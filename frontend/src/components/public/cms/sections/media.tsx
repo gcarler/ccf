@@ -2,7 +2,7 @@
 
 import { CmsSection } from "@/types/cms-v2";
 import type {
-  GalleryProps, EmbedProps, ImageTextProps, VideoGridProps, EventsCalendarProps, LocationsListProps, CourseGridProps, BookShopProps,
+  GalleryProps, EmbedProps, ImageTextProps, VideoGridProps, EventsCalendarProps, LocationsListProps, CourseGridProps, BookShopProps, FeedProps,
 } from "@/types/cms-section-props";
 import OptimizedImage from "@/components/ui/OptimizedImage";
 import Link from "next/link";
@@ -239,6 +239,330 @@ export function BookShopSection({ section }: { section: CmsSection<"book_shop"> 
           La librería se renderiza desde la Academia.
         </p>
       </div>
+    </section>
+  );
+}
+
+// ─── Feed Section ──────────────────────────────────────────────────────────────
+// Renderiza el tipo "feed" usado en home, sermons, courses, testimonials, pastors, events, locations
+
+export function FeedSection({ section }: { section: CmsSection<"feed"> }) {
+  const props: FeedProps = section.props_json ?? {};
+  const p = asProps(props);
+
+  // Detectar qué variante de feed es según los campos presentes
+  const isHomeFeed = p.featured_card || p.cards;
+  const isSermonsFeed = p.content;
+  const isCoursesFeed = p.courses_title || p.hero_image_url || p.cta_images;
+  const isTestimonialsFeed = p.hero_badge && p.hero_title_lead;
+  const isEventsFeed = p.empty_title && p.no_events_title;
+  const isPastorsFeed = p.hero_badge && p.hero_title && p.card_cta;
+  const isLocationsFeed = p.section_key === "feed" && !p.featured_card && !p.content && !p.courses_title && !p.hero_badge;
+
+  // Home feed: featured_card + 3 cards + newsletter
+  if (isHomeFeed) {
+    const eyebrow = val(p, "eyebrow", "");
+    const sectionTitle = val(p, "section_title", "");
+    const sectionDescription = val(p, "section_description", "");
+    const featuredCard = p.featured_card as Record<string, unknown> | undefined;
+    const cards = p.cards as Array<Record<string, unknown>> | undefined;
+    const activitiesEyebrow = val(p, "activities_eyebrow", "");
+    const activitiesTitle = val(p, "activities_title", "");
+    const activitiesViewAll = val(p, "activities_view_all", "");
+    const activitiesEmpty = val(p, "activities_empty", "");
+    const newsletterEyebrow = val(p, "newsletter_eyebrow", "");
+    const newsletterTitle = val(p, "newsletter_title", "");
+    const newsletterDescription = val(p, "newsletter_description", "");
+    const newsletterPlaceholder = val(p, "newsletter_placeholder", "");
+    const newsletterSubmit = val(p, "newsletter_submit", "");
+
+    return (
+      <section className="ccf-section-panel p-7 md:p-12 lg:p-14" style={{ background: "var(--site-surface-container-low)" }}>
+        {eyebrow && <span className="ccf-kicker inline-flex items-center gap-2 text-xs uppercase mb-3" style={{ color: "var(--site-primary)" }}>{eyebrow}</span>}
+        {sectionTitle && <h2 className="text-2xl md:text-3xl font-black tracking-tight" style={{ color: "var(--site-on-surface)" }}>{sectionTitle}</h2>}
+        {sectionDescription && <p className="mt-3 max-w-2xl" style={{ color: "var(--site-on-surface-variant)" }}>{sectionDescription}</p>}
+
+        {featuredCard && (
+          <Link href={val(featuredCard, "href", "/")} className="block my-8 rounded-xl overflow-hidden group" style={{ background: "var(--site-surface-container)" }}>
+            <div className="relative aspect-[16/9]">
+              {val(featuredCard, "img", "") && (
+                <OptimizedImage src={val(featuredCard, "img", "")} alt={val(featuredCard, "alt", "")} fill sizes="100vw" className="object-cover transition-transform duration-700 group-hover:scale-105" />
+              )}
+              <div className="absolute inset-0" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.8) 0%, transparent 60%)" }} />
+              <div className="absolute bottom-0 p-6 md:p-8 w-full">
+                <span className="inline-block px-4 py-1.5 rounded-full text-xs font-semibold uppercase tracking-wide mb-3" style={{ background: "var(--site-card-highlight)", color: "var(--site-primary)" }}>
+                  {val(featuredCard, "title", "")}
+                </span>
+                <p className="text-base md:text-lg font-medium text-white mb-3 max-w-xl">{val(featuredCard, "desc", "")}</p>
+                <span className="inline-flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-white">{val(featuredCard, "cta", "Ver más")} →</span>
+              </div>
+            </div>
+          </Link>
+        )}
+
+        {cards && cards.length > 0 && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {cards.slice(0, 3).map((card, i) => (
+              <Link key={i} href={val(card, "href", "#")} className="rounded-xl overflow-hidden group transition-transform hover:-translate-y-1 hover:shadow-lg" style={{ background: "var(--site-surface-container)" }}>
+                {val(card, "img", "") && (
+                  <div className="relative aspect-[4/3]">
+                    <OptimizedImage src={val(card, "img", "")} alt={val(card, "alt", "")} fill sizes="(max-width: 768px) 50vw, 33vw" className="object-cover transition-transform duration-500 group-hover:scale-105" />
+                  </div>
+                )}
+                <div className="p-5 flex flex-col gap-3">
+                  <h3 className="font-bold" style={{ color: "var(--site-on-surface)" }}>{val(card, "title", `Tarjeta ${i + 1}`)}</h3>
+                  {val(card, "desc", "") && <p className="text-sm leading-relaxed flex-1" style={{ color: "var(--site-on-surface-variant)" }}>{val(card, "desc", "")}</p>}
+                  {val(card, "href", "") && <span className="text-xs font-bold uppercase tracking-widest mt-auto" style={{ color: "var(--site-primary)" }}>Ver más →</span>}
+                </div>
+              </Link>
+            ))}
+          </div>
+        )}
+
+        {(activitiesTitle || newsletterTitle) && <hr className="my-12 border-[hsl(var(--border))]" />}
+
+        {activitiesTitle && (
+          <div>
+            {activitiesEyebrow && <span className="ccf-kicker inline-flex items-center gap-2 text-xs uppercase mb-2" style={{ color: "var(--site-primary)" }}>{activitiesEyebrow}</span>}
+            <h3 className="text-xl md:text-2xl font-black tracking-tight mb-4" style={{ color: "var(--site-on-surface)" }}>{activitiesTitle}</h3>
+            <p className="text-sm" style={{ color: "var(--site-on-surface-variant)" }}>{activitiesEmpty}</p>
+            {activitiesViewAll && (
+              <Link href="/eventos" className="inline-flex mt-4 items-center gap-2 text-sm font-bold uppercase tracking-widest" style={{ color: "var(--site-primary)" }}>
+                {activitiesViewAll}
+              </Link>
+            )}
+          </div>
+        )}
+
+        {newsletterTitle && (
+          <div className="mt-8 max-w-md">
+            {newsletterEyebrow && <span className="ccf-kicker inline-flex items-center gap-2 text-xs uppercase mb-2" style={{ color: "var(--site-primary)" }}>{newsletterEyebrow}</span>}
+            <h3 className="text-xl md:text-2xl font-black tracking-tight mb-2" style={{ color: "var(--site-on-surface)" }}>{newsletterTitle}</h3>
+            {newsletterDescription && <p className="mt-2 text-sm" style={{ color: "var(--site-on-surface-variant)" }}>{newsletterDescription}</p>}
+            <form className="mt-4 flex gap-2" onSubmit={(e) => e.preventDefault()}>
+              <input
+                type="email"
+                placeholder={newsletterPlaceholder}
+                className="flex-1 rounded-xl px-4 py-3 text-sm border"
+                style={{ borderColor: "var(--site-outline)", background: "var(--site-surface)", color: "var(--site-on-surface)" }}
+              />
+              <button type="submit" className="px-5 py-3 text-sm font-bold uppercase tracking-widest text-white" style={{ background: "var(--site-cta-gradient)" }}>
+                {newsletterSubmit}
+              </button>
+            </form>
+          </div>
+        )}
+      </section>
+    );
+  }
+
+  // Sermons feed: YouTube video grid with search
+  if (isSermonsFeed) {
+    const contentStr = val(p, "content", "{}");
+    let content: Record<string, unknown> = {};
+    try { content = JSON.parse(contentStr); } catch {}
+    const heroEyebrow = val(content, "hero_eyebrow", "");
+    const heroTitleLead = val(content, "hero_title_lead", "");
+    const heroTitleAccent = val(content, "hero_title_accent", "");
+    const heroDescription = val(content, "hero_description", "");
+    const featuredLabel = val(content, "featured_label", "");
+    const gridLabel = val(content, "grid_label", "");
+    const searchPlaceholder = val(content, "search_placeholder", "");
+    const ctaLabel = val(content, "cta_label", "");
+
+    return (
+      <section className="ccf-section-panel p-7 md:p-12 lg:p-14" style={{ background: "var(--site-surface-container-low)" }}>
+        {heroEyebrow && <span className="ccf-kicker inline-flex items-center gap-2 text-xs uppercase mb-3" style={{ color: "var(--site-primary)" }}>{heroEyebrow}</span>}
+        {heroTitleLead && (
+          <h2 className="text-2xl md:text-3xl font-black tracking-tight" style={{ color: "var(--site-on-surface)" }}>
+            {heroTitleLead}{" "}
+            {heroTitleAccent && (
+              <span style={{ background: "var(--site-hero-accent-1)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
+                {heroTitleAccent}
+              </span>
+            )}
+          </h2>
+        )}
+        {heroDescription && <p className="mt-3 max-w-2xl" style={{ color: "var(--site-on-surface-variant)" }}>{heroDescription}</p>}
+        <div className="mt-8 rounded-xl p-8 text-center border-2 border-dashed" style={{ borderColor: "var(--site-outline-variant)" }}>
+          <p className="text-sm" style={{ color: "var(--site-on-surface-variant)" }}>
+            Biblioteca de videos desde YouTube — configurar integración para renderizar grid completo.
+          </p>
+          {ctaLabel && (
+            <Link href="https://youtube.com/@comunidadccf" target="_blank" rel="noopener noreferrer" className="inline-flex mt-4 items-center gap-2 text-sm font-bold uppercase tracking-widest text-white" style={{ background: "var(--site-cta-gradient)" }}>
+              {ctaLabel}
+            </Link>
+          )}
+        </div>
+      </section>
+    );
+  }
+
+  // Courses feed: featured course + grid
+  if (isCoursesFeed) {
+    const heroImageUrl = val(p, "hero_image_url", "");
+    const coursesTitle = val(p, "courses_title", "");
+    const coursesDescription = val(p, "courses_description", "");
+    const emptyTitle = val(p, "empty_title", "");
+    const emptyDescription = val(p, "empty_description", "");
+    const ctaImages = p.cta_images as Array<{ src?: string; alt?: string }> | undefined;
+
+    return (
+      <section className="ccf-section-panel p-7 md:p-12 lg:p-14" style={{ background: "var(--site-surface-container-low)" }}>
+        {heroImageUrl && coursesTitle && (
+          <div className="relative rounded-xl overflow-hidden mb-10 aspect-[16/9]">
+            <OptimizedImage src={heroImageUrl} alt={coursesTitle} fill sizes="100vw" className="object-cover" />
+            <div className="absolute inset-0" style={{ background: "linear-gradient(to top, var(--site-surface-container-lowest) 0%, transparent 60%)" }} />
+            <div className="absolute bottom-0 p-6 md:p-8 w-full">
+              <h2 className="text-2xl md:text-3xl font-black text-white mb-3">{coursesTitle}</h2>
+              {coursesDescription && <p className="text-white/90 max-w-xl">{coursesDescription}</p>}
+            </div>
+          </div>
+        )}
+        {ctaImages && ctaImages.length > 0 && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {ctaImages.slice(0, 3).map((img, i) => (
+              <div key={i} className="relative aspect-[4/3] rounded-xl overflow-hidden group">
+                <OptimizedImage src={val(img, "src", "")} alt={val(img, `alt`, `Curso ${i + 1}`)} fill sizes="(max-width: 768px) 50vw, 33vw" className="object-cover transition-transform duration-500 group-hover:scale-105" />
+              </div>
+            ))}
+          </div>
+        )}
+        {!ctaImages && (
+          <div className="rounded-lg p-8 text-center" style={{ background: "var(--site-surface-container-low)" }}>
+            {emptyTitle && <h3 className="text-xl font-bold mb-2">{emptyTitle}</h3>}
+            {emptyDescription && <p className="text-sm" style={{ color: "var(--site-on-surface-variant)" }}>{emptyDescription}</p>}
+          </div>
+        )}
+      </section>
+    );
+  }
+
+  // Testimonials feed: search + grid
+  if (isTestimonialsFeed) {
+    const heroBadge = val(p, "hero_badge", "");
+    const heroTitleLead = val(p, "hero_title_lead", "");
+    const heroTitleAccent = val(p, "hero_title_accent", "");
+    const heroDescription = val(p, "hero_description", "");
+    const ctaLabel = val(p, "cta_label", "");
+    const searchPlaceholder = val(p, "search_placeholder", "");
+
+    return (
+      <section className="ccf-section-panel p-7 md:p-12 lg:p-14" style={{ background: "var(--site-surface-container-low)" }}>
+        {heroBadge && <span className="ccf-kicker inline-flex items-center gap-2 text-xs uppercase mb-3" style={{ color: "var(--site-primary)" }}>{heroBadge}</span>}
+        {heroTitleLead && (
+          <h2 className="text-2xl md:text-3xl font-black tracking-tight" style={{ color: "var(--site-on-surface)" }}>
+            {heroTitleLead}{" "}
+            {heroTitleAccent && (
+              <span style={{ background: "var(--site-hero-accent-1)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
+                {heroTitleAccent}
+              </span>
+            )}
+          </h2>
+        )}
+        {heroDescription && <p className="mt-3 max-w-2xl" style={{ color: "var(--site-on-surface-variant)" }}>{heroDescription}</p>}
+        <div className="mt-8 rounded-xl p-8 text-center border-2 border-dashed" style={{ borderColor: "var(--site-outline-variant)" }}>
+          <p className="text-sm" style={{ color: "var(--site-on-surface-variant)" }}>
+            Testimonios se renderizan desde el módulo de testimonios — configurar API para grid completo.
+          </p>
+          {ctaLabel && (
+            <button className="inline-flex mt-4 items-center gap-2 text-sm font-bold uppercase tracking-widest text-white" style={{ background: "var(--site-cta-gradient)" }}>
+              {ctaLabel}
+            </button>
+          )}
+        </div>
+      </section>
+    );
+  }
+
+  // Events feed
+  if (isEventsFeed) {
+    const emptyTitle = val(p, "empty_title", "");
+    const emptyDescription = val(p, "empty_description", "");
+    const noEventsTitle = val(p, "no_events_title", "");
+    const noEventsDescription = val(p, "no_events_description", "");
+    const calendarTitle = val(p, "calendar_title", "");
+    const calendarDescription = val(p, "calendar_description", "");
+    const todayLabel = val(p, "today_label", "");
+    const upcomingLabel = val(p, "upcoming_label", "");
+    const featuredBadge = val(p, "featured_badge", "");
+    const reserveCta = val(p, "reserve_cta", "");
+    const filters = p.filters as string[] | undefined;
+    const channelLinkLabel = val(p, "channel_link_label", "");
+
+    return (
+      <section className="ccf-section-panel p-7 md:p-12 lg:p-14" style={{ background: "var(--site-surface-container-low)" }}>
+        <div className="rounded-xl p-8 text-center border-2 border-dashed" style={{ borderColor: "var(--site-outline-variant)" }}>
+          <p className="text-sm" style={{ color: "var(--site-on-surface-variant)" }}>
+            {emptyTitle && <p className="font-bold mb-2">{emptyTitle}</p>}
+            {emptyDescription}
+          </p>
+          {calendarTitle && (
+            <div className="mt-8">
+              <h3 className="text-xl font-bold mb-2">{calendarTitle}</h3>
+              {calendarDescription && <p className="text-sm" style={{ color: "var(--site-on-surface-variant)" }}>{calendarDescription}</p>}
+            </div>
+          )}
+        </div>
+      </section>
+    );
+  }
+
+  // Pastors feed
+  if (isPastorsFeed) {
+    const heroBadge = val(p, "hero_badge", "");
+    const heroTitle = val(p, "hero_title", "");
+    const heroDescription = val(p, "hero_description", "");
+    const loadingLabel = val(p, "loading_label", "");
+    const emptyTitle = val(p, "empty_title", "");
+    const cardCta = val(p, "card_cta", "");
+    const principalLabel = val(p, "principal_label", "");
+
+    return (
+      <section className="ccf-section-panel p-7 md:p-12 lg:p-14" style={{ background: "var(--site-surface-container-low)" }}>
+        {heroBadge && <span className="ccf-kicker inline-flex items-center gap-2 text-xs uppercase mb-3" style={{ color: "var(--site-primary)" }}>{heroBadge}</span>}
+        {heroTitle && <h2 className="text-2xl md:text-3xl font-black tracking-tight" style={{ color: "var(--site-on-surface)" }}>{heroTitle}</h2>}
+        {heroDescription && <p className="mt-3 max-w-2xl" style={{ color: "var(--site-on-surface-variant)" }}>{heroDescription}</p>}
+        <div className="mt-8 rounded-xl p-8 text-center border-2 border-dashed" style={{ borderColor: "var(--site-outline-variant)" }}>
+          <p className="text-sm" style={{ color: "var(--site-on-surface-variant)" }}>
+            Equipo pastoral se renderiza desde el módulo de pastores — configurar API para grid completo.
+          </p>
+        </div>
+      </section>
+    );
+  }
+
+  // Locations feed (empty, shell only)
+  if (isLocationsFeed) {
+    return (
+      <section className="ccf-section-panel p-7 md:p-12 lg:p-14" style={{ background: "var(--site-surface-container-low)" }}>
+        <div className="rounded-xl p-8 text-center border-2 border-dashed" style={{ borderColor: "var(--site-outline-variant)" }}>
+          <p className="text-sm" style={{ color: "var(--site-on-surface-variant)" }}>
+            Listado de sedes se renderiza desde el módulo de ubicaciones.
+          </p>
+        </div>
+      </section>
+    );
+  }
+
+  // Generic fallback
+  const title = val(p, "title", "");
+  const body = val(p, "body", "");
+  const items = asItems(p);
+
+  return (
+    <section className="ccf-section-panel p-7 md:p-12 lg:p-14" style={{ background: "var(--site-surface-container-low)" }}>
+      {title && <h2 className="text-2xl md:text-3xl font-black tracking-tight mb-4" style={{ color: "var(--site-on-surface)" }}>{title}</h2>}
+      {body && <p className="mb-6" style={{ color: "var(--site-on-surface-variant)" }}>{body}</p>}
+      {items.length > 0 && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {items.map((item, i) => (
+            <div key={i} className="rounded-xl p-4 border" style={{ borderColor: "var(--site-outline)", background: "var(--site-surface-container)" }}>
+              <pre className="text-xs overflow-auto">{JSON.stringify(item, null, 2)}</pre>
+            </div>
+          ))}
+        </div>
+      )}
     </section>
   );
 }

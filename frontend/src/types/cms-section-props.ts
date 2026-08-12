@@ -306,6 +306,100 @@ export interface EmbedProps {
   embed_url?: string;
 }
 
+export interface FeedProps {
+  // Home / landing page style
+  eyebrow?: string;
+  section_title?: string;
+  section_description?: string;
+  featured_card?: {
+    title?: string;
+    desc?: string;
+    href?: string;
+    cta?: string;
+    img?: string;
+    alt?: string;
+  };
+  cards?: Array<{
+    title?: string;
+    desc?: string;
+    href?: string;
+    img?: string;
+    alt?: string;
+  }>;
+  activities_eyebrow?: string;
+  activities_title?: string;
+  activities_view_all?: string;
+  activities_empty?: string;
+  scroll_indicator?: string;
+  newsletter_eyebrow?: string;
+  newsletter_title?: string;
+  newsletter_description?: string;
+  newsletter_placeholder?: string;
+  newsletter_submit?: string;
+  newsletter_success_title?: string;
+  newsletter_success_desc?: string;
+
+  // Sermons / predicas style
+  content?: string;
+
+  // Courses / cursos style
+  hero_image_url?: string;
+  courses_title?: string;
+  courses_description?: string;
+  empty_title?: string;
+  empty_description?: string;
+  cta_images?: Array<{ src?: string; alt?: string }>;
+  library_title?: string;
+  library_description?: string;
+  empty_books_message?: string;
+  featured_fallback_image_url?: string;
+  course_cards?: Array<any>;
+  books?: Array<any>;
+  cta_title?: string;
+  cta_description?: string;
+  cta_placeholder?: string;
+  cta_submit?: string;
+  newsletter_success_toast?: string;
+  newsletter_error_toast?: string;
+  wishlist_success_toast_prefix?: string;
+  wishlist_fallback_toast_prefix?: string;
+
+  // Testimonials style
+  search_placeholder?: string;
+  loading_label?: string;
+  hero_badge?: string;
+  hero_title_lead?: string;
+  hero_title_accent?: string;
+  hero_description?: string;
+  cta_label?: string;
+
+  // Events style
+  no_events_title?: string;
+  no_events_description?: string;
+  calendar_title?: string;
+  calendar_description?: string;
+  today_label?: string;
+  upcoming_label?: string;
+  featured_badge?: string;
+  reserve_cta?: string;
+  filters?: string[];
+  featured_empty_title?: string;
+  featured_empty_description?: string;
+  channel_link_label?: string;
+
+  // Pastors style
+  hero_title?: string;
+  card_cta?: string;
+  principal_label?: string;
+
+  // Generic fallback
+  title?: string;
+  body?: string;
+  items?: Array<Record<string, unknown>>;
+  
+  [key: string]: unknown;
+}
+
 export interface TestimonialsProps {
   title?: string;
   items?: TestimonialItemPublic[];

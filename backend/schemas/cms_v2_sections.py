@@ -501,6 +501,85 @@ class EmbedProps(_PermissiveProps):
     embed_url: str = ""
 
 
+class FeedProps(_PermissiveProps):
+    # Home / landing page style
+    eyebrow: Optional[str] = None
+    section_title: Optional[str] = None
+    section_description: Optional[str] = None
+    featured_card: Optional[Dict[str, Any]] = None
+    cards: Optional[List[Dict[str, Any]]] = None
+    activities_eyebrow: Optional[str] = None
+    activities_title: Optional[str] = None
+    activities_view_all: Optional[str] = None
+    activities_empty: Optional[str] = None
+    scroll_indicator: Optional[str] = None
+    newsletter_eyebrow: Optional[str] = None
+    newsletter_title: Optional[str] = None
+    newsletter_description: Optional[str] = None
+    newsletter_placeholder: Optional[str] = None
+    newsletter_submit: Optional[str] = None
+    newsletter_success_title: Optional[str] = None
+    newsletter_success_desc: Optional[str] = None
+
+    # Sermons / predicas style
+    content: Optional[str] = None
+
+    # Courses / cursos style
+    hero_image_url: Optional[str] = None
+    courses_title: Optional[str] = None
+    courses_description: Optional[str] = None
+    empty_title: Optional[str] = None
+    empty_description: Optional[str] = None
+    cta_images: Optional[List[Dict[str, Any]]] = None
+    library_title: Optional[str] = None
+    library_description: Optional[str] = None
+    empty_books_message: Optional[str] = None
+    featured_fallback_image_url: Optional[str] = None
+    course_cards: Optional[List[Dict[str, Any]]] = None
+    books: Optional[List[Dict[str, Any]]] = None
+    cta_title: Optional[str] = None
+    cta_description: Optional[str] = None
+    cta_placeholder: Optional[str] = None
+    cta_submit: Optional[str] = None
+    newsletter_success_toast: Optional[str] = None
+    newsletter_error_toast: Optional[str] = None
+    wishlist_success_toast_prefix: Optional[str] = None
+    wishlist_fallback_toast_prefix: Optional[str] = None
+
+    # Testimonials style
+    search_placeholder: Optional[str] = None
+    loading_label: Optional[str] = None
+    hero_badge: Optional[str] = None
+    hero_title_lead: Optional[str] = None
+    hero_title_accent: Optional[str] = None
+    hero_description: Optional[str] = None
+    cta_label: Optional[str] = None
+
+    # Events style
+    no_events_title: Optional[str] = None
+    no_events_description: Optional[str] = None
+    calendar_title: Optional[str] = None
+    calendar_description: Optional[str] = None
+    today_label: Optional[str] = None
+    upcoming_label: Optional[str] = None
+    featured_badge: Optional[str] = None
+    reserve_cta: Optional[str] = None
+    filters: Optional[List[str]] = None
+    featured_empty_title: Optional[str] = None
+    featured_empty_description: Optional[str] = None
+    channel_link_label: Optional[str] = None
+
+    # Pastors style
+    hero_title: Optional[str] = None
+    card_cta: Optional[str] = None
+    principal_label: Optional[str] = None
+
+    # Generic fallback
+    title: Optional[str] = None
+    body: Optional[str] = None
+    items: Optional[List[Dict[str, Any]]] = None
+
+
 class TestimonialItemPublic(BaseModel):
     model_config = {"extra": "ignore"}
     author: Optional[str] = None
@@ -726,6 +805,7 @@ SECTION_PROPS_SCHEMAS: Dict[str, type[BaseModel]] = {
     "civic_file_downloads": CivicFileDownloadsProps,
     "civic_data_table": CivicDataTableProps,
     "civic_alert_banner": CivicAlertBannerProps,
+    "feed": FeedProps,
 }
 
 
