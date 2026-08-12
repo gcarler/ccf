@@ -76,8 +76,21 @@ export default function RootLayout({
                         __html: `
                             (function() {
                                 try {
-                                    var theme = localStorage.getItem('theme-mode');
-                                    if (theme === 'night') {
+                                    var isPublicRoute = window.location.pathname.indexOf('/public') === 0;
+                                    var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+                                    var effectiveTheme;
+                                    
+                                    if (isPublicRoute) {
+                                        // Rutas públicas: respetar preferencia del sistema (day/night)
+                                        // sin leer localStorage de la plataforma (theme-mode)
+                                        effectiveTheme = prefersDark ? 'night' : 'day';
+                                    } else {
+                                        // Rutas autenticadas: respetar localStorage (plataforma)
+                                        var theme = localStorage.getItem('theme-mode');
+                                        effectiveTheme = theme === 'night' ? 'night' : 'day';
+                                    }
+                                    
+                                    if (effectiveTheme === 'night') {
                                         document.documentElement.classList.add('dark');
                                         document.documentElement.setAttribute('data-theme', 'night');
                                     } else {

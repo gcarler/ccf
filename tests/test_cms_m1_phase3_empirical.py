@@ -19,6 +19,7 @@ from backend.api.cms.public.menus import public_menu
 from backend.api.cms.public.pages import public_page
 from backend.api.cms.public.posts import public_post, public_posts_list
 from backend.api.cms.public.themes import public_theme
+from backend.api.cms_v2._shared import _build_section_defaults
 from backend.core.cache_v2 import get_redis
 from tests.conftest import seed_admin
 
@@ -174,6 +175,53 @@ def test_empirical_public_page_query_count(db_session):
     # Site + Page + Sections + SystemVars Batch <= 4 SELECTs
     # Before fix: 1 + 8*5 = 41 queries.
     assert q.select_count <= 4, f"Expected <= 4 SELECTs for 8 sections, got {q.select_count}: {q.statements}"
+
+
+def test_empirical_public_page_dynamic_defaults_query_count(db_session):
+    """Dynamic defaults stay O(1) when a page repeats the same section type."""
+    site = _seed_site(db_session, "dynamic-page")
+    page = models.CmsPage(
+        id=uuid.uuid4(),
+        site_id=site.id,
+        slug="dynamic-page",
+        title="Dynamic Page",
+        status="published",
+    )
+    db_session.add(page)
+    db_session.commit()
+
+    for i in range(8):
+        db_session.add(
+            models.CmsSection(
+                id=uuid.uuid4(),
+                page_id=page.id,
+                section_key=f"stats-{i}",
+                type="stats",
+                sort_order=i,
+                is_visible=True,
+                status="active",
+                props_json={},
+            )
+        )
+    db_session.commit()
+
+    _clear_cache()
+    engine = db_session.get_bind()
+    with QueryCounter(engine) as q:
+        res = public_page(site_key=site.site_key, slug="dynamic-page", db=db_session)
+    assert res.slug == "dynamic-page"
+    # Site + page + sections + system vars + two stats counters. Without the
+    # request-scoped defaults cache, the two counters repeat for every section.
+    assert q.select_count <= 6, f"Expected <= 6 SELECTs for repeated stats sections, got {q.select_count}: {q.statements}"
+
+
+def test_section_defaults_cache_isolated_from_mutation(db_session):
+    """A caller cannot mutate the cached defaults returned to the next section."""
+    cache = {}
+    first = _build_section_defaults(db_session, "uncached-test", "stats", {}, defaults_cache=cache)
+    first["stats"][0]["value"] = "mutated"
+    second = _build_section_defaults(db_session, "uncached-test", "stats", {}, defaults_cache=cache)
+    assert second["stats"][0]["value"] != "mutated"
 
 
 def test_empirical_public_posts_list_query_count(db_session):

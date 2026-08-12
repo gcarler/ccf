@@ -201,6 +201,15 @@ export function InlineEditorPanel({ section, builder, onClose }: InlineEditorPan
         return [
           { key: "title", label: "Título", type: "input", value: safeString(propsJson.title) },
         ];
+      case "feed":
+        // Variante home del FeedSection: los campos visibles usan section_title /
+        // section_description / eyebrow (title/body no se renderizan en esta
+        // variante, así que no se exponen aquí para evitar edits invisibles).
+        return [
+          { key: "section_title", label: "Título de sección", type: "input", value: safeString(propsJson.section_title) },
+          { key: "section_description", label: "Descripción", type: "input", value: safeString(propsJson.section_description) },
+          { key: "eyebrow", label: "Kicker / Eyebrow", type: "input", value: safeString(propsJson.eyebrow) },
+        ];
       default: {
         const res = [];
         res.push({ key: "title", label: "Título", type: "input", value: safeString(propsJson.title) });

@@ -134,13 +134,14 @@ function RegisterSuccess({ result, event, baseUrl }: { result: RegistrationResul
 
             {showQr && result.qr_token && (
                 <>
-                    <div className="p-4 bg-white rounded-md shadow-xl border border-[hsl(var(--border-primary))] flex items-center justify-center">
+                    <div className="p-4 bg-[hsl(var(--surface-1))] dark:bg-white rounded-md shadow-xl border border-[hsl(var(--border-primary))] flex items-center justify-center">
                         <QRCodeSVG
                             id="registration-qr-code"
                             value={`${baseUrl}/public/events/${event.id}/qr?token=${result.qr_token}`}
-                            size={224}
+                            size={200}
                             level="H"
                             includeMargin
+                            className="w-full h-auto max-w-[200px] sm:max-w-[224px]"
                         />
                     </div>
                     <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
@@ -903,13 +904,13 @@ export default function PublicEventRegistrationPage() {
             <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-[hsl(var(--info-muted))]/50 blur-[120px] rounded-full mix-blend-multiply pointer-events-none" />
             <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-[hsl(var(--info-muted))]/50 blur-[120px] rounded-full mix-blend-multiply pointer-events-none" />
 
-            <div className="w-full max-w-xl bg-[hsl(var(--bg-primary))] rounded-lg shadow-2xl border border-[hsl(var(--border))] p-4 sm:p-6 relative z-10">
+            <div className="w-full max-w-2xl lg:max-w-3xl bg-[hsl(var(--bg-primary))] rounded-lg shadow-2xl border border-[hsl(var(--border))] p-4 sm:p-6 relative z-10">
                 <div className="flex flex-col items-center justify-center text-center space-y-3 mb-4">
                     <div className="w-16 h-8 bg-gradient-to-tr from-[hsl(var(--info))] to-[hsl(var(--info))] text-white rounded-lg flex items-center justify-center shadow-lg shadow-[hsl(var(--info)/30%)] rotate-3">
                         <Calendar size={28} className="drop-shadow-md" />
                     </div>
                     <div>
-                        <p className="text-2xs font-bold uppercase tracking-widest text-[hsl(var(--primary))] mb-1">Pre-registro CCF</p>
+                        <p className="text-2xs font-bold uppercase tracking-widest text-[hsl(var(--primary))] mb-1">Inscripción CCF</p>
                         <h1 className="text-lg sm:text-xl font-bold text-[hsl(var(--text-primary))] tracking-tight">{event.name}</h1>
                         {event.description && (
                             <p className="text-sm font-medium text-[hsl(var(--text-secondary))] mt-2 max-w-md mx-auto">{event.description}</p>

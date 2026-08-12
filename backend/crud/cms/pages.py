@@ -33,7 +33,8 @@ _logger = logging.getLogger(__name__)
 
 
 
-from backend.crud.cms._shared import _commit_or_conflict
+from backend.core.cache_v2 import invalidate_cached_public, invalidate_cached_public_pattern
+from backend.crud.cms._shared import _commit_or_conflict, resolve_site_key
 
 
 def list_cms_pages(
@@ -114,6 +115,9 @@ def update_cms_page(
         row.updated_by_persona_id = resolve_persona_uuid_for_user(db, user_id)
     db.commit()
     db.refresh(row)
+    # Cierre de staleness: slug/title/status/seo alteran la respuesta
+    # pública cacheada de la página (detail) y el listado de páginas.
+    _invalidate_public_page_cache(db, row)
     return row
 
 
@@ -190,6 +194,9 @@ def delete_cms_page(db: Session, row: models.CmsPage) -> bool:
     row.status = "archived"
     row.deleted_at = _utcnow()
     db.commit()
+    # Cierre de staleness: la página archivada deja de servirse en el
+    # endpoint público de inmediato (404), sin esperar el TTL de 300s.
+    _invalidate_public_page_cache(db, row)
     return True
 
 
@@ -240,6 +247,9 @@ def create_cms_section(
     elif not commit_with_conflict_check:
         db.commit()
     db.refresh(row)
+    # Cierre de staleness: una sección nueva cambia el render público de
+    # la página padre cacheada.
+    _invalidate_public_page_sections_cache(db, page_id)
     return row
 
 
@@ -284,6 +294,9 @@ def update_cms_section(db: Session, row: models.CmsSection, payload: schemas.Cms
         row.props_json = validate_section_props(section_type, data["props_json"])
     db.commit()
     db.refresh(row)
+    # Cierre de staleness: type/sort_order/is_visible/status/props alteran
+    # el render público cacheado de la página padre.
+    _invalidate_public_page_sections_cache(db, row.page_id)
     return row
 
 
@@ -306,6 +319,9 @@ def archive_cms_section(db: Session, row: models.CmsSection) -> models.CmsSectio
     row.deleted_at = _utcnow()
     db.commit()
     db.refresh(row)
+    # Cierre de staleness: archivar una sección la oculta del render
+    # público cacheado de la página padre de inmediato.
+    _invalidate_public_page_sections_cache(db, row.page_id)
     return row
 
 
@@ -318,8 +334,50 @@ def reorder_cms_sections(db: Session, page_id: uuid.UUID, items: list[schemas.Cm
             continue
         row.sort_order = item.sort_order
     db.commit()
+    # Cierre de staleness: el orden de secciones afecta el render público
+    # cacheado de la página padre.
+    _invalidate_public_page_sections_cache(db, page_id)
     items_list, _ = list_cms_sections(db, page_id)
     return items_list
+
+
+
+def _invalidate_public_page_cache(db: Session, row: models.CmsPage) -> None:
+    """Invalida la caché pública de una página (detail + listado).
+
+    Reconstruye la key del detalle con ``site_key`` + ``slug`` (los
+    mismos kwargs serializables que ``public_page`` recibe) y borra todas
+    las variantes del listado ``public_pages_list`` (skip/limit variables).
+    """
+    try:
+        site_key = resolve_site_key(db, row.site_id)
+        if not site_key:
+            return
+        invalidate_cached_public("public_page", site_key=site_key, slug=row.slug)
+        invalidate_cached_public_pattern("public_pages_list")
+    except Exception:  # la invalidación nunca debe romper la mutación
+        _logger.debug("public page cache invalidation skipped", exc_info=True)
+
+
+
+def _invalidate_public_page_sections_cache(db: Session, page_id: uuid.UUID) -> None:
+    """Invalida la caché pública de la página que contiene una sección.
+
+    El render público serializa las secciones activas de la página
+    (``is_visible`` / ``status != archived``), así que crear/editar/
+    archivar/reordenar una sección cambia la respuesta cacheada de su
+    página padre.
+    """
+    try:
+        page = (
+            db.query(models.CmsPage)
+            .filter(models.CmsPage.id == page_id)
+            .first()
+        )
+        if page is not None:
+            _invalidate_public_page_cache(db, page)
+    except Exception:  # la invalidación nunca debe romper la mutación
+        _logger.debug("public page sections cache invalidation skipped", exc_info=True)
 
 
 
@@ -465,6 +523,10 @@ def restore_cms_page_version(
         )
     db.commit()
     db.refresh(page)
+    # Cierre de staleness: un rollback devuelve la página a ``draft`` — si
+    # estaba publicada, deja de servirse en el endpoint público de
+    # inmediato (404), sin esperar el TTL de 300s.
+    _invalidate_public_page_cache(db, page)
     return page
 
 
@@ -516,6 +578,9 @@ def transition_cms_page_status(
     )
     db.commit()
     db.refresh(page)
+    # Cierre de staleness: publish/archive/revert cambia la visibilidad y
+    # el contenido publicado de la página en el endpoint público.
+    _invalidate_public_page_cache(db, page)
     return page
 
 

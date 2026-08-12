@@ -190,7 +190,6 @@ def capture_daily_seo_snapshots(db: Session, *, today: dt.date | None = None, dr
             # ya está satisfecho. Contamos como "skipped" y seguimos
             # con el siguiente site.
             counts["skipped_count"] += 1
-            counts["sites_visited"] += 1
             continue
         counts["snapshots_count"] += 1
         counts["sites_captured"] += 1
@@ -295,6 +294,11 @@ def _archive_post_with_audit(db: Session, post: models.CmsPost, *, dry_run: bool
     )
     db.commit()
     db.refresh(post)
+    # Cierre de staleness: el auto-archivo del scheduler oculta el post
+    # del endpoint público de inmediato (no espera el TTL de 300s).
+    from backend.crud.cms.posts import _invalidate_public_post_cache
+
+    _invalidate_public_post_cache(db, post)
     return True
 
 

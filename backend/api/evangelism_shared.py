@@ -48,6 +48,7 @@ __all__ = [
     "is_excused_status",
     "ttl_cache",
     "invalidate_ttl_cache",
+    "analytics_cache_scope",
 ]
 
 
@@ -61,6 +62,22 @@ __all__ = [
 _TTL_CACHE: dict = {}
 TTL_DEFAULT_SECONDS = 60
 F = TypeVar("F", bound=Callable[..., Any])
+
+
+def analytics_cache_scope(current_user: Any) -> str:
+    """Return a tenant-specific cache suffix without querying during keying.
+
+    Aislar por ``sede_id`` evita que un usuario de la sede X reciba el
+    resultado cacheado de un recurso que solo es visible por usuarios de la
+    sede Y (Cross-Tenant defense-in-depth). Cuando no hay ``sede_id`` en el
+    objeto User, cae a ``user:<id>`` para igualmente particionar y no romper
+    el RBAC por_sede.
+    """
+    sede_id = getattr(current_user, "sede_id", None) if current_user is not None else None
+    if sede_id:
+        return str(sede_id)
+    user_id = getattr(current_user, "id", None) if current_user is not None else None
+    return f"user:{user_id or 'anonymous'}"
 
 
 def ttl_cache(key_fn: Callable[..., str], ttl: int = TTL_DEFAULT_SECONDS) -> Callable[[F], F]:

@@ -12,6 +12,7 @@ Everything here is import-safe: no FastAPI router definitions, no
 
 from __future__ import annotations
 
+import copy
 import logging
 import re
 import time
@@ -44,8 +45,13 @@ logger = logging.getLogger(__name__)
 
 # ── Role constants ──────────────────────────────────────────────────────────
 
-CMS_EDITOR_ROLES = {"admin", "coordinador", "docente", "pastor"}
-CMS_PUBLISHER_ROLES = {"admin", "coordinador", "pastor"}
+CMS_EDITOR_ROLES = {"admin", "coordinador", "docente", "editor", "gestor", "pastor"}
+# Publicar contenido (workflow publish/unpublish, themes, section types,
+# analytics ops): GESTOR publica contenido (política de producto).
+CMS_PUBLISHER_ROLES = {"admin", "coordinador", "gestor", "pastor"}
+# Mutar sites (create/patch/archive): acción administrativa de plataforma.
+# GESTOR puede publicar contenido pero NO gestionar sitios (403 server-side).
+CMS_SITE_MANAGE_ROLES = {"admin", "coordinador", "pastor"}
 
 # ── Rate limiting ──────────────────────────────────────────────────────────────
 
@@ -379,9 +385,59 @@ def _get_system_vars_batch(db: Session, site_key: str, var_keys: tuple[str, ...]
 
 
 def _build_section_defaults(
+    db: Session,
+    site_key: str,
+    section_type: str,
+    props: dict[str, Any] | None = None,
+    *,
+    defaults_cache: dict[str, dict[str, Any]] | None = None,
+) -> dict[str, Any]:
+    """Fill section props, optionally reusing dynamic defaults within one request.
+
+    ``defaults_cache`` is deliberately request-scoped: dynamic sections such as
+    ``stats`` and ``team`` otherwise repeat the same database work once per
+    section on a rendered page. The optional argument preserves compatibility
+    for callers that need the original uncached behavior.
+    """
+    if props and any(
+        key in props
+        for key in (
+            "title",
+            "subtitle",
+            "body",
+            "content",
+            "items",
+            "personas",
+            "pastors",
+            "stats",
+            "testimonials",
+            "faqs",
+            "embed_url",
+            "map_url",
+            "eyebrow",
+            "title_lead",
+            "primary_cta",
+            "bg_image",
+        )
+    ):
+        return props or {}
+
+    cache_key = section_type if not props else None
+    if defaults_cache is not None and cache_key is not None:
+        cached = defaults_cache.get(cache_key)
+        if cached is not None:
+            return copy.deepcopy(cached)
+
+    result = _build_section_defaults_uncached(db, site_key, section_type, props)
+    if defaults_cache is not None and cache_key is not None:
+        defaults_cache[cache_key] = copy.deepcopy(result)
+    return result
+
+
+def _build_section_defaults_uncached(
     db: Session, site_key: str, section_type: str, props: dict[str, Any] | None = None
 ) -> dict[str, Any]:
-    """Fill empty section props with data from SystemVariable / DB / hardcoded."""
+    """Build defaults for one section without request-level memoization."""
     if props and any(
         key in props
         for key in (

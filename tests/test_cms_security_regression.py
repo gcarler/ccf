@@ -553,6 +553,56 @@ class TestSectionPropsStructuralValidation:
             validate_section_props("popup_banner", {"dismiss_days": "abc"})
 
 
+class TestCmsSectionReadListProps:
+    """Regresión (verificación navegador 2026-08-12): el feed de sedes
+    (locations) se persiste como lista plana en ``props_json`` y FeedSection
+    lo renderiza así. ``CmsSectionRead`` exigía ``Dict`` y cualquier página
+    pública con ese feed reventaba con 500 al serializar (Pydantic: input
+    should be a valid dictionary)."""
+
+    def test_section_read_accepts_list_props_json(self):
+        from datetime import datetime, timezone
+
+        from backend import schemas
+
+        section = schemas.CmsSectionRead(
+            id=uuid.uuid4(),
+            page_id=uuid.uuid4(),
+            section_key="feed",
+            type="feed",
+            props_json=[
+                {"name": "Sede Central", "address": "Barranquilla, Colombia", "phone": "+57 300 000 0000"}
+            ],
+            sort_order=0,
+            is_visible=True,
+            status="active",
+            is_global=False,
+            created_at=datetime.now(timezone.utc),
+            updated_at=datetime.now(timezone.utc),
+        )
+        assert isinstance(section.props_json, list)
+        assert section.props_json[0]["name"] == "Sede Central"
+
+    def test_section_read_still_accepts_dict_props_json(self):
+        from datetime import datetime, timezone
+
+        from backend import schemas
+
+        section = schemas.CmsSectionRead(
+            id=uuid.uuid4(),
+            page_id=uuid.uuid4(),
+            section_key="feed",
+            type="feed",
+            props_json={"title": "Feed home"},
+            sort_order=0,
+            is_visible=True,
+            status="active",
+            created_at=datetime.now(timezone.utc),
+            updated_at=datetime.now(timezone.utc),
+        )
+        assert isinstance(section.props_json, dict)
+
+
 # ═══════════════════════════════════════════════════════════════════════════════
 # F-06 — CmsCategory.parent_id cross-sede validation (Axioma 3)
 # ═══════════════════════════════════════════════════════════════════════════════

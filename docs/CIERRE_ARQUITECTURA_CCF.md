@@ -33,8 +33,8 @@ SQLite por lo que la migración detecta el dialect y usa sintaxis portable).
 
 | Archivo | Cambio |
 |---|---|
-| `backend/api/cms.py` | 11 endpoints con scope multi-tenant + extendidos con `actor_user_id` |
-| `backend/api/cms_v2.py` | `cms_pastoral_profile_update` IDOR critico resuelto via `_get_scoped_persona` |
+| `backend/api/cms/v1.py` | Media/métricas con scope multi-tenant y `actor_user_id`; hard-delete/cleanup publisher-scoped |
+| `backend/api/cms_v2/` | `cms_pastoral_profile_update` IDOR crítico resuelto vía `_get_scoped_persona` |
 | `backend/api/cms_content.py` | `/metrics/overview` con scope per sede |
 | `backend/api/agents.py` | `analytics_summary` con scope per sede |
 | `backend/api/messaging.py` | Endpoints admin con scope per sede (Fase 4) |

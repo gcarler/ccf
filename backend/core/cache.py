@@ -60,6 +60,21 @@ class MemoryRedis:
             self._store.pop(key, None)
             self._expire.pop(key, None)
 
+    def scan_keys(self, pattern: str) -> list[str]:
+        """Return keys matching a glob pattern (``*`` wildcard), like Redis ``SCAN``.
+
+        MemoryRedis is the in-process fallback for test/CI environments; the
+        real ``redis.Redis`` exposes ``scan_iter`` natively. Only ``*``
+        prefix-suffix matching is supported (the CMS cache helpers only need
+        ``cache:v2:<func>:*`` style patterns).
+        """
+        with self._lock:
+            self._cleanup()
+            if "*" not in pattern:
+                return [k for k in self._store if k == pattern]
+            prefix, suffix = pattern.split("*", 1)
+            return [k for k in self._store if k.startswith(prefix) and k.endswith(suffix)]
+
     def incr(self, key: str) -> int:
         with self._lock:
             self._cleanup()

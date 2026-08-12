@@ -15,7 +15,7 @@ if str(_PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(_PROJECT_ROOT))
 
 import asyncio
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 from backend.crud import create_project, create_project_task
 from backend.database import SessionLocal
@@ -40,7 +40,7 @@ def seed_projects():
                 title="Diseño de UI/UX Proyectos",
                 status="EN CURSO",
                 priority="Alta",
-                due_date=datetime.utcnow() + timedelta(days=5),
+                due_date=datetime.now(timezone.utc) + timedelta(days=5),
                 description="Finalizar la interfaz de usuario con estilo ClickUp.",
             ),
             ProjectTaskCreate(
@@ -48,7 +48,7 @@ def seed_projects():
                 title="Implementación Base de Datos",
                 status="PENDIENTE",
                 priority="Media",
-                due_date=datetime.utcnow() + timedelta(days=7),
+                due_date=datetime.now(timezone.utc) + timedelta(days=7),
                 description="Migraciones de Alembic para el módulo de proyectos.",
             ),
             ProjectTaskCreate(
@@ -56,7 +56,7 @@ def seed_projects():
                 title="Componentes Frontend (React)",
                 status="EN CURSO",
                 priority="Media",
-                due_date=datetime.utcnow() + timedelta(days=10),
+                due_date=datetime.now(timezone.utc) + timedelta(days=10),
                 description="Crear Toolbar y Drawer unificados.",
             ),
         ]

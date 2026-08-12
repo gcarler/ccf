@@ -12,11 +12,13 @@ pasar por el helper API `_get_scoped_*` correspondiente.
 import logging
 import os
 import uuid
+from pathlib import Path
 
 from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
 from backend import models
+from backend.core.config import get_settings
 from backend.crud.crm import (
     resolve_persona_id_for_user as resolve_persona_uuid_for_user,
 )
@@ -353,18 +355,22 @@ def _apply_cleanup_orphan_cms_media(
             # Guard H-05: path traversal hardening antes de os.remove.
             if row.url:
                 rel = row.url.lstrip("/").replace("uploads/", "", 1)
-                full = os.path.normpath(os.path.join("/root/ccf/uploads", rel))
-                if not full.startswith("/root/ccf/uploads"):
+                uploads_root = os.path.abspath(get_settings().uploads_dir)
+                full = os.path.normpath(os.path.join(uploads_root, rel))
+                try:
+                    Path(full).resolve(strict=False).relative_to(Path(uploads_root).resolve(strict=False))
+                except ValueError:
                     # url malformado/posible traversal: no se borra el
                     # archivo fisico, pero se archiva el row (mas seguro
                     # que fallar el cleanup completo).
                     row.status = "archived"
-                elif os.path.exists(full) and os.path.isfile(full):
-                    os.remove(full)
-                    db.delete(row)
                 else:
-                    # Archivo fisico ya ausente: borra el row.
-                    db.delete(row)
+                    if os.path.exists(full) and os.path.isfile(full):
+                        os.remove(full)
+                        db.delete(row)
+                    else:
+                        # Archivo fisico ya ausente: borra el row.
+                        db.delete(row)
             else:
                 db.delete(row)
         else:

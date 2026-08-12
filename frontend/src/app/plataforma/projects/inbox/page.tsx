@@ -54,15 +54,15 @@ export default function ProjectsInboxPage() {
 
     const filteredMessages = messages.filter((msg) => {
         if (filter === 'unread') return !msg.is_read;
-        if (filter === 'mentions') return msg.type === 'mention';
+        if (filter === 'mentions') return msg.type === 'comment';
         return true;
     });
     const groupedMessages = [
-        { id: 'mentions', label: 'Menciones', rows: filteredMessages.filter((msg) => msg.type === 'mention') },
-        { id: 'comments', label: 'Comentarios', rows: filteredMessages.filter((msg) => msg.type !== 'mention') },
+        { id: 'comments', label: 'Comentarios', rows: filteredMessages.filter((msg) => msg.type === 'comment') },
+        { id: 'tasks', label: 'Tareas Asignadas', rows: filteredMessages.filter((msg) => msg.type === 'task_assigned') },
     ];
-    const calendarEvents = filteredMessages.map((msg) => ({ id: msg.id, title: msg.user, date: msg.created_at.split('T')[0], color: msg.type === 'mention' ? 'amber' as const : 'blue' as const, location: msg.project }));
-    const ganttItems = filteredMessages.map((msg) => ({ id: msg.id, title: msg.user, subtitle: msg.content, start_date: msg.created_at, end_date: msg.created_at, color: msg.type === 'mention' ? 'amber' as const : 'blue' as const, progress: msg.is_read ? 100 : 35 }));
+    const calendarEvents = filteredMessages.map((msg) => ({ id: msg.id, title: msg.user, date: msg.created_at.split('T')[0], color: msg.type === 'comment' ? 'amber' as const : 'blue' as const, location: msg.project }));
+    const ganttItems = filteredMessages.map((msg) => ({ id: msg.id, title: msg.user, subtitle: msg.content, start_date: msg.created_at, end_date: msg.created_at, color: msg.type === 'comment' ? 'amber' as const : 'blue' as const, progress: msg.is_read ? 100 : 35 }));
 
     const handleResolve = async (msg: ProjectInboxItem) => {
         if (!token) return;
@@ -151,9 +151,9 @@ export default function ProjectsInboxPage() {
                                     <div className="shrink-0 pt-1">
                                         <div className={clsx(
                                             "size-8 rounded-lg flex items-center justify-center shadow-sm",
-                                            msg.type === 'mention' ? "bg-[hsl(var(--warning-muted))] dark:bg-[hsl(var(--warning))]/30 text-warning-text" : "bg-[hsl(var(--info-muted))] dark:bg-[hsl(var(--info))]/30 text-[hsl(var(--primary))]"
+                                            msg.type === 'comment' ? "bg-[hsl(var(--warning-muted))] dark:bg-[hsl(var(--warning))]/30 text-warning-text" : "bg-[hsl(var(--info-muted))] dark:bg-[hsl(var(--info))]/30 text-[hsl(var(--primary))]"
                                         )}>
-                                            {msg.type === 'mention' ? <AtSign size={20} /> : <MessageCircle size={20} />}
+                                            {msg.type === 'comment' ? <AtSign size={20} /> : <MessageCircle size={20} />}
                                         </div>
                                 </div>
                                 <div className="flex-1 space-y-1">

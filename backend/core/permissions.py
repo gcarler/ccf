@@ -277,6 +277,8 @@ DEFAULT_ROLES: List[Dict[str, Any]] = [
             *expand_module_permissions("projects", "manage"),
             *expand_module_permissions("academy", "manage"),
             *expand_module_permissions("messaging", "edit"),
+            # GESTOR gestiona contenido del CMS (editar) — política de producto.
+            *expand_module_permissions("cms", "edit"),
             "profile:manage",
         ],
     },
@@ -288,6 +290,8 @@ DEFAULT_ROLES: List[Dict[str, Any]] = [
             *expand_module_permissions("projects", "edit"),
             *expand_module_permissions("academy", "edit"),
             *expand_module_permissions("messaging", "edit"),
+            # EDITOR edita contenido del CMS (sin publicar ni gestionar sitios).
+            *expand_module_permissions("cms", "edit"),
             "profile:manage",
         ],
     },

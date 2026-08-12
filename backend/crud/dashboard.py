@@ -1211,34 +1211,63 @@ def _build_seo_trend_slice(
 # ═══════════════════════════════════════════════════════════════════
 
 
-def get_projects_dashboard(db: Session) -> ProjectsDashboard:
+def get_projects_dashboard(db: Session, sede_id: Optional[str] = None) -> ProjectsDashboard:
+    """Dashboard de Proyectos con filtro multi-tenant (Axioma 3).
+
+    ``sede_id`` filtra projects y project_tasks. ``None`` ⇒ superadmin
+    ve todo (consistente con list_projects / portfolio_summary).
+    """
     from sqlalchemy import text as sqlt
 
-    total = db.execute(sqlt("SELECT COUNT(*) FROM projects")).scalar() or 0
-    active = db.execute(sqlt("SELECT COUNT(*) FROM projects WHERE status = 'active'")).scalar() or 0
-    tasks = db.execute(sqlt("SELECT COUNT(*) FROM project_tasks")).scalar() or 0
-    done = db.execute(sqlt("SELECT COUNT(*) FROM project_tasks WHERE status = 'completed'")).scalar() or 0
+    # Build WHERE clause for sede_id once, reuse in all queries.
+    # Projects without sede_id (NULL) are global/demo and excluded
+    # from seated actors to avoid cross-sede leakage.
+    sede_filter = "AND p.sede_id = :sede_id" if sede_id else ""
+    task_sede_filter = "AND pt.sede_id = :sede_id" if sede_id else ""
+    # For tasks joined via projects, filter at the project level.
+    params: dict = {}
+    if sede_id:
+        params["sede_id"] = sede_id
+
+    total = db.execute(sqlt(f"SELECT COUNT(*) FROM projects p WHERE 1=1 {sede_filter.replace('p.', 'p.')}"), params).scalar() or 0
+    active = db.execute(sqlt(f"SELECT COUNT(*) FROM projects p WHERE p.status = 'active' {sede_filter}"), params).scalar() or 0
+    tasks = db.execute(
+        sqlt(f"SELECT COUNT(*) FROM project_tasks pt JOIN projects p ON p.id = pt.project_id WHERE 1=1 {sede_filter}"), params
+    ).scalar() or 0
+    done = db.execute(
+        sqlt(f"SELECT COUNT(*) FROM project_tasks pt JOIN projects p ON p.id = pt.project_id WHERE pt.status = 'completed' {sede_filter}"), params
+    ).scalar() or 0
     delayed = (
         db.execute(
-            sqlt("SELECT COUNT(*) FROM project_tasks WHERE due_date < :now AND status != 'completed'"),
-            {"now": _utcnow()},
+            sqlt(
+                f"SELECT COUNT(*) FROM project_tasks pt JOIN projects p ON p.id = pt.project_id "
+                f"WHERE pt.due_date < :now AND pt.status != 'completed' {sede_filter}"
+            ),
+            {**params, "now": _utcnow()},
         ).scalar()
         or 0
     )
 
     # Distribución de tareas por estado
-    statuses = db.execute(sqlt("SELECT status, COUNT(*) FROM project_tasks GROUP BY status ORDER BY status")).all()
+    statuses = db.execute(
+        sqlt(f"SELECT pt.status, COUNT(*) FROM project_tasks pt JOIN projects p ON p.id = pt.project_id WHERE 1=1 {sede_filter} GROUP BY pt.status ORDER BY pt.status"),
+        params,
+    ).all()
     status_chart = [ChartDataPoint(label=r[0] or "unknown", value=float(r[1])) for r in statuses]
 
     # Distribución de carga (tareas por proyecto)
     workload = db.execute(
-        sqlt("""
+        sqlt(
+            f"""
         SELECT p.title, COUNT(pt.id) as cnt
         FROM projects p
         LEFT JOIN project_tasks pt ON pt.project_id = p.id
+        WHERE 1=1 {sede_filter}
         GROUP BY p.id, p.title
         ORDER BY cnt DESC
-    """)
+    """
+        ),
+        params,
     ).all()
     workload_chart = [ChartDataPoint(label=r[0], value=float(r[1])) for r in workload]
 

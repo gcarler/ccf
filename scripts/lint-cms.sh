@@ -10,11 +10,11 @@ cd "$REPO_ROOT"
 source "$REPO_ROOT/scripts/_ruff.sh"
 
 CMS_PATHS=(
-  backend/api/cms.py
-  backend/api/cms_v2.py
+  backend/api/cms/
+  backend/api/cms_v2/
   backend/api/enterprise_cms.py
   backend/api/_cms_helpers/
-  backend/crud/cms.py
+  backend/crud/cms/
   backend/crud/cms_pastors_sync.py
   backend/schemas/cms.py
   backend/schemas/cms_v2_sections.py

@@ -8,6 +8,7 @@ export { HeroSection, VideoHeroSection } from "./hero";
 export {
   RichTextSection,
   RichTextColumnsSection,
+  AboutSection,
   CardsSection,
   CtaBannerSection,
 } from "./text";
@@ -33,6 +34,7 @@ export {
 export {
   GallerySection,
   EmbedSection,
+  FeedSection,
   ImageTextSection,
   VideoGridSection,
   EventsCalendarSection,

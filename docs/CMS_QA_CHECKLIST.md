@@ -65,6 +65,7 @@ Validar con consola abierta:
 | `/plataforma/cms/media` | media y folders |
 | `/plataforma/cms/themes` | themes |
 | `/plataforma/cms/menus` | menus |
+| `/plataforma/cms/forms` | builder de formularios + respuestas |
 | `/plataforma/cms/readiness` | readiness/SEO/broken links |
 
 ## 6. Consola del navegador
@@ -98,6 +99,21 @@ No cerrar tarea si aparece:
 - fetch público CMS
 - spec Playwright pública
 
+### Formularios
+
+- crear/editar formulario con campos (FieldEditor)
+- reordenar campos (flechas/DnD) y duplicar
+- vista previa en vivo en el drawer
+- notificaciones por email (chips de correos)
+- anti-spam: toggle hCaptcha + honeypot
+- ver respuestas con paginación
+- toggle activo/inactivo desde la tarjeta
+
+### Caché pública (staleness)
+
+- tras publicar/archivar una página o post, el endpoint público refleja el cambio sin esperar el TTL de 300s
+- cubierto por `tests/test_cms_v2_gap_coverage.py` (clases `TestPublic*CacheInvalidation`)
+
 ## 8. Roles mínimos
 
 | Rol | Esperado |
@@ -124,6 +140,10 @@ Una tarea de CMS queda cerrada cuando:
 
 ## 10. Cerrado recientemente
 
+- `DONE-CMS-CACHE-INVALIDATION-001` cerrado el 2026-08-11 con 18 regresiones bidireccionales de invalidación de caché pública en `tests/test_cms_v2_gap_coverage.py` (187 tests) y `tests/test_cache_v2_invalidation.py`; documentado en `ARQUITECTURA_CMS.md` §3.9.
+- `DONE-CMS-FORMS-001` cerrado el 2026-08-11 con el módulo de formularios completo (admin + público + anti-spam) y 27 tests backend + 50 tests frontend.
+- `DONE-CMS-COVERAGE-REPORT-001` cerrado el 2026-08-11 con `docs/ESTADO_COBERTURA_CMS_FRONTEND.md` actualizado (48.7% stmts global).
+
 - `DONE-BUILDER-CMS-002` cerrado el 2026-08-01 con `frontend/tests/e2e/cms/builder-flow.spec.ts` (6 tests), `builder-puck-flow.spec.ts` (3 tests) y `pages-preview.spec.ts` (3 tests) pasando; cierra el residual `PEND-CMS-BUILDER-001` del builder.
 
 - `DONE-RBAC-V1-HARDENING-CMS-001` cerrado el 2026-07-16 con endurecimiento de mutaciones CMS v1 a `cms:edit` y cobertura focal para `LECTOR`
@@ -141,4 +161,4 @@ No hay pendientes abiertos en el módulo CMS al momento de esta lectura (`PEND-C
 
 ## 12. Estado operativo
 
-Sin otros pendientes abiertos en CMS al momento de esta lectura.
+Sin otros pendientes abiertos en CMS al momento de esta lectura. Gates verificados el 2026-08-11: backend 798 tests CMS (1 skip), frontend 601 vitest + 31 E2E Playwright, lint `lint-cms.sh` OK, mypy 0 errores, bandit 0 hallazgos, tsc/eslint limpios.

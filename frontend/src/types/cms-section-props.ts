@@ -266,6 +266,44 @@ export interface RichTextProps {
   cta_href?: string;
 }
 
+export interface AboutProps {
+  stats?: Array<{ value?: string; label?: string }>;
+  vision_title?: string;
+  vision_text?: string;
+  mision_title?: string;
+  mision_text?: string;
+  founder_label?: string;
+  founder_title?: string;
+  founder_title_accent?: string;
+  founder1_name?: string;
+  founder1_role?: string;
+  founder1_image?: string;
+  founder2_name?: string;
+  founder2_role?: string;
+  founder2_image?: string;
+  founder_bio?: string;
+  founder_bio2?: string;
+  valores_title?: string;
+  valores?: Array<{ num?: string; key?: string; title?: string; desc?: string }>;
+  quote_text?: string;
+  quote_author?: string;
+  quote_subtitle?: string;
+  cta_title?: string;
+  cta_desc?: string;
+  founder_cta_team?: string;
+  founder_cta_visit?: string;
+  values_eyebrow?: string;
+  cta_view_sedes?: string;
+  cta_view_events?: string;
+  breadcrumbInicio?: string;
+  breadcrumbPage?: string;
+  title?: string;
+  body?: string;
+  cta_label?: string;
+  cta_href?: string;
+  [key: string]: unknown;
+}
+
 export interface RichTextColumnsProps {
   title?: string;
   body?: string;
@@ -304,6 +342,102 @@ export interface EmbedProps {
   title?: string;
   body?: string;
   embed_url?: string;
+}
+
+export interface FeedProps {
+  // Home / landing page style
+  eyebrow?: string;
+  section_title?: string;
+  section_description?: string;
+  featured_card?: {
+    title?: string;
+    desc?: string;
+    href?: string;
+    cta?: string;
+    img?: string;
+    alt?: string;
+  };
+  cards?: Array<{
+    title?: string;
+    desc?: string;
+    href?: string;
+    img?: string;
+    alt?: string;
+  }>;
+  activities_eyebrow?: string;
+  activities_title?: string;
+  activities_view_all?: string;
+  activities_empty?: string;
+  scroll_indicator?: string;
+  newsletter_eyebrow?: string;
+  newsletter_title?: string;
+  newsletter_description?: string;
+  newsletter_placeholder?: string;
+  newsletter_submit?: string;
+  newsletter_success_title?: string;
+  newsletter_success_desc?: string;
+
+  // Sermons / predicas style
+  content?: string;
+  hero_eyebrow?: string;
+  youtube_channel_url?: string;
+
+  // Courses / cursos style
+  hero_image_url?: string;
+  courses_title?: string;
+  courses_description?: string;
+  empty_title?: string;
+  empty_description?: string;
+  cta_images?: Array<{ src?: string; alt?: string }>;
+  library_title?: string;
+  library_description?: string;
+  empty_books_message?: string;
+  featured_fallback_image_url?: string;
+  course_cards?: Array<any>;
+  books?: Array<any>;
+  cta_title?: string;
+  cta_description?: string;
+  cta_placeholder?: string;
+  cta_submit?: string;
+  newsletter_success_toast?: string;
+  newsletter_error_toast?: string;
+  wishlist_success_toast_prefix?: string;
+  wishlist_fallback_toast_prefix?: string;
+
+  // Testimonials style
+  search_placeholder?: string;
+  loading_label?: string;
+  hero_badge?: string;
+  hero_title_lead?: string;
+  hero_title_accent?: string;
+  hero_description?: string;
+  cta_label?: string;
+
+  // Events style
+  no_events_title?: string;
+  no_events_description?: string;
+  calendar_title?: string;
+  calendar_description?: string;
+  today_label?: string;
+  upcoming_label?: string;
+  featured_badge?: string;
+  reserve_cta?: string;
+  filters?: string[];
+  featured_empty_title?: string;
+  featured_empty_description?: string;
+  channel_link_label?: string;
+
+  // Pastors style
+  hero_title?: string;
+  card_cta?: string;
+  principal_label?: string;
+
+  // Generic fallback
+  title?: string;
+  body?: string;
+  items?: Array<Record<string, unknown>>;
+  
+  [key: string]: unknown;
 }
 
 export interface TestimonialsProps {
@@ -750,6 +884,7 @@ export interface CmsSectionTypeToProps {
   video_hero: VideoHeroProps;
   rich_text: RichTextProps;
   rich_text_columns: RichTextColumnsProps;
+  about: AboutProps;
   cards: CardsProps;
   cta_banner: CtaBannerProps;
   gallery: GalleryProps;
@@ -813,6 +948,7 @@ export type CmsSectionDiscriminated =
   | CmsSectionBase<"video_hero", VideoHeroProps>
   | CmsSectionBase<"rich_text", RichTextProps>
   | CmsSectionBase<"rich_text_columns", RichTextColumnsProps>
+  | CmsSectionBase<"about", AboutProps>
   | CmsSectionBase<"cards", CardsProps>
   | CmsSectionBase<"cta_banner", CtaBannerProps>
   | CmsSectionBase<"gallery", GalleryProps>

@@ -31,7 +31,12 @@ _logger = logging.getLogger(__name__)
 
 
 
-from backend.crud.cms._shared import _actor_sede_or_none_cms, _crud_scope_re_check_cms_site_content
+from backend.core.cache_v2 import invalidate_cached_public, invalidate_cached_public_pattern
+from backend.crud.cms._shared import (
+    _actor_sede_or_none_cms,
+    _crud_scope_re_check_cms_site_content,
+    resolve_site_key,
+)
 
 
 def _set_post_categories(db: Session, post_id: uuid.UUID, category_ids: list[uuid.UUID]):
@@ -145,6 +150,9 @@ def create_cms_post(
         _set_post_tags(db, row.id, payload.tag_ids)
     db.commit()
     db.refresh(row)
+    # Cierre de staleness: un post nuevo publicado aparece en el listado
+    # público cacheado de inmediato.
+    _invalidate_public_post_cache(db, row)
     return row
 
 
@@ -201,6 +209,9 @@ def update_cms_post(
         _set_post_tags(db, row.id, data["tag_ids"])
     db.commit()
     db.refresh(row)
+    # Cierre de staleness: slug/title/status/content/categorías/tags
+    # alteran la respuesta pública cacheada del post (detail + listado).
+    _invalidate_public_post_cache(db, row)
     return row
 
 
@@ -221,6 +232,9 @@ def delete_cms_post(
         )
     row.status = "archived"
     db.commit()
+    # Cierre de staleness: el post archivado deja de servirse en el
+    # endpoint público de inmediato (404), sin esperar el TTL de 300s.
+    _invalidate_public_post_cache(db, row)
     return True
 
 
@@ -281,6 +295,25 @@ def get_posts_tags_batch(db: Session, post_ids: list[uuid.UUID]) -> dict[str, li
     for post_id, tag in rows:
         result.setdefault(str(post_id), []).append(tag)
     return result
+
+
+
+def _invalidate_public_post_cache(db: Session, row: models.CmsPost) -> None:
+    """Invalida la caché pública de un post (detail + listado).
+
+    Reconstruye la key del detalle con ``site_key`` + ``slug`` (los
+    mismos kwargs serializables que ``public_post`` recibe) y borra todas
+    las variantes del listado ``public_posts_list`` (skip/limit/
+    category/tag variables).
+    """
+    try:
+        site_key = resolve_site_key(db, row.site_id)
+        if not site_key:
+            return
+        invalidate_cached_public("public_post", site_key=site_key, slug=row.slug)
+        invalidate_cached_public_pattern("public_posts_list")
+    except Exception:  # la invalidación nunca debe romper la mutación
+        _logger.debug("public post cache invalidation skipped", exc_info=True)
 
 
 

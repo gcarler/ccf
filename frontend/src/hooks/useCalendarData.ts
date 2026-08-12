@@ -3,7 +3,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { apiFetch } from '@/lib/http';
 import { CalEvent, CalEventType, CalendarView, getEventTypeColor } from '@/types/calendar';
-import type { ProjectTaskRecord } from '@/types/projects';
 
 interface UseCalendarDataOptions {
   token: string | null;
@@ -12,7 +11,6 @@ interface UseCalendarDataOptions {
 
 interface UseCalendarDataResult {
   events: CalEvent[];
-  tasks: ProjectTaskRecord[];
   loading: boolean;
   error: string | null;
   refresh: () => Promise<void>;
@@ -20,7 +18,6 @@ interface UseCalendarDataResult {
 
 export function useCalendarData({ token, calendarView }: UseCalendarDataOptions): UseCalendarDataResult {
   const [events, setEvents] = useState<CalEvent[]>([]);
-  const [tasks, setTasks] = useState<ProjectTaskRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -49,27 +46,17 @@ export function useCalendarData({ token, calendarView }: UseCalendarDataOptions)
     }
   }, [token, calendarView]);
 
-  const fetchTasks = useCallback(async () => {
-    if (!token || calendarView !== 'proyectos') return;
-    try {
-      const data = await apiFetch<{ _tasks: ProjectTaskRecord[] }>('/projects/_tasks', { token }).catch(() => null);
-      if (data?._tasks) setTasks(data._tasks);
-    } catch {
-      // Silently handle fetch errors
-    }
-  }, [token, calendarView]);
-
   const refresh = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      await Promise.all([fetchCalendar(), fetchTasks()]);
+      await fetchCalendar();
     } catch {
       setError('No se pudieron cargar los datos del calendario.');
     } finally {
       setLoading(false);
     }
-  }, [fetchCalendar, fetchTasks]);
+  }, [fetchCalendar]);
 
   useEffect(() => { refresh(); }, [refresh]);
 
@@ -78,5 +65,5 @@ export function useCalendarData({ token, calendarView }: UseCalendarDataOptions)
     setEvents([]);
   }, [calendarView]);
 
-  return { events, tasks, loading, error, refresh };
+  return { events, loading, error, refresh };
 }

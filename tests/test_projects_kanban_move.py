@@ -154,7 +154,7 @@ class TestKanbanAssigneeNotificationAtomicity:
         )
 
         # A fresh assignee the admin assigns to
-        new_assignee = _ensure_persona(db_session)
+        new_assignee = _ensure_persona(db_session, sede_id=sede.id)
         new_assignee.email = f"target_{new_assignee.id.hex[:8]}@example.com"
         db_session.commit()
 
