@@ -44,8 +44,8 @@ wc -l /root/ccf/frontend/src/components/evangelism/*.tsx /root/ccf/frontend/src/
 
 Conteo actual:
 
-- Backend evangelismo directo: **~11 300 LOC** (limpieza de deuda tecnica 2026-08-01)
-- Frontend evangelismo directo: **4 215 LOC**
+- Backend evangelismo directo: **~12 800 LOC** (incluye fixes CRUD, RBAC, schemas, analytics, notifications — actualizado 2026-08-11)
+- Frontend evangelismo directo: **3 027 LOC** (bajó de 4 215 por refactor container/presenter F-02/03/05/06 — actualizado 2026-08-11)
 
 ## 4. Listar backlog completo (Parcial + Pendiente) por ID
 
