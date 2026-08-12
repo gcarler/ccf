@@ -18,6 +18,7 @@ vi.mock("@/context/AuthContext", () => ({
 
 vi.mock("@/lib/cms/permissions", () => ({
   canEditCms: () => true,
+  canPublishCms: () => true,
 }));
 
 vi.mock("@/lib/cms/v2", () => ({
@@ -25,6 +26,7 @@ vi.mock("@/lib/cms/v2", () => ({
   patchCmsSection: vi.fn(),
   createCmsSection: vi.fn(),
   deleteCmsSection: vi.fn(),
+  workflowCmsPage: vi.fn().mockResolvedValue({ status: "published" }),
 }));
 
 vi.mock("@/lib/http", () => ({

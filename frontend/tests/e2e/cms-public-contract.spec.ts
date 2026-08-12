@@ -9,6 +9,9 @@ const PUBLIC_PATHS = [
   "/cursos",
   "/sedes",
   "/boletin",
+  "/conocer-a-jesus",
+  "/privacidad",
+  "/blog",
   "/predicas",
   "/plataforma/cms/readiness",
 ];
@@ -23,6 +26,8 @@ const PUBLIC_API_ENDPOINTS = [
   "/api/cms/v2/public/sites/ccf/pages/courses",
   "/api/cms/v2/public/sites/ccf/pages/locations",
   "/api/cms/v2/public/sites/ccf/pages/newsletter",
+  "/api/cms/v2/public/sites/ccf/pages/discover",
+  "/api/cms/v2/public/sites/ccf/pages/privacy",
   "/api/cms/v2/public/sites/ccf/pages/sermons",
   "/api/cms/v2/public/sites/ccf/pages/blog",
   "/api/cms/v2/public/sites/ccf/theme",

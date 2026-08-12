@@ -130,8 +130,6 @@ export function AboutSection({ section }: { section: CmsSection<"about"> }) {
   const misionTitle = val(p, "mision_title", "");
   const misionText = val(p, "mision_text", "");
   const founderLabel = val(p, "founder_label", "");
-  const founderTitle = val(p, "founder_title", "");
-  const founderTitleAccent = val(p, "founder_title_accent", "");
   const founder1Name = val(p, "founder1_name", "");
   const founder1Role = val(p, "founder1_role", "");
   const founder1Image = val(p, "founder1_image", "");
@@ -243,7 +241,7 @@ export function AboutSection({ section }: { section: CmsSection<"about"> }) {
       {quoteText && (
         <div className="mb-16 p-8 rounded-2xl text-center" style={{ background: "linear-gradient(135deg, var(--site-primary-container), var(--site-secondary-container, var(--site-primary-container)))" }}>
           <blockquote className="text-xl md:text-2xl italic font-medium max-w-3xl mx-auto" style={{ color: "var(--site-on-primary-container)" }}>
-            "{quoteText}"
+            &ldquo;{quoteText}&rdquo;
           </blockquote>
           {quoteAuthor && (
             <cite className="block mt-4 text-base font-normal" style={{ color: "var(--site-on-primary-container)" }}>
