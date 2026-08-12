@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Any, Dict, List, Literal, Optional
+from typing import Any, Dict, List, Literal, Optional, Union
 from uuid import UUID
 
 from pydantic import BaseModel, Field
@@ -302,7 +302,11 @@ class CmsSectionRead(BaseModel):
     page_id: UUID
     section_key: str
     type: str
-    props_json: Dict[str, Any] = Field(default_factory=dict)
+    # El feed de sedes (locations) se persiste como lista plana en ``props_json``
+    # (seeders de ccf_locations_feed) y FeedSection lo renderiza así. Sin el
+    # union, la serialización pública de cualquier página con ese feed reventaba
+    # con 500 (Pydantic: input should be a valid dictionary).
+    props_json: Union[Dict[str, Any], List[Any]] = Field(default_factory=dict)
     sort_order: int
     is_visible: bool
     status: str = "active"
