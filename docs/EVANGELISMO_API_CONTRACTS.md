@@ -30,8 +30,13 @@ Evangelismo se documenta desde la taxonomía canónica del módulo:
 
 Pero no toda ruta es RBAC puro:
 
-- Superficies administrativas usan `require_evangelism_*`
-- Rutas personales y de asistencia de grupo usan `get_current_user` + validación contextual
+- Toda ruta administrativa/operativa usa `require_evangelism_*` (read/edit/manage).
+- Los endpoints contextuales a liderazgo/ownership (`/grupos/mine`,
+  `/grupos/{grupo_id}`, `/grupos/sessions/mine/pending`, asistencia de grupo)
+  combinan el guard canónico (`require_evangelism_read`/`require_evangelism_edit`)
+  con `_can_manage_grupo(...)` para autorizar líderes/asistentes no-admin sobre
+  su propio grupo. (Actualizado 2026-08-11 — migración de `get_current_user`
+  al guard canónico completada en todo el namespace evangelismo.)
 - Check-in rápido de visitantes en eventos usa `require_evangelism_edit` y alcance de sede
 - Scanner usa `require_module_access("evangelism", ...)`, equivalente funcional a la taxonomía canónica
 
@@ -82,10 +87,10 @@ Archivo: `backend/api/evangelism_main/main_roles.py`
 
 | Método | Ruta | Guard |
 |---|---|---|
-| `GET` | `/strategies/{strategy_id}/roles` | `require_evangelism_manage` |
+| `GET` | `/strategies/{strategy_id}/roles` | `require_evangelism_read` |
 | `POST` | `/strategies/{strategy_id}/roles` | `require_evangelism_manage` |
 | `DELETE` | `/strategies/{strategy_id}/roles/{role_id}` | `require_evangelism_manage` |
-| `GET` | `/excuses` | `require_evangelism_manage` |
+| `GET` | `/excuses` | `require_evangelism_read` |
 | `POST` | `/excuses` | `require_evangelism_manage` |
 | `PATCH` | `/excuses/{excusa_id}` | `require_evangelism_manage` |
 | `DELETE` | `/excuses/{excusa_id}` | `require_evangelism_manage` |
@@ -104,14 +109,14 @@ Archivo: `backend/api/evangelism_grupos/grupos_main.py`
 | Método | Ruta canónica | Alias | Guard |
 |---|---|---|---|
 | `GET` | `/grupos` | `/groups` | `require_evangelism_read` |
-| `GET` | `/grupos/mine` | `/groups/mine` | `get_current_user` |
-| `GET` | `/grupos/{grupo_id}` | `/groups/{grupo_id}`, `/micro/{grupo_id}` | `get_current_user` + `_can_manage_grupo(...)` |
+| `GET` | `/grupos/mine` | `/groups/mine` | `require_evangelism_read` |
+| `GET` | `/grupos/{grupo_id}` | `/groups/{grupo_id}`, `/micro/{grupo_id}` | `require_evangelism_read` + `_can_manage_grupo(...)` |
 | `POST` | `/grupos` | `/groups` | `require_evangelism_manage` |
-| `PUT` | `/grupos/{grupo_id}` | `/groups/{grupo_id}` | `require_evangelism_manage` |
+| `PUT` | `/grupos/{grupo_id}` | `/groups/{grupo_id}` | `require_evangelism_edit` + `_can_manage_grupo(...)` |
 | `DELETE` | `/grupos/{grupo_id}` | `/groups/{grupo_id}` | `require_evangelism_manage` |
 | `GET/POST/PATCH` | `/grupos/seasons` | `/groups/seasons` | canónico según operación |
 | `GET` | `/grupos/analytics` | `/groups/analytics` | `require_evangelism_read` |
-| `POST` | `/grupos/visitors` | — | `require_evangelism_manage` |
+| `POST` | `/grupos/visitors` | — | `require_evangelism_edit` |
 
 Reglas:
 
@@ -129,7 +134,7 @@ Archivo: `backend/api/evangelism_grupos/grupos_sesiones.py`
 | Método | Ruta | Guard |
 |---|---|---|
 | `GET` | `/grupos/sessions`, `/groups/sessions` | `require_evangelism_read` |
-| `GET` | `/grupos/sessions/mine/pending`, `/groups/sessions/mine/pending` | `get_current_user` |
+| `GET` | `/grupos/sessions/mine/pending`, `/groups/sessions/mine/pending` | `require_evangelism_read` |
 | `POST` | `/grupos/sessions`, `/groups/sessions` | `require_evangelism_manage` |
 | `GET` | `/sessions` | `require_evangelism_read` |
 | `POST` | `/sessions` | `require_evangelism_manage` |
@@ -139,7 +144,7 @@ Archivo: `backend/api/evangelism_grupos/grupos_sesiones.py`
 | `PATCH` | `/sessions/{session_id}/habilitacion` | `require_evangelism_manage` |
 | `POST` | `/strategies/{strategy_id}/habilitar-todas` | `require_evangelism_manage` |
 | `POST` | `/strategies/{strategy_id}/deshabilitar-todas` | `require_evangelism_manage` |
-| `GET` | `/personas/search` | `get_current_user` |
+| `GET` | `/personas/search` | `require_evangelism_read` |
 
 Reglas:
 
@@ -154,7 +159,8 @@ Archivo: `backend/api/evangelism_grupos/grupos_asistencias.py`
 
 | Método | Ruta | Guard |
 |---|---|---|
-| `GET/POST` | `/grupos/sessions/{session_id}/attendance`, `/groups/sessions/{session_id}/attendance` | `get_current_user` + `_can_manage_grupo(...)` |
+| `GET` | `/grupos/sessions/{session_id}/attendance`, `/groups/sessions/{session_id}/attendance` | `require_evangelism_read` + `_can_manage_grupo(...)` |
+| `POST` | `/grupos/sessions/{session_id}/attendance`, `/groups/sessions/{session_id}/attendance` | `require_evangelism_edit` + `_can_manage_grupo(...)` |
 | `GET/POST` | `/sessions/{session_id}/attendance` | equivalente operativo según router propietario |
 | `GET` | `/follow-up/pending` | `require_evangelism_read` |
 | `GET/POST` | `/follow-up/{asistencia_id}` | lectura/escritura según operación |
@@ -186,8 +192,8 @@ Archivos:
 | `PUT` | `/events/{event_id}` | `require_evangelism_manage` |
 | `DELETE` | `/events/{event_id}` | `require_evangelism_manage` |
 | `PUT` | `/events/{event_id}/audience` | `require_evangelism_manage` |
-| `GET` | `/events/dashboard-stats` | `require_evangelism_manage` |
-| `GET` | `/events/analytics/global` | `require_evangelism_manage` |
+| `GET` | `/events/dashboard-stats` | `require_evangelism_read` |
+| `GET` | `/events/analytics/global` | `require_evangelism_read` |
 
 ### 9.2 Analytics y export
 
@@ -216,7 +222,7 @@ Archivos:
 
 | Método | Ruta | Guard |
 |---|---|---|
-| `GET` | `/events/roles`, `/roles` | lectura administrativa del archivo propietario |
+| `GET` | `/events/roles`, `/roles` | `require_evangelism_read` |
 | `POST` | `/events/roles`, `/roles` | `require_evangelism_manage` |
 | `PUT` | `/events/roles/{role_id}`, `/roles/{role_id}` | `require_evangelism_manage` |
 | `DELETE` | `/events/roles/{role_id}`, `/roles/{role_id}` | `require_evangelism_manage` |
@@ -237,9 +243,9 @@ Archivo: `backend/api/evangelism_multiplication.py`
 
 | Método | Ruta | Guard |
 |---|---|---|
-| `GET` | `/multiplication/check` | `require_evangelism_manage` |
+| `GET` | `/multiplication/check` | `require_evangelism_read` |
 | `POST` | `/multiplication/split` | `require_evangelism_manage` |
-| `GET` | `/multiplication/history` | `require_evangelism_manage` |
+| `GET` | `/multiplication/history` | `require_evangelism_read` |
 
 Contratos de shape relevantes:
 
