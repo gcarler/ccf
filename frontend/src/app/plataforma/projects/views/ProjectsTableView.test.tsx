@@ -4,6 +4,10 @@ import { describe, it, expect, vi } from 'vitest';
 import ProjectsTableView from './ProjectsTableView';
 import { createMockProject } from '@/test-utils/factories';
 
+vi.mock('next/navigation', () => ({
+    useRouter: () => ({ push: vi.fn() }),
+}));
+
 const projects = [
     createMockProject({
         id: 'p1',

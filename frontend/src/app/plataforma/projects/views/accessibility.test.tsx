@@ -6,6 +6,9 @@ import { axe } from 'jest-axe';
 vi.mock('@/context/AuthContext', () => ({
     useAuth: () => ({ user: { id: 'u1', role: 'admin' }, hasPermission: () => true, loading: false }),
 }));
+vi.mock('next/navigation', () => ({
+    useRouter: () => ({ push: vi.fn() }),
+}));
 import ProjectsGridView from './ProjectsGridView';
 import ProjectsListView from './ProjectsListView';
 import ProjectsBoardView from './ProjectsBoardView';

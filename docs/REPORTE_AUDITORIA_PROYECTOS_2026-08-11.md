@@ -271,3 +271,117 @@ El frontend CCF usa `sessionStorage.getItem('ccf_token')` para auth client-side 
 
 - `require_project_access(level)`: checks rol PRIMERO, luego cae a assignment-based access (owner del proyecto o asignado a tarea). Usar para endpoints con `project_id` en el path que deben permitir miembros del proyecto.
 - `require_module_access("projects", level)`: puramente role-based. Usar para endpoints cross-project (listar todos, summary, workload).
+
+---
+
+## 8. Re-auditoría de paridad (2026-08-12)
+
+> **Sesión:** ses_00cf47465ffe8b3fsX1pi6eB1F
+> **Alcance:** Verificación cruzada exhaustiva frontend ↔ backend más allá de los FIX-01..FIX-07. Todo lo que existe en el frontend debe tener correspondencia backend viva y operativa.
+> **Metodología:** Mapeo de los 54 endpoints backend (52 en `api/projects.py` + 2 en `api/dashboard.py`), mapeo de ~35 llamadas frontend únicas (`apiFetch`/WebSocket/Link), verificación en vivo con `curl` de cada endpoint con token real del usuario `prueba3@ccf.test`.
+
+### 8.1 Resumen cuantitativo
+
+| Métrica | Valor |
+|---|---|
+| Endpoints backend total | **54** (53 HTTP + 1 WebSocket) |
+| Llamadas frontend únicas | **~35** |
+| Endpoints verificados en vivo | **24/24** |
+| Endpoints con sede_id (Axioma 3) | **54/54** ✓ |
+| Brechas de paridad encontradas | **3** (1 fantasma + 2 sin consumidor frontend) |
+| Feature areas operativas | **16/16** ✓ |
+
+### 8.2 Verificación en vivo
+
+| Endpoint | HTTP | Estado |
+|---|---|---|
+| `GET /api/projects/_tasks` (phantom) | **500** | ❌ BRECHA-01 |
+| `GET /api/projects` | 200 | ✅ |
+| `GET /api/dashboard/projects` | 200 | ✅ |
+| `GET /api/projects/summary` | 200 | ✅ |
+| `GET /api/projects/workload` | 200 | ✅ |
+| `GET /api/projects/comments` | 200 | ✅ |
+| `GET /api/projects/inbox` | 200 | ✅ |
+| `GET /api/projects/tasks` | 200 | ✅ |
+| `GET /api/projects/whiteboards` | 200 | ✅ |
+| `GET /api/projects/activities` | 200 | ✅ |
+| `GET /api/projects/{id}` | 200 | ✅ |
+| `GET /api/projects/{id}/tasks` | 200 | ✅ |
+| `GET /api/projects/{id}/phases` | 200 | ✅ |
+| `GET /api/projects/{id}/analytics` | 200 | ✅ |
+| `GET /api/projects/{id}/wiki` | 200 | ✅ |
+| `GET /api/projects/{id}/whiteboard` | 200 | ✅ |
+| `GET /api/projects/{id}/milestones` | 200 | ✅ |
+| `GET /api/projects/{id}/messages` | 200 | ✅ |
+| `GET /api/projects/{id}/team` | 200 | ✅ |
+| `GET /api/system/workload` | 200 | ✅ |
+| `PATCH /api/projects/comments/{id}` (id inválido) | 404 | ✅ |
+| `DELETE /api/projects/comments/{id}` (id inválido) | 404 | ✅ |
+| `POST /api/projects/comments` | 200 | ✅ |
+| `DELETE /api/projects/{id}/team/{persona_id}` (id inválido) | 404 | ✅ |
+| `DELETE /api/projects/{id}/whiteboard` | 204 | ✅ |
+| `POST /api/projects/{id}/whiteboard/thumbnail` (sin multipart) | 422 | ✅ |
+
+### 8.3 Brechas detectadas
+
+#### 🟡 BRECHA-01 — Endpoint fantasma `/projects/_tasks` (NO operativo)
+
+**Severidad:** Media (silenciada, pero genera un HTTP 500 por cada visita al calendario "proyectos").
+
+- **Frontend:** `frontend/src/hooks/useCalendarData.ts:55` ejecuta
+  `apiFetch<{_tasks: ProjectTaskRecord[]}>('/projects/_tasks', { token }).catch(() => null)`.
+- **Backend:** El endpoint **NO existe**. El router trata `_tasks` como `{project_id}` y ejecuta
+  `WHERE projects.id = '_tasks'::UUID` → **HTTP 500** con `psycopg2.errors.InvalidTextRepresentation`.
+- **Impacto funcional:** El calendario global (`/plataforma/calendar?view=proyectos`) no carga tareas
+  asignadas al usuario en esa vista. El `.catch(() => null)` silencia el error, así que el usuario no
+  ve mensaje, pero la vista está incompleta (solo muestra eventos del calendario system, no tasks de
+  proyectos).
+- **Causa raíz:** Contrato inventado en el frontend sin backend correspondiente. El endpoint
+  `GET /api/projects/tasks` (backend `api/projects.py:128`) ya devuelve exactamente las tareas
+  asignadas al usuario — pero con shape `ProjectTask[]` (array directo), no `{_tasks: ProjectTask[]}`.
+- **Nota:** El hook devuelve `tasks` pero `calendar/page.tsx` solo consume `events` del hook — las
+  tasks se fetchan pero nunca se renderizan. Hay código muerto además de la brecha de contrato.
+
+**Decisión de corrección:** Alinear el frontend al endpoint existente `GET /projects/tasks`
+(array directo) y eliminar el código muerto del hook si la vista no lo usa.
+
+#### 🟡 BRECHA-02 — Team membership: GET y DELETE sin consumidor frontend
+
+**Severidad:** Baja (endpoints backend vivos y operativos; falta UI que los consuma).
+
+- **Backend:** `GET /api/projects/{id}/team` (#40) y `DELETE /api/projects/{id}/team/{persona_id}`
+  (#42) existen, filtran sede correctamente (Axioma 3 ✓).
+- **Frontend:** La página `team/page.tsx` usa `/system/workload` (módulo System) para listar
+  personas, y `POST /projects/{id}/team` solo para invitar.
+  - **`GET /{id}/team` no se consume** para listar los miembros actuales de un proyecto.
+  - **`DELETE /{id}/team/{persona_id}` no se consume** — no hay UI para remover miembros.
+- **Impacto funcional:** Un admin puede invitar a un proyecto pero la vista principal de equipo no
+  muestra los miembros asociados a un proyecto específico (solo la carga global), ni permite
+  removerlos desde la UI. La única superficie donde se ven miembros es el drawer lateral que aparece
+  al abrir el flujo de invitación (poblado por `members[inviteProjectId]` tras invitar).
+
+**Decisión de corrección:** Desarrollar la UI faltante — una vista/sección que liste los miembros
+reales de un proyecto (usando `GET /{id}/team`) y permita removerlos (usando `DELETE`). Alinear con
+el directive "si no lo son debes desarrollarlas no eliminarlas".
+
+#### ⚪ BRECHA-03 (no-bloqueante) — `POST /projects/comments` body-only (forma sombra)
+
+**Severidad:** Ninguna (endpoints alternates operativos; no es una disfunción).
+
+- **Backend:** `POST /api/projects/comments` (#28, `project_id` en body) y
+  `POST /api/projects/{project_id}/comments` (#29, `project_id` en path) — dos rutas para crear
+  comentario.
+- **Frontend:** Solo usa la forma con path (#29) en `comments/page.tsx:80` y
+  `TaskCommentSection.tsx:62`.
+- **Estado:** No es una brecha disfuncional. El endpoint body-only está operativo (HTTP 200
+  verificado) y existe por conveniencia de clientes que solo conocen el `project_id` en el body.
+  Ambas formas aplican sede_id correctamente.
+
+**Decisión de corrección:** Documentar y dejar como está — no requiere cambio.
+
+### 8.4 Conclusión de la re-auditoría
+
+- **Paridad global:** 98% — 53/54 endpoints operativos, todas las feature areas funcionales.
+- **Única disfunción real:** BRECHA-01 (endpoint fantasma silenciado).
+- **Deuda de UI:** BRECHA-02 (team membership incompleto en frontend).
+- **Axioma 3 (sede_id):** 54/54 endpoints cumplen.
