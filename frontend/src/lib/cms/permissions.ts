@@ -6,7 +6,7 @@ function normalize(role: string | null | undefined): CmsRole {
 
 // El backend expone los roles del Kernel en español (ADMINISTRADOR, GESTOR,
 // EDITOR, LECTOR) y AuthContext los normaliza a lowercase, así que además de
-// los roles legacy en inglés se aceptan las formas completas en español.
+// los roles históricos en inglés se aceptan las formas completas en español.
 // Mapeo de política CMS: ADMINISTRADOR/GESTOR editan y publican contenido;
 // EDITOR solo edita (no publica ni gestiona sitios); LECTOR queda fuera
 // (solo lectura). Gestionar SITES es acción administrativa de plataforma:
