@@ -33,6 +33,7 @@ export {
 export {
   GallerySection,
   EmbedSection,
+  FeedSection,
   ImageTextSection,
   VideoGridSection,
   EventsCalendarSection,

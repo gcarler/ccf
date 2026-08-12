@@ -16,6 +16,7 @@ import {
   GallerySection,
   FaqSection,
   EmbedSection,
+  FeedSection,
   TestimonialsSection,
   StatsSection,
   TeamSection,
@@ -164,6 +165,7 @@ function renderSection(section: CmsSection) {
     case "gallery":          return <GallerySection section={asTyped<"gallery">(section)} />;
     case "faq":              return <FaqSection section={asTyped<"faq">(section)} />;
     case "embed":            return <EmbedSection section={asTyped<"embed">(section)} />;
+    case "feed":             return <FeedSection section={asTyped<"feed">(section)} />;
     case "testimonials":     return <TestimonialsSection section={asTyped<"testimonials">(section)} />;
     case "stats":            return <StatsSection section={asTyped<"stats">(section)} />;
     case "team":             return <TeamSection section={asTyped<"team">(section)} />;
