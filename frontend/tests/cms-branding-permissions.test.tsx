@@ -44,8 +44,9 @@ import { toast } from "sonner";
 import type { CmsTheme } from "@/types/cms-v2";
 import CmsBrandingPage from "../src/app/plataforma/cms/branding/page";
 
-// Espejo de canEditCms (lib/cms/permissions.ts): admin/coordinador/docente/pastor.
-const EDITABLE_ROLES = ["admin", "coordinador", "docente", "pastor"];
+// Espejo de canEditCms (lib/cms/permissions.ts): roles Kernel (administrador,
+// gestor, editor) + legacy (admin/coordinador/docente/pastor).
+const EDITABLE_ROLES = ["admin", "administrador", "gestor", "editor", "coordinador", "docente", "pastor"];
 const READ_ONLY_ROLES = ["estudiante", "aspirante", "visitante", "role-inexistente", ""];
 
 const activeTheme: CmsTheme = {

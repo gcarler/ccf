@@ -342,7 +342,7 @@ export default function IdentityManagementPage() {
                                             <td className="px-4 py-2">
                                                 <span className={clsx(
                                                     "inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-2xs font-semibold uppercase",
-                                                    user.role === 'admin' ? "bg-info-soft text-info-text dark:bg-[hsl(var(--info))]/10 dark:text-[hsl(var(--info))]" :
+                                                    ['admin', 'administrador'].includes(user.role) ? "bg-info-soft text-info-text dark:bg-[hsl(var(--info))]/10 dark:text-[hsl(var(--info))]" :
                                                     user.role === 'pastor' ? "bg-info-soft text-[hsl(var(--primary))] dark:bg-[hsl(var(--info))]/10 dark:text-[hsl(var(--primary))]" :
                                                     "bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))] dark:bg-white/5 dark:text-[hsl(var(--text-secondary))]"
                                                 )}>
