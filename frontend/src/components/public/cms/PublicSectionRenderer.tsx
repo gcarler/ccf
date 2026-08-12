@@ -11,6 +11,7 @@ import {
   VideoHeroSection,
   RichTextSection,
   RichTextColumnsSection,
+  AboutSection,
   CardsSection,
   CtaBannerSection,
   GallerySection,
@@ -160,6 +161,7 @@ function renderSection(section: CmsSection) {
     case "video_hero":       return <VideoHeroSection section={asTyped<"video_hero">(section)} />;
     case "rich_text":        return <RichTextSection section={asTyped<"rich_text">(section)} />;
     case "rich_text_columns":return <RichTextColumnsSection section={asTyped<"rich_text_columns">(section)} />;
+    case "about":            return <AboutSection section={asTyped<"about">(section)} />;
     case "cards":            return <CardsSection section={asTyped<"cards">(section)} />;
     case "cta_banner":       return <CtaBannerSection section={asTyped<"cta_banner">(section)} />;
     case "gallery":          return <GallerySection section={asTyped<"gallery">(section)} />;
