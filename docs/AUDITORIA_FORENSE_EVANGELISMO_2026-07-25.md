@@ -8,14 +8,22 @@
 
 ## Resumen Ejecutivo
 
-| Severidad | Hallazgos | Estado |
+> **Actualización 2026-08-11 (post-fix):** La mayoría de hallazgos quedaron
+> resueltos tras commits posteriores a esta auditoría. Estado real actual:
+> - **Crítico**: 0 abiertos (F1-1, F1-2 resueltos — soft-delete filters añadidos).
+> - **Alta**: 0 abiertos (F1-3 resuelto; F2-1 resuelto — `get_current_user` migrado a `require_evangelism_*`; F2-2 resuelto — `people/lookup` a `read`; F2-3 resuelto — nota aclaratoria en RBAC matrix).
+> - **Media**: parcial — F3-1, F3-2 resueltos (schemas creados); F5-1 resuelto (monolitos frontend descompuestos en F-02/F-03/F-05/F-06); F4-1 resuelto (test ya no acepta 500); F4-2 (cobertura RBAC no-admin) y F5-2 (QA checklist analytics/reports/notifications) siguen parciales.
+> - **Baja**: F6-3 resuelto (`_generate_codigo` removido); F6-1/F6-2 (drift en docs API contracts / LOC counts) sin verificar en este pase.
+> Ver la "Tabla Consolidada" actualizada abajo.
+
+| Severidad | Hallazgos | Estado (al corte de auditoría 2026-07-25) |
 |-----------|-----------|--------|
 | **Crítico** | 1 | Abierto |
 | **Alta** | 4 | 1 resuelto, 3 abiertos |
 | **Media** | 6 | Abiertos |
 | **Baja** | 3 | Abiertos |
 
-**Hallazgo más relevante:** 3 funciones CRUD permiten resucitar registros soft-deletados (`actualizar_participante`, `remover_participante`, `submit_asistencia`) porque no filtran por `deleted_at` antes de buscar el registro objetivo.
+**Hallazgo más relevante (histórico):** 3 funciones CRUD permitían resucitar registros soft-deletados (`actualizar_participante`, `remover_participante`, `submit_asistencia`) porque no filtraban por `deleted_at` antes de buscar el registro objetivo. **RESUELTO** (filtros `deleted_at.is_(None)` añadidos en `backend/crud/evangelism.py`).
 
 ---
 
@@ -55,9 +63,9 @@
 | Eliminar rol | `delete_rol_personalizado` | ✓ | ✓ |
 | Listar participantes | `get_participantes` | ✓ | ✗ (by group) |
 | Agregar participante | `agregar_participante` | N/A | ✓ |
-| Actualizar participante | `actualizar_participante` | **✗ BUG** | ✓ |
-| Remover participante | `remover_participante` | **✗ BUG** | ✓ |
-| Submit asistencia | `submit_asistencia` | **✗ BUG** | ✓ |
+| Actualizar participante | `actualizar_participante` | ✓ resuelto (filtro añadido) | ✓ |
+| Remover participante | `remover_participante` | ✓ resuelto (filtro añadido) | ✓ |
+| Submit asistencia | `submit_asistencia` | ✓ resuelto (filtro añadido) | ✓ |
 | Seguimientos | `get_seguimientos` | ✓ | ✓ |
 | Crear seguimiento | `create_seguimiento` | ✓ (parent) | ✓ |
 | Actualizar seguimiento | `update_seguimiento` | ✓ | ✓ |
@@ -108,9 +116,9 @@ No se encontraron endpoints sin consumidor frontend. Todos los endpoints son con
 | EstrategiaEvangelismo | ✓ | ✓ | OK |
 | GrupoEvangelismo | ✓ | ✓ (en handler) | OK |
 | SesionGrupo | ✓ | ✓ (en handler) | OK |
-| Asistencia | ✓ | **✗ en upsert** | **BUG** |
+| Asistencia | ✓ | ✓ (en upsert) | OK (resuelto) |
 | RegistroSeguimiento | ✓ | ✓ | OK |
-| ParticipanteGrupo | ✓ | **✗ en update/remove** | **BUG** |
+| ParticipanteGrupo | ✓ | ✓ (en update/remove) | OK (resuelto) |
 | MotivoExcusa | ✓ | **✗** (global) | Diseño intencional |
 | LogAuditoria | ✓ | ✗ | Sin consumo |
 
@@ -415,21 +423,21 @@ existing = db.query(models.Asistencia).filter(
 
 | ID | Severidad | Hallazgo | Archivo(s) | Línea(s) | Estado |
 |----|-----------|---------|------------|----------|--------|
-| F1-1 | **Crítico** | `actualizar_participante` no filtra `deleted_at` — puede mutar registros soft-deletados | `crud/evangelism.py` | 495 | Abierto |
-| F1-2 | **Crítico** | `submit_asistencia` upsert no filtra `deleted_at` — puede resucitar asistencias soft-deletadas | `crud/evangelism.py` | 604-611 | Abierto |
-| F1-3 | **Alta** | `remover_participante` no filtra `deleted_at` — puede desactivar registros soft-deletados | `crud/evangelism.py` | 536 | Abierto |
-| F2-1 | **Alta** | 4 endpoints usan `get_current_user` en vez de `require_evangelism_*` (design inconsistency) | `grupos_main.py`, `grupos_asistencias.py` | varies | Abierto |
-| F2-2 | **Alta** | 6 endpoints usan `require_evangelism_manage` para operaciones de solo lectura | `main_roles.py`, `events_main.py`, `multiplication.py` | varies | Abierto |
-| F2-3 | **Alta** | RBAC matrix documenta roles GESTOR/EDITOR/LECTOR que no existen en DEFAULT_ROLES | `docs/EVANGELISMO_RBAC_MATRIX.md` | §6 | Abierto |
-| F3-1 | **Media** | `GrupoEvangelismoResponse` no existe — endpoints retornan `dict` manual | `schemas/evangelism.py` | — | Abierto |
-| F3-2 | **Media** | `RolPersonalizadoEstrategiaUpdate` no existe — roles sin PUT | `schemas/evangelism.py` | — | Abierto |
-| F4-1 | **Media** | `test_evangelism_roles_coverage.py` acepta 500 como válido | `tests/test_evangelism_roles_coverage.py` | 104 | Abierto |
-| F4-2 | **Media** | Cobertura RBAC no-admin extremadamente baja (1 test positivo con coordinador) | `tests/` | — | Abierto |
-| F5-1 | **Media** | 3 páginas >1500 LOC (monolitos) | `strategies/[id]/page.tsx`, `events/page.tsx`, `groups/[id]/page.tsx` | — | Abierto |
-| F5-2 | **Media** | QA checklist no cubre analytics, reports, notifications | `docs/EVANGELISMO_QA_CHECKLIST.md` | — | Abierto |
-| F6-1 | **Baja** | API contracts documenta guards desactualizados | `docs/EVANGELISMO_API_CONTRACTS.md` | §3 | Abierto |
-| F6-2 | **Baja** | LOC counts en ESTADO_EVANGELISMO.md desactualizados | `docs/ESTADO_EVANGELISMO.md` | 47-48 | Abierto |
-| F6-3 | **Baja** | `_generate_codigo` es dead code | `crud/evangelism.py` | 145 | Abierto |
+| F1-1 | **Crítico** | `actualizar_participante` no filtra `deleted_at` — puede mutar registros soft-deletados | `crud/evangelism.py` | 495 | ✅ Resuelto — filtro `deleted_at.is_(None)` presente (línea 514) |
+| F1-2 | **Crítico** | `submit_asistencia` upsert no filtra `deleted_at` — puede resucitar asistencias soft-deletadas | `crud/evangelism.py` | 604-611 | ✅ Resuelto — filtro `deleted_at.is_(None)` presente (línea 613) |
+| F1-3 | **Alta** | `remover_participante` no filtra `deleted_at` — puede desactivar registros soft-deletados | `crud/evangelism.py` | 536 | ✅ Resuelto — filtro `deleted_at.is_(None)` presente (línea 553) |
+| F2-1 | **Alta** | 4 endpoints usan `get_current_user` en vez de `require_evangelism_*` (design inconsistency) | `grupos_main.py`, `grupos_asistencias.py` | varies | ✅ Resuelto 2026-08-11 — migrados a `require_evangelism_read`/`require_evangelism_edit` (`grupos_main.py:326,629`, `grupos_asistencias.py:58,142`); `_can_manage_grupo` preservado para autorización de líder/asistente |
+| F2-2 | **Alta** | 6 endpoints usan `require_evangelism_manage` para operaciones de solo lectura | `main_roles.py`, `events_main.py`, `multiplication.py` | varies | ✅ Parcialmente resuelto — `GET /events/{id}/people/lookup` migrado a `require_evangelism_read` (`events_main.py:547`); `GET /events/roles` ya usaba `read`; los demás endpoints listados eran en realidad escritura (POST/PUT/DELETE) con `manage` correcto. `multiplication.py` ya usaba `read` para GETs. |
+| F2-3 | **Alta** | RBAC matrix documenta roles GESTOR/EDITOR/LECTOR que no existen en DEFAULT_ROLES | `docs/EVANGELISMO_RBAC_MATRIX.md` | §6 | ✅ Resuelto — nota aclaratoria añadida (línea 220) indicando que esos roles no existen en `DEFAULT_ROLES` sin asignación explícita |
+| F3-1 | **Media** | `GrupoEvangelismoResponse` no existe — endpoints retornan `dict` manual | `schemas/evangelism.py` | — | ✅ Resuelto — `GrupoEvangelismoResponse` creado (línea 560) |
+| F3-2 | **Media** | `RolPersonalizadoEstrategiaUpdate` no existe — roles sin PUT | `schemas/evangelism.py` | — | ✅ Resuelto — `RolPersonalizadoEstrategiaUpdate` creado (línea 276) |
+| F4-1 | **Media** | `test_evangelism_roles_coverage.py` acepta 500 como válido | `tests/test_evangelism_roles_coverage.py` | 104 | ✅ Resuelto — el test ahora espera `== 404` (línea 109), ya no acepta 500 |
+| F4-2 | **Media** | Cobertura RBAC no-admin extremadamente baja (1 test positivo con coordinador) | `tests/` | — | ⬜ Abierto (parcial) — fuera del alcance de este pase |
+| F5-1 | **Media** | 3 páginas >1500 LOC (monolitos) | `strategies/[id]/page.tsx`, `events/page.tsx`, `groups/[id]/page.tsx` | — | ✅ Resuelto — descompuestos en `erroresevangelismo.md` (F-02 strategies 458 LOC, F-03 events 261 LOC, F-05 groups/groups 257 LOC, F-06 groups/[id] 205 LOC) |
+| F5-2 | **Media** | QA checklist no cubre analytics, reports, notifications | `docs/EVANGELISMO_QA_CHECKLIST.md` | — | 🟡 Parcial — analytics y reports ya referenciados; notifications sin cobertura |
+| F6-1 | **Baja** | API contracts documenta guards desactualizados | `docs/EVANGELISMO_API_CONTRACTS.md` | §3 | ⬜ Sin verificar en este pase |
+| F6-2 | **Baja** | LOC counts en ESTADO_EVANGELISMO.md desactualizados | `docs/ESTADO_EVANGELISMO.md` | 47-48 | ⬜ Sin verificar en este pase |
+| F6-3 | **Baja** | `_generate_codigo` es dead code | `crud/evangelism.py` | 145 | ✅ Resuelto — la función ya no existe en el archivo |
 
 ---
 
