@@ -46,6 +46,9 @@ from backend.api.cms.public import (
 from backend.api.cms.public import (
     themes as _public_themes,
 )
+from backend.api.cms.public import (
+    embed as _public_embed,
+)
 from backend.api.cms.section_types import get_allowed_section_types  # noqa: E402, F401
 from backend.api.cms_v2 import (  # noqa: E402
     ab_testing as _ab,
@@ -139,6 +142,7 @@ SUBROUTERS = (
     _comments,
     _public_themes,
     _public_pastoral,
+    _public_embed,
 )
 
 for _mod in SUBROUTERS:
