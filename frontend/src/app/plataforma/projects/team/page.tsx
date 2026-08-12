@@ -132,9 +132,9 @@ export default function TeamPage() {
                 ...prev,
                 [projectId]: (prev[projectId] ?? []).filter(m => m.persona_id !== personaId),
             }));
-            toast.success('Miembro removido del equipo');
+            toast.success('Integrante removido del equipo');
         } catch {
-            toast.error('No se pudo remover al miembro');
+            toast.error('No se pudo remover al integrante');
         } finally {
             setRemovingId(null);
         }
