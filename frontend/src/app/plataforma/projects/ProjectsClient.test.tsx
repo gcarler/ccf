@@ -146,10 +146,12 @@ describe('ProjectsClient scroll-to-list (fix carrera 100ms vs ~300ms)', () => {
     }
   });
 
-  it('no scrollea cuando filtered está vacío (sin anchor ni ref montado)', async () => {
+  it('scrollea al anchor incluso cuando filtered está vacío (FIX-06a monta anchor en empty state)', async () => {
     const scrollSpy = vi.spyOn(HTMLElement.prototype, 'scrollIntoView').mockImplementation(() => {});
     try {
-      // Forzamos lista vacía para el caso empty (sin wrapper del listado).
+      // FIX-06a: cuando viewType==='list' y filtered está vacío, el anchor
+      // #projects-dashboard se monta dentro del div con ref para que el hash
+      // scroll siga funcionando. El ref ya NO es null → el scroll se ejecuta.
       render(<ProjectsClient initialProjects={[]} initialViewType="list" />);
       await act(async () => {});
 
@@ -157,8 +159,7 @@ describe('ProjectsClient scroll-to-list (fix carrera 100ms vs ~300ms)', () => {
         capturedAnimationComplete?.();
       });
 
-      // Sin wrapper del listado, el ref es null -> no-op seguro.
-      expect(scrollSpy).not.toHaveBeenCalled();
+      expect(scrollSpy).toHaveBeenCalled();
     } finally {
       scrollSpy.mockRestore();
     }
