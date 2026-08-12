@@ -46,7 +46,12 @@ logger = logging.getLogger(__name__)
 # ── Role constants ──────────────────────────────────────────────────────────
 
 CMS_EDITOR_ROLES = {"admin", "coordinador", "docente", "editor", "gestor", "pastor"}
-CMS_PUBLISHER_ROLES = {"admin", "coordinador", "pastor"}
+# Publicar contenido (workflow publish/unpublish, themes, section types,
+# analytics ops): GESTOR publica contenido (política de producto).
+CMS_PUBLISHER_ROLES = {"admin", "coordinador", "gestor", "pastor"}
+# Mutar sites (create/patch/archive): acción administrativa de plataforma.
+# GESTOR puede publicar contenido pero NO gestionar sitios (403 server-side).
+CMS_SITE_MANAGE_ROLES = {"admin", "coordinador", "pastor"}
 
 # ── Rate limiting ──────────────────────────────────────────────────────────────
 

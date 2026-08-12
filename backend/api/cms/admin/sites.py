@@ -13,7 +13,7 @@ from sqlalchemy.orm import Session
 
 from backend import crud, models, schemas
 from backend.api.cms_v2._shared import (
-    CMS_PUBLISHER_ROLES,
+    CMS_SITE_MANAGE_ROLES,
     _actor_sede_from_user,
     _assert_role,
     _get_scoped_site_or_404,
@@ -47,7 +47,7 @@ def create_site(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("cms", "edit")),
 ):
-    _assert_role(current_user, CMS_PUBLISHER_ROLES)
+    _assert_role(current_user, CMS_SITE_MANAGE_ROLES)
     if not payload.site_key.strip():
         raise CmsValidationError("Site key is required", error_code="site_key_required")
     if not payload.base_path.strip().startswith("/"):
@@ -83,7 +83,7 @@ def patch_site(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("cms", "edit")),
 ):
-    _assert_role(current_user, CMS_PUBLISHER_ROLES)
+    _assert_role(current_user, CMS_SITE_MANAGE_ROLES)
     row = _get_scoped_site_or_404(db, site_key, current_user)
     if payload.sede_id is not None:
         raise CmsValidationError(
@@ -99,7 +99,7 @@ def delete_site(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("cms", "edit")),
 ):
-    _assert_role(current_user, CMS_PUBLISHER_ROLES)
+    _assert_role(current_user, CMS_SITE_MANAGE_ROLES)
     row = _get_scoped_site_or_404(db, site_key, current_user)
     crud.archive_cms_site(db, row)
     return None
