@@ -379,6 +379,8 @@ export interface FeedProps {
 
   // Sermons / predicas style
   content?: string;
+  hero_eyebrow?: string;
+  youtube_channel_url?: string;
 
   // Courses / cursos style
   hero_image_url?: string;

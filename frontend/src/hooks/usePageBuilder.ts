@@ -16,7 +16,7 @@ import {
   rollbackCmsPageVersion,
   workflowCmsPage,
 } from "@/lib/cms/v2";
-import { PAGE_TEMPLATES } from "@/components/cms/builder/constants";
+import { PAGE_TEMPLATES, resolveDefaultSectionProps } from "@/components/cms/builder/constants";
 import type { CmsSection, CmsTheme } from "@/types/cms-v2";
 import { apiFetch } from "@/lib/http";
 import { SITE_KEY } from "@/lib/site-config";
@@ -416,10 +416,15 @@ export function usePageBuilder({ token, canEdit, canPublish }: UsePageBuilderOpt
 
   const addSection = useCallback(async (type?: string, props?: Record<string, unknown>) => {
     if (!token || !activeSlug || !canEdit) return;
+    const sectionType = type || newSectionType;
+    // Plantilla por defecto por tipo cuando existe (p. ej. ``feed``); si no,
+    // se usa el placeholder genérico. Cadena: props explícitos →
+    // DEFAULT_SECTION_PROPS[type] → placeholder (ver resolveDefaultSectionProps).
+    const defaultProps = resolveDefaultSectionProps(sectionType, props);
     await createCmsSection(siteKey, activeSlug, {
-      type: type || newSectionType,
+      type: sectionType,
       sort_order: sections.length,
-      props_json: props || { title: "Nueva sección", body: "Edita este contenido", cta_label: "Ver más", cta_href: "/" },
+      props_json: defaultProps,
     }, token);
     await loadSectionsAndVersions(activeSlug);
     notifyPreviewSync({ type: "section-created", siteKey, slug: activeSlug });

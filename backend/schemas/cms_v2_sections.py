@@ -560,6 +560,8 @@ class FeedProps(_PermissiveProps):
 
     # Sermons / predicas style
     content: Optional[str] = None
+    hero_eyebrow: Optional[str] = None
+    youtube_channel_url: Optional[str] = None
 
     # Courses / cursos style
     hero_image_url: Optional[str] = None
