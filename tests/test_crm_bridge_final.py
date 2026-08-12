@@ -57,10 +57,10 @@ class TestPipelineIntegrityErrorFinal:
         db_session.add(p1)
         db_session.commit()
 
+        # El código real usa `sp = db.begin_nested()` directo (sin `with`), así
+        # que el side_effect del commit va en mock_bn.return_value.commit.
         with patch.object(db_session, "begin_nested") as mock_bn:
-            mock_savepoint = MagicMock()
-            mock_bn.return_value.__enter__.return_value = mock_savepoint
-            mock_savepoint.commit.side_effect = IntegrityError("test", "test", "test")
+            mock_bn.return_value.commit.side_effect = IntegrityError("test", "test", "test")
 
             # Make the query return pipeline_return (None or p1) after IntegrityError
             original_query = db_session.query
@@ -75,7 +75,11 @@ class TestPipelineIntegrityErrorFinal:
 
                 return FakeQuery()
 
-            with patch.object(db_session, "query", side_effect=query_side_effect):
+            # El add del pipeline nuevo dentro del try dispararía autoflush y
+            # chocaría con UNIQUE real (sede_id, tipo) contra p1; se mockea para
+            # que el camino de error sea puro (sin tocar la DB).
+            with patch.object(db_session, "query", side_effect=query_side_effect), \
+                    patch.object(db_session, "add", return_value=None):
                 return _obtener_o_crear_pipeline_nuevos_visitantes(db_session, sede.id)
 
     def test_integrity_error_pipeline_found(self, db_session, sede):
@@ -117,11 +121,11 @@ class TestEtapaIntegrityErrorFinal:
         etapa1 = _obtener_o_crear_etapa_nuevo_contacto(db_session, pipeline, sede.id)
         assert etapa1 is not None
 
-        # Now mock begin_nested to raise IntegrityError
+        # Now mock begin_nested to raise IntegrityError. El código real usa
+        # `sp = db.begin_nested()` directo (sin `with`), así que el side_effect
+        # va en mock_bn.return_value.commit.
         with patch.object(db_session, "begin_nested") as mock_bn:
-            mock_sp = MagicMock()
-            mock_bn.return_value.__enter__.return_value = mock_sp
-            mock_sp.commit.side_effect = IntegrityError("test", "test", "test")
+            mock_bn.return_value.commit.side_effect = IntegrityError("test", "test", "test")
 
             # Mock query to return None first (no etapa), then existing
             call_count = [0]
@@ -145,7 +149,10 @@ class TestEtapaIntegrityErrorFinal:
 
                 return FakeQuery()
 
-            with patch.object(db_session, "query", side_effect=query_side_effect):
+            # El add de la etapa nueva dentro del try dispararía autoflush y
+            # chocaría con UNIQUE real (pipeline_id, orden) contra etapa1.
+            with patch.object(db_session, "query", side_effect=query_side_effect), \
+                    patch.object(db_session, "add", return_value=None):
                 etapa2 = _obtener_o_crear_etapa_nuevo_contacto(db_session, pipeline, sede.id)
 
         assert etapa2 is not None
@@ -161,14 +168,16 @@ class TestEtapaIntegrityErrorFinal:
         pipeline = _obtener_o_crear_pipeline_nuevos_visitantes(db_session, sede.id)
         assert pipeline is not None
 
+        # El código real usa `sp = db.begin_nested()` directo (sin `with`), así
+        # que el side_effect del commit va en mock_bn.return_value.commit.
         with patch.object(db_session, "begin_nested") as mock_bn:
-            mock_sp = MagicMock()
-            mock_bn.return_value.__enter__.return_value = mock_sp
-            mock_sp.commit.side_effect = IntegrityError("test", "test", "test")
+            mock_bn.return_value.commit.side_effect = IntegrityError("test", "test", "test")
 
-            # All queries return None
+            # All queries return None. El código real consulta primero
+            # _crm_etapa_pipeline_read_only_options (options()) y después
+            # filter().order_by().first(); el mock debe cubrir esa cadena.
             with patch.object(db_session, "query") as mock_query:
-                mock_query.return_value.filter.return_value.order_by.return_value.options.return_value.first.return_value = None
+                mock_query.return_value.options.return_value.filter.return_value.order_by.return_value.first.return_value = None
                 mock_query.return_value.filter.return_value.order_by.return_value.first.return_value = None
 
                 result = _obtener_o_crear_etapa_nuevo_contacto(db_session, pipeline, sede.id)

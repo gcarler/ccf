@@ -5,13 +5,25 @@ from __future__ import annotations
 import uuid
 from unittest.mock import MagicMock, patch
 
+import pytest
 from sqlalchemy.exc import IntegrityError
 
+from backend.models_evangelism import Sede
 from backend.services.evangelism_crm_bridge import (
     _crm_casos_live_column_names,
     _obtener_o_crear_etapa_nuevo_contacto,
     _obtener_o_crear_pipeline_nuevos_visitantes,
 )
+
+
+@pytest.fixture
+def sede(db_session):
+    s = db_session.query(Sede).first()
+    if not s:
+        s = Sede(id=uuid.uuid4(), nombre="Test", ciudad="Test", es_activa=True)
+        db_session.add(s)
+        db_session.commit()
+    return s
 
 
 class TestCrmCasosLiveColumnNames:
@@ -48,23 +60,26 @@ class TestPipelineIntegrityError:
         db_session.add(existing)
         db_session.commit()
 
-        # Mock begin_nested so its commit raises IntegrityError
+        # Mock begin_nested so its commit raises IntegrityError. El código real
+        # hace `sp = db.begin_nested()` y luego `sp.commit()` (sin `with`), así
+        # que el side_effect debe ir en mock_bn.return_value.commit.
         with patch.object(db_session, "begin_nested") as mock_bn:
-            mock_sp = MagicMock()
-            mock_bn.return_value.__enter__.return_value = mock_sp
-            mock_sp.commit.side_effect = IntegrityError("test", "test", "test")
+            mock_bn.return_value.commit.side_effect = IntegrityError("test", "test", "test")
 
-            # Mock the query to return None, forcing creation attempt
+            # Mock the query to return None, forcing creation attempt. El código
+            # real usa un solo .filter(...) con múltiples condiciones.
             original_query = db_session.query
             with patch.object(db_session, "query") as mock_query:
-                # First query (for existing pipeline) returns None
-                # But the function also queries after the IntegrityError
-                mock_query.return_value.filter.return_value.filter.return_value.first.side_effect = [
+                # Primera consulta (pipeline inexistente) -> None; después del
+                # IntegrityError -> devuelve el pipeline ya creado.
+                mock_query.return_value.filter.return_value.first.side_effect = [
                     None,  # First call: no pipeline found -> try to create
                     existing,  # After IntegrityError: find the existing one
                 ]
-
-                result = _obtener_o_crear_pipeline_nuevos_visitantes(db_session, sede.id)
+                # Evitar autoflush real: el add del pipeline nuevo en el try
+                # no debe tocar la DB (si no, UNIQUE real contra `existing`).
+                with patch.object(db_session, "add", return_value=None):
+                    result = _obtener_o_crear_pipeline_nuevos_visitantes(db_session, sede.id)
 
         # Should find the existing pipeline (it exists, just the creation failed)
         assert result is not None
@@ -80,22 +95,24 @@ class TestEtapaIntegrityError:
         etapa1 = _obtener_o_crear_etapa_nuevo_contacto(db_session, pipeline, sede.id)
         assert etapa1 is not None
 
-        # Mock to force IntegrityError on a new creation attempt
+        # Mock to force IntegrityError on a new creation attempt. El código real
+        # usa `sp = db.begin_nested()` directo (sin `with`), así que el
+        # side_effect va en mock_bn.return_value.commit.
         with patch.object(db_session, "begin_nested") as mock_bn:
-            mock_sp = MagicMock()
-            mock_bn.return_value.__enter__.return_value = mock_sp
-            mock_sp.commit.side_effect = IntegrityError("test", "test", "test")
+            mock_bn.return_value.commit.side_effect = IntegrityError("test", "test", "test")
 
             # Mock query to return None first (no etapa found) then the existing one
             with patch.object(db_session, "query") as mock_query:
                 mock_filter = MagicMock()
 
+                # Contador a nivel de closure: el except crea un FakeQuery nuevo
+                # y necesita saber que ya hubo una primera consulta.
+                call_count = [0]
+
                 def side_effect_first(model):
                     # First call (etapa query) -> return None
                     # Second call (after IntegrityError) -> return existing
                     class FakeQuery:
-                        _call_count = 0
-
                         def filter(self, *a, **kw):
                             return self
 
@@ -103,8 +120,8 @@ class TestEtapaIntegrityError:
                             return self
 
                         def first(self):
-                            self._call_count += 1
-                            if self._call_count == 1:
+                            call_count[0] += 1
+                            if call_count[0] == 1:
                                 return None
                             return etapa1
 
@@ -117,8 +134,10 @@ class TestEtapaIntegrityError:
                     return FakeQuery()
 
                 mock_query.side_effect = side_effect_first
-
-                etapa2 = _obtener_o_crear_etapa_nuevo_contacto(db_session, pipeline, sede.id)
+                # El add de la etapa nueva dentro del try dispararía autoflush
+                # y chocaría con UNIQUE real (pipeline_id, orden) contra etapa1.
+                with patch.object(db_session, "add", return_value=None):
+                    etapa2 = _obtener_o_crear_etapa_nuevo_contacto(db_session, pipeline, sede.id)
 
         assert etapa2 is not None
         assert etapa2.id == etapa1.id
