@@ -4,14 +4,22 @@ function normalize(role: string | null | undefined): CmsRole {
   return String(role || "").toLowerCase().trim();
 }
 
+// El backend expone los roles del Kernel en español (ADMINISTRADOR, GESTOR,
+// EDITOR, LECTOR) y AuthContext los normaliza a lowercase, así que además de
+// los roles legacy en inglés se aceptan las formas completas en español.
+// Mapeo de política CMS: ADMINISTRADOR/GESTOR editan y publican; EDITOR solo
+// edita (no publica ni gestiona sitios); LECTOR queda fuera (solo lectura).
+const EDIT_ROLES = ["admin", "administrador", "gestor", "editor", "coordinador", "docente", "pastor"];
+const PUBLISH_ROLES = ["admin", "administrador", "gestor", "coordinador", "pastor"];
+
 export function canEditCms(role: string | null | undefined): boolean {
-  return ["admin", "coordinador", "docente", "pastor"].includes(normalize(role));
+  return EDIT_ROLES.includes(normalize(role));
 }
 
 export function canPublishCms(role: string | null | undefined): boolean {
-  return ["admin", "coordinador", "pastor"].includes(normalize(role));
+  return PUBLISH_ROLES.includes(normalize(role));
 }
 
 export function canManageSites(role: string | null | undefined): boolean {
-  return ["admin", "coordinador", "pastor"].includes(normalize(role));
+  return PUBLISH_ROLES.includes(normalize(role));
 }

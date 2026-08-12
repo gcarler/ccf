@@ -43,8 +43,11 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
   hasModuleAccess: (module: string, minLevel = 'read') => {
     const { user } = get();
+    // El rol privilegiado se evalúa primero y normalizado: un admin sin objeto
+    // de permisos granular no debe quedar bloqueado por el guard de abajo.
+    const role = String(user?.role || '').toLowerCase();
+    if (role === 'admin' || role === 'administrador') return true;
     if (!user?.permissions) return false;
-    if (user.role === 'admin') return true;
     const permKey = `${module}:${minLevel}`;
     if (user.permissions[permKey] === 'allow') return true;
     if (minLevel === 'read') {
