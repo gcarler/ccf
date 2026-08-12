@@ -27,7 +27,6 @@ from backend.api.evangelism_shared import (
 )
 from backend.core.database import get_db
 from backend.core.permissions import (
-    get_current_user,
     require_evangelism_edit,
     require_evangelism_manage,
     require_evangelism_read,
@@ -323,7 +322,7 @@ def get_groups_assignment_summary(
 def get_grupo(
     grupo_id: UUID,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(get_current_user),
+    current_user: models.User = Depends(require_evangelism_read),
 ):
     from backend.models_evangelism import Asistencia, SesionGrupo
 
@@ -626,7 +625,7 @@ def update_grupo(
     grupo_id: UUID,
     payload: schemas.GrupoEvangelismoUpdate,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(get_current_user),
+    current_user: models.User = Depends(require_evangelism_edit),
 ):
     house_db = get_visible_group(db, grupo_id, require_user_sede_id(db, current_user))
     if not house_db:
