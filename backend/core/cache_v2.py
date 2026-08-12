@@ -19,13 +19,32 @@ logger = logging.getLogger(__name__)
 F = TypeVar("F", bound=Callable[..., Any])
 
 
+def _key_value(value: Any) -> tuple[bool, Any]:
+    """Return a stable key value, dropping only nested non-serializable values."""
+    if value is None or isinstance(value, (str, int, float, bool)):
+        return True, value
+    if isinstance(value, (list, tuple)):
+        clean_items = []
+        for item in value:
+            valid, clean = _key_value(item)
+            if valid:
+                clean_items.append(clean)
+        return True, clean_items
+    if isinstance(value, dict):
+        result: dict[str, Any] = {}
+        for key, item in value.items():
+            if not isinstance(key, str):
+                continue
+            valid, clean = _key_value(item)
+            if valid:
+                result[key] = clean
+        return True, result
+    return False, None
+
+
 def _is_serializable(value: Any) -> bool:
-    """Return True if value can be JSON-serialized in a stable way."""
-    if value is None:
-        return True
-    if isinstance(value, (str, int, float, bool, list, dict, tuple)):
-        return True
-    return False
+    """Return True if value can be represented in a stable cache key."""
+    return _key_value(value)[0]
 
 
 def _to_jsonable(value: Any, seen: set[int] | None = None) -> Any:
@@ -80,8 +99,12 @@ def _to_jsonable(value: Any, seen: set[int] | None = None) -> Any:
 
 def _build_cache_key(func_name: str, args: tuple, kwargs: dict) -> str:
     """Build a deterministic cache key, skipping non-serializable args."""
-    serializable_args = tuple(arg for arg in args if _is_serializable(arg))
-    serializable_kwargs = {k: v for k, v in kwargs.items() if _is_serializable(v)}
+    serializable_args = tuple(_key_value(arg)[1] for arg in args if _key_value(arg)[0])
+    serializable_kwargs = {
+        key: _key_value(value)[1]
+        for key, value in kwargs.items()
+        if _key_value(value)[0]
+    }
     payload = json.dumps(
         {"args": serializable_args, "kwargs": serializable_kwargs},
         sort_keys=True,
@@ -89,6 +112,45 @@ def _build_cache_key(func_name: str, args: tuple, kwargs: dict) -> str:
     )
     digest = hashlib.sha256(payload.encode()).hexdigest()
     return f"cache:v2:{func_name}:{digest}"
+
+
+def invalidate_cached_public(func_name: str, *args: Any, **kwargs: Any) -> None:
+    """Delete a cached public entry by rebuilding its deterministic key.
+
+    Must be called with the same serializable args/kwargs the endpoint
+    was cached under (e.g. ``site_key`` and ``menu_key`` for
+    ``public_menu``), so the sha256 digest matches. Non-serializable
+    values (like the ``Session`` dependency) are skipped exactly like
+    ``cached_public`` does when writing.
+    """
+    redis = get_redis()
+    key = _build_cache_key(func_name, args, kwargs)
+    try:
+        redis.delete(key)
+    except (ConnectionError, TypeError, ValueError) as exc:
+        logger.debug("Cache invalidation skipped: %s", exc)
+
+
+def invalidate_cached_public_pattern(func_name: str) -> None:
+    """Delete every cached entry for a public endpoint function.
+
+    Used for list endpoints whose cache key also includes query params
+    (``skip``/``limit``/``category_slug``/``tag_slug``), so the exact key
+    cannot be rebuilt from the mutation alone. Deletes all keys prefixed
+    ``cache:v2:{func_name}:`` — works with real Redis (``scan_iter``)
+    and the test MemoryRedis fallback (``scan_keys``).
+    """
+    redis = get_redis()
+    prefix = f"cache:v2:{func_name}:"
+    try:
+        if hasattr(redis, "scan_iter"):
+            for key in redis.scan_iter(f"{prefix}*"):
+                redis.delete(key)
+        else:
+            for key in redis.scan_keys(f"{prefix}*"):
+                redis.delete(key)
+    except (ConnectionError, TypeError, ValueError) as exc:
+        logger.debug("Cache pattern invalidation skipped: %s", exc)
 
 
 def cached_public(ttl: int = 300) -> Callable[[F], F]:

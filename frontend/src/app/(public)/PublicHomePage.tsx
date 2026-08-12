@@ -113,9 +113,9 @@ export default function PublicHomePage({ initialHomePage }: { initialHomePage?: 
         if (!nlEmail) return;
         setNlStatus("sending");
         try {
-            await apiFetch("/public/newsletter/subscribe", {
+            await apiFetch("/cms/v2/public/subscribe", {
                 method: "POST",
-                body: { email: nlEmail, source: "newsletter-web", landing_page: "/" },
+                body: { site_key: "ccf", email: nlEmail },
             });
             setNlStatus("sent");
             setNlEmail("");

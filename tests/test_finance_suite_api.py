@@ -637,7 +637,7 @@ def test_send_sign_request_no_signers(client, db_session):
 
 
 def test_send_and_sign_request(client, db_session):
-    _seed_admin(db_session)
+    admin, _, _ = _seed_admin(db_session)
     headers = _auth_headers(client)
 
     resp = client.post(
@@ -646,7 +646,7 @@ def test_send_and_sign_request(client, db_session):
             "title": "Para firmar",
             "document_url": "https://test.com/doc.pdf",
             "signers": [
-                {"email": "signer@test.com", "full_name": "Test Signer"},
+                {"email": admin.email, "full_name": "Test Signer"},
             ],
         },
         headers=headers,
@@ -672,7 +672,7 @@ def test_send_and_sign_request(client, db_session):
 
 
 def test_sign_document_wrong_status(client, db_session):
-    _seed_admin(db_session)
+    admin, _, _ = _seed_admin(db_session)
     headers = _auth_headers(client)
 
     resp = client.post(
@@ -680,7 +680,7 @@ def test_sign_document_wrong_status(client, db_session):
         json={
             "title": "Doble sign test",
             "document_url": "https://test.com/doc.pdf",
-            "signers": [{"email": "s@test.com", "full_name": "S"}],
+            "signers": [{"email": admin.email, "full_name": "S"}],
         },
         headers=headers,
     )

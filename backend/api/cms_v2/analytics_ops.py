@@ -17,7 +17,12 @@ from sqlalchemy.orm import Session
 
 from backend import crud, models, schemas
 from backend.api._cms_helpers import _get_scoped_cms_media
-from backend.api.cms_v2._shared import CMS_PUBLISHER_ROLES, _assert_role, _get_scoped_site_or_404
+from backend.api.cms_v2._shared import (
+    CMS_EDITOR_ROLES,
+    CMS_PUBLISHER_ROLES,
+    _assert_role,
+    _get_scoped_site_or_404,
+)
 from backend.core.database import get_db
 from backend.core.permissions import require_module_access
 from backend.core.rate_limit import rate_limiter
@@ -161,6 +166,7 @@ async def optimize_uploaded_image(
     current_user: models.User = Depends(require_module_access("cms", "edit")),
     background_tasks: BackgroundTasks = None,
 ):
+    _assert_role(current_user, CMS_EDITOR_ROLES)
     media = _get_scoped_cms_media(db, current_user, media_id)
     if (media.status or "") == "archived":
         raise MediaNotFoundError()

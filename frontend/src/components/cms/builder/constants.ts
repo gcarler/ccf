@@ -2,7 +2,7 @@
 
 export const SECTION_TYPES = [
   "hero", "video_hero", "rich_text", "rich_text_columns",
-  "cards", "cta_banner", "gallery", "faq", "embed",
+  "cards", "cta_banner", "gallery", "faq", "embed", "feed",
   "testimonials", "stats", "team", "countdown", "pricing",
   "image_text", "timeline", "icon_grid", "newsletter", "popup_banner",
   // New
@@ -27,6 +27,7 @@ export const SECTION_TYPE_COLORS: Record<string, string> = {
   gallery:           "bg-[hsl(var(--domain-pink))]",
   faq:               "bg-[hsl(var(--warning))]",
   embed:             "bg-[hsl(var(--domain-cyan))]",
+  feed:              "bg-[hsl(var(--domain-teal))]",
   testimonials:      "bg-[hsl(var(--danger))]",
   stats:             "bg-[hsl(var(--domain-teal))]",
   team:              "bg-orange-500",
@@ -70,6 +71,7 @@ export const SECTION_TYPE_LABEL: Record<string, string> = {
   gallery:           "Galería",
   faq:               "Preguntas Frecuentes",
   embed:             "Embed / iFrame",
+  feed:              "Feed / Contenido",
   testimonials:      "Testimonios",
   stats:             "Estadísticas",
   team:              "Equipo",
@@ -101,6 +103,37 @@ export const SECTION_TYPE_LABEL: Record<string, string> = {
   video_embed:            "Video Embed",
   gallery_masonry:        "Galería Masonry",
   map_embed:              "Mapa Embed",
+};
+
+// ── Default props del tipo feed ───────────────────────────────────────────────
+// Variante home del FeedSection: featured_card + grid de tarjetas + newsletter.
+// Es la plantilla por defecto usada tanto por SECTION_TEMPLATES como por
+// DEFAULT_SECTION_PROPS (cuando el usuario añade "feed" desde la paleta).
+
+const FEED_DEFAULT_PROPS: Record<string, unknown> = {
+  eyebrow: "Nuestra esencia",
+  section_title: "Bienvenidos a Casa",
+  section_description: "Rutas públicas para conocer la comunidad, profundizar en la fe y encontrar dónde dar el siguiente paso.",
+  featured_card: {
+    title: "Conocer a Jesús",
+    desc: "Descubre la base de nuestra fe a través de un viaje personal y transformador.",
+    href: "/conocer-a-jesus",
+    cta: "Empezar el camino",
+    img: "/images/convenccion/IMG_6813.webp",
+    alt: "Comunidad CCF",
+  },
+  cards: [
+    { title: "Librería", desc: "Recursos para profundizar en tu estudio bíblico.", href: "/cursos" },
+    { title: "Horarios", desc: "Reuniones presenciales y online cada semana.", href: "/eventos" },
+    { title: "Sedes", desc: "Encuéntranos en tu ciudad.", href: "/sedes" },
+  ],
+  newsletter_eyebrow: "Boletín semanal",
+  newsletter_title: "¿Quieres recibir nuestras novedades?",
+  newsletter_description: "Meditaciones semanales y novedades de la comunidad, directo a tu correo.",
+  newsletter_placeholder: "Tu correo electrónico",
+  newsletter_submit: "Suscribirme",
+  newsletter_success_title: "¡Gracias por suscribirte!",
+  newsletter_success_desc: "Revisa tu correo para confirmar tu suscripción al boletín.",
 };
 
 // ── Page templates ──────────────────────────────────────────────────────────
@@ -261,6 +294,11 @@ export const SECTION_TEMPLATES: SectionTemplate[] = [
     },
   },
   {
+    label: "Feed de contenido",
+    type: "feed",
+    props_json: FEED_DEFAULT_PROPS,
+  },
+  {
     label: "Contador Animado",
     type: "animated_counter",
     props_json: {
@@ -307,7 +345,15 @@ export const SECTION_TEMPLATES: SectionTemplate[] = [
   },
 ];
 
+/**
+ * Props por defecto al crear una sección desde la paleta del builder.
+ *
+ * Solo tipos con entrada aquí obtienen props ricos; el resto cae al
+ * placeholder genérico. Las entradas deben coincidir con los ``SECTION_TEMPLATES``
+ * del mismo tipo (la paleta y "Plantillas rápidas" comparten contrato).
+ */
 export const DEFAULT_SECTION_PROPS: Record<string, Record<string, unknown>> = {
+  feed: FEED_DEFAULT_PROPS,
   animated_counter: {
     title: "Nuestros Logros",
     items: [
@@ -338,3 +384,23 @@ export const DEFAULT_SECTION_PROPS: Record<string, Record<string, unknown>> = {
     height_px: 400,
   },
 };
+
+const GENERIC_SECTION_PLACEHOLDER: Record<string, unknown> = {
+  title: "Nueva sección",
+  body: "Edita este contenido",
+  cta_label: "Ver más",
+  cta_href: "/",
+};
+
+/**
+ * Cadena de resolución de props al añadir una sección: 1) props explícitos,
+ * 2) plantilla por defecto del tipo (DEFAULT_SECTION_PROPS), 3) placeholder
+ * genérico. Se mantiene fuera del hook para poder testear el contrato.
+ */
+export function resolveDefaultSectionProps(
+  type: string,
+  props?: Record<string, unknown> | null,
+): Record<string, unknown> {
+  if (props) return props;
+  return DEFAULT_SECTION_PROPS[type] ?? GENERIC_SECTION_PLACEHOLDER;
+}

@@ -1774,6 +1774,378 @@ class TestPublicMenuInactive:
         resp = c.get(f"/api/cms/v2/public/sites/{key}/menus/inactive")
         assert resp.status_code == 404
 
+    def test_public_menu_cache_invalidated_on_delete(self, full):
+        """Regresión: borrar un menú (soft-delete) debe invalidar la caché
+        pública de inmediato — el endpoint devuelve 404 sin esperar el
+        TTL de 300s de ``cached_public``."""
+        c, h = full["c"], full["h"]
+        key = _make_site(c, h, "pubmcache")
+        c.post(
+            f"/api/cms/v2/sites/{key}/menus",
+            json={"menu_key": "cacheme", "name": "Cache Me"},
+            headers=h,
+        )
+        # 1) Poblar la caché pública (200 + se cachea)
+        first = c.get(f"/api/cms/v2/public/sites/{key}/menus/cacheme")
+        assert first.status_code == 200
+        # 2) Soft-delete admin
+        resp = c.delete(f"/api/cms/v2/sites/{key}/menus/cacheme", headers=h)
+        assert resp.status_code == 204
+        # 3) 404 inmediato — la entrada cacheada fue invalidada
+        resp = c.get(f"/api/cms/v2/public/sites/{key}/menus/cacheme")
+        assert resp.status_code == 404
+
+    def test_public_menu_cache_invalidated_on_menu_update(self, full):
+        """Regresión: desactivar un menú vía PATCH debe invalidar la caché
+        pública de inmediato (404)."""
+        c, h = full["c"], full["h"]
+        key = _make_site(c, h, "pubmupd")
+        c.post(
+            f"/api/cms/v2/sites/{key}/menus",
+            json={"menu_key": "navupd", "name": "Nav"},
+            headers=h,
+        )
+        assert c.get(f"/api/cms/v2/public/sites/{key}/menus/navupd").status_code == 200
+        resp = c.patch(
+            f"/api/cms/v2/sites/{key}/menus/navupd",
+            json={"is_active": False},
+            headers=h,
+        )
+        assert _ok(resp.status_code)
+        assert c.get(f"/api/cms/v2/public/sites/{key}/menus/navupd").status_code == 404
+
+    def test_public_menu_cache_invalidated_on_item_hidden(self, full):
+        """Regresión: ocultar un item (DELETE) debe invalidar la caché del
+        menú padre de inmediato — el item deja de aparecer en público."""
+        c, h = full["c"], full["h"]
+        key = _make_site(c, h, "pubmitem")
+        c.post(
+            f"/api/cms/v2/sites/{key}/menus",
+            json={"menu_key": "m", "name": "M"},
+            headers=h,
+        )
+        r = c.post(
+            f"/api/cms/v2/sites/{key}/menus/m/items",
+            json={"label": "Home", "href": "/"},
+            headers=h,
+        )
+        item_id = r.json()["id"]
+        # Poblar caché pública con el item visible
+        first = c.get(f"/api/cms/v2/public/sites/{key}/menus/m")
+        assert first.status_code == 200
+        assert any(i["id"] == item_id for i in first.json()["items"])
+        # Ocultar item
+        resp = c.delete(f"/api/cms/v2/sites/{key}/menus/m/items/{item_id}", headers=h)
+        assert resp.status_code == 204
+        # El item ya no aparece (caché invalidada)
+        second = c.get(f"/api/cms/v2/public/sites/{key}/menus/m")
+        assert second.status_code == 200
+        assert all(i["id"] != item_id for i in second.json()["items"])
+
+    def test_public_menu_cache_invalidated_on_item_update(self, full):
+        """Regresión: editar un item (PATCH label) debe invalidar la caché
+        del menú padre de inmediato — el label nuevo aparece en público."""
+        c, h = full["c"], full["h"]
+        key = _make_site(c, h, "pubmiupd")
+        c.post(
+            f"/api/cms/v2/sites/{key}/menus",
+            json={"menu_key": "m2", "name": "M2"},
+            headers=h,
+        )
+        r = c.post(
+            f"/api/cms/v2/sites/{key}/menus/m2/items",
+            json={"label": "Viejo", "href": "/"},
+            headers=h,
+        )
+        item_id = r.json()["id"]
+        first = c.get(f"/api/cms/v2/public/sites/{key}/menus/m2")
+        assert first.json()["items"][0]["label"] == "Viejo"
+        resp = c.patch(
+            f"/api/cms/v2/sites/{key}/menus/m2/items/{item_id}",
+            json={"label": "Nuevo"},
+            headers=h,
+        )
+        assert _ok(resp.status_code)
+        second = c.get(f"/api/cms/v2/public/sites/{key}/menus/m2")
+        assert second.json()["items"][0]["label"] == "Nuevo"
+
+    def test_public_menu_cache_invalidated_on_item_created(self, full):
+        """Regresión: crear un item nuevo debe invalidar la caché del menú
+        padre de inmediato — el item aparece en público sin esperar TTL."""
+        c, h = full["c"], full["h"]
+        key = _make_site(c, h, "pubmcreate")
+        c.post(
+            f"/api/cms/v2/sites/{key}/menus",
+            json={"menu_key": "m3", "name": "M3"},
+            headers=h,
+        )
+        first = c.get(f"/api/cms/v2/public/sites/{key}/menus/m3")
+        assert first.status_code == 200
+        assert first.json()["items"] == []
+        r = c.post(
+            f"/api/cms/v2/sites/{key}/menus/m3/items",
+            json={"label": "NuevoItem", "href": "/nuevo"},
+            headers=h,
+        )
+        assert _ok(r.status_code)
+        second = c.get(f"/api/cms/v2/public/sites/{key}/menus/m3")
+        assert any(i["label"] == "NuevoItem" for i in second.json()["items"])
+
+    def test_public_menu_cache_invalidated_on_reorder(self, full):
+        """Regresión: reordenar items debe invalidar la caché del menú
+        padre de inmediato — el nuevo orden aparece en público."""
+        c, h = full["c"], full["h"]
+        key = _make_site(c, h, "pubmreord")
+        c.post(
+            f"/api/cms/v2/sites/{key}/menus",
+            json={"menu_key": "m4", "name": "M4"},
+            headers=h,
+        )
+        r1 = c.post(
+            f"/api/cms/v2/sites/{key}/menus/m4/items",
+            json={"label": "A", "href": "/a", "sort_order": 0},
+            headers=h,
+        )
+        r2 = c.post(
+            f"/api/cms/v2/sites/{key}/menus/m4/items",
+            json={"label": "B", "href": "/b", "sort_order": 1},
+            headers=h,
+        )
+        id_a, id_b = r1.json()["id"], r2.json()["id"]
+        first = c.get(f"/api/cms/v2/public/sites/{key}/menus/m4")
+        assert [i["label"] for i in first.json()["items"]] == ["A", "B"]
+        resp = c.post(
+            f"/api/cms/v2/sites/{key}/menus/m4/reorder",
+            json={"items": [{"id": id_b, "sort_order": 0}, {"id": id_a, "sort_order": 1}]},
+            headers=h,
+        )
+        assert _ok(resp.status_code)
+        second = c.get(f"/api/cms/v2/public/sites/{key}/menus/m4")
+        assert [i["label"] for i in second.json()["items"]] == ["B", "A"]
+
+    def test_public_menu_cache_invalidated_on_site_archive(self, full):
+        """Regresión: archivar un site (DELETE site) debe invalidar la caché
+        de sus menús públicos de inmediato (404)."""
+        c, h = full["c"], full["h"]
+        key = _make_site(c, h, "pubmarch")
+        c.post(
+            f"/api/cms/v2/sites/{key}/menus",
+            json={"menu_key": "archnav", "name": "Arch"},
+            headers=h,
+        )
+        assert c.get(f"/api/cms/v2/public/sites/{key}/menus/archnav").status_code == 200
+        resp = c.delete(f"/api/cms/v2/sites/{key}", headers=h)
+        assert resp.status_code == 204
+        assert c.get(f"/api/cms/v2/public/sites/{key}/menus/archnav").status_code == 404
+
+    def test_public_menu_cache_invalidated_on_site_deactivate_patch(self, full):
+        """Regresión: desactivar un site vía PATCH (is_active=False) debe
+        invalidar la caché de sus menús públicos de inmediato (404)."""
+        c, h = full["c"], full["h"]
+        key = _make_site(c, h, "pubmpatch")
+        c.post(
+            f"/api/cms/v2/sites/{key}/menus",
+            json={"menu_key": "patchnav", "name": "Patch"},
+            headers=h,
+        )
+        assert c.get(f"/api/cms/v2/public/sites/{key}/menus/patchnav").status_code == 200
+        resp = c.patch(
+            f"/api/cms/v2/sites/{key}",
+            json={"is_active": False},
+            headers=h,
+        )
+        assert _ok(resp.status_code)
+        assert c.get(f"/api/cms/v2/public/sites/{key}/menus/patchnav").status_code == 404
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# PUBLIC CACHE INVALIDATION — themes / pages / posts (staleness 300s)
+# ═══════════════════════════════════════════════════════════════════════════════
+
+
+class TestPublicThemeCacheInvalidation:
+    """Regresiones: mutaciones de theme invalidan la caché pública."""
+
+    def test_public_theme_cache_invalidated_on_archive(self, full):
+        c, h = full["c"], full["h"]
+        key = _make_site(c, h, "pubtheme")
+        r = c.post(
+            f"/api/cms/v2/sites/{key}/themes",
+            json={"name": "Dark", "tokens_json": {"primary": "#000"}, "is_active": True},
+            headers=h,
+        )
+        assert _ok(r.status_code)
+        tid = r.json()["id"]
+        assert c.get(f"/api/cms/v2/public/sites/{key}/theme").status_code == 200
+        resp = c.delete(f"/api/cms/v2/sites/{key}/themes/{tid}", headers=h)
+        assert resp.status_code == 204
+        # Sin otro theme activo, el endpoint público debe dar 404 inmediato
+        assert c.get(f"/api/cms/v2/public/sites/{key}/theme").status_code == 404
+
+    def test_public_theme_cache_invalidated_on_activate_switch(self, full):
+        c, h = full["c"], full["h"]
+        key = _make_site(c, h, "pubtheme2")
+        r1 = c.post(
+            f"/api/cms/v2/sites/{key}/themes",
+            json={"name": "A", "tokens_json": {"primary": "#aaa"}, "is_active": True},
+            headers=h,
+        )
+        r2 = c.post(
+            f"/api/cms/v2/sites/{key}/themes",
+            json={"name": "B", "tokens_json": {"primary": "#bbb"}},
+            headers=h,
+        )
+        tid1, tid2 = r1.json()["id"], r2.json()["id"]
+        # Theme A es el único activo
+        body = c.get(f"/api/cms/v2/public/sites/{key}/theme").json()
+        assert body["id"] == tid1
+        # Activar B → el público debe reflejarlo de inmediato (caché invalidada)
+        resp = c.post(f"/api/cms/v2/sites/{key}/themes/{tid2}/activate", headers=h)
+        assert _ok(resp.status_code)
+        body = c.get(f"/api/cms/v2/public/sites/{key}/theme").json()
+        assert body["id"] == tid2
+
+
+class TestPublicPageCacheInvalidation:
+    """Regresiones: mutaciones de páginas invalidan la caché pública."""
+
+    def test_public_page_cache_invalidated_on_delete(self, full):
+        c, h = full["c"], full["h"]
+        key = _make_site(c, h, "pubpage")
+        _make_page(c, h, key, "cachepage")
+        c.post(
+            f"/api/cms/v2/sites/{key}/pages/cachepage/workflow",
+            json={"action": "publish"},
+            headers=h,
+        )
+        assert c.get(f"/api/cms/v2/public/sites/{key}/pages/cachepage").status_code == 200
+        resp = c.delete(f"/api/cms/v2/sites/{key}/pages/cachepage", headers=h)
+        assert resp.status_code == 204
+        assert c.get(f"/api/cms/v2/public/sites/{key}/pages/cachepage").status_code == 404
+
+    def test_public_pages_list_cache_invalidated_on_delete(self, full):
+        c, h = full["c"], full["h"]
+        key = _make_site(c, h, "publistinv")
+        _make_page(c, h, key, "gone")
+        c.post(
+            f"/api/cms/v2/sites/{key}/pages/gone/workflow",
+            json={"action": "publish"},
+            headers=h,
+        )
+        first = c.get(f"/api/cms/v2/public/sites/{key}/pages")
+        assert first.status_code == 200
+        slugs = [p["slug"] for p in first.json()["items"]]
+        assert "gone" in slugs
+        c.delete(f"/api/cms/v2/sites/{key}/pages/gone", headers=h)
+        second = c.get(f"/api/cms/v2/public/sites/{key}/pages")
+        assert all(p["slug"] != "gone" for p in second.json()["items"])
+
+    def test_public_page_cache_invalidated_on_rollback(self, full):
+        """Rollback a published page → draft: la caché pública debe dar 404
+        de inmediato (no servir el snapshot stale hasta el TTL)."""
+        c, h = full["c"], full["h"]
+        key = _make_site(c, h, "pubroll")
+        _make_page(c, h, key, "rbpage")
+        c.post(
+            f"/api/cms/v2/sites/{key}/pages/rbpage/workflow",
+            json={"action": "publish"},
+            headers=h,
+        )
+        assert c.get(f"/api/cms/v2/public/sites/{key}/pages/rbpage").status_code == 200
+        # La publicación crea la versión 1 — rollback a ella → draft
+        versions = c.get(f"/api/cms/v2/sites/{key}/pages/rbpage/versions", headers=h)
+        assert _ok(versions.status_code)
+        version_id = versions.json()["items"][0]["id"]
+        resp = c.post(
+            f"/api/cms/v2/sites/{key}/pages/rbpage/rollback/{version_id}",
+            headers=h,
+        )
+        assert _ok(resp.status_code)
+        assert resp.json()["status"] == "draft"
+        # La página ya no es pública — 404 inmediato (no 200 cacheado)
+        assert c.get(f"/api/cms/v2/public/sites/{key}/pages/rbpage").status_code == 404
+
+    def test_public_page_cache_invalidated_on_section_archive(self, full, db_session):
+        """Archivar una sección oculta su render en la página pública de
+        inmediato (cuando la página se sirve por secciones live)."""
+        from backend import models
+
+        c, h = full["c"], full["h"]
+        key = _make_site(c, h, "pubsec")
+        _make_page(c, h, key, "secpage")
+        r = c.post(
+            f"/api/cms/v2/sites/{key}/pages/secpage/sections",
+            json={"type": "rich_text", "props_json": {"content": "visible"}},
+            headers=h,
+        )
+        assert _ok(r.status_code)
+        sec_id = r.json()["id"]
+        # Publish sin published_version (path de secciones live)
+        page = db_session.query(models.CmsPage).filter(models.CmsPage.slug == "secpage").first()
+        page.status = "published"
+        db_session.commit()
+        first = c.get(f"/api/cms/v2/public/sites/{key}/pages/secpage")
+        assert any(s["type"] == "rich_text" for s in first.json()["sections"])
+        resp = c.delete(
+            f"/api/cms/v2/sites/{key}/pages/secpage/sections/{sec_id}",
+            headers=h,
+        )
+        assert resp.status_code == 204
+        second = c.get(f"/api/cms/v2/public/sites/{key}/pages/secpage")
+        assert all(s["type"] != "rich_text" for s in second.json()["sections"])
+
+
+class TestPublicPostCacheInvalidation:
+    """Regresiones: mutaciones de posts invalidan la caché pública."""
+
+    def _publish_post(self, c, h, key, slug):
+        c.post(
+            f"/api/cms/v2/sites/{key}/posts",
+            json={"slug": slug, "title": "T", "content": "x", "status": "draft"},
+            headers=h,
+        )
+        resp = c.patch(
+            f"/api/cms/v2/sites/{key}/posts/{slug}",
+            json={"status": "published", "published_at": datetime.now(timezone.utc).isoformat()},
+            headers=h,
+        )
+        assert _ok(resp.status_code), f"publish_post: {resp.status_code} {resp.text}"
+
+    def test_public_post_cache_invalidated_on_delete(self, full):
+        c, h = full["c"], full["h"]
+        key = _make_site(c, h, "pubpost")
+        self._publish_post(c, h, key, "postinv")
+        assert c.get(f"/api/cms/v2/public/sites/{key}/posts/postinv").status_code == 200
+        resp = c.delete(f"/api/cms/v2/sites/{key}/posts/postinv", headers=h)
+        assert resp.status_code == 204
+        assert c.get(f"/api/cms/v2/public/sites/{key}/posts/postinv").status_code == 404
+
+    def test_public_posts_list_cache_invalidated_on_delete(self, full):
+        c, h = full["c"], full["h"]
+        key = _make_site(c, h, "publistp")
+        self._publish_post(c, h, key, "gone-post")
+        first = c.get(f"/api/cms/v2/public/sites/{key}/posts")
+        slugs = [p["slug"] for p in first.json()["items"]]
+        assert "gone-post" in slugs
+        c.delete(f"/api/cms/v2/sites/{key}/posts/gone-post", headers=h)
+        second = c.get(f"/api/cms/v2/public/sites/{key}/posts")
+        assert all(p["slug"] != "gone-post" for p in second.json()["items"])
+
+    def test_public_post_cache_invalidated_on_update(self, full):
+        c, h = full["c"], full["h"]
+        key = _make_site(c, h, "pubpostup")
+        self._publish_post(c, h, key, "upd-post")
+        first = c.get(f"/api/cms/v2/public/sites/{key}/posts/upd-post").json()
+        assert first["title"] == "T"
+        resp = c.patch(
+            f"/api/cms/v2/sites/{key}/posts/upd-post",
+            json={"title": "Titulo Nuevo"},
+            headers=h,
+        )
+        assert _ok(resp.status_code)
+        second = c.get(f"/api/cms/v2/public/sites/{key}/posts/upd-post").json()
+        assert second["title"] == "Titulo Nuevo"
+
 
 class TestBuildSectionDefaults:
     """Lines 1803-1956: _build_section_defaults helper."""

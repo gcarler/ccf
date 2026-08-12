@@ -214,7 +214,7 @@ export default function UserDetailPage() {
                             <div className="space-y-3 text-center md:text-left relative z-10 flex-1">
                                 <h1 className="text-lg font-bold text-[hsl(var(--text-primary))] dark:text-white tracking-tight">{user.username}</h1>
                                 <div className="flex flex-wrap items-center justify-center md:justify-start gap-3">
-                                    <DSBadge tone={user.role === 'admin' ? 'blue' : 'blue'} label={user.role.toUpperCase()} />
+                                    <DSBadge tone="blue" label={user.role.toUpperCase()} />
                                     <DSBadge tone={user.is_active ? 'emerald' : 'amber'} label={user.is_active ? 'ACTIVO' : 'SUSPENDIDO'} />
                                     <span className="text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide bg-[hsl(var(--surface-1))] dark:bg-white/5 px-3 py-1 rounded-full">
                                         ID: {user.id}

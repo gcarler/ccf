@@ -1,6 +1,7 @@
 "use client";
 
 import { Folder, Layers, Plus } from 'lucide-react';
+import clsx from 'clsx';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
@@ -53,24 +54,42 @@ export default function ProjectsClient({ initialProjects, initialViewType = 'gri
     const searchParams = useSearchParams();
     const [projects, setProjects] = useState<ProjectRecord[]>(initialProjects);
     const [dashboard, setDashboard] = useState<{
-        cards?: Array<{ label: string; title?: string; value: number; icon?: string; color?: string; trend?: number }>;
-        workload_distribution?: Array<{ name: string; tasks: number }>;
+        cards?: Array<{ title: string; value: string; trend?: string | null; tone?: string | null; icon?: string | null }>;
+        workload_distribution?: Array<{ label: string; value: number }>;
         delayed_tasks_count?: number;
     } | null>(null);
     const [viewType, setViewType] = useState<ViewType>(initialViewType);
     const [search, setSearch] = useState('');
+    const [statusFilter, setStatusFilter] = useState<string>('all');
     const [isCreating, setIsCreating] = useState(false);
     const [showCreateForm, setShowCreateForm] = useState(false);
     const { updateProject, deleteProject } = useProjects();
     const projectsListRef = useRef<HTMLDivElement | null>(null);
+
+    // Reload projects from the backend when the token becomes available.
+    // The SSR (page.tsx → fetchProjects) cannot authenticate because the
+    // JWT lives in sessionStorage (client-only), so initialProjects is
+    // often []. This useEffect fetches the real list client-side.
+    useEffect(() => {
+        if (!token) return;
+        const loadProjects = async () => {
+            try {
+                const data = await apiFetch<ProjectRecord[]>('/projects', { token, cache: 'no-store' });
+                if (Array.isArray(data)) setProjects(data);
+            } catch (err) {
+                // Keep SSR data if the client fetch fails (graceful degradation)
+            }
+        };
+        loadProjects();
+    }, [token]);
 
     useEffect(() => {
         if (!token) return;
         const loadDashboard = async () => {
             try {
                 const data = await apiFetch<{
-                    cards?: Array<{ label: string; value: number }>;
-                    workload_distribution?: Array<{ name: string; tasks: number }>;
+                    cards?: Array<{ title: string; value: string; trend?: string | null; tone?: string | null; icon?: string | null }>;
+                    workload_distribution?: Array<{ label: string; value: number }>;
                     delayed_tasks_count?: number;
                 }>('/dashboard/projects', { token });
                 setDashboard(data);
@@ -121,7 +140,8 @@ export default function ProjectsClient({ initialProjects, initialViewType = 'gri
             (p) =>
                 p.title.toLowerCase().includes(search.toLowerCase()) ||
                 (p.description || '').toLowerCase().includes(search.toLowerCase())
-        );
+        )
+        .filter((p) => statusFilter === 'all' || (p.status || 'active') === statusFilter);
 
     const handleUpdateProject = useCallback(
         async (projectId: string, patch: Partial<ProjectRecord>) => {
@@ -216,12 +236,23 @@ export default function ProjectsClient({ initialProjects, initialViewType = 'gri
 
     const renderView = () => {
         if (filtered.length === 0) {
-            return (
+            // Wrap the empty state inside the anchor container for the list
+            // view so that the #projects-dashboard hash target always exists
+            // when the user clicks the "Proyectos" metric card.
+            const emptyState = (
                 <EmptyProjectsState
                     search={search}
                     onShowCreate={() => setShowCreateForm(true)}
                 />
             );
+            if (viewType === 'list') {
+                return (
+                    <div id={PROJECTS_LIST_ANCHOR} ref={projectsListRef}>
+                        {emptyState}
+                    </div>
+                );
+            }
+            return emptyState;
         }
 
         switch (viewType) {
@@ -275,18 +306,14 @@ export default function ProjectsClient({ initialProjects, initialViewType = 'gri
             {/* 📊 Project Metrics */}
             <section className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 {dashboard?.cards?.map((card, idx) => {
-                    const label = (card.title || card.label).toLowerCase();
+                    const label = (card.title || '').toLowerCase();
                     return (
                         <DSMetric
                             key={idx}
-                            label={card.title || card.label}
-                            value={String(card.value)}
-                            trend={
-                                card.trend != null
-                                    ? `${card.trend > 0 ? '+' : ''}${card.trend}%`
-                                    : undefined
-                            }
-                            tone={card.color as 'blue' | 'emerald' | 'amber' | undefined}
+                            label={card.title}
+                            value={card.value}
+                            trend={card.trend ?? undefined}
+                            tone={card.tone as 'blue' | 'emerald' | 'amber' | undefined}
                             href={getProjectMetricHref(label)}
                             onClick={() => {
                                 const targetUrl = getProjectMetricHref(label);
@@ -299,6 +326,29 @@ export default function ProjectsClient({ initialProjects, initialViewType = 'gri
                 })}
             </section>
 
+            {/* 🔍 Status Filter Bar */}
+            <div className="flex items-center gap-2 flex-wrap">
+                {['all', 'planning', 'active', 'on_hold', 'completed', 'archived'].map((status) => (
+                    <button
+                        key={status}
+                        onClick={() => setStatusFilter(status)}
+                        className={clsx(
+                            'px-3 py-1 rounded-full text-2xs font-bold uppercase tracking-wide border transition-colors',
+                            statusFilter === status
+                                ? 'bg-[hsl(var(--primary))] text-white border-[hsl(var(--primary))]'
+                                : 'border-[hsl(var(--border))] dark:border-white/10 text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5'
+                        )}
+                    >
+                        {status === 'all' ? 'Todos' :
+                         status === 'planning' ? 'Planificación' :
+                         status === 'active' ? 'Activo' :
+                         status === 'on_hold' ? 'En Pausa' :
+                         status === 'completed' ? 'Completado' :
+                         'Archivado'}
+                    </button>
+                ))}
+            </div>
+
             {/* 📈 Charts */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
                 <div className="lg:col-span-2">
@@ -310,8 +360,8 @@ export default function ProjectsClient({ initialProjects, initialViewType = 'gri
                             <DSChart
                                 type="bar"
                                 data={dashboard?.workload_distribution?.map((w) => ({
-                                    label: w.name,
-                                    value: w.tasks,
+                                    label: w.label,
+                                    value: w.value,
                                 }))}
                                 color="hsl(var(--warning))"
                                 height={220}

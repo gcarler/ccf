@@ -50,17 +50,24 @@ def seed_rol_plataforma(db) -> None:
     roles_config = build_roles_config()
 
     created = 0
+    updated = 0
     for nombre, module_levels in roles_config.items():
-        existing = db.query(RolPlataforma).filter(RolPlataforma.nombre == nombre).first()
-        if existing:
-            log.info("RolPlataforma '%s' already exists, skipping", nombre)
-            continue
-
         permisos = {}
         for module, level in module_levels.items():
             expanded = expand_module_permissions(module, level)
             for p in expanded:
                 permisos[p] = "allow"
+
+        existing = db.query(RolPlataforma).filter(RolPlataforma.nombre == nombre).first()
+        if existing:
+            # Upsert idempotente: roles sembrados por una versión previa del
+            # seed (sin permisos CMS, por ejemplo) quedan desactualizados y
+            # rompen el RBAC del CMS (GESTOR sin cms:read/cms:edit). Re-sembrar
+            # el rol con la matriz canónica garantiza consistencia sin duplicar.
+            existing.permisos = permisos
+            updated += 1
+            log.info("Updated RolPlataforma: %s with %d permissions", nombre, len(permisos))
+            continue
 
         rol = RolPlataforma(nombre=nombre, permisos=permisos)
         db.add(rol)
@@ -68,7 +75,7 @@ def seed_rol_plataforma(db) -> None:
         log.info("Created RolPlataforma: %s with %d permissions", nombre, len(permisos))
 
     db.commit()
-    log.info("RolPlataforma seeded: %d created", created)
+    log.info("RolPlataforma seeded: %d created, %d updated", created, updated)
 
 
 def main() -> None:

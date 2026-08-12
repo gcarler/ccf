@@ -6,14 +6,14 @@ Este documento fija la matriz RBAC operativa de CMS contra el código actual. Do
 
 CMS no tiene una sola superficie homogénea. La lectura correcta exige separar:
 
-- `backend/api/cms.py` (CMS v1)
-- `backend/api/cms_v2.py` (CMS v2)
+- `backend/api/cms/v1.py` (CMS v1, compatibilidad de media)
+- `backend/api/cms_v2/` (CMS v2 modular)
 - `backend/api/enterprise_cms.py` (Enterprise CMS)
 
 ## 2. Fuente de verdad inspeccionada
 
-- `backend/api/cms.py`
-- `backend/api/cms_v2.py`
+- `backend/api/cms/v1.py`
+- `backend/api/cms_v2/`
 - `backend/api/enterprise_cms.py`
 - `backend/core/permissions.py`
 - `backend/management/seed_user_permissions.py`
@@ -68,22 +68,27 @@ En CMS, depender del fallback runtime no es equivalente a depender del `RolPlata
 
 ## 5. Matriz por superficie
 
-### 5.1. CMS v1 (`backend/api/cms.py`)
+### 5.1. CMS v1 (`backend/api/cms/v1.py`)
 
 | Superficie | Guard observado | Roles que pasan hoy |
 |---|---|---|
-| feeds públicos `/cms/testimonials`, `/cms/announcements` | público | cualquiera |
+| contenido público de testimonios/anuncios servido por CMS v2 | público | cualquiera |
 | listados admin testimonials/announcements | `require_module_access("cms", "read")` | `ADMINISTRADOR`, `GESTOR`, `EDITOR`, `LECTOR` persistido |
 | create/update/delete testimonials/announcements | `require_module_access("cms", "read")` | mismos que arriba |
-| media list/detail/create/update/delete/optimize/upload | `require_module_access("cms", "read")` | `ADMINISTRADOR`, `GESTOR`, `EDITOR`, `LECTOR` persistido |
+| media list/detail | `require_module_access("cms", "read")` + scope de sede | usuarios con `cms:read` y sede válida |
+| media create/update/optimize/upload/edit | `require_module_access("cms", "edit")` + `CMS_EDITOR_ROLES` + scope de sede | `ADMINISTRADOR`, `GESTOR`, `EDITOR` persistidos |
+| media soft-delete | `require_module_access("cms", "edit")` + `CMS_EDITOR_ROLES` + scope de sede | `ADMINISTRADOR`, `GESTOR`, `EDITOR` persistidos |
+| media hard-delete (`permanent=true`) / cleanup | `require_module_access("cms", "edit")` + `CMS_PUBLISHER_ROLES` + scope de sede | `ADMINISTRADOR`, `COORDINADOR`, `PASTOR` persistidos |
 | metrics | `require_module_access("cms", "read")` | `ADMINISTRADOR`, `GESTOR`, `EDITOR`, `LECTOR` persistido |
 
-Hallazgo crítico:
+Corrección aplicada:
 
-- en CMS v1 varias mutaciones administrativas están protegidas sólo con `cms:read`
-- por contrato actual, `LECTOR` persistido podría alcanzar mutaciones v1 si no hay otra barrera funcional
+- las mutaciones editoriales de media v1 conservan el permiso granular `cms:edit` y aplican `CMS_EDITOR_ROLES`, igual que CMS v2
+- el soft-delete sigue siendo editorial; el hard-delete (`permanent=true`) y cleanup requieren `CMS_PUBLISHER_ROLES`
+- esto impide que un rol nominal `LECTOR` con un grant manual aislado de `cms:edit` atraviese v1 de forma distinta a v2
+- las lecturas siguen usando `cms:read` y mantienen el scope por sede
 
-### 5.2. CMS v2 (`backend/api/cms_v2.py`)
+### 5.2. CMS v2 (`backend/api/cms_v2/`)
 
 Patrón observado:
 
@@ -131,14 +136,14 @@ Hallazgo operativo:
 | `ADMINISTRADOR` | lectura + mutación | lectura + mutación | lectura + mutación |
 | `GESTOR` persistido | lectura + mutación v1 | lectura + mutación v2 | lectura si tiene `cms:read`; mutación sólo con `cms:manage` |
 | `EDITOR` persistido | lectura + mutación v1 | lectura + mutación v2 | lectura si tiene `cms:read`; mutación sólo con `cms:manage` |
-| `LECTOR` persistido | lectura + también mutación v1 por guard actual | solo lectura v2 | lectura sólo si tiene `cms:read`; sin mutación |
+| `LECTOR` persistido | solo lectura; mutaciones bloqueadas por `CMS_EDITOR_ROLES` | solo lectura v2 | lectura sólo si tiene `cms:read`; sin mutación |
 | `MIEMBRO` | sin CMS | sin CMS | sin CMS salvo permiso explícito añadido |
 
 ## 7. Riesgos y drift documentados
 
-1. CMS v1 está subprotegido: varias mutaciones usan `cms:read`.
-2. CMS v2 está mejor segmentado que v1.
-3. Enterprise CMS ya expresa RBAC por `cms:*` en el borde del router; la deuda activa se concentra ahora en otros flujos del módulo.
+1. CMS v1 conserva endpoints de compatibilidad, pero sus mutaciones de media ya están alineadas con el guard nominal de v2.
+2. CMS v2 sigue siendo la superficie canónica para páginas, posts, workflow y contenido nuevo.
+3. Enterprise CMS ya expresa RBAC por `cms:*` en el borde del router; la deuda activa se concentra ahora en la migración documental y de consumidores legacy.
 4. seed persistido y fallback runtime siguen sin ser equivalentes para `GESTOR`, `EDITOR` y `LECTOR`.
 
 ## 8. Reglas operativas para QA
@@ -147,12 +152,12 @@ Validar mínimo:
 
 1. `ADMINISTRADOR` entra a toda la superficie interna CMS
 2. `GESTOR` y `EDITOR` deben poder mutar CMS v2
-3. `LECTOR` no debería mutar CMS, pero en v1 puede pasar por guard actual; ese drift debe considerarse real
+3. `LECTOR` no debe mutar CMS; v1 y v2 deben conservar la misma barrera nominal además del permiso granular
 4. preview, publicado y público se prueban por separado
 5. enterprise se valida como superficie aparte; auth no equivale a permiso CMS correcto
 
 ## 9. Estado
 
-- `PEND-RBAC-CMS-001` queda cerrada el `2026-07-16` como documentación del contrato actual
+- `PEND-RBAC-CMS-001` se corrige en esta auditoría: mutaciones v1 de media alineadas con v2 y documentadas aquí
 - `PEND-RBAC-ENTERPRISE-CMS-001` queda cerrada el `2026-07-16` con guards `cms:read` / `cms:manage` en el borde del router
 - la deuda técnica visible queda concentrada en la evolución normal de CMS v1 y en cambios futuros de contrato, no en Enterprise CMS

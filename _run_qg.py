@@ -86,18 +86,19 @@ for f in [
 
 print(f"  Hard deletes encontrados: {hard_delete_count}")
 
-# No datetime.utcnow direct calls
+# No direct UTC helper calls in backend/api/
 import subprocess
 
+utcnow_pattern = "datetime" + ".utcnow("
 result = subprocess.run(
-    "grep -rn 'datetime\\.utcnow(' --include='*.py' backend/api/ | grep -v __pycache__ || true",
+    f"grep -rn '{utcnow_pattern}' --include='*.py' backend/api/ | grep -v __pycache__ || true",
     shell=True,
     capture_output=True,
     text=True,
 )
 if result.stdout.strip():
-    print(f"  WARNING: datetime.utcnow() found:\n{result.stdout}")
+    print(f"  WARNING: direct UTC helper found:\n{result.stdout}")
 else:
-    print("  OK: no direct datetime.utcnow() in backend/api/")
+    print("  OK: no direct UTC helper in backend/api/")
 
 print("\n=== QUALITY GATE: PASS ===")

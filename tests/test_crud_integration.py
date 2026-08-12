@@ -183,6 +183,62 @@ class TestProjectsCrud:
         update_project(db, project.id, ProjectUpdate(title="New Name"), sede_id=sede.id)
         assert project.name == "New Name"
 
+    def test_update_project_rejects_foreign_sede_scope(self, authed_client):
+        _client, _headers, sede, persona, db = authed_client
+        from backend.crud.projects import create_project, update_project
+        from backend.schemas.projects import ProjectCreate, ProjectUpdate
+
+        project = create_project(db, ProjectCreate(title="Scoped Name"), sede_id=sede.id, owner_persona_id=persona.id)
+        foreign_sede_id = uuid.uuid4()
+
+        updated = update_project(
+            db,
+            project.id,
+            ProjectUpdate(title="Cross-sede mutation"),
+            sede_id=foreign_sede_id,
+        )
+
+        assert updated is None
+        db.refresh(project)
+        assert project.title == "Scoped Name"
+
+    def test_update_project_rejects_missing_sede_scope(self, authed_client):
+        _client, _headers, sede, persona, db = authed_client
+        from backend.crud.projects import create_project, update_project
+        from backend.schemas.projects import ProjectCreate, ProjectUpdate
+
+        project = create_project(db, ProjectCreate(title="Scoped Name"), sede_id=sede.id, owner_persona_id=persona.id)
+
+        with pytest.raises(ValueError, match="sede_id is required"):
+            update_project(db, project.id, ProjectUpdate(title="Unscoped mutation"))
+
+        db.refresh(project)
+        assert project.title == "Scoped Name"
+
+    def test_delete_project_rejects_foreign_sede_scope(self, authed_client):
+        _client, _headers, sede, persona, db = authed_client
+        from backend.crud.projects import create_project, delete_project
+        from backend.schemas.projects import ProjectCreate
+
+        project = create_project(db, ProjectCreate(title="Scoped Delete"), sede_id=sede.id, owner_persona_id=persona.id)
+
+        assert delete_project(db, project.id, sede_id=uuid.uuid4()) is False
+        db.refresh(project)
+        assert project.deleted_at is None
+
+    def test_delete_project_rejects_missing_sede_scope(self, authed_client):
+        _client, _headers, sede, persona, db = authed_client
+        from backend.crud.projects import create_project, delete_project
+        from backend.schemas.projects import ProjectCreate
+
+        project = create_project(db, ProjectCreate(title="Scoped Delete"), sede_id=sede.id, owner_persona_id=persona.id)
+
+        with pytest.raises(ValueError, match="sede_id is required"):
+            delete_project(db, project.id)
+
+        db.refresh(project)
+        assert project.deleted_at is None
+
     def test_list_projects(self, authed_client):
         client, headers, sede, persona, db = authed_client
         from backend.crud.projects import get_projects

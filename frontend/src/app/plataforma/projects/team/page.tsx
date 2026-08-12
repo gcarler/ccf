@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import {
     Users, AlertTriangle,
-    ChevronRight, UserPlus, Loader2
+    ChevronRight, UserPlus, UserMinus, Loader2
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import clsx from 'clsx';
@@ -49,6 +49,10 @@ export default function TeamPage() {
     const [inviting, setInviting] = useState(false);
     const [projects, setProjects] = useState<ProjectRecord[]>([]);
     const [members, setMembers] = useState<Record<string, ProjectMemberItem[]>>({});
+    // View mode: 'workload' = global ministerial workload; 'members' = members of a specific project.
+    const [viewMode, setViewMode] = useState<'workload' | 'members'>('workload');
+    const [selectedProjectId, setSelectedProjectId] = useState('');
+    const [removingId, setRemovingId] = useState<string | null>(null);
 
     useEffect(() => {
         if (!layers.RIGHT && selectedPersona) setSelectedPersona(null);
@@ -71,14 +75,19 @@ export default function TeamPage() {
                 setError('No se pudo cargar el equipo del proyecto.');
             })
             .finally(() => setLoading(false));
-    }, [authLoading, token]);
-
-    useEffect(() => {
-        if (!showInvite || !token) return;
+        // Cargar la lista de proyectos para el selector de vista de miembros.
         apiFetch<ProjectRecord[]>('/projects', { token })
             .then(data => setProjects(Array.isArray(data) ? data : []))
             .catch(() => setProjects([]));
-    }, [showInvite, token]);
+    }, [authLoading, token]);
+
+    // Cargar miembros reales del proyecto seleccionado vía GET /projects/{id}/team.
+    useEffect(() => {
+        if (!token || viewMode !== 'members' || !selectedProjectId) return;
+        apiFetch<ProjectMemberItem[]>(`/projects/${selectedProjectId}/team`, { token })
+            .then(data => setMembers(prev => ({ ...prev, [selectedProjectId]: Array.isArray(data) ? data : [] })))
+            .catch(() => setMembers(prev => ({ ...prev, [selectedProjectId]: [] })));
+    }, [token, viewMode, selectedProjectId]);
 
     const handleSelect = (persona: TeamPersona) => {
         setSelectedPersona(persona);
@@ -87,7 +96,7 @@ export default function TeamPage() {
     };
 
     const openInvite = () => {
-        setInviteProjectId(projects[0]?.id ?? '');
+        setInviteProjectId(viewMode === 'members' && selectedProjectId ? selectedProjectId : (projects[0]?.id ?? ''));
         setInvitePersonaId(null);
         setShowInvite(true);
     };
@@ -114,6 +123,23 @@ export default function TeamPage() {
         }
     };
 
+    const handleRemoveMember = async (projectId: string, personaId: string) => {
+        if (!token) return;
+        setRemovingId(personaId);
+        try {
+            await apiFetch(`/projects/${projectId}/team/${personaId}`, { method: 'DELETE', token });
+            setMembers(prev => ({
+                ...prev,
+                [projectId]: (prev[projectId] ?? []).filter(m => m.persona_id !== personaId),
+            }));
+            toast.success('Integrante removido del equipo');
+        } catch {
+            toast.error('No se pudo remover al integrante');
+        } finally {
+            setRemovingId(null);
+        }
+    };
+
     return (
         <ProjectsShell
             breadcrumbs={[{ label: 'Proyectos', icon: Users }, { label: 'Equipo', icon: Users }]}
@@ -126,6 +152,44 @@ export default function TeamPage() {
                         </div>
                     )}
 
+                    {/* View mode switcher + project selector */}
+                    <div className="flex items-center gap-2 flex-wrap">
+                        <button
+                            onClick={() => { setViewMode('workload'); }}
+                            className={clsx(
+                                'px-3 py-1 rounded-full text-2xs font-bold uppercase tracking-wide border transition-colors',
+                                viewMode === 'workload'
+                                    ? 'bg-[hsl(var(--primary))] text-white border-[hsl(var(--primary))]'
+                                    : 'border-[hsl(var(--border))] dark:border-white/10 text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5'
+                            )}
+                        >
+                            Carga global
+                        </button>
+                        <button
+                            onClick={() => { setViewMode('members'); setSelectedProjectId(projects[0]?.id ?? ''); }}
+                            className={clsx(
+                                'px-3 py-1 rounded-full text-2xs font-bold uppercase tracking-wide border transition-colors',
+                                viewMode === 'members'
+                                    ? 'bg-[hsl(var(--primary))] text-white border-[hsl(var(--primary))]'
+                                    : 'border-[hsl(var(--border))] dark:border-white/10 text-[hsl(var(--secondary))] hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5'
+                            )}
+                        >
+                            Miembros por proyecto
+                        </button>
+                        {viewMode === 'members' && (
+                            <select
+                                value={selectedProjectId}
+                                onChange={(e) => setSelectedProjectId(e.target.value)}
+                                className="bg-[hsl(var(--surface-1))] dark:bg-black/20 border border-[hsl(var(--border))] dark:border-white/5 rounded-md px-3 py-1.5 text-sm font-medium outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]/20 transition-all text-[hsl(var(--text-primary))] dark:text-white"
+                            >
+                                {projects.length === 0 && <option value="">Sin proyectos</option>}
+                                {projects.map((p) => (
+                                    <option key={p.id} value={p.id}>{p.title}</option>
+                                ))}
+                            </select>
+                        )}
+                    </div>
+
                     {/* Sub-header */}
                     <div className="flex items-center justify-between">
                         <div>
@@ -136,14 +200,16 @@ export default function TeamPage() {
                                 <span className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--primary))]">Recursos Humanos</span>
                             </div>
                             <h1 className="text-xl font-bold tracking-tight text-[hsl(var(--text-primary))] dark:text-white leading-none">
-                                Equipo del Proyecto
+                                {viewMode === 'workload' ? 'Equipo del Proyecto' : 'Miembros del Proyecto'}
                             </h1>
                             <p className="text-sm text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] mt-0.5 font-medium">
-                                Disponibilidad y saturación del equipo ministerial en tiempo real.
+                                {viewMode === 'workload'
+                                    ? 'Disponibilidad y saturación del equipo ministerial en tiempo real.'
+                                    : 'Personas asignadas al proyecto seleccionado.'}
                             </p>
                         </div>
                         <div className="flex items-center gap-3">
-                            {!loading && team.length > 0 && (
+                            {viewMode === 'workload' && !loading && team.length > 0 && (
                                 <div className="px-4 py-2 bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))] rounded-md border border-[hsl(var(--border))] dark:border-white/[0.06] shadow-sm text-center">
                                     <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Cap. Prom.</p>
                                     <p className="text-sm font-semibold text-[hsl(var(--primary))]">
@@ -151,18 +217,90 @@ export default function TeamPage() {
                                     </p>
                                 </div>
                             )}
+                            {viewMode === 'members' && selectedProjectId && (members[selectedProjectId]?.length ?? 0) > 0 && (
+                                <div className="px-4 py-2 bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))] rounded-md border border-[hsl(var(--border))] dark:border-white/[0.06] shadow-sm text-center">
+                                    <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Miembros</p>
+                                    <p className="text-sm font-semibold text-[hsl(var(--primary))]">
+                                        {members[selectedProjectId].length}
+                                    </p>
+                                </div>
+                            )}
                             <button
                                 onClick={openInvite}
-                                className="flex items-center gap-2 px-4 py-1.5 bg-[hsl(var(--primary))] text-white rounded-lg text-xs font-semibold uppercase tracking-wide shadow-xl shadow-[hsl(var(--info)/20%)] hover:bg-[hsl(var(--primary))] active:scale-95 transition-all"
+                                disabled={viewMode === 'members' && !selectedProjectId}
+                                className="flex items-center gap-2 px-4 py-1.5 bg-[hsl(var(--primary))] text-white rounded-lg text-xs font-semibold uppercase tracking-wide shadow-xl shadow-[hsl(var(--info)/20%)] hover:bg-[hsl(var(--primary))] active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 <UserPlus size={13} /> Invitar
                             </button>
                         </div>
                     </div>
-                    {loading ? (
+                    {loading && viewMode === 'workload' ? (
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                             {[...Array(6)].map((_, i) => <DSSkeleton key={i} className="h-48 rounded-lg" />)}
                         </div>
+                    ) : viewMode === 'members' ? (
+                        !selectedProjectId ? (
+                            <EmptyState
+                                icon={Users}
+                                title="Selecciona un proyecto"
+                                description="Elige un proyecto del selector para ver las personas asignadas a su equipo."
+                            />
+                        ) : (members[selectedProjectId] === undefined ? (
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                                {[...Array(3)].map((_, i) => <DSSkeleton key={i} className="h-32 rounded-lg" />)}
+                            </div>
+                        ) : members[selectedProjectId].length === 0 ? (
+                            <EmptyState
+                                icon={Users}
+                                title="Sin miembros en este proyecto"
+                                description="Invita colaboradores a este proyecto para que aparezcan aquí."
+                            />
+                        ) : (
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                                {members[selectedProjectId].map((member, idx) => (
+                                    <motion.div
+                                        key={member.id}
+                                        initial={{ opacity: 0, scale: 0.97 }}
+                                        animate={{ opacity: 1, scale: 1 }}
+                                        transition={{ delay: idx * 0.05 }}
+                                        className="group relative bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))] rounded-lg border border-[hsl(var(--border))]/70 dark:border-white/[0.06] p-3 shadow-sm transition-all overflow-hidden"
+                                    >
+                                        <div className="absolute top-0 left-0 right-0 h-[3px] bg-[hsl(var(--info))]" />
+                                        <div className="flex items-start justify-between mb-3">
+                                            <div className="flex items-center gap-3">
+                                                <div className="size-8 rounded-md bg-[hsl(var(--surface-2))] dark:bg-white/10 flex items-center justify-center text-[hsl(var(--text-secondary))] shadow-sm font-bold text-xs">
+                                                    {(member.persona_name ?? member.persona_id).substring(0, 2).toUpperCase()}
+                                                </div>
+                                                <div>
+                                                    <p className="text-base font-medium text-[hsl(var(--text-primary))] dark:text-white leading-none">
+                                                        {member.persona_name ?? 'Sin nombre'}
+                                                    </p>
+                                                    <span className="text-2xs font-semibold uppercase tracking-wide mt-0.5 block text-[hsl(var(--text-secondary))]">
+                                                        {member.role}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div className="p-2 bg-[hsl(var(--surface-1))] dark:bg-black/20 rounded-md mb-3">
+                                            <p className="text-2xs font-bold uppercase text-[hsl(var(--text-secondary))] mb-0.5">Invitado</p>
+                                            <p className="text-sm font-medium text-[hsl(var(--text-primary))] dark:text-white">
+                                                {member.invited_at
+                                                    ? new Date(member.invited_at).toLocaleDateString('es', { day: 'numeric', month: 'short', year: 'numeric' })
+                                                    : '—'}
+                                            </p>
+                                        </div>
+                                        <button
+                                            onClick={() => handleRemoveMember(selectedProjectId, member.persona_id)}
+                                            disabled={removingId === member.persona_id}
+                                            className="w-full py-1.5 text-2xs font-bold uppercase tracking-wide text-[hsl(var(--danger))] border border-[hsl(var(--danger))]/30 rounded-md hover:bg-[hsl(var(--danger))]/10 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1.5"
+                                        >
+                                            {removingId === member.persona_id ? <Loader2 className="animate-spin" size={12} /> : <UserMinus size={12} />}
+                                            {removingId === member.persona_id ? 'Removiendo...' : 'Remover del proyecto'}
+                                        </button>
+                                    </motion.div>
+                                ))}
+                            </div>
+                        ))
                     ) : !error && team.length === 0 ? (
                         <EmptyState
                             icon={Users}

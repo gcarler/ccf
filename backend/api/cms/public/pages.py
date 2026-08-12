@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+from typing import Any
 
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session, lazyload
@@ -93,6 +94,7 @@ def public_page(site_key: str, slug: str, db: Session = Depends(get_db)):
 
     settings = get_settings()
     base_url = settings.frontend_url.rstrip("/")
+    defaults_cache: dict[str, dict[str, Any]] = {}
 
     if published_version:
         snapshot = published_version.snapshot_json or {}
@@ -110,7 +112,12 @@ def public_page(site_key: str, slug: str, db: Session = Depends(get_db)):
         ]
         section_rows = [
             schemas.CmsSectionRead(
-                **{**s.model_dump(), "props_json": _build_section_defaults(db, site_key, s.type, s.props_json)}
+                **{
+                    **s.model_dump(),
+                    "props_json": _build_section_defaults(
+                        db, site_key, s.type, s.props_json, defaults_cache=defaults_cache
+                    ),
+                }
             )
             for s in section_rows
         ]
@@ -170,7 +177,9 @@ def public_page(site_key: str, slug: str, db: Session = Depends(get_db)):
     section_reads = []
     for section in sections:
         sr = schemas.CmsSectionRead.model_validate(section)
-        sr.props_json = _build_section_defaults(db, site_key, sr.type, sr.props_json)
+        sr.props_json = _build_section_defaults(
+            db, site_key, sr.type, sr.props_json, defaults_cache=defaults_cache
+        )
         section_reads.append(sr)
     page_url = f"{base_url}/{page.slug.lstrip('/')}"
     canonical = (page.seo_json or {}).get("canonical_url") if isinstance(page.seo_json, dict) else None

@@ -7,6 +7,7 @@ explicit Academy permission.
 
 from __future__ import annotations
 
+import asyncio
 from datetime import date
 from html import escape as _html_escape
 from typing import Annotated, Any
@@ -858,7 +859,7 @@ def validate_certificate(code: str, request: Request, db: Session = Depends(get_
 
 @router.post("/lessons/{lesson_id}/submit-assignment", response_model=schemas.AssignmentSubmission)
 @academy_limiter.limit("10/minute")
-def submit_assignment(
+async def submit_assignment(
     lesson_id: UUID,
     request: Request,
     current_user: AcademyStudent,
@@ -903,11 +904,19 @@ def submit_assignment(
     if file.content_type and file.content_type not in ALLOWED_TYPES:
         raise HTTPException(status_code=422, detail="Tipo de archivo no permitido")
     MAX_SIZE = 10 * 1024 * 1024
-    contents = file.file.read()
-    if len(contents) > MAX_SIZE:
-        raise HTTPException(status_code=422, detail="El archivo excede el límite de 10 MB")
-    url = storage_service.save_file_original(
-        contents, sanitize_filename(file.filename or "assignment"), subfolder="academy"
+    contents = bytearray()
+    while True:
+        chunk = await file.read(64 * 1024)
+        if not chunk:
+            break
+        contents.extend(chunk)
+        if len(contents) > MAX_SIZE:
+            raise HTTPException(status_code=422, detail="El archivo excede el límite de 10 MB")
+    url = await asyncio.to_thread(
+        storage_service.save_file_original,
+        bytes(contents),
+        sanitize_filename(file.filename or "assignment"),
+        "academy",
     )
     submission = models.AssignmentSubmission(
         enrollment_id=enrollment.id,
@@ -943,7 +952,7 @@ def forum_threads(
     # innerjoin para los hilos con course_id != NULL descarta automáticamente
     # los huérfanos/archivados (JOIN falla → row no aparece). Complementado con
     # el branch course_id IS NULL para los anuncios globales puros.
-    query = db.query(models.ForumThread)
+    query = db.query(models.ForumThread).filter(models.ForumThread.deleted_at.is_(None))
     if sede_id:
         # Hilos globales (course_id IS NULL) O hilos con Course no borrado de la sede.
         query = query.outerjoin(
@@ -1027,7 +1036,14 @@ def resolve_forum_thread(
     db: Session = Depends(get_db),
 ):
     # ACAD-MED-002: alternar is_resolved. Solo Editor/Manager.
-    thread = db.query(models.ForumThread).filter(models.ForumThread.id == thread_id).first()
+    thread = (
+        db.query(models.ForumThread)
+        .filter(
+            models.ForumThread.id == thread_id,
+            models.ForumThread.deleted_at.is_(None),
+        )
+        .first()
+    )
     if not thread:
         raise HTTPException(status_code=404, detail="Hilo no encontrado")
     if thread.course_id:
@@ -1049,7 +1065,14 @@ def resolve_forum_thread(
 
 
 def _get_scoped_forum_thread(db: Session, current_user: models.User, thread_id: UUID):
-    thread = db.query(models.ForumThread).filter(models.ForumThread.id == thread_id).first()
+    thread = (
+        db.query(models.ForumThread)
+        .filter(
+            models.ForumThread.id == thread_id,
+            models.ForumThread.deleted_at.is_(None),
+        )
+        .first()
+    )
     if not thread:
         raise HTTPException(status_code=404, detail="Hilo no encontrado")
     if thread.course_id:

@@ -8,12 +8,16 @@ re-publish the ``pastors`` page to reflect the changes on the public site.
 
 from __future__ import annotations
 
+import logging
 import uuid as _uuid
 
 from sqlalchemy.orm import Session
 
 from backend import models
+from backend.core.cache_v2 import invalidate_cached_public_pattern
 from backend.crud._utils import _slugify
+
+_logger = logging.getLogger(__name__)
 
 SITE_KEY = "ccf"
 PAGE_SLUG = "pastors"
@@ -176,6 +180,13 @@ def sync_pastoral_profiles_from_cms_section(db: Session) -> dict[str, int]:
             persona.church_role = role
 
     db.commit()
+    # Cierre de staleness: los perfiles marcados/creados como líderes
+    # pastorales cambian la salida del endpoint público cacheado
+    # ``public_pastoral_team``.
+    try:
+        invalidate_cached_public_pattern("public_pastoral_team")
+    except Exception:  # la invalidación nunca debe romper la mutación
+        _logger.debug("public pastoral team cache invalidation skipped", exc_info=True)
     return {"matched": matched, "created": created, "total": len(pastors)}
 
 
@@ -252,6 +263,13 @@ def update_pastors_section_from_profiles(db: Session) -> bool:
     section.props_json = build_pastors_section_props(db, sede_id=sede_id)
     db.commit()
     db.refresh(section)
+    # Cierre de staleness: la sección ``pastors`` refleja los perfiles
+    # (is_pastoral_leader) y el endpoint público cacheado
+    # ``public_pastoral_team`` deriva de esos mismos perfiles.
+    try:
+        invalidate_cached_public_pattern("public_pastoral_team")
+    except Exception:  # la invalidación nunca debe romper la mutación
+        _logger.debug("public pastoral team cache invalidation skipped", exc_info=True)
     return True
 
 

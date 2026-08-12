@@ -31,9 +31,9 @@ export default function BoletinPage() {
         e.preventDefault();
         setStatus("sending");
         try {
-            await apiFetch("/public/newsletter/subscribe", {
+            await apiFetch("/cms/v2/public/subscribe", {
                 method: "POST",
-                body: { email, source: "newsletter-web", landing_page: "/boletin" },
+                body: { site_key: "ccf", email },
             });
             setStatus("sent");
             toast.success(`¡Suscrito al boletín de ${SITE_NAME}!`);

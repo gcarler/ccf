@@ -11,11 +11,13 @@ import {
   VideoHeroSection,
   RichTextSection,
   RichTextColumnsSection,
+  AboutSection,
   CardsSection,
   CtaBannerSection,
   GallerySection,
   FaqSection,
   EmbedSection,
+  FeedSection,
   TestimonialsSection,
   StatsSection,
   TeamSection,
@@ -159,11 +161,13 @@ function renderSection(section: CmsSection) {
     case "video_hero":       return <VideoHeroSection section={asTyped<"video_hero">(section)} />;
     case "rich_text":        return <RichTextSection section={asTyped<"rich_text">(section)} />;
     case "rich_text_columns":return <RichTextColumnsSection section={asTyped<"rich_text_columns">(section)} />;
+    case "about":            return <AboutSection section={asTyped<"about">(section)} />;
     case "cards":            return <CardsSection section={asTyped<"cards">(section)} />;
     case "cta_banner":       return <CtaBannerSection section={asTyped<"cta_banner">(section)} />;
     case "gallery":          return <GallerySection section={asTyped<"gallery">(section)} />;
     case "faq":              return <FaqSection section={asTyped<"faq">(section)} />;
     case "embed":            return <EmbedSection section={asTyped<"embed">(section)} />;
+    case "feed":             return <FeedSection section={asTyped<"feed">(section)} />;
     case "testimonials":     return <TestimonialsSection section={asTyped<"testimonials">(section)} />;
     case "stats":            return <StatsSection section={asTyped<"stats">(section)} />;
     case "team":             return <TeamSection section={asTyped<"team">(section)} />;

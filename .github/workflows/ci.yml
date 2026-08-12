@@ -11,6 +11,11 @@ env:
   NODE_VERSION: "20"
   DATABASE_URL: "postgresql://postgres:postgres@localhost:5432/ccf_test"
   TEST_DATABASE_URL: "postgresql://postgres:postgres@localhost:5432/ccf_test"
+  # Fuente única de verdad del umbral de cobertura backend (heredero en todos
+  # los jobs; debe coincidir con el target `make coverage-gate`). Ya no vive en
+  # pytest.ini para que los subconjuntos de tests locales no fallen por
+  # cobertura parcial.
+  COV_THRESHOLD: "38"
 
 jobs:
   # ── Quality Gate ─────────────────────────────────────────────
@@ -61,12 +66,14 @@ jobs:
         run: bash scripts/lint-cms.sh
 
       - name: Security scan with Bandit
-        run: bandit -r backend/ -f json -o bandit-report.json || true
+        # Security findings must fail CI; the JSON report remains available
+        # for diagnosis when the scan rejects a change.
+        run: bandit -r backend/ -c .bandit -f json -o bandit-report.json
 
       - name: Type check (mypy)
         run: |
           pip install mypy
-          mypy backend/ --ignore-missing-imports || true
+          mypy backend/ --config-file mypy.ini --ignore-missing-imports
 
       - name: Run non-CRM tests with coverage (SQLite + xdist)
         # CRM tests have their own dedicated job to surface regressions quickly.
@@ -77,7 +84,7 @@ jobs:
         #   (>15 min en Postgres serial) baja a ~2-4 min en SQLite paralelo.
         run: |
           rm -f .coverage .coverage.*
-          pytest tests/ -q -n auto --cov=backend --cov-report=xml --cov-report=term --ignore-glob='tests/test_crm_*.py'
+          pytest tests/ -q -n auto --cov=backend --cov-report=xml --cov-report=term --cov-fail-under=$COV_THRESHOLD --ignore-glob='tests/test_crm_*.py'
 
       - name: Upload coverage
         uses: codecov/codecov-action@v4
@@ -86,12 +93,12 @@ jobs:
           fail_ci_if_error: false
 
       - name: Check coverage threshold
-        # Fuente única de verdad: pytest.ini (--cov-fail-under). pytest-cov ya
-        # falla la corrida si no se alcanza; este paso lo verifica de nuevo
-        # sobre coverage.xml para un mensaje explícito. NO hardcodear aquí:
-        # si cambia pytest.ini, esto debe seguirlo.
+        # Fuente única de verdad: COV_THRESHOLD (env del job) — debe coincidir
+        # con `make coverage-gate`. pytest-cov ya falla la corrida si no se
+        # alcanza (--cov-fail-under=$COV_THRESHOLD); este paso lo verifica de
+        # nuevo sobre coverage.xml para un mensaje explícito.
         run: |
-          THRESHOLD=$(grep -oP 'cov-fail-under=\K\d+' pytest.ini || echo 38)
+          THRESHOLD=${COV_THRESHOLD:-38}
           COVERAGE=$(python -c "import xml.etree.ElementTree as ET; tree=ET.parse('coverage.xml'); root=tree.getroot(); rate=float(root.get('line-rate')); print(f'{rate*100:.1f}')")
           echo "Coverage: $COVERAGE% (threshold: $THRESHOLD%)"
           if (( $(echo "$COVERAGE < $THRESHOLD" | bc -l) )); then
@@ -252,7 +259,7 @@ jobs:
       - name: Run CRM tests (SQLite + xdist)
         run: |
           rm -f .coverage .coverage.*
-          pytest tests/test_crm_*.py -q -n auto --cov=backend --cov-report=xml --cov-report=term
+          pytest tests/test_crm_*.py -q -n auto --cov=backend --cov-report=xml --cov-report=term --cov-fail-under=$COV_THRESHOLD
 
       - name: Upload CRM coverage
         uses: codecov/codecov-action@v4

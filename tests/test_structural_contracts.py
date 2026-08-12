@@ -941,6 +941,17 @@ def test_workspace_navigation_access_rules_stay_centralized():
     assert "workspaceAccess" in mini_content
 
 
+def test_ci_quality_security_and_typing_gates_are_blocking():
+    """Bandit and mypy must be real CI gates, not informational commands."""
+    root = Path(__file__).resolve().parents[1]
+    workflow = (root / ".github" / "workflows" / "ci.yml").read_text(encoding="utf-8")
+
+    assert "bandit -r backend/ -c .bandit -f json -o bandit-report.json" in workflow
+    assert "mypy backend/ --config-file mypy.ini --ignore-missing-imports" in workflow
+    assert "bandit -r backend/ -f json -o bandit-report.json || true" not in workflow
+    assert "mypy backend/ --ignore-missing-imports || true" not in workflow
+
+
 def test_pre_push_hook_supports_fast_and_full_modes():
     root = Path(__file__).resolve().parents[1]
     hook = root / "scripts" / "hooks" / "pre-push"

@@ -193,7 +193,7 @@ export default function AdminUsersPage() {
                                             <td className="px-4 py-2">
                                                 <span className={clsx(
                                                     "inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-2xs font-semibold uppercase tracking-wide",
-                                                    user.role === 'admin' ? "bg-[hsl(var(--info-muted))] text-[hsl(var(--info))] dark:bg-[hsl(var(--info)/0.1)] dark:text-[hsl(var(--info))]" :
+                                                    ['admin', 'administrador'].includes(user.role) ? "bg-[hsl(var(--info-muted))] text-[hsl(var(--info))] dark:bg-[hsl(var(--info)/0.1)] dark:text-[hsl(var(--info))]" :
                                                     user.role === 'pastor' ? "bg-[hsl(var(--info-muted))] text-[hsl(var(--primary))] dark:bg-[hsl(var(--info)/0.1)] dark:text-[hsl(var(--primary))]" :
                                                     "bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))] dark:bg-white/5 dark:text-[hsl(var(--text-secondary))]"
                                                 )}>

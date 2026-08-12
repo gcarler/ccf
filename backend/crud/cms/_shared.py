@@ -322,3 +322,18 @@ def _now_utc() -> dt.datetime:
 
 
 
+def resolve_site_key(db: Session, site_id) -> str | None:
+    """Resuelve el ``site_key`` canónico de un ``CmsSite`` (None si no existe)."""
+    if site_id is None:
+        return None
+    try:
+        site_uuid = uuid.UUID(str(site_id))
+    except (TypeError, ValueError, AttributeError):
+        return None
+    row = db.query(models.CmsSite.site_key).filter(models.CmsSite.id == site_uuid).first()
+    if not row or row[0] is None:
+        return None
+    return str(row[0])
+
+
+

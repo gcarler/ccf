@@ -83,32 +83,40 @@ def update_project(
     project_id,
     payload: schemas.ProjectUpdate,
     *,
-    sede_id=None,
+    sede_id: UUID | str | None = None,
 ):
-    """Actualiza un proyecto mediante el contrato Pydantic canónico."""
-    row = get_project(db, project_id)
+    """Actualiza un proyecto dentro de una sede explícitamente indicada.
+
+    ``sede_id`` es obligatorio en la capa CRUD para que un caller directo no
+    pueda mutar un proyecto de otra sede por omisión del scope. La API debe
+    resolver la sede efectiva del actor antes de llamar a esta función.
+    """
+    if sede_id is None:
+        raise ValueError("sede_id is required (Axioma 3): cannot update without tenant scope")
+    # Apply the tenant scope while locating the row—not only when assigning
+    # the new sede—so a direct CRUD caller cannot update another tenant.
+    row = get_project(db, project_id, sede_id=sede_id)
     if not row:
         return None
     for key, value in payload.model_dump(exclude_unset=True).items():
         if value is not None:
             setattr(row, key, value)
-    if sede_id is not None:
-        row.sede_id = sede_id
+    row.sede_id = sede_id
     db.commit()
     db.refresh(row)
     return row
 
 
-def delete_project(db: Session, project_id) -> bool:
-    row = get_project(db, project_id)
+def delete_project(db: Session, project_id, *, sede_id: UUID | str | None = None) -> bool:
+    """Soft-delete a project only when it belongs to the supplied sede."""
+    if sede_id is None:
+        raise ValueError("sede_id is required (Axioma 3): cannot delete without tenant scope")
+    row = get_project(db, project_id, sede_id=sede_id)
     if not row:
         return False
     row.deleted_at = datetime.now(timezone.utc)
     db.commit()
     return True
-
-
-# ── Project Tasks ───────────────────────────────────────
 
 
 def create_project_task(db: Session, task: schemas.ProjectTaskCreate):

@@ -4,7 +4,7 @@
  * Tests: sanitizeCmsHtml, RichText, PublicSectionRenderer, CmsPageOverride, SeoHead
  */
 import { describe, it, expect } from "vitest";
-import { SECTION_TEMPLATES, SECTION_TYPES } from "../src/components/cms/builder/constants";
+import { DEFAULT_SECTION_PROPS, SECTION_TEMPLATES, SECTION_TYPES, resolveDefaultSectionProps } from "../src/components/cms/builder/constants";
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // 1. SANITIZE HTML
@@ -133,18 +133,19 @@ describe("SEO Meta Blocks", () => {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 describe("PublicSectionRenderer Section Types", () => {
-  it("should support all 34 section types", () => {
+  it("should support all 35 section types", () => {
     const sectionTypes = SECTION_TYPES.filter((type) => !type.startsWith("civic_"));
 
-    expect(sectionTypes.length).toBe(34);
+    expect(sectionTypes.length).toBe(35);
     sectionTypes.forEach((type) => {
       expect(type).toBeTruthy();
     });
   });
 
-  it("keeps hero, video hero, and popup banner available in the builder catalog", () => {
+  it("keeps hero, video hero, feed, and popup banner available in the builder catalog", () => {
     expect(SECTION_TYPES).toContain("hero");
     expect(SECTION_TYPES).toContain("video_hero");
+    expect(SECTION_TYPES).toContain("feed");
     expect(SECTION_TYPES).toContain("popup_banner");
   });
 
@@ -152,6 +153,7 @@ describe("PublicSectionRenderer Section Types", () => {
     const hero = SECTION_TEMPLATES.find((template) => template.type === "hero");
     const videoHero = SECTION_TEMPLATES.find((template) => template.type === "video_hero");
     const popup = SECTION_TEMPLATES.find((template) => template.type === "popup_banner");
+    const feed = SECTION_TEMPLATES.find((template) => template.type === "feed");
 
     expect(hero?.props_json).toMatchObject({
       title_lead: expect.any(String),
@@ -177,6 +179,33 @@ describe("PublicSectionRenderer Section Types", () => {
     });
     expect(Array.isArray(popup?.props_json.show_on_paths)).toBe(true);
     expect(Array.isArray(popup?.props_json.hide_on_paths)).toBe(true);
+    // La plantilla por defecto del feed usa la variante home: featured_card +
+    // cards + newsletter, lista para renderizar sin edits previos.
+    expect(feed?.props_json).toMatchObject({
+      section_title: expect.any(String),
+      featured_card: expect.any(Object),
+      cards: expect.any(Array),
+      newsletter_submit: expect.any(String),
+    });
+  });
+
+  it("resolves default section props via the fallback chain", () => {
+    // 1) props explícitos ganan siempre.
+    const explicit = { title: "Custom" };
+    expect(resolveDefaultSectionProps("feed", explicit)).toBe(explicit);
+
+    // 2) DEFAULT_SECTION_PROPS por tipo (feed → plantilla home).
+    const feedDefaults = resolveDefaultSectionProps("feed", null);
+    expect(feedDefaults).toBe(DEFAULT_SECTION_PROPS.feed);
+    expect(feedDefaults).toMatchObject({
+      section_title: expect.any(String),
+      featured_card: expect.any(Object),
+      cards: expect.any(Array),
+    });
+
+    // 3) placeholder genérico para tipos sin default.
+    const generic = resolveDefaultSectionProps("rich_text", null);
+    expect(generic).toMatchObject({ title: "Nueva sección" });
   });
 });
 
