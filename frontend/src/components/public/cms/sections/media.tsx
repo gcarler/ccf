@@ -365,9 +365,6 @@ export function FeedSection({ section }: { section: CmsSection<"feed"> }) {
     const heroTitleLead = val(content, "hero_title_lead", "");
     const heroTitleAccent = val(content, "hero_title_accent", "");
     const heroDescription = val(content, "hero_description", "");
-    const featuredLabel = val(content, "featured_label", "");
-    const gridLabel = val(content, "grid_label", "");
-    const searchPlaceholder = val(content, "search_placeholder", "");
     const ctaLabel = val(content, "cta_label", "");
 
     return (
@@ -445,7 +442,6 @@ export function FeedSection({ section }: { section: CmsSection<"feed"> }) {
     const heroTitleAccent = val(p, "hero_title_accent", "");
     const heroDescription = val(p, "hero_description", "");
     const ctaLabel = val(p, "cta_label", "");
-    const searchPlaceholder = val(p, "search_placeholder", "");
 
     return (
       <section className="ccf-section-panel p-7 md:p-12 lg:p-14" style={{ background: "var(--site-surface-container-low)" }}>
@@ -479,16 +475,8 @@ export function FeedSection({ section }: { section: CmsSection<"feed"> }) {
   if (isEventsFeed) {
     const emptyTitle = val(p, "empty_title", "");
     const emptyDescription = val(p, "empty_description", "");
-    const noEventsTitle = val(p, "no_events_title", "");
-    const noEventsDescription = val(p, "no_events_description", "");
     const calendarTitle = val(p, "calendar_title", "");
     const calendarDescription = val(p, "calendar_description", "");
-    const todayLabel = val(p, "today_label", "");
-    const upcomingLabel = val(p, "upcoming_label", "");
-    const featuredBadge = val(p, "featured_badge", "");
-    const reserveCta = val(p, "reserve_cta", "");
-    const filters = p.filters as string[] | undefined;
-    const channelLinkLabel = val(p, "channel_link_label", "");
 
     return (
       <section className="ccf-section-panel p-7 md:p-12 lg:p-14" style={{ background: "var(--site-surface-container-low)" }}>
@@ -513,10 +501,6 @@ export function FeedSection({ section }: { section: CmsSection<"feed"> }) {
     const heroBadge = val(p, "hero_badge", "");
     const heroTitle = val(p, "hero_title", "");
     const heroDescription = val(p, "hero_description", "");
-    const loadingLabel = val(p, "loading_label", "");
-    const emptyTitle = val(p, "empty_title", "");
-    const cardCta = val(p, "card_cta", "");
-    const principalLabel = val(p, "principal_label", "");
 
     return (
       <section className="ccf-section-panel p-7 md:p-12 lg:p-14" style={{ background: "var(--site-surface-container-low)" }}>
