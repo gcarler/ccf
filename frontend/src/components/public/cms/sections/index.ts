@@ -8,6 +8,7 @@ export { HeroSection, VideoHeroSection } from "./hero";
 export {
   RichTextSection,
   RichTextColumnsSection,
+  AboutSection,
   CardsSection,
   CtaBannerSection,
 } from "./text";

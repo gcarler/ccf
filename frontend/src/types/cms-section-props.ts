@@ -266,6 +266,44 @@ export interface RichTextProps {
   cta_href?: string;
 }
 
+export interface AboutProps {
+  stats?: Array<{ value?: string; label?: string }>;
+  vision_title?: string;
+  vision_text?: string;
+  mision_title?: string;
+  mision_text?: string;
+  founder_label?: string;
+  founder_title?: string;
+  founder_title_accent?: string;
+  founder1_name?: string;
+  founder1_role?: string;
+  founder1_image?: string;
+  founder2_name?: string;
+  founder2_role?: string;
+  founder2_image?: string;
+  founder_bio?: string;
+  founder_bio2?: string;
+  valores_title?: string;
+  valores?: Array<{ num?: string; key?: string; title?: string; desc?: string }>;
+  quote_text?: string;
+  quote_author?: string;
+  quote_subtitle?: string;
+  cta_title?: string;
+  cta_desc?: string;
+  founder_cta_team?: string;
+  founder_cta_visit?: string;
+  values_eyebrow?: string;
+  cta_view_sedes?: string;
+  cta_view_events?: string;
+  breadcrumbInicio?: string;
+  breadcrumbPage?: string;
+  title?: string;
+  body?: string;
+  cta_label?: string;
+  cta_href?: string;
+  [key: string]: unknown;
+}
+
 export interface RichTextColumnsProps {
   title?: string;
   body?: string;
@@ -844,6 +882,7 @@ export interface CmsSectionTypeToProps {
   video_hero: VideoHeroProps;
   rich_text: RichTextProps;
   rich_text_columns: RichTextColumnsProps;
+  about: AboutProps;
   cards: CardsProps;
   cta_banner: CtaBannerProps;
   gallery: GalleryProps;
@@ -907,6 +946,7 @@ export type CmsSectionDiscriminated =
   | CmsSectionBase<"video_hero", VideoHeroProps>
   | CmsSectionBase<"rich_text", RichTextProps>
   | CmsSectionBase<"rich_text_columns", RichTextColumnsProps>
+  | CmsSectionBase<"about", AboutProps>
   | CmsSectionBase<"cards", CardsProps>
   | CmsSectionBase<"cta_banner", CtaBannerProps>
   | CmsSectionBase<"gallery", GalleryProps>

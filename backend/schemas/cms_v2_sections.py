@@ -446,6 +446,43 @@ class RichTextColumnsProps(_PermissiveProps):
     body_2: str = ""
 
 
+class AboutProps(_PermissiveProps):
+    stats: List[Dict[str, Any]] = []
+    vision_title: str = ""
+    vision_text: str = ""
+    mision_title: str = ""
+    mision_text: str = ""
+    founder_label: str = ""
+    founder_title: str = ""
+    founder_title_accent: str = ""
+    founder1_name: str = ""
+    founder1_role: str = ""
+    founder1_image: str = ""
+    founder2_name: str = ""
+    founder2_role: str = ""
+    founder2_image: str = ""
+    founder_bio: str = ""
+    founder_bio2: str = ""
+    valores_title: str = ""
+    valores: List[Dict[str, Any]] = []
+    quote_text: str = ""
+    quote_author: str = ""
+    quote_subtitle: str = ""
+    cta_title: str = ""
+    cta_desc: str = ""
+    founder_cta_team: str = ""
+    founder_cta_visit: str = ""
+    values_eyebrow: str = ""
+    cta_view_sedes: str = ""
+    cta_view_events: str = ""
+    breadcrumbInicio: str = ""
+    breadcrumbPage: str = ""
+    title: str = ""
+    body: str = ""
+    cta_label: str = ""
+    cta_href: str = "/"
+
+
 class CardItem(BaseModel):
     model_config = {"extra": "ignore"}
     title: Optional[str] = None
@@ -785,6 +822,7 @@ SECTION_PROPS_SCHEMAS: Dict[str, type[BaseModel]] = {
     "video_hero": VideoHeroProps,
     "rich_text": RichTextProps,
     "rich_text_columns": RichTextColumnsProps,
+    "about": AboutProps,
     "cards": CardsProps,
     "cta_banner": CtaBannerProps,
     "gallery": GalleryProps,
