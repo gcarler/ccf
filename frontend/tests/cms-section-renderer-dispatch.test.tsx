@@ -26,7 +26,7 @@ import { createMockCmsSection } from "@/test-utils/factories";
 
 vi.mock("@/components/public/cms/sections", async () => {
   const React = await vi.importActual<typeof import("react")>("react");
-  // List of all 47 component names exported by the barrel.
+  // List of all 48 component names exported by the barrel.
   // Must match sections/index.ts exports.
   const componentNames = [
     "HeroSection", "VideoHeroSection",
@@ -35,7 +35,7 @@ vi.mock("@/components/public/cms/sections", async () => {
     "CountdownSection", "PricingSection", "TimelineSection", "IconGridSection",
     "TocSection", "CollapsibleSection", "ContentBlocksSection",
     "AccordionSection", "PolicyDocumentSection", "TestimonialsMasonrySection",
-    "GallerySection", "EmbedSection", "ImageTextSection",
+    "GallerySection", "EmbedSection", "FeedSection", "ImageTextSection",
     "VideoGridSection", "EventsCalendarSection", "LocationsListSection",
     "CourseGridSection", "BookShopSection",
     "FaqSection", "NewsletterSection", "DocumentUploadSection",
@@ -63,7 +63,7 @@ vi.mock("@/components/public/cms/sections/shared", () => ({
 // Import AFTER mocks are set up
 import PublicSectionRenderer from "@/components/public/cms/PublicSectionRenderer";
 
-// ── The 47 section types → expected component names ─────────────────────────
+// ── The 48 section types → expected component names ─────────────────────────
 // Single source of truth that must match PublicSectionRenderer.tsx.
 // Defined here (after vi.mock) so it's available at test-run time.
 
@@ -78,6 +78,7 @@ const TYPE_TO_COMPONENT: Record<string, string> = {
   gallery: "GallerySection",
   faq: "FaqSection",
   embed: "EmbedSection",
+  feed: "FeedSection",
   testimonials: "TestimonialsSection",
   stats: "StatsSection",
   team: "TeamSection",
@@ -137,10 +138,10 @@ function makeSection(type: string) {
 // ── Tests ────────────────────────────────────────────────────────────────────
 
 describe("PublicSectionRenderer dispatch", () => {
-  it("covers exactly 47 section types", () => {
-    expect(ALL_SECTION_TYPES).toHaveLength(47);
+  it("covers exactly 48 section types", () => {
+    expect(ALL_SECTION_TYPES).toHaveLength(48);
     // No duplicate types
-    expect(new Set(ALL_SECTION_TYPES).size).toBe(47);
+    expect(new Set(ALL_SECTION_TYPES).size).toBe(48);
     // No duplicate component names
     const componentNames = Object.values(TYPE_TO_COMPONENT);
     expect(new Set(componentNames).size).toBe(componentNames.length);

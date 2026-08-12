@@ -81,6 +81,7 @@ const SECTION_TYPES_FIXTURE = [
   { name: 'testimonials', is_active: true },
   { name: 'gallery', is_active: true },
   { name: 'pricing', is_active: true },
+  { name: 'feed', is_active: true },
 ];
 
 const THEME_FIXTURE = {
