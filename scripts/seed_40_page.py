@@ -112,7 +112,7 @@ def seed_40_page():
                 "type": "embed",
                 "sort_order": 3,
                 "props_json": {
-                    "html": "<iframe src='https://photos.app.goo.gl/CTHj2bbSZsDY3pjH9' width='100%' height='600' style='border:none;'></iframe>"
+                    "html": "<iframe src='https://photos.app.goo.gl/BN3sDiXAt6aP6tLX8' width='100%' height='600' style='border:none;'></iframe>"
                 },
             },
         ]
