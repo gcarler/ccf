@@ -65,20 +65,29 @@ export function EmbedSection({ section }: { section: CmsSection<"embed"> }) {
   const embedUrl = val(p, "embed_url", "");
 
   // Google Photos bloquea la incrustación con x-frame-options: SAMEORIGIN.
-  // Usar el proxy del backend CCF que sirve el contenido sin la restricción.
+  // Renderizar un CTA que abre el álbum en nueva pestaña.
   const isGooglePhotos = /photos\.app\.goo\.gl|photos\.google\.com/.test(embedUrl);
-  const iframeSrc = isGooglePhotos
-    ? `/api/cms/v2/embed/photos?url=${encodeURIComponent(embedUrl)}`
-    : embedUrl;
 
   return (
     <section className="ccf-section-panel p-7 md:p-10" style={{ background: "var(--site-surface-container-low)" }}>
       {title && <h3 className="text-xl font-bold mb-3" style={{ color: "var(--site-on-surface)" }}>{title}</h3>}
       {body && <p className="mb-4 text-sm leading-relaxed" style={{ color: "var(--site-on-surface-variant)" }}>{body}</p>}
       {embedUrl ? (
-        <div className="rounded-xl overflow-hidden" style={{ background: "var(--site-surface-container)", minHeight: "600px" }}>
-          <iframe title={title} src={iframeSrc} className="w-full border-0" style={{ height: "600px" }} allowFullScreen sandbox="allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox" />
-        </div>
+        isGooglePhotos ? (
+          <a
+            href={embedUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 rounded-full px-6 py-3 text-sm font-bold uppercase tracking-widest text-white shadow-lg transition-transform hover:scale-105"
+            style={{ background: "var(--site-cta-gradient)" }}
+          >
+            Ver galería de fotos
+          </a>
+        ) : (
+          <div className="aspect-video rounded-xl overflow-hidden" style={{ background: "var(--site-surface-container)" }}>
+            <iframe title={title} src={embedUrl} className="w-full h-full border-0" allowFullScreen />
+          </div>
+        )
       ) : (
         <div className="aspect-video rounded-xl flex items-center justify-center text-sm" style={{ background: "var(--site-surface-container)", color: "var(--site-on-surface-variant)" }}>
           Sin URL de embed configurada
