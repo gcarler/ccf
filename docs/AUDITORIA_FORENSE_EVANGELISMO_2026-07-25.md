@@ -12,8 +12,10 @@
 > resueltos tras commits posteriores a esta auditoría. Estado real actual:
 > - **Crítico**: 0 abiertos (F1-1, F1-2 resueltos — soft-delete filters añadidos).
 > - **Alta**: 0 abiertos (F1-3 resuelto; F2-1 resuelto — `get_current_user` migrado a `require_evangelism_*`; F2-2 resuelto — `people/lookup` a `read`; F2-3 resuelto — nota aclaratoria en RBAC matrix).
-> - **Media**: parcial — F3-1, F3-2 resueltos (schemas creados); F5-1 resuelto (monolitos frontend descompuestos en F-02/F-03/F-05/F-06); F4-1 resuelto (test ya no acepta 500); F4-2 (cobertura RBAC no-admin) y F5-2 (QA checklist analytics/reports/notifications) siguen parciales.
-> - **Baja**: F6-3 resuelto (`_generate_codigo` removido); F6-1/F6-2 (drift en docs API contracts / LOC counts) sin verificar en este pase.
+> - **Media**: todos resueltos — F3-1, F3-2 (schemas), F5-2 (QA checklist notifications), F5-1 (monolitos frontend), F4-1 (test 500), F4-2 (tests RBAC no-admin).
+> - **Baja**: todos resueltos — F6-1 (API contracts guards corregidos), F6-2 (LOC counts actualizados), F6-3 (`_generate_codigo` removido).
+>
+> **Resultado: 15/15 hallazgos cerrados.**
 > Ver la "Tabla Consolidada" actualizada abajo.
 
 | Severidad | Hallazgos | Estado (al corte de auditoría 2026-07-25) |
@@ -432,11 +434,11 @@ existing = db.query(models.Asistencia).filter(
 | F3-1 | **Media** | `GrupoEvangelismoResponse` no existe — endpoints retornan `dict` manual | `schemas/evangelism.py` | — | ✅ Resuelto — `GrupoEvangelismoResponse` creado (línea 560) |
 | F3-2 | **Media** | `RolPersonalizadoEstrategiaUpdate` no existe — roles sin PUT | `schemas/evangelism.py` | — | ✅ Resuelto — `RolPersonalizadoEstrategiaUpdate` creado (línea 276) |
 | F4-1 | **Media** | `test_evangelism_roles_coverage.py` acepta 500 como válido | `tests/test_evangelism_roles_coverage.py` | 104 | ✅ Resuelto — el test ahora espera `== 404` (línea 109), ya no acepta 500 |
-| F4-2 | **Media** | Cobertura RBAC no-admin extremadamente baja (1 test positivo con coordinador) | `tests/` | — | ⬜ Abierto (parcial) — fuera del alcance de este pase |
+| F4-2 | **Media** | Cobertura RBAC no-admin extremadamente baja (1 test positivo con coordinador) | `tests/` | — | ✅ Resuelto 2026-08-11 — 4 tests positivos en `TestEvangelismRBACNonAdminPositive`: coordinador read-all, coordinador denied manage, coordinador edit group, pastor manage groups |
 | F5-1 | **Media** | 3 páginas >1500 LOC (monolitos) | `strategies/[id]/page.tsx`, `events/page.tsx`, `groups/[id]/page.tsx` | — | ✅ Resuelto — descompuestos en `erroresevangelismo.md` (F-02 strategies 458 LOC, F-03 events 261 LOC, F-05 groups/groups 257 LOC, F-06 groups/[id] 205 LOC) |
-| F5-2 | **Media** | QA checklist no cubre analytics, reports, notifications | `docs/EVANGELISMO_QA_CHECKLIST.md` | — | 🟡 Parcial — analytics y reports ya referenciados; notifications sin cobertura |
-| F6-1 | **Baja** | API contracts documenta guards desactualizados | `docs/EVANGELISMO_API_CONTRACTS.md` | §3 | ⬜ Sin verificar en este pase |
-| F6-2 | **Baja** | LOC counts en ESTADO_EVANGELISMO.md desactualizados | `docs/ESTADO_EVANGELISMO.md` | 47-48 | ⬜ Sin verificar en este pase |
+| F5-2 | **Media** | QA checklist no cubre analytics, reports, notifications | `docs/EVANGELISMO_QA_CHECKLIST.md` | — | ✅ Resuelto 2026-08-11 — sección "Notificaciones" añadida al QA checklist con 5 pasos de validación |
+| F6-1 | **Baja** | API contracts documenta guards desactualizados | `docs/EVANGELISMO_API_CONTRACTS.md` | §3 | ✅ Resuelto 2026-08-11 — guards corregidos en §2, §4-§10 (grupos, sesiones, asistencia, eventos, multiplicación, excuses, roles) |
+| F6-2 | **Baja** | LOC counts en ESTADO_EVANGELISMO.md desactualizados | `docs/ESTADO_EVANGELISMO.md` | 47-48 | ✅ Resuelto 2026-08-11 — backend ~12 800 LOC, frontend 3 027 LOC (post-refactor) |
 | F6-3 | **Baja** | `_generate_codigo` es dead code | `crud/evangelism.py` | 145 | ✅ Resuelto — la función ya no existe en el archivo |
 
 ---

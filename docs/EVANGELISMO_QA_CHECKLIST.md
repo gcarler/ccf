@@ -170,6 +170,14 @@ Si el comportamiento real difiere, actualizar `EVANGELISMO_API_CONTRACTS.md`, `E
 - Probar split con precondicion invalida.
 - Confirmar historial.
 
+### Notificaciones
+
+- Disparar `POST /notifications/send-reminders` y confirmar que retorna `200` con conteo de recordatorios enviados.
+- Validar idempotencia: un segundo disparo para la misma ventana no duplica notificaciones ya enviadas (ver helper `_notification_already_sent`).
+- Confirmar que solo se generan recordatorios para sesiones habilitadas dentro de la ventana de días configurada.
+- Verificar que el endpoint usa `require_evangelism_manage` (gestión administrativa, no lectura).
+- Confirmar que no se envían recordatorios a personas eliminadas o inactivas (`deleted_at`/`activo=False`).
+
 ### Soft-delete y cross-sede (auditoria forense 2026-07-26)
 
 - Validar que `actualizar_participante`, `submit_asistencia`, `remover_participante` excluyen registros eliminados.
