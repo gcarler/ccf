@@ -3,13 +3,18 @@
 
 Usage:
     cd /root/ccf && source venv/bin/activate && python scripts/seed_public_cms_v2_sections.py
+    # Regenerate the canonical seed intentionally (may replace existing sections):
+    python scripts/seed_public_cms_v2_sections.py --force
 
-The script is idempotent: it updates existing sections by ``section_key`` and only
-publishes a new ``CmsPageVersion`` when the effective snapshot actually changes.
+The default mode is non-destructive: it initializes only pages without sections
+and never overwrites content edited in the CMS. ``--force`` is an explicit
+maintenance operation for rebuilding the canonical seed. Existing pages still
+receive a new ``CmsPageVersion`` only when the effective snapshot changes.
 """
 
 from __future__ import annotations
 
+import argparse
 import hashlib
 import json
 import os
@@ -161,7 +166,8 @@ def _page_title(slug: str) -> str:
         "courses": "Cursos",
         "locations": "Sedes",
         "testimonials": "Testimonios",
-        "boletin": "Boletín",
+        "newsletter": "Boletín",
+        "blog": "Blog",
         "welcome": "Bienvenida",
         "privacy": "Política de Privacidad",
         "_global": "Global (nav / shared)",
@@ -576,6 +582,18 @@ def _build_pages(media_find: Any) -> dict[str, list[dict[str, Any]]]:
         "cta_label": "Compartir mi historia",
     }
 
+    # ── BLOG ────────────────────────────────────────────────────────────────
+    blog_hero = _get_block("ccf_blog_hero", CMS_BLOCKS) or {
+        "eyebrow": "Recursos CCF",
+        "title": "Blog",
+        "description": "Historias, reflexiones y recursos para seguir creciendo en comunidad.",
+    }
+    blog_feed = _get_block("ccf_blog_feed", CMS_BLOCKS) or {
+        "search_placeholder": "Buscar artículos...",
+        "empty_title": "Todavía no hay artículos publicados",
+        "empty_description": "Cuando el CMS publique un artículo, aparecerá aquí.",
+    }
+
     # ── BOLETÍN ─────────────────────────────────────────────────────────────
     boletin_hero = _get_block("ccf_boletin_hero", CMS_BLOCKS) or {
         "subtitle": "Boletín Semanal CCF",
@@ -728,7 +746,11 @@ def _build_pages(media_find: Any) -> dict[str, list[dict[str, Any]]]:
             {"key": "hero", "type": "hero", "props": testimonials_hero, "sort": 0},
             {"key": "feed", "type": "feed", "props": _content_json(testimonials_feed), "sort": 1},
         ],
-        "boletin": [
+        "blog": [
+            {"key": "hero", "type": "hero", "props": blog_hero, "sort": 0},
+            {"key": "feed", "type": "feed", "props": blog_feed, "sort": 1},
+        ],
+        "newsletter": [
             {"key": "hero", "type": "hero", "props": _content_json(boletin_hero), "sort": 0},
         ],
         "welcome": [
@@ -810,7 +832,7 @@ def _load_page_row(db, site_id: Any, slug: str) -> dict[str, Any] | None:
     return dict(row) if row is not None else None
 
 
-def run(site_key: str = "ccf") -> int:
+def run(site_key: str = "ccf", *, preserve_existing: bool = True) -> int:
     # expire_on_commit=False: the seeder reuses ONE long-lived session across
     # all pages. With the default True, every ``db.commit()`` expires every ORM
     # instance, so the next attribute mutation (the section upsert loop) fires
@@ -868,21 +890,37 @@ def run(site_key: str = "ccf") -> int:
 
             existing_sections = {
                 s.section_key: s
-                for s in db.query(models.CmsSection).options(lazyload("*")).filter_by(page_id=_value(page, "id")).all()
+                for s in db.query(models.CmsSection)
+                .options(lazyload("*"))
+                .filter_by(page_id=_value(page, "id"))
+                .filter(models.CmsSection.deleted_at.is_(None), models.CmsSection.status != "archived")
+                .all()
             }
+
+            # A page with sections is already managed by the CMS. Never replace
+            # those sections during a routine bootstrap: an editor may have
+            # changed them from the builder, and the database is the source of
+            # truth for published content. Use --force for an intentional reset.
+            if preserve_existing and existing_sections:
+                unchanged += 1
+                print(f"  → preserved {len(existing_sections)} existing sections")
+                continue
+
             desired_keys = {s["key"] for s in sections}
 
-            # Remove stale sections for this page
-            for key, section in existing_sections.items():
-                if key not in desired_keys:
-                    db.delete(section)
-                    deleted_sections += 1
-            db.commit()
+            # Remove stale sections only during an explicit forced rebuild.
+            if not preserve_existing:
+                for key, section in existing_sections.items():
+                    if key not in desired_keys:
+                        db.delete(section)
+                        deleted_sections += 1
+                db.commit()
 
             # Localize any external placeholder images before writing sections
             sections = _localize_external_images(db, sections)
 
-            # Upsert desired sections
+            # Upsert desired sections. In the default mode this branch is only
+            # reached for a page without sections, so all specs are inserts.
             for spec in sections:
                 key = spec["key"]
                 if key in existing_sections:
@@ -908,8 +946,27 @@ def run(site_key: str = "ccf") -> int:
                     created_sections += 1
                 db.commit()
 
-            # Refresh page relationship for snapshot
-            new_snapshot = _snapshot(page, sections)
+            # Build the snapshot from persisted rows rather than the seed
+            # blueprint. This keeps the public version faithful to any data
+            # that was intentionally preserved during a forced/legacy run.
+            persisted_sections = (
+                db.query(models.CmsSection)
+                .options(lazyload("*"))
+                .filter_by(page_id=_value(page, "id"))
+                .filter(models.CmsSection.deleted_at.is_(None), models.CmsSection.status != "archived")
+                .order_by(models.CmsSection.sort_order.asc())
+                .all()
+            )
+            snapshot_sections = [
+                {
+                    "key": section.section_key,
+                    "type": section.type,
+                    "props": section.props_json or {},
+                    "sort": section.sort_order,
+                }
+                for section in persisted_sections
+            ]
+            new_snapshot = _snapshot(page, snapshot_sections)
             current_version = None
             page_published_version_id = _value(page, "published_version_id")
             page_status = _value(page, "status")
@@ -1012,4 +1069,11 @@ def run(site_key: str = "ccf") -> int:
 
 
 if __name__ == "__main__":
-    raise SystemExit(run())
+    parser = argparse.ArgumentParser(description="Seed public CMS v2 pages")
+    parser.add_argument(
+        "--force",
+        action="store_true",
+        help="rebuild existing page sections (destructive; use only intentionally)",
+    )
+    args = parser.parse_args()
+    raise SystemExit(run(preserve_existing=not args.force))

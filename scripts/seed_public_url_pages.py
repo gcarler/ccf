@@ -42,6 +42,8 @@ SPANISH_PAGES: dict[str, tuple[str, str]] = {
     "cursos": ("courses", "Cursos"),
     "sedes": ("locations", "Sedes"),
     "testimonios": ("testimonials", "Testimonios"),
+    "boletin": ("newsletter", "Boletín"),
+    "blog": ("blog", "Blog"),
     "conocer-a-jesus": ("discover", "Conocer a Jesús"),
     "bienvenida": ("welcome", "Bienvenida"),
     "privacidad": ("privacy", "Política de Privacidad"),
@@ -51,17 +53,22 @@ SPANISH_PAGES: dict[str, tuple[str, str]] = {
 
 def _hero_props_from_english(en_props: dict[str, Any]) -> dict[str, Any]:
     """Build a standard hero section from the English page hero data."""
+    # Some canonical hero sections (notably newsletter) store their rich
+    # payload as ``{"content": "{...}"}``. Parse that envelope before
+    # projecting it to the generic Spanish URL renderer, otherwise the
+    # projection silently falls back to "Bienvenidos" and loses the copy.
+    source = _extract_parsed(en_props)
     title = (
-        en_props.get("title")
-        or f"{en_props.get('title_lead', '')} {en_props.get('title_accent', '')}".strip()
+        source.get("title")
+        or f"{source.get('title_lead', '')} {source.get('title_accent', '')}".strip()
         or "Bienvenidos"
     )
     return {
         "title": title,
-        "body": en_props.get("description", ""),
-        "cta_label": en_props.get("cta") or en_props.get("primary_cta", ""),
+        "body": source.get("description", ""),
+        "cta_label": source.get("cta") or source.get("cta_text") or source.get("primary_cta", ""),
         "cta_href": "/",
-        "image_url": en_props.get("bg_image", ""),
+        "image_url": source.get("bg_image", ""),
         "image_alt": title,
     }
 
@@ -190,6 +197,26 @@ def main() -> int:
             else:
                 print(f"Updating page: {es_slug}")
 
+            # URL pages are a compatibility/public-route projection of the
+            # canonical English-key pages. Never rebuild an existing projection:
+            # editors may have customized it from the CMS builder. Only seed a
+            # page that is new or still carries the empty contract snapshot
+            # created by ``ensure_public_cms_pages``.
+            existing_sections = (
+                db.query(models.CmsSection)
+                .filter_by(page_id=es_page.id)
+                .filter(models.CmsSection.deleted_at.is_(None), models.CmsSection.status != "archived")
+                .count()
+            )
+            if existing_sections:
+                print(f"  → preserved {existing_sections} existing sections")
+                continue
+            if es_page.published_version_id:
+                current_version = db.query(models.CmsPageVersion).filter_by(id=es_page.published_version_id).first()
+                if current_version and "Ensure public CMS page contract" not in (current_version.notes or ""):
+                    print("  → preserved existing empty page")
+                    continue
+
             # Collect source sections from the English page.
             en_sections = (
                 db.query(models.CmsSection).filter_by(page_id=en_page.id).order_by(models.CmsSection.sort_order).all()
@@ -227,7 +254,7 @@ def main() -> int:
                         section_type = "cards"
                     elif en_slug in ("privacy",):
                         section_type = "policy_document"
-                    elif en_slug == "boletin":
+                    elif en_slug == "newsletter":
                         section_type = "newsletter"
                     elif en_slug == "discover":
                         section_type = "contact_form"
@@ -250,10 +277,8 @@ def main() -> int:
                     }
                 )
 
-            # Remove old sections and insert new ones.
-            db.query(models.CmsSection).filter_by(page_id=es_page.id).delete()
-            db.commit()
-
+            # The guards above ensure this page is either new or an empty
+            # bootstrap contract. Do not delete/rebuild an editor-managed page.
             for spec in new_sections:
                 section = models.CmsSection(
                     page_id=es_page.id,

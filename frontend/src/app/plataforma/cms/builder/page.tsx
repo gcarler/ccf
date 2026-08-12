@@ -6,8 +6,8 @@ import "@puckeditor/core/dist/index.css";
 import { useSearchParams, useRouter } from "next/navigation";
 import { LayoutPanelTop, ArrowLeft, Loader2, Palette, CheckCircle2, AlertTriangle, Save } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
-import { canEditCms } from "@/lib/cms/permissions";
-import { listCmsSections, patchCmsSection, createCmsSection, deleteCmsSection } from "@/lib/cms/v2";
+import { canEditCms, canPublishCms } from "@/lib/cms/permissions";
+import { listCmsSections, patchCmsSection, createCmsSection, deleteCmsSection, workflowCmsPage } from "@/lib/cms/v2";
 import { apiFetch } from "@/lib/http";
 import { SITE_KEY } from "@/lib/site-config";
 import type { CmsTheme } from "@/types/cms-v2";
@@ -17,6 +17,63 @@ import MediaPickerField, { setMediaPickerTrigger } from "@/components/cms/builde
 import AiField from "@/components/cms/builder/AiField";
 
 export type SaveStatus = "saved" | "dirty" | "saving" | "error";
+
+// The public routes use a few rich, page-specific section types (feed, about,
+// policy_document, etc.) that are rendered by PublicSectionRenderer but are not
+// part of the small native Puck form catalogue. Keep those sections editable by
+// exposing their complete props as JSON instead of silently dropping them from
+// the editor.
+const JSON_EDITABLE_SECTION_TYPES = [
+  "about",
+  "feed",
+  "team",
+  "events_calendar",
+  "policy_document",
+  "welcome",
+  "footer_config",
+  "mobile_menu_config",
+  "content_blocks",
+  "newsletter",
+  "contact_form",
+  "course_grid",
+  "locations_list",
+  "testimonials_masonry",
+] as const;
+
+const NATIVE_PUCK_SECTION_TYPES = new Set([
+  "hero",
+  "rich_text",
+  "cta_banner",
+  "faq",
+  "testimonials",
+  "stats",
+  "gallery",
+  "cards",
+]);
+
+function serializeJsonProps(props: Record<string, unknown>): Record<string, unknown> {
+  return {
+    ...props,
+    __cms_json: JSON.stringify(props, null, 2),
+  };
+}
+
+function deserializePuckProps(props: Record<string, unknown>): Record<string, unknown> {
+  const serialized = props.__cms_json;
+  if (typeof serialized !== "string") {
+    return props;
+  }
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(serialized);
+  } catch {
+    throw new Error("El contenido JSON de la sección no es válido");
+  }
+  if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+    throw new Error("El contenido JSON debe ser un objeto");
+  }
+  return parsed as Record<string, unknown>;
+}
 
 function SaveStatusBadge({ status }: { status: SaveStatus }) {
   switch (status) {
@@ -58,6 +115,7 @@ export default function PuckBuilderPage() {
   const router = useRouter();
   const { token, user } = useAuth();
   const canEdit = canEditCms(user?.role);
+  const canPublish = canPublishCms(user?.role);
 
   const siteKey = searchParams?.get("site") || SITE_KEY;
   const pageSlug = searchParams?.get("page") || "";
@@ -125,7 +183,9 @@ export default function PuckBuilderPage() {
         const puckContent = (sections || []).map((sec: any) => ({
           type: sec.type,
           props: {
-            ...(sec.props_json || {}),
+            ...(NATIVE_PUCK_SECTION_TYPES.has(sec.type)
+              ? (sec.props_json || {})
+              : serializeJsonProps(sec.props_json || {})),
             id: sec.id, // Store database ID in Puck block properties
           },
         }));
@@ -154,6 +214,32 @@ export default function PuckBuilderPage() {
 
   // Dynamically memoize Puck configuration to inject token closure for the AI text inputs
   const puckConfig = useMemo<Config>(() => {
+    const genericComponents = Object.fromEntries(
+      JSON_EDITABLE_SECTION_TYPES.map((type) => [
+        type,
+        {
+          label: `Contenido CMS (${type})`,
+          fields: {
+            __cms_json: {
+              type: "textarea",
+              label: "Contenido editable (JSON)",
+            },
+          },
+          render: ({ __cms_json }: { __cms_json?: string }) => (
+            <section className="rounded-lg border border-dashed border-[var(--site-outline-variant,rgba(255,255,255,0.2))] p-6 my-4">
+              <p className="text-sm font-semibold">Sección {type}</p>
+              <p className="mt-2 text-xs opacity-70">
+                Edita todos los campos de esta sección desde el panel lateral.
+              </p>
+              <pre className="mt-4 max-h-40 overflow-auto whitespace-pre-wrap text-2xs opacity-70">
+                {__cms_json || "{}"}
+              </pre>
+            </section>
+          ),
+        },
+      ]),
+    );
+
     return {
       root: {
         render: ({ children }: any) => (
@@ -172,6 +258,7 @@ export default function PuckBuilderPage() {
         )
       },
       components: {
+        ...genericComponents,
         hero: {
           label: "Banner Héroe (Hero)",
           fields: {
@@ -861,6 +948,7 @@ export default function PuckBuilderPage() {
         setSaveStatus("saving");
       }
 
+      let draftSaved = false;
       try {
         const activeIdsInPuck = new Set<string>();
         const currentDbSections = dbSectionsRef.current;
@@ -871,10 +959,21 @@ export default function PuckBuilderPage() {
           const item = contentToSave[i];
           const id = item.props?.id;
 
-          // Clean properties by stripping the custom id field
-          const { id: _, ...cleanProps } = item.props || {};
+          // Clean properties by stripping the editor-only id field. Generic
+          // page sections store their complete editable payload in
+          // ``__cms_json``; restore it to the object expected by the API.
+          const { id: _, ...rawProps } = item.props || {};
+          const deserializedProps = deserializePuckProps(rawProps);
+          const existingSection = currentDbSections.find((s) => s.id === id);
+          // Native Puck blocks expose only their compact field schema. Merge
+          // their edited values over the stored payload so page-specific keys
+          // (eyebrow, title_lead, SEO copy, etc.) are not lost on save.
+          const cleanProps =
+            existingSection && NATIVE_PUCK_SECTION_TYPES.has(item.type)
+              ? { ...(existingSection.props_json || {}), ...deserializedProps }
+              : deserializedProps;
 
-          if (id && currentDbSections.some((s) => s.id === id)) {
+          if (id && existingSection) {
             // Exists in DB: Update sort_order and props_json
             activeIdsInPuck.add(id);
             await patchCmsSection(
@@ -921,6 +1020,14 @@ export default function PuckBuilderPage() {
         const updated = freshSections || [];
         setDbSections(updated);
         dbSectionsRef.current = updated;
+        draftSaved = true;
+
+        // A manual save is the explicit publish action in this compact Puck
+        // editor. Auto-save only persists the draft; publishing creates the
+        // immutable snapshot consumed by the public endpoint.
+        if (!options.isAutoSave && canPublish) {
+          await workflowCmsPage(siteKey, pageSlug, "publish", "Publicado desde el editor visual", token);
+        }
 
         // Check if newer changes arrived while save was in flight
         if (
@@ -933,12 +1040,20 @@ export default function PuckBuilderPage() {
         }
 
         if (!options.isAutoSave) {
-          toast.success("¡Página publicada exitosamente con Puck!");
+          toast.success(
+            canPublish
+              ? "¡Página publicada exitosamente con Puck!"
+              : "Cambios guardados como borrador. Un publicador debe aprobarlos.",
+          );
         }
       } catch (err) {
         setSaveStatus("error");
         if (!options.isAutoSave) {
-          toast.error("Error al guardar y publicar la página");
+          toast.error(
+            draftSaved
+              ? "Borrador guardado, pero la publicación falló"
+              : "Error al guardar y publicar la página",
+          );
         } else {
           toast.error("Error en el auto-guardado", { id: "autosave-err" });
         }
@@ -949,7 +1064,7 @@ export default function PuckBuilderPage() {
         }
       }
     },
-    [token, pageSlug, canEdit, siteKey]
+    [token, pageSlug, canEdit, canPublish, siteKey]
   );
 
   const handlePuckChange = (newData: { content: any[] }) => {

@@ -1,10 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React from "react";
-import { render, screen, waitFor, fireEvent } from "@testing-library/react";
+import { render, screen, waitFor, fireEvent, act } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import CmsBuilderPage from "./page";
 import * as cmsV2 from "@/lib/cms/v2";
 import { apiFetch } from "@/lib/http";
+import { toast } from "sonner";
 
 // ── Mocks ───────────────────────────────────────────────────────────────────
 
@@ -42,6 +43,7 @@ vi.mock("@/lib/cms/v2", () => ({
   patchCmsSection: vi.fn().mockResolvedValue({ id: "sec-hero-1", type: "hero", props_json: {} }),
   createCmsSection: vi.fn().mockResolvedValue({ id: "sec-new-1", type: "hero", props_json: {} }),
   deleteCmsSection: vi.fn().mockResolvedValue(undefined),
+  workflowCmsPage: vi.fn().mockResolvedValue({ status: "published" }),
 }));
 
 vi.mock("@/lib/http", () => ({
@@ -67,18 +69,22 @@ vi.mock("sonner", () => ({
   },
 }));
 
+let puckPropsCaptured: any = null;
 vi.mock("@puckeditor/core", () => ({
-  Puck: (props: any) => (
-    <div data-testid="puck-editor-mock">
-      <span>Puck Editor Canvas</span>
-      <button
-        data-testid="puck-trigger-publish"
-        onClick={() => props.onPublish?.(props.data)}
-      >
-        Trigger Publish
-      </button>
-    </div>
-  ),
+  Puck: (props: any) => {
+    puckPropsCaptured = props;
+    return (
+      <div data-testid="puck-editor-mock">
+        <span>Puck Editor Canvas</span>
+        <button
+          data-testid="puck-trigger-publish"
+          onClick={() => props.onPublish?.(props.data)}
+        >
+          Trigger Publish
+        </button>
+      </div>
+    );
+  },
 }));
 
 // ── Tests ───────────────────────────────────────────────────────────────────
@@ -88,6 +94,16 @@ describe("CmsBuilderPage (Puck visual editor main route)", () => {
     vi.clearAllMocks();
     mockSearchParams = new URLSearchParams("site=ccf&page=home");
     mockAuth = { token: "mock-token", user: { role: "admin" } };
+    puckPropsCaptured = null;
+    (cmsV2.listCmsSections as any).mockResolvedValue([
+      {
+        id: "sec-hero-1",
+        type: "hero",
+        props_json: { title: "Hero Test Title" },
+        sort_order: 1,
+      },
+    ]);
+    (cmsV2.workflowCmsPage as any).mockResolvedValue({ status: "published" });
   });
 
   it("renders the main Puck builder page layout and header elements", async () => {
@@ -144,6 +160,87 @@ describe("CmsBuilderPage (Puck visual editor main route)", () => {
 
     await waitFor(() => {
       expect(cmsV2.patchCmsSection).toHaveBeenCalled();
+    });
+  });
+
+  it("round-trips generic CMS JSON sections and publishes the edited snapshot", async () => {
+    const props = { title: "Contenido editable", nested: { enabled: true } };
+    // The API returns an array; keep the mock explicit for both initial load
+    // and the post-save refresh.
+    (cmsV2.listCmsSections as any).mockResolvedValue([
+      { id: "sec-feed-1", type: "feed", props_json: props, sort_order: 0 },
+    ]);
+
+    render(<CmsBuilderPage />);
+
+    await waitFor(() => {
+      expect(puckPropsCaptured?.data?.content?.[0]?.props?.__cms_json).toContain("Contenido editable");
+    });
+
+    await act(async () => {
+      await puckPropsCaptured.onPublish({
+        content: [
+          {
+            type: "feed",
+            props: {
+              id: "sec-feed-1",
+              __cms_json: JSON.stringify({ title: "Texto publicado desde Puck", nested: { enabled: false } }),
+            },
+          },
+        ],
+      });
+    });
+
+    await waitFor(() => {
+      expect(cmsV2.patchCmsSection).toHaveBeenCalledWith(
+        "ccf",
+        "home",
+        "sec-feed-1",
+        { sort_order: 0, props_json: { title: "Texto publicado desde Puck", nested: { enabled: false } } },
+        "mock-token",
+      );
+      expect(cmsV2.workflowCmsPage).toHaveBeenCalledWith(
+        "ccf",
+        "home",
+        "publish",
+        "Publicado desde el editor visual",
+        "mock-token",
+      );
+    });
+  });
+
+  it("rejects invalid generic JSON without overwriting the stored section", async () => {
+    (cmsV2.listCmsSections as any).mockResolvedValue([
+      { id: "sec-feed-1", type: "feed", props_json: { title: "Seguro" }, sort_order: 0 },
+    ]);
+
+    render(<CmsBuilderPage />);
+    await waitFor(() => {
+      expect(puckPropsCaptured?.data?.content?.[0]?.props?.__cms_json).toContain("Seguro");
+    });
+
+    await act(async () => {
+      await puckPropsCaptured.onPublish({
+        content: [{ type: "feed", props: { id: "sec-feed-1", __cms_json: "{ inválido" } }],
+      });
+    });
+
+    expect(cmsV2.patchCmsSection).not.toHaveBeenCalled();
+    expect(cmsV2.workflowCmsPage).not.toHaveBeenCalled();
+  });
+
+  it("reports when the draft is saved but publishing fails", async () => {
+    (cmsV2.workflowCmsPage as any).mockRejectedValueOnce(new Error("workflow unavailable"));
+
+    render(<CmsBuilderPage />);
+    await waitFor(() => {
+      expect(screen.getByTestId("puck-editor-mock")).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "Guardar" }));
+
+    await waitFor(() => {
+      expect(toast.error).toHaveBeenCalledWith("Borrador guardado, pero la publicación falló");
     });
   });
 

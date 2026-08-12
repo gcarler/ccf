@@ -29,6 +29,8 @@ vi.mock("@/lib/cms/v2", () => ({
   listCmsSections: vi.fn().mockResolvedValue([]),
   patchCmsSection: vi.fn(),
   createCmsSection: vi.fn(),
+  deleteCmsSection: vi.fn(),
+  workflowCmsPage: vi.fn(),
 }));
 
 /* eslint-disable @typescript-eslint/no-explicit-any */

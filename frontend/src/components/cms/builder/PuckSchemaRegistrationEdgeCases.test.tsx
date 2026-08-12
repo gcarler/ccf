@@ -17,12 +17,15 @@ vi.mock("@/context/AuthContext", () => ({
 
 vi.mock("@/lib/cms/permissions", () => ({
   canEditCms: () => true,
+  canPublishCms: () => true,
 }));
 
 vi.mock("@/lib/cms/v2", () => ({
   listCmsSections: vi.fn().mockResolvedValue([]),
   patchCmsSection: vi.fn(),
   createCmsSection: vi.fn(),
+  deleteCmsSection: vi.fn(),
+  workflowCmsPage: vi.fn(),
 }));
 
 vi.mock("@/lib/http", () => ({

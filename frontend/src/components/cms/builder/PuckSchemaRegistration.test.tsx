@@ -17,12 +17,15 @@ vi.mock("@/context/AuthContext", () => ({
 
 vi.mock("@/lib/cms/permissions", () => ({
   canEditCms: () => true,
+  canPublishCms: () => true,
 }));
 
 vi.mock("@/lib/cms/v2", () => ({
   listCmsSections: vi.fn().mockResolvedValue([]),
   patchCmsSection: vi.fn(),
   createCmsSection: vi.fn(),
+  deleteCmsSection: vi.fn(),
+  workflowCmsPage: vi.fn(),
 }));
 
 vi.mock("@/lib/http", () => ({
@@ -71,6 +74,19 @@ describe("Puck Block Schema Registrations for MediaPicker", () => {
     expect(cardsItems?.arrayFields?.image_url).toBeDefined();
     expect(cardsItems?.arrayFields?.image_url?.type).toBe("custom");
     expect(typeof cardsItems?.arrayFields?.image_url?.render).toBe("function");
+  });
+
+  it("registers JSON editors for every public projection section type", async () => {
+    render(<PuckBuilderPage />);
+    await waitFor(() => {
+      expect(screen.getByTestId("puck-editor-mock")).toBeInTheDocument();
+    });
+
+    const components = capturedConfig?.components as any;
+    for (const type of ["contact_form", "course_grid", "locations_list", "testimonials_masonry"]) {
+      expect(components[type]).toBeDefined();
+      expect(components[type].fields.__cms_json.type).toBe("textarea");
+    }
   });
 
   it("renders MediaPickerField correctly from hero bg_image custom field render function", async () => {
