@@ -59,6 +59,10 @@ export default function MediaPicker({
     apiFetch<{ items: CmsMediaItem[]; total: number }>("/cms/media", {
       token,
       cache: "no-store",
+      // The picker is the central library selector. Load the full API page
+      // (the endpoint caps this at 500) so migrated public-site assets are
+      // selectable instead of silently stopping at the first 50 items.
+      query: { skip: 0, limit: 500 },
     })
       .then((data) => setItems(data?.items || []))
       .catch(() => setItems([]))

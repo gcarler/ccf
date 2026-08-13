@@ -40,6 +40,7 @@ class TestPublicApi100PctCoverage:
             tag="Academia",
             modality="online",
             is_published=True,
+            image_url="/api/static/cms/public-site/course-cover.webp",
         )
         c2 = Course(
             id=uuid.uuid4(),
@@ -61,6 +62,8 @@ class TestPublicApi100PctCoverage:
         # List courses
         res = client.get("/api/public/courses")
         assert res.status_code == 200
+        listed = next(item for item in res.json() if item["id"] == c1.slug)
+        assert listed["imageUrl"] == c1.image_url
 
         # Get course detail by slug
         res_detail = client.get(f"/api/public/courses/{c1.slug}")

@@ -119,7 +119,7 @@ const FEED_DEFAULT_PROPS: Record<string, unknown> = {
     desc: "Descubre la base de nuestra fe a través de un viaje personal y transformador.",
     href: "/conocer-a-jesus",
     cta: "Empezar el camino",
-    img: "/images/convenccion/IMG_6813.webp",
+    img: "",
     alt: "Comunidad CCF",
   },
   cards: [
@@ -228,7 +228,7 @@ export const SECTION_TEMPLATES: SectionTemplate[] = [
       primary_cta_href: "/conocer-a-jesus",
       secondary_cta: "Ver eventos",
       secondary_cta_href: "/eventos",
-      bg_image: "/images/convenccion/IMG_6813.webp",
+      bg_image: "",
     },
   },
   {
@@ -327,7 +327,7 @@ export const SECTION_TEMPLATES: SectionTemplate[] = [
       title: "Nuestra Galería",
       columns: 3,
       images: [
-        { url: "/images/convenccion/IMG_6813.webp", alt: "Imagen 1", caption: "Evento de convención" },
+        { url: "", alt: "Imagen 1", caption: "Evento de convención" },
       ],
     },
   },
@@ -372,7 +372,7 @@ export const DEFAULT_SECTION_PROPS: Record<string, Record<string, unknown>> = {
     title: "Nuestra Galería",
     columns: 3,
     images: [
-      { url: "/images/convenccion/IMG_6813.webp", alt: "Imagen 1", caption: "Evento de convención" },
+      { url: "", alt: "Imagen 1", caption: "Evento de convención" },
     ],
   },
   map_embed: {

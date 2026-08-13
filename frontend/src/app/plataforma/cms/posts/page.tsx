@@ -38,6 +38,7 @@ import {
 import { CmsCategory, CmsPostWithTaxonomies, CmsSite, CmsTag } from "@/types/cms-v2";
 import { canEditCms } from "@/lib/cms/permissions";
 import ViewSwitcher, { ViewType } from "@/components/ViewSwitcher";
+import CmsMediaUrlField from "@/components/cms/CmsMediaUrlField";
 
 const RichEditor = dynamic(() => import("@/components/cms/RichEditor"), { ssr: false });
 
@@ -645,17 +646,13 @@ export default function CmsPostsManagement() {
                     minHeight="300px"
                   />
                 </div>
-                <div className="space-y-1.5">
-                  <span className="text-sm font-medium text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">Imagen destacada (URL)</span>
-                  <input
-                    type="url"
-                    value={selectedPost.featured_image_url || ""}
-                    onChange={(e) => setSelectedPost({ ...selectedPost, featured_image_url: e.target.value })}
-                    className="w-full px-3 py-2 text-base bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-secondary))] border border-[hsl(var(--border))] dark:border-white/10 rounded-md"
-                    disabled={!canEdit}
-                    placeholder="https://..."
-                  />
-                </div>
+                <CmsMediaUrlField
+                  label="Imagen destacada"
+                  value={selectedPost.featured_image_url || ""}
+                  token={token}
+                  disabled={!canEdit}
+                  onChange={(url) => setSelectedPost({ ...selectedPost, featured_image_url: url })}
+                />
               </div>
             </section>
 
@@ -1025,22 +1022,13 @@ export default function CmsPostsManagement() {
                       Imagen Destacada & SEO
                     </h4>
 
-                    <div className="space-y-1.5">
-                      <label className="text-xs font-medium text-[hsl(var(--text-secondary))]">URL Imagen Destacada</label>
-                      <input
-                        type="url"
-                        value={selectedPost.featured_image_url || ""}
-                        onChange={(e) => setSelectedPost({ ...selectedPost, featured_image_url: e.target.value })}
-                        placeholder="https://..."
-                        className="w-full px-3 py-2 text-xs bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-secondary))] border border-[hsl(var(--border))] dark:border-white/10 rounded-lg text-[hsl(var(--text-primary))] dark:text-white"
-                        disabled={!canEdit}
-                      />
-                      {selectedPost.featured_image_url && (
-                        <div className="mt-2 rounded-lg overflow-hidden border border-[hsl(var(--border))] dark:border-white/10 max-h-36">
-                          <img src={selectedPost.featured_image_url} alt="Preview" className="w-full h-full object-cover" />
-                        </div>
-                      )}
-                    </div>
+                    <CmsMediaUrlField
+                      label="Imagen destacada"
+                      value={selectedPost.featured_image_url || ""}
+                      token={token}
+                      disabled={!canEdit}
+                      onChange={(url) => setSelectedPost({ ...selectedPost, featured_image_url: url })}
+                    />
 
                     <div className="space-y-1.5">
                       <label className="text-xs font-medium text-[hsl(var(--text-secondary))]">Meta Descripción SEO</label>

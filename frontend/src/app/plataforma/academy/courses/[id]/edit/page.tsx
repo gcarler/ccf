@@ -13,6 +13,7 @@ import {
 import { toast } from 'sonner';
 import clsx from 'clsx';
 import { motion } from 'framer-motion';
+import CmsMediaUrlField from '@/components/cms/CmsMediaUrlField';
 
 const INPUT = "w-full bg-[hsl(var(--surface-1))] dark:bg-black/20 border-2 border-transparent dark:border-white/5 rounded-lg px-3 py-1.5 text-sm font-bold outline-none focus:border-[hsl(var(--info)/100%)]/50 focus:ring-4 focus:ring-[hsl(var(--primary))]/5 transition-all text-[hsl(var(--text-primary))] dark:text-white";
 const LABEL = "text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] ml-4";
@@ -26,7 +27,7 @@ export default function EditCoursePage() {
     const [form, setForm] = useState({
         code: '', title: '', description: '',
         modality: 'non_formal', duration_hours: 0,
-        certificate_type: '', is_published: true, is_self_paced: true,
+        certificate_type: '', image_url: '', is_published: true, is_self_paced: true,
     });
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
@@ -43,6 +44,7 @@ export default function EditCoursePage() {
                 modality: data.modality ?? 'non_formal',
                 duration_hours: data.duration_hours ?? 0,
                 certificate_type: data.certificate_type ?? '',
+                image_url: data.image_url ?? '',
                 is_published: data.is_published ?? true,
                 is_self_paced: data.is_self_paced ?? true,
             }))
@@ -136,6 +138,14 @@ export default function EditCoursePage() {
                                         <label className={LABEL}>Descripcion</label>
                                         <textarea rows={4} placeholder="Objetivos e impacto del programa..." value={form.description} onChange={set('description')}
                                             className={clsx(INPUT, "resize-none py-1.5 leading-relaxed")} />
+                                    </div>
+                                    <div className="md:col-span-2">
+                                        <CmsMediaUrlField
+                                            label="Imagen pública del curso"
+                                            value={form.image_url}
+                                            token={token}
+                                            onChange={(image_url) => setForm((current) => ({ ...current, image_url }))}
+                                        />
                                     </div>
                                 </div>
                             </motion.div>

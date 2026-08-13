@@ -39,7 +39,11 @@ describe("MediaPicker", () => {
       expect(screen.getByText("img2.png")).toBeInTheDocument();
     });
 
-    expect(apiFetch).toHaveBeenCalledWith("/cms/media", { token: "token", cache: "no-store" });
+    expect(apiFetch).toHaveBeenCalledWith("/cms/media", {
+      token: "token",
+      cache: "no-store",
+      query: { skip: 0, limit: 500 },
+    });
   });
 
   it("filters non-image items", async () => {
