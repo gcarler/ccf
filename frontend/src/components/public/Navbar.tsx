@@ -21,7 +21,7 @@ type PublicNavItem = {
 
 export default function Navbar() {
     const { toggle, themeTokens } = useTheme();
-    const { logoUrl, logoName } = useSiteBranding({ logoName: SITE_NAME });
+    const { logoUrl, logoName, tagline } = useSiteBranding({ logoName: SITE_NAME });
     const pathname = usePathname();
     const [scrolled, setScrolled] = useState(false);
     const [mobileOpen, setMobileOpen] = useState(false);
@@ -50,8 +50,12 @@ export default function Navbar() {
     const ctaLabel = themeTokens["--site-header-cta-label"] || "Quiero conocer a Jesús";
     const ctaHref = themeTokens["--site-header-cta-href"] || "/conocer-a-jesus";
 
-    const locationTitle = "Nuestras Sedes";
-    const themeToggleTitle = "Cambiar tema";
+    const locationTitle = themeTokens["--site-header-location-title"] || "Nuestras Sedes";
+    const themeToggleTitle = themeTokens["--site-header-theme-title"] || "Cambiar tema";
+    const dropdownLabel = themeTokens["--site-header-dropdown-label"] || "Explorar";
+    const mobileMenuLabel = themeTokens["--site-header-mobile-menu-label"] || "Menu principal";
+    const openMenuLabel = themeTokens["--site-header-open-menu-label"] || "Abrir menu";
+    const closeMenuLabel = themeTokens["--site-header-close-menu-label"] || "Cerrar menu";
     const navLinks = menuItemsV2;
     const isActiveHref = (href: string) => pathname === href || (href !== "/" && Boolean(pathname?.startsWith(href)));
     const isActiveItem = (item: PublicNavItem) => isActiveHref(item.href) || Boolean(item.children?.some((child) => isActiveHref(child.href)));
@@ -195,7 +199,7 @@ export default function Navbar() {
                                     {logoName}
                                 </span>
                                 <span className="hidden pt-1 text-2xs font-semibold uppercase tracking-[0.18em] md:block" style={{ color: "var(--site-on-surface-variant)" }}>
-                                    Comunidad cristiana
+                                    {tagline}
                                 </span>
                             </span>
                         )}
@@ -247,7 +251,7 @@ export default function Navbar() {
                                         }}
                                     >
                                         <div className="px-3 pb-2 pt-1 text-xs font-semibold uppercase tracking-[0.18em]" style={{ color: "var(--site-on-surface-variant)" }}>
-                                            Explorar
+                                            {dropdownLabel}
                                         </div>
                                         {children?.map((child) => {
                                             const childActive = isActiveHref(child.href);
@@ -333,7 +337,7 @@ export default function Navbar() {
                                 borderColor: "var(--site-outline-variant)",
                             }}
                             aria-expanded={mobileOpen}
-                            aria-label={mobileOpen ? "Cerrar menu" : "Abrir menu"}
+                            aria-label={mobileOpen ? closeMenuLabel : openMenuLabel}
                         >
                             {mobileOpen ? <X size={24} /> : <Menu size={24} />}
                         </button>
@@ -381,7 +385,7 @@ export default function Navbar() {
                                 background: "var(--site-surface-container-low)",
                                 borderColor: "var(--site-outline-variant)",
                             }}
-                            aria-label="Cerrar menu"
+                            aria-label={closeMenuLabel}
                         >
                             <X size={22} />
                         </button>
@@ -390,7 +394,7 @@ export default function Navbar() {
                     <div className="flex-1 overflow-y-auto px-5 pb-8 pt-3">
                         <div className="mb-6">
                             <p className="text-xs font-semibold uppercase tracking-[0.2em]" style={{ color: "var(--site-on-surface-variant)" }}>
-                                Menu principal
+                                {mobileMenuLabel}
                             </p>
                         </div>
                         <div className="space-y-3">

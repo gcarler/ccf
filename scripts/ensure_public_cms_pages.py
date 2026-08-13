@@ -46,6 +46,7 @@ PUBLIC_PAGES = {
     "sedes": "Sedes",
     "testimonios": "Testimonios",
     "conocer-a-jesus": "Conocer a Jesus",
+    "contacto": "Contacto",
     "boletin": "Boletin",
     "privacidad": "Politica de Privacidad",
     "bienvenida": "Bienvenida",

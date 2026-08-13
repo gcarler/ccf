@@ -43,6 +43,11 @@ export default function TestimonioDetailPage() {
 
     const cmsPage = useCmsV2Page("testimonials");
     const cms = cmsPage?.blocks?.detail_template as Record<string, unknown> | undefined;
+    const backLabel = getString(cms, "back_label") || "Volver a testimonios";
+    const notFoundTitle = getString(cms, "not_found_title") || "Testimonio no encontrado";
+    const notFoundDescription = getString(cms, "not_found_description")
+        || "Parece que la historia que buscas ya no está disponible o el enlace es incorrecto.";
+    const notFoundCta = getString(cms, "not_found_cta") || "Ver más testimonios";
 
     useEffect(() => {
         if (!slug) {
@@ -93,16 +98,16 @@ export default function TestimonioDetailPage() {
                 <Header />
                 <main className="pt-[120px] pb-4 min-h-[70vh] flex flex-col items-center justify-center text-center px-3">
                     <Quote size={80} className="mb-3 opacity-20" style={{ color: "var(--site-primary)" }} />
-                    <h1 className="text-lg font-bold mb-4" style={{ color: "var(--site-on-background)" }}>Testimonio no encontrado</h1>
+                    <h1 className="text-lg font-bold mb-4" style={{ color: "var(--site-on-background)" }}>{notFoundTitle}</h1>
                     <p className="text-xl mb-3 opacity-70 max-w-lg" style={{ color: "var(--site-on-surface-variant)" }}>
-                        Parece que la historia que buscas ya no está disponible o el enlace es incorrecto.
+                        {notFoundDescription}
                     </p>
                     <button
                         onClick={() => router.push('/testimonios')}
                         className="flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-semibold uppercase tracking-wide transition-all hover:-translate-x-2"
                         style={{ background: "var(--site-primary)", color: "var(--site-on-primary)" }}
                     >
-                        <ArrowLeft size={16} /> Ver más testimonios
+                        <ArrowLeft size={16} /> {notFoundCta}
                     </button>
                 </main>
                 <Footer_Simple />
@@ -128,7 +133,7 @@ export default function TestimonioDetailPage() {
                         className="inline-flex items-center gap-2 text-sm font-semibold uppercase tracking-wide transition-all hover:opacity-70"
                         style={{ color: "var(--site-primary)" }}
                     >
-                        <ArrowLeft size={16} /> Volver a testimonios
+                        <ArrowLeft size={16} /> {backLabel}
                     </Link>
                 </motion.div>
 

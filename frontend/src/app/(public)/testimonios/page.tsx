@@ -24,7 +24,7 @@ function getTestimonialMediaUrl(t: PublicTestimonialItem): string {
 }
 
 // Extracted Component for Expandable Testimonial Card
-function TestimonialCard({ t, isHighlight }: { t: PublicTestimonialItem; isHighlight: boolean }) {
+function TestimonialCard({ t, isHighlight, readMoreLabel = "Leer más" }: { t: PublicTestimonialItem; isHighlight: boolean; readMoreLabel?: string }) {
     const limit = isHighlight ? 180 : 120;
     const isLongText = t.content.length > limit;
     const mediaUrl = getTestimonialMediaUrl(t);
@@ -91,7 +91,7 @@ function TestimonialCard({ t, isHighlight }: { t: PublicTestimonialItem; isHighl
                             className="mt-4 flex items-center gap-1.5 text-sm font-semibold uppercase tracking-wide transition-all w-fit hover:opacity-70"
                             style={{ color: "var(--site-primary)" }}
                         >
-                            Leer más <ArrowRight size={16} />
+                            {readMoreLabel} <ArrowRight size={16} />
                         </Link>
                     )}
                 </div>
@@ -182,6 +182,7 @@ export default function TestimoniosPage() {
         : {};
     const searchPlaceholder = typeof feed.search_placeholder === "string" ? feed.search_placeholder : "";
     const loadingLabel = typeof feed.loading_label === "string" ? feed.loading_label : "";
+    const readMoreLabel = typeof feed.read_more_label === "string" ? feed.read_more_label : "";
     const emptyTitle = typeof feed.empty_title === "string" ? feed.empty_title : "";
     const emptyDescription = typeof feed.empty_description === "string" ? feed.empty_description : "";
     const storyCta = typeof feed.cta_label === "string" ? feed.cta_label : "";
@@ -320,6 +321,7 @@ export default function TestimoniosPage() {
                                     key={t.id}
                                     t={t}
                                     isHighlight={index === 0 && searchQuery === ""}
+                                    readMoreLabel={readMoreLabel || "Leer más"}
                                 />
                             ))}
                         </motion.div>

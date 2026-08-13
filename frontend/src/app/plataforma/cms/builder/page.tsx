@@ -229,6 +229,7 @@ export default function PuckBuilderPage() {
                   label="Contenido editable (JSON)"
                   value={value || "{}"}
                   token={token}
+                  allowThumbnailOverrides={type === "feed"}
                   onChange={onChange}
                 />
               ),

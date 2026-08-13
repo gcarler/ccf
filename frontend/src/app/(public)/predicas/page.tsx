@@ -11,6 +11,7 @@ import { useCmsV2Page } from "@/hooks/useCmsV2Page";
 import { apiFetch } from "@/lib/http";
 import { formatDate } from "@/lib/format";
 import { safeJsonParse } from "@/lib/safeJson";
+import { normalizeThumbnailOverrides, resolveThumbnailUrl } from "./thumbnail-overrides";
 
 /* ── Tipos ── */
 interface YTVideo {
@@ -120,6 +121,7 @@ function VideoCard({
                     fill
                     sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                     className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                    onError={() => _setImgErr(true)}
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
 
@@ -331,6 +333,17 @@ export default function PredicasPage() {
     useEffect(() => { load(); }, [load]);
 
     const feed = safeJsonParse<Record<string, unknown>>(feedContent?.content, {});
+    const thumbnailOverrides = useMemo(
+        () => normalizeThumbnailOverrides(feed.thumbnail_overrides ?? feedContent?.thumbnail_overrides),
+        [feed.thumbnail_overrides, feedContent?.thumbnail_overrides],
+    );
+    const displayVideos = useMemo(
+        () => (data?.videos ?? []).map((video) => ({
+            ...video,
+            thumbnail_hq: resolveThumbnailUrl(video, thumbnailOverrides),
+        })),
+        [data?.videos, thumbnailOverrides],
+    );
     const feedString = (key: string) => {
         const value = feed[key];
         return typeof value === "string" ? value : "";
@@ -390,13 +403,13 @@ export default function PredicasPage() {
     /* Videos filtrados por búsqueda */
     const filtered = useMemo(() => {
         const q = search.trim().toLowerCase();
-        const vids = data?.videos ?? [];
+        const vids = displayVideos;
         if (!q) return vids;
         return vids.filter(v =>
             v.title.toLowerCase().includes(q) ||
             v.description.toLowerCase().includes(q)
         );
-    }, [data?.videos, search]);
+    }, [displayVideos, search]);
 
     /* Conteo mensual de prédicas vistas */
     const viewedThisMonth = useMemo(() => {

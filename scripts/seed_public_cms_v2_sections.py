@@ -168,6 +168,7 @@ def _page_title(slug: str) -> str:
         "testimonials": "Testimonios",
         "newsletter": "Boletín",
         "blog": "Blog",
+        "contact": "Contacto",
         "welcome": "Bienvenida",
         "privacy": "Política de Privacidad",
         "_global": "Global (nav / shared)",
@@ -278,6 +279,7 @@ def _build_pages(media_find: Any) -> dict[str, list[dict[str, Any]]]:
     home_feed.setdefault("activities_eyebrow", "Actualidad")
     home_feed.setdefault("activities_title", "Actividades Recientes")
     home_feed.setdefault("activities_view_all", "Ver calendario →")
+    home_feed.setdefault("activities_view_all_href", "/eventos")
     home_feed.setdefault(
         "activities_empty",
         "Próximamente encontrarás aquí nuestras actividades. Mientras tanto, síguenos en redes sociales.",
@@ -290,8 +292,11 @@ def _build_pages(media_find: Any) -> dict[str, list[dict[str, Any]]]:
     )
     home_feed.setdefault("newsletter_placeholder", "Tu correo electrónico")
     home_feed.setdefault("newsletter_submit", "Suscribirme")
+    home_feed.setdefault("newsletter_sending_label", "Enviando...")
     home_feed.setdefault("newsletter_success_title", "¡Gracias por suscribirte!")
     home_feed.setdefault("newsletter_success_desc", "Recibirás meditaciones y novedades semanales.")
+    home_feed.setdefault("newsletter_success_toast", "¡Suscrito al boletín!")
+    home_feed.setdefault("newsletter_error_toast", "No se pudo suscribir. Intenta de nuevo.")
 
     # ── ABOUT / NOSOTROS ────────────────────────────────────────────────────
     about_hero = _get_block("ccf_about_hero") or {
@@ -414,6 +419,10 @@ def _build_pages(media_find: Any) -> dict[str, list[dict[str, Any]]]:
         "highlights_empty": "Sin destacados publicados todavía.",
         "no_upcoming_label": "Sin eventos próximos publicados.",
         "no_location": "Sin ubicación publicada",
+        "month_names": ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"],
+        "week_view_label": "Semanal",
+        "month_view_label": "Mensual",
+        "year_view_label": "Anual",
     }
     events_parsed: list[dict[str, Any]] = []
 
@@ -580,6 +589,7 @@ def _build_pages(media_find: Any) -> dict[str, list[dict[str, Any]]]:
         "empty_title": "Todavía no hay testimonios publicados",
         "empty_description": "Cuando el CMS publique testimonios, aparecerán aquí.",
         "cta_label": "Compartir mi historia",
+        "read_more_label": "Leer más",
     }
 
     # ── BLOG ────────────────────────────────────────────────────────────────
@@ -592,6 +602,31 @@ def _build_pages(media_find: Any) -> dict[str, list[dict[str, Any]]]:
         "search_placeholder": "Buscar artículos...",
         "empty_title": "Todavía no hay artículos publicados",
         "empty_description": "Cuando el CMS publique un artículo, aparecerá aquí.",
+        "read_more_label": "Leer más",
+    }
+
+    # ── CONTACT / CONTACTO ─────────────────────────────────────────────────
+    contact_hero = _get_block("ccf_contact_hero", CMS_BLOCKS) or {
+        "eyebrow": "Hablemos",
+        "title_lead": "Contáctanos,",
+        "title_accent": "te esperamos.",
+        "description": "¿Tienes preguntas? ¿Quieres conocernos o pedir oración? Déjanos tus datos y nuestro equipo te contactará pronto.",
+    }
+    contact_form = _get_block("ccf_contact_form", CMS_BLOCKS) or {
+        "title": "Hablemos de Tu Caminar",
+        "subtitle": "Nuestro equipo está aquí para acompañarte sin juicios.",
+        "name_label": "Nombre completo",
+        "name_placeholder": "Tu nombre",
+        "email_label": "Correo electrónico",
+        "email_placeholder": "tu@email.com (opcional)",
+        "phone_label": "WhatsApp",
+        "phone_placeholder": "+57 300...",
+        "message_label": "¿En qué podemos ayudarte?",
+        "message_placeholder": "Cuéntanos un poco sobre ti o tu petición de oración...",
+        "submit_label": "Enviar mensaje y conectar",
+        "success_message": "Gracias. Te contactaremos pronto.",
+        "action_url": "/public/contact",
+        "reset_label": "Enviar otro mensaje",
     }
 
     # ── BOLETÍN ─────────────────────────────────────────────────────────────
@@ -688,11 +723,19 @@ def _build_pages(media_find: Any) -> dict[str, list[dict[str, Any]]]:
         ],
         "location_label": "Cartagena, Colombia",
         "newsletter_label": "Boletín semanal",
+        "contact": {
+            "email": "info@ccfministerio.com",
+            "location_label": "Cartagena, Colombia",
+            "location_href": "/sedes",
+            "newsletter_label": "Boletín semanal",
+            "newsletter_href": "/boletin",
+        },
     }
     footer_config.setdefault("copyright_company", "PLES SAS")
     footer_config.setdefault("copyright_company_url", "https://ples.com.co")
     footer_config.setdefault("copyright_text", "El uso inteligente de la experiencia. Todos los derechos reservados.")
     footer_config.setdefault("privacy_label", "Política de Privacidad")
+    footer_config.setdefault("privacy_href", "/privacy")
     footer_config.setdefault("nav_section_title", "Navegación")
     footer_config.setdefault("resource_section_title", "Recursos")
     footer_config.setdefault("contact_section_title", "Contáctanos")
@@ -752,6 +795,10 @@ def _build_pages(media_find: Any) -> dict[str, list[dict[str, Any]]]:
         ],
         "newsletter": [
             {"key": "hero", "type": "hero", "props": _content_json(boletin_hero), "sort": 0},
+        ],
+        "contact": [
+            {"key": "hero", "type": "hero", "props": contact_hero, "sort": 0},
+            {"key": "contact", "type": "contact_form", "props": contact_form, "sort": 1},
         ],
         "welcome": [
             {"key": "welcome", "type": "welcome", "props": welcome_content, "sort": 0},

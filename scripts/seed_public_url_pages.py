@@ -44,6 +44,7 @@ SPANISH_PAGES: dict[str, tuple[str, str]] = {
     "testimonios": ("testimonials", "Testimonios"),
     "boletin": ("newsletter", "Boletín"),
     "blog": ("blog", "Blog"),
+    "contacto": ("contact", "Contacto"),
     "conocer-a-jesus": ("discover", "Conocer a Jesús"),
     "bienvenida": ("welcome", "Bienvenida"),
     "privacidad": ("privacy", "Política de Privacidad"),
@@ -111,10 +112,16 @@ def _normalize_props(section_type: str, props: Any) -> dict[str, Any]:
             "items": items,
         }
     if section_type == "contact_form":
-        return {
-            "title": data.get("contact_title", "Hablemos"),
-            "body": data.get("contact_description", ""),
-        }
+        if "contact_title" in data or "contact_description" in data:
+            # discover-style feed projection: those props carry contact copy
+            # under ``contact_title`` / ``contact_description``.
+            return {
+                "title": data.get("contact_title", "Hablemos"),
+                "body": data.get("contact_description", ""),
+            }
+        # Canonical contact page: pass the full form props through so the CMS
+        # builder can edit every label/placeholder from the Spanish URL page.
+        return data if isinstance(data, dict) else {}
     if section_type == "policy_document":
         sections = data.get("sections") or []
         intro = data.get("summary") or data.get("intro", "")

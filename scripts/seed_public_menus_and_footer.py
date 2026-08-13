@@ -83,8 +83,11 @@ FOOTER_PROPS: dict[str, Any] = {
         "contact": "Contáctanos",
     },
     "contact": {
+        "email": "info@ccfministerio.com",
         "location_label": "Cartagena, Colombia",
+        "location_href": "/sedes",
         "newsletter_label": "Boletín semanal",
+        "newsletter_href": "/boletin",
     },
     "copyright": {
         "company": "PLES SAS",
@@ -92,6 +95,7 @@ FOOTER_PROPS: dict[str, Any] = {
         "text": "El uso inteligente de la experiencia. Todos los derechos reservados.",
     },
     "privacy_label": "Política de Privacidad",
+    "privacy_href": "/privacy",
 }
 
 

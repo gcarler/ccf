@@ -35,6 +35,7 @@ import {
   ALL_TOKEN_KEYS,
   applyPreset,
   buildDefaultTokens,
+  getTokenDefaultValue,
   THEME_PRESETS,
   TOKEN_CATEGORIES,
 } from "@/components/cms/themes/themeTokens";
@@ -80,6 +81,28 @@ function hexFromAny(value: string): string {
 
 function updateTokenValue(prev: Record<string, string>, key: string, value: string): Record<string, string> {
   return { ...prev, [key]: value };
+}
+
+/**
+ * Calcula el set de tokens a persistir: solo los que difieren de su default
+ * del catálogo, más cualquier token de compatibilidad/desconocido conservado tal cual.
+ *
+ * Evita materializar los 64 defaults al editar un tema existente (la BD
+ * quedaría "sucia" con valores que no reflejan la intención del tema) y
+ * borra del payload los tokens que fueron restaurados a su default.
+ */
+function buildPersistedTokens(tokens: Record<string, string>): Record<string, string> {
+  const payload: Record<string, string> = {};
+  for (const [key, value] of Object.entries(tokens)) {
+    if (!ALL_TOKEN_KEYS.includes(key)) {
+      // Tokens fuera del catálogo (de compatibilidad o importados) se conservan tal cual.
+      payload[key] = value;
+      continue;
+    }
+    if (value === getTokenDefaultValue(key)) continue;
+    payload[key] = value;
+  }
+  return payload;
 }
 
 /* ── Component ── */
@@ -140,7 +163,12 @@ export default function CmsThemesPage() {
     setSaving(true);
     setMessage(null);
     try {
-      const payload = { name, tokens_json: tokens, is_active: canPublish, status: "active" };
+      const payload = {
+        name,
+        tokens_json: buildPersistedTokens(tokens),
+        is_active: canPublish,
+        status: "active",
+      };
       if (editingThemeId) {
         await patchCmsTheme(siteKey, editingThemeId, payload, token);
         if (canPublish) {
@@ -271,8 +299,9 @@ export default function CmsThemesPage() {
     });
   };
 
+  // Cuenta solo los tokens que se persistirían realmente (valor ≠ default).
   const usedTokensCount = useMemo(() => {
-    return Object.keys(tokens).filter((k) => ALL_TOKEN_KEYS.includes(k)).length;
+    return Object.entries(tokens).filter(([key, value]) => value !== getTokenDefaultValue(key)).length;
   }, [tokens]);
 
   return (
@@ -479,7 +508,12 @@ export default function CmsThemesPage() {
               <h2 className="text-xs font-bold uppercase tracking-widest text-[hsl(var(--text-secondary))]">
                 Tokens de diseño
               </h2>
-              <span className="text-2xs opacity-50">{usedTokensCount} / {ALL_TOKEN_KEYS.length}</span>
+              <span
+                className="text-2xs opacity-50"
+                title="Solo se guardan los tokens con valores personalizados; los que quedan en su default no se persisten."
+              >
+                {usedTokensCount} / {ALL_TOKEN_KEYS.length} personalizados
+              </span>
             </div>
             <div className="divide-y divide-[hsl(var(--border))] dark:divide-white/5">
               {TOKEN_CATEGORIES.map((cat) => {

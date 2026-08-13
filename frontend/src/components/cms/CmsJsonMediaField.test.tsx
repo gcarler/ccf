@@ -39,6 +39,55 @@ describe("CmsJsonMediaField", () => {
     });
   });
 
+  it("exposes founder photos and nested sermon thumbnail overrides through CMS pickers", () => {
+    const onChange = vi.fn();
+    const value = JSON.stringify({
+      founder1_image: "/api/static/cms/pastores/old-one.webp",
+      founder2_image: "/api/static/cms/pastores/old-two.webp",
+      content: JSON.stringify({ thumbnail_overrides: { "video-abc": "" } }),
+    }, null, 2);
+
+    render(<CmsJsonMediaField value={value} token="token" onChange={onChange} />);
+
+    expect(screen.getByText("founder1_image")).toBeInTheDocument();
+    expect(screen.getByText("founder2_image")).toBeInTheDocument();
+    expect(screen.getByText("Miniaturas de prédicas")).toBeInTheDocument();
+    expect(screen.getByDisplayValue("video-abc")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: /Seleccionar imagen para Imagen de miniatura/i }));
+
+    const nextJson = onChange.mock.calls.at(-1)?.[0] as string;
+    const next = JSON.parse(nextJson) as { content: string };
+    expect(JSON.parse(next.content)).toMatchObject({
+      thumbnail_overrides: { "video-abc": "/api/static/cms/public-site/selected.webp" },
+    });
+  });
+
+  it("can activate sermon thumbnail overrides when the feed has none yet", () => {
+    const onChange = vi.fn();
+    const value = JSON.stringify({
+      content: JSON.stringify({ hero_eyebrow: "Mensaje semanal" }),
+    }, null, 2);
+
+    render(
+      <CmsJsonMediaField
+        value={value}
+        token="token"
+        allowThumbnailOverrides
+        onChange={onChange}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Activar selector" }));
+
+    const nextJson = onChange.mock.calls.at(-1)?.[0] as string;
+    const next = JSON.parse(nextJson) as { content: string };
+    expect(JSON.parse(next.content)).toMatchObject({
+      hero_eyebrow: "Mensaje semanal",
+      thumbnail_overrides: {},
+    });
+  });
+
   it("keeps the JSON textarea editable when it is temporarily invalid", () => {
     const onChange = vi.fn();
     render(<CmsJsonMediaField value="{ inválido" token="token" onChange={onChange} />);

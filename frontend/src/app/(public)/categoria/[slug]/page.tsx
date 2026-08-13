@@ -18,8 +18,13 @@ function applyTemplate(template: string, name: string) {
 export default function CategoryArchivePage() {
   const cmsPage = useCmsV2Page("blog");
   const archiveContent = cmsPage?.blocks?.archive_template;
+  const feedContent = cmsPage?.blocks?.feed;
   const categoryTitlePrefix = (archiveContent?.category_title_prefix as string) ?? "";
   const categoryDescriptionTemplate = (archiveContent?.category_description_template as string) ?? "";
+  const backToBlogLabel = (archiveContent?.back_to_blog_label as string) ?? "Volver al blog";
+  const emptyCategoryTitle = (archiveContent?.empty_category_title as string) ?? "Sin artículos en esta categoría";
+  const emptyCategoryDescription = (archiveContent?.empty_category_description as string) ?? "No hay posts publicados en esta categoría todavía.";
+  const readMoreLabel = (feedContent?.read_more_label as string) ?? "Leer más";
 
   const params = useParams();
   const slug = params?.slug && typeof params.slug === "string" ? params.slug : "";
@@ -73,7 +78,7 @@ export default function CategoryArchivePage() {
       {/* Back + Posts */}
       <section className="ccf-section-tight ccf-container min-h-[50vh]">
         <Link href="/blog" className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wide mb-6 transition-opacity hover:opacity-70" style={{ color: "var(--site-primary)" }}>
-          <ArrowLeft size={14} /> Volver al blog
+          <ArrowLeft size={14} /> {backToBlogLabel}
         </Link>
 
         {loading ? (
@@ -83,9 +88,9 @@ export default function CategoryArchivePage() {
         ) : posts.length === 0 ? (
           <div className="flex flex-col items-center justify-center text-center py-1.5">
             <FolderOpen size={64} className="mb-3 opacity-20" style={{ color: "var(--site-primary)" }} />
-            <h3 className="text-xl font-bold mb-4" style={{ color: "var(--site-on-surface)" }}>Sin artículos en esta categoría</h3>
+            <h3 className="text-xl font-bold mb-4" style={{ color: "var(--site-on-surface)" }}>{emptyCategoryTitle}</h3>
             <p className="ccf-body text-lg opacity-80 max-w-md mx-auto" style={{ color: "var(--site-on-surface-variant)" }}>
-              No hay posts publicados en esta categoría todavía.
+              {emptyCategoryDescription}
             </p>
           </div>
         ) : (
@@ -133,7 +138,7 @@ export default function CategoryArchivePage() {
                       </p>
                     )}
                     <span className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-wide" style={{ color: "var(--site-primary)" }}>
-                      Leer más <ArrowRight size={14} />
+                      {readMoreLabel} <ArrowRight size={14} />
                     </span>
                   </div>
                 </Link>

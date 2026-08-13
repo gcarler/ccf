@@ -4,6 +4,8 @@
 > **Última actualización:** 2026-07-31
 > **Audiencia:** DevOps, Backend Dev, On-Call
 
+> **📖 Para el equipo editorial:** ver [Checklist Editorial — Sitio Público Editable desde el CMS](./CHECKLIST_EDITABILIDAD_PUBLICO_EDITORIAL.md) para saber qué textos e imágenes se editan desde el CMS y dónde.
+
 ---
 
 ## Tabla de Contenidos

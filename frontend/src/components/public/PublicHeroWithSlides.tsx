@@ -215,8 +215,8 @@ export default function PublicHeroWithSlides({
           className="order-2 relative"
         >
           <div className="relative overflow-hidden rounded-[2rem] shadow-2xl min-h-[28rem] lg:min-h-[38rem]">
-            <AnimatePresence mode="wait">
-              {activeSlide && (
+            {activeSlide ? (
+              <AnimatePresence mode="wait">
                 <motion.div
                   key={`${activeSlide.src}-${activeIndex}`}
                   initial={{ opacity: 0, scale: 1.02 }}
@@ -227,23 +227,38 @@ export default function PublicHeroWithSlides({
                 >
                   <OptimizedImage src={activeSlide.src} alt={activeSlide.alt} fill sizes="(max-width: 1024px) 100vw, 45vw" className="object-cover" priority={activeIndex === 0} />
                 </motion.div>
-              )}
-            </AnimatePresence>
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_20%,rgba(255,255,255,0.2),transparent_30%),linear-gradient(to_top,rgba(0,0,0,0.9)_0%,rgba(0,0,0,0.42)_45%,transparent_100%)]" />
-            <div className="absolute inset-x-0 top-0 flex items-center justify-between p-4 md:p-6 text-white/90">
-              <span className="ccf-kicker rounded-full border border-white/20 bg-white/10 px-3 py-1 text-2xs uppercase backdrop-blur">
-                Banner
-              </span>
-              {totalSlides > 1 && (
-                <span className="ccf-kicker rounded-full border border-white/20 bg-white/10 px-3 py-1 text-2xs uppercase backdrop-blur">
-                  {String(activeIndex + 1).padStart(2, "0")} / {String(totalSlides).padStart(2, "0")}
-                </span>
-              )}
-            </div>
-            <div className="absolute inset-x-0 bottom-0 p-5 md:p-8 text-white">
-              {activeSlide?.title && <h2 className="text-xl md:text-3xl mb-3 max-w-xl">{activeSlide.title}</h2>}
-              {activeSlide?.caption && <p className="ccf-copy text-white/86 max-w-2xl">{activeSlide.caption}</p>}
-            </div>
+              </AnimatePresence>
+            ) : (
+              /* Sin imagen publicada: gradiente decorativo en vez del placeholder gris "Banner". */
+              <div
+                className="absolute inset-0"
+                style={{
+                  background: "linear-gradient(135deg, var(--site-primary-container) 0%, var(--site-surface-container-high) 55%, var(--site-surface-container) 100%)",
+                }}
+              >
+                <div className="absolute -right-16 -top-16 size-64 rounded-full opacity-25 blur-3xl" style={{ background: "var(--site-primary)" }} />
+                <div className="absolute -bottom-20 -left-10 size-72 rounded-full opacity-15 blur-3xl" style={{ background: "var(--site-secondary, var(--site-primary))" }} />
+              </div>
+            )}
+            {activeSlide && (
+              <>
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_20%,rgba(255,255,255,0.2),transparent_30%),linear-gradient(to_top,rgba(0,0,0,0.9)_0%,rgba(0,0,0,0.42)_45%,transparent_100%)]" />
+                <div className="absolute inset-x-0 top-0 flex items-center justify-between p-4 md:p-6 text-white/90">
+                  <span className="ccf-kicker rounded-full border border-white/20 bg-white/10 px-3 py-1 text-2xs uppercase backdrop-blur">
+                    Banner
+                  </span>
+                  {totalSlides > 1 && (
+                    <span className="ccf-kicker rounded-full border border-white/20 bg-white/10 px-3 py-1 text-2xs uppercase backdrop-blur">
+                      {String(activeIndex + 1).padStart(2, "0")} / {String(totalSlides).padStart(2, "0")}
+                    </span>
+                  )}
+                </div>
+                <div className="absolute inset-x-0 bottom-0 p-5 md:p-8 text-white">
+                  {activeSlide.title && <h2 className="text-xl md:text-3xl mb-3 max-w-xl">{activeSlide.title}</h2>}
+                  {activeSlide.caption && <p className="ccf-copy text-white/86 max-w-2xl">{activeSlide.caption}</p>}
+                </div>
+              </>
+            )}
           </div>
           {totalSlides > 1 && (
             <div className="mt-4 grid grid-cols-3 gap-3 sm:grid-cols-4">

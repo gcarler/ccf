@@ -40,6 +40,7 @@ type FooterConfig = {
   contact?: Record<string, unknown>;
   copyright?: Record<string, unknown>;
   privacy_label?: string;
+  privacy_href?: string;
 };
 
 function socialIcon(kindOrLabel: string) {
@@ -129,7 +130,7 @@ function FooterLinkColumn({ title, links }: { title: string; links: PublicLink[]
 }
 
 export default function Footer() {
-    const { logoUrl, logoName } = useSiteBranding({ logoName: SITE_NAME });
+    const { logoUrl, logoName, tagline } = useSiteBranding({ logoName: SITE_NAME });
     const bootstrappedFooterPage = usePublicBootstrap()?.footerPage ?? null;
     const [footerConfig, setFooterConfig] = useState<FooterConfig | null>(() => {
         const section = bootstrappedFooterPage?.sections?.find((s) => s.type === "footer_config");
@@ -173,6 +174,10 @@ export default function Footer() {
     const contact = asRecord(cfg.contact);
     const locationLabel = asString(contact.location_label);
     const newsletterLabel = asString(contact.newsletter_label);
+    const contactEmail = asString(contact.email, SITE_EMAIL);
+    const locationHref = asString(contact.location_href, "/sedes");
+    const newsletterHref = asString(contact.newsletter_href, "/boletin");
+    const privacyHref = asString(cfg.privacy_href, "/privacy");
     const copyright = asRecord(cfg.copyright);
     const copyrightCompany = asString(copyright.company, brandName);
     const copyrightCompanyUrl = asString(copyright.company_url, "/");
@@ -218,7 +223,7 @@ export default function Footer() {
                                         {brandName}
                                     </span>
                                     <span className="mt-1 block text-xs font-semibold uppercase tracking-[0.2em]" style={{ color: "var(--site-primary)" }}>
-                                        Comunidad cristiana
+                                        {tagline}
                                     </span>
                                 </span>
                             </Link>
@@ -254,22 +259,22 @@ export default function Footer() {
                         </div>
 
                         <div className="grid gap-2 py-4 sm:grid-cols-3 lg:grid-cols-1 lg:py-2 lg:pl-10">
-                            {SITE_EMAIL ? (
-                                <a href={`mailto:${SITE_EMAIL}`} className="group flex items-center gap-3 rounded-2xl px-4 py-3.5 text-sm font-semibold transition-colors" style={{ color: "var(--site-on-surface)" }}>
+                            {contactEmail ? (
+                                <a href={`mailto:${contactEmail}`} className="group flex items-center gap-3 rounded-2xl px-4 py-3.5 text-sm font-semibold transition-colors" style={{ color: "var(--site-on-surface)" }}>
                                     <Mail size={18} aria-hidden="true" style={{ color: "var(--site-primary)" }} />
-                                    <span className="min-w-0 flex-1 truncate">{SITE_EMAIL}</span>
+                                    <span className="min-w-0 flex-1 truncate">{contactEmail}</span>
                                     <ArrowUpRight size={15} className="shrink-0 opacity-50 transition-opacity group-hover:opacity-100" aria-hidden="true" />
                                 </a>
                             ) : null}
                             {locationLabel ? (
-                                <Link href="/sedes" className="group flex items-center gap-3 rounded-2xl px-4 py-3.5 text-sm font-semibold transition-colors" style={{ color: "var(--site-on-surface)" }}>
+                                <Link href={locationHref} className="group flex items-center gap-3 rounded-2xl px-4 py-3.5 text-sm font-semibold transition-colors" style={{ color: "var(--site-on-surface)" }}>
                                     <MapPin size={18} aria-hidden="true" style={{ color: "var(--site-primary)" }} />
                                     <span className="min-w-0 flex-1 truncate">{locationLabel}</span>
                                     <ArrowUpRight size={15} className="shrink-0 opacity-50 transition-opacity group-hover:opacity-100" aria-hidden="true" />
                                 </Link>
                             ) : null}
                             {newsletterLabel ? (
-                                <Link href="/boletin" className="group flex items-center gap-3 rounded-2xl px-4 py-3.5 text-sm font-semibold transition-colors" style={{ color: "var(--site-on-surface)" }}>
+                                <Link href={newsletterHref} className="group flex items-center gap-3 rounded-2xl px-4 py-3.5 text-sm font-semibold transition-colors" style={{ color: "var(--site-on-surface)" }}>
                                     <Newspaper size={18} aria-hidden="true" style={{ color: "var(--site-primary)" }} />
                                     <span className="min-w-0 flex-1 truncate">{newsletterLabel}</span>
                                     <ArrowUpRight size={15} className="shrink-0 opacity-50 transition-opacity group-hover:opacity-100" aria-hidden="true" />
@@ -289,20 +294,20 @@ export default function Footer() {
                                 {contactSectionTitle}
                             </h4>
                             <div className="mt-5 grid gap-2">
-                                {SITE_EMAIL ? (
-                                    <a href={`mailto:${SITE_EMAIL}`} className="flex min-h-10 items-center gap-3 text-sm font-medium sm:text-md" style={{ color: "var(--site-on-surface-variant)" }}>
+                                {contactEmail ? (
+                                    <a href={`mailto:${contactEmail}`} className="flex min-h-10 items-center gap-3 text-sm font-medium sm:text-md" style={{ color: "var(--site-on-surface-variant)" }}>
                                         <Mail size={16} className="shrink-0" aria-hidden="true" style={{ color: "var(--site-primary)" }} />
-                                        <span className="min-w-0 truncate">{SITE_EMAIL}</span>
+                                        <span className="min-w-0 truncate">{contactEmail}</span>
                                     </a>
                                 ) : null}
                                 {locationLabel ? (
-                                    <Link href="/sedes" className="flex min-h-10 items-center gap-3 text-sm font-medium sm:text-md" style={{ color: "var(--site-on-surface-variant)" }}>
+                                    <Link href={locationHref} className="flex min-h-10 items-center gap-3 text-sm font-medium sm:text-md" style={{ color: "var(--site-on-surface-variant)" }}>
                                         <MapPin size={16} className="shrink-0" aria-hidden="true" style={{ color: "var(--site-primary)" }} />
                                         <span className="min-w-0 truncate">{locationLabel}</span>
                                     </Link>
                                 ) : null}
                                 {newsletterLabel ? (
-                                    <Link href="/boletin" className="flex min-h-10 items-center gap-3 text-sm font-medium sm:text-md" style={{ color: "var(--site-on-surface-variant)" }}>
+                                    <Link href={newsletterHref} className="flex min-h-10 items-center gap-3 text-sm font-medium sm:text-md" style={{ color: "var(--site-on-surface-variant)" }}>
                                         <Newspaper size={16} className="shrink-0" aria-hidden="true" style={{ color: "var(--site-primary)" }} />
                                         <span className="min-w-0 truncate">{newsletterLabel}</span>
                                     </Link>
@@ -321,7 +326,7 @@ export default function Footer() {
                             </a>
                             {" "}— {copyrightText}
                         </p>
-                        <Link href="/privacy" className="shrink-0 font-semibold transition-colors hover:text-[var(--site-primary)]" style={{ color: "var(--site-on-surface-variant)" }}>
+                        <Link href={privacyHref} className="shrink-0 font-semibold transition-colors hover:text-[var(--site-primary)]" style={{ color: "var(--site-on-surface-variant)" }}>
                             {privacyLabel}
                         </Link>
                     </div>

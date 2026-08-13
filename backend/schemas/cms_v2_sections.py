@@ -268,6 +268,8 @@ class ContactFormProps(BaseModel):
     subtitle: str = ""
     name_label: str = "Nombre completo"
     name_placeholder: str = "Tu nombre"
+    email_label: str = "Correo electrónico"
+    email_placeholder: str = "tu@email.com (opcional)"
     phone_label: str = "WhatsApp"
     phone_placeholder: str = "+57 300..."
     message_label: str = "¿En qué podemos ayudarte?"
@@ -275,6 +277,7 @@ class ContactFormProps(BaseModel):
     submit_label: str = "Enviar mensaje y conectar"
     success_message: str = "Gracias. Te contactaremos pronto."
     action_url: str = "/public/contact"
+    reset_label: str = "Enviar otro mensaje"
 
 
 class PrayerFormProps(BaseModel):
@@ -287,6 +290,7 @@ class PrayerFormProps(BaseModel):
     submit_label: str = "Enviar al equipo pastoral"
     success_message: str = "Tu petición ha sido enviada."
     action_url: str = "/crm/prayer-requests/public"
+    reset_label: str = "Enviar otra petición"
 
 
 class CourseItem(BaseModel):
@@ -364,13 +368,31 @@ class FooterLinkGroup(BaseModel):
 
 
 class FooterConfigProps(BaseModel):
-    brand_description: str = ""
-    location_label: str = ""
-    newsletter_label: str = ""
-    copyright: str = ""
-    copyright_url: str = ""
-    nav_groups: List[FooterLinkGroup] = []
-    social_links: List[SocialLinkItem] = []
+    model_config = {"extra": "ignore"}
+    # Shape realmente persistida/consumida por FaroFooter/Footer. El schema
+    # estricto anterior (extra=ignore) descartaba todas estas claves al guardar
+    # desde el builder, rompiendo el footer publicado.
+    description: Optional[str] = None
+    nav_links: Optional[List[Dict[str, Any]]] = None
+    resource_links: Optional[List[Dict[str, Any]]] = None
+    social_links: Optional[List[Dict[str, Any]]] = None
+    section_titles: Optional[Dict[str, Any]] = None
+    contact: Optional[Dict[str, Any]] = None
+    copyright: Optional[Dict[str, Any]] = None
+    privacy_label: Optional[str] = None
+    privacy_href: Optional[str] = None
+    location_label: Optional[str] = None
+    newsletter_label: Optional[str] = None
+    copyright_company: Optional[str] = None
+    copyright_company_url: Optional[str] = None
+    copyright_text: Optional[str] = None
+    nav_section_title: Optional[str] = None
+    resource_section_title: Optional[str] = None
+    contact_section_title: Optional[str] = None
+    # Compatibility keys (renderer de config) — se conservan para compatibilidad
+    brand_description: Optional[str] = None
+    copyright_url: Optional[str] = None
+    nav_groups: Optional[List[FooterLinkGroup]] = None
 
 
 class MobileMenuItem(BaseModel):
@@ -438,6 +460,63 @@ class RichTextProps(_PermissiveProps):
     body: str = ""
     cta_label: str = ""
     cta_href: str = "/"
+    # Blog archive_template (etiqueta/categoría)
+    category_title_prefix: Optional[str] = None
+    category_description_template: Optional[str] = None
+    tag_title_prefix: Optional[str] = None
+    tag_description_template: Optional[str] = None
+    back_to_blog_label: Optional[str] = None
+    empty_tag_title: Optional[str] = None
+    empty_tag_description: Optional[str] = None
+    empty_category_title: Optional[str] = None
+    empty_category_description: Optional[str] = None
+    # Detail templates (testimonios)
+    footer_label: Optional[str] = None
+    back_label: Optional[str] = None
+    not_found_title: Optional[str] = None
+    not_found_description: Optional[str] = None
+    not_found_cta: Optional[str] = None
+    prayer_action_label: Optional[str] = None
+    share_action_label: Optional[str] = None
+    share_toast_success: Optional[str] = None
+    share_toast_error: Optional[str] = None
+    prayer_success_title: Optional[str] = None
+    prayer_success_description: Optional[str] = None
+    prayer_success_close: Optional[str] = None
+    prayer_form_badge: Optional[str] = None
+    prayer_form_title: Optional[str] = None
+    prayer_form_description: Optional[str] = None
+    prayer_name_placeholder: Optional[str] = None
+    prayer_request_placeholder: Optional[str] = None
+    prayer_submit_label: Optional[str] = None
+    # Detail templates (cursos)
+    about_title: Optional[str] = None
+    instructor_label: Optional[str] = None
+    syllabus_title: Optional[str] = None
+    enroll_button_default: Optional[str] = None
+    enrolled_label: Optional[str] = None
+    enroll_drawer_title: Optional[str] = None
+    enroll_drawer_description: Optional[str] = None
+    enroll_name_label: Optional[str] = None
+    enroll_email_label: Optional[str] = None
+    enroll_phone_label: Optional[str] = None
+    enroll_cancel_label: Optional[str] = None
+    enroll_submit_label: Optional[str] = None
+    enroll_submitting_label: Optional[str] = None
+    enroll_success_toast: Optional[str] = None
+    enroll_error_toast: Optional[str] = None
+    # Detail templates (pastores)
+    badge_label: Optional[str] = None
+    role_fallback: Optional[str] = None
+    quote_subtitle: Optional[str] = None
+    tags: Optional[List[str]] = None
+    motto_label: Optional[str] = None
+    story_title: Optional[str] = None
+    story_subtitle: Optional[str] = None
+    cta_eyebrow: Optional[str] = None
+    cta_description: Optional[str] = None
+    cta_primary_label: Optional[str] = None
+    cta_secondary_label: Optional[str] = None
 
 
 class RichTextColumnsProps(_PermissiveProps):
@@ -495,6 +574,12 @@ class CardsProps(_PermissiveProps):
     title: str = ""
     body: str = ""
     items: List[CardItem] = []
+    # Blog feed is seeded as ``cards`` (seed_blog_sermons_cms) and reads
+    # these extra keys from the public page.
+    search_placeholder: Optional[str] = None
+    empty_title: Optional[str] = None
+    empty_description: Optional[str] = None
+    read_more_label: Optional[str] = None
 
 
 class CtaBannerProps(_PermissiveProps):
@@ -548,6 +633,7 @@ class FeedProps(_PermissiveProps):
     activities_eyebrow: Optional[str] = None
     activities_title: Optional[str] = None
     activities_view_all: Optional[str] = None
+    activities_view_all_href: Optional[str] = None
     activities_empty: Optional[str] = None
     scroll_indicator: Optional[str] = None
     newsletter_eyebrow: Optional[str] = None
@@ -555,6 +641,7 @@ class FeedProps(_PermissiveProps):
     newsletter_description: Optional[str] = None
     newsletter_placeholder: Optional[str] = None
     newsletter_submit: Optional[str] = None
+    newsletter_sending_label: Optional[str] = None
     newsletter_success_title: Optional[str] = None
     newsletter_success_desc: Optional[str] = None
 
@@ -562,6 +649,9 @@ class FeedProps(_PermissiveProps):
     content: Optional[str] = None
     hero_eyebrow: Optional[str] = None
     youtube_channel_url: Optional[str] = None
+    # Overrides editoriales por ID de video; el feed anidado en ``content``
+    # sigue siendo JSON libre y se valida/renderiza en el frontend.
+    thumbnail_overrides: Optional[Dict[str, str]] = None
 
     # Courses / cursos style
     hero_image_url: Optional[str] = None
@@ -607,6 +697,21 @@ class FeedProps(_PermissiveProps):
     featured_empty_title: Optional[str] = None
     featured_empty_description: Optional[str] = None
     channel_link_label: Optional[str] = None
+    filters_title: Optional[str] = None
+    sync_calendar_cta: Optional[str] = None
+    sync_calendar_toast: Optional[str] = None
+    notifications_title: Optional[str] = None
+    notifications_desc: Optional[str] = None
+    notifications_toast: Optional[str] = None
+    highlights_title: Optional[str] = None
+    highlights_empty: Optional[str] = None
+    no_upcoming_label: Optional[str] = None
+    no_location: Optional[str] = None
+    month_names: Optional[List[str]] = None
+    week_view_label: Optional[str] = None
+    month_view_label: Optional[str] = None
+    year_view_label: Optional[str] = None
+    read_more_label: Optional[str] = None
 
     # Pastors style
     hero_title: Optional[str] = None

@@ -8,13 +8,17 @@ import { usePublicBootstrap } from "@/components/public/PublicBootstrapProvider"
 export interface SiteBranding {
   logoUrl: string;
   logoName: string;
+  tagline: string;
 }
+
+const DEFAULT_TAGLINE = "Comunidad cristiana";
 
 export function useSiteBranding(fallback?: Partial<SiteBranding>) {
   const bootstrapTheme = usePublicBootstrap()?.theme ?? null;
   const [branding, setBranding] = useState<SiteBranding>({
     logoUrl: bootstrapTheme?.tokens_json?.["--site-logo-url"] || fallback?.logoUrl || "",
     logoName: bootstrapTheme?.tokens_json?.["--site-logo-name"] || fallback?.logoName || SITE_NAME,
+    tagline: bootstrapTheme?.tokens_json?.["--site-brand-tagline"] || fallback?.tagline || DEFAULT_TAGLINE,
   });
 
   useEffect(() => {
@@ -22,6 +26,7 @@ export function useSiteBranding(fallback?: Partial<SiteBranding>) {
       setBranding({
         logoUrl: bootstrapTheme.tokens_json["--site-logo-url"] || fallback?.logoUrl || "",
         logoName: bootstrapTheme.tokens_json["--site-logo-name"] || fallback?.logoName || SITE_NAME,
+        tagline: bootstrapTheme.tokens_json["--site-brand-tagline"] || fallback?.tagline || DEFAULT_TAGLINE,
       });
       return;
     }
@@ -40,12 +45,14 @@ export function useSiteBranding(fallback?: Partial<SiteBranding>) {
         setBranding({
           logoUrl: tokens["--site-logo-url"] || fallback?.logoUrl || "",
           logoName: tokens["--site-logo-name"] || fallback?.logoName || SITE_NAME,
+          tagline: tokens["--site-brand-tagline"] || fallback?.tagline || DEFAULT_TAGLINE,
         });
       } catch {
         if (!mounted) return;
         setBranding({
           logoUrl: fallback?.logoUrl || "",
           logoName: fallback?.logoName || SITE_NAME,
+          tagline: fallback?.tagline || DEFAULT_TAGLINE,
         });
       }
     };

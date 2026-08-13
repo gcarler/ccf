@@ -18,6 +18,7 @@ type FooterConfig = {
   contact?: Record<string, unknown>;
   copyright?: Record<string, unknown>;
   privacy_label?: string;
+  privacy_href?: string;
 };
 
 function socialIcon(kindOrLabel: string) {
@@ -67,7 +68,7 @@ function asPublicLinks(value: unknown): PublicLink[] {
 }
 
 export default function FaroFooter() {
-    const { logoUrl, logoName } = useSiteBranding({ logoName: SITE_NAME });
+    const { logoUrl, logoName, tagline } = useSiteBranding({ logoName: SITE_NAME });
     const [footerConfig, setFooterConfig] = useState<FooterConfig | null>(null);
 
     useEffect(() => {
@@ -100,6 +101,10 @@ export default function FaroFooter() {
     const contact = asRecord(cfg.contact);
     const locationLabel = asString(contact.location_label);
     const newsletterLabel = asString(contact.newsletter_label);
+    const contactEmail = asString(contact.email, SITE_EMAIL);
+    const locationHref = asString(contact.location_href, "/sedes");
+    const newsletterHref = asString(contact.newsletter_href, "/boletin");
+    const privacyHref = asString(cfg.privacy_href, "/privacy");
     const copyright = asRecord(cfg.copyright);
     const copyrightCompany = asString(copyright.company);
     const copyrightCompanyUrl = asString(copyright.company_url);
@@ -211,19 +216,19 @@ export default function FaroFooter() {
                             </h4>
                             <ul className="grid gap-3 sm:grid-cols-3 lg:grid-cols-1 sm:gap-4">
                                 <li>
-                                    {SITE_EMAIL ? (
-                                        <a href={`mailto:${SITE_EMAIL}`} className="block min-h-8 break-words text-sm sm:text-base leading-snug transition-colors duration-200 hover:text-[var(--site-primary)]" style={{ color: "var(--site-on-surface-variant)" }}>
-                                            {SITE_EMAIL}
+                                    {contactEmail ? (
+                                        <a href={`mailto:${contactEmail}`} className="block min-h-8 break-words text-sm sm:text-base leading-snug transition-colors duration-200 hover:text-[var(--site-primary)]" style={{ color: "var(--site-on-surface-variant)" }}>
+                                            {contactEmail}
                                         </a>
                                     ) : null}
                                 </li>
                                 <li>
-                                    <Link href="/sedes" className="block min-h-8 text-sm sm:text-base leading-snug transition-colors duration-200 hover:text-[var(--site-primary)]" style={{ color: "var(--site-on-surface-variant)" }}>
+                                    <Link href={locationHref} className="block min-h-8 text-sm sm:text-base leading-snug transition-colors duration-200 hover:text-[var(--site-primary)]" style={{ color: "var(--site-on-surface-variant)" }}>
                                         {locationLabel}
                                     </Link>
                                 </li>
                                 <li>
-                                    <Link href="/boletin" className="block min-h-8 text-sm sm:text-base leading-snug transition-colors duration-200 hover:text-[var(--site-primary)]" style={{ color: "var(--site-on-surface-variant)" }}>
+                                    <Link href={newsletterHref} className="block min-h-8 text-sm sm:text-base leading-snug transition-colors duration-200 hover:text-[var(--site-primary)]" style={{ color: "var(--site-on-surface-variant)" }}>
                                         {newsletterLabel}
                                     </Link>
                                 </li>
@@ -256,7 +261,7 @@ export default function FaroFooter() {
                     </p>
                     <div className="flex shrink-0 items-center justify-center gap-4">
                         <Link
-                            href="/privacy"
+                            href={privacyHref}
                             className="text-xs transition-colors hover:text-[var(--site-primary)] hover:underline"
                             style={{
                                 color: "var(--site-on-surface-variant)",

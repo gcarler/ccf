@@ -141,6 +141,82 @@ describe("CmsThemesPage", () => {
     expect(await screen.findByText("Tema actualizado y activado.")).toBeInTheDocument();
   });
 
+  it("persiste solo los tokens personalizados al editar un tema existente", async () => {
+    vi.mocked(listCmsThemes).mockResolvedValue([
+      { ...theme, tokens_json: { "--site-primary": "#123456" } },
+    ]);
+    render(<CmsThemesPage />);
+    await waitFor(() => expect(screen.getByText("Tema Oscuro")).toBeInTheDocument());
+
+    fireEvent.click(screen.getByRole("button", { name: /^editar$/i }));
+    // Cambia un segundo token (Secondary → #00ff88) sin tocar el resto
+    const secondaryRow = screen.getByText("Secondary").closest(".group") as HTMLElement;
+    const secondaryInput = secondaryRow.querySelector('input:not([type="color"])') as HTMLInputElement;
+    fireEvent.change(secondaryInput, { target: { value: "#00ff88" } });
+    fireEvent.click(screen.getByRole("button", { name: /actualizar y activar/i }));
+
+    await waitFor(() =>
+      expect(patchCmsTheme).toHaveBeenCalledWith(
+        "ccf",
+        "t1",
+        expect.objectContaining({
+          tokens_json: { "--site-primary": "#123456", "--site-secondary": "#00ff88" },
+        }),
+        "test-token",
+      ),
+    );
+    // No debe materializar los 64 defaults del catálogo
+    const payload = vi.mocked(patchCmsTheme).mock.calls.at(-1)?.[2] as { tokens_json: Record<string, string> };
+    expect(Object.keys(payload.tokens_json)).toHaveLength(2);
+  });
+
+  it("elimina del payload los tokens restaurados a su default", async () => {
+    vi.mocked(listCmsThemes).mockResolvedValue([
+      { ...theme, tokens_json: { "--site-primary": "#123456" } },
+    ]);
+    render(<CmsThemesPage />);
+    await waitFor(() => expect(screen.getByText("Tema Oscuro")).toBeInTheDocument());
+
+    fireEvent.click(screen.getByRole("button", { name: /^editar$/i }));
+    // Restaurar default del primer token de colores (--site-primary)
+    const resetButtons = screen.getAllByTitle("Restaurar default");
+    expect(resetButtons.length).toBeGreaterThan(0);
+    fireEvent.click(resetButtons[0]);
+    fireEvent.click(screen.getByRole("button", { name: /actualizar y activar/i }));
+
+    await waitFor(() =>
+      expect(patchCmsTheme).toHaveBeenCalledWith(
+        "ccf",
+        "t1",
+        expect.objectContaining({ tokens_json: {} }),
+        "test-token",
+      ),
+    );
+  });
+
+  it("guarda un tema nuevo sin materializar los 64 defaults", async () => {
+    vi.mocked(createCmsTheme).mockResolvedValue({ ...theme, id: "t-new", name: "Tema Nuevo" });
+    render(<CmsThemesPage />);
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: /guardar y activar/i })).toBeInTheDocument(),
+    );
+
+    fireEvent.change(screen.getByDisplayValue("Tema personalizado"), {
+      target: { value: "Tema Nuevo" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: /guardar y activar/i }));
+
+    await waitFor(() =>
+      expect(createCmsTheme).toHaveBeenCalledWith(
+        "ccf",
+        expect.objectContaining({ name: "Tema Nuevo" }),
+        "test-token",
+      ),
+    );
+    const payload = vi.mocked(createCmsTheme).mock.calls.at(-1)?.[1] as { tokens_json: Record<string, string> };
+    expect(payload.tokens_json).toEqual({});
+  });
+
   it("activa un tema inactivo", async () => {
     vi.mocked(listCmsThemes).mockResolvedValue([{ ...theme, is_active: false }]);
     render(<CmsThemesPage />);
