@@ -2246,23 +2246,30 @@ class TestPublicPageWithVersion:
         c, h = full["c"], full["h"]
         key = _make_site(c, h, "pubver")
         _make_page(c, h, key, "verpage")
-        # Add section
-        c.post(
+        edited_title = "Texto CMS publicado exactamente"
+
+        # Edit the CMS section with the content that must reach the public page.
+        section_resp = c.post(
             f"/api/cms/v2/sites/{key}/pages/verpage/sections",
-            json={"type": "hero", "props_json": {"title": "Versioned"}},
+            json={"type": "hero", "props_json": {"title": edited_title}},
             headers=h,
         )
-        # Publish (creates version)
-        c.post(
+        assert _ok(section_resp.status_code)
+
+        # Publish (creates the immutable version consumed by the public endpoint).
+        publish_resp = c.post(
             f"/api/cms/v2/sites/{key}/pages/verpage/workflow",
             json={"action": "publish"},
             headers=h,
         )
-        # Public endpoint
+        assert _ok(publish_resp.status_code)
+
+        # The public page must expose the exact text edited in the CMS.
         resp = c.get(f"/api/cms/v2/public/sites/{key}/pages/verpage")
         assert _ok(resp.status_code)
         body = resp.json()
-        assert body["sections"] is not None
+        public_hero = next(section for section in body["sections"] if section["type"] == "hero")
+        assert public_hero["props_json"]["title"] == edited_title
 
 
 class TestPastoralTeamEndpoints:
