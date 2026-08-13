@@ -162,7 +162,8 @@ describe("PublicSectionRenderer Section Types", () => {
       description: expect.any(String),
       primary_cta: expect.any(String),
       primary_cta_href: expect.stringMatching(/^\//),
-      bg_image: expect.stringMatching(/^\/images\//),
+      // La imagen es opcional: el editor puede dejarla vacía hasta elegirla desde la biblioteca CMS.
+      bg_image: expect.any(String),
     });
     expect(videoHero?.props_json).toMatchObject({
       title: expect.any(String),

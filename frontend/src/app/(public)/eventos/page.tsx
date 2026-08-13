@@ -105,7 +105,15 @@ export default function EventosPage() {
     const upcomingCards = filteredEvents;
     const hasEvents = filteredEvents.length > 0;
 
-    const monthNames = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
+    const defaultMonthNames = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
+    const rawMonthNames = Array.isArray(feed.month_names) ? (feed.month_names as unknown[]) : null;
+    const monthNames = rawMonthNames && rawMonthNames.length === 12 && rawMonthNames.every((m) => typeof m === "string" && (m as string).trim())
+        ? (rawMonthNames as string[])
+        : defaultMonthNames;
+    const weekViewLabel = typeof feed.week_view_label === "string" && feed.week_view_label ? feed.week_view_label : "Semanal";
+    const monthViewLabel = typeof feed.month_view_label === "string" && feed.month_view_label ? feed.month_view_label : "Mensual";
+    const yearViewLabel = typeof feed.year_view_label === "string" && feed.year_view_label ? feed.year_view_label : "Anual";
+    const viewLabels = { Semanal: weekViewLabel, Mensual: monthViewLabel, Anual: yearViewLabel } as const;
 
     // Build dynamic calendar from events
     const eventDays = useMemo(() => {
@@ -491,7 +499,7 @@ export default function EventosPage() {
                                             : { color: "var(--site-on-surface-variant)" }
                                     }
                                 >
-                                    {value}
+                                    {viewLabels[value]}
                                 </button>
                             ))}
                         </div>

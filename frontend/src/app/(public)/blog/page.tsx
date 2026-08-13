@@ -21,6 +21,7 @@ export default function BlogPage() {
   const searchPlaceholder = (feedContent?.search_placeholder as string) ?? "";
   const emptyTitle = (feedContent?.empty_title as string) ?? "";
   const emptyDescription = (feedContent?.empty_description as string) ?? "";
+  const readMoreLabel = (feedContent?.read_more_label as string) ?? "Leer más";
 
   const [posts, setPosts] = useState<CmsPublicPost[]>([]);
   const [loading, setLoading] = useState(true);
@@ -146,7 +147,7 @@ export default function BlogPage() {
                       </p>
                     )}
                     <span className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-wide" style={{ color: "var(--site-primary)" }}>
-                      Leer más <ArrowRight size={14} />
+                      {readMoreLabel} <ArrowRight size={14} />
                     </span>
                   </div>
                 </Link>

@@ -61,6 +61,7 @@ export default function PublicHomePage({ initialHomePage }: { initialHomePage?: 
     const activitiesEyebrow = (homeFeed?.activities_eyebrow as string) ?? "";
     const activitiesTitle = (homeFeed?.activities_title as string) ?? "";
     const activitiesViewAll = (homeFeed?.activities_view_all as string) ?? "";
+    const activitiesViewAllHref = (homeFeed?.activities_view_all_href as string) ?? "/eventos";
     const activitiesEmpty = (homeFeed?.activities_empty as string) ?? "";
     const scrollIndicator = (homeFeed?.scroll_indicator as string) ?? "";
     const newsletterEyebrow = (homeFeed?.newsletter_eyebrow as string) ?? "";
@@ -68,6 +69,9 @@ export default function PublicHomePage({ initialHomePage }: { initialHomePage?: 
     const newsletterDescription = (homeFeed?.newsletter_description as string) ?? "";
     const newsletterPlaceholder = (homeFeed?.newsletter_placeholder as string) ?? "";
     const newsletterSubmit = (homeFeed?.newsletter_submit as string) ?? "";
+    const newsletterSendingLabel = (homeFeed?.newsletter_sending_label as string) ?? "Enviando...";
+    const newsletterSuccessToast = (homeFeed?.newsletter_success_toast as string) ?? `¡Suscrito al boletín de ${SITE_NAME}!`;
+    const newsletterErrorToast = (homeFeed?.newsletter_error_toast as string) ?? "No se pudo suscribir. Intenta de nuevo.";
     const newsletterSuccessTitle = (homeFeed?.newsletter_success_title as string) ?? "";
     const newsletterSuccessDesc = (homeFeed?.newsletter_success_desc as string) ?? "";
     const homeFeaturedCard = (homeFeed?.featured_card && typeof homeFeed.featured_card === "object" && !Array.isArray(homeFeed.featured_card))
@@ -119,10 +123,10 @@ export default function PublicHomePage({ initialHomePage }: { initialHomePage?: 
             });
             setNlStatus("sent");
             setNlEmail("");
-            toast.success(`¡Suscrito al boletín de ${SITE_NAME}!`);
+            if (newsletterSuccessToast) toast.success(newsletterSuccessToast);
         } catch {
             setNlStatus("idle");
-            toast.error("No se pudo suscribir. Intenta de nuevo.");
+            if (newsletterErrorToast) toast.error(newsletterErrorToast);
         }
     };
 
@@ -358,7 +362,7 @@ export default function PublicHomePage({ initialHomePage }: { initialHomePage?: 
                             </div>
                             {activitiesViewAll && (
                                 <Link
-                                    href="/eventos"
+                                    href={activitiesViewAllHref}
                                     className="hidden md:block text-sm font-bold uppercase tracking-wide border-b-2 pb-1 transition-all hover:-translate-y-1"
                                     style={{
                                         color: "var(--site-primary)",
@@ -505,7 +509,7 @@ export default function PublicHomePage({ initialHomePage }: { initialHomePage?: 
                                         color: "var(--site-on-primary)",
                                     }}
                                 >
-                                    {nlStatus === "sending" ? "Enviando..." : newsletterSubmit}
+                                    {nlStatus === "sending" ? (newsletterSendingLabel || "Enviando...") : newsletterSubmit}
                                 </button>
                             </form>
                         )}

@@ -22,10 +22,10 @@ import {
 // Fuente única de la sidebar Academy (ACAD-HIGH-004).
 // Si moduleConfigs.ts declara una sección "academy" en el futuro, debe importar
 // de aquí para evitar drift. Hoy el layout local es la fuente efectiva y este
-// módulo se exporta también como constante reutilizable.
+// la constante se mantiene local al layout para evitar exportaciones no válidas en una ruta Next.
 type AcademyLevel = 'read' | 'study' | 'edit' | 'manage';
 
-export const ACADEMY_SIDEBAR_SECTIONS = [
+const ACADEMY_SIDEBAR_SECTIONS = [
     {
         title: 'Principal',
         items: [

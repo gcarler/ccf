@@ -35,8 +35,15 @@ function inferThemeMode(themeName?: string, tokens?: Record<string, unknown>): F
 const CMS_TOKEN_ALLOWLIST = new Set([
     "--site-logo-url",
     "--site-logo-name",
+    "--site-brand-tagline",
     "--site-header-cta-label",
     "--site-header-cta-href",
+    "--site-header-location-title",
+    "--site-header-theme-title",
+    "--site-header-dropdown-label",
+    "--site-header-mobile-menu-label",
+    "--site-header-open-menu-label",
+    "--site-header-close-menu-label",
 ]);
 
 export function useFaroTheme() {

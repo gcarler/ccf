@@ -57,6 +57,7 @@ BLOG_SECTIONS: list[dict[str, Any]] = [
             "search_placeholder": "Buscar artículos...",
             "empty_title": "Sin artículos publicados",
             "empty_description": "Cuando se publiquen posts en el CMS, aparecerán aquí.",
+            "read_more_label": "Leer más",
         },
     },
     {
@@ -68,6 +69,11 @@ BLOG_SECTIONS: list[dict[str, Any]] = [
             "category_description_template": 'Artículos en la categoría "{categoryName}".',
             "tag_title_prefix": "Etiqueta",
             "tag_description_template": 'Artículos etiquetados con "{tagName}".',
+            "back_to_blog_label": "Volver al blog",
+            "empty_tag_title": "Sin artículos con esta etiqueta",
+            "empty_tag_description": "No hay posts publicados con esta etiqueta todavía.",
+            "empty_category_title": "Sin artículos en esta categoría",
+            "empty_category_description": "No hay posts publicados en esta categoría todavía.",
         },
     },
 ]

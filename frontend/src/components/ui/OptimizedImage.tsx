@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { getCmsMediaUrl } from "@/lib/cms/media";
 
 /**
@@ -32,6 +32,7 @@ interface Props {
   priority?: boolean;
   loading?: "lazy" | "eager";
   objectFit?: "cover" | "contain" | "fill" | "none" | "scale-down";
+  onError?: () => void;
 }
 
 export default function OptimizedImage({
@@ -45,8 +46,15 @@ export default function OptimizedImage({
   priority = false,
   loading,
   objectFit = "cover",
+  onError,
 }: Props) {
   const [error, setError] = useState(false);
+
+  // A parent may switch from a failed CMS URL to a fallback URL. Reset the
+  // internal failure state when the source changes so the new request is made.
+  useEffect(() => {
+    setError(false);
+  }, [src]);
 
   if (!src || error) {
     return (
@@ -84,7 +92,10 @@ export default function OptimizedImage({
       priority={priority}
       loading={loading}
       style={fill || !width ? { objectFit } : undefined}
-      onError={() => setError(true)}
+      onError={() => {
+        setError(true);
+        onError?.();
+      }}
     />
   );
 }

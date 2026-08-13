@@ -35,6 +35,10 @@ except Exception:
 DETAIL_TEMPLATE_PROPS: dict[str, dict[str, Any]] = {
     "testimonials": {
         "footer_label": "Historia de impacto",
+        "back_label": "Volver a testimonios",
+        "not_found_title": "Testimonio no encontrado",
+        "not_found_description": "Parece que la historia que buscas ya no está disponible o el enlace es incorrecto.",
+        "not_found_cta": "Ver más testimonios",
         "prayer_action_label": "Pedir oración",
         "share_action_label": "Compartir historia",
         "share_toast_success": "Enlace copiado al portapapeles",

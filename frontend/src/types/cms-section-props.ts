@@ -264,6 +264,67 @@ export interface RichTextProps {
   body?: string;
   cta_label?: string;
   cta_href?: string;
+
+  // Blog archive_template (etiqueta/categoría)
+  category_title_prefix?: string;
+  category_description_template?: string;
+  tag_title_prefix?: string;
+  tag_description_template?: string;
+  back_to_blog_label?: string;
+  empty_tag_title?: string;
+  empty_tag_description?: string;
+  empty_category_title?: string;
+  empty_category_description?: string;
+
+  // Detail templates (testimonios)
+  footer_label?: string;
+  back_label?: string;
+  not_found_title?: string;
+  not_found_description?: string;
+  not_found_cta?: string;
+  prayer_action_label?: string;
+  share_action_label?: string;
+  share_toast_success?: string;
+  share_toast_error?: string;
+  prayer_success_title?: string;
+  prayer_success_description?: string;
+  prayer_success_close?: string;
+  prayer_form_badge?: string;
+  prayer_form_title?: string;
+  prayer_form_description?: string;
+  prayer_name_placeholder?: string;
+  prayer_request_placeholder?: string;
+  prayer_submit_label?: string;
+
+  // Detail templates (cursos)
+  about_title?: string;
+  instructor_label?: string;
+  syllabus_title?: string;
+  enroll_button_default?: string;
+  enrolled_label?: string;
+  enroll_drawer_title?: string;
+  enroll_drawer_description?: string;
+  enroll_name_label?: string;
+  enroll_email_label?: string;
+  enroll_phone_label?: string;
+  enroll_cancel_label?: string;
+  enroll_submit_label?: string;
+  enroll_submitting_label?: string;
+  enroll_success_toast?: string;
+  enroll_error_toast?: string;
+
+  // Detail templates (pastores)
+  badge_label?: string;
+  role_fallback?: string;
+  quote_subtitle?: string;
+  tags?: string[];
+  motto_label?: string;
+  story_title?: string;
+  story_subtitle?: string;
+  cta_eyebrow?: string;
+  cta_description?: string;
+  cta_primary_label?: string;
+  cta_secondary_label?: string;
 }
 
 export interface AboutProps {
@@ -314,6 +375,12 @@ export interface CardsProps {
   title?: string;
   body?: string;
   items?: CardItem[];
+
+  // Blog feed is seeded as ``cards`` and reads these keys from the public page.
+  search_placeholder?: string;
+  empty_title?: string;
+  empty_description?: string;
+  read_more_label?: string;
 }
 
 export interface CtaBannerProps {
@@ -367,6 +434,7 @@ export interface FeedProps {
   activities_eyebrow?: string;
   activities_title?: string;
   activities_view_all?: string;
+  activities_view_all_href?: string;
   activities_empty?: string;
   scroll_indicator?: string;
   newsletter_eyebrow?: string;
@@ -374,6 +442,7 @@ export interface FeedProps {
   newsletter_description?: string;
   newsletter_placeholder?: string;
   newsletter_submit?: string;
+  newsletter_sending_label?: string;
   newsletter_success_title?: string;
   newsletter_success_desc?: string;
 
@@ -381,6 +450,7 @@ export interface FeedProps {
   content?: string;
   hero_eyebrow?: string;
   youtube_channel_url?: string;
+  thumbnail_overrides?: Record<string, string>;
 
   // Courses / cursos style
   hero_image_url?: string;
@@ -426,6 +496,21 @@ export interface FeedProps {
   featured_empty_title?: string;
   featured_empty_description?: string;
   channel_link_label?: string;
+  filters_title?: string;
+  sync_calendar_cta?: string;
+  sync_calendar_toast?: string;
+  notifications_title?: string;
+  notifications_desc?: string;
+  notifications_toast?: string;
+  highlights_title?: string;
+  highlights_empty?: string;
+  no_upcoming_label?: string;
+  no_location?: string;
+  month_names?: string[];
+  week_view_label?: string;
+  month_view_label?: string;
+  year_view_label?: string;
+  read_more_label?: string;
 
   // Pastors style
   hero_title?: string;
@@ -636,6 +721,8 @@ export interface ContactFormProps {
   subtitle?: string;
   name_label?: string;
   name_placeholder?: string;
+  email_label?: string;
+  email_placeholder?: string;
   phone_label?: string;
   phone_placeholder?: string;
   message_label?: string;
@@ -643,6 +730,7 @@ export interface ContactFormProps {
   submit_label?: string;
   success_message?: string;
   action_url?: string;
+  reset_label?: string;
 }
 
 export interface PrayerFormProps {
@@ -655,6 +743,7 @@ export interface PrayerFormProps {
   submit_label?: string;
   success_message?: string;
   action_url?: string;
+  reset_label?: string;
 }
 
 export interface CourseGridProps {
@@ -693,13 +782,38 @@ export interface PolicyDocumentProps {
 }
 
 export interface FooterConfigProps {
-  brand_description?: string;
+  // Shape real persistida/consumida por FaroFooter/Footer (paridad con backend).
+  description?: string;
+  nav_links?: Array<{ href?: string; label?: string; kind?: string }>;
+  resource_links?: Array<{ href?: string; label?: string; kind?: string }>;
+  social_links?: SocialLinkItem[];
+  section_titles?: Record<string, unknown>;
+  contact?: {
+    email?: string;
+    location_label?: string;
+    location_href?: string;
+    newsletter_label?: string;
+    newsletter_href?: string;
+  };
+  copyright?: {
+    company?: string;
+    company_url?: string;
+    text?: string;
+  };
+  privacy_label?: string;
+  privacy_href?: string;
   location_label?: string;
   newsletter_label?: string;
-  copyright?: string;
+  copyright_company?: string;
+  copyright_company_url?: string;
+  copyright_text?: string;
+  nav_section_title?: string;
+  resource_section_title?: string;
+  contact_section_title?: string;
+  // Compatibility keys (renderer de config)
+  brand_description?: string;
   copyright_url?: string;
   nav_groups?: FooterLinkGroup[];
-  social_links?: SocialLinkItem[];
 }
 
 export interface MobileMenuConfigProps {

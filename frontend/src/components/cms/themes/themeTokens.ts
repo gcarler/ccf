@@ -100,6 +100,15 @@ const GRADIENT_TOKENS: TokenDef[] = [
 const BRAND_TOKENS: TokenDef[] = [
   { key: "--site-logo-url", label: "Logo URL", description: "URL de la imagen del logo (relativa o absoluta)", type: "text", defaultValue: "" },
   { key: "--site-logo-name", label: "Nombre del Logo", description: "Texto que acompaña al logo en navbar y sidebar", type: "text", defaultValue: "" },
+  { key: "--site-brand-tagline", label: "Eslogan de marca", description: "Subtítulo junto al logo en navbar y footer", type: "text", defaultValue: "Comunidad cristiana" },
+  { key: "--site-header-cta-label", label: "CTA del Header", description: "Texto del botón principal del header", type: "text", defaultValue: "Quiero conocer a Jesús" },
+  { key: "--site-header-cta-href", label: "CTA del Header (enlace)", description: "Ruta interna del botón principal del header", type: "text", defaultValue: "/conocer-a-jesus" },
+  { key: "--site-header-location-title", label: "Tooltip de Sedes", description: "Tooltip del icono de sedes en el header", type: "text", defaultValue: "Nuestras Sedes" },
+  { key: "--site-header-theme-title", label: "Tooltip de Tema", description: "Tooltip del botón de cambio de tema", type: "text", defaultValue: "Cambiar tema" },
+  { key: "--site-header-dropdown-label", label: "Encabezado de dropdown", description: "Título del menú desplegable de navegación", type: "text", defaultValue: "Explorar" },
+  { key: "--site-header-mobile-menu-label", label: "Encabezado menú móvil", description: "Título del menú móvil desplegable", type: "text", defaultValue: "Menu principal" },
+  { key: "--site-header-open-menu-label", label: "Abrir menú (accesibilidad)", description: "Aria-label del botón que abre el menú móvil", type: "text", defaultValue: "Abrir menu" },
+  { key: "--site-header-close-menu-label", label: "Cerrar menú (accesibilidad)", description: "Aria-label de los botones que cierran el menú móvil", type: "text", defaultValue: "Cerrar menu" },
 ];
 
 export const TOKEN_CATEGORIES: TokenCategory[] = [

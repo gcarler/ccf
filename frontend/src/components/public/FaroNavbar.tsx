@@ -22,8 +22,8 @@ export default function FaroNavbar() {
     const ctaLabel = themeTokens["--site-header-cta-label"] || "Quiero conocer a Jesús";
     const ctaHref = themeTokens["--site-header-cta-href"] || "/conocer-a-jesus";
 
-    const locationTitle = "Nuestras Sedes";
-    const themeToggleTitle = "Cambiar tema";
+    const locationTitle = themeTokens["--site-header-location-title"] || "Nuestras Sedes";
+    const themeToggleTitle = themeTokens["--site-header-theme-title"] || "Cambiar tema";
     const navLinks = menuItemsV2;
 
     useEffect(() => {
