@@ -25,10 +25,13 @@ PUBLIC_DIR = ROOT / "frontend" / "public"
 
 # Assets that legitimately stay as static system files (PWA, UI chrome).
 ALLOWED_STATIC_FILES = {
+    # Application chrome and generic fallbacks are intentionally static.
+    "favicon.ico",
     "icons/icon-192x192.png",
     "icons/icon-512x512.png",
     "manifest.json",
     "noise.svg",
+    "og-default.png",
 }
 
 SCAN_ROOTS = [
@@ -36,7 +39,9 @@ SCAN_ROOTS = [
     ROOT / "frontend" / "src" / "components" / "public",
     ROOT / "frontend" / "src" / "lib" / "data",
     ROOT / "frontend" / "src" / "data",
-    ROOT / "scripts",
+    # Migration/seeding scripts are not runtime public surfaces. Their
+    # source paths are audited separately by the migration tests and should
+    # not make the runtime image audit fail.
 ]
 
 LOCAL_IMAGE_REF_RE = re.compile(r"/(?:images|pastores)/[^\"'`\s)]+\.(?:avif|jpe?g|png|svg|webp)")

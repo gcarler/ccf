@@ -8,6 +8,7 @@ export interface CourseSummary {
   is_self_paced: boolean;
   cohort_name?: string | null;
   certificate_type?: string | null;
+  image_url?: string | null;
 }
 
 export interface EnrollmentRecord {

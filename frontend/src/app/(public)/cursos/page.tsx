@@ -15,6 +15,7 @@ type PublicCourse = CourseSummary & {
   instructor?: string;
   description?: string;
   modality?: string;
+  imageUrl?: string;
 };
 
 export default function CursosPage() {
@@ -114,7 +115,7 @@ export default function CursosPage() {
             <motion.article className="md:col-span-8 group relative rounded-lg overflow-hidden min-h-[280px] md:min-h-[450px] cursor-pointer" style={{ background: "var(--site-surface-container-low)" }} whileHover={{ y: -2 }}>
               <Link href={`/plataforma/academy/course/${featured.id}`} className="absolute inset-0 z-20" />
               <div className="absolute inset-0">
-                <Image src={heroImageUrl || "/og-default.png"} alt={featured.title} fill className="object-cover transition-transform duration-700 group-hover:scale-105" style={{ opacity: 0.5 }} />
+                <Image src={featured.imageUrl || heroImageUrl || "/og-default.png"} alt={featured.title} fill className="object-cover transition-transform duration-700 group-hover:scale-105" style={{ opacity: 0.5 }} />
               </div>
               <div className="absolute inset-0" style={{ background: "linear-gradient(to top, var(--site-surface-container-lowest) 0%, transparent 60%)" }} />
               <div className="absolute bottom-0 p-4 md:p-4 w-full relative z-10 flex flex-col justify-end h-full">
@@ -132,7 +133,7 @@ export default function CursosPage() {
                 <motion.article key={course.id} className="group rounded-lg overflow-hidden border bg-[hsl(var(--surface-1))] border-[hsl(var(--border))] dark:border-white/10" whileHover={{ y: -2 }}>
                   <Link href={`/plataforma/academy/course/${course.id}`} className="block">
                     <div className="relative h-40 bg-[hsl(var(--surface-2))]">
-                      <Image src={heroImageUrl || "/og-default.png"} alt={course.title} fill className="object-cover" />
+                      <Image src={course.imageUrl || heroImageUrl || "/og-default.png"} alt={course.title} fill className="object-cover" />
                     </div>
                     <div className="p-4">
                       <span className="inline-flex items-center px-2 py-0.5 rounded-full text-2xs font-semibold uppercase tracking-wide mb-3" style={{ background: "var(--site-primary-container)", color: "var(--site-primary)" }}>

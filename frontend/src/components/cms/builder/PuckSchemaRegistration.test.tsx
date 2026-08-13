@@ -85,7 +85,8 @@ describe("Puck Block Schema Registrations for MediaPicker", () => {
     const components = capturedConfig?.components as any;
     for (const type of ["contact_form", "course_grid", "locations_list", "testimonials_masonry"]) {
       expect(components[type]).toBeDefined();
-      expect(components[type].fields.__cms_json.type).toBe("textarea");
+      expect(components[type].fields.__cms_json.type).toBe("custom");
+      expect(typeof components[type].fields.__cms_json.render).toBe("function");
     }
   });
 

@@ -18,6 +18,7 @@ import {
 import { toast } from 'sonner';
 import clsx from 'clsx';
 import { motion } from 'framer-motion';
+import CmsMediaUrlField from '@/components/cms/CmsMediaUrlField';
 
 export default function NewCoursePage() {
     const router = useRouter();
@@ -30,6 +31,7 @@ export default function NewCoursePage() {
         modality: 'non_formal',
         duration_hours: 0,
         certificate_type: 'Participación',
+        image_url: '',
         is_published: true,
         is_self_paced: true
     });
@@ -175,6 +177,14 @@ export default function NewCoursePage() {
                                         rows={4} placeholder="Describe el impacto y los objetivos de este programa..." value={formData.description}
                                         onChange={(e) => setFormData({...formData, description: e.target.value})}
                                         className="w-full bg-[hsl(var(--surface-1))] dark:bg-black/20 border-2 border-transparent dark:border-white/5 rounded-md px-4 py-2 text-sm font-medium outline-none focus:border-[hsl(var(--info)/100%)]/50 focus:ring-4 focus:ring-[hsl(var(--primary))]/5 transition-all resize-none leading-relaxed"
+                                    />
+                                </div>
+                                <div className="md:col-span-2">
+                                    <CmsMediaUrlField
+                                        label="Imagen pública del curso"
+                                        value={formData.image_url}
+                                        token={token}
+                                        onChange={(image_url) => setFormData({ ...formData, image_url })}
                                     />
                                 </div>
                             </div>

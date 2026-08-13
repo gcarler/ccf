@@ -14,6 +14,7 @@ import type { CmsTheme } from "@/types/cms-v2";
 import { toast } from "sonner";
 import MediaPicker from "@/components/cms/builder/MediaPicker";
 import MediaPickerField, { setMediaPickerTrigger } from "@/components/cms/builder/MediaPickerField";
+import CmsJsonMediaField from "@/components/cms/CmsJsonMediaField";
 import AiField from "@/components/cms/builder/AiField";
 
 export type SaveStatus = "saved" | "dirty" | "saving" | "error";
@@ -221,8 +222,16 @@ export default function PuckBuilderPage() {
           label: `Contenido CMS (${type})`,
           fields: {
             __cms_json: {
-              type: "textarea",
+              type: "custom",
               label: "Contenido editable (JSON)",
+              render: ({ value, onChange }: any) => (
+                <CmsJsonMediaField
+                  label="Contenido editable (JSON)"
+                  value={value || "{}"}
+                  token={token}
+                  onChange={onChange}
+                />
+              ),
             },
           },
           render: ({ __cms_json }: { __cms_json?: string }) => (
