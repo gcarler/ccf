@@ -19,6 +19,7 @@ from backend.core.database import get_db
 from backend.core.permissions import require_evangelism_edit
 from backend.core.rate_limit import academy_limiter
 from backend.core.tenant import require_user_sede_id
+from backend.services.event_registration_service import is_qr_token_expired
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -304,6 +305,9 @@ def unified_checkin(
                     status_code=409,
                     detail=f"Inscripción no confirmada (estado: {reg.registration_status})",
                 )
+            # plan_clasificador_contextual §4.3: el QR de inscripción expira a los 365 días.
+            if is_qr_token_expired(reg):
+                raise HTTPException(status_code=410, detail="El QR expiró")
             registration = reg
             persona = reg.persona
 
@@ -485,6 +489,9 @@ def ccf_evt_checkin(
             status_code=409,
             detail=f"Inscripción no confirmada (estado: {reg.registration_status})",
         )
+    # plan_clasificador_contextual §4.3: el QR de inscripción expira a los 365 días.
+    if is_qr_token_expired(reg):
+        raise HTTPException(status_code=410, detail="El QR expiró")
 
     persona = reg.persona
     is_duplicate = bool(
