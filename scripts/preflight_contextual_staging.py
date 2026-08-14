@@ -137,8 +137,13 @@ def _load_approved_identity():
     ]
 
 
-def _check_common(target: str) -> list[Check]:
-    """Checks comunes: entorno, DB configurada, Postgres y sin credenciales."""
+def _check_common(target: str) -> tuple[list[Check], str]:
+    """Checks comunes: entorno, DB configurada, Postgres y sin credenciales.
+
+    Returns ``(checks, database_url)`` para que los checks por entorno
+    reutilicen la URL ya resuelta sin volver a invocar ``_configured_database``
+    (evita duplicar el check de ambigüedad en la salida).
+    """
     env = (os.getenv("ENV") or os.getenv("ENVIRONMENT") or "").strip().lower()
     database_url, checks = _configured_database()
     scheme, db_host, db_name, has_credentials = _database_parts(database_url)
@@ -181,14 +186,12 @@ def _check_common(target: str) -> list[Check]:
             ]
         )
 
-    return checks
+    return checks, database_url
 
 
 def _check_staging() -> list[Check]:
     """Checks de staging: identidad aprobada, backup verificado y E2E aislado."""
-    checks = _check_common("staging")
-    database_url, database_checks = _configured_database()
-    checks.extend(database_checks)
+    checks, database_url = _check_common("staging")
     _, db_host, db_name, _ = _database_parts(database_url)
 
     identity, identity_checks = _load_approved_identity()
@@ -280,9 +283,7 @@ def _check_staging() -> list[Check]:
 
 def _check_production(ack: bool) -> list[Check]:
     """Checks de producción: identidad aprobada + ack/approval/backup explícitos."""
-    checks = _check_common("production")
-    database_url, database_checks = _configured_database()
-    checks.extend(database_checks)
+    checks, database_url = _check_common("production")
     _, db_host, db_name, _ = _database_parts(database_url)
 
     identity, identity_checks = _load_approved_identity()
@@ -342,7 +343,7 @@ def main() -> int:
     args = parser.parse_args()
 
     if args.target == "local":
-        checks = _check_common("local")
+        checks, _ = _check_common("local")
     elif args.target == "staging":
         checks = _check_staging()
     else:

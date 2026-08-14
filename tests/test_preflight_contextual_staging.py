@@ -62,7 +62,7 @@ def test_local_allows_default_database(monkeypatch):
     mod = _load_module()
     _clear(monkeypatch)
     monkeypatch.setenv("ENV", "local")
-    checks = mod._check_common("local")
+    checks, _ = mod._check_common("local")
     assert all(c.ok for c in checks)
 
 
