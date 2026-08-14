@@ -68,7 +68,7 @@ function asPublicLinks(value: unknown): PublicLink[] {
 }
 
 export default function FaroFooter() {
-    const { logoUrl, logoName, tagline } = useSiteBranding({ logoName: SITE_NAME });
+    const { logoUrl, logoName } = useSiteBranding({ logoName: SITE_NAME });
     const [footerConfig, setFooterConfig] = useState<FooterConfig | null>(null);
 
     useEffect(() => {
