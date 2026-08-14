@@ -203,3 +203,49 @@ def test_messaging_e2e_paths_select_messaging_quality_and_frontend_build():
 def test_evangelism_e2e_paths_select_evangelism_quality_and_frontend_build():
     checks = select_quality_checks(["frontend/tests/e2e/evangelism/smoke.spec.ts"])
     assert checks == ["evangelism_quality", "frontend_build"]
+
+
+def test_http_test_file_selects_only_frontend_build():
+    # frontend/src/lib/http.test.ts colisiona con el prefijo shared
+    # "frontend/src/lib/http"; al ser un test no debe escalar a los critical checks.
+    checks = select_quality_checks(["frontend/src/lib/http.test.ts"])
+    assert checks == ["frontend_build"]
+
+
+def test_http_source_file_still_selects_critical_modules():
+    # El código real de http.ts sí es shared y mantiene los critical checks.
+    checks = select_quality_checks(["frontend/src/lib/http.ts"])
+    assert checks == [
+        "academy_quality",
+        "agenda_quality",
+        "cms_quality",
+        "crm_quality",
+        "evangelism_quality",
+        "frontend_build",
+        "messaging_quality",
+        "platform_quality",
+        "projects_quality",
+    ]
+
+
+def test_api_test_file_selects_only_frontend_build():
+    # Mismo patrón con el prefijo frontend/src/lib/api.
+    checks = select_quality_checks(["frontend/src/lib/api.test.ts"])
+    assert checks == ["frontend_build"]
+
+
+def test_explicit_shared_e2e_spec_keeps_critical_modules():
+    # platform-critical-routes.spec.ts está listado explícitamente como shared:
+    # su comportamiento de escalar a todos los critical checks se preserva.
+    checks = select_quality_checks(["frontend/tests/e2e/platform-critical-routes.spec.ts"])
+    assert checks == [
+        "academy_quality",
+        "agenda_quality",
+        "cms_quality",
+        "crm_quality",
+        "evangelism_quality",
+        "frontend_build",
+        "messaging_quality",
+        "platform_quality",
+        "projects_quality",
+    ]
