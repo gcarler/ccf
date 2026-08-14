@@ -294,6 +294,36 @@ def _matches(path: str, prefix: str) -> bool:
     return path == prefix or path.startswith(prefix)
 
 
+def _is_test_file(path: str) -> bool:
+    """True when the path is a test artifact (unit, spec or E2E).
+
+    Test files that merely collide with a shared prefix (e.g.
+    ``frontend/src/lib/http.test.ts`` matching the ``frontend/src/lib/http``
+    prefix) must not escalate to every critical check: they exercise a single
+    module, so they should be routed through ``MODULE_RULES`` instead.
+    """
+    path = _normalize(path)
+    if path.endswith((".test.ts", ".test.tsx", ".spec.ts", ".spec.tsx", ".test.js", ".spec.js")):
+        return True
+    return (
+        path.startswith("tests/")
+        or "/tests/" in f"/{path}"
+        or path.startswith("test_")
+        or "/test_" in path
+    )
+
+
+def _is_explicit_shared_file(path: str) -> bool:
+    """True when the path is listed verbatim in ``SHARED_PREFIXES``.
+
+    A few test files are intentionally shared (e.g.
+    ``frontend/tests/e2e/platform-critical-routes.spec.ts`` and
+    ``tests/test_select_quality_checks.py``) — those keep escalating to all
+    critical checks even though they are tests.
+    """
+    return _normalize(path) in {_normalize(p) for p in SHARED_PREFIXES}
+
+
 def changed_files_from_git(base: str, head: str) -> list[str]:
     result = subprocess.run(
         ["git", "diff", "--name-only", base, head],
@@ -317,7 +347,9 @@ def explain_selection(changed_files: list[str]) -> dict[str, list[str]]:
     normalized = [_normalize(path) for path in changed_files if path.strip()]
 
     for path in normalized:
-        if any(_matches(path, prefix) for prefix in SHARED_PREFIXES):
+        if any(_matches(path, prefix) for prefix in SHARED_PREFIXES) and (
+            _is_explicit_shared_file(path) or not _is_test_file(path)
+        ):
             reason = f"shared:{path}"
             selected.update(CRITICAL_CHECKS)
             for check_id in CRITICAL_CHECKS:
