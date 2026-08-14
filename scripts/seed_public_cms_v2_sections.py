@@ -171,6 +171,8 @@ def _page_title(slug: str) -> str:
         "contact": "Contacto",
         "welcome": "Bienvenida",
         "privacy": "Política de Privacidad",
+        "terms": "Términos de Servicio",
+        "donate": "Ofrenda",
         "_global": "Global (nav / shared)",
     }.get(slug, slug.replace("-", " ").title())
 
@@ -666,7 +668,59 @@ def _build_pages(media_find: Any) -> dict[str, list[dict[str, Any]]]:
         ],
     }
 
+    # ── DONATE ──────────────────────────────────────────────────────────────
+    donate_hero = _get_block("ccf_donate_hero", CMS_BLOCKS) or {
+        "header_label": "Generosidad",
+        "badge": "Tu siembra tiene propósito",
+        "title": "Honramos a Dios",
+        "title_accent": "generosidad.",
+        "description": "Cada ofrenda y diezmo fortalece la misión de transformar vidas y comunidades a través del evangelio.",
+        "benefit1_title": "Seguridad Total",
+        "benefit1_desc": "Tus transacciones están protegidas con encriptación de nivel bancario.",
+        "benefit2_title": "Impacto Global",
+        "benefit2_desc": "Apoyas misiones y ayuda social en toda la región.",
+    }
+    donate_feed = _get_block("ccf_donate_feed", CMS_BLOCKS) or {
+        "amounts": ["20", "50", "100", "200"],
+        "amounts_label": "Selecciona un monto",
+        "custom_amount_label": "Otra cantidad personalizada",
+        "type_label": "Destino de la semilla",
+        "diezmo_label": "Diezmo",
+        "ofrenda_label": "Ofrenda",
+        "pay_button_label": "Pagar con MercadoPago",
+        "connecting_label": "Conectando...",
+        "manual_button_label": "Registrar como recibido",
+        "manual_divider_label": "O registra manualmente",
+        "ssl_label": "Secure SSL",
+        "verified_label": "Verified Merchant",
+        "success_title_approved": "¡Ofrenda Recibida!",
+        "success_title_pending": "Pago Pendiente",
+        "success_desc_approved": "Tu generosidad permite que el ministerio siga creciendo y alcanzando más vidas.",
+        "success_desc_pending": "Tu pago está siendo procesado. Te notificaremos cuando se confirme.",
+        "amount_label": "Monto Sembrado",
+        "category_label": "Categoría",
+        "back_home_label": "Volver al Inicio",
+        "toast_success": "¡Gracias por tu generosidad!",
+        "toast_error": "Error al procesar",
+        "toast_mp_error": "Error al iniciar pago con MercadoPago",
+        "toast_mp_pending": "Tu pago está siendo procesado.",
+        "toast_mp_failure": "El pago no pudo completarse. Intenta de nuevo.",
+    }
+
+    # ── TERMS ───────────────────────────────────────────────────────────────
+    terms_hero = _get_block("ccf_terms_hero", CMS_BLOCKS) or {
+        "title": "Términos de Servicio",
+        "subtitle": "Última actualización: 12 de Marzo, 2026",
+        "body": "Los términos de servicio de la plataforma se encuentran en construcción. Para dudas, contacta al equipo pastoral.",
+    }
+
     # ── PRIVACY ─────────────────────────────────────────────────────────────
+    privacy_hero = _get_block("ccf_privacy_hero", CMS_BLOCKS) or {
+        "title": "Política de Privacidad",
+        "subtitle": "Comprometidos con la seguridad de tus datos.",
+        "body": "La política de privacidad de la plataforma se encuentra en construcción. Para dudas sobre el manejo de tus datos, contacta al equipo pastoral.",
+        "icon": "shield",
+    }
     privacy_content = _get_block("ccf_privacy", CMS_BLOCKS) or {
         "last_update": "12 de junio de 2026",
         "summary": "Esta política describe cómo PLES SAS y la Comunidad Cristiana CCF recopilan, usan, almacenan y protegen tus datos personales.",
@@ -804,7 +858,15 @@ def _build_pages(media_find: Any) -> dict[str, list[dict[str, Any]]]:
             {"key": "welcome", "type": "welcome", "props": welcome_content, "sort": 0},
         ],
         "privacy": [
-            {"key": "privacy", "type": "policy_document", "props": privacy_content, "sort": 0},
+            {"key": "hero", "type": "hero", "props": privacy_hero, "sort": 0},
+            {"key": "privacy", "type": "policy_document", "props": privacy_content, "sort": 1},
+        ],
+        "terms": [
+            {"key": "hero", "type": "hero", "props": terms_hero, "sort": 0},
+        ],
+        "donate": [
+            {"key": "hero", "type": "hero", "props": donate_hero, "sort": 0},
+            {"key": "feed", "type": "feed", "props": donate_feed, "sort": 1},
         ],
         "_global": [
             {"key": "nav_items", "type": "feed", "props": nav_items, "sort": 0},
@@ -948,10 +1010,17 @@ def run(site_key: str = "ccf", *, preserve_existing: bool = True) -> int:
             # those sections during a routine bootstrap: an editor may have
             # changed them from the builder, and the database is the source of
             # truth for published content. Use --force for an intentional reset.
+            # In preserve mode we still complete sections that the canonical
+            # blueprint declares but the page is missing (e.g. a page that
+            # gained a new section in a later seed) without touching the rest.
             if preserve_existing and existing_sections:
-                unchanged += 1
-                print(f"  → preserved {len(existing_sections)} existing sections")
-                continue
+                missing_specs = [s for s in sections if s["key"] not in existing_sections]
+                if not missing_specs:
+                    unchanged += 1
+                    print(f"  → preserved {len(existing_sections)} existing sections")
+                    continue
+                print(f"  → completing {len(missing_specs)} missing section(s) on managed page")
+                sections = missing_specs
 
             desired_keys = {s["key"] for s in sections}
 
