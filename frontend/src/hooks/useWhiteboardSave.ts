@@ -66,7 +66,7 @@ export function useWhiteboardSave(
   const onConflictRef = useRef(onConflict);
   useEffect(() => {
     onConflictRef.current = onConflict;
-  }, [title]);
+  }, [onConflict]);
   const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
   const [isDirty, setIsDirty] = useState(false);
 

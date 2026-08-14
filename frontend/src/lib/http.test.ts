@@ -24,12 +24,6 @@ function mockResponse(body: unknown, init: Partial<Response> = {}): Response {
   } as unknown as Response;
 }
 
-/** Extrae headers de la llamada mock como Headers legibles (.get). */
-function headersOf(call: unknown): Headers {
-  const [, init] = call as [string, RequestInit];
-  return new Headers(init.headers);
-}
-
 beforeEach(() => {
   vi.clearAllMocks();
   sessionStorage.clear();
