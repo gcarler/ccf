@@ -61,7 +61,7 @@ export function useSiteBranding(fallback?: Partial<SiteBranding>) {
     return () => {
       mounted = false;
     };
-  }, [bootstrapTheme?.tokens_json, fallback?.logoName, fallback?.logoUrl]);
+  }, [bootstrapTheme?.tokens_json, fallback?.logoName, fallback?.logoUrl, fallback?.tagline]);
 
   return branding;
 }
