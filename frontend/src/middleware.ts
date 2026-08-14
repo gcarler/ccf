@@ -45,7 +45,7 @@ export function middleware(request: NextRequest) {
     const { pathname } = request.nextUrl;
 
     // Skip already-prefixed paths and root-level paths
-    if (pathname.startsWith('/plataforma/') || pathname === '/' || pathname.startsWith('/_next/') || pathname.startsWith('/api/') || pathname.startsWith('/favicon') || pathname.startsWith('/login') || pathname.startsWith('/register') || pathname.startsWith('/reset-password') || pathname.startsWith('/verify-email') || pathname.startsWith('/donate') || pathname.startsWith('/events') || pathname.startsWith('/sermons') || pathname.startsWith('/books') || pathname.startsWith('/privacy') || pathname.startsWith('/terms') || pathname.startsWith('/testimonials') || pathname.startsWith('/pastores') || pathname.startsWith('/public') || pathname.startsWith('/auth') || pathname.startsWith('/s/')) {
+    if (pathname.startsWith('/plataforma/') || pathname === '/' || pathname.startsWith('/_next/') || pathname.startsWith('/api/') || pathname.startsWith('/favicon') || pathname.startsWith('/login') || pathname.startsWith('/register') || pathname.startsWith('/reset-password') || pathname.startsWith('/verify-email') || pathname.startsWith('/donate') || pathname.startsWith('/books') || pathname.startsWith('/privacy') || pathname.startsWith('/terms') || pathname.startsWith('/testimonials') || pathname.startsWith('/pastores') || pathname.startsWith('/public') || pathname.startsWith('/auth') || pathname.startsWith('/s/')) {
         return withNoStoreHeaders(NextResponse.next(), request);
     }
 

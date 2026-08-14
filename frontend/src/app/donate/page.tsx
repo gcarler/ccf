@@ -21,12 +21,72 @@ import { useToast } from '@/context/ToastContext';
 import { apiFetch } from '@/lib/http';
 import { motion } from 'framer-motion';
 import clsx from 'clsx';
-
-const AMOUNTS = ['20', '50', '100', '200'];
+import { useCmsV2Page } from '@/hooks/useCmsV2Page';
+import { safeJsonParse } from '@/lib/safeJson';
 
 export default function DonatePage() {
     const { user } = useAuth();
     const { addToast } = useToast();
+    const cmsPage = useCmsV2Page('donate');
+    const cmsHero = cmsPage?.blocks?.hero;
+    const cmsFeed = cmsPage?.blocks?.feed;
+    const hero = safeJsonParse<Record<string, unknown>>(cmsHero?.content, {});
+    const feed = safeJsonParse<Record<string, unknown>>(cmsFeed?.content, {});
+
+    // ── CMS-driven text content (with fallbacks to current hardcoded values) ──
+    const str = (obj: Record<string, unknown>, key: string, fallback = "") =>
+        typeof obj[key] === "string" && (obj[key] as string).trim() ? (obj[key] as string) : fallback;
+
+    // Header & hero
+    const headerLabel = str(hero, "header_label", "Generosidad");
+    const heroBadge = str(hero, "badge", "Tu siembra tiene propósito");
+    const heroTitle = str(hero, "title", "Honramos a Dios");
+    const heroTitleAccent = str(hero, "title_accent", "generosidad.");
+    const heroDescription = str(hero, "description", "Cada ofrenda y diezmo fortalece la misión de transformar vidas y comunidades a través del evangelio.");
+
+    // Benefits
+    const benefit1Title = str(hero, "benefit1_title", "Seguridad Total");
+    const benefit1Desc = str(hero, "benefit1_desc", "Tus transacciones están protegidas con encriptación de nivel bancario.");
+    const benefit2Title = str(hero, "benefit2_title", "Impacto Global");
+    const benefit2Desc = str(hero, "benefit2_desc", "Apoyas misiones y ayuda social en toda la región.");
+
+    // Amount & type selectors
+    const amountsLabel = str(feed, "amounts_label", "Selecciona un monto");
+    const customAmountLabel = str(feed, "custom_amount_label", "Otra cantidad personalizada");
+    const typeLabel = str(feed, "type_label", "Destino de la semilla");
+    const diezmoLabel = str(feed, "diezmo_label", "Diezmo");
+    const ofrendaLabel = str(feed, "ofrenda_label", "Ofrenda");
+
+    // Buttons
+    const payButtonLabel = str(feed, "pay_button_label", "Pagar con MercadoPago");
+    const connectingLabel = str(feed, "connecting_label", "Conectando...");
+    const manualButtonLabel = str(feed, "manual_button_label", "Registrar como recibido");
+    const manualDividerLabel = str(feed, "manual_divider_label", "O registra manualmente");
+
+    // Footer badges
+    const sslLabel = str(feed, "ssl_label", "Secure SSL");
+    const verifiedLabel = str(feed, "verified_label", "Verified Merchant");
+
+    // Success screen
+    const successTitleApproved = str(feed, "success_title_approved", "¡Ofrenda Recibida!");
+    const successTitlePending = str(feed, "success_title_pending", "Pago Pendiente");
+    const successDescApproved = str(feed, "success_desc_approved", "Tu generosidad permite que el ministerio siga creciendo y alcanzando más vidas.");
+    const successDescPending = str(feed, "success_desc_pending", "Tu pago está siendo procesado. Te notificaremos cuando se confirme.");
+    const amountLabel = str(feed, "amount_label", "Monto Sembrado");
+    const categoryLabel = str(feed, "category_label", "Categoría");
+    const backHomeLabel = str(feed, "back_home_label", "Volver al Inicio");
+
+    // Toasts
+    const toastSuccess = str(feed, "toast_success", "¡Gracias por tu generosidad!");
+    const toastError = str(feed, "toast_error", "Error al procesar");
+    const toastMpError = str(feed, "toast_mp_error", "Error al iniciar pago con MercadoPago");
+    const toastMpPending = str(feed, "toast_mp_pending", "Tu pago está siendo procesado.");
+    const toastMpFailure = str(feed, "toast_mp_failure", "El pago no pudo completarse. Intenta de nuevo.");
+
+    // Amounts (editable from CMS)
+    const cmsAmounts = Array.isArray(feed.amounts) ? (feed.amounts as string[]) : ['20', '50', '100', '200'];
+    const AMOUNTS = cmsAmounts.length > 0 ? cmsAmounts : ['20', '50', '100', '200'];
+
     const [amount, setAmount] = useState('50');
     const [type, setType] = useState('Diezmo');
     const [isCustom, setIsCustom] = useState(false);
@@ -43,13 +103,13 @@ export default function DonatePage() {
             setCompleted(true);
             setPaymentStatus('approved');
         } else if (status === 'failure') {
-            addToast('El pago no pudo completarse. Intenta de nuevo.', 'error');
+            addToast(toastMpFailure, 'error');
         } else if (status === 'pending') {
-            addToast('Tu pago está siendo procesado.', 'warning');
+            addToast(toastMpPending, 'warning');
             setCompleted(true);
             setPaymentStatus('pending');
         }
-    }, [addToast]);
+    }, [addToast, toastMpFailure, toastMpPending]);
 
     const handleManualDonation = async () => {
         setLoading(true);
@@ -63,10 +123,10 @@ export default function DonatePage() {
                 }
             });
             setCompleted(true);
-            addToast("¡Gracias por tu generosidad!", "success");
+            addToast(toastSuccess, "success");
         } catch (error) {
             console.error(error);
-            addToast("Error al procesar", "error");
+            addToast(toastError, "error");
         } finally {
             setLoading(false);
         }
@@ -87,11 +147,11 @@ export default function DonatePage() {
             if (pref?.init_point) {
                 window.location.href = pref.init_point;
             } else {
-                addToast('Error al iniciar pago con MercadoPago', 'error');
+                addToast(toastMpError, 'error');
             }
         } catch (error: any) {
             const detail = error?.detail?.detail || error?.message;
-            addToast(detail || 'Error al conectar con MercadoPago', 'error');
+            addToast(detail || toastMpError, 'error');
         } finally {
             setMpLoading(false);
         }
@@ -110,26 +170,26 @@ export default function DonatePage() {
                     </div>
                     <div className="space-y-3">
                         <h2 className="text-xl font-bold text-[hsl(var(--text-primary))] dark:text-white tracking-tighter">
-                            {isApproved ? '¡Ofrenda Recibida!' : 'Pago Pendiente'}
+                            {isApproved ? successTitleApproved : successTitlePending}
                         </h2>
                         <p className="text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] font-medium">
                             {isApproved
-                                ? 'Tu generosidad permite que el ministerio siga creciendo y alcanzando más vidas.'
-                                : 'Tu pago está siendo procesado. Te notificaremos cuando se confirme.'}
+                                ? successDescApproved
+                                : successDescPending}
                         </p>
                     </div>
                     <div className="py-2 border-y border-[hsl(var(--border))] dark:border-white/10 flex justify-between items-center px-4">
                         <div className="text-left">
-                            <p className="text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Monto Sembrado</p>
+                            <p className="text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">{amountLabel}</p>
                             <p className="text-lg font-bold text-[hsl(var(--text-primary))] dark:text-white">${amount}</p>
                         </div>
                         <div className="text-right">
-                            <p className="text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Categoría</p>
+                            <p className="text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">{categoryLabel}</p>
                             <p className="text-sm font-bold text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))]">{type}</p>
                         </div>
                     </div>
                     <Link href="/" className="block w-full py-2 bg-[hsl(var(--bg-muted))] dark:bg-[hsl(var(--bg-primary))] text-white dark:text-[hsl(var(--text-primary))] rounded-lg font-bold text-sm uppercase tracking-wide active:scale-95 transition-all shadow-xl">
-                        Volver al Inicio
+                        {backHomeLabel}
                     </Link>
                 </motion.div>
             </div>
@@ -147,7 +207,7 @@ export default function DonatePage() {
                     <ChevronLeft size={24} />
                 </Link>
                 <div className="flex flex-col items-center">
-                    <h1 className="text-sm font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Generosidad</h1>
+                    <h1 className="text-sm font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{headerLabel}</h1>
                     <div className="h-1 w-8 bg-[hsl(var(--primary))] rounded-full mt-1" />
                 </div>
                 <div className="size-7" />
@@ -157,18 +217,18 @@ export default function DonatePage() {
                 {/* Left Side: Inspiration */}
                 <div className="space-y-3 pt-4">
                     <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-info-soft dark:bg-[hsl(var(--info))]/30 text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] rounded-full text-2xs font-bold uppercase tracking-wide">
-                        <HandHeart size={14} /> Tu siembra tiene propósito
+                        <HandHeart size={14} /> {heroBadge}
                     </div>
                     <h2 className="text-lg lg:text-xl font-bold text-[hsl(var(--text-primary))] dark:text-white tracking-tighter leading-[0.9]">
-                        Honramos a Dios <br /> con nuestra <br /> <span className="text-[hsl(var(--primary))]">generosidad.</span>
+                        {heroTitle} <br /> con nuestra <br /> <span className="text-[hsl(var(--primary))]">{heroTitleAccent}</span>
                     </h2>
                     <p className="text-lg text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] font-medium max-w-md leading-relaxed">
-                        Cada ofrenda y diezmo fortalece la misión de transformar vidas y comunidades a través del evangelio.
+                        {heroDescription}
                     </p>
 
                     <div className="grid grid-cols-1 gap-4 pt-4">
-                        <BenefitCard icon={ShieldCheck} title="Seguridad Total" desc="Tus transacciones están protegidas con encriptación de nivel bancario." />
-                        <BenefitCard icon={Globe} title="Impacto Global" desc="Apoyas misiones y ayuda social en toda la región." />
+                        <BenefitCard icon={ShieldCheck} title={benefit1Title} desc={benefit1Desc} />
+                        <BenefitCard icon={Globe} title={benefit2Title} desc={benefit2Desc} />
                     </div>
                 </div>
 
@@ -177,7 +237,7 @@ export default function DonatePage() {
                     {/* Amount Selector */}
                     <div className="space-y-3">
                         <div className="text-center">
-                            <p className="text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide mb-4">Selecciona un monto</p>
+                            <p className="text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide mb-4">{amountsLabel}</p>
                             <div className="flex items-center justify-center gap-2">
                                 <span className="text-lg font-bold text-[hsl(var(--text-secondary))]">$</span>
                                 {isCustom ? (
@@ -213,16 +273,16 @@ export default function DonatePage() {
                                 isCustom ? "border-[hsl(var(--info)/100%)] bg-info-soft/50 dark:bg-[hsl(var(--info))]/10 text-[hsl(var(--primary))]" : "border-transparent bg-[hsl(var(--surface-1))] dark:bg-white/5 text-[hsl(var(--text-secondary))]"
                             )}
                         >
-                            Otra cantidad personalizada
+                            {customAmountLabel}
                         </button>
                     </div>
 
                     {/* Type Selector */}
                     <div className="space-y-4">
-                        <p className="text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide text-center">Destino de la semilla</p>
+                        <p className="text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide text-center">{typeLabel}</p>
                         <div className="grid grid-cols-2 gap-3">
-                            <TypeOption active={type === 'Diezmo'} onClick={() => setType('Diezmo')} icon={Building} label="Diezmo" />
-                            <TypeOption active={type === 'Ofrenda'} onClick={() => setType('Ofrenda')} icon={Heart} label="Ofrenda" />
+                            <TypeOption active={type === 'Diezmo'} onClick={() => setType('Diezmo')} icon={Building} label={diezmoLabel} />
+                            <TypeOption active={type === 'Ofrenda'} onClick={() => setType('Ofrenda')} icon={Heart} label={ofrendaLabel} />
                         </div>
                     </div>
 
@@ -233,9 +293,9 @@ export default function DonatePage() {
                         className="w-full py-2.5 bg-[hsl(var(--primary))] text-white rounded-lg font-bold text-sm uppercase tracking-wide shadow-xl shadow-[hsl(var(--info)/30%)] active:scale-[0.98] transition-all flex items-center justify-center gap-2 disabled:opacity-50 hover:bg-[hsl(var(--primary))]"
                     >
                         {mpLoading ? (
-                            <><Loader2 size={18} className="animate-spin" /> Conectando...</>
+                            <><Loader2 size={18} className="animate-spin" /> {connectingLabel}</>
                         ) : (
-                            <><ExternalLink size={18} /> Pagar con MercadoPago</>
+                            <><ExternalLink size={18} /> {payButtonLabel}</>
                         )}
                     </button>
 
@@ -246,7 +306,7 @@ export default function DonatePage() {
                         </div>
                         <div className="relative flex justify-center">
                             <span className="bg-[hsl(var(--bg-primary))] dark:bg-[#1e1f21] px-3 text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
-                                O registra manualmente
+                                {manualDividerLabel}
                             </span>
                         </div>
                     </div>
@@ -256,12 +316,12 @@ export default function DonatePage() {
                         disabled={loading || !amount || parseFloat(amount) <= 0}
                         className="w-full py-2 bg-[hsl(var(--surface-2))] dark:bg-white/5 text-[hsl(var(--text-secondary))] rounded-lg font-bold text-xs uppercase tracking-wide active:scale-[0.98] transition-all flex items-center justify-center gap-2 disabled:opacity-50 hover:bg-[hsl(var(--surface-3))] dark:hover:bg-white/10"
                     >
-                        {loading ? <Loader2 size={16} className="animate-spin" /> : <><CreditCard size={16} /> Registrar como recibido</>}
+                        {loading ? <Loader2 size={16} className="animate-spin" /> : <><CreditCard size={16} /> {manualButtonLabel}</>}
                     </button>
 
                     <div className="flex items-center justify-center gap-4 pt-4 border-t border-[hsl(var(--border))] dark:border-white/5 opacity-40">
-                        <div className="flex items-center gap-1"><Lock size={12} /><span className="text-2xs font-semibold uppercase">Secure SSL</span></div>
-                        <div className="flex items-center gap-1"><CheckCircle2 size={12} /><span className="text-2xs font-semibold uppercase">Verified Merchant</span></div>
+                        <div className="flex items-center gap-1"><Lock size={12} /><span className="text-2xs font-semibold uppercase">{sslLabel}</span></div>
+                        <div className="flex items-center gap-1"><CheckCircle2 size={12} /><span className="text-2xs font-semibold uppercase">{verifiedLabel}</span></div>
                     </div>
                 </div>
             </main>
