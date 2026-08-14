@@ -17,7 +17,6 @@ export default function PrivacyPage() {
     const title = str("title", "Política de Privacidad");
     const subtitle = str("subtitle", "Comprometidos con la seguridad de tus datos.");
     const body = str("body", "La política de privacidad de la plataforma se encuentra en construcción. Para dudas sobre el manejo de tus datos, contacta al equipo pastoral.");
-    const icon = str("icon", "shield");
 
     return (
         <div className="min-h-screen bg-[hsl(var(--surface-1))] dark:bg-background-dark">
