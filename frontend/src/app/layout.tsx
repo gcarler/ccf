@@ -67,6 +67,10 @@ export default function RootLayout({
     return (
         <html lang="es" suppressHydrationWarning className={`${roboto.variable} ${openSans.variable} ${inter.variable} ${outfit.variable}`}>
             <head>
+                {/* Material Symbols Outlined is an icon font, not a text font —
+                    it cannot be loaded via next/font/google and must be linked
+                    directly. The no-page-custom-font rule targets text fonts. */}
+                {/* eslint-disable-next-line @next/next/no-page-custom-font */}
                 <link
                     rel="stylesheet"
                     href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
