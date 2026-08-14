@@ -148,6 +148,19 @@ const nextConfig = {
                 destination: '/plataforma/projects?view=list#projects-dashboard',
                 permanent: true,
             },
+            {
+                // Rutas legacy (páginas eliminadas): /events y /sermons viven ahora
+                // en el CMS como /eventos y /predicas. Mantener los enlaces viejos
+                // (bookmarks, SEO, referencias externas) sin romperlos.
+                source: '/events',
+                destination: '/eventos',
+                permanent: true,
+            },
+            {
+                source: '/sermons',
+                destination: '/predicas',
+                permanent: true,
+            },
         ];
     },
     async rewrites() {
