@@ -25,6 +25,7 @@ import { useToast } from '@/context/ToastContext';
 import { apiFetch } from '@/lib/http';
 import CrmShell from '@/components/crm/CrmShell';
 import WorkspaceDrawer from '@/components/WorkspaceDrawer';
+import type { PipelineCase, CounselingSession } from '@/types/crm';
 
 interface CallLog {
     id: number;
@@ -77,9 +78,9 @@ export default function LeadDetail() {
     }
 
     const [activeTab, setActiveTab] = useState<'history' | 'notes'>('history');
-    const [lead, setLead] = useState<any>(null);
+    const [lead, setLead] = useState<PipelineCase | null>(null);
     const [callLogs, setCallLogs] = useState<CallLog[]>([]);
-    const [counselingSessions, setCounselingSessions] = useState<any[]>([]);
+    const [counselingSessions, setCounselingSessions] = useState<CounselingSession[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [reloadKey, setReloadKey] = useState(0);
@@ -113,7 +114,7 @@ export default function LeadDetail() {
                 apiFetch<CallLog[]>(`/crm/casos/${leadId}/calls`, { token, cache: 'no-store', signal }),
             ]);
             if (leadData.status === 'fulfilled') {
-                const leadValue = leadData.value as { persona_id?: string | null };
+                const leadValue = leadData.value as PipelineCase;
                 setLead(leadValue);
                 if (leadValue.persona_id) {
                     try {
@@ -163,7 +164,7 @@ export default function LeadDetail() {
                 token,
                 body: { stage: newStage },
             });
-            setLead((prev: any) => ({ ...prev, stage: newStage }));
+            setLead((prev: PipelineCase | null) => prev ? { ...prev, stage: newStage } : prev);
             addToast(`Etapa actualizada a ${STAGE_LABELS[newStage]}`, 'success');
         } catch {
             addToast('Error al actualizar etapa', 'error');

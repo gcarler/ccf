@@ -71,8 +71,8 @@ export default function CounselingPage() {
         try {
             const sessionsData = await apiFetch<CounselingSession[]>('/crm/counseling/', { token, cache: 'no-store', signal });
             setSessions(Array.isArray(sessionsData) ? sessionsData : []);
-        } catch (err: any) {
-            if (err?.name === 'AbortError') return;
+        } catch (err: unknown) {
+            if ((err as Error)?.name === 'AbortError') return;
             setSessions([]);
             const message = extractErrorMessage(err, 'Error al cargar la sesion de consejeria');
             setSessionsError(message);

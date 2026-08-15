@@ -35,6 +35,7 @@ import {
     Loader2,
     Send,
 } from 'lucide-react'
+import type { LucideIcon } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import clsx from 'clsx';
 import { useAuth } from '@/context/AuthContext';
@@ -198,6 +199,109 @@ function MentorAssignmentDrawer({
 
 import { Tab } from '@/types/crm';
 
+// ─── Persona Detail (merged API + computed defaults) ──────────────────────────
+// Shape estricta del expediente de persona expuesto en este page.
+// Reemplaza los tipos amplios para el estado `persona` / `editPersona`.
+
+interface PersonaFamilyMember {
+    id?: string;
+    name?: string | null;
+    first_name?: string | null;
+    relation?: string | null;
+}
+
+interface PersonaDetail {
+    id?: string;
+    nombre_completo?: string;
+    first_name?: string;
+    last_name?: string;
+    second_name?: string;
+    second_last_name?: string;
+    email?: string;
+    phone?: string;
+    landline_phone?: string;
+    other_phone?: string;
+    mobile_phone?: string;
+    address?: string;
+    city?: string;
+    housing_type?: string;
+    id_type?: string;
+    id_number?: string;
+    birth_country?: string;
+    sex?: string;
+    marital_status?: string;
+    birthday?: string | null;
+    blood_type?: string;
+    medical_notes?: string;
+    baptism_date?: string | null;
+    church_join_date?: string | null;
+    education_level?: string;
+    education_status?: string;
+    profession?: string;
+    economic_sector?: string;
+    participation_type?: string;
+    attendance_type?: string;
+    group_name?: string;
+    campus?: string;
+    house?: string;
+    status?: string;
+    church_role?: string;
+    pastoral_notes?: string;
+    spiritual_gifts?: string;
+    talents?: string;
+    xp?: number;
+    level?: number;
+    joinedAt?: string | null;
+    created_at?: string;
+    family: PersonaFamilyMember[];
+    mesh_insight?: PersonaMeshInsight | null;
+    current_mentorship?: PersonaMentorshipSummary | null;
+    academy_progress?: number;
+    volunteer_commitment?: number;
+    colombian_department_id?: number | null;
+    registration_reason?: string;
+    unregistration_reason?: string;
+    registration_date?: string | null;
+    unregistration_date?: string | null;
+    optional_info?: string;
+    responsible_adult_name?: string;
+    responsible_adult_contact?: string;
+    guardian_name?: string;
+    guardian_contact?: string;
+    last_group_attendance?: string | null;
+    last_meeting_attendance?: string | null;
+    [key: string]: unknown;
+}
+
+// ─── Departamento / Ciudad (catálogo geo) ──────────────────────────────────────
+
+interface ColombianDepartment {
+    id: number;
+    name: string;
+}
+
+interface ColombianCity {
+    id: number | string;
+    name: string;
+}
+
+// ─── Timeline / Donations (extra data) ──────────────────────────────────────────
+
+interface PersonaTimelineRow {
+    id?: string;
+    event_type?: string;
+    type?: string;
+    notes?: string;
+    created_at?: string;
+}
+
+interface PersonaDonationRow {
+    id?: string;
+    donation_type: string;
+    amount: number;
+    created_at?: string;
+}
+
 interface PersonaMeshMetric {
     key: string;
     label: string;
@@ -255,7 +359,7 @@ function formatCurrency(val?: number | null): string {
     return new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(val);
 }
 
-function getDeptName(departments: any[], id: number | null | undefined): string {
+function getDeptName(departments: ColombianDepartment[], id: number | null | undefined): string {
     if (!id) return '';
     const d = departments.find(d => d.id === id);
     return d ? d.name : String(id);
@@ -301,7 +405,7 @@ export default function PersonaDetailPage() {
     const router = useRouter();
     const { token } = useAuth();
     const { canEditCrm } = useCrmAccess();
-    const [persona, setPersona] = useState<any>(null);
+    const [persona, setPersona] = useState<PersonaDetail | null>(null);
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState<Tab>('overview');
     const [mentorDrawerOpen, setMentorDrawerOpen] = useState(false);
@@ -310,10 +414,10 @@ export default function PersonaDetailPage() {
         subtitle: 'Selecciona el mentor que guiará el proceso espiritual de este persona.',
     });
     const [isEditOpen, setIsEditOpen] = useState(false);
-    const [editPersona, setEditPersona] = useState<any>({});
+    const [editPersona, setEditPersona] = useState<Partial<PersonaDetail>>({});
     const [isEditSaving, setIsEditSaving] = useState(false);
-    const [departments, setDepartments] = useState<any[]>([]);
-    const [editCities, setEditCities] = useState<any[]>([]);
+    const [departments, setDepartments] = useState<ColombianDepartment[]>([]);
+    const [editCities, setEditCities] = useState<ColombianCity[]>([]);
     const [loadingEditCities, setLoadingEditCities] = useState(false);
     const [mentorCandidates, setMentorCandidates] = useState<PersonaMentorCandidate[]>([]);
     const [mentorSearch, setMentorSearch] = useState('');
@@ -324,15 +428,15 @@ export default function PersonaDetailPage() {
     const [mentorError, setMentorError] = useState<string | null>(null);
 
     // Extra data fetched on demand
-    const [history, setHistory] = useState<any[]>([]);
-    const [donations, setDonations] = useState<any[]>([]);
+    const [history, setHistory] = useState<PersonaTimelineRow[]>([]);
+    const [donations, setDonations] = useState<PersonaDonationRow[]>([]);
     const [loadingHistory, setLoadingHistory] = useState(false);
     const [loadingDonations, setLoadingDonations] = useState(false);
 
     const loadPersonaDetail = useCallback(async (signal?: AbortSignal) => {
         try {
-            const data = await apiFetch<any>(`/crm/personas/${id}`, { token, signal, cache: 'no-store' });
-            const m = {
+            const data = await apiFetch<PersonaDetail>(`/crm/personas/${id}`, { token, signal, cache: 'no-store' });
+            const m: PersonaDetail = {
                 ...data,
                 first_name: data.first_name ?? '',
                 last_name: data.last_name ?? '',
@@ -410,7 +514,7 @@ export default function PersonaDetailPage() {
         const abortCtrl = new AbortController();
         loadPersonaDetail(abortCtrl.signal);
         // Load departments for display
-        apiFetch<any[]>('/crm/colombian-departments', { token, signal: abortCtrl.signal })
+        apiFetch<ColombianDepartment[]>('/crm/colombian-departments', { token, signal: abortCtrl.signal })
             .then(setDepartments)
             .catch((_err) => {
                 if (!abortCtrl.signal.aborted) {
@@ -468,7 +572,7 @@ export default function PersonaDetailPage() {
         // el componente se desmonta antes de resolver.
         const controller = new AbortController();
         setLoadingEditCities(true);
-        apiFetch<any[]>(`/crm/colombian-departments/${editPersona.colombian_department_id}/cities`, { token, signal: controller.signal })
+        apiFetch<ColombianCity[]>(`/crm/colombian-departments/${editPersona.colombian_department_id}/cities`, { token, signal: controller.signal })
             .then(d => { if (!controller.signal.aborted) setEditCities(d); })
             .catch(() => { if (!controller.signal.aborted) setEditCities([]); })
             .finally(() => { if (!controller.signal.aborted) setLoadingEditCities(false); });
@@ -477,9 +581,10 @@ export default function PersonaDetailPage() {
 
     const handleSavePersona = async () => {
         if (!token) return;
+        if (!persona) return;
         setIsEditSaving(true);
         try {
-            const body: any = {};
+            const body: Record<string, unknown> = {};
             const fields = [
                 'first_name','last_name','email','phone','church_role','second_name','second_last_name',
                 'id_type','id_number','birth_country','sex','marital_status','birthday',
@@ -503,11 +608,11 @@ export default function PersonaDetailPage() {
             if (body.colombian_department_id === '' || body.colombian_department_id === null) {
                 body.colombian_department_id = null;
             }
-            const updated = await apiFetch<any>(`/crm/personas/${id}`, {
+            const updated = await apiFetch<PersonaDetail>(`/crm/personas/${id}`, {
                 method: 'PATCH', token, body,
             });
-            setPersona((prev: any) => ({ ...prev, ...updated }));
-            setEditPersona((prev: any) => ({ ...prev, ...updated }));
+            setPersona((prev: PersonaDetail | null) => ({ ...prev, ...updated }));
+            setEditPersona((prev: Partial<PersonaDetail>) => ({ ...prev, ...updated }));
             setIsEditOpen(false);
             toast.success('Persona actualizada');
         } catch {
@@ -548,7 +653,7 @@ export default function PersonaDetailPage() {
             // tab o el componente se desmonta antes de resolver el fetch de timeline.
             const controller = new AbortController();
             setLoadingHistory(true);
-            apiFetch<any[]>(`/crm/personas/${id}/timeline`, { token, signal: controller.signal })
+            apiFetch<PersonaTimelineRow[]>(`/crm/personas/${id}/timeline`, { token, signal: controller.signal })
                 .then(d => { if (!controller.signal.aborted) setHistory(Array.isArray(d) ? d : []); })
                 .catch(() => { if (!controller.signal.aborted) setHistory([]); })
                 .finally(() => { if (!controller.signal.aborted) setLoadingHistory(false); });
@@ -563,7 +668,7 @@ export default function PersonaDetailPage() {
             // o el componente se desmonta antes de resolver el fetch de donations.
             const controller = new AbortController();
             setLoadingDonations(true);
-            apiFetch<any[]>(`/crm/personas/${id}/donations`, { token, signal: controller.signal })
+            apiFetch<PersonaDonationRow[]>(`/crm/personas/${id}/donations`, { token, signal: controller.signal })
                 .then(d => { if (!controller.signal.aborted) setDonations(Array.isArray(d) ? d : []); })
                 .catch(() => { if (!controller.signal.aborted) setDonations([]); })
                 .finally(() => { if (!controller.signal.aborted) setLoadingDonations(false); });
@@ -597,7 +702,7 @@ export default function PersonaDetailPage() {
     const nameParts = (persona.nombre_completo || `${persona.first_name ?? ''} ${persona.last_name ?? ''}`).trim().split(/\s+/);
     const initials = (nameParts[0]?.[0] ?? '') + (nameParts.length > 1 ? nameParts[nameParts.length - 1]?.[0] ?? '' : '');
 
-    const TABS: { id: Tab; label: string; icon: any }[] = [
+    const TABS: { id: Tab; label: string; icon: LucideIcon }[] = [
         { id: 'overview', label: 'Resumen', icon: User },
         { id: 'spiritual', label: 'Vida Espiritual', icon: Heart },
         { id: 'academy', label: 'Academia', icon: GraduationCap },
@@ -779,7 +884,7 @@ export default function PersonaDetailPage() {
                                 </div>
                                 {persona.family.length > 0 ? (
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                        {persona.family.map((f: any) => (
+                                        {persona.family.map((f: PersonaFamilyMember) => (
                                             <div key={f.id} className="p-3 bg-[hsl(var(--surface-1))] dark:bg-white/5 rounded-lg border border-[hsl(var(--border))] dark:border-white/5 flex items-center justify-between group hover:border-[hsl(var(--info)/100%)]/30 hover:bg-info-soft/50 dark:hover:bg-[hsl(var(--info))]/5 transition-all cursor-pointer">
                                                 <div className="flex items-center gap-3">
                                                     <div className="size-9 rounded-md bg-[hsl(var(--surface-1))] dark:bg-[#15171c] flex items-center justify-center shadow-sm border border-[hsl(var(--border))] dark:border-white/10">
@@ -807,7 +912,7 @@ export default function PersonaDetailPage() {
                         <div className="lg:col-span-4 space-y-3">
                             {/* MESH Insight */}
                             {(() => {
-                                const insight: PersonaMeshInsight | undefined = persona.mesh_insight;
+                                const insight: PersonaMeshInsight | null | undefined = persona.mesh_insight;
                                 const metrics = insight?.metrics ?? [];
                                 const currentMentor = insight?.current_mentorship ?? persona.current_mentorship;
                                 return (
@@ -969,9 +1074,9 @@ export default function PersonaDetailPage() {
                             {/* Summary Cards */}
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                 {[
-                                    { label: 'Total Diezmos', value: donations.filter(d => d.donation_type === 'diezmo').reduce((s: number, d: any) => s + d.amount, 0), color: 'bg-[hsl(var(--success))]', icon: TrendingUp },
-                                    { label: 'Total Ofrendas', value: donations.filter(d => d.donation_type === 'ofrenda').reduce((s: number, d: any) => s + d.amount, 0), color: 'bg-[hsl(var(--primary))]', icon: DollarSign },
-                                    { label: 'Total Registrado', value: donations.reduce((s: number, d: any) => s + d.amount, 0), color: 'bg-[hsl(var(--primary))]', icon: Award },
+                                    { label: 'Total Diezmos', value: donations.filter(d => d.donation_type === 'diezmo').reduce((s: number, d: PersonaDonationRow) => s + d.amount, 0), color: 'bg-[hsl(var(--success))]', icon: TrendingUp },
+                                    { label: 'Total Ofrendas', value: donations.filter(d => d.donation_type === 'ofrenda').reduce((s: number, d: PersonaDonationRow) => s + d.amount, 0), color: 'bg-[hsl(var(--primary))]', icon: DollarSign },
+                                    { label: 'Total Registrado', value: donations.reduce((s: number, d: PersonaDonationRow) => s + d.amount, 0), color: 'bg-[hsl(var(--primary))]', icon: Award },
                                 ].map((stat, i) => (
                                     <div key={i} className="bg-[hsl(var(--surface-1))] dark:bg-[#15171c] rounded-md p-4 border border-[hsl(var(--border))] dark:border-white/5 shadow-sm space-y-3">
                                         <div className={clsx('size-8 rounded-md flex items-center justify-center text-white', stat.color)}>
@@ -990,7 +1095,7 @@ export default function PersonaDetailPage() {
                                     <div className="py-2 text-center text-[hsl(var(--text-secondary))] text-sm">Cargando...</div>
                                 ) : donations.length > 0 ? (
                                     <div className="space-y-3">
-                                        {donations.map((d: any, i: number) => (
+                                        {donations.map((d: PersonaDonationRow, i: number) => (
                                             <div key={d.id ?? i} className="flex items-center justify-between p-4 bg-[hsl(var(--surface-1))] dark:bg-white/5 rounded-lg">
                                                 <div className="flex items-center gap-3">
                                                     <div className="size-9 rounded-md bg-success-soft dark:bg-[hsl(var(--success))]/10 flex items-center justify-center">
@@ -1026,7 +1131,7 @@ export default function PersonaDetailPage() {
                                 ) : history.length > 0 ? (
                                     <div className="relative space-y-0">
                                         <div className="absolute left-5 top-0 bottom-0 w-px bg-[hsl(var(--surface-2))] dark:bg-white/5" />
-                                        {history.map((event: any, i: number) => (
+                                        {history.map((event: PersonaTimelineRow, i: number) => (
                                             <div key={event.id ?? i} className="flex gap-4 pl-12 pb-8 relative">
                                                 <div className="absolute left-0 top-1 size-8 rounded-md bg-[hsl(var(--surface-1))] dark:bg-[#15171c] border border-[hsl(var(--border))] dark:border-white/10 flex items-center justify-center shadow-sm z-10">
                                                     <MessageSquare size={16} className="text-[hsl(var(--primary))]" />
@@ -1102,65 +1207,65 @@ export default function PersonaDetailPage() {
                     <div className="rounded-lg overflow-hidden">
                         <div className="px-3 py-2 space-y-2">
                             <div className="grid grid-cols-2 gap-3">
-                                <EditField label="Nombre" value={editPersona.first_name ?? ''} onChange={v => setEditPersona((p: any) => ({...p, first_name: v}))} placeholder="Juan" />
-                                <EditField label="Apellido" value={editPersona.last_name ?? ''} onChange={v => setEditPersona((p: any) => ({...p, last_name: v}))} placeholder="Pérez" />
+                                <EditField label="Nombre" value={editPersona.first_name ?? ''} onChange={v => setEditPersona((p: Partial<PersonaDetail>) => ({...p, first_name: v}))} placeholder="Juan" />
+                                <EditField label="Apellido" value={editPersona.last_name ?? ''} onChange={v => setEditPersona((p: Partial<PersonaDetail>) => ({...p, last_name: v}))} placeholder="Pérez" />
                             </div>
                             <div className="grid grid-cols-2 gap-3">
-                                <EditField label="Segundo Nombre" value={editPersona.second_name ?? ''} onChange={v => setEditPersona((p: any) => ({...p, second_name: v}))} placeholder="José" />
-                                <EditField label="Segundo Apellido" value={editPersona.second_last_name ?? ''} onChange={v => setEditPersona((p: any) => ({...p, second_last_name: v}))} placeholder="García" />
+                                <EditField label="Segundo Nombre" value={editPersona.second_name ?? ''} onChange={v => setEditPersona((p: Partial<PersonaDetail>) => ({...p, second_name: v}))} placeholder="José" />
+                                <EditField label="Segundo Apellido" value={editPersona.second_last_name ?? ''} onChange={v => setEditPersona((p: Partial<PersonaDetail>) => ({...p, second_last_name: v}))} placeholder="García" />
                             </div>
                             <div className="grid grid-cols-2 gap-3">
-                                <EditField label="Correo" type="email" value={editPersona.email ?? ''} onChange={v => setEditPersona((p: any) => ({...p, email: v}))} placeholder="correo@ejemplo.com" />
-                                <EditField label="Teléfono" value={editPersona.phone ?? ''} onChange={v => setEditPersona((p: any) => ({...p, phone: v}))} placeholder="+57 300 000 0000" />
+                                <EditField label="Correo" type="email" value={editPersona.email ?? ''} onChange={v => setEditPersona((p: Partial<PersonaDetail>) => ({...p, email: v}))} placeholder="correo@ejemplo.com" />
+                                <EditField label="Teléfono" value={editPersona.phone ?? ''} onChange={v => setEditPersona((p: Partial<PersonaDetail>) => ({...p, phone: v}))} placeholder="+57 300 000 0000" />
                             </div>
                             <div className="grid grid-cols-2 gap-3">
-                                <SelectField label="Rol" value={editPersona.church_role ?? ''} onChange={v => setEditPersona((p: any) => ({...p, church_role: v}))} options={['Persona','Pastor','Líder','Diácono','Ministro de Culto','Apóstol','Profeta','Evangelista','Maestro','Administrador']} />
-                                <SelectField label="Tipo de Participación" value={editPersona.participation_type ?? ''} onChange={v => setEditPersona((p: any) => ({...p, participation_type: v}))} options={PARTICIPATION_TYPES} />
+                                <SelectField label="Rol" value={editPersona.church_role ?? ''} onChange={v => setEditPersona((p: Partial<PersonaDetail>) => ({...p, church_role: v}))} options={['Persona','Pastor','Líder','Diácono','Ministro de Culto','Apóstol','Profeta','Evangelista','Maestro','Administrador']} />
+                                <SelectField label="Tipo de Participación" value={editPersona.participation_type ?? ''} onChange={v => setEditPersona((p: Partial<PersonaDetail>) => ({...p, participation_type: v}))} options={PARTICIPATION_TYPES} />
                             </div>
                         </div>
                     </div>
 
                     <FormSection title="Identificación">
                         <div className="grid grid-cols-2 gap-3">
-                            <SelectField label="Tipo de ID" value={editPersona.id_type ?? ''} onChange={v => setEditPersona((p: any) => ({...p, id_type: v}))} options={ID_TYPES} />
-                            <EditField label="Número de ID" value={editPersona.id_number ?? ''} onChange={v => setEditPersona((p: any) => ({...p, id_number: v}))} placeholder="1234567890" />
+                            <SelectField label="Tipo de ID" value={editPersona.id_type ?? ''} onChange={v => setEditPersona((p: Partial<PersonaDetail>) => ({...p, id_type: v}))} options={ID_TYPES} />
+                            <EditField label="Número de ID" value={editPersona.id_number ?? ''} onChange={v => setEditPersona((p: Partial<PersonaDetail>) => ({...p, id_number: v}))} placeholder="1234567890" />
                         </div>
                     </FormSection>
 
                     <FormSection title="Información Personal">
                         <div className="grid grid-cols-2 gap-3">
-                            <SelectField label="Sexo" value={editPersona.sex ?? ''} onChange={v => setEditPersona((p: any) => ({...p, sex: v}))} options={SEX_OPTIONS} />
-                            <SelectField label="Estado Civil" value={editPersona.marital_status ?? ''} onChange={v => setEditPersona((p: any) => ({...p, marital_status: v}))} options={MARITAL_STATUSES} />
+                            <SelectField label="Sexo" value={editPersona.sex ?? ''} onChange={v => setEditPersona((p: Partial<PersonaDetail>) => ({...p, sex: v}))} options={SEX_OPTIONS} />
+                            <SelectField label="Estado Civil" value={editPersona.marital_status ?? ''} onChange={v => setEditPersona((p: Partial<PersonaDetail>) => ({...p, marital_status: v}))} options={MARITAL_STATUSES} />
                         </div>
                         <div className="grid grid-cols-2 gap-3">
-                            <EditField label="País de Nacimiento" value={editPersona.birth_country ?? ''} onChange={v => setEditPersona((p: any) => ({...p, birth_country: v}))} placeholder="Colombia" />
-                            <EditField label="Fecha de Nacimiento" type="date" value={editPersona.birthday ? editPersona.birthday.slice(0,10) : ''} onChange={v => setEditPersona((p: any) => ({...p, birthday: v}))} placeholder="" />
+                            <EditField label="País de Nacimiento" value={editPersona.birth_country ?? ''} onChange={v => setEditPersona((p: Partial<PersonaDetail>) => ({...p, birth_country: v}))} placeholder="Colombia" />
+                            <EditField label="Fecha de Nacimiento" type="date" value={editPersona.birthday ? editPersona.birthday.slice(0,10) : ''} onChange={v => setEditPersona((p: Partial<PersonaDetail>) => ({...p, birthday: v}))} placeholder="" />
                         </div>
                     </FormSection>
 
                     <FormSection title="Contacto y Ubicación">
                         <div className="grid grid-cols-2 gap-3">
-                            <EditField label="Teléfono Fijo" value={editPersona.landline_phone ?? ''} onChange={v => setEditPersona((p: any) => ({...p, landline_phone: v}))} placeholder="+57 1 000 0000" />
-                            <EditField label="Otro Teléfono" value={editPersona.other_phone ?? ''} onChange={v => setEditPersona((p: any) => ({...p, other_phone: v}))} placeholder="+57 300 000 0000" />
+                            <EditField label="Teléfono Fijo" value={editPersona.landline_phone ?? ''} onChange={v => setEditPersona((p: Partial<PersonaDetail>) => ({...p, landline_phone: v}))} placeholder="+57 1 000 0000" />
+                            <EditField label="Otro Teléfono" value={editPersona.other_phone ?? ''} onChange={v => setEditPersona((p: Partial<PersonaDetail>) => ({...p, other_phone: v}))} placeholder="+57 300 000 0000" />
                         </div>
-                        <EditField label="Dirección" value={editPersona.address ?? ''} onChange={v => setEditPersona((p: any) => ({...p, address: v}))} placeholder="Cra 1 # 2-3, Barrio..." />
+                        <EditField label="Dirección" value={editPersona.address ?? ''} onChange={v => setEditPersona((p: Partial<PersonaDetail>) => ({...p, address: v}))} placeholder="Cra 1 # 2-3, Barrio..." />
                         <div className="grid grid-cols-2 gap-3">
-                            <SelectField label="Tipo de Vivienda" value={editPersona.housing_type ?? ''} onChange={v => setEditPersona((p: any) => ({...p, housing_type: v}))} options={HOUSING_TYPES} />
-                            <EditField label="Celular" value={editPersona.mobile_phone ?? ''} onChange={v => setEditPersona((p: any) => ({...p, mobile_phone: v}))} placeholder="+57 300 000 0000" />
+                            <SelectField label="Tipo de Vivienda" value={editPersona.housing_type ?? ''} onChange={v => setEditPersona((p: Partial<PersonaDetail>) => ({...p, housing_type: v}))} options={HOUSING_TYPES} />
+                            <EditField label="Celular" value={editPersona.mobile_phone ?? ''} onChange={v => setEditPersona((p: Partial<PersonaDetail>) => ({...p, mobile_phone: v}))} placeholder="+57 300 000 0000" />
                         </div>
                         <div className="grid grid-cols-2 gap-3">
                             <div className="space-y-2">
                                 <label className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Departamento</label>
-                                <select value={editPersona.colombian_department_id ?? ''} onChange={e => setEditPersona((p: any) => ({ ...p, colombian_department_id: e.target.value ? Number(e.target.value) : null, city: '' }))} className="w-full rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] px-4 py-1.5 text-sm font-bold outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.2] dark:border-white/10 dark:bg-black/20 dark:text-white">
+                                <select value={editPersona.colombian_department_id ?? ''} onChange={e => setEditPersona((p: Partial<PersonaDetail>) => ({ ...p, colombian_department_id: e.target.value ? Number(e.target.value) : null, city: '' }))} className="w-full rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] px-4 py-1.5 text-sm font-bold outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.2] dark:border-white/10 dark:bg-black/20 dark:text-white">
                                     <option value="">Seleccionar departamento</option>
-                                    {departments.map((d: any) => <option key={d.id} value={d.id}>{d.name}</option>)}
+                                    {departments.map((d: ColombianDepartment) => <option key={d.id} value={d.id}>{d.name}</option>)}
                                 </select>
                             </div>
                             <div className="space-y-2">
                                 <label className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Ciudad</label>
-                                <select value={editPersona.city ?? ''} onChange={e => setEditPersona((p: any) => ({ ...p, city: e.target.value }))} disabled={!editPersona.colombian_department_id || loadingEditCities} className="w-full rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] px-4 py-1.5 text-sm font-bold outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.2] disabled:opacity-50 disabled:cursor-not-allowed dark:border-white/10 dark:bg-black/20 dark:text-white">
+                                <select value={editPersona.city ?? ''} onChange={e => setEditPersona((p: Partial<PersonaDetail>) => ({ ...p, city: e.target.value }))} disabled={!editPersona.colombian_department_id || loadingEditCities} className="w-full rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] px-4 py-1.5 text-sm font-bold outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.2] disabled:opacity-50 disabled:cursor-not-allowed dark:border-white/10 dark:bg-black/20 dark:text-white">
                                     <option value="">{loadingEditCities ? 'Cargando ciudades...' : 'Seleccionar ciudad'}</option>
-                                    {editCities.map((c: any) => <option key={c.id} value={c.name}>{c.name}</option>)}
+                                    {editCities.map((c: ColombianCity) => <option key={c.id} value={c.name}>{c.name}</option>)}
                                 </select>
                             </div>
                         </div>
@@ -1168,61 +1273,61 @@ export default function PersonaDetailPage() {
 
                     <FormSection title="Educación y Profesión">
                         <div className="grid grid-cols-2 gap-3">
-                            <SelectField label="Nivel Educativo" value={editPersona.education_level ?? ''} onChange={v => setEditPersona((p: any) => ({...p, education_level: v}))} options={EDUCATION_LEVELS} />
-                            <SelectField label="Estado Educativo" value={editPersona.education_status ?? ''} onChange={v => setEditPersona((p: any) => ({...p, education_status: v}))} options={EDUCATION_STATUSES} />
+                            <SelectField label="Nivel Educativo" value={editPersona.education_level ?? ''} onChange={v => setEditPersona((p: Partial<PersonaDetail>) => ({...p, education_level: v}))} options={EDUCATION_LEVELS} />
+                            <SelectField label="Estado Educativo" value={editPersona.education_status ?? ''} onChange={v => setEditPersona((p: Partial<PersonaDetail>) => ({...p, education_status: v}))} options={EDUCATION_STATUSES} />
                         </div>
                         <div className="grid grid-cols-2 gap-3">
-                            <EditField label="Profesión" value={editPersona.profession ?? ''} onChange={v => setEditPersona((p: any) => ({...p, profession: v}))} placeholder="Ingeniero, Abogado..." />
-                            <EditField label="Sector Económico" value={editPersona.economic_sector ?? ''} onChange={v => setEditPersona((p: any) => ({...p, economic_sector: v}))} placeholder="Salud, Educación..." />
+                            <EditField label="Profesión" value={editPersona.profession ?? ''} onChange={v => setEditPersona((p: Partial<PersonaDetail>) => ({...p, profession: v}))} placeholder="Ingeniero, Abogado..." />
+                            <EditField label="Sector Económico" value={editPersona.economic_sector ?? ''} onChange={v => setEditPersona((p: Partial<PersonaDetail>) => ({...p, economic_sector: v}))} placeholder="Salud, Educación..." />
                         </div>
                     </FormSection>
 
                     <FormSection title="Información Médica">
-                        <SelectField label="Tipo de Sangre" value={editPersona.blood_type ?? ''} onChange={v => setEditPersona((p: any) => ({...p, blood_type: v}))} options={BLOOD_TYPES} />
-                        <EditField label="Notas Médicas" value={editPersona.medical_notes ?? ''} onChange={v => setEditPersona((p: any) => ({...p, medical_notes: v}))} placeholder="Alergias, condiciones..." />
+                        <SelectField label="Tipo de Sangre" value={editPersona.blood_type ?? ''} onChange={v => setEditPersona((p: Partial<PersonaDetail>) => ({...p, blood_type: v}))} options={BLOOD_TYPES} />
+                        <EditField label="Notas Médicas" value={editPersona.medical_notes ?? ''} onChange={v => setEditPersona((p: Partial<PersonaDetail>) => ({...p, medical_notes: v}))} placeholder="Alergias, condiciones..." />
                     </FormSection>
 
                     <FormSection title="Información de Iglesia">
                         <div className="grid grid-cols-2 gap-3">
-                            <SelectField label="Tipo de Asistencia" value={editPersona.attendance_type ?? ''} onChange={v => setEditPersona((p: any) => ({...p, attendance_type: v}))} options={ATTENDANCE_TYPES} />
-                            <EditField label="Grupo" value={editPersona.group_name ?? ''} onChange={v => setEditPersona((p: any) => ({...p, group_name: v}))} placeholder="Grupo 1, Casa de Paz..." />
+                            <SelectField label="Tipo de Asistencia" value={editPersona.attendance_type ?? ''} onChange={v => setEditPersona((p: Partial<PersonaDetail>) => ({...p, attendance_type: v}))} options={ATTENDANCE_TYPES} />
+                            <EditField label="Grupo" value={editPersona.group_name ?? ''} onChange={v => setEditPersona((p: Partial<PersonaDetail>) => ({...p, group_name: v}))} placeholder="Grupo 1, Casa de Paz..." />
                         </div>
                         <div className="grid grid-cols-2 gap-3">
-                            <EditField label="Campus / Sede" value={editPersona.campus ?? ''} onChange={v => setEditPersona((p: any) => ({...p, campus: v}))} placeholder="Principal, Norte..." />
-                            <EditField label="Fecha de Ingreso" type="date" value={editPersona.church_join_date ? editPersona.church_join_date.slice(0,10) : ''} onChange={v => setEditPersona((p: any) => ({...p, church_join_date: v}))} placeholder="" />
+                            <EditField label="Campus / Sede" value={editPersona.campus ?? ''} onChange={v => setEditPersona((p: Partial<PersonaDetail>) => ({...p, campus: v}))} placeholder="Principal, Norte..." />
+                            <EditField label="Fecha de Ingreso" type="date" value={editPersona.church_join_date ? editPersona.church_join_date.slice(0,10) : ''} onChange={v => setEditPersona((p: Partial<PersonaDetail>) => ({...p, church_join_date: v}))} placeholder="" />
                         </div>
-                        <EditField label="Fecha de Bautismo" type="date" value={editPersona.baptism_date ? editPersona.baptism_date.slice(0,10) : ''} onChange={v => setEditPersona((p: any) => ({...p, baptism_date: v}))} placeholder="" />
+                        <EditField label="Fecha de Bautismo" type="date" value={editPersona.baptism_date ? editPersona.baptism_date.slice(0,10) : ''} onChange={v => setEditPersona((p: Partial<PersonaDetail>) => ({...p, baptism_date: v}))} placeholder="" />
                     </FormSection>
 
                     <FormSection title="Información Familiar">
                         <div className="grid grid-cols-2 gap-3">
-                            <EditField label="Nombre del Responsable" value={editPersona.responsible_adult_name ?? ''} onChange={v => setEditPersona((p: any) => ({...p, responsible_adult_name: v}))} placeholder="Nombre completo" />
-                            <EditField label="Contacto del Responsable" value={editPersona.responsible_adult_contact ?? ''} onChange={v => setEditPersona((p: any) => ({...p, responsible_adult_contact: v}))} placeholder="Teléfono" />
+                            <EditField label="Nombre del Responsable" value={editPersona.responsible_adult_name ?? ''} onChange={v => setEditPersona((p: Partial<PersonaDetail>) => ({...p, responsible_adult_name: v}))} placeholder="Nombre completo" />
+                            <EditField label="Contacto del Responsable" value={editPersona.responsible_adult_contact ?? ''} onChange={v => setEditPersona((p: Partial<PersonaDetail>) => ({...p, responsible_adult_contact: v}))} placeholder="Teléfono" />
                         </div>
                         <div className="grid grid-cols-2 gap-3">
-                            <EditField label="Nombre del Acudiente" value={editPersona.guardian_name ?? ''} onChange={v => setEditPersona((p: any) => ({...p, guardian_name: v}))} placeholder="Nombre completo" />
-                            <EditField label="Contacto del Acudiente" value={editPersona.guardian_contact ?? ''} onChange={v => setEditPersona((p: any) => ({...p, guardian_contact: v}))} placeholder="Teléfono" />
+                            <EditField label="Nombre del Acudiente" value={editPersona.guardian_name ?? ''} onChange={v => setEditPersona((p: Partial<PersonaDetail>) => ({...p, guardian_name: v}))} placeholder="Nombre completo" />
+                            <EditField label="Contacto del Acudiente" value={editPersona.guardian_contact ?? ''} onChange={v => setEditPersona((p: Partial<PersonaDetail>) => ({...p, guardian_contact: v}))} placeholder="Teléfono" />
                         </div>
                     </FormSection>
 
                     <FormSection title="Información Espiritual">
-                        <EditField label="Talentos y Habilidades" value={editPersona.talents ?? ''} onChange={v => setEditPersona((p: any) => ({...p, talents: v}))} placeholder="Canto, enseñanza, liderazgo..." />
-                        <EditField label="Dones Espirituales" value={editPersona.spiritual_gifts ?? ''} onChange={v => setEditPersona((p: any) => ({...p, spiritual_gifts: v}))} placeholder="Profecía, enseñanza, servicio..." />
-                        <EditField label="Notas Pastorales" value={editPersona.pastoral_notes ?? ''} onChange={v => setEditPersona((p: any) => ({...p, pastoral_notes: v}))} placeholder="Observaciones pastorales..." />
+                        <EditField label="Talentos y Habilidades" value={editPersona.talents ?? ''} onChange={v => setEditPersona((p: Partial<PersonaDetail>) => ({...p, talents: v}))} placeholder="Canto, enseñanza, liderazgo..." />
+                        <EditField label="Dones Espirituales" value={editPersona.spiritual_gifts ?? ''} onChange={v => setEditPersona((p: Partial<PersonaDetail>) => ({...p, spiritual_gifts: v}))} placeholder="Profecía, enseñanza, servicio..." />
+                        <EditField label="Notas Pastorales" value={editPersona.pastoral_notes ?? ''} onChange={v => setEditPersona((p: Partial<PersonaDetail>) => ({...p, pastoral_notes: v}))} placeholder="Observaciones pastorales..." />
                         <div className="grid grid-cols-2 gap-3">
-                            <EditField label="Última Asistencia a Grupo" type="date" value={editPersona.last_group_attendance ? editPersona.last_group_attendance.slice(0,10) : ''} onChange={v => setEditPersona((p: any) => ({...p, last_group_attendance: v}))} placeholder="" />
-                            <EditField label="Última Asistencia a Reunión" type="date" value={editPersona.last_meeting_attendance ? editPersona.last_meeting_attendance.slice(0,10) : ''} onChange={v => setEditPersona((p: any) => ({...p, last_meeting_attendance: v}))} placeholder="" />
+                            <EditField label="Última Asistencia a Grupo" type="date" value={editPersona.last_group_attendance ? editPersona.last_group_attendance.slice(0,10) : ''} onChange={v => setEditPersona((p: Partial<PersonaDetail>) => ({...p, last_group_attendance: v}))} placeholder="" />
+                            <EditField label="Última Asistencia a Reunión" type="date" value={editPersona.last_meeting_attendance ? editPersona.last_meeting_attendance.slice(0,10) : ''} onChange={v => setEditPersona((p: Partial<PersonaDetail>) => ({...p, last_meeting_attendance: v}))} placeholder="" />
                         </div>
                     </FormSection>
 
                     <FormSection title="Información de Registro">
-                        <EditField label="Motivo de Registro" value={editPersona.registration_reason ?? ''} onChange={v => setEditPersona((p: any) => ({...p, registration_reason: v}))} placeholder="Conversión, transferencia..." />
-                        <EditField label="Motivo de Baja" value={editPersona.unregistration_reason ?? ''} onChange={v => setEditPersona((p: any) => ({...p, unregistration_reason: v}))} placeholder="Si aplica..." />
+                        <EditField label="Motivo de Registro" value={editPersona.registration_reason ?? ''} onChange={v => setEditPersona((p: Partial<PersonaDetail>) => ({...p, registration_reason: v}))} placeholder="Conversión, transferencia..." />
+                        <EditField label="Motivo de Baja" value={editPersona.unregistration_reason ?? ''} onChange={v => setEditPersona((p: Partial<PersonaDetail>) => ({...p, unregistration_reason: v}))} placeholder="Si aplica..." />
                         <div className="grid grid-cols-2 gap-3">
-                            <EditField label="Fecha de Registro" type="date" value={editPersona.registration_date ? editPersona.registration_date.slice(0,10) : ''} onChange={v => setEditPersona((p: any) => ({...p, registration_date: v}))} placeholder="" />
-                            <EditField label="Fecha de Baja" type="date" value={editPersona.unregistration_date ? editPersona.unregistration_date.slice(0,10) : ''} onChange={v => setEditPersona((p: any) => ({...p, unregistration_date: v}))} placeholder="" />
+                            <EditField label="Fecha de Registro" type="date" value={editPersona.registration_date ? editPersona.registration_date.slice(0,10) : ''} onChange={v => setEditPersona((p: Partial<PersonaDetail>) => ({...p, registration_date: v}))} placeholder="" />
+                            <EditField label="Fecha de Baja" type="date" value={editPersona.unregistration_date ? editPersona.unregistration_date.slice(0,10) : ''} onChange={v => setEditPersona((p: Partial<PersonaDetail>) => ({...p, unregistration_date: v}))} placeholder="" />
                         </div>
-                        <EditField label="Información Opcional" value={editPersona.optional_info ?? ''} onChange={v => setEditPersona((p: any) => ({...p, optional_info: v}))} placeholder="Notas adicionales..." />
+                        <EditField label="Información Opcional" value={editPersona.optional_info ?? ''} onChange={v => setEditPersona((p: Partial<PersonaDetail>) => ({...p, optional_info: v}))} placeholder="Notas adicionales..." />
                     </FormSection>
                 </div>
             </WorkspaceDrawer>

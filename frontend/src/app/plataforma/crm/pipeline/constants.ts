@@ -1,7 +1,7 @@
-import { UserPlus, Phone, Calendar, Sparkles, CheckCircle2 } from 'lucide-react';
+import { UserPlus, Phone, Calendar, Sparkles, CheckCircle2, type LucideIcon } from 'lucide-react';
 import { StatusOption } from '@/components/ui/StatusPicker';
 
-export const PIPELINE_STAGES: (StatusOption & { dot: string; colBg: string; emptyIcon: any })[] = [
+export const PIPELINE_STAGES: (StatusOption & { dot: string; colBg: string; emptyIcon: LucideIcon })[] = [
     { label: 'NUEVO', value: 'new', color: 'bg-[hsl(var(--primary))]', dot: 'bg-[hsl(var(--primary))]', text: 'text-[hsl(var(--primary))]', bg: 'bg-info-soft', colBg: 'bg-[hsl(var(--info))]/5', emptyIcon: UserPlus },
     { label: 'POR LLAMAR', value: 'call', color: 'bg-[hsl(var(--warning))]', dot: 'bg-[hsl(var(--warning))]', text: 'text-warning-text', bg: 'bg-warning-soft', colBg: 'bg-[hsl(var(--warning))]/5', emptyIcon: Phone },
     { label: 'VISITA', value: 'visit', color: 'bg-[hsl(var(--info))]', dot: 'bg-[hsl(var(--info))]', text: 'text-info-text', bg: 'bg-info-soft', colBg: 'bg-[hsl(var(--info))]/5', emptyIcon: Calendar },

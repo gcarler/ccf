@@ -100,7 +100,9 @@ export interface CounselingSession {
   duration_minutes: number;
   status: string;
   topic?: string;
+  subject?: string;
   summary?: string;
+  notes?: string;
   confidential_notes?: string;
   priority_level?: string;
   created_at: string;
@@ -416,4 +418,122 @@ export function normalizePersonas(payload: any[]): CrmPersona[] {
     church_role: m.church_role || 'Persona',
     family_id: m.family_id,
   }));
+}
+
+// ─── Saneamiento CRM — tipos estrictos (reemplazan `any`) ──────────────
+
+export interface DashboardMetricCard {
+  title: string;
+  value: string;
+  trend?: string;
+  icon?: string;
+  color?: string;
+}
+
+export interface DashboardCRM {
+  cards: DashboardMetricCard[];
+  growth_chart?: Array<{ label: string; value: number }>;
+  pipeline_funnel?: Array<{ stage: string; count: number }>;
+  chart?: {
+    labels: string[];
+    values: number[];
+  };
+}
+
+export interface CrmTaskRecord {
+  id: string;
+  titulo: string;
+  title?: string;
+  description?: string;
+  estado: string;
+  status?: string;
+  prioridad: string;
+  priority?: string;
+  categoria?: string;
+  category?: string;
+  persona_id?: string;
+  assignee_id?: string;
+  assigned_to?: string;
+  caso_id?: string;
+  due_date?: string;
+  sede_id?: string;
+  created_at?: string;
+  updated_at?: string;
+  [key: string]: unknown;
+}
+
+export interface PipelineCase {
+  id: string;
+  title?: string;
+  stage: string;
+  persona_id?: string;
+  assignee_id?: string;
+  sede_id?: string;
+  nombre_completo?: string;
+  telefono?: string;
+  phone?: string;
+  email?: string;
+  source?: string;
+  created_at?: string;
+  updated_at?: string;
+  [key: string]: unknown;
+}
+
+export interface PipelineStage {
+  id: string;
+  key: string;
+  label: string;
+  color?: string;
+  name?: string;
+  order_index?: number;
+  items?: PipelineLead[];
+}
+
+export interface PipelineHistoryEntry {
+  id: string;
+  case_id: string;
+  action: string;
+  from_stage?: string;
+  to_stage?: string;
+  created_at: string;
+  actor?: string;
+  date?: string;
+}
+
+export interface PositionRecord {
+  id: string;
+  name: string;
+  category?: string;
+  is_active: boolean;
+  sede_id?: string;
+  color?: string;
+  description?: string;
+}
+
+export interface PersonaRecord {
+  id: string;
+  nombre_completo?: string;
+  first_name?: string;
+  last_name?: string;
+  email?: string;
+  phone?: string;
+  sede_id?: string;
+  family_id?: string;
+  group_name?: string;
+  participation_type?: string;
+  attendance_type?: string;
+  church_role?: string;
+  spiritual_health?: string;
+  created_at?: string;
+  updated_at?: string;
+  deleted_at?: string | null;
+  [key: string]: unknown;
+}
+
+export interface AutomationRecord {
+  id: string;
+  name: string;
+  trigger_event: string;
+  is_active: boolean;
+  action_payload?: Record<string, unknown>;
 }

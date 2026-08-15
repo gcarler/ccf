@@ -77,7 +77,7 @@ interface EdgeData {
     condition_type?: string;
     condition_key?: string | null;
     condition_value?: string | null;
-    [key: string]: any;
+    [key: string]: unknown;
 }
 
 type CustomNode = Node<{
@@ -203,7 +203,7 @@ export default function AutomationBuilderPage() {
     }, [setEdges]);
 
     // Handle selection changes
-    const onSelectionChange = useCallback(({ nodes: selectedNodes, edges: selectedEdges }: any) => {
+    const onSelectionChange = useCallback(({ nodes: selectedNodes, edges: selectedEdges }: { nodes: CustomNode[]; edges: CustomEdge[] }) => {
         if (selectedNodes.length > 0) {
             setSelectedNode(selectedNodes[0]);
             setSelectedEdge(null);
@@ -264,7 +264,7 @@ export default function AutomationBuilderPage() {
     };
 
     // Update node details (local state)
-    const handleUpdateNodeField = (field: string, value: any) => {
+    const handleUpdateNodeField = (field: string, value: unknown) => {
         if (!selectedNode) return;
         setNodes(nds => nds.map(node => {
             if (node.id === selectedNode.id) {
@@ -273,7 +273,7 @@ export default function AutomationBuilderPage() {
                     ...node,
                     data: {
                         ...node.data,
-                        label: field === 'name' ? value : node.data.label,
+                        label: field === 'name' ? String(value) : node.data.label,
                         automation: updatedAut
                     }
                 };
@@ -285,7 +285,7 @@ export default function AutomationBuilderPage() {
     };
 
     // Update node action payload (local state)
-    const handleUpdateNodePayload = (key: string, value: any) => {
+    const handleUpdateNodePayload = (key: string, value: unknown) => {
         if (!selectedNode) return;
         const currentPayload = selectedNode.data.automation.action_payload || {};
         const newPayload = { ...currentPayload, [key]: value };
@@ -313,7 +313,7 @@ export default function AutomationBuilderPage() {
     };
 
     // Update edge details (local state)
-    const handleUpdateEdgeField = (field: string, value: any) => {
+    const handleUpdateEdgeField = (field: string, value: unknown) => {
         if (!selectedEdge) return;
         setEdges(eds => eds.map(e => {
             if (e.id === selectedEdge.id) {

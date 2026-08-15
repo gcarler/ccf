@@ -17,6 +17,7 @@ import { DSBadge } from '@/design';
 import CrmShell from '@/components/crm/CrmShell';
 import { toast } from 'sonner';
 import clsx from 'clsx';
+import type { CrmTaskRecord } from '@/types/crm';
 
 export default function CrmTaskDetailPage() {
     const params = useParams();
@@ -28,7 +29,7 @@ export default function CrmTaskDetailPage() {
     }
     const { token, loading: authLoading } = useAuth();
 
-    const [task, setTask] = useState<any>(null);
+    const [task, setTask] = useState<CrmTaskRecord | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [reloadKey, setReloadKey] = useState(0);
@@ -51,7 +52,7 @@ export default function CrmTaskDetailPage() {
             try {
                 setError(null);
                 setLoading(true);
-                const data = await apiFetch<any>(`/crm/tasks/${id}`, { token, signal: controller.signal });
+                const data = await apiFetch<CrmTaskRecord>(`/crm/tasks/${id}`, { token, signal: controller.signal });
                 setTask(data);
             } catch (err) {
                 if (controller.signal.aborted) return;
@@ -179,7 +180,7 @@ export default function CrmTaskDetailPage() {
                                     <div className="space-y-2">
                                         <p className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Vencimiento</p>
                                         <div className="flex items-center gap-2 text-xs font-bold text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">
-                                            <Calendar size={14} /> {new Date(task.due_date).toLocaleDateString()}
+                                            <Calendar size={14} /> {task.due_date ? new Date(task.due_date).toLocaleDateString() : 'Sin fecha'}
                                         </div>
                                     </div>
 

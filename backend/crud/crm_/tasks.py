@@ -39,6 +39,7 @@ def create_crm_task(
     payload: schemas.CrmTaskCreate,
     *,
     actor_user_id: str | uuid.UUID,
+    sede_id: Optional[uuid.UUID] = None,
 ) -> models.TareaCRM:
     """Crea una tarea CRM y registra audit log (Axioma 1 — Auditoría Estricta).
 
@@ -77,11 +78,15 @@ def create_crm_task(
     # ``_crud_scope_re_check_task`` ya validó que las FK entrantes están
     # en la misma sede; aquí persistimos el atributo directo para que
     # futuras lecturas puedan filtrar por ``sede_id`` sin JOIN.
+    # Prioridad: sede_id explícito > sede_id del actor.
     from backend.crud.crm_.shared import _actor_sede_or_none
 
-    actor_sede = _actor_sede_or_none(db, actor_user_id)
-    if actor_sede is not None:
-        row.sede_id = actor_sede
+    if sede_id is not None:
+        row.sede_id = sede_id
+    else:
+        actor_sede = _actor_sede_or_none(db, actor_user_id)
+        if actor_sede is not None:
+            row.sede_id = actor_sede
     db.add(row)
     db.flush()  # poblar row.id antes del audit log
     _audit_log(

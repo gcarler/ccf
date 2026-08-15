@@ -71,13 +71,13 @@ export default function AutomationsPage() {
             // Backend returns trigger_type/action_type/is_active; map to the
             // AutomationRule frontend shape (trigger/action/active) so the rest
             // of the component reads canonical fields.
-            const data = await apiFetch<{ items: Record<string, any>[]; total: number }>('/admin/automations', { token, signal });
+            const data = await apiFetch<{ items: Record<string, unknown>[]; total: number }>('/admin/automations', { token, signal });
             const mapped: AutomationRule[] = (data?.items ?? []).map(r => ({
                 id: String(r.id),
                 name: String(r.name ?? ''),
                 trigger: String(r.trigger_type ?? r.trigger ?? ''),
                 action: String(r.action_type ?? r.action ?? ''),
-                payload: (r.action_payload as Record<string, any>) ?? {},
+                payload: (r.action_payload as Record<string, unknown>) ?? {},
                 active: Boolean(r.is_active ?? r.active),
             }));
             if (signal?.aborted) return;

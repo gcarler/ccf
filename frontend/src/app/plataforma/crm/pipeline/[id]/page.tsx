@@ -18,6 +18,7 @@ import { DSCard } from '@/design';
 import { DSBadge } from '@/design';
 import { toast } from 'sonner';
 import CrmDetailShell from '@/components/crm/CrmDetailShell';
+import type { PipelineCase, PipelineHistoryEntry } from '@/types/crm';
 
 export default function LeadDetailPage() {
     const params = useParams();
@@ -28,8 +29,8 @@ export default function LeadDetailPage() {
     }
     const { token } = useAuth();
 
-    const [lead, setLead] = useState<any>(null);
-    const [history, setHistory] = useState<any[]>([]);
+    const [lead, setLead] = useState<PipelineCase | null>(null);
+    const [history, setHistory] = useState<PipelineHistoryEntry[]>([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -39,7 +40,7 @@ export default function LeadDetailPage() {
         const loadLead = async () => {
             try {
                 setLoading(true);
-                const data = await apiFetch<any>(`/crm/casos/${id}`, { token, signal: controller.signal });
+                const data = await apiFetch<PipelineCase>(`/crm/casos/${id}`, { token, signal: controller.signal });
                 if (!data) {
                     toast.error('Expediente no encontrado');
                     return;
@@ -59,8 +60,9 @@ export default function LeadDetailPage() {
     }, [id, token]);
 
     if (loading) return <div className="p-4 text-center animate-pulse font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Recuperando expediente ministerial...</div>;
+    if (!lead) return <div className="p-4 text-center text-[hsl(var(--text-secondary))]">Expediente no encontrado</div>;
 
-    const STAGE_LABELS: any = {
+    const STAGE_LABELS: Record<string, string> = {
         'new': 'NUEVO',
         'call': 'POR LLAMAR',
         'visit': 'VISITA',
@@ -104,7 +106,7 @@ export default function LeadDetailPage() {
                         <DSCard>
                             <h3 className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-4">Notas de Seguimiento</h3>
                             <p className="text-sm text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] leading-relaxed italic">
-                                &quot;{lead.notes || 'Sin notas adicionales.'}&quot;
+                                &quot;{String(lead.notes || 'Sin notas adicionales.')}&quot;
                             </p>
                         </DSCard>
 
