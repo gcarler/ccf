@@ -170,4 +170,16 @@ from backend.crud.cms.taxonomy import (
     update_cms_category,
     update_cms_tag,
 )
+from backend.crud.cms.ugc import (
+    create_announcement,
+    create_testimonial,
+    delete_announcement,
+    delete_testimonial,
+    get_announcement,
+    get_testimonial,
+    list_announcements,
+    list_testimonials,
+    update_announcement,
+    update_testimonial,
+)
 

@@ -333,3 +333,58 @@ def cleanup_orphan_cms_media_endpoint(
         permanent=permanent,
     )
     return {"purged": purged, "dry_run": dry_run, "permanent": permanent}
+
+
+# ── Announcements & Testimonials (v1 read endpoints) ─────────────────────
+# These read-only endpoints expose the ``announcements`` and
+# ``testimonials`` tables (kept hardened with ``sede_id`` NOT NULL by
+# the 20260701_0002 migration). The editorial frontend consumes the v2
+# API (CmsPost with canonical categories); these endpoints are kept for
+# backward compat with the smoke / integration tests and internal
+# integrations that still hit the v1 path.
+
+
+@router.get("/cms/announcements", response_model=list[schemas.AnnouncementRead])
+def list_announcements_v1(
+    db: Session = Depends(get_db),
+    skip: int = Query(default=0, ge=0),
+    limit: int = Query(default=50, ge=1, le=200),
+    current_user: models.User = Depends(require_module_access("cms", "read")),
+):
+    """Lista announcements visibles para el actor (scope por sede en query).
+
+    Axioma 3 — Multi-Tenant: el ``sede_id`` se deriva del actor autenticado
+    y se filtra a nivel de query (antes de paginar). Un superadministrador
+    sin sede puede leer global por contrato (REGLAS §4.1).
+    """
+    actor_sede = _actor_sede_or_none(db, current_user)
+    return crud.list_announcements(
+        db,
+        public_only=True,
+        sede_id=actor_sede,
+        skip=skip,
+        limit=limit,
+    )
+
+
+@router.get("/cms/testimonials", response_model=list[schemas.TestimonialRead])
+def list_testimonials_v1(
+    db: Session = Depends(get_db),
+    skip: int = Query(default=0, ge=0),
+    limit: int = Query(default=50, ge=1, le=200),
+    current_user: models.User = Depends(require_module_access("cms", "read")),
+):
+    """Lista testimonials aprobados visibles para el actor (scope por sede en query).
+
+    Axioma 3 — Multi-Tenant: el ``sede_id`` se deriva del actor autenticado
+    y se filtra a nivel de query (antes de paginar). Un superadministrador
+    sin sede puede leer global por contrato (REGLAS §4.1).
+    """
+    actor_sede = _actor_sede_or_none(db, current_user)
+    return crud.list_testimonials(
+        db,
+        approved_only=True,
+        sede_id=actor_sede,
+        skip=skip,
+        limit=limit,
+    )

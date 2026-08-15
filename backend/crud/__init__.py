@@ -198,6 +198,17 @@ from backend.crud.cms import (
     import_cms_subscribers,
     public_subscribe,
     public_unsubscribe,
+    # UGC — Announcement & Testimonial (v1 read list, multi-tenant hardened)
+    create_announcement,
+    create_testimonial,
+    delete_announcement,
+    delete_testimonial,
+    get_announcement,
+    get_testimonial,
+    list_announcements,
+    list_testimonials,
+    update_announcement,
+    update_testimonial,
 )
 
 # ── CRM (consumed by pastoral, personas, donations, support, messaging …) ─

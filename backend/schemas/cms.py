@@ -20,6 +20,53 @@ class CmsMetrics(BaseModel):
     media_audio: int = 0
 
 
+# ── Announcements & Testimonials (v1 read schema) ─────────────────────────
+# Los modelos físicos persisten (tablas ``announcements`` y
+# ``testimonials``) — véase ``backend.models_cms.Announcement`` /
+# ``backend.models_cms.Testimonial`` y el CRUD ``backend.crud.cms.ugc``.
+# El frontend editorial público ya consume la API v2 (CmsPost con
+# categorías canónicas); este contrato Read-only se mantiene para los
+# endpoints de compatibilidad y el gate de arquitectura.
+
+AnnouncementStatus = Literal["draft", "published", "archived"]
+TestimonialStatus = Literal["pending", "approved", "archived"]
+
+
+class AnnouncementRead(BaseModel):
+    id: UUID
+    title: str
+    content: str
+    category: Optional[str] = None
+    image_url: Optional[str] = None
+    is_active: bool = True
+    is_featured: bool = False
+    status: AnnouncementStatus = "published"
+    sede_id: UUID
+    created_by_persona_id: UUID
+    published_at: Optional[datetime] = None
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
+    model_config = orm_config
+
+
+class TestimonialRead(BaseModel):
+    id: UUID
+    content: str
+    emotion: Optional[str] = None
+    media_type: Optional[str] = None
+    media_url: Optional[str] = None
+    image_url: Optional[str] = None
+    video_url: Optional[str] = None
+    podcast_url: Optional[str] = None
+    is_approved: bool = False
+    show_on_home: bool = False
+    status: TestimonialStatus = "pending"
+    author_persona_id: UUID
+    sede_id: UUID
+    created_at: Optional[datetime] = None
+    model_config = orm_config
+
+
 class CmsMediaCreate(BaseModel):
     url: str
     alt_text: Optional[str] = None
