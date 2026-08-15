@@ -145,6 +145,7 @@ from backend.schemas.chat import (
 
 # ── CMS ──────────────────────────────────────────────────────────────────────
 from backend.schemas.cms import (
+    AnnouncementRead,
     CmsAbTestApplyWinner,
     CmsAbTestCreate,
     CmsAbTestEventCreate,
@@ -163,7 +164,6 @@ from backend.schemas.cms import (
     CmsFormSubmissionPaginated,
     CmsFormSubmissionRead,
     CmsFormUpdate,
-    AnnouncementRead,
     CmsMediaCreate,
     CmsMediaRead,
     CmsMediaUpdate,
@@ -188,7 +188,6 @@ from backend.schemas.cms import (
     CmsPopupRead,
     CmsPopupUpdate,
     CmsPostCommentCreate,
-    TestimonialRead,
     CmsPostCommentListResponse,
     CmsPostCommentPublicRead,
     CmsPostCommentRead,
@@ -234,6 +233,7 @@ from backend.schemas.cms import (
     SeoFinding,
     SeoFindingSeverity,
     SiteSeoStats,
+    TestimonialRead,
 )
 from backend.schemas.crm.base import (
     EVENT_TYPES,
