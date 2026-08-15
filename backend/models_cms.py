@@ -813,3 +813,89 @@ class CmsAbTestEvent(Base):
 
     # Relationships
     test = relationship("CmsAbTest", back_populates="events", lazy="joined")
+
+
+# ── UGC — Announcement & Testimonial (Axioma 3 — Multi-Tenant) ────────────
+# These legacy tables predate the v2 CmsPage builder and persist as
+# standalone content types. They are tenant-isolated (``sede_id`` is NOT
+# NULL since the 20260701_0002 migration) and expose an ``actor_user_id``
+# policy via the CRUD layer ``backend.crud.cms.ugc``.
+
+
+class Announcement(Base):
+    """Editorial announcement (User-Generated Content, tenant-scoped).
+
+    Axioma 3 — Multi-Tenant: ``sede_id`` is NOT NULL (migration
+    ``20260701_0002_eradicate_runtime_legacy`` hardened the column after
+    backfilling from ``created_by_persona_id``).  Mutations require an
+    attributed actor (``actor_user_id``) — enforced by the CRUD layer
+    in ``backend.crud.cms.ugc``.
+    """
+
+    __tablename__ = "announcements"
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    title = Column(String(200), nullable=False)
+    content = Column(Text, nullable=False)
+    category = Column(String(100), nullable=True)
+    image_url = Column(String(500), nullable=True)
+    is_active = Column(Boolean, default=True)
+    is_featured = Column(Boolean, default=False)
+    status = Column(String(20), default="published", index=True)
+    sede_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("sedes.id"),
+        nullable=False,
+        index=True,
+    )
+    created_by_persona_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("personas.id"),
+        nullable=False,
+    )
+    published_at = Column(DateTime(timezone=True), nullable=True, index=True)
+    created_at = Column(DateTime(timezone=True), default=_utcnow)
+    updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
+
+    # Relationships
+    created_by_persona = relationship("Persona", foreign_keys=[created_by_persona_id], lazy="joined")
+    sede = relationship("Sede", foreign_keys=[sede_id], lazy="joined")
+
+
+class Testimonial(Base):
+    """Public user testimonial (User-Generated Content, tenant-scoped).
+
+    Axioma 3 — Multi-Tenant: ``sede_id`` is NOT NULL (migration
+    ``20260701_0002_eradicate_runtime_legacy`` hardened the column after
+    backfilling from ``author_persona_id``).  Mutations require an
+    attributed actor (``actor_user_id``) — enforced by the CRUD layer
+    in ``backend.crud.cms.ugc``.
+    """
+
+    __tablename__ = "testimonials"
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    content = Column(Text, nullable=False)
+    emotion = Column(String(50), nullable=True)
+    media_type = Column(String(30), nullable=True, index=True)
+    media_url = Column(String(500), nullable=True)
+    image_url = Column(String(500), nullable=True)
+    video_url = Column(String(500), nullable=True)
+    podcast_url = Column(String(500), nullable=True)
+    is_approved = Column(Boolean, default=False)
+    show_on_home = Column(Boolean, default=False)
+    status = Column(String(20), default="pending", index=True)
+    author_persona_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("personas.id"),
+        nullable=False,
+    )
+    sede_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("sedes.id"),
+        nullable=False,
+        index=True,
+    )
+    created_at = Column(DateTime(timezone=True), default=_utcnow)
+
+    # Relationships
+    author_persona = relationship("Persona", foreign_keys=[author_persona_id], lazy="joined")
+    sede = relationship("Sede", foreign_keys=[sede_id], lazy="joined")

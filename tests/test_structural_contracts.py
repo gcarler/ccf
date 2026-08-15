@@ -573,6 +573,7 @@ def test_backend_no_hard_deletes_in_transactional_apis():
         "backend/crud/cms/forms.py",  # cms forms son contenido editorial, no transaccional
         "backend/crud/cms/popups.py",  # cms popups son contenido editorial, no transaccional
         "backend/crud/cms/newsletters.py",  # newsletters/subscribers son editorial, no transaccional
+        "backend/crud/cms/ugc.py",  # announcements/testimonials son contenido editorial UGC, no transaccional
         "backend/crud/kernel.py",  # relaciones persona-ministerio (tabla de control sin trazabilidad histórica)
     }
     violations = []

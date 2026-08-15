@@ -319,7 +319,6 @@ def list_posts_by_category(
     include_archived: bool = Query(False),
     current_user: models.User = Depends(require_module_access("cms", "read")),
 ):
-    _assert_role(current_user, CMS_EDITOR_ROLES)
     _validate_canonical_category(category)
     site = _get_scoped_site_or_404(db, site_key, current_user)
     _ensure_canonical_category(db, site.id, category)
@@ -351,8 +350,8 @@ def list_posts_by_category(
 )
 def create_post_by_category(
     site_key: str,
+    payload: schemas.CmsPostCreate,
     category: str = Query(..., description="Canonical category: testimonials or announcements"),
-    payload: schemas.CmsPostCreate = None,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("cms", "edit")),
 ):
@@ -387,7 +386,6 @@ def get_post_by_category(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("cms", "read")),
 ):
-    _assert_role(current_user, CMS_EDITOR_ROLES)
     _validate_canonical_category(category)
     site = _get_scoped_site_or_404(db, site_key, current_user)
     _ensure_canonical_category(db, site.id, category)
@@ -407,8 +405,8 @@ def get_post_by_category(
 def patch_post_by_category(
     site_key: str,
     slug: str,
+    payload: schemas.CmsPostUpdate,
     category: str = Query(..., description="Canonical category: testimonials or announcements"),
-    payload: schemas.CmsPostUpdate = None,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("cms", "edit")),
 ):
