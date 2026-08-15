@@ -495,8 +495,16 @@ def get_crm_automations(
     return q.order_by(models.CrmAutomation.name).all()
 
 
-def get_crm_automation(db: Session, automation_id: UUID) -> Optional[models.CrmAutomation]:
-    return db.query(models.CrmAutomation).filter(models.CrmAutomation.id == automation_id).first()
+def get_crm_automation(
+    db: Session,
+    automation_id: UUID,
+    *,
+    sede_id: UUID | None = None,
+) -> Optional[models.CrmAutomation]:
+    q = db.query(models.CrmAutomation).filter(models.CrmAutomation.id == automation_id)
+    if sede_id is not None:
+        q = q.filter(models.CrmAutomation.sede_id == sede_id)
+    return q.first()
 
 
 def create_crm_automation(
@@ -516,8 +524,13 @@ def update_crm_automation(
     db: Session,
     automation_id: UUID,
     payload: CrmAutomationUpdate,
+    *,
+    sede_id: UUID | None = None,
 ) -> Optional[models.CrmAutomation]:
-    row = db.query(models.CrmAutomation).filter(models.CrmAutomation.id == automation_id).first()
+    q = db.query(models.CrmAutomation).filter(models.CrmAutomation.id == automation_id)
+    if sede_id is not None:
+        q = q.filter(models.CrmAutomation.sede_id == sede_id)
+    row = q.first()
     if not row:
         return None
     for k, v in payload.model_dump(exclude_unset=True).items():
@@ -527,8 +540,16 @@ def update_crm_automation(
     return row
 
 
-def delete_crm_automation(db: Session, automation_id: UUID) -> bool:
-    row = db.query(models.CrmAutomation).filter(models.CrmAutomation.id == automation_id).first()
+def delete_crm_automation(
+    db: Session,
+    automation_id: UUID,
+    *,
+    sede_id: UUID | None = None,
+) -> bool:
+    q = db.query(models.CrmAutomation).filter(models.CrmAutomation.id == automation_id)
+    if sede_id is not None:
+        q = q.filter(models.CrmAutomation.sede_id == sede_id)
+    row = q.first()
     if not row:
         return False
     row.is_active = False
@@ -598,26 +619,48 @@ def delete_crm_automation_edge(db: Session, edge_id: UUID) -> bool:
 # ── Role Definitions ─────────────────────────────────────────────────────
 
 
-def get_role_definitions(db: Session, only_leadership: bool = False) -> List[models.RoleDefinition]:
+def get_role_definitions(
+    db: Session,
+    only_leadership: bool = False,
+    *,
+    sede_id: UUID | None = None,
+) -> List[models.RoleDefinition]:
     q = db.query(models.RoleDefinition).filter(models.RoleDefinition.deleted_at.is_(None))
     if only_leadership:
         q = q.filter(models.RoleDefinition.is_leadership)
+    if sede_id is not None:
+        q = q.filter(models.RoleDefinition.sede_id.is_(None) | (models.RoleDefinition.sede_id == sede_id))
     return q.order_by(models.RoleDefinition.name).all()
 
 
-def get_role_definition(db: Session, role_id: UUID) -> Optional[models.RoleDefinition]:
-    return (
+def get_role_definition(
+    db: Session,
+    role_id: UUID,
+    *,
+    sede_id: UUID | None = None,
+) -> Optional[models.RoleDefinition]:
+    q = (
         db.query(models.RoleDefinition)
         .filter(
             models.RoleDefinition.id == role_id,
             models.RoleDefinition.deleted_at.is_(None),
         )
-        .first()
     )
+    if sede_id is not None:
+        q = q.filter(models.RoleDefinition.sede_id.is_(None) | (models.RoleDefinition.sede_id == sede_id))
+    return q.first()
 
 
-def create_role_definition(db: Session, payload: RoleDefinitionCreate) -> models.RoleDefinition:
-    row = models.RoleDefinition(**payload.model_dump())
+def create_role_definition(
+    db: Session,
+    payload: RoleDefinitionCreate,
+    *,
+    sede_id: UUID | None = None,
+) -> models.RoleDefinition:
+    data = payload.model_dump()
+    if sede_id is not None:
+        data["sede_id"] = sede_id
+    row = models.RoleDefinition(**data)
     db.add(row)
     db.commit()
     db.refresh(row)
@@ -625,9 +668,19 @@ def create_role_definition(db: Session, payload: RoleDefinitionCreate) -> models
 
 
 def update_role_definition(
-    db: Session, role_id: UUID, payload: RoleDefinitionUpdate
+    db: Session,
+    role_id: UUID,
+    payload: RoleDefinitionUpdate,
+    *,
+    sede_id: UUID | None = None,
 ) -> Optional[models.RoleDefinition]:
-    row = db.query(models.RoleDefinition).filter(models.RoleDefinition.id == role_id).first()
+    q = db.query(models.RoleDefinition).filter(
+        models.RoleDefinition.id == role_id,
+        models.RoleDefinition.deleted_at.is_(None),
+    )
+    if sede_id is not None:
+        q = q.filter(models.RoleDefinition.sede_id.is_(None) | (models.RoleDefinition.sede_id == sede_id))
+    row = q.first()
     if not row:
         return None
     for k, v in payload.model_dump(exclude_unset=True).items():
@@ -637,8 +690,16 @@ def update_role_definition(
     return row
 
 
-def delete_role_definition(db: Session, role_id: UUID) -> bool:
-    row = db.query(models.RoleDefinition).filter(models.RoleDefinition.id == role_id).first()
+def delete_role_definition(
+    db: Session,
+    role_id: UUID,
+    *,
+    sede_id: UUID | None = None,
+) -> bool:
+    q = db.query(models.RoleDefinition).filter(models.RoleDefinition.id == role_id)
+    if sede_id is not None:
+        q = q.filter(models.RoleDefinition.sede_id.is_(None) | (models.RoleDefinition.sede_id == sede_id))
+    row = q.first()
     if not row:
         return False
     row.deleted_at = _utcnow()
@@ -682,34 +743,68 @@ def delete_persona_role_link(db: Session, mr_id: UUID) -> bool:
 # ── Funds ────────────────────────────────────────────────────────────────
 
 
-def get_funds(db: Session, only_public: bool = False) -> List[models.Fund]:
+def get_funds(
+    db: Session,
+    only_public: bool = False,
+    *,
+    sede_id: UUID | None = None,
+) -> List[models.Fund]:
     q = db.query(models.Fund).filter(models.Fund.deleted_at.is_(None))
     if only_public:
         q = q.filter(models.Fund.is_public)
+    if sede_id is not None:
+        q = q.filter(models.Fund.sede_id.is_(None) | (models.Fund.sede_id == sede_id))
     return q.order_by(models.Fund.name).all()
 
 
-def get_fund(db: Session, fund_id: UUID) -> Optional[models.Fund]:
-    return (
+def get_fund(
+    db: Session,
+    fund_id: UUID,
+    *,
+    sede_id: UUID | None = None,
+) -> Optional[models.Fund]:
+    q = (
         db.query(models.Fund)
         .filter(
             models.Fund.fund_id == fund_id,
             models.Fund.deleted_at.is_(None),
         )
-        .first()
     )
+    if sede_id is not None:
+        q = q.filter(models.Fund.sede_id.is_(None) | (models.Fund.sede_id == sede_id))
+    return q.first()
 
 
-def create_fund(db: Session, payload: FundCreate) -> models.Fund:
-    row = models.Fund(**payload.model_dump())
+def create_fund(
+    db: Session,
+    payload: FundCreate,
+    *,
+    sede_id: UUID | None = None,
+) -> models.Fund:
+    data = payload.model_dump()
+    if sede_id is not None:
+        data["sede_id"] = sede_id
+    row = models.Fund(**data)
     db.add(row)
     db.commit()
     db.refresh(row)
     return row
 
 
-def update_fund(db: Session, fund_id: UUID, payload: FundUpdate) -> Optional[models.Fund]:
-    row = db.query(models.Fund).filter(models.Fund.fund_id == fund_id).first()
+def update_fund(
+    db: Session,
+    fund_id: UUID,
+    payload: FundUpdate,
+    *,
+    sede_id: UUID | None = None,
+) -> Optional[models.Fund]:
+    q = db.query(models.Fund).filter(
+        models.Fund.fund_id == fund_id,
+        models.Fund.deleted_at.is_(None),
+    )
+    if sede_id is not None:
+        q = q.filter(models.Fund.sede_id.is_(None) | (models.Fund.sede_id == sede_id))
+    row = q.first()
     if not row:
         return None
     for k, v in payload.model_dump(exclude_unset=True).items():
@@ -719,8 +814,16 @@ def update_fund(db: Session, fund_id: UUID, payload: FundUpdate) -> Optional[mod
     return row
 
 
-def delete_fund(db: Session, fund_id: UUID) -> bool:
-    row = db.query(models.Fund).filter(models.Fund.fund_id == fund_id).first()
+def delete_fund(
+    db: Session,
+    fund_id: UUID,
+    *,
+    sede_id: UUID | None = None,
+) -> bool:
+    q = db.query(models.Fund).filter(models.Fund.fund_id == fund_id)
+    if sede_id is not None:
+        q = q.filter(models.Fund.sede_id.is_(None) | (models.Fund.sede_id == sede_id))
+    row = q.first()
     if not row:
         return False
     row.deleted_at = _utcnow()

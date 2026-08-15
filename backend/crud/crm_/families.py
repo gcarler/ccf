@@ -69,7 +69,12 @@ def get_families(
     return families
 
 
-def create_family(db: Session, name: str):
+def create_family(
+    db: Session,
+    name: str,
+    *,
+    sede_id: Optional[UUID] = None,
+):
     fam = models.Family(name=name)
     db.add(fam)
     db.commit()
@@ -77,26 +82,49 @@ def create_family(db: Session, name: str):
     return fam
 
 
-def get_family(db: Session, family_id: UUID) -> Optional[models.Family]:
-    return (
+def get_family(
+    db: Session,
+    family_id: UUID,
+    *,
+    sede_id: Optional[UUID] = None,
+) -> Optional[models.Family]:
+    q = (
         db.query(models.Family)
         .filter(
             models.Family.id == family_id,
             models.Family.deleted_at.is_(None),
         )
-        .first()
     )
+    if sede_id is not None:
+        q = (
+            q.join(models.Persona, models.Persona.family_id == models.Family.id)
+            .filter(models.Persona.sede_id == sede_id)
+            .distinct()
+        )
+    return q.first()
 
 
-def update_family(db: Session, family_id: UUID, name: str) -> Optional[models.Family]:
-    row = (
+def update_family(
+    db: Session,
+    family_id: UUID,
+    name: str,
+    *,
+    sede_id: Optional[UUID] = None,
+) -> Optional[models.Family]:
+    q = (
         db.query(models.Family)
         .filter(
             models.Family.id == family_id,
             models.Family.deleted_at.is_(None),
         )
-        .first()
     )
+    if sede_id is not None:
+        q = (
+            q.join(models.Persona, models.Persona.family_id == models.Family.id)
+            .filter(models.Persona.sede_id == sede_id)
+            .distinct()
+        )
+    row = q.first()
     if not row:
         return None
     row.name = name
@@ -105,8 +133,20 @@ def update_family(db: Session, family_id: UUID, name: str) -> Optional[models.Fa
     return row
 
 
-def delete_family(db: Session, family_id: UUID) -> bool:
-    row = db.query(models.Family).filter(models.Family.id == family_id).first()
+def delete_family(
+    db: Session,
+    family_id: UUID,
+    *,
+    sede_id: Optional[UUID] = None,
+) -> bool:
+    q = db.query(models.Family).filter(models.Family.id == family_id)
+    if sede_id is not None:
+        q = (
+            q.join(models.Persona, models.Persona.family_id == models.Family.id)
+            .filter(models.Persona.sede_id == sede_id)
+            .distinct()
+        )
+    row = q.first()
     if not row:
         return False
     row.deleted_at = _utcnow()
@@ -114,10 +154,13 @@ def delete_family(db: Session, family_id: UUID) -> bool:
     return True
 
 
-def get_family_personas(db: Session, family_id: UUID):
-    return (
-        db.query(models.Persona)
-        .filter(models.Persona.family_id == family_id)
-        .order_by(models.Persona.nombre_completo.asc())
-        .all()
-    )
+def get_family_personas(
+    db: Session,
+    family_id: UUID,
+    *,
+    sede_id: Optional[UUID] = None,
+):
+    q = db.query(models.Persona).filter(models.Persona.family_id == family_id)
+    if sede_id is not None:
+        q = q.filter(models.Persona.sede_id == sede_id)
+    return q.order_by(models.Persona.nombre_completo.asc()).all()

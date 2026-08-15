@@ -44,9 +44,10 @@ import {
 } from '@/types/crm';
 import { FormSection, SelectField, PersonaField } from '@/components/crm/ui';
 import { extractErrorMessage, apiFetch } from '@/lib/http';
+import type { PersonaRecord, PositionRecord } from '@/types/crm';
 
 interface PersonasPageResponse {
-    items: any[];
+    items: PersonaRecord[];
     total: number;
     skip: number;
     limit: number;
@@ -88,7 +89,7 @@ export default function PersonasPage() {
     const [page, setPage] = useState(1);
     const [pageSize, setPageSize] = useState(DEFAULT_PERSONAS_PAGE_SIZE);
 
-    const [roles, setRoles] = useState<any[]>([]);
+    const [roles, setRoles] = useState<PositionRecord[]>([]);
     const [isCreateOpen, setIsCreateOpen] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
     const [newPersona, setNewPersona] = useState<PersonaFormData>({ ...INITIAL_PERSONA });
@@ -138,8 +139,8 @@ export default function PersonasPage() {
                 signal,
             });
             setPersonasPage(personasData);
-        } catch (err: any) {
-            if (err?.name === 'AbortError') return;
+        } catch (err: unknown) {
+            if ((err as Error)?.name === 'AbortError') return;
             setPersonasPage(null);
 
             const message = extractErrorMessage(err, 'No se pudo cargar la lista de personas');
@@ -159,7 +160,7 @@ export default function PersonasPage() {
     useEffect(() => {
         if (!token) return;
         const controller = new AbortController();
-        apiFetch<any[]>('/crm/roles', { token, cache: 'no-store', signal: controller.signal })
+        apiFetch<PositionRecord[]>('/crm/roles', { token, cache: 'no-store', signal: controller.signal })
             .then(setRoles)
             .catch((err) => { if (err?.name !== 'AbortError') setRoles([]); });
 
@@ -252,14 +253,14 @@ export default function PersonasPage() {
 
         setIsSaving(true);
         try {
-            const body: any = { ...newPersona };
+            const body: Record<string, unknown> = { ...newPersona };
             if (!body.colombian_department_id) body.colombian_department_id = null;
             // Convert empty date strings to null
             ['birthday','church_join_date','baptism_date','registration_date','unregistration_date','last_group_attendance','last_meeting_attendance'].forEach(k => {
                 if (!body[k]) body[k] = null;
             });
 
-            await apiFetch<any>('/crm/personas/', {
+            await apiFetch<PersonaRecord>('/crm/personas/', {
                 method: 'POST',
                 token,
                 body,
@@ -600,7 +601,7 @@ export default function PersonasPage() {
 
                                 // Collect unique group_name values from filtered Visitante personas
                                 const visitantes = personas.filter(m => (m.participation_type || '') === 'Visitante');
-                                const visitantGroups = [...new Set(visitantes.map((m: any) => m.group_name).filter(Boolean))].sort();
+                                const visitantGroups = [...new Set(visitantes.map((m: PersonaRecord) => m.group_name).filter(Boolean))].sort();
                                 const visitantesSinGrupo = visitantes.filter(m => !m.group_name);
 
                                 const sinMembresia = personas.filter(m => !m.participation_type);
@@ -617,7 +618,7 @@ export default function PersonasPage() {
                                 sinMembresia.forEach(persona => renderedIds.add(String(persona.id)));
                                 const otrasPersonas = personas.filter(persona => !renderedIds.has(String(persona.id)));
 
-                                function renderPersonaCard(persona: any) {
+                                function renderPersonaCard(persona: PersonaRecord) {
                                     return (
                                         <motion.div key={persona.id} layout initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }} transition={{ duration: 0.2 }}>
                                             <div onClick={() => router.push(`/plataforma/crm/personas/${persona.id}`)} className="group p-3 bg-[hsl(var(--surface-1))] dark:bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] dark:border-white/5 rounded-md hover:border-[hsl(var(--info)/100%)]/30 hover:shadow-xl hover:shadow-[hsl(var(--info)/10%)] transition-all cursor-pointer flex items-center justify-between">
@@ -626,7 +627,7 @@ export default function PersonasPage() {
                                                         <div className="size-9 rounded-lg bg-gradient-to-br from-[hsl(var(--surface-2))] to-[hsl(var(--surface-2))] dark:from-white/5 dark:to-white/10 flex items-center justify-center text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] font-bold text-sm">
                                                             {(persona.nombre_completo?.charAt(0) || '')}
                                                         </div>
-                                                        <div className={clsx("absolute -bottom-1 -right-1 size-4 rounded-full border-2 border-white dark:border-[hsl(var(--surface-1))]", persona.spiritual_health > 0.7 ? "bg-[hsl(var(--success))]" : persona.spiritual_health > 0.4 ? "bg-[hsl(var(--warning))]" : "bg-[hsl(var(--destructive))]")} />
+                                                        <div className={clsx("absolute -bottom-1 -right-1 size-4 rounded-full border-2 border-white dark:border-[hsl(var(--surface-1))]", Number(persona.spiritual_health) > 0.7 ? "bg-[hsl(var(--success))]" : Number(persona.spiritual_health) > 0.4 ? "bg-[hsl(var(--warning))]" : "bg-[hsl(var(--destructive))]")} />
                                                     </div>
                                                     <div>
                                                         <h3 className="text-sm font-bold text-[hsl(var(--text-primary))] dark:text-white uppercase truncate max-w-[150px]">{persona.nombre_completo || `${persona.first_name ?? ''} ${persona.last_name ?? ''}`.trim()}</h3>
@@ -643,7 +644,7 @@ export default function PersonasPage() {
                                     );
                                 }
 
-                                function renderGroupPersonaCards(personas: any[]) {
+                                function renderGroupPersonaCards(personas: PersonaRecord[]) {
                                     return (
                                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                                             <AnimatePresence>

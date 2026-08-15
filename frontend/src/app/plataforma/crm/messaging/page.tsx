@@ -38,24 +38,25 @@ import { ChannelButton, SegmentTag } from '@/components/crm/ui';
 
 const STATUS_PROGRESS: Record<string, number> = { failed: 20, sent: 75, delivered: 100 };
 
-function normalizeHistoryRow(row: any): MessagingHistoryRow {
-    const sentAt = row?.sent_at ? new Date(row.sent_at) : null;
-    const targetCount = Number(row?.target_count ?? row?.count ?? 1);
-    const deliveredCount = Number(row?.delivered_count ?? (row?.status === 'failed' ? 0 : targetCount));
-    const failedCount = Number(row?.failed_count ?? (row?.status === 'failed' ? targetCount : 0));
+function normalizeHistoryRow(row: Record<string, unknown>): MessagingHistoryRow {
+    const r = row as Record<string, string | number | null>;
+    const sentAt = r?.sent_at ? new Date(r.sent_at) : null;
+    const targetCount = Number(r?.target_count ?? r?.count ?? 1);
+    const deliveredCount = Number(r?.delivered_count ?? (r?.status === 'failed' ? 0 : targetCount));
+    const failedCount = Number(r?.failed_count ?? (r?.status === 'failed' ? targetCount : 0));
     return {
-        id: String(row?.id ?? ''),
-        name: row?.name ?? row?.campaign_name ?? row?.persona_name ?? `Mensaje #${row?.id ?? 0}`,
-        campaign_name: row?.campaign_name,
-        channel: (String(row?.channel || 'whatsapp').toLowerCase() as Channel),
-        status: String(row?.status || 'sent'),
-        count: Number(row?.count ?? row?.target_count ?? 1),
-        date: sentAt && !Number.isNaN(sentAt.getTime()) ? sentAt.toLocaleString() : String(row?.date || 'Sin fecha'),
+        id: String(r?.id ?? ''),
+        name: String(r?.name ?? r?.campaign_name ?? r?.persona_name ?? `Mensaje #${r?.id ?? 0}`),
+        campaign_name: r?.campaign_name != null ? String(r.campaign_name) : undefined,
+        channel: (String(r?.channel || 'whatsapp').toLowerCase() as Channel),
+        status: String(r?.status || 'sent'),
+        count: Number(r?.count ?? r?.target_count ?? 1),
+        date: sentAt && !Number.isNaN(sentAt.getTime()) ? sentAt.toLocaleString() : String(r?.date || 'Sin fecha'),
         target_count: targetCount,
         delivered_count: deliveredCount,
         failed_count: failedCount,
-        external_id: row?.external_id ?? null,
-        log_ids: Array.isArray(row?.log_ids) ? row.log_ids.map(String) : undefined,
+        external_id: r?.external_id != null ? String(r.external_id) : null,
+        log_ids: Array.isArray(r?.log_ids) ? r.log_ids.map(String) : undefined,
     };
 }
 
@@ -147,12 +148,12 @@ export default function MessagingCampaignCenter() {
         return channels.map(ch => ({
             key: ch,
             label: ch === 'whatsapp' ? 'WhatsApp' : ch === 'email' ? 'Email' : 'SMS',
-            items: history.filter((h: any) => h.channel === ch),
+            items: history.filter((h: MessagingHistoryRow) => h.channel === ch),
         }));
     }, [history]);
 
     const groupedByDate = useMemo(() => {
-        const map = {} as Record<string, any[]>;
+        const map = {} as Record<string, MessagingHistoryRow[]>;
         for (const item of history) {
             const key = item.date || 'Sin fecha';
             if (!map[key]) map[key] = [];
@@ -296,7 +297,7 @@ export default function MessagingCampaignCenter() {
                                     <span className="text-2xs font-bold text-[hsl(var(--text-secondary))]">{col.items.length}</span>
                                 </div>
                                 <div className="space-y-2">
-                                    {col.items.map((item: any) => (
+                                    {col.items.map((item: MessagingHistoryRow) => (
                                         <div
                                             key={item.id}
                                             onClick={() => router.push(`/plataforma/crm/messaging/${item.id}`)}
@@ -335,7 +336,7 @@ export default function MessagingCampaignCenter() {
                             <div key={label} className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-white/5 p-4">
                                 <p className="mb-3 text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{label}</p>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                    {items.map((item: any) => (
+                                    {items.map((item: MessagingHistoryRow) => (
                                         <div
                                             key={item.id}
                                             onClick={() => router.push(`/plataforma/crm/messaging/${item.id}`)}

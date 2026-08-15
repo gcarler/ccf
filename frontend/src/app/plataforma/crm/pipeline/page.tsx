@@ -23,7 +23,7 @@ import { extractErrorMessage, apiFetch } from '@/lib/http';
 import { useWikiDocument } from '@/hooks/useWikiDocument';
 import { useRouter } from 'next/navigation';
 import CrmShell from '@/components/crm/CrmShell';
-import type { PipelineLead } from '@/types/crm';
+import type { PipelineLead, PipelineStage } from '@/types/crm';
 
 import { useSidebarLayers } from '@/context/SidebarLayerContext';
 import { ViewType, getStoredView } from '@/components/ViewSwitcher';
@@ -58,11 +58,11 @@ export default function ConsolidationPipelinePage() {
     const [search, setSearch] = useState('');
     const [viewType, setViewType] = useState<ViewType>(() => getStoredView('crm_pipeline_view', 'board'));
     const ALL_VIEWS: ViewType[] = ['table', 'list', 'grid', 'board', 'kanban', 'gantt', 'calendar', 'wiki'];
-    const [selectedLead, setSelectedLead] = useState<any>(null);
-    const [pipelineStages, setPipelineStages] = useState<any[]>([]);
+    const [selectedLead, setSelectedLead] = useState<PipelineLead | null>(null);
+    const [pipelineStages, setPipelineStages] = useState<PipelineStage[]>([]);
     const { pushSidebarPanel, resetSidebarStack } = useSidebarLayers();
 
-    const handleLeadSelect = useCallback((lead: any) => {
+    const handleLeadSelect = useCallback((lead: PipelineLead) => {
         setSelectedLead(lead);
     }, []);
     const normalizeStageName = useCallback((value?: string | null) => {
@@ -95,15 +95,15 @@ export default function ConsolidationPipelinePage() {
         setLoading(true);
         setLeadsError(null);
         try {
-            const data = await apiFetch<any>('/crm/casos', { token, cache: 'no-store', signal });
+            const data = await apiFetch<PipelineLead[] | { cases: PipelineLead[] }>('/crm/casos', { token, cache: 'no-store', signal });
             const items = Array.isArray(data)
                 ? data
                 : Array.isArray(data?.cases)
                     ? data.cases
                     : [];
             setLeads(items);
-        } catch (err: any) {
-            if (err?.name === 'AbortError') return;
+        } catch (err: unknown) {
+            if ((err as Error)?.name === 'AbortError') return;
             setLeads([]);
             const message = extractErrorMessage(err, 'No se pudo cargar el pipeline');
             setLeadsError(message);
@@ -125,10 +125,10 @@ export default function ConsolidationPipelinePage() {
             return;
         }
         try {
-            const data = await apiFetch<any[]>('/crm/pipeline/kanban/stages', { token, cache: 'no-store', signal });
+            const data = await apiFetch<PipelineStage[]>('/crm/pipeline/kanban/stages', { token, cache: 'no-store', signal });
             setPipelineStages(Array.isArray(data) ? data : []);
-        } catch (err: any) {
-            if (err?.name !== 'AbortError') {
+        } catch (err: unknown) {
+            if ((err as Error)?.name !== 'AbortError') {
                 const message = extractErrorMessage(err, "No se pudieron cargar las etapas del pipeline");
                 console.error(message);
                 addToast(message, 'error');
@@ -387,7 +387,7 @@ export default function ConsolidationPipelinePage() {
                     stages={stageTargets}
                     onUpdateStage={(leadId, newStage, targetStageId) => {
                         handleUpdateStage(leadId, newStage, targetStageId);
-                        setSelectedLead((prev: any) => ({ ...prev, stage: newStage }));
+                        setSelectedLead((prev: PipelineLead | null) => ({ ...prev, stage: newStage } as PipelineLead));
                     }}
                     onViewFullProfile={(id) => router.push(`/plataforma/crm/contacts/${id}`)}
                 />
@@ -483,7 +483,7 @@ export default function ConsolidationPipelinePage() {
                                         onLeadClick={handleLeadSelect}
                                         onDropLead={(leadId, stageValue, stageId, reorderPayload) => {
                                             handleUpdateStage(leadId, stageValue, stageId, reorderPayload);
-                                            setSelectedLead((prev: any) => prev ? { ...prev, stage: stageValue } : prev);
+                                            setSelectedLead((prev: PipelineLead | null) => prev ? { ...prev, stage: stageValue } : prev);
                                         }}
                                         onNewLead={(s) => {
                                             if (!canEditCrm) return;
@@ -496,7 +496,7 @@ export default function ConsolidationPipelinePage() {
                             ) : viewType === 'grid' ? (
                                 <motion.div key="grid" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex-1 p-4 overflow-y-auto">
                                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                        {filteredLeads.map((lead: any) => {
+                                        {filteredLeads.map((lead: PipelineLead) => {
                                             const stageValue = lead.stage ?? 'new';
                                             const stage = PIPELINE_STAGES.find(s => s.value === stageValue);
                                             return (
@@ -525,7 +525,7 @@ export default function ConsolidationPipelinePage() {
                                                             </span>
                                                         ) : null}
                                                         <span className="text-2xs text-[hsl(var(--text-secondary))]">
-                                                            {SOURCES[lead.source] ?? '📌'} {lead.source}
+                                                            {SOURCES[lead.source ?? ''] ?? '📌'} {lead.source}
                                                         </span>
                                                     </div>
                                                 </div>
@@ -541,7 +541,7 @@ export default function ConsolidationPipelinePage() {
                                         <div key={key} className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-white/5 p-4">
                                             <p className="mb-3 text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{payload.label}</p>
                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                                {payload.items.map((lead: any) => {
+                                                {payload.items.map((lead: PipelineLead) => {
                                                     const stageValue = lead.stage ?? 'new';
                                                     return (
                                                         <button key={lead.id} onClick={() => setSelectedLead(lead)} className="rounded-md border border-[hsl(var(--border))] dark:border-white/10 px-3 py-2 text-left hover:border-[hsl(var(--info)/30%)] dark:hover:border-[hsl(var(--info)/100%)] transition-all">
@@ -558,7 +558,7 @@ export default function ConsolidationPipelinePage() {
                                 <motion.div key="gantt" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex-1 p-4 overflow-y-auto">
                                     <div className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-white/5 p-4 space-y-3">
                                         <p className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Evolucion de prospectos</p>
-                                        {filteredLeads.map((lead: any) => {
+                                        {filteredLeads.map((lead: PipelineLead) => {
                                             const stageValue = lead.stage ?? 'new';
                                             return (
                                             <div key={lead.id} className="space-y-1">

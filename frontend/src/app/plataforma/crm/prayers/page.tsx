@@ -80,8 +80,8 @@ export default function PrayerSupportCenter() {
                     time: new Date(rr.created_at ?? Date.now()).toLocaleDateString()
                 }; }));
             }
-        } catch (err: any) {
-            if (err?.name === 'AbortError') return;
+        } catch (err: unknown) {
+            if ((err as Error)?.name === 'AbortError') return;
             setRequests([]);
             const message = extractErrorMessage(err, 'Error al cargar peticiones');
             setRequestsError(message);
@@ -131,7 +131,7 @@ export default function PrayerSupportCenter() {
         }
     };
 
-    const columns = useMemo<ColumnDef<any>[]>(() => [
+    const columns = useMemo<ColumnDef<PrayerRequest>[]>(() => [
         {
             accessorKey: 'name',
             header: 'Persona / Solicitante',
@@ -185,7 +185,7 @@ export default function PrayerSupportCenter() {
         }
     ], [updateRequestStatus, canEditCrm]);
 
-    const handleOpenRequest = (req: any) => {
+    const handleOpenRequest = (req: PrayerRequest) => {
         router.push(`/plataforma/crm/prayers/${req.id}`);
     };
 
@@ -203,7 +203,7 @@ export default function PrayerSupportCenter() {
     );
 
     const groupedByDate = useMemo(() => {
-        const map = {} as Record<string, { label: string; items: any[] }>;
+        const map = {} as Record<string, { label: string; items: PrayerRequest[] }>;
         for (const req of filtered) {
             const raw = req.time ? new Date(req.time) : new Date();
             const date = Number.isNaN(raw.getTime()) ? new Date() : raw;

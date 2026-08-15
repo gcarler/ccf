@@ -17,6 +17,7 @@ import { useToast } from '@/context/ToastContext';
 import { apiFetch } from '@/lib/http';
 import CrmShell from '@/components/crm/CrmShell';
 import { SettingsNavButton, SettingInput, ToggleSetting } from '@/components/crm/ui';
+import type { PositionRecord } from '@/types/crm';
 
 export default function CrmSettingsPage() {
     const { token } = useAuth();
@@ -24,10 +25,10 @@ export default function CrmSettingsPage() {
     const { addToast } = useToast();
     const [isSaving, setIsSaving] = useState(false);
     const [activeSection, setActiveTab] = useState('general');
-    const [positions, setPositions] = useState<any[]>([]);
+    const [positions, setPositions] = useState<PositionRecord[]>([]);
     const [isLoadingPositions, setIsLoadingPositions] = useState(false);
     const [isCreatingPosition, setIsCreatingPosition] = useState(false);
-    const [editingPositionId, setEditingPositionId] = useState<number | null>(null);
+    const [editingPositionId, setEditingPositionId] = useState<string | null>(null);
     const [positionForm, setPositionForm] = useState({
         name: '',
         description: '',
@@ -35,7 +36,7 @@ export default function CrmSettingsPage() {
         is_active: true,
     });
 
-    const [config, setConfig] = useState<any>({
+    const [config, setConfig] = useState<Record<string, unknown>>({
         churchName: SITE_NAME,
         contactEmail: SITE_EMAIL || '',
         timezone: 'America/Bogota',
@@ -48,7 +49,7 @@ export default function CrmSettingsPage() {
     const fetchSettings = useCallback(async (signal?: AbortSignal) => {
         if (!token) return;
         try {
-            const data = await apiFetch('/crm/settings', { token, cache: 'no-store', signal });
+            const data = await apiFetch<Record<string, unknown>>('/crm/settings', { token, cache: 'no-store', signal });
             if (signal?.aborted) return;
             if (data) setConfig(data);
         } catch (err) {
@@ -62,7 +63,7 @@ export default function CrmSettingsPage() {
         if (!token) return;
         setIsLoadingPositions(true);
         try {
-            const data = await apiFetch<any[]>('/crm/positions', { token, cache: 'no-store', signal });
+            const data = await apiFetch<PositionRecord[]>('/crm/positions', { token, cache: 'no-store', signal });
             if (signal?.aborted) return;
             setPositions(Array.isArray(data) ? data : []);
         } catch (err) {
@@ -149,7 +150,7 @@ export default function CrmSettingsPage() {
         }
     };
 
-    const startEditPosition = (row: any) => {
+    const startEditPosition = (row: PositionRecord) => {
         setEditingPositionId(row.id);
         setPositionForm({
             name: row.name || '',
@@ -223,11 +224,11 @@ export default function CrmSettingsPage() {
                                     </div>
 
                                     <div className="grid grid-cols-1 gap-4">
-                                        <SettingInput disabled={!canEditCrm} label="Nombre de la Iglesia" value={config.churchName} onChange={(val: string) => setConfig({...config, churchName: val})} />
-                                        <SettingInput disabled={!canEditCrm} label="Email de Respuesta Público" value={config.contactEmail} onChange={(val: string) => setConfig({...config, contactEmail: val})} />
+                                        <SettingInput disabled={!canEditCrm} label="Nombre de la Iglesia" value={config.churchName as string} onChange={(val: string) => setConfig({...config, churchName: val})} />
+                                        <SettingInput disabled={!canEditCrm} label="Email de Respuesta Público" value={config.contactEmail as string} onChange={(val: string) => setConfig({...config, contactEmail: val})} />
                                         <div className="space-y-1.5">
                                             <label className="text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide pl-1">Zona Horaria Base</label>
-                                            <select disabled={!canEditCrm} className="w-full bg-[hsl(var(--surface-1))] hover:bg-[hsl(var(--surface-2))] dark:bg-black/20 dark:hover:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-md px-4 py-2.5 text-xs font-medium text-[hsl(var(--text-primary))] dark:text-white outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.3] transition-all appearance-none cursor-pointer disabled:opacity-50" value={config.timezone} onChange={e => setConfig({...config, timezone: e.target.value})}>
+                                            <select disabled={!canEditCrm} className="w-full bg-[hsl(var(--surface-1))] hover:bg-[hsl(var(--surface-2))] dark:bg-black/20 dark:hover:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-md px-4 py-2.5 text-xs font-medium text-[hsl(var(--text-primary))] dark:text-white outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.3] transition-all appearance-none cursor-pointer disabled:opacity-50" value={config.timezone as string} onChange={e => setConfig({...config, timezone: e.target.value})}>
                                                 <option value="America/Bogota">Bogotá (GMT-5)</option>
                                                 <option value="America/New_York">New York (GMT-4)</option>
                                                 <option value="Europe/Madrid">Madrid (GMT+2)</option>
@@ -249,22 +250,22 @@ export default function CrmSettingsPage() {
                                             disabled={!canEditCrm}
                                             icon={Smartphone} color="text-[hsl(var(--success))] bg-success-soft dark:bg-[hsl(var(--success))]/10" title="Canal de WhatsApp Business"
                                             desc="Habilita envío de notificaciones y seguimiento automático."
-                                            active={config.enableWhatsApp} onToggle={(v: boolean) => setConfig({...config, enableWhatsApp: v})}
+                                            active={Boolean(config.enableWhatsApp)} onToggle={(v: boolean) => setConfig({...config, enableWhatsApp: v})}
                                         />
                                         <ToggleSetting
                                             disabled={!canEditCrm}
                                             icon={Smartphone} color="text-[hsl(var(--primary))] bg-info-soft dark:bg-[hsl(var(--info))]/10" title="Notificaciones SMS (Twilio)"
                                             desc="Para alertas urgentes cuando no hay internet."
-                                            active={config.enableSMS} onToggle={(v: boolean) => setConfig({...config, enableSMS: v})}
+                                            active={Boolean(config.enableSMS)} onToggle={(v: boolean) => setConfig({...config, enableSMS: v})}
                                         />
-                                        {config.enableSMS && (
+                                        {Boolean(config.enableSMS) && (
                                             <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} className="pl-4 ml-4 border-l-2 border-[hsl(var(--border))] dark:border-white/10 py-2 space-y-4">
-                                                <SettingInput disabled={!canEditCrm} label="Twilio Account SID" value={config.twilioApiKey} onChange={(v: string) => setConfig({...config, twilioApiKey: v})} placeholder="ACxxxxxxxxxxxxxxxx" />
+                                                <SettingInput disabled={!canEditCrm} label="Twilio Account SID" value={config.twilioApiKey as string} onChange={(v: string) => setConfig({...config, twilioApiKey: v})} placeholder="ACxxxxxxxxxxxxxxxx" />
                                                 <SettingInput disabled={!canEditCrm} label="Auth Token" value="••••••••••••••••" onChange={() => {}} type="password" />
                                             </motion.div>
                                         )}
                                         <div className="pt-4 mt-2 border-t border-[hsl(var(--border))] dark:border-white/5">
-                                            <SettingInput disabled={!canEditCrm} label="Servidor SMTP Principal" value={config.smtpServer} onChange={(v: string) => setConfig({...config, smtpServer: v})} placeholder="smtp.mail.ccf.org" />
+                                            <SettingInput disabled={!canEditCrm} label="Servidor SMTP Principal" value={config.smtpServer as string} onChange={(v: string) => setConfig({...config, smtpServer: v})} placeholder="smtp.mail.ccf.org" />
                                         </div>
                                     </div>
                                 </motion.div>
@@ -433,6 +434,6 @@ export default function CrmSettingsPage() {
     );
 }
 
-function SpinnerIcon({ className, size = 24 }: any) {
+function SpinnerIcon({ className, size = 24 }: { className?: string; size?: number }) {
     return <Activity size={size} className={clsx("animate-spin", className)} />;
 }

@@ -3,6 +3,7 @@
 import DashboardEmbed from '@/components/DashboardEmbed';
 import { DSSkeleton } from '@/design';
 import { useAuth } from '@/context/AuthContext';
+import type { DashboardCRM, DashboardMetricCard } from '@/types/crm';
 import { DSCard } from '@/design';
 import { DSChart } from '@/design';
 import { DSMetric } from '@/design';
@@ -26,7 +27,7 @@ export default function CRMClient() {
     const { token } = useAuth();
     const { canEditCrm: _canEditCrm } = useCrmAccess();
     const _router = useRouter();
-    const [dashboard, setDashboard] = useState<any>(null);
+    const [dashboard, setDashboard] = useState<DashboardCRM | null>(null);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -34,7 +35,7 @@ export default function CRMClient() {
         const loadDashboard = async () => {
             setLoading(true);
             try {
-                const data = await apiFetch<any>('/dashboard/crm', { token });
+                const data = await apiFetch<DashboardCRM>('/dashboard/crm', { token });
                 setDashboard(data);
             } catch (err) {
                 toast.error("Error al cargar el dashboard");
@@ -59,14 +60,14 @@ export default function CRMClient() {
                         <>
                             {/* 📊 Pastoral Metrics */}
                             <section className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                                {dashboard?.cards?.length > 0 ? (
-                                    dashboard.cards.map((card: any, idx: number) => (
+                                {dashboard?.cards && dashboard.cards.length > 0 ? (
+                                    dashboard.cards.map((card: DashboardMetricCard, idx: number) => (
                                         <DSMetric
                                             key={idx}
                                             label={card.title}
                                             value={card.value}
                                             trend={card.trend}
-                                            tone={card.color}
+                                            tone={card.color as "emerald" | "amber" | "blue" | undefined}
                                         />
                                     ))
                                 ) : (
@@ -90,7 +91,7 @@ export default function CRMClient() {
                                 <div>
                                     <DSCard>
                                         <h3 className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-3">Distribución por Rol</h3>
-                                        <DSChart type="bar" data={dashboard?.pipeline_funnel} color="hsl(var(--primary))" height={220} />
+                                        <DSChart type="bar" data={(dashboard?.pipeline_funnel ?? []).map((p: { stage: string; count: number }) => ({ label: p.stage, value: p.count }))} color="hsl(var(--primary))" height={220} />
                                     </DSCard>
                                 </div>
                             </div>

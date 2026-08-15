@@ -82,8 +82,8 @@ export default function CrmTasksPage() {
         try {
             const data = await apiFetch<ConsolidationTask[]>('/crm/tasks', { token, cache: 'no-store', signal });
             setTasks(Array.isArray(data) ? data : []);
-        } catch (err: any) {
-            if (err?.name === 'AbortError') return;
+        } catch (err: unknown) {
+            if ((err as Error)?.name === 'AbortError') return;
             setTasks([]);
             const message = extractErrorMessage(err, 'Error al cargar tareas');
             setTasksError(message);
