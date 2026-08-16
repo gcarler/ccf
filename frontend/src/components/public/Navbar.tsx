@@ -47,9 +47,6 @@ export default function Navbar() {
             }));
     });
 
-    const ctaLabel = themeTokens["--site-header-cta-label"] || "Quiero conocer a Jesús";
-    const ctaHref = themeTokens["--site-header-cta-href"] || "/conocer-a-jesus";
-
     const locationTitle = themeTokens["--site-header-location-title"] || "Nuestras Sedes";
     const themeToggleTitle = themeTokens["--site-header-theme-title"] || "Cambiar tema";
     const dropdownLabel = themeTokens["--site-header-dropdown-label"] || "Explorar";
@@ -310,23 +307,6 @@ export default function Navbar() {
                             <Sun size={18} />
                         </button>
 
-                        {/* CTA Principal */}
-                        {ctaLabel && ctaHref && (
-                            <Link
-                                href={ctaHref}
-                                onClick={() => setMobileOpen && setMobileOpen(false)}
-                                className="hidden h-11 items-center gap-2 rounded-full px-4 text-base font-semibold transition-transform hover:-translate-y-0.5 xl:inline-flex xl:px-5"
-                                style={{
-                                    background: "var(--site-primary)",
-                                    color: "var(--site-on-primary)",
-                                    boxShadow: "0 14px 34px color-mix(in srgb, var(--site-primary) 24%, transparent)",
-                                }}
-                            >
-                                <span className="max-w-[13rem] truncate">{ctaLabel}</span>
-                                <ArrowRight size={15} aria-hidden="true" />
-                            </Link>
-                        )}
-
                         {/* Mobile Menu Toggle */}
                         <button
                             onClick={() => setMobileOpen(!mobileOpen)}
@@ -444,21 +424,6 @@ export default function Navbar() {
                             );
                         })}
                         </div>
-                        {ctaLabel && ctaHref && (
-                            <Link
-                                href={ctaHref}
-                                onClick={() => setMobileOpen && setMobileOpen(false)}
-                                className="mt-7 flex w-full items-center justify-center gap-2 rounded-full px-5 py-4 text-sm font-semibold"
-                                style={{
-                                    background: "var(--site-primary)",
-                                    color: "var(--site-on-primary)",
-                                    boxShadow: "0 18px 42px color-mix(in srgb, var(--site-primary) 28%, transparent)",
-                                }}
-                            >
-                                <span className="truncate">{ctaLabel}</span>
-                                <ArrowRight size={16} aria-hidden="true" />
-                            </Link>
-                        )}
                     </div>
                 </div>
             )}
