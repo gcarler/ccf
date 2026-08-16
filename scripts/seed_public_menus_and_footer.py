@@ -45,7 +45,6 @@ MOBILE_MENU_ITEMS: list[dict[str, Any]] = [
     {"label": "Eventos", "href": "/eventos", "icon": "CalendarDays"},
     {"label": "Prédicas", "href": "/predicas", "icon": "PlayCircle"},
     {"label": "Sedes", "href": "/sedes", "icon": "MapPin"},
-    {"label": "Conocer a Jesús", "href": "/conocer-a-jesus", "icon": "Menu"},
 ]
 
 FOOTER_PAGE_SLUG = "footer"

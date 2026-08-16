@@ -19,9 +19,6 @@ export default function FaroNavbar() {
     const [mobileOpen, setMobileOpen] = useState(false);
     const [menuItemsV2, setMenuItemsV2] = useState<Array<{ id?: string; href: string; label: string; children?: Array<{ id?: string; href: string; label: string }> }>>([]);
 
-    const ctaLabel = themeTokens["--site-header-cta-label"] || "Quiero conocer a Jesús";
-    const ctaHref = themeTokens["--site-header-cta-href"] || "/conocer-a-jesus";
-
     const locationTitle = themeTokens["--site-header-location-title"] || "Nuestras Sedes";
     const themeToggleTitle = themeTokens["--site-header-theme-title"] || "Cambiar tema";
     const navLinks = menuItemsV2;
@@ -179,23 +176,6 @@ export default function FaroNavbar() {
                             <Sun size={18} />
                         </button>
 
-                        {/* CTA Principal */}
-                        {ctaLabel && ctaHref && (
-                            <Link
-                                href={ctaHref}
-                                onClick={() => setMobileOpen && setMobileOpen(false)}
-                                className="hidden lg:flex ccf-button"
-                                style={{
-                                    background: "var(--site-cta-gradient)",
-                                    backgroundSize: "200% auto",
-                                    color: "white",
-                                    boxShadow: "var(--site-cta-shadow)",
-                                }}
-                            >
-                                {ctaLabel}
-                            </Link>
-                        )}
-
                         {/* Mobile Menu Toggle */}
                         <button
                             onClick={() => setMobileOpen(!mobileOpen)}
@@ -246,21 +226,6 @@ export default function FaroNavbar() {
                                 )}
                             </div>
                         ))}
-                        {ctaLabel && ctaHref && (
-                            <Link
-                                href={ctaHref}
-                                onClick={() => setMobileOpen && setMobileOpen(false)}
-                                className="flex items-center justify-center gap-2 px-3 py-3 mt-4 w-full rounded-full text-sm font-bold uppercase tracking-wider transition-all hover:scale-105"
-                                style={{
-                                    background: "var(--site-cta-gradient)",
-                                    backgroundSize: "200% auto",
-                                    color: "white",
-                                    boxShadow: "var(--site-cta-shadow)",
-                                }}
-                            >
-                                {ctaLabel}
-                            </Link>
-                        )}
                     </div>
                 </div>
             )}

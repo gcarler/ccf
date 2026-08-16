@@ -300,6 +300,16 @@ def _build_pages(media_find: Any) -> dict[str, list[dict[str, Any]]]:
     home_feed.setdefault("newsletter_success_toast", "¡Suscrito al boletín!")
     home_feed.setdefault("newsletter_error_toast", "No se pudo suscribir. Intenta de nuevo.")
 
+    home_discover_cta = _get_block("ccf_home_discover_cta") or {}
+    home_discover_cta.setdefault("eyebrow", "Una invitación para ti")
+    home_discover_cta.setdefault("title", "¿Quieres conocer a Jesús?")
+    home_discover_cta.setdefault(
+        "description",
+        "No es una religión, es el comienzo de una relación que transforma la vida. Da el siguiente paso hoy.",
+    )
+    home_discover_cta.setdefault("cta_label", "Quiero conocer a Jesús")
+    home_discover_cta.setdefault("cta_href", "/conocer-a-jesus")
+
     # ── ABOUT / NOSOTROS ────────────────────────────────────────────────────
     about_hero = _get_block("ccf_about_hero") or {
         "eyebrow": "Nuestra Identidad",
@@ -808,6 +818,7 @@ def _build_pages(media_find: Any) -> dict[str, list[dict[str, Any]]]:
         "home": [
             {"key": "hero", "type": "hero", "props": home_hero, "sort": 0},
             {"key": "feed", "type": "feed", "props": home_feed, "sort": 1},
+            {"key": "discover_cta", "type": "cta_banner", "props": home_discover_cta, "sort": 2},
         ],
         "about": [
             {"key": "hero", "type": "hero", "props": about_hero, "sort": 0},

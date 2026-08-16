@@ -46,6 +46,7 @@ export default function PublicHomePage({ initialHomePage }: { initialHomePage?: 
     const homeFeed = (homeFeedContent?.parsed && typeof homeFeedContent.parsed === "object" && !Array.isArray(homeFeedContent.parsed))
         ? homeFeedContent.parsed as Record<string, unknown>
         : null;
+    const discoverCtaContent = (homePage?.blocks?.discover_cta as Record<string, unknown> | undefined) ?? null;
     const homeGallerySection = homePage?.sections?.find(
         (section) => section.type === "gallery" && Array.isArray(section.props_json?.items),
     );
@@ -64,6 +65,11 @@ export default function PublicHomePage({ initialHomePage }: { initialHomePage?: 
     const activitiesViewAllHref = (homeFeed?.activities_view_all_href as string) ?? "/eventos";
     const activitiesEmpty = (homeFeed?.activities_empty as string) ?? "";
     const scrollIndicator = (homeFeed?.scroll_indicator as string) ?? "";
+    const discoverCtaEyebrow = (discoverCtaContent?.eyebrow as string) ?? "Una invitación para ti";
+    const discoverCtaTitle = (discoverCtaContent?.title as string) ?? "¿Quieres conocer a Jesús?";
+    const discoverCtaDescription = (discoverCtaContent?.description as string) ?? "No es una religión, es el comienzo de una relación que transforma la vida. Da el siguiente paso hoy.";
+    const discoverCtaLabel = (discoverCtaContent?.cta_label as string) ?? "Quiero conocer a Jesús";
+    const discoverCtaHref = (discoverCtaContent?.cta_href as string) || "/conocer-a-jesus";
     const newsletterEyebrow = (homeFeed?.newsletter_eyebrow as string) ?? "";
     const newsletterTitle = (homeFeed?.newsletter_title as string) ?? "";
     const newsletterDescription = (homeFeed?.newsletter_description as string) ?? "";
@@ -516,6 +522,62 @@ export default function PublicHomePage({ initialHomePage }: { initialHomePage?: 
                     </motion.div>
                 </section>
             )}
+
+            {/* ─── CTA: QUIERO CONOCER A JESÚS ───────────────────────── */}
+            <section
+                className="ccf-section overflow-hidden"
+                style={{ background: "var(--site-surface-container-lowest)" }}
+            >
+                <motion.div
+                    initial={{ opacity: 0, y: 24 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true, margin: "-100px" }}
+                    className="ccf-container max-w-4xl mx-auto text-center"
+                >
+                    {discoverCtaEyebrow && (
+                        <span
+                            className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.3em] mb-5 px-4 py-2 rounded-full border"
+                            style={{
+                                color: "var(--site-primary)",
+                                borderColor: "var(--site-primary-container)",
+                                background: "var(--site-surface-container-low)",
+                            }}
+                        >
+                            <Sparkles size={12} /> {discoverCtaEyebrow}
+                        </span>
+                    )}
+                    {discoverCtaTitle && (
+                        <h2
+                            className="font-black ccf-headline mb-6 text-3xl sm:text-4xl lg:text-5xl"
+                            style={{ color: "var(--site-on-background)" }}
+                        >
+                            {discoverCtaTitle}
+                        </h2>
+                    )}
+                    {discoverCtaDescription && (
+                        <p
+                            className="ccf-body text-base sm:text-lg mb-10 max-w-2xl mx-auto"
+                            style={{ color: "var(--site-on-surface-variant)" }}
+                        >
+                            {discoverCtaDescription}
+                        </p>
+                    )}
+                    {discoverCtaLabel && discoverCtaHref && (
+                        <Link
+                            href={discoverCtaHref}
+                            className="ccf-button group inline-flex items-center justify-center gap-2 rounded-full px-8 py-4 text-base font-bold transition-transform hover:-translate-y-0.5"
+                            style={{
+                                background: "var(--site-primary)",
+                                color: "var(--site-on-primary)",
+                                boxShadow: "0 18px 42px color-mix(in srgb, var(--site-primary) 28%, transparent)",
+                            }}
+                        >
+                            <span>{discoverCtaLabel}</span>
+                            <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" aria-hidden="true" />
+                        </Link>
+                    )}
+                </motion.div>
+            </section>
         </div>
         </>
     );

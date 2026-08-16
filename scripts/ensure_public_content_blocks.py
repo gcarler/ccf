@@ -360,7 +360,6 @@ BLOCKS = {
                 {"href": "/eventos", "label": "Eventos", "icon": "calendar"},
                 {"href": "/predicas", "label": "Prédicas", "icon": "play"},
                 {"href": "/sedes", "label": "Sedes", "icon": "map-pin"},
-                {"href": "/conocer-a-jesus", "label": "Conectar", "icon": "menu"},
             ]
         },
     },
@@ -416,6 +415,17 @@ BLOCKS = {
                 {"id": "cambios", "title": "12. Cambios a esta política"},
                 {"id": "contacto", "title": "13. Canal de atención"},
             ],
+        },
+    },
+    # ── CTA DESCUBRE (sección body del home) ─────────────────────────────────
+    "ccf_home_discover_cta": {
+        "title": "CTA Conocer a Jesús — Home",
+        "content": {
+            "eyebrow": "Una invitación para ti",
+            "title": "¿Quieres conocer a Jesús?",
+            "description": "No es una religión, es el comienzo de una relación que transforma la vida. Da el siguiente paso hoy.",
+            "cta_label": "Quiero conocer a Jesús",
+            "cta_href": "/conocer-a-jesus",
         },
     },
     # ── HEROES PÚBLICOS (unificados desde seed_public_content) ──────────────
