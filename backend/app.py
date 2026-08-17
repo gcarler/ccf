@@ -47,6 +47,7 @@ from backend.api import (
     workspace,
     youtube,
 )
+from backend.api.mcp import mcp_app
 from backend.core.config import get_settings
 from backend.core.logging import observability_middleware
 from backend.core.rate_limit import academy_limiter
@@ -231,6 +232,8 @@ for router, prefix, tags in ROUTER_REGISTRY:
     if tags:
         include_kwargs["tags"] = tags
     app.include_router(router, **include_kwargs)
+
+app.mount("/api/mcp", mcp_app, name="ccf-cms-mcp")
 
 
 @app.get("/")
