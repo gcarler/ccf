@@ -64,6 +64,8 @@ frontend/.next.backup-*/
 frontend/.next-build/
 frontend/.next-verify/
 frontend/.next-old/
+# Build dev aislado (NEXT_DIST_DIR=.next-dev) para no chocar con producción
+frontend/.next-dev/
 frontend/coverage/
 frontend/coverage-cms/
 frontend/crm-lh.json
