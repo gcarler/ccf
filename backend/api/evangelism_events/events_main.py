@@ -87,6 +87,71 @@ def list_events(
     return [schemas.CrmEvent.model_validate(event).model_dump(mode="json") for event in events]
 
 
+def _strategy_event_matches(event: models.CrmEvent, strategy_id: UUID) -> bool:
+    settings = event.settings_json if isinstance(event.settings_json, dict) else {}
+    return str(settings.get("evangelism_strategy_id") or "") == str(strategy_id)
+
+
+@static_router.post("/events/strategy/{strategy_id}/ensure", response_model=schemas.CrmEvent)
+def ensure_strategy_event(
+    strategy_id: UUID,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_evangelism_manage),
+):
+    """Resolve the event record used by an ``evento_masivo`` strategy.
+
+    Mass strategies do not use groups/sessions.  The existing event attendance
+    contract is the canonical store for their attendance, so this endpoint
+    creates the event lazily when the operator first opens attendance.
+    """
+    user_sede = require_user_sede_id(db, current_user)
+    strategy = (
+        db.query(models.EstrategiaEvangelismo)
+        .filter(
+            models.EstrategiaEvangelismo.id == strategy_id,
+            models.EstrategiaEvangelismo.sede_id == user_sede,
+            models.EstrategiaEvangelismo.deleted_at.is_(None),
+        )
+        .first()
+    )
+    if not strategy:
+        raise HTTPException(status_code=404, detail="Estrategia no encontrada")
+    if strategy.typology != "evento_masivo":
+        raise HTTPException(status_code=409, detail="La estrategia no es de tipología evento_masivo")
+
+    event = next(
+        (
+            item
+            for item in _active_events_query(db)
+            .filter(models.CrmEvent.sede_id == user_sede)
+            .order_by(models.CrmEvent.event_date.desc())
+            .all()
+            if _strategy_event_matches(item, strategy_id)
+        ),
+        None,
+    )
+    if not event:
+        event_date = strategy.fecha_inicio or utc_now()
+        event = models.CrmEvent(
+            sede_id=user_sede,
+            name=strategy.nombre,
+            description=strategy.descripcion,
+            event_date=event_date,
+            fixed_date=event_date,
+            event_type="ONCE",
+            status="SCHEDULED",
+            target_audience="ALL",
+            settings_json={
+                "evangelism_strategy_id": str(strategy.id),
+                "strategy_typology": "evento_masivo",
+            },
+        )
+        db.add(event)
+        db.commit()
+        db.refresh(event)
+    return schemas.CrmEvent.model_validate(event).model_dump(mode="json")
+
+
 @static_router.post("/events/", response_model=schemas.CrmEvent)
 def create_event(
     payload: schemas.CrmEventCreate,
