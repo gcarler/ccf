@@ -26,6 +26,7 @@ interface StrategyDashboardProps {
   attendanceByGroup: AttendanceByGroupEntry[];
   formatDate: (dateStr: string | null | undefined) => string;
   onOpenGroupDrawer: () => void;
+  onOpenMassAttendance: () => void;
   onOpenPersona: (group: StrategyGroup) => void;
   onRequestDeleteGroup: (id: string, name: string) => void;
   onOpenGroupAttendance: (group: StrategyGroup) => void;
@@ -63,6 +64,7 @@ export default function StrategyDashboard({
   attendanceByGroup,
   formatDate,
   onOpenGroupDrawer,
+  onOpenMassAttendance,
   onOpenPersona,
   onRequestDeleteGroup,
   onOpenGroupAttendance,
@@ -104,14 +106,28 @@ export default function StrategyDashboard({
                   </p>
                 )}
               </div>
-              {canManage ? (
+              {strategy.typology === 'evento_masivo' ? (
+                <button onClick={onOpenMassAttendance}
+                  className="inline-flex items-center gap-1.5 px-3 h-8 rounded-lg bg-[hsl(var(--primary))] text-white text-xs font-semibold hover:bg-[hsl(var(--primary))] transition-colors">
+                  <ClipboardList size={14} />Diligenciar asistencia
+                </button>
+              ) : canManage ? (
                 <button onClick={onOpenGroupDrawer}
                   className="inline-flex items-center gap-1.5 px-3 h-8 rounded-lg bg-[hsl(var(--primary))] text-white text-xs font-semibold hover:bg-[hsl(var(--primary))] transition-colors">
                   <Plus size={14} />Nuevo grupo
                 </button>
               ) : null}
             </div>
-            {groups.length === 0 ? (
+            {strategy.typology === 'evento_masivo' ? (
+              <div className="flex flex-col items-center justify-center py-12 text-center bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))] border border-[hsl(var(--border-primary))] rounded-lg">
+                <ClipboardList size={32} className="text-[hsl(var(--primary))] mb-2" />
+                <p className="text-sm font-semibold text-[hsl(var(--text-primary))]">Evento masivo sin grupos</p>
+                <p className="text-xs text-[hsl(var(--text-secondary))] max-w-md mt-1">La asistencia de esta estrategia se registra directamente como asistencia de evento, sin crear grupos.</p>
+                <button onClick={onOpenMassAttendance} className="mt-4 inline-flex items-center gap-1.5 px-3 h-8 rounded-lg border border-[hsl(var(--primary))] text-[hsl(var(--primary))] text-xs font-semibold hover:bg-info-soft transition-colors">
+                  <ClipboardList size={14} />Abrir registro de asistencia
+                </button>
+              </div>
+            ) : groups.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-12 text-center bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))] border border-[hsl(var(--border-primary))] rounded-lg">
                 <Home size={32} className="text-[hsl(var(--text-secondary))] mb-2" />
                 <p className="text-sm font-medium text-[hsl(var(--text-secondary))]">Sin grupos aún</p>
@@ -192,6 +208,17 @@ export default function StrategyDashboard({
       {activeTab === 'attendance' && (
         <ErrorBoundary moduleName="Estrategia - Asistencia" compact>
           <div className="space-y-4">
+            {strategy.typology === 'evento_masivo' ? (
+              <div className="flex flex-col items-center justify-center py-12 text-center bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))] border border-[hsl(var(--border-primary))] rounded-lg">
+                <ClipboardList size={32} className="text-[hsl(var(--primary))] mb-2" />
+                <p className="text-sm font-semibold text-[hsl(var(--text-primary))]">Asistencia del evento masivo</p>
+                <p className="text-xs text-[hsl(var(--text-secondary))] max-w-md mt-1">No se requiere grupo. Usa el registro de eventos para marcar asistentes, fecha y scanner.</p>
+                <button onClick={onOpenMassAttendance} className="mt-4 inline-flex items-center gap-1.5 px-3 h-8 rounded-lg bg-[hsl(var(--primary))] text-white text-xs font-semibold hover:opacity-90 transition-colors">
+                  <ClipboardList size={14} />Diligenciar asistencia
+                </button>
+              </div>
+            ) : (
+            <>
             <div className="flex items-center justify-between">
               <p className="text-xs font-bold uppercase tracking-wider text-[hsl(var(--text-secondary))]">
                 Grupos — sesiones recientes
@@ -290,6 +317,8 @@ export default function StrategyDashboard({
                   );
                 })}
               </div>
+            )}
+            </>
             )}
           </div>
         </ErrorBoundary>

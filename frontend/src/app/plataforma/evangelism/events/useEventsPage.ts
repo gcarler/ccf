@@ -16,7 +16,8 @@ import { useToast } from '@/context/ToastContext';
 import { useWikiDocument } from '@/hooks/useWikiDocument';
 import { apiFetch } from '@/lib/http';
 import { parseAndValidateTime } from '@/lib/time';
-import React, { useEffect, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
+import React, { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { formatLocalDate, getErrorMessage } from '../utils';
 
@@ -42,6 +43,9 @@ interface AudiencePreset {
 
 export function useEventsPage() {
  const { token, hasModuleAccess } = useAuth();
+ const searchParams = useSearchParams();
+ const requestedEventId = searchParams?.get('event_id');
+ const autoOpenedEventRef = useRef<string | null>(null);
  const canManageEvents = hasModuleAccess('evangelism', 'manage');
  const canEditEvents = hasModuleAccess('evangelism', 'edit');
  const { addToast } = useToast();
@@ -498,6 +502,14 @@ const openAttendance = (ev: MinistryEvent) => {
  setAttendanceRoleFilter('ALL');
  setAttendanceStatusFilter('ALL');
  };
+
+ useEffect(() => {
+  if (!requestedEventId || !canEditEvents || autoOpenedEventRef.current === requestedEventId) return;
+  const event = events.find((item) => String(item.id) === requestedEventId);
+  if (!event) return;
+  autoOpenedEventRef.current = requestedEventId;
+  openAttendance(event);
+ }, [canEditEvents, events, requestedEventId]);
 
  useEffect(() => {
  if (!token || !selectedEvent || !isAttendanceDrawerOpen || !attendanceDate) return;
