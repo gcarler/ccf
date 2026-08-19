@@ -35,7 +35,7 @@ import { useAuth } from '@/context/AuthContext';
 import { useViewType } from '@/hooks/useViewType';
 import type { GroupForm, RoleSearchPersona } from './panels/GroupCreationDrawer';
 import { apiFetch } from '@/lib/http';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
@@ -53,6 +53,7 @@ type RoleSearchQuery = { limit: number; search?: string; sort_by?: string; sort_
 export function useStrategyDetailPage() {
  const params = useParams();
  const id = (params?.id as string) || '';
+ const router = useRouter();
  const { token, loading: authLoading, hasModuleAccess } = useAuth();
  const canReadStrategySurface = hasModuleAccess('evangelism', 'read');
  const canManageStrategySurface = hasModuleAccess('evangelism', 'manage');
@@ -486,6 +487,18 @@ export function useStrategyDetailPage() {
  } finally { setSessionSaving(false); }
  };
 
+ const openMassAttendance = async () => {
+  if (!token || !canManageStrategySurface || strategy?.typology !== 'evento_masivo') return;
+  try {
+   const event = await apiFetch<{ id: string }>(`/evangelism/events/strategy/${id}/ensure`, {
+    method: 'POST', token, silent: true,
+   });
+   router.push(`/plataforma/evangelism/events?event_id=${encodeURIComponent(event.id)}`);
+  } catch (error: unknown) {
+   toast.error('No se pudo preparar el evento: ' + getErrorMessage(error, 'Intente de nuevo'));
+  }
+ };
+
  const openGroupAttendance = async (g: StrategyGroup) => {
   let sessionList = sessions;
   if (sessionList.length === 0) {
@@ -785,6 +798,7 @@ export function useStrategyDetailPage() {
     updateGroupPersonaRole,
     removePersonaFromGroup,
     handleCreateSession,
+    openMassAttendance,
     openGroupAttendance,
     openAttendanceDrawer,
     handleSaveAttendance,
