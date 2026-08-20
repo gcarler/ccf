@@ -41,6 +41,7 @@ openpyxl>=3.1
 defusedxml>=0.7.1
 # Optional agent orchestrator
 openai
+mcp>=1.29.0,<2
 opentelemetry-sdk
 opentelemetry-exporter-otlp-proto-grpc
 opentelemetry-instrumentation-fastapi

@@ -147,3 +147,35 @@ class TestCheckin:
             headers=evan_full["h"],
         )
         assert resp.status_code == 404
+
+    def test_session_detail_excludes_absent_attendance(self, evan_full, db_session):
+        """Los registros marcados ausentes no deben aparecer como presentes."""
+        c, h, s = evan_full["c"], evan_full["h"], evan_full["s"]
+        evt = _create_event(db_session, s)
+        person = Persona(
+            id=uuid.uuid4(),
+            first_name="Absent",
+            last_name="Person",
+            sede_id=s.id,
+        )
+        db_session.add(person)
+        db_session.flush()
+        db_session.add(
+            models.EventAttendance(
+                event_id=evt.id,
+                session_date=datetime(2026, 8, 15).date(),
+                persona_id=person.id,
+                attended=False,
+                status="absent",
+            )
+        )
+        db_session.commit()
+
+        resp = c.get(
+            f"/api/evangelism/events/{evt.id}/sessions/2026-08-15",
+            headers=h,
+        )
+        assert resp.status_code == 200, resp.text
+        data = resp.json()
+        assert data["attendees"] == []
+        assert data["total_attendance"] == 0
