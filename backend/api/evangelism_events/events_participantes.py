@@ -120,6 +120,11 @@ def register_bulk_attendance(
             status_code=409,
             detail="No se puede registrar asistencia en eventos cancelados",
         )
+    if event.attendance_closed_at is not None:
+        raise HTTPException(
+            status_code=409,
+            detail="La asistencia de este evento ya fue cerrada",
+        )
 
     normalized_persona_ids: list[str] = []
     invalid_persona_ids: list[object] = []
@@ -138,7 +143,15 @@ def register_bulk_attendance(
             invalid_persona_ids.append(pid)
 
     valid_persona_uuids = (
-        {row[0] for row in db.query(models.Persona.id).filter(models.Persona.id.in_(normalized_persona_uuids)).all()}
+        {
+            row[0]
+            for row in db.query(models.Persona.id)
+            .filter(
+                models.Persona.id.in_(normalized_persona_uuids),
+                models.Persona.sede_id == event.sede_id,
+            )
+            .all()
+        }
         if normalized_persona_uuids
         else set()
     )
@@ -255,6 +268,10 @@ def get_event_session_detail(
 
     attendee_list = []
     for att in attendances_db:
+        # Los registros ausentes se mantienen para el historial, pero no
+        # deben aparecer en la lista de asistentes que consume el frontend.
+        if not att.attended:
+            continue
         persona = att.persona
         if not persona:
             continue

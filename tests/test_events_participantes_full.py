@@ -119,6 +119,39 @@ class TestBulkAttendance:
         # May be 403 if require_evangelism_edit blocks admin
         assert resp.status_code in (200, 403), f"bulk: {resp.status_code} {resp.text[:200]}"
 
+    def test_bulk_rejects_person_from_other_sede(self, full, db_session):
+        """Bulk attendance must not attach a person from another sede."""
+        c, h, s = full["c"], full["h"], full["s"]
+        evt = _create_event(db_session, s)
+        other_sede = models.Sede(
+            id=uuid.uuid4(),
+            nombre="Otra sede",
+            ciudad="Cali",
+            es_activa=True,
+        )
+        other_person = models.Persona(
+            id=uuid.uuid4(),
+            first_name="Cross",
+            last_name="Sede",
+            sede_id=other_sede.id,
+        )
+        db_session.add_all([other_sede, other_person])
+        db_session.commit()
+
+        resp = c.post(
+            "/api/evangelism/attendance/bulk",
+            json={
+                "event_id": str(evt.id),
+                "persona_ids": [str(other_person.id)],
+                "session_date": "2026-08-15",
+            },
+            headers=h,
+        )
+        assert resp.status_code in (200, 403)
+        if resp.status_code == 200:
+            assert str(other_person.id) in resp.json()["invalid_persona_ids"]
+            assert db_session.query(models.EventAttendance).count() == 0
+
     def test_bulk_cancelled_event_409(self, full, db_session):
         """POST bulk on cancelled event -> 409."""
         c, h, s = full["c"], full["h"], full["s"]
