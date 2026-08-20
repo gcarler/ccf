@@ -27,7 +27,7 @@ Plataforma institucional de la Comunidad Cristiana El Faro (CCF): sitio público
 - **Identidad:** `personas.id` es el UUID canónico; `auth_users.id` comparte ese UUID.
 - **Seguridad:** JWT, cookies HttpOnly, refresh coordinado, permisos modulares y aislamiento por `sede_id`.
 - **API:** routers modulares registrados en `backend/app.py`.
-- **MCP:** contenido público/CMS en `/mcp` y `/mcp/cms`, más superficies privadas de Evangelismo, CRM, Academia y Calendario en `/mcp/evangelism`, `/mcp/crm`, `/mcp/academy` y `/mcp/calendar`, protegidas con el JWT y RBAC de CCF.
+- **MCP:** gateway de descubrimiento en `/mcp/platform`, contenido público/CMS en `/mcp` y `/mcp/cms`, y conexión MCP para los 32 módulos de la plataforma mediante rutas especializadas o `/mcp/{modulo}`, protegidas con JWT y RBAC de CCF.
 - **Calidad:** pytest, Ruff, Vitest, Playwright, gates por módulo y CI/CD.
 
 ## Requisitos locales

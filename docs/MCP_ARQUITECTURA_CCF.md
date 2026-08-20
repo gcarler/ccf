@@ -1,6 +1,6 @@
 # MCP de la plataforma CCF
 
-**Estado:** seis superficies MCP operativas
+**Estado:** catálogo MCP completo para 32 módulos, más gateway de descubrimiento
 **Fecha de verificación:** 20 de agosto de 2026
 **Fuente de verdad:** `backend/mcp_public.py`, `backend/mcp_auth.py`, `backend/mcp_evangelism.py`, `backend/mcp_crm.py`, `backend/mcp_academy.py` y `backend/mcp_agenda.py`.
 
@@ -28,15 +28,30 @@ consulta MCP que salte los servicios y restricciones del dominio.
 
 | Superficie | Ruta | Autenticación | Alcance |
 |---|---|---|---|
+| Gateway de módulos | `/mcp/platform` | `Authorization: Bearer <JWT>` | Catálogo y descubrimiento de los 32 módulos |
 | Contenido público | `/mcp` | Sin JWT de usuario | Solo CMS publicado; lectura |
 | CMS privado | `/mcp/cms` | `Authorization: Bearer <JWT>` | Gestión de páginas, secciones y workflow editorial |
 | Evangelismo privado | `/mcp/evangelism` | `Authorization: Bearer <JWT>` | Estrategias, grupos, sesiones, eventos y asistencia de la sede |
 | CRM privado | `/mcp/crm` | `Authorization: Bearer <JWT>` | Personas, casos, tareas, pipeline, automatizaciones, eventos y asistencia |
 | Academia privada | `/mcp/academy` | `Authorization: Bearer <JWT>` | Cursos, lecciones, inscripciones, estudiantes y asistencia académica |
 | Calendario privado | `/mcp/calendar` | `Authorization: Bearer <JWT>` | Eventos de agenda, recursos, participantes y reservas |
+| Módulos restantes | `/mcp/{modulo}` | `Authorization: Bearer <JWT>` | Proxy REST allowlisted con RBAC del módulo |
 
 El MCP público no permite mutaciones. Las superficies privadas usan el mismo
-middleware JWT/RBAC y sesiones MCP independientes.
+middleware JWT/RBAC y sesiones MCP independientes. El gateway genérico no acepta
+URLs arbitrarias: cada módulo declara prefijos REST permitidos y el método HTTP
+determina si se exige permiso de lectura o escritura.
+
+El catálogo incluye Auth, Proyectos, Kernel, Servicios públicos, Workspace,
+Sistema, Agentes, Administración, Finanzas, Suite financiera, Donaciones,
+Gobernanza, Chat, Mensajería, Soporte, Base de conocimiento, Vida espiritual,
+Graph, Comunidad, Oración, Analítica, Dashboards, Tablas, YouTube, Enterprise
+CMS, Wiki, Comentarios, CMS, Evangelismo, CRM, Academia y Calendario.
+
+Los módulos con herramientas especializadas son CMS, Evangelismo, CRM,
+Academia y Calendario. Los demás se conectan mediante el contrato estándar de
+`backend/mcp_platform.py`, que permite invocar sus endpoints REST canónicos sin
+duplicar reglas de dominio.
 
 El montaje privado aparece antes de `/mcp` en `backend/app.py`. Esto es
 obligatorio porque el montaje público `/mcp` es un prefijo amplio y, si se
@@ -262,6 +277,7 @@ En un ambiente levantado, el cliente debe conectarse a:
 
 ```text
 http://localhost:8000/mcp             # público, lectura
+http://localhost:8000/mcp/platform    # catálogo completo de módulos, Bearer JWT
 http://localhost:8000/mcp/evangelism  # privado, requiere Bearer JWT
 http://localhost:8000/mcp/crm         # privado, requiere Bearer JWT
 http://localhost:8000/mcp/academy     # privado, requiere Bearer JWT

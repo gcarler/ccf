@@ -182,6 +182,34 @@ PERMISSIONS: Dict[str, Dict[str, str]] = {
         "label": "Wiki: editor",
         "description": "Crear y editar documentos de la wiki",
     },
+    "support:read": {
+        "label": "Soporte: lector",
+        "description": "Consultar tickets y base de conocimiento de soporte",
+    },
+    "support:edit": {
+        "label": "Soporte: editor",
+        "description": "Crear y actualizar tickets de soporte",
+    },
+    "support:manage": {
+        "label": "Soporte: gestor",
+        "description": "Gestionar soporte y su base de conocimiento",
+    },
+    "analytics:read": {
+        "label": "Analítica: lector",
+        "description": "Consultar indicadores y reportes analíticos",
+    },
+    "analytics:manage": {
+        "label": "Analítica: gestor",
+        "description": "Gestionar consultas y reportes analíticos",
+    },
+    "dashboard:read": {
+        "label": "Dashboards: lector",
+        "description": "Consultar dashboards de la plataforma",
+    },
+    "dashboard:manage": {
+        "label": "Dashboards: gestor",
+        "description": "Gestionar dashboards e indicadores",
+    },
 }
 
 # ── Permission expansion helpers (must be before DEFAULT_ROLES) ────────
@@ -228,6 +256,9 @@ MODULE_PERMISSION_MAP: Dict[str, Dict[str, str]] = {
         "manage": "spiritual_life:manage",
     },
     "wiki": {"read": "wiki:read", "edit": "wiki:edit", "manage": "wiki:edit"},
+    "support": {"read": "support:read", "edit": "support:edit", "manage": "support:manage"},
+    "analytics": {"read": "analytics:read", "edit": "analytics:manage", "manage": "analytics:manage"},
+    "dashboard": {"read": "dashboard:read", "edit": "dashboard:manage", "manage": "dashboard:manage"},
 }
 
 

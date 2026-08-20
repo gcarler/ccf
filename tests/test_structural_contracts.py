@@ -8,6 +8,8 @@ from pydantic import ValidationError
 from backend.app import app
 from backend.core.config import Settings
 
+ALLOWED_NON_API_PREFIXES = ("/mcp/",)
+
 ALLOWED_NON_API_PATHS = {
     "/",
     "/healthz",
@@ -34,7 +36,13 @@ FORBIDDEN_ROOT_PREFIXES = (
 def test_all_application_routes_stay_under_api_tree_or_explicit_exceptions():
     paths = {route.path for route in app.routes if getattr(route, "path", None)}
 
-    invalid_paths = sorted(path for path in paths if not path.startswith("/api/") and path not in ALLOWED_NON_API_PATHS)
+    invalid_paths = sorted(
+        path
+        for path in paths
+        if not path.startswith("/api/")
+        and path not in ALLOWED_NON_API_PATHS
+        and not any(path.startswith(prefix) for prefix in ALLOWED_NON_API_PREFIXES)
+    )
 
     assert invalid_paths == []
 

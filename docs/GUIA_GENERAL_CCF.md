@@ -70,14 +70,16 @@ Servicios complementarios:
 
 ### 2.2 Superficies MCP
 
-El backend expone seis superficies MCP diferenciadas:
+El backend expone un gateway y superficies MCP por módulo:
 
+- `/mcp/platform`: catálogo autenticado de los 32 módulos MCP.
 - `/mcp`: solo lectura del CMS publicado, sin personas ni datos administrativos.
 - `/mcp/cms`: gestión privada de páginas CMS, secciones y workflow con Bearer JWT y RBAC editorial.
 - `/mcp/evangelism`: superficie privada con Bearer JWT, RBAC `evangelism:*` y aislamiento por `sede_id` para estrategias, grupos, sesiones, eventos y asistencia.
 - `/mcp/crm`: superficie privada con Bearer JWT, RBAC `crm:*` y aislamiento por `sede_id` para personas, casos, tareas, pipeline, automatizaciones, eventos y asistencia.
 - `/mcp/academy`: superficie privada con Bearer JWT y RBAC `academy:*` para cursos, lecciones, inscripciones, estudiantes y asistencia académica.
 - `/mcp/calendar`: superficie privada con Bearer JWT y permisos `spiritual_life:*` para eventos de Agenda, recursos físicos, participantes y reservas.
+- Los demás módulos tienen una ruta `/mcp/{modulo}` con descubrimiento de capacidades y proxy REST allowlisted, siempre sujeto al RBAC canónico.
 
 El MCP privado de Evangelismo no requiere grupos para registrar asistencia en
 eventos masivos: usa directamente `CrmEvent` + `EventAttendance`. Su contrato detallado está en
