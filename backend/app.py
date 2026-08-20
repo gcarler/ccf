@@ -52,11 +52,12 @@ from backend.core.logging import observability_middleware
 from backend.core.rate_limit import academy_limiter
 from backend.core.security_headers import mount_security_headers
 from backend.exceptions.cms import CmsError
-from backend.mcp_academy import academy_mcp, academy_mcp_app
-from backend.mcp_agenda import agenda_mcp, agenda_mcp_app
-from backend.mcp_crm import crm_mcp, crm_mcp_app
-from backend.mcp_evangelism import mass_event_mcp, mass_event_mcp_app
-from backend.mcp_public import cms_admin_mcp, cms_admin_mcp_app, public_mcp
+from backend.mcp_academy import academy_mcp_app
+from backend.mcp_agenda import agenda_mcp_app
+from backend.mcp_crm import crm_mcp_app
+from backend.mcp_evangelism import mass_event_mcp_app
+from backend.mcp_platform import GENERIC_MODULE_SERVERS, platform_mcp_app, run_all_mcp_sessions
+from backend.mcp_public import cms_admin_mcp_app, public_mcp
 from backend.middleware.module_isolation import register_module_isolation
 
 logging.basicConfig(level=logging.INFO)  # Fallback; configure_logging() in core/logging overrides
@@ -233,10 +234,13 @@ app.mount(
 
 # Specific private mounts must precede `/mcp`, whose prefix would otherwise catch them.
 # Private domain surfaces: JWT + RBAC + sede isolation, separate from CMS public data.
+app.mount("/mcp/platform", platform_mcp_app, name="platform-mcp")
 app.mount("/mcp/evangelism", mass_event_mcp_app, name="evangelism-mcp")
 app.mount("/mcp/crm", crm_mcp_app, name="crm-mcp")
 app.mount("/mcp/academy", academy_mcp_app, name="academy-mcp")
 app.mount("/mcp/calendar", agenda_mcp_app, name="calendar-mcp")
+for _module_slug, (_module_server, _module_app) in GENERIC_MODULE_SERVERS.items():
+    app.mount(f"/mcp/{_module_slug}", _module_app, name=f"{_module_slug}-mcp")
 # Read-only public content surface for ChatGPT and other MCP clients.
 # Keep the authenticated CMS mount before the broad public `/mcp` prefix.
 app.mount("/mcp/cms", cms_admin_mcp_app, name="cms-mcp")
@@ -270,13 +274,8 @@ def health_check():
 async def _application_lifespan_with_mcp(application: FastAPI):
     """Run the MCP session managers alongside the existing app lifecycle."""
     async with lifespan(application):
-        async with public_mcp.session_manager.run():
-            async with cms_admin_mcp.session_manager.run():
-                async with mass_event_mcp.session_manager.run():
-                    async with crm_mcp.session_manager.run():
-                        async with academy_mcp.session_manager.run():
-                            async with agenda_mcp.session_manager.run():
-                                yield
+        async with run_all_mcp_sessions():
+            yield
 
 
 
