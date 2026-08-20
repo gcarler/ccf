@@ -15,6 +15,12 @@ ALLOWED_NON_API_PATHS = {
     "/docs/oauth2-redirect",
     "/openapi.json",
     "/redoc",
+    "/mcp",
+    "/mcp/cms",
+    "/mcp/evangelism",
+    "/mcp/crm",
+    "/mcp/academy",
+    "/mcp/calendar",
 }
 
 FORBIDDEN_ROOT_PREFIXES = (
