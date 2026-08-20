@@ -11,7 +11,10 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const nextConfig = {
-    allowedDevOrigins: ['elfarocc.tech', 'www.elfarocc.tech'],
+    allowedDevOrigins: [
+        'ministerioselfaro.org',
+        'www.ministerioselfaro.org',
+    ],
     // distDir dinámico: el deploy seguro (build-safe.mjs) compila a .next-build
     // y hace swap atómico al final, para que el proceso en servicio nunca vea
     // un .next a medias (chunks huérfanos → 400 en /_next/static/*).
@@ -50,7 +53,7 @@ const nextConfig = {
             // Backend serving optimized images (WebP)
             {
                 protocol: 'https',
-                hostname: 'elfarocc.tech',
+                hostname: 'ministerioselfaro.org',
                 pathname: '/api/static/**',
             },
             // Allow localhost for development
