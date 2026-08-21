@@ -12,6 +12,7 @@ export function GalleryMasonrySection({ section }: { section: Partial<CmsSection
   const albumUrl = section.props_json?.album_url || "";
   const albumLabel = section.props_json?.album_label || "Ver más fotos";
   const autoplay = Boolean(section.props_json?.autoplay);
+  const fullBleed = Boolean(section.props_json?.full_bleed);
   const rawColumns = section.props_json?.columns;
   const cols = Number(rawColumns) || 3;
   const rawImages = section.props_json?.images;
@@ -83,18 +84,18 @@ export function GalleryMasonrySection({ section }: { section: Partial<CmsSection
   const isCarousel = layout === "carousel";
 
   return (
-    <section className="py-12 md:py-16 px-4 max-w-7xl mx-auto">
+    <section className={`py-12 md:py-16 ${fullBleed ? "relative left-1/2 w-screen -translate-x-1/2 max-w-none px-0" : "mx-auto max-w-7xl px-4"}`}>
       {title && (
-        <h2 className="text-2xl md:text-3xl font-bold text-center mb-8 md:mb-12 text-gray-900 dark:text-white">
+        <h2 className="px-4 text-2xl md:text-3xl font-bold text-center mb-8 md:mb-12 text-gray-900 dark:text-white">
           {title}
         </h2>
       )}
 
-      {body && <p className="mx-auto mb-8 max-w-2xl text-center text-sm leading-relaxed text-gray-600 dark:text-gray-300">{body}</p>}
+      {body && <p className="mx-auto mb-8 max-w-2xl px-4 text-center text-sm leading-relaxed text-gray-600 dark:text-gray-300">{body}</p>}
 
       {isCarousel ? (
         <div className="relative">
-          <div className="overflow-hidden rounded-2xl bg-gray-100 shadow-xl dark:bg-zinc-900">
+          <div className={`overflow-hidden bg-gray-100 shadow-xl dark:bg-zinc-900 ${fullBleed ? "rounded-none" : "rounded-2xl"}`}>
             {images.length > 0 ? (
               <button
                 type="button"

@@ -215,6 +215,7 @@ def seed_40_page():
                     "body": "Momentos que forman parte de nuestra historia. Recorre estas memorias y visita el álbum completo para ver más fotografías.",
                     "layout": "carousel",
                     "autoplay": False,
+                    "full_bleed": True,
                     "album_url": "https://photos.app.goo.gl/BN3sDiXAt6aP6tLX8",
                     "album_label": "Ver más fotos en Google Fotos",
                     "images": [
