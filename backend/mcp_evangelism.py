@@ -314,12 +314,16 @@ def register_mass_event_attendance(
                 "recorded": 0,
             }
 
+        # Se consultan TODAS las filas de la fecha (incluidas las soft-deleted):
+        # la UniqueConstraint(event_id, session_date, persona_id) no considera
+        # deleted_at, así que una fila soft-deleted debe reutilizarse/reactivarse
+        # en lugar de insertar un duplicado (mismo patrón que el REST
+        # register_bulk_attendance).
         existing_rows = (
             db.query(models.EventAttendance)
             .filter(
                 models.EventAttendance.event_id == event.id,
                 models.EventAttendance.session_date == session_date,
-                models.EventAttendance.deleted_at.is_(None),
             )
             .all()
         )
@@ -353,12 +357,19 @@ def register_mass_event_attendance(
                 row.scanned_at = now
                 row.check_in_at = now
                 row.check_out_at = None
+                if row.deleted_at is not None:
+                    # Reactivar fila soft-deleted en vez de insertar un
+                    # duplicado (UniqueConstraint sin deleted_at).
+                    row.deleted_at = None
                 if not was_present:
                     marked_present += 1
 
         selected_set = set(selected_ids)
         for row in existing_rows:
             if row.persona_id in selected_set:
+                continue
+            if row.deleted_at is not None:
+                # Fila soft-deleted no seleccionada: no revivirla como ausente.
                 continue
             if row.attended or row.status != "absent":
                 row.attended = False
