@@ -119,7 +119,20 @@ export function ContactFormSection({ section }: { section: CmsSection<"contact_f
     <section className={`ccf-section-panel p-7 md:p-12 lg:p-14 ${fullBleed ? "relative left-1/2 w-screen -translate-x-1/2 rounded-none" : ""}`} style={{ background: "var(--site-surface-container-low)" }}>
       <div className={splitLayout ? "grid gap-10 md:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] md:items-start md:gap-16" : ""}>
         <div>
-          {title && <h2 className="text-2xl md:text-3xl font-black tracking-tight" style={{ color: "var(--site-on-surface)" }}>{title}</h2>}
+          {title && (
+            <h2
+              className={splitLayout ? "max-w-xl text-4xl font-black leading-[0.98] tracking-tight text-transparent sm:text-5xl lg:text-6xl" : "text-2xl md:text-3xl font-black tracking-tight"}
+              style={splitLayout
+                ? {
+                    backgroundImage: "linear-gradient(110deg, var(--site-primary), var(--site-secondary, var(--site-primary)) 55%, var(--site-tertiary, var(--site-primary)))",
+                    WebkitBackgroundClip: "text",
+                    WebkitTextFillColor: "transparent",
+                  }
+                : { color: "var(--site-on-surface)" }}
+            >
+              {title}
+            </h2>
+          )}
           {subtitle && <p className="mt-3 text-base" style={{ color: "var(--site-on-surface-variant)" }}>{subtitle}</p>}
         </div>
         <div>
