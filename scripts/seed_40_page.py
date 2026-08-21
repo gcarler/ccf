@@ -164,12 +164,17 @@ def seed_40_page():
                         {
                             "year": "2000s",
                             "title": "Una casa que crece",
-                            "body": "Los pastores Luis Ricardo Meza e Histar Ariza dedican más de dos décadas a edificar una iglesia que sea verdaderamente una casa para cada persona.",
+                            "body": "La iglesia crece con una visión clara: edificar una casa para cada persona, afirmada en la Palabra, la vida en comunidad y el amor de Dios.",
                         },
                         {
                             "year": "2010s",
                             "title": "Madrugones y familias",
                             "body": "Los servicios de madrugón reúnen a generaciones. Nuevas familias se bautizan, se casan y crecen en la vida en comunidad.",
+                        },
+                        {
+                            "year": "2021",
+                            "title": "Una nueva etapa pastoral",
+                            "body": "Luis Ricardo Meza e Histar Ariza asumen como pastores principales del ministerio y continúan guiando a la iglesia hacia una nueva etapa de crecimiento, madurez y expansión.",
                         },
                         {
                             "year": "Hoy",
