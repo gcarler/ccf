@@ -131,8 +131,7 @@ describe("Empirical Robustness Suite: Gallery & Cards Blocks", () => {
         const items = Array.from({ length: count }, (_, i) => ({
           title: `Tarjeta ${i + 1}`,
           body: `Descripción ${i + 1}`,
-          cta_label: `Boton ${i + 1}`,
-          cta_href: `/link-${i + 1}`,
+          href: `/link-${i + 1}`,
           image_url: `https://example.com/card-${i + 1}.jpg`,
         }));
 
@@ -143,7 +142,7 @@ describe("Empirical Robustness Suite: Gallery & Cards Blocks", () => {
       }
     });
 
-    it("handles CTA links edge cases: missing cta_href, missing cta_label, empty string href", async () => {
+    it("handles href edge cases: missing href, empty href, valid href", async () => {
       const config = await setupConfig();
       const cardsRender = (config.components.cards.render as any);
 
@@ -151,30 +150,22 @@ describe("Empirical Robustness Suite: Gallery & Cards Blocks", () => {
         cardsRender({
           title: "CTA Test",
           items: [
-            // Case 1: Label present, href missing -> defaults to "#"
-            { title: "Card 1", cta_label: "Click Me 1", cta_href: undefined },
-            // Case 2: Label present, href empty -> defaults to "#"
-            { title: "Card 2", cta_label: "Click Me 2", cta_href: "" },
-            // Case 3: Label missing -> no <a> tag rendered
-            { title: "Card 3", cta_label: "", cta_href: "/some-path" },
-            // Case 4: Label & href valid -> renders <a> tag with href
-            { title: "Card 4", cta_label: "Click Me 4", cta_href: "/valid-path" },
+            // Case 1: href missing -> no <a> tag rendered (item?.href is falsy)
+            { title: "Card 1" },
+            // Case 2: href empty string -> no <a> tag rendered
+            { title: "Card 2", href: "" },
+            // Case 3: href valid -> renders <a> tag with href
+            { title: "Card 3", href: "/valid-path" },
           ],
         })
       );
 
       const links = container.querySelectorAll("a");
-      // Only Card 1, Card 2, and Card 4 have cta_label, so exactly 3 links should be rendered
-      expect(links.length).toBe(3);
+      // Only Card 3 has a truthy href, so exactly 1 link should be rendered
+      expect(links.length).toBe(1);
 
-      expect(links[0].getAttribute("href")).toBe("#");
-      expect(links[0].textContent).toContain("Click Me 1");
-
-      expect(links[1].getAttribute("href")).toBe("#");
-      expect(links[1].textContent).toContain("Click Me 2");
-
-      expect(links[2].getAttribute("href")).toBe("/valid-path");
-      expect(links[2].textContent).toContain("Click Me 4");
+      expect(links[0].getAttribute("href")).toBe("/valid-path");
+      expect(links[0].textContent).toContain("Ver más");
     });
 
     it("handles extreme text lengths, special characters, and missing images in cards", async () => {

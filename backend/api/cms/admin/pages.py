@@ -5,6 +5,7 @@ from __future__ import annotations
 import logging
 import uuid
 from datetime import datetime, timezone
+from typing import Any
 
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy import func
@@ -51,6 +52,56 @@ logger = logging.getLogger(__name__)
 router = APIRouter(tags=["cms_v2_pages"])
 
 
+def _sanitize_audit_changes(obj: Any) -> Any:
+    """Convert non-JSON-serializable values (datetime, UUID, etc.) to strings."""
+    from datetime import date
+    from uuid import UUID
+
+    if isinstance(obj, (datetime, date)):
+        return obj.isoformat()
+    if isinstance(obj, UUID):
+        return str(obj)
+    if isinstance(obj, dict):
+        return {k: _sanitize_audit_changes(v) for k, v in obj.items()}
+    if isinstance(obj, (list, tuple)):
+        return [_sanitize_audit_changes(v) for v in obj]
+    return obj
+
+
+def _log_cms_audit(
+    db: Session,
+    user: models.User,
+    action: str,
+    entity_type: str,
+    entity_id: str | None = None,
+    entity_slug: str | None = None,
+    site_key: str | None = None,
+    changes: dict | None = None,
+):
+    try:
+        log_entry = models.AuditLog(
+            actor_persona_id=getattr(user, "persona_id", None) or getattr(user, "id", None),
+            actor_email=getattr(user, "email", None),
+            actor_role=getattr(user, "role", None),
+            action=action,
+            entity_type=entity_type,
+            entity_id=entity_id,
+            entity_slug=entity_slug,
+            site_key=site_key,
+            changes_json=_sanitize_audit_changes(changes) if changes else {},
+        )
+        db.add(log_entry)
+        db.flush()
+    except Exception as exc:
+        logger.warning("CMS Audit logging failed: %s", exc)
+        # Rollback the failed audit insert so the session stays usable
+        # for the caller's own commit (the audit is best-effort).
+        try:
+            db.rollback()
+        except Exception:
+            pass
+
+
 # ── Pages CRUD ───────────────────────────────────────────────────────────────
 
 
@@ -90,6 +141,7 @@ def create_page(
     row = crud.create_cms_page(db, site.id, payload, current_user.id, commit_with_conflict_check=True)
     if row is None:
         raise SlugConflictError()
+    _log_cms_audit(db, current_user, "page.create", "cms_page", str(row.id), row.slug, site_key)
     index_cms_page(db, row)
     return row
 
@@ -124,6 +176,7 @@ def patch_page(
     if payload.publish_at is not None:
         wf = PageWorkflowService(db)
         updated = wf.apply_schedule(updated, publish_at=payload.publish_at, user_id=current_user.id)
+    _log_cms_audit(db, current_user, "page.update", "cms_page", str(updated.id), updated.slug, site_key, payload.model_dump(exclude_unset=True))
     index_cms_page(db, updated)
     return updated
 
@@ -140,6 +193,7 @@ def delete_page(
     row = _get_page_or_404(db, site.id, slug)
     page_id_str = str(row.id)
     crud.delete_cms_page(db, row)
+    _log_cms_audit(db, current_user, "page.delete", "cms_page", page_id_str, slug, site_key)
     delete_from_search_index(db, site_key, "page", page_id_str)
 
 
@@ -164,6 +218,7 @@ def clone_page(
     cloned = crud.clone_cms_page(db, source, new_slug, current_user.id, new_title=payload.new_title)
     if cloned is None:
         raise SlugConflictError()
+    _log_cms_audit(db, current_user, "page.clone", "cms_page", str(cloned.id), cloned.slug, site_key, {"source_slug": slug})
     index_cms_page(db, cloned)
     return cloned
 
@@ -212,9 +267,10 @@ def create_section(
         raise UnsupportedSectionStatusError()
     site = _get_scoped_site_or_404(db, site_key, current_user)
     page = _get_page_or_404(db, site.id, slug)
-    row = crud.create_cms_section(db, page.id, payload, commit_with_conflict_check=True)
+    row = crud.create_cms_section(db, page.id, payload, user_id=current_user.id, commit_with_conflict_check=True)
     if row is None:
         raise SectionConflictError()
+    _log_cms_audit(db, current_user, "section.create", "cms_section", str(row.id), slug, site_key, {"type": row.type, "sort_order": row.sort_order})
     index_cms_page(db, page)
     return row
 
@@ -247,7 +303,8 @@ def patch_section(
             payload.props_json = validate_section_props(effective_type, payload.props_json)
         except ValueError as exc:
             raise CmsValidationError(str(exc)) from exc
-    res = crud.update_cms_section(db, row, payload)
+    res = crud.update_cms_section(db, row, payload, user_id=current_user.id)
+    _log_cms_audit(db, current_user, "section.update", "cms_section", str(res.id), slug, site_key, payload.model_dump(exclude_unset=True))
     index_cms_page(db, page)
     return res
 
@@ -267,6 +324,7 @@ def delete_section(
     if not row:
         raise SectionNotFoundError()
     crud.archive_cms_section(db, row)
+    _log_cms_audit(db, current_user, "section.delete", "cms_section", str(section_id), slug, site_key)
     index_cms_page(db, page)
 
 
@@ -282,6 +340,7 @@ def reorder_sections(
     site = _get_scoped_site_or_404(db, site_key, current_user)
     page = _get_page_or_404(db, site.id, slug)
     reordered = crud.reorder_cms_sections(db, page.id, payload.items)
+    _log_cms_audit(db, current_user, "section.reorder", "cms_section", None, slug, site_key, {"count": len(reordered)})
     index_cms_page(db, page)
     return reordered
 
