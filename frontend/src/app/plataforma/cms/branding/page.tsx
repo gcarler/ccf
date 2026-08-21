@@ -31,11 +31,16 @@ interface CmsMediaItem {
 export default function CmsBrandingPage() {
   const { token, user } = useAuth();
   const canEdit = canEditCms(user?.role);
-  const { logoUrl: currentLogoUrl, logoName: currentLogoName } = useSiteBranding();
+  const {
+    logoUrl: currentLogoUrl,
+    logoName: currentLogoName,
+    tagline: currentTagline,
+  } = useSiteBranding();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [logoUrl, setLogoUrl] = useState("");
   const [logoName, setLogoName] = useState("");
+  const [tagline, setTagline] = useState("");
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [mediaItems, setMediaItems] = useState<CmsMediaItem[]>([]);
@@ -46,7 +51,8 @@ export default function CmsBrandingPage() {
   useEffect(() => {
     setLogoUrl(currentLogoUrl || "");
     setLogoName(currentLogoName || "");
-  }, [currentLogoUrl, currentLogoName]);
+    setTagline(currentTagline || "");
+  }, [currentLogoUrl, currentLogoName, currentTagline]);
 
   // Load media items for picker
   useEffect(() => {
@@ -111,6 +117,7 @@ export default function CmsBrandingPage() {
         ...currentTokens,
         "--site-logo-url": logoUrl,
         "--site-logo-name": logoName,
+        "--site-brand-tagline": tagline,
       };
       await patchCmsTheme(SITE_KEY, activeTheme.id, { tokens_json: updatedTokens }, token);
       toast.success("Branding guardado correctamente");
@@ -268,6 +275,24 @@ export default function CmsBrandingPage() {
                 Texto que acompaña al logo en la navegación
               </p>
             </div>
+
+            {/* Brand Tagline */}
+            <div>
+              <label className="block text-xs font-semibold text-[hsl(var(--text-primary))] mb-1.5">
+                Texto debajo del nombre
+              </label>
+              <input
+                type="text"
+                value={tagline}
+                onChange={(e) => setTagline(e.target.value)}
+                placeholder="Comunidad Cristiana"
+                disabled={!canEdit}
+                className="w-full rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] px-3 py-2 text-xs text-[hsl(var(--text-primary))] placeholder:text-[hsl(var(--text-secondary))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]/50"
+              />
+              <p className="mt-1 text-2xs text-[hsl(var(--text-secondary))]">
+                Subtítulo visible debajo del nombre en la navegación y el footer
+              </p>
+            </div>
           </div>
         </div>
       </div>
@@ -293,7 +318,7 @@ export default function CmsBrandingPage() {
                   {logoName || "Comunidad Cristiana El Faro"}
                 </p>
                 <p className="text-2xs font-semibold uppercase tracking-[0.2em] text-gray-500">
-                  Plataforma
+                  {tagline || "Comunidad Cristiana"}
                 </p>
               </div>
             </div>
