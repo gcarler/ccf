@@ -58,10 +58,12 @@ def _settings_public_base_url() -> str:
     Fix #11: usado por send_campaign_now/broadcast en lugar del query param
     ``public_base_url`` que se eliminó — previene que un admin inyecte dominios
     arbitrarios para phishing via plantillas ``{{qr_url}}``.
+    Orden: ``settings.public_base_url`` → ``settings.frontend_url`` (dominio
+    canónico) → fallback. Antes caía siempre al placeholder ``https://ccf.co``.
     """
     try:
         s = get_settings()
-        return getattr(s, "public_base_url", None) or "https://ccf.co"
+        return (getattr(s, "public_base_url", None) or s.frontend_url or "https://ccf.co").rstrip("/")
     except Exception:
         return "https://ccf.co"
 
@@ -449,12 +451,14 @@ def resend_confirmation(
 
     from backend.services.event_registration_service import _send_confirmation_email
 
+    # El dominio base se resuelve del setting canónico — antes se pasaba ""
+    # y el QR del email reenviado salía como URL relativa (inutilizable).
     _send_confirmation_email(
         db,
         event,
         reg,
         reg.persona,
-        public_base_url="",
+        public_base_url=_settings_public_base_url(),
         qr_token_plain=qr_token_plain,
         cancel_token_plain=cancel_token_plain,
     )

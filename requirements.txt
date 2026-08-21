@@ -31,6 +31,7 @@ pygments>=2.20.0
 duckdb
 # Image optimization
 Pillow>=10.0.0
+qrcode>=7.4.2
 # Async SQLAlchemy (opcional) — instalar para endpoints async con get_db_async
 # asyncpg
 # aiosqlite

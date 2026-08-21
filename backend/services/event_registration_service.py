@@ -22,7 +22,6 @@ from __future__ import annotations
 import datetime as _dt
 import hashlib
 import logging
-import os
 import secrets
 import uuid
 from typing import Optional, Tuple
@@ -31,8 +30,53 @@ from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from backend import models, schemas
+from backend.core.config import get_settings
 
 log = logging.getLogger(__name__)
+
+
+# ── URL pública base (links de QR/verify en emails) ─────────────────────────
+
+
+def resolve_public_base_url() -> str:
+    """URL pública base canónica para links de QR/verify en emails.
+
+    Orden de resolución: ``settings.public_base_url`` (si se configuró) →
+    ``settings.frontend_url`` (dominio canónico del sitio) → fallback. Nunca
+    cae a un dominio distinto del de la iglesia: antes el fallback era
+    ``https://ccf.co`` (placeholder), lo que rompía los links del QR en
+    producción.
+    """
+    try:
+        s = get_settings()
+        return (getattr(s, "public_base_url", None) or s.frontend_url or "https://ccf.co").rstrip("/")
+    except Exception:
+        log.debug("resolve_public_base_url fallback", exc_info=True)
+        return "https://ccf.co"
+
+
+def render_qr_png(content: str, box_size: int = 10, border: int = 2) -> bytes:
+    """Renderiza un QR como PNG (bytes) con la librería ``qrcode``.
+
+    Usado por el endpoint público ``/qr.png`` (imagen embebida en el email
+    de confirmación) y por tests. Requiere ``qrcode`` + Pillow.
+    """
+    import io
+
+    import qrcode
+
+    qr = qrcode.QRCode(
+        version=None,
+        error_correction=qrcode.constants.ERROR_CORRECT_H,
+        box_size=box_size,
+        border=border,
+    )
+    qr.add_data(content)
+    qr.make(fit=True)
+    img = qr.make_image(fill_color="black", back_color="white")
+    buf = io.BytesIO()
+    img.save(buf, format="PNG")
+    return buf.getvalue()
 
 
 # ── Constantes ───────────────────────────────────────────────────────────────
@@ -512,34 +556,36 @@ def _send_confirmation_email(
     if not persona.email:
         return
     try:
-        from html import escape
+        from backend.services.email import render_event_confirmation_email, send_email
 
-        from backend.services.email import send_email
-
+        # El dominio base se resuelve del setting canónico (nunca el
+        # placeholder https://ccf.co) — si el caller no inyectó ``public_base_url``
+        # (p. ej. resend del admin), se usa ``resolve_public_base_url()``.
+        base = (public_base_url or resolve_public_base_url()).rstrip("/")
         qr_link = ""
         cancel_link = ""
+        qr_img_url = ""
         if qr_token_plain:
             # El token de cancelación va embebido en el QR link (plan §4.1):
             # la página pública de ticket lo usa para la auto-cancelación.
             cancel_param = f"&cancel={cancel_token_plain}" if cancel_token_plain else ""
-            qr_link = f"{public_base_url}/public/events/{event.id}/qr?token={qr_token_plain}{cancel_param}".strip()
+            qr_link = f"{base}/public/events/{event.id}/qr?token={qr_token_plain}{cancel_param}".strip()
             if cancel_token_plain:
-                cancel_link = f"{public_base_url}/public/events/{event.id}/cancel?token={cancel_token_plain}".strip()
+                cancel_link = f"{base}/public/events/{event.id}/cancel?token={cancel_token_plain}".strip()
+            # Imagen PNG del QR servida por el backend (hash-bound).
+            qr_img_url = f"{base}/api/public/events/{event.id}/qr.png?token={qr_token_plain}{cancel_param}".strip()
 
         event_date_str = event.event_date.strftime("%d/%m/%Y %H:%M") if event.event_date else "Por confirmar"
         location_str = event.location or "Por confirmar"
-        html = f"""
-        <h2>¡Inscripción confirmada: {escape(event.name)}!</h2>
-        <p>Hola <strong>{escape(persona.first_name or "")}</strong>,</p>
-        <p>Tu inscripción al evento fue confirmada. Guarda este QR para el día del evento:</p>
-        <ul>
-            <li><strong>Fecha:</strong> {escape(event_date_str)}</li>
-            <li><strong>Lugar:</strong> {escape(location_str)}</li>
-        </ul>
-        {f'<p>Tu QR: <a href="{escape(qr_link)}">descargar</a></p>' if qr_link else ""}
-        {f'<p style="font-size:12px;color:#9ca3af;">¿No podrás asistir? <a href="{escape(cancel_link)}">Cancela tu inscripción</a>.</p>' if cancel_link else ""}
-        <p>¡Te esperamos!</p>
-        """
+        html = render_event_confirmation_email(
+            event_name=event.name,
+            persona_first_name=persona.first_name or "",
+            event_date_str=event_date_str,
+            location_str=location_str,
+            qr_link=qr_link,
+            cancel_link=cancel_link,
+            qr_img_url=qr_img_url,
+        )
         send_email(to=persona.email, subject=f"Confirmación: {event.name}", html=html)
     except (OSError, ConnectionError, RuntimeError) as exc:
         log.warning("Failed to send confirmation email for registration %s: %s", reg.id, exc)
@@ -757,19 +803,32 @@ def _promote_first_waitlist(db: Session, event: models.CrmEvent) -> None:
         if next_in_line.persona and next_in_line.persona.email:
             from html import escape
 
-            from backend.services.email import send_email
+            from backend.services.email import render_event_confirmation_email, send_email
 
-            public_base_url = os.environ.get("CCF_PUBLIC_BASE_URL", "https://ccf.co")
-            qr_link = f"{public_base_url}/public/events/{event.id}/qr?token={qr_token_plain}"
-            if cancel_token_plain:
-                qr_link += f"&cancel={cancel_token_plain}"
-            html = f"""
-            <h2>¡Tu inscripción a {escape(event.name)} fue confirmada!</h2>
-            <p>Hola <strong>{escape(next_in_line.persona.first_name or "")}</strong>,</p>
-            <p>Se liberó un cupo. Ya estás confirmado para el evento.</p>
-            <p>Tu QR: <a href="{escape(qr_link)}">ver ticket</a></p>
-            """
-            send_email(to=next_in_line.persona.email, subject=f"Cupo confirmado: {event.name}", html=html)
+            base = resolve_public_base_url()
+            cancel_param = f"&cancel={cancel_token_plain}" if cancel_token_plain else ""
+            qr_link = f"{base}/public/events/{event.id}/qr?token={qr_token_plain}{cancel_param}".strip()
+            qr_img_url = f"{base}/api/public/events/{event.id}/qr.png?token={qr_token_plain}{cancel_param}".strip()
+            cancel_link = (
+                f"{base}/public/events/{event.id}/cancel?token={cancel_token_plain}".strip()
+                if cancel_token_plain
+                else ""
+            )
+            event_date_str = event.event_date.strftime("%d/%m/%Y %H:%M") if event.event_date else "Por confirmar"
+            html = render_event_confirmation_email(
+                event_name=event.name,
+                persona_first_name=next_in_line.persona.first_name or "",
+                event_date_str=event_date_str,
+                location_str=event.location or "Por confirmar",
+                qr_link=qr_link,
+                cancel_link=cancel_link,
+                qr_img_url=qr_img_url,
+            )
+            send_email(
+                to=next_in_line.persona.email,
+                subject=f"Cupo confirmado: {event.name}",
+                html=html,
+            )
     except (OSError, ConnectionError, RuntimeError) as exc:
         log.warning("Failed to send promotion email for reg %s: %s", next_in_line.id, exc)
 

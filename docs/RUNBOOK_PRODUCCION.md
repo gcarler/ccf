@@ -1,6 +1,6 @@
 # Runbook de Operaciones — Plataforma CCF v3.0
 
-**Fecha:** 2026-06-05
+**Fecha:** 2026-08-21 (revisado; última revisión previa: 2026-06-05)
 **Autor:** Equipo de Arquitectura CCF
 **Audiencia:** DevOps, Desarrolladores Backend, Administradores
 
@@ -14,6 +14,7 @@
 4. [Monitoreo y Alertas](#4-monitoreo-y-alertas)
 5. [Procedimientos de Emergencia](#5-procedimientos-de-emergencia)
 6. [Mantenimiento Programado](#6-mantenimiento-programado)
+7. [Flujo de Eventos: Registro → Email QR → Check-in](#7-flujo-de-eventos-registro--email-qr--check-in)
 
 ---
 
@@ -335,6 +336,136 @@ psql -U ccf_user ccf_production -c "SELECT query, calls, total_time FROM pg_stat
 - [ ] Optimización de queries lentas
 - [ ] Actualizar documentación
 - [ ] Auditar seguridad del VPS
+
+---
+
+## 7. Flujo de Eventos: Registro → Email QR → Check-in
+
+> **Veredicto de revisión (2026-08-21):** esta sección se añadió para cerrar la
+> brecha de documentación operativa del flujo de pre-registro de eventos masivos
+> (p.ej. el **Aniversario 40 Años CCF** en `/aniversario40`). Los detalles de
+> diseño viven en `docs/PLAN_PREREGISTRO_EVENTOS_MASIVOS.md` y
+> `docs/AUDITORIA_FORENSE_EVENT_REGISTRATION.md`; aquí está lo que necesita un
+> operador en producción.
+
+### 7.1 Visión del flujo
+
+```
+Anuncio (CMS /aniversario40) ──► /public/events/{id}/register (form dinámico)
+        │  POST /api/public/events/{id}/register   (rate-limited por IP)
+        ▼
+EventRegistration = CONFIRMED (o WAITLIST si capacity_max lleno)
+        │  _issue_qr() → token CCF-EVT- (NUNCA persistido plano; solo sha256 en qr_token_hash)
+        │  _issue_cancel_token() → CCF-CXL- (hash en extras._cancel_token_hash)
+        ▼
+Email corporativo con QR PNG embebido (plantilla render_event_confirmation_email)
+        │  img src = {base}/api/public/events/{id}/qr.png?token=…&cancel=…
+        ▼
+Día del evento: scanner/check-in con require_evangelism:edit
+        │  POST /api/evangelism/events/{id}/sessions/{fecha}/ccf-evt-checkin
+        ▼
+EventAttendance(attended=True, role_at_event)  +  reg → CHECKED_IN
+```
+
+### 7.2 Endpoints involucrados
+
+**Público** (`backend/api/public.py`, prefix `/api/public`):
+
+| Endpoint | Uso | Notas operativas |
+|---|---|---|
+| `GET /events/{id}` | Detalle del evento (ventana de registro, capacidad) | `PUBLIC_EVENT_RATE_LIMIT` |
+| `POST /events/{id}/identify` + `/identify/verify` | Flujo “ya soy parte de CCF” (token single-use) | consume `event_identity_challenges` |
+| `POST /events/{id}/register` | Pre-registro con form dinámico (`form_data`) | Idempotente; validación server-side del `CmsForm` vinculado; hCaptcha si `form.captcha_enabled` |
+| `GET /events/{id}/verify` | Verificación por email (24h) | Token `CCF-VER-` |
+| `GET /events/{id}/ticket` | Ticket público por token QR | **Hash-bound**: busca por `qr_token_hash`, nunca por token plano |
+| `GET /events/{id}/qr.png` | Imagen PNG del QR para el email | `?token=…&cancel=…`; 200 `image/png`; token inválido → 404; status ≠ CONFIRMED/CHECKED_IN → 409 |
+| `GET /events/{id}/status` | Consulta de inscripción por email | No expone PII (correcto por diseño) |
+| `POST /events/{id}/cancel` | Auto-cancelación con token | Token de cancelación expira a las 72h desde `qr_generated_at`; libera el cupo y promueve waitlist |
+
+**Admin / check-in** (`backend/api/evangelism_events/`, requieren `evangelism:edit` + alcance de sede):
+
+| Endpoint | Uso | Notas operativas |
+|---|---|---|
+| `POST /events/{id}/registrations/{reg_id}/resend-confirmation` | Reenviar email con QR | Usa `resolve_public_base_url()` — nunca `""` ni placeholder |
+| `POST /events/{id}/sessions/{fecha}/ccf-evt-checkin` | Check-in por QR de inscripción `CCF-EVT-` | Persiste `role_at_event` (rol contextual); idempotente (`is_duplicate=True`) |
+| `POST /events/{id}/sessions/{fecha}/checkin` | Check-in unificado (`CCF-EVT-`, `CCF-PER-`, `persona_id`, walk-in) | Idempotente por `(event_id, session_date, persona_id)`; evento CANCELLED → 409 |
+
+### 7.3 Configuración de email (`.env`)
+
+| Variable | Valor en prod | Efecto |
+|---|---|---|
+| `smtp_host` / `smtp_port` | `smtp.gmail.com` / `587` | Relay SMTP |
+| `smtp_use_tls` | `True` | STARTTLS obligatorio |
+| `smtp_user` / `smtp_password` | credenciales de app Gmail | AUTH LOGIN (validar con `smtplib` si falla el envío) |
+| `smtp_from_email` / `smtp_from_name` | remitente corporativo | Remitente visible del email |
+| `frontend_url` | `https://ministerioselfaro.org` | **Dominio canónico** |
+| `public_base_url` | *(vacío)* | Si vacío → usa `frontend_url`; **nunca** cae al placeholder `https://ccf.co` |
+| `environment` | `staging`/`production` | El validator fuerza credenciales fuertes; fuera de `local` los emails se envían reales |
+| `stub_comms` | `False` | Si `True` **no sale ningún email** (solo `CommunicationLog`); excepción: `test_email_override` |
+| `test_email_override` | *(vacío)* | Única dirección que recibe email real con `stub_comms=True` |
+
+> **Verificación rápida del dominio de los links QR** (defecto histórico corregido 2026-08-21):
+> ```bash
+> cd /root/ccf && ./venv/bin/python -c "from backend.core.config import get_settings; s=get_settings(); print(s.public_base_url or s.frontend_url)"
+> # Debe imprimir https://ministerioselfaro.org — nunca https://ccf.co
+> ```
+
+### 7.4 Datos de respaldo (PostgreSQL)
+
+- `event_registrations` — `registration_status` (`CONFIRMED`, `WAITLIST`, `CHECKED_IN`, `CANCELLED`), `qr_token_hash` (sha256, el único token persistido), `extras._cancel_token_hash`, `extras._form_data` (respuestas del form dinámico), `source` (`public_form`/…).
+- `event_attendances` — asistencia del día (`attended`, `check_in_at`, `scanned_at`, `role_at_event`).
+- `personas` — upsert por email/phone en el registro público.
+- `crm_events.capacity_max` — aforo; al llenarse los nuevos registros van a **waitlist** y se promueven automáticamente al cancelarse un cupo (`_promote_first_waitlist`, con email propio).
+
+```sql
+-- Cupos ocupados vs aforo (para el Aniversario 40 u otro evento)
+SELECT e.name, e.capacity_max,
+       COUNT(r.id) FILTER (WHERE r.registration_status IN ('CONFIRMED','CHECKED_IN')) AS ocupados,
+       COUNT(r.id) FILTER (WHERE r.registration_status = 'WAITLIST') AS waitlist
+FROM crm_events e
+LEFT JOIN event_registrations r ON r.event_id = e.id AND r.deleted_at IS NULL
+WHERE e.id = '<EVENT_UUID>'
+GROUP BY e.id, e.name, e.capacity_max;
+```
+
+### 7.5 Operaciones comunes
+
+- **Reenviar QR a un inscrito**: endpoint admin `resend-confirmation` (UI del módulo evangelismo). Verifica en el email reenviado que la URL del QR comience con `https://ministerioselfaro.org` (nunca relativa ni `ccf.co`).
+- **Cupo liberado por cancelación**: la fila pasa a `CANCELLED` (no se borra) y el siguiente de la waitlist recibe su email de confirmación con QR automáticamente.
+- **Verificación post-deploy del flujo completo** (smoke):
+  ```bash
+  # 1. Registro público (form con captcha desactivado en dev/test; en prod puede requerir hCaptcha)
+  curl -s -X POST https://ministerioselfaro.org/api/public/events/<ID>/register \
+    -H 'Content-Type: application/json' \
+    -d '{"first_name":"Smoke","last_name":"Test","email":"<TU_CORREO>","form_data":{…}}'
+  # → status CONFIRMED + qr_token (transitorio, solo en la respuesta)
+  # 2. Ticket y PNG del QR
+  curl -s -o /dev/null -w '%{http_code}\n' 'https://ministerioselfaro.org/api/public/events/<ID>/ticket?token=<qr_token>'
+  curl -s -o /dev/null -w '%{http_code}\n' 'https://ministerioselfaro.org/api/public/events/<ID>/qr.png?token=<qr_token>'
+  # 3. Check-in (con JWT de evangelism:edit)
+  curl -s -X POST 'https://ministerioselfaro.org/api/evangelism/events/<ID>/sessions/2026-08-23/ccf-evt-checkin' \
+    -H "Authorization: Bearer <JWT>" -H 'Content-Type: application/json' \
+    -d "{\"qr_token\": \"<qr_token>\"}"
+  # 4. Limpiar el registro de prueba (borrar fila de event_registrations + persona)
+  ```
+
+> **Requisito operativo del usuario de check-in** (verificado en el smoke 2026-08-21):
+> el JWT necesita `evangelism:edit` **y** el usuario debe pertenecer a la **misma sede
+> del evento** (`require_event_access` compara `user.sede_id` con `event.sede_id`
+> y devuelve 404 si difieren; no hay jerarquía de sedes en el modelo actual).
+> Buscar candidato con: `SELECT u.id, u.email FROM auth_users u WHERE u.sede_id = '<SEDE_DEL_EVENTO>' AND u.is_active = true;`
+
+### 7.6 Troubleshooting
+
+| Síntoma | Causa probable | Acción |
+|---|---|---|
+| El email de confirmación no llega | `stub_comms=True`; SMTP caído; credenciales rotas | Verificar `stub_comms`/`test_email_override` en `.env`; `tail -f backend.log` (el envío loguea warning `Failed to send confirmation email`); probar AUTH con `smtplib` |
+| Link del QR apunta a otro dominio o es relativo | `public_base_url`/`frontend_url` mal configurados; `resend_confirmation` con URL base vacía | Verificar sección 7.3; reenviar el QR desde el admin |
+| El QR del email no muestra imagen | Imagen bloqueada por el cliente (URL relativa) o endpoint `qr.png` caído | Verificar `GET /api/public/events/{id}/qr.png` (200 `image/png`); el token se valida hash-bound |
+| `422` al registrar | Form dinámico inválido o `CmsForm` inactivo/eliminado | Validar `form_data` contra los campos del form; verificar `form.is_active` |
+| Check-in devuelve `403` | QR inválido (hash no coincide) o token expirado | El QR expira a los `QR_EXPIRY_DAYS` (365 días) desde `qr_generated_at`; usar `resend-confirmation` |
+| Check-in devuelve `409` | Evento `CANCELLED` o inscripción no activa | Verificar `crm_events.status`; los borrados soft no admiten check-in |
+| Registro va a waitlist sin aviso | `capacity_max` lleno | Promoción automática al cancelar; revisar SQL de 7.4 |
 
 ---
 
