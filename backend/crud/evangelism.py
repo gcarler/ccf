@@ -181,6 +181,11 @@ def create_estrategia(
         dump["clase_raiz"] = (
             dump["clase_raiz"].value if hasattr(dump["clase_raiz"], "value") else dump["clase_raiz"].upper()
         )
+        # The strategy editor uses ``clase_raiz`` as the canonical typology
+        # selector. Keep the runtime typology in sync so Evento Masivo does
+        # not fall back to the relational groups/sessions flow.
+        if "typology" not in dump or dump["typology"] is None:
+            dump["typology"] = dump["clase_raiz"].lower()
     # Map English schema fields to Spanish model columns (via synonym — no field_map needed)
     FIELD_MAP = {
         "name": "nombre",
@@ -262,6 +267,8 @@ def update_estrategia(
         dump["clase_raiz"] = (
             dump["clase_raiz"].value if hasattr(dump["clase_raiz"], "value") else dump["clase_raiz"].upper()
         )
+        if "typology" not in dump or dump["typology"] is None:
+            dump["typology"] = dump["clase_raiz"].lower()
     update_data = {k: v for k, v in dump.items() if k in valid_cols}
     # Agregar synonyms mapeados a sus columnas reales
     for syn_key, col_name in synonym_map.items():
