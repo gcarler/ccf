@@ -896,8 +896,13 @@ export interface VideoEmbedProps {
 
 export interface GalleryMasonryProps {
   title?: string;
+  body?: string;
   columns?: number | string;
   images?: GalleryMasonryImage[];
+  layout?: "masonry" | "carousel" | string;
+  album_url?: string;
+  album_label?: string;
+  autoplay?: boolean;
 }
 
 export interface MapEmbedProps {

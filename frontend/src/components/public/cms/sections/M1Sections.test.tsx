@@ -198,6 +198,26 @@ describe("M1 Public Section Components", () => {
       fireEvent.keyDown(window, { key: "ArrowRight" });
       fireEvent.keyDown(window, { key: "ArrowLeft" });
     });
+
+    it("renders the anniversary carousel and the full album CTA", () => {
+      render(
+        <GalleryMasonrySection
+          section={{
+            ...gallerySection,
+            props_json: {
+              ...gallerySection.props_json,
+              layout: "carousel",
+              album_url: "https://photos.app.goo.gl/example",
+              album_label: "Ver más fotos en Google Fotos",
+            },
+          }}
+        />,
+      );
+
+      expect(screen.getByRole("link", { name: "Ver más fotos en Google Fotos" })).toBeDefined();
+      expect(screen.getByLabelText("Foto anterior")).toBeDefined();
+      expect(screen.getByLabelText("Foto siguiente")).toBeDefined();
+    });
   });
 
   describe("MapEmbedSection", () => {

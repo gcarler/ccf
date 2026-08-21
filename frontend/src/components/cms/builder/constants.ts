@@ -325,6 +325,10 @@ export const SECTION_TEMPLATES: SectionTemplate[] = [
     type: "gallery_masonry",
     props_json: {
       title: "Nuestra Galería",
+      layout: "carousel",
+      album_url: "",
+      album_label: "Ver más fotos",
+      autoplay: false,
       columns: 3,
       images: [
         { url: "", alt: "Imagen 1", caption: "Evento de convención" },
@@ -370,6 +374,10 @@ export const DEFAULT_SECTION_PROPS: Record<string, Record<string, unknown>> = {
   },
   gallery_masonry: {
     title: "Nuestra Galería",
+    layout: "carousel",
+    album_url: "",
+    album_label: "Ver más fotos",
+    autoplay: false,
     columns: 3,
     images: [
       { url: "", alt: "Imagen 1", caption: "Evento de convención" },

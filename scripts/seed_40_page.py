@@ -33,12 +33,12 @@ def seed_40_page():
             return
 
         # Check if page already exists
-        page = db.query(CmsPage).filter_by(site_id=site.id, slug="40").first()
+        page = db.query(CmsPage).filter_by(site_id=site.id, slug="aniversario40").first()
         if not page:
             page = CmsPage(
                 id=uuid.uuid4(),
                 site_id=site.id,
-                slug="40",
+                slug="aniversario40",
                 title="40 Años Iluminando Generaciones",
                 status="draft",
                 locale="es",
@@ -109,10 +109,23 @@ def seed_40_page():
             },
             {
                 "section_key": "galeria",
-                "type": "embed",
+                "type": "gallery_masonry",
                 "sort_order": 3,
                 "props_json": {
-                    "html": "<iframe src='https://photos.app.goo.gl/BN3sDiXAt6aP6tLX8' width='100%' height='600' style='border:none;'></iframe>"
+                    "title": "Galería histórica",
+                    "body": "Momentos que forman parte de nuestra historia. Recorre estas memorias y visita el álbum completo para ver más fotografías.",
+                    "layout": "carousel",
+                    "autoplay": False,
+                    "album_url": "https://photos.app.goo.gl/BN3sDiXAt6aP6tLX8",
+                    "album_label": "Ver más fotos en Google Fotos",
+                    "images": [
+                        {
+                            "url": f"/aniversario40/gallery-{index:02d}.jpg",
+                            "alt": f"Memoria histórica de CCF {index}",
+                            "caption": "Aniversario 40 años CCF",
+                        }
+                        for index in range(1, 21)
+                    ],
                 },
             },
         ]

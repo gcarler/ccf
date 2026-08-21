@@ -1632,6 +1632,48 @@ export default function BuilderSectionInspector({
                   <div className="space-y-2 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 p-3 bg-[hsl(var(--surface-1))]/50 dark:bg-white/[0.02]">
                     <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Galería Masonry</p>
                     <div>
+                      <label className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-1 block">Título</label>
+                      <input
+                        value={safeString(activeSection.props_json?.title)}
+                        onChange={(e) => { const nextProps = { ...asObject(activeSection.props_json), title: e.target.value }; updateSectionPropsLocal(nextProps); }}
+                        onBlur={(e) => saveSectionField("title", e.target.value)}
+                        placeholder="Galería histórica"
+                        className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-2 py-1.5 text-xs"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-1 block">Presentación</label>
+                      <select
+                        value={safeString(activeSection.props_json?.layout) || "masonry"}
+                        onChange={(e) => { const nextProps = { ...asObject(activeSection.props_json), layout: e.target.value }; updateSectionPropsLocal(nextProps); saveSectionProps(nextProps); }}
+                        className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-3 py-2 text-xs"
+                      >
+                        <option value="masonry">Masonry</option>
+                        <option value="carousel">Carrusel</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-1 block">Enlace al álbum completo</label>
+                      <input
+                        value={safeString(activeSection.props_json?.album_url)}
+                        onChange={(e) => { const nextProps = { ...asObject(activeSection.props_json), album_url: e.target.value }; updateSectionPropsLocal(nextProps); }}
+                        onBlur={(e) => saveSectionField("album_url", e.target.value)}
+                        placeholder="https://photos.app.goo.gl/..."
+                        className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-2 py-1.5 text-xs"
+                      />
+                    </div>
+                    {activeSection.props_json?.layout === "carousel" && (
+                      <label className="flex items-center gap-2 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={Boolean(activeSection.props_json?.autoplay)}
+                          onChange={(e) => { const nextProps = { ...asObject(activeSection.props_json), autoplay: e.target.checked }; updateSectionPropsLocal(nextProps); saveSectionProps(nextProps); }}
+                          className="rounded border-[hsl(var(--border))]"
+                        />
+                        Avance automático
+                      </label>
+                    )}
+                    <div>
                       <label className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-1 block">Columnas</label>
                       <select
                         value={safeString(activeSection.props_json?.columns) || "3"}
