@@ -257,6 +257,7 @@ export interface VideoHeroProps {
   cta_label?: string;
   cta_href?: string;
   video_url?: string;
+  full_bleed?: boolean;
 }
 
 export interface RichTextProps {
