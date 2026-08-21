@@ -116,6 +116,7 @@ def seed_40_page():
                     "cta_label": "Registra tu asistencia",
                     "cta_href": register_href,
                     "video_url": "/aniversario40/video-aniversario40.mp4",
+                    "full_bleed": True,
                 },
             },
             {
