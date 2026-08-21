@@ -137,6 +137,21 @@ class TestMcpEvangelismContract:
         assert report["expected_count"] >= 2
         assert report["present"][0]["persona_id"] == str(mass_event["person"].id)
 
+    def test_list_mass_events_scans_light_columns_and_filters_typology(self, monkeypatch, mass_event):
+        import backend.mcp_evangelism as module
+
+        monkeypatch.setattr(module, "SessionLocal", TestingSessionLocal)
+        token = _authenticate(mass_event["admin_id"])
+        try:
+            result = module.list_mass_events(limit=10)
+        finally:
+            auth_context_var.reset(token)
+
+        assert result["total"] == 1
+        assert len(result["items"]) == 1
+        assert result["items"][0]["id"] == str(mass_event["event"].id)
+        assert result["items"][0]["typology"] == "evento_masivo"
+
     def test_register_attendance_reactivates_soft_deleted_row(self, monkeypatch, mass_event, db_session):
         import backend.mcp_evangelism as module
 

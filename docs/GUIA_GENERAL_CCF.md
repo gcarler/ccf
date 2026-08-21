@@ -2,7 +2,7 @@
 
 **Nombre:** Plataforma CCF — Comunidad Cristiana El Faro
 **Tipo de documento:** mapa funcional, arquitectónico y operativo
-**Fecha de revisión del código:** 20 de agosto de 2026
+**Fecha de revisión del código:** 21 de agosto de 2026
 **Fuente principal:** código vigente del repositorio; los documentos de estado se usan como contexto y trazabilidad.
 
 > Esta guía es el punto de entrada para comprender CCF. No reemplaza los contratos detallados de cada módulo ni los runbooks de producción. Cuando exista una diferencia entre un plan histórico y el código actual, debe prevalecer el código, sus pruebas y la configuración de ejecución vigente.
@@ -86,6 +86,12 @@ eventos masivos: usa directamente `CrmEvent` + `EventAttendance`. Su contrato de
 [`MCP_ARQUITECTURA_CCF.md`](MCP_ARQUITECTURA_CCF.md). El host permitido en
 producción para el MCP público sigue siendo `ministerioselfaro.org` (y su
 variante `www`).
+
+Todas las superficies MCP privadas comparten la **misma matriz RBAC que
+REST**: no existe una segunda taxonomía. Los permisos por rol
+(`role_allows_permission`), los granulares (`UsuarioRolModulo` y overrides) y
+la jerarquía se resuelven desde `backend/core/permissions.py`; el detalle
+está en [`MCP_ARQUITECTURA_CCF.md`](MCP_ARQUITECTURA_CCF.md) §3.2.
 
 ### 2.3 Componentes principales
 
@@ -256,11 +262,14 @@ La taxonomía central vive en `backend/core/permissions.py`:
 - `evangelism:read|edit|manage`;
 - `community:read|edit|manage`;
 - `spiritual_life:read|edit|manage`;
+- `support:read|edit|manage`;
+- `analytics:read|manage`;
+- `dashboard:read|manage`;
 - `wiki:read|edit`.
 
 La jerarquía es acumulativa: `manage` incluye `edit` y `read`; `edit` incluye `read`. `study` es un nivel específico de Academia.
 
-Los guards deben salir de la capa central (`require_permission`, `require_module_access` y guards nombrados). No se debe crear una taxonomía paralela dentro de un router.
+Los guards deben salir de la capa central (`require_permission`, `require_module_access` y guards nombrados). No se debe crear una taxonomía paralela dentro de un router. Las superficies MCP privadas usan la misma capa central (`require_mcp_permission` + `role_allows_permission` en `backend/mcp_auth.py`), de modo que un rol sin permisos granulares recibe en MCP exactamente los mismos allowances por rol que en REST; detalle en [`MCP_ARQUITECTURA_CCF.md`](MCP_ARQUITECTURA_CCF.md) §3.2.
 
 ### 6.4 Aislamiento por sede
 
@@ -285,7 +294,9 @@ Excepción editorial documentada: `CmsSite`, páginas, secciones, temas y menús
 
 ```text
 POST /api/v3/auth/login
-POST /api/v3/auth/register
+POST /api/v3/auth/initialize-password
+POST /api/v3/auth/change-password
+GET  /api/v3/auth/check-email
 GET  /api/v3/auth/me
 PATCH /api/v3/auth/me
 POST /api/v3/auth/refresh
@@ -298,6 +309,7 @@ GET  /api/v3/auth/google/callback
 POST /api/v3/auth/forgot-password
 POST /api/v3/auth/reset-password
 POST /api/v3/auth/verify-email
+POST /api/v3/auth/send-verification-email
 ```
 
 ### 7.2 Transporte actual de sesión

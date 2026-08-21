@@ -1,8 +1,8 @@
 # MCP de la plataforma CCF
 
 **Estado:** catálogo MCP completo para 32 módulos, más gateway de descubrimiento
-**Fecha de verificación:** 20 de agosto de 2026
-**Fuente de verdad:** `backend/mcp_public.py`, `backend/mcp_auth.py`, `backend/mcp_evangelism.py`, `backend/mcp_crm.py`, `backend/mcp_academy.py` y `backend/mcp_agenda.py`.
+**Fecha de verificación:** 21 de agosto de 2026
+**Fuente de verdad:** `backend/mcp_public.py`, `backend/mcp_auth.py`, `backend/mcp_evangelism.py`, `backend/mcp_crm.py`, `backend/mcp_academy.py`, `backend/mcp_agenda.py` y `backend/core/permissions.py` (matriz RBAC).
 
 ## 1. Propósito
 
@@ -97,9 +97,49 @@ Las herramientas vuelven a validar el permiso en cada operación:
 | Leer agenda, recursos, participantes y reservas | `spiritual_life:read` |
 | Crear, editar o archivar agenda y reservas | `spiritual_life:edit` |
 
-La jerarquía sigue la de REST: `manage` incluye `edit` y `read`. Los roles
-`admin`/`pastor` conservan el acceso completo a evangelismo y `coordinador`
-recibe lectura y operación, pero no gestión salvo permiso explícito.
+La jerarquía sigue la de REST: `manage` incluye `edit` y `read`. Cada
+herramienta vuelve a resolver el permiso con `require_mcp_permission`,
+que aplica exactamente la misma resolución que el guard REST
+`require_permission` (ver §3.2).
+
+### 3.2 Matriz RBAC compartida (REST ↔ MCP)
+
+La matriz de permisos **por rol** para roles de plataforma sin permisos
+granulares explícitos vive en **una sola función**:
+`role_allows_permission(role, permission)` en `backend/core/permissions.py`.
+
+- **REST:** `require_permission` la usa como fallback cuando el usuario no
+  tiene el permiso granular (`_has_permission` falla) ni es admin.
+- **MCP:** `require_mcp_permission` (`backend/mcp_auth.py`) calcula los scopes
+  del usuario con `_effective_user_scopes`, que combina
+  `get_user_effective_permissions` (rol_plataforma, `UsuarioRolModulo` y
+  `UsuarioPermisoOverride`) con los allowances de `role_allows_permission`
+  aplicados sobre toda la taxonomía `PERMISSIONS`; si aun así no hay match,
+  aplica `role_allows_permission` directamente antes de denegar.
+
+Ambas fronteras leen los permisos granulares de la **misma fuente de verdad**
+(`get_user_effective_permissions`), por lo que jerarquía, grants modulares y
+denegaciones coinciden permiso por permiso. La garantía la cubren
+`tests/test_mcp_auth.py` (`TestMcpRoleMatrixParity` y
+`TestMcpRestParityGranularPermissions`, que comparan REST y MCP sobre toda la
+taxonomía).
+
+Allowances por rol (además de los permisos granulares explícitos en BD):
+
+| Rol | Permisos concedidos por rol | Módulos sin allowance |
+|---|---|---|
+| `admin` / `administrador` | Todos (`system:config`, `profile:manage` y cada `módulo:read/edit/manage`) | — (bypass total) |
+| `pastor` | `crm:*`, `evangelism:*`, `academy:read/study/edit/manage`, `projects:*`, `wiki:*` | CMS, finanzas, soporte, comunidad, etc. |
+| `coordinador` | `evangelism:read/edit`, `academy:read/study/edit/manage`, `projects:*`, `wiki:*` | `evangelism:manage`, `crm:*`, CMS, finanzas, etc. |
+| `docente` | `academy:read/study/edit`, `projects:*`, `wiki:*` | `academy:manage`, `evangelism:*`, `crm:*`, etc. |
+| `estudiante`, `lector`, `miembro`, `aspirante` | `academy:read/study` | Todo lo demás |
+
+Donde `módulo:*` significa `read` + `edit` + `manage`, y la jerarquía sigue
+siendo `manage → edit → read`. Un `coordinador` puede reportar asistencia de
+evangelismo (`evangelism:edit`) pero no crear estrategias ni dividir grupos
+(`evangelism:manage`) sin el permiso granular explícito; un `docente` edita
+contenido académico pero no archiva cursos ni administra estudiantes
+(`academy:manage`).
 
 ## 4. Aislamiento por sede
 
@@ -174,17 +214,62 @@ Por seguridad de agentes:
 - la fuente persistida de esta superficie es `mcp`;
 - la operación es idempotente por la restricción única de asistencia.
 
-## 6. Gestión privada del CMS
+Las filas soft-deleted de la misma clave `(event_id, session_date, persona_id)`
+se **reutilizan y reactivan** (`deleted_at = NULL`) al volver a seleccionar a
+la persona, en lugar de insertar un duplicado que violaría la restricción
+única (la `UniqueConstraint` no considera `deleted_at`). Las filas
+soft-deleted que no se seleccionan permanecen borradas y no se reviven como
+ausentes. Este comportamiento es idéntico al del endpoint REST
+`POST /api/evangelism/attendance/bulk`.
 
-`/mcp/cms` reutiliza el JWT CCF, el permiso `cms:edit`, el aislamiento de
-sitio y las funciones CRUD/workflow del CMS. Sus herramientas permiten listar
-páginas por estado, crear borradores, editar metadatos, gestionar secciones y
-ejecutar acciones del workflow. Crear siempre produce un borrador. Las acciones
-`publish`, `approve`, `unpublish` y `archive` requieren además los roles
-publicadores definidos por CMS.
+## 6. Contrato del MCP público y del CMS privado
 
-No se acepta un token como argumento de una herramienta: la credencial siempre
-viaja en `Authorization: Bearer`.
+El CMS expone dos superficies MCP con contratos distintos, ambas en
+`backend/mcp_public.py`:
+
+- **Pública** (`public_mcp`, montada en `/mcp`): solo lectura del contenido
+  publicado; no requiere JWT.
+- **Privada** (`cms_admin_mcp`, montada en `/mcp/cms` con
+  `authenticated_mcp_app`): gestión editorial con Bearer JWT, `cms:edit` y
+  roles editoriales.
+
+### 6.1 MCP público — contenido publicado (solo lectura)
+
+No requiere autenticación. Lee únicamente contenido publicado del sitio
+público y nunca expone borradores, datos administrativos ni personas. La
+protección de transporte solo acepta los hosts permitidos definidos en
+`backend/mcp_public.py` (dominio canónico `ministerioselfaro.org`, su variante
+`www` y localhost).
+
+| Herramienta | Parámetros | Comportamiento |
+|---|---|---|
+| `list_public_pages` | `site_key` (default `ccf`), `limit` (máx. 100) | Lista páginas publicadas del sitio |
+| `get_public_page` | `slug`, `site_key` | Página publicada con sus secciones, SEO y datos estructurados |
+| `get_public_menu` | `menu_key` (default `main`), `site_key` | Enlaces visibles de un menú publicado |
+| `list_public_posts` | `site_key`, `limit` (máx. 50) | Lista publicaciones y sermones publicados |
+| `get_public_post` | `slug`, `site_key` | Publicación o sermón publicado |
+| `search_public_content` | `query` (mín. 2 caracteres), `site_key`, `limit` (máx. 20) | Busca en títulos y contenido publicado de páginas y posts; devuelve `kind` (`page`/`post`), `slug`, `title` y `href` |
+
+### 6.2 MCP privado — gestión editorial
+
+Reutiliza el JWT CCF, el permiso `cms:edit`, el aislamiento por sitio
+(`_get_scoped_site_or_404`) y las funciones CRUD/workflow del CMS. Crear
+siempre produce un **borrador**; las acciones de publicación exigen además los
+roles publicadores definidos por CMS (`CMS_PUBLISHER_ROLES` =
+`admin`, `coordinador`, `gestor`, `pastor`; el resto de ediciones usa
+`CMS_EDITOR_ROLES`, que suma `docente` y `editor`).
+
+La credencial viaja únicamente en `Authorization: Bearer`; ninguna herramienta
+acepta un token como argumento y todas exigen el contexto de autenticación
+MCP (`ctx`) — sin él se rechaza la operación.
+
+| Herramienta | Parámetros | Comportamiento |
+|---|---|---|
+| `list_manageable_pages` | `site_key`, `limit` (máx. 200) | Lista páginas de todos los estados (borrador, revisión, publicado, archivado) del sitio |
+| `create_public_page` | `slug`, `title`, `site_key`, `seo_json` | Normaliza el slug (`_slugify`), valida duplicados (`SlugConflictError`) y crea un borrador; nunca publica automáticamente |
+| `update_public_page` | `slug`, `site_key`, `new_slug`, `title`, `seo_json` | Edita metadatos (título, SEO, slug) sin cambiar el estado de publicación; valida duplicados de slug |
+| `upsert_public_page_section` | `slug`, `section_type`, `props_json`, `site_key`, `section_id` (opcional), `sort_order`, `is_visible` | Valida el tipo contra el catálogo (`get_allowed_section_types`) y las props contra `validate_section_props`; con `section_id` actualiza la sección existente (un UUID malformado se rechaza con `ValueError` controlado) y sin él la crea |
+| `publish_public_page` | `slug`, `action` (`publish`, `unpublish`, `archive`, `revert_draft`, `submit_review`, `approve`), `site_key`, `notes` | Ejecuta la transición del workflow (`PageWorkflowService`); `publish`, `unpublish`, `archive` y `approve` exigen rol publicador; reindexa la página o la retira del índice de búsqueda según el estado resultante |
 
 ## 7. Contrato del MCP CRM
 
@@ -269,7 +354,7 @@ Cada nuevo MCP o módulo de herramientas debe:
 Para revisar la superficie MCP sin iniciar un cliente externo:
 
 ```bash
-./venv/bin/python -m pytest -q -o addopts='' tests/test_mcp_evangelism.py tests/test_mcp_crm.py tests/test_mcp_academy.py tests/test_mcp_agenda.py
+./venv/bin/python -m pytest -q -o addopts='' tests/test_mcp_auth.py tests/test_mcp_evangelism.py tests/test_mcp_crm.py tests/test_mcp_academy.py tests/test_mcp_agenda.py tests/test_mcp_platform.py
 ./venv/bin/python -m pytest -q -o addopts='' tests/test_events_participantes_full.py
 ```
 
