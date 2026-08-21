@@ -59,6 +59,10 @@ PAGE_SLUG = "pastors"
 MENU_KEY = "main"
 THEME_NAME = "Tema institucional CCF"
 THEME_TOKENS = {
+    # Public brand copy is owned by CMS v2. Navbar and footer consume this
+    # token; keep a real site value so they never fall back to "Mi Comunidad"
+    # after a fresh seed or theme repair.
+    "--site-logo-name": "Comunidad Cristiana El Faro",
     "--site-background": "#f8f9ff",
     "--site-on-background": "#101828",
     "--site-surface": "#ffffff",
