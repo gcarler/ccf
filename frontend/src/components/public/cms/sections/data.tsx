@@ -164,9 +164,10 @@ export function TimelineSection({ section }: { section: CmsSection<"timeline"> }
   const p = asProps(props);
   const title = val(p, "title", "");
   const items = asItems(p) as Array<{ year?: string; title?: string; body?: string }>;
+  const fullBleed = Boolean(p.full_bleed);
 
   return (
-    <section className="ccf-section-panel p-7 md:p-12 lg:p-14" style={{ background: "var(--site-surface-container-low)" }}>
+    <section className={`ccf-section-panel p-7 md:p-12 lg:p-14 ${fullBleed ? "relative left-1/2 w-screen -translate-x-1/2 rounded-none" : ""}`} style={{ background: "var(--site-surface-container-low)" }}>
       {title && <h2 className="text-2xl md:text-3xl font-black tracking-tight mb-10 md:mb-12" style={{ color: "var(--site-on-surface)" }}>{title}</h2>}
       <div className="relative">
         <div className="absolute left-6 top-0 bottom-0 w-0.5" style={{ background: "var(--site-primary)", opacity: 0.3 }} />

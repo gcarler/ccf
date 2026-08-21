@@ -19,9 +19,10 @@ export function RichTextSection({ section }: { section: CmsSection<"rich_text"> 
   const body = val(p, "body", "");
   const ctaLabel = val(p, "cta_label", "");
   const ctaHref = val(p, "cta_href", "/");
+  const fullBleed = Boolean(p.full_bleed);
 
   return (
-    <section className="ccf-section-panel p-7 md:p-12 lg:p-14" style={{ background: "var(--site-surface-container-low)" }}>
+    <section className={`ccf-section-panel p-7 md:p-12 lg:p-14 ${fullBleed ? "relative left-1/2 w-screen -translate-x-1/2 rounded-none" : ""}`} style={{ background: "var(--site-surface-container-low)" }}>
       {title && (
         <h2 className="text-2xl md:text-3xl font-black tracking-tight mb-4" style={{ color: "var(--site-on-surface)" }}>
           {title}

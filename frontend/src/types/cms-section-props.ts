@@ -560,11 +560,13 @@ export interface ImageTextProps {
   cta_label?: string;
   cta_href?: string;
   image_side?: string;
+  full_bleed?: boolean;
 }
 
 export interface TimelineProps {
   title?: string;
   items?: TimelineEntryItem[];
+  full_bleed?: boolean;
 }
 
 export interface IconGridProps {
@@ -732,6 +734,7 @@ export interface ContactFormProps {
   success_message?: string;
   action_url?: string;
   reset_label?: string;
+  full_bleed?: boolean;
 }
 
 export interface PrayerFormProps {

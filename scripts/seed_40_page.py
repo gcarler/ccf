@@ -138,6 +138,7 @@ def seed_40_page():
                     ),
                     "cta_label": "Ver todos los eventos",
                     "cta_href": "/eventos",
+                    "full_bleed": True,
                 },
             },
             {
@@ -148,6 +149,7 @@ def seed_40_page():
                 "sort_order": 2,
                 "props_json": {
                     "title": "40 Años de Fidelidad",
+                    "full_bleed": True,
                     "items": [
                         {
                             "year": "1986",
@@ -191,6 +193,7 @@ def seed_40_page():
                 "sort_order": 3,
                 "props_json": {
                     "title": "¿Cómo ha transformado Dios tu vida en El Faro?",
+                    "full_bleed": True,
                     "subtitle": "Comparte tu testimonio. Tu historia es parte de nuestra historia.",
                     "name_label": "Tu nombre",
                     "name_placeholder": "Tu nombre",
