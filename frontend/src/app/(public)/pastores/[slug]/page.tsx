@@ -1,13 +1,15 @@
 'use client';
 
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
 import { ArrowLeft, Quote, BookOpen, Cross, Sparkles, Instagram, Heart } from 'lucide-react';
 import { SITE_NAME } from '@/lib/site-config';
 import ShareButtons from '@/components/public/ShareButtons';
+import { getPublicPastoralTeam, type PastoralProfile } from '@/lib/cms/v2';
 import { useCmsV2Page } from '@/hooks/useCmsV2Page';
+import { SITE_KEY } from '@/lib/site-config';
 import { sanitizeCmsHtml } from '@/lib/cms/sanitize';
 
 function getString(props: Record<string, unknown> | undefined, key: string): string {
@@ -49,12 +51,25 @@ export default function PastorDetailPage() {
     const pastorsPage = useCmsV2Page('pastors');
     const pastorsCms = pastorsPage?.blocks?.pastors;
     const cms = pastorsPage?.blocks?.detail_template as Record<string, unknown> | undefined;
-    const pastor = useMemo(() => {
+    const [apiPastors, setApiPastors] = useState<PastoralProfile[]>([]);
+    const [apiLoading, setApiLoading] = useState(true);
+
+    useEffect(() => {
+        getPublicPastoralTeam(SITE_KEY)
+            .then((data) => setApiPastors(Array.isArray(data) ? data : []))
+            .catch(() => setApiPastors([]))
+            .finally(() => setApiLoading(false));
+    }, []);
+
+    const pastor = useMemo((): (CmsPastor & Partial<PastoralProfile>) | null => {
+        const apiPastor = apiPastors.find((profile) => profile.slug === slug);
+        if (apiPastor) return apiPastor as CmsPastor & Partial<PastoralProfile>;
+
         const list = (pastorsCms as unknown as { pastors?: CmsPastor[] } | null)?.pastors;
         if (!Array.isArray(list)) return null;
         return list.find(p => p.slug === slug) || null;
-    }, [pastorsCms, slug]);
-    if (!pastorsCms) {
+    }, [apiPastors, pastorsCms, slug]);
+    if (!pastorsCms || apiLoading) {
         return (
             <div className="min-h-screen bg-[hsl(var(--bg-primary))] dark:bg-[#0b0d11] flex items-center justify-center pt-[88px]">
                 <div className="w-10 h-10 rounded-full border-2 border-[hsl(var(--primary))] border-t-transparent animate-spin" />
