@@ -279,6 +279,7 @@ class ContactFormProps(BaseModel):
     action_url: str = "/public/contact"
     reset_label: str = "Enviar otro mensaje"
     full_bleed: bool = False
+    split_layout: bool = False
 
 
 class PrayerFormProps(BaseModel):
