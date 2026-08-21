@@ -190,7 +190,7 @@ def seed_40_page():
                 # schema de ``contact_form`` descarta (se habrían borrado al
                 # editar desde el builder). ``subtitle`` es el contrato.
                 "type": "contact_form",
-                "sort_order": 3,
+                "sort_order": 4,
                 "props_json": {
                     "title": "¿Cómo ha transformado Dios tu vida en El Faro?",
                     "full_bleed": True,
@@ -212,7 +212,7 @@ def seed_40_page():
             {
                 "section_key": "galeria",
                 "type": "gallery_masonry",
-                "sort_order": 4,
+                "sort_order": 3,
                 "props_json": {
                     "title": "Galería histórica",
                     "body": "Momentos que forman parte de nuestra historia. Recorre estas memorias y visita el álbum completo para ver más fotografías.",
