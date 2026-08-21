@@ -182,7 +182,7 @@ def main() -> int:
         for section in sections:
             props = section.props_json or {}
             if section.section_key == "hero":
-                desired = photo_urls.get("martina-herrera")
+                desired = photo_urls.get("luis-ricardo-meza")
                 if desired and props.get("bg_image") != desired:
                     props["bg_image"] = desired
                     if props.get("content"):
