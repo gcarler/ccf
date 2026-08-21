@@ -324,10 +324,23 @@ def _build_pages(media_find: Any) -> dict[str, list[dict[str, Any]]]:
             {"value": "+500", "label": "Familias"},
             {"value": "3", "label": "Sedes"},
         ],
-        "vision_title": "¿A dónde vamos?",
-        "vision_text": "Ser una comunidad de fe que transforma vidas, familias y ciudades a través del poder del Evangelio.",
-        "mision_title": "¿Por qué existimos?",
-        "mision_text": "Guiar, equipar y movilizar a cada persona mediante la enseñanza bíblica profunda, el compañerismo genuino y el servicio desinteresado.",
+        "vision_title": "Nuestra visión",
+        "vision_text": (
+            "Seremos una comunidad de fe donde el amor y el poder de Dios restauren vidas y familias, "
+            "levantando generaciones apasionadas por Cristo, firmes en Su Palabra y llenas del Espíritu Santo. "
+            "Formaremos creyentes con un carácter sólido y una fe inquebrantable, capacitados para transformar su "
+            "entorno y ejercer una influencia sobrenatural en cada esfera de la sociedad. "
+            "Nuestra misión es encender corazones con la verdad del Evangelio y expandir el Reino de Dios con "
+            "autoridad, gracia y compasión."
+        ),
+        "mision_title": "Nuestra misión",
+        "mision_text": (
+            "Manifestar y expandir el Reino de Dios en cada esfera de la sociedad, llevando el amor inagotable del "
+            "Padre, el poder transformador del Espíritu Santo y la verdad eterna de Su Palabra a todas las naciones. "
+            "Nos comprometemos a cumplir la Gran Comisión (Mateo 28:19), formando discípulos que vivan en obediencia "
+            "a Cristo, sean bautizados en Su nombre y reflejen Su gloria, para que el mundo sea alcanzado, restaurado "
+            "y reconciliado con Dios."
+        ),
         "founder_label": "Nuestros Pastores Principales",
         "founder_title": "Un llamado a construir",
         "founder_title_accent": "una familia de fe",
@@ -369,7 +382,7 @@ def _build_pages(media_find: Any) -> dict[str, list[dict[str, Any]]]:
             },
         ],
         "quote_text": "La luz que encontramos en CCF no es para guardarla — es para guiar a otros que aún caminan en la oscuridad.",
-        "quote_author": "Pastor Histar Ariza Herrera",
+        "quote_author": "Pastor Luis Ricardo Meza Gutiérrez",
         "quote_subtitle": "Comunidad Cristiana CCF",
         "cta_title": "¿Listo para ser parte?",
         "cta_desc": "Ven a conocernos. Tenemos puertas abiertas y un lugar reservado para ti y tu familia.",
