@@ -137,6 +137,58 @@ class TestMcpEvangelismContract:
         assert report["expected_count"] >= 2
         assert report["present"][0]["persona_id"] == str(mass_event["person"].id)
 
+    def test_register_attendance_reactivates_soft_deleted_row(self, monkeypatch, mass_event, db_session):
+        import backend.mcp_evangelism as module
+
+        monkeypatch.setattr(module, "SessionLocal", TestingSessionLocal)
+        event = mass_event["event"]
+        person = mass_event["person"]
+        session_date = date(2026, 8, 20)
+
+        # Fila soft-deleted para la misma terna (evento, fecha, persona): la
+        # UniqueConstraint(event_id, session_date, persona_id) no considera
+        # deleted_at, así que debe reutilizarse en vez de reventar con
+        # IntegrityError (regresión Hallazgo 2).
+        existing = models.EventAttendance(
+            id=uuid.uuid4(),
+            event_id=event.id,
+            session_date=session_date,
+            persona_id=person.id,
+            attended=True,
+            status="present",
+            source="manual",
+            deleted_at=datetime.now(timezone.utc),
+        )
+        db_session.add(existing)
+        db_session.commit()
+
+        token = _authenticate(mass_event["admin_id"])
+        try:
+            result = module.register_mass_event_attendance(
+                event_id=event.id,
+                session_date=session_date,
+                persona_ids=[person.id],
+            )
+        finally:
+            auth_context_var.reset(token)
+
+        assert result["status"] == "success"
+        assert result["created"] == 0  # reutilizó la fila, no insertó duplicado
+
+        db_session.expire_all()
+        rows = (
+            db_session.query(models.EventAttendance)
+            .filter(
+                models.EventAttendance.event_id == event.id,
+                models.EventAttendance.session_date == session_date,
+                models.EventAttendance.persona_id == person.id,
+            )
+            .all()
+        )
+        assert len(rows) == 1
+        assert rows[0].deleted_at is None
+        assert rows[0].attended is True
+
     def test_empty_selection_requires_explicit_confirmation(self, monkeypatch, mass_event):
         import backend.mcp_evangelism as module
 

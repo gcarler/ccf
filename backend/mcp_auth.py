@@ -21,9 +21,11 @@ from backend import models
 from backend.core.config import get_settings
 from backend.core.database import SessionLocal
 from backend.core.permissions import (
+    PERMISSIONS,
     _has_permission,
     get_user_effective_permissions,
     normalize_role,
+    role_allows_permission,
 )
 
 settings = get_settings()
@@ -56,7 +58,7 @@ class CcfJwtTokenVerifier(TokenVerifier):
             if not user:
                 return None
 
-            scopes = _effective_evangelism_scopes(db, user)
+            scopes = _effective_user_scopes(db, user)
             expires_at = payload.get("exp")
             return AccessToken(
                 token=token,
@@ -77,23 +79,20 @@ def _user_role(user: Any) -> str:
     return role
 
 
-def _effective_evangelism_scopes(db: Session, user: Any) -> set[str]:
-    """Calcula scopes MCP compatibles con los allowances REST canónicos."""
+def _effective_user_scopes(db: Session, user: Any) -> set[str]:
+    """Calcula scopes MCP del usuario autenticado.
+
+    Combina los permisos efectivos (rol_plataforma, roles modulares y
+    overrides) con los allowances por rol que REST concede vía
+    ``role_allows_permission``, de modo que ambas superficies resuelvan la
+    misma matriz RBAC para todos los módulos (evangelismo, CRM, academia,
+    proyectos, wiki, etc.).
+    """
     role = _user_role(user)
     permissions = set(get_user_effective_permissions(db, user).keys())
-    if role in {"admin", "administrador", "pastor"}:
-        permissions.update(
-            {
-                "evangelism:read",
-                "evangelism:edit",
-                "evangelism:manage",
-                "crm:read",
-                "crm:edit",
-                "crm:manage",
-            }
-        )
-    elif role == "coordinador":
-        permissions.update({"evangelism:read", "evangelism:edit"})
+    for permission in PERMISSIONS:
+        if role_allows_permission(role, permission):
+            permissions.add(permission)
     return permissions
 
 
@@ -122,8 +121,11 @@ def get_mcp_current_user(db: Session) -> models.Usuario:
 
 def require_mcp_permission(db: Session, user: models.Usuario, permission: str) -> None:
     """Aplica la misma jerarquía RBAC que los endpoints REST."""
-    if not _has_permission(_user_role(user), _effective_evangelism_scopes(db, user), permission):
-        raise PermissionError(f"Permisos insuficientes. Se requiere: {permission}")
+    role = _user_role(user)
+    if not _has_permission(role, _effective_user_scopes(db, user), permission):
+        # Allowance por rol (misma matriz que require_permission en REST).
+        if not role_allows_permission(role, permission):
+            raise PermissionError(f"Permisos insuficientes. Se requiere: {permission}")
 
 
 def authenticated_mcp_app(mcp_server):
