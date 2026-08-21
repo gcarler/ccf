@@ -606,6 +606,19 @@ class GalleryProps(_PermissiveProps):
     items: List[GalleryItem] = []
 
 
+class GalleryMasonryProps(_PermissiveProps):
+    """Gallery block with an optional horizontal carousel presentation."""
+
+    title: str = ""
+    body: str = ""
+    columns: int = 3
+    images: List[GalleryItem] = []
+    layout: str = "masonry"
+    album_url: str = ""
+    album_label: str = "Ver más fotos"
+    autoplay: bool = False
+
+
 class FaqItem(BaseModel):
     model_config = {"extra": "ignore"}
     q: Optional[str] = None
@@ -933,6 +946,7 @@ SECTION_PROPS_SCHEMAS: Dict[str, type[BaseModel]] = {
     "cards": CardsProps,
     "cta_banner": CtaBannerProps,
     "gallery": GalleryProps,
+    "gallery_masonry": GalleryMasonryProps,
     "faq": FaqProps,
     "embed": EmbedProps,
     "testimonials": TestimonialsProps,
