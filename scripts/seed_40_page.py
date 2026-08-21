@@ -194,6 +194,7 @@ def seed_40_page():
                 "props_json": {
                     "title": "¿Cómo ha transformado Dios tu vida en El Faro?",
                     "full_bleed": True,
+                    "split_layout": True,
                     "subtitle": "Comparte tu testimonio. Tu historia es parte de nuestra historia.",
                     "name_label": "Tu nombre",
                     "name_placeholder": "Tu nombre",

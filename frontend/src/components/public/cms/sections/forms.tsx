@@ -68,6 +68,7 @@ export function ContactFormSection({ section }: { section: CmsSection<"contact_f
   const actionUrl = val(p, "action_url", "/public/contact");
   const resetLabel = val(p, "reset_label", "Enviar otro mensaje");
   const fullBleed = Boolean(p.full_bleed);
+  const splitLayout = Boolean(p.split_layout);
   const [status, setStatus] = useState<"idle" | "submitting" | "success" | "error">("idle");
   const [error, setError] = useState<string | null>(null);
 
@@ -116,16 +117,20 @@ export function ContactFormSection({ section }: { section: CmsSection<"contact_f
 
   return (
     <section className={`ccf-section-panel p-7 md:p-12 lg:p-14 ${fullBleed ? "relative left-1/2 w-screen -translate-x-1/2 rounded-none" : ""}`} style={{ background: "var(--site-surface-container-low)" }}>
-      {title && <h2 className="text-2xl md:text-3xl font-black tracking-tight" style={{ color: "var(--site-on-surface)" }}>{title}</h2>}
-      {subtitle && <p className="mt-3 text-base" style={{ color: "var(--site-on-surface-variant)" }}>{subtitle}</p>}
-      {status === "success" ? (
-        <FormSuccess
-          message={val(p, "success_message", "Gracias. Te contactaremos pronto.")}
-          resetLabel={resetLabel}
-          onReset={() => setStatus("idle")}
-        />
-      ) : (
-        <form onSubmit={handleSubmit} className="mt-8 space-y-5 max-w-xl">
+      <div className={splitLayout ? "grid gap-10 md:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] md:items-start md:gap-16" : ""}>
+        <div>
+          {title && <h2 className="text-2xl md:text-3xl font-black tracking-tight" style={{ color: "var(--site-on-surface)" }}>{title}</h2>}
+          {subtitle && <p className="mt-3 text-base" style={{ color: "var(--site-on-surface-variant)" }}>{subtitle}</p>}
+        </div>
+        <div>
+        {status === "success" ? (
+          <FormSuccess
+            message={val(p, "success_message", "Gracias. Te contactaremos pronto.")}
+            resetLabel={resetLabel}
+            onReset={() => setStatus("idle")}
+          />
+        ) : (
+        <form onSubmit={handleSubmit} className={`${splitLayout ? "mt-0 max-w-none" : "mt-8 max-w-xl"} space-y-5`}>
           <div className="space-y-2">
             <FieldLabel htmlFor="cms-contact-full-name" icon={<User size={15} />}>{val(p, "name_label", "Nombre completo")}</FieldLabel>
             <input id="cms-contact-full-name" name="full_name" required minLength={2} maxLength={160} type="text" placeholder={val(p, "name_placeholder", "Tu nombre")} autoComplete="name" className={inputClass} style={inputStyle()} />
@@ -148,7 +153,9 @@ export function ContactFormSection({ section }: { section: CmsSection<"contact_f
           {status === "error" && <p role="alert" aria-live="assertive" className="text-sm font-semibold text-[hsl(var(--destructive))]">{error}</p>}
           <SubmitButton submitting={status === "submitting"} label={val(p, "submit_label", "Enviar mensaje y conectar")} />
         </form>
-      )}
+        )}
+        </div>
+      </div>
     </section>
   );
 }

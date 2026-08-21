@@ -735,6 +735,7 @@ export interface ContactFormProps {
   action_url?: string;
   reset_label?: string;
   full_bleed?: boolean;
+  split_layout?: boolean;
 }
 
 export interface PrayerFormProps {
