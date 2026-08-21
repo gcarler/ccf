@@ -61,6 +61,13 @@ class Settings(BaseSettings):
     smtp_from_name: str = Field(default="CCF Ministerio")
     smtp_use_tls: bool = Field(default=True)
     frontend_url: str = Field(default="http://localhost:3000")
+    # URL pública base para links de QR/verify en emails. Si se deja vacía se
+    # usa ``frontend_url`` (dominio canónico); nunca cae a dominios ajenos.
+    public_base_url: str = Field(
+        default="",
+        description="Base URL pública para links de QR/verify en emails (vacío → frontend_url).",
+        validation_alias=AliasChoices("CCF_PUBLIC_BASE_URL", "public_base_url"),
+    )
 
     # Stub / Mock mode — bloquea comunicaciones externas (email, SMS, WhatsApp)
     # True = ningún mensaje sale al exterior (solo se registra en CommunicationLog)

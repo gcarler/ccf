@@ -343,6 +343,73 @@ def render_reset_password(token: str, frontend_url: str | None = None) -> tuple[
     return subject, _brand_wrap(body)
 
 
+def render_event_confirmation_email(
+    *,
+    event_name: str,
+    persona_first_name: str,
+    event_date_str: str,
+    location_str: str,
+    qr_link: str,
+    cancel_link: str = "",
+    qr_img_url: str = "",
+) -> str:
+    """Renderiza el email de confirmación de inscripción con QR embebido.
+
+    Usa el layout corporativo (``_brand_wrap``). El QR va como imagen
+    servida por el backend (``qr_img_url``) — funciona en Gmail/Outlook,
+    a diferencia de un data-URI. ``qr_link`` es el enlace al ticket.
+    """
+    body = f"""\
+<h2 style="font-size:22px;font-weight:800;color:{_CCF_DARK};margin:0 0 6px 0;letter-spacing:-0.3px;">
+  &iexcl;Inscripci&oacute;n confirmada: {escape(event_name)}!
+</h2>
+<p style="font-size:14px;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:3px;margin:0 0 24px 0;">
+  Tu c&oacute;digo QR de ingreso
+</p>
+<p style="font-size:16px;color:#374151;line-height:1.7;margin:0 0 20px 0;">
+  Hola <strong style="color:{_CCF_DARK};">{escape(persona_first_name)}</strong>,
+  tu inscripci&oacute;n al evento fue confirmada. Guarda tu c&oacute;digo QR para presentarlo
+  el d&iacute;a del evento:
+</p>
+<table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 0 24px 0;background:#f8fafc;border:1px solid #e5e7eb;border-radius:12px;">
+  <tr>
+    <td style="padding:16px 20px;font-size:14px;color:#374151;line-height:1.8;">
+      <strong style="color:{_CCF_DARK};">Fecha:</strong> {escape(event_date_str)}<br/>
+      <strong style="color:{_CCF_DARK};">Lugar:</strong> {escape(location_str)}
+    </td>
+  </tr>
+</table>
+{qr_img_block(qr_img_url)}
+<table cellpadding="0" cellspacing="0" style="margin:28px 0 8px 0;">
+  <tr>
+    <td style="background:{_CCF_BLUE};border-radius:10px;padding:14px 36px;text-align:center;">
+      <a href="{escape(qr_link)}" style="color:#ffffff;font-size:14px;font-weight:700;text-decoration:none;letter-spacing:2px;text-transform:uppercase;display:inline-block;">
+        Abrir mi c&oacute;digo QR &rarr;
+      </a>
+    </td>
+  </tr>
+</table>
+{f'<p style="font-size:13px;color:#9ca3af;margin:4px 0 0 0;line-height:1.6;">Si el bot&oacute;n no funciona, copia este enlace:<br/><a href="{escape(qr_link)}" style="color:{_CCF_BLUE};word-break:break-all;text-decoration:none;">{escape(qr_link)}</a></p>' if qr_link else ""}
+{f'<p style="font-size:12px;color:#9ca3af;margin:16px 0 0 0;">\u00bfNo podr\u00e1s asistir? <a href="{escape(cancel_link)}" style="color:#9ca3af;">Cancela tu inscripci&oacute;n</a> para liberar tu cupo.</p>' if cancel_link else ""}
+"""
+    return _brand_wrap(body)
+
+
+def qr_img_block(qr_img_url: str) -> str:
+    """Bloque visual del QR como imagen (vacío si no hay URL)."""
+    if not qr_img_url:
+        return ""
+    return f"""\
+<table role="presentation" cellpadding="0" cellspacing="0" style="margin:28px 0 0 0;">
+  <tr>
+    <td style="background:#f4f6f9;border:1px solid #e5e7eb;border-radius:16px;padding:20px;text-align:center;">
+      <img src="{escape(qr_img_url)}" alt="Código QR de ingreso" width="200" height="200" style="width:200px;height:200px;border-radius:8px;display:block;margin:0 auto;" />
+      <p style="margin:14px 0 0 0;font-size:13px;color:#6b7280;line-height:1.6;">Escanea este c&oacute;digo en el ingreso. No lo compartas con terceros.</p>
+    </td>
+  </tr>
+</table>"""
+
+
 def render_task_assignment_email(
     *,
     task_title: str,

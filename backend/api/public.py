@@ -4,7 +4,7 @@ import uuid
 from datetime import datetime
 from typing import Any, Optional
 
-from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile
+from fastapi import APIRouter, Depends, File, HTTPException, Query, Response, UploadFile
 from pydantic import BaseModel, EmailStr, Field
 from sqlalchemy import func, or_
 from sqlalchemy.exc import IntegrityError
@@ -470,10 +470,15 @@ def _public_event_or_404(db: Session, event_id):
 
 
 def _settings_public_base_url() -> str:
-    """Resuelve la URL pública base para links de QR/verify (configurable)."""
+    """Resuelve la URL pública base para links de QR/verify (configurable).
+
+    Orden: ``settings.public_base_url`` → ``settings.frontend_url`` (dominio
+    canónico) → fallback. Antes caía siempre a ``https://ccf.co`` (placeholder),
+    rompiendo los links del QR en producción.
+    """
     try:
         s = get_settings()
-        return getattr(s, "public_base_url", None) or "https://ccf.co"
+        return (getattr(s, "public_base_url", None) or s.frontend_url or "https://ccf.co").rstrip("/")
     except Exception:
         return "https://ccf.co"
 
@@ -783,6 +788,45 @@ def public_register_for_event(
         persona,
         qr_token_override=qr_token_plain,
         cancel_token_override=cancel_token_plain,
+    )
+
+
+@router.get(
+    "/events/{event_id}/qr.png",
+    response_class=Response,
+    dependencies=[Depends(rate_limiter(limit=PUBLIC_EVENT_RATE_LIMIT, window_seconds=60))],
+)
+def public_event_qr_png(
+    event_id: uuid.UUID,
+    token: str = Query(..., min_length=10, max_length=300),
+    cancel: Optional[str] = Query(None, min_length=10, max_length=300),
+    db: Session = Depends(get_db),
+):
+    """Imagen PNG del código QR (se embebe en el email de confirmación).
+
+    Valida el token contra ``qr_token_hash`` (hash-bound, igual que
+    ``/ticket``) y codifica el mismo contenido que el QR del ticket:
+    ``{base}/public/events/{event_id}/qr?token=...&cancel=...``.
+    El token plano en la query equivale al que el QR ya codifica.
+    """
+    from backend.services.event_registration_service import render_qr_png
+
+    event = _public_event_or_404(db, event_id)
+    reg = find_by_qr_token(db, token)
+    if not reg or reg.event_id != event.id:
+        raise HTTPException(status_code=404, detail="Ticket no encontrado")
+    if reg.registration_status not in {"CONFIRMED", "CHECKED_IN"}:
+        raise HTTPException(
+            status_code=409,
+            detail=f"Ticket no activo (estado: {reg.registration_status})",
+        )
+    cancel_param = f"&cancel={cancel}" if cancel else ""
+    qr_content = f"{_settings_public_base_url()}/public/events/{event.id}/qr?token={token}{cancel_param}"
+    png = render_qr_png(qr_content)
+    return Response(
+        content=png,
+        media_type="image/png",
+        headers={"Cache-Control": "private, max-age=300"},
     )
 
 

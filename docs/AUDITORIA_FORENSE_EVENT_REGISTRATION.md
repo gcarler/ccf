@@ -1,6 +1,6 @@
 # Auditoría Forense — Inscripción Pública a Eventos
 
-**Fecha:** 2026-08-09
+**Fecha:** 2026-08-09 (revisado 2026-08-21)
 
 ---
 
@@ -141,3 +141,17 @@ except (OSError, ConnectionError, RuntimeError) as exc:
 - `ConnectionError`: cubre fallos de red subyacentes
 - `RuntimeError`: cubre fallos de formato de plantilla
 - NO captura: `AttributeError`, `NameError`, `ImportError` (bugs de programación)
+
+---
+
+## Follow-up 2026-08-21 — Email de confirmación con QR (3 defectos corregidos)
+
+La auditoría original no cubría el **contenido del email de confirmación** (solo el envío best-effort). Revisión de producción encontró y corrigió 3 defectos, validados con 70 tests (11 nuevos en `tests/test_event_registration_email.py`) y smoke E2E en vivo:
+
+| # | Defecto | Impacto | Fix |
+|---|---|---|---|
+| E-EMAIL-01 | `Settings` no definía `public_base_url` → el link del QR en el email caía siempre a `https://ccf.co` (dominio placeholder ajeno) pese a tener `frontend_url=https://ministerioselfaro.org` | Enlace del QR roto en producción | Setting `public_base_url` en `backend/core/config.py` (vacío → `frontend_url`); `_settings_public_base_url()` y `resolve_public_base_url()` ya nunca devuelven el placeholder |
+| E-EMAIL-02 | `resend_confirmation` (admin) pasaba `public_base_url=""` → email reenviado con URL **relativa** (inutilizable) | Reenvío de QR inservible | El admin router usa `resolve_public_base_url()`; idem `_promote_first_waitlist` |
+| E-EMAIL-03 | Plantilla sin marca corporativa; el QR era solo texto “descargar” pese a decir “guarda este QR” | Baja conversión y riesgo de que el inscrito no lleve el QR | `render_event_confirmation_email` en `backend/services/email.py` con layout `_brand_wrap`, **QR embebido como imagen** (nuevo endpoint público `GET /api/public/events/{id}/qr.png`, hash-bound, dependencia `qrcode`) + botón “Abrir mi código QR” + link de cancelación |
+
+**Validación en vivo 2026-08-21** (entorno `environment=staging` local): registro público real → `CONFIRMED` → `GET /ticket` 200 → `GET /qr.png` 200 `image/png` (930×930) → `POST …/ccf-evt-checkin` con JWT de la sede del evento → `CHECKED_IN` + `EventAttendance(role_at_event)` → idempotencia `is_duplicate=True` → limpieza completa de datos de prueba.

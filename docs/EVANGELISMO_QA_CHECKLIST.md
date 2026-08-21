@@ -54,6 +54,19 @@ Ejecutar si se toca:
 - `backend/schemas/evangelism.py`
 - `backend/models_evangelism.py`
 
+Adicionalmente, si se toca **preregistro público, email de confirmación o QR** (`backend/api/public.py`, `backend/services/event_registration_service.py`, `backend/services/email.py`):
+
+```bash
+cd /root/ccf
+./venv/bin/python -m pytest -q -o addopts='' \
+  tests/test_event_registration_email.py \
+  tests/test_event_registrations.py \
+  tests/test_event_registrations_dynamic_form.py \
+  tests/test_event_registration_quality.py
+```
+
+> `tests/test_event_registration_email.py` cubre la resolución de dominio (`public_base_url → frontend_url`), la plantilla corporativa con QR embebido y el endpoint `GET /api/public/events/{id}/qr.png` (200 PNG, 404 token desconocido, 404 no-inscrito, `cancel` codificado en el contenido).
+
 ## 4. Frontend smoke
 
 ```bash
@@ -162,6 +175,21 @@ Si el comportamiento real difiere, actualizar `EVANGELISMO_API_CONTRACTS.md`, `E
 - Registrar asistencia/check-in.
 - Validar duplicado controlado.
 - Revisar analytics/export si aplica.
+
+### Preregistro público → email con QR → check-in (añadido 2026-08-21)
+
+Flujo completo del CTA de `/aniversario40` y de la sección 7 del `RUNBOOK_PRODUCCION.md`:
+
+- **Registro público**: `POST /api/public/events/{id}/register` con el `form_data` del formulario dinámico vinculado → `CONFIRMED` (o `WAITLIST` si `capacity_max` lleno) y rol contextual (`VISITANTE_EVENTO`, etc.). Idempotente: repetir con el mismo email no duplica.
+- **Validación del form**: 422 si `form_data` no cumple el contrato del `CmsForm`; 404 si el form está inactivo/eliminado; 400 captcha si `form.captcha_enabled`.
+- **Email de confirmación corporativo**: plantilla `render_event_confirmation_email` con layout `_brand_wrap`, QR embebido como `<img>`, botón “Abrir mi código QR” y link de cancelación (72h). Verificar en el HTML que los links usan el dominio canónico (`https://ministerioselfaro.org`) y **no** contienen `https://ccf.co` (placeholder) ni URLs relativas.
+- **QR PNG**: `GET /api/public/events/{id}/qr.png?token=…&cancel=…` → `200 image/png` (PNG válido) con token real; `404` con token inválido; `409` si la inscripción no está `CONFIRMED`/`CHECKED_IN`.
+- **Ticket**: `GET /api/public/events/{id}/ticket?token=…` → `200` con estado y rol contextual (hash-bound, el token plano nunca se persiste).
+- **Check-in contextual**: `POST /api/evangelism/events/{id}/sessions/{fecha}/ccf-evt-checkin` con JWT de `evangelism:edit` **de la sede del evento** → `CHECKED_IN` + `EventAttendance(role_at_event)`; repetir → `is_duplicate=True`.
+- **Reenviar QR (admin)**: `POST …/registrations/{reg_id}/resend-confirmation` → el email reenviado debe llevar URL absoluta con el dominio canónico (nunca relativa).
+- **Cancelación y waitlist**: `POST /api/public/events/{id}/cancel?token=…` (token 72h) libera el cupo y promueve el siguiente `WAITLIST` con su propio email de confirmación.
+
+Smoke E2E reproducible: pasos 1–4 de `RUNBOOK_PRODUCCION.md` §7.5 (registro → ticket → qr.png → check-in → limpieza de datos de prueba).
 
 ### Multiplicacion
 
