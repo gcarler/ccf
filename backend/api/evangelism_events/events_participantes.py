@@ -184,6 +184,11 @@ def register_bulk_attendance(
             row.scanned_at = now
             row.check_in_at = now
             row.check_out_at = None
+            if row.deleted_at is not None:
+                # Reactivar fila soft-deleted: la UniqueConstraint
+                # (event_id, session_date, persona_id) no considera deleted_at,
+                # así que se reutiliza la fila en lugar de insertar un duplicado.
+                row.deleted_at = None
             if not was_attended:
                 marked_present_count += 1
         else:
@@ -202,6 +207,9 @@ def register_bulk_attendance(
 
     for row in existing_rows:
         if row.persona_id in selected_persona_uuids:
+            continue
+        if row.deleted_at is not None:
+            # Fila soft-deleted no seleccionada: no revivirla como ausente.
             continue
         if row.attended or row.status != "absent":
             row.attended = False
