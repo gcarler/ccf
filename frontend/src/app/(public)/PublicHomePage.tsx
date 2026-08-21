@@ -86,6 +86,16 @@ export default function PublicHomePage({ initialHomePage }: { initialHomePage?: 
     const homeCards = Array.isArray(homeFeed?.cards)
         ? homeFeed.cards as Array<Record<string, unknown>>
         : [];
+    const cmsHeroSlides: PublicSlide[] = (Array.isArray(heroContent?.slides) ? heroContent.slides : [])
+        .filter((item): item is Record<string, unknown> => Boolean(item) && typeof item === "object")
+        .map((item) => ({
+            src: typeof item.src === "string" ? item.src : typeof item.url === "string" ? item.url : "",
+            alt: typeof item.alt === "string" && item.alt.trim() ? item.alt : "Imagen principal",
+            title: typeof item.title === "string" ? item.title : undefined,
+            caption: typeof item.caption === "string" ? item.caption : undefined,
+            href: typeof item.href === "string" ? item.href : undefined,
+        }))
+        .filter((slide) => Boolean(slide.src));
     const homeGallery = (() => {
         if (!homeGallerySource) return [];
         if ("parsed" in homeGallerySource) {
@@ -154,9 +164,10 @@ export default function PublicHomePage({ initialHomePage }: { initialHomePage?: 
         .filter((slide): slide is PublicSlide => Boolean(slide));
 
     const homeSlides: PublicSlide[] = [
+        ...cmsHeroSlides,
         ...(gallerySlides.length > 0
             ? gallerySlides
-            : heroBgImage
+            : cmsHeroSlides.length === 0 && heroBgImage
                 ? [{
                     src: heroBgImage,
                     alt: heroTitleLead || heroTitleAccent || heroTitleTail || "Imagen principal",
