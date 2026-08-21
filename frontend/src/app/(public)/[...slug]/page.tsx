@@ -75,6 +75,8 @@ export default async function CcfDynamicPage({ params }: { params: Promise<{ slu
     notFound();
   }
 
+  const isAnniversaryPage = slugValue === "aniversario40";
+
   return (
     <>
       {page.json_ld && (
@@ -89,8 +91,8 @@ export default async function CcfDynamicPage({ params }: { params: Promise<{ slu
           dangerouslySetInnerHTML={{ __html: JSON.stringify(page.breadcrumb_json_ld) }}
         />
       )}
-      <main className="ccf-dynamic-main flex-1 px-4 md:px-8 lg:px-12">
-        {page.breadcrumbs && page.breadcrumbs.length > 1 && (
+      <main className={`ccf-dynamic-main flex-1 px-4 md:px-8 lg:px-12${isAnniversaryPage ? " ccf-anniversary-page" : ""}`}>
+        {!isAnniversaryPage && page.breadcrumbs && page.breadcrumbs.length > 1 && (
           <div className="ccf-container mb-10">
             <BreadcrumbNav items={page.breadcrumbs} />
           </div>

@@ -501,6 +501,12 @@
     padding-bottom: clamp(6rem, 10vw, 9rem);
 }
 
+/* The anniversary hero is the page's visual header and starts directly below
+   the public navbar; the remaining sections keep the normal page rhythm. */
+.ccf-anniversary-page {
+    padding-top: 0;
+}
+
 .ccf-section-panel {
     background: var(--site-surface-container-low);
     border: 1px solid color-mix(in srgb, var(--site-outline-variant) 42%, transparent);
