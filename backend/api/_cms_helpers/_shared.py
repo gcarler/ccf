@@ -52,12 +52,42 @@ def _actor_sede_or_none(db: Session, current_user: models.User) -> Optional[str]
     return get_user_sede_id(db, user_id)
 
 
+def _has_global_cms_site(db: Session) -> bool:
+    """Return True if there is at least one active ``CmsSite`` with ``sede_id`` NULL.
+
+    A global CMS site (``sede_id=None``) is a cross-sede editorial surface —
+    its media library is a shared resource that editors from any sede must
+    be able to browse and attach. When such a site exists, the media scope
+    is global; otherwise media is strictly scoped by the actor's sede.
+    """
+    return (
+        db.query(models.CmsSite.id)
+        .filter(
+            models.CmsSite.is_active.is_(True),
+            models.CmsSite.sede_id.is_(None),
+        )
+        .first()
+        is not None
+    )
+
+
 def _scope_cms_media_by_user_sede(db: Session, current_user: models.User, query):
     """Filtra un query de ``models.CmsMediaItem`` por ``sede_id == user_sede``.
 
     CmsMediaItem exige ``sede_id`` propio desde la migración 2026-07-01 y
     permite filtrado directo, eficiente y consistente.
+
+    Excepción de site global: si existe al menos un ``CmsSite`` activo con
+    ``sede_id`` NULL (un site editorial cross-sede como ``ccf``), la
+    biblioteca de media es un recurso compartido y NO se filtra por sede.
+    Esto alinea el scope de media con el scope de contenido del site: un
+    site global es editable por actores de cualquier sede, y su media
+    asociada debe ser visible para ellos. El aislamiento multi-tenant se
+    preserva cuando TODOS los sites activos pertenecen a una sede
+    específica (escenario multi-iglesia).
     """
+    if _has_global_cms_site(db):
+        return query
     user_sede = _actor_sede_or_none(db, current_user)
     if user_sede:
         query = query.filter(models.CmsMediaItem.sede_id == user_sede)

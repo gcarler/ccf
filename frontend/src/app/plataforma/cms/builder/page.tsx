@@ -272,71 +272,157 @@ export default function PuckBuilderPage() {
         hero: {
           label: "Banner Héroe (Hero)",
           fields: {
-            title: {
+            eyebrow: {
               type: "custom",
               render: ({ value, onChange }: any) => (
-                <AiField label="Título Principal" value={value} onChange={onChange} fieldType="title" token={token} />
+                <AiField label="Eyebrow (texto superior)" value={value} onChange={onChange} fieldType="title" token={token} />
               )
             },
-            body: {
+            title_lead: {
               type: "custom",
               render: ({ value, onChange }: any) => (
-                <AiField label="Cuerpo del Mensaje" value={value} onChange={onChange} isTextArea fieldType="body" token={token} />
+                <AiField label="Título - Lead" value={value} onChange={onChange} fieldType="title" token={token} />
               )
             },
-            cta_label: {
+            title_accent: {
               type: "custom",
               render: ({ value, onChange }: any) => (
-                <AiField label="Texto del Botón" value={value} onChange={onChange} fieldType="cta" placeholder="ej. Comenzar ahora" token={token} />
+                <AiField label="Título - Accent (color)" value={value} onChange={onChange} fieldType="title" token={token} />
               )
             },
-            cta_href: { type: "text", label: "Enlace del Botón" },
+            title_tail: {
+              type: "custom",
+              render: ({ value, onChange }: any) => (
+                <AiField label="Título - Tail" value={value} onChange={onChange} fieldType="title" token={token} />
+              )
+            },
+            description: {
+              type: "custom",
+              render: ({ value, onChange }: any) => (
+                <AiField label="Descripción" value={value} onChange={onChange} isTextArea fieldType="body" token={token} />
+              )
+            },
+            primary_cta: {
+              type: "custom",
+              render: ({ value, onChange }: any) => (
+                <AiField label="Botón Primario - Texto" value={value} onChange={onChange} fieldType="cta" placeholder="ej. Conocer a Jesús" token={token} />
+              )
+            },
+            primary_cta_href: { type: "text", label: "Botón Primario - Enlace" },
+            secondary_cta: {
+              type: "text",
+              label: "Botón Secundario - Texto",
+            },
+            secondary_cta_href: { type: "text", label: "Botón Secundario - Enlace" },
             bg_image: {
               type: "custom",
               render: ({ value, onChange }: any) => (
                 <MediaPickerField label="Imagen de Fondo" value={value} onChange={onChange} />
               )
             },
+            slides: {
+              type: "array",
+              label: "Slides del Hero (carrusel)",
+              max: 10,
+              getItemSummary: (item: any, idx?: number) =>
+                item?.title || item?.caption || `Slide #${(idx ?? 0) + 1}`,
+              defaultItemProps: { src: "", alt: "Slide", title: "", caption: "", href: "" },
+              arrayFields: {
+                src: {
+                  type: "custom",
+                  label: "Imagen",
+                  render: ({ value, onChange }: any) => (
+                    <MediaPickerField label="Imagen del slide" value={value} onChange={onChange} />
+                  )
+                },
+                alt: { type: "text", label: "Texto Alt" },
+                title: { type: "text", label: "Título" },
+                caption: { type: "text", label: "Caption / Descripción" },
+                href: { type: "text", label: "Enlace del slide" },
+              },
+            },
           },
-          render: ({ title, body, cta_label, cta_href, bg_image }: any) => (
-            <section
-              className="relative py-20 px-6 text-center bg-cover bg-center rounded-lg overflow-hidden my-4 border border-[var(--site-outline-variant,rgba(255,255,255,0.05))]"
-              style={{
-                backgroundImage: bg_image 
-                  ? `linear-gradient(rgba(0,0,0,0.65), rgba(0,0,0,0.65)), url(${bg_image})` 
-                  : "var(--site-cta-gradient, linear-gradient(135deg, #004581, #018abd))",
-                minHeight: "380px",
-              }}
-            >
-              <div className="relative z-10 max-w-2xl mx-auto flex flex-col items-center justify-center min-h-[250px]">
-                <h1 
-                  className="text-3xl font-extrabold tracking-tight sm:text-4xl md:text-5xl"
-                  style={{ color: "var(--site-on-hero, #ffffff)", fontFamily: "var(--font-outfit, sans-serif)" }}
-                >
-                  {title || "Título del Héroe"}
-                </h1>
-                <p 
-                  className="mt-4 text-lg max-w-lg"
-                  style={{ color: "var(--site-on-hero, rgba(255,255,255,0.9))" }}
-                >
-                  {body || "Este es el cuerpo del mensaje del banner de la página."}
-                </p>
-                {cta_label && (
-                  <a
-                    href={cta_href || "#"}
-                    className="mt-8 px-6 py-3 text-sm font-semibold rounded-md shadow-md transition-all duration-200 hover:scale-[1.02]"
-                    style={{
-                      backgroundColor: "var(--site-primary, #a5c8ff)",
-                      color: "var(--site-on-primary, #00315e)",
-                      boxShadow: "var(--site-cta-shadow, 0 4px 12px rgba(0,0,0,0.15))",
-                    }}
+          render: ({ eyebrow, title_lead, title_accent, title_tail, description, primary_cta, primary_cta_href, secondary_cta, secondary_cta_href, bg_image, slides }: any) => {
+            const slideList = Array.isArray(slides) ? slides : [];
+            const hasSlideImages = slideList.some((s: any) => s?.src || s?.url);
+            const titleParts = [title_lead, title_accent, title_tail].filter(Boolean).join(" ");
+            return (
+              <section
+                className="relative py-20 px-6 text-center bg-cover bg-center rounded-lg overflow-hidden my-4 border border-[var(--site-outline-variant,rgba(255,255,255,0.05))]"
+                style={{
+                  backgroundImage: bg_image || hasSlideImages
+                    ? `linear-gradient(rgba(0,0,0,0.65), rgba(0,0,0,0.65)), url(${bg_image || slideList[0]?.src || slideList[0]?.url || ""})`
+                    : "var(--site-cta-gradient, linear-gradient(135deg, #004581, #018abd))",
+                  minHeight: "380px",
+                }}
+              >
+                <div className="relative z-10 max-w-2xl mx-auto flex flex-col items-center justify-center min-h-[250px]">
+                  {eyebrow && (
+                    <span
+                      className="text-xs font-bold uppercase tracking-[0.3em] mb-3 px-4 py-1.5 rounded-full"
+                      style={{
+                        color: "var(--site-primary, #a5c8ff)",
+                        background: "var(--site-primary-container, rgba(165,200,255,0.15))",
+                      }}
+                    >
+                      {eyebrow}
+                    </span>
+                  )}
+                  <h1
+                    className="text-3xl font-extrabold tracking-tight sm:text-4xl md:text-5xl"
+                    style={{ color: "var(--site-on-hero, #ffffff)", fontFamily: "var(--font-outfit, sans-serif)" }}
                   >
-                    {cta_label}
-                  </a>
-                )}
-              </div>
-            </section>
-          ),
+                    {title_lead && <span>{title_lead} </span>}
+                    {title_accent && (
+                      <span style={{ color: "var(--site-primary, #a5c8ff)" }}>{title_accent}</span>
+                    )}
+                    {title_tail && <span> {title_tail}</span>}
+                    {!titleParts && "Título del Héroe"}
+                  </h1>
+                  {description && (
+                    <p
+                      className="mt-4 text-lg max-w-lg"
+                      style={{ color: "var(--site-on-hero, rgba(255,255,255,0.9))" }}
+                    >
+                      {description}
+                    </p>
+                  )}
+                  <div className="mt-8 flex gap-3">
+                    {primary_cta && (
+                      <a
+                        href={primary_cta_href || "#"}
+                        className="px-6 py-3 text-sm font-semibold rounded-md shadow-md transition-all duration-200 hover:scale-[1.02]"
+                        style={{
+                          backgroundColor: "var(--site-primary, #a5c8ff)",
+                          color: "var(--site-on-primary, #00315e)",
+                          boxShadow: "var(--site-cta-shadow, 0 4px 12px rgba(0,0,0,0.15))",
+                        }}
+                      >
+                        {primary_cta}
+                      </a>
+                    )}
+                    {secondary_cta && (
+                      <a
+                        href={secondary_cta_href || "#"}
+                        className="px-6 py-3 text-sm font-semibold rounded-md border transition-all duration-200 hover:bg-white/10"
+                        style={{
+                          borderColor: "var(--site-outline, rgba(255,255,255,0.3))",
+                          color: "var(--site-on-hero, #ffffff)",
+                        }}
+                      >
+                        {secondary_cta}
+                      </a>
+                    )}
+                  </div>
+                  {hasSlideImages && (
+                    <p className="mt-3 text-2xs opacity-60" style={{ color: "var(--site-on-hero, #ffffff)" }}>
+                      📸 {slideList.length} slide(s) en carrusel
+                    </p>
+                  )}
+                </div>
+              </section>
+            );
+          },
         },
         rich_text: {
           label: "Texto Enriquecido (Rich Text)",
@@ -650,6 +736,8 @@ export default function PuckBuilderPage() {
           label: "Galería (Gallery)",
           defaultProps: {
             title: "Galería de imágenes",
+            image_url: "",
+            image_alt: "",
             items: [
               { url: "", alt: "Galería 1", caption: "Imagen 1" },
               { url: "", alt: "Galería 2", caption: "Imagen 2" },
@@ -669,6 +757,13 @@ export default function PuckBuilderPage() {
                 <AiField label="Descripción" value={value} onChange={onChange} isTextArea fieldType="body" token={token} />
               )
             },
+            image_url: {
+              type: "custom",
+              render: ({ value, onChange }: any) => (
+                <MediaPickerField label="Imagen destacada" value={value} onChange={onChange} />
+              )
+            },
+            image_alt: { type: "text", label: "Texto Alt de la imagen destacada" },
             items: {
               type: "array",
               label: "Imágenes de la Galería",
@@ -690,7 +785,7 @@ export default function PuckBuilderPage() {
               }
             }
           },
-          render: ({ title, body, items }: any) => {
+          render: ({ title, body, image_url, image_alt, items }: any) => {
             const itemList = items || [];
             return (
               <section 
@@ -715,6 +810,11 @@ export default function PuckBuilderPage() {
                   >
                     {body}
                   </p>
+                )}
+                {image_url && (
+                  <div className="mb-8 rounded-lg overflow-hidden border" style={{ borderColor: "var(--site-outline-variant, rgba(255,255,255,0.1))" }}>
+                    <img src={image_url} alt={image_alt || title || "Imagen destacada"} className="w-full max-h-64 object-cover" />
+                  </div>
                 )}
                 {itemList.length === 0 ? (
                   <div 
@@ -777,9 +877,9 @@ export default function PuckBuilderPage() {
           defaultProps: {
             title: "Tarjetas",
             items: [
-              { title: "Tarjeta 1", body: "Descripción de la tarjeta 1...", cta_label: "Saber más", cta_href: "/", image_url: "" },
-              { title: "Tarjeta 2", body: "Descripción de la tarjeta 2...", cta_label: "Saber más", cta_href: "/", image_url: "" },
-              { title: "Tarjeta 3", body: "Descripción de la tarjeta 3...", cta_label: "Saber más", cta_href: "/", image_url: "" },
+              { title: "Tarjeta 1", body: "Descripción de la tarjeta 1...", href: "/", icon: "", image_url: "" },
+              { title: "Tarjeta 2", body: "Descripción de la tarjeta 2...", href: "/", icon: "", image_url: "" },
+              { title: "Tarjeta 3", body: "Descripción de la tarjeta 3...", href: "/", icon: "", image_url: "" },
             ],
           },
           fields: {
@@ -802,7 +902,7 @@ export default function PuckBuilderPage() {
               max: 6,
               getItemSummary: (item: any, idx?: number) =>
                 item?.title || `Tarjeta #${(idx ?? 0) + 1}`,
-              defaultItemProps: { title: "Título de Tarjeta", body: "Descripción corta...", cta_label: "Saber más", cta_href: "/", image_url: "" },
+              defaultItemProps: { title: "Título de Tarjeta", body: "Descripción corta...", href: "/", icon: "", image_url: "" },
               arrayFields: {
                 title: {
                   type: "custom",
@@ -818,8 +918,8 @@ export default function PuckBuilderPage() {
                     <AiField label="Descripción" value={value} onChange={onChange} isTextArea fieldType="body" token={token} />
                   )
                 },
-                cta_label: { type: "text", label: "Etiqueta Botón" },
-                cta_href: { type: "text", label: "Enlace Botón" },
+                href: { type: "text", label: "Enlace de la tarjeta" },
+                icon: { type: "text", label: "Icono (nombre lucide-react, ej: heart)" },
                 image_url: {
                   type: "custom",
                   label: "Imagen",
@@ -915,13 +1015,13 @@ export default function PuckBuilderPage() {
                               </p>
                             )}
                           </div>
-                          {item?.cta_label && (
+                          {item?.href && (
                             <a 
-                              href={item.cta_href || "#"} 
+                              href={item.href || "#"} 
                               className="mt-4 inline-block text-sm font-semibold hover:underline"
                               style={{ color: "var(--site-primary, #a5c8ff)" }}
                             >
-                              {item.cta_label} &rarr;
+                              Ver más &rarr;
                             </a>
                           )}
                         </div>

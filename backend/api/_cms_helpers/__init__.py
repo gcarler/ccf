@@ -18,6 +18,7 @@ from backend.api._cms_helpers._shared import (
     _actor_sede_or_none,
     _get_scoped_cms_media,
     _get_scoped_persona,
+    _has_global_cms_site,
     _scope_cms_media_by_user_sede,
     _scope_cms_pastoral_team_by_user_sede,
     # ── SEO audit helpers (merged from seo_audit.py per Gate 6) ──
@@ -32,6 +33,7 @@ __all__ = (
     "_actor_sede_or_none",
     "_get_scoped_cms_media",
     "_get_scoped_persona",
+    "_has_global_cms_site",
     "_scope_cms_media_by_user_sede",
     "_scope_cms_pastoral_team_by_user_sede",
     # ── SEO audit exports (public) ──
