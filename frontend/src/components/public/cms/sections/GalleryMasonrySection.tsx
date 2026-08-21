@@ -86,7 +86,10 @@ export function GalleryMasonrySection({ section }: { section: Partial<CmsSection
   return (
     <section className={`py-12 md:py-16 ${fullBleed ? "relative left-1/2 w-screen -translate-x-1/2 max-w-none px-0" : "mx-auto max-w-7xl px-4"}`}>
       {title && (
-        <h2 className="px-4 text-2xl md:text-3xl font-bold text-center mb-8 md:mb-12 text-gray-900 dark:text-white">
+        <h2
+          className="mx-auto mb-8 max-w-4xl px-4 text-center text-3xl font-black tracking-tight md:mb-12 md:text-4xl lg:text-5xl"
+          style={{ color: "var(--site-on-surface)" }}
+        >
           {title}
         </h2>
       )}
