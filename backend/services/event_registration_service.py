@@ -801,8 +801,6 @@ def _promote_first_waitlist(db: Session, event: models.CrmEvent) -> None:
     # pueda presentarlo al evento.
     try:
         if next_in_line.persona and next_in_line.persona.email:
-            from html import escape
-
             from backend.services.email import render_event_confirmation_email, send_email
 
             base = resolve_public_base_url()
