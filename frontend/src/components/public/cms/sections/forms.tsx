@@ -67,6 +67,7 @@ export function ContactFormSection({ section }: { section: CmsSection<"contact_f
   const subtitle = val(p, "subtitle", "");
   const actionUrl = val(p, "action_url", "/public/contact");
   const resetLabel = val(p, "reset_label", "Enviar otro mensaje");
+  const fullBleed = Boolean(p.full_bleed);
   const [status, setStatus] = useState<"idle" | "submitting" | "success" | "error">("idle");
   const [error, setError] = useState<string | null>(null);
 
@@ -114,7 +115,7 @@ export function ContactFormSection({ section }: { section: CmsSection<"contact_f
   };
 
   return (
-    <section className="ccf-section-panel p-7 md:p-12 lg:p-14" style={{ background: "var(--site-surface-container-low)" }}>
+    <section className={`ccf-section-panel p-7 md:p-12 lg:p-14 ${fullBleed ? "relative left-1/2 w-screen -translate-x-1/2 rounded-none" : ""}`} style={{ background: "var(--site-surface-container-low)" }}>
       {title && <h2 className="text-2xl md:text-3xl font-black tracking-tight" style={{ color: "var(--site-on-surface)" }}>{title}</h2>}
       {subtitle && <p className="mt-3 text-base" style={{ color: "var(--site-on-surface-variant)" }}>{subtitle}</p>}
       {status === "success" ? (

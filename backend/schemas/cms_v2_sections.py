@@ -278,6 +278,7 @@ class ContactFormProps(BaseModel):
     success_message: str = "Gracias. Te contactaremos pronto."
     action_url: str = "/public/contact"
     reset_label: str = "Enviar otro mensaje"
+    full_bleed: bool = False
 
 
 class PrayerFormProps(BaseModel):
@@ -471,6 +472,7 @@ class RichTextProps(_PermissiveProps):
     empty_tag_description: Optional[str] = None
     empty_category_title: Optional[str] = None
     empty_category_description: Optional[str] = None
+    full_bleed: bool = False
     # Detail templates (testimonios)
     footer_label: Optional[str] = None
     back_label: Optional[str] = None
@@ -816,6 +818,7 @@ class TimelineEntryItem(BaseModel):
 class TimelineProps(_PermissiveProps):
     title: str = ""
     items: List[TimelineEntryItem] = []
+    full_bleed: bool = False
 
 
 class IconGridItem(BaseModel):
