@@ -318,6 +318,7 @@ export const SECTION_TEMPLATES: SectionTemplate[] = [
       video_url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
       caption: "Video explicativo sobre nuestra misión.",
       autoplay: false,
+      full_bleed: false,
     },
   },
   {
@@ -329,6 +330,7 @@ export const SECTION_TEMPLATES: SectionTemplate[] = [
       album_url: "",
       album_label: "Ver más fotos",
       autoplay: false,
+      full_bleed: false,
       columns: 3,
       images: [
         { url: "", alt: "Imagen 1", caption: "Evento de convención" },
@@ -371,6 +373,7 @@ export const DEFAULT_SECTION_PROPS: Record<string, Record<string, unknown>> = {
     video_url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
     caption: "Video explicativo sobre nuestra misión.",
     autoplay: false,
+    full_bleed: false,
   },
   gallery_masonry: {
     title: "Nuestra Galería",
@@ -378,6 +381,7 @@ export const DEFAULT_SECTION_PROPS: Record<string, Record<string, unknown>> = {
     album_url: "",
     album_label: "Ver más fotos",
     autoplay: false,
+    full_bleed: false,
     columns: 3,
     images: [
       { url: "", alt: "Imagen 1", caption: "Evento de convención" },
