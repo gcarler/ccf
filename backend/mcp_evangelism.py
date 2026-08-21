@@ -82,16 +82,28 @@ def list_mass_events(limit: int = 50, offset: int = 0) -> dict[str, Any]:
         user = get_mcp_current_user(db)
         require_mcp_permission(db, user, "evangelism:read")
         sede_id = require_user_sede_id(db, user)
-        events = (
-            db.query(models.CrmEvent)
+        # La tipología evento_masivo vive en settings_json (JSON, sin filtro SQL
+        # portable), así que se escanean solo las columnas del summary con
+        # yield_per: no se materializan todos los eventos de la sede en memoria.
+        columns = (
+            models.CrmEvent.id,
+            models.CrmEvent.name,
+            models.CrmEvent.description,
+            models.CrmEvent.event_date,
+            models.CrmEvent.location,
+            models.CrmEvent.status,
+            models.CrmEvent.settings_json,
+        )
+        rows = (
+            db.query(*columns)
             .filter(
                 models.CrmEvent.sede_id == sede_id,
                 models.CrmEvent.deleted_at.is_(None),
             )
             .order_by(models.CrmEvent.event_date.desc().nullslast())
-            .all()
+            .yield_per(500)
         )
-        mass_events = [event for event in events if _is_mass_event(event)]
+        mass_events = [row for row in rows if _is_mass_event(row)]
         page = mass_events[safe_offset : safe_offset + safe_limit]
         return {"items": [_event_summary(event) for event in page], "total": len(mass_events)}
     finally:
@@ -120,10 +132,22 @@ def ensure_mass_event(strategy_id: UUID) -> dict[str, Any]:
         if strategy.typology != "evento_masivo":
             raise ValueError("La estrategia no es de tipología evento_masivo")
 
+        # Mismo escaneo liviano que list_mass_events: solo las columnas del
+        # summary (la tipología vive en settings_json, JSON sin filtro SQL
+        # portable), en lugar de materializar todos los eventos de la sede.
+        columns = (
+            models.CrmEvent.id,
+            models.CrmEvent.name,
+            models.CrmEvent.description,
+            models.CrmEvent.event_date,
+            models.CrmEvent.location,
+            models.CrmEvent.status,
+            models.CrmEvent.settings_json,
+        )
         event = next(
             (
                 item
-                for item in db.query(models.CrmEvent)
+                for item in db.query(*columns)
                 .filter(
                     models.CrmEvent.sede_id == sede_id,
                     models.CrmEvent.deleted_at.is_(None),

@@ -1064,3 +1064,164 @@ def test_event_preregistration_models_use_json_not_jsonb():
     assert "extras = Column(JSON" in models_text
     assert "target_status = Column(JSON" in models_text
     assert "settings_json = Column(JSON" in models_text
+
+
+def test_guide_permission_taxonomy_matches_permissions_module():
+    """GUIA_GENERAL_CCF.md §6.3 debe listar exactamente la taxonomía de PERMISSIONS.
+
+    Evita drift entre la documentación y la fuente de verdad RBAC: si se añade,
+    renombra o elimina un permiso en ``backend/core/permissions.py``, este test
+    falla hasta que la guía se actualice (y viceversa). La notación documentada
+    ``module:level1|level2`` se expande a las claves concretas ``module:level``.
+    """
+    from backend.core.permissions import PERMISSIONS
+
+    root = Path(__file__).resolve().parents[1]
+    guide = (root / "docs" / "GUIA_GENERAL_CCF.md").read_text(encoding="utf-8")
+
+    if "### 6.3 RBAC" not in guide:
+        pytest.fail("GUIA_GENERAL_CCF.md ya no contiene la sección '### 6.3 RBAC'")
+    section = guide.split("### 6.3 RBAC", 1)[1].split("### 6.4", 1)[0]
+
+    pattern = re.compile(r"^- `([a-z_]+):([a-z|]+)`[;.]?$")
+    documented: set[str] = set()
+    for line in section.splitlines():
+        match = pattern.match(line.strip())
+        if not match:
+            continue
+        module, levels = match.group(1), match.group(2)
+        for level in levels.split("|"):
+            documented.add(f"{module}:{level}")
+
+    assert documented, "No se encontró la lista de permisos en GUIA §6.3 (¿cambió el formato?)"
+
+    actual = set(PERMISSIONS)
+    assert documented == actual, (
+        "GUIA §6.3 desalineada con PERMISSIONS. "
+        f"Faltan en la guía: {sorted(actual - documented)}. "
+        f"Sobran en la guía: {sorted(documented - actual)}."
+    )
+
+
+def test_mcp_guide_role_matrix_matches_role_allows_permission():
+    """MCP_ARQUITECTURA_CCF.md §3.2 debe reflejar exactamente ``role_allows_permission``.
+
+    Cada fila de la tabla expande su columna "Permisos concedidos por rol"
+    (``módulo:*`` → todos los niveles del módulo en PERMISSIONS; ``read/edit`` →
+    claves concretas) y compara el resultado contra el comportamiento real de
+    ``role_allows_permission`` sobre toda la taxonomía. Además valida el sentido
+    inverso: todo rol mencionado en la función debe tener su fila documentada.
+    """
+    import inspect
+
+    from backend.core.permissions import PERMISSIONS, role_allows_permission
+
+    root = Path(__file__).resolve().parents[1]
+    doc = (root / "docs" / "MCP_ARQUITECTURA_CCF.md").read_text(encoding="utf-8")
+
+    if "### 3.2 Matriz RBAC compartida" not in doc:
+        pytest.fail("MCP_ARQUITECTURA_CCF.md ya no contiene '### 3.2 Matriz RBAC compartida'")
+    section = doc.split("### 3.2 Matriz RBAC compartida", 1)[1].split("## 4.", 1)[0]
+
+    header = "| Rol | Permisos concedidos por rol | Módulos sin allowance |"
+    assert header in section, "Cambió el encabezado de la tabla RBAC en MCP_ARQUITECTURA_CCF.md §3.2"
+
+    lines = section.splitlines()
+    start = next(i for i, line in enumerate(lines) if line.startswith("| Rol |"))
+    rows = []
+    for line in lines[start + 1 :]:
+        stripped = line.strip()
+        if not stripped.startswith("|") or not stripped.endswith("|"):
+            break
+        cells = [cell.strip() for cell in stripped.strip("|").split("|")]
+        if len(cells) >= 2:
+            rows.append(cells)
+
+    assert rows, "No se encontraron filas en la tabla RBAC de MCP_ARQUITECTURA_CCF.md §3.2"
+
+    token_pattern = re.compile(r"`([a-z_]+:[a-z*/]+)`")
+    failures = []
+    documented_roles: set[str] = set()
+    for cells in rows:
+        rol_cell, granted_cell = cells[0], cells[1]
+        roles = set(re.findall(r"`([a-z_]+)`", rol_cell))
+        if not roles:
+            continue
+        documented_roles.update(roles)
+
+        if granted_cell.startswith("Todos"):
+            documented = set(PERMISSIONS)
+        else:
+            documented = set()
+            for token in token_pattern.findall(granted_cell):
+                module, spec = token.split(":", 1)
+                if spec == "*":
+                    documented.update(perm for perm in PERMISSIONS if perm.startswith(f"{module}:"))
+                else:
+                    documented.update(f"{module}:{level}" for level in spec.split("/"))
+
+        for role in roles:
+            computed = {perm for perm in PERMISSIONS if role_allows_permission(role, perm)}
+            if documented != computed:
+                failures.append(
+                    f"{role}: doc={sorted(documented)} código={sorted(computed)} "
+                    f"(faltan en doc: {sorted(computed - documented)}, sobran: {sorted(documented - computed)})"
+                )
+
+    # Sentido inverso: los roles que el código concede no pueden quedar sin
+    # documentar. Se extraen los literales de rol del cuerpo de la función.
+    code_roles = set(re.findall(r'"([a-z_]+)"', inspect.getsource(role_allows_permission)))
+    undoc = sorted(code_roles - documented_roles)
+    assert not failures and not undoc, (
+        "Desalineación MCP_ARQUITECTURA_CCF.md §3.2 vs role_allows_permission:\n"
+        + "\n".join(failures)
+        + (f"\nRoles en código sin fila documentada: {undoc}" if undoc else "")
+    )
+
+
+def test_documented_mcp_surfaces_are_mounted_in_app():
+    """Las superficies MCP documentadas deben estar montadas en backend/app.py.
+
+    Cruza las guías (GUIA_GENERAL_CCF §2.2 y MCP_ARQUITECTURA_CCF §2) contra
+    los mounts reales: cada ruta `/mcp/*` concreta documentada debe existir, y
+    cada módulo del catálogo (`MODULE_SPECS`) debe tener montada su ruta
+    dedicada (`dedicated_route`) o genérica (`/mcp/{slug}`). En sentido
+    inverso, ningún mount `/mcp` puede quedar fuera del catálogo ni de la
+    documentación.
+    """
+    from backend.mcp_platform import GENERIC_MODULE_SERVERS, MODULE_BY_SLUG, MODULE_SPECS
+
+    root = Path(__file__).resolve().parents[1]
+    guide = (root / "docs" / "GUIA_GENERAL_CCF.md").read_text(encoding="utf-8")
+    mcp_doc = (root / "docs" / "MCP_ARQUITECTURA_CCF.md").read_text(encoding="utf-8")
+
+    def _mcp_paths(text: str) -> set[str]:
+        # Rutas concretas `/mcp...` en backticks; se excluyen templates `{...}`.
+        return {p for p in re.findall(r"`(/mcp[^`]*)`", text) if "{" not in p}
+
+    documented = _mcp_paths(guide) | _mcp_paths(mcp_doc)
+
+    mounted = {
+        path
+        for path in (getattr(route, "path", None) for route in app.routes)
+        if path and path.startswith("/mcp")
+    }
+
+    # Rutas declaradas por el catálogo: dedicadas + genéricas `/mcp/{slug}`.
+    catalog_routes = {spec.dedicated_route or f"/mcp/{spec.slug}" for spec in MODULE_SPECS}
+
+    missing = sorted((documented | catalog_routes) - mounted)
+    assert not missing, f"Superficies MCP sin mount en app.py: {missing}"
+
+    # Sentido inverso: todo mount `/mcp` debe estar documentado o catalogado
+    # (el gateway `/mcp/platform` no es un módulo, pero sí está documentado).
+    known = documented | catalog_routes | {f"/mcp/{slug}" for slug in GENERIC_MODULE_SERVERS}
+    undocumented = sorted(mounted - known)
+    assert not undocumented, f"Mounts /mcp sin documentar ni catalogar: {undocumented}"
+
+    # Cada módulo dedicado declara su ruta dedicada y esta está montada.
+    for spec in MODULE_SPECS:
+        if spec.dedicated_route:
+            assert spec.dedicated_route in mounted, f"Módulo dedicado {spec.slug} sin mount {spec.dedicated_route}"
+
+    assert len(MODULE_BY_SLUG) == len(MODULE_SPECS), "Duplicados en el catálogo de módulos MCP"

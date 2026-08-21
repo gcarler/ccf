@@ -33,7 +33,9 @@ Base única: `/api/v3/auth/*`
 Contrato vigente:
 
 - `POST /api/v3/auth/login`
-- `POST /api/v3/auth/register`
+- `POST /api/v3/auth/initialize-password`
+- `POST /api/v3/auth/change-password`
+- `GET /api/v3/auth/check-email`
 - `GET /api/v3/auth/me`
 - `PATCH /api/v3/auth/me`
 - `POST /api/v3/auth/refresh`
@@ -43,19 +45,22 @@ Contrato vigente:
 - `POST /api/v3/auth/sessions/revoke-all`
 - `GET /api/v3/auth/google`
 - `GET /api/v3/auth/google/callback`
-- `GET /api/v3/auth/check-email`
+- `POST /api/v3/auth/verify-email`
+- `POST /api/v3/auth/forgot-password`
+- `POST /api/v3/auth/reset-password`
+- `POST /api/v3/auth/send-verification-email`
+
+> No existe un endpoint público `POST /api/v3/auth/register`. La creación de
+> cuenta ocurre vía Google SSO (`GET /api/v3/auth/google` + callback, que
+> crea `Usuario` + `Persona` silenciosamente) o mediante aprovisionamiento
+> administrativo más `POST /api/v3/auth/initialize-password` (token de un
+> solo uso).
 
 ### Google OAuth seguro
 
 El callback de Google redirige a `/auth/callback` sin incluir `token`, `access_token`, `refresh` ni ningún JWT en la URL. El backend protege el intercambio con un `state` aleatorio, ligado a una cookie `HttpOnly` de corta duración, y establece las cookies `HttpOnly` de sesión antes de redirigir. La página callback obtiene una sesión efímera mediante `POST /api/v3/auth/refresh` con `credentials: include` y después conserva el access token únicamente en memoria/sessionStorage para compatibilidad con el runtime actual.
 
 El frontend no consume credenciales desde query strings ni fragmentos. Cualquier cambio del transporte OAuth debe mantener el redirect limpio y validar `state`, cookies, refresh y navegación en pruebas.
-- `POST /api/v3/auth/initialize-password`
-- `POST /api/v3/auth/change-password`
-- `POST /api/v3/auth/verify-email`
-- `POST /api/v3/auth/forgot-password`
-- `POST /api/v3/auth/reset-password`
-- `POST /api/v3/auth/send-verification-email`
 
 ## 4. Transporte de sesión
 
@@ -85,14 +90,13 @@ Implicación:
 }
 ```
 
-`POST /api/v3/auth/register`
+`POST /api/v3/auth/initialize-password`
 
 ```json
 {
-  "email": "user@example.com",
-  "password": "secret",
-  "first_name": "Nombre",
-  "last_name": "Apellido"
+  "token": "...",
+  "password": "NuevaClave123",
+  "password_confirm": "NuevaClave123"
 }
 ```
 
