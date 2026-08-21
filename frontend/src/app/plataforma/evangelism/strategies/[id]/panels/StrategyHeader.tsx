@@ -32,7 +32,7 @@ export default function StrategyHeader({ strategy, groupCount, canManage, onDele
               style={{ backgroundColor: `${STATUS_COLORS[strategy.status]}18`, color: STATUS_COLORS[strategy.status] }}>
               {STATUS_LABELS[strategy.status]}
             </span>
-            {groupCount !== null && (
+            {groupCount !== null && strategy.typology !== 'evento_masivo' && (
               <span className="inline-flex items-center gap-1.5"><Users size={12} />{groupCount} grupo{groupCount !== 1 ? 's' : ''}</span>
             )}
           </div>
