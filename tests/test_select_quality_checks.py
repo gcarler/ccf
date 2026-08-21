@@ -228,6 +228,12 @@ def test_http_source_file_still_selects_critical_modules():
     ]
 
 
+def test_next_config_only_selects_frontend_build():
+    # next.config.mjs controls the Next build; it must not escalate to every
+    # backend module quality suite.
+    assert select_quality_checks(["frontend/next.config.mjs"]) == ["frontend_build"]
+
+
 def test_api_test_file_selects_only_frontend_build():
     # Mismo patrón con el prefijo frontend/src/lib/api.
     checks = select_quality_checks(["frontend/src/lib/api.test.ts"])
