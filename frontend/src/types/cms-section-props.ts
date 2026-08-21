@@ -904,6 +904,7 @@ export interface GalleryMasonryProps {
   album_url?: string;
   album_label?: string;
   autoplay?: boolean;
+  full_bleed?: boolean;
 }
 
 export interface MapEmbedProps {

@@ -618,6 +618,7 @@ class GalleryMasonryProps(_PermissiveProps):
     album_url: str = ""
     album_label: str = "Ver más fotos"
     autoplay: bool = False
+    full_bleed: bool = False
 
 
 class FaqItem(BaseModel):
