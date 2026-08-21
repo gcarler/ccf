@@ -159,17 +159,17 @@ def seed_40_page():
                         {
                             "year": "90s",
                             "title": "La semilla de los fundadores",
-                            "body": "La Pastora Martina Herrera y su esposo Alejandro Ariza Torres siembran con fe, oración y perseverancia las bases espirituales de esta casa. (Año exacto por confirmar desde el CMS)",
+                            "body": "La Pastora Martina Herrera y su esposo Alejandro Ariza Torres siembran con fe, oración y perseverancia las bases espirituales de esta casa.",
                         },
                         {
                             "year": "2000s",
                             "title": "Una casa que crece",
-                            "body": "Los pastores Luis Ricardo Meza e Histar Ariza dedican más de dos décadas a edificar una iglesia que sea verdaderamente una casa para cada persona. (Década por confirmar desde el CMS)",
+                            "body": "Los pastores Luis Ricardo Meza e Histar Ariza dedican más de dos décadas a edificar una iglesia que sea verdaderamente una casa para cada persona.",
                         },
                         {
                             "year": "2010s",
                             "title": "Madrugones y familias",
-                            "body": "Los servicios de madrugón reúnen a generaciones. Nuevas familias se bautizan, se casan y crecen en la vida en comunidad. (Año por confirmar desde el CMS)",
+                            "body": "Los servicios de madrugón reúnen a generaciones. Nuevas familias se bautizan, se casan y crecen en la vida en comunidad.",
                         },
                         {
                             "year": "Hoy",

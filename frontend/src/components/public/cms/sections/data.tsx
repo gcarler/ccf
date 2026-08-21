@@ -167,22 +167,28 @@ export function TimelineSection({ section }: { section: CmsSection<"timeline"> }
   const fullBleed = Boolean(p.full_bleed);
 
   return (
-    <section className={`ccf-section-panel p-7 md:p-12 lg:p-14 ${fullBleed ? "relative left-1/2 w-screen -translate-x-1/2 rounded-none" : ""}`} style={{ background: "var(--site-surface-container-low)" }}>
-      {title && <h2 className="text-2xl md:text-3xl font-black tracking-tight mb-10 md:mb-12" style={{ color: "var(--site-on-surface)" }}>{title}</h2>}
-      <div className="relative">
-        <div className="absolute left-6 top-0 bottom-0 w-0.5" style={{ background: "var(--site-primary)", opacity: 0.3 }} />
-        <div className="space-y-6">
+    <section className={`ccf-section-panel p-7 md:p-12 lg:p-16 ${fullBleed ? "relative left-1/2 w-screen -translate-x-1/2 rounded-none" : ""}`} style={{ background: "var(--site-surface-container-low)" }}>
+      {title && (
+        <div className="mx-auto mb-12 max-w-2xl text-center md:mb-16">
+          <p className="mb-3 text-xs font-bold uppercase tracking-[0.24em]" style={{ color: "var(--site-primary)" }}>Nuestra historia</p>
+          <h2 className="text-3xl font-black tracking-tight md:text-5xl" style={{ color: "var(--site-on-surface)" }}>{title}</h2>
+        </div>
+      )}
+      <div className="relative mx-auto max-w-5xl">
+        <div className="absolute bottom-0 left-5 top-0 w-px md:left-1/2" style={{ background: "color-mix(in srgb, var(--site-primary) 28%, transparent)" }} />
+        <div className="space-y-10 md:space-y-14">
           {items.map((item, i) => (
-            <div key={i} className="relative pl-16">
-              <div
-                className="absolute left-0 size-12 rounded-full flex items-center justify-center text-xs font-black text-white leading-tight text-center"
-                style={{ background: "var(--site-cta-gradient)" }}
-              >
-                {item.year || String(i + 1)}
-              </div>
-              <div className="rounded-xl p-5" style={{ background: "var(--site-surface-container)" }}>
-                {item.title && <h3 className="font-black text-base" style={{ color: "var(--site-on-surface)" }}>{item.title}</h3>}
-                {item.body && <p className="mt-2 text-sm leading-relaxed" style={{ color: "var(--site-on-surface-variant)" }}>{item.body}</p>}
+            <div key={i} className="relative pl-16 md:grid md:grid-cols-2 md:gap-16 md:pl-0">
+              <article className={`rounded-2xl border p-6 shadow-sm md:p-8 ${i % 2 === 1 ? "md:col-start-2" : ""}`} style={{ background: "var(--site-surface-container)", borderColor: "color-mix(in srgb, var(--site-outline-variant) 58%, transparent)" }}>
+                <div className="mb-4 flex items-center gap-3">
+                  <span className="text-sm font-black uppercase tracking-[0.16em]" style={{ color: "var(--site-primary)" }}>{item.year || String(i + 1)}</span>
+                  <span className="h-px w-8" style={{ background: "var(--site-primary)", opacity: 0.35 }} />
+                </div>
+                {item.title && <h3 className="text-xl font-black leading-tight md:text-2xl" style={{ color: "var(--site-on-surface)" }}>{item.title}</h3>}
+                {item.body && <p className="mt-4 max-w-prose text-base leading-8" style={{ color: "var(--site-on-surface-variant)" }}>{item.body}</p>}
+              </article>
+              <div className="absolute left-0 top-6 flex size-10 items-center justify-center rounded-full border-4 text-[10px] font-black text-white shadow-lg md:left-1/2 md:top-1/2 md:-translate-x-1/2 md:-translate-y-1/2" style={{ background: "var(--site-cta-gradient)", borderColor: "var(--site-surface-container-low)" }} aria-hidden="true">
+                <span className="size-2 rounded-full bg-white" />
               </div>
             </div>
           ))}
