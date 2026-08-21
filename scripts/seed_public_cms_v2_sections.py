@@ -965,7 +965,7 @@ def _load_page_row(db, site_id: Any, slug: str) -> dict[str, Any] | None:
     return dict(row) if row is not None else None
 
 
-def run(site_key: str = "ccf", *, preserve_existing: bool = True) -> int:
+def run(site_key: str = "ccf", *, preserve_existing: bool = True, page_slug: str | None = None) -> int:
     # expire_on_commit=False: the seeder reuses ONE long-lived session across
     # all pages. With the default True, every ``db.commit()`` expires every ORM
     # instance, so the next attribute mutation (the section upsert loop) fires
@@ -992,6 +992,10 @@ def run(site_key: str = "ccf", *, preserve_existing: bool = True) -> int:
 
         media_find = _media_lookup(db)
         pages_specs = _build_pages(media_find)
+        if page_slug is not None:
+            if page_slug not in pages_specs:
+                raise ValueError(f"Unknown public page slug: {page_slug}")
+            pages_specs = {page_slug: pages_specs[page_slug]}
         site_id = _value(site, "id")
 
         created_pages = 0
@@ -1215,5 +1219,9 @@ if __name__ == "__main__":
         action="store_true",
         help="rebuild existing page sections (destructive; use only intentionally)",
     )
+    parser.add_argument(
+        "--page",
+        help="limit the seed to one public page slug; combine with --force for a targeted refresh",
+    )
     args = parser.parse_args()
-    raise SystemExit(run(preserve_existing=not args.force))
+    raise SystemExit(run(preserve_existing=not args.force, page_slug=args.page))
