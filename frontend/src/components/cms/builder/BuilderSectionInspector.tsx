@@ -387,6 +387,44 @@ export default function BuilderSectionInspector({
                   </div>
                 )}
 
+                {(activeSection.type === "video_hero" ||
+                  activeSection.type === "rich_text" ||
+                  activeSection.type === "timeline" ||
+                  activeSection.type === "gallery_masonry" ||
+                  activeSection.type === "contact_form") && (
+                  <div className="space-y-2 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 p-3 bg-[hsl(var(--surface-1))]/50 dark:bg-white/[0.02]">
+                    <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Presentación</p>
+                    <label className="flex items-center gap-2 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={Boolean(activeSection.props_json?.full_bleed)}
+                        onChange={(e) => {
+                          const nextProps = { ...asObject(activeSection.props_json), full_bleed: e.target.checked };
+                          updateSectionPropsLocal(nextProps);
+                          saveSectionProps(nextProps);
+                        }}
+                        className="rounded border-[hsl(var(--border))]"
+                      />
+                      Usar ancho completo de pantalla
+                    </label>
+                    {activeSection.type === "contact_form" && (
+                      <label className="flex items-center gap-2 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={Boolean(activeSection.props_json?.split_layout)}
+                          onChange={(e) => {
+                            const nextProps = { ...asObject(activeSection.props_json), split_layout: e.target.checked };
+                            updateSectionPropsLocal(nextProps);
+                            saveSectionProps(nextProps);
+                          }}
+                          className="rounded border-[hsl(var(--border))]"
+                        />
+                        Texto y formulario en dos columnas
+                      </label>
+                    )}
+                  </div>
+                )}
+
                 {activeSection.type === "rich_text_columns" && (
                   <div className="space-y-2 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 p-3 bg-[hsl(var(--surface-1))]/50 dark:bg-white/[0.02]">
                     <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Segunda columna</p>
