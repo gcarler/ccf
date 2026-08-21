@@ -259,7 +259,11 @@ def upsert_public_page_section(
             raise ValueError(f"Tipo de sección no permitido: {section_type}")
         validated_props = validate_section_props(section_type, props_json or {})
         if section_id:
-            row = crud.get_cms_section(db, page.id, uuid.UUID(section_id), site_id=site.id)
+            try:
+                section_uuid = uuid.UUID(section_id)
+            except (TypeError, ValueError, AttributeError) as exc:
+                raise ValueError(f"section_id inválido: {section_id!r}") from exc
+            row = crud.get_cms_section(db, page.id, section_uuid, site_id=site.id)
             if row is None:
                 raise ValueError("Sección no encontrada.")
             payload = schemas.CmsSectionUpdate(
