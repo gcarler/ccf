@@ -63,6 +63,7 @@ THEME_TOKENS = {
     # token; keep a real site value so they never fall back to "Mi Comunidad"
     # after a fresh seed or theme repair.
     "--site-logo-name": "Comunidad Cristiana El Faro",
+    "--site-brand-tagline": "Comunidad Cristiana",
     "--site-background": "#f8f9ff",
     "--site-on-background": "#101828",
     "--site-surface": "#ffffff",
