@@ -14,6 +14,7 @@ import {
 import { getCmsPublicMenu } from "@/lib/cms/v2";
 import { SITE_KEY } from "@/lib/site-config";
 import { usePublicBootstrap } from "./PublicBootstrapProvider";
+import { ANNIVERSARY_NAV_ITEMS } from "./anniversaryNav";
 
 const ICON_MAP: Record<string, LucideIcon> = {
   Home,
@@ -40,6 +41,7 @@ type MobileMenuItem = {
 
 export default function MobileNav() {
   const pathname = usePathname();
+  const isAnniversaryPage = pathname === "/aniversario40";
   const bootstrapMenu = usePublicBootstrap()?.menus?.mobile ?? null;
   const [items, setItems] = useState<MobileMenuItem[]>(() => {
     if (!bootstrapMenu) return [];
@@ -97,6 +99,15 @@ export default function MobileNav() {
     };
   }, [bootstrapMenu]);
 
+  const navItems = isAnniversaryPage
+    ? ANNIVERSARY_NAV_ITEMS.map((item) => ({
+        id: item.href,
+        href: item.href,
+        label: item.label,
+        meta_json: {},
+      }))
+    : items;
+
   return (
     <nav className="md:hidden fixed bottom-0 left-0 w-full flex justify-center z-50" style={{ paddingBottom: 'max(1.75rem, env(safe-area-inset-bottom))' }}>
       <div
@@ -106,7 +117,7 @@ export default function MobileNav() {
           boxShadow: "var(--site-mobile-nav-shadow)",
         }}
       >
-        {items.map(({ id, href, label, meta_json }) => {
+        {navItems.map(({ id, href, label, meta_json }) => {
           const isActive = pathname === href || (href !== "/" && pathname?.startsWith(href));
           const iconName = String((meta_json as Record<string, unknown>)?.icon || "");
           const Icon = ICON_MAP[iconName] || fallbackIcon(href);

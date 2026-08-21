@@ -11,6 +11,7 @@ import { useEffect, useState } from "react";
 import { useTheme } from "./ThemeProvider";
 import { useSiteBranding } from "@/lib/site-branding";
 import { usePublicBootstrap } from "./PublicBootstrapProvider";
+import { ANNIVERSARY_NAV_ITEMS } from "./anniversaryNav";
 
 type PublicNavItem = {
     id?: string;
@@ -53,7 +54,10 @@ export default function Navbar() {
     const mobileMenuLabel = themeTokens["--site-header-mobile-menu-label"] || "Menu principal";
     const openMenuLabel = themeTokens["--site-header-open-menu-label"] || "Abrir menu";
     const closeMenuLabel = themeTokens["--site-header-close-menu-label"] || "Cerrar menu";
-    const navLinks = menuItemsV2;
+    const isAnniversaryPage = pathname === "/aniversario40";
+    const navLinks: PublicNavItem[] = isAnniversaryPage
+        ? ANNIVERSARY_NAV_ITEMS
+        : menuItemsV2;
     const isActiveHref = (href: string) => pathname === href || (href !== "/" && Boolean(pathname?.startsWith(href)));
     const isActiveItem = (item: PublicNavItem) => isActiveHref(item.href) || Boolean(item.children?.some((child) => isActiveHref(child.href)));
 

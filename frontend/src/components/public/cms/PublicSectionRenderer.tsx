@@ -146,6 +146,8 @@ export default function PublicSectionRenderer({
 
   return (
     <div
+      id={targetSection.section_key}
+      className="scroll-mt-32"
       data-ab-test-id={abTest?.id}
       data-ab-variant={variant}
       onClick={handleContainerClick}
