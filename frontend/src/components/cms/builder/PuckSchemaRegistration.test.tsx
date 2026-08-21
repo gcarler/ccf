@@ -127,7 +127,7 @@ describe("Puck Block Schema Registrations for MediaPicker", () => {
     expect(screen.getByText("Cambiar Imagen")).toBeInTheDocument();
   });
 
-  it("registers AiField custom fields for Hero (title, body, cta_label), Rich Text (title, body), and CTA Banner (title, body, cta_label)", async () => {
+  it("registers AiField custom fields for Hero (eyebrow, title_lead, description), Rich Text (title, body), and CTA Banner (title, body, cta_label)", async () => {
     render(<PuckBuilderPage />);
     await waitFor(() => {
       expect(screen.getByTestId("puck-editor-mock")).toBeInTheDocument();
@@ -136,10 +136,11 @@ describe("Puck Block Schema Registrations for MediaPicker", () => {
     const components = capturedConfig?.components as any;
     expect(components).toBeDefined();
 
-    // Hero AI fields
-    expect(components.hero.fields.title.type).toBe("custom");
-    expect(components.hero.fields.body.type).toBe("custom");
-    expect(components.hero.fields.cta_label.type).toBe("custom");
+    // Hero AI fields (aligned with backend HeroProps schema)
+    expect(components.hero.fields.eyebrow.type).toBe("custom");
+    expect(components.hero.fields.title_lead.type).toBe("custom");
+    expect(components.hero.fields.description.type).toBe("custom");
+    expect(components.hero.fields.primary_cta.type).toBe("custom");
 
     // Rich Text AI fields
     expect(components.rich_text.fields.title.type).toBe("custom");
@@ -150,10 +151,10 @@ describe("Puck Block Schema Registrations for MediaPicker", () => {
     expect(components.cta_banner.fields.body.type).toBe("custom");
     expect(components.cta_banner.fields.cta_label.type).toBe("custom");
 
-    // Test rendering of one of the fields (e.g. Hero title)
-    render(components.hero.fields.title.render({ value: "Hero Title", onChange: vi.fn() }));
-    expect(screen.getByText("Título Principal")).toBeInTheDocument();
-    expect(screen.getByDisplayValue("Hero Title")).toBeInTheDocument();
+    // Test rendering of one of the fields (e.g. Hero eyebrow)
+    render(components.hero.fields.eyebrow.render({ value: "Hero Eyebrow", onChange: vi.fn() }));
+    expect(screen.getByText("Eyebrow (texto superior)")).toBeInTheDocument();
+    expect(screen.getByDisplayValue("Hero Eyebrow")).toBeInTheDocument();
     expect(screen.getByText("Redactar con IA")).toBeInTheDocument();
   });
 
@@ -180,14 +181,14 @@ describe("Puck Block Schema Registrations for MediaPicker", () => {
     expect(galleryItems.getItemSummary({ alt: "Imagen" }, 2)).toBe("Imagen #3");
     expect(galleryItems.getItemSummary({}, 0)).toBe("Imagen #1");
 
-    // 3. Cards defaultProps
+    // 3. Cards defaultProps (aligned with backend CardItem schema: href, icon)
     expect(components.cards.defaultProps).toBeDefined();
     expect(components.cards.defaultProps.items).toHaveLength(3);
     expect(components.cards.defaultProps.items[0]).toEqual({
       title: "Tarjeta 1",
       body: "Descripción de la tarjeta 1...",
-      cta_label: "Saber más",
-      cta_href: "/",
+      href: "/",
+      icon: "",
       image_url: "",
     });
 
