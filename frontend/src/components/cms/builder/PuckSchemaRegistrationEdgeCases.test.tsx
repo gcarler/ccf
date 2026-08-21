@@ -135,7 +135,7 @@ describe("M4 Schema Edge Cases & Empirical Stress Tests", () => {
     render(
       cardsRender({
         title: "Test Cards",
-        items: [null, undefined, {}, { title: "Complete Card", image_url: "http://example.com/card.jpg", cta_label: "Click Me" }],
+        items: [null, undefined, {}, { title: "Complete Card", image_url: "http://example.com/card.jpg", href: "/test" }],
       })
     );
 
@@ -147,6 +147,7 @@ describe("M4 Schema Edge Cases & Empirical Stress Tests", () => {
 
     // Sin imagen badges for 3 items without image_url
     expect(screen.getAllByText("Sin imagen").length).toBeGreaterThan(0);
-    expect(screen.getByText("Click Me →")).toBeInTheDocument();
+    // Cards render uses href-based "Ver más →" link (aligned with backend CardItem schema)
+    expect(screen.getByText("Ver más →")).toBeInTheDocument();
   });
 });
