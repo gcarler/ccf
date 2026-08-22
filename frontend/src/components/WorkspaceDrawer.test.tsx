@@ -36,7 +36,8 @@ describe('WorkspaceDrawer', () => {
         expect(drawer).not.toHaveClass('inset-0');
         fireEvent.click(expand);
         expect(screen.getByRole('button', { name: 'Contraer panel' })).toBeInTheDocument();
-        expect(drawer).toHaveClass('inset-0', 'h-dvh');
+        expect(drawer).toHaveClass('inset-x-0', 'top-10', 'bottom-0');
+        expect(drawer).not.toHaveClass('inset-0', 'h-dvh');
 
         fireEvent.click(screen.getByRole('button', { name: 'Contraer panel' }));
         expect(screen.getByRole('button', { name: 'Expandir panel' })).toBeInTheDocument();
