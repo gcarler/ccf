@@ -16,6 +16,7 @@ fi
 MODE="${CCF_PRE_PUSH_MODE:-fast}"
 DEPLOY_AFTER_VALIDATION="${CCF_PRE_PUSH_DEPLOY:-0}"
 RUN_FRONTEND_E2E="${CCF_PRE_PUSH_E2E:-0}"
+QUALITY_TIMEOUT_SECONDS="${CCF_PRE_PUSH_CHECK_TIMEOUT:-300}"
 BASE_REF="${CCF_PRE_PUSH_BASE:-origin/main}"
 HEAD_REF="${CCF_PRE_PUSH_HEAD:-HEAD}"
 RED='\033[0;31m'
@@ -40,6 +41,7 @@ echo "🔍 Pre-push: validando cambios antes de enviar a producción..."
 echo -e "  ${BLUE}Modo:${NC} $MODE"
 echo -e "  ${BLUE}Deploy automático:${NC} $DEPLOY_AFTER_VALIDATION"
 echo -e "  ${BLUE}Frontend E2E autenticado:${NC} $RUN_FRONTEND_E2E"
+echo -e "  ${BLUE}Timeout por check:${NC} ${QUALITY_TIMEOUT_SECONDS}s"
 echo -e "  ${BLUE}Diff base/head:${NC} $BASE_REF..$HEAD_REF"
 echo ""
 
@@ -59,17 +61,38 @@ run_quality_check() {
     local check_id="$1"
     local label="$2"
     local cmd="$3"
-    echo "      - $label"
-    if eval "$cmd" > /tmp/ccf-quality-check.log 2>&1; then
+    local log_file="/tmp/ccf-quality-check-${check_id}.log"
+    local started_at=$SECONDS
+    local rc=0
+    echo "      - $label (máximo ${QUALITY_TIMEOUT_SECONDS}s)"
+    : > "$log_file"
+    timeout --kill-after=10s "${QUALITY_TIMEOUT_SECONDS}s" bash -lc "$cmd" >"$log_file" 2>&1 &
+    local pid=$!
+    while kill -0 "$pid" 2>/dev/null; do
+        sleep 10
+        if kill -0 "$pid" 2>/dev/null; then
+            echo "        … $check_id sigue ejecutándose ($((SECONDS - started_at))s)"
+        fi
+    done
+    if wait "$pid"; then
+        rc=0
+    else
+        rc=$?
+    fi
+    if [ "$rc" -eq 0 ]; then
         local tail_line
-        tail_line=$(tail -n 1 /tmp/ccf-quality-check.log 2>/dev/null || true)
+        tail_line=$(tail -n 1 "$log_file" 2>/dev/null || true)
         echo -e "        ${GREEN}✓${NC} $check_id"
         if [ -n "$tail_line" ]; then
             echo "          $tail_line"
         fi
     else
-        echo -e "        ${RED}✗${NC} $check_id"
-        tail -n 20 /tmp/ccf-quality-check.log 2>/dev/null | sed 's/^/          /'
+        if [ "$rc" -eq 124 ]; then
+            echo -e "        ${RED}✗${NC} $check_id — timeout después de ${QUALITY_TIMEOUT_SECONDS}s"
+        else
+            echo -e "        ${RED}✗${NC} $check_id (exit $rc)"
+        fi
+        tail -n 20 "$log_file" 2>/dev/null | sed 's/^/          /'
         FAIL=1
     fi
 }
