@@ -33,12 +33,14 @@ export default function CmsBrandingPage() {
   const canEdit = canEditCms(user?.role);
   const {
     logoUrl: currentLogoUrl,
+    logoLargeUrl: currentLogoLargeUrl,
     logoName: currentLogoName,
     tagline: currentTagline,
   } = useSiteBranding();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [logoUrl, setLogoUrl] = useState("");
+  const [logoLargeUrl, setLogoLargeUrl] = useState("");
   const [logoName, setLogoName] = useState("");
   const [tagline, setTagline] = useState("");
   const [saving, setSaving] = useState(false);
@@ -50,9 +52,10 @@ export default function CmsBrandingPage() {
   // Initialize from current branding
   useEffect(() => {
     setLogoUrl(currentLogoUrl || "");
+    setLogoLargeUrl(currentLogoLargeUrl || "");
     setLogoName(currentLogoName || "");
     setTagline(currentTagline || "");
-  }, [currentLogoUrl, currentLogoName, currentTagline]);
+  }, [currentLogoUrl, currentLogoLargeUrl, currentLogoName, currentTagline]);
 
   // Load media items for picker
   useEffect(() => {
@@ -116,6 +119,7 @@ export default function CmsBrandingPage() {
       const updatedTokens = {
         ...currentTokens,
         "--site-logo-url": logoUrl,
+        "--site-logo-large-url": logoLargeUrl,
         "--site-logo-name": logoName,
         "--site-brand-tagline": tagline,
       };
@@ -273,6 +277,24 @@ export default function CmsBrandingPage() {
               />
               <p className="mt-1 text-2xs text-[hsl(var(--text-secondary))]">
                 Texto que acompaña al logo en la navegación
+              </p>
+            </div>
+
+            {/* Large Logo */}
+            <div>
+              <label className="block text-xs font-semibold text-[hsl(var(--text-primary))] mb-1.5">
+                Logo de alta resolución
+              </label>
+              <input
+                type="text"
+                value={logoLargeUrl}
+                onChange={(e) => setLogoLargeUrl(e.target.value)}
+                placeholder="/brand/faro-logo-white.svg"
+                disabled={!canEdit}
+                className="w-full rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] px-3 py-2 text-xs text-[hsl(var(--text-primary))] placeholder:text-[hsl(var(--text-secondary))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]/50"
+              />
+              <p className="mt-1 text-2xs text-[hsl(var(--text-secondary))]">
+                Se usa en login y superficies grandes; admite SVG o una imagen de alta resolución.
               </p>
             </div>
 

@@ -7,6 +7,7 @@ import { usePublicBootstrap } from "@/components/public/PublicBootstrapProvider"
 
 export interface SiteBranding {
   logoUrl: string;
+  logoLargeUrl: string;
   logoName: string;
   tagline: string;
 }
@@ -17,6 +18,7 @@ export function useSiteBranding(fallback?: Partial<SiteBranding>) {
   const bootstrapTheme = usePublicBootstrap()?.theme ?? null;
   const [branding, setBranding] = useState<SiteBranding>({
     logoUrl: bootstrapTheme?.tokens_json?.["--site-logo-url"] || fallback?.logoUrl || "",
+    logoLargeUrl: bootstrapTheme?.tokens_json?.["--site-logo-large-url"] || "",
     logoName: bootstrapTheme?.tokens_json?.["--site-logo-name"] || fallback?.logoName || SITE_NAME,
     tagline: bootstrapTheme?.tokens_json?.["--site-brand-tagline"] || fallback?.tagline || DEFAULT_TAGLINE,
   });
@@ -25,6 +27,7 @@ export function useSiteBranding(fallback?: Partial<SiteBranding>) {
     if (bootstrapTheme?.tokens_json) {
       setBranding({
         logoUrl: bootstrapTheme.tokens_json["--site-logo-url"] || fallback?.logoUrl || "",
+        logoLargeUrl: bootstrapTheme.tokens_json["--site-logo-large-url"] || "",
         logoName: bootstrapTheme.tokens_json["--site-logo-name"] || fallback?.logoName || SITE_NAME,
         tagline: bootstrapTheme.tokens_json["--site-brand-tagline"] || fallback?.tagline || DEFAULT_TAGLINE,
       });
@@ -44,6 +47,7 @@ export function useSiteBranding(fallback?: Partial<SiteBranding>) {
         const tokens = row?.tokens_json || {};
         setBranding({
           logoUrl: tokens["--site-logo-url"] || fallback?.logoUrl || "",
+          logoLargeUrl: tokens["--site-logo-large-url"] || "",
           logoName: tokens["--site-logo-name"] || fallback?.logoName || SITE_NAME,
           tagline: tokens["--site-brand-tagline"] || fallback?.tagline || DEFAULT_TAGLINE,
         });
@@ -51,6 +55,7 @@ export function useSiteBranding(fallback?: Partial<SiteBranding>) {
         if (!mounted) return;
         setBranding({
           logoUrl: fallback?.logoUrl || "",
+          logoLargeUrl: "",
           logoName: fallback?.logoName || SITE_NAME,
           tagline: fallback?.tagline || DEFAULT_TAGLINE,
         });
