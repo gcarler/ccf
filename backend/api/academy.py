@@ -7,6 +7,7 @@ explicit Academy permission.
 
 from __future__ import annotations
 
+import asyncio
 from datetime import date
 from html import escape as _html_escape
 from typing import Annotated, Any
@@ -228,10 +229,7 @@ def list_courses(
     # F-02 (2026-08-02): students_count real vía count bulk por página (sin N+1).
     user_sede = get_user_sede_id(db, current_user.id)
     counts = _students_count_map(db, [c.id for c in courses], user_sede)
-    return [
-        _serialize_course(course, students_count=counts.get(course.id, 0))
-        for course in courses
-    ]
+    return [_serialize_course(course, students_count=counts.get(course.id, 0)) for course in courses]
 
 
 @router.get("/courses/{course_id_or_slug}")
@@ -506,13 +504,14 @@ def update_lesson_progress(
             import secrets
             import string
             import uuid
+
             code = "".join(secrets.choice(string.ascii_uppercase + string.digits) for _ in range(12))
             cert = models.Certificate(
                 id=uuid.uuid4(),
                 enrollment_id=enrollment.id,
                 certificate_type=lesson.course.certificate_type or "Formación Básica",
                 certificate_code=code,
-                issued_at=_utcnow()
+                issued_at=_utcnow(),
             )
             db.add(cert)
     db.commit()
@@ -905,11 +904,19 @@ async def submit_assignment(
     if file.content_type and file.content_type not in ALLOWED_TYPES:
         raise HTTPException(status_code=422, detail="Tipo de archivo no permitido")
     MAX_SIZE = 10 * 1024 * 1024
-    contents = await file.read()
-    if len(contents) > MAX_SIZE:
-        raise HTTPException(status_code=422, detail="El archivo excede el límite de 10 MB")
-    url = storage_service.save_file_original(
-        contents, sanitize_filename(file.filename or "assignment"), subfolder="academy"
+    contents = bytearray()
+    while True:
+        chunk = await file.read(64 * 1024)
+        if not chunk:
+            break
+        contents.extend(chunk)
+        if len(contents) > MAX_SIZE:
+            raise HTTPException(status_code=422, detail="El archivo excede el límite de 10 MB")
+    url = await asyncio.to_thread(
+        storage_service.save_file_original,
+        bytes(contents),
+        sanitize_filename(file.filename or "assignment"),
+        "academy",
     )
     submission = models.AssignmentSubmission(
         enrollment_id=enrollment.id,
@@ -945,7 +952,7 @@ def forum_threads(
     # innerjoin para los hilos con course_id != NULL descarta automáticamente
     # los huérfanos/archivados (JOIN falla → row no aparece). Complementado con
     # el branch course_id IS NULL para los anuncios globales puros.
-    query = db.query(models.ForumThread)
+    query = db.query(models.ForumThread).filter(models.ForumThread.deleted_at.is_(None))
     if sede_id:
         # Hilos globales (course_id IS NULL) O hilos con Course no borrado de la sede.
         query = query.outerjoin(
@@ -1029,7 +1036,14 @@ def resolve_forum_thread(
     db: Session = Depends(get_db),
 ):
     # ACAD-MED-002: alternar is_resolved. Solo Editor/Manager.
-    thread = db.query(models.ForumThread).filter(models.ForumThread.id == thread_id).first()
+    thread = (
+        db.query(models.ForumThread)
+        .filter(
+            models.ForumThread.id == thread_id,
+            models.ForumThread.deleted_at.is_(None),
+        )
+        .first()
+    )
     if not thread:
         raise HTTPException(status_code=404, detail="Hilo no encontrado")
     if thread.course_id:
@@ -1051,7 +1065,14 @@ def resolve_forum_thread(
 
 
 def _get_scoped_forum_thread(db: Session, current_user: models.User, thread_id: UUID):
-    thread = db.query(models.ForumThread).filter(models.ForumThread.id == thread_id).first()
+    thread = (
+        db.query(models.ForumThread)
+        .filter(
+            models.ForumThread.id == thread_id,
+            models.ForumThread.deleted_at.is_(None),
+        )
+        .first()
+    )
     if not thread:
         raise HTTPException(status_code=404, detail="Hilo no encontrado")
     if thread.course_id:
@@ -1252,9 +1273,7 @@ def academy_personas(
     # (models_crm.py:362) — no filtrar por soft-delete aquí (causaba
     # AttributeError → 500). El M-06 outerjoin contra auth_users para
     # ``is_active`` se conserva.
-    query = db.query(models.Persona, models.Usuario).outerjoin(
-        models.Usuario, models.Usuario.id == models.Persona.id
-    )
+    query = db.query(models.Persona, models.Usuario).outerjoin(models.Usuario, models.Usuario.id == models.Persona.id)
     sede_id = get_user_sede_id(db, current_user.id)
     if sede_id:
         query = query.filter(models.Persona.sede_id == sede_id)
@@ -1287,6 +1306,8 @@ def academy_personas(
             "id": persona.id,
             "persona_id": persona.id,
             "username": _persona_display_name(persona),
+            "name": _persona_display_name(persona),
+            "full_name": _persona_display_name(persona),
             "email": persona.email,
             "role": role or "student",
             # M-06 (cierre 2026-07-24): estado activo real desde

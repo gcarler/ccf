@@ -13,6 +13,7 @@ type StudentRow = {
     id: string;
     name?: string;
     full_name?: string;
+    username?: string;
     email?: string;
     role?: string;
     status?: string;
@@ -107,10 +108,10 @@ export default function AcademyStudentsPage() {
                                 {filtered.map(s => (
                                     <div key={s.id} onClick={() => router.push(`/plataforma/academy/profile?student=${s.id}`)} className="flex items-center gap-3 p-3 rounded-lg hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5 cursor-pointer transition-all">
                                         <div className="w-8 h-8 rounded-full bg-[hsl(var(--info-muted))] dark:bg-[hsl(var(--info))]/30 flex items-center justify-center shrink-0 text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] font-bold text-xs">
-                                            {(s.full_name || s.name || 'E')[0]}
+                                            {(s.full_name || s.name || s.username || 'E')[0]}
                                         </div>
                                         <div className="flex-1 min-w-0">
-                                            <p className="text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-white truncate">{s.full_name || s.name || "Participante"}</p>
+                                            <p className="text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-white truncate">{s.full_name || s.name || s.username || "Participante"}</p>
                                             <p className="text-xs text-[hsl(var(--text-secondary))]">{s.email || 'Sin correo'}</p>
                                         </div>
                                         <span className="text-xs text-[hsl(var(--text-secondary))]">{s.course_count ?? 0} cursos</span>
@@ -125,7 +126,7 @@ export default function AcademyStudentsPage() {
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 p-3">
                                 {filtered.map(s => (
                                     <div key={s.id} onClick={() => router.push(`/plataforma/academy/profile?student=${s.id}`)} className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-[#1a1b1e] p-4 hover:shadow-md cursor-pointer transition-all">
-                                        <h3 className="text-sm font-bold text-[hsl(var(--text-primary))] dark:text-white">{s.full_name || s.name || "Estudiante"}</h3>
+                                        <h3 className="text-sm font-bold text-[hsl(var(--text-primary))] dark:text-white">{s.full_name || s.name || s.username || "Estudiante"}</h3>
                                         <p className="text-xs text-[hsl(var(--text-secondary))] mt-1">{s.email || 'Sin correo'}</p>
                                         <div className="flex items-center justify-between mt-3">
                                             <span className="text-xs text-[hsl(var(--text-secondary))]">{s.course_count ?? 0} cursos</span>
