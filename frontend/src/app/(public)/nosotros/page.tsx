@@ -23,6 +23,21 @@ export default function NosotrosPage() {
     const heroCms = heroPage?.blocks?.hero;
     const aboutCms = heroPage?.blocks?.about;
 
+    const [liveStats, setLiveStats] = React.useState<Array<{ value: string; label: string }> | null>(null);
+
+    React.useEffect(() => {
+        let mounted = true;
+        fetch('/api/public/stats')
+            .then(res => res.ok ? res.json() : null)
+            .then(data => {
+                if (mounted && data?.stats && Array.isArray(data.stats) && data.stats.length > 0) {
+                    setLiveStats(data.stats);
+                }
+            })
+            .catch(() => {});
+        return () => { mounted = false; };
+    }, []);
+
     const hero = (heroCms?.parsed && typeof heroCms.parsed === "object" && !Array.isArray(heroCms.parsed))
         ? heroCms.parsed as Record<string, unknown>
         : null;
@@ -36,7 +51,8 @@ export default function NosotrosPage() {
         ? aboutCms.parsed as Record<string, unknown>
         : null;
 
-    const stats  = Array.isArray(about?.stats) ? about!.stats as Array<{ value: string; label: string }> : [];
+    const cmsStats = Array.isArray(about?.stats) ? about!.stats as Array<{ value: string; label: string }> : [];
+    const stats = (liveStats && liveStats.length > 0) ? liveStats : cmsStats;
     const valores = Array.isArray(about?.valores) ? about!.valores as Array<{ num?: string; key?: string; title?: string; desc?: string }> : [];
 
     const visionText  = typeof about?.vision_text === "string" ? about.vision_text : "";
@@ -78,6 +94,16 @@ export default function NosotrosPage() {
     const hasQuote = quoteText && quoteAuthor;
     const hasCta = ctaTitle || ctaDesc;
 
+    const heroSlides = Array.isArray(hero?.slides) && hero!.slides.length > 0
+        ? (hero!.slides as Array<{ src?: string; alt?: string; title?: string; caption?: string }>)
+            .filter(s => s && typeof s.src === "string")
+            .map(s => ({ src: s.src!, alt: s.alt || "Comunidad Cristiana El Faro", title: s.title, caption: s.caption }))
+        : [
+            { src: "/api/static/cms/public-site/1930936676f84f6b97df83da209fd657.webp", alt: "Comunidad Cristiana El Faro — Nosotros" },
+            { src: "/api/static/cms/public-site/a663278641a340028b26d6831b08f063.webp", alt: "Comunidad Cristiana El Faro — Nosotros" },
+            { src: "/api/static/cms/public-site/7ca9cbaf381a48bc841a6f858abae2cb.webp", alt: "Comunidad Cristiana El Faro — Nosotros" },
+        ];
+
     return (
         <main className="min-h-screen bg-site-background pt-[88px] overflow-hidden">
             {/* ── HERO ── */}
@@ -87,7 +113,7 @@ export default function NosotrosPage() {
                     titleLead={heroTitleLead}
                     titleAccent={heroTitleAccent}
                     description={heroDescription}
-                    slides={[]}
+                    slides={heroSlides}
                 />
             )}
 
