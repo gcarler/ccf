@@ -41,7 +41,7 @@ export default function EventViews({
       {(viewType === 'board' || viewType === 'kanban') && (
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
           {boardColumns.map((column) => (
-            <section key={column.key} className="rounded-md border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-primary))] p-4 shadow-sm dark:bg-surface-card">
+            <section key={column.key} className="rounded-md border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-primary))] p-4 shadow-sm dark:bg-[hsl(var(--surface-card))]">
               <header className="mb-4 flex items-center justify-between">
                 <h3 className="text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{column.label}</h3>
                 <span className="rounded-full bg-[hsl(var(--bg-muted))] px-2 py-0.5 font-semibold text-[hsl(var(--text-secondary))]">
@@ -74,19 +74,19 @@ export default function EventViews({
       )}
 
       {viewType === 'calendar' && (
-        <div className="rounded-md border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-primary))] p-4 shadow-sm dark:bg-surface-card">
+        <div className="rounded-md border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-primary))] p-4 shadow-sm dark:bg-[hsl(var(--surface-card))]">
           <UniversalCalendarView events={calendarEvents} title="Calendario de eventos" />
         </div>
       )}
 
       {viewType === 'gantt' && (
-        <div className="rounded-md border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-primary))] p-4 shadow-sm dark:bg-surface-card">
+        <div className="rounded-md border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-primary))] p-4 shadow-sm dark:bg-[hsl(var(--surface-card))]">
           <UniversalGanttView items={ganttItems} moduleName="Eventos" />
         </div>
       )}
 
       {viewType === 'wiki' && (
-        <section className="rounded-md border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-primary))] p-3 shadow-sm dark:bg-surface-card">
+        <section className="rounded-md border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-primary))] p-3 shadow-sm dark:bg-[hsl(var(--surface-card))]">
           <p className="mb-3 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Wiki de eventos</p>
           <textarea
             value={wikiNotes}

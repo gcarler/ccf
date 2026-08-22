@@ -56,7 +56,7 @@ export default function EventCardViews({
   role="link"
   onClick={() => onOpenEvent(ev.id)}
   onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onOpenEvent(ev.id); } }}
-  className="p-4 rounded-md border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-primary))] dark:bg-surface-card hover:border-[hsl(var(--primary)/0.3)] hover:shadow-[0_8px_30px_hsl(var(--primary)/0.12)] transition-all group flex flex-col justify-between cursor-pointer"
+  className="p-4 rounded-md border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-card))] hover:border-[hsl(var(--primary)/0.3)] hover:shadow-[0_8px_30px_hsl(var(--primary)/0.12)] transition-all group flex flex-col justify-between cursor-pointer"
   >
  <div>
  <div className="flex justify-between items-start mb-4">
@@ -105,7 +105,7 @@ export default function EventCardViews({
  <MoreVertical size={16} />
  </button>
  {menuOpenId === ev.id && (
- <div className="absolute right-0 bottom-12 z-50 bg-[hsl(var(--bg-primary))] dark:bg-surface-card border border-[hsl(var(--border-primary))] rounded-lg shadow-[0_8px_30px_hsl(var(--primary)/0.15)] overflow-hidden w-40 animate-in fade-in slide-in-from-bottom-2">
+ <div className="absolute right-0 bottom-12 z-50 bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-card))] border border-[hsl(var(--border-primary))] rounded-lg shadow-[0_8px_30px_hsl(var(--primary)/0.15)] overflow-hidden w-40 animate-in fade-in slide-in-from-bottom-2">
   <button
   onClick={() => onEdit(ev)}
   className="w-full flex items-center gap-3 px-4 py-1.5 text-sm font-bold text-[hsl(var(--text-primary))] hover:bg-info-muted dark:hover:bg-white/5 transition-all"
@@ -131,7 +131,7 @@ export default function EventCardViews({
 
  {/* LIST VIEW */}
  {viewType === 'list' && (
- <div className="bg-[hsl(var(--bg-primary))] dark:bg-surface-card rounded-md border border-[hsl(var(--border-primary))] overflow-hidden shadow-sm divide-y divide-[hsl(var(--border-primary))]">
+ <div className="bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-card))] rounded-md border border-[hsl(var(--border-primary))] overflow-hidden shadow-sm divide-y divide-[hsl(var(--border-primary))]">
  {events.map(ev => {
  const attendanceStat = getEventAttendanceStat(ev);
  return (
@@ -183,7 +183,7 @@ export default function EventCardViews({
  )}
 
  {viewType === 'table' && (
- <div className="overflow-x-auto rounded-md border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-primary))] dark:bg-surface-card shadow-sm">
+ <div className="overflow-x-auto rounded-md border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-card))] shadow-sm">
  <table className="w-full min-w-[480px] text-left">
  <thead className="bg-[hsl(var(--bg-muted))]">
  <tr>

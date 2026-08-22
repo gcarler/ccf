@@ -88,7 +88,7 @@ function PersonaSelect({ personas, value, onChange, label, multi = false }: Pers
             />
           </div>
           {open && search && (
-            <div className="absolute z-20 top-full left-0 right-0 mt-2 bg-[hsl(var(--bg-primary))] dark:bg-surface-card border border-[hsl(var(--border-primary))] rounded-lg shadow-xl max-h-60 overflow-y-auto">
+            <div className="absolute z-20 top-full left-0 right-0 mt-2 bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-card))] border border-[hsl(var(--border-primary))] rounded-lg shadow-xl max-h-60 overflow-y-auto">
               {filtered.map((m: Persona) => (
                 <button
                   key={m.id}
@@ -386,7 +386,7 @@ export default function SessionTab({ eventId, token, eventName }: SessionTabProp
                       <p className="text-sm text-[hsl(var(--text-secondary))]">Sin registros de asistentes.</p>
                     ) : (
                       sessionData!.attendees.map((att) => (
-                        <div key={`${att.persona_id}-${att.role}`} className="flex items-center justify-between gap-3 rounded-md bg-[hsl(var(--bg-primary))] dark:bg-surface-card border border-[hsl(var(--border-primary))] px-3 py-2">
+                        <div key={`${att.persona_id}-${att.role}`} className="flex items-center justify-between gap-3 rounded-md bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-card))] border border-[hsl(var(--border-primary))] px-3 py-2">
                           <div className="min-w-0">
                             <p className="text-sm font-bold text-[hsl(var(--text-primary))] truncate">{att.name}</p>
                             <p className="text-2xs uppercase font-bold tracking-wide text-[hsl(var(--text-secondary))]">{att.role}</p>
@@ -410,7 +410,7 @@ export default function SessionTab({ eventId, token, eventName }: SessionTabProp
                       <p className="text-sm text-[hsl(var(--text-secondary))]">No hay ausentes en esta sesión.</p>
                     ) : (
                       sessionData!.absentees.map((att) => (
-                        <div key={`${att.persona_id}-${att.role}`} className="flex items-center justify-between gap-3 rounded-md bg-[hsl(var(--bg-primary))] dark:bg-surface-card border border-[hsl(var(--border-primary))] px-3 py-2">
+                        <div key={`${att.persona_id}-${att.role}`} className="flex items-center justify-between gap-3 rounded-md bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-card))] border border-[hsl(var(--border-primary))] px-3 py-2">
                           <div className="min-w-0">
                             <p className="text-sm font-bold text-[hsl(var(--text-primary))] truncate">{att.name}</p>
                             <p className="text-2xs uppercase font-bold tracking-wide text-[hsl(var(--text-secondary))]">{att.role}</p>

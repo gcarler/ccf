@@ -275,7 +275,7 @@ method: 'POST', token: token, silent: true, body: attPayload,
  </div>
 
  {/* Date */}
- <div className="bg-[hsl(var(--bg-primary))] dark:bg-surface-card border border-[hsl(var(--border-primary))] rounded-lg p-4">
+ <div className="bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-card))] border border-[hsl(var(--border-primary))] rounded-lg p-4">
  <label className="text-2xs font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] flex items-center gap-1.5 mb-2"><Calendar size={12} /> Fecha</label>
  <input type="date" value={sessionDate} onChange={e => setSessionDate(e.target.value)} className="w-full md:w-auto px-3 py-2 rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-muted))] text-sm text-[hsl(var(--text-primary))] focus:border-[hsl(var(--primary))] focus:outline-none" />
  </div>
@@ -289,7 +289,7 @@ method: 'POST', token: token, silent: true, body: attPayload,
  </div>
 
  {/* Attendance */}
- <div className="bg-[hsl(var(--bg-primary))] dark:bg-surface-card border border-[hsl(var(--border-primary))] rounded-lg overflow-hidden">
+ <div className="bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-card))] border border-[hsl(var(--border-primary))] rounded-lg overflow-hidden">
  <div className="px-4 py-3 border-b border-[hsl(var(--border-primary))] flex items-center justify-between">
  <h2 className="text-2xs font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] flex items-center gap-1.5"><Users size={12} /> Asistencia ({people.length})</h2>
  <div className="relative">
@@ -323,7 +323,7 @@ method: 'POST', token: token, silent: true, body: attPayload,
  </div>
 
  {/* New Guests */}
- <div className="bg-[hsl(var(--bg-primary))] dark:bg-surface-card border border-[hsl(var(--border-primary))] rounded-lg overflow-hidden">
+ <div className="bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-card))] border border-[hsl(var(--border-primary))] rounded-lg overflow-hidden">
  <div className="px-4 py-3 border-b border-[hsl(var(--border-primary))] flex items-center justify-between">
  <h2 className="text-2xs font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] flex items-center gap-1.5"><UserPlus size={12} /> Invitados nuevos ({newGuests.length})</h2>
  <button onClick={addGuest} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-[hsl(var(--primary))] text-white text-2xs font-bold hover:bg-[hsl(var(--primary))]"><Plus size={11} /> Agregar</button>
@@ -332,9 +332,9 @@ method: 'POST', token: token, silent: true, body: attPayload,
  {newGuests.map((g, i) => (
  <motion.div key={i} initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="px-4 py-3 border-b border-[hsl(var(--border-primary))] last:border-b-0 bg-info-soft">
  <div className="flex items-center gap-2">
- <input type="text" value={g.firstName} onChange={e => updateGuest(i, 'firstName', e.target.value)} placeholder="Nombre" className="flex-1 px-3 py-2 rounded-lg border border-info-muted bg-[hsl(var(--bg-primary))] dark:bg-surface-card text-sm text-[hsl(var(--text-primary))] focus:border-[hsl(var(--primary))] focus:outline-none" />
- <input type="text" value={g.lastName} onChange={e => updateGuest(i, 'lastName', e.target.value)} placeholder="Apellido" className="flex-1 px-3 py-2 rounded-lg border border-info-muted bg-[hsl(var(--bg-primary))] dark:bg-surface-card text-sm text-[hsl(var(--text-primary))] focus:border-[hsl(var(--primary))] focus:outline-none" />
- <input type="text" value={g.phone} onChange={e => updateGuest(i, 'phone', e.target.value)} placeholder="Teléfono" className="flex-1 px-3 py-2 rounded-lg border border-info-muted bg-[hsl(var(--bg-primary))] dark:bg-surface-card text-sm text-[hsl(var(--text-primary))] focus:border-[hsl(var(--primary))] focus:outline-none" />
+ <input type="text" value={g.firstName} onChange={e => updateGuest(i, 'firstName', e.target.value)} placeholder="Nombre" className="flex-1 px-3 py-2 rounded-lg border border-info-muted bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-card))] text-sm text-[hsl(var(--text-primary))] focus:border-[hsl(var(--primary))] focus:outline-none" />
+ <input type="text" value={g.lastName} onChange={e => updateGuest(i, 'lastName', e.target.value)} placeholder="Apellido" className="flex-1 px-3 py-2 rounded-lg border border-info-muted bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-card))] text-sm text-[hsl(var(--text-primary))] focus:border-[hsl(var(--primary))] focus:outline-none" />
+ <input type="text" value={g.phone} onChange={e => updateGuest(i, 'phone', e.target.value)} placeholder="Teléfono" className="flex-1 px-3 py-2 rounded-lg border border-info-muted bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-card))] text-sm text-[hsl(var(--text-primary))] focus:border-[hsl(var(--primary))] focus:outline-none" />
  <button onClick={() => removeGuest(i)} className="p-2 rounded-lg text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--destructive))] hover:bg-danger-soft"><XCircle size={16} /></button>
  </div>
  </motion.div>
@@ -344,7 +344,7 @@ method: 'POST', token: token, silent: true, body: attPayload,
  </div>
 
  {/* Session Details */}
- <div className="bg-[hsl(var(--bg-primary))] dark:bg-surface-card border border-[hsl(var(--border-primary))] rounded-lg p-4 space-y-4">
+ <div className="bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-card))] border border-[hsl(var(--border-primary))] rounded-lg p-4 space-y-4">
  <h2 className="text-2xs font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] flex items-center gap-1.5"><FileText size={12} /> Detalles</h2>
  <div>
  <label className="block text-2xs font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] mb-1">Tema</label>
