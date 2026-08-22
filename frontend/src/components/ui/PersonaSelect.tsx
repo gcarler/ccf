@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { apiFetch } from "@/lib/http";
-import { matchesPersonNamePrefix, normalizePersonSearch } from "@/lib/personSearch";
+import { filtroAPersonas, normalizarBusquedaPersona } from "@/lib/filtroAPersonas";
 import { Check, ChevronDown, User as UserIcon, Search, Shield } from "lucide-react";
 
 interface PersonaOption {
@@ -62,8 +62,8 @@ export default function PersonaSelect({
 
     const filtered = search.trim()
         ? personas.filter((p) => {
-              const q = normalizePersonSearch(search);
-              return matchesPersonNamePrefix(displayName(p), q) || normalizePersonSearch(p.church_role).includes(q);
+              const q = normalizarBusquedaPersona(search);
+              return filtroAPersonas(displayName(p), q) || normalizarBusquedaPersona(p.church_role).includes(q);
           })
         : personas;
 

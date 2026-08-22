@@ -19,6 +19,7 @@ import {
 import CrmShell from '@/components/crm/CrmShell';
 import AdminHero from '@/components/admin/AdminHero';
 import { apiFetch } from '@/lib/http';
+import { filtroAPersonas } from '@/lib/filtroAPersonas';
 import { motion, AnimatePresence } from 'framer-motion';
 import clsx from 'clsx';
 
@@ -91,9 +92,9 @@ export default function TaskAssignment() {
     }, [authLoading, fetchData, isAuthenticated, reloadKey]);
 
     const filteredPersonas = useMemo(() => {
-        const query = searchQuery.trim().toLocaleLowerCase('es');
+        const query = searchQuery.trim();
         return personas.filter(m =>
-            (m.nombre_completo || `${m.first_name ?? ''} ${m.last_name ?? ''}`.trim()).trim().toLocaleLowerCase('es').startsWith(query)
+            filtroAPersonas(m.nombre_completo || `${m.first_name ?? ''} ${m.last_name ?? ''}`.trim(), query)
         );
     }, [personas, searchQuery]);
 

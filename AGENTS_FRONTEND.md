@@ -287,6 +287,7 @@ frontend/src/
 - [ ] 9. ¿Usé `DSButton` / `DSCard` del design system donde aplica?
 - [ ] 10. ¿El módulo nuevo está registrado en el layout de plataforma?
 - [ ] 11. **¿El código tiene `indigo`, `violet` o `purple`?** Si hay alguno → BLOQUEADO. Reemplazar por `hsl(var(--primary))` o `blue-*`.
+- [ ] 12. **¿Busco personas por nombre?** Usar `filtroAPersonas` de `@/lib/filtroAPersonas` (normaliza acentos y soporta nombres compuestos). No escribir filtros propios con `startsWith`/`includes` crudos.
 
 ---
 

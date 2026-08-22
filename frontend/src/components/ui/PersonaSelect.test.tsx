@@ -21,7 +21,7 @@ describe('PersonaSelect', () => {
     it('renders placeholder when no value is selected', async () => {
         render(<PersonaSelect value={null} onChange={() => {}} />);
         await waitFor(() => expect(screen.getByText('Sin asignar')).toBeInTheDocument());
-        await waitFor(() => expect(mockApiFetch).toHaveBeenCalledWith('/crm/personas', { token: 'test-token' }));
+        await waitFor(() => expect(mockApiFetch).toHaveBeenCalledWith('/crm/personas', { token: 'test-token', query: { limit: 1000 } }));
     });
 
     it('opens dropdown and displays personas after fetching', async () => {

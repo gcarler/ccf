@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { apiFetch, ApiError } from '@/lib/http';
-import { matchesPersonNamePrefix, normalizePersonSearch } from '@/lib/personSearch';
+import { filtroAPersonas, normalizarBusquedaPersona } from '@/lib/filtroAPersonas';
 import { getErrorMessage } from '../../../utils';
 import { toast } from 'sonner';
 import { useAuth } from '@/context/AuthContext';
@@ -160,11 +160,11 @@ export default function SessionReportPage() {
  }), [people, newGuests]);
 
  const filtered = useMemo(() => {
- const q = normalizePersonSearch(searchQuery);
+ const q = normalizarBusquedaPersona(searchQuery);
  if (!q) return people;
  return people.filter(p =>
-   matchesPersonNamePrefix(p.name, q) ||
-   normalizePersonSearch(p.role).includes(q)
+   filtroAPersonas(p.name, q) ||
+   normalizarBusquedaPersona(p.role).includes(q)
  );
  }, [people, searchQuery]);
 

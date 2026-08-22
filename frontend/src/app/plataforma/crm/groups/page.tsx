@@ -4,6 +4,7 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { extractErrorMessage, apiFetch } from '@/lib/http';
+import { filtroAPersonas, normalizarBusquedaPersona } from '@/lib/filtroAPersonas';
 import CrmShell from '@/components/crm/CrmShell';
 import { motion } from 'framer-motion';
 import {
@@ -158,7 +159,7 @@ export default function CrmGroupsPage() {
     }, [groups]);
 
     const filteredPersonas = useMemo(() => {
-        const term = personaQuery.trim().toLocaleLowerCase('es');
+        const term = normalizarBusquedaPersona(personaQuery);
         const base = [...personas].sort((a, b) => {
             const nameA = (a.nombre_completo || `${a.first_name ?? ''} ${a.last_name ?? ''}`.trim()).toLowerCase();
             const nameB = (b.nombre_completo || `${b.first_name ?? ''} ${b.last_name ?? ''}`.trim()).toLowerCase();
@@ -167,8 +168,8 @@ export default function CrmGroupsPage() {
 
         if (!term) return base;
         return base.filter(persona =>
-            (persona.nombre_completo || `${persona.first_name ?? ''} ${persona.last_name ?? ''}`.trim()).trim().toLocaleLowerCase('es').startsWith(term) ||
-            persona.church_role?.toLocaleLowerCase('es').includes(term)
+            filtroAPersonas(persona.nombre_completo || `${persona.first_name ?? ''} ${persona.last_name ?? ''}`.trim(), term) ||
+            normalizarBusquedaPersona(persona.church_role).includes(term)
         );
     }, [personaQuery, personas]);
 

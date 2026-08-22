@@ -45,6 +45,15 @@ Importar desde `@/design`:
 | `DSToolbarChip` | Filtros | soft, solid, outline |
 | `DSCommandEntry` | Command palette | active, inactive |
 
+## Utilidades compartidas (`@/lib`)
+
+| Utilidad | Uso | Import |
+|---|---|---|
+| `filtroAPersonas(name, query)` | Filtro reutilizable de búsqueda de personas: normaliza acentos/case/espacios y casa por prefijo del nombre completo o por subsecuencia de palabras ("juan meza" encuentra "Juan Luis Meza"). Query vacío → true. | `import { filtroAPersonas } from '@/lib/filtroAPersonas'` |
+| `normalizarBusquedaPersona(value)` | Normaliza un texto para comparación (minúsculas, sin acentos, espacios simples). Con cache interno acotado. | `import { normalizarBusquedaPersona } from '@/lib/filtroAPersonas'` |
+
+> **Regla:** al buscar personas por nombre en cualquier módulo, usar `filtroAPersonas` — no escribir filtros propios con `startsWith`/`includes` (pierden acentos y nombres compuestos).
+
 ## Regla de oro
 
 > Si el backend dice "personas", el frontend dice "personas".
