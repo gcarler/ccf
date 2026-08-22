@@ -57,6 +57,7 @@ function EventsPage() {
   isScanning,
   newEvent, setNewEvent,
   roles,
+  sedes,
   editingEvent, setEditingEvent,
   deletingEventId, setDeletingEventId,
   menuOpenId, setMenuOpenId,
@@ -180,6 +181,7 @@ function EventsPage() {
     form={newEvent}
     setForm={setNewEvent}
     roles={roles}
+    sedes={sedes}
     presets={audiencePresets}
     onApplyPreset={applyPresetToCreateEvent}
     onDeletePreset={deleteAudiencePreset}

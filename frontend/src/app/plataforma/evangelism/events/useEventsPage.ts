@@ -83,6 +83,7 @@ export function useEventsPage() {
  });
 
  const [roles, setRoles] = useState<RoleDefinition[]>([]);
+ const [sedes, setSedes] = useState<Array<{ id: string; name: string }>>([]);
  const [editingEvent, setEditingEvent] = useState<MinistryEvent | null>(null);
  const [deletingEventId, setDeletingEventId] = useState<string | null>(null);
  const [menuOpenId, setMenuOpenId] = useState<string | null>(null);
@@ -100,7 +101,8 @@ export function useEventsPage() {
  useEffect(() => {
  const abort = new AbortController();
  if (token) {
- apiFetch<RoleDefinition[]>('/evangelism/roles', { token, silent: true, signal: abort.signal }).then(setRoles).catch(() => {});
+  apiFetch<RoleDefinition[]>('/evangelism/roles', { token, silent: true, signal: abort.signal }).then(setRoles).catch(() => {});
+  apiFetch<Array<{ id: string; name: string }>>('/evangelism/events/sedes', { token, silent: true, signal: abort.signal }).then(setSedes).catch(() => {});
  }
  return () => abort.abort();
  }, [token]);
@@ -754,6 +756,7 @@ const handleUpdateEvent = async (evId: string, payload: Partial<MinistryEvent> &
     isScanning,
     newEvent, setNewEvent,
     roles,
+    sedes,
     editingEvent, setEditingEvent,
     deletingEventId, setDeletingEventId,
     menuOpenId, setMenuOpenId,

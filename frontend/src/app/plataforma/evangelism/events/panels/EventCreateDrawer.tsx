@@ -26,6 +26,11 @@ export interface EventCreateForm {
   end_time: string;
 }
 
+export interface EventSedeOption {
+  id: string;
+  name: string;
+}
+
 export interface AudiencePresetData {
   id: string;
   name: string;
@@ -42,6 +47,7 @@ interface EventCreateDrawerProps {
   form: EventCreateForm;
   setForm: React.Dispatch<React.SetStateAction<EventCreateForm>>;
   roles: RoleDefinition[];
+  sedes: EventSedeOption[];
   presets: AudiencePresetData[];
   onApplyPreset: (presetId: string) => void;
   onDeletePreset: (presetId: string) => void;
@@ -60,6 +66,7 @@ export default function EventCreateDrawer({
   form,
   setForm,
   roles,
+  sedes,
   presets,
   onApplyPreset,
   onDeletePreset,
