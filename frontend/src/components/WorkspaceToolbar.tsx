@@ -115,7 +115,8 @@ export default function WorkspaceToolbar({
                     />
                 </div>
 
-                <div className="flex min-w-0 items-center gap-0.5 overflow-x-auto scrollbar-none">
+                <div className="flex min-w-0 items-center gap-0.5">
+                    <div className="flex min-w-0 items-center gap-0.5 overflow-x-auto scrollbar-none">
                     {onFilter && <ToolbarButton icon={Filter} onClick={onFilter} tooltip="Filtrar" />}
                     {onColumns && <ToolbarButton icon={Columns} onClick={onColumns} tooltip="Columnas" />}
                     {onGroup && <ToolbarButton icon={Layers} onClick={onGroup} tooltip="Agrupar" />}
@@ -123,8 +124,6 @@ export default function WorkspaceToolbar({
                     {(onFilter || onColumns || onGroup) && (
                         <div className="w-px h-4 bg-[hsl(var(--surface-3))] dark:bg-white/10 mx-1" />
                     )}
-
-                    {rightActions}
 
                     {onAdd && (
                         <SplitDropdownButton
@@ -134,6 +133,8 @@ export default function WorkspaceToolbar({
                     )}
 
                     {onMore && <ToolbarButton icon={MoreHorizontal} onClick={onMore} tooltip="Más opciones" />}
+                    </div>
+                    {rightActions}
                 </div>
             </div>
         </div>
