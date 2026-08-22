@@ -230,17 +230,32 @@ export default function AcademyClient() {
                     </section>
                 )}
 
-                {/* Metricas Principales */}
-                <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                    {dashboard.cards.map((card) => (
-                        <DSMetric
-                            key={card.title}
-                            label={card.title}
-                            value={card.value}
-                            trend={card.trend}
-                            tone={card.color ?? card.tone as 'blue' | 'emerald' | 'amber'}
-                        />
-                    ))}
+                {/* Metricas Principales sin recuadros, números 3x más grandes con efecto hover gradiente */}
+                <section className="grid grid-cols-2 lg:grid-cols-4 gap-6 py-3 px-1">
+                    {dashboard.cards.map((card, idx) => {
+                        const gradients = [
+                            'group-hover:from-blue-500 group-hover:via-indigo-400 group-hover:to-cyan-400',
+                            'group-hover:from-emerald-400 group-hover:via-teal-300 group-hover:to-cyan-400',
+                            'group-hover:from-amber-400 group-hover:via-orange-400 group-hover:to-pink-400',
+                            'group-hover:from-purple-400 group-hover:via-pink-400 group-hover:to-rose-400'
+                        ];
+                        const grad = gradients[idx % gradients.length];
+                        return (
+                            <div key={card.title} className="group cursor-pointer select-none space-y-1">
+                                <p className={`text-4xl md:text-5xl lg:text-6xl font-black tracking-tight text-[hsl(var(--text-primary))] dark:text-white ${grad} group-hover:bg-gradient-to-r group-hover:bg-clip-text group-hover:text-transparent group-hover:scale-105 group-hover:drop-shadow-[0_0_18px_rgba(99,102,241,0.35)] transition-all duration-300 origin-left`}>
+                                    {card.value}
+                                </p>
+                                <p className="text-xs font-bold uppercase tracking-wider text-[hsl(var(--text-secondary))] group-hover:text-[hsl(var(--text-primary))] dark:group-hover:text-white transition-colors">
+                                    {card.title}
+                                </p>
+                                {card.trend !== undefined && (
+                                    <p className="text-2xs font-semibold text-emerald-500 flex items-center gap-1">
+                                        ↑ {card.trend}% crecimiento
+                                    </p>
+                                )}
+                            </div>
+                        );
+                    })}
                 </section>
 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">

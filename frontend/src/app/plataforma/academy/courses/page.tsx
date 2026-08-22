@@ -121,29 +121,40 @@ export default function AcademyCoursesPage() {
             />
 
             <main className="flex-1 overflow-y-auto p-4 md:p-6 space-y-6">
-                {/* Header informativo */}
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] dark:border-white/10 rounded-2xl p-5 shadow-sm">
-                    <div className="space-y-1">
-                        <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-2xs font-bold uppercase tracking-wider bg-[hsl(var(--primary))]/10 text-[hsl(var(--primary))] border border-[hsl(var(--primary))]/20">
-                            <Sparkles size={12} /> Oferta Formativa Institucional
+                {/* Header informativo limpio sin recuadros */}
+                <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-2">
+                    <div className="space-y-1.5 max-w-xl">
+                        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-2xs font-bold uppercase tracking-widest bg-[hsl(var(--primary))]/10 text-[hsl(var(--primary))]">
+                            <Sparkles size={13} /> Oferta Formativa Institucional
                         </div>
-                        <h1 className="text-xl md:text-2xl font-black text-[hsl(var(--text-primary))] dark:text-white tracking-tight">
+                        <h1 className="text-2xl md:text-3xl font-black text-[hsl(var(--text-primary))] dark:text-white tracking-tight">
                             Cursos y Programas Académicos
                         </h1>
-                        <p className="text-xs text-[hsl(var(--text-secondary))]">
+                        <p className="text-sm text-[hsl(var(--text-secondary))] leading-relaxed">
                             Explora todas las asignaturas disponibles, ingresa a las aulas virtuales o gestiona los contenidos.
                         </p>
                     </div>
 
-                    <div className="flex items-center gap-4 bg-[hsl(var(--surface-2))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-xl p-3 px-4 shrink-0">
-                        <div className="text-center">
-                            <p className="text-xl font-black text-[hsl(var(--primary))]">{courses.length}</p>
-                            <p className="text-2xs font-bold uppercase tracking-wider text-[hsl(var(--text-secondary))]">Cursos</p>
+                    {/* Números 3x más grandes, sin recuadros, con efecto hover gradiente */}
+                    <div className="flex items-center gap-8 md:gap-12 shrink-0">
+                        <div className="group cursor-pointer select-none">
+                            <p className="text-5xl md:text-6xl font-black tracking-tight text-[hsl(var(--text-primary))] dark:text-white group-hover:bg-gradient-to-r group-hover:from-blue-500 group-hover:via-indigo-400 group-hover:to-cyan-400 group-hover:bg-clip-text group-hover:text-transparent group-hover:scale-110 group-hover:drop-shadow-[0_0_15px_rgba(59,130,246,0.5)] transition-all duration-300 origin-left">
+                                {courses.length}
+                            </p>
+                            <p className="text-xs font-bold uppercase tracking-widest text-[hsl(var(--text-secondary))] group-hover:text-[hsl(var(--primary))] transition-colors mt-1">
+                                Cursos Activos
+                            </p>
                         </div>
-                        <div className="h-8 w-px bg-[hsl(var(--border))] dark:bg-white/10" />
-                        <div className="text-center">
-                            <p className="text-xl font-black text-emerald-500">{totalLessons || 168}</p>
-                            <p className="text-2xs font-bold uppercase tracking-wider text-[hsl(var(--text-secondary))]">Lecciones</p>
+
+                        <div className="h-14 w-px bg-gradient-to-b from-transparent via-[hsl(var(--border))] dark:via-white/20 to-transparent" />
+
+                        <div className="group cursor-pointer select-none">
+                            <p className="text-5xl md:text-6xl font-black tracking-tight text-[hsl(var(--text-primary))] dark:text-white group-hover:bg-gradient-to-r group-hover:from-emerald-400 group-hover:via-teal-300 group-hover:to-cyan-400 group-hover:bg-clip-text group-hover:text-transparent group-hover:scale-110 group-hover:drop-shadow-[0_0_15px_rgba(16,185,129,0.5)] transition-all duration-300 origin-left">
+                                {totalLessons || 168}
+                            </p>
+                            <p className="text-xs font-bold uppercase tracking-widest text-[hsl(var(--text-secondary))] group-hover:text-emerald-400 transition-colors mt-1">
+                                Total Lecciones
+                            </p>
                         </div>
                     </div>
                 </div>
