@@ -12,7 +12,6 @@ export default function AdminSettingsProfilePage() {
     const { token, isAuthenticated } = useAuth();
     const { addToast } = useToast();
     const [editing, setEditing] = useState(false);
-    const [loading, setLoading] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
     const [saved, setSaved] = useState(false);
 

@@ -328,6 +328,40 @@ def cleanup_orphan_cms_media_scheduled(
 
 
 
+def _resolve_local_media_path(url: str | None) -> str | None:
+    """Resolve a stored local media URL inside the configured uploads root.
+
+    StorageService emits ``/api/static/...`` URLs, while historical rows can
+    contain ``/static/...`` or ``/uploads/...``.  Return ``None`` for an
+    unsupported or escaping path so cleanup can archive the row safely
+    without deleting an arbitrary file.
+    """
+    if not url:
+        return None
+
+    value = url.strip()
+    prefixes = (
+        "/api/static/",
+        "api/static/",
+        "/static/",
+        "static/",
+        "/uploads/",
+        "uploads/",
+    )
+    rel_path = next((value[len(prefix) :] for prefix in prefixes if value.startswith(prefix)), None)
+    if not rel_path:
+        return None
+
+    uploads_root = Path(os.path.abspath(get_settings().uploads_dir)).resolve(strict=False)
+    full_path = Path(os.path.normpath(os.path.join(str(uploads_root), rel_path)))
+    try:
+        full_path.resolve(strict=False).relative_to(uploads_root)
+    except ValueError:
+        return None
+    return str(full_path)
+
+
+
 def _apply_cleanup_orphan_cms_media(
     db: Session,
     *,
@@ -352,26 +386,19 @@ def _apply_cleanup_orphan_cms_media(
     purged = 0
     for row in orphans:
         if permanent:
-            # Guard H-05: path traversal hardening antes de os.remove.
-            if row.url:
-                rel = row.url.lstrip("/").replace("uploads/", "", 1)
-                uploads_root = os.path.abspath(get_settings().uploads_dir)
-                full = os.path.normpath(os.path.join(uploads_root, rel))
-                try:
-                    Path(full).resolve(strict=False).relative_to(Path(uploads_root).resolve(strict=False))
-                except ValueError:
-                    # url malformado/posible traversal: no se borra el
-                    # archivo fisico, pero se archiva el row (mas seguro
-                    # que fallar el cleanup completo).
-                    row.status = "archived"
-                else:
-                    if os.path.exists(full) and os.path.isfile(full):
-                        os.remove(full)
-                        db.delete(row)
-                    else:
-                        # Archivo fisico ya ausente: borra el row.
-                        db.delete(row)
+            # Guard H-05: valida la URL y la frontera real del filesystem
+            # antes de tocar el archivo físico.
+            full_path = _resolve_local_media_path(row.url)
+            if full_path is None:
+                # URL externa, malformada o con traversal: no se borra el
+                # archivo físico, pero se archiva el row para que el cleanup
+                # pueda continuar con los demás huérfanos.
+                row.status = "archived"
+            elif os.path.exists(full_path) and os.path.isfile(full_path):
+                os.remove(full_path)
+                db.delete(row)
             else:
+                # Archivo físico ya ausente: borra el row.
                 db.delete(row)
         else:
             row.status = "archived"

@@ -20,6 +20,7 @@
 - `evangelism/events-scanner.spec.ts`: cobertura profunda mockeada de `/plataforma/evangelism/events`, `/plataforma/evangelism/events/[id]` y `/plataforma/evangelism/scanner`; valida creación de eventos, asistencia por scanner, agenda de sesión y validación standalone de tokens.
 - `cms/smoke.spec.ts`: smoke dedicado de CMS (`/plataforma/cms`, `/plataforma/cms/pages`, `/plataforma/cms/media`) con bloqueo de consola/API/assets.
 - `cms/pages-preview.spec.ts`: cobertura profunda mockeada de `/plataforma/cms/pages` y `/plataforma/cms/preview`; valida gestión editorial, archivado y render draft con runner administrado.
+- `cms/media-live.spec.ts`: flujo autenticado contra API real; sube una imagen temporal, la elimina desde `/plataforma/cms/media` y confirma con `GET /api/cms/media/{id}` que retorna 404.
 - `platform-critical-routes.spec.ts`: rutas criticas canonicas de plataforma (`/plataforma/crm/personas`, `/plataforma/projects`, `/plataforma/evangelism`, `/plataforma/academy`, `/plataforma/cms`) con bloqueo de errores de consola, API y `_next/static`.
 - `projects-demo.spec.ts`: semilla y verificacion de `projects`, `tasks` y `activities` con 3 proyectos / 15 tareas.
 
@@ -57,6 +58,7 @@ Si falta alguna variable, la suite autenticada se marca como `skip` automaticame
 - `npm run test:e2e:evangelism:deep`
 - `npm run test:e2e:cms`
 - `npm run test:e2e:cms:deep`
+- `npm run test:e2e:cms:media:live`
 - `npm run test:e2e:modules`
 - `npm run test:e2e:modules:matrix`
 - `npm run test:e2e:platform`

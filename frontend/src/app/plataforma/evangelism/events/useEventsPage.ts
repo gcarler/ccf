@@ -20,6 +20,7 @@ import { useSearchParams } from 'next/navigation';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { formatLocalDate, getErrorMessage } from '../utils';
+import type { EventSede } from './panels/EventCreateDrawer';
 
 const normalizeMinistryEvent = (raw: MinistryEvent): MinistryEvent => ({
   ...raw,
@@ -41,6 +42,13 @@ interface AudiencePreset {
   target_persona_ids: string[];
 }
 
+interface PersonaPageResponse {
+ items: Persona[];
+ total: number;
+ skip: number;
+ limit: number;
+}
+
 export function useEventsPage() {
  const { token, hasModuleAccess } = useAuth();
  const searchParams = useSearchParams();
@@ -51,6 +59,7 @@ export function useEventsPage() {
  const { addToast } = useToast();
  const [viewType, setViewType] = useState<ViewType>(() => getStoredView('evangelism_events_view', 'grid'));
  const [events, setEvents] = useState<MinistryEvent[]>([]);
+ const [sedes, setSedes] = useState<EventSede[]>([]);
  const [personas, setPersonas] = useState<Persona[]>([]);
  const [stats, setStats] = useState<EventDashboardStat[]>([]);
  const [loading, setLoading] = useState(true);
@@ -73,6 +82,7 @@ export function useEventsPage() {
  // Form states
  const [newEvent, setNewEvent] = useState({
  name: '',
+ sede_id: '',
  description: '',
  event_type: 'PERMANENT',
  target_audience: 'ALL',
@@ -157,23 +167,55 @@ export function useEventsPage() {
  if (!token) return;
  setLoading(true);
  try {
- const eventsRes = await apiFetch<MinistryEvent[]>('/evangelism/events/', { token, silent: true, cache: 'no-store', signal });
- const [personasRes, statsRes] = await Promise.all([
- canManageEvents || canEditEvents
- ? apiFetch<Persona[]>('/crm/personas', { token, silent: true, query: { limit: 200 }, cache: 'no-store', signal })
- : Promise.resolve([] as Persona[]),
+  const eventsRes = await apiFetch<MinistryEvent[]>('/evangelism/events/', { token, silent: true, cache: 'no-store', signal });
+ const personasPromise = canManageEvents || canEditEvents
+ ? (async () => {
+  const pageSize = 200;
+  const firstPage = await apiFetch<PersonaPageResponse>('/crm/personas/page', {
+   token,
+   silent: true,
+   query: { skip: 0, limit: pageSize, sort_by: 'nombre_completo', sort_dir: 'asc' },
+   cache: 'no-store',
+   signal,
+  });
+  const total = Math.max(0, Number(firstPage?.total) || 0);
+  const pageCount = Math.ceil(total / pageSize);
+  if (pageCount <= 1) return Array.isArray(firstPage?.items) ? firstPage.items : [];
+
+  const remainingPages = await Promise.all(
+   Array.from({ length: pageCount - 1 }, (_, index) => apiFetch<PersonaPageResponse>('/crm/personas/page', {
+    token,
+    silent: true,
+    query: { skip: (index + 1) * pageSize, limit: pageSize, sort_by: 'nombre_completo', sort_dir: 'asc' },
+    cache: 'no-store',
+    signal,
+   }))
+  );
+  return [
+   ...(Array.isArray(firstPage?.items) ? firstPage.items : []),
+   ...remainingPages.flatMap((page) => Array.isArray(page?.items) ? page.items : []),
+  ];
+ })()
+ : Promise.resolve([] as Persona[]);
+ const [personasRes, statsRes, sedesRes] = await Promise.all([
+ personasPromise,
  canManageEvents
  ? apiFetch<EventDashboardStat[]>('/evangelism/events/dashboard-stats', { token, silent: true, cache: 'no-store', signal })
  : Promise.resolve([] as EventDashboardStat[]),
+ canManageEvents
+ ? apiFetch<EventSede[]>('/evangelism/sedes', { token, silent: true, cache: 'no-store', signal })
+ : Promise.resolve([] as EventSede[]),
  ]);
  setEvents(Array.isArray(eventsRes) ? eventsRes.map(normalizeMinistryEvent) : []);
  setPersonas(Array.isArray(personasRes) ? personasRes : []);
  setStats(Array.isArray(statsRes) ? statsRes : []);
+ setSedes(Array.isArray(sedesRes) ? sedesRes : []);
  } catch {
  if (signal?.aborted) return;
  setEvents([]);
  setPersonas([]);
  setStats([]);
+ setSedes([]);
  } finally {
  setLoading(false);
  }
@@ -413,6 +455,7 @@ const handleCreateEvent = async (e: React.FormEvent) => {
 
  const payload: {
  name: string;
+ sede_id: string | null;
  description: string;
  event_type: string;
  target_audience: string;
@@ -426,6 +469,7 @@ const handleCreateEvent = async (e: React.FormEvent) => {
  fixed_date?: string;
  } = {
  name: newEvent.name,
+ sede_id: newEvent.sede_id || null,
  description: newEvent.description,
  event_type: newEvent.event_type,
  target_audience: newEvent.target_audience,
@@ -445,7 +489,7 @@ const handleCreateEvent = async (e: React.FormEvent) => {
  await apiFetch('/evangelism/events/', { method: 'POST', token, silent: true, body: payload });
  addToast("Evento creado con éxito", "success");
  setIsCreateDrawerOpen(false);
- setNewEvent({ name: '', description: '', event_type: 'PERMANENT', target_audience: 'ALL', target_role_id: '', target_role_ids: [], target_persona_ids: [], day_of_week: '0', month_day: '', fixed_date: '', start_time: '', end_time: '' });
+ setNewEvent({ name: '', sede_id: '', description: '', event_type: 'PERMANENT', target_audience: 'ALL', target_role_id: '', target_role_ids: [], target_persona_ids: [], day_of_week: '0', month_day: '', fixed_date: '', start_time: '', end_time: '' });
  fetchData();
  } catch (error: unknown) {
  const msg = getErrorMessage(error, "Error de conexión");
@@ -765,6 +809,7 @@ const handleUpdateEvent = async (evId: string, payload: Partial<MinistryEvent> &
     scannerToken, setScannerToken,
     isScanning,
     newEvent, setNewEvent,
+    sedes,
     roles,
     editingEvent, setEditingEvent,
     deletingEventId, setDeletingEventId,

@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import {
     ShieldCheck, Heart, Target, BarChart3, ArrowRight, Loader2, Users, Home,
-    TrendingUp, HeartHandshake, DollarSign, Landmark
+    HeartHandshake, DollarSign, Landmark
 } from 'lucide-react';
 import WorkspaceLayout from '@/components/WorkspaceLayout';
 import { apiFetch } from '@/lib/http';

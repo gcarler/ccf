@@ -7,6 +7,7 @@ previous version for history.
 
 from __future__ import annotations
 
+import re
 from datetime import datetime, timezone
 from typing import List, Optional
 from uuid import NAMESPACE_URL, UUID, uuid5
@@ -20,9 +21,18 @@ from backend.core.permissions import get_current_active_user, require_module_acc
 from backend.crud import wiki as crud_wiki
 from backend.crud._utils import _slugify
 from backend.crud.crm import get_user_sede_id
-from backend.schemas.wiki import WikiPageCreate, WikiPageRead, WikiPageUpdate, WikiPageVersionRead
+from backend.schemas.wiki import (
+    WikiGraphData,
+    WikiGraphLink,
+    WikiGraphNode,
+    WikiPageCreate,
+    WikiPageRead,
+    WikiPageUpdate,
+    WikiPageVersionRead,
+)
 
 router = APIRouter(prefix="/wiki", tags=["wiki"])
+
 
 
 def _normalize_page_key(value: str) -> str:
@@ -271,3 +281,89 @@ def delete_wiki_page(
         raise HTTPException(status_code=404, detail="wiki page not found")
     crud_wiki.soft_delete_wiki_page(db, row)
     return None
+
+
+@router.get("/graph-data", response_model=WikiGraphData)
+def get_wiki_graph_data(
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_active_user),
+    _: models.User = Depends(require_module_access("wiki", "read")),
+):
+    """Returns knowledge graph nodes and bidirectional links extracted from wiki documents."""
+    sede_id = _resolve_sede(db, current_user)
+    pages = crud_wiki.list_wiki_pages(db, sede_id, limit=1000)
+
+    # Index by page_key and normalized title
+    key_map = {}
+    title_map = {}
+    for p in pages:
+        key_map[p.page_key] = p
+        normalized_key = _normalize_page_key(p.page_key)
+        key_map[normalized_key] = p
+        if p.title:
+            title_map[p.title.strip().lower()] = p.page_key
+
+    nodes_dict = {
+        p.page_key: WikiGraphNode(
+            id=p.page_key,
+            title=p.title,
+            category=p.category or "General",
+            links_count=0,
+        )
+        for p in pages
+    }
+
+    links_set = set()
+    links_list: list[WikiGraphLink] = []
+
+    wiki_link_bracket_pattern = re.compile(r"\[\[(.*?)\]\]")
+    wiki_link_tag_pattern = re.compile(r'data-page-key=["\']([^"\']+)["\']')
+    wiki_link_href_pattern = re.compile(r'href=["\'][^"\']*/wiki/docs/([^"\'#?]+)["\']')
+
+    for page in pages:
+        src = page.page_key
+        content = page.content or ""
+        targets_found = set()
+
+        # 1. Bracket syntax [[Target]] or [[key|label]]
+        for match in wiki_link_bracket_pattern.findall(content):
+            target_str = match.split("|")[0].strip()
+            norm_key = _normalize_page_key(target_str)
+            if norm_key in key_map:
+                targets_found.add(key_map[norm_key].page_key)
+            elif target_str.lower() in title_map:
+                targets_found.add(title_map[target_str.lower()])
+            elif target_str in key_map:
+                targets_found.add(key_map[target_str].page_key)
+
+        # 2. Tag data-page-key="..."
+        for match in wiki_link_tag_pattern.findall(content):
+            target_str = match.strip()
+            norm_key = _normalize_page_key(target_str)
+            if norm_key in key_map:
+                targets_found.add(key_map[norm_key].page_key)
+            elif target_str in key_map:
+                targets_found.add(key_map[target_str].page_key)
+
+        # 3. Href links
+        for match in wiki_link_href_pattern.findall(content):
+            target_str = match.strip()
+            norm_key = _normalize_page_key(target_str)
+            if norm_key in key_map:
+                targets_found.add(key_map[norm_key].page_key)
+            elif target_str in key_map:
+                targets_found.add(key_map[target_str].page_key)
+
+        for tgt in targets_found:
+            if tgt != src:
+                link_key = (src, tgt)
+                if link_key not in links_set:
+                    links_set.add(link_key)
+                    links_list.append(WikiGraphLink(source=src, target=tgt))
+                    if src in nodes_dict:
+                        nodes_dict[src].links_count += 1
+                    if tgt in nodes_dict:
+                        nodes_dict[tgt].links_count += 1
+
+    return WikiGraphData(nodes=list(nodes_dict.values()), links=links_list)
+

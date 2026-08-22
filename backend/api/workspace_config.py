@@ -28,7 +28,7 @@ def update_workspace_config(
     current_user: models.User = Depends(require_admin),
 ):
     """Update workspace configuration."""
-    prev_config = _load_workspace_config()
+    _prev_config = _load_workspace_config()
     _save_workspace_config(config)
     user_id = str(getattr(current_user, "id", "admin"))
     _append_audit_event({

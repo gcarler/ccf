@@ -3,27 +3,29 @@
 from __future__ import annotations
 
 from typing import Any, Dict, List, Optional
-from uuid import UUID
 
 from mcp.server.fastmcp import FastMCP
 
 from backend.core.database import SessionLocal
 from backend.crud import governance as gov_crud
-from backend.mcp_auth import authenticated_mcp_app, get_mcp_current_user
+from backend.mcp_auth import authenticated_mcp_app, get_mcp_current_user, require_mcp_permission
 
 mcp_app = FastMCP(
-    "ccf-governance",
-    title="CCF Gobernanza Institucional MCP",
-    description="Herramientas para consulta de políticas eclesiales, resoluciones, actas y comités pastorales.",
+    name="CCF Gobernanza",
+    instructions="Herramientas para consulta de políticas eclesiales, resoluciones, actas y comités pastorales.",
+    streamable_http_path="/",
+    stateless_http=True,
 )
+governance_mcp = mcp_app
 
 
 @mcp_app.tool()
 def get_active_policies(category: Optional[str] = None, limit: int = 20) -> List[Dict[str, Any]]:
     """Consulta las políticas eclesiales institucionales activas y aprobadas."""
-    user = get_mcp_current_user()
-    sede_id = getattr(user, "sede_id", None)
     with SessionLocal() as db:
+        user = get_mcp_current_user(db)
+        require_mcp_permission(db, user, "profile:manage")
+        sede_id = getattr(user, "sede_id", None)
         policies, _ = gov_crud.list_policies(
             db, sede_id=sede_id, category=category, status="PUBLICADA", limit=limit
         )
@@ -43,9 +45,10 @@ def get_active_policies(category: Optional[str] = None, limit: int = 20) -> List
 @mcp_app.tool()
 def get_official_resolutions(limit: int = 20) -> List[Dict[str, Any]]:
     """Consulta las actas y resoluciones ministeriales aprobadas y firmadas."""
-    user = get_mcp_current_user()
-    sede_id = getattr(user, "sede_id", None)
     with SessionLocal() as db:
+        user = get_mcp_current_user(db)
+        require_mcp_permission(db, user, "profile:manage")
+        sede_id = getattr(user, "sede_id", None)
         resolutions, _ = gov_crud.list_resolutions(
             db, sede_id=sede_id, status="FIRMADA", limit=limit
         )
@@ -65,9 +68,10 @@ def get_official_resolutions(limit: int = 20) -> List[Dict[str, Any]]:
 @mcp_app.tool()
 def list_pastoral_committees(committee_type: Optional[str] = None) -> List[Dict[str, Any]]:
     """Lista los comités institucionales y pastorales de la iglesia."""
-    user = get_mcp_current_user()
-    sede_id = getattr(user, "sede_id", None)
     with SessionLocal() as db:
+        user = get_mcp_current_user(db)
+        require_mcp_permission(db, user, "profile:manage")
+        sede_id = getattr(user, "sede_id", None)
         committees, _ = gov_crud.list_committees(
             db, sede_id=sede_id, committee_type=committee_type, limit=50
         )
@@ -86,12 +90,17 @@ def list_pastoral_committees(committee_type: Optional[str] = None) -> List[Dict[
 @mcp_app.tool()
 def get_governance_summary() -> Dict[str, Any]:
     """Obtiene el resumen estadístico de gobernanza eclesiástica."""
-    user = get_mcp_current_user()
-    sede_id = getattr(user, "sede_id", None)
     with SessionLocal() as db:
+        user = get_mcp_current_user(db)
+        require_mcp_permission(db, user, "profile:manage")
+        sede_id = getattr(user, "sede_id", None)
         stats = gov_crud.get_governance_stats(db, sede_id=sede_id)
         return stats.model_dump()
 
 
+governance_mcp_app = authenticated_mcp_app(mcp_app)
+
+
 def create_governance_mcp_app():
-    return authenticated_mcp_app(mcp_app)
+    return governance_mcp_app
+

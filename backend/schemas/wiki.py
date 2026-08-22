@@ -45,3 +45,21 @@ class WikiPageVersionRead(BaseModel):
     content: str
     created_by_persona_id: Optional[UUID] = None
     created_at: datetime
+
+
+class WikiGraphNode(BaseModel):
+    id: str
+    title: str
+    category: Optional[str] = None
+    links_count: int = 0
+
+
+class WikiGraphLink(BaseModel):
+    source: str
+    target: str
+
+
+class WikiGraphData(BaseModel):
+    nodes: list[WikiGraphNode]
+    links: list[WikiGraphLink]
+

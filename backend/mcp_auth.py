@@ -128,6 +128,42 @@ def require_mcp_permission(db: Session, user: models.Usuario, permission: str) -
             raise PermissionError(f"Permisos insuficientes. Se requiere: {permission}")
 
 
+def has_mcp_execute_permission(db: Session, user: Any) -> bool:
+    """Determina si el usuario cuenta con el permiso 'mcp:execute'."""
+    role = _user_role(user)
+    if role in {"admin", "administrador", "super administrador"}:
+        return True
+    scopes = _effective_user_scopes(db, user)
+    if _has_permission(role, scopes, "mcp:execute") or role_allows_permission(role, "mcp:execute"):
+        return True
+    return False
+
+
+def require_mcp_execute(db: Session, user: Any) -> None:
+    """Valida el permiso mcp:execute o lanza PermissionError."""
+    if not has_mcp_execute_permission(db, user):
+        raise PermissionError("Permisos insuficientes. Se requiere: mcp:execute")
+
+
+def set_mcp_auth_context(
+    token: str,
+    user_id: UUID | str,
+    scopes: list[str] | None = None,
+    claims: dict[str, Any] | None = None,
+):
+    """Establece explícitamente el contexto de autenticación MCP (útil para orquestadores y gateway)."""
+    from mcp.server.auth.middleware.bearer_auth import AuthenticatedUser
+
+    access_token = AccessToken(
+        token=token,
+        client_id="ccf-auth-v3",
+        subject=str(user_id),
+        scopes=scopes or [],
+        claims=claims or {},
+    )
+    return auth_context_var.set(AuthenticatedUser(access_token))
+
+
 def authenticated_mcp_app(mcp_server):
     """Protege una app Streamable HTTP MCP con el JWT de Auth v3.
 
@@ -138,3 +174,4 @@ def authenticated_mcp_app(mcp_server):
     protected = RequireAuthMiddleware(mcp_server.streamable_http_app(), required_scopes=[])
     with_context = AuthContextMiddleware(protected)
     return AuthenticationMiddleware(with_context, backend=BearerAuthBackend(CcfJwtTokenVerifier()))
+

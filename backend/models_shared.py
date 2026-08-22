@@ -26,8 +26,10 @@ from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import backref, relationship
 
 from backend.core.database import Base
+from backend.core.pgvector_compat import VectorEmbedding
 
 
 def _utcnow() -> dt.datetime:
     """Return timezone-aware UTC now. Use this for all DateTime columns."""
     return dt.datetime.now(dt.timezone.utc)
+

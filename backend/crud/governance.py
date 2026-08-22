@@ -1,10 +1,8 @@
 """Governance CRUD: Policies, Resolutions, Committees, Signatures, and Automation Rules."""
 
-from datetime import datetime, timezone
-from typing import Any, List, Optional, Tuple
+from typing import List, Optional, Tuple
 from uuid import UUID
 
-from sqlalchemy import func
 from sqlalchemy.orm import Session, joinedload
 
 from backend import models
@@ -30,7 +28,6 @@ from backend.schemas.governance import (
     SignatureCreate,
     SignatureSign,
 )
-
 
 # ══════════════════════════════════════════════════════════════════════════════
 # AUTOMATION RULES

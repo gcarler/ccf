@@ -56,6 +56,7 @@ function EventsPage() {
   scannerToken, setScannerToken,
   isScanning,
   newEvent, setNewEvent,
+  sedes,
   roles,
   editingEvent, setEditingEvent,
   deletingEventId, setDeletingEventId,
@@ -179,7 +180,8 @@ function EventsPage() {
     onSubmit={handleCreateEvent}
     form={newEvent}
     setForm={setNewEvent}
-    roles={roles}
+       roles={roles}
+       sedes={sedes}
     presets={audiencePresets}
     onApplyPreset={applyPresetToCreateEvent}
     onDeletePreset={deleteAudiencePreset}

@@ -953,3 +953,6 @@ def register_evangelism_group_attendance(
 
 
 mass_event_mcp_app = authenticated_mcp_app(mass_event_mcp)
+evangelism_mcp = mass_event_mcp
+evangelism_mcp_app = mass_event_mcp_app
+

@@ -288,7 +288,6 @@ export default function SocialMediaSettings() {
                                 className="grid grid-cols-1 gap-3"
                             >
                                 {PLATFORMS.map((platform, i) => {
-                                    const channel = socials.find(s => s.platform.toLowerCase() === platform.id);
                                     return (
                                         <motion.div
                                             key={platform.id}

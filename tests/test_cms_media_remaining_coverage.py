@@ -182,3 +182,43 @@ def test_cleanup_hard_delete_removes_missing_physical_file(db_session, monkeypat
         db_session, sede_id=sede.id, referenced_media_ids=set(), permanent=True
     ) == 1
     assert db_session.get(models.CmsMediaItem, row.id) is None
+
+
+def test_cleanup_hard_delete_removes_api_static_physical_file(db_session, tmp_path, monkeypatch):
+    sede = models.Sede(
+        id=uuid.uuid4(), nombre="Cleanup API Static Sede", ciudad="Bogotá", es_activa=True
+    )
+    persona = models.Persona(
+        id=uuid.uuid4(),
+        first_name="Cleanup",
+        last_name="API Static Owner",
+        email="cleanup-api-static@example.com",
+        sede_id=sede.id,
+        estado_vital="ACTIVO",
+    )
+    db_session.add_all([sede, persona])
+    db_session.flush()
+
+    uploads_root = tmp_path / "uploads"
+    physical_file = uploads_root / "cms" / "orphan.webp"
+    physical_file.parent.mkdir(parents=True)
+    physical_file.write_bytes(b"orphan")
+    monkeypatch.setattr(
+        "backend.crud.cms.media.get_settings",
+        lambda: type("Settings", (), {"uploads_dir": str(uploads_root)})(),
+    )
+
+    row = _media(
+        db_session,
+        sede_id=sede.id,
+        persona_id=persona.id,
+        url="/api/static/cms/orphan.webp",
+        filename="orphan.webp",
+    )
+    db_session.commit()
+
+    assert _apply_cleanup_orphan_cms_media(
+        db_session, sede_id=sede.id, referenced_media_ids=set(), permanent=True
+    ) == 1
+    assert not physical_file.exists()
+    assert db_session.get(models.CmsMediaItem, row.id) is None

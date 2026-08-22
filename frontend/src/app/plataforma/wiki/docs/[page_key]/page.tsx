@@ -1,12 +1,13 @@
 "use client";
 
 import WikiEditor from '@/components/wiki/WikiEditor';
+import BacklinksPanel from '@/components/wiki/BacklinksPanel';
 import WorkspaceLayout from '@/components/WorkspaceLayout';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
 import { apiFetch } from '@/lib/http';
 import { motion } from 'framer-motion';
-import { BookOpen, ChevronLeft, History, Share2, AlertCircle, Eye, Download } from 'lucide-react';
+import { BookOpen, ChevronLeft, History, Share2, AlertCircle, Eye, Download, Network } from 'lucide-react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState, useRef, useCallback } from 'react';
 import sanitize from 'sanitize-html';
@@ -79,6 +80,7 @@ export default function WikiDocEditPage() {
             token,
             body: { content: newContent }
         });
+        setDoc(prev => prev ? { ...prev, content: newContent } : null);
         hasUnsavedRef.current = false;
     }, [token, page_key]);
 
@@ -130,6 +132,7 @@ export default function WikiDocEditPage() {
             title: 'Wiki',
             items: [
                 { id: 'wiki-home', label: 'Inicio', href: '/plataforma/wiki', icon: BookOpen },
+                { id: 'wiki-graph', label: 'Red de Conocimiento', href: '/plataforma/wiki/graph', icon: Network },
             ]
         }
     ];
@@ -154,6 +157,15 @@ export default function WikiDocEditPage() {
                 </div>
 
                 <div className="flex items-center gap-2">
+                    <button
+                        title="Ver en Red de Conocimiento"
+                        aria-label="Ver en Red de Conocimiento"
+                        className="p-1.5 hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5 rounded-md text-[hsl(var(--primary))] flex items-center gap-1 text-xs font-bold"
+                        onClick={() => router.push(`/plataforma/wiki/graph?focus=${page_key}`)}
+                    >
+                        <Network size={16} />
+                        <span className="hidden md:inline">Grafo 2D</span>
+                    </button>
                     {!isReadonly && (
                         <button
                             title="Historial de versiones"
@@ -205,22 +217,37 @@ export default function WikiDocEditPage() {
 
             <div className="flex-1 overflow-y-auto custom-scrollbar">
                 {isReadonly ? (
-                    <div className="max-w-4xl mx-auto py-8 px-6">
+                    <div className="max-w-4xl mx-auto py-8 px-6 space-y-8">
                         <div
                             className="prose prose-slate dark:prose-invert max-w-none"
                             dangerouslySetInnerHTML={{ __html: sanitize(doc.content || '') }}
                         />
+                        <BacklinksPanel
+                            pageKey={doc.page_key}
+                            docTitle={doc.title}
+                            content={doc.content || ''}
+                        />
                     </div>
                 ) : (
-                    <WikiEditor
-                        initialContent={doc.content || ""}
-                        onSave={handleSave}
-                        onContentChange={handleContentChange}
-                        placeholder="Comienza la base de conocimiento..."
-                    />
+                    <div className="max-w-4xl mx-auto py-4 px-3 space-y-8">
+                        <WikiEditor
+                            initialContent={doc.content || ""}
+                            onSave={handleSave}
+                            onContentChange={handleContentChange}
+                            placeholder="Comienza la base de conocimiento... Usa [[ para vincular temas."
+                        />
+                        <div className="pt-4 border-t border-[hsl(var(--border))]/60 dark:border-white/5">
+                            <BacklinksPanel
+                                pageKey={doc.page_key}
+                                docTitle={doc.title}
+                                content={doc.content || ''}
+                            />
+                        </div>
+                    </div>
                 )}
             </div>
         </div>
         </WorkspaceLayout>
     );
 }
+

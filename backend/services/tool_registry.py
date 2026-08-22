@@ -580,3 +580,6 @@ def register_all_tools():
     for tool in tools:
         tool_registry.register(tool)
     return tool_registry
+
+
+register_all_tools()

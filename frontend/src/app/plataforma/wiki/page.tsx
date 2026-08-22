@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
     BookOpen, Search, Plus, FileText,
     ChevronRight,
-    Zap, Bookmark, Clock, AlertCircle
+    Zap, Bookmark, Clock, AlertCircle, Network
 } from 'lucide-react';
 import { apiFetch } from '@/lib/http';
 import { useAuth } from '@/context/AuthContext';
@@ -100,6 +100,7 @@ export default function WikiHomePage() {
             title: 'Wiki',
             items: [
                 { id: 'wiki-home', label: 'Inicio', href: '/plataforma/wiki', icon: BookOpen },
+                { id: 'wiki-graph', label: 'Red de Conocimiento', href: '/plataforma/wiki/graph', icon: Network },
             ]
         }
     ];
@@ -119,6 +120,13 @@ export default function WikiHomePage() {
                 </div>
 
                 <div className="flex items-center gap-2">
+                    <Link
+                        href="/plataforma/wiki/graph"
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[hsl(var(--primary)/0.3)] bg-[hsl(var(--primary)/0.1)] text-[hsl(var(--primary))] text-xs font-bold uppercase tracking-wider hover:bg-[hsl(var(--primary)/0.2)] transition-all"
+                    >
+                        <Network size={14} />
+                        <span>Grafo 2D</span>
+                    </Link>
                     <div className="relative">
                         <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[hsl(var(--text-secondary))]" />
                         <input
@@ -138,6 +146,7 @@ export default function WikiHomePage() {
                     </button>
                 </div>
             </header>
+
 
             {/* QUICK ADD BAR */}
             <AnimatePresence>

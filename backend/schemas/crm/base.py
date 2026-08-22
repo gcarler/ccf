@@ -76,6 +76,7 @@ class CrmTaskPriority(str, Enum):
 
 class CrmEventBase(BaseModel):
     name: str
+    sede_id: Optional[UUID] = None
     description: Optional[str] = None
     event_type: EventType = EventType.PERMANENT
     target_audience: EventAudienceType = EventAudienceType.ALL
