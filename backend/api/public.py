@@ -172,18 +172,32 @@ def public_list_courses(db: Session = Depends(get_db)):
     return result
 
 
-@router.get("/courses/{course_slug}", response_model=PublicCursoResponse)
-def public_get_course(course_slug: str, db: Session = Depends(get_db)):
-    """Detalle de un curso por slug."""
-    curso = (
+def _find_public_course(db: Session, key: str) -> Optional[Course]:
+    curso_uuid = None
+    try:
+        curso_uuid = uuid.UUID(key)
+    except (ValueError, TypeError, AttributeError):
+        pass
+
+    conds = [Course.slug == key, Course.code == key]
+    if curso_uuid:
+        conds.append(Course.id == curso_uuid)
+
+    return (
         db.query(Course)
         .filter(
-            Course.slug == course_slug,
+            or_(*conds),
             Course.is_published.is_(True),
             Course.deleted_at.is_(None),
         )
         .first()
     )
+
+
+@router.get("/courses/{course_slug}", response_model=PublicCursoResponse)
+def public_get_course(course_slug: str, db: Session = Depends(get_db)):
+    """Detalle de un curso por slug, código o UUID."""
+    curso = _find_public_course(db, course_slug)
     if not curso:
         raise HTTPException(status_code=404, detail="Curso no encontrado")
     lecciones = db.query(Lesson).filter(Lesson.course_id == curso.id, Lesson.deleted_at.is_(None)).count()
@@ -206,16 +220,8 @@ def public_course_enroll(
     payload: PublicEnrollCreate,
     db: Session = Depends(get_db),
 ):
-    """Inscripcion publica a un curso por slug. Crea Persona en el kernel."""
-    curso = (
-        db.query(Course)
-        .filter(
-            Course.slug == course_slug,
-            Course.is_published.is_(True),
-            Course.deleted_at.is_(None),
-        )
-        .first()
-    )
+    """Inscripcion publica a un curso por slug, código o UUID. Crea Persona en el kernel."""
+    curso = _find_public_course(db, course_slug)
     if not curso:
         raise HTTPException(status_code=404, detail="Curso no encontrado")
 
