@@ -19,7 +19,7 @@ import {
   Zap,
 } from "lucide-react"
 import { useAuth } from "@/context/AuthContext";
-import { apiFetch } from "@/lib/http";
+import { ApiError, apiFetch } from "@/lib/http";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import clsx from "clsx";
@@ -84,6 +84,7 @@ export default function CmsMediaLibrary() {
   const [uploading, setUploading] = useState(false);
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<FilterType>("all");
+  const [showArchived, setShowArchived] = useState(false);
   const [viewType, setViewType] = useState<ViewType>("grid");
   const [selectedItem, setSelectedItem] = useState<MediaItem | null>(null);
   const [copiedId, setCopiedId] = useState<number | null>(null);
@@ -99,14 +100,24 @@ export default function CmsMediaLibrary() {
     if (!token) { setLoading(false); return; }
     setLoading(true);
     try {
-      const data = await apiFetch<{ items: MediaItem[]; total: number }>("/cms/media", { token, cache: "no-store", query: { include_archived: true } });
-      setItems(data?.items || []);
+      // Archived media are intentionally hidden from the main library. The
+      // DELETE endpoint soft-archives by default; requesting archived rows
+      // here made deleted files appear to resurrect after every refresh.
+      const data = await apiFetch<{ items: MediaItem[]; total: number }>("/cms/media", {
+        token,
+        cache: "no-store",
+        query: { include_archived: showArchived },
+      });
+      const loadedItems = data?.items || [];
+      setItems(showArchived
+        ? loadedItems.filter(item => item.status === "archived")
+        : loadedItems.filter(item => item.status !== "archived"));
     } catch {
       setItems([]);
     } finally {
       setLoading(false);
     }
-  }, [token]);
+  }, [showArchived, token]);
 
   useEffect(() => { fetchMedia(); }, [fetchMedia]);
 
@@ -219,7 +230,9 @@ export default function CmsMediaLibrary() {
     try {
       if (action === 'archive') {
         await apiFetch<MediaItem | undefined>(`/cms/media/${item.id}`, { method: "DELETE", token });
-        setItems(prev => prev.map(i => i.id === item.id ? { ...i, status: "archived" } : i));
+        setItems(prev => showArchived
+          ? prev.map(i => i.id === item.id ? { ...i, status: "archived" } : i)
+          : prev.filter(i => i.id !== item.id));
         if (selectedItem?.id === item.id) setSelectedItem(prev => prev ? { ...prev, status: "archived" } : prev);
         toast.success("Archivo archivado");
       } else {
@@ -229,7 +242,10 @@ export default function CmsMediaLibrary() {
         toast.success("Archivo eliminado permanentemente");
       }
     } catch (err) {
-      toast.error(action === 'archive' ? "Error al archivar" : "Error al eliminar archivo");
+      const apiMessage = err instanceof ApiError
+        ? (typeof err.detail === "string" ? err.detail : (err.detail as { detail?: string } | undefined)?.detail)
+        : undefined;
+      toast.error(apiMessage || (action === 'archive' ? "Error al archivar" : "No se pudo eliminar. Verifica que tengas permiso de publicador."));
     } finally {
       setDeletingId(null);
     }
@@ -314,6 +330,14 @@ export default function CmsMediaLibrary() {
                   <button onClick={e => { e.stopPropagation(); copyUrl(item); }} className="p-2 rounded-md hover:bg-[hsl(var(--info-muted))] text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))]">
                     {copiedId === item.id ? <Check size={14} /> : <Copy size={14} />}
                   </button>
+                  <button
+                    onClick={e => { e.stopPropagation(); deleteItem(item); }}
+                    disabled={deletingId === item.id}
+                    className="p-2 rounded-md hover:bg-[hsl(var(--destructive)/0.08)] text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--destructive))] disabled:opacity-60"
+                    aria-label="Eliminar permanentemente"
+                  >
+                    {deletingId === item.id ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
+                  </button>
                 </td>
               </tr>
             );
@@ -383,7 +407,7 @@ export default function CmsMediaLibrary() {
             Biblioteca de Medios
           </h1>
           <span className="text-2xs font-semibold text-[hsl(var(--text-secondary))] bg-[hsl(var(--surface-2))] dark:bg-white/5 px-2 py-0.5 rounded-full shrink-0">
-            {filtered.length} archivos
+            {filtered.length} {showArchived ? "en papelera" : "archivos activos"}
           </span>
         </div>
 
@@ -399,6 +423,20 @@ export default function CmsMediaLibrary() {
         </div>
 
         <ViewSwitcher viewType={viewType} setViewType={setViewType} availableViews={MEDIA_VIEWS} />
+
+        <button
+          onClick={() => setShowArchived(value => !value)}
+          className={clsx(
+            "flex items-center gap-2 px-3 py-2 rounded-md text-xs font-semibold uppercase tracking-wide transition-all shrink-0",
+            showArchived
+              ? "bg-[hsl(var(--warning-muted))] text-[hsl(var(--warning))]"
+              : "bg-[hsl(var(--surface-2))] dark:bg-white/5 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))]"
+          )}
+          title={showArchived ? "Ocultar papelera" : "Abrir papelera"}
+        >
+          {showArchived ? <RotateCcw size={14} /> : <Archive size={14} />}
+          {showArchived ? "Biblioteca" : "Papelera"}
+        </button>
 
         {/* Upload button */}
         <button
