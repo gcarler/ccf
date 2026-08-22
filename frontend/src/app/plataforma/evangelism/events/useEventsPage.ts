@@ -243,7 +243,7 @@ export function useEventsPage() {
  if (!normalized) return sortedPersonas;
  return sortedPersonas.filter((persona) =>
  (persona.nombre_completo || '').toLowerCase().includes(normalized) ||
- persona.email.toLowerCase().includes(normalized) ||
+ (persona.email || '').toLowerCase().includes(normalized) ||
  (persona.church_role || '').toLowerCase().includes(normalized)
  );
  };
