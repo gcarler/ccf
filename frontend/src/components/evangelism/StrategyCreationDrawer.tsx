@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect } from 'react';
+import clsx from 'clsx';
 import { useForm, useFieldArray } from 'react-hook-form';
 import {
     Users, Flame, Target, MapPin, Clock, Sparkles, Calendar, X
@@ -10,6 +11,7 @@ import { apiFetch } from '@/lib/http';
 import { getErrorMessage } from '@/app/plataforma/evangelism/utils';
 import { useAuth } from '@/context/AuthContext';
 import WorkspaceDrawer from '@/components/WorkspaceDrawer';
+import { DSButton, DSInput, DSSelect } from '@/design';
 
 interface StrategyCreationDrawerProps {
     isOpen: boolean;
@@ -174,13 +176,17 @@ export default function StrategyCreationDrawer({
             subtitle="Evangelismo"
             actions={
                 <>
-                    <button
+                    <DSButton
+                        type="button"
+                        variant="ghost"
                         onClick={handleClose}
                         className="px-4 py-1.5 text-sm font-semibold text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5 rounded-md transition-colors"
                     >
                         Cancelar
-                    </button>
-                    <button
+                    </DSButton>
+                    <DSButton
+                        type="submit"
+                        variant="primary"
                         onClick={handleSubmit(onSubmit)}
                         disabled={isSubmitting || !watch('name').trim()}
                         className="px-4 py-1.5 text-sm font-semibold text-white bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))] disabled:opacity-50 disabled:cursor-not-allowed rounded-md transition-colors flex items-center gap-2"
@@ -196,7 +202,7 @@ export default function StrategyCreationDrawer({
                                 Crear Estrategia
                             </>
                         )}
-                    </button>
+                    </DSButton>
                 </>
             }
         >
@@ -212,19 +218,20 @@ export default function StrategyCreationDrawer({
                             { id: 'evento_masivo', label: 'Evento Masivo', icon: Flame },
                             { id: 'sectorial', label: 'Sectorial', icon: Target },
                         ].map(t => (
-                            <button
+                            <DSButton
                                 key={t.id}
                                 type="button"
                                 onClick={() => setValue('typology', t.id)}
-                                className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-bold transition-all flex-1 justify-center ${
+                                className={clsx(
+                                    'flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-bold transition-all flex-1 justify-center',
                                     typology === t.id
                                         ? 'bg-[hsl(var(--primary))] text-white shadow-sm'
                                         : 'bg-[hsl(var(--surface-1))] dark:bg-white/5 text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/10 border border-[hsl(var(--border))] dark:border-white/10'
-                                }`}
+                                )}
                             >
                                 <t.icon size={14} />
                                 {t.label}
-                            </button>
+                            </DSButton>
                         ))}
                     </div>
                 </div>
@@ -238,19 +245,20 @@ export default function StrategyCreationDrawer({
                         </label>
                         <div className="flex gap-2">
                             {['SEMANAL', 'QUINCENAL', 'MENSUAL'].map(r => (
-                                <button
+                                <DSButton
                                     key={r}
                                     type="button"
                                     onClick={() => setValue('recurrence', r)}
-                                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex-1 justify-center ${
+                                    className={clsx(
+                                        'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex-1 justify-center',
                                         watch('recurrence') === r
                                             ? 'bg-[hsl(var(--info-muted))] dark:bg-[hsl(var(--info))]/30 text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] border border-[hsl(var(--info)/25%)] dark:border-[hsl(var(--info)/100%)]'
                                             : 'bg-[hsl(var(--surface-1))] dark:bg-white/5 text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/10 border border-[hsl(var(--border))] dark:border-white/10'
-                                    }`}
+                                    )}
                                 >
                                     <Clock size={12} />
                                     {r}
-                                </button>
+                                </DSButton>
                             ))}
                         </div>
                     </div>
@@ -261,18 +269,19 @@ export default function StrategyCreationDrawer({
                         </label>
                         <div className="flex gap-1.5 flex-wrap">
                             {['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'].map(d => (
-                                <button
+                                <DSButton
                                     key={d}
                                     type="button"
                                     onClick={() => setValue('dayOfWeek', d)}
-                                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                                    className={clsx(
+                                        'px-3 py-1.5 rounded-lg text-xs font-bold transition-all',
                                         watch('dayOfWeek') === d
                                             ? 'bg-[hsl(var(--info-muted))] dark:bg-[hsl(var(--info))]/30 text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] border border-[hsl(var(--info)/25%)] dark:border-[hsl(var(--info)/100%)]'
                                             : 'bg-[hsl(var(--surface-1))] dark:bg-white/5 text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/10 border border-[hsl(var(--border))] dark:border-white/10'
-                                    }`}
+                                    )}
                                 >
                                     {d}
-                                </button>
+                                </DSButton>
                             ))}
                         </div>
                     </div>
@@ -281,7 +290,7 @@ export default function StrategyCreationDrawer({
                         <label className="text-xs font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wider mb-2 block">
                             Hora de reunión
                         </label>
-                        <input
+                        <DSInput
                             type="time"
                             value={watch('startTime')}
                             onChange={e => setValue('startTime', e.target.value)}
@@ -303,19 +312,20 @@ export default function StrategyCreationDrawer({
                                     { id: 'UNICA_LOCACION', label: 'Una Ubicación' },
                                     { id: 'MULTILOCACION', label: 'Multi-sede' },
                                 ].map(f => (
-                                    <button
+                                    <DSButton
                                         key={f.id}
                                         type="button"
                                         onClick={() => setValue('eventFormat', f.id)}
-                                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex-1 justify-center ${
+                                        className={clsx(
+                                            'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex-1 justify-center',
                                             watch('eventFormat') === f.id
                                                 ? 'bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400 border border-orange-200 dark:border-orange-800'
                                                 : 'bg-[hsl(var(--surface-1))] dark:bg-white/5 text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/10 border border-[hsl(var(--border))] dark:border-white/10'
-                                        }`}
+                                        )}
                                     >
                                         <MapPin size={12} />
                                         {f.label}
-                                    </button>
+                                    </DSButton>
                                 ))}
                             </div>
                         </div>
@@ -326,42 +336,43 @@ export default function StrategyCreationDrawer({
                                 <label className="text-xs font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wider">
                                     Fases ({fields.length})
                                 </label>
-                                <button
+                                <DSButton
                                     type="button"
                                     onClick={() => append({ name: '', type: 'preparacion', start_date: '', end_date: '' })}
                                     className="text-xs font-bold text-[hsl(var(--primary))] hover:text-[hsl(var(--primary))]"
                                 >
                                     + Agregar Fase
-                                </button>
+                                </DSButton>
                             </div>
                             {fields.map((field, i) => (
                                 <div key={field.id} className="flex items-center gap-2 mb-2">
-                                    <input
+                                    <DSInput
                                         {...register(`phases.${i}.name`)}
                                         placeholder={`Fase ${i + 1}`}
                                         className="flex-1 px-2.5 py-1.5 text-sm rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-white/5 text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] focus:border-[hsl(var(--info)/100%)] focus:outline-none"
                                     />
-                                    <select
+                                    <DSSelect
                                         {...register(`phases.${i}.type`)}
+                                        options={[
+                                            { value: 'preparacion', label: 'Prep.' },
+                                            { value: 'impacto', label: 'Impacto' },
+                                            { value: 'cosecha', label: 'Cosecha' },
+                                            { value: 'seguimiento', label: 'Seg.' },
+                                        ]}
                                         className="px-2 py-1.5 text-xs rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-white/5 text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]"
-                                    >
-                                        <option value="preparacion">Prep.</option>
-                                        <option value="impacto">Impacto</option>
-                                        <option value="cosecha">Cosecha</option>
-                                        <option value="seguimiento">Seg.</option>
-                                    </select>
-                                    <input
+                                    />
+                                    <DSInput
                                         type="date"
                                         {...register(`phases.${i}.start_date`)}
                                         className="px-1.5 py-1.5 text-xs rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-white/5 text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]"
                                     />
-                                    <button
+                                    <DSButton
                                         type="button"
                                         onClick={() => remove(i)}
                                         className="p-1.5 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--destructive))] rounded-md hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
                                     >
                                         <X size={14} />
-                                    </button>
+                                    </DSButton>
                                 </div>
                             ))}
                         </div>
@@ -374,7 +385,7 @@ export default function StrategyCreationDrawer({
                         <label className="text-xs font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wider mb-2 block">
                             Nicho Objetivo
                         </label>
-                        <input
+                        <DSInput
                             {...register('nicheObjective')}
                             placeholder="Ej: Universidades, Cárceles, Fundaciones"
                             className="w-full px-3 py-2 text-base bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]/20 focus:border-[hsl(var(--info)/100%)]"
@@ -389,18 +400,19 @@ export default function StrategyCreationDrawer({
                     </label>
                     <div className="grid grid-cols-2 gap-2">
                         {strategyTypes.map(opt => (
-                            <button
+                            <DSButton
                                 key={opt}
                                 type="button"
                                 onClick={() => setValue('strategyType', opt)}
-                                className={`px-3 py-2 rounded-lg text-xs font-bold transition-all text-left ${
+                                className={clsx(
+                                    'px-3 py-2 rounded-lg text-xs font-bold transition-all text-left',
                                     watch('strategyType') === opt
                                         ? 'bg-[hsl(var(--primary))] text-white shadow-sm'
                                         : 'bg-[hsl(var(--surface-1))] dark:bg-white/5 text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/10 border border-[hsl(var(--border))] dark:border-white/10'
-                                }`}
+                                )}
                             >
                                 {opt}
-                            </button>
+                            </DSButton>
                         ))}
                     </div>
                 </div>
@@ -410,7 +422,7 @@ export default function StrategyCreationDrawer({
                     <label className="text-xs font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wider mb-2 block">
                         Nombre
                     </label>
-                    <input
+                    <DSInput
                         {...register('name', { required: true })}
                         placeholder="Nombre de la estrategia..."
                         className="w-full px-3 py-2 text-md font-medium bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]/20 focus:border-[hsl(var(--info)/100%)]"
@@ -425,7 +437,7 @@ export default function StrategyCreationDrawer({
                     <div className="flex items-center gap-3">
                         <div className="flex items-center gap-2 flex-1">
                             <Calendar size={14} className="text-[hsl(var(--text-secondary))] shrink-0" />
-                            <input
+                            <DSInput
                                 type="date"
                                 {...register('startDate')}
                                 className="flex-1 px-2.5 py-1.5 text-sm font-semibold bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]/20 focus:border-[hsl(var(--info)/100%)] cursor-pointer"
@@ -433,7 +445,7 @@ export default function StrategyCreationDrawer({
                         </div>
                         <span className="text-[hsl(var(--text-secondary))] text-xs font-semibold">→</span>
                         <div className="flex items-center gap-2 flex-1">
-                            <input
+                            <DSInput
                                 type="date"
                                 {...register('endDate')}
                                 className="flex-1 px-2.5 py-1.5 text-sm font-semibold bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]/20 focus:border-[hsl(var(--info)/100%)] cursor-pointer"

@@ -5,6 +5,7 @@ import WorkspaceDrawer from '@/components/WorkspaceDrawer';
 import ErrorBoundary from '@/components/ErrorBoundary';
 import { Pencil } from 'lucide-react';
 import type { AudiencePresetData } from './EventCreateDrawer';
+import { DSButton } from '@/design';
 
 interface EventEditDrawerProps {
   event: MinistryEvent | null;
@@ -52,12 +53,12 @@ export default function EventEditDrawer({
  subtitle="Modifica los detalles o configuración"
  actions={
  <>
- <button disabled={!!event && updatingId === event.id} onClick={() => setEvent(null)} className="px-4 py-2 text-xs font-bold text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] transition-colors disabled:opacity-60">
+ <DSButton variant="ghost" disabled={!!event && updatingId === event.id} onClick={() => setEvent(null)} className="px-4 py-2 text-xs font-bold text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] transition-colors disabled:opacity-60">
  Cancelar
- </button>
- <button disabled={!event || updatingId === event.id} onClick={() => event && onSave(event.id, { name: event.name, description: event.description, location: event.location, status: event.status, cancellation_reason: event.cancellation_reason, start_time: event.start_time, end_time: event.end_time, target_audience: event.target_audience || 'ALL', target_role_id: (event.target_audience || 'ALL') === 'ROLE' ? (event.target_role_ids?.[0] || event.target_role_id) : null, target_role_ids: (event.target_audience || 'ALL') === 'ROLE' ? (event.target_role_ids || getTargetRoleIds(event)) : [], target_persona_ids: (event.target_audience || 'ALL') === 'MANUAL' ? (event.target_persona_ids || []) : [] })} className="px-3 py-2 bg-[hsl(var(--primary))] text-white rounded-lg text-xs font-semibold uppercase tracking-wide shadow-lg hover:bg-[hsl(var(--primary))] active:scale-95 transition-all flex items-center gap-2 disabled:opacity-60">
+ </DSButton>
+ <DSButton variant="primary" disabled={!event || updatingId === event.id} onClick={() => event && onSave(event.id, { name: event.name, description: event.description, location: event.location, status: event.status, cancellation_reason: event.cancellation_reason, start_time: event.start_time, end_time: event.end_time, target_audience: event.target_audience || 'ALL', target_role_id: (event.target_audience || 'ALL') === 'ROLE' ? (event.target_role_ids?.[0] || event.target_role_id) : null, target_role_ids: (event.target_audience || 'ALL') === 'ROLE' ? (event.target_role_ids || getTargetRoleIds(event)) : [], target_persona_ids: (event.target_audience || 'ALL') === 'MANUAL' ? (event.target_persona_ids || []) : [] })} className="px-3 py-2 bg-[hsl(var(--primary))] text-white rounded-lg text-xs font-semibold uppercase tracking-wide shadow-lg hover:bg-[hsl(var(--primary))] active:scale-95 transition-all flex items-center gap-2 disabled:opacity-60">
  {event && updatingId === event.id ? 'Guardando...' : 'Guardar'} <Pencil size={14} />
- </button>
+ </DSButton>
  </>
  }
  >

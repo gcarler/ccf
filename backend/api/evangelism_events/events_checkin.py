@@ -7,15 +7,17 @@ import secrets
 from typing import Optional
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel
 from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
 from backend import models, schemas
 from backend.api.evangelism_events._shared import require_event_access
+from backend.core.audit import record_admin_action
 from backend.core.database import get_db
 from backend.core.permissions import require_evangelism_edit
+from backend.core.rate_limit import academy_limiter
 from backend.core.tenant import require_user_sede_id
 
 router = APIRouter()
@@ -30,7 +32,9 @@ class VisitorCreate(BaseModel):
 
 
 @router.post("/events/{event_id}/sessions/{session_date}/visitors")
+@academy_limiter.limit("30/minute")
 def fast_checkin_visitor(
+    request: Request,
     event_id: UUID,
     session_date: str,
     visitor: VisitorCreate,
@@ -90,6 +94,8 @@ def fast_checkin_visitor(
         is_new_visitor = False
     else:
         is_new_visitor = True
+        # Un evento específico conserva su sede; un evento Universo asigna la
+        # persona a la sede del operador que realiza el check-in.
         sede_id = event.sede_id or user_sede_id
         new_visitor = models.Persona(
             first_name=visitor.first_name,
@@ -234,8 +240,10 @@ def _upsert_attendance(
     return attendance, True
 
 
+@academy_limiter.limit("30/minute")
 @router.post("/events/{event_id}/sessions/{session_date}/checkin", response_model=dict)
 def unified_checkin(
+    request: Request,
     event_id: UUID,
     session_date: str,
     payload: schemas.CheckinPayload,
@@ -403,6 +411,7 @@ def unified_checkin(
         registration.checked_in_by = current_user.id
 
     db.commit()
+    record_admin_action(db, current_user, action="event_checkin", resource_type="event", resource_id=str(event_id))
     return {
         "status": "success",
         "is_duplicate": is_duplicate,
@@ -416,9 +425,10 @@ def unified_checkin(
         "checked_in_at": attendance.check_in_at.isoformat() if attendance.check_in_at else None,
     }
 
-
+@academy_limiter.limit("30/minute")
 @router.post("/events/{event_id}/sessions/{session_date}/ccf-evt-checkin", response_model=dict)
 def ccf_evt_checkin(
+    request: Request,
     event_id: UUID,
     session_date: str,
     payload: schemas.CheckinPayload,
@@ -503,6 +513,7 @@ def ccf_evt_checkin(
         reg.checked_in_by = current_user.id
 
     db.commit()
+    record_admin_action(db, current_user, action="event_checkin", resource_type="event", resource_id=str(event_id))
     return {
         "status": "success",
         "is_duplicate": is_duplicate,
@@ -516,8 +527,10 @@ def ccf_evt_checkin(
     }
 
 
+@academy_limiter.limit("30/minute")
 @router.post("/events/{event_id}/sessions/{session_date}/checkout", response_model=dict)
 def unified_checkout(
+    request: Request,
     event_id: UUID,
     session_date: str,
     payload: schemas.CheckoutPayload,
@@ -570,6 +583,7 @@ def unified_checkout(
         raise HTTPException(status_code=404, detail="No hay check-in previo para esta persona/sesión")
     attendance.check_out_at = _utcnow()
     db.commit()
+    record_admin_action(db, current_user, action="event_checkin", resource_type="event", resource_id=str(event_id))
     return {
         "status": "success",
         "persona_id": str(persona.id),
