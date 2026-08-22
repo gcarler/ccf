@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect } from 'react';
+import clsx from 'clsx';
 import { useForm, useFieldArray } from 'react-hook-form';
 import {
     Users, Flame, Target, MapPin, Clock, Sparkles, Calendar, X
@@ -216,11 +217,12 @@ export default function StrategyCreationDrawer({
                                 key={t.id}
                                 type="button"
                                 onClick={() => setValue('typology', t.id)}
-                                className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-bold transition-all flex-1 justify-center ${
+                                className={clsx(
+                                    'flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-bold transition-all flex-1 justify-center',
                                     typology === t.id
                                         ? 'bg-[hsl(var(--primary))] text-white shadow-sm'
                                         : 'bg-[hsl(var(--surface-1))] dark:bg-white/5 text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/10 border border-[hsl(var(--border))] dark:border-white/10'
-                                }`}
+                                )}
                             >
                                 <t.icon size={14} />
                                 {t.label}
@@ -242,11 +244,12 @@ export default function StrategyCreationDrawer({
                                     key={r}
                                     type="button"
                                     onClick={() => setValue('recurrence', r)}
-                                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex-1 justify-center ${
+                                    className={clsx(
+                                        'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex-1 justify-center',
                                         watch('recurrence') === r
                                             ? 'bg-[hsl(var(--info-muted))] dark:bg-[hsl(var(--info))]/30 text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] border border-[hsl(var(--info)/25%)] dark:border-[hsl(var(--info)/100%)]'
                                             : 'bg-[hsl(var(--surface-1))] dark:bg-white/5 text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/10 border border-[hsl(var(--border))] dark:border-white/10'
-                                    }`}
+                                    )}
                                 >
                                     <Clock size={12} />
                                     {r}
@@ -265,11 +268,12 @@ export default function StrategyCreationDrawer({
                                     key={d}
                                     type="button"
                                     onClick={() => setValue('dayOfWeek', d)}
-                                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                                    className={clsx(
+                                        'px-3 py-1.5 rounded-lg text-xs font-bold transition-all',
                                         watch('dayOfWeek') === d
                                             ? 'bg-[hsl(var(--info-muted))] dark:bg-[hsl(var(--info))]/30 text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] border border-[hsl(var(--info)/25%)] dark:border-[hsl(var(--info)/100%)]'
                                             : 'bg-[hsl(var(--surface-1))] dark:bg-white/5 text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/10 border border-[hsl(var(--border))] dark:border-white/10'
-                                    }`}
+                                    )}
                                 >
                                     {d}
                                 </button>
@@ -307,11 +311,12 @@ export default function StrategyCreationDrawer({
                                         key={f.id}
                                         type="button"
                                         onClick={() => setValue('eventFormat', f.id)}
-                                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex-1 justify-center ${
+                                        className={clsx(
+                                            'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex-1 justify-center',
                                             watch('eventFormat') === f.id
                                                 ? 'bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400 border border-orange-200 dark:border-orange-800'
                                                 : 'bg-[hsl(var(--surface-1))] dark:bg-white/5 text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/10 border border-[hsl(var(--border))] dark:border-white/10'
-                                        }`}
+                                        )}
                                     >
                                         <MapPin size={12} />
                                         {f.label}
@@ -393,11 +398,12 @@ export default function StrategyCreationDrawer({
                                 key={opt}
                                 type="button"
                                 onClick={() => setValue('strategyType', opt)}
-                                className={`px-3 py-2 rounded-lg text-xs font-bold transition-all text-left ${
+                                className={clsx(
+                                    'px-3 py-2 rounded-lg text-xs font-bold transition-all text-left',
                                     watch('strategyType') === opt
                                         ? 'bg-[hsl(var(--primary))] text-white shadow-sm'
                                         : 'bg-[hsl(var(--surface-1))] dark:bg-white/5 text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/10 border border-[hsl(var(--border))] dark:border-white/10'
-                                }`}
+                                )}
                             >
                                 {opt}
                             </button>
