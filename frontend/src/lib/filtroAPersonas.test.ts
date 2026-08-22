@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { filtroAPersona, filtroAPersonas, normalizarBusquedaPersona } from './filtroAPersonas';
+import { filtroAPersona, filtroAPersonaMultiCampo, filtroAPersonas, normalizarBusquedaPersona } from './filtroAPersonas';
 
 describe('normalizarBusquedaPersona', () => {
   it('normalizes case, accents and whitespace', () => {
@@ -83,30 +83,30 @@ describe('filtroAPersona', () => {
   });
 
   it('matches by email with partial input', () => {
-    expect(filtroAPersona(persona, 'luis.meza')).toBe(true);
-    expect(filtroAPersona(persona, 'ccf.org')).toBe(true);
+    expect(filtroAPersonaMultiCampo(persona, 'luis.meza')).toBe(true);
+    expect(filtroAPersonaMultiCampo(persona, 'ccf.org')).toBe(true);
   });
 
   it('matches by phone with partial input', () => {
-    expect(filtroAPersona(persona, '300 123')).toBe(true);
-    expect(filtroAPersona(persona, '1234567')).toBe(true);
-    expect(filtroAPersona(persona, '300123')).toBe(true);
-    expect(filtroAPersona(persona, '+57300123')).toBe(true);
+    expect(filtroAPersonaMultiCampo(persona, '300 123')).toBe(true);
+    expect(filtroAPersonaMultiCampo(persona, '1234567')).toBe(true);
+    expect(filtroAPersonaMultiCampo(persona, '300123')).toBe(true);
+    expect(filtroAPersonaMultiCampo(persona, '+57300123')).toBe(true);
   });
 
   it('matches by document number', () => {
-    expect(filtroAPersona(persona, '1123456789')).toBe(true);
-    expect(filtroAPersona(persona, '234567')).toBe(true);
+    expect(filtroAPersonaMultiCampo(persona, '1123456789')).toBe(true);
+    expect(filtroAPersonaMultiCampo(persona, '234567')).toBe(true);
   });
 
   it('matches by role', () => {
-    expect(filtroAPersona(persona, 'lider')).toBe(true);
-    expect(filtroAPersona(persona, 'grupo')).toBe(true);
+    expect(filtroAPersonaMultiCampo(persona, 'lider')).toBe(true);
+    expect(filtroAPersonaMultiCampo(persona, 'grupo')).toBe(true);
   });
 
   it('normalizes accents in every field', () => {
-    expect(filtroAPersona({ ...persona, church_role: 'Líder de Grupo' }, 'lider de grupo')).toBe(true);
-    expect(filtroAPersona({ ...persona, nombre_completo: 'María José Fernández' }, 'maria')).toBe(true);
+    expect(filtroAPersonaMultiCampo({ ...persona, church_role: 'Líder de Grupo' }, 'lider de grupo')).toBe(true);
+    expect(filtroAPersonaMultiCampo({ ...persona, nombre_completo: 'María José Fernández' }, 'maria')).toBe(true);
   });
 
   it('falls back to first_name + last_name when nombre_completo is absent', () => {
@@ -116,13 +116,20 @@ describe('filtroAPersona', () => {
   });
 
   it('honors the telefono alias', () => {
-    expect(filtroAPersona({ nombre_completo: 'Juan Pérez', telefono: '5551234' }, '555')).toBe(true);
+    expect(filtroAPersonaMultiCampo({ nombre_completo: 'Juan Pérez', telefono: '5551234' }, '555')).toBe(true);
   });
 
   it('returns false when nothing matches or persona is empty', () => {
     expect(filtroAPersona(persona, 'xavier')).toBe(false);
     expect(filtroAPersona(null, 'luis')).toBe(false);
     expect(filtroAPersona(undefined, 'luis')).toBe(false);
+  });
+
+  it('does not return false positives from non-name fields', () => {
+    expect(filtroAPersona({ nombre_completo: 'Carlos Pérez', email: 'contacto@lau-car.example', church_role: 'Servidor' }, 'lau')).toBe(false);
+    expect(filtroAPersona({ nombre_completo: 'Ana Gómez', email: 'contacto@lau-car.example', church_role: 'Servidor' }, 'car')).toBe(false);
+    expect(filtroAPersona({ nombre_completo: 'Laura Méndez', email: 'persona@example.org' }, 'lau')).toBe(true);
+    expect(filtroAPersona({ nombre_completo: 'Carlos Pérez', email: 'persona@example.org' }, 'car')).toBe(true);
   });
 
   it('empty query matches everything', () => {

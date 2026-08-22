@@ -101,17 +101,17 @@ export interface PersonaBusqueda {
 }
 
 /**
- * Búsqueda sobre una persona completa:
+ * Búsqueda estricta sobre una persona:
  *
  * - Query que empieza con "@" → busca por USUARIO (username de la cuenta,
  *   estilo mensajería): "@gscarlosernesto" encuentra esa cuenta.
- * - Sin "@" → multi-campo: nombre (con `filtroAPersonas`), email, teléfonos,
- *   documento y rol (coincidencia parcial).
+ * - Sin "@" → busca únicamente el prefijo del nombre completo/apellidos.
+ *
+ * Esta es la función que deben usar los listados de personas. No permite que
+ * un correo, teléfono, documento o rol haga aparecer una persona cuyo nombre
+ * no coincide con lo escrito.
  *
  * Query vacío → true; persona vacía → false.
- *
- * Reemplaza el patrón repetido en cada pantalla de:
- * `filtroAPersonas(p.nombre_completo, q) || normalizar(p.email).includes(q) || ...`
  */
 export function filtroAPersona(persona: PersonaBusqueda | null | undefined, query: string): boolean {
   const rawQuery = (query ?? '').trim();
@@ -129,6 +129,30 @@ export function filtroAPersona(persona: PersonaBusqueda | null | undefined, quer
 
   const normalizedQuery = normalizarBusquedaPersona(rawQuery);
 
+  const nombre =
+    persona.nombre_completo ||
+    [persona.first_name, persona.last_name].filter(Boolean).join(' ').trim() ||
+    '';
+  return filtroAPersonas(nombre, normalizedQuery);
+}
+
+/**
+ * Búsqueda multi-campo explícita para superficies que necesitan encontrar
+ * personas por correo, teléfono, documento o rol. No debe usarse como filtro
+ * principal de un listado que promete coincidencia por nombre.
+ */
+export function filtroAPersonaMultiCampo(persona: PersonaBusqueda | null | undefined, query: string): boolean {
+  const rawQuery = (query ?? '').trim();
+  if (!rawQuery) return true;
+  if (!persona) return false;
+
+  if (rawQuery.startsWith('@')) {
+    const normalizedUsernameQuery = normalizarBusquedaPersona(rawQuery.slice(1));
+    if (!normalizedUsernameQuery) return false;
+    return persona.username ? normalizarBusquedaPersona(persona.username).startsWith(normalizedUsernameQuery) : false;
+  }
+
+  const normalizedQuery = normalizarBusquedaPersona(rawQuery);
   const nombre =
     persona.nombre_completo ||
     [persona.first_name, persona.last_name].filter(Boolean).join(' ').trim() ||
