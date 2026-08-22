@@ -234,10 +234,10 @@ export default function AcademyClient() {
                 <section className="grid grid-cols-2 lg:grid-cols-4 gap-6 py-3 px-1">
                     {dashboard.cards.map((card, idx) => {
                         const gradients = [
-                            'group-hover:from-blue-500 group-hover:via-indigo-400 group-hover:to-cyan-400',
+                            'group-hover:from-[hsl(var(--primary))] group-hover:via-[hsl(var(--info))] group-hover:to-[hsl(var(--accent))]',
                             'group-hover:from-emerald-400 group-hover:via-teal-300 group-hover:to-cyan-400',
                             'group-hover:from-amber-400 group-hover:via-orange-400 group-hover:to-pink-400',
-                            'group-hover:from-purple-400 group-hover:via-pink-400 group-hover:to-rose-400'
+                            'group-hover:from-[hsl(var(--warning))] group-hover:via-[hsl(var(--accent))] group-hover:to-[hsl(var(--danger))]'
                         ];
                         const grad = gradients[idx % gradients.length];
                         return (
