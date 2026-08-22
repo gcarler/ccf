@@ -47,19 +47,9 @@ def test_shared_paths_select_critical_modules():
     ]
 
 
-def test_pre_push_selector_changes_select_critical_modules():
+def test_pre_push_selector_changes_select_platform_only():
     checks = select_quality_checks(["scripts/hooks/pre-push", "scripts/select_quality_checks.py"])
-    assert checks == [
-        "academy_quality",
-        "agenda_quality",
-        "cms_quality",
-        "crm_quality",
-        "evangelism_quality",
-        "frontend_build",
-        "messaging_quality",
-        "platform_quality",
-        "projects_quality",
-    ]
+    assert checks == ["platform_quality"]
 
 
 def test_migration_selects_critical_modules():
