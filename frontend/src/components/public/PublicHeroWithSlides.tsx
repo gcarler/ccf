@@ -2,7 +2,7 @@
 
 import React, { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { ArrowRight, ChevronDown, Play } from "lucide-react";
+import { ArrowRight, ChevronDown, Play, Sparkles } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import OptimizedImage from "@/components/ui/OptimizedImage";
 
@@ -23,6 +23,7 @@ type Props = {
   description?: string;
   primaryCta?: { label: string; href: string };
   secondaryCta?: { label: string; href: string };
+  tertiaryCta?: { label: string; href: string };
   slides: PublicSlide[];
   home?: boolean;
   /** Texto de la guía "desliza hacia abajo" (solo variante home). */
@@ -38,6 +39,7 @@ export default function PublicHeroWithSlides({
   description,
   primaryCta,
   secondaryCta,
+  tertiaryCta,
   slides,
   home = false,
   scrollIndicator,
@@ -85,13 +87,7 @@ export default function PublicHeroWithSlides({
               transition={{ duration: 0.6 }}
               className="absolute inset-0"
             >
-              {activeSlide.href ? (
-                <Link href={activeSlide.href} aria-label={activeSlide.title || activeSlide.alt} className="absolute inset-0 z-0">
-                  <OptimizedImage src={activeSlide.src} alt={activeSlide.alt} fill sizes="100vw" className="object-cover" priority={activeIndex === 0} />
-                </Link>
-              ) : (
-                <OptimizedImage src={activeSlide.src} alt={activeSlide.alt} fill sizes="100vw" className="object-cover" priority={activeIndex === 0} />
-              )}
+              <OptimizedImage src={activeSlide.src} alt={activeSlide.alt} fill sizes="100vw" className="object-cover" priority={activeIndex === 0} />
             </motion.div>
           )}
         </AnimatePresence>
@@ -118,7 +114,7 @@ export default function PublicHeroWithSlides({
                   {description}
                 </p>
               )}
-              {(primaryCta || secondaryCta) && (
+              {(primaryCta || secondaryCta || tertiaryCta) && (
                 <div className="mt-8 flex flex-col sm:flex-row gap-4">
                   {primaryCta && (
                     <Link href={primaryCta.href} className="ccf-button group" style={{ background: "var(--site-hero-cta-gradient)", boxShadow: "var(--site-hero-cta-shadow)", color: "var(--site-on-hero)" }}>
@@ -130,6 +126,22 @@ export default function PublicHeroWithSlides({
                     <Link href={secondaryCta.href} className="ccf-button" style={{ background: "var(--site-hero-bg-light)", border: "2px solid var(--site-hero-border-light)", color: "var(--site-on-hero)", backdropFilter: "blur(10px)" }}>
                       <Play size={14} />
                       {secondaryCta.label}
+                    </Link>
+                  )}
+                  {tertiaryCta && (
+                    <Link
+                      href={tertiaryCta.href}
+                      className="ccf-button group"
+                      style={{
+                        background: "var(--site-hero-bg-light)",
+                        border: "2px solid var(--site-primary, #a5c8ff)",
+                        color: "var(--site-on-hero)",
+                        backdropFilter: "blur(10px)",
+                      }}
+                    >
+                      <Sparkles size={14} />
+                      {tertiaryCta.label}
+                      <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
                     </Link>
                   )}
                 </div>
