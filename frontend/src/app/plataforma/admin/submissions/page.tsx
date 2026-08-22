@@ -59,11 +59,12 @@ export default function SubmissionsPage() {
         return () => controller.abort();
     }, [token, fetchSubmissions]);
 
-    const handleGrade = async (id: number) => {
+    const handleGrade = async (id: number | string) => {
         try {
-            await apiFetch(`/academy/admin/submissions/${id}/grade?grade=${grade}&feedback=${encodeURIComponent(feedback)}`, {
+            await apiFetch(`/academy/admin/submissions/${id}/grade`, {
                 method: "PATCH",
                 token,
+                body: { grade: Number(grade), feedback: feedback || null },
             });
             addToast("Calificación guardada", "success");
             setGradingId(null);

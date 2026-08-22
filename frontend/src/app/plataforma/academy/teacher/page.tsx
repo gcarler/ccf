@@ -92,8 +92,12 @@ export default function TeacherWorkspace() {
             : 'Por favor ajusta los requisitos antes de volver a enviar.';
         try {
             await apiFetch<AssignmentSubmissionReview>(
-                `/academy/admin/submissions/${submission.id}/grade?grade=${grade}&feedback=${encodeURIComponent(feedback)}`,
-                { method: 'PATCH', token }
+                `/academy/admin/submissions/${submission.id}/grade`,
+                {
+                    method: 'PATCH',
+                    token,
+                    body: { grade, feedback }
+                }
             );
             toast.success(decision === 'approve' ? 'Calificación registrada' : 'Solicitud de ajustes enviada');
             await loadData();

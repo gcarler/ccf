@@ -162,8 +162,11 @@ export default function EditCoursePage() {
                                         <label className={LABEL}>Modalidad</label>
                                         <select value={form.modality} onChange={set('modality')}
                                             className={clsx(INPUT, "appearance-none cursor-pointer")}>
+                                            <option value="online">Online / Virtual</option>
+                                            <option value="presential">Presencial</option>
+                                            <option value="hybrid">Híbrido / Mixto</option>
                                             <option value="formal">Academia Formal</option>
-                                            <option value="non_formal">Capacitacion Libre</option>
+                                            <option value="non_formal">Capacitación Libre</option>
                                         </select>
                                     </div>
                                     <div className="space-y-2">
