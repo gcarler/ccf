@@ -1,8 +1,8 @@
 "use client";
 
-import React, { useRef } from 'react';
+import React, { useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X } from 'lucide-react';
+import { Maximize2, Minimize2, X } from 'lucide-react';
 import { useSidebarLayers } from '@/context/SidebarLayerContext';
 import { useFocusTrap } from '@/hooks/useFocusTrap';
 import clsx from 'clsx';
@@ -41,6 +41,7 @@ function RightPanel({
     const isControlled = controlledOpen !== undefined;
     const isOpen = isControlled ? controlledOpen : layers.RIGHT;
     const panelRef = useRef<HTMLDivElement>(null);
+    const [isExpanded, setIsExpanded] = useState(false);
 
     const isOverlay = isControlled || rightMode === 'overlay';
 
@@ -69,10 +70,12 @@ function RightPanel({
             animate={{ x: 0, opacity: 1 }}
             exit={{ x: width, opacity: 0 }}
             transition={{ type: 'tween', duration: 0.28, ease: [0.4, 0, 0.2, 1] }}
-            style={{ width: `min(${width}px, 100vw)`, minWidth: 0, maxWidth: '100vw' }}
+            style={{ width: isExpanded ? '100vw' : `min(${width}px, 100vw)`, minWidth: 0, maxWidth: '100vw' }}
             className={clsx(
                 'flex flex-col bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-elevated))] border-l border-[hsl(var(--border))] dark:border-[hsl(var(--border))]',
-                isControlled || rightMode === 'overlay'
+                isExpanded
+                    ? 'fixed inset-0 h-screen z-[1001] shadow-2xl border-l-0'
+                    : isControlled || rightMode === 'overlay'
                     ? 'fixed right-0 top-10 h-[calc(100vh-2.5rem)] z-[35] shadow-[-24px_0_60px_hsl(var(--shadow-floating))]'
                     : 'relative h-full z-[25] shadow-[-8px_0_24px_hsl(var(--shadow-floating))]'
             )}
@@ -87,6 +90,16 @@ function RightPanel({
                     {title}
                 </span>
                 <div className="flex items-center gap-1">
+                    <button
+                        onClick={() => setIsExpanded((expanded) => !expanded)}
+                        aria-label={isExpanded ? 'Contraer panel' : 'Expandir panel'}
+                        aria-pressed={isExpanded}
+                        title={isExpanded ? 'Contraer panel' : 'Expandir panel'}
+                        className="inline-flex items-center gap-1 rounded-md border border-[hsl(var(--border))] px-2 py-1 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/10 transition-all focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[hsl(var(--primary))]"
+                    >
+                        {isExpanded ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
+                        <span>{isExpanded ? 'Contraer' : 'Expandir'}</span>
+                    </button>
                     <button
                         onClick={handleClose}
                         aria-label="Cerrar panel"
@@ -120,7 +133,7 @@ function RightPanel({
                                 transition={{ duration: 0.2 }}
                                 className={clsx(
                                     'z-[34] bg-[hsl(var(--bg-muted))]/20 backdrop-blur-[1px]',
-                                    isControlled ? 'fixed inset-x-0 bottom-0 top-10' : 'absolute inset-0'
+                                    isExpanded || isControlled ? 'fixed inset-0' : 'absolute inset-0'
                                 )}
                                 onClick={handleClose}
                                 aria-hidden="true"
