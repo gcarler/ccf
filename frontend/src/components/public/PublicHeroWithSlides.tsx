@@ -244,8 +244,8 @@ export default function PublicHeroWithSlides({
                   className="absolute inset-0"
                 >
                   {activeSlide.href ? (
-                    <Link href={activeSlide.href} aria-label={activeSlide.title || activeSlide.alt} className="absolute inset-0 z-0">
-                      <OptimizedImage src={activeSlide.src} alt={activeSlide.alt} fill sizes="(max-width: 1024px) 100vw, 45vw" className="object-cover" priority={activeIndex === 0} />
+                    <Link href={activeSlide.href} aria-label={activeSlide.title || activeSlide.alt} className="absolute inset-0 z-20 cursor-pointer">
+                      <OptimizedImage src={activeSlide.src} alt={activeSlide.alt} fill sizes="(max-width: 1024px) 100vw, 45vw" className="object-cover transition-transform duration-700 hover:scale-105" priority={activeIndex === 0} />
                     </Link>
                   ) : (
                     <OptimizedImage src={activeSlide.src} alt={activeSlide.alt} fill sizes="(max-width: 1024px) 100vw, 45vw" className="object-cover" priority={activeIndex === 0} />
@@ -266,10 +266,10 @@ export default function PublicHeroWithSlides({
             )}
             {activeSlide && (
               <>
-                <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_70%_20%,rgba(255,255,255,0.2),transparent_30%),linear-gradient(to_top,rgba(0,0,0,0.9)_0%,rgba(0,0,0,0.42)_45%,transparent_100%)]" />
-                <div className="absolute inset-x-0 top-0 flex items-center justify-between p-4 md:p-6 text-white/90">
+                <div className="pointer-events-none absolute inset-0 z-10 bg-[radial-gradient(circle_at_70%_20%,rgba(255,255,255,0.2),transparent_30%),linear-gradient(to_top,rgba(0,0,0,0.9)_0%,rgba(0,0,0,0.42)_45%,transparent_100%)]" />
+                <div className="pointer-events-none absolute inset-x-0 top-0 z-10 flex items-center justify-between p-4 md:p-6 text-white/90">
                   <span className="ccf-kicker rounded-full border border-white/20 bg-white/10 px-3 py-1 text-2xs uppercase backdrop-blur">
-                    Banner
+                    {activeSlide.href ? "Ver Curso →" : "Banner"}
                   </span>
                   {totalSlides > 1 && (
                     <span className="ccf-kicker rounded-full border border-white/20 bg-white/10 px-3 py-1 text-2xs uppercase backdrop-blur">
@@ -277,9 +277,9 @@ export default function PublicHeroWithSlides({
                     </span>
                   )}
                 </div>
-                <div className="absolute inset-x-0 bottom-0 p-5 md:p-8 text-white">
-                  {activeSlide.title && <h2 className="text-xl md:text-3xl mb-3 max-w-xl">{activeSlide.title}</h2>}
-                  {activeSlide.caption && <p className="ccf-copy text-white/86 max-w-2xl">{activeSlide.caption}</p>}
+                <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 p-5 md:p-8 text-white">
+                  {activeSlide.title && <h2 className="text-xl md:text-3xl mb-3 max-w-xl font-bold">{activeSlide.title}</h2>}
+                  {activeSlide.caption && <p className="ccf-copy text-white/86 max-w-2xl line-clamp-2">{activeSlide.caption}</p>}
                 </div>
               </>
             )}

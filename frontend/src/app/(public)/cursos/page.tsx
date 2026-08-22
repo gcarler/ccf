@@ -70,26 +70,34 @@ export default function CursosPage() {
   const featured = courses[0];
   const rest = courses.slice(1);
   const hasHero = Boolean(heroTitleLead || heroAccent || heroDescription);
-  const heroSlides: PublicSlide[] = ([
-    heroImageUrl
-      ? {
-          src: heroImageUrl,
-          alt: heroTitleLead || heroAccent || "Cursos CCF",
-          title: heroTitleLead || heroAccent || "Cursos",
-          caption: heroDescription || undefined,
-        }
-      : null,
-    ...ctaImages.slice(0, 3).map((slide, index) => {
-      const src = typeof slide.src === "string" ? slide.src : "";
-      if (!src) return null;
-      return {
-        src,
-        alt: typeof slide.alt === "string" && slide.alt.trim() ? slide.alt : `Curso ${index + 1}`,
-        title: index === 0 ? coursesTitle || "Formación" : undefined,
-        caption: index === 0 ? coursesDescription || undefined : undefined,
-      };
-    }),
-  ] as (PublicSlide | null)[]).filter((slide): slide is PublicSlide => Boolean(slide));
+  const heroSlides: PublicSlide[] = courses.length > 0
+    ? courses.slice(0, 4).map((c) => ({
+        src: c.imageUrl || heroImageUrl || "/og-default.png",
+        alt: c.title,
+        title: c.title,
+        caption: c.description || c.title,
+        href: `/cursos/${c.slug || c.id}`,
+      }))
+    : ([
+        heroImageUrl
+          ? {
+              src: heroImageUrl,
+              alt: heroTitleLead || heroAccent || "Cursos CCF",
+              title: heroTitleLead || heroAccent || "Cursos",
+              caption: heroDescription || undefined,
+            }
+          : null,
+        ...ctaImages.slice(0, 3).map((slide, index) => {
+          const src = typeof slide.src === "string" ? slide.src : "";
+          if (!src) return null;
+          return {
+            src,
+            alt: typeof slide.alt === "string" && slide.alt.trim() ? slide.alt : `Curso ${index + 1}`,
+            title: index === 0 ? coursesTitle || "Formación" : undefined,
+            caption: index === 0 ? coursesDescription || undefined : undefined,
+          };
+        }),
+      ] as (PublicSlide | null)[]).filter((slide): slide is PublicSlide => Boolean(slide));
 
   return (
     <main className="pt-[88px] pb-4 overflow-hidden">
