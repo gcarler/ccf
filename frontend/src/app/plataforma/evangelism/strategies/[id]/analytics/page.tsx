@@ -11,6 +11,7 @@ import {
 import { useParams, useRouter } from "next/navigation";
 import type { BreadcrumbOption } from "@/components/evangelism/EvangelismShell";
 import { useCallback, useEffect, useState } from "react";
+import clsx from "clsx";
 import {
   AreaChart, Area, BarChart, Bar, RadarChart, Radar, PolarGrid,
   PolarAngleAxis, PolarRadiusAxis, LineChart, Line, PieChart, Pie, Cell,
@@ -163,10 +164,10 @@ function KpiCard({ label, value, sub, semaforo, icon: Icon }: {
         <Icon size={14} className="text-[hsl(var(--text-secondary))]" />
         <p className="text-2xs font-bold uppercase tracking-wider text-[hsl(var(--text-secondary))]">{label}</p>
       </div>
-      <p className={`text-2xl font-black ${semaforo ? sem(semaforo) : "text-[hsl(var(--text-primary))]"}`}>{value}</p>
+      <p className={clsx("text-2xl font-black", semaforo ? sem(semaforo) : "text-[hsl(var(--text-primary))]")}>{value}</p>
       {sub && <p className="text-xs text-[hsl(var(--text-secondary))]">{sub}</p>}
       {semaforo && (
-        <span className={`text-2xs font-bold px-2 py-0.5 rounded-full border w-fit mt-1 ${semBg(semaforo)}`}>
+        <span className={clsx("text-2xs font-bold px-2 py-0.5 rounded-full border w-fit mt-1", semBg(semaforo))}>
           {semaforo.replace(/_/g, " ")}
         </span>
       )}
@@ -192,7 +193,7 @@ function ProgressBar({ value, max = 100, color = "bg-[hsl(var(--primary))]" }: {
   const pct = Math.min((value / max) * 100, 100);
   return (
     <div className="h-1.5 w-full bg-[hsl(var(--bg-muted))] rounded-full overflow-hidden">
-      <div className={`h-full rounded-full transition-all ${color}`} style={{ width: `${pct}%` }} />
+      <div className={clsx("h-full rounded-full transition-all", color)} style={{ width: `${pct}%` }} />
     </div>
   );
 }
@@ -341,9 +342,9 @@ export default function StrategyAnalyticsPage() {
             <div className="flex items-center gap-1 bg-[hsl(var(--bg-muted))] rounded-lg p-1">
               {WEEKS_OPTIONS.map(w => (
                 <button key={w} onClick={() => setWeeks(w)}
-                  className={`px-3 py-1 rounded-md text-xs font-bold transition-all ${weeks === w
+                  className={clsx("px-3 py-1 rounded-md text-xs font-bold transition-all", weeks === w
                     ? "bg-[hsl(var(--bg-primary))] text-[hsl(var(--text-primary))] shadow-sm"
-                    : "text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))]"}`}>
+                    : "text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))]")}>
                   {w}s
                 </button>
               ))}
@@ -373,11 +374,11 @@ export default function StrategyAnalyticsPage() {
         <div className="bg-[hsl(var(--bg-primary))] border border-[hsl(var(--border-primary))] rounded-xl p-5">
           <SectionHeader icon={MapPin} title="1. Dimensión Territorial" sub="Densidad de cobertura por zona geográfica (IDC)" />
           <div className="grid md:grid-cols-3 gap-4">
-            <div className={`rounded-lg border p-4 text-center ${semBg(dim1_territorial.semaforo)}`}>
+            <div className={clsx("rounded-lg border p-4 text-center", semBg(dim1_territorial.semaforo))}>
               <p className="text-2xs font-bold uppercase tracking-wider text-[hsl(var(--text-secondary))] mb-1">IDC global</p>
-              <p className={`text-4xl font-black ${sem(dim1_territorial.semaforo)}`}>{dim1_territorial.idc}</p>
+              <p className={clsx("text-4xl font-black", sem(dim1_territorial.semaforo))}>{dim1_territorial.idc}</p>
               <p className="text-xs text-[hsl(var(--text-secondary))] mt-1">grupos / zona</p>
-              <span className={`text-2xs font-bold ${sem(dim1_territorial.semaforo)}`}>{dim1_territorial.semaforo}</span>
+              <span className={clsx("text-2xs font-bold", sem(dim1_territorial.semaforo))}>{dim1_territorial.semaforo}</span>
             </div>
             <div className="md:col-span-2">
               <p className="text-2xs font-bold uppercase tracking-wider text-[hsl(var(--text-secondary))] mb-2">Grupos por zona</p>
@@ -411,8 +412,8 @@ export default function StrategyAnalyticsPage() {
               { label: "Saludables (60–85%)", count: dim2_capacidad.saludables, color: "text-[hsl(var(--success))]", bg: "bg-[hsl(var(--success-muted))] border-[hsl(var(--success)/0.3)]" },
               { label: "Bajos (<60%)", count: dim2_capacidad.bajos, color: "text-[hsl(var(--warning))]", bg: "bg-[hsl(var(--warning-muted))] border-[hsl(var(--warning)/0.3)]" },
             ].map(s => (
-              <div key={s.label} className={`rounded-lg border p-3 text-center ${s.bg}`}>
-                <p className={`text-3xl font-black ${s.color}`}>{s.count}</p>
+              <div key={s.label} className={clsx("rounded-lg border p-3 text-center", s.bg)}>
+                <p className={clsx("text-3xl font-black", s.color)}>{s.count}</p>
                 <p className="text-xs text-[hsl(var(--text-secondary))] mt-0.5">{s.label}</p>
               </div>
             ))}
@@ -456,7 +457,7 @@ export default function StrategyAnalyticsPage() {
                   <div key={g.nombre} className="p-3 bg-[hsl(var(--bg-secondary))] rounded-lg">
                     <div className="flex justify-between items-center mb-1">
                       <span className="text-sm font-bold text-[hsl(var(--text-primary))]">{g.nombre}</span>
-                      <span className={`text-2xs font-bold px-1.5 py-0.5 rounded-full border ${semBg(g.irt_semaforo)}`}>
+                      <span className={clsx("text-2xs font-bold px-1.5 py-0.5 rounded-full border", semBg(g.irt_semaforo))}>
                         IRT {g.irt_promedio}
                       </span>
                     </div>
@@ -501,7 +502,7 @@ export default function StrategyAnalyticsPage() {
               { label: "Casos abiertos", value: dim4_conversion_crm.total_casos_crm - dim4_conversion_crm.total_resueltos, color: "text-[hsl(var(--primary))]" },
             ].map(s => (
               <div key={s.label} className="bg-[hsl(var(--bg-secondary))] rounded-lg p-3 text-center">
-                <p className={`text-2xl font-black ${s.color || "text-[hsl(var(--text-primary))]"}`}>{s.value}</p>
+                <p className={clsx("text-2xl font-black", s.color || "text-[hsl(var(--text-primary))]")}>{s.value}</p>
                 <p className="text-2xs text-[hsl(var(--text-secondary))] mt-0.5">{s.label}</p>
               </div>
             ))}
@@ -515,7 +516,7 @@ export default function StrategyAnalyticsPage() {
                 <div className="flex-1 min-w-0">
                   <div className="flex justify-between items-center mb-1">
                     <span className="text-sm font-bold text-[hsl(var(--text-primary))]">{g.nombre}</span>
-                    <span className={`text-2xs font-bold px-2 py-0.5 rounded-full border ${semBg(_semClasif(g.clasificacion))}`}>
+                    <span className={clsx("text-2xs font-bold px-2 py-0.5 rounded-full border", semBg(_semClasif(g.clasificacion)))}>
                       {g.clasificacion.replace(/_/g, " ")}
                     </span>
                   </div>
@@ -608,7 +609,7 @@ export default function StrategyAnalyticsPage() {
                   { label: "ICS global", value: `${dim6_eficiencia.ics_global_porcentaje}%`, color: dim6_eficiencia.ics_global_porcentaje >= 90 ? "text-[hsl(var(--success))]" : "text-[hsl(var(--warning))]" },
                 ].map(s => (
                   <div key={s.label} className="bg-[hsl(var(--bg-secondary))] rounded-lg p-3 text-center">
-                    <p className={`text-xl font-black ${s.color}`}>{s.value}</p>
+                    <p className={clsx("text-xl font-black", s.color)}>{s.value}</p>
                     <p className="text-2xs text-[hsl(var(--text-secondary))]">{s.label}</p>
                   </div>
                 ))}
@@ -621,7 +622,7 @@ export default function StrategyAnalyticsPage() {
                   <div key={g.nombre} className="p-3 bg-[hsl(var(--bg-secondary))] rounded-lg">
                     <div className="flex justify-between items-center mb-1">
                       <span className="text-sm font-bold text-[hsl(var(--text-primary))]">{g.nombre}</span>
-                      <span className={`text-2xs font-bold ${sem(g.estado_operativo)}`}>{g.estado_operativo}</span>
+                      <span className={clsx("text-2xs font-bold", sem(g.estado_operativo))}>{g.estado_operativo}</span>
                     </div>
                     <div className="flex gap-4 text-xs text-[hsl(var(--text-secondary))] mb-1.5">
                       <span>{g.sesiones_realizadas}/{g.sesiones_proyectadas} sesiones</span>
@@ -752,7 +753,7 @@ export default function StrategyAnalyticsPage() {
                         </div>
                         <div className="space-y-1">
                           <div className="h-1.5 w-full bg-[hsl(var(--bg-muted))] rounded-full overflow-hidden">
-                            <div className={`h-full rounded-full transition-all ${toneColor}`} style={{ width: `${barWidth}%` }} />
+                            <div className={clsx("h-full rounded-full transition-all", toneColor)} style={{ width: `${barWidth}%` }} />
                           </div>
                           <p className="text-2xs text-[hsl(var(--text-secondary))] font-mono">
                             {s.transitions} transición{s.transitions !== 1 ? 'es' : ''}
@@ -780,12 +781,12 @@ export default function StrategyAnalyticsPage() {
           <div className="bg-[hsl(var(--bg-primary))] border border-[hsl(var(--border-primary))] rounded-xl p-5">
             <SectionHeader icon={TrendingUp} title="7. Multiplicación (TMG / TPM)"
               sub="Tasa de Multiplicación de Grupos y tiempo promedio" />
-            <div className={`rounded-lg border p-4 text-center mb-4 ${semBg(dim7_multiplicacion.estado_reproduccion)}`}>
-              <p className={`text-4xl font-black ${sem(dim7_multiplicacion.estado_reproduccion)}`}>
+            <div className={clsx("rounded-lg border p-4 text-center mb-4", semBg(dim7_multiplicacion.estado_reproduccion))}>
+              <p className={clsx("text-4xl font-black", sem(dim7_multiplicacion.estado_reproduccion))}>
                 {dim7_multiplicacion.tmg_porcentaje}%
               </p>
               <p className="text-xs text-[hsl(var(--text-secondary))] mt-1">TMG — Tasa de multiplicación</p>
-              <p className={`text-2xs font-bold mt-1 ${sem(dim7_multiplicacion.estado_reproduccion)}`}>
+              <p className={clsx("text-2xs font-bold mt-1", sem(dim7_multiplicacion.estado_reproduccion))}>
                 {dim7_multiplicacion.estado_reproduccion}
               </p>
             </div>
@@ -819,7 +820,7 @@ export default function StrategyAnalyticsPage() {
                 { label: "IRL", value: `${dim8_liderazgo.irl_porcentaje}%`, color: "text-[hsl(var(--text-primary))]" },
               ].map(s => (
                 <div key={s.label} className="bg-[hsl(var(--bg-secondary))] rounded-lg p-3 text-center">
-                  <p className={`text-xl font-black ${s.color}`}>{s.value}</p>
+                  <p className={clsx("text-xl font-black", s.color)}>{s.value}</p>
                   <p className="text-2xs text-[hsl(var(--text-secondary))]">{s.label}</p>
                 </div>
               ))}
@@ -851,10 +852,10 @@ export default function StrategyAnalyticsPage() {
           <SectionHeader icon={Zap} title="9. Retención de Campañas (IRC)"
             sub="Personas capturadas por esta estrategia que se convirtieron en asistentes regulares" />
           <div className="grid md:grid-cols-3 gap-4">
-            <div className={`rounded-lg border p-4 text-center col-span-1 ${semBg(dim9_campanas.semaforo)}`}>
-              <p className={`text-4xl font-black ${sem(dim9_campanas.semaforo)}`}>{dim9_campanas.irc_porcentaje}%</p>
+            <div className={clsx("rounded-lg border p-4 text-center col-span-1", semBg(dim9_campanas.semaforo))}>
+              <p className={clsx("text-4xl font-black", sem(dim9_campanas.semaforo))}>{dim9_campanas.irc_porcentaje}%</p>
               <p className="text-xs text-[hsl(var(--text-secondary))] mt-1">IRC — Índice de Retención</p>
-              <p className={`text-2xs font-bold mt-1 ${sem(dim9_campanas.semaforo)}`}>{dim9_campanas.semaforo}</p>
+              <p className={clsx("text-2xs font-bold mt-1", sem(dim9_campanas.semaforo))}>{dim9_campanas.semaforo}</p>
             </div>
             <div className="md:col-span-2 grid grid-cols-2 gap-3">
               <div className="bg-[hsl(var(--bg-secondary))] rounded-lg p-4 text-center">
@@ -875,11 +876,11 @@ export default function StrategyAnalyticsPage() {
             sub="Entropía de Shannon adaptada — equilibrio intergeneracional" />
           <div className="grid md:grid-cols-3 gap-6">
             <div>
-              <div className={`rounded-lg border p-4 text-center mb-3 ${semBg(dim10_demografia.estado_equilibrio)}`}>
-                <p className={`text-3xl font-black ${sem(dim10_demografia.estado_equilibrio)}`}>{dim10_demografia.idg}</p>
+              <div className={clsx("rounded-lg border p-4 text-center mb-3", semBg(dim10_demografia.estado_equilibrio))}>
+                <p className={clsx("text-3xl font-black", sem(dim10_demografia.estado_equilibrio))}>{dim10_demografia.idg}</p>
                 <p className="text-xs text-[hsl(var(--text-secondary))] mt-0.5">IDG (máx 1.61)</p>
                 <p className="text-xs font-bold mt-1">{dim10_demografia.equilibrio_porcentaje}% equilibrio</p>
-                <span className={`text-2xs font-bold ${sem(dim10_demografia.estado_equilibrio)}`}>{dim10_demografia.estado_equilibrio}</span>
+                <span className={clsx("text-2xs font-bold", sem(dim10_demografia.estado_equilibrio))}>{dim10_demografia.estado_equilibrio}</span>
               </div>
               <div className="p-3 bg-[hsl(var(--bg-secondary))] rounded-lg text-center">
                 <p className="text-2xl font-black text-[hsl(var(--primary))]">{dim10_demografia.pct_bautizados}%</p>
