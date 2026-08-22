@@ -112,11 +112,10 @@ export default function WorkspaceDrawer({
                                     onClick={() => setIsExpanded((expanded) => !expanded)}
                                     aria-label={isExpanded ? "Contraer panel" : "Expandir panel"}
                                     aria-pressed={isExpanded}
-                                    title={isExpanded ? "Contraer panel" : "Expandir panel"}
-                                    className="inline-flex shrink-0 items-center gap-1.5 rounded-md border border-[hsl(var(--border))] px-2 py-1.5 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/10 hover:text-[hsl(var(--text-primary))] transition-all focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[hsl(var(--primary))]"
+                                    title={isExpanded ? "Contraer" : "Expandir"}
+                                    className="inline-flex size-10 shrink-0 items-center justify-center rounded-md border border-[hsl(var(--border))] text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/10 hover:text-[hsl(var(--text-primary))] transition-all focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[hsl(var(--primary))]"
                                 >
-                                    {isExpanded ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
-                                    <span className="hidden sm:inline">{isExpanded ? "Contraer" : "Expandir"}</span>
+                                    {isExpanded ? <Minimize2 size={20} /> : <Maximize2 size={20} />}
                                 </button>
                                 <div className="h-6 w-[1px] bg-[hsl(var(--border))] dark:bg-white/10" />
                                 <div className="flex flex-col overflow-hidden">
