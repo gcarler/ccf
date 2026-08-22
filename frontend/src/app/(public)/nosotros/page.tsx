@@ -273,14 +273,19 @@ export default function NosotrosPage() {
 
                         {/* Texto */}
                         <div className="w-full lg:w-7/12">
+                            <div className="inline-flex items-center gap-2.5 px-4 py-2 rounded-full bg-site-primary/10 border border-site-primary/20 text-site-primary text-xs font-bold uppercase tracking-widest mb-4">
+                                <Heart size={14} className="text-site-primary" />
+                                <span>Liderazgo Pastoral</span>
+                            </div>
+
                             {founderLabel && (
-                                <div className="inline-flex items-center gap-2.5 px-4 py-2 rounded-full bg-site-primary/10 border border-site-primary/20 text-site-primary text-xs font-bold uppercase tracking-widest mb-6">
-                                    <Heart size={14} className="text-site-primary" />
-                                    <span>{founderLabel}</span>
-                                </div>
-                            )}
-                            {(founderTitle || founderTitleAccent) && (
                                 <h2 className="ccf-headline text-3xl sm:text-4xl md:text-5xl font-black text-site-on-surface mb-6 tracking-tight">
+                                    {founderLabel}
+                                </h2>
+                            )}
+
+                            {(founderTitle || founderTitleAccent) && (
+                                <h3 className="ccf-headline text-2xl sm:text-3xl md:text-4xl font-black text-site-on-surface mb-6 tracking-tight">
                                     {founderTitle}
                                     {founderTitleAccent && (
                                         <>
@@ -288,7 +293,7 @@ export default function NosotrosPage() {
                                             <span className="text-site-primary">{founderTitleAccent}</span>
                                         </>
                                     )}
-                                </h2>
+                                </h3>
                             )}
                             {(founderBio || founderBio2) && (
                                 <div className="ccf-body space-y-4 text-base md:text-lg text-site-on-surface-variant [&_strong]:text-site-on-surface [&_em]:text-site-outline">
