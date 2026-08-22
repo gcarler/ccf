@@ -141,10 +141,22 @@ class PublicStatsResponse(BaseModel):
 )
 def public_stats(db: Session = Depends(get_db)) -> PublicStatsResponse:
     """Devuelve estadísticas en vivo de la iglesia para páginas públicas (Nosotros, etc.)."""
-    # 1. Años de ministerio (Fundada en 1986 — 40 años en 2026)
-    foundation_year = 1986
+    # 1. Años de ministerio (Cálculo dinámico desde configuración/BD: SystemVariable 'ccf_foundation_year' o 'foundation_year')
     current_year = datetime.now().year
-    years_ministry = max(current_year - foundation_year, 40)
+    foundation_var = (
+        db.query(models.SystemVariable)
+        .filter(
+            models.SystemVariable.key.in_(["ccf_foundation_year", "foundation_year"]),
+            models.SystemVariable.deleted_at.is_(None),
+        )
+        .first()
+    )
+    try:
+        foundation_year = int(foundation_var.value) if foundation_var and foundation_var.value else 1986
+    except (ValueError, TypeError):
+        foundation_year = 1986
+
+    years_ministry = max(current_year - foundation_year, 1)
 
     # 2. Pastores activos
     pastores_count = (

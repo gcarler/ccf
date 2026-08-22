@@ -14,6 +14,7 @@ from backend.api.evangelism_shared import get_visible_strategy, sessions_grupo_h
 from backend.core.database import get_db
 from backend.core.permissions import require_evangelism_manage, require_evangelism_read
 from backend.core.tenant import require_user_sede_id
+from backend.core.audit import record_admin_action
 from backend.crud.evangelism import (
     create_estrategia as create_evangelism_strategy,
 )
@@ -172,6 +173,7 @@ def create_strategy(
         result = create_evangelism_strategy(
             db=db, data=strategy, sede_id=sede_id, categoria_id=primera_categoria.id, actor_user_id=str(current_user.id)
         )
+        record_admin_action(db, current_user, action="create_strategy", resource_type="strategy", resource_id=str(result.id))
     except HTTPException:
         raise
     except Exception:
@@ -220,6 +222,7 @@ def update_strategy(
         if not db_obj:
             raise HTTPException(status_code=404, detail="Evangelism strategy not found")
         db_obj = update_evangelism_strategy(db=db, strategy_id=strategy_id, data=strategy, actor_user_id=str(_user.id))
+        record_admin_action(db, _user, action="update_strategy", resource_type="strategy", resource_id=str(strategy_id))
     except Exception:
         logger.exception("Failed to update evangelism strategy=%s", strategy_id)
         db.rollback()
@@ -442,6 +445,7 @@ def delete_strategy(
 ):
     if not delete_evangelism_strategy(db=db, strategy_id=strategy_id, actor_user_id=str(_user.id)):
         raise HTTPException(status_code=404, detail="Evangelism strategy not found")
+    record_admin_action(db, _user, action="delete_strategy", resource_type="strategy", resource_id=str(strategy_id))
 
 
 def _project_phases_as_tasks(

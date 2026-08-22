@@ -7,7 +7,7 @@ from types import SimpleNamespace
 from typing import List
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.orm import Session, joinedload
 
 from backend import models, schemas
@@ -32,6 +32,7 @@ from backend.core.permissions import (
     require_evangelism_manage,
     require_evangelism_read,
 )
+from backend.core.rate_limit import academy_limiter
 from backend.core.tenant import require_user_sede_id
 from backend.models import Asistencia, GrupoEvangelismo, SesionGrupo
 
@@ -133,9 +134,11 @@ def get_groups_session_attendance(
     }
 
 
+@academy_limiter.limit("30/minute")
 @router.post("/grupos/sessions/{session_id}/attendance", response_model=dict)
 @router.post("/groups/sessions/{session_id}/attendance", response_model=dict)
 def add_groups_attendance(
+    request: Request,
     session_id: UUID,
     payload: dict,
     db: Session = Depends(get_db),
@@ -307,8 +310,10 @@ def add_groups_attendance(
 # ── Attendance ──
 
 
+@academy_limiter.limit("30/minute")
 @router.post("/sessions/{session_id}/attendance", response_model=dict)
 def submit_attendance(
+    request: Request,
     session_id: UUID,
     attendance_data: List[schemas.AsistenciaGrupoCreate],
     db: Session = Depends(get_db),

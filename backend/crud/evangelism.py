@@ -136,6 +136,7 @@ def get_estrategias(
     limit: int = 100,
     activa: Optional[bool] = None,
     clase_raiz: Optional[str] = None,
+    *,
     sede_id: Optional[str] = None,
 ) -> List[EstrategiaEvangelismo]:
     """Lista estrategias con filtros opcionales."""
