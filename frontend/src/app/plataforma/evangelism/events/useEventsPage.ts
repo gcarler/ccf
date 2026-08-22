@@ -283,7 +283,7 @@ export function useEventsPage() {
  if (!normalized) return sortedPersonas;
  return sortedPersonas.filter((persona) =>
  (persona.nombre_completo || '').toLowerCase().includes(normalized) ||
- persona.email.toLowerCase().includes(normalized) ||
+ (persona.email || '').toLowerCase().includes(normalized) ||
  (persona.church_role || '').toLowerCase().includes(normalized)
  );
  };
@@ -670,7 +670,7 @@ const saveAttendance = async (forceEmpty = false) => {
 
  const filteredPersonas = expectedUniversePersonas.filter((persona) => {
  const query = attendanceSearch.trim().toLowerCase();
- const matchesSearch = !query || (persona.nombre_completo || '').toLowerCase().includes(query) || persona.email.toLowerCase().includes(query);
+ const matchesSearch = !query || (persona.nombre_completo || '').toLowerCase().includes(query) || (persona.email || '').toLowerCase().includes(query);
  const matchesRole = attendanceRoleFilter === 'ALL' || (persona.church_role || 'Sin rol') === attendanceRoleFilter;
  const isPresent = attendedPersonaIds.includes(persona.id);
  const matchesStatus =
