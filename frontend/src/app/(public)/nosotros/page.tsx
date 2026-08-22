@@ -118,23 +118,23 @@ export default function NosotrosPage() {
             )}
 
             {hasHero && stats.length > 0 && (
-                <section className="py-16 md:py-24 ccf-container relative z-10">
-                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 md:gap-14 items-start">
+                <section className="py-14 md:py-20 ccf-container relative z-10">
+                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 md:gap-12 items-start">
                         {stats.map((s, i) => (
                             <div
                                 key={i}
-                                className="group cursor-default select-none transition-all duration-300 transform hover:-translate-y-2"
+                                className="group cursor-default select-none transition-all duration-300 transform hover:-translate-y-1.5"
                             >
                                 <p
-                                    className="font-black tracking-tighter leading-none transition-all duration-500 text-transparent bg-clip-text bg-gradient-to-br from-site-primary via-site-primary/90 to-amber-500 group-hover:from-amber-400 group-hover:via-site-primary group-hover:to-orange-500 group-hover:drop-shadow-[0_10px_25px_rgba(245,158,11,0.35)]"
-                                    style={{ fontSize: "clamp(3.75rem, 9vw, 8rem)" }}
+                                    className="font-black tracking-tighter leading-none transition-all duration-300 text-site-primary group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-site-primary group-hover:via-amber-400 group-hover:to-cyan-400 group-hover:animate-gradient-flow group-hover:drop-shadow-[0_8px_20px_rgba(37,99,235,0.3)]"
+                                    style={{ fontSize: "clamp(2.8rem, 6.75vw, 6rem)" }}
                                 >
                                     {s.value}
                                 </p>
-                                <p className="text-sm sm:text-base md:text-lg font-extrabold uppercase tracking-widest text-site-on-surface-variant group-hover:text-site-primary mt-3 md:mt-5 transition-colors duration-300">
+                                <p className="text-xs sm:text-sm md:text-base font-extrabold uppercase tracking-widest text-site-on-surface-variant group-hover:text-site-primary mt-3 md:mt-4 transition-colors duration-300">
                                     {s.label}
                                 </p>
-                                <div className="h-1 w-12 bg-site-primary/30 group-hover:w-28 group-hover:bg-amber-400 mt-2.5 transition-all duration-500 rounded-full" />
+                                <div className="h-0.5 w-10 bg-site-primary/30 group-hover:w-20 group-hover:bg-site-primary mt-2 transition-all duration-300 rounded-full" />
                             </div>
                         ))}
                     </div>

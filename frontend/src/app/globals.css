@@ -635,8 +635,22 @@ html .ag-theme-quartz-dark {
     backdrop-filter: blur(12px);
   }
 
-  .whiteboard-mobile-toolbar button {
-    min-width: 44px;
-    min-height: 44px; /* Touch-friendly target size */
+}
+
+/* Animated gradient effect on text */
+@keyframes gradient-flow {
+  0% {
+    background-position: 0% 50%;
   }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.animate-gradient-flow {
+  background-size: 200% 200%;
+  animation: gradient-flow 3s ease infinite;
 }

@@ -185,8 +185,8 @@ def public_stats(db: Session = Depends(get_db)) -> PublicStatsResponse:
         stats=[
             PublicStatItem(value=f"+{years_ministry}", label="Años de ministerio"),
             PublicStatItem(value=f"+{pastores_count}", label="Pastores activos"),
-            PublicStatItem(value=f"+{familias_count}", label="Familias"),
             PublicStatItem(value=str(sedes_count), label="Sedes"),
+            PublicStatItem(value=f"+{familias_count}", label="Familias"),
         ]
     )
 
