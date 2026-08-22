@@ -15,8 +15,17 @@ from backend.services.cms_media_service import (
 
 
 class TestGuardPath:
-    def test_guard_path_accepts_uploads_url(self):
-        path = _guard_path("/uploads/cms/logo.png")
+    @pytest.mark.parametrize(
+        "url",
+        [
+            "/api/static/cms/logo.png",
+            "/static/cms/logo.png",
+            "/uploads/cms/logo.png",
+            "uploads/cms/logo.png",
+        ],
+    )
+    def test_guard_path_accepts_supported_local_url_forms(self, url):
+        path = _guard_path(url)
         assert path.endswith("uploads/cms/logo.png")
 
     def test_guard_path_rejects_traversal(self):

@@ -135,11 +135,12 @@ def get_transactions(
         db.query(models.Donation)
         .options(joinedload(models.Donation.persona))
         .filter(
-            models.Donation.sede_id == sede_id,
             models.Donation.deleted_at.is_(None),
         )
         .order_by(models.Donation.created_at.desc())
     )
+    if sede_id:
+        q = q.filter(models.Donation.sede_id == sede_id)
     # FIN-H02: Implementar filtro por tipo (antes era código muerto)
     if tipo:
         q = q.filter(models.Donation.donation_type == tipo)
@@ -147,40 +148,32 @@ def get_transactions(
 
     result = []
     for d in rows:
-        # Drift #7: el frontend admin/finance/treasury consume tx.person,
-        # tx.donation_id y tx.transaction_date. El contrato previo (id, type,
-        # category, description, amount, date, persona_id) caía a fallbacks y
-        # 'Entrada General' en todas las filas, con fecha de la columna created_at.
-        # transaction_date real = Donation.donation_date; si no existe, created_at.
         person_obj = None
-        if d.persona is not None:
+        if d.persona:
+            full_name = f"{d.persona.first_name} {d.persona.last_name}".strip()
             person_obj = {
-                "nombre_completo": f"{d.persona.first_name} {d.persona.last_name}".strip(),
-                "first_name": d.persona.first_name,
-                "email": d.persona.email,
+                "id": str(d.persona.id),
                 "persona_id": str(d.persona.id),
+                "nombre_completo": full_name,
+                "full_name": full_name,
+                "first_name": d.persona.first_name,
+                "last_name": d.persona.last_name,
+                "email": d.persona.email,
             }
         result.append(
             {
                 "id": d.id,
                 "donation_id": d.id,
                 "type": "ingreso",
+                "donation_type": d.donation_type,
                 "category": d.donation_type or "Ofrenda",
-                "description": d.donor_name or f"Donación #{d.id}",
+                "description": f"Donación {d.donation_type or 'general'} - {d.donor_name or 'Anónimo'}",
                 "amount": d.amount,
-                "currency": d.currency,
-                "date": d.created_at.isoformat() if d.created_at else None,
-                "transaction_date": (
-                    d.donation_date.isoformat()
-                    if d.donation_date is not None
-                    else (d.created_at.isoformat() if d.created_at else None)
-                ),
+                "date": d.donation_date.isoformat() if d.donation_date else (d.created_at.isoformat() if d.created_at else None),
+                "transaction_date": d.donation_date.isoformat() if d.donation_date else (d.created_at.isoformat() if d.created_at else None),
                 "persona_id": d.persona_id,
+                "donor_name": d.donor_name,
                 "person": person_obj,
-                "status": d.status,
-                "reference_code": d.reference_code,
-                "payment_method": d.payment_method,
-                "fund_id": d.fund_id,
             }
         )
     return result
@@ -214,6 +207,7 @@ def register_donation(
         sede_id=sede_id,
     )
     db.add(donation)
+    fund.current_balance = (fund.current_balance or 0) + payload.amount
     db.commit()
     db.refresh(donation)
     return {
@@ -238,7 +232,7 @@ def list_funds(
     funds = q.all()
     return [
         {
-            # FIN-H10: Renombrar "id" → "fund_id" para consistencia con el modelo
+            "id": f.fund_id,
             "fund_id": f.fund_id,
             "name": f.name,
             "description": f.description,

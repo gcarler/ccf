@@ -171,19 +171,13 @@ def mercadopago_create_preference(
 
 
 @router.post("/mercadopago/webhook")
-async def mercadopago_webhook(request: Request, db: Session = Depends(get_db)):
-    """
-    Webhook para recibir notificaciones de pago de MercadoPago.
-    Configurar en el panel de MercadoPago → Webhooks → URL de notificación.
-
-    Cuando un pago es aprobado, registra la donación en la base de datos.
-
-    Seguridad: verifica la firma HMAC del header x-signature si el
-    webhook_secret está configurado. Defense-in-depth: reconsulta el
-    pago via API de MP antes de registrar la donación.
-    """
-    # ── Verificación de firma HMAC (MercadoPago x-signature) ──
+async def mercadopago_webhook(
+    request: Request,
+    db: Session = Depends(get_db),
+):
+    """Webhook de MercadoPago para confirmar pagos aprobados."""
     webhook_secret = settings.mercadopago_webhook_secret
+
     if webhook_secret:
         signature_header = request.headers.get("x-signature", "")
         if not signature_header:
@@ -198,13 +192,22 @@ async def mercadopago_webhook(request: Request, db: Session = Depends(get_db)):
             logger.warning("Webhook MP rechazado: formato de firma inválido")
             raise HTTPException(status_code=401, detail="Invalid signature format")
 
+        try:
+            ts_int = int(ts)
+            now_ts = int(time.time())
+            if abs(now_ts - ts_int) > 300:
+                logger.warning("Webhook MP rechazado: timestamp fuera de tolerancia")
+                raise HTTPException(status_code=401, detail="Signature timestamp expired")
+        except ValueError:
+            raise HTTPException(status_code=401, detail="Invalid timestamp format")
+
         # Leer body raw para validar firma
         body = await request.body()
         data_id = ""
         try:
             parsed = json.loads(body)
             data_id = str(parsed.get("data", {}).get("id", ""))
-        except Exception as exc:  # pragma: no cover - malformed body
+        except Exception as exc:
             logger.warning("donations: webhook body parse failed: %s", exc)
 
         # HMAC-SHA256 sobre "<data.id><ts>"
@@ -221,14 +224,14 @@ async def mercadopago_webhook(request: Request, db: Session = Depends(get_db)):
 
         logger.info("Webhook MP: firma verificada correctamente")
     else:
+        body = await request.body()
         logger.warning(
             "Webhook MP procesado sin verificación de firma "
-            "(MERCADOPAGO_WEBHOOK_SECRET no configurado) — "
-            "configúralo en producción"
+            "(MERCADOPAGO_WEBHOOK_SECRET no configurado)"
         )
 
     try:
-        data = json.loads(body) if webhook_secret else await request.json()
+        data = json.loads(body)
     except Exception as exc:
         logger.debug("Failed to parse MercadoPago webhook JSON: %s", exc)
         data = {}
@@ -240,14 +243,17 @@ async def mercadopago_webhook(request: Request, db: Session = Depends(get_db)):
 
         result = process_webhook_notification(data)
         if result and result.status == "approved":
-            # FIN-C07: Webhook no tiene contexto de sede — sede_id=None explícito
-            # La donación será visible globalmente hasta que se implemente
-            # un mecanismo de match por email o preference metadata.
+            ref_code = f"MP-{result.payment_id}"
+            existing = db.query(models.Donation).filter(models.Donation.reference_code == ref_code).first()
+            if existing:
+                logger.info("Donación MP ya registrada previamente: %s", ref_code)
+                return {"status": "ok", "already_processed": True}
+
             donation = models.Donation(
                 amount=result.amount,
                 donation_type="Diezmo",
                 donor_name=result.donor_name or result.email or "Web - MercadoPago",
-                reference_code=f"MP-{result.payment_id}",
+                reference_code=ref_code,
                 payment_method="MercadoPago",
                 sede_id=None,
             )
@@ -259,9 +265,10 @@ async def mercadopago_webhook(request: Request, db: Session = Depends(get_db)):
                 result.amount,
             )
     except Exception as exc:
+        db.rollback()
         logger.error("Error procesando webhook MP: %s", exc)
+        raise HTTPException(status_code=500, detail="Internal processing error")
 
-    # MercadoPago espera 200 OK siempre (incluso si hay error interno)
     return {"status": "ok"}
 
 

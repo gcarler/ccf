@@ -115,14 +115,14 @@ export default function DonationsManagementPage() {
         setSaving(true);
         try {
             if (drawerMode === "create") {
-                const params = new URLSearchParams({
+                const body = {
                     fund_id: fFundId,
-                    amount: fAmount,
+                    amount: Number(fAmount),
                     donation_type: fType,
-                    ...(fDonor && { donor_name: fDonor }),
-                    ...(fPersonaId && { persona_id: fPersonaId }),
-                });
-                await apiFetch(`/finance/donations?${params.toString()}`, { method: "POST", token });
+                    ...(fDonor ? { donor_name: fDonor } : {}),
+                    ...(fPersonaId ? { persona_id: fPersonaId } : {}),
+                };
+                await apiFetch("/finance/donations", { method: "POST", token, body });
                 toast.success("Donación registrada correctamente");
             } else if (selected) {
                 // PATCH via donations endpoint - update is not standard; re-use POST approach

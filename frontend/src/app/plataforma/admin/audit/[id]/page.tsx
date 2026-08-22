@@ -38,13 +38,25 @@ export default function AuditDetailPage() {
         const loadLog = async () => {
             try {
                 setLoading(true);
-                const data = await apiFetch<{ events?: WorkspaceAuditEvent[] }>('/workspace/flags/audit', {
+                const data = await apiFetch<any>('/admin/audit', {
                     token,
                     query: { limit: 1000 },
                     cache: 'no-store',
                     signal: controller.signal,
                 });
-                const rows = Array.isArray(data?.events) ? data.events : [];
+                let rows: WorkspaceAuditEvent[] = [];
+                if (Array.isArray(data)) {
+                    rows = data.map((item: any) => ({
+                        timestamp: item.created_at || new Date().toISOString(),
+                        action: item.action || 'system.action',
+                        feature_id: item.resource_type ? `${item.resource_type}:${item.resource_id}` : (item.resource_id || 'GLOBAL'),
+                        actor_persona_id: item.actor_persona_id,
+                        updated_by: item.actor_persona_id,
+                        changes: item.metadata || {},
+                    }));
+                } else if (Array.isArray(data?.events)) {
+                    rows = data.events;
+                }
                 const match = rows.find((event) => getWorkspaceAuditEventKey(event) === id) || null;
                 setLog(match);
             } catch {

@@ -3,14 +3,16 @@
 import React, { useEffect, useState } from 'react';
 import {
     ShieldCheck, Heart, Target, BarChart3, ArrowRight, Loader2, Users, Home,
-    TrendingUp, TrendingDown, HeartHandshake
+    TrendingUp, HeartHandshake, DollarSign, Landmark
 } from 'lucide-react';
 import WorkspaceLayout from '@/components/WorkspaceLayout';
 import { apiFetch } from '@/lib/http';
+import { useAuth } from '@/context/AuthContext';
 import { toast } from 'sonner';
 
 interface ImpactData {
-    total_personas: number;
+    total_personas?: number;
+    total_miembros?: number;
     total_familias: number;
     total_donaciones_cop: number;
     distribucion: { label: string; pct: number; desc: string }[];
@@ -21,20 +23,23 @@ function fmt(n: number) {
 }
 
 export default function TransparencyPage() {
+    const { token } = useAuth();
     const [data, setData] = useState<ImpactData | null>(null);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         const ctrl = new AbortController();
-        apiFetch<ImpactData>('/finance/impact', { cache: 'no-store', signal: ctrl.signal })
+        apiFetch<ImpactData>('/finance/impact', { cache: 'no-store', signal: ctrl.signal, token })
             .then(d => setData(d))
             .catch(e => { if (e.name !== 'AbortError') { console.error(e); toast.error('Error al cargar datos'); } })
             .finally(() => setLoading(false));
         return () => ctrl.abort();
-    }, []);
+    }, [token]);
+
+    const totalBeneficiados = data ? (data.total_personas ?? data.total_miembros ?? 0) : 0;
 
     const stats = data ? [
-        { label: 'Personas Beneficiadas', value: data.total_personas.toLocaleString('es-CO'), icon: Users, color: 'text-[hsl(var(--primary))]' },
+        { label: 'Personas Beneficiadas', value: totalBeneficiados.toLocaleString('es-CO'), icon: Users, color: 'text-[hsl(var(--primary))]' },
         { label: 'Familias Beneficiadas', value: data.total_familias.toLocaleString('es-CO'), icon: Home, color: 'text-[hsl(var(--danger))]' },
         { label: 'Total Donaciones', value: fmt(data.total_donaciones_cop), icon: Heart, color: 'text-[hsl(var(--success))]' },
     ] : [
@@ -47,9 +52,9 @@ export default function TransparencyPage() {
         {
             title: 'Finanzas',
             items: [
-                { id: 'finances-dashboard', label: 'Dashboard Financiero', href: '/plataforma/finances', icon: BarChart3 },
-                { id: 'finances-ingresos', label: 'Ingresos', href: '/plataforma/finances/ingresos', icon: TrendingUp },
-                { id: 'finances-egresos', label: 'Egresos', href: '/plataforma/finances/egresos', icon: TrendingDown },
+                { id: 'finances-dashboard', label: 'Dashboard Financiero', href: '/plataforma/admin/finance', icon: BarChart3 },
+                { id: 'finances-donations', label: 'Donaciones', href: '/plataforma/admin/donations', icon: DollarSign },
+                { id: 'finances-funds', label: 'Fondos Ministeriales', href: '/plataforma/admin/finance/funds', icon: Landmark },
                 { id: 'finances-transparency', label: 'Transparencia', href: '/plataforma/finances/transparency', icon: HeartHandshake },
             ]
         }
@@ -74,7 +79,7 @@ export default function TransparencyPage() {
                 {data && (
                     <div className="flex items-center justify-center gap-3 pt-2">
                         <div className="text-center">
-                            <p className="text-lg font-bold text-[hsl(var(--text-primary))] dark:text-white">{data.total_personas.toLocaleString()}</p>
+                            <p className="text-lg font-bold text-[hsl(var(--text-primary))] dark:text-white">{totalBeneficiados.toLocaleString()}</p>
                             <p className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide flex items-center gap-1 justify-center"><Users size={10}/> Personas</p>
                         </div>
                         <div className="w-px h-8 bg-[hsl(var(--surface-3))] dark:bg-white/10" />

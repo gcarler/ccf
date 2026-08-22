@@ -229,8 +229,10 @@ def create_cms_section(
     page_id: uuid.UUID,
     payload: schemas.CmsSectionCreate,
     *,
+    user_id: uuid.UUID | None = None,
     commit_with_conflict_check: bool = False,
 ):
+    persona_id = resolve_persona_uuid_for_user(db, user_id) if user_id else None
     row = models.CmsSection(
         page_id=page_id,
         section_key=(payload.section_key or uuid.uuid4().hex),
@@ -240,6 +242,8 @@ def create_cms_section(
         is_visible=payload.is_visible,
         status=(payload.status or "active").strip().lower(),
         is_global=getattr(payload, "is_global", False) or False,
+        created_by_persona_id=persona_id,
+        updated_by_persona_id=persona_id,
     )
     db.add(row)
     if commit_with_conflict_check and not _commit_or_conflict(db):
@@ -280,13 +284,21 @@ def get_cms_section(
 
 
 
-def update_cms_section(db: Session, row: models.CmsSection, payload: schemas.CmsSectionUpdate):
+def update_cms_section(
+    db: Session,
+    row: models.CmsSection,
+    payload: schemas.CmsSectionUpdate,
+    *,
+    user_id: uuid.UUID | None = None,
+):
     from backend.schemas.cms_v2_sections import validate_section_props
 
     data = payload.model_dump(exclude_unset=True)
     for field in ["type", "sort_order", "is_visible", "status", "is_global", "global_key"]:
         if field in data and data[field] is not None:
             setattr(row, field, data[field])
+    if user_id is not None:
+        row.updated_by_persona_id = resolve_persona_uuid_for_user(db, user_id)
     if "props_json" in data and data["props_json"] is not None:
         # Defense-in-depth: re-sanitise props_json on every update, even if
         # the caller already validated it. This protects direct CRUD callers.
@@ -504,8 +516,10 @@ def restore_cms_page_version(
         page.slug = str(page_data.get("slug") or page.slug)
         page.title = str(page_data.get("title") or page.title)
         page.seo_json = page_data.get("seo_json") or {}
+    prev_status = page.status
     page.status = "draft"
-    page.updated_by_persona_id = resolve_persona_uuid_for_user(db, user_id)
+    actor_id = resolve_persona_uuid_for_user(db, user_id) if user_id else None
+    page.updated_by_persona_id = actor_id
     db.query(models.CmsSection).filter(models.CmsSection.page_id == page.id).delete(synchronize_session=False)
     for idx, section_data in enumerate(sections_data):
         if not isinstance(section_data, dict):
@@ -519,8 +533,28 @@ def restore_cms_page_version(
                 sort_order=int(section_data.get("sort_order") or idx),
                 is_visible=bool(section_data.get("is_visible", True)),
                 status=str(section_data.get("status") or "active"),
+                created_by_persona_id=actor_id,
+                updated_by_persona_id=actor_id,
             )
         )
+    # Trazabilidad: registrar la operación de rollback en el log de publicación
+    db.add(
+        models.CmsPublishLog(
+            site_id=page.site_id,
+            page_id=page.id,
+            entity_type="page",
+            entity_id=str(page.id),
+            action="rollback",
+            from_status=prev_status,
+            to_status="draft",
+            actor_persona_id=actor_id,
+            metadata_json={
+                "restored_version_id": str(version.id),
+                "restored_version_number": version.version_number,
+                "sections_restored": len(sections_data),
+            },
+        )
+    )
     db.commit()
     db.refresh(page)
     # Cierre de staleness: un rollback devuelve la página a ``draft`` — si

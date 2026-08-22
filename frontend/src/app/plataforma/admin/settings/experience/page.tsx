@@ -46,6 +46,8 @@ export default function WorkspaceExperienceManager() {
     features_enabled?: Record<string, boolean>;
     feature_rules?: Record<string, unknown>;
     health?: Record<string, string>;
+    workspace_name?: string;
+    logo_url?: string;
 }
     const [config, setConfig] = useState<WorkspaceConfig | null>(null);
     const [isSaving, setIsSaving] = useState(false);
@@ -300,11 +302,22 @@ export default function WorkspaceExperienceManager() {
                                 <div className="space-y-3 bg-white/5 p-4 rounded-lg border border-white/10 backdrop-blur-md">
                                     <div className="space-y-2">
                                         <label className="text-2xs font-semibold uppercase text-[hsl(var(--text-secondary))] tracking-wide ml-2">Nombre del Workspace</label>
-                                        <input type="text" defaultValue={SITE_NAME} className="w-full bg-black/40 border border-white/10 rounded-lg p-4 text-sm font-bold outline-none focus:border-[hsl(var(--info)/100%)] transition-all" />
+                                        <input
+                                            type="text"
+                                            value={config?.workspace_name ?? SITE_NAME}
+                                            onChange={(e) => setConfig(prev => ({ ...(prev ?? {}), workspace_name: e.target.value }))}
+                                            className="w-full bg-black/40 border border-white/10 rounded-lg p-4 text-sm font-bold outline-none focus:border-[hsl(var(--info)/100%)] transition-all"
+                                        />
                                     </div>
                                     <div className="space-y-2">
                                         <label className="text-2xs font-semibold uppercase text-[hsl(var(--text-secondary))] tracking-wide ml-2">URL del Logotipo (SVG/PNG)</label>
-                                        <input type="text" placeholder="https://..." className="w-full bg-black/40 border border-white/10 rounded-lg p-4 text-sm font-bold outline-none focus:border-[hsl(var(--info)/100%)] transition-all" />
+                                        <input
+                                            type="text"
+                                            placeholder="https://..."
+                                            value={config?.logo_url ?? ''}
+                                            onChange={(e) => setConfig(prev => ({ ...(prev ?? {}), logo_url: e.target.value }))}
+                                            className="w-full bg-black/40 border border-white/10 rounded-lg p-4 text-sm font-bold outline-none focus:border-[hsl(var(--info)/100%)] transition-all"
+                                        />
                                     </div>
                                 </div>
                             </div>

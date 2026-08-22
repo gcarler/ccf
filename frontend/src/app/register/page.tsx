@@ -1,111 +1,16 @@
 "use client";
 
 import React, { useState } from 'react';
-import { apiFetch } from '@/lib/http';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Loader2, Eye, EyeOff } from 'lucide-react';
+import { motion } from 'framer-motion';
 import Link from 'next/link';
 
 export default function RegisterPage() {
-    const [formData, setFormData] = useState({
-        full_name: '',
-        email: '',
-        password: '',
-    });
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState('');
-    const [success, setSuccess] = useState(false);
-    const [showPassword, setShowPassword] = useState(false);
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setLoading(true);
-        setError('');
-        try {
-            await apiFetch('/v3/auth/register', {
-                method: 'POST',
-                body: {
-                    username: formData.email,
-                    email: formData.email,
-                    password: formData.password,
-                    full_name: formData.full_name,
-                    role: 'estudiante',
-                },
-            });
-            setSuccess(true);
-        } catch (err: any) {
-            const detail = err?.detail?.detail || err?.detail?.message;
-            setError(detail || 'Error de conexión con el servidor');
-        } finally {
-            setLoading(false);
-        }
-    };
+    const [loadingGoogle, setLoadingGoogle] = useState(false);
 
-    if (success) {
-        return (
-            <>
-                <style>{`
-                    :root {
-                        --ccf-blue-dark:   rgb(0, 27, 72);
-                        --ccf-blue-medium: rgb(0, 69, 129);
-                        --ccf-blue-light:  rgb(1, 138, 189);
-                        --ccf-blue-pale:   rgb(221, 232, 240);
-                    }
-                    html, body { margin: 0; padding: 0; height: 100%; overflow-x: hidden; }
-                `}</style>
-                <div style={{
-                    display: 'flex', width: '100vw', minHeight: '100vh',
-                    alignItems: 'center', justifyContent: 'center',
-                    backgroundColor: 'var(--ccf-blue-dark)',
-                }}>
-                    <motion.div
-                        initial={{ opacity: 0, scale: 0.95 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        style={{
-                            background: 'rgba(255,255,255,0.06)',
-                            border: '1px solid rgba(255,255,255,0.12)',
-                            borderRadius: '2rem', padding: '64px 56px',
-                            textAlign: 'center', maxWidth: '480px', width: '100%',
-                        }}
-                    >
-                        <div style={{
-                            width: '72px', height: '72px', borderRadius: '50%',
-                            background: 'rgba(1,138,189,0.2)', display: 'flex',
-                            alignItems: 'center', justifyContent: 'center', margin: '0 auto 32px',
-                        }}>
-                            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="rgb(1,138,189)" strokeWidth="2.5">
-                                <rect x="2" y="4" width="20" height="16" rx="2" strokeLinecap="round" strokeLinejoin="round"/>
-                                <path d="M22 6L12 13 2 6" strokeLinecap="round" strokeLinejoin="round"/>
-                            </svg>
-                        </div>
-                        <h2 style={{ color: 'white', fontSize: '2rem', fontWeight: 900, letterSpacing: '-0.04em', margin: '0 0 16px' }}>
-                            ¡Cuenta creada!
-                        </h2>
-                        <p style={{ color: 'rgba(221,232,240,0.6)', fontSize: '0.95rem', lineHeight: 1.7, marginBottom: '24px' }}>
-                            Te enviamos un correo de verificación. Revisa tu bandeja de entrada y haz clic en el enlace para activar tu cuenta.
-                        </p>
-                        <p style={{ color: 'rgba(221,232,240,0.4)', fontSize: '0.8rem', lineHeight: 1.5, marginBottom: '40px' }}>
-                            ¿No lo recibiste? Revisa la carpeta de spam o intenta registrarte de nuevo.
-                        </p>
-                        <Link
-                            href="/login"
-                            style={{
-                                display: 'inline-flex', alignItems: 'center', gap: '10px',
-                                backgroundColor: 'var(--ccf-blue-light)', color: 'white',
-                                borderRadius: '9999px', padding: '18px 40px',
-                                fontWeight: 900, fontSize: '11px', textTransform: 'uppercase',
-                                letterSpacing: '0.25em', textDecoration: 'none',
-                            }}
-                        >
-                            Ir al ingreso
-                            <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M17 8l4 4m0 0l-4 4m4-4H3" />
-                            </svg>
-                        </Link>
-                    </motion.div>
-                </div>
-            </>
-        );
-    }
+    const handleGoogleAuth = () => {
+        setLoadingGoogle(true);
+        window.location.href = '/api/v3/auth/google';
+    };
 
     return (
         <>
@@ -118,379 +23,146 @@ export default function RegisterPage() {
                 }
                 html, body { margin: 0; padding: 0; height: 100%; overflow-x: hidden; }
 
-                .reg-input-pill {
-                    width: 100%;
-                    background-color: hsl(var(--bg-primary));
-                    border: 2px solid transparent;
-                    border-radius: 9999px;
-                    padding: 20px 32px;
-                    color: var(--ccf-blue-dark);
-                    font-weight: 700;
-                    font-size: 1rem;
-                    transition: all 0.3s ease;
-                    box-sizing: border-box;
+                .reg-card {
+                    background: rgba(255, 255, 255, 0.05);
+                    backdrop-filter: blur(24px);
+                    -webkit-backdrop-filter: blur(24px);
+                    border: 1px solid rgba(255, 255, 255, 0.12);
+                    border-radius: 2rem;
+                    box-shadow: 0 40px 100px -20px rgba(0, 0, 0, 0.5),
+                                0 0 0 1px rgba(255, 255, 255, 0.05) inset;
                 }
-                .reg-input-pill:focus {
-                    background-color: white;
-                    border-color: var(--ccf-blue-light);
-                    outline: none;
-                    box-shadow: 0 0 0 4px rgba(1, 138, 189, 0.12);
-                }
-                .reg-input-pill::placeholder { color: hsl(var(--text-muted)); font-weight: 500; }
 
-                .reg-btn-pill {
-                    background-color: var(--ccf-blue-light);
+                .reg-btn-google {
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    gap: 14px;
+                    width: 100%;
+                    background: white;
+                    color: rgb(0, 27, 72);
                     border-radius: 9999px;
-                    transition: all 0.3s ease;
+                    padding: 18px 32px;
+                    font-weight: 800;
+                    font-size: 13px;
+                    text-transform: uppercase;
+                    letter-spacing: 0.12em;
                     border: none;
                     cursor: pointer;
-                    position: relative;
-                    overflow: hidden;
+                    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+                    box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.3);
                 }
-                .reg-btn-pill:hover:not(:disabled) {
-                    background-color: var(--ccf-blue-medium);
+                .reg-btn-google:hover {
                     transform: translateY(-2px);
-                    box-shadow: 0 10px 25px -5px rgba(1, 138, 189, 0.45);
+                    box-shadow: 0 15px 35px -5px rgba(0, 0, 0, 0.4);
+                    background: #f8fafc;
                 }
-                .reg-btn-pill:active:not(:disabled) { transform: translateY(0); }
-                .reg-btn-pill:disabled { opacity: 0.6; cursor: not-allowed; }
 
-                .title-heavy {
-                    font-weight: 900;
-                    letter-spacing: -0.04em;
-                    line-height: 0.88;
+                .reg-btn-outline {
+                    display: inline-flex;
+                    align-items: center;
+                    justify-content: center;
+                    gap: 10px;
+                    width: 100%;
+                    background: transparent;
+                    color: rgba(255, 255, 255, 0.85);
+                    border-radius: 9999px;
+                    padding: 16px 32px;
+                    font-weight: 700;
+                    font-size: 12px;
+                    text-transform: uppercase;
+                    letter-spacing: 0.15em;
+                    border: 1.5px solid rgba(255, 255, 255, 0.25);
+                    text-decoration: none;
+                    transition: all 0.25s ease;
+                }
+                .reg-btn-outline:hover {
+                    background: rgba(255, 255, 255, 0.1);
+                    border-color: rgba(255, 255, 255, 0.5);
+                    color: white;
                 }
             `}</style>
 
-            <div style={{ display: 'flex', width: '100vw', minHeight: '100vh' }}>
-
-                {/* ── PANEL IZQUIERDO: IDENTIDAD ── */}
-                <motion.section
-                    initial={{ opacity: 0, x: -30 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-                    style={{
-                        flex: '1.2',
-                        backgroundColor: 'var(--ccf-blue-dark)',
-                        position: 'relative',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        justifyContent: 'space-between',
-                        padding: 'clamp(40px, 8%, 90px)',
-                        overflow: 'hidden',
-                        minHeight: '100vh',
-                    }}
+            <div style={{
+                display: 'flex', width: '100vw', minHeight: '100vh',
+                backgroundColor: 'var(--ccf-blue-dark)',
+                alignItems: 'center', justifyContent: 'center',
+                padding: '32px 20px', position: 'relative',
+            }}>
+                <motion.div
+                    initial={{ opacity: 0, y: 24 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+                    className="reg-card"
+                    style={{ maxWidth: '520px', width: '100%', padding: '56px 44px' }}
                 >
-                    {/* Radial glow */}
-                    <div style={{
-                        position: 'absolute', top: '-20%', right: '-20%',
-                        width: '140%', height: '140%', pointerEvents: 'none', zIndex: 0,
-                        background: 'radial-gradient(circle at 70% 30%, rgba(1,138,189,0.25) 0%, transparent 60%)',
-                    }} />
-
-                    {/* Pastilla superior */}
-                    <motion.div
-                        initial={{ opacity: 0, y: -10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.4 }}
-                        style={{ position: 'relative', zIndex: 10 }}
-                    >
+                    {/* Header */}
+                    <div style={{ textAlign: 'center', marginBottom: '36px' }}>
                         <div style={{
-                            display: 'inline-flex', alignItems: 'center', gap: '12px',
-                            border: '1px solid rgba(255,255,255,0.2)',
-                            borderRadius: '9999px', padding: '10px 20px',
-                            background: 'rgba(255,255,255,0.05)', backdropFilter: 'blur(8px)',
+                            display: 'inline-flex', alignItems: 'center', gap: '8px',
+                            background: 'rgba(1,138,189,0.15)', border: '1px solid rgba(1,138,189,0.3)',
+                            borderRadius: '9999px', padding: '6px 16px', marginBottom: '20px',
                         }}>
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2">
-                                <path d="M8 22L10 6L12 2L14 6L16 22H8Z" strokeLinejoin="round"/>
-                                <circle cx="12" cy="4" r="1.5" fill="white" stroke="none"/>
-                            </svg>
-                            <span style={{ color: 'white', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.2em', fontSize: '10px' }}>
-                                Ministerio Internacional
+                            <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'var(--ccf-blue-light)' }} />
+                            <span style={{ fontSize: '11px', fontWeight: 800, color: 'var(--ccf-blue-pale)', textTransform: 'uppercase', letterSpacing: '0.15em' }}>
+                                Plataforma CCF
                             </span>
                         </div>
-                    </motion.div>
-
-                    {/* Título CCF */}
-                    <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.6, duration: 0.8 }}
-                        style={{ position: 'relative', zIndex: 10 }}
-                    >
-                        <h1 className="title-heavy" style={{
-                            color: 'white',
-                            fontSize: 'clamp(5rem, 10vw, 8rem)',
-                            margin: 0,
-                        }}>
-                            EL <br /> CCF
+                        <h1 style={{ color: 'white', fontSize: '2.2rem', fontWeight: 900, letterSpacing: '-0.03em', margin: '0 0 12px' }}>
+                            Crear Cuenta
                         </h1>
-                        <p style={{
-                            color: 'var(--ccf-blue-light)',
-                            fontSize: 'clamp(1rem, 2vw, 1.5rem)',
-                            fontWeight: 900,
-                            letterSpacing: '0.4em',
-                            textTransform: 'uppercase',
-                            marginTop: '24px',
-                            lineHeight: 1.4,
-                        }}>
-                            Comunidad <br /> Cristiana
+                        <p style={{ color: 'rgba(221,232,240,0.7)', fontSize: '0.95rem', lineHeight: 1.6, margin: 0 }}>
+                            Accede a la plataforma ministerial, academia y recursos formativos.
                         </p>
-                        <div style={{ width: '64px', height: '6px', backgroundColor: 'white', marginTop: '32px', borderRadius: '999px' }} />
-                    </motion.div>
-
-                    {/* Lema inferior */}
-                    <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        transition={{ delay: 1 }}
-                        style={{ position: 'relative', zIndex: 10 }}
-                    >
-                        <p style={{
-                            color: 'rgba(221, 232, 240, 0.5)',
-                            fontSize: '0.875rem',
-                            fontWeight: 700,
-                            textTransform: 'uppercase',
-                            letterSpacing: '0.1em',
-                            lineHeight: 1.9,
-                        }}>
-                            Guiando a las naciones <br /> hacia la luz de la verdad.
-                        </p>
-                    </motion.div>
-
-                    {/* Ondas SVG decorativas */}
-                    <svg
-                        style={{ position: 'absolute', bottom: 0, left: 0, width: '100%', zIndex: 0, pointerEvents: 'none' }}
-                        viewBox="0 0 1440 320"
-                        preserveAspectRatio="none"
-                    >
-                        <path fill="rgba(255,255,255,0.03)" d="M0,224L48,213.3C96,203,192,181,288,181.3C384,181,480,203,576,218.7C672,235,768,245,864,240C960,235,1056,213,1152,197.3C1248,181,1344,171,1392,165.3L1440,160L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"/>
-                        <path fill="rgba(255,255,255,0.06)" d="M0,128L48,144C96,160,192,192,288,197.3C384,203,480,181,576,160C672,139,768,117,864,128C960,139,1056,181,1152,186.7C1248,192,1344,160,1392,144L1440,128L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"/>
-                    </svg>
-                </motion.section>
-
-                {/* ── PANEL DERECHO: FORMULARIO ── */}
-                <motion.section
-                    initial={{ opacity: 0, x: 30 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-                    style={{
-                        flex: '1',
-                        backgroundColor: 'white',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        justifyContent: 'center',
-                        padding: 'clamp(40px, 8%, 90px)',
-                        minHeight: '100vh',
-                    }}
-                >
-                    <div style={{ width: '100%', maxWidth: '420px', margin: '0 auto' }}>
-
-                        {/* Volver al login */}
-                        <motion.div
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            transition={{ delay: 0.2 }}
-                            style={{ marginBottom: '32px' }}
-                        >
-                            <Link
-                                href="/login"
-                                style={{
-                                    display: 'inline-flex', alignItems: 'center', gap: '8px',
-                                    color: 'hsl(var(--text-muted))', fontSize: '10px', fontWeight: 900,
-                                    textTransform: 'uppercase', letterSpacing: '0.15em',
-                                    textDecoration: 'none', transition: 'color 0.2s',
-                                }}
-                            >
-                                <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M7 16l-4-4m0 0l4-4m-4 4h18" />
-                                </svg>
-                                Regresar al acceso
-                            </Link>
-                        </motion.div>
-
-                        {/* Header del form */}
-                        <motion.div
-                            initial={{ opacity: 0, y: 10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: 0.3 }}
-                            style={{ marginBottom: '48px' }}
-                        >
-                            <h2 style={{
-                                fontSize: 'clamp(2.2rem, 5vw, 3rem)',
-                                fontWeight: 900,
-                                color: 'var(--ccf-blue-dark)',
-                                letterSpacing: '-0.04em',
-                                lineHeight: 1,
-                                margin: 0,
-                                marginBottom: '16px',
-                            }}>Crear cuenta</h2>
-                            <p style={{ color: 'hsl(var(--text-muted))', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.2em', fontSize: '10px', margin: 0 }}>
-                                Registro ministerial
-                            </p>
-                        </motion.div>
-
-                        {/* Formulario */}
-                        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-
-                            {/* Nombre */}
-                            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}>
-                                <label style={{ fontSize: '10px', fontWeight: 900, color: 'hsl(var(--text-muted))', textTransform: 'uppercase', letterSpacing: '0.15em', display: 'block', marginBottom: '12px', marginLeft: '8px' }}>
-                                    Nombre completo
-                                </label>
-                                <input
-                                    type="text"
-                                    required
-                                    value={formData.full_name}
-                                    onChange={e => setFormData({ ...formData, full_name: e.target.value })}
-                                    placeholder="Juan Pérez"
-                                    className="reg-input-pill"
-                                />
-                            </motion.div>
-
-                            {/* Email */}
-                            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.48 }}>
-                                <label style={{ fontSize: '10px', fontWeight: 900, color: 'hsl(var(--text-muted))', textTransform: 'uppercase', letterSpacing: '0.15em', display: 'block', marginBottom: '12px', marginLeft: '8px' }}>
-                                    Correo ministerial
-                                </label>
-                                <input
-                                    type="email"
-                                    required
-                                    value={formData.email}
-                                    onChange={e => setFormData({ ...formData, email: e.target.value })}
-                                    placeholder="correo@ejemplo.com"
-                                    className="reg-input-pill"
-                                />
-                            </motion.div>
-
-                            {/* Contraseña */}
-                            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.56 }}>
-                                <label style={{ fontSize: '10px', fontWeight: 900, color: 'hsl(var(--text-muted))', textTransform: 'uppercase', letterSpacing: '0.15em', display: 'block', marginBottom: '12px', marginLeft: '8px' }}>
-                                    Contraseña
-                                </label>
-                                <div style={{ position: 'relative' }}>
-                                    <input
-                                        type={showPassword ? 'text' : 'password'}
-                                        required
-                                        minLength={6}
-                                        value={formData.password}
-                                        onChange={e => setFormData({ ...formData, password: e.target.value })}
-                                        placeholder="••••••••"
-                                        className="reg-input-pill"
-                                        style={{ paddingRight: '60px', letterSpacing: showPassword ? 'normal' : '0.2em' }}
-                                    />
-                                    <button
-                                        type="button"
-                                        onClick={() => setShowPassword(!showPassword)}
-                                        style={{ position: 'absolute', right: '20px', top: '50%', transform: 'translateY(-50%)', color: 'hsl(var(--text-muted))', background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex' }}
-                                    >
-                                        {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                                    </button>
-                                </div>
-                            </motion.div>
-
-                            {/* Rol fijo */}
-                            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.62 }}>
-                                <div style={{
-                                    padding: '16px 24px', borderRadius: '9999px',
-                                    background: 'rgba(1,138,189,0.06)',
-                                    border: '2px solid rgba(1,138,189,0.15)',
-                                    display: 'flex', alignItems: 'center', gap: '12px',
-                                }}>
-                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--ccf-blue-light)" strokeWidth="2.5">
-                                        <circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/>
-                                    </svg>
-                                    <div>
-                                        <span style={{ fontSize: '10px', fontWeight: 900, color: 'var(--ccf-blue-light)', textTransform: 'uppercase', letterSpacing: '0.15em' }}>
-                                            Rol: Estudiante
-                                        </span>
-                                        <p style={{ margin: 0, fontSize: '10px', color: 'hsl(var(--text-muted))', marginTop: '2px' }}>
-                                            Acceso estándar a academia y recursos.
-                                        </p>
-                                    </div>
-                                </div>
-                            </motion.div>
-
-                            {/* Error */}
-                            <AnimatePresence>
-                                {error && (
-                                    <motion.div
-                                        initial={{ opacity: 0, scale: 0.96 }}
-                                        animate={{ opacity: 1, scale: 1 }}
-                                        exit={{ opacity: 0, scale: 0.96 }}
-                                        style={{
-                                            padding: '14px 24px',
-                                            backgroundColor: 'hsl(var(--destructive)/0.1)',
-                                            border: '2px solid hsl(var(--destructive)/0.2)',
-                                            borderRadius: '9999px',
-                                            color: 'hsl(var(--destructive))',
-                                            fontSize: '11px',
-                                            fontWeight: 900,
-                                            textAlign: 'center',
-                                            textTransform: 'uppercase',
-                                            letterSpacing: '0.1em',
-                                        }}
-                                    >
-                                        {error}
-                                    </motion.div>
-                                )}
-                            </AnimatePresence>
-
-                            {/* Botón CREAR CUENTA */}
-                            <motion.button
-                                initial={{ opacity: 0, y: 10 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ delay: 0.7 }}
-                                type="submit"
-                                disabled={loading}
-                                className="reg-btn-pill"
-                                style={{
-                                    width: '100%',
-                                    padding: '20px 24px',
-                                    color: 'white',
-                                    fontWeight: 900,
-                                    fontSize: '12px',
-                                    textTransform: 'uppercase',
-                                    letterSpacing: '0.3em',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    gap: '12px',
-                                }}
-                            >
-                                {loading ? (
-                                    <Loader2 className="animate-spin" size={20} />
-                                ) : (
-                                    <>
-                                        Crear cuenta ahora
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M17 8l4 4m0 0l-4 4m4-4H3" />
-                                        </svg>
-                                    </>
-                                )}
-                            </motion.button>
-                        </form>
-
-                        {/* Link de ingreso */}
-                        <motion.div
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            transition={{ delay: 0.9 }}
-                            style={{ textAlign: 'center', marginTop: '36px' }}
-                        >
-                            <p style={{ color: 'hsl(var(--text-muted))', fontSize: '10px', fontWeight: 700, letterSpacing: '0.15em', textTransform: 'uppercase', marginBottom: '10px' }}>
-                                ¿Ya tienes una cuenta ministerial?
-                            </p>
-                            <Link
-                                href="/login"
-                                style={{ color: 'var(--ccf-blue-light)', fontWeight: 900, fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.15em', textDecoration: 'none' }}
-                            >
-                                Inicia sesión ahora
-                            </Link>
-                        </motion.div>
-
                     </div>
-                </motion.section>
+
+                    {/* Google SSO Button */}
+                    <div style={{ marginBottom: '32px' }}>
+                        <button
+                            type="button"
+                            onClick={handleGoogleAuth}
+                            disabled={loadingGoogle}
+                            className="reg-btn-google"
+                        >
+                            <svg width="20" height="20" viewBox="0 0 24 24">
+                                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+                                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+                            </svg>
+                            {loadingGoogle ? 'Conectando...' : 'Continuar con Google'}
+                        </button>
+                    </div>
+
+                    {/* Divider */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '28px' }}>
+                        <div style={{ flex: 1, height: '1px', background: 'rgba(255,255,255,0.12)' }} />
+                        <span style={{ fontSize: '11px', fontWeight: 800, color: 'rgba(221,232,240,0.4)', textTransform: 'uppercase', letterSpacing: '0.15em' }}>
+                            Aprovisionamiento Ministerial
+                        </span>
+                        <div style={{ flex: 1, height: '1px', background: 'rgba(255,255,255,0.12)' }} />
+                    </div>
+
+                    {/* Info Card */}
+                    <div style={{
+                        background: 'rgba(1,138,189,0.08)',
+                        border: '1px solid rgba(1,138,189,0.2)',
+                        borderRadius: '1.25rem',
+                        padding: '20px 24px',
+                        marginBottom: '32px',
+                    }}>
+                        <p style={{ color: 'rgba(221,232,240,0.85)', fontSize: '0.85rem', lineHeight: 1.6, margin: 0 }}>
+                            <strong style={{ color: 'white' }}>¿Tienes una invitación ministerial?</strong> Si eres líder o docente, tu cuenta es aprovisionada por la administración y recibirás un correo de activación con tu enlace seguro.
+                        </p>
+                    </div>
+
+                    {/* Login Link */}
+                    <div style={{ textAlign: 'center' }}>
+                        <Link href="/login" className="reg-btn-outline">
+                            ¿Ya tienes cuenta? Iniciar Sesión
+                        </Link>
+                    </div>
+                </motion.div>
             </div>
         </>
     );

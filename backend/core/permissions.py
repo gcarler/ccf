@@ -210,6 +210,18 @@ PERMISSIONS: Dict[str, Dict[str, str]] = {
         "label": "Dashboards: gestor",
         "description": "Gestionar dashboards e indicadores",
     },
+    "ai:use": {
+        "label": "IA: usuario",
+        "description": "Interactuar con asistentes y agentes de IA pastoral",
+    },
+    "ai:manage": {
+        "label": "IA: gestor",
+        "description": "Configurar modelos, prompts y memoria de agentes de IA",
+    },
+    "mcp:execute": {
+        "label": "MCP: ejecutor",
+        "description": "Ejecutar herramientas y consultas de servidores FastMCP",
+    },
 }
 
 # ── Permission expansion helpers (must be before DEFAULT_ROLES) ────────

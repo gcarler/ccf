@@ -170,6 +170,8 @@ def _visible_auth_users_query(db: Session, current_user: Usuario):
         sede_id = getattr(current_user, "sede_id", None)
         if sede_id:
             query = query.filter(Usuario.sede_id == sede_id)
+        else:
+            query = query.filter(Usuario.id == current_user.id)
     return query
 
 
@@ -180,6 +182,8 @@ def _visible_auth_user(db: Session, current_user: Usuario, user_id: _uuid.UUID) 
         sede_id = getattr(current_user, "sede_id", None)
         if sede_id:
             query = query.filter(Usuario.sede_id == sede_id)
+        else:
+            query = query.filter(Usuario.id == current_user.id)
     return query.first()
 
 
@@ -374,6 +378,9 @@ def change_user_role(
         return None
     role = db.query(RolPlataforma).filter(RolPlataforma.id == role_id, RolPlataforma.deleted_at.is_(None)).first()
     if not role:
+        return None
+    target_role_name = str(role.nombre).strip().lower().replace("_", " ")
+    if target_role_name in {"super administrador", "superadmin"} and not _is_global_admin(current_user):
         return None
     user.rol_plataforma_id = role.id
     db.commit()
@@ -652,10 +659,20 @@ def list_admin_locations(
 
 
 def create_admin_location(
-    db: Session, name: str, address: Optional[str] = None, phone: Optional[str] = None
+    db: Session,
+    name: str,
+    address: Optional[str] = None,
+    phone: Optional[str] = None,
+    pastor_name: Optional[str] = None,
+    location_type: Optional[str] = "Central",
 ) -> models.ChurchLocation:
     """Create a new church location."""
-    loc = models.ChurchLocation(name=name.strip(), address=address)
+    loc = models.ChurchLocation(
+        name=name.strip(),
+        address=address,
+        pastor_name=pastor_name,
+        location_type=location_type or "Central",
+    )
     db.add(loc)
     db.commit()
     db.refresh(loc)
@@ -668,6 +685,8 @@ def update_admin_location(
     name: Optional[str] = None,
     address: Optional[str] = None,
     phone: Optional[str] = None,
+    pastor_name: Optional[str] = None,
+    location_type: Optional[str] = None,
     is_active: Optional[bool] = None,
 ) -> Optional[models.ChurchLocation]:
     """Update an active church location."""
@@ -685,6 +704,10 @@ def update_admin_location(
         loc.name = name.strip()
     if address is not None:
         loc.address = address
+    if pastor_name is not None:
+        loc.pastor_name = pastor_name
+    if location_type is not None:
+        loc.location_type = location_type
     if is_active is not None:
         loc.is_active = is_active
     db.commit()
@@ -1219,29 +1242,29 @@ def provision_personas_sin_cuenta(db: Session, batch_limit: int = 50) -> Dict[st
             continue
 
         try:
-            temp_password = _generate_password()
-            usuario = Usuario(
-                id=persona.id,
-                sede_id=sede.id,
-                username=username,
-                email=persona.email,
-                password_hash=hash_password(temp_password),
-                rol_plataforma_id=default_role.id,
-                is_active=True,
-                is_email_verified=False,
-            )
-            db.add(usuario)
-            db.flush()
-            created += 1
-            accounts_created.append(
-                {
-                    "email": persona.email,
-                    "username": username,
-                    "temp_password": temp_password,
-                }
-            )
+            with db.begin_nested():
+                temp_password = _generate_password()
+                usuario = Usuario(
+                    id=persona.id,
+                    sede_id=persona.sede_id or sede.id,
+                    username=username,
+                    email=persona.email,
+                    password_hash=hash_password(temp_password),
+                    rol_plataforma_id=default_role.id,
+                    is_active=True,
+                    is_email_verified=False,
+                )
+                db.add(usuario)
+                db.flush()
+                created += 1
+                accounts_created.append(
+                    {
+                        "email": persona.email,
+                        "username": username,
+                        "temp_password": temp_password,
+                    }
+                )
         except Exception as e:
-            db.rollback()
             skipped += 1
             errors.append({"email": persona.email, "error": str(e)})
             continue

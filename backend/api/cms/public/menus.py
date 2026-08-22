@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import logging
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Response
 from sqlalchemy.orm import Session, lazyload
 
 from backend import models
@@ -26,7 +26,7 @@ router = APIRouter(tags=["cms_v2_public_menus"])
     dependencies=[Depends(rate_limiter(limit=PUBLIC_CMS_RATE_LIMIT, window_seconds=60))],
 )
 @cached_public(ttl=300)
-def public_menu(site_key: str, menu_key: str, db: Session = Depends(get_db)):
+def public_menu(site_key: str, menu_key: str, response: Response = None, db: Session = Depends(get_db)):
     # Optimizado N+1: 1 query JOIN CmsMenu+CmsSite (evita el site lookup
     # separado de ``_get_public_site_or_404``). ``lazyload('*')`` previene el
     # selectin automático de ``CmsMenu.items`` y de las 11 relaciones hijas

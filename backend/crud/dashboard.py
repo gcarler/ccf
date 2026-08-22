@@ -5,7 +5,7 @@ métricas, tendencias y distribuciones para alimentar los dashboards.
 """
 
 from datetime import datetime, timedelta, timezone
-from typing import List, Optional
+from typing import Any, List, Optional
 from uuid import UUID
 
 from sqlalchemy.orm import Session
@@ -64,14 +64,14 @@ def _sede_filters(db: Session) -> List[DashboardFilter]:
 # ═══════════════════════════════════════════════════════════════════
 
 
-def get_crm_dashboard(db: Session, sede_id: Optional[str] = None) -> CrmDashboard:
+def get_crm_dashboard(db: Session, sede_id: Optional[Any] = None) -> CrmDashboard:
     from sqlalchemy import text as sqlt
 
     params = {}
     base_where = ""
     if sede_id:
         base_where = "AND p.sede_id = :sede_id"
-        params["sede_id"] = sede_id
+        params["sede_id"] = str(sede_id)
 
     total = (
         db.execute(
@@ -123,10 +123,11 @@ def get_crm_dashboard(db: Session, sede_id: Optional[str] = None) -> CrmDashboar
     conversion = round(with_role / max(total, 1) * 100, 1)
 
     # Distribución de roles eclesiásticos
+    role_where = "AND sede_id = :sede_id" if sede_id else ""
     role_chart = db.execute(
         sqlt(f"""
         SELECT church_role, COUNT(*) FROM personas
-        WHERE church_role IS NOT NULL AND church_role != '' {"AND sede_id = :sede_id" if sede_id else ""}
+        WHERE church_role IS NOT NULL AND church_role != '' {role_where}
         GROUP BY church_role ORDER BY COUNT(*) DESC LIMIT 8
     """),
         params,
@@ -580,27 +581,34 @@ def get_academy_dashboard(db: Session, sede_id=None) -> AcademyDashboard:
 # ═══════════════════════════════════════════════════════════════════
 
 
-def get_finance_dashboard(db: Session) -> FinanceDashboard:
+def get_finance_dashboard(db: Session, sede_id: Optional[Any] = None) -> FinanceDashboard:
     from sqlalchemy import text as sqlt
 
-    total_donations = db.execute(sqlt("SELECT COUNT(*) FROM donations")).scalar() or 0
-    total_amount = db.execute(sqlt("SELECT COALESCE(SUM(amount), 0) FROM donations")).scalar() or 0
+    sede_filter = " AND sede_id = :sede_id" if sede_id else ""
+    params = {"sede_id": str(sede_id)} if sede_id else {}
+
+    total_donations = db.execute(sqlt(f"SELECT COUNT(*) FROM donations WHERE deleted_at IS NULL{sede_filter}"), params).scalar() or 0
+    total_amount = db.execute(sqlt(f"SELECT COALESCE(SUM(amount), 0) FROM donations WHERE deleted_at IS NULL{sede_filter}"), params).scalar() or 0
     this_month, _ = _month_range(0)
+    monthly_params = {**params, "start": this_month}
     monthly = (
         db.execute(
-            sqlt("SELECT COALESCE(SUM(amount), 0) FROM donations WHERE created_at >= :start"), {"start": this_month}
+            sqlt(f"SELECT COALESCE(SUM(amount), 0) FROM donations WHERE deleted_at IS NULL AND created_at >= :start{sede_filter}"),
+            monthly_params,
         ).scalar()
         or 0
     )
 
     # Ingresos por categoría
     by_category = db.execute(
-        sqlt("""
+        sqlt(f"""
         SELECT donation_type, COALESCE(SUM(amount), 0) as total
         FROM donations
+        WHERE deleted_at IS NULL{sede_filter}
         GROUP BY donation_type
         ORDER BY total DESC
-    """)
+    """),
+        params,
     ).all()
 
     income_by_category = [ChartDataPoint(label=r[0] or "Sin tipo", value=float(r[1])) for r in by_category]
@@ -609,10 +617,11 @@ def get_finance_dashboard(db: Session) -> FinanceDashboard:
     monthly_series = []
     for i in range(5, -1, -1):
         start, end = _month_range(i)
+        series_params = {**params, "s": start, "e": end}
         c = (
             db.execute(
-                sqlt("SELECT COALESCE(SUM(amount), 0) FROM donations WHERE created_at BETWEEN :s AND :e"),
-                {"s": start, "e": end},
+                sqlt(f"SELECT COALESCE(SUM(amount), 0) FROM donations WHERE deleted_at IS NULL AND created_at BETWEEN :s AND :e{sede_filter}"),
+                series_params,
             ).scalar()
             or 0
         )
@@ -620,12 +629,14 @@ def get_finance_dashboard(db: Session) -> FinanceDashboard:
 
     # Últimas donaciones
     latest = db.execute(
-        sqlt("""
+        sqlt(f"""
         SELECT donor_name, donation_type, amount, created_at
         FROM donations
+        WHERE deleted_at IS NULL{sede_filter}
         ORDER BY created_at DESC
         LIMIT 5
-    """)
+    """),
+        params,
     ).all()
 
     latest_donations = [
@@ -658,62 +669,58 @@ def get_finance_dashboard(db: Session) -> FinanceDashboard:
 # ═══════════════════════════════════════════════════════════════════
 
 
-def get_agenda_dashboard(db: Session) -> AgendaDashboard:
+def get_agenda_dashboard(db: Session, sede_id: Optional[Any] = None) -> AgendaDashboard:
     from sqlalchemy import func
 
     from backend.models_agenda import EventoAgenda, ParticipanteEvento, RecursoFisico, ReservaRecurso
 
     now = _utcnow()
 
-    total = db.query(func.count(EventoAgenda.id)).filter(EventoAgenda.deleted_at.is_(None)).scalar() or 0
-    upcoming = (
-        db.query(func.count(EventoAgenda.id))
-        .filter(
-            EventoAgenda.deleted_at.is_(None),
-            EventoAgenda.fecha_inicio >= now,
-        )
-        .scalar()
-        or 0
-    )
+    query_events = db.query(EventoAgenda).filter(EventoAgenda.deleted_at.is_(None))
+    if sede_id:
+        query_events = query_events.filter(EventoAgenda.sede_id == sede_id)
+
+    total = query_events.count()
+    upcoming = query_events.filter(EventoAgenda.fecha_inicio >= now).count()
 
     proximos = (
-        db.query(EventoAgenda)
-        .filter(
-            EventoAgenda.deleted_at.is_(None),
-            EventoAgenda.fecha_inicio >= now,
-        )
+        query_events.filter(EventoAgenda.fecha_inicio >= now)
         .order_by(EventoAgenda.fecha_inicio.asc())
         .limit(5)
         .all()
     )
+
+    participantes_map = {}
+    if proximos:
+        event_ids = [ev.id for ev in proximos]
+        counts = (
+            db.query(ParticipanteEvento.evento_id, func.count(ParticipanteEvento.id))
+            .filter(
+                ParticipanteEvento.evento_id.in_(event_ids),
+                ParticipanteEvento.deleted_at.is_(None),
+            )
+            .group_by(ParticipanteEvento.evento_id)
+            .all()
+        )
+        participantes_map = {row[0]: row[1] for row in counts}
 
     eventos_proximos = [
         {
             "titulo": ev.titulo,
             "ubicacion": ev.ubicacion_texto or "",
             "fecha": ev.fecha_inicio.isoformat() if hasattr(ev.fecha_inicio, "isoformat") else str(ev.fecha_inicio),
-            "participantes": (
-                db.query(func.count(ParticipanteEvento.id))
-                .filter(
-                    ParticipanteEvento.evento_id == ev.id,
-                    ParticipanteEvento.deleted_at.is_(None),
-                )
-                .scalar()
-                or 0
-            ),
+            "participantes": participantes_map.get(ev.id, 0),
         }
         for ev in proximos
     ]
 
-    total_recursos = (
-        db.query(func.count(RecursoFisico.id))
-        .filter(
-            RecursoFisico.deleted_at.is_(None),
-            RecursoFisico.activo.is_(True),
-        )
-        .scalar()
-        or 0
+    recurso_query = db.query(func.count(RecursoFisico.id)).filter(
+        RecursoFisico.deleted_at.is_(None),
+        RecursoFisico.activo.is_(True),
     )
+    if sede_id:
+        recurso_query = recurso_query.filter(RecursoFisico.sede_id == sede_id)
+    total_recursos = recurso_query.scalar() or 0
 
     colisiones = (
         db.query(func.count(ReservaRecurso.id))

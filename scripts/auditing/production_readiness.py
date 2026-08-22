@@ -24,7 +24,7 @@ from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
 ROOT = Path(__file__).resolve().parents[2]
-DEFAULT_BASE_URL = os.getenv("CCF_PRODUCTION_BASE_URL", "https://elfarocc.tech")
+DEFAULT_BASE_URL = os.getenv("CCF_PRODUCTION_BASE_URL", "https://ministerioselfaro.org")
 ARTIFACT_DIR = ROOT / "test_artifacts"
 
 

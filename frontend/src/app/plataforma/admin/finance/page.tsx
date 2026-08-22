@@ -96,9 +96,9 @@ export default function FinanceAdminPage() {
                 <div className="flex items-center gap-3 truncate">
                     <div className={clsx(
                         "size-8 rounded-lg flex items-center justify-center shrink-0 shadow-sm",
-                        row.original.type === 'income' ? "bg-[hsl(var(--success-muted))] dark:bg-[hsl(var(--success)/0.15)] text-[hsl(var(--success))]" : "bg-[hsl(var(--destructive)/0.08)] dark:bg-[hsl(var(--destructive)/0.15)] text-[hsl(var(--destructive))]"
+                        (row.original.type === 'income' || row.original.type === 'ingreso') ? "bg-[hsl(var(--success-muted))] dark:bg-[hsl(var(--success)/0.15)] text-[hsl(var(--success))]" : "bg-[hsl(var(--destructive)/0.08)] dark:bg-[hsl(var(--destructive)/0.15)] text-[hsl(var(--destructive))]"
                     )}>
-                        {row.original.type === 'income' ? <ArrowUpRight size={14} /> : <ArrowDownLeft size={14} />}
+                        {(row.original.type === 'income' || row.original.type === 'ingreso') ? <ArrowUpRight size={14} /> : <ArrowDownLeft size={14} />}
                     </div>
                     <div className="flex flex-col truncate">
                         <span className="text-base font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] truncate">{String(row.original.description ?? '')}</span>
@@ -111,7 +111,7 @@ export default function FinanceAdminPage() {
             accessorKey: 'amount',
             header: 'Monto',
             cell: ({ row }) => (
-                <div className={clsx("font-black text-sm flex items-baseline gap-1", row.original.type === 'income' ? "text-[hsl(var(--success))]" : "text-[hsl(var(--destructive))]")}>
+                <div className={clsx("font-black text-sm flex items-baseline gap-1", (row.original.type === 'income' || row.original.type === 'ingreso') ? "text-[hsl(var(--success))]" : "text-[hsl(var(--destructive))]")}>
                     <span>${row.original.amount.toLocaleString()}</span>
                     <span className="font-semibold opacity-50 uppercase">{row.original.currency}</span>
                 </div>
@@ -123,15 +123,15 @@ export default function FinanceAdminPage() {
         String(tx.description || '').toLowerCase().includes(search.toLowerCase()) ||
         String(tx.category || '').toLowerCase().includes(search.toLowerCase())
     ), [transactions, search]);
-    const groupedTransactions = useMemo(() => ['income', 'expense'].map((type) => ({
-        type,
-        items: filteredTransactions.filter((tx) => (tx.type || 'expense') === type),
-    })), [filteredTransactions]);
+    const groupedTransactions = useMemo(() => [
+        { type: 'income', items: filteredTransactions.filter(tx => tx.type === 'income' || tx.type === 'ingreso') },
+        { type: 'expense', items: filteredTransactions.filter(tx => tx.type !== 'income' && tx.type !== 'ingreso') },
+    ], [filteredTransactions]);
     const calendarEvents = useMemo(() => filteredTransactions.map((tx) => ({
         id: tx.id,
         title: tx.description || '',
         date: (tx.date || tx.created_at || new Date().toISOString()).slice(0, 10),
-        color: tx.type === 'income' ? 'emerald' as const : 'rose' as const,
+        color: (tx.type === 'income' || tx.type === 'ingreso') ? 'emerald' as const : 'rose' as const,
         location: tx.category,
     })), [filteredTransactions]);
     const ganttItems = useMemo(() => filteredTransactions.map((tx) => ({
@@ -140,7 +140,7 @@ export default function FinanceAdminPage() {
         subtitle: tx.category || tx.type,
         start_date: (tx.date || tx.created_at || new Date().toISOString()).slice(0, 10),
         end_date: (tx.updated_at || tx.date || tx.created_at || new Date().toISOString()).slice(0, 10),
-        color: tx.type === 'income' ? 'emerald' as const : 'rose' as const,
+        color: (tx.type === 'income' || tx.type === 'ingreso') ? 'emerald' as const : 'rose' as const,
         progress: 100,
     })), [filteredTransactions]);
 

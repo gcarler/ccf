@@ -1352,10 +1352,16 @@ def sign_document(
     if not signer:
         raise HTTPException(status_code=404, detail="Signer not found")
 
-    # Verify signer identity — the signer's email must match the current user's email
+    # Verify signer identity — the signer's email must match the current user's email unless admin
     signer_email = getattr(signer, "email", None) or ""
     user_email = getattr(current_user, "email", None) or ""
-    if signer_email and user_email and signer_email.lower() != user_email.lower():
+    role_name = ""
+    if hasattr(current_user, "rol_plataforma") and current_user.rol_plataforma:
+        role_name = getattr(current_user.rol_plataforma, "nombre", "") or ""
+    if not role_name:
+        role_name = getattr(current_user, "role", "") or ""
+    is_admin = role_name.lower() in ("admin", "superadmin", "director", "pastor_principal", "pastor")
+    if signer_email and user_email and signer_email.lower() != user_email.lower() and not is_admin:
         raise HTTPException(
             status_code=403,
             detail="No autorizado: el firmante no corresponde al usuario actual",

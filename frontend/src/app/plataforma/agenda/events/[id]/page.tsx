@@ -169,8 +169,13 @@ export default function AgendaEventDetailPage() {
                                         <label className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Inicio</label>
                                         <input
                                             type="datetime-local"
-                                            value={event.start_at.slice(0, 16)}
-                                            onChange={(e) => setEvent({ ...event, start_at: new Date(e.target.value).toISOString() })}
+                                            value={(event.start_at || "").slice(0, 16)}
+                                            onChange={(e) => {
+                                                const d = new Date(e.target.value);
+                                                if (!isNaN(d.getTime())) {
+                                                    setEvent({ ...event, start_at: d.toISOString() });
+                                                }
+                                            }}
                                             className="w-full rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] px-4 py-3 text-sm font-bold text-[hsl(var(--text-primary))] outline-none focus:border-[hsl(var(--info)/100%)] dark:border-white/10 dark:bg-black/20 dark:text-white"
                                         />
                                     </div>
@@ -178,8 +183,13 @@ export default function AgendaEventDetailPage() {
                                         <label className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Fin</label>
                                         <input
                                             type="datetime-local"
-                                            value={(event.end_at || event.start_at).slice(0, 16)}
-                                            onChange={(e) => setEvent({ ...event, end_at: new Date(e.target.value).toISOString() })}
+                                            value={(event.end_at || event.start_at || "").slice(0, 16)}
+                                            onChange={(e) => {
+                                                const d = new Date(e.target.value);
+                                                if (!isNaN(d.getTime())) {
+                                                    setEvent({ ...event, end_at: d.toISOString() });
+                                                }
+                                            }}
                                             className="w-full rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] px-4 py-3 text-sm font-bold text-[hsl(var(--text-primary))] outline-none focus:border-[hsl(var(--info)/100%)] dark:border-white/10 dark:bg-black/20 dark:text-white"
                                         />
                                     </div>

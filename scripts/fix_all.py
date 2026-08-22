@@ -32,8 +32,8 @@ print("=" * 60)
 print("\n1. Backend health")
 code = test("http://localhost:8000/healthz")
 print(f"   {OK if code == '200' else FAIL} localhost:8000 → {code}")
-code = test("https://elfarocc.tech/api/health")
-print(f"   {OK if code == '200' else FAIL} elfarocc.tech/api/health → {code}")
+code = test("https://ministerioselfaro.org/api/health")
+print(f"   {OK if code == '200' else FAIL} ministerioselfaro.org/api/health → {code}")
 
 # ─── 2. DATABASE CHECK ───
 print("\n2. Database")
@@ -89,11 +89,11 @@ if "access_token" in out:
     print(f"   {OK if code == '200' else FAIL} Login → /auth/me → {code}")
 
     # External
-    code = test(f"https://elfarocc.tech/api/auth/me -H 'Authorization: Bearer {token}'")
+    code = test(f"https://ministerioselfaro.org/api/auth/me -H 'Authorization: Bearer {token}'")
     print(f"   {OK if code == '200' else FAIL} External /auth/me → {code}")
 
     # Frontend
-    code = test("https://elfarocc.tech")
+    code = test("https://ministerioselfaro.org")
     print(f"   {OK if code == '200' else FAIL} Frontend → {code}")
 else:
     print(f"   {FAIL} Login failed: {out[:100]}")

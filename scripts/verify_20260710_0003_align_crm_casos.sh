@@ -10,7 +10,7 @@
 # (systemd unit 'ccf-backend' o backend.log) para entregar contexto.
 #
 # Uso:
-#   BASE_URL=https://elfarocc.tech scripts/verify_20260710_0003_align_crm_casos.sh
+#   BASE_URL=https://ministerioselfaro.org scripts/verify_20260710_0003_align_crm_casos.sh
 #
 # Diseño:
 #  - urllib nativo (no asumimos curl, ni DNS público).

@@ -259,7 +259,14 @@ def create_location(
     name = body.name.strip()
     if not name:
         raise HTTPException(status_code=400, detail="nombre es requerido")
-    loc = admin_crud.create_admin_location(db, name, body.address, body.phone)
+    loc = admin_crud.create_admin_location(
+        db,
+        name,
+        body.address,
+        body.phone,
+        body.pastor_name,
+        body.location_type,
+    )
     record_admin_action(db, current_user, "location.create", "location", str(loc.id))
     return schemas.AdminLocationRead(
         id=loc.id,
@@ -285,6 +292,8 @@ def update_location(
         body.name,
         body.address,
         body.phone,
+        body.pastor_name,
+        body.location_type,
         body.is_active,
     )
     if not loc:
@@ -753,6 +762,14 @@ def award_milestone_bulk(
             body.persona_id,
             body.badge_id,
             body.awarded_by,
+        )
+        record_admin_action(
+            db,
+            current_user,
+            "award_milestone",
+            "milestone",
+            str(body.badge_id),
+            detalles={"persona_id": str(body.persona_id), "awarded_by": str(body.awarded_by)},
         )
     except ValueError as e:
         msg = str(e)
