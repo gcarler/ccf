@@ -13,6 +13,8 @@ export interface EventCreateForm {
   name: string;
   description: string;
   event_type: string;
+  /** Vacío representa el Universo completo; un UUID limita el evento a una sede. */
+  sede_id?: string;
   target_audience: string;
   target_role_id: string;
   target_role_ids: string[];
