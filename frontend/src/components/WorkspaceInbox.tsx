@@ -5,7 +5,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
     X, Bell,
     Settings, Inbox, User,
-    Archive, CheckCircle2, Filter, Search
+    Archive, CheckCircle2, Filter, Search,
+    Maximize2, Minimize2
 } from 'lucide-react';
 import clsx from 'clsx';
 import { useAuth } from '@/context/AuthContext';
@@ -18,6 +19,7 @@ export default function WorkspaceInbox({ isOpen, onClose }: { isOpen: boolean, o
     const [notifications, setNotifications] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState<'all' | 'mentions' | 'assigned'>('all');
+    const [isExpanded, setIsExpanded] = useState(false);
 
     const fetchNotifications = useCallback(async () => {
         if (!token) return;
@@ -32,6 +34,19 @@ export default function WorkspaceInbox({ isOpen, onClose }: { isOpen: boolean, o
     useEffect(() => {
         if (isOpen) fetchNotifications();
     }, [isOpen, fetchNotifications]);
+
+    useEffect(() => {
+        if (!isOpen) {
+            setIsExpanded(false);
+            return;
+        }
+
+        const handleEscape = (event: KeyboardEvent) => {
+            if (event.key === 'Escape') onClose();
+        };
+        document.addEventListener('keydown', handleEscape);
+        return () => document.removeEventListener('keydown', handleEscape);
+    }, [isOpen, onClose]);
 
     const handleSocketEvent = useCallback((payload: any) => {
         if (payload?.event === 'notification:new' && payload.body) {
@@ -73,7 +88,10 @@ export default function WorkspaceInbox({ isOpen, onClose }: { isOpen: boolean, o
                         animate={{ opacity: 1, x: 0 }}
                         exit={{ opacity: 0, x: 400 }}
                         transition={{ type: 'spring', damping: 30, stiffness: 300 }}
-                        className="fixed top-10 right-0 h-[calc(100vh-2.5rem)] w-full max-w-[480px] bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-2))] shadow-[-20px_0_60px_rgba(0,0,0,0.1)] border-l border-[hsl(var(--border))] dark:border-white/5 z-[1001] flex flex-col overflow-hidden"
+                        className={clsx(
+                            "fixed top-10 right-0 h-[calc(100vh-2.5rem)] w-full bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-2))] shadow-[-20px_0_60px_rgba(0,0,0,0.1)] border-l border-[hsl(var(--border))] dark:border-white/5 z-[1001] flex flex-col overflow-hidden",
+                            isExpanded ? "max-w-none" : "max-w-[480px]"
+                        )}
                     >
                         {/* Header */}
                         <header className="h-8 border-b border-[hsl(var(--border))] dark:border-white/5 flex items-center justify-between px-3 bg-[hsl(var(--surface-1))]/50 dark:bg-white/5 shrink-0">
@@ -97,11 +115,23 @@ export default function WorkspaceInbox({ isOpen, onClose }: { isOpen: boolean, o
                                     <span className="size-2 rounded-full bg-current" />
                                     WS
                                 </span>
+                                <HeaderAction
+                                    icon={isExpanded ? Minimize2 : Maximize2}
+                                    tooltip={isExpanded ? "Contraer panel" : "Expandir panel"}
+                                    ariaLabel={isExpanded ? "Contraer panel de notificaciones" : "Expandir panel de notificaciones"}
+                                    onClick={() => setIsExpanded((expanded) => !expanded)}
+                                    pressed={isExpanded}
+                                />
                                 <HeaderAction icon={CheckCircle2} tooltip="Marcar todo como leído" />
                                 <HeaderAction icon={Filter} tooltip="Filtrar" />
                                 <HeaderAction icon={Settings} tooltip="Ajustes" />
                                 <div className="w-[1px] h-4 bg-[hsl(var(--surface-3))] dark:bg-white/10 mx-2" />
-                                <button onClick={onClose} className="p-2 hover:bg-[hsl(var(--surface-3))] dark:hover:bg-white/10 rounded-md transition-all text-[hsl(var(--text-secondary))]">
+                                <button
+                                    onClick={onClose}
+                                    className="p-2 hover:bg-[hsl(var(--surface-3))] dark:hover:bg-white/10 rounded-md transition-all text-[hsl(var(--text-secondary))]"
+                                    aria-label="Cerrar panel de notificaciones"
+                                    title="Cerrar panel"
+                                >
                                     <X size={20} />
                                 </button>
                             </div>
@@ -201,9 +231,15 @@ export default function WorkspaceInbox({ isOpen, onClose }: { isOpen: boolean, o
     );
 }
 
-function HeaderAction({ icon: Icon, tooltip }: any) {
+function HeaderAction({ icon: Icon, tooltip, ariaLabel = tooltip, onClick, pressed }: any) {
     return (
-        <button className="p-2 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-secondary))] dark:hover:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-3))] dark:hover:bg-white/10 rounded-md transition-all relative group/h">
+        <button
+            onClick={onClick}
+            className="p-2 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-secondary))] dark:hover:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-3))] dark:hover:bg-white/10 rounded-md transition-all relative group/h"
+            aria-label={ariaLabel}
+            aria-pressed={pressed}
+            title={tooltip}
+        >
             <Icon size={18} />
             <div className="absolute top-10 left-1/2 -translate-x-1/2 px-2 py-1 bg-[hsl(var(--bg-muted))] text-[hsl(var(--text-primary))] dark:text-white text-2xs font-semibold uppercase tracking-wide rounded opacity-0 group-hover/h:opacity-100 pointer-events-none transition-opacity whitespace-nowrap z-[200]">
                 {tooltip}
