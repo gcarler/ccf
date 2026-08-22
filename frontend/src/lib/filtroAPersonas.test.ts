@@ -11,6 +11,14 @@ describe('normalizarBusquedaPersona', () => {
     expect(normalizarBusquedaPersona(undefined)).toBe('');
     expect(normalizarBusquedaPersona('')).toBe('');
   });
+
+  it('ignores a leading @ (messaging-style mention)', () => {
+    expect(normalizarBusquedaPersona('@Luis Ricardo')).toBe('luis ricardo');
+    expect(normalizarBusquedaPersona('@luisricardo')).toBe('luisricardo');
+    expect(normalizarBusquedaPersona('@@juan')).toBe('juan');
+    // El @ interno de un email no se toca.
+    expect(normalizarBusquedaPersona('luis@ccf.org')).toBe('luis@ccf.org');
+  });
 });
 
 describe('filtroAPersonas', () => {
@@ -118,5 +126,11 @@ describe('filtroAPersona', () => {
   it('empty query matches everything', () => {
     expect(filtroAPersona(persona, '')).toBe(true);
     expect(filtroAPersona(persona, '  ')).toBe(true);
+  });
+
+  it('matches with a leading @ (messaging-style)', () => {
+    expect(filtroAPersona(persona, '@luis')).toBe(true);
+    expect(filtroAPersona(persona, '@meza')).toBe(true);
+    expect(filtroAPersona(persona, '@luis.meza@ccf.org')).toBe(true);
   });
 });

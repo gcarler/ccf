@@ -18,6 +18,9 @@ export function normalizarBusquedaPersona(value: string | null | undefined): str
   const cached = CACHE_NORMALIZACION.get(key);
   if (cached !== undefined) return cached;
   const normalized = String(key)
+    // Un '@' inicial (estilo mensajería: "@luis") no debe romper la búsqueda:
+    // se ignora y se busca "luis" normalmente.
+    .replace(/^@+/, '')
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
     .toLocaleLowerCase('es')
@@ -78,6 +81,7 @@ export function filtroAPersonas(name: string | null | undefined, query: string):
  * (evangelismo, CRM, etc.) con estos campos opcionales.
  */
 export interface PersonaBusqueda {
+  id?: string | null;
   nombre_completo?: string | null;
   first_name?: string | null;
   last_name?: string | null;
