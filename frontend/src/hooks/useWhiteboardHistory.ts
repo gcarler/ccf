@@ -10,8 +10,8 @@ interface UseWhiteboardHistoryOptions {
 interface UseWhiteboardHistoryReturn {
   canUndo: boolean;
   canRedo: boolean;
-  undo: (canvas: Canvas) => void;
-  redo: (canvas: Canvas) => void;
+  undo: (canvas: Canvas) => Promise<void>;
+  redo: (canvas: Canvas) => Promise<void>;
   pushHistory: (canvas: Canvas) => void;
   clearHistory: () => void;
   restoringRef: React.MutableRefObject<boolean>;
@@ -41,6 +41,15 @@ export function useWhiteboardHistory(
       const json = JSON.stringify(canvas.toJSON());
       const idx = historyIndexRef.current;
 
+      // Fabric can emit more than one change event for a single insertion
+      // (for example when selection state is applied immediately afterward).
+      // Do not create an identical checkpoint, otherwise the first undo only
+      // moves between duplicate states and leaves the object visible.
+      if (historyRef.current[idx] === json) {
+        updateStates();
+        return;
+      }
+
       // Truncate any redo states beyond current index
       historyRef.current = historyRef.current.slice(0, idx + 1);
       historyRef.current.push(json);
@@ -58,14 +67,14 @@ export function useWhiteboardHistory(
 
   const undo = useCallback(
     (canvas: Canvas) => {
-      if (!canvas || historyIndexRef.current <= 0) return;
+      if (!canvas || historyIndexRef.current <= 0) return Promise.resolve();
 
       const previousIndex = historyIndexRef.current;
       const targetIndex = previousIndex - 1;
       historyIndexRef.current = targetIndex;
       restoringRef.current = true;
 
-      canvas
+      return canvas
         .loadFromJSON(JSON.parse(historyRef.current[targetIndex]))
         .then(() => {
           canvas.renderAll();
@@ -84,15 +93,14 @@ export function useWhiteboardHistory(
 
   const redo = useCallback(
     (canvas: Canvas) => {
-      if (!canvas || historyIndexRef.current >= historyRef.current.length - 1)
-        return;
+      if (!canvas || historyIndexRef.current >= historyRef.current.length - 1) return Promise.resolve();
 
       const previousIndex = historyIndexRef.current;
       const targetIndex = previousIndex + 1;
       historyIndexRef.current = targetIndex;
       restoringRef.current = true;
 
-      canvas
+      return canvas
         .loadFromJSON(JSON.parse(historyRef.current[targetIndex]))
         .then(() => {
           canvas.renderAll();

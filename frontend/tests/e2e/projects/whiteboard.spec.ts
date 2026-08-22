@@ -17,6 +17,9 @@ test.describe('whiteboard editor e2e', () => {
   });
 
   test.beforeEach(async ({ page }) => {
+    // Each test mutates the persisted whiteboard. Re-seed the demo bundle so
+    // layer counts and project navigation start from an isolated state.
+    seedProjectsDemo();
     await installPlatformAuthSession(page);
   });
 
@@ -34,7 +37,12 @@ test.describe('whiteboard editor e2e', () => {
     const whiteboardPath = `/plataforma/whiteboard/${projectId}`;
     await page.goto(whiteboardPath);
 
-    await page.locator('canvas.whiteboard-canvas').waitFor({ state: 'visible', timeout: 15_000 });
+    await page.locator('canvas.whiteboard-canvas[data-fabric="main"]').waitFor({ state: 'visible', timeout: 15_000 });
+    const blankBoardButton = page.getByRole('button', { name: 'Iniciar con pizarra en blanco', exact: true });
+    await blankBoardButton.waitFor({ state: 'visible', timeout: 3_000 }).then(
+      () => blankBoardButton.click({ force: true }),
+      () => undefined,
+    );
     await expect(page.getByTestId('whiteboard-export-png')).toBeEnabled({ timeout: 15_000 });
 
     return { projectId, whiteboardPath };
@@ -78,7 +86,7 @@ test.describe('whiteboard editor e2e', () => {
     // A new text object is created at a fixed position; it should appear both
     // on the canvas and in the layers panel.
     const layersPanel = page.locator('aside');
-    await expect(layersPanel.getByText('Nuevo texto', { exact: false })).toBeVisible({ timeout: 5_000 });
+    await expect(layersPanel.getByText('Nuevo texto', { exact: false }).first()).toBeVisible({ timeout: 5_000 });
 
     // ── Apply bold and italic formatting ──────────────────────────────────────
     const boldButton = page.getByRole('button', { name: /Negrita/i });
@@ -111,9 +119,9 @@ test.describe('whiteboard editor e2e', () => {
     await waitForWhiteboardSaved(page);
     await page.reload();
 
-    await page.locator('canvas.whiteboard-canvas').waitFor({ state: 'visible', timeout: 15_000 });
+    await page.locator('canvas.whiteboard-canvas[data-fabric="main"]').waitFor({ state: 'visible', timeout: 15_000 });
     await expect(page.getByTestId('whiteboard-export-png')).toBeEnabled({ timeout: 15_000 });
-    await expect(layersPanel.getByText('Nuevo texto', { exact: false })).toBeVisible({ timeout: 5_000 });
+    await expect(layersPanel.getByText('Nuevo texto', { exact: false }).first()).toBeVisible({ timeout: 5_000 });
 
     // No runtime regressions should have happened during the whole flow.
     expect(runtime.assetErrors).toEqual([]);

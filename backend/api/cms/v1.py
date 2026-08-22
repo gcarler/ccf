@@ -268,10 +268,13 @@ def get_cms_metrics(
     actor_sede = _actor_sede_or_none(db, current_user)
 
     def _cms_posts_by_category(slug: str) -> list[models.CmsPost]:
-        q = db.query(models.CmsPost).join(models.CmsPost.categories).filter(models.CmsCategory.slug == slug)
+        # Use EXISTS-based relationship filters instead of DISTINCT over the
+        # full model. CmsPost contains JSON columns, which PostgreSQL cannot
+        # compare for DISTINCT because json has no equality operator.
+        q = db.query(models.CmsPost).filter(models.CmsPost.categories.any(models.CmsCategory.slug == slug))
         if actor_sede is not None:
-            q = q.join(models.CmsSite).filter(models.CmsSite.sede_id == actor_sede)
-        return q.distinct().order_by(models.CmsPost.created_at.desc()).all()
+            q = q.filter(models.CmsPost.site.has(models.CmsSite.sede_id == actor_sede))
+        return q.order_by(models.CmsPost.created_at.desc()).all()
 
     cms_testimonials = _cms_posts_by_category("testimonials")
     cms_announcements = _cms_posts_by_category("announcements")
