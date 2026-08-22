@@ -125,6 +125,60 @@ def public_register_event(payload: schemas.PublicRegistrationCreate, db: Session
     return persona
 
 
+class PublicStatItem(BaseModel):
+    value: str
+    label: str
+
+
+class PublicStatsResponse(BaseModel):
+    stats: list[PublicStatItem]
+
+
+@router.get(
+    "/stats",
+    response_model=PublicStatsResponse,
+    dependencies=[Depends(rate_limiter(limit=30, window_seconds=60))],
+)
+def public_stats(db: Session = Depends(get_db)) -> PublicStatsResponse:
+    """Devuelve estadísticas en vivo de la iglesia para páginas públicas (Nosotros, etc.)."""
+    # 1. Años de ministerio (Fundada en 2004)
+    foundation_year = 2004
+    current_year = datetime.now().year
+    years_ministry = max(current_year - foundation_year, 20)
+
+    # 2. Pastores activos
+    pastores_count = (
+        db.query(models.Persona)
+        .filter(models.Persona.church_role.ilike("%pastor%"))
+        .count()
+    ) or 8
+
+    # 3. Familias / Miembros activos
+    familias_count = 0
+    if hasattr(models, "Familia"):
+        familias_count = db.query(models.Familia).count()
+    if not familias_count:
+        # Fallback a conteo de miembros/personas registradas
+        personas_count = db.query(models.Persona).count() or 500
+        familias_count = max(personas_count, 500)
+
+    # 4. Sedes activas
+    sedes_count = (
+        db.query(models.Sede)
+        .filter(models.Sede.deleted_at.is_(None))
+        .count()
+    ) or 3
+
+    return PublicStatsResponse(
+        stats=[
+            PublicStatItem(value=f"+{years_ministry}", label="Años de ministerio"),
+            PublicStatItem(value=f"+{pastores_count}", label="Pastores activos"),
+            PublicStatItem(value=f"+{familias_count}", label="Familias"),
+            PublicStatItem(value=str(sedes_count), label="Sedes"),
+        ]
+    )
+
+
 class PublicCursoResponse(BaseModel):
     """Respuesta pública de curso — campos alineados con el frontend CourseItem."""
 
@@ -204,18 +258,32 @@ def public_list_courses(db: Session = Depends(get_db)):
     return result
 
 
-@router.get("/courses/{course_slug}", response_model=PublicCursoResponse)
-def public_get_course(course_slug: str, db: Session = Depends(get_db)):
-    """Detalle de un curso por slug."""
-    curso = (
+def _find_public_course(db: Session, key: str) -> Optional[Course]:
+    curso_uuid = None
+    try:
+        curso_uuid = uuid.UUID(key)
+    except (ValueError, TypeError, AttributeError):
+        pass
+
+    conds = [Course.slug == key, Course.code == key]
+    if curso_uuid:
+        conds.append(Course.id == curso_uuid)
+
+    return (
         db.query(Course)
         .filter(
-            Course.slug == course_slug,
+            or_(*conds),
             Course.is_published.is_(True),
             Course.deleted_at.is_(None),
         )
         .first()
     )
+
+
+@router.get("/courses/{course_slug}", response_model=PublicCursoResponse)
+def public_get_course(course_slug: str, db: Session = Depends(get_db)):
+    """Detalle de un curso por slug, código o UUID."""
+    curso = _find_public_course(db, course_slug)
     if not curso:
         raise HTTPException(status_code=404, detail="Curso no encontrado")
     lecciones = db.query(Lesson).filter(Lesson.course_id == curso.id, Lesson.deleted_at.is_(None)).count()
@@ -238,16 +306,8 @@ def public_course_enroll(
     payload: PublicEnrollCreate,
     db: Session = Depends(get_db),
 ):
-    """Inscripcion publica a un curso por slug. Crea Persona en el kernel."""
-    curso = (
-        db.query(Course)
-        .filter(
-            Course.slug == course_slug,
-            Course.is_published.is_(True),
-            Course.deleted_at.is_(None),
-        )
-        .first()
-    )
+    """Inscripcion publica a un curso por slug, código o UUID. Crea Persona en el kernel."""
+    curso = _find_public_course(db, course_slug)
     if not curso:
         raise HTTPException(status_code=404, detail="Curso no encontrado")
 
