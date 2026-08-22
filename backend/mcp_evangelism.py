@@ -198,20 +198,18 @@ def search_mass_event_people(event_id: UUID, query: str, limit: int = 50) -> dic
         user = get_mcp_current_user(db)
         require_mcp_permission(db, user, "evangelism:read")
         event = _resolve_mass_event(db, user, event_id)
-        people = (
-            db.query(models.Persona)
-            .filter(
-                models.Persona.sede_id == event.sede_id,
-                or_(
-                    models.Persona.first_name.ilike(pattern),
-                    models.Persona.last_name.ilike(pattern),
-                    models.Persona.nombre_completo.ilike(pattern),
-                ),
+        people_query = db.query(models.Persona).filter(
+            or_(
+                models.Persona.first_name.ilike(pattern),
+                models.Persona.last_name.ilike(pattern),
+                models.Persona.nombre_completo.ilike(pattern),
             )
-            .order_by(models.Persona.nombre_completo.asc())
-            .limit(safe_limit)
-            .all()
         )
+        if event.sede_id:
+            # Evento global (sede_id NULL) abarca toda la iglesia: solo se
+            # filtra por sede cuando el evento está acotado a una sede.
+            people_query = people_query.filter(models.Persona.sede_id == event.sede_id)
+        people = people_query.order_by(models.Persona.nombre_completo.asc()).limit(safe_limit).all()
         return {
             "items": [
                 {
@@ -320,15 +318,12 @@ def register_mass_event_attendance(
             raise ValueError("La asistencia de este evento ya fue cerrada")
 
         selected_ids = list(dict.fromkeys(persona_ids))
-        valid_ids = {
-            row[0]
-            for row in db.query(models.Persona.id)
-            .filter(
-                models.Persona.id.in_(selected_ids),
-                models.Persona.sede_id == event.sede_id,
-            )
-            .all()
-        }
+        persona_query = db.query(models.Persona.id).filter(models.Persona.id.in_(selected_ids))
+        if event.sede_id:
+            # Evento global (sede_id NULL) abarca toda la iglesia: solo se
+            # filtra por sede cuando el evento está acotado a una sede.
+            persona_query = persona_query.filter(models.Persona.sede_id == event.sede_id)
+        valid_ids = {row[0] for row in persona_query.all()}
         invalid_ids = sorted(str(persona_id) for persona_id in set(selected_ids) - valid_ids)
         if invalid_ids:
             return {
