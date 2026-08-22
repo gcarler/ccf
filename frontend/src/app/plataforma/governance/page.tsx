@@ -166,7 +166,7 @@ export default function GovernancePage() {
                 <div className="bg-[hsl(var(--bg-muted))]/40 backdrop-blur-xl border border-white/5 p-4 rounded-xl space-y-2">
                     <div className="flex items-center justify-between text-[hsl(var(--text-secondary))]">
                         <span className="text-2xs font-semibold uppercase tracking-wider">Miembros Directivos</span>
-                        <Users size={16} className="text-indigo-400" />
+                        <Users size={16} className="text-primary" />
                     </div>
                     <p className="text-2xl font-black text-white">{stats?.active_committee_members ?? 0}</p>
                 </div>
