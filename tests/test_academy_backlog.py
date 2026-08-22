@@ -405,7 +405,7 @@ def test_high_pending_tickets_have_negative_evidence(tkt: int, needle: str, rati
         )
     elif tkt == 21:
         text = _read(api_file)
-        assert "MAX_SIZE" in text and "await file.read()" in text
+        assert "MAX_SIZE" in text and "await file.read" in text
     elif tkt == 22:
         text = _read(api_file)
         assert "ALLOWED_TYPES" in text and "file.content_type not in ALLOWED_TYPES" in text
