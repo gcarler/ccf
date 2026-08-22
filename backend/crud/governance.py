@@ -33,7 +33,7 @@ from backend.schemas.governance import (
 
 
 # ══════════════════════════════════════════════════════════════════════════════
-# AUTOMATION RULES (LEGACY UTILITIES)
+# AUTOMATION RULES
 # ══════════════════════════════════════════════════════════════════════════════
 
 def get_automation_rules(db: Session, only_active: bool = False, sede_id: Optional[UUID] = None):
