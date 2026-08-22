@@ -23,6 +23,45 @@ def test_search_chat_users(client, db_session):
     assert any(item["id"] == str(user2.id) for item in data)
 
 
+def test_search_chat_users_returns_username_and_name(client, db_session):
+    """El search devuelve el username REAL de la cuenta + nombre para mostrar."""
+    admin, persona, sede = _seed_admin(db_session)
+    user2, persona2, _ = seed_user_with_role(db_session, "estudiante", "user2@example.com")
+    user2.sede_id = sede.id
+    persona2.sede_id = sede.id
+    persona2.first_name = "José"
+    persona2.last_name = "González"
+    db_session.add_all([user2, persona2])
+    db_session.commit()
+    headers = _auth_headers(client)
+
+    resp = client.get(f"/api/chat/users/search?q={user2.username}&limit=10", headers=headers)
+    assert resp.status_code == 200
+    data = resp.json()
+    match = next((item for item in data if item["id"] == str(user2.id)), None)
+    assert match is not None
+    assert match["username"] == user2.username
+    assert match["name"] == "José González"
+    assert "church_role" in match
+
+
+def test_search_chat_users_accent_insensitive(client, db_session):
+    """Buscar "jose" encuentra a "José González" (ILIKE no ve acentos)."""
+    admin, persona, sede = _seed_admin(db_session)
+    user2, persona2, _ = seed_user_with_role(db_session, "estudiante", "user2@example.com")
+    user2.sede_id = sede.id
+    persona2.sede_id = sede.id
+    persona2.first_name = "José"
+    persona2.last_name = "González"
+    db_session.add_all([user2, persona2])
+    db_session.commit()
+    headers = _auth_headers(client)
+
+    resp = client.get("/api/chat/users/search?q=jose&limit=10", headers=headers)
+    assert resp.status_code == 200
+    assert any(item["id"] == str(user2.id) for item in resp.json())
+
+
 def test_create_and_list_conversations(client, db_session):
     admin, persona, sede = _seed_admin(db_session)
     user2, persona2, _ = seed_user_with_role(db_session, "estudiante", "user2@example.com")
