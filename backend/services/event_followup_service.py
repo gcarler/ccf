@@ -418,7 +418,11 @@ def mask_identifier(value: str, identifier_type: str) -> str:
 
 
 def _find_persona(db: Session, event: models.CrmEvent, identifier_type: str, normalized: str):
-    query = db.query(models.Persona).filter(models.Persona.sede_id == event.sede_id)
+    query = db.query(models.Persona)
+    if event.sede_id:
+        # Evento global (sede_id NULL) abarca toda la iglesia: solo se filtra
+        # por sede cuando el evento está acotado a una sede concreta.
+        query = query.filter(models.Persona.sede_id == event.sede_id)
     if identifier_type == "email":
         query = query.filter(models.Persona.email == normalized)
     else:
@@ -505,20 +509,17 @@ def verify_identity_challenge(
         models.EventIdentityChallenge.verified_at.is_(None),
     ]
     filters.append(models.EventIdentityChallenge.id == challenge_id)
-    row = (
+    query = (
         db.query(models.EventIdentityChallenge)
         .join(
             models.Persona,
             models.Persona.id == models.EventIdentityChallenge.persona_id,
         )
-        .filter(
-            *filters,
-            models.Persona.sede_id == event.sede_id,
-        )
-        .order_by(models.EventIdentityChallenge.created_at.desc())
-        .with_for_update()
-        .first()
+        .filter(*filters)
     )
+    if event.sede_id:
+        query = query.filter(models.Persona.sede_id == event.sede_id)
+    row = query.order_by(models.EventIdentityChallenge.created_at.desc()).with_for_update().first()
     now = _utcnow()
     if not row or _as_utc(row.expires_at) <= now or row.attempt_count >= row.max_attempts:
         raise ValueError("IDENTITY_VERIFICATION_FAILED")
@@ -529,7 +530,7 @@ def verify_identity_challenge(
     if not row.persona_id:
         raise ValueError("IDENTITY_VERIFICATION_FAILED")
     persona = row.persona
-    if not persona or persona.sede_id != event.sede_id:
+    if not persona or (event.sede_id and persona.sede_id != event.sede_id):
         raise ValueError("IDENTITY_VERIFICATION_FAILED")
     token = secrets.token_urlsafe(32)
     row.verified_identity_token_hash = identifier_hash(token)
@@ -550,7 +551,7 @@ def verify_identity_challenge(
 
 
 def resolve_verified_identity_token(db: Session, event: models.CrmEvent, token: str):
-    row = (
+    query = (
         db.query(models.EventIdentityChallenge)
         .join(
             models.Persona,
@@ -560,14 +561,14 @@ def resolve_verified_identity_token(db: Session, event: models.CrmEvent, token: 
             models.EventIdentityChallenge.event_id == event.id,
             models.EventIdentityChallenge.verified_identity_token_hash == identifier_hash(token),
             models.EventIdentityChallenge.consumed_at.is_(None),
-            models.Persona.sede_id == event.sede_id,
         )
-        .with_for_update()
-        .first()
     )
+    if event.sede_id:
+        query = query.filter(models.Persona.sede_id == event.sede_id)
+    row = query.with_for_update().first()
     if not row or not row.verified_at or _as_utc(row.expires_at) <= _utcnow() or not row.persona_id:
         raise ValueError("IDENTITY_TOKEN_INVALID")
-    if not row.persona or row.persona.sede_id != event.sede_id:
+    if not row.persona or (event.sede_id and row.persona.sede_id != event.sede_id):
         raise ValueError("IDENTITY_TOKEN_INVALID")
     return row.persona, row
 

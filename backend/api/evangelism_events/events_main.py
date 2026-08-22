@@ -343,7 +343,7 @@ def get_global_event_analytics(
     ).join(models.CrmEvent)
 
     query = query.filter(
-        models.CrmEvent.sede_id == user_sede,
+        (models.CrmEvent.sede_id == user_sede) | models.CrmEvent.sede_id.is_(None),
         models.CrmEvent.deleted_at.is_(None),
     )
     if event_type and event_type != "ALL":
@@ -655,7 +655,10 @@ def lookup_person_for_event(
     event = require_event_access(db, current_user, event_id)
     sede_id = getattr(event, "sede_id", None)
 
-    query = db.query(models.Persona).filter(models.Persona.sede_id == sede_id)
+    query = db.query(models.Persona)
+    if sede_id:
+        # Evento global (sede_id NULL): la búsqueda abarca toda la iglesia.
+        query = query.filter(models.Persona.sede_id == sede_id)
     conditions = []
     if email:
         conditions.append(_func.lower(models.Persona.email) == email.strip().lower())
@@ -808,7 +811,7 @@ def get_persona_attendance_history(
         .filter(models.EventAttendance.persona_id == persona_id)
         .join(models.CrmEvent)
         .filter(
-            models.CrmEvent.sede_id == user_sede,
+            (models.CrmEvent.sede_id == user_sede) | models.CrmEvent.sede_id.is_(None),
             models.CrmEvent.deleted_at.is_(None),
         )
         .order_by(

@@ -201,6 +201,82 @@ class TestBulkAttendance:
         )
         assert resp.status_code in (200, 403)
 
+    def test_bulk_global_event_accepts_all_sedes(self, full, db_session):
+        """Evento global (sede_id NULL) admite personas de cualquier sede."""
+        c, h, s = full["c"], full["h"], full["s"]
+        other_sede = models.Sede(
+            id=uuid.uuid4(),
+            nombre="Sede Norte",
+            ciudad="Villagarzón",
+            es_activa=True,
+        )
+        p1 = models.Persona(id=uuid.uuid4(), first_name="Glob", last_name="Uno", sede_id=s.id)
+        p2 = models.Persona(id=uuid.uuid4(), first_name="Glob", last_name="Dos", sede_id=other_sede.id)
+        db_session.add_all([other_sede, p1, p2])
+        db_session.commit()
+
+        evt = models.CrmEvent(
+            id=uuid.uuid4(),
+            name="Evento Masivo Global",
+            event_date=datetime(2026, 8, 20, 10, 0, 0, tzinfo=timezone.utc),
+            sede_id=None,  # global: todo el ministerio
+            location="Coliseo Central",
+        )
+        db_session.add(evt)
+        db_session.commit()
+
+        resp = c.post(
+            "/api/evangelism/attendance/bulk",
+            json={
+                "event_id": str(evt.id),
+                "persona_ids": [str(p1.id), str(p2.id)],
+                "session_date": "2026-08-20",
+                "source": "test",
+            },
+            headers=h,
+        )
+        assert resp.status_code in (200, 403), f"bulk: {resp.status_code} {resp.text[:200]}"
+        if resp.status_code == 200:
+            data = resp.json()
+            assert data["recorded"] == 2
+            assert not data["invalid_persona_ids"]
+            rows = (
+                db_session.query(models.EventAttendance)
+                .filter(models.EventAttendance.event_id == evt.id)
+                .all()
+            )
+            assert {row.persona_id for row in rows} == {p1.id, p2.id}
+
+    def test_global_event_universe_includes_all_sedes(self, full, db_session):
+        """El universo de un evento global incluye personas de todas las sedes."""
+        c, h, s = full["c"], full["h"], full["s"]
+        other_sede = models.Sede(
+            id=uuid.uuid4(),
+            nombre="Sede Sur",
+            ciudad="Puerto Asís",
+            es_activa=True,
+        )
+        p1 = models.Persona(id=uuid.uuid4(), first_name="Uni", last_name="Central", sede_id=s.id)
+        p2 = models.Persona(id=uuid.uuid4(), first_name="Uni", last_name="Sur", sede_id=other_sede.id)
+        db_session.add_all([other_sede, p1, p2])
+        db_session.commit()
+
+        evt = models.CrmEvent(
+            id=uuid.uuid4(),
+            name="Evento Global Universo",
+            event_date=datetime(2026, 8, 21, 10, 0, 0, tzinfo=timezone.utc),
+            sede_id=None,
+            location="Auditorio",
+        )
+        db_session.add(evt)
+        db_session.commit()
+
+        resp = c.get(f"/api/evangelism/events/personas/{evt.id}", headers=h)
+        assert _ok(resp.status_code), f"universe: {resp.status_code} {resp.text[:200]}"
+        persona_ids = {item["id"] for item in resp.json()}
+        assert str(p1.id) in persona_ids
+        assert str(p2.id) in persona_ids
+
 
 class TestSessionDetail:
     def test_get_session_detail(self, full, db_session):

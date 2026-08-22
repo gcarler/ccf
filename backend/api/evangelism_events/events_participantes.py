@@ -142,19 +142,12 @@ def register_bulk_attendance(
         except ValueError:
             invalid_persona_ids.append(pid)
 
-    valid_persona_uuids = (
-        {
-            row[0]
-            for row in db.query(models.Persona.id)
-            .filter(
-                models.Persona.id.in_(normalized_persona_uuids),
-                models.Persona.sede_id == event.sede_id,
-            )
-            .all()
-        }
-        if normalized_persona_uuids
-        else set()
-    )
+    persona_query = db.query(models.Persona.id).filter(models.Persona.id.in_(normalized_persona_uuids))
+    if event.sede_id:
+        # Evento global (sede_id NULL) abarca a toda la iglesia: solo se filtra
+        # por sede cuando el evento está acotado a una sede concreta.
+        persona_query = persona_query.filter(models.Persona.sede_id == event.sede_id)
+    valid_persona_uuids = {row[0] for row in persona_query.all()} if normalized_persona_uuids else set()
     valid_persona_ids = {str(uid) for uid in valid_persona_uuids}
     missing_persona_ids = sorted(set(normalized_persona_ids) - valid_persona_ids)
     selected_persona_uuids = sorted(valid_persona_uuids)

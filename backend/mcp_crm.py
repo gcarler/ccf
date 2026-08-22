@@ -295,15 +295,12 @@ def register_crm_event_attendance(
         require_mcp_permission(db, user, "crm:edit")
         event = _resolve_crm_event(db, user, event_id)
         selected_ids = list(dict.fromkeys(persona_ids))
-        valid_ids = {
-            row[0]
-            for row in db.query(models.Persona.id)
-            .filter(
-                models.Persona.id.in_(selected_ids),
-                models.Persona.sede_id == event.sede_id,
-            )
-            .all()
-        }
+        persona_query = db.query(models.Persona.id).filter(models.Persona.id.in_(selected_ids))
+        if event.sede_id:
+            # Evento global (sede_id NULL) abarca toda la iglesia: solo se
+            # filtra por sede cuando el evento está acotado a una sede.
+            persona_query = persona_query.filter(models.Persona.sede_id == event.sede_id)
+        valid_ids = {row[0] for row in persona_query.all()}
         invalid_ids = sorted(str(persona_id) for persona_id in set(selected_ids) - valid_ids)
         if invalid_ids:
             return {

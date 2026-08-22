@@ -76,13 +76,17 @@ def fast_checkin_visitor(
         }
 
     existing_persona = None
+    # Evento global (sede_id NULL) abarca toda la iglesia: se reconoce a la
+    # persona sin importar su sede. Solo se exige misma sede cuando el evento
+    # está acotado a una sede concreta.
+    global_event = event.sede_id is None
     if visitor.email:
         candidate = db.query(models.Persona).filter(models.Persona.email == visitor.email).first()
-        if candidate and str(candidate.sede_id) == str(user_sede_id):
+        if candidate and (global_event or str(candidate.sede_id) == str(user_sede_id)):
             existing_persona = candidate
     if not existing_persona and visitor.phone:
         candidate = db.query(models.Persona).filter(models.Persona.phone == visitor.phone).first()
-        if candidate and str(candidate.sede_id) == str(user_sede_id):
+        if candidate and (global_event or str(candidate.sede_id) == str(user_sede_id)):
             existing_persona = candidate
 
     if existing_persona:
@@ -360,7 +364,7 @@ def unified_checkin(
             existing_persona = db.query(models.Persona).filter(models.Persona.email == payload.email).first()
         if not existing_persona and payload.phone:
             existing_persona = db.query(models.Persona).filter(models.Persona.phone == payload.phone).first()
-        if existing_persona and str(existing_persona.sede_id) == str(user_sede_id):
+        if existing_persona and (not event.sede_id or str(existing_persona.sede_id) == str(user_sede_id)):
             persona = existing_persona
         else:
             persona = models.Persona(
