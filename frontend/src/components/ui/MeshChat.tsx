@@ -3,7 +3,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-    Send, X, Bot, User, Sparkles, Loader2
+    Send, X, Bot, User, Sparkles, Loader2, Maximize2, Minimize2
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/lib/http';
@@ -29,6 +29,7 @@ export default function MeshChat({ isOpen, onClose }: { isOpen: boolean, onClose
     ]);
     const [input, setInput] = useState('');
     const [loading, setLoading] = useState(false);
+    const [isExpanded, setIsExpanded] = useState(false);
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
     const scrollToBottom = () => {
@@ -95,7 +96,12 @@ export default function MeshChat({ isOpen, onClose }: { isOpen: boolean, onClose
                         initial={{ opacity: 0, y: 100, scale: 0.95 }}
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: 100, scale: 0.95 }}
-                        className="fixed inset-x-0 bottom-[72px] top-10 sm:inset-x-auto sm:top-auto sm:bottom-6 sm:right-6 sm:w-full sm:max-w-[440px] sm:h-[600px] rounded-none sm:rounded-lg bg-[hsl(var(--bg-primary))] shadow-2xl border-t sm:border border-[hsl(var(--border))] z-[1001] flex flex-col overflow-hidden"
+                        className={clsx(
+                            "fixed inset-x-0 bottom-[72px] top-10 sm:top-auto sm:bottom-6 sm:right-6 sm:w-full rounded-none sm:rounded-lg bg-[hsl(var(--bg-primary))] shadow-2xl border-t sm:border border-[hsl(var(--border))] z-[1001] flex flex-col overflow-hidden",
+                            isExpanded
+                                ? "sm:inset-0 sm:max-w-none sm:h-auto sm:rounded-none"
+                                : "sm:max-w-[440px] sm:h-[600px]"
+                        )}
                     >
                         {/* Header */}
                         <header className="p-3 border-b border-[hsl(var(--border))] flex items-center justify-between bg-[hsl(var(--bg-primary))] shrink-0">
@@ -112,9 +118,21 @@ export default function MeshChat({ isOpen, onClose }: { isOpen: boolean, onClose
                                     </div>
                                 </div>
                             </div>
-                            <button aria-label="Cerrar" onClick={onClose} className="p-2 hover:bg-[hsl(var(--surface-2))] dark:hover:bg-[hsl(var(--surface-2))] rounded-md transition-all text-[hsl(var(--text-secondary))]">
+                            <div className="flex items-center gap-1">
+                                <button
+                                    aria-label={isExpanded ? "Contraer panel de MESH AI" : "Expandir panel de MESH AI"}
+                                    aria-pressed={isExpanded}
+                                    title={isExpanded ? "Contraer panel" : "Expandir panel"}
+                                    onClick={() => setIsExpanded((expanded) => !expanded)}
+                                    className="inline-flex items-center gap-1.5 rounded-md border border-[hsl(var(--border))] px-2 py-1 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/10 transition-all"
+                                >
+                                    {isExpanded ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
+                                    <span>{isExpanded ? "Contraer" : "Expandir"}</span>
+                                </button>
+                                <button aria-label="Cerrar" title="Cerrar panel" onClick={onClose} className="p-2 hover:bg-[hsl(var(--surface-2))] dark:hover:bg-[hsl(var(--surface-2))] rounded-md transition-all text-[hsl(var(--text-secondary))]">
                                 <X size={20} />
-                            </button>
+                                </button>
+                            </div>
                         </header>
 
                         {/* Chat Messages */}
