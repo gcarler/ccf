@@ -676,7 +676,7 @@ export default function StrategyAnalyticsPage() {
                         style={{
                           backgroundColor: d.sessions === 0
                             ? 'hsl(var(--bg-muted))'
-                            : `rgba(99, 102, 241, ${0.15 + intensity * 0.85})`,
+                            : `hsl(var(--primary) / ${0.15 + intensity * 0.85})`,
                           color: intensity > 0.55 || d.sessions === 0 ? 'white' : 'hsl(var(--text-primary))',
                         }}
                         title={`${d.label}: ${d.sessions} sesiones, ${d.pct !== null ? `${d.pct.toFixed(1)}% asistencia` : 'sin datos'}`}
@@ -699,13 +699,13 @@ export default function StrategyAnalyticsPage() {
                     <span className="size-3 rounded" style={{ background: 'hsl(var(--bg-muted))' }} /> Sin sesiones
                   </span>
                   <span className="flex items-center gap-1 text-2xs text-[hsl(var(--text-secondary))]">
-                    <span className="size-3 rounded" style={{ background: 'rgba(99, 102, 241, 0.2)' }} /> Bajo
+                    <span className="size-3 rounded" style={{ background: 'hsl(var(--primary) / 0.2)' }} /> Bajo
                   </span>
                   <span className="flex items-center gap-1 text-2xs text-[hsl(var(--text-secondary))]">
-                    <span className="size-3 rounded" style={{ background: 'rgba(99, 102, 241, 0.55)' }} /> Medio
+                    <span className="size-3 rounded" style={{ background: 'hsl(var(--primary) / 0.55)' }} /> Medio
                   </span>
                   <span className="flex items-center gap-1 text-2xs text-[hsl(var(--text-secondary))]">
-                    <span className="size-3 rounded" style={{ background: 'rgba(99, 102, 241, 0.95)' }} /> Alto
+                    <span className="size-3 rounded" style={{ background: 'hsl(var(--primary) / 0.95)' }} /> Alto
                   </span>
                 </div>
                 <p className="text-2xs text-[hsl(var(--text-secondary))] italic">

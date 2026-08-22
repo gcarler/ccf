@@ -170,7 +170,7 @@ export default function StrategyDashboard({
                       {shareMenuId === g.id && (
                         <div
                           onClick={e => e.stopPropagation()}
-                          className="absolute top-7 right-0 w-52 bg-[hsl(var(--bg-primary))] dark:bg-[#2a2b2d] border border-[hsl(var(--border-primary))] rounded-lg shadow-xl py-1"
+                          className="absolute top-7 right-0 w-52 bg-[hsl(var(--bg-primary))] dark:bg-[var(--admin-bg-elevated)] border border-[hsl(var(--border-primary))] rounded-lg shadow-xl py-1"
                         >
                           <p className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] px-3 py-1.5">Compartir enlace del grupo</p>
                           <button onClick={() => shareGroupLink(g.id, g.name, 'copy')}

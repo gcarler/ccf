@@ -8,6 +8,8 @@ import {
   QrCode, RefreshCw, Send, Trash2, Users, X, Megaphone, Settings2,
 } from "lucide-react";
 import clsx from "clsx";
+import ConfirmActionDrawer, { type ConfirmActionState } from "@/components/evangelism/ConfirmActionDrawer";
+import WorkspaceDrawer from "@/components/WorkspaceDrawer";
 
 type RegistrationStatus =
   | "PENDING"
@@ -133,6 +135,7 @@ export default function PreregistrationTab({ eventId, token }: { eventId: string
   const [showCampaignForm, setShowCampaignForm] = useState(false);
   const [sendingCampaignId, setSendingCampaignId] = useState<string | null>(null);
   const [exportingCsv, setExportingCsv] = useState(false);
+  const [confirmAction, setConfirmAction] = useState<ConfirmActionState>(null);
 
   const handleExportCsv = async () => {
     if (!token) return;
@@ -229,16 +232,22 @@ export default function PreregistrationTab({ eventId, token }: { eventId: string
           Al cerrar la asistencia, los confirmados sin check-in se marcan como ausentes y generan seguimiento CRM automaticamente.
         </div>
         <button
-          onClick={async () => {
-            if (!window.confirm("¿Cerrar la asistencia? Los confirmados sin check-in se marcaran como ausentes.")) return;
-            try {
-              await apiFetch(`/evangelism/events/${eventId}/attendance/close`, { method: "POST", token });
-              toast.success("Asistencia cerrada");
-              loadAll();
-            } catch {
-              toast.error("No se pudo cerrar la asistencia");
-            }
-          }}
+          onClick={() => setConfirmAction({
+            title: "Cerrar asistencia",
+            description: "Los confirmados sin check-in se marcarán como ausentes y generarán seguimiento CRM automáticamente.",
+            confirmLabel: "Cerrar asistencia",
+            destructive: true,
+            onConfirm: async () => {
+              try {
+                await apiFetch(`/evangelism/events/${eventId}/attendance/close`, { method: "POST", token });
+                toast.success("Asistencia cerrada");
+                loadAll();
+              } catch {
+                toast.error("No se pudo cerrar la asistencia");
+                throw new Error("close-failed");
+              }
+            },
+          })}
           className="shrink-0 inline-flex items-center gap-1.5 rounded-md bg-danger-soft px-3 py-1.5 text-sm font-semibold text-danger-text hover:opacity-80 transition-all"
         >
           <Check size={14} /> Cerrar asistencia
@@ -316,16 +325,22 @@ export default function PreregistrationTab({ eventId, token }: { eventId: string
                     {sendingCampaignId === c.id ? <Loader2 size={13} className="animate-spin" /> : <Send size={13} />} Enviar
                   </button>
                   <button
-                    onClick={async () => {
-                      if (!window.confirm(`¿Eliminar la campaña "${c.name}"?`)) return;
-                      try {
-                        await apiFetch(`/evangelism/events/${eventId}/campaigns/${c.id}`, { method: "DELETE", token, silent: true });
-                        toast.success("Campaña eliminada");
-                        loadAll();
-                      } catch {
-                        toast.error("No se pudo eliminar la campaña");
-                      }
-                    }}
+                    onClick={() => setConfirmAction({
+                      title: "Eliminar campaña",
+                      description: `¿Eliminar la campaña "${c.name}"? Esta acción no se puede deshacer.`,
+                      confirmLabel: "Eliminar",
+                      destructive: true,
+                      onConfirm: async () => {
+                        try {
+                          await apiFetch(`/evangelism/events/${eventId}/campaigns/${c.id}`, { method: "DELETE", token, silent: true });
+                          toast.success("Campaña eliminada");
+                          loadAll();
+                        } catch {
+                          toast.error("No se pudo eliminar la campaña");
+                          throw new Error("delete-failed");
+                        }
+                      },
+                    })}
                     className="p-1.5 rounded-md text-[hsl(var(--text-secondary))] hover:text-danger-text hover:bg-danger-soft transition-all"
                   >
                     <Trash2 size={14} />
@@ -432,15 +447,20 @@ export default function PreregistrationTab({ eventId, token }: { eventId: string
                       <div className="flex items-center gap-1.5">
                         {r.registration_status === "CONFIRMED" && (
                           <button
-                            onClick={async () => {
-                              if (!window.confirm("¿Reenviar el correo de confirmación/QR a esta persona?")) return;
-                              try {
-                                await apiFetch(`/evangelism/events/${eventId}/registrations/${r.id}/resend-confirmation`, { method: "POST", token, silent: true });
-                                toast.success("Confirmación reenviada");
-                              } catch {
-                                toast.error("No se pudo reenviar la confirmación");
-                              }
-                            }}
+                            onClick={() => setConfirmAction({
+                              title: "Reenviar confirmación",
+                              description: "¿Reenviar el correo de confirmación/QR a esta persona?",
+                              confirmLabel: "Reenviar",
+                              onConfirm: async () => {
+                                try {
+                                  await apiFetch(`/evangelism/events/${eventId}/registrations/${r.id}/resend-confirmation`, { method: "POST", token, silent: true });
+                                  toast.success("Confirmación reenviada");
+                                } catch {
+                                  toast.error("No se pudo reenviar la confirmación");
+                                  throw new Error("resend-failed");
+                                }
+                              },
+                            })}
                             className="p-1.5 rounded-md text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] hover:bg-info-soft transition-all"
                             title="Reenviar confirmación"
                           >
@@ -458,21 +478,27 @@ export default function PreregistrationTab({ eventId, token }: { eventId: string
                         )}
                         {r.registration_status !== "CANCELLED" && (
                           <button
-                            onClick={async () => {
-                              if (!window.confirm(`¿Marcar a ${r.persona_name || "esta persona"} como CANCELADO?`)) return;
-                              try {
-                                await apiFetch(`/evangelism/events/${eventId}/registrations/${r.id}`, {
-                                  method: "PATCH",
-                                  token,
-                                  body: { registration_status: "CANCELLED" },
-                                  silent: true,
-                                });
-                                toast.success("Inscripción cancelada");
-                                loadAll();
-                              } catch {
-                                toast.error("No se pudo cancelar la inscripción");
-                              }
-                            }}
+                            onClick={() => setConfirmAction({
+                              title: "Cancelar inscripción",
+                              description: `¿Marcar a ${r.persona_name || "esta persona"} como CANCELADO?`,
+                              confirmLabel: "Cancelar inscripción",
+                              destructive: true,
+                              onConfirm: async () => {
+                                try {
+                                  await apiFetch(`/evangelism/events/${eventId}/registrations/${r.id}`, {
+                                    method: "PATCH",
+                                    token,
+                                    body: { registration_status: "CANCELLED" },
+                                    silent: true,
+                                  });
+                                  toast.success("Inscripción cancelada");
+                                  loadAll();
+                                } catch {
+                                  toast.error("No se pudo cancelar la inscripción");
+                                  throw new Error("cancel-failed");
+                                }
+                              },
+                            })}
                             className="p-1.5 rounded-md text-[hsl(var(--text-secondary))] hover:text-danger-text hover:bg-danger-soft transition-all"
                             title="Cancelar inscripción"
                           >
@@ -493,25 +519,25 @@ export default function PreregistrationTab({ eventId, token }: { eventId: string
         </div>
       </div>
 
-      {showConfigForm && (
-        <ConfigForm
-          eventId={eventId}
-          token={token}
-          config={config}
-          onClose={() => setShowConfigForm(false)}
-          onSaved={() => { setShowConfigForm(false); loadAll(); }}
-        />
-      )}
+      <ConfigForm
+        isOpen={showConfigForm}
+        eventId={eventId}
+        token={token}
+        config={config}
+        onClose={() => setShowConfigForm(false)}
+        onSaved={() => { setShowConfigForm(false); loadAll(); }}
+      />
 
-      {showCampaignForm && (
-        <CampaignForm
-          eventId={eventId}
-          token={token}
-          plantillas={plantillas}
-          onClose={() => setShowCampaignForm(false)}
-          onSaved={() => { setShowCampaignForm(false); loadAll(); }}
-        />
-      )}
+      <CampaignForm
+        isOpen={showCampaignForm}
+        eventId={eventId}
+        token={token}
+        plantillas={plantillas}
+        onClose={() => setShowCampaignForm(false)}
+        onSaved={() => { setShowCampaignForm(false); loadAll(); }}
+      />
+
+      <ConfirmActionDrawer action={confirmAction} onClose={() => setConfirmAction(null)} />
     </div>
   );
 }
@@ -538,7 +564,8 @@ function StatCard({ label, value, accent }: { label: string; value: number; acce
   );
 }
 
-function ConfigForm({ eventId, token, config, onClose, onSaved }: {
+function ConfigForm({ isOpen, eventId, token, config, onClose, onSaved }: {
+  isOpen: boolean;
   eventId: string;
   token: string | null;
   config: PreregConfig | null;
@@ -582,18 +609,26 @@ function ConfigForm({ eventId, token, config, onClose, onSaved }: {
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/50 flex items-end sm:items-center justify-center p-0 sm:p-4" onClick={onClose}>
-      <div className="w-full sm:max-w-lg bg-[hsl(var(--bg-primary))] rounded-t-xl sm:rounded-xl shadow-2xl p-4 sm:p-6 max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-sm font-bold uppercase tracking-wide text-[hsl(var(--text-primary))] flex items-center gap-2">
-            <Settings2 size={15} /> Configuración de pre-registro
-          </h3>
-          <button onClick={onClose} className="p-1.5 rounded-md hover:bg-[hsl(var(--bg-muted))] text-[hsl(var(--text-secondary))]">
-            <X size={16} />
+    <WorkspaceDrawer
+      isOpen={isOpen}
+      onClose={onClose}
+      title="Configuración de pre-registro"
+      actions={
+        <div className="flex justify-end gap-2">
+          <button onClick={onClose} className="px-4 py-2 text-xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] transition-colors">
+            Cancelar
+          </button>
+          <button
+            onClick={handleSave}
+            disabled={saving}
+            className="px-4 py-2 rounded-md bg-[hsl(var(--primary))] text-white text-xs font-bold uppercase tracking-wide flex items-center gap-2 disabled:opacity-50"
+          >
+            {saving ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />} Guardar
           </button>
         </div>
-
-        <div className="space-y-4">
+      }
+    >
+      <div className="space-y-4">
           <ToggleRow
             label="Habilitar pre-registro"
             checked={form.requires_registration}
@@ -666,21 +701,8 @@ function ConfigForm({ eventId, token, config, onClose, onSaved }: {
             />
           </div>
 
-          <div className="flex justify-end gap-2 pt-2">
-            <button onClick={onClose} className="px-4 py-2 text-xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] transition-colors">
-              Cancelar
-            </button>
-            <button
-              onClick={handleSave}
-              disabled={saving}
-              className="px-4 py-2 rounded-md bg-[hsl(var(--primary))] text-white text-xs font-bold uppercase tracking-wide flex items-center gap-2 disabled:opacity-50"
-            >
-              {saving ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />} Guardar
-            </button>
-          </div>
-        </div>
       </div>
-    </div>
+    </WorkspaceDrawer>
   );
 }
 
@@ -703,7 +725,8 @@ function ToggleRow({ label, hint, checked, onChange }: {
   );
 }
 
-function CampaignForm({ eventId, token, plantillas, onClose, onSaved }: {
+function CampaignForm({ isOpen, eventId, token, plantillas, onClose, onSaved }: {
+  isOpen: boolean;
   eventId: string;
   token: string | null;
   plantillas: Plantilla[];
@@ -750,18 +773,26 @@ function CampaignForm({ eventId, token, plantillas, onClose, onSaved }: {
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/50 flex items-end sm:items-center justify-center p-0 sm:p-4" onClick={onClose}>
-      <div className="w-full sm:max-w-lg bg-[hsl(var(--bg-primary))] rounded-t-xl sm:rounded-xl shadow-2xl p-4 sm:p-6 max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-sm font-bold uppercase tracking-wide text-[hsl(var(--text-primary))] flex items-center gap-2">
-            <Megaphone size={15} /> Nueva campaña
-          </h3>
-          <button onClick={onClose} className="p-1.5 rounded-md hover:bg-[hsl(var(--bg-muted))] text-[hsl(var(--text-secondary))]">
-            <X size={16} />
+    <WorkspaceDrawer
+      isOpen={isOpen}
+      onClose={onClose}
+      title="Nueva campaña"
+      actions={
+        <div className="flex justify-end gap-2">
+          <button onClick={onClose} className="px-4 py-2 text-xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] transition-colors">
+            Cancelar
+          </button>
+          <button
+            onClick={handleSave}
+            disabled={saving}
+            className="px-4 py-2 rounded-md bg-[hsl(var(--primary))] text-white text-xs font-bold uppercase tracking-wide flex items-center gap-2 disabled:opacity-50"
+          >
+            {saving ? <Loader2 size={14} className="animate-spin" /> : <Plus size={14} />} Crear
           </button>
         </div>
-
-        <div className="space-y-4">
+      }
+    >
+      <div className="space-y-4">
           <div className="space-y-2">
             <label className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] block">Nombre *</label>
             <input
@@ -851,21 +882,8 @@ function CampaignForm({ eventId, token, plantillas, onClose, onSaved }: {
             </div>
           </div>
 
-          <div className="flex justify-end gap-2 pt-2">
-            <button onClick={onClose} className="px-4 py-2 text-xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] transition-colors">
-              Cancelar
-            </button>
-            <button
-              onClick={handleSave}
-              disabled={saving}
-              className="px-4 py-2 rounded-md bg-[hsl(var(--primary))] text-white text-xs font-bold uppercase tracking-wide flex items-center gap-2 disabled:opacity-50"
-            >
-              {saving ? <Loader2 size={14} className="animate-spin" /> : <Plus size={14} />} Crear
-            </button>
-          </div>
-        </div>
       </div>
-    </div>
+    </WorkspaceDrawer>
   );
 }
 

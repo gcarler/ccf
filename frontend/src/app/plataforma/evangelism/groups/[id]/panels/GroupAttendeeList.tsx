@@ -27,7 +27,7 @@ export function GroupAttendeeList({ loadingAtt, attendance }: GroupAttendeeListP
     );
   }
   return (
-    <div className="bg-[hsl(var(--bg-primary))] dark:bg-[#252528] rounded-md border border-[hsl(var(--border-primary))] overflow-hidden shadow-sm">
+    <div className="bg-[hsl(var(--bg-primary))] dark:bg-[var(--admin-bg-secondary)] rounded-md border border-[hsl(var(--border-primary))] overflow-hidden shadow-sm">
       <div className="px-4 py-2 border-b border-[hsl(var(--border-primary))] flex items-center justify-between">
         <h3 className="text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] flex items-center gap-2">
           <CheckCircle2 size={14} className="text-[hsl(var(--success))]" /> Lista de Asistencia

@@ -260,7 +260,7 @@ export default function SessionsSection({
                         <span className="text-base leading-none">⋯</span>
                       </button>
                       {sessionMenuId === String(s.id) && (
-                        <div className="absolute right-0 top-8 z-20 bg-[hsl(var(--bg-primary))] dark:bg-[#2a2b2d] border border-[hsl(var(--border-primary))] rounded-lg shadow-lg py-1 min-w-[130px]">
+                        <div className="absolute right-0 top-8 z-20 bg-[hsl(var(--bg-primary))] dark:bg-[var(--admin-bg-elevated)] border border-[hsl(var(--border-primary))] rounded-lg shadow-lg py-1 min-w-[130px]">
                           <button
                             onClick={() => onRequestDelete(String(s.id))}
                             className="w-full text-left px-3 py-2 text-xs text-[hsl(var(--destructive))] dark:text-[hsl(var(--destructive))] hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-2">
