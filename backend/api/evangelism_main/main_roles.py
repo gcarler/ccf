@@ -12,6 +12,7 @@ from backend.api.evangelism_shared import get_visible_strategy
 from backend.core.database import get_db
 from backend.core.permissions import require_evangelism_manage, require_evangelism_read
 from backend.core.tenant import require_user_sede_id
+from backend.core.audit import record_admin_action
 
 roles_router = APIRouter(tags=["Evangelismo - Roles y Excusas"])
 
@@ -68,7 +69,9 @@ def create_strategy_role(
 
     _require_visible_strategy(db, strategy_id, _user)
     payload.estrategia_id = strategy_id
-    return _serialize_rol_personalizado(create_rol_personalizado(db, payload, actor_user_id=str(_user.id)))
+    rol = create_rol_personalizado(db, payload, actor_user_id=str(_user.id))
+    record_admin_action(db, _user, action="create_role", resource_type="role", resource_id=str(rol.id))
+    return _serialize_rol_personalizado(rol)
 
 
 @roles_router.delete("/strategies/{strategy_id}/roles/{role_id}")
@@ -86,6 +89,7 @@ def delete_strategy_role(
         strategy.default_role_id = None
     if not delete_rol_personalizado(db, role_id, actor_user_id=str(_user.id)):
         raise HTTPException(status_code=404, detail="Rol no encontrado")
+    record_admin_action(db, _user, action="delete_role", resource_type="role", resource_id=str(role_id))
     return {"ok": True}
 
 
@@ -111,6 +115,7 @@ def update_strategy_role(
     result = update_rol_personalizado(db, role_id, payload, actor_user_id=str(_user.id))
     if not result:
         raise HTTPException(status_code=404, detail="Rol no encontrado")
+    record_admin_action(db, _user, action="update_role", resource_type="role", resource_id=str(role_id))
     return _serialize_rol_personalizado(result)
 
 

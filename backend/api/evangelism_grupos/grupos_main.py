@@ -33,6 +33,7 @@ from backend.core.permissions import (
     require_evangelism_read,
 )
 from backend.core.tenant import require_user_sede_id
+from backend.core.audit import record_admin_action
 from backend.models import GrupoEvangelismo, SesionGrupo
 
 router = APIRouter()
@@ -601,6 +602,7 @@ async def create_grupo(
 
     _validate_strategy_group_roles(db, payload.evangelism_strategy_id, body)
     obj = crud.create_grupo(db, payload, sede_id=user_sede)
+    record_admin_action(db, current_user, action="create_group", resource_type="group", resource_id=str(obj.id))
     return {
         "id": obj.id,
         "code": obj.codigo,

@@ -275,7 +275,7 @@ def split_group(
         nuevo_grupo.id,
         nuevo_grupo.nombre,
         transferidos,
-        current_user.email if hasattr(current_user, "email") else "desconocido",
+        current_user.id if hasattr(current_user, "id") else "desconocido",
     )
 
     return SplitResponse(

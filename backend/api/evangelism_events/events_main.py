@@ -92,8 +92,8 @@ def list_event_sedes(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_evangelism_read),
 ):
-    """Lista sedes activas para que el creador elija el alcance del evento."""
-    return [
+    """Lista las sedes activas y permite seleccionar el alcance global."""
+    result = [
         {"id": str(sede.id), "name": sede.nombre}
         for sede in (
             db.query(models.Sede)
@@ -102,6 +102,8 @@ def list_event_sedes(
             .all()
         )
     ]
+    result.insert(0, {"id": "global", "name": "Universo (todas las sedes)"})
+    return result
 
 
 @static_router.get("/events/personas/{event_id}", response_model=List[dict])
@@ -188,10 +190,9 @@ def create_event(
     current_user: models.User = Depends(require_evangelism_manage),
 ):
     payload = schemas.CrmEventCreate(**normalize_role_scope_payload(payload.model_dump()))
-    _user_sede = require_user_sede_id(db, current_user)
     event = crud.create_crm_event(db, payload)
-    # La sede se selecciona explícitamente en la UI. NULL significa evento
-    # global, visible para todas las sedes y con audiencia de toda la iglesia.
+    # La UI pregunta explícitamente el alcance: UUID = sede seleccionada;
+    # NULL = Universo. Nunca se infiere una sede por defecto para el administrador.
     event.sede_id = payload.sede_id
     db.commit()
     db.refresh(event)
