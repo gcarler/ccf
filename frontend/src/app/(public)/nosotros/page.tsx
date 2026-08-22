@@ -118,27 +118,20 @@ export default function NosotrosPage() {
             )}
 
             {hasHero && stats.length > 0 && (
-                <section className="py-12 md:py-16 ccf-container relative z-10">
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
+                <section className="py-14 md:py-20 ccf-container relative z-10">
+                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 md:gap-12 items-start">
                         {stats.map((s, i) => (
                             <div
                                 key={i}
-                                className="group relative overflow-hidden rounded-2xl bg-site-surface/80 dark:bg-site-surface-container-low/80 backdrop-blur-md p-6 md:p-8 border border-site-outline-variant/15 hover:border-site-primary/40 shadow-sm hover:shadow-xl hover:shadow-site-primary/5 transition-all duration-300 transform hover:-translate-y-1"
+                                className="group cursor-default select-none transition-all duration-300 transform hover:-translate-y-1.5"
                             >
-                                {/* Decorative subtle glow on hover */}
-                                <div className="absolute -right-8 -top-8 w-28 h-28 bg-site-primary/10 rounded-full blur-2xl group-hover:bg-site-primary/20 transition-all duration-500 pointer-events-none" />
-                                
-                                {/* Accent top pill indicator */}
-                                <div className="w-8 h-1 rounded-full bg-site-primary/30 group-hover:w-14 group-hover:bg-site-primary transition-all duration-300 mb-4" />
-
-                                <div className="relative z-10">
-                                    <p className="text-4xl sm:text-5xl md:text-6xl font-black tracking-tight text-site-primary group-hover:scale-105 transition-transform duration-300 origin-left">
-                                        {s.value}
-                                    </p>
-                                    <p className="text-xs sm:text-sm font-semibold uppercase tracking-wider text-site-on-surface-variant group-hover:text-site-on-surface mt-2 transition-colors duration-200">
-                                        {s.label}
-                                    </p>
-                                </div>
+                                <p className="text-6xl sm:text-7xl md:text-8xl lg:text-9xl font-black tracking-tighter leading-none text-site-on-surface/90 transition-all duration-500 group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-site-primary group-hover:via-amber-400 group-hover:to-site-primary group-hover:bg-[length:200%_auto] group-hover:animate-pulse">
+                                    {s.value}
+                                </p>
+                                <p className="text-xs sm:text-sm md:text-base font-bold uppercase tracking-widest text-site-on-surface-variant/80 group-hover:text-site-primary mt-3 md:mt-4 transition-colors duration-300">
+                                    {s.label}
+                                </p>
+                                <div className="h-0.5 w-10 bg-site-outline-variant/30 group-hover:w-20 group-hover:bg-site-primary mt-2 transition-all duration-500 rounded-full" />
                             </div>
                         ))}
                     </div>
