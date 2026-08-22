@@ -129,10 +129,7 @@ export default function FaroFooter() {
                         {/* Brand column */}
                         <div className="col-span-2 lg:col-span-5 space-y-4 text-center sm:text-left">
                             <div className="flex flex-col items-center gap-3 sm:flex-row sm:gap-4">
-                                <div
-                                    className="w-14 h-14 sm:w-16 sm:h-16 rounded-full flex items-center justify-center shrink-0 overflow-hidden"
-                                    style={{ background: "var(--site-navbar-bg)" }}
-                                >
+                                <div className="w-14 h-14 sm:w-16 sm:h-16 flex items-center justify-center shrink-0 overflow-hidden">
                                     {logoUrl ? (
                                         <OptimizedImage src={logoUrl} alt={brandName} width={56} height={56} className="w-full h-full object-contain p-2" />
                                     ) : (
