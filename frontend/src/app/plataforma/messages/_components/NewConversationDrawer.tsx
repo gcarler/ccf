@@ -60,10 +60,10 @@ export function NewConversationDrawer({
                                 aria-label={`Iniciar conversación con ${u.username}`}
                                 className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5 transition-colors disabled:opacity-50 text-left"
                             >
-                                <AvatarInitial name={u.username} />
+                                <AvatarInitial name={u.name || u.username} />
                                 <div className="flex-1 min-w-0">
-                                    <p className="text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] truncate">{u.username}</p>
-                                    <p className="text-xs text-[hsl(var(--text-secondary))] truncate">{u.email}</p>
+                                    <p className="text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] truncate">{u.name || u.username}</p>
+                                    <p className="text-xs text-[hsl(var(--text-secondary))] truncate">{u.username ? `@${u.username} · ` : ''}{u.email}</p>
                                 </div>
                                 {creating && <Loader2 size={14} aria-hidden="true" data-testid="creating-conversation-spinner" className="animate-spin text-[hsl(var(--primary))] shrink-0" />}
                             </button>

@@ -2,9 +2,10 @@
 
 import { AvatarInitial } from '@/components/ui/AvatarInitial';
 import { apiFetch } from '@/lib/http';
+import { filtroAPersona, type PersonaBusqueda } from '@/lib/filtroAPersonas';
 import type { DirectMessageItem } from '@/types/directMessages';
 import { FileText, Loader2, Music, Paperclip, Send, Video, X } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import type { SearchedUser } from '../_hooks/useUserSearch';
 
@@ -15,6 +16,16 @@ function escapeRegExp(value: string) {
 interface MentionCandidate {
     query: string;
     start: number;
+}
+
+/** Mapea un usuario buscado a la forma que entiende filtroAPersona. */
+function toPersonaBusqueda(user: SearchedUser): PersonaBusqueda {
+    return {
+        id: user.id,
+        username: user.username,
+        nombre_completo: user.name ?? null,
+        email: user.email,
+    };
 }
 
 interface MessageInputProps {
@@ -53,6 +64,13 @@ export function MessageInput({
     const fileInputRef = useRef<HTMLInputElement>(null);
     const containerRef = useRef<HTMLDivElement>(null);
     const [mentionDropdownPos, setMentionDropdownPos] = useState<{ top: number; left: number; width: number } | null>(null);
+    const [activeIndex, setActiveIndex] = useState(0);
+
+    // Reset keyboard selection synchronously when results change, so the
+    // highlight never lags behind the list (avoids selecting the wrong item).
+    useLayoutEffect(() => {
+        setActiveIndex(0);
+    }, [mentionResults]);
 
     // Calculate dropdown position relative to viewport when mention results appear.
     // The dropdown appears ABOVE the input, so we use the container's top edge
@@ -98,7 +116,15 @@ export function MessageInput({
                 token,
                 signal: controller.signal,
             })
-                .then((r) => setMentionResults(Array.isArray(r) ? r.slice(0, 6) : []))
+                .then((r) => {
+                    const list = Array.isArray(r) ? r : [];
+                    // Filtro reutilizable de personas: en menciones TODO es
+                    // búsqueda de usuario (se re-antepone el '@').
+                    const filtered = list.filter((u) =>
+                        filtroAPersona(toPersonaBusqueda(u), `@${query}`)
+                    );
+                    setMentionResults(filtered.slice(0, 6));
+                })
                 .catch(() => {});
         }, 100);
         return () => {
@@ -253,12 +279,17 @@ export function MessageInput({
                         marginBottom: '4px',
                     }}
                 >
-                    {mentionResults.map((u) => (
-                        <button key={u.id} onClick={() => selectMention(u)} className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5 transition-colors">
-                            <AvatarInitial name={u.username} size="sm" />
+                    {mentionResults.map((u, i) => (
+                        <button
+                            key={u.id}
+                            onClick={() => selectMention(u)}
+                            onMouseEnter={() => setActiveIndex(i)}
+                            className={`w-full flex items-center gap-2.5 px-3 py-2 transition-colors ${i === activeIndex ? 'bg-[hsl(var(--surface-1))] dark:bg-white/10' : 'hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5'}`}
+                        >
+                            <AvatarInitial name={u.name || u.username} size="sm" />
                             <div className="text-left flex-1 min-w-0">
-                                <p className="text-sm font-semibold text-[hsl(var(--text-primary))] truncate">{u.username}</p>
-                                <p className="text-2xs text-[hsl(var(--text-secondary))] truncate">{u.email}</p>
+                                <p className="text-sm font-semibold text-[hsl(var(--text-primary))] truncate">@{u.username}</p>
+                                <p className="text-2xs text-[hsl(var(--text-secondary))] truncate">{(u.name || u.username)}{u.email ? ` · ${u.email}` : ''}</p>
                             </div>
                         </button>
                     ))}
@@ -296,6 +327,31 @@ export function MessageInput({
                         value={input}
                         onChange={handleInputChange}
                         onKeyDown={(e) => {
+                            // With the mention dropdown open, keyboard controls
+                            // the dropdown: ↑↓ navigate, Enter picks, Escape closes.
+                            // Only when no dropdown is open does Enter send.
+                            if (mentionState && mentionResults.length > 0) {
+                                if (e.key === 'ArrowDown') {
+                                    e.preventDefault();
+                                    setActiveIndex((i) => (i + 1) % mentionResults.length);
+                                    return;
+                                }
+                                if (e.key === 'ArrowUp') {
+                                    e.preventDefault();
+                                    setActiveIndex((i) => (i - 1 + mentionResults.length) % mentionResults.length);
+                                    return;
+                                }
+                                if (e.key === 'Enter' && !e.shiftKey) {
+                                    e.preventDefault();
+                                    selectMention(mentionResults[activeIndex]);
+                                    return;
+                                }
+                                if (e.key === 'Escape') {
+                                    setMentionState(null);
+                                    setMentionResults([]);
+                                    return;
+                                }
+                            }
                             if (e.key === 'Enter' && !e.shiftKey) {
                                 e.preventDefault();
                                 handleSend();
