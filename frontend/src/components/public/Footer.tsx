@@ -205,7 +205,7 @@ export default function Footer() {
                                 <span
                                     className="grid h-16 w-16 shrink-0 place-items-center overflow-hidden rounded-2xl border sm:h-20 sm:w-20"
                                     style={{
-                                        background: "var(--site-surface-container-lowest)",
+                                        background: "var(--site-navbar-bg)",
                                         borderColor: "var(--site-outline-variant)",
                                     }}
                                 >

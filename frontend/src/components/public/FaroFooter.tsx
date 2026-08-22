@@ -131,7 +131,7 @@ export default function FaroFooter() {
                             <div className="flex flex-col items-center gap-3 sm:flex-row sm:gap-4">
                                 <div
                                     className="w-14 h-14 sm:w-16 sm:h-16 rounded-full flex items-center justify-center shrink-0 overflow-hidden"
-                                    style={{ background: "var(--site-surface-container)" }}
+                                    style={{ background: "var(--site-navbar-bg)" }}
                                 >
                                     {logoUrl ? (
                                         <OptimizedImage src={logoUrl} alt={brandName} width={56} height={56} className="w-full h-full object-contain p-2" />
