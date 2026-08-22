@@ -24,6 +24,9 @@ describe('WorkspaceDrawer', () => {
         const expand = screen.getByRole('button', { name: 'Expandir panel' });
         const title = screen.getByRole('heading', { name: 'Registro de Asistencia' });
 
+        expect(expand).toHaveAttribute('title', 'Expandir');
+        expect(expand).toHaveAttribute('aria-label', 'Expandir panel');
+        expect(expand).not.toHaveTextContent('Expandir');
         expect(close.compareDocumentPosition(expand) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
         expect(expand.compareDocumentPosition(title) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     });
