@@ -3,18 +3,24 @@
 import WorkspaceToolbar from '@/components/WorkspaceToolbar';
 import EmptyState from '@/components/ui/EmptyState';
 import { useAuth } from '@/context/AuthContext';
-import { DSCard } from '@/design';
-import { DSChart } from '@/design';
-import { DSMetric } from '@/design';
+import { DSButton, DSCard, DSChart } from '@/design';
 import { apiFetch } from '@/lib/http';
+import clsx from 'clsx';
 import { GraduationCap, TrendingUp, AlertTriangle } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { useCallback,useEffect,useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import type { DashboardMetrics } from '@/types/academy';
 
 type DashboardCard = NonNullable<DashboardMetrics['cards']>[number] & { color?: 'blue' | 'emerald' | 'amber' };
 type AcademyDashboard = Omit<DashboardMetrics, 'cards'> & { cards: DashboardCard[] };
+
+const metricAccents = [
+    'group-hover:from-[hsl(var(--info))] group-hover:to-[hsl(var(--primary))]',
+    'group-hover:from-[hsl(var(--success))] group-hover:to-[hsl(var(--secondary))]',
+    'group-hover:from-[hsl(var(--warning))] group-hover:to-[hsl(var(--primary))]',
+    'group-hover:from-[hsl(var(--primary))] group-hover:to-[hsl(var(--info))]',
+];
 
 function dashboardFromProfile(profile: { enrollments_count: number; certificates_count: number; total_progress: number }): AcademyDashboard {
     return {
@@ -138,23 +144,34 @@ export default function AcademyClient() {
                     { label: 'Dashboard Inteligente', icon: TrendingUp },
                 ]}
                 rightActions={
-                    <button onClick={() => router.push('/plataforma/academy/curriculum')} className="px-4 py-2 bg-[hsl(var(--primary))] text-white rounded-md text-2xs font-semibold uppercase tracking-wide shadow-lg shadow-[hsl(var(--info)/20%)] hover:scale-105 transition-all">
+                    <DSButton onClick={() => router.push('/plataforma/academy/curriculum')}>
                         Ver Malla Curricular
-                    </button>
+                    </DSButton>
                 }
             />
 
-            <main className="flex-1 overflow-y-auto p-4 lg:p-3 space-y-3">
-                {/* Metricas Principales */}
-                <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                    {dashboard.cards.map((card) => (
-                        <DSMetric
-                            key={card.title}
-                            label={card.title}
-                            value={card.value}
-                            trend={card.trend}
-                            tone={card.color ?? card.tone as 'blue' | 'emerald' | 'amber'}
-                        />
+            <main className="flex-1 overflow-y-auto p-4 lg:p-3 space-y-5">
+                {/* Metricas principales: lectura rápida sin recuadros redundantes. */}
+                <section className="grid grid-cols-2 lg:grid-cols-4 gap-5 py-3 px-1" aria-label="Métricas de la Academia">
+                    {dashboard.cards.map((card, index) => (
+                        <div key={card.title} className="group min-w-0 space-y-1 border-b border-[hsl(var(--border))] pb-3">
+                            <p
+                                className={clsx(
+                                    'bg-gradient-to-r bg-[length:0%_2px] bg-left-bottom bg-no-repeat text-4xl md:text-5xl lg:text-6xl font-black tracking-tight text-[hsl(var(--text-primary))] transition-[background-size,color,transform] duration-300 group-hover:bg-[length:100%_2px]',
+                                    metricAccents[index % metricAccents.length]
+                                )}
+                            >
+                                {card.value}
+                            </p>
+                            <p className="truncate text-xs font-bold uppercase tracking-wider text-[hsl(var(--text-secondary))]">
+                                {card.title}
+                            </p>
+                            {card.trend && (
+                                <p className="text-2xs font-semibold text-[hsl(var(--success))]">
+                                    ↑ {card.trend}% crecimiento
+                                </p>
+                            )}
+                        </div>
                     ))}
                 </section>
 
@@ -165,7 +182,7 @@ export default function AcademyClient() {
                             <div className="flex items-center justify-between mb-3">
                                 <div>
                                     <h3 className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-1">Tendencia de Crecimiento</h3>
-                                    <p className="text-xl font-bold text-white italic">Inscripciones Mensuales</p>
+                                    <p className="text-xl font-bold text-[hsl(var(--text-primary))] italic">Inscripciones Mensuales</p>
                                 </div>
                                 <div className="size-10 rounded-md bg-[hsl(var(--info))]/10 flex items-center justify-center text-[hsl(var(--primary))]">
                                     <TrendingUp size={20} />
@@ -188,7 +205,7 @@ export default function AcademyClient() {
                                     <div key={course.title} className="flex items-center justify-between group">
                                         <div className="flex items-center gap-3">
                                             <div className="size-2 rounded-full bg-[hsl(var(--primary))]" />
-                                            <span className="text-xs font-bold text-[hsl(var(--text-secondary))] group-hover:text-white transition-colors">{course.title}</span>
+                                            <span className="text-xs font-bold text-[hsl(var(--text-secondary))] group-hover:text-[hsl(var(--text-primary))] transition-colors">{course.title}</span>
                                         </div>
                                         <span className="font-semibold text-[hsl(var(--text-secondary))]">{course.count} Est.</span>
                                     </div>
