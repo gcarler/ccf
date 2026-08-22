@@ -1,0 +1,521 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /usr/bin/python3
+rootdir: /root/ccf
+configfile: pytest.ini
+plugins: cov-7.1.0, asyncio-1.4.0, anyio-4.13.0
+asyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collecting ... collected 47 items
+
+tests/test_cms_v2_presence.py::test_token_parsing_helper PASSED          [  2%]
+tests/test_cms_v2_presence.py::test_rest_presence_empty PASSED           [  4%]
+tests/test_cms_v2_presence.py::test_websocket_presence_flow PASSED       [  6%]
+tests/test_structural_contracts.py::test_all_application_routes_stay_under_api_tree_or_explicit_exceptions PASSED [  8%]
+tests/test_structural_contracts.py::test_settings_rejects_trivial_secret_keys_in_restricted_environments[production] PASSED [ 10%]
+tests/test_structural_contracts.py::test_settings_rejects_trivial_secret_keys_in_restricted_environments[prod] PASSED [ 12%]
+tests/test_structural_contracts.py::test_settings_rejects_trivial_secret_keys_in_restricted_environments[staging] PASSED [ 14%]
+tests/test_structural_contracts.py::test_settings_force_secure_access_cookie_in_restricted_environments[production] PASSED [ 17%]
+tests/test_structural_contracts.py::test_settings_force_secure_access_cookie_in_restricted_environments[prod] PASSED [ 19%]
+tests/test_structural_contracts.py::test_settings_force_secure_access_cookie_in_restricted_environments[staging] PASSED [ 21%]
+tests/test_structural_contracts.py::test_settings_accepts_env_alias_input PASSED [ 23%]
+tests/test_structural_contracts.py::test_docker_compose_requires_mandatory_secrets_and_canonical_environment_key SKIPPED [ 25%]
+tests/test_structural_contracts.py::test_routes_do_not_collide_by_method_and_normalized_path PASSED [ 27%]
+tests/test_structural_contracts.py::test_domain_modules_expose_only_expected_canonical_prefixes PASSED [ 29%]
+tests/test_structural_contracts.py::test_dashboard_routes_require_authenticated_user PASSED [ 31%]
+tests/test_structural_contracts.py::test_internal_routes_do_not_accept_client_sede_id_query PASSED [ 34%]
+tests/test_structural_contracts.py::test_app_lifespan_does_not_bootstrap_schema_with_create_all PASSED [ 36%]
+tests/test_structural_contracts.py::test_frontend_does_not_add_auth_users_old_consumers PASSED [ 38%]
+tests/test_structural_contracts.py::test_frontend_does_not_add_academy_user_id_old_consumers PASSED [ 40%]
+tests/test_structural_contracts.py::test_platform_frontend_uses_persona_uuid_for_cms_and_audit_identity_labels PASSED [ 42%]
+tests/test_structural_contracts.py::test_academy_persona_backfill_migration_exists PASSED [ 44%]
+tests/test_structural_contracts.py::test_academy_dashboard_queries_canonical_enrollments_by_persona_id PASSED [ 46%]
+tests/test_structural_contracts.py::test_crm_persona_backfill_migration_exists PASSED [ 48%]
+tests/test_structural_contracts.py::test_cms_persona_backfill_migration_exists PASSED [ 51%]
+tests/test_structural_contracts.py::test_agents_governance_persona_backfill_migration_exists PASSED [ 53%]
+tests/test_structural_contracts.py::test_platform_frontend_respects_ccf_ui_contracts PASSED [ 55%]
+tests/test_structural_contracts.py::test_platform_frontend_does_not_expose_old_identity_contracts PASSED [ 57%]
+tests/test_structural_contracts.py::test_active_code_does_not_reintroduce_old_architecture_labels PASSED [ 59%]
+tests/test_structural_contracts.py::test_h11_academy_frontend_no_any_types PASSED [ 61%]
+tests/test_structural_contracts.py::test_backend_no_jsonb_columns PASSED [ 63%]
+tests/test_structural_contracts.py::test_backend_datetime_columns_always_have_timezone PASSED [ 65%]
+tests/test_structural_contracts.py::test_backend_no_hard_deletes_in_transactional_apis PASSED [ 68%]
+tests/test_structural_contracts.py::test_backend_new_models_use_uuid_not_integer_pk_for_persona_linked_tables PASSED [ 70%]
+tests/test_structural_contracts.py::test_all_runtime_primary_keys_are_uuid PASSED [ 72%]
+tests/test_structural_contracts.py::test_internal_id_contracts_do_not_use_integer_annotations PASSED [ 74%]
+tests/test_structural_contracts.py::test_academy_has_one_runtime_contract_and_model_tree PASSED [ 76%]
+tests/test_structural_contracts.py::test_parallel_academy_and_identity_tables_are_not_in_runtime_metadata PASSED [ 78%]
+tests/test_structural_contracts.py::test_crm_and_agenda_have_one_runtime_contract_each PASSED [ 80%]
+tests/test_structural_contracts.py::test_auth_has_one_role_owner_and_no_removed_runtime_modules PASSED [ 82%]
+tests/test_structural_contracts.py::test_auth_and_scanner_have_no_parallel_fallback_contracts PASSED [ 85%]
+tests/test_structural_contracts.py::test_frontend_auth_entrypoints_use_v3_contracts PASSED [ 87%]
+tests/test_structural_contracts.py::test_ag_grid_module_registration_stays_centralized PASSED [ 89%]
+tests/test_structural_contracts.py::test_frontend_no_direct_fetch_calls PASSED [ 91%]
+tests/test_structural_contracts.py::test_frontend_no_legacy_cms_ui_routes PASSED [ 93%]
+tests/test_structural_contracts.py::test_workspace_navigation_access_rules_stay_centralized PASSED [ 95%]
+tests/test_structural_contracts.py::test_pre_push_hook_supports_fast_and_full_modes PASSED [ 97%]
+tests/test_structural_contracts.py::test_protected_route_permissions_stay_canonical_in_platform_routes PASSED [100%]/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/api/crm/pastoral.py': Couldn't use data file '/root/ccf/.coverage': no such table: line_bits (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/api/crm/persona_relations.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/api/crm/personas.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/api/crm/pipelines.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/api/crm/resources.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/api/dashboard.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/api/donations.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/api/enterprise_cms.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/api/evangelism.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/api/evangelism_analytics.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/api/evangelism_events/__init__.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/api/evangelism_events/_shared.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/api/evangelism_events/events_checkin.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/api/evangelism_events/events_main.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/api/evangelism_events/events_participantes.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/api/evangelism_grupos/__init__.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/api/evangelism_grupos/grupos_asistencias.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/api/evangelism_grupos/grupos_main.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/api/evangelism_grupos/grupos_sesiones.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/api/evangelism_main/__init__.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/api/evangelism_main/main_estrategias.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/api/evangelism_main/main_roles.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/api/evangelism_main/main_utils.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/api/evangelism_multiplication.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/api/evangelism_notifications.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/api/evangelism_rankings.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/api/evangelism_reports.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/api/evangelism_shared.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/api/finance.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/api/finance_suite.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/api/governance.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/api/graph.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/api/kernel.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/api/messaging.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/api/prayer.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/api/projects.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/api/public.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/api/spiritual_life.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/api/support.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/api/support_kb.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/api/system.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/api/tables.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/api/wiki.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/api/workspace.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/api/workspace_audit.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/api/workspace_compliance.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/api/workspace_config.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/api/workspace_flags.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/api/workspace_incidents.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/api/workspace_shared/__init__.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/api/workspace_shared/_audit.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/api/workspace_shared/_flags.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/api/workspace_shared/_incidents.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/api/workspace_shared/_snapshots.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/api/workspace_shared/_storage.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/api/youtube.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/app.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/content_defaults.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/core/__init__.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/core/ai.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/core/audit.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/core/bootstrap.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/core/cache.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/core/cache_v2.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/core/config.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/core/context.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/core/database.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/core/events.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/core/feature_flags.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/core/file_lock.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/core/kernel_rbac.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/core/logging.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/core/permissions.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/core/rate_limit.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/core/sanitize_html.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/core/security.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/core/security_headers.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/core/seo.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/core/storage.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/core/telemetry.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/core/tenant.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/core/uploads.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/core/websockets.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/crud/__init__.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/crud/_utils.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/crud/academy.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/crud/admin.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/crud/agenda.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/crud/agents.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/crud/audit.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/crud/cms.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/crud/cms_pastors_sync.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/crud/crm.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/crud/crm_/__init__.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/crud/crm_/communication.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/crud/crm_/community.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/crud/crm_/counseling.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/crud/crm_/donations.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/crud/crm_/events.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/crud/crm_/extended.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/crud/crm_/families.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/crud/crm_/groups.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/crud/crm_/health.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/crud/crm_/milestones.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/crud/crm_/notifications.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/crud/crm_/personas.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/crud/crm_/pipeline.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/crud/crm_/prayer.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/crud/crm_/resources.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/crud/crm_/shared.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/crud/crm_/support.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/crud/crm_/tasks.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/crud/crm_/timeline.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/crud/crm_/volunteers.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/crud/dashboard.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/crud/evangelism.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/crud/governance.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/crud/identity.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/crud/kernel.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/crud/ops.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/crud/projects.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/crud/wiki.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/database.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/exceptions/__init__.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/exceptions/cms.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/main.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/mesh_websockets.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/messaging_service.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/middleware/__init__.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/middleware/module_isolation.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/models.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/models_academy_core.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/models_agenda.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/models_agents.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/models_auth.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/models_cms.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/models_conversation.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/models_crm.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/models_crm_pipeline.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/models_enterprise.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/models_evangelism.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/models_finance_suite.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/models_governance.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/models_identity.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/models_kernel.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/models_knowledge_base.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/models_ops.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/models_other.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/models_projects.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/models_shared.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/models_system.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/models_wiki.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/scheduler.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/schemas/__init__.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/schemas/_common.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/schemas/academy.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/schemas/admin.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/schemas/agenda.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/schemas/agents.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/schemas/auth_v3.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/schemas/chat.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/schemas/cms.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/schemas/cms_v2_sections.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/schemas/crm/__init__.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/schemas/crm/automation.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/schemas/crm/base.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/schemas/crm/pipeline.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/schemas/crm/resources.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/schemas/crm_automation.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/schemas/crm_pipeline.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/schemas/crm_resources.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/schemas/dashboard.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/schemas/evangelism.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/schemas/finance_suite.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/schemas/governance.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/schemas/identity.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/schemas/notifications.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/schemas/operational.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/schemas/projects.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/schemas/wiki.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/security.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/services/__init__.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/services/automation_engine.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/services/calculo_sesiones.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/services/cms_media_service.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/services/cms_workflow.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/services/comment_notifications.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/services/conversation_memory.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/services/crm_resource_bank.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/services/email.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/services/email_block_renderer.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/services/email_block_types.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/services/email_templates.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/services/evangelism_crm_bridge.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/services/evangelism_projection.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/services/event_consumers.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/services/image_optimizer.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/services/intelligence.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/services/knowledge_base.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/services/knowledge_graph.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/services/mention_parser.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/services/messaging.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/services/messaging_outcomes.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/services/pastoral_health.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/services/payments.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/services/public_contact_tracking.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/services/scheduler.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/services/task_notifications.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+/usr/local/lib/python3.12/dist-packages/coverage/report_core.py:113: CoverageWarning: Couldn't parse '/root/ccf/backend/services/tool_registry.py': Couldn't use data file '/root/ccf/.coverage': no such table: tracer (couldnt-parse); see https://coverage.readthedocs.io/en/7.14.3/messages.html#warning-couldnt-parse
+  coverage._warn(msg, slug="couldnt-parse")
+
+
+================================ tests coverage ================================
+_______________ coverage: platform linux, python 3.12.3-final-0 ________________
+
+Name                                   Stmts   Miss  Cover   Missing
+--------------------------------------------------------------------
+backend/__init__.py                        0      0   100%
+backend/agents/orchestrator.py            88     72    18%   45-58, 72-142, 160-182, 188-192, 202-208, 215-245
+backend/analytics/__init__.py              0      0   100%
+backend/analytics/event_sink.py           32     32     0%   1-67
+backend/analytics/proactive_ia.py         21     21     0%   1-62
+backend/analytics/queries.py              30     30     0%   1-103
+backend/api/__init__.py                    2      0   100%
+backend/api/_cms_helpers/__init__.py       2      0   100%
+backend/api/_cms_helpers/_shared.py      225    178    21%   49-52, 63-66, 80-85, 95-105, 149-154, 165-187, 191-193, 203-221, 225, 232-268, 272-286, 290-318, 325-371, 378-426, 430-442, 450-462, 473-495, 508-511, 518-526, 531-535, 552-556
+backend/api/academy.py                   567    438    23%   47-48, 52-56, 60-63, 67-78, 85-87, 103-105, 116-118, 122-123, 155-170, 183-191, 196-204, 221-223, 241-248, 253-266, 281-348, 353-380, 394-452, 464-497, 507-522, 532-545, 551-570, 580-642, 647-671, 689-705, 721-739, 751-780, 804-848, 869-913, 926-947, 957-975, 979-984, 993, 1002-1003, 1018-1036, 1047-1056, 1065-1066, 1081-1096, 1105-1123, 1134-1135, 1158-1190, 1219-1221, 1226-1231, 1248-1264, 1292-1332, 1337-1342, 1352-1370, 1375-1388, 1393-1425, 1454-1459, 1469-1488, 1493-1508, 1529-1573, 1582-1622, 1632-1648
+backend/api/academy_cache.py              68     52    24%   38, 54-61, 89-182, 216-217, 233-241, 252-258, 293-304
+backend/api/admin.py                     349    246    30%   49-60, 72-90, 103-111, 123-132, 143-144, 169-176, 197-214, 230-242, 254-259, 273-281, 294-297, 315-322, 334-336, 349-355, 367-370, 384-385, 395-399, 409-412, 426, 442-455, 473-474, 486-493, 503-517, 528-545, 555-562, 573-590, 605-606, 633-634, 646-652, 668-669, 681-690, 709-717, 733-740, 757-765, 778-781, 799-812, 824-829, 848-859, 877-888, 907-908, 920-938, 948-955, 976-977, 993-1001
+backend/api/agenda.py                    219    149    32%   37, 41, 59, 77, 88, 99, 109, 123-125, 135-136, 146-149, 158-161, 170-173, 183-190, 199-203, 211-212, 221-231, 241-254, 263-267, 276-278, 287-306, 316-329, 338-342, 348-351, 360-362, 371-386, 396-417, 426-430, 440-454, 464-499, 510-553, 563-579
+backend/api/agents.py                    268    171    36%   62, 74-122, 139-148, 157, 167-178, 188-193, 202-211, 220, 229-239, 249-258, 276-313, 342-343, 353-359, 368, 384-390, 399-400, 405-408, 413-428, 433-447, 452-460, 465-482, 494-531, 536-568, 589-591, 603-608, 629-641, 665-671, 681, 692, 702-705, 716-718, 726
+backend/api/analytics.py                  31     18    42%   17-26, 46-47, 55-73
+backend/api/auth_v3.py                   544    430    21%   49, 53-57, 61-70, 74-88, 92-106, 110-118, 129-135, 139, 143-149, 212, 216-233, 237, 249, 268-282, 292-426, 446-509, 530-556, 568, 579-600, 614-642, 674-722, 738-748, 796-856, 865-877, 887-899, 908-937, 947-967, 976-990, 1005-1025, 1040-1067, 1083-1115, 1126-1165
+backend/api/chat.py                      337    291    14%   45, 49-52, 56-58, 89-117, 145-160, 203-228, 278-304, 325-347, 373-398, 415-433, 451-474, 494-500, 521-570, 589-629, 660-692, 710-788, 820-889, 920-941, 966-990, 999-1042
+backend/api/cms.py                       125     85    32%   40, 67-91, 107, 132, 143-144, 175-181, 192-196, 214-229, 247-296, 316-336, 390-431
+backend/api/cms_v2/__init__.py            37      0   100%
+backend/api/cms_v2/_shared.py            223    180    19%   71-90, 107-111, 130-134, 147-150, 159-165, 174-177, 200-207, 221-223, 234-244, 252-260, 264-272, 282-300, 325-337, 344-374, 381-482, 489-492, 498-506, 510-518, 522-530, 543-546, 551-553, 557-558
+backend/api/cms_v2/ab_testing.py          65     32    51%   30-33, 48-49, 67-69, 82-83, 97-99, 109-110, 121-124, 134-138, 151-153, 167-170
+backend/api/cms_v2/analytics_ops.py       92     64    30%   43-53, 66-76, 90-103, 121-128, 140-173
+backend/api/cms_v2/forms.py               71     40    44%   30-33, 48-76, 92-93, 107-109, 119-120, 132-135, 145-148, 163-168
+backend/api/cms_v2/global_blocks.py       69     45    35%   48-62, 77-109, 120-137, 147-160
+backend/api/cms_v2/newsletter.py         106     62    42%   33-36, 40-43, 56-59, 74-79, 93-94, 108-110, 120-121, 132-135, 145-149, 159-162, 174-179, 193-195, 205-208, 218-219, 230-233, 243-247
+backend/api/cms_v2/pages.py              288    227    21%   79-81, 91-103, 113-114, 125-138, 148-151, 162-175, 194-197, 208-225, 237-256, 267-273, 284-287, 305-308, 323-326, 342-362, 376-379, 389, 398-487, 503-522, 541-548, 559-570
+backend/api/cms_v2/pastoral.py            30     14    53%   37-52, 62-66
+backend/api/cms_v2/popups.py              52     25    52%   30-33, 48-58, 70-71, 85-87, 97-98, 109-112, 123-126
+backend/api/cms_v2/posts.py              220    167    24%   50-51, 61-71, 81-82, 93-99, 109-112, 124-125, 135-142, 152-153, 164-167, 177-180, 200-211, 221-237, 247-252, 263-275, 285-288, 308-322, 337-354, 368-378, 393-410, 421-427
+backend/api/cms_v2/presence.py           125     22    82%   41, 45, 51, 83-87, 195-197, 200-201, 223-228, 231-233
+backend/api/cms_v2/public.py             162    118    27%   59-68, 77-97, 115-119, 129-191, 207-216, 225-230, 243-257, 267-288, 305-314, 324-332
+backend/api/cms_v2/section_types.py       64     41    36%   43-46, 65-68, 80, 94-108, 122-131, 149-153, 158-167
+backend/api/cms_v2/sites.py               52     31    40%   43-45, 54-74, 83-84, 94-104, 114-117
+backend/api/cms_v2/themes_menus.py       125     81    35%   44-45, 55-59, 69-73, 84-91, 101-106, 117-123, 135-136, 146-153, 163-164, 175-178, 189-192, 208-210, 225-231, 246-252, 264-270, 284-287
+backend/api/comments.py                  122     96    21%   44-64, 73-74, 84-87, 91, 108, 126-151, 163-217, 229-287
+backend/api/community.py                  51     30    41%   29, 45-46, 61-64, 92-102, 116-137, 160-167
+backend/api/crm/__init__.py               10      0   100%
+backend/api/crm/_shared.py               271    232    14%   30, 35, 40, 45, 49, 70-73, 78-93, 101-116, 120-132, 136-153, 157-169, 176-183, 215-240, 266-308, 322-335, 339-340, 365, 369-397, 401-405, 409-422, 477-479, 483-485, 503-514, 535-554, 558-579
+--------------------------------------------------------------------
+TOTAL                                   5143   3720    28%
+Required test coverage of 38% reached. Total coverage: 39.09%
+======================== 46 passed, 1 skipped in 10.19s ========================
