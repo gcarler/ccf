@@ -507,6 +507,19 @@
     padding-top: 0;
 }
 
+/* The anniversary video deserves a little more vertical room so the
+   composition can be appreciated below the fixed navbar. Keep this scoped to
+   /aniversario40; other CMS video heroes retain their existing height. */
+.ccf-anniversary-page .ccf-video-hero {
+    min-height: clamp(500px, calc(72vh + 5rem), 840px);
+}
+
+@media (max-width: 767px) {
+    .ccf-anniversary-page .ccf-video-hero {
+        min-height: clamp(460px, calc(72vh + 3rem), 700px);
+    }
+}
+
 .ccf-section-panel {
     background: var(--site-surface-container-low);
     border: 1px solid color-mix(in srgb, var(--site-outline-variant) 42%, transparent);
