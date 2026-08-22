@@ -111,15 +111,14 @@ export default function EventCreateDrawer({
  </div>
 
  <div className="space-y-1.5">
- <label htmlFor="event-sede" className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Sede del Evento *</label>
+ <label htmlFor="event-sede" className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Universo del Evento</label>
  <select
  id="event-sede"
- required
  value={form.sede_id}
  onChange={e => setForm({ ...form, sede_id: e.target.value })}
  className="w-full px-4 py-1.5 rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-primary))] dark:bg-black/20 focus:ring-2 focus:ring-primary outline-none font-bold text-sm text-[hsl(var(--text-primary))] appearance-none"
  >
- <option value="">Todas las sedes (evento global)</option>
+ <option value="">Universo completo — Todas las sedes</option>
  {sedes.map((sede) => <option key={sede.id} value={sede.id}>{sede.name}</option>)}
  </select>
  <p className="text-2xs text-[hsl(var(--text-secondary))]">“Todas las sedes” permite registrar personas de toda la base de datos.</p>

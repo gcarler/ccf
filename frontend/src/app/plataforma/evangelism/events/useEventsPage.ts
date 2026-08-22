@@ -121,6 +121,8 @@ export function useEventsPage() {
 
  // Attendance State
  const [attendanceDate, setAttendanceDate] = useState(() => formatLocalDate(new Date()));
+ const [attendancePersonas, setAttendancePersonas] = useState<Persona[]>([]);
+ const [attendanceUniverseLoaded, setAttendanceUniverseLoaded] = useState(false);
  const [attendedPersonaIds, setAttendedPersonaIds] = useState<string[]>([]);
  const [attendanceSearch, setAttendanceSearch] = useState('');
  const [attendanceLoading, setAttendanceLoading] = useState(false);
@@ -537,6 +539,8 @@ const handleCreateEvent = async (e: React.FormEvent) => {
   if (!canEditEvents) return;
   setSelectedEvent(normalizeMinistryEvent(ev));
   setIsAttendanceDrawerOpen(true);
+  setAttendancePersonas([]);
+  setAttendanceUniverseLoaded(false);
   setAttendanceDate(formatLocalDate(new Date()));
   setAttendedPersonaIds([]);
   setShowScanner(false);
@@ -572,6 +576,24 @@ const handleCreateEvent = async (e: React.FormEvent) => {
  loadAttendanceSession();
  return () => abort.abort();
  }, [attendanceDate, isAttendanceDrawerOpen, selectedEvent, token]);
+
+ useEffect(() => {
+  if (!token || !selectedEvent || !isAttendanceDrawerOpen) return;
+  const abort = new AbortController();
+  apiFetch<Persona[]>(`/evangelism/events/personas/${selectedEvent.id}`, {
+   token,
+   silent: true,
+   cache: 'no-store',
+   signal: abort.signal,
+  }).then((data) => {
+   if (abort.signal.aborted) return;
+   setAttendancePersonas(Array.isArray(data) ? data : []);
+   setAttendanceUniverseLoaded(true);
+  }).catch(() => {
+   if (!abort.signal.aborted) setAttendanceUniverseLoaded(false);
+  });
+  return () => abort.abort();
+ }, [isAttendanceDrawerOpen, selectedEvent, token]);
 
 const saveAttendance = async (forceEmpty = false) => {
  if (!selectedEvent || !canEditEvents) return;
@@ -621,7 +643,8 @@ const saveAttendance = async (forceEmpty = false) => {
  );
  };
 
- const expectedUniversePersonas = personas.filter((persona) => {
+ const attendanceSourcePersonas = attendanceUniverseLoaded ? attendancePersonas : personas;
+ const expectedUniversePersonas = attendanceSourcePersonas.filter((persona) => {
  if (!selectedEvent) {
  return true;
  }
