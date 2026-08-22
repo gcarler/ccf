@@ -138,7 +138,7 @@ export default function AcademyCoursesPage() {
                     {/* Números 3x más grandes, sin recuadros, con efecto hover gradiente */}
                     <div className="flex items-center gap-8 md:gap-12 shrink-0">
                         <div className="group cursor-pointer select-none">
-                            <p className="text-5xl md:text-6xl font-black tracking-tight text-[hsl(var(--text-primary))] dark:text-white group-hover:bg-gradient-to-r group-hover:from-blue-500 group-hover:via-indigo-400 group-hover:to-cyan-400 group-hover:bg-clip-text group-hover:text-transparent group-hover:scale-110 group-hover:drop-shadow-[0_0_15px_rgba(59,130,246,0.5)] transition-all duration-300 origin-left">
+                            <p className="text-5xl md:text-6xl font-black tracking-tight text-[hsl(var(--text-primary))] dark:text-white group-hover:bg-gradient-to-r group-hover:from-[hsl(var(--primary))] group-hover:via-[hsl(var(--info))] group-hover:to-[hsl(var(--accent))] group-hover:bg-clip-text group-hover:text-transparent group-hover:scale-110 group-hover:drop-shadow-[0_0_15px_rgba(59,130,246,0.5)] transition-all duration-300 origin-left">
                                 {courses.length}
                             </p>
                             <p className="text-xs font-bold uppercase tracking-widest text-[hsl(var(--text-secondary))] group-hover:text-[hsl(var(--primary))] transition-colors mt-1">
