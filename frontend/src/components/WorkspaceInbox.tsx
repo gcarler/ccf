@@ -115,6 +115,10 @@ export default function WorkspaceInbox({ isOpen, onClose }: { isOpen: boolean, o
                                     <span className="size-2 rounded-full bg-current" />
                                     WS
                                 </span>
+                                <HeaderAction icon={CheckCircle2} tooltip="Marcar todo como leído" />
+                                <HeaderAction icon={Filter} tooltip="Filtrar" />
+                                <HeaderAction icon={Settings} tooltip="Ajustes" />
+                                <div className="w-[1px] h-4 bg-[hsl(var(--surface-3))] dark:bg-white/10 mx-2" />
                                 <HeaderAction
                                     icon={isExpanded ? Minimize2 : Maximize2}
                                     tooltip={isExpanded ? "Contraer panel" : "Expandir panel"}
@@ -122,10 +126,6 @@ export default function WorkspaceInbox({ isOpen, onClose }: { isOpen: boolean, o
                                     onClick={() => setIsExpanded((expanded) => !expanded)}
                                     pressed={isExpanded}
                                 />
-                                <HeaderAction icon={CheckCircle2} tooltip="Marcar todo como leído" />
-                                <HeaderAction icon={Filter} tooltip="Filtrar" />
-                                <HeaderAction icon={Settings} tooltip="Ajustes" />
-                                <div className="w-[1px] h-4 bg-[hsl(var(--surface-3))] dark:bg-white/10 mx-2" />
                                 <button
                                     onClick={onClose}
                                     className="p-2 hover:bg-[hsl(var(--surface-3))] dark:hover:bg-white/10 rounded-md transition-all text-[hsl(var(--text-secondary))]"
