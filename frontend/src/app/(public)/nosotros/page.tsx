@@ -300,15 +300,20 @@ export default function NosotrosPage() {
                         {/* Texto */}
                         <div className="w-full lg:w-7/12">
                             {founderLabel && (
-                                <span className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-site-primary mb-4">
-                                    <Heart size={12} /> {founderLabel}
-                                </span>
+                                <div className="inline-flex items-center gap-2.5 px-4 py-2 rounded-full bg-site-primary/10 border border-site-primary/20 text-site-primary text-xs font-bold uppercase tracking-widest mb-6">
+                                    <Heart size={14} className="text-site-primary" />
+                                    <span>{founderLabel}</span>
+                                </div>
                             )}
                             {(founderTitle || founderTitleAccent) && (
-                                <h2 className="ccf-headline text-3xl md:text-4xl lg:text-5xl font-black text-site-on-surface mb-5">
+                                <h2 className="ccf-headline text-3xl sm:text-4xl md:text-5xl font-black text-site-on-surface mb-6 tracking-tight">
                                     {founderTitle}
-                                    <br />
-                                    <span className="text-site-primary">{founderTitleAccent}</span>
+                                    {founderTitleAccent && (
+                                        <>
+                                            <br />
+                                            <span className="text-site-primary">{founderTitleAccent}</span>
+                                        </>
+                                    )}
                                 </h2>
                             )}
                             {(founderBio || founderBio2) && (
