@@ -117,57 +117,98 @@ export default function NosotrosPage() {
 
             {/* ── VISIÓN Y MISIÓN ── */}
             {hasVisionMission && (
-                <section className="ccf-section bg-site-surface-container-low">
-                    <div className="ccf-container grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
-                        {/* Visión */}
+                <section className="py-20 md:py-28 bg-site-surface-container-low/60 relative overflow-hidden">
+                    {/* Background ambient lighting */}
+                    <div className="absolute top-1/2 left-1/4 -translate-y-1/2 w-96 h-96 bg-site-primary/5 rounded-full blur-3xl pointer-events-none" />
+                    <div className="absolute top-1/2 right-1/4 -translate-y-1/2 w-96 h-96 bg-site-primary-container/10 rounded-full blur-3xl pointer-events-none" />
+
+                    <div className="ccf-container relative z-10 grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-10">
+                        {/* Visión Card */}
                         {(visionTitle || visionText) && (
-                            <div className="ccf-card relative p-8 md:p-10 overflow-hidden bg-site-surface">
-                                <div className="absolute top-6 right-6 opacity-[0.06] text-site-primary">
-                                    <Target size={100} />
+                            <div className="group relative rounded-3xl p-8 sm:p-10 md:p-12 bg-site-surface dark:bg-site-surface-container/60 backdrop-blur-xl border border-site-outline-variant/15 hover:border-site-primary/30 shadow-lg hover:shadow-2xl hover:shadow-site-primary/5 transition-all duration-500 transform hover:-translate-y-1.5 flex flex-col justify-between overflow-hidden">
+                                {/* Watermark icon */}
+                                <div className="absolute -bottom-6 -right-6 text-site-primary/[0.04] group-hover:text-site-primary/[0.08] transition-colors duration-500 pointer-events-none select-none">
+                                    <Target size={180} />
                                 </div>
-                                <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-site-primary/10 border border-site-primary/20 text-site-primary text-2xs font-bold uppercase tracking-widest mb-5">
-                                    <Target size={11} /> Visión
+
+                                <div>
+                                    {/* Badge Header */}
+                                    <div className="flex items-center justify-between mb-8">
+                                        <div className="inline-flex items-center gap-2.5 px-4 py-2 rounded-full bg-site-primary/10 border border-site-primary/20 text-site-primary text-xs font-bold uppercase tracking-widest">
+                                            <Target size={14} className="text-site-primary" />
+                                            <span>Nuestra Visión</span>
+                                        </div>
+                                        <span className="text-3xl sm:text-4xl font-black text-site-outline-variant/30 select-none">
+                                            01
+                                        </span>
+                                    </div>
+
+                                    {visionTitle && (
+                                        <h2 className="ccf-headline text-2xl sm:text-3xl md:text-4xl font-black text-site-on-surface mb-6 tracking-tight group-hover:text-site-primary transition-colors duration-300">
+                                            {visionTitle}
+                                        </h2>
+                                    )}
+
+                                    {visionText && (
+                                        <RichText
+                                            html={visionText}
+                                            className="ccf-body text-base sm:text-lg leading-relaxed text-site-on-surface-variant [&_strong]:text-site-on-surface"
+                                        />
+                                    )}
                                 </div>
-                                {visionTitle && (
-                                    <h2 className="ccf-headline text-2xl md:text-3xl font-black text-site-on-surface mb-4">
-                                        {visionTitle}
-                                    </h2>
-                                )}
-                                {visionText && (
-                                    <RichText
-                                        html={visionText}
-                                        className="ccf-body text-base md:text-lg text-site-on-surface-variant [&_strong]:text-site-on-surface"
-                                    />
-                                )}
+
+                                <div className="mt-8 pt-6 border-t border-site-outline-variant/15 flex items-center gap-3 text-xs font-bold uppercase tracking-wider text-site-primary">
+                                    <div className="w-8 h-0.5 rounded-full bg-site-primary group-hover:w-16 transition-all duration-500" />
+                                    <span>Hacia dónde vamos</span>
+                                </div>
                             </div>
                         )}
 
-                        {/* Misión */}
+                        {/* Misión Card */}
                         {(misionTitle || misionText) && (
                             <div
-                                className="relative rounded-2xl p-8 md:p-10 overflow-hidden shadow-2xl"
+                                className="group relative rounded-3xl p-8 sm:p-10 md:p-12 overflow-hidden shadow-xl hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-1.5 flex flex-col justify-between"
                                 style={{
                                     background: "var(--site-hero-cta-gradient)",
-                                    boxShadow: "0 20px 60px -10px var(--site-glow-intense)",
+                                    boxShadow: "0 24px 64px -12px var(--site-glow-intense)",
                                 }}
                             >
-                                <div className="absolute top-6 right-6 opacity-10">
-                                    <Sparkles size={100} className="text-white" />
+                                {/* Subtle inner pattern & watermark */}
+                                <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(255,255,255,0.15),transparent_65%)] pointer-events-none" />
+                                <div className="absolute -bottom-6 -right-6 text-white/[0.08] group-hover:text-white/[0.14] transition-colors duration-500 pointer-events-none select-none">
+                                    <Sparkles size={180} />
                                 </div>
-                                <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/15 border border-white/20 text-white text-2xs font-bold uppercase tracking-widest mb-5">
-                                    <Sparkles size={11} /> Misión
+
+                                <div className="relative z-10">
+                                    {/* Badge Header */}
+                                    <div className="flex items-center justify-between mb-8">
+                                        <div className="inline-flex items-center gap-2.5 px-4 py-2 rounded-full bg-white/15 border border-white/25 text-white text-xs font-bold uppercase tracking-widest backdrop-blur-md">
+                                            <Sparkles size={14} className="text-white" />
+                                            <span>Nuestra Misión</span>
+                                        </div>
+                                        <span className="text-3xl sm:text-4xl font-black text-white/30 select-none">
+                                            02
+                                        </span>
+                                    </div>
+
+                                    {misionTitle && (
+                                        <h2 className="ccf-headline text-2xl sm:text-3xl md:text-4xl font-black text-white mb-6 tracking-tight">
+                                            {misionTitle}
+                                        </h2>
+                                    )}
+
+                                    {misionText && (
+                                        <RichText
+                                            html={misionText}
+                                            className="ccf-body text-base sm:text-lg leading-relaxed text-white/90 [&_strong]:text-white"
+                                        />
+                                    )}
                                 </div>
-                                {misionTitle && (
-                                    <h2 className="ccf-headline text-2xl md:text-3xl font-black text-white mb-4">
-                                        {misionTitle}
-                                    </h2>
-                                )}
-                                {misionText && (
-                                    <RichText
-                                        html={misionText}
-                                        className="ccf-body text-base md:text-lg text-white/85 [&_strong]:text-white"
-                                    />
-                                )}
+
+                                <div className="relative z-10 mt-8 pt-6 border-t border-white/15 flex items-center gap-3 text-xs font-bold uppercase tracking-wider text-white/90">
+                                    <div className="w-8 h-0.5 rounded-full bg-white group-hover:w-16 transition-all duration-500" />
+                                    <span>Nuestra razón de ser</span>
+                                </div>
                             </div>
                         )}
                     </div>
