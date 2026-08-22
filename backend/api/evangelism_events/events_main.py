@@ -104,6 +104,18 @@ def list_event_sedes(
     ]
 
 
+@static_router.get("/events/personas/{event_id}", response_model=List[dict])
+def list_event_personas(
+    event_id: UUID,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_evangelism_read),
+):
+    """Lista el universo de personas del evento respetando su alcance."""
+    event = require_event_access(db, current_user, event_id)
+    people = get_expected_personas_for_event(db, event)
+    return [schemas.PersonaResponse.model_validate(person).model_dump(mode="json") for person in people]
+
+
 def _strategy_event_matches(event: models.CrmEvent, strategy_id: UUID) -> bool:
     settings = event.settings_json if isinstance(event.settings_json, dict) else {}
     return str(settings.get("evangelism_strategy_id") or "") == str(strategy_id)
@@ -140,7 +152,7 @@ def ensure_strategy_event(
         (
             item
             for item in _active_events_query(db)
-            .filter(models.CrmEvent.sede_id == user_sede)
+            .filter((models.CrmEvent.sede_id == user_sede) | models.CrmEvent.sede_id.is_(None))
             .order_by(models.CrmEvent.event_date.desc())
             .all()
             if _strategy_event_matches(item, strategy_id)
@@ -150,7 +162,7 @@ def ensure_strategy_event(
     if not event:
         event_date = strategy.fecha_inicio or utc_now()
         event = models.CrmEvent(
-            sede_id=user_sede,
+            sede_id=None,
             name=strategy.nombre,
             description=strategy.descripcion,
             event_date=event_date,
@@ -413,7 +425,9 @@ def get_events_dashboard_stats(
     current_user: models.User = Depends(require_evangelism_read),
 ):
     user_sede = require_user_sede_id(db, current_user)
-    events = _active_events_query(db).filter(models.CrmEvent.sede_id == user_sede).all()
+    events = _active_events_query(db).filter(
+        (models.CrmEvent.sede_id == user_sede) | models.CrmEvent.sede_id.is_(None)
+    ).all()
     if not events:
         return []
 
