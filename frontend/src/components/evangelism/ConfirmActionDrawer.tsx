@@ -1,6 +1,7 @@
 'use client';
 
 import { AlertTriangle, CheckCircle2 } from 'lucide-react';
+import clsx from 'clsx';
 import WorkspaceDrawer from '@/components/WorkspaceDrawer';
 
 export type ConfirmActionState = {
@@ -43,11 +44,12 @@ export default function ConfirmActionDrawer({ action, onClose }: Props) {
                 // Keep the drawer open so the user can retry or cancel.
               }
             }}
-            className={`inline-flex items-center gap-2 rounded-md px-3 py-2 text-xs font-semibold uppercase tracking-wide text-white transition-colors ${
+            className={clsx(
+              'inline-flex items-center gap-2 rounded-md px-3 py-2 text-xs font-semibold uppercase tracking-wide text-white transition-colors',
               action?.destructive
                 ? 'bg-[hsl(var(--danger))] hover:bg-[hsl(var(--danger))]'
                 : 'bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))]'
-            }`}
+            )}
           >
             <CheckCircle2 size={14} />
             {action?.confirmLabel || 'Confirmar'}
