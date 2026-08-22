@@ -22,7 +22,6 @@ import clsx from 'clsx';
 import { toast } from 'sonner';
 import { useWikiDocument } from '@/hooks/useWikiDocument';
 
-import WorkspaceLayout from '@/components/WorkspaceLayout';
 import { DSSkeleton } from '@/design';
 import EmptyState from '@/components/ui/EmptyState';
 import { DSMetric, DSCard, DSBadge } from '@/design';
@@ -93,8 +92,12 @@ export default function TeacherWorkspace() {
             : 'Por favor ajusta los requisitos antes de volver a enviar.';
         try {
             await apiFetch<AssignmentSubmissionReview>(
-                `/academy/admin/submissions/${submission.id}/grade?grade=${grade}&feedback=${encodeURIComponent(feedback)}`,
-                { method: 'PATCH', token }
+                `/academy/admin/submissions/${submission.id}/grade`,
+                {
+                    method: 'PATCH',
+                    token,
+                    body: { grade, feedback }
+                }
             );
             toast.success(decision === 'approve' ? 'Calificación registrada' : 'Solicitud de ajustes enviada');
             await loadData();
@@ -108,23 +111,17 @@ export default function TeacherWorkspace() {
 
     if (loading) {
         return (
-            <WorkspaceLayout sidebarTitle="Academia">
-                <div className="p-4 space-y-3">
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                        {[1, 2, 3].map(i => <DSSkeleton key={i} className="h-32 rounded-lg" />)}
-                    </div>
-                    <DSSkeleton className="h-[400px] rounded-lg" />
+            <div className="p-4 space-y-3">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    {[1, 2, 3].map(i => <DSSkeleton key={i} className="h-32 rounded-lg" />)}
                 </div>
-            </WorkspaceLayout>
+                <DSSkeleton className="h-[400px] rounded-lg" />
+            </div>
         );
     }
 
     return (
-        <WorkspaceLayout
-            sidebarTitle="Academia"
-            allowedPermissions={['academy:edit', 'academy:manage']}
-        >
-            <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))]">
+        <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))]">
                 <WorkspaceToolbar
                     breadcrumbs={[
                         { label: 'Academia', icon: GraduationCap },
@@ -241,12 +238,28 @@ export default function TeacherWorkspace() {
                                                         <BookOpen size={14} className="text-[hsl(var(--primary))]" /> {course.lesson_count || 0} Lecciones
                                                     </div>
                                                 </div>
-                                                <button
-                                                    onClick={() => router.push(`/plataforma/academy/courses/${course.id}/manage`)}
-                                                    className="w-full py-3 bg-[hsl(var(--bg-muted))] dark:bg-[hsl(var(--bg-primary))] text-white dark:text-[hsl(var(--text-primary))] rounded-lg text-2xs font-semibold uppercase tracking-wide hover:scale-105 active:scale-95 transition-all shadow-lg"
-                                                >
-                                                    Gestionar Programa
-                                                </button>
+                                                <div className="flex flex-col gap-2 pt-2 border-t border-[hsl(var(--border))] dark:border-white/5">
+                                                    <button
+                                                        onClick={() => router.push(`/plataforma/academy/courses/${course.id}/lessons`)}
+                                                        className="w-full py-2.5 px-3 bg-[hsl(var(--primary))] text-white rounded-lg text-xs font-bold uppercase tracking-wider hover:opacity-90 active:scale-95 transition-all shadow-md flex items-center justify-center gap-1.5"
+                                                    >
+                                                        <BookOpen size={14} /> Gestionar Clases y Lecciones
+                                                    </button>
+                                                    <div className="flex gap-2">
+                                                        <button
+                                                            onClick={() => router.push(`/plataforma/academy/course/${course.id}`)}
+                                                            className="flex-1 py-2 px-2.5 bg-[hsl(var(--surface-2))] dark:bg-white/10 text-[hsl(var(--text-primary))] dark:text-white rounded-lg text-2xs font-bold uppercase tracking-wider hover:bg-[hsl(var(--surface-3))] transition-all flex items-center justify-center gap-1"
+                                                        >
+                                                            Ver Aula Virtual
+                                                        </button>
+                                                        <button
+                                                            onClick={() => router.push(`/plataforma/academy/courses/${course.id}/manage`)}
+                                                            className="flex-1 py-2 px-2.5 bg-[hsl(var(--surface-2))] dark:bg-white/10 text-[hsl(var(--text-primary))] dark:text-white rounded-lg text-2xs font-bold uppercase tracking-wider hover:bg-[hsl(var(--surface-3))] transition-all flex items-center justify-center gap-1"
+                                                        >
+                                                            Administrar Cohorte
+                                                        </button>
+                                                    </div>
+                                                </div>
                                             </div>
                                         ))}
                                     </div>
@@ -358,6 +371,5 @@ export default function TeacherWorkspace() {
                     )}
                 </main>
             </div>
-        </WorkspaceLayout>
     );
 }
