@@ -18,7 +18,7 @@ from alembic import op
 
 
 revision: str = "20260822_0002_evangelism_sede_indexes"
-down_revision: Union[str, None] = "20260822_0001_pgvector_rag_rls"
+down_revision: Union[str, None] = "20260810_0002_kernel_roles_uuid_pk"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
