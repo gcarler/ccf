@@ -10,7 +10,6 @@ import type { CourseDetail } from '@/types/academy';
 
 import { motion, AnimatePresence } from "framer-motion";
 import { AcademyDetailContainer } from '@/components/academy/AcademyDetailShell';
-import WorkspaceLayout from '@/components/WorkspaceLayout';
 
 export default function EnrollmentWizard() {
     const { token, isAuthenticated, user } = useAuth();
@@ -69,24 +68,18 @@ export default function EnrollmentWizard() {
 
     if (loading) {
         return (
-            <WorkspaceLayout depth={2} breadcrumbs={[{ label: 'Academia' }, { label: 'Procesando curso…' }]} onBack={() => router.push('/plataforma/academy')}>
-                <AcademyDetailContainer variant="blue" contentClassName="px-4 py-1.5">
-                    <div className="flex items-center justify-center py-1.5">
-                        <Loader2 className="animate-spin text-[hsl(var(--primary))] w-10 h-10" />
-                    </div>
-                </AcademyDetailContainer>
-            </WorkspaceLayout>
+            <AcademyDetailContainer variant="blue" contentClassName="px-4 py-1.5">
+                <div className="flex items-center justify-center py-1.5">
+                    <Loader2 className="animate-spin text-[hsl(var(--primary))] w-10 h-10" />
+                </div>
+            </AcademyDetailContainer>
         );
     }
 
     if (!course) return null;
 
     return (
-        <WorkspaceLayout
-            breadcrumbs={[{ label: 'Academia' }, { label: `Inscripción · ${course.title}` }]}
-            onBack={() => router.push('/plataforma/academy')}
-        >
-            <AcademyDetailContainer variant="blue" contentClassName="max-w-xl mx-auto">
+        <AcademyDetailContainer variant="blue" contentClassName="max-w-xl mx-auto">
             <div className="px-4 mt-4 mb-4">
                 <div className="flex items-center justify-between gap-4 p-2 bg-[hsl(var(--surface-2))] rounded-lg border border-[hsl(var(--border))]">
                     {[1, 2, 3].map((s) => (
@@ -284,6 +277,5 @@ export default function EnrollmentWizard() {
                     </div>
                 )}
             </AcademyDetailContainer>
-        </WorkspaceLayout>
     );
 }

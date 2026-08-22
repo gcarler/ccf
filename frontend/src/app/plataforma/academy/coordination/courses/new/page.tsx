@@ -207,6 +207,9 @@ export default function NewCoursePage() {
                                         onChange={(e) => setFormData({...formData, modality: e.target.value})}
                                         className="w-full bg-[hsl(var(--surface-1))] dark:bg-black/20 border-2 border-transparent dark:border-white/5 rounded-lg px-4 py-2 text-sm font-bold outline-none appearance-none cursor-pointer focus:border-[hsl(var(--info)/100%)]/50 transition-all"
                                     >
+                                        <option value="online">Online / Virtual</option>
+                                        <option value="presential">Presencial</option>
+                                        <option value="hybrid">Híbrido / Mixto</option>
                                         <option value="formal">Academia Formal</option>
                                         <option value="non_formal">Capacitación Libre</option>
                                     </select>

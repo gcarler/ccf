@@ -50,7 +50,7 @@ interface Course {
 export default function CourseViewPage() {
     const params = useParams();
     const id = (params?.id as string) ?? '';
-    const { token } = useAuth();
+    const { token, user } = useAuth();
     const router = useRouter();
     const { pushSidebarPanel } = useSidebarLayers();
     const [course, setCourse] = useState<Course | null>(null);
@@ -76,12 +76,21 @@ export default function CourseViewPage() {
                 const uncompleted = data.lessons.find((lesson: Lesson) => !lesson.is_completed);
                 setActiveLesson(uncompleted || data.lessons[0]);
             }
+            // Garantía de matrícula automática en segundo plano
+            if (user?.id && data?.id) {
+                apiFetch('/academy/enrollments/', {
+                    method: 'POST',
+                    token,
+                    body: { persona_id: user.id, course_id: data.id },
+                    silent: true,
+                }).catch(() => {});
+            }
         } catch (err) {
             console.error(err);
         } finally {
             setLoading(false);
         }
-    }, [id, token]);
+    }, [id, token, user?.id]);
 
     useEffect(() => {
         fetchCourseData();

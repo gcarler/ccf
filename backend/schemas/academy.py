@@ -35,6 +35,9 @@ class Modality(str, Enum):
     ONLINE = "online"
     PRESENTIAL = "presential"
     HYBRID = "hybrid"
+    FORMAL = "formal"
+    NON_FORMAL = "non_formal"
+    VIRTUAL = "virtual"
 
 
 class ContentType(str, Enum):
@@ -182,6 +185,7 @@ class AssessmentAnswerSubmit(BaseModel):
 class AssessmentAttemptSubmit(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
+    enrollment_id: Optional[UUID] = None
     submitted_score: Optional[float] = None
     answers: Optional[List[AssessmentAnswerSubmit]] = None
 
@@ -749,6 +753,8 @@ class AcademyPersonaItem(BaseModel):
     id: UUID
     persona_id: UUID
     username: str
+    name: Optional[str] = None
+    full_name: Optional[str] = None
     email: str
     role: str
     is_active: bool

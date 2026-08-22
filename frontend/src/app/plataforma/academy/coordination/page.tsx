@@ -13,7 +13,6 @@ import { DSMetric, DSCard, DSBadge } from '@/design';
 import { ViewType, getStoredView } from '@/components/ViewSwitcher';
 import { useWikiDocument } from '@/hooks/useWikiDocument';
 
-import WorkspaceLayout from '@/components/WorkspaceLayout';
 import { DSSkeleton } from '@/design';
 import EmptyState from '@/components/ui/EmptyState';
 
@@ -85,23 +84,17 @@ export default function CoordinationConsole() {
 
     if (loading) {
         return (
-            <WorkspaceLayout sidebarTitle="Academia">
-                <div className="p-4 space-y-3">
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                        {[1, 2, 3].map(i => <DSSkeleton key={i} className="h-32 rounded-lg" />)}
-                    </div>
-                    <DSSkeleton className="h-[400px] rounded-lg" />
+            <div className="p-4 space-y-3">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    {[1, 2, 3].map(i => <DSSkeleton key={i} className="h-32 rounded-lg" />)}
                 </div>
-            </WorkspaceLayout>
+                <DSSkeleton className="h-[400px] rounded-lg" />
+            </div>
         );
     }
 
     return (
-        <WorkspaceLayout
-            sidebarTitle="Academia"
-            allowedPermissions={['academy:manage']}
-        >
-            <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))]">
+        <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))]">
                 <WorkspaceToolbar
                     breadcrumbs={[
                         { label: 'Academia', icon: GraduationCap },
@@ -316,6 +309,5 @@ export default function CoordinationConsole() {
                     )}
                 </main>
             </div>
-        </WorkspaceLayout>
     );
 }
