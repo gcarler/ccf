@@ -5,6 +5,7 @@ import WorkspaceDrawer from '@/components/WorkspaceDrawer';
 import ErrorBoundary from '@/components/ErrorBoundary';
 import { Check } from 'lucide-react';
 import React from 'react';
+import { DSButton, DSInput, DSSelect } from '@/design';
 
 const DAY_LABELS = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
 
@@ -83,24 +84,25 @@ export default function EventCreateDrawer({
  subtitle="Configura un evento de la iglesia"
  actions={
  <>
- <button type="button" disabled={saving} onClick={() => onClose()} className="px-4 py-2 text-xs font-bold text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] transition-colors disabled:opacity-60">
+ <DSButton type="button" variant="ghost" disabled={saving} onClick={() => onClose()} className="px-4 py-2 text-xs font-bold text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] transition-colors disabled:opacity-60">
  Cancelar
- </button>
- <button
+ </DSButton>
+ <DSButton
+ variant="primary"
  form="create-event-form"
  type="submit"
  disabled={saving}
  className="px-3 py-2 bg-[hsl(var(--primary))] text-white rounded-lg text-xs font-semibold uppercase tracking-wide shadow-lg hover:bg-[hsl(var(--primary))] active:scale-95 transition-all flex items-center gap-2 disabled:opacity-60 disabled:active:scale-100"
  >
  {saving ? 'Guardando...' : 'Guardar'} <Check size={14} />
- </button>
+ </DSButton>
  </>
  }
  >
  <form id="create-event-form" onSubmit={onSubmit} className="space-y-3">
  <div className="space-y-1.5">
  <label htmlFor="event-name" className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Nombre del Evento *</label>
- <input
+ <DSInput
  id="event-name"
  required
  value={form.name}
@@ -112,41 +114,40 @@ export default function EventCreateDrawer({
 
  <div className="space-y-1.5">
  <label htmlFor="event-sede" className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Universo del Evento</label>
- <select
+ <DSSelect
  id="event-sede"
  value={form.sede_id}
  onChange={e => setForm({ ...form, sede_id: e.target.value })}
  className="w-full px-4 py-1.5 rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-primary))] dark:bg-black/20 focus:ring-2 focus:ring-primary outline-none font-bold text-sm text-[hsl(var(--text-primary))] appearance-none"
- >
- <option value="">Universo completo — Todas las sedes</option>
- {sedes.map((sede) => <option key={sede.id} value={sede.id}>{sede.name}</option>)}
- </select>
+ options={[{ value: '', label: 'Universo completo — Todas las sedes' }, ...sedes.map((sede) => ({ value: sede.id, label: sede.name }))]}
+ />
  <p className="text-2xs text-[hsl(var(--text-secondary))]">“Todas las sedes” permite registrar personas de toda la base de datos.</p>
  </div>
 
  <div className="space-y-1.5">
  <label htmlFor="event-type" className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Tipo de Evento *</label>
- <select
+ <DSSelect
  id="event-type"
  required
  value={form.event_type}
  onChange={e => setForm({ ...form, event_type: e.target.value })}
  className="w-full px-4 py-1.5 rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-primary))] dark:bg-black/20 focus:ring-2 focus:ring-primary outline-none font-bold text-sm text-[hsl(var(--text-primary))] appearance-none"
- >
- <option value="PERMANENT">Semanal / Rutinario</option>
- <option value="MONTHLY">Mensual</option>
- <option value="ANNUAL">Anual</option>
- <option value="ONCE">Única Vez / Fecha Fija</option>
- <option value="SPECIAL">Especial / Campaña</option>
- <option value="GROUPS">Temporada - fuera del templo</option>
- <option value="ONLINE">En Línea / Transmisión</option>
- </select>
+ options={[
+ { value: 'PERMANENT', label: 'Semanal / Rutinario' },
+ { value: 'MONTHLY', label: 'Mensual' },
+ { value: 'ANNUAL', label: 'Anual' },
+ { value: 'ONCE', label: 'Única Vez / Fecha Fija' },
+ { value: 'SPECIAL', label: 'Especial / Campaña' },
+ { value: 'GROUPS', label: 'Temporada - fuera del templo' },
+ { value: 'ONLINE', label: 'En Línea / Transmisión' },
+ ]}
+ />
  </div>
 
  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
  <div className="space-y-1.5">
  <label htmlFor="event-audience" className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Universo Esperado</label>
- <select
+ <DSSelect
  id="event-audience"
  value={form.target_audience}
  onChange={e => setForm({
@@ -157,15 +158,16 @@ export default function EventCreateDrawer({
  target_persona_ids: e.target.value === 'MANUAL' ? form.target_persona_ids : [],
  })}
  className="w-full px-4 py-1.5 rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-primary))] dark:bg-black/20 focus:ring-2 focus:ring-primary outline-none font-bold text-sm text-[hsl(var(--text-primary))] appearance-none"
- >
- <option value="ALL">Toda la iglesia</option>
- <option value="ROLE">Uno o varios roles</option>
- <option value="MANUAL">Selección manual</option>
- </select>
+ options={[
+ { value: 'ALL', label: 'Toda la iglesia' },
+ { value: 'ROLE', label: 'Uno o varios roles' },
+ { value: 'MANUAL', label: 'Selección manual' },
+ ]}
+ />
  </div>
  <div className="space-y-1.5">
  <label htmlFor="event-roles" className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Roles esperados</label>
- <select
+ <DSSelect
  id="event-roles"
  multiple
  disabled={form.target_audience !== 'ROLE'}
@@ -175,11 +177,8 @@ export default function EventCreateDrawer({
  setForm({ ...form, target_role_ids: selectedValues, target_role_id: selectedValues[0] || '' });
  }}
  className="min-h-[140px] w-full px-4 py-1.5 rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-primary))] dark:bg-black/20 focus:ring-2 focus:ring-primary outline-none font-bold text-sm text-[hsl(var(--text-primary))] disabled:opacity-50"
- >
- {roles.map((role) => (
- <option key={role.id} value={role.id}>{role.name}</option>
- ))}
- </select>
+ options={roles.map((role) => ({ value: role.id, label: role.name }))}
+ />
  </div>
  </div>
 
@@ -190,20 +189,20 @@ export default function EventCreateDrawer({
  <p className="text-sm font-bold text-[hsl(var(--text-primary))] ">Guarda y reaplica universos esperados frecuentes</p>
  </div>
  <div className="flex items-center gap-2">
- <button
+ <DSButton
  type="button"
  onClick={onAddSuggestions}
  className="rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-primary))] px-4 py-2 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] transition-all hover:bg-[hsl(var(--bg-muted))] dark:hover:bg-white/10"
  >
  Sugerencias
- </button>
- <button
+ </DSButton>
+ <DSButton
  type="button"
  onClick={() => onSavePreset(form)}
  className="rounded-lg bg-[hsl(var(--primary))] px-4 py-2 text-2xs font-semibold uppercase tracking-wide text-white transition-all hover:bg-[hsl(var(--primary))]"
  >
  Guardar actual
- </button>
+ </DSButton>
  </div>
  </div>
  <div className="space-y-2">
@@ -224,20 +223,20 @@ export default function EventCreateDrawer({
  </p>
  </div>
  <div className="flex items-center gap-2">
- <button
+ <DSButton
  type="button"
  onClick={() => onApplyPreset(preset.id)}
  className="rounded-lg bg-[hsl(var(--bg-primary))] px-3 py-2 text-2xs font-semibold uppercase tracking-wide text-white transition-all hover:opacity-85 "
  >
  Aplicar
- </button>
- <button
+ </DSButton>
+ <DSButton
  type="button"
  onClick={() => onDeletePreset(preset.id)}
  className="rounded-lg border border-[hsl(var(--border-primary))] px-3 py-2 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] transition-all hover:bg-[hsl(var(--bg-muted))]"
  >
  Borrar
- </button>
+ </DSButton>
  </div>
  </div>
  ))}
@@ -252,7 +251,7 @@ export default function EventCreateDrawer({
  {form.target_persona_ids.length} seleccionadas
  </span>
  </div>
- <input
+ <DSInput
  id="event-personas"
  value={manualSearch}
  onChange={e => setManualSearch(e.target.value)}
@@ -263,7 +262,7 @@ export default function EventCreateDrawer({
  {manualPersonas.map((persona) => {
  const isSelected = form.target_persona_ids.includes(persona.id);
  return (
- <button
+ <DSButton
  key={persona.id}
  type="button"
  onClick={() => setForm({
@@ -285,7 +284,7 @@ export default function EventCreateDrawer({
  <span className={`text-2xs font-semibold uppercase tracking-wide ${isSelected ? 'text-[hsl(var(--primary))] dark:text-info' : 'text-[hsl(var(--text-secondary))]'}`}>
  {isSelected ? 'Incluida' : 'Agregar'}
  </span>
- </button>
+ </DSButton>
  );
  })}
  {manualPersonas.length === 0 && (
@@ -298,7 +297,7 @@ export default function EventCreateDrawer({
  <div className="grid grid-cols-2 gap-4">
  <div className="space-y-1.5">
  <label htmlFor="event-start-time" className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Hora de Inicio *</label>
- <input
+ <DSInput
  id="event-start-time"
  type="time"
  required
@@ -309,7 +308,7 @@ export default function EventCreateDrawer({
  </div>
  <div className="space-y-1.5">
  <label htmlFor="event-end-time" className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Hora de Finalización *</label>
- <input
+ <DSInput
  id="event-end-time"
  type="time"
  required
@@ -323,21 +322,20 @@ export default function EventCreateDrawer({
  {['PERMANENT', 'GROUPS', 'ONLINE'].includes(form.event_type) && (
  <div className="space-y-1.5">
  <label htmlFor="event-day-of-week" className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Día de la Semana</label>
- <select
+ <DSSelect
  id="event-day-of-week"
  value={form.day_of_week}
  onChange={e => setForm({ ...form, day_of_week: e.target.value })}
  className="w-full px-4 py-1.5 rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-primary))] dark:bg-black/20 focus:ring-2 focus:ring-primary outline-none font-bold text-sm "
- >
- {DAY_LABELS.map((d, i) => <option key={i} value={i}>{d}</option>)}
- </select>
+ options={DAY_LABELS.map((d, i) => ({ value: String(i), label: d }))}
+ />
  </div>
  )}
 
  {['ONCE', 'SPECIAL'].includes(form.event_type) && (
  <div className="space-y-1.5">
  <label htmlFor="event-fixed-date" className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Fecha Exacta</label>
- <input
+ <DSInput
  id="event-fixed-date"
  type="date"
  value={form.fixed_date}
@@ -350,7 +348,7 @@ export default function EventCreateDrawer({
  {['ANNUAL', 'MONTHLY'].includes(form.event_type) && (
  <div className="space-y-1.5">
  <label htmlFor="event-month-day" className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Día(s) del Mes / Año</label>
- <input
+ <DSInput
  id="event-month-day"
  value={form.month_day}
  onChange={e => setForm({ ...form, month_day: e.target.value })}
