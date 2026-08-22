@@ -106,7 +106,10 @@ export default function CmsMediaLibrary() {
       const data = await apiFetch<{ items: MediaItem[]; total: number }>("/cms/media", {
         token,
         cache: "no-store",
-        query: { include_archived: showArchived },
+        // The library displays all matching media in one scrollable view.
+        // Keep this aligned with the API maximum so the sidebar total does
+        // not exceed the records available on the page.
+        query: { include_archived: showArchived, limit: 500 },
       });
       const loadedItems = data?.items || [];
       setItems(showArchived
