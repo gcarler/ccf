@@ -2,7 +2,7 @@
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, MoreHorizontal, MessageSquare, Clock, Sparkles, Maximize2, Minimize2 } from 'lucide-react';
+import { X, MoreHorizontal, MessageSquare, Clock, Sparkles, Maximize2, Minimize2, type LucideIcon } from 'lucide-react';
 import clsx from 'clsx';
 
 interface WorkspaceDrawerProps {
@@ -156,7 +156,7 @@ export default function WorkspaceDrawer({
     );
 }
 
-function HeaderButton({ icon: Icon, onClick, tooltip }: { icon: any, onClick?: () => void, tooltip: string }) {
+function HeaderButton({ icon: Icon, onClick, tooltip }: { icon: LucideIcon, onClick?: () => void, tooltip: string }) {
     return (
         <div className="relative group/drawer-btn">
             <button
