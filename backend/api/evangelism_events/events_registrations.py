@@ -19,7 +19,7 @@ import re
 from typing import List, Optional
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Response
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response
 from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
@@ -32,6 +32,7 @@ from backend.core.permissions import (
     require_evangelism_manage,
     require_evangelism_read,
 )
+from backend.core.rate_limit import academy_limiter
 from backend.services.event_registration_service import (
     RegistrationError,
     _issue_cancel_token,
@@ -261,8 +262,10 @@ def export_registrations_csv(
 # ── Alta manual ──────────────────────────────────────────────────────────────
 
 
+@academy_limiter.limit("30/minute")
 @router.post("/events/{event_id}/registrations", response_model=schemas.EventRegistrationRead, status_code=201)
 def create_registration(
+    request: Request,
     event_id: UUID,
     payload: schemas.EventRegistrationCreate,
     db: Session = Depends(get_db),
@@ -466,8 +469,10 @@ def resend_confirmation(
 # ── Bulk import ───────────────────────────────────────────────────────────────
 
 
+@academy_limiter.limit("30/minute")
 @router.post("/events/{event_id}/registrations/import", response_model=dict)
 def bulk_import(
+    request: Request,
     event_id: UUID,
     payload: schemas.EventRegistrationBulkImport,
     db: Session = Depends(get_db),
@@ -641,8 +646,10 @@ def list_campaigns(
     return rows
 
 
+@academy_limiter.limit("30/minute")
 @router.post("/events/{event_id}/campaigns", response_model=schemas.EventCampaignRead, status_code=201)
 def create_campaign(
+    request: Request,
     event_id: UUID,
     payload: schemas.EventCampaignCreate,
     db: Session = Depends(get_db),
@@ -748,8 +755,10 @@ def delete_campaign(
     return None
 
 
+@academy_limiter.limit("30/minute")
 @router.post("/events/{event_id}/campaigns/{campaign_id}/send", response_model=dict)
 def send_campaign_now(
+    request: Request,
     event_id: UUID,
     campaign_id: UUID,
     db: Session = Depends(get_db),
@@ -784,8 +793,10 @@ def send_campaign_now(
     return send_campaign(db, campaign, public_base_url=_settings_public_base_url(), dry_run=dry_run, limit=limit)
 
 
+@academy_limiter.limit("30/minute")
 @router.post("/events/{event_id}/registrations/broadcast", response_model=dict)
 def broadcast_campaign(
+    request: Request,
     event_id: UUID,
     payload: schemas.EventRegistrationBroadcast,
     db: Session = Depends(get_db),

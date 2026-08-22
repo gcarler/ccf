@@ -75,7 +75,7 @@ def list_events(
     user_sede = require_user_sede_id(db, current_user)
     events = (
         _active_events_query(db)
-        .filter(models.CrmEvent.sede_id == user_sede)
+        .filter((models.CrmEvent.sede_id == user_sede) | models.CrmEvent.sede_id.is_(None))
         .order_by(models.CrmEvent.event_date.desc())
         .offset(skip)
         .limit(limit)
@@ -87,6 +87,102 @@ def list_events(
     return [schemas.CrmEvent.model_validate(event).model_dump(mode="json") for event in events]
 
 
+@static_router.get("/sedes", response_model=List[dict])
+def list_event_sedes(
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_evangelism_read),
+):
+    """Lista las sedes activas y permite seleccionar el alcance global."""
+    result = [
+        {"id": str(sede.id), "name": sede.nombre}
+        for sede in (
+            db.query(models.Sede)
+            .filter(models.Sede.es_activa.is_(True), models.Sede.deleted_at.is_(None))
+            .order_by(models.Sede.nombre.asc())
+            .all()
+        )
+    ]
+    result.insert(0, {"id": "global", "name": "Universo (todas las sedes)"})
+    return result
+
+
+@static_router.get("/events/personas/{event_id}", response_model=List[dict])
+def list_event_personas(
+    event_id: UUID,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_evangelism_read),
+):
+    """Lista el universo de personas del evento respetando su alcance."""
+    event = require_event_access(db, current_user, event_id)
+    people = get_expected_personas_for_event(db, event)
+    return [schemas.PersonaResponse.model_validate(person).model_dump(mode="json") for person in people]
+
+
+def _strategy_event_matches(event: models.CrmEvent, strategy_id: UUID) -> bool:
+    settings = event.settings_json if isinstance(event.settings_json, dict) else {}
+    return str(settings.get("evangelism_strategy_id") or "") == str(strategy_id)
+
+
+@static_router.post("/events/strategy/{strategy_id}/ensure", response_model=schemas.CrmEvent)
+def ensure_strategy_event(
+    strategy_id: UUID,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_evangelism_manage),
+):
+    """Resolve the event record used by an ``evento_masivo`` strategy.
+
+    Mass strategies do not use groups/sessions.  The existing event attendance
+    contract is the canonical store for their attendance, so this endpoint
+    creates the event lazily when the operator first opens attendance.
+    """
+    user_sede = require_user_sede_id(db, current_user)
+    strategy = (
+        db.query(models.EstrategiaEvangelismo)
+        .filter(
+            models.EstrategiaEvangelismo.id == strategy_id,
+            models.EstrategiaEvangelismo.sede_id == user_sede,
+            models.EstrategiaEvangelismo.deleted_at.is_(None),
+        )
+        .first()
+    )
+    if not strategy:
+        raise HTTPException(status_code=404, detail="Estrategia no encontrada")
+    if strategy.typology != "evento_masivo":
+        raise HTTPException(status_code=409, detail="La estrategia no es de tipología evento_masivo")
+
+    event = next(
+        (
+            item
+            for item in _active_events_query(db)
+            .filter((models.CrmEvent.sede_id == user_sede) | models.CrmEvent.sede_id.is_(None))
+            .order_by(models.CrmEvent.event_date.desc())
+            .all()
+            if _strategy_event_matches(item, strategy_id)
+        ),
+        None,
+    )
+    if not event:
+        event_date = strategy.fecha_inicio or utc_now()
+        event = models.CrmEvent(
+            sede_id=None,
+            name=strategy.nombre,
+            description=strategy.descripcion,
+            event_date=event_date,
+            fixed_date=event_date,
+            event_type="ONCE",
+            status="SCHEDULED",
+            target_audience="ALL",
+            settings_json={
+                "evangelism_strategy_id": str(strategy.id),
+                "strategy_typology": "evento_masivo",
+            },
+        )
+        db.add(event)
+        db.commit()
+        db.refresh(event)
+    return schemas.CrmEvent.model_validate(event).model_dump(mode="json")
+
+
 @static_router.post("/events/", response_model=schemas.CrmEvent)
 def create_event(
     payload: schemas.CrmEventCreate,
@@ -94,9 +190,10 @@ def create_event(
     current_user: models.User = Depends(require_evangelism_manage),
 ):
     payload = schemas.CrmEventCreate(**normalize_role_scope_payload(payload.model_dump()))
-    user_sede = require_user_sede_id(db, current_user)
     event = crud.create_crm_event(db, payload)
-    event.sede_id = user_sede
+    # La UI pregunta explícitamente el alcance: UUID = sede seleccionada;
+    # NULL = Universo. Nunca se infiere una sede por defecto para el administrador.
+    event.sede_id = payload.sede_id
     db.commit()
     db.refresh(event)
     record_admin_action(
@@ -247,7 +344,7 @@ def get_global_event_analytics(
     ).join(models.CrmEvent)
 
     query = query.filter(
-        models.CrmEvent.sede_id == user_sede,
+        (models.CrmEvent.sede_id == user_sede) | models.CrmEvent.sede_id.is_(None),
         models.CrmEvent.deleted_at.is_(None),
     )
     if event_type and event_type != "ALL":
@@ -329,7 +426,9 @@ def get_events_dashboard_stats(
     current_user: models.User = Depends(require_evangelism_read),
 ):
     user_sede = require_user_sede_id(db, current_user)
-    events = _active_events_query(db).filter(models.CrmEvent.sede_id == user_sede).all()
+    events = _active_events_query(db).filter(
+        (models.CrmEvent.sede_id == user_sede) | models.CrmEvent.sede_id.is_(None)
+    ).all()
     if not events:
         return []
 
@@ -557,7 +656,10 @@ def lookup_person_for_event(
     event = require_event_access(db, current_user, event_id)
     sede_id = getattr(event, "sede_id", None)
 
-    query = db.query(models.Persona).filter(models.Persona.sede_id == sede_id)
+    query = db.query(models.Persona)
+    if sede_id:
+        # Evento global (sede_id NULL): la búsqueda abarca toda la iglesia.
+        query = query.filter(models.Persona.sede_id == sede_id)
     conditions = []
     if email:
         conditions.append(_func.lower(models.Persona.email) == email.strip().lower())
@@ -710,7 +812,7 @@ def get_persona_attendance_history(
         .filter(models.EventAttendance.persona_id == persona_id)
         .join(models.CrmEvent)
         .filter(
-            models.CrmEvent.sede_id == user_sede,
+            (models.CrmEvent.sede_id == user_sede) | models.CrmEvent.sede_id.is_(None),
             models.CrmEvent.deleted_at.is_(None),
         )
         .order_by(
