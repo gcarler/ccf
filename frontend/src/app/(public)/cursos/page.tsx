@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { ArrowRight, CheckCircle2, Clock, User } from "lucide-react";
+import { apiFetch } from "@/lib/http";
 import { useCmsV2Page } from "@/hooks/useCmsV2Page";
 import PublicHeroWithSlides, { type PublicSlide } from "@/components/public/PublicHeroWithSlides";
 import type { CourseSummary } from "@/types/academy";
@@ -51,16 +52,19 @@ export default function CursosPage() {
     : "";
 
   useEffect(() => {
-    fetch('/api/public/courses')
-      .then(res => res.json())
+    const ctrl = new AbortController();
+    apiFetch<PublicCourse[]>('/public/courses', { signal: ctrl.signal, silent: true })
       .then(data => {
-        setCourses(data);
+        setCourses(Array.isArray(data) ? data : []);
         setLoading(false);
       })
       .catch(err => {
+        if (err instanceof DOMException && err.name === 'AbortError') return;
         console.error('Error fetching courses:', err);
+        setCourses([]);
         setLoading(false);
       });
+    return () => ctrl.abort();
   }, []);
 
   const featured = courses[0];
