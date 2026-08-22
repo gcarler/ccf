@@ -120,6 +120,7 @@ export default function ProjectChatPanel({ projectId }: ProjectChatPanelProps) {
   useWorkspaceSocket({
     rooms: [`project_${projectId}`],
     enabled: !!token,
+    token,
     onEvent: handleSocketEvent,
   });
 

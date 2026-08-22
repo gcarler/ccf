@@ -556,7 +556,6 @@ export default function WhiteboardEditor({
             selectionLineWidth: 1,
         });
         fabricCanvas.current = canvas;
-        setIsCanvasReady(true);
 
         const resizeCanvas = () => {
             canvas.setDimensions({
@@ -605,6 +604,9 @@ export default function WhiteboardEditor({
                 historyRef.current.clearHistory();
                 historyRef.current.pushHistory(canvas);
                 ensureShapeIds(canvas);
+                // Do not expose editing controls until the persisted board
+                // has loaded and the initial undo checkpoint exists.
+                setIsCanvasReady(true);
             }
         };
         loadSaved();
@@ -1636,6 +1638,23 @@ export default function WhiteboardEditor({
         setShowTemplateModal(false);
     };
 
+    const startWithBlankBoard = () => {
+        const canvas = fabricCanvas.current;
+        if (!canvas) return;
+        // Starter objects are one initialization action. Suppress their
+        // individual Fabric object:added events and establish one clean
+        // checkpoint so the first user undo removes the first user action.
+        historyRef.current.restoringRef.current = true;
+        addStarterObjects(canvas);
+        ensureShapeIds(canvas);
+        historyRef.current.restoringRef.current = false;
+        historyRef.current.clearHistory();
+        historyRef.current.pushHistory(canvas);
+        syncLayers();
+        saveNow(canvas);
+        setShowTemplateModal(false);
+    };
+
     /** PZ-15: entry points to enter presentation mode. */
     const presentFrames =
         (fabricCanvas.current?.getObjects().filter((o) => o.data?.shapeType === "frame").map((o) => {
@@ -1732,13 +1751,7 @@ export default function WhiteboardEditor({
                         <div className="flex justify-between items-center mb-6">
                             <h2 className="text-2xl font-bold text-[hsl(var(--text-primary))]">Selecciona una plantilla</h2>
                             <button
-                                onClick={() => {
-                                    setShowTemplateModal(false);
-                                    if (fabricCanvas.current) {
-                                        addStarterObjects(fabricCanvas.current);
-                                        saveNow(fabricCanvas.current);
-                                    }
-                                }}
+                                onClick={startWithBlankBoard}
                                 className="text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))]"
                                 aria-label="Cerrar plantilla"
                             >
@@ -1764,13 +1777,7 @@ export default function WhiteboardEditor({
                         </div>
                         <div className="mt-6 pt-4 border-t border-[hsl(var(--border))] flex justify-end">
                             <button
-                                onClick={() => {
-                                    setShowTemplateModal(false);
-                                    if (fabricCanvas.current) {
-                                        addStarterObjects(fabricCanvas.current);
-                                        saveNow(fabricCanvas.current);
-                                    }
-                                }}
+                                onClick={startWithBlankBoard}
                                 className="px-4 py-2 text-[hsl(var(--primary))] hover:bg-[hsl(var(--bg-muted))] rounded-lg font-medium"
                             >
                                 Iniciar con pizarra en blanco
@@ -2033,7 +2040,10 @@ export default function WhiteboardEditor({
                     <ToolbarButton
                         icon={RotateCcw}
                         active={false}
-                        onClick={() => fabricCanvas.current && history.undo(fabricCanvas.current)}
+                        onClick={() => {
+                            const canvas = fabricCanvas.current;
+                            if (canvas) void history.undo(canvas).then(syncLayers);
+                        }}
                         label="Deshacer (Ctrl+Z)"
                         disabled={!history.canUndo}
                         data-testid="whiteboard-undo"
@@ -2041,7 +2051,10 @@ export default function WhiteboardEditor({
                     <ToolbarButton
                         icon={RotateCw}
                         active={false}
-                        onClick={() => fabricCanvas.current && history.redo(fabricCanvas.current)}
+                        onClick={() => {
+                            const canvas = fabricCanvas.current;
+                            if (canvas) void history.redo(canvas).then(syncLayers);
+                        }}
                         label="Rehacer (Ctrl+Y)"
                         disabled={!history.canRedo}
                         data-testid="whiteboard-redo"

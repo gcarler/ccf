@@ -26,7 +26,7 @@ test.describe('projects detail seeded smoke', () => {
     const detailPath = await openSeededProjectDetailPath(page);
 
     await expect(page.locator('body')).toContainText(/Demo Proyecto 1/i, { timeout: 15_000 });
-    await expect(page.locator('body')).toContainText(/Actividad Reciente|Pulso del Equipo/i, { timeout: 15_000 });
+    await expect(page.locator('body')).toContainText(/Actividad|Contexto|Inbox/i, { timeout: 15_000 });
     await expect(page.locator('body')).toContainText(/Nueva Tarea|Pizarra|Fases/i, { timeout: 15_000 });
 
     expect(runtime.assetErrors, `${detailPath} should not emit _next/static 4xx/5xx`).toEqual([]);

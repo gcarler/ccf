@@ -18,7 +18,12 @@ export function seedProjectsDemo() {
 export async function openSeededProjectDetailPath(page: Page, projectName = 'Demo Proyecto 1') {
   await page.goto('/plataforma/projects?view=list#projects-dashboard');
   await expect(page.locator('body')).toContainText(projectName, { timeout: 15_000 });
-  await page.getByText(projectName, { exact: true }).first().click();
+  const projectLink = page
+    .locator('a[href^="/plataforma/projects/"]')
+    .filter({ hasText: projectName })
+    .first();
+  await expect(projectLink).toBeVisible({ timeout: 15_000 });
+  await projectLink.click();
   // The detail view preserves the ?view= query param (ProjectsLayoutClient
   // links to /plataforma/projects/<uuid>?view=list), so accept an optional
   // query string after the project id.

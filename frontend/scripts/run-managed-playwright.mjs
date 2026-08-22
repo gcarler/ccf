@@ -47,13 +47,18 @@ const apiBaseUrl = (
   process.env.API_BASE_URL ||
   'http://127.0.0.1:8000/api'
 ).replace(/\/$/, '');
+// E2E_API_URL is intentionally accepted as the backend host (the auth helper
+// appends /api for v3 login). Server-side Next proxies, however, need the API
+// prefix explicitly. Keep both conventions compatible for managed runs.
+const serverApiBaseUrl =
+  apiBaseUrl.endsWith('/api') || apiBaseUrl === '/api' ? apiBaseUrl : `${apiBaseUrl}/api`;
 
 const env = {
   ...process.env,
   PLAYWRIGHT_PORT: port,
   PLAYWRIGHT_BASE_URL: process.env.PLAYWRIGHT_BASE_URL || `http://localhost:${port}`,
   NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || '/api',
-  API_BASE_URL: process.env.API_BASE_URL || apiBaseUrl,
+  API_BASE_URL: process.env.API_BASE_URL || serverApiBaseUrl,
 };
 
 const managedBuildDir = path.join(process.cwd(), '.next');
