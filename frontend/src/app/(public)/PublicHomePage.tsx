@@ -197,6 +197,13 @@ export default function PublicHomePage({ initialHomePage }: { initialHomePage?: 
     ].filter((slide): slide is PublicSlide => Boolean(slide));
     const hasHero = homeSlides.length > 0 || heroTitleLead || heroTitleAccent || heroTitleTail || heroDescription;
 
+    // Extraer el primer slide del hero del CMS que tenga href para mostrarlo
+    // como CTA persistente (ej. banner de aniversario).
+    const heroAnniversarySlide = cmsHeroSlides.find((s) => s.href);
+    const heroTertiaryCta = heroAnniversarySlide
+        ? { label: heroAnniversarySlide.title || "Celebrar aniversario", href: heroAnniversarySlide.href! }
+        : undefined;
+
     return (
         <>
             {/* ─── HERO sticky — hijo directo del <main> del layout ─────────────
@@ -212,6 +219,7 @@ export default function PublicHomePage({ initialHomePage }: { initialHomePage?: 
                     description={heroDescription}
                     primaryCta={heroPrimaryCta ? { label: heroPrimaryCta, href: (heroContent?.primary_cta_href as string) || "/conocer-a-jesus" } : undefined}
                     secondaryCta={heroSecondaryCta ? { label: heroSecondaryCta, href: (heroContent?.secondary_cta_href as string) || "/predicas" } : undefined}
+                    tertiaryCta={heroTertiaryCta}
                     slides={homeSlides}
                     scrollIndicator={scrollIndicator}
                 />
