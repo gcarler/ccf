@@ -78,7 +78,7 @@ export default function WorkspaceDrawer({
                         style={{ width: isExpanded || (typeof window !== 'undefined' && window.innerWidth < 640) ? '100vw' : width }}
                         className={clsx(
                             "fixed max-w-full bg-[hsl(var(--surface-1))] dark:bg-[hsl(var(--surface-1))] shadow-[var(--shadow-floating)] z-[1001] border-l border-[hsl(var(--border))] flex flex-col focus:outline-none overflow-hidden",
-                            isExpanded ? "inset-0 h-dvh" : "top-10 right-0 h-[calc(100dvh-2.5rem)]"
+                            isExpanded ? "inset-x-0 top-10 bottom-0 h-auto" : "top-10 right-0 h-[calc(100dvh-2.5rem)]"
                         )}
                         role="complementary"
                         aria-label={title}
