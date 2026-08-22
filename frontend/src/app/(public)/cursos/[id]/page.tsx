@@ -59,11 +59,13 @@ export default function CursoDetailPage() {
         setShowEnrollModal(true);
     };
 
+    const [enrollSuccessData, setEnrollSuccessData] = useState<{ course_id?: string; redirect_url?: string } | null>(null);
+
     const submitEnroll = async (e: React.FormEvent) => {
         e.preventDefault();
         setEnrollSubmitting(true);
         try {
-            await apiFetch(`/public/courses/${id}/enroll`, {
+            const res = await apiFetch<{ status: string; course_id?: string; redirect_url?: string }>(`/public/courses/${id}/enroll`, {
                 method: "POST",
                 body: {
                     full_name: enrollForm.fullName,
@@ -73,8 +75,7 @@ export default function CursoDetailPage() {
                 },
             });
             setEnrolled(true);
-            setShowEnrollModal(false);
-            setEnrollForm({ fullName: "", email: "", phone: "" });
+            setEnrollSuccessData(res);
             const successToast = getString(cms, "enroll_success_toast");
             if (successToast) {
                 toast.success(applyTemplate(successToast, { title: course?.title ?? "" }));
@@ -322,76 +323,115 @@ export default function CursoDetailPage() {
                                     </button>
                                 </div>
 
-                                <form id="course-enroll-form" onSubmit={submitEnroll} className="flex-1 space-y-4 overflow-y-auto px-5 py-5">
-                                    {getString(cms, "enroll_name_label") && (
-                                        <div>
-                                            <label className="mb-1 block text-2xs font-semibold uppercase tracking-wide" style={{ color: "var(--site-on-surface-variant)" }}>
-                                                {getString(cms, "enroll_name_label")}
-                                            </label>
-                                            <input
-                                                type="text"
-                                                value={enrollForm.fullName}
-                                                onChange={(e) => setEnrollForm(f => ({ ...f, fullName: e.target.value }))}
-                                                required
-                                                className="w-full rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2"
-                                                style={{ background: "var(--site-surface)", border: "2px solid var(--site-outline-variant)", color: "var(--site-on-surface)" }}
-                                            />
+                                {enrolled ? (
+                                    <div className="flex-1 flex flex-col items-center justify-center p-6 text-center space-y-4">
+                                        <div className="w-16 h-16 rounded-full bg-emerald-500/10 text-emerald-600 flex items-center justify-center">
+                                            <CheckCircle2 size={36} />
                                         </div>
-                                    )}
-                                    {getString(cms, "enroll_email_label") && (
                                         <div>
-                                            <label className="mb-1 block text-2xs font-semibold uppercase tracking-wide" style={{ color: "var(--site-on-surface-variant)" }}>
-                                                {getString(cms, "enroll_email_label")}
-                                            </label>
-                                            <input
-                                                type="email"
-                                                value={enrollForm.email}
-                                                onChange={(e) => setEnrollForm(f => ({ ...f, email: e.target.value }))}
-                                                required
-                                                className="w-full rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2"
-                                                style={{ background: "var(--site-surface)", border: "2px solid var(--site-outline-variant)", color: "var(--site-on-surface)" }}
-                                            />
+                                            <h3 className="text-xl font-bold" style={{ color: "var(--site-on-surface)" }}>
+                                                ¡Inscripción Exitosa!
+                                            </h3>
+                                            <p className="mt-2 text-sm max-w-sm" style={{ color: "var(--site-on-surface-variant)" }}>
+                                                Ya estás formalmente matriculado en <strong>{course.title}</strong>. Puedes ingresar al aula virtual para acceder a tus lecciones, videos y evaluaciones.
+                                            </p>
                                         </div>
-                                    )}
-                                    {getString(cms, "enroll_phone_label") && (
-                                        <div>
-                                            <label className="mb-1 block text-2xs font-semibold uppercase tracking-wide" style={{ color: "var(--site-on-surface-variant)" }}>
-                                                {getString(cms, "enroll_phone_label")}
-                                            </label>
-                                            <input
-                                                type="tel"
-                                                value={enrollForm.phone}
-                                                onChange={(e) => setEnrollForm(f => ({ ...f, phone: e.target.value }))}
-                                                className="w-full rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2"
-                                                style={{ background: "var(--site-surface)", border: "2px solid var(--site-outline-variant)", color: "var(--site-on-surface)" }}
-                                            />
+                                        <div className="w-full pt-4 space-y-2">
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    const targetCourseId = enrollSuccessData?.course_id || course.id;
+                                                    router.push(`/login?redirect=${encodeURIComponent(`/plataforma/academy/course/${targetCourseId}`)}`);
+                                                }}
+                                                className="w-full rounded-lg py-3 text-sm font-bold text-white transition-all shadow-md hover:scale-[1.02]"
+                                                style={{ background: "var(--site-cta-gradient)" }}
+                                            >
+                                                Ir a mi Curso en la Plataforma →
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => setShowEnrollModal(false)}
+                                                className="w-full rounded-lg py-2 text-sm font-semibold transition-all"
+                                                style={{ color: "var(--site-on-surface-variant)" }}
+                                            >
+                                                Seguir explorando
+                                            </button>
                                         </div>
-                                    )}
-                                </form>
+                                    </div>
+                                ) : (
+                                    <>
+                                        <form id="course-enroll-form" onSubmit={submitEnroll} className="flex-1 space-y-4 overflow-y-auto px-5 py-5">
+                                            {getString(cms, "enroll_name_label") && (
+                                                <div>
+                                                    <label className="mb-1 block text-2xs font-semibold uppercase tracking-wide" style={{ color: "var(--site-on-surface-variant)" }}>
+                                                        {getString(cms, "enroll_name_label")}
+                                                    </label>
+                                                    <input
+                                                        type="text"
+                                                        value={enrollForm.fullName}
+                                                        onChange={(e) => setEnrollForm(f => ({ ...f, fullName: e.target.value }))}
+                                                        required
+                                                        className="w-full rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2"
+                                                        style={{ background: "var(--site-surface)", border: "2px solid var(--site-outline-variant)", color: "var(--site-on-surface)" }}
+                                                    />
+                                                </div>
+                                            )}
+                                            {getString(cms, "enroll_email_label") && (
+                                                <div>
+                                                    <label className="mb-1 block text-2xs font-semibold uppercase tracking-wide" style={{ color: "var(--site-on-surface-variant)" }}>
+                                                        {getString(cms, "enroll_email_label")}
+                                                    </label>
+                                                    <input
+                                                        type="email"
+                                                        value={enrollForm.email}
+                                                        onChange={(e) => setEnrollForm(f => ({ ...f, email: e.target.value }))}
+                                                        required
+                                                        className="w-full rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2"
+                                                        style={{ background: "var(--site-surface)", border: "2px solid var(--site-outline-variant)", color: "var(--site-on-surface)" }}
+                                                    />
+                                                </div>
+                                            )}
+                                            {getString(cms, "enroll_phone_label") && (
+                                                <div>
+                                                    <label className="mb-1 block text-2xs font-semibold uppercase tracking-wide" style={{ color: "var(--site-on-surface-variant)" }}>
+                                                        {getString(cms, "enroll_phone_label")}
+                                                    </label>
+                                                    <input
+                                                        type="tel"
+                                                        value={enrollForm.phone}
+                                                        onChange={(e) => setEnrollForm(f => ({ ...f, phone: e.target.value }))}
+                                                        className="w-full rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2"
+                                                        style={{ background: "var(--site-surface)", border: "2px solid var(--site-outline-variant)", color: "var(--site-on-surface)" }}
+                                                    />
+                                                </div>
+                                            )}
+                                        </form>
 
-                                <div className="flex gap-3 border-t px-5 py-4" style={{ borderColor: "var(--site-outline-variant)" }}>
-                                    {getString(cms, "enroll_cancel_label") && (
-                                        <button
-                                            type="button"
-                                            onClick={() => setShowEnrollModal(false)}
-                                            className="flex-1 rounded-lg py-2 text-sm font-bold transition-all"
-                                            style={{ background: "var(--site-surface-container)", color: "var(--site-on-surface-variant)" }}
-                                        >
-                                            {getString(cms, "enroll_cancel_label")}
-                                        </button>
-                                    )}
-                                    {getString(cms, "enroll_submit_label") && (
-                                        <button
-                                            type="submit"
-                                            form="course-enroll-form"
-                                            disabled={enrollSubmitting}
-                                            className="flex-1 rounded-lg py-2 text-sm font-bold text-white transition-all disabled:opacity-60"
-                                            style={{ background: "var(--site-cta-gradient)" }}
-                                        >
-                                            {enrollSubmitting ? getString(cms, "enroll_submitting_label") : getString(cms, "enroll_submit_label")}
-                                        </button>
-                                    )}
-                                </div>
+                                        <div className="flex gap-3 border-t px-5 py-4" style={{ borderColor: "var(--site-outline-variant)" }}>
+                                            {getString(cms, "enroll_cancel_label") && (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setShowEnrollModal(false)}
+                                                    className="flex-1 rounded-lg py-2 text-sm font-bold transition-all"
+                                                    style={{ background: "var(--site-surface-container)", color: "var(--site-on-surface-variant)" }}
+                                                >
+                                                    {getString(cms, "enroll_cancel_label")}
+                                                </button>
+                                            )}
+                                            {getString(cms, "enroll_submit_label") && (
+                                                <button
+                                                    type="submit"
+                                                    form="course-enroll-form"
+                                                    disabled={enrollSubmitting}
+                                                    className="flex-1 rounded-lg py-2 text-sm font-bold text-white transition-all disabled:opacity-60"
+                                                    style={{ background: "var(--site-cta-gradient)" }}
+                                                >
+                                                    {enrollSubmitting ? getString(cms, "enroll_submitting_label") : getString(cms, "enroll_submit_label")}
+                                                </button>
+                                            )}
+                                        </div>
+                                    </>
+                                )}
                             </div>
                         </motion.aside>
                     </>

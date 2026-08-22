@@ -14,7 +14,7 @@ from backend import models, schemas
 from backend.core.config import get_settings
 from backend.core.database import get_db
 from backend.core.rate_limit import rate_limiter
-from backend.models_academy_core import Course, Lesson
+from backend.models_academy_core import Course, Enrollment, Lesson
 
 # plan_followup: identidad por desafío single-use (identify/verify + register
 # con verified_identity_token).
@@ -272,13 +272,41 @@ def public_course_enroll(
         ),
     )
     persona = result.persona
+    enrollment_id = None
+    if persona and curso:
+        enrollment = (
+            db.query(Enrollment)
+            .filter(
+                Enrollment.persona_id == persona.id,
+                Enrollment.course_id == curso.id,
+            )
+            .first()
+        )
+        if not enrollment:
+            enrollment = Enrollment(
+                persona_id=persona.id,
+                course_id=curso.id,
+                status="active",
+                progress_percent=0.0,
+            )
+            db.add(enrollment)
+            db.flush()
+        elif enrollment.deleted_at is not None or enrollment.status == "dropped":
+            enrollment.deleted_at = None
+            enrollment.status = "active"
+            db.flush()
+        enrollment_id = str(enrollment.id)
+
     db.commit()
 
     return {
         "status": "enrolled",
         "persona_id": str(persona.id) if persona else None,
+        "course_id": str(curso.id),
         "course_slug": course_slug,
         "course_title": curso.title,
+        "enrollment_id": enrollment_id,
+        "redirect_url": f"/plataforma/academy/course/{curso.id}",
     }
 
 
