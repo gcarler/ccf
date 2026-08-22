@@ -126,7 +126,7 @@ export default function NosotrosPage() {
                                 className="group cursor-default select-none transition-all duration-300 transform hover:-translate-y-1.5"
                             >
                                 <p
-                                    className="font-black tracking-tighter leading-none transition-all duration-300 text-site-primary group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-site-primary group-hover:via-amber-400 group-hover:to-cyan-400 group-hover:animate-gradient-flow group-hover:drop-shadow-[0_8px_20px_rgba(37,99,235,0.3)]"
+                                    className="font-black tracking-tighter leading-none transition-all duration-300 text-site-primary group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-site-primary group-hover:via-site-primary-container group-hover:to-site-primary group-hover:animate-gradient-flow group-hover:drop-shadow-[0_8px_20px_var(--site-glow-subtle)]"
                                     style={{ fontSize: "clamp(2.8rem, 6.75vw, 6rem)" }}
                                 >
                                     {s.value}
