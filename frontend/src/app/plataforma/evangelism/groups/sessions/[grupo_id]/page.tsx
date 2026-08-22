@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { apiFetch, ApiError } from '@/lib/http';
-import { filtroAPersonas, normalizarBusquedaPersona } from '@/lib/filtroAPersonas';
+import { filtroAPersona, normalizarBusquedaPersona } from '@/lib/filtroAPersonas';
 import { getErrorMessage } from '../../../utils';
 import { toast } from 'sonner';
 import { useAuth } from '@/context/AuthContext';
@@ -163,8 +163,7 @@ export default function SessionReportPage() {
  const q = normalizarBusquedaPersona(searchQuery);
  if (!q) return people;
  return people.filter(p =>
-   filtroAPersonas(p.name, q) ||
-   normalizarBusquedaPersona(p.role).includes(q)
+   filtroAPersona({ nombre_completo: p.name, church_role: p.role }, q)
  );
  }, [people, searchQuery]);
 

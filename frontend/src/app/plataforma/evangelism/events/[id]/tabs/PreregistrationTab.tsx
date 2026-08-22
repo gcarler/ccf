@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState, useCallback } from "react";
 import { apiFetch, ApiError } from "@/lib/http";
-import { filtroAPersonas, normalizarBusquedaPersona } from "@/lib/filtroAPersonas";
+import { filtroAPersona, normalizarBusquedaPersona } from "@/lib/filtroAPersonas";
 import { toast } from "sonner";
 import {
   Check, Download, FolderOpen, Loader2, Mail, Plus,
@@ -409,9 +409,10 @@ export default function PreregistrationTab({ eventId, token }: { eventId: string
                 .filter((r) => {
                   if (!search) return true;
                   const q = normalizarBusquedaPersona(search);
-                  return filtroAPersonas(r.persona_name, q)
-                    || normalizarBusquedaPersona(r.persona_email).includes(q)
-                    || normalizarBusquedaPersona(r.persona_phone).includes(q);
+                  return filtroAPersona(
+                    { nombre_completo: r.persona_name, email: r.persona_email, phone: r.persona_phone },
+                    q,
+                  );
                 })
                 .map((r) => (
                   <tr key={r.id}>

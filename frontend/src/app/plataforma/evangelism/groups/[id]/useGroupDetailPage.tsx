@@ -1,7 +1,7 @@
 'use client';
 
 import { apiFetch, ApiError } from '@/lib/http';
-import { filtroAPersonas, normalizarBusquedaPersona } from '@/lib/filtroAPersonas';
+import { filtroAPersona, normalizarBusquedaPersona } from '@/lib/filtroAPersonas';
 import { useAuth } from '@/context/AuthContext';
 import { useSidebarLayers } from '@/context/SidebarLayerContext';
 import { Calendar, ChevronRight, Plus, ArrowLeft } from 'lucide-react';
@@ -357,7 +357,7 @@ export function useGroupDetailPage(id: string | undefined) {
       : [];
     const localPool = personas
       .filter(m => !attendedIds.has(m.id))
-      .filter(m => filtroAPersonas(m.nombre_completo, q))
+      .filter(m => filtroAPersona(m, q))
       // Excluir las que ya aparecieron en remoteResults.
       .filter(m => !remoteMatches.some(r => r.id === m.id));
     return [...remoteMatches, ...localPool];

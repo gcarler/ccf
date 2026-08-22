@@ -6,7 +6,7 @@ import type { ViewType } from '@/components/ViewSwitcher';
 import { useAuth } from '@/context/AuthContext';
 import { useSidebarLayers } from '@/context/SidebarLayerContext';
 import { apiFetch } from '@/lib/http';
-import { filtroAPersonas } from '@/lib/filtroAPersonas';
+import { filtroAPersona } from '@/lib/filtroAPersonas';
 import { parseAndValidateTime } from '@/lib/time';
 import {
   BarChart3,
@@ -467,7 +467,7 @@ export function useGroupsPage() {
     );
 
     return base.filter(m => {
-      if (!filtroAPersonas(m.nombre_completo, personaSearchQuery)) {
+      if (!filtroAPersona(m, personaSearchQuery)) {
         return false;
       }
       if (personaRoleFilter && m.church_role !== personaRoleFilter) {

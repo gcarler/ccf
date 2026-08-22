@@ -4,7 +4,7 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { extractErrorMessage, apiFetch } from '@/lib/http';
-import { filtroAPersonas, normalizarBusquedaPersona } from '@/lib/filtroAPersonas';
+import { filtroAPersona, normalizarBusquedaPersona } from '@/lib/filtroAPersonas';
 import CrmShell from '@/components/crm/CrmShell';
 import { motion } from 'framer-motion';
 import {
@@ -168,8 +168,7 @@ export default function CrmGroupsPage() {
 
         if (!term) return base;
         return base.filter(persona =>
-            filtroAPersonas(persona.nombre_completo || `${persona.first_name ?? ''} ${persona.last_name ?? ''}`.trim(), term) ||
-            normalizarBusquedaPersona(persona.church_role).includes(term)
+            filtroAPersona(persona, term)
         );
     }, [personaQuery, personas]);
 

@@ -2,7 +2,7 @@
 
 import React, { useEffect, useMemo, useState } from "react";
 import { apiFetch } from "@/lib/http";
-import { filtroAPersonas, normalizarBusquedaPersona } from "@/lib/filtroAPersonas";
+import { filtroAPersona, normalizarBusquedaPersona } from "@/lib/filtroAPersonas";
 import { toast } from "sonner";
 import WorkspaceDrawer from "@/components/WorkspaceDrawer";
 import { Calendar, CheckCircle2, Download, Mic, Save, UserPlus, Users, X } from "lucide-react";
@@ -24,7 +24,7 @@ function PersonaSelect({ personas, value, onChange, label, multi = false }: Pers
     const q = normalizarBusquedaPersona(search);
     if (!q) return personas.slice(0, 50);
     return personas.filter((m) =>
-      filtroAPersonas(m.nombre_completo, q)
+      filtroAPersona(m, q)
     );
   }, [personas, search]);
 

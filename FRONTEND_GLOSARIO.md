@@ -49,10 +49,11 @@ Importar desde `@/design`:
 
 | Utilidad | Uso | Import |
 |---|---|---|
-| `filtroAPersonas(name, query)` | Filtro reutilizable de búsqueda de personas: normaliza acentos/case/espacios y casa por prefijo del nombre completo o por subsecuencia de palabras ("juan meza" encuentra "Juan Luis Meza"). Query vacío → true. | `import { filtroAPersonas } from '@/lib/filtroAPersonas'` |
+| `filtroAPersonas(name, query)` | Filtro reutilizable de búsqueda de personas: normaliza acentos/case/espacios; una palabra casa con nombre o apellido ("meza" encuentra "Luis Ricardo Meza") y varias palabras por subsecuencia ("juan meza" encuentra "Juan Luis Meza"). Query vacío → true. | `import { filtroAPersonas } from '@/lib/filtroAPersonas'` |
+| `filtroAPersona(persona, query)` | Búsqueda multi-campo sobre una persona completa: nombre, email, teléfonos, documento y rol. Reemplaza el patrón `filtroAPersonas(...) || normalizar(email).includes(...) || ...` repetido en cada pantalla. | `import { filtroAPersona } from '@/lib/filtroAPersonas'` |
 | `normalizarBusquedaPersona(value)` | Normaliza un texto para comparación (minúsculas, sin acentos, espacios simples). Con cache interno acotado. | `import { normalizarBusquedaPersona } from '@/lib/filtroAPersonas'` |
 
-> **Regla:** al buscar personas por nombre en cualquier módulo, usar `filtroAPersonas` — no escribir filtros propios con `startsWith`/`includes` (pierden acentos y nombres compuestos).
+> **Regla:** al buscar personas en cualquier módulo, usar `filtroAPersona(persona, query)` (o `filtroAPersonas` solo para nombre) — no escribir filtros propios con `startsWith`/`includes` (pierden acentos y nombres compuestos).
 
 ## Regla de oro
 

@@ -15,7 +15,7 @@ import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
 import { useWikiDocument } from '@/hooks/useWikiDocument';
 import { apiFetch } from '@/lib/http';
-import { filtroAPersonas, normalizarBusquedaPersona } from '@/lib/filtroAPersonas';
+import { filtroAPersona, normalizarBusquedaPersona } from '@/lib/filtroAPersonas';
 import { parseAndValidateTime } from '@/lib/time';
 import { useSearchParams } from 'next/navigation';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
@@ -286,9 +286,7 @@ export function useEventsPage() {
  const normalized = normalizarBusquedaPersona(query);
  if (!normalized) return sortedPersonas;
  return sortedPersonas.filter((persona) =>
- filtroAPersonas(persona.nombre_completo, normalized) ||
- normalizarBusquedaPersona(persona.email).includes(normalized) ||
- normalizarBusquedaPersona(persona.church_role).includes(normalized)
+ filtroAPersona(persona, normalized)
  );
  };
 
@@ -674,7 +672,7 @@ const saveAttendance = async (forceEmpty = false) => {
 
  const filteredPersonas = expectedUniversePersonas.filter((persona) => {
  const query = normalizarBusquedaPersona(attendanceSearch);
- const matchesSearch = !query || filtroAPersonas(persona.nombre_completo, query) || normalizarBusquedaPersona(persona.email).includes(query);
+ const matchesSearch = !query || filtroAPersona(persona, query);
  const matchesRole = attendanceRoleFilter === 'ALL' || (persona.church_role || 'Sin rol') === attendanceRoleFilter;
  const isPresent = attendedPersonaIds.includes(persona.id);
  const matchesStatus =
