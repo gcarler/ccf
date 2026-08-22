@@ -47,6 +47,7 @@ from backend.models_agents import (
     AgentPermission,
     AgentRole,
     AgentTask,
+    ToolExecutionLog,
 )
 
 # Auth v3 — RBAC, MFA, forensics, and gamification
@@ -232,7 +233,15 @@ from backend.models_finance_suite import (
 )
 
 # Governance / Identity / Ops
-from backend.models_governance import AdminAuditLog, AutomationRule
+from backend.models_governance import (
+    AdminAuditLog,
+    AutomationRule,
+    CommitteeMember,
+    GovernanceCommittee,
+    GovernancePolicy,
+    GovernanceResolution,
+    GovernanceSignature,
+)
 from backend.models_identity import (
     Badge,
     Level,
@@ -258,7 +267,7 @@ from backend.models_kernel import (  # noqa: F401
 )
 
 # Knowledge Base
-from backend.models_knowledge_base import AgentKnowledgeBase
+from backend.models_knowledge_base import AgentKnowledgeBase, KnowledgeBaseArticle  # noqa: F401
 from backend.models_ops import ChurchLocation, SocialChannel, SystemVariable
 
 # Projects (canonical)
@@ -276,4 +285,6 @@ from backend.models_projects import (
     ProjectWhiteboard,
     TaskSupply,
 )
+from backend.models_sermones import Sermon, Sermones  # noqa: F401
 from backend.models_wiki import WikiPage, WikiPageVersion  # noqa: F401
+

@@ -502,4 +502,6 @@ from backend.schemas.projects import (  # noqa: F401
     TaskSupplyCreate,
     TaskSupplyUpdate,
 )
+from backend.schemas.rag import PastoralSearchRequest, PastoralSearchResult  # noqa: F401
 from backend.schemas.wiki import WikiPageCreate, WikiPageRead, WikiPageUpdate, WikiPageVersionRead  # noqa: F401
+

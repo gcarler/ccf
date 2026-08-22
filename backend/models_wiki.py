@@ -2,6 +2,7 @@
 
 from sqlalchemy import UniqueConstraint
 
+from backend.core.pgvector_compat import VectorEmbedding
 from backend.models_shared import *
 from backend.models_shared import _utcnow
 
@@ -21,6 +22,7 @@ class WikiPage(Base):
     tags = Column(JSON, nullable=True, default=list)
     sede_id = Column(UUID(as_uuid=True), ForeignKey("sedes.id"), nullable=True, index=True)
     author_id = Column(UUID(as_uuid=True), ForeignKey("personas.id"), nullable=True)
+    embedding = Column(VectorEmbedding(1536), nullable=True)
     created_at = Column(DateTime(timezone=True), nullable=False, default=_utcnow)
     updated_at = Column(DateTime(timezone=True), nullable=False, default=_utcnow, onupdate=_utcnow)
     deleted_at = Column(DateTime(timezone=True), nullable=True)

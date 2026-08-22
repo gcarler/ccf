@@ -621,3 +621,37 @@ class TestWikiAPI:
         )
         assert resp.status_code == 200
         assert resp.json()["version"] >= 2
+
+    def test_get_wiki_graph_data(self, client, db_session):
+        """GET /wiki/graph-data returns nodes and links between wiki pages."""
+        token, sede = _ensure_sede_and_persona(db_session)
+        headers = auth_headers(client)
+
+        client.post(
+            f"{self.BASE}/wiki_page_alpha",
+            json={"title": "Page Alpha", "content": "Link to [[Page Beta]] and <span data-type=\"wiki-link\" data-page-key=\"wiki_page_gamma\">Gamma</span>"},
+            headers=headers,
+        )
+        client.post(
+            f"{self.BASE}/wiki_page_beta",
+            json={"title": "Page Beta", "content": "Referencing [[wiki_page_alpha]]"},
+            headers=headers,
+        )
+        client.post(
+            f"{self.BASE}/wiki_page_gamma",
+            json={"title": "Page Gamma", "content": "No links"},
+            headers=headers,
+        )
+
+        resp = client.get("/api/wiki/graph-data", headers=headers)
+        assert resp.status_code == 200
+        data = resp.json()
+        assert "nodes" in data
+        assert "links" in data
+        node_ids = {n["id"] for n in data["nodes"]}
+        assert "wiki_page_alpha" in node_ids
+        assert "wiki_page_beta" in node_ids
+        assert "wiki_page_gamma" in node_ids
+        assert len(data["links"]) >= 2
+
+

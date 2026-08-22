@@ -75,7 +75,7 @@ def list_events(
     user_sede = require_user_sede_id(db, current_user)
     events = (
         _active_events_query(db)
-        .filter(models.CrmEvent.sede_id == user_sede)
+        .filter((models.CrmEvent.sede_id == user_sede) | models.CrmEvent.sede_id.is_(None))
         .order_by(models.CrmEvent.event_date.desc())
         .offset(skip)
         .limit(limit)
@@ -85,6 +85,23 @@ def list_events(
     # debe ser dict; convertimos cada ORM CrmEvent a dict compatible con
     # el schema (preserva contrato y evita response model orm-only errores).
     return [schemas.CrmEvent.model_validate(event).model_dump(mode="json") for event in events]
+
+
+@static_router.get("/sedes", response_model=List[dict])
+def list_event_sedes(
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_evangelism_read),
+):
+    """Lista sedes activas para que el creador elija el alcance del evento."""
+    return [
+        {"id": str(sede.id), "name": sede.nombre}
+        for sede in (
+            db.query(models.Sede)
+            .filter(models.Sede.es_activa.is_(True), models.Sede.deleted_at.is_(None))
+            .order_by(models.Sede.nombre.asc())
+            .all()
+        )
+    ]
 
 
 def _strategy_event_matches(event: models.CrmEvent, strategy_id: UUID) -> bool:
@@ -159,9 +176,11 @@ def create_event(
     current_user: models.User = Depends(require_evangelism_manage),
 ):
     payload = schemas.CrmEventCreate(**normalize_role_scope_payload(payload.model_dump()))
-    user_sede = require_user_sede_id(db, current_user)
+    _user_sede = require_user_sede_id(db, current_user)
     event = crud.create_crm_event(db, payload)
-    event.sede_id = user_sede
+    # La sede se selecciona explícitamente en la UI. NULL significa evento
+    # global, visible para todas las sedes y con audiencia de toda la iglesia.
+    event.sede_id = payload.sede_id
     db.commit()
     db.refresh(event)
     record_admin_action(

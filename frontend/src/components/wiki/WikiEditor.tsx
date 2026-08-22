@@ -1,13 +1,15 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useMemo } from 'react';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Placeholder from '@tiptap/extension-placeholder';
 import TaskList from '@tiptap/extension-task-list';
 import TaskItem from '@tiptap/extension-task-item';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Cloud, CloudOff, Loader2 } from 'lucide-react';
+import { Cloud, CloudOff, Loader2, Sparkles, BookOpen } from 'lucide-react';
+import { useAuth } from '@/context/AuthContext';
+import { WikiLinkExtension } from './WikiLinkExtension';
 
 interface WikiEditorProps {
     initialContent: string;
@@ -20,19 +22,25 @@ export default function WikiEditor({
     initialContent,
     onSave,
     onContentChange,
-    placeholder = "Escribe algo increíble..."
+    placeholder = "Escribe algo increíble... (Usa [[ para vincular documentos wiki)"
 }: WikiEditorProps) {
+    const { token } = useAuth();
     const [status, setStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
     const [lastSaved, setLastSaved] = useState<Date | null>(null);
     const lastSavedContentRef = useRef(initialContent);
 
+    const extensions = useMemo(() => [
+        StarterKit,
+        Placeholder.configure({ placeholder }),
+        TaskList,
+        TaskItem.configure({ nested: true }),
+        WikiLinkExtension.configure({
+            token: token || null,
+        } as any),
+    ], [placeholder, token]);
+
     const editor = useEditor({
-        extensions: [
-            StarterKit,
-            Placeholder.configure({ placeholder }),
-            TaskList,
-            TaskItem.configure({ nested: true }),
-        ],
+        extensions,
         content: initialContent,
         editorProps: {
             attributes: {
@@ -106,6 +114,17 @@ export default function WikiEditor({
 
     return (
         <div className="relative w-full max-w-4xl mx-auto py-1.5 px-3">
+            {/* Quick Wiki Link hint badge */}
+            <div className="mb-4 flex items-center justify-between p-2 rounded-lg bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))]/70 dark:border-white/5 text-[11px] text-[hsl(var(--text-secondary))]">
+                <div className="flex items-center gap-1.5">
+                    <Sparkles size={13} className="text-[hsl(var(--primary))]" />
+                    <span>Consejo de Conocimiento: Escribe <code className="bg-[hsl(var(--surface-2))] dark:bg-white/10 px-1 py-0.5 rounded font-mono font-bold text-[hsl(var(--primary))]">[[</code> para buscar o enlazar otros documentos de la base ministerial.</span>
+                </div>
+                <div className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-[hsl(var(--primary))]">
+                    <BookOpen size={11} /> Red Obsidian
+                </div>
+            </div>
+
             {/* Status Indicator (Floating) */}
             <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50">
                 <AnimatePresence>
@@ -146,7 +165,7 @@ export default function WikiEditor({
             <div className="mt-3 pt-8 border-t border-[hsl(var(--border))] dark:border-white/5 flex items-center justify-between text-[hsl(var(--text-secondary))]">
                 <div className="flex items-center gap-2">
                     <div className="size-2 rounded-full bg-[hsl(var(--success))]" />
-                    <span className="text-2xs font-semibold uppercase tracking-wide">Editor Activo</span>
+                    <span className="text-2xs font-semibold uppercase tracking-wide">Editor Activo (Bidireccional)</span>
                 </div>
                 {lastSaved && (
                     <span className="text-2xs font-bold uppercase tracking-wide">

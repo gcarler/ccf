@@ -18,6 +18,7 @@ from backend.api import (
     agenda,
     agents,
     analytics,
+    analytics_olap,
     auth_v3,
     chat,
     cms,
@@ -34,10 +35,12 @@ from backend.api import (
     governance,
     graph,
     kernel,
+    mcp_gateway,
     messaging,
     prayer,
     projects,
     public,
+    rag,
     spiritual_life,
     support,
     support_kb,
@@ -56,6 +59,7 @@ from backend.mcp_academy import academy_mcp_app
 from backend.mcp_agenda import agenda_mcp_app
 from backend.mcp_crm import crm_mcp_app
 from backend.mcp_evangelism import mass_event_mcp_app
+from backend.mcp_governance import governance_mcp_app
 from backend.mcp_platform import GENERIC_MODULE_SERVERS, platform_mcp_app, run_all_mcp_sessions
 from backend.mcp_public import cms_admin_mcp_app, public_mcp
 from backend.middleware.module_isolation import register_module_isolation
@@ -67,6 +71,7 @@ settings = get_settings()
 
 ROUTER_REGISTRY = [
     (auth_v3.router, "/api", ["Auth v3"]),
+    (mcp_gateway.router, "/api", ["MCP Gateway"]),
     (projects.router, "/api/projects", ["projects"]),
     (kernel.router, "/api", ["kernel"]),
     (academy.router, "/api", ["Academy"]),
@@ -84,7 +89,7 @@ ROUTER_REGISTRY = [
     (finance.router, "/api", ["finance"]),
     (finance_suite.router, "/api", ["Finance Suite"]),
     (donations.router, "/api", ["donations"]),
-    (governance.router, "/api", ["governance"]),
+    (governance.router, "/api/governance", ["governance"]),
     (chat.router, "/api", ["chat"]),
     (messaging.router, "/api", ["messaging"]),
     (support.router, "/api/support", ["support"]),
@@ -94,13 +99,17 @@ ROUTER_REGISTRY = [
     (community.router, "/api", ["community"]),
     (prayer.router, "/api/prayer", ["prayer"]),
     (analytics.router, "/api", ["analytics"]),
+    (analytics_olap.router, "/api", ["Analytics OLAP"]),
     (dashboard.router, "/api", ["dashboard"]),
     (tables.router, "/api", ["tables"]),
     (youtube.router, "/api", ["youtube"]),
     (enterprise_cms.router, "/api", ["Enterprise CMS"]),
     (wiki.router, "/api", ["wiki"]),
     (comments.router, "/api/comments", ["comments"]),
+    (rag.router, "/api", ["rag"]),
 ]
+
+
 
 
 @asynccontextmanager
@@ -239,6 +248,7 @@ app.mount("/mcp/evangelism", mass_event_mcp_app, name="evangelism-mcp")
 app.mount("/mcp/crm", crm_mcp_app, name="crm-mcp")
 app.mount("/mcp/academy", academy_mcp_app, name="academy-mcp")
 app.mount("/mcp/calendar", agenda_mcp_app, name="calendar-mcp")
+app.mount("/mcp/governance", governance_mcp_app, name="governance-mcp")
 for _module_slug, (_module_server, _module_app) in GENERIC_MODULE_SERVERS.items():
     app.mount(f"/mcp/{_module_slug}", _module_app, name=f"{_module_slug}-mcp")
 # Read-only public content surface for ChatGPT and other MCP clients.

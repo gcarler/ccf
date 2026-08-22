@@ -10,6 +10,7 @@ const DAY_LABELS = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viern
 
 export interface EventCreateForm {
   name: string;
+  sede_id: string;
   description: string;
   event_type: string;
   target_audience: string;
@@ -21,6 +22,11 @@ export interface EventCreateForm {
   fixed_date: string;
   start_time: string;
   end_time: string;
+}
+
+export interface EventSede {
+  id: string;
+  name: string;
 }
 
 export interface AudiencePresetData {
@@ -39,6 +45,7 @@ interface EventCreateDrawerProps {
   form: EventCreateForm;
   setForm: React.Dispatch<React.SetStateAction<EventCreateForm>>;
   roles: RoleDefinition[];
+  sedes?: EventSede[];
   presets: AudiencePresetData[];
   onApplyPreset: (presetId: string) => void;
   onDeletePreset: (presetId: string) => void;
@@ -57,6 +64,7 @@ export default function EventCreateDrawer({
   form,
   setForm,
   roles,
+  sedes = [],
   presets,
   onApplyPreset,
   onDeletePreset,
@@ -100,6 +108,21 @@ export default function EventCreateDrawer({
  className="w-full px-4 py-1.5 rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-primary))] dark:bg-black/20 focus:ring-2 focus:ring-primary outline-none font-bold text-sm text-[hsl(var(--text-primary))]"
  placeholder="Ej: Servicio Dominical"
  />
+ </div>
+
+ <div className="space-y-1.5">
+ <label htmlFor="event-sede" className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Sede del Evento *</label>
+ <select
+ id="event-sede"
+ required
+ value={form.sede_id}
+ onChange={e => setForm({ ...form, sede_id: e.target.value })}
+ className="w-full px-4 py-1.5 rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-primary))] dark:bg-black/20 focus:ring-2 focus:ring-primary outline-none font-bold text-sm text-[hsl(var(--text-primary))] appearance-none"
+ >
+ <option value="">Todas las sedes (evento global)</option>
+ {sedes.map((sede) => <option key={sede.id} value={sede.id}>{sede.name}</option>)}
+ </select>
+ <p className="text-2xs text-[hsl(var(--text-secondary))]">“Todas las sedes” permite registrar personas de toda la base de datos.</p>
  </div>
 
  <div className="space-y-1.5">

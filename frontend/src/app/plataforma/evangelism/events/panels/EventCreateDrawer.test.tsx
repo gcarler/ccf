@@ -27,7 +27,7 @@ vi.mock('@/components/WorkspaceDrawer', () => ({
 vi.mock('@/components/ErrorBoundary', () => ({ default: ({ children }: { children?: React.ReactNode }) => <>{children}</> }));
 
 const DEFAULT_FORM: EventCreateForm = {
-  name: '', description: '', event_type: 'PERMANENT',
+  name: '', sede_id: '', description: '', event_type: 'PERMANENT',
   target_audience: 'ALL', target_role_id: '', target_role_ids: [],
   target_persona_ids: [], day_of_week: '0', month_day: '', fixed_date: '',
   start_time: '', end_time: '',
