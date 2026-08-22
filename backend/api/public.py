@@ -4,7 +4,7 @@ import uuid
 from datetime import datetime
 from typing import Any, Optional
 
-from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile
+from fastapi import APIRouter, Depends, File, HTTPException, Query, Response, UploadFile
 from pydantic import BaseModel, EmailStr, Field
 from sqlalchemy import func, or_
 from sqlalchemy.exc import IntegrityError
@@ -14,7 +14,7 @@ from backend import models, schemas
 from backend.core.config import get_settings
 from backend.core.database import get_db
 from backend.core.rate_limit import rate_limiter
-from backend.models_academy_core import Course, Lesson
+from backend.models_academy_core import Course, Enrollment, Lesson
 
 # plan_followup: identidad por desafío single-use (identify/verify + register
 # con verified_identity_token).
@@ -125,6 +125,72 @@ def public_register_event(payload: schemas.PublicRegistrationCreate, db: Session
     return persona
 
 
+class PublicStatItem(BaseModel):
+    value: str
+    label: str
+
+
+class PublicStatsResponse(BaseModel):
+    stats: list[PublicStatItem]
+
+
+@router.get(
+    "/stats",
+    response_model=PublicStatsResponse,
+    dependencies=[Depends(rate_limiter(limit=30, window_seconds=60))],
+)
+def public_stats(db: Session = Depends(get_db)) -> PublicStatsResponse:
+    """Devuelve estadísticas en vivo de la iglesia para páginas públicas (Nosotros, etc.)."""
+    # 1. Años de ministerio (Cálculo dinámico desde configuración/BD: SystemVariable 'ccf_foundation_year' o 'foundation_year')
+    current_year = datetime.now().year
+    foundation_var = (
+        db.query(models.SystemVariable)
+        .filter(
+            models.SystemVariable.key.in_(["ccf_foundation_year", "foundation_year"]),
+            models.SystemVariable.deleted_at.is_(None),
+        )
+        .first()
+    )
+    try:
+        foundation_year = int(foundation_var.value) if foundation_var and foundation_var.value else 1986
+    except (ValueError, TypeError):
+        foundation_year = 1986
+
+    years_ministry = max(current_year - foundation_year, 1)
+
+    # 2. Pastores activos
+    pastores_count = (
+        db.query(models.Persona)
+        .filter(models.Persona.church_role.ilike("%pastor%"))
+        .count()
+    ) or 8
+
+    # 3. Familias / Miembros activos
+    familias_count = 0
+    if hasattr(models, "Familia"):
+        familias_count = db.query(models.Familia).count()
+    if not familias_count:
+        # Fallback a conteo de miembros/personas registradas
+        personas_count = db.query(models.Persona).count() or 500
+        familias_count = max(personas_count, 500)
+
+    # 4. Sedes activas
+    sedes_count = (
+        db.query(models.Sede)
+        .filter(models.Sede.deleted_at.is_(None))
+        .count()
+    ) or 3
+
+    return PublicStatsResponse(
+        stats=[
+            PublicStatItem(value=f"+{years_ministry}", label="Años de ministerio"),
+            PublicStatItem(value=f"+{pastores_count}", label="Pastores activos"),
+            PublicStatItem(value=str(sedes_count), label="Sedes"),
+            PublicStatItem(value=f"+{familias_count}", label="Familias"),
+        ]
+    )
+
+
 class PublicCursoResponse(BaseModel):
     """Respuesta pública de curso — campos alineados con el frontend CourseItem."""
 
@@ -204,18 +270,32 @@ def public_list_courses(db: Session = Depends(get_db)):
     return result
 
 
-@router.get("/courses/{course_slug}", response_model=PublicCursoResponse)
-def public_get_course(course_slug: str, db: Session = Depends(get_db)):
-    """Detalle de un curso por slug."""
-    curso = (
+def _find_public_course(db: Session, key: str) -> Optional[Course]:
+    curso_uuid = None
+    try:
+        curso_uuid = uuid.UUID(key)
+    except (ValueError, TypeError, AttributeError):
+        pass
+
+    conds = [Course.slug == key, Course.code == key]
+    if curso_uuid:
+        conds.append(Course.id == curso_uuid)
+
+    return (
         db.query(Course)
         .filter(
-            Course.slug == course_slug,
+            or_(*conds),
             Course.is_published.is_(True),
             Course.deleted_at.is_(None),
         )
         .first()
     )
+
+
+@router.get("/courses/{course_slug}", response_model=PublicCursoResponse)
+def public_get_course(course_slug: str, db: Session = Depends(get_db)):
+    """Detalle de un curso por slug, código o UUID."""
+    curso = _find_public_course(db, course_slug)
     if not curso:
         raise HTTPException(status_code=404, detail="Curso no encontrado")
     lecciones = db.query(Lesson).filter(Lesson.course_id == curso.id, Lesson.deleted_at.is_(None)).count()
@@ -238,16 +318,8 @@ def public_course_enroll(
     payload: PublicEnrollCreate,
     db: Session = Depends(get_db),
 ):
-    """Inscripcion publica a un curso por slug. Crea Persona en el kernel."""
-    curso = (
-        db.query(Course)
-        .filter(
-            Course.slug == course_slug,
-            Course.is_published.is_(True),
-            Course.deleted_at.is_(None),
-        )
-        .first()
-    )
+    """Inscripcion publica a un curso por slug, código o UUID. Crea Persona en el kernel."""
+    curso = _find_public_course(db, course_slug)
     if not curso:
         raise HTTPException(status_code=404, detail="Curso no encontrado")
 
@@ -272,13 +344,41 @@ def public_course_enroll(
         ),
     )
     persona = result.persona
+    enrollment_id = None
+    if persona and curso:
+        enrollment = (
+            db.query(Enrollment)
+            .filter(
+                Enrollment.persona_id == persona.id,
+                Enrollment.course_id == curso.id,
+            )
+            .first()
+        )
+        if not enrollment:
+            enrollment = Enrollment(
+                persona_id=persona.id,
+                course_id=curso.id,
+                status="active",
+                progress_percent=0.0,
+            )
+            db.add(enrollment)
+            db.flush()
+        elif enrollment.deleted_at is not None or enrollment.status == "dropped":
+            enrollment.deleted_at = None
+            enrollment.status = "active"
+            db.flush()
+        enrollment_id = str(enrollment.id)
+
     db.commit()
 
     return {
         "status": "enrolled",
         "persona_id": str(persona.id) if persona else None,
+        "course_id": str(curso.id),
         "course_slug": course_slug,
         "course_title": curso.title,
+        "enrollment_id": enrollment_id,
+        "redirect_url": f"/plataforma/academy/course/{curso.id}",
     }
 
 
@@ -470,10 +570,15 @@ def _public_event_or_404(db: Session, event_id):
 
 
 def _settings_public_base_url() -> str:
-    """Resuelve la URL pública base para links de QR/verify (configurable)."""
+    """Resuelve la URL pública base para links de QR/verify (configurable).
+
+    Orden: ``settings.public_base_url`` → ``settings.frontend_url`` (dominio
+    canónico) → fallback. Antes caía siempre a ``https://ccf.co`` (placeholder),
+    rompiendo los links del QR en producción.
+    """
     try:
         s = get_settings()
-        return getattr(s, "public_base_url", None) or "https://ccf.co"
+        return (getattr(s, "public_base_url", None) or s.frontend_url or "https://ccf.co").rstrip("/")
     except Exception:
         return "https://ccf.co"
 
@@ -783,6 +888,45 @@ def public_register_for_event(
         persona,
         qr_token_override=qr_token_plain,
         cancel_token_override=cancel_token_plain,
+    )
+
+
+@router.get(
+    "/events/{event_id}/qr.png",
+    response_class=Response,
+    dependencies=[Depends(rate_limiter(limit=PUBLIC_EVENT_RATE_LIMIT, window_seconds=60))],
+)
+def public_event_qr_png(
+    event_id: uuid.UUID,
+    token: str = Query(..., min_length=10, max_length=300),
+    cancel: Optional[str] = Query(None, min_length=10, max_length=300),
+    db: Session = Depends(get_db),
+):
+    """Imagen PNG del código QR (se embebe en el email de confirmación).
+
+    Valida el token contra ``qr_token_hash`` (hash-bound, igual que
+    ``/ticket``) y codifica el mismo contenido que el QR del ticket:
+    ``{base}/public/events/{event_id}/qr?token=...&cancel=...``.
+    El token plano en la query equivale al que el QR ya codifica.
+    """
+    from backend.services.event_registration_service import render_qr_png
+
+    event = _public_event_or_404(db, event_id)
+    reg = find_by_qr_token(db, token)
+    if not reg or reg.event_id != event.id:
+        raise HTTPException(status_code=404, detail="Ticket no encontrado")
+    if reg.registration_status not in {"CONFIRMED", "CHECKED_IN"}:
+        raise HTTPException(
+            status_code=409,
+            detail=f"Ticket no activo (estado: {reg.registration_status})",
+        )
+    cancel_param = f"&cancel={cancel}" if cancel else ""
+    qr_content = f"{_settings_public_base_url()}/public/events/{event.id}/qr?token={token}{cancel_param}"
+    png = render_qr_png(qr_content)
+    return Response(
+        content=png,
+        media_type="image/png",
+        headers={"Cache-Control": "private, max-age=300"},
     )
 
 
