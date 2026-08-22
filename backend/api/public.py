@@ -141,10 +141,10 @@ class PublicStatsResponse(BaseModel):
 )
 def public_stats(db: Session = Depends(get_db)) -> PublicStatsResponse:
     """Devuelve estadísticas en vivo de la iglesia para páginas públicas (Nosotros, etc.)."""
-    # 1. Años de ministerio (Fundada en 2004)
-    foundation_year = 2004
+    # 1. Años de ministerio (Fundada en 1986 — 40 años en 2026)
+    foundation_year = 1986
     current_year = datetime.now().year
-    years_ministry = max(current_year - foundation_year, 20)
+    years_ministry = max(current_year - foundation_year, 40)
 
     # 2. Pastores activos
     pastores_count = (
