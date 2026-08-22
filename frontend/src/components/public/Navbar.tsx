@@ -168,23 +168,11 @@ export default function Navbar() {
                     {/* Logo */}
                     <Link href="/" className="group flex min-w-0 shrink-0 items-center gap-3 rounded-full pr-2 transition-opacity hover:opacity-90">
                         {logoUrl ? (
-                            <span
-                                className="grid h-11 w-11 place-items-center rounded-full border md:h-12 md:w-12"
-                                style={{
-                                    background: "var(--site-navbar-bg)",
-                                    borderColor: "var(--site-outline-variant)",
-                                }}
-                            >
+                            <span className="grid h-11 w-11 place-items-center md:h-12 md:w-12">
                                 <OptimizedImage src={logoUrl} alt={logoName} width={42} height={42} className="h-8 w-8 object-contain md:h-9 md:w-9" />
                             </span>
                         ) : (
-                            <div
-                                className="relative h-11 w-11 rounded-full border p-2 md:h-12 md:w-12"
-                                style={{
-                                    background: "var(--site-navbar-bg)",
-                                    borderColor: "var(--site-outline-variant)",
-                                }}
-                            >
+                            <div className="relative h-11 w-11 p-2 md:h-12 md:w-12">
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-full h-full text-site-primary">
                                     <path d="M8 22L10 6L12 2L14 6L16 22H8Z" strokeLinejoin="round" />
                                     <circle cx="12" cy="4" r="1.5" fill="currentColor" />

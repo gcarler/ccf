@@ -202,13 +202,7 @@ export default function Footer() {
                     <div className="grid gap-10 py-14 sm:py-16 lg:grid-cols-[1.15fr_0.85fr] lg:items-center lg:py-20">
                         <div className="min-w-0">
                             <Link href="/" className="inline-flex max-w-full items-center gap-4">
-                                <span
-                                    className="grid h-16 w-16 shrink-0 place-items-center overflow-hidden rounded-2xl border sm:h-20 sm:w-20"
-                                    style={{
-                                        background: "var(--site-navbar-bg)",
-                                        borderColor: "var(--site-outline-variant)",
-                                    }}
-                                >
+                                <span className="grid h-16 w-16 shrink-0 place-items-center overflow-hidden sm:h-20 sm:w-20">
                                     {logoUrl ? (
                                         <OptimizedImage src={logoUrl} alt={brandName} width={80} height={80} className="h-full w-full object-contain p-3" />
                                     ) : (
