@@ -1,5 +1,6 @@
 import inspect
 import re
+import subprocess
 from pathlib import Path
 
 import pytest
@@ -415,7 +416,19 @@ def test_platform_frontend_respects_ccf_ui_contracts():
     violations = []
 
     for scan_root in scan_roots:
-        for path in scan_root.rglob("*"):
+        # The pre-push gate validates the Git snapshot, not arbitrary files
+        # left untracked in a developer workspace. Scanning untracked feature
+        # branches here caused false blocks for files that cannot be included
+        # in the push until they are intentionally staged and committed.
+        tracked = subprocess.run(
+            ["git", "ls-files", "--cached", "--", str(scan_root.relative_to(root))],
+            cwd=root,
+            check=False,
+            capture_output=True,
+            text=True,
+        )
+        paths = [root / line for line in tracked.stdout.splitlines()] if tracked.returncode == 0 else scan_root.rglob("*")
+        for path in paths:
             if path.suffix not in {".ts", ".tsx"}:
                 continue
             for line_no, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
