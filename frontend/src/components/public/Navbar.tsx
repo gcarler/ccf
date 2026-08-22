@@ -171,7 +171,7 @@ export default function Navbar() {
                             <span
                                 className="grid h-11 w-11 place-items-center rounded-full border md:h-12 md:w-12"
                                 style={{
-                                    background: "var(--site-surface-container-low)",
+                                    background: "var(--site-navbar-bg)",
                                     borderColor: "var(--site-outline-variant)",
                                 }}
                             >
@@ -181,7 +181,7 @@ export default function Navbar() {
                             <div
                                 className="relative h-11 w-11 rounded-full border p-2 md:h-12 md:w-12"
                                 style={{
-                                    background: "var(--site-surface-container-low)",
+                                    background: "var(--site-navbar-bg)",
                                     borderColor: "var(--site-outline-variant)",
                                 }}
                             >
