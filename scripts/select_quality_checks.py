@@ -270,6 +270,16 @@ SHARED_PREFIXES: tuple[str, ...] = (
     "tests/test_select_quality_checks.py",
 )
 
+# Infraestructura del gate: debe validarse con el contrato de plataforma, pero
+# no debe simular que cada módulo cambió cuando solo cambia el propio selector
+# o el instalador del hook.
+QUALITY_INFRASTRUCTURE_PREFIXES: tuple[str, ...] = (
+    "scripts/hooks/pre-push",
+    "scripts/install-hooks.sh",
+    "scripts/select_quality_checks.py",
+    "tests/test_select_quality_checks.py",
+)
+
 
 CRITICAL_CHECKS: tuple[str, ...] = (
     "frontend_build",
@@ -347,6 +357,11 @@ def explain_selection(changed_files: list[str]) -> dict[str, list[str]]:
     normalized = [_normalize(path) for path in changed_files if path.strip()]
 
     for path in normalized:
+        if any(_matches(path, prefix) for prefix in QUALITY_INFRASTRUCTURE_PREFIXES):
+            reason = f"platform-infrastructure:{path}"
+            selected.add("platform_quality")
+            reasons.setdefault("platform_quality", set()).add(reason)
+            continue
         if any(_matches(path, prefix) for prefix in SHARED_PREFIXES) and (
             _is_explicit_shared_file(path) or not _is_test_file(path)
         ):
