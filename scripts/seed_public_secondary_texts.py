@@ -78,7 +78,7 @@ HOME_FEED_KEYS: dict[str, Any] = {
 
 FOOTER_TOP_LEVEL_KEYS: dict[str, Any] = {"privacy_href": "/privacy"}
 FOOTER_CONTACT_KEYS: dict[str, Any] = {
-    "email": "info@ccfministerio.com",
+    "email": "contactenos@ministerioselfaro.org",
     "location_href": "/sedes",
     "newsletter_href": "/boletin",
 }

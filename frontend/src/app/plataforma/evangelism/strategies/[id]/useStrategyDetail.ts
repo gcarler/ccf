@@ -297,7 +297,7 @@ export function useRemotePersonaSearch(token: string | null) {
   const abortRef = useRef<AbortController | null>(null);
 
   const search = useCallback(async (q: string, limit: number = 10): Promise<SharedSearchablePersona[]> => {
-    if (!token || q.trim().length < 3) return [];
+    if (!token || q.trim().length < 1) return [];
     if (abortRef.current) abortRef.current.abort();
     const controller = new AbortController();
     abortRef.current = controller;

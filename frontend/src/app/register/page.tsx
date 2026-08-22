@@ -1,15 +1,53 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
+import { Sparkles } from 'lucide-react';
 
-export default function RegisterPage() {
+function RegisterForm() {
+    const searchParams = useSearchParams();
+    const courseId = searchParams?.get('course_id') || '';
+    const courseSlug = searchParams?.get('course_slug') || '';
+    const courseTitle = searchParams?.get('course_title') || '';
+    const redirectParam = searchParams?.get('redirect') || '';
+
     const [loadingGoogle, setLoadingGoogle] = useState(false);
+    const [pendingCourse, setPendingCourse] = useState<{ id?: string; title?: string } | null>(null);
+
+    useEffect(() => {
+        if (courseId || courseTitle) {
+            setPendingCourse({ id: courseId, title: courseTitle });
+        } else if (typeof window !== 'undefined') {
+            try {
+                const stored = localStorage.getItem('ccf_pending_course');
+                if (stored) {
+                    const parsed = JSON.parse(stored);
+                    if (parsed.id || parsed.title) {
+                        setPendingCourse({ id: parsed.id, title: parsed.title });
+                    }
+                }
+            } catch {
+                // ignore
+            }
+        }
+    }, [courseId, courseTitle]);
 
     const handleGoogleAuth = () => {
         setLoadingGoogle(true);
-        window.location.href = '/api/v3/auth/google';
+        const query = new URLSearchParams();
+        const effectiveCourseId = courseId || pendingCourse?.id || '';
+        if (effectiveCourseId) query.set('course_id', effectiveCourseId);
+        if (courseSlug) query.set('course_slug', courseSlug);
+        if (redirectParam) {
+            query.set('redirect', redirectParam);
+        } else if (effectiveCourseId) {
+            query.set('redirect', `/plataforma/academy/course/${effectiveCourseId}`);
+        }
+
+        const queryString = query.toString() ? `?${query.toString()}` : '';
+        window.location.href = `/api/v3/auth/google${queryString}`;
     };
 
     return (
@@ -97,7 +135,7 @@ export default function RegisterPage() {
                     style={{ maxWidth: '520px', width: '100%', padding: '56px 44px' }}
                 >
                     {/* Header */}
-                    <div style={{ textAlign: 'center', marginBottom: '36px' }}>
+                    <div style={{ textAlign: 'center', marginBottom: '32px' }}>
                         <div style={{
                             display: 'inline-flex', alignItems: 'center', gap: '8px',
                             background: 'rgba(1,138,189,0.15)', border: '1px solid rgba(1,138,189,0.3)',
@@ -105,16 +143,41 @@ export default function RegisterPage() {
                         }}>
                             <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'var(--ccf-blue-light)' }} />
                             <span style={{ fontSize: '11px', fontWeight: 800, color: 'var(--ccf-blue-pale)', textTransform: 'uppercase', letterSpacing: '0.15em' }}>
-                                Plataforma CCF
+                                Academia CCF
                             </span>
                         </div>
                         <h1 style={{ color: 'white', fontSize: '2.2rem', fontWeight: 900, letterSpacing: '-0.03em', margin: '0 0 12px' }}>
                             Crear Cuenta
                         </h1>
                         <p style={{ color: 'rgba(221,232,240,0.7)', fontSize: '0.95rem', lineHeight: 1.6, margin: 0 }}>
-                            Accede a la plataforma ministerial, academia y recursos formativos.
+                            {pendingCourse ? 'Inicia con Google para ingresar directamente a tu curso gratuito.' : 'Accede a la plataforma ministerial, academia y recursos formativos.'}
                         </p>
                     </div>
+
+                    {/* Pending Course Banner */}
+                    {pendingCourse && (
+                        <div style={{
+                            background: 'rgba(16, 185, 129, 0.12)',
+                            border: '1px solid rgba(16, 185, 129, 0.3)',
+                            borderRadius: '1rem',
+                            padding: '14px 18px',
+                            marginBottom: '24px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '12px',
+                            textAlign: 'left',
+                        }}>
+                            <Sparkles size={22} color="#10b981" style={{ flexShrink: 0 }} />
+                            <div>
+                                <div style={{ fontSize: '11px', fontWeight: 800, color: '#34d399', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+                                    Matrícula Inmediata Incluida
+                                </div>
+                                <div style={{ fontSize: '14px', fontWeight: 700, color: 'white', marginTop: '2px' }}>
+                                    {pendingCourse.title || 'Curso de Formación'}
+                                </div>
+                            </div>
+                        </div>
+                    )}
 
                     {/* Google SSO Button */}
                     <div style={{ marginBottom: '32px' }}>
@@ -130,7 +193,7 @@ export default function RegisterPage() {
                                 <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
                                 <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
                             </svg>
-                            {loadingGoogle ? 'Conectando...' : 'Continuar con Google'}
+                            {loadingGoogle ? 'Conectando con Google...' : (pendingCourse ? 'Comenzar Curso con Google' : 'Continuar con Google')}
                         </button>
                     </div>
 
@@ -165,5 +228,17 @@ export default function RegisterPage() {
                 </motion.div>
             </div>
         </>
+    );
+}
+
+export default function RegisterPage() {
+    return (
+        <Suspense fallback={
+            <div style={{ display: 'flex', width: '100vw', minHeight: '100vh', backgroundColor: 'var(--ccf-blue-dark)', alignItems: 'center', justifyContent: 'center' }}>
+                <p style={{ color: 'white', fontWeight: 'bold' }}>Cargando registro...</p>
+            </div>
+        }>
+            <RegisterForm />
+        </Suspense>
     );
 }

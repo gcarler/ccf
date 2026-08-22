@@ -182,3 +182,76 @@ class TestScannerValidate:
         token = f"CCF-PER-{p.id}-{secret}"
         resp = c.post(f"/api/evangelism/scanner/validate/{token}", headers=h)
         assert resp.status_code == 403
+
+    def _persona_with_token(self, db_session, sede_id, first_name):
+        p = models.Persona(id=uuid.uuid4(), first_name=first_name, last_name="Test", sede_id=sede_id, church_role="miembro")
+        db_session.add(p)
+        db_session.flush()
+        secret = secrets.token_hex(16)
+        p.scanner_token_hash = hashlib.sha256(secret.encode()).hexdigest()
+        p.scanner_token_expires_at = datetime.now(timezone.utc) + timedelta(days=365)
+        db_session.commit()
+        return p, f"CCF-PER-{p.id}-{secret}"
+
+    def test_validate_global_event_accepts_any_sede(self, full, db_session):
+        """Evento global (sede_id NULL): el carnet de una persona de otra sede es válido."""
+        c, h, s = full["c"], full["h"], full["s"]
+        other = models.Sede(id=uuid.uuid4(), nombre="Sede Norte", ciudad="Villagarzón", es_activa=True)
+        db_session.add(other)
+        db_session.flush()
+        p, token = self._persona_with_token(db_session, other.id, "GlobScan")
+
+        evt = models.CrmEvent(
+            id=uuid.uuid4(),
+            name="Evento Masivo Global",
+            event_date=datetime(2026, 9, 1, 10, 0, 0, tzinfo=timezone.utc),
+            sede_id=None,
+            location="Coliseo",
+        )
+        db_session.add(evt)
+        db_session.commit()
+
+        resp = c.post(f"/api/evangelism/scanner/validate/{token}?event_id={evt.id}", headers=h)
+        assert _ok(resp.status_code), f"validate: {resp.status_code} {resp.text[:200]}"
+        assert resp.json()["valid"] is True
+        assert str(resp.json()["persona_id"]) == str(p.id)
+
+    def test_validate_sede_event_rejects_other_sede(self, full, db_session):
+        """Evento acotado a una sede: el carnet de otra sede NO es válido (404)."""
+        c, h, s = full["c"], full["h"], full["s"]
+        other = models.Sede(id=uuid.uuid4(), nombre="Sede Sur", ciudad="Puerto Asís", es_activa=True)
+        db_session.add(other)
+        db_session.flush()
+        p, token = self._persona_with_token(db_session, other.id, "SedeScan")
+
+        evt = models.CrmEvent(
+            id=uuid.uuid4(),
+            name="Evento de Sede Central",
+            event_date=datetime(2026, 9, 2, 10, 0, 0, tzinfo=timezone.utc),
+            sede_id=s.id,
+            location="Templo Central",
+        )
+        db_session.add(evt)
+        db_session.commit()
+
+        resp = c.post(f"/api/evangelism/scanner/validate/{token}?event_id={evt.id}", headers=h)
+        assert resp.status_code == 404
+
+    def test_validate_global_event_accepts_caller_sede(self, full, db_session):
+        """Evento global: el carnet de la propia sede sigue siendo válido."""
+        c, h, s = full["c"], full["h"], full["s"]
+        p, token = self._persona_with_token(db_session, s.id, "LocalScan")
+
+        evt = models.CrmEvent(
+            id=uuid.uuid4(),
+            name="Evento Global 2",
+            event_date=datetime(2026, 9, 3, 10, 0, 0, tzinfo=timezone.utc),
+            sede_id=None,
+            location="Auditorio",
+        )
+        db_session.add(evt)
+        db_session.commit()
+
+        resp = c.post(f"/api/evangelism/scanner/validate/{token}?event_id={evt.id}", headers=h)
+        assert _ok(resp.status_code), f"validate: {resp.status_code} {resp.text[:200]}"
+        assert resp.json()["valid"] is True

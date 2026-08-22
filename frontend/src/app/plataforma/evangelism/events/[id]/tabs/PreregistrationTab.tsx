@@ -408,7 +408,7 @@ export default function PreregistrationTab({ eventId, token }: { eventId: string
                 .filter((r) => {
                   if (!search) return true;
                   const q = search.toLowerCase();
-                  return (r.persona_name || "").toLowerCase().includes(q)
+                  return (r.persona_name || "").trim().toLocaleLowerCase('es').startsWith(q)
                     || (r.persona_email || "").toLowerCase().includes(q)
                     || (r.persona_phone || "").toLowerCase().includes(q);
                 })

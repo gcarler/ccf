@@ -20,11 +20,11 @@ function PersonaSelect({ personas, value, onChange, label, multi = false }: Pers
   const [open, setOpen] = useState(false);
 
   const filtered = useMemo(() => {
-    if (!search) return personas.slice(0, 50);
-    const q = search.toLowerCase();
+    const q = search.trim().toLocaleLowerCase('es');
+    if (!q) return personas.slice(0, 50);
     return personas.filter((m) =>
-      m.nombre_completo.toLowerCase().includes(q)
-    ).slice(0, 50);
+      (m.nombre_completo || '').trim().toLocaleLowerCase('es').startsWith(q)
+    );
   }, [personas, search]);
 
   const handleSelect = (m: Persona) => {

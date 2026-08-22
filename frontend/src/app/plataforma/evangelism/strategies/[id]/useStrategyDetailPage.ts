@@ -291,7 +291,7 @@ export function useStrategyDetailPage() {
  const timer = setTimeout(async () => {
  try {
  const params: RoleSearchQuery = query.length >= 1
- ? { limit: 200, search: query }
+ ? { limit: 1000, search: query }
  : { limit: 1000, sort_by: 'first_name', sort_dir: 'asc' };
  const res = await apiFetch<RoleSearchPersona[]>('/crm/personas', { token, silent: true, query: params });
  setRoleResults(r => ({ ...r, [field]: res || [] }));
@@ -394,7 +394,7 @@ export function useStrategyDetailPage() {
  useEffect(() => {
  if (!token || !isPersonaDrawerOpen) return;
  const q = personaSearch.trim();
- if (q.length < 3) {
+ if (q.length < 1) {
  setPersonaSearchLoading(false);
  setPersonaSearchResults([]);
  cancelPersonaSearch();
@@ -402,7 +402,7 @@ export function useStrategyDetailPage() {
  }
  setPersonaSearchLoading(true);
  const handle = setTimeout(() => {
- searchPersonas(q, 12)
+ searchPersonas(q, 1000)
  .then(results => {
  setPersonaSearchResults(results);
  })

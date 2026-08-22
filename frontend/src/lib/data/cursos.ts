@@ -1,5 +1,6 @@
 export interface CourseItem {
     id: string;
+    slug?: string;
     tag?: string;
     modality?: string;
     title: string;

@@ -66,7 +66,7 @@ export default function TaskAssignment() {
             setError(null);
             const [usersData, personasData] = await Promise.all([
                 apiFetch<{ items: Leader[]; total: number }>('/admin/users', { token, signal }),
-                apiFetch<Persona[]>('/crm/personas', { token, signal })
+                apiFetch<Persona[]>('/crm/personas', { token, signal, query: { limit: 1000 } })
             ]);
 
             // Filtrar solo líderes/admin/staff para asignar
@@ -91,9 +91,10 @@ export default function TaskAssignment() {
     }, [authLoading, fetchData, isAuthenticated, reloadKey]);
 
     const filteredPersonas = useMemo(() => {
+        const query = searchQuery.trim().toLocaleLowerCase('es');
         return personas.filter(m =>
-            (m.nombre_completo || `${m.first_name ?? ''} ${m.last_name ?? ''}`.trim()).toLowerCase().includes(searchQuery.toLowerCase())
-        ).slice(0, 10); // Limit to 10 for assignment UI
+            (m.nombre_completo || `${m.first_name ?? ''} ${m.last_name ?? ''}`.trim()).trim().toLocaleLowerCase('es').startsWith(query)
+        );
     }, [personas, searchQuery]);
 
     const handleAssign = async () => {

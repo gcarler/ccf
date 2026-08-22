@@ -42,7 +42,7 @@ export default function PersonaSelect({
 
     useEffect(() => {
         if (!token || personas.length > 0) return;
-        apiFetch<PersonaOption[]>("/crm/personas", { token })
+        apiFetch<PersonaOption[]>("/crm/personas", { token, query: { limit: 1000 } })
             .then((data) => setPersonas(Array.isArray(data) ? data : []))
             .catch((err) => { console.error("[PersonaSelect] Failed to load personas:", err); });
     }, [token, personas.length]);
@@ -61,9 +61,9 @@ export default function PersonaSelect({
 
     const filtered = search.trim()
         ? personas.filter((p) => {
-              const name = displayName(p).toLowerCase();
-              const q = search.toLowerCase();
-              return name.includes(q) || (p.church_role ?? "").toLowerCase().includes(q);
+              const name = displayName(p).trim().toLocaleLowerCase('es');
+              const q = search.trim().toLocaleLowerCase('es');
+              return name.startsWith(q) || (p.church_role ?? "").toLocaleLowerCase('es').includes(q);
           })
         : personas;
 

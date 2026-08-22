@@ -5,8 +5,9 @@ import hashlib
 import secrets
 import uuid
 from datetime import timezone
+from typing import Optional
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
 from backend import models
@@ -39,22 +40,34 @@ def _get_scoped_scanner_persona(
     persona_id: uuid.UUID,
     db: Session,
     current_user: models.User,
+    event_id: Optional[uuid.UUID] = None,
 ) -> models.Persona:
-    """Return a canonical persona only when it belongs to the caller's sede.
+    """Return a canonical persona respecting the tenant boundary in play.
 
     Scanner tokens identify a person and therefore follow the same tenant
     boundary as the rest of Evangelism.  A 404 intentionally avoids exposing
     whether a persona exists in another sede.
+
+    Con contexto de evento (``event_id``): el límite lo define el alcance del
+    evento. Un evento global (``sede_id`` NULL, para todo el ministerio)
+    acepta carnets de personas de cualquier sede; un evento acotado a una
+    sede exige que la persona pertenezca a esa sede.
+
+    Sin contexto de evento: se mantiene el límite de sede del llamador
+    (generación de carnets y validación desde la página del escáner).
     """
-    user_sede_id = require_user_sede_id(db, current_user)
-    persona = (
-        db.query(models.Persona)
-        .filter(
-            models.Persona.id == persona_id,
-            models.Persona.sede_id == user_sede_id,
-        )
-        .first()
-    )
+    query = db.query(models.Persona).filter(models.Persona.id == persona_id)
+    if event_id is not None:
+        from backend.api.evangelism_events._shared import require_event_access
+
+        event = require_event_access(db, current_user, event_id)
+        if event.sede_id:
+            query = query.filter(models.Persona.sede_id == event.sede_id)
+        # Evento global (sede_id NULL): el carnet es válido para toda la iglesia.
+    else:
+        user_sede_id = require_user_sede_id(db, current_user)
+        query = query.filter(models.Persona.sede_id == user_sede_id)
+    persona = query.first()
     if not persona:
         raise HTTPException(status_code=404, detail="Persona no encontrada")
     return persona
@@ -84,6 +97,7 @@ def generate_scanner_token(
 @router.post("/scanner/validate/{token}", response_model=dict)
 def validate_scanner_token(
     token: str,
+    event_id: Optional[uuid.UUID] = Query(None, description="Contexto de evento para eventos globales (toda la iglesia)"),
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("evangelism", "read")),
 ):
@@ -101,7 +115,7 @@ def validate_scanner_token(
         raise HTTPException(status_code=400, detail="Token malformado")
     secret = payload[37:]
 
-    persona = _get_scoped_scanner_persona(persona_id, db, current_user)
+    persona = _get_scoped_scanner_persona(persona_id, db, current_user, event_id=event_id)
     if not persona.scanner_token_hash:
         raise HTTPException(status_code=403, detail="La persona no tiene un token activo")
 

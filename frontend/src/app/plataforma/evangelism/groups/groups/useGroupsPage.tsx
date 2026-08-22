@@ -466,7 +466,8 @@ export function useGroupsPage() {
     );
 
     return base.filter(m => {
-      if (personaSearchQuery && !(m.nombre_completo || '').toLowerCase().includes(personaSearchQuery.toLowerCase())) {
+      const query = personaSearchQuery.trim().toLocaleLowerCase('es');
+      if (query && !(m.nombre_completo || '').trim().toLocaleLowerCase('es').startsWith(query)) {
         return false;
       }
       if (personaRoleFilter && m.church_role !== personaRoleFilter) {

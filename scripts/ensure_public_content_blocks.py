@@ -343,7 +343,7 @@ BLOCKS = {
             "location_label": "Cartagena, Colombia",
             "newsletter_label": "Boletín semanal",
             "contact": {
-                "email": "info@ccfministerio.com",
+                "email": "contactenos@ministerioselfaro.org",
                 "location_label": "Cartagena, Colombia",
                 "location_href": "/sedes",
                 "newsletter_label": "Boletín semanal",

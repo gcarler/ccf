@@ -306,7 +306,7 @@ export function useGroupDetailPage(id: string | undefined) {
   useEffect(() => {
     if (!token || !showAddAttendee) return;
     const q = remoteQuery.trim();
-    if (q.length < 3) {
+    if (q.length < 1) {
       setRemoteResults([]);
       if (remoteAbortRef.current) {
         remoteAbortRef.current.abort();
@@ -324,7 +324,7 @@ export function useGroupDetailPage(id: string | undefined) {
       apiFetch<{ results: Persona[] }>('/evangelism/personas/search', {
         token,
         silent: true,
-        query: { q, limit: 10 },
+        query: { q, limit: 1000 },
         signal: controller.signal,
       })
         .then(res => {
@@ -346,7 +346,7 @@ export function useGroupDetailPage(id: string | undefined) {
   }, [remoteQuery, showAddAttendee, token]);
 
   const filteredPersonas = useMemo(() => {
-    const q = personaQuery.toLowerCase();
+    const q = personaQuery.trim().toLocaleLowerCase('es');
     const attendedIds = new Set(attendance?.attendees.map(a => a.persona_id) || []);
     // R2: si la búsqueda remota está activa (>=3 chars y hay resultados),
     // mezclamos primero los hits remotos; después el pool local para no
@@ -356,10 +356,10 @@ export function useGroupDetailPage(id: string | undefined) {
       : [];
     const localPool = personas
       .filter(m => !attendedIds.has(m.id))
-      .filter(m => !q || (m.nombre_completo || '').toLowerCase().includes(q))
+      .filter(m => !q || (m.nombre_completo || '').trim().toLocaleLowerCase('es').startsWith(q))
       // Excluir las que ya aparecieron en remoteResults.
       .filter(m => !remoteMatches.some(r => r.id === m.id));
-    return [...remoteMatches, ...localPool].slice(0, 30);
+    return [...remoteMatches, ...localPool];
   }, [personas, personaQuery, attendance, remoteQuery, remoteResults]);
 
   const handleSaveAttendance = async () => {

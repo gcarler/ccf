@@ -82,7 +82,7 @@ FOOTER_PROPS: dict[str, Any] = {
         "contact": "Contáctanos",
     },
     "contact": {
-        "email": "info@ccfministerio.com",
+        "email": "contactenos@ministerioselfaro.org",
         "location_label": "Cartagena, Colombia",
         "location_href": "/sedes",
         "newsletter_label": "Boletín semanal",

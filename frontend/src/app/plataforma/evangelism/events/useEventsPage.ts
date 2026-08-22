@@ -146,7 +146,10 @@ export function useEventsPage() {
  const result = await apiFetch<ScanValidationResult>(`/evangelism/scanner/validate/${scannerToken}`, {
   method: 'POST',
   token,
-  silent: true
+  silent: true,
+  // El contexto del evento define el límite de validación: un evento global
+  // (toda la iglesia) acepta carnets de personas de cualquier sede.
+  query: { event_id: selectedEvent.id },
  });
  if (result.valid) {
  const pid = result.persona_id;

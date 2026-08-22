@@ -40,7 +40,10 @@ export default function CrmTableView({ personas, search, onRowClick, isList = fa
     const gridRef = useRef<AgGridTableRef>(null);
 
     const filtered = useMemo(
-        () => personas.filter((m) => (m.nombre_completo || '').toLowerCase().includes(search.toLowerCase())),
+        () => {
+            const query = search.trim().toLocaleLowerCase('es');
+            return personas.filter((m) => (m.nombre_completo || '').trim().toLocaleLowerCase('es').startsWith(query));
+        },
         [personas, search]
     );
 

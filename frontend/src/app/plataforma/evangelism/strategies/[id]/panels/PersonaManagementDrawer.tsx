@@ -135,8 +135,8 @@ export default function PersonaManagementDrawer({
               );
               const q = search.trim();
               const available = searchResults.filter(m => !personas.find(gm => String(gm.id) === String(m.id)));
-              if (q.length < 3) return (
-                <p className="text-xs text-[hsl(var(--text-secondary))] text-center py-3">Escribe al menos 3 caracteres para buscar</p>
+              if (q.length < 1) return (
+                <p className="text-xs text-[hsl(var(--text-secondary))] text-center py-3">Escribe una letra para buscar</p>
               );
               if (available.length === 0) return (
                 <p className="text-xs text-[hsl(var(--text-secondary))] text-center py-3">

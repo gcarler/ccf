@@ -158,7 +158,7 @@ export default function CrmGroupsPage() {
     }, [groups]);
 
     const filteredPersonas = useMemo(() => {
-        const term = personaQuery.trim().toLowerCase();
+        const term = personaQuery.trim().toLocaleLowerCase('es');
         const base = [...personas].sort((a, b) => {
             const nameA = (a.nombre_completo || `${a.first_name ?? ''} ${a.last_name ?? ''}`.trim()).toLowerCase();
             const nameB = (b.nombre_completo || `${b.first_name ?? ''} ${b.last_name ?? ''}`.trim()).toLowerCase();
@@ -167,8 +167,8 @@ export default function CrmGroupsPage() {
 
         if (!term) return base;
         return base.filter(persona =>
-            (persona.nombre_completo || `${persona.first_name ?? ''} ${persona.last_name ?? ''}`.trim()).toLowerCase().includes(term) ||
-            persona.church_role?.toLowerCase().includes(term)
+            (persona.nombre_completo || `${persona.first_name ?? ''} ${persona.last_name ?? ''}`.trim()).trim().toLocaleLowerCase('es').startsWith(term) ||
+            persona.church_role?.toLocaleLowerCase('es').includes(term)
         );
     }, [personaQuery, personas]);
 

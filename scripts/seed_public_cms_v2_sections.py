@@ -548,7 +548,7 @@ def _build_pages(media_find: Any) -> dict[str, list[dict[str, Any]]]:
         "contact_info",
         [
             {"icon": "Clock", "text": "Respuesta en menos de 24 horas"},
-            {"icon": "Mail", "text": "info@ccfministerio.com"},
+            {"icon": "Mail", "text": "contactenos@ministerioselfaro.org"},
         ],
     )
 
@@ -810,7 +810,7 @@ def _build_pages(media_find: Any) -> dict[str, list[dict[str, Any]]]:
         "location_label": "Cartagena, Colombia",
         "newsletter_label": "Boletín semanal",
         "contact": {
-            "email": "info@ccfministerio.com",
+            "email": "contactenos@ministerioselfaro.org",
             "location_label": "Cartagena, Colombia",
             "location_href": "/sedes",
             "newsletter_label": "Boletín semanal",

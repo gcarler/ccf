@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/lib/http';
 import { Loader2 } from 'lucide-react';
+import { toast } from 'sonner';
 
 function AuthCallbackContent() {
     const router = useRouter();
@@ -13,11 +14,37 @@ function AuthCallbackContent() {
 
     useEffect(() => {
         async function handleAuth() {
-            // Google OAuth is cookie-based. Never consume access/refresh
-            // credentials from query strings or URL fragments. Remove any
-            // historical parameters before making the refresh request so they
-            // cannot be sent as a Referer to the API.
+            // 1. Extraer intención de curso y redirección de los parámetros URL antes de limpiar
+            let targetRedirect: string | null = null;
+            let targetCourseId: string | null = null;
+            let targetCourseTitle: string | null = null;
+            let alreadyEnrolled = false;
+
             if (typeof window !== 'undefined') {
+                const searchParams = new URLSearchParams(window.location.search);
+                targetRedirect = searchParams.get('redirect');
+                targetCourseId = searchParams.get('course_id');
+                targetCourseTitle = searchParams.get('course_title');
+                alreadyEnrolled = searchParams.get('enrolled') === '1';
+
+                // Si no vino por URL, revisar en localStorage
+                if (!targetCourseId) {
+                    try {
+                        const stored = localStorage.getItem('ccf_pending_course');
+                        if (stored) {
+                            const parsed = JSON.parse(stored);
+                            targetCourseId = parsed.id || parsed.course_id || null;
+                            targetCourseTitle = parsed.title || parsed.course_title || null;
+                            if (parsed.redirect && !targetRedirect) {
+                                targetRedirect = parsed.redirect;
+                            }
+                        }
+                    } catch {
+                        // ignore parse errors
+                    }
+                }
+
+                // Limpiar parámetros sensibles del historial
                 window.history.replaceState({}, document.title, window.location.pathname);
             }
 
@@ -42,9 +69,47 @@ function AuthCallbackContent() {
                 return;
             }
 
-            setStatus('Autenticación exitosa. Redirigiendo...');
+            setStatus('Autenticación exitosa. Preparando tu aula virtual...');
             await login(token, refresh ?? undefined);
-            router.push('/plataforma/academy');
+
+            // 2. Extraer user ID del JWT y garantizar auto-matrícula
+            let userId: string | null = null;
+            try {
+                const parts = token.split('.');
+                if (parts.length === 3) {
+                    const payload = JSON.parse(atob(parts[1]));
+                    userId = payload.sub || null;
+                }
+            } catch {
+                // ignore jwt decode errors
+            }
+
+            if (targetCourseId && userId) {
+                try {
+                    if (!alreadyEnrolled) {
+                        setStatus('Matriculando en tu curso gratuito...');
+                        await apiFetch('/academy/enrollments/', {
+                            method: 'POST',
+                            token,
+                            body: { persona_id: userId, course_id: targetCourseId },
+                        });
+                    }
+                    if (typeof window !== 'undefined') {
+                        localStorage.removeItem('ccf_pending_course');
+                    }
+                    toast.success(
+                        targetCourseTitle
+                            ? `¡Bienvenido! Ya estás matriculado en "${targetCourseTitle}".`
+                            : '¡Bienvenido a tu curso!'
+                    );
+                } catch (enrollErr) {
+                    console.warn('Auto-enroll fallback warning:', enrollErr);
+                }
+            }
+
+            // 3. Redirigir directamente al curso o al aula
+            const destination = targetRedirect || (targetCourseId ? `/plataforma/academy/course/${targetCourseId}` : '/plataforma/academy');
+            router.push(destination);
         }
 
         handleAuth();

@@ -81,7 +81,7 @@ export default function AttendanceDrawer({
   useEffect(() => {
     if (!token || !showVisitorSearch) return;
     const q = visitorSearch.trim();
-    if (q.length < 3) {
+    if (q.length < 1) {
     setVisitorSearchLoading(false);
     setVisitorSearchResults([]);
     cancelVisitorSearch();
@@ -89,7 +89,7 @@ export default function AttendanceDrawer({
     }
     setVisitorSearchLoading(true);
     const handle = setTimeout(() => {
-    searchVisitors(q, 10)
+    searchVisitors(q, 1000)
     .then(results => {
     setVisitorSearchResults(results);
     })
@@ -264,7 +264,7 @@ export default function AttendanceDrawer({
     <X size={14} />
     </button>
     </div>
-    {visitorSearch.trim().length >= 3 && (
+    {visitorSearch.trim().length >= 1 && (
     <div className="max-h-40 overflow-y-auto space-y-1 rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))] p-1">
     {visitorSearchResults
     .filter(m => !personas.find(a => a.persona_id === m.id))
@@ -292,9 +292,6 @@ export default function AttendanceDrawer({
     <p className="text-center py-3 text-xs text-[hsl(var(--text-secondary))]">No se encontraron personas</p>
     )}
     </div>
-    )}
-    {visitorSearch.trim().length > 0 && visitorSearch.trim().length < 3 && (
-    <p className="text-xs text-[hsl(var(--text-secondary))]">Escribe al menos 3 caracteres para buscar en la sede</p>
     )}
     </div>
     ) : (

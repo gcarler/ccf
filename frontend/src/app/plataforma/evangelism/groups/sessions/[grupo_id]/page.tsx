@@ -159,9 +159,12 @@ export default function SessionReportPage() {
  }), [people, newGuests]);
 
  const filtered = useMemo(() => {
- if (!searchQuery) return people;
- const q = searchQuery.toLowerCase();
- return people.filter(p => p.name.toLowerCase().includes(q) || p.role.toLowerCase().includes(q));
+ const q = searchQuery.trim().toLocaleLowerCase('es');
+ if (!q) return people;
+ return people.filter(p =>
+   p.name.trim().toLocaleLowerCase('es').startsWith(q) ||
+   p.role.toLocaleLowerCase('es').includes(q)
+ );
  }, [people, searchQuery]);
 
  const handleSubmit = async () => {

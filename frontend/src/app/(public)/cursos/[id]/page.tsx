@@ -43,6 +43,15 @@ export default function CursoDetailPage() {
             .then(data => {
                 setCourse(data);
                 setLoading(false);
+                if (data && typeof window !== 'undefined') {
+                    try {
+                        const payload = JSON.stringify({ id: data.id, slug: data.slug, title: data.title });
+                        localStorage.setItem('ccf_pending_course', payload);
+                        document.cookie = `ccf_pending_course=${encodeURIComponent(payload)}; path=/; max-age=86400; SameSite=Lax`;
+                    } catch {
+                        // ignore
+                    }
+                }
             })
             .catch(() => {
                 setLoading(false);
@@ -341,12 +350,19 @@ export default function CursoDetailPage() {
                                                 type="button"
                                                 onClick={() => {
                                                     const targetCourseId = enrollSuccessData?.course_id || course.id;
-                                                    router.push(`/login?redirect=${encodeURIComponent(`/plataforma/academy/course/${targetCourseId}`)}`);
+                                                    const targetSlug = course.slug || '';
+                                                    const targetTitle = course.title || '';
+                                                    if (typeof window !== 'undefined') {
+                                                        const payload = JSON.stringify({ id: targetCourseId, slug: targetSlug, title: targetTitle });
+                                                        localStorage.setItem('ccf_pending_course', payload);
+                                                        document.cookie = `ccf_pending_course=${encodeURIComponent(payload)}; path=/; max-age=86400; SameSite=Lax`;
+                                                    }
+                                                    router.push(`/register?course_id=${targetCourseId}&course_slug=${targetSlug}&course_title=${encodeURIComponent(targetTitle)}&redirect=${encodeURIComponent(`/plataforma/academy/course/${targetCourseId}`)}`);
                                                 }}
                                                 className="w-full rounded-lg py-3 text-sm font-bold text-white transition-all shadow-md hover:scale-[1.02]"
                                                 style={{ background: "var(--site-cta-gradient)" }}
                                             >
-                                                Ir a mi Curso en la Plataforma →
+                                                Ir a mi Curso en el Aula Virtual →
                                             </button>
                                             <button
                                                 type="button"

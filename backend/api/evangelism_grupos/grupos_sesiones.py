@@ -805,7 +805,7 @@ def search_personas_for_attendance(
     """Búsqueda remota con debounce de personas para el formulario de asistencia.
 
     Args:
-        q: texto de búsqueda (mínimo 3 caracteres para evitar storm).
+        q: texto de búsqueda por prefijo (desde 1 carácter).
         limit: tope razonable (default 10).
 
     Returns:
@@ -813,11 +813,11 @@ def search_personas_for_attendance(
         filtrado por la sede del usuario actual y por el texto.
     """
     lowered_query = (q or "").strip().lower()
-    if len(lowered_query) < 3:
+    if len(lowered_query) < 1:
         return {"results": []}
 
     # Limit defensivo para no pegar a la DB completa.
-    bounded_limit = max(1, min(int(limit or 10), 25))
+    bounded_limit = max(1, min(int(limit or 1000), 1000))
     user_sede = require_user_sede_id(db, current_user)
 
     # ``Persona`` no tiene columna ``deleted_at`` (su borrado se gestiona
@@ -832,18 +832,20 @@ def search_personas_for_attendance(
     )
 
     def _matches(persona) -> bool:
-        haystack = " ".join(
-            [
-                str(getattr(persona, "nombre_completo", "") or ""),
-                str(getattr(persona, "first_name", "") or ""),
-                str(getattr(persona, "last_name", "") or ""),
-                str(getattr(persona, "email", "") or ""),
-                str(getattr(persona, "phone", "") or ""),
-                str(getattr(persona, "documento", "") or ""),
-                str(getattr(persona, "church_role", "") or ""),
-            ]
-        ).lower()
-        return lowered_query in haystack
+        name_fields = (
+            str(getattr(persona, "nombre_completo", "") or ""),
+            str(getattr(persona, "first_name", "") or ""),
+            str(getattr(persona, "last_name", "") or ""),
+        )
+        if any(value.strip().lower().startswith(lowered_query) for value in name_fields):
+            return True
+        searchable_fields = (
+            str(getattr(persona, "email", "") or ""),
+            str(getattr(persona, "phone", "") or ""),
+            str(getattr(persona, "documento", "") or ""),
+            str(getattr(persona, "church_role", "") or ""),
+        )
+        return any(lowered_query in value.lower() for value in searchable_fields)
 
     return {
         "results": [

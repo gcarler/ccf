@@ -9,12 +9,14 @@ Flujo:
 
 from __future__ import annotations
 
+import json
 import logging
 import secrets
 import uuid
 from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, Optional
-from urllib.parse import urlencode
+from urllib.parse import unquote, urlencode
+from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from fastapi.responses import RedirectResponse
@@ -43,6 +45,7 @@ logger = logging.getLogger(__name__)
 
 SECRET_KEY = settings.secret_key
 GOOGLE_OAUTH_STATE_COOKIE = "ccf_google_oauth_state"
+GOOGLE_OAUTH_INTENT_COOKIE = "ccf_oauth_course_intent"
 GOOGLE_OAUTH_STATE_MAX_AGE = 600
 ALGORITHM = "HS256"
 
@@ -267,8 +270,13 @@ def _serialize_session(row: TokenSesion) -> AuthSessionResponse:
 
 
 @router.get("/google")
-def google_login(request: Request):
-    """Redirige a pantalla de consentimiento de Google."""
+def google_login(
+    request: Request,
+    course_id: Optional[str] = None,
+    course_slug: Optional[str] = None,
+    redirect: Optional[str] = None,
+):
+    """Redirige a pantalla de consentimiento de Google preservando la intención de curso/redirect."""
     if not _google_oauth_ready():
         raise HTTPException(status_code=503, detail="Google OAuth no configurado")
 
@@ -294,6 +302,40 @@ def google_login(request: Request):
         samesite="lax",
         max_age=GOOGLE_OAUTH_STATE_MAX_AGE,
     )
+
+    # Capturar intención de matrícula de curso o redirección
+    intent_data: Dict[str, Any] = {}
+    if course_id:
+        intent_data["course_id"] = str(course_id).strip()
+    if course_slug:
+        intent_data["course_slug"] = str(course_slug).strip()
+    if redirect:
+        intent_data["redirect"] = str(redirect).strip()
+
+    # Si no vinieron por query param, inspeccionar cookie ccf_pending_course
+    if not intent_data.get("course_id") and not intent_data.get("course_slug"):
+        pending_cookie = request.cookies.get("ccf_pending_course")
+        if pending_cookie:
+            try:
+                unquoted = unquote(pending_cookie)
+                cookie_json = json.loads(unquoted) if "{" in unquoted else None
+                if cookie_json:
+                    intent_data["course_id"] = cookie_json.get("id") or cookie_json.get("course_id")
+                    intent_data["course_slug"] = cookie_json.get("slug") or cookie_json.get("course_slug")
+                    if cookie_json.get("redirect"):
+                        intent_data["redirect"] = cookie_json.get("redirect")
+            except Exception:
+                pass
+
+    if intent_data:
+        response.set_cookie(
+            key=GOOGLE_OAUTH_INTENT_COOKIE,
+            value=json.dumps(intent_data),
+            httponly=True,
+            secure=settings.access_token_cookie_secure,
+            samesite="lax",
+            max_age=GOOGLE_OAUTH_STATE_MAX_AGE,
+        )
     return response
 
 
@@ -448,13 +490,108 @@ def google_callback(
         ua=request.headers.get("user-agent") if request else None,
     )
 
-    # Redirect without credentials. The HttpOnly cookies established above
-    # are the only token transport for the OAuth callback; putting the JWT in
-    # the URL would expose it through browser history, referrers and logs.
+    # 9. Resolver intención de curso / auto-matrícula para nuevos buscadores o miembros
+    target_course = None
+    target_redirect = None
+    enrolled_now = False
+
+    intent_cookie = request.cookies.get(GOOGLE_OAUTH_INTENT_COOKIE) if request else None
+    intent_obj: Dict[str, Any] = {}
+    if intent_cookie:
+        try:
+            intent_obj = json.loads(intent_cookie)
+        except Exception:
+            intent_obj = {}
+
+    target_course_id = intent_obj.get("course_id")
+    target_course_slug = intent_obj.get("course_slug")
+    target_redirect = intent_obj.get("redirect")
+
+    from backend import models
+
+    if target_course_id or target_course_slug:
+        course_query = db.query(models.Course).filter(models.Course.deleted_at.is_(None))
+        if target_course_id:
+            try:
+                course_uuid = UUID(str(target_course_id))
+                target_course = course_query.filter(models.Course.id == course_uuid).first()
+            except (ValueError, TypeError):
+                target_course = None
+        if not target_course and target_course_slug:
+            target_course = course_query.filter(models.Course.slug == str(target_course_slug)).first()
+
+    if target_course:
+        # Verificar o crear matrícula activa inmediata
+        existing_enr = (
+            db.query(models.Enrollment)
+            .filter(
+                models.Enrollment.persona_id == user.id,
+                models.Enrollment.course_id == target_course.id,
+            )
+            .first()
+        )
+        if not existing_enr:
+            new_enr = models.Enrollment(
+                persona_id=user.id,
+                course_id=target_course.id,
+                status="active",
+                progress_percent=0.0,
+            )
+            db.add(new_enr)
+            db.add(
+                models.AcademyActivityLog(
+                    event_type="enrollment",
+                    course_id=target_course.id,
+                    persona_id=user.id,
+                    modality=target_course.modality,
+                )
+            )
+            db.commit()
+            enrolled_now = True
+            log.info("Auto-matrícula Google SSO exitosa: user=%s curso=%s (%s)", user.id, target_course.id, target_course.title)
+        elif existing_enr.deleted_at is not None or existing_enr.status == "dropped":
+            existing_enr.deleted_at = None
+            existing_enr.status = "active"
+            db.commit()
+            enrolled_now = True
+
+        # Registrar seguimiento pastoral en CRM para nuevos contactos de curso
+        try:
+            from backend.services.public_contact_tracking import ContactRecord, tracker
+            tracker.record_contact(
+                db,
+                ContactRecord(
+                    email=google_email,
+                    first_name=persona.first_name if persona else "Visitante",
+                    last_name=persona.last_name if persona else "",
+                    source="academy-google-sso",
+                    landing_page=f"/cursos/{target_course.slug or target_course.id}",
+                    spiritual_status="Nuevo",
+                    church_role="Visitante",
+                    extra_notes=[f"Auto-matriculado vía Google SSO en curso gratuito: {target_course.title}"],
+                ),
+            )
+            db.commit()
+        except Exception as tracker_err:
+            log.warning("No se pudo registrar contacto CRM pastoral: %s", tracker_err)
+
+    # 10. Construir redirección segura al aula virtual o ruta destino
     frontend_url = getattr(settings, "frontend_url", "http://localhost:3000")
-    redirect_response = RedirectResponse(url=f"{frontend_url}/auth/callback")
+    cb_params = {}
+    if target_course:
+        cb_params["redirect"] = f"/plataforma/academy/course/{target_course.id}"
+        cb_params["course_id"] = str(target_course.id)
+        cb_params["course_title"] = target_course.title
+        cb_params["enrolled"] = "1" if enrolled_now else "0"
+    elif target_redirect:
+        cb_params["redirect"] = target_redirect
+
+    redirect_query = f"?{urlencode(cb_params)}" if cb_params else ""
+    redirect_response = RedirectResponse(url=f"{frontend_url}/auth/callback{redirect_query}")
     _set_cookies(redirect_response, access_token, refresh_token)
     redirect_response.delete_cookie(GOOGLE_OAUTH_STATE_COOKIE, path="/")
+    redirect_response.delete_cookie(GOOGLE_OAUTH_INTENT_COOKIE, path="/")
+    redirect_response.delete_cookie("ccf_pending_course", path="/")
     return redirect_response
 
 

@@ -29,7 +29,9 @@ export default function LoginPage() {
 
     useEffect(() => {
         if (isAuthenticated && user?.role) {
-            router.push('/plataforma/academy');
+            const searchParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
+            const redirectParam = searchParams?.get('redirect');
+            router.push(redirectParam || '/plataforma/academy');
         }
     }, [isAuthenticated, user, router]);
 
@@ -42,8 +44,19 @@ export default function LoginPage() {
             const res = await apiFetch<any>(`/v3/auth/check-email?email=${encodeURIComponent(email)}`);
             if (res.is_gmail) {
                 if (res.google_oauth_enabled) {
-                    // Google SSO — go direct
-                    window.location.href = '/api/v3/auth/google';
+                    // Google SSO — go direct with redirect & course params
+                    const searchParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
+                    const redirectParam = searchParams?.get('redirect') || '';
+                    const courseId = searchParams?.get('course_id') || '';
+                    const courseSlug = searchParams?.get('course_slug') || '';
+
+                    const query = new URLSearchParams();
+                    if (redirectParam) query.set('redirect', redirectParam);
+                    if (courseId) query.set('course_id', courseId);
+                    if (courseSlug) query.set('course_slug', courseSlug);
+
+                    const queryString = query.toString() ? `?${query.toString()}` : '';
+                    window.location.href = `/api/v3/auth/google${queryString}`;
                     return;
                 }
                 if (res.has_password) {
@@ -79,7 +92,9 @@ export default function LoginPage() {
             });
             if (response.access_token) {
                 await login(response.access_token, response.refresh_token);
-                router.push('/plataforma/academy');
+                const searchParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
+                const redirectParam = searchParams?.get('redirect');
+                router.push(redirectParam || '/plataforma/academy');
             } else {
                 setError('No se recibió el token de acceso.');
             }
