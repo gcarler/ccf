@@ -99,6 +99,7 @@ const GRADIENT_TOKENS: TokenDef[] = [
 
 const BRAND_TOKENS: TokenDef[] = [
   { key: "--site-logo-url", label: "Logo URL", description: "URL de la imagen del logo (relativa o absoluta)", type: "text", defaultValue: "" },
+  { key: "--site-logo-large-url", label: "Logo de alta resolución", description: "Logo para login y superficies grandes; admite SVG", type: "text", defaultValue: "" },
   { key: "--site-logo-name", label: "Nombre del Logo", description: "Texto que acompaña al logo en navbar y sidebar", type: "text", defaultValue: "" },
   { key: "--site-brand-tagline", label: "Eslogan de marca", description: "Subtítulo junto al logo en navbar y footer", type: "text", defaultValue: "Comunidad cristiana" },
   { key: "--site-header-cta-label", label: "CTA del Header", description: "Texto del botón principal del header", type: "text", defaultValue: "Quiero conocer a Jesús" },

@@ -17,14 +17,18 @@ export default function LoginPage() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const [showPassword, setShowPassword] = useState(false);
-    const [expired] = useState(() => typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('expired') === '1');
+    const [expired] = useState(() => {
+        if (typeof window === 'undefined') return false;
+        const param = new URLSearchParams(window.location.search).get('expired');
+        return param === '1' || param === 'true';
+    });
     const { login, isAuthenticated, user } = useAuth();
-    const { logoUrl, logoName } = useSiteBranding({ logoName: SITE_NAME });
+    const { logoUrl, logoLargeUrl, logoName } = useSiteBranding({ logoName: SITE_NAME });
     const router = useRouter();
 
     useEffect(() => {
         if (isAuthenticated && user?.role) {
-            router.push('/plataforma/messages');
+            router.push('/plataforma/academy');
         }
     }, [isAuthenticated, user, router]);
 
@@ -74,7 +78,7 @@ export default function LoginPage() {
             });
             if (response.access_token) {
                 await login(response.access_token, response.refresh_token);
-                router.push('/plataforma/messages');
+                router.push('/plataforma/academy');
             } else {
                 setError('No se recibió el token de acceso.');
             }
@@ -140,10 +144,10 @@ export default function LoginPage() {
                     transition={{ delay: 0.6, duration: 0.8 }}
                     className="relative z-10"
                 >
-                    {logoUrl ? (
+                    {(logoLargeUrl || logoUrl) ? (
                         <div className="max-w-[420px]">
                             <OptimizedImage
-                                src={logoUrl}
+                                src={logoLargeUrl || logoUrl}
                                 alt={logoName || SITE_NAME}
                                 width={420}
                                 height={180}

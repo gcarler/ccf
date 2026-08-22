@@ -69,6 +69,7 @@ HOME_SLUG = "home"
 
 THEME_TOKENS: dict[str, str] = {
     "--site-logo-name": "Comunidad Cristiana El Faro",
+    "--site-logo-large-url": "/brand/faro-logo-white.svg",
     "--site-brand-tagline": "Comunidad Cristiana",
     "--site-background": "#f6f8ff",
     "--site-on-background": "#0d1730",

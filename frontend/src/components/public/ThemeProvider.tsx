@@ -33,6 +33,7 @@ function inferThemeMode(themeName?: string, tokens?: Record<string, unknown>): T
 
 const CMS_TOKEN_ALLOWLIST = new Set([
     "--site-logo-url",
+    "--site-logo-large-url",
     "--site-logo-name",
     "--site-brand-tagline",
     "--site-header-cta-label",
