@@ -15,6 +15,7 @@ import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
 import { useWikiDocument } from '@/hooks/useWikiDocument';
 import { apiFetch } from '@/lib/http';
+import { matchesPersonNamePrefix, normalizePersonSearch } from '@/lib/personSearch';
 import { parseAndValidateTime } from '@/lib/time';
 import { useSearchParams } from 'next/navigation';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
@@ -282,12 +283,12 @@ export function useEventsPage() {
  );
 
  const filterPersonasByQuery = (query: string) => {
- const normalized = query.trim().toLowerCase();
+ const normalized = normalizePersonSearch(query);
  if (!normalized) return sortedPersonas;
  return sortedPersonas.filter((persona) =>
- (persona.nombre_completo || '').toLowerCase().startsWith(normalized) ||
- (persona.email || '').toLowerCase().includes(normalized) ||
- (persona.church_role || '').toLowerCase().includes(normalized)
+ matchesPersonNamePrefix(persona.nombre_completo, normalized) ||
+ normalizePersonSearch(persona.email).includes(normalized) ||
+ normalizePersonSearch(persona.church_role).includes(normalized)
  );
  };
 
@@ -672,8 +673,8 @@ const saveAttendance = async (forceEmpty = false) => {
  ).sort((a, b) => a.localeCompare(b));
 
  const filteredPersonas = expectedUniversePersonas.filter((persona) => {
- const query = attendanceSearch.trim().toLowerCase();
- const matchesSearch = !query || (persona.nombre_completo || '').toLowerCase().startsWith(query) || (persona.email || '').toLowerCase().includes(query);
+ const query = normalizePersonSearch(attendanceSearch);
+ const matchesSearch = !query || matchesPersonNamePrefix(persona.nombre_completo, query) || normalizePersonSearch(persona.email).includes(query);
  const matchesRole = attendanceRoleFilter === 'ALL' || (persona.church_role || 'Sin rol') === attendanceRoleFilter;
  const isPresent = attendedPersonaIds.includes(persona.id);
  const matchesStatus =

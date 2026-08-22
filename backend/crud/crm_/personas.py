@@ -168,8 +168,6 @@ def _build_persona_search_query(
         # NOTA: nombre_completo es @hybrid_property con expresión SQL, funciona en filter
         query = query.filter(
             or_(
-                models.Persona.first_name.ilike(name_prefix),
-                models.Persona.last_name.ilike(name_prefix),
                 models.Persona.nombre_completo.ilike(name_prefix),
                 models.Persona.email.ilike(like),
                 models.Persona.id_number.ilike(like),

@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { apiFetch, ApiError } from '@/lib/http';
+import { matchesPersonNamePrefix, normalizePersonSearch } from '@/lib/personSearch';
 import { getErrorMessage } from '../../../utils';
 import { toast } from 'sonner';
 import { useAuth } from '@/context/AuthContext';
@@ -159,11 +160,11 @@ export default function SessionReportPage() {
  }), [people, newGuests]);
 
  const filtered = useMemo(() => {
- const q = searchQuery.trim().toLocaleLowerCase('es');
+ const q = normalizePersonSearch(searchQuery);
  if (!q) return people;
  return people.filter(p =>
-   p.name.trim().toLocaleLowerCase('es').startsWith(q) ||
-   p.role.toLocaleLowerCase('es').includes(q)
+   matchesPersonNamePrefix(p.name, q) ||
+   normalizePersonSearch(p.role).includes(q)
  );
  }, [people, searchQuery]);
 

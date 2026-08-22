@@ -1,6 +1,7 @@
 'use client';
 
 import { apiFetch, ApiError } from '@/lib/http';
+import { matchesPersonNamePrefix, normalizePersonSearch } from '@/lib/personSearch';
 import { useAuth } from '@/context/AuthContext';
 import { useSidebarLayers } from '@/context/SidebarLayerContext';
 import { Calendar, ChevronRight, Plus, ArrowLeft } from 'lucide-react';
@@ -346,7 +347,7 @@ export function useGroupDetailPage(id: string | undefined) {
   }, [remoteQuery, showAddAttendee, token]);
 
   const filteredPersonas = useMemo(() => {
-    const q = personaQuery.trim().toLocaleLowerCase('es');
+    const q = normalizePersonSearch(personaQuery);
     const attendedIds = new Set(attendance?.attendees.map(a => a.persona_id) || []);
     // R2: si la búsqueda remota está activa (>=3 chars y hay resultados),
     // mezclamos primero los hits remotos; después el pool local para no
@@ -356,7 +357,7 @@ export function useGroupDetailPage(id: string | undefined) {
       : [];
     const localPool = personas
       .filter(m => !attendedIds.has(m.id))
-      .filter(m => !q || (m.nombre_completo || '').trim().toLocaleLowerCase('es').startsWith(q))
+      .filter(m => matchesPersonNamePrefix(m.nombre_completo, q))
       // Excluir las que ya aparecieron en remoteResults.
       .filter(m => !remoteMatches.some(r => r.id === m.id));
     return [...remoteMatches, ...localPool];

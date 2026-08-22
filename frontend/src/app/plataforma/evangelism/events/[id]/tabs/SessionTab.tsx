@@ -2,6 +2,7 @@
 
 import React, { useEffect, useMemo, useState } from "react";
 import { apiFetch } from "@/lib/http";
+import { matchesPersonNamePrefix, normalizePersonSearch } from "@/lib/personSearch";
 import { toast } from "sonner";
 import WorkspaceDrawer from "@/components/WorkspaceDrawer";
 import { Calendar, CheckCircle2, Download, Mic, Save, UserPlus, Users, X } from "lucide-react";
@@ -20,10 +21,10 @@ function PersonaSelect({ personas, value, onChange, label, multi = false }: Pers
   const [open, setOpen] = useState(false);
 
   const filtered = useMemo(() => {
-    const q = search.trim().toLocaleLowerCase('es');
+    const q = normalizePersonSearch(search);
     if (!q) return personas.slice(0, 50);
     return personas.filter((m) =>
-      (m.nombre_completo || '').trim().toLocaleLowerCase('es').startsWith(q)
+      matchesPersonNamePrefix(m.nombre_completo, q)
     );
   }, [personas, search]);
 

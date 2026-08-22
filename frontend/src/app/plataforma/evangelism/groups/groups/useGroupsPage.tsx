@@ -6,6 +6,7 @@ import type { ViewType } from '@/components/ViewSwitcher';
 import { useAuth } from '@/context/AuthContext';
 import { useSidebarLayers } from '@/context/SidebarLayerContext';
 import { apiFetch } from '@/lib/http';
+import { matchesPersonNamePrefix } from '@/lib/personSearch';
 import { parseAndValidateTime } from '@/lib/time';
 import {
   BarChart3,
@@ -466,8 +467,7 @@ export function useGroupsPage() {
     );
 
     return base.filter(m => {
-      const query = personaSearchQuery.trim().toLocaleLowerCase('es');
-      if (query && !(m.nombre_completo || '').trim().toLocaleLowerCase('es').startsWith(query)) {
+      if (!matchesPersonNamePrefix(m.nombre_completo, personaSearchQuery)) {
         return false;
       }
       if (personaRoleFilter && m.church_role !== personaRoleFilter) {

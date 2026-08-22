@@ -2,6 +2,7 @@
 
 import { useMemo, useRef } from 'react';
 import AgGridTable, { ColDef, type AgGridTableRef } from '@/components/ui/AgGridTable';
+import { matchesPersonNamePrefix } from '@/lib/personSearch';
 
 
 
@@ -41,8 +42,7 @@ export default function CrmTableView({ personas, search, onRowClick, isList = fa
 
     const filtered = useMemo(
         () => {
-            const query = search.trim().toLocaleLowerCase('es');
-            return personas.filter((m) => (m.nombre_completo || '').trim().toLocaleLowerCase('es').startsWith(query));
+            return personas.filter((m) => matchesPersonNamePrefix(m.nombre_completo, search));
         },
         [personas, search]
     );

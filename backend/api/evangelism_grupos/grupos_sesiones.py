@@ -832,12 +832,8 @@ def search_personas_for_attendance(
     )
 
     def _matches(persona) -> bool:
-        name_fields = (
-            str(getattr(persona, "nombre_completo", "") or ""),
-            str(getattr(persona, "first_name", "") or ""),
-            str(getattr(persona, "last_name", "") or ""),
-        )
-        if any(value.strip().lower().startswith(lowered_query) for value in name_fields):
+        full_name = str(getattr(persona, "nombre_completo", "") or "").strip()
+        if full_name.lower().startswith(lowered_query):
             return True
         searchable_fields = (
             str(getattr(persona, "email", "") or ""),
