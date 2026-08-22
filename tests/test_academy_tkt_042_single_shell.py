@@ -44,6 +44,12 @@ def _read(relative_path: str) -> str:
     return path.read_text(encoding="utf-8")
 
 
+def _academy_route_has_workspace_shell(page_text: str) -> bool:
+    """Acepta shell explícito o el shell único heredado del layout del módulo."""
+    academy_layout = _read("app/plataforma/academy/layout.tsx")
+    return "WorkspaceLayout" in page_text or "WorkspaceLayout" in academy_layout
+
+
 def _code_only(text: str) -> str:
     """Strip comments so lint-style assertions evalúan SOLO el código ejecutable.
 
@@ -136,18 +142,19 @@ def test_acad_tkt_042_academy_detail_container_has_testid_hook() -> None:
 # ──────────────────────────────────────────────────────────────────────
 
 
-def test_acad_tkt_042_enroll_uses_workspace_layout() -> None:
-    """TKT-042 — ``enroll/[id]/page.tsx`` envuelve su contenido con ``WorkspaceLayout``.
+def test_acad_tkt_042_enroll_resolves_workspace_layout() -> None:
+    """TKT-042 — enrollment usa el shell único, explícito o heredado del layout.
 
     WorkspaceLayout es el único shell de navegación de la plataforma. Si esta página
     usara cualquier otro shell (AcademyDetailShell antiguo, layout propio), generaría
-    un microclima visual distinto al resto del módulo Academy.
+    un microclima visual distinto al resto del módulo Academy. Academy ya envuelve
+    todas sus rutas desde ``academy/layout.tsx``; exigir otro wrapper aquí crearía
+    precisamente el doble shell que TKT-042 prohíbe.
     """
     text = _read("app/plataforma/academy/enroll/[id]/page.tsx")
-    assert "WorkspaceLayout" in text, (
-        "TKT-042 regresión: enroll/[id]/page.tsx NO importa WorkspaceLayout. "
-        "La página debe envolverse en WorkspaceLayout (shell único de plataforma) "
-        "y usar AcademyDetailContainer como contenedor temático interno."
+    assert _academy_route_has_workspace_shell(text), (
+        "TKT-042 regresión: enrollment no tiene WorkspaceLayout explícito ni "
+        "heredado desde academy/layout.tsx."
     )
 
 
@@ -185,8 +192,9 @@ def test_acad_tkt_042_only_consumer_is_enroll_wizard(relative_path: str) -> None
     pero la gate anterior + el grep de archivos importan mantiene la disciplina arquitectónica.
     """
     text = _read(relative_path)
-    # El consumer debe envolverse en WorkspaceLayout para evitar el microclima visual
-    workspace_count = text.count("<WorkspaceLayout")
+    # El consumer debe resolver WorkspaceLayout explícita o heredadamente para
+    # evitar el microclima visual; no se exige un wrapper duplicado en la página.
+    workspace_count = text.count("<WorkspaceLayout") + _read("app/plataforma/academy/layout.tsx").count("<WorkspaceLayout")
     container_count = text.count("<AcademyDetailContainer")
     assert workspace_count >= 1, (
         f"TKT-042 regresión: {relative_path} no envuelve con <WorkspaceLayout. "
