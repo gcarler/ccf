@@ -64,8 +64,11 @@ export default function WorkspaceDrawer({
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
                         data-testid="workspace-drawer-backdrop"
-                        className="fixed inset-x-0 bottom-0 top-10 dark:bg-black/40 backdrop-blur-[2px] z-[1000]"
-                        style={{ backgroundColor: 'hsl(var(--bg-primary) / 0.35)' }}
+                        className="fixed inset-x-0 bottom-0 dark:bg-black/40 backdrop-blur-[2px] z-[1000]"
+                        style={{
+                            top: 'var(--workspace-header-height, 2.5rem)',
+                            backgroundColor: 'hsl(var(--bg-primary) / 0.35)',
+                        }}
                         onClick={handleClose}
                     />
 
@@ -75,11 +78,15 @@ export default function WorkspaceDrawer({
                         animate={{ x: 0 }}
                         exit={{ x: '100%' }}
                         transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-                        style={{ width: isExpanded || (typeof window !== 'undefined' && window.innerWidth < 640) ? '100vw' : width }}
                         className={clsx(
                             "fixed max-w-full bg-[hsl(var(--surface-1))] dark:bg-[hsl(var(--surface-1))] shadow-[var(--shadow-floating)] z-[1001] border-l border-[hsl(var(--border))] flex flex-col focus:outline-none overflow-hidden",
-                            isExpanded ? "inset-x-0 top-10 bottom-0 h-auto" : "top-10 right-0 h-[calc(100dvh-2.5rem)]"
+                            isExpanded ? "inset-x-0 bottom-0 h-auto" : "right-0 h-auto"
                         )}
+                        style={{
+                            width: isExpanded || (typeof window !== 'undefined' && window.innerWidth < 640) ? '100vw' : width,
+                            top: 'var(--workspace-header-height, 2.5rem)',
+                            height: 'calc(100dvh - var(--workspace-header-height, 2.5rem))',
+                        }}
                         role="complementary"
                         aria-label={title}
                     >
