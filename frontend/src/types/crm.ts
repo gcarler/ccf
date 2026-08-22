@@ -392,6 +392,7 @@ export interface CrmPersona {
   joinedAt?: string | null;
   church_role?: string | null;
   family_id?: string | null;
+  username?: string | null;
 }
 
 export interface CrmAnalyticsSummary {

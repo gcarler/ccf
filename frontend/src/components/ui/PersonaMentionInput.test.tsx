@@ -5,9 +5,10 @@ import PersonaMentionInput from './PersonaMentionInput';
 import type { PersonaBusqueda } from '@/lib/filtroAPersonas';
 
 const PERSONAS: PersonaBusqueda[] = [
-    { id: 'p1', nombre_completo: 'Luis Ricardo Meza', email: 'luis.meza@ccf.org', church_role: 'Pastor' },
-    { id: 'p2', nombre_completo: 'Ana María Gómez', email: 'ana@ccf.org', church_role: 'Líder de Grupo' },
-    { id: 'p3', nombre_completo: 'María Del Carmen López', email: 'maria.lopez@ccf.org' },
+    { id: 'p1', username: 'luisricardo', nombre_completo: 'Luis Ricardo Meza', email: 'luis.meza@ccf.org', church_role: 'Pastor' },
+    { id: 'p2', username: 'mariagomez', nombre_completo: 'Ana María Gómez', email: 'ana@ccf.org', church_role: 'Líder de Grupo' },
+    { id: 'p3', username: 'mariadelcarmen', nombre_completo: 'María Del Carmen López', email: 'maria.lopez@ccf.org' },
+    { id: 'p4', nombre_completo: 'Juan Pérez', email: 'juan@ccf.org' }, // sin cuenta → nunca aparece con @
 ];
 
 function setup(overrides: Partial<React.ComponentProps<typeof PersonaMentionInput>> = {}) {
@@ -36,20 +37,27 @@ function type(textarea: HTMLElement, value: string) {
 }
 
 describe('PersonaMentionInput', () => {
-    it('opens the dropdown when typing @ and filters with accents', async () => {
+    it('opens the dropdown when typing @ and matches by username', async () => {
         const { textarea } = setup();
         type(textarea, '@luis');
         await waitFor(() => expect(screen.getByRole('listbox')).toBeInTheDocument());
-        expect(screen.getByText('Luis Ricardo Meza')).toBeInTheDocument();
-        expect(screen.queryByText('Ana María Gómez')).not.toBeInTheDocument();
+        expect(screen.getByText('@luisricardo')).toBeInTheDocument();
+        expect(screen.queryByText('@mariagomez')).not.toBeInTheDocument();
+        // Personas sin cuenta no aparecen en menciones.
+        expect(screen.queryByText('Juan Pérez')).not.toBeInTheDocument();
     });
 
-    it('finds by last name with @', async () => {
+    it('matches username by prefix', async () => {
+        const { textarea } = setup();
+        type(textarea, '@mariadel');
+        await waitFor(() => expect(screen.getByRole('listbox')).toBeInTheDocument());
+        expect(screen.getByText('@mariadelcarmen')).toBeInTheDocument();
+    });
+
+    it('does NOT match by name when typing @', async () => {
         const { textarea } = setup();
         type(textarea, '@gomez');
-        await waitFor(() => expect(screen.getByRole('listbox')).toBeInTheDocument());
-        expect(screen.getByText('Ana María Gómez')).toBeInTheDocument();
-        expect(screen.queryByText('Luis Ricardo Meza')).not.toBeInTheDocument();
+        await waitFor(() => expect(screen.queryByRole('listbox')).not.toBeInTheDocument());
     });
 
     it('closes the dropdown when the query contains a space', async () => {
@@ -58,14 +66,14 @@ describe('PersonaMentionInput', () => {
         await waitFor(() => expect(screen.queryByRole('listbox')).not.toBeInTheDocument());
     });
 
-    it('selects a result on click and inserts @Nombre Completo', async () => {
+    it('selects a result on click and inserts @username', async () => {
         const { textarea, onChange } = setup();
         type(textarea, 'Hola @luis');
         await waitFor(() => expect(screen.getByRole('listbox')).toBeInTheDocument());
-        fireEvent.click(screen.getByText('Luis Ricardo Meza'));
+        fireEvent.click(screen.getByText('@luisricardo'));
         expect(onChange).toHaveBeenLastCalledWith(
-            'Hola @Luis Ricardo Meza ',
-            [{ id: 'p1', nombre_completo: 'Luis Ricardo Meza', email: 'luis.meza@ccf.org', church_role: 'Pastor' }]
+            'Hola @luisricardo ',
+            [{ id: 'p1', username: 'luisricardo', nombre_completo: 'Luis Ricardo Meza', email: 'luis.meza@ccf.org', church_role: 'Pastor' }]
         );
         await waitFor(() => expect(screen.queryByRole('listbox')).not.toBeInTheDocument());
     });
@@ -74,23 +82,23 @@ describe('PersonaMentionInput', () => {
         const { textarea, onChange } = setup();
         type(textarea, '@ma');
         await waitFor(() => expect(screen.getByRole('listbox')).toBeInTheDocument());
-        // Sin navegación: Enter selecciona el primero (Ana María Gómez).
+        // Sin navegación: Enter selecciona el primero (mariagomez).
         fireEvent.keyDown(textarea, { key: 'Enter' });
         expect(onChange).toHaveBeenLastCalledWith(
-            '@Ana María Gómez ',
-            [{ id: 'p2', nombre_completo: 'Ana María Gómez', email: 'ana@ccf.org', church_role: 'Líder de Grupo' }]
+            '@mariagomez ',
+            [{ id: 'p2', username: 'mariagomez', nombre_completo: 'Ana María Gómez', email: 'ana@ccf.org', church_role: 'Líder de Grupo' }]
         );
 
         type(textarea, '@ma');
         await waitFor(() => expect(screen.getByRole('listbox')).toBeInTheDocument());
-        // ArrowDown mueve al segundo (María Del Carmen López).
+        // ArrowDown mueve al segundo (mariadelcarmen).
         fireEvent.keyDown(textarea, { key: 'ArrowDown' });
         fireEvent.keyDown(textarea, { key: 'Enter' });
         expect(onChange).toHaveBeenLastCalledWith(
-            '@María Del Carmen López ',
+            '@mariadelcarmen ',
             [
-                { id: 'p2', nombre_completo: 'Ana María Gómez', email: 'ana@ccf.org', church_role: 'Líder de Grupo' },
-                { id: 'p3', nombre_completo: 'María Del Carmen López', email: 'maria.lopez@ccf.org' },
+                { id: 'p2', username: 'mariagomez', nombre_completo: 'Ana María Gómez', email: 'ana@ccf.org', church_role: 'Líder de Grupo' },
+                { id: 'p3', username: 'mariadelcarmen', nombre_completo: 'María Del Carmen López', email: 'maria.lopez@ccf.org' },
             ]
         );
     });
@@ -103,14 +111,14 @@ describe('PersonaMentionInput', () => {
         await waitFor(() => expect(screen.queryByRole('listbox')).not.toBeInTheDocument());
     });
 
-    it('deduplicates repeated mentions of the same person', async () => {
+    it('deduplicates repeated mentions of the same user', async () => {
         const { textarea, onChange } = setup();
         type(textarea, '@luis');
         await waitFor(() => expect(screen.getByRole('listbox')).toBeInTheDocument());
-        fireEvent.click(screen.getByText('Luis Ricardo Meza'));
-        type(textarea, '@Luis Ricardo Meza @luis');
+        fireEvent.click(screen.getByText('@luisricardo'));
+        type(textarea, '@luisricardo @luis');
         await waitFor(() => expect(screen.getByRole('listbox')).toBeInTheDocument());
-        fireEvent.click(screen.getByText('Luis Ricardo Meza'));
+        fireEvent.click(screen.getByText('@luisricardo'));
         const menciones = onChange.mock.calls.map((call) => call[1]);
         expect(menciones[menciones.length - 1].length).toBe(1);
         expect(menciones[menciones.length - 1][0].id).toBe('p1');

@@ -50,7 +50,7 @@ Importar desde `@/design`:
 | Utilidad | Uso | Import |
 |---|---|---|
 | `filtroAPersonas(name, query)` | Filtro reutilizable de búsqueda de personas: normaliza acentos/case/espacios; una palabra casa con nombre o apellido ("meza" encuentra "Luis Ricardo Meza") y varias palabras por subsecuencia ("juan meza" encuentra "Juan Luis Meza"). Query vacío → true. | `import { filtroAPersonas } from '@/lib/filtroAPersonas'` |
-| `filtroAPersona(persona, query)` | Búsqueda multi-campo sobre una persona completa: nombre, email, teléfonos, documento y rol. Reemplaza el patrón `filtroAPersonas(...) || normalizar(email).includes(...) || ...` repetido en cada pantalla. Un `@` inicial se ignora (estilo mensajería: `@luis` busca "luis"). | `import { filtroAPersona } from '@/lib/filtroAPersonas'` |
+| `filtroAPersona(persona, query)` | Búsqueda sobre una persona completa. Con `@` inicial → busca por **username** de la cuenta (estilo mensajería: `@gscarlosernesto`). Sin `@` → nombre/apellido, email, teléfonos, documento y rol. Reemplaza el patrón `filtroAPersonas(...) || normalizar(email).includes(...) || ...` repetido en cada pantalla. | `import { filtroAPersona } from '@/lib/filtroAPersonas'` |
 | `normalizarBusquedaPersona(value)` | Normaliza un texto para comparación (minúsculas, sin acentos, espacios simples). Con cache interno acotado. | `import { normalizarBusquedaPersona } from '@/lib/filtroAPersonas'` |
 
 > **Regla:** al buscar personas en cualquier módulo, usar `filtroAPersona(persona, query)` (o `filtroAPersonas` solo para nombre) — no escribir filtros propios con `startsWith`/`includes` (pierden acentos y nombres compuestos).
@@ -59,7 +59,7 @@ Importar desde `@/design`:
 
 | Componente | Uso | Import |
 |---|---|---|
-| `PersonaMentionInput` | Input con mención de personas estilo mensajería: escribes `@luis` → dropdown con coincidencias (filtroAPersona) → Enter/clic inserta `@Nombre Completo`. Con navegación por flechas, Escape y dedupe de menciones. | `import PersonaMentionInput from '@/components/ui/PersonaMentionInput'` |
+| `PersonaMentionInput` | Input con mención de **usuarios** estilo mensajería: escribes `@gscarlosernesto` → dropdown con usernames que coinciden → Enter/clic inserta `@username `. Con navegación por flechas, Escape y dedupe de menciones. | `import PersonaMentionInput from '@/components/ui/PersonaMentionInput'` |
 
 ## Regla de oro
 

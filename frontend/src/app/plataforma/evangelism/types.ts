@@ -32,6 +32,7 @@ export interface Persona {
  nombre_completo: string;
  email: string;
  church_role?: string;
+ username?: string | null;
 }
 
 export interface EventDashboardStat {

@@ -1,15 +1,16 @@
 "use client";
 
 /**
- * PersonaMentionInput — búsqueda de personas estilo mensajería.
+ * PersonaMentionInput — mención de USUARIOS estilo mensajería.
  *
- * Escribiendo "@luis" se abre un dropdown con las personas que coinciden
- * (filtroAPersona, cliente-side) y al seleccionar se inserta "@Nombre
- * Completo " en el texto. Reutilizable en cualquier módulo de la plataforma.
+ * Escribiendo "@gscarlosernesto" se abre un dropdown con los usuarios cuyos
+ * username coinciden (filtroAPersona con "@" = username, cliente-side) y al
+ * seleccionar se inserta "@Username " en el texto. Reutilizable en cualquier
+ * módulo de la plataforma.
  */
 import { AvatarInitial } from '@/components/ui/AvatarInitial';
 import { filtroAPersona, type PersonaBusqueda } from '@/lib/filtroAPersonas';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 
 interface MentionCandidate {
@@ -40,7 +41,7 @@ export default function PersonaMentionInput({
     personas,
     value,
     onChange,
-    placeholder = 'Escribe... (@ para mencionar personas)',
+    placeholder = 'Escribe... (@usuario para mencionar)',
     disabled = false,
     maxResults = 6,
     rows = 2,
@@ -55,7 +56,9 @@ export default function PersonaMentionInput({
 
     const results = useMemo(() => {
         if (!mentionState || mentionState.query.trim().length < 1) return [];
-        return personas.filter((p) => filtroAPersona(p, mentionState.query)).slice(0, maxResults);
+        // En el input de menciones TODO es búsqueda de usuario: se re-antepone
+        // el '@' para que filtroAPersona aplique la semántica de username.
+        return personas.filter((p) => filtroAPersona(p, `@${mentionState.query}`)).slice(0, maxResults);
     }, [mentionState, personas, maxResults]);
 
     // Dropdown por encima del input (misma UX que mensajería).
@@ -68,7 +71,9 @@ export default function PersonaMentionInput({
         }
     }, [results, mentionState]);
 
-    useEffect(() => setActiveIndex(0), [results]);
+    // Síncrono: el highlight debe resetearse antes de que el usuario pulse
+    // Enter/flechas (useEffect asíncrono podía quedarse con el índice viejo).
+    useLayoutEffect(() => setActiveIndex(0), [results]);
 
     const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
         const val = e.target.value;
@@ -87,10 +92,10 @@ export default function PersonaMentionInput({
 
     const selectMention = (persona: PersonaBusqueda) => {
         if (!mentionState) return;
-        const nombre = nombreDe(persona);
+        const usuario = persona.username || nombreDe(persona);
         const before = value.slice(0, mentionState.start);
         const after = value.slice(mentionState.start + 1 + mentionState.query.length);
-        const next = `${before}@${nombre} ${after}`;
+        const next = `${before}@${usuario} ${after}`;
         setMencionadas((prev) => (prev.some((m) => m.id === persona.id) ? prev : [...prev, persona]));
         onChange(next, mencionadas.some((m) => m.id === persona.id) ? mencionadas : [...mencionadas, persona]);
         setMentionState(null);
@@ -141,10 +146,8 @@ export default function PersonaMentionInput({
                         >
                             <AvatarInitial name={nombreDe(p)} size="sm" />
                             <div className="text-left flex-1 min-w-0">
-                                <p className="text-sm font-semibold text-[hsl(var(--text-primary))] truncate">{nombreDe(p)}</p>
-                                {p.church_role && (
-                                    <p className="text-2xs text-[hsl(var(--text-secondary))] truncate">{p.church_role}</p>
-                                )}
+                                <p className="text-sm font-semibold text-[hsl(var(--text-primary))] truncate">@{p.username || nombreDe(p)}</p>
+                                <p className="text-2xs text-[hsl(var(--text-secondary))] truncate">{nombreDe(p)}{p.church_role ? ` · ${p.church_role}` : ''}</p>
                             </div>
                         </button>
                     ))}

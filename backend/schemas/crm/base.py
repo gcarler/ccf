@@ -530,6 +530,9 @@ class PersonaResponse(BaseModel):
     volunteer_commitment: float = 0.0
     mesh_insight: Optional[PersonaMeshInsight] = None
     current_mentorship: Optional[PersonaMentorshipResponse] = None
+    # Username de la cuenta de plataforma (auth_users), si la persona tiene una.
+    # Permite buscar personas por usuario con "@" (estilo mensajería).
+    username: Optional[str] = None
 
 
 class PersonaPageResponse(BaseModel):

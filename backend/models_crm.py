@@ -702,6 +702,21 @@ class Persona(Base):
         back_populates="persona",
         uselist=False,
     )
+    # Cuenta de plataforma (auth_users): 1:1 opcional (Usuario.id == Persona.id).
+    # viewonly: la escritura se gestiona en auth. selectin evita N+1 al exponer
+    # el username en los payloads de listas de personas.
+    usuario = relationship(
+        "Usuario",
+        primaryjoin="Usuario.id == Persona.id",
+        uselist=False,
+        viewonly=True,
+        lazy="selectin",
+    )
+
+    @property
+    def username(self) -> str | None:
+        """Username de la cuenta de plataforma, si la persona tiene una."""
+        return self.usuario.username if self.usuario else None
 
 
 class Position(Base):

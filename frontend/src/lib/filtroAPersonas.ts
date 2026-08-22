@@ -18,9 +18,6 @@ export function normalizarBusquedaPersona(value: string | null | undefined): str
   const cached = CACHE_NORMALIZACION.get(key);
   if (cached !== undefined) return cached;
   const normalized = String(key)
-    // Un '@' inicial (estilo mensajería: "@luis") no debe romper la búsqueda:
-    // se ignora y se busca "luis" normalmente.
-    .replace(/^@+/, '')
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
     .toLocaleLowerCase('es')
@@ -82,6 +79,8 @@ export function filtroAPersonas(name: string | null | undefined, query: string):
  */
 export interface PersonaBusqueda {
   id?: string | null;
+  // Username de la cuenta de plataforma (auth_users). Se busca con "@".
+  username?: string | null;
   nombre_completo?: string | null;
   first_name?: string | null;
   last_name?: string | null;
@@ -98,17 +97,33 @@ export interface PersonaBusqueda {
 }
 
 /**
- * Búsqueda multi-campo sobre una persona completa: nombre (con
- * `filtroAPersonas`), email, teléfonos, documento y rol (con coincidencia
- * parcial). Query vacío → true; persona vacía → false.
+ * Búsqueda sobre una persona completa:
+ *
+ * - Query que empieza con "@" → busca por USUARIO (username de la cuenta,
+ *   estilo mensajería): "@gscarlosernesto" encuentra esa cuenta.
+ * - Sin "@" → multi-campo: nombre (con `filtroAPersonas`), email, teléfonos,
+ *   documento y rol (coincidencia parcial).
+ *
+ * Query vacío → true; persona vacía → false.
  *
  * Reemplaza el patrón repetido en cada pantalla de:
  * `filtroAPersonas(p.nombre_completo, q) || normalizar(p.email).includes(q) || ...`
  */
 export function filtroAPersona(persona: PersonaBusqueda | null | undefined, query: string): boolean {
-  const normalizedQuery = normalizarBusquedaPersona(query);
-  if (!normalizedQuery) return true;
+  const rawQuery = (query ?? '').trim();
+  if (!rawQuery) return true;
   if (!persona) return false;
+
+  // Un '@' inicial significa búsqueda por USUARIO (username de la cuenta),
+  // estilo mensajería: "@gscarlosernesto" busca ese username. Los nombres se
+  // buscan SIN '@'.
+  if (rawQuery.startsWith('@')) {
+    const normalizedUsernameQuery = normalizarBusquedaPersona(rawQuery.slice(1));
+    if (!normalizedUsernameQuery) return false;
+    return persona.username ? normalizarBusquedaPersona(persona.username).startsWith(normalizedUsernameQuery) : false;
+  }
+
+  const normalizedQuery = normalizarBusquedaPersona(rawQuery);
 
   const nombre =
     persona.nombre_completo ||

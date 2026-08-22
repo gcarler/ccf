@@ -12,10 +12,8 @@ describe('normalizarBusquedaPersona', () => {
     expect(normalizarBusquedaPersona('')).toBe('');
   });
 
-  it('ignores a leading @ (messaging-style mention)', () => {
-    expect(normalizarBusquedaPersona('@Luis Ricardo')).toBe('luis ricardo');
-    expect(normalizarBusquedaPersona('@luisricardo')).toBe('luisricardo');
-    expect(normalizarBusquedaPersona('@@juan')).toBe('juan');
+  it('keeps a leading @ (username searches are handled by filtroAPersona)', () => {
+    expect(normalizarBusquedaPersona('@luisricardo')).toBe('@luisricardo');
     // El @ interno de un email no se toca.
     expect(normalizarBusquedaPersona('luis@ccf.org')).toBe('luis@ccf.org');
   });
@@ -69,6 +67,8 @@ describe('filtroAPersonas', () => {
 
 describe('filtroAPersona', () => {
   const persona = {
+    id: 'p1',
+    username: 'gscarlosernesto',
     nombre_completo: 'Luis Ricardo Meza',
     email: 'luis.meza@ccf.org',
     phone: '+57 300 123 4567',
@@ -84,7 +84,7 @@ describe('filtroAPersona', () => {
 
   it('matches by email with partial input', () => {
     expect(filtroAPersona(persona, 'luis.meza')).toBe(true);
-    expect(filtroAPersona(persona, '@ccf.org')).toBe(true);
+    expect(filtroAPersona(persona, 'ccf.org')).toBe(true);
   });
 
   it('matches by phone with partial input', () => {
@@ -128,9 +128,25 @@ describe('filtroAPersona', () => {
     expect(filtroAPersona(persona, '  ')).toBe(true);
   });
 
-  it('matches with a leading @ (messaging-style)', () => {
-    expect(filtroAPersona(persona, '@luis')).toBe(true);
-    expect(filtroAPersona(persona, '@meza')).toBe(true);
-    expect(filtroAPersona(persona, '@luis.meza@ccf.org')).toBe(true);
+  it('with @ matches the USERNAME only (messaging-style)', () => {
+    expect(filtroAPersona(persona, '@gscarlosernesto')).toBe(true);
+    expect(filtroAPersona(persona, '@gscarlos')).toBe(true);
+    expect(filtroAPersona(persona, '@GSCARLOSERNESTO')).toBe(true);
+    // El @ NO busca por nombre, apellido, email ni teléfono.
+    expect(filtroAPersona(persona, '@luis')).toBe(false);
+    expect(filtroAPersona(persona, '@meza')).toBe(false);
+    expect(filtroAPersona(persona, '@300')).toBe(false);
+  });
+
+  it('personas sin username nunca coinciden con un @', () => {
+    const sinCuenta = { id: 'p9', nombre_completo: 'Luis Ricardo Meza' };
+    expect(filtroAPersona(sinCuenta, '@luis')).toBe(false);
+    expect(filtroAPersona(sinCuenta, '@')).toBe(false);
+  });
+
+  it('sin @ busca por nombre/apellido y nunca por username', () => {
+    expect(filtroAPersona(persona, 'gscarlosernesto')).toBe(false);
+    expect(filtroAPersona(persona, 'luis')).toBe(true);
+    expect(filtroAPersona(persona, 'meza')).toBe(true);
   });
 });
