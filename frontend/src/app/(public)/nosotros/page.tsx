@@ -92,12 +92,27 @@ export default function NosotrosPage() {
             )}
 
             {hasHero && stats.length > 0 && (
-                <section className="ccf-section-tight ccf-container">
-                    <div className="flex flex-wrap gap-8 md:gap-12">
+                <section className="py-12 md:py-16 ccf-container relative z-10">
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
                         {stats.map((s, i) => (
-                            <div key={i}>
-                                <p className="text-3xl md:text-4xl font-black text-site-primary">{s.value}</p>
-                                <p className="text-xs font-bold uppercase tracking-widest text-site-outline mt-0.5">{s.label}</p>
+                            <div
+                                key={i}
+                                className="group relative overflow-hidden rounded-2xl bg-site-surface/80 dark:bg-site-surface-container-low/80 backdrop-blur-md p-6 md:p-8 border border-site-outline-variant/15 hover:border-site-primary/40 shadow-sm hover:shadow-xl hover:shadow-site-primary/5 transition-all duration-300 transform hover:-translate-y-1"
+                            >
+                                {/* Decorative subtle glow on hover */}
+                                <div className="absolute -right-8 -top-8 w-28 h-28 bg-site-primary/10 rounded-full blur-2xl group-hover:bg-site-primary/20 transition-all duration-500 pointer-events-none" />
+                                
+                                {/* Accent top pill indicator */}
+                                <div className="w-8 h-1 rounded-full bg-site-primary/30 group-hover:w-14 group-hover:bg-site-primary transition-all duration-300 mb-4" />
+
+                                <div className="relative z-10">
+                                    <p className="text-4xl sm:text-5xl md:text-6xl font-black tracking-tight text-site-primary group-hover:scale-105 transition-transform duration-300 origin-left">
+                                        {s.value}
+                                    </p>
+                                    <p className="text-xs sm:text-sm font-semibold uppercase tracking-wider text-site-on-surface-variant group-hover:text-site-on-surface mt-2 transition-colors duration-200">
+                                        {s.label}
+                                    </p>
+                                </div>
                             </div>
                         ))}
                     </div>
