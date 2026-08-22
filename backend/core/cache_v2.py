@@ -158,7 +158,8 @@ def cached_public(ttl: int = 300) -> Callable[[F], F]:
 
     Skips SQLAlchemy Session, Request, and other non-serializable arguments
     when building the cache key so that ``Depends(get_db)`` does not bust
-    the cache on every request.
+    the cache on every request. Automatically attaches Cache-Control and ETag
+    headers to the Response object when provided in kwargs.
     """
 
     def decorator(func: F) -> F:
@@ -166,28 +167,34 @@ def cached_public(ttl: int = 300) -> Callable[[F], F]:
         def wrapper(*args: Any, **kwargs: Any) -> Any:
             redis = get_redis()
             key = _build_cache_key(func.__name__, args, kwargs)
+            response = kwargs.get("response")
 
             cached_val = redis.get(key)
             if cached_val:
                 try:
-                    return json.loads(cached_val)
+                    data = json.loads(cached_val)
                 except (json.JSONDecodeError, TypeError):
-                    return cached_val
+                    data = cached_val
+                if response is not None and hasattr(response, "headers"):
+                    response.headers["Cache-Control"] = f"public, max-age={ttl}, s-maxage={ttl*2}, stale-while-revalidate=86400"
+                    etag = hashlib.md5(str(cached_val).encode("utf-8")).hexdigest()
+                    response.headers["ETag"] = f'"{etag}"'
+                return data
 
             result = func(*args, **kwargs)
 
             try:
-                # Convert Pydantic models \u2014 and any list/tuple/dict that
-                # contains them \u2014 into plain JSON-safe types BEFORE
+                # Convert Pydantic models — and any list/tuple/dict that
+                # contains them — into plain JSON-safe types BEFORE
                 # ``json.dumps`` so the cache stores a real dict/list
                 # structure instead of the ``str(model)`` debug repr.
-                # Without this, ``List[PastoralProfileRead]`` would round-
-                # trip as a list of strings and FastAPI's response_model
-                # validation would fail with "Input should be a valid
-                # dictionary or object to extract fields from" on the
-                # next cache hit.
                 serializable = _to_jsonable(result)
-                redis.setex(key, ttl, json.dumps(serializable, default=str))
+                dumped = json.dumps(serializable, default=str)
+                redis.setex(key, ttl, dumped)
+                if response is not None and hasattr(response, "headers"):
+                    response.headers["Cache-Control"] = f"public, max-age={ttl}, s-maxage={ttl*2}, stale-while-revalidate=86400"
+                    etag = hashlib.md5(dumped.encode("utf-8")).hexdigest()
+                    response.headers["ETag"] = f'"{etag}"'
             except (TypeError, ValueError, ConnectionError) as exc:
                 logger.debug("Cache store skipped: %s", exc)
 

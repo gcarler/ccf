@@ -42,7 +42,7 @@ interface Tool {
 }
 
 interface Conversation {
-    id: number;
+    id: string | number;
     title: string;
     agent_name: string;
     created_at: string;
@@ -71,7 +71,7 @@ export default function AgentsPage() {
     const [chatMessages, setChatMessages] = useState<{role: string, content: string}[]>([]);
     const [chatInput, setChatInput] = useState('');
     const [chatLoading, setChatLoading] = useState(false);
-    const [activeConversation, setActiveConversation] = useState<number | null>(null);
+    const [activeConversation, setActiveConversation] = useState<string | number | null>(null);
 
     const fetchData = useCallback(async () => {
         if (!token) return;
@@ -127,8 +127,25 @@ export default function AgentsPage() {
             }
         } catch {
             setChatMessages(prev => [...prev, { role: 'assistant', content: 'Error al procesar la consulta.' }]);
+            addToast("Error de comunicación con el agente", "error");
         } finally {
             setChatLoading(false);
+        }
+    };
+
+    const selectConversation = async (convId: string | number) => {
+        setActiveConversation(convId);
+        setActiveTab('chat');
+        setChatMessages([]);
+        if (!token) return;
+        try {
+            const msgs = await apiFetch<Array<{ role: 'user' | 'assistant'; content: string }>>(`/agents/conversations/${convId}/messages`, { token });
+            if (Array.isArray(msgs)) {
+                setChatMessages(msgs.map(m => ({ role: m.role as 'user' | 'assistant', content: m.content })));
+            }
+        } catch (err) {
+            console.error(err);
+            addToast("Error al cargar historial de conversación", "error");
         }
     };
 
@@ -341,11 +358,7 @@ export default function AgentsPage() {
                                 {conversations.map(conv => (
                                     <button
                                         key={conv.id}
-                                        onClick={() => {
-                                            setActiveConversation(conv.id);
-                                            setActiveTab('chat');
-                                            setChatMessages([]);
-                                        }}
+                                        onClick={() => selectConversation(conv.id)}
                                         className="w-full bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--bg-primary))] rounded-lg p-4 shadow-sm border border-[hsl(var(--border-primary))] dark:border-[hsl(var(--border))] text-left hover:border-[hsl(var(--info)/30%)] dark:hover:border-[hsl(var(--info)/100%)] transition-colors"
                                     >
                                         <div className="flex items-center justify-between">

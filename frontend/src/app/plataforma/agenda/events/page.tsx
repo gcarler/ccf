@@ -31,9 +31,9 @@ export default function AgendaEventsPage() {
     const [events, setEvents] = useState<AgendaEvent[]>([]);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
-    const [editingEventId, setEditingEventId] = useState<number | null>(null);
+    const [editingEventId, setEditingEventId] = useState<string | number | null>(null);
     const [editingEventSaving, setEditingEventSaving] = useState(false);
-    const [deletingEventId, setDeletingEventId] = useState<number | null>(null);
+    const [deletingEventId, setDeletingEventId] = useState<string | number | null>(null);
     const [form, setForm] = useState<AgendaFormState>({
         title: "",
         description: "",
@@ -118,7 +118,7 @@ export default function AgendaEventsPage() {
         });
     };
 
-    const handleInlineUpdate = async (eventId: number) => {
+    const handleInlineUpdate = async (eventId: string | number) => {
         if (!token || !editForm.title.trim()) return;
         setEditingEventSaving(true);
         try {
@@ -144,7 +144,7 @@ export default function AgendaEventsPage() {
         }
     };
 
-    const handleInlineDelete = async (eventId: number) => {
+    const handleInlineDelete = async (eventId: string | number) => {
         if (!token) return;
         setDeletingEventId(eventId);
         try {
@@ -389,7 +389,7 @@ export default function AgendaEventsPage() {
                                                     <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
                                                         <div className="space-y-2">
                                                             <button
-                                                                onClick={() => router.push(`/agenda/events/${event.id}`)}
+                                                                onClick={() => router.push(`/plataforma/agenda/events/${event.id}`)}
                                                                 className="text-left"
                                                             >
                                                                 <h3 className="text-lg font-bold text-[hsl(var(--text-primary))] transition-colors hover:text-[hsl(var(--primary))] dark:text-white dark:hover:text-[hsl(var(--primary))]">{event.title}</h3>

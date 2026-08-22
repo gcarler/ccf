@@ -9,7 +9,7 @@ from backend import models
 from backend.models_shared import _utcnow
 
 
-def list_events(db: Session, sede_id: UUID) -> list[models.EventoAgenda]:
+def list_events(db: Session, sede_id: UUID, skip: int = 0, limit: int = 100) -> list[models.EventoAgenda]:
     return (
         db.query(models.EventoAgenda)
         .filter(
@@ -17,6 +17,8 @@ def list_events(db: Session, sede_id: UUID) -> list[models.EventoAgenda]:
             models.EventoAgenda.deleted_at.is_(None),
         )
         .order_by(models.EventoAgenda.fecha_inicio.asc())
+        .offset(skip)
+        .limit(limit)
         .all()
     )
 

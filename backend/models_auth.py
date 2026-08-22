@@ -164,7 +164,7 @@ class LogSeguridad(Base):
     __tablename__ = "auth_security_logs"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
-    user_id = Column(UUID(as_uuid=True), ForeignKey("auth_users.id", ondelete="CASCADE"), nullable=False)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("auth_users.id", ondelete="CASCADE"), nullable=True)
     evento = Column(String(100), nullable=False)
     ip_address = Column(String(50))
     user_agent = Column(Text)

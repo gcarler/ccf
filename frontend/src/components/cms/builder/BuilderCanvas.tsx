@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useCallback } from "react";
 import {
   DndContext,
   DragOverlay,
@@ -69,7 +69,7 @@ interface SortableSectionWrapperProps {
   builder: PageBuilderState;
 }
 
-function SortableSectionWrapper({
+const SortableSectionWrapper = React.memo(function SortableSectionWrapper({
   section,
   index,
   totalSections,
@@ -336,7 +336,7 @@ function SortableSectionWrapper({
       </div>
     </div>
   );
-}
+});
 
 // ── Active Drag Overlay Component ───────────────────────────────────────────
 
@@ -425,16 +425,19 @@ export default function BuilderCanvas({
     })
   );
 
-  async function handleDragEnd(event: DragEndEvent) {
-    const { active, over } = event;
-    if (over && active.id !== over.id) {
-      const oldIndex = sections.findIndex((s) => s.id === active.id);
-      const newIndex = sections.findIndex((s) => s.id === over.id);
-      if (oldIndex !== -1 && newIndex !== -1) {
-        await moveSectionToIndex(active.id as string, newIndex);
+  const handleDragEnd = useCallback(
+    async (event: DragEndEvent) => {
+      const { active, over } = event;
+      if (over && active.id !== over.id) {
+        const oldIndex = sections.findIndex((s) => s.id === active.id);
+        const newIndex = sections.findIndex((s) => s.id === over.id);
+        if (oldIndex !== -1 && newIndex !== -1) {
+          await moveSectionToIndex(active.id as string, newIndex);
+        }
       }
-    }
-  }
+    },
+    [sections, moveSectionToIndex]
+  );
 
   return (
     <section className="lg:col-span-6 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-tertiary))] p-4 space-y-4">

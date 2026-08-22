@@ -28,10 +28,12 @@ class AgentConversation(Base):
     )
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
+    sede_id = Column(UUID(as_uuid=True), ForeignKey("sedes.id"), nullable=True, index=True)
     persona_id = Column(UUID(as_uuid=True), ForeignKey("personas.id"), nullable=False, index=True)
     title = Column(String(300), nullable=True)
     agent_name = Column(String(100), nullable=False, server_default="Optimus")
     is_active = Column(Boolean, default=True, index=True)
+    deleted_at = Column(DateTime(timezone=True), nullable=True, index=True)
     created_at = Column(DateTime(timezone=True), default=_utcnow, index=True)
     updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
 
@@ -49,6 +51,7 @@ class AgentMessage(Base):
     __table_args__ = (Index("ix_msg_conv", "conversation_id", "created_at"),)
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
+    sede_id = Column(UUID(as_uuid=True), ForeignKey("sedes.id"), nullable=True, index=True)
     conversation_id = Column(
         UUID(as_uuid=True),
         ForeignKey("agent_conversations.id", ondelete="CASCADE"),
@@ -58,6 +61,7 @@ class AgentMessage(Base):
     role = Column(String(20), nullable=False)  # user, assistant, system
     content = Column(Text, nullable=False)
     tools_used = Column("tools_used_json", Text, nullable=True)
+    deleted_at = Column(DateTime(timezone=True), nullable=True, index=True)
     created_at = Column(DateTime(timezone=True), default=_utcnow, index=True)
 
     conversation = relationship(

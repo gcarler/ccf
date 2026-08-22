@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Response
 from sqlalchemy.orm import Session, lazyload
 
 from backend import models, schemas
@@ -17,7 +17,7 @@ router = APIRouter(tags=["cms_v2_public"])
     dependencies=[Depends(rate_limiter(limit=PUBLIC_CMS_RATE_LIMIT, window_seconds=60))],
 )
 @cached_public(ttl=300)
-def public_theme(site_key: str, db: Session = Depends(get_db)):
+def public_theme(site_key: str, response: Response = None, db: Session = Depends(get_db)):
     # Optimizado N+1: en lugar de 2 querys separadas (site + theme), hacemos
     # 1 sola query JOIN de CmsTheme con CmsSite filtrando por site_key. El
     # JOIN trae también ``sede`` (lazy="joined" en CmsSite.sede) en la misma

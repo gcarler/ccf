@@ -1,29 +1,98 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { SITE_NAME } from '@/lib/site-config';
 import { motion } from 'framer-motion';
-import { Church, Camera, Save, Edit2, AlertCircle } from 'lucide-react';
+import { Church, Camera, Save, Edit2, AlertCircle, Loader2 } from 'lucide-react';
+import { apiFetch } from '@/lib/http';
+import { useAuth } from '@/context/AuthContext';
+import { useToast } from '@/context/ToastContext';
 
 export default function AdminSettingsProfilePage() {
+    const { token, isAuthenticated } = useAuth();
+    const { addToast } = useToast();
     const [editing, setEditing] = useState(false);
+    const [loading, setLoading] = useState(false);
+    const [isSaving, setIsSaving] = useState(false);
+    const [saved, setSaved] = useState(false);
+
     const [form, setForm] = useState({
         name: SITE_NAME,
         slogan: '',
         mission: '',
         vision: '',
-        city: '',
-        department: '',
-        country: '',
-        founded: '',
+        city: 'Mocoa',
+        department: 'Putumayo',
+        country: 'Colombia',
+        founded: '2020',
     });
-    const [saved, setSaved] = useState(false);
 
-    const handleSave = () => {
-        setSaved(true);
-        setEditing(false);
-        setTimeout(() => setSaved(false), 3000);
+    const fetchProfileVariables = useCallback(async (signal?: AbortSignal) => {
+        if (!token) return;
+        setLoading(true);
+        try {
+            const vars = await apiFetch<Record<string, string>>('/admin/variables', { token, signal });
+            if (vars) {
+                setForm(prev => ({
+                    ...prev,
+                    name: vars['ministry_name'] || prev.name,
+                    slogan: vars['ministry_slogan'] || prev.slogan,
+                    mission: vars['ministry_mission'] || prev.mission,
+                    vision: vars['ministry_vision'] || prev.vision,
+                    city: vars['ministry_city'] || prev.city,
+                    department: vars['ministry_department'] || prev.department,
+                    country: vars['ministry_country'] || prev.country,
+                    founded: vars['ministry_founded'] || prev.founded,
+                }));
+            }
+        } catch (err) {
+            console.error(err);
+        } finally {
+            setLoading(false);
+        }
+    }, [token]);
+
+    useEffect(() => {
+        if (!isAuthenticated) return;
+        const controller = new AbortController();
+        fetchProfileVariables(controller.signal);
+        return () => controller.abort();
+    }, [isAuthenticated, fetchProfileVariables]);
+
+    const handleSave = async () => {
+        if (!token) return;
+        setIsSaving(true);
+        try {
+            const updates = [
+                { key: 'ministry_name', value: form.name },
+                { key: 'ministry_slogan', value: form.slogan },
+                { key: 'ministry_mission', value: form.mission },
+                { key: 'ministry_vision', value: form.vision },
+                { key: 'ministry_city', value: form.city },
+                { key: 'ministry_department', value: form.department },
+                { key: 'ministry_country', value: form.country },
+                { key: 'ministry_founded', value: form.founded },
+            ];
+            for (const item of updates) {
+                await apiFetch('/admin/variables', {
+                    token,
+                    method: 'POST',
+                    body: item,
+                });
+            }
+            setSaved(true);
+            setEditing(false);
+            addToast("Perfil del ministerio actualizado", "success");
+            setTimeout(() => setSaved(false), 3000);
+        } catch (err) {
+            console.error(err);
+            addToast("Error al guardar el perfil", "error");
+        } finally {
+            setIsSaving(false);
+        }
     };
+
+    if (!isAuthenticated) return null;
 
     return (
         <div className="min-h-full bg-[hsl(var(--bg-muted))]/20 font-display">
@@ -56,9 +125,10 @@ export default function AdminSettingsProfilePage() {
                         ) : (
                             <button
                                 onClick={handleSave}
-                                className="flex items-center gap-2 px-3 py-2 bg-primary hover:bg-primary/80 text-white rounded-md text-xs font-semibold uppercase tracking-wide shadow-lg shadow-primary/20 transition-all"
+                                disabled={isSaving}
+                                className="flex items-center gap-2 px-3 py-2 bg-primary hover:bg-primary/80 text-white rounded-md text-xs font-semibold uppercase tracking-wide shadow-lg shadow-primary/20 transition-all disabled:opacity-50"
                             >
-                                <Save size={14} /> Guardar Cambios
+                                {isSaving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />} Guardar Cambios
                             </button>
                         )}
                     </div>

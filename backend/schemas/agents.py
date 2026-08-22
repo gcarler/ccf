@@ -107,10 +107,17 @@ class AgentSearchResult(BaseModel):
     id: UUID
     code: str
     full_name: str
-    email: Optional[str]
-    phone: Optional[str]
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    email: Optional[str] = None
+    phone: Optional[str] = None
     spiritual_stage: str
     is_active: bool
+    created_at: Optional[datetime] = None
+
+    @property
+    def nombre_completo(self) -> str:
+        return self.full_name
 
     model_config = {"from_attributes": True}
 

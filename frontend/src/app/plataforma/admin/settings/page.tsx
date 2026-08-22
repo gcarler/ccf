@@ -35,18 +35,18 @@ export default function MinistrySettings() {
         {
             title: "Administración General",
             items: [
-                { icon: Church, label: "Perfil del Ministerio", sub: "Nombre, misión, visión y logo", path: "/admin/settings/profile" },
-                { icon: Sparkles, label: "Experiencia de Usuario", sub: "Activar módulos, IA y marca visual", path: "/admin/settings/experience" },
-                { icon: Contact, label: "Información de Contacto", sub: "Teléfonos, correos y atención", path: "/admin/settings/contact" },
-                { icon: Share2, label: "Redes Sociales", sub: "Instagram, YouTube, Facebook", path: "/admin/settings/socials" },
+                { icon: Church, label: "Perfil del Ministerio", sub: "Nombre, misión, visión y logo", path: "/plataforma/admin/settings/profile" },
+                { icon: Sparkles, label: "Experiencia de Usuario", sub: "Activar módulos, IA y marca visual", path: "/plataforma/admin/settings/experience" },
+                { icon: Contact, label: "Información de Contacto", sub: "Teléfonos, correos y atención", path: "/plataforma/admin/settings/contact" },
+                { icon: Share2, label: "Redes Sociales", sub: "Instagram, YouTube, Facebook", path: "/plataforma/admin/settings/socials" },
             ]
         },
         {
             title: "Operaciones y Pagos",
             items: [
-                { icon: MapPin, label: "Gestión de Sedes", sub: "Sucursales y ministerios locales", path: "/admin/settings/locations" },
-                { icon: CreditCard, label: "Pagos y Donaciones", sub: "Pasarelas, diezmos y ofrendas", path: "/admin/donations/config" },
-                { icon: Settings, label: "Feature Flags y Sistema", sub: "Módulos, toggles y estado global", path: "/admin/settings/system" },
+                { icon: MapPin, label: "Gestión de Sedes", sub: "Sucursales y ministerios locales", path: "/plataforma/admin/settings/locations" },
+                { icon: CreditCard, label: "Pagos y Donaciones", sub: "Pasarelas, diezmos y ofrendas", path: "/plataforma/admin/donations/config" },
+                { icon: Settings, label: "Feature Flags y Sistema", sub: "Módulos, toggles y estado global", path: "/plataforma/admin/settings/system" },
             ]
         }
     ];

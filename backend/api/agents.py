@@ -245,6 +245,7 @@ def delete_insight(
 
 class AskRequest(BaseModel):
     query: str
+    conversation_id: Optional[uuid.UUID] = None
 
 
 @router.post("/ask")
@@ -269,19 +270,23 @@ def ask_optimus(
     # 2. Use Orchestrator for real AI generation if configured
     try:
         orchestrator = AgentOrchestrator()
-        # Create a custom prompt combining KB context and query
         full_query = f"Context from Knowledge Base:\n{context}\n\nUser Question: {payload.query}"
 
         insight = orchestrator.run_diagnosis(
             summary=f"Consulta de usuario: {payload.query}",
             metrics={
                 "context_length": len(context),
-                "user": current_user.username,
+                "user": getattr(current_user, "username", "usuario"),
                 "full_query": full_query,
             },
+            conversation_id=payload.conversation_id,
         )
 
-        return {"answer": insight.payload, "sources": sources}
+        return {
+            "answer": insight.payload,
+            "sources": sources,
+            "conversation_id": payload.conversation_id,
+        }
     except MemoryError:
         raise
     except Exception:

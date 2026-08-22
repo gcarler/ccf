@@ -476,17 +476,6 @@ BLOCKS = {
                 "que vivan en obediencia a Cristo, sean bautizados en Su nombre y reflejen Su gloria, para que el mundo "
                 "sea alcanzado, restaurado y reconciliado con Dios."
             ),
-            "founder_label": "Nuestros Pastores Principales",
-            "founder_title": "Un llamado a construir",
-            "founder_title_accent": "una familia de fe",
-            "founder1_name": "Luis Ricardo Meza G.",
-            "founder1_role": "Pastor Principal",
-            "founder1_image": "/api/static/cms/pastores/db401ca5d8484ed3a15e3b7012a8b14f.webp",
-            "founder2_name": "Histar Ariza Herrera",
-            "founder2_role": "Pastor Principal",
-            "founder2_image": "/api/static/cms/pastores/b84ca87b625d46bdbdd7d9d5bc41f994.webp",
-            "founder_bio": "La Comunidad Cristiana CCF nació de un profundo encuentro con la paternidad de Dios. Nuestros pastores principales, <strong>Luis Ricardo Meza Gutiérrez</strong> e <strong>Histar Ariza Herrera</strong>, han dedicado más de dos décadas a construir una iglesia que sea verdaderamente una casa — un lugar donde cada persona sea vista, amada y formada.",
-            "founder_bio2": "Desde sus inicios, el ADN de CCF ha sido claro: <em>sana doctrina, corazón pastoral y vida en comunidad</em>. Una iglesia que no teme enseñar la Palabra en su profundidad y que, al mismo tiempo, envuelve a cada persona con la calidez del amor de Cristo.",
             "valores_title": "Valores que nos Guían",
             "valores": [
                 {
@@ -527,7 +516,6 @@ BLOCKS = {
                 },
             ],
             "quote_text": "La luz que encontramos en CCF no es para guardarla — es para guiar a otros que aún caminan en la oscuridad.",
-            "quote_author": "Pastor Luis Ricardo Meza Gutiérrez",
             "quote_subtitle": "Comunidad Cristiana CCF",
             "cta_title": "¿Listo para ser parte?",
             "cta_desc": "Ven a conocernos. Tenemos puertas abiertas y un lugar reservado para ti y tu familia.",
@@ -762,6 +750,19 @@ def main() -> int:
                     current = json.loads(row.content or "{}")
                 except json.JSONDecodeError:
                     current = {}
+            # These fields were seeded with identities and photos that do not
+            # belong to the current church leadership. They are editorial CMS
+            # data, not safe bootstrap defaults, so never resurrect them from
+            # this maintenance script.
+            if page_key == "ccf_about_feed":
+                for key in (
+                    "founder_label", "founder_title", "founder_title_accent",
+                    "founder1_name", "founder1_role", "founder1_image",
+                    "founder2_name", "founder2_role", "founder2_image",
+                    "founder_bio", "founder_bio2", "founder_cta_team",
+                    "founder_cta_visit", "quote_author",
+                ):
+                    current.pop(key, None)
             next_content = {**current, **payload["content"]}
             content = json.dumps(next_content, ensure_ascii=False)
             if row is None:

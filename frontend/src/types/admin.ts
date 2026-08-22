@@ -18,6 +18,34 @@ export interface AdminRoleRead {
   users_count?: number;
 }
 
+/** A location/sede as returned by /api/admin/locations */
+export interface AdminLocationRead {
+  id: string;
+  name: string;
+  address?: string | null;
+  phone?: string | null;
+  pastor?: string | null;
+  active: boolean;
+  type?: string | null;
+}
+
+export interface AdminLocationCreate {
+  name: string;
+  address?: string | null;
+  phone?: string | null;
+  pastor_name?: string | null;
+  location_type?: string | null;
+}
+
+export interface AdminLocationUpdate {
+  name?: string | null;
+  address?: string | null;
+  phone?: string | null;
+  pastor_name?: string | null;
+  location_type?: string | null;
+  is_active?: boolean | null;
+}
+
 /** A user row as returned by /api/admin/users */
 export interface AdminUserRead {
   id: string;

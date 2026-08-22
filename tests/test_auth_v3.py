@@ -325,11 +325,11 @@ class TestAuthV3Flow:
 
     def test_welcome_redirect_builder(self):
         url = _build_public_welcome_redirect(
-            "https://elfarocc.tech/",
+            "https://ministerioselfaro.org/",
             name="G. Carler",
             email="gscarler@gmail.com",
         )
-        assert url.startswith("https://elfarocc.tech/bienvenida?")
+        assert url.startswith("https://ministerioselfaro.org/bienvenida?")
         assert "reason=no_account" in url
         assert "name=G.+Carler" in url
         assert "email=gscarler%40gmail.com" in url

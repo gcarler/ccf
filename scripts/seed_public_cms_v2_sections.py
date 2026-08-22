@@ -341,17 +341,6 @@ def _build_pages(media_find: Any) -> dict[str, list[dict[str, Any]]]:
             "a Cristo, sean bautizados en Su nombre y reflejen Su gloria, para que el mundo sea alcanzado, restaurado "
             "y reconciliado con Dios."
         ),
-        "founder_label": "Nuestros Pastores Principales",
-        "founder_title": "Un llamado a construir",
-        "founder_title_accent": "una familia de fe",
-        "founder1_name": "Luis Ricardo Meza G.",
-        "founder1_role": "Pastor Principal",
-        "founder1_image": _ensure_image("", media_find, "db401ca5"),
-        "founder2_name": "Histar Ariza Herrera",
-        "founder2_role": "Pastor Principal",
-        "founder2_image": _ensure_image("", media_find, "b84ca87b"),
-        "founder_bio": "La Comunidad Cristiana CCF nació de un profundo encuentro con la paternidad de Dios. Nuestros pastores principales han dedicado más de dos décadas a construir una iglesia que sea verdaderamente una casa.",
-        "founder_bio2": "Desde sus inicios, el ADN de CCF ha sido claro: sana doctrina, corazón pastoral y vida en comunidad.",
         "valores_title": "Valores que nos Guían",
         "valores": [
             {"num": "01", "key": "palabra", "title": "Palabra", "desc": "La Escritura es nuestra brújula."},
@@ -382,11 +371,20 @@ def _build_pages(media_find: Any) -> dict[str, list[dict[str, Any]]]:
             },
         ],
         "quote_text": "La luz que encontramos en CCF no es para guardarla — es para guiar a otros que aún caminan en la oscuridad.",
-        "quote_author": "Pastor Luis Ricardo Meza Gutiérrez",
         "quote_subtitle": "Comunidad Cristiana CCF",
         "cta_title": "¿Listo para ser parte?",
         "cta_desc": "Ven a conocernos. Tenemos puertas abiertas y un lugar reservado para ti y tu familia.",
     }
+    # Pastor names, biographies and photos are editorial CMS content. Do not
+    # reintroduce the old, incorrect identities when this bootstrap runs.
+    for key in (
+        "founder_label", "founder_title", "founder_title_accent",
+        "founder1_name", "founder1_role", "founder1_image",
+        "founder2_name", "founder2_role", "founder2_image",
+        "founder_bio", "founder_bio2", "founder_cta_team",
+        "founder_cta_visit", "quote_author",
+    ):
+        about_content.pop(key, None)
     about_content.setdefault("founder_cta_team", "Conoce al equipo")
     about_content.setdefault("founder_cta_visit", "Visítanos")
     about_content.setdefault("values_eyebrow", "Lo que nos define")

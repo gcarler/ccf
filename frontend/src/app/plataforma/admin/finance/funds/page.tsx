@@ -16,7 +16,8 @@ const INPUT = "w-full bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[
 const LABEL = "block text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-1.5";
 
 type Fund = {
-    id: number;
+    id?: string | number;
+    fund_id?: string | number;
     name: string;
     description?: string;
     is_public: boolean;
@@ -103,7 +104,8 @@ export default function FundsPage() {
                 await apiFetch("/finance/admin/funds", { method: "POST", token, body });
                 toast.success("Fondo creado correctamente");
             } else if (selected) {
-                await apiFetch(`/finance/admin/funds/${selected.id}`, { method: "PATCH", token, body });
+                const targetId = selected.id ?? selected.fund_id;
+                await apiFetch(`/finance/admin/funds/${targetId}`, { method: "PATCH", token, body });
                 toast.success("Fondo actualizado");
             }
             setDrawerMode(null);
@@ -119,7 +121,8 @@ export default function FundsPage() {
         if (!deleteTarget) return;
         setDeleting(true);
         try {
-            await apiFetch(`/finance/admin/funds/${deleteTarget.id}`, { method: "DELETE", token });
+            const targetId = deleteTarget.id ?? deleteTarget.fund_id;
+            await apiFetch(`/finance/admin/funds/${targetId}`, { method: "DELETE", token });
             toast.success("Fondo eliminado");
             setDeleteTarget(null);
             loadFunds();

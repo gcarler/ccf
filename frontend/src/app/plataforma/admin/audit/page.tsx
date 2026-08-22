@@ -27,13 +27,26 @@ export default function SecurityAuditPage() {
         }
         setLoading(true);
         try {
-            const data = await apiFetch<{ events?: AuditLog[] }>('/workspace/flags/audit', {
+            const data = await apiFetch<any>('/admin/audit', {
                 token,
                 query: { limit: 100 },
                 cache: 'no-store',
                 signal,
             });
-            setLogs(Array.isArray(data?.events) ? data.events : []);
+            let items: AuditLog[] = [];
+            if (Array.isArray(data)) {
+                items = data.map((item: any) => ({
+                    timestamp: item.created_at || new Date().toISOString(),
+                    action: item.action || 'system.action',
+                    feature_id: item.resource_type ? `${item.resource_type}:${item.resource_id}` : (item.resource_id || 'GLOBAL'),
+                    actor_persona_id: item.actor_persona_id,
+                    updated_by: item.actor_persona_id,
+                    changes: item.metadata || {},
+                }));
+            } else if (Array.isArray(data?.events)) {
+                items = data.events;
+            }
+            setLogs(items);
         } catch (error: unknown) {
             if (error instanceof Error && error.name === 'AbortError') return;
             console.error(error);

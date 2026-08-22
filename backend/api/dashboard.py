@@ -13,9 +13,9 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
+from backend.core.audit import record_admin_action
 from backend.core.database import get_db
 from backend.core.permissions import get_user_effective_permissions, normalize_role, require_active_user
-from backend.core.tenant import require_user_sede_id
 from backend.crud.dashboard import (
     get_academy_dashboard,
     get_admin_dashboard,
@@ -63,7 +63,6 @@ def get_module_dashboard(
 
     Args:
         module: Nombre del módulo (crm, academy, evangelism, finance, agenda, cms, projects, admin)
-        sede_id: Filtrar por sede (opcional)
         estrategia_id: Filtrar por estrategia — solo aplica a evangelism (opcional)
     """
     if module not in MODULE_REGISTRY:
@@ -74,19 +73,24 @@ def get_module_dashboard(
 
     fn, schema_cls, label = MODULE_REGISTRY[module]
 
+    user_perms = get_user_effective_permissions(db, current_user)
+    role = normalize_role(str(getattr(current_user, "role", "")))
+    if not role and getattr(current_user, "rol_plataforma", None):
+        role = normalize_role(current_user.rol_plataforma.nombre)
+    is_super = role in {"admin", "administrador", "super administrador", "superadmin"}
+
     if module == "admin":
-        role = normalize_role(str(getattr(current_user, "role", "")))
-        if not role and getattr(current_user, "rol_plataforma", None):
-            role = normalize_role(current_user.rol_plataforma.nombre)
-        perms = get_user_effective_permissions(db, current_user)
-        if role not in {"admin", "administrador", "super administrador"} and "system:config" not in perms:
+        if not is_super and "system:config" not in user_perms and "admin:read" not in user_perms:
             raise HTTPException(status_code=403, detail="Permisos insuficientes")
-        kwargs = {}
-    else:
-        sede_id = require_user_sede_id(db, current_user)
-        kwargs = {}
-        if "sede_id" in signature(fn).parameters:
-            kwargs["sede_id"] = sede_id
+    elif module == "finance":
+        if not is_super and "finance:read" not in user_perms and "finance:manage" not in user_perms:
+            raise HTTPException(status_code=403, detail="Permisos insuficientes para acceder a finanzas")
+        record_admin_action(db, current_user, "dashboard.finance.view", "dashboard", "finance")
+
+    user_sede = getattr(current_user, "sede_id", None)
+    kwargs = {}
+    if "sede_id" in signature(fn).parameters:
+        kwargs["sede_id"] = user_sede
 
     if module == "evangelism" and estrategia_id:
         kwargs["estrategia_id"] = estrategia_id

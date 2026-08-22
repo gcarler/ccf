@@ -73,11 +73,15 @@ def get_user_conversations(
         persona_id = resolve_persona_id_for_user(db, user_id)
         if not persona_id:
             return []
+        from sqlalchemy.orm import selectinload
+
         convs = (
             db.query(AgentConversation)
+            .options(selectinload(AgentConversation.messages))
             .filter(
                 AgentConversation.persona_id == persona_id,
                 AgentConversation.is_active,
+                AgentConversation.deleted_at.is_(None),
             )
             .order_by(
                 AgentConversation.updated_at.desc(),

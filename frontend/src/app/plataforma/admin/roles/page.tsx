@@ -44,7 +44,7 @@ export default function RolesPage() {
         try {
             const [rolesRes, permsRes] = await Promise.all([
                 apiFetch<{ items: AdminRoleRaw[]; total: number }>('/admin/roles', { token, signal }),
-                apiFetch<Record<string, string>>('/admin/permissions', { token, signal })
+                apiFetch<any>('/admin/permissions', { token, signal })
             ]);
             const items = rolesRes?.items ?? [];
             const mapped = items.map((r: AdminRoleRaw) => ({
@@ -53,7 +53,8 @@ export default function RolesPage() {
                 permissions: r.permisos ? Object.keys(r.permisos) : [],
             }));
             setRoles(mapped);
-            setPermissionsMap(permsRes || {});
+            const pMap = permsRes?.permissions || permsRes || {};
+            setPermissionsMap(pMap);
         } catch (err: unknown) {
             if (err instanceof DOMException && err.name === 'AbortError') return;
             addToast("Error al cargar roles", "error");
@@ -277,7 +278,11 @@ export default function RolesPage() {
                                                     </div>
                                                     <div>
                                                         <p className={`text-sm font-bold ${isActive ? 'text-info-text' : 'text-[hsl(var(--text-primary))]'}`}>{p}</p>
-                                                        <p className="text-xs text-[hsl(var(--text-secondary))] mt-1">{permissionsMap[p]}</p>
+                                                        <p className="text-xs text-[hsl(var(--text-secondary))] mt-1">
+                                                            {typeof permissionsMap[p] === 'object' && permissionsMap[p] !== null
+                                                                ? ((permissionsMap[p] as any).description || (permissionsMap[p] as any).label || p)
+                                                                : (permissionsMap[p] || p)}
+                                                        </p>
                                                     </div>
                                                 </div>
                                             );

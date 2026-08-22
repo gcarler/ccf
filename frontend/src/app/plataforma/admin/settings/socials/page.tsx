@@ -47,6 +47,7 @@ export default function SocialMediaSettings() {
     const { addToast } = useToast();
 
     const [socials, setSocials] = useState<SocialChannel[]>([]);
+    const [urls, setUrls] = useState<Record<string, string>>({});
     const [loading, setLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
     const [viewType, setViewType] = useState<ViewType>('grid');
@@ -56,7 +57,13 @@ export default function SocialMediaSettings() {
         setLoading(true);
         try {
             const data = await apiFetch<{ items: SocialChannel[]; total: number }>('/admin/socials', { token, cache: 'no-store', signal });
-            setSocials(data?.items ?? []);
+            const items = data?.items ?? [];
+            setSocials(items);
+            const map: Record<string, string> = {};
+            items.forEach((item) => {
+                map[item.platform.toLowerCase()] = item.url;
+            });
+            setUrls(map);
         } catch (err) {
             console.error(err);
             addToast("Error al sincronizar redes sociales", "error");
@@ -73,12 +80,33 @@ export default function SocialMediaSettings() {
     }, [isAuthenticated, fetchSocials]);
 
     const handleSave = async () => {
+        if (!token) return;
         setIsSaving(true);
         try {
-            // Mock mass save for now, or we could loop if API supports single only
-            addToast("Canales sociales actualizados", "success");
+            for (const platform of PLATFORMS) {
+                const currentUrl = urls[platform.id];
+                const existing = socials.find(s => s.platform.toLowerCase() === platform.id);
+                if (existing) {
+                    if (currentUrl !== undefined && currentUrl !== existing.url) {
+                        await apiFetch(`/admin/socials/${existing.id}`, {
+                            token,
+                            method: 'PATCH',
+                            body: { url: currentUrl, is_visible: true },
+                        });
+                    }
+                } else if (currentUrl && currentUrl.trim()) {
+                    await apiFetch('/admin/socials', {
+                        token,
+                        method: 'POST',
+                        body: { platform: platform.id, url: currentUrl, is_visible: true },
+                    });
+                }
+            }
+            await fetchSocials();
+            addToast("Canales sociales actualizados con éxito", "success");
         } catch (err) {
-            addToast("Error al guardar cambios", "error");
+            console.error(err);
+            addToast("Error al guardar cambios de redes sociales", "error");
         } finally {
             setIsSaving(false);
         }
@@ -282,7 +310,8 @@ export default function SocialMediaSettings() {
                                                     <div className="relative group/input">
                                                         <Link2 className="absolute left-5 top-1/2 -translate-y-1/2 text-[hsl(var(--text-secondary))] group-focus-within/input:text-[hsl(var(--primary))] transition-colors" size={18} />
                                                         <input
-                                                            defaultValue={channel?.url || ''}
+                                                            value={urls[platform.id] || ''}
+                                                            onChange={(e) => setUrls(prev => ({ ...prev, [platform.id]: e.target.value }))}
                                                             className="w-full pl-14 pr-6 py-1.5 bg-[hsl(var(--surface-1))] dark:bg-black/40 border border-transparent focus:border-[hsl(var(--info)/100%)] rounded-lg text-xs font-bold outline-none transition-all placeholder:text-[hsl(var(--text-secondary))]"
                                                             placeholder={`URL de tu ${platform.label}...`}
                                                         />

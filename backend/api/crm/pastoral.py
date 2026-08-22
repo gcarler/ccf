@@ -2373,6 +2373,10 @@ def get_crm_radar(
         "total_ministries": total_ministries,
         "active_cases": active_cases,
         "pending_tasks": pending_tasks,
+        "membresia_viva": total_personas,
+        "bautismos_este_anio": active_cases,
+        "estudiantes_activos": total_ministries,
+        "recaudacion_mes": pending_tasks,
     }
 
 

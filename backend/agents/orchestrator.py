@@ -83,58 +83,66 @@ class AgentOrchestrator:
 
             tools = tool_registry.get_openai_tools()
 
-        # Call LLM
-        response = self.client.chat.completions.create(
-            model=self.default_model,
-            messages=messages,
-            tools=tools if tools else None,
-            tool_choice="auto" if tools else None,
-            temperature=0.7,
-            max_tokens=2048,
-        )
-
-        # Handle tool calls if present
-        message = response.choices[0].message
+        # Multi-turn iterative tool-calling loop
+        max_iterations = 5
+        iteration = 0
+        total_tokens = 0
         tool_results = []
+        content = ""
 
-        if hasattr(message, "tool_calls") and message.tool_calls:
-            # Execute tool calls
-            messages.append(message)  # Add assistant's message with tool calls
-
-            for tc in message.tool_calls:
-                tool_name = tc.function.name
-                tool_args = json.loads(tc.function.arguments)
-
-                from backend.services.tool_registry import tool_registry
-
-                result = tool_registry.execute(tool_name, **tool_args)
-                tool_results.append(
-                    {
-                        "tool": tool_name,
-                        "args": tool_args,
-                        "result": result,
-                    }
+        while iteration < max_iterations:
+            iteration += 1
+            try:
+                response = self.client.chat.completions.create(
+                    model=self.default_model,
+                    messages=messages,
+                    tools=tools if tools else None,
+                    tool_choice="auto" if tools else None,
+                    temperature=0.7,
+                    max_tokens=2048,
                 )
+                if hasattr(response, "usage") and response.usage:
+                    total_tokens += getattr(response.usage, "total_tokens", 0)
+            except Exception as e:
+                logger.error(f"Error calling LLM provider: {e}")
+                content = f"Lo siento, ocurrió un problema al conectar con el servicio de IA ({str(e)}). Por favor intenta de nuevo."
+                break
 
-                # Add tool result to messages
-                messages.append(
-                    {
-                        "role": "tool",
-                        "tool_call_id": tc.id,
-                        "content": json.dumps(result, ensure_ascii=False),
-                    }
-                )
+            message = response.choices[0].message
+            if hasattr(message, "tool_calls") and message.tool_calls:
+                messages.append(message)
+                for tc in message.tool_calls:
+                    tool_name = tc.function.name
+                    try:
+                        tool_args = json.loads(tc.function.arguments) if isinstance(tc.function.arguments, str) else (tc.function.arguments or {})
+                    except Exception:
+                        tool_args = {}
 
-            # Get final response after tool execution
-            final_response = self.client.chat.completions.create(
-                model=self.default_model,
-                messages=messages,
-                temperature=0.7,
-                max_tokens=2048,
-            )
-            content = final_response.choices[0].message.content
-        else:
-            content = message.content
+                    from backend.services.tool_registry import tool_registry
+
+                    try:
+                        result = tool_registry.execute(tool_name, **tool_args)
+                    except Exception as err:
+                        result = {"error": str(err)}
+
+                    tool_results.append(
+                        {
+                            "tool": tool_name,
+                            "args": tool_args,
+                            "result": result,
+                        }
+                    )
+
+                    messages.append(
+                        {
+                            "role": "tool",
+                            "tool_call_id": tc.id,
+                            "content": json.dumps(result, ensure_ascii=False) if not isinstance(result, str) else result,
+                        }
+                    )
+            else:
+                content = message.content or ""
+                break
 
         # Save conversation to memory if conversation_id provided
         if conversation_id:

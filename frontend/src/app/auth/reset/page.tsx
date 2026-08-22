@@ -36,6 +36,10 @@ function ResetPasswordContent() {
             setError('Las contraseñas no coinciden');
             return;
         }
+        if (password.length < 8) {
+            setError('La contraseña debe tener al menos 8 caracteres');
+            return;
+        }
         setLoading(true);
         setError(null);
         setMessage(null);
@@ -70,7 +74,7 @@ function ResetPasswordContent() {
                             <input
                                 type="password"
                                 required
-                                minLength={6}
+                                minLength={8}
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
                                 className="w-full bg-[hsl(var(--bg-muted))] border border-white/10 rounded-lg py-1.5 pl-12 pr-4 text-sm text-white focus:outline-none focus:border-primary"
@@ -85,7 +89,7 @@ function ResetPasswordContent() {
                             <input
                                 type="password"
                                 required
-                                minLength={6}
+                                minLength={8}
                                 value={confirmPassword}
                                 onChange={(e) => setConfirmPassword(e.target.value)}
                                 className="w-full bg-[hsl(var(--bg-muted))] border border-white/10 rounded-lg py-1.5 pl-12 pr-4 text-sm text-white focus:outline-none focus:border-primary"

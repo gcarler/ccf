@@ -5,7 +5,7 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, Response
 from sqlalchemy.orm import Session, lazyload
 
 from backend import models, schemas
@@ -42,6 +42,7 @@ router = APIRouter(tags=["cms_v2_public_pages"])
 @cached_public(ttl=300)
 def public_pages_list(
     site_key: str,
+    response: Response = None,
     db: Session = Depends(get_db),
     skip: int = Query(0, ge=0),
     limit: int = Query(200, ge=1, le=500),
@@ -63,7 +64,7 @@ def public_pages_list(
     dependencies=[Depends(rate_limiter(limit=PUBLIC_CMS_RATE_LIMIT, window_seconds=60))],
 )
 @cached_public(ttl=300)
-def public_page(site_key: str, slug: str, db: Session = Depends(get_db)):
+def public_page(site_key: str, slug: str, response: Response = None, db: Session = Depends(get_db)):
     # Optimizado N+1: 1 query JOIN CmsPage+CmsSite (evita el site lookup
     # separado). ``lazyload('*')`` previene el cascade de JOINs de
     # ``CmsPage.site``/``published_version`` y de los joined de ``CmsSection``.

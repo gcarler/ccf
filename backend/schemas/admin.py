@@ -156,6 +156,8 @@ class AdminLocationCreate(BaseModel):
     name: str = Field(min_length=1, max_length=200)
     address: Optional[str] = None
     phone: Optional[str] = None
+    pastor_name: Optional[str] = None
+    location_type: Optional[str] = "Central"
 
 
 class AdminLocationUpdate(BaseModel):
@@ -164,6 +166,8 @@ class AdminLocationUpdate(BaseModel):
     name: Optional[str] = Field(default=None, min_length=1, max_length=200)
     address: Optional[str] = None
     phone: Optional[str] = None
+    pastor_name: Optional[str] = None
+    location_type: Optional[str] = None
     is_active: Optional[bool] = None
 
 

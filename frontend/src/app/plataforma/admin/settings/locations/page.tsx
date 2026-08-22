@@ -20,12 +20,13 @@ import clsx from 'clsx';
 import WorkspaceDrawer from '@/components/WorkspaceDrawer';
 
 interface Location {
-    id: number;
+    id: string | number;
     name: string;
-    address: string;
-    pastor: string;
+    address?: string;
+    phone?: string;
+    pastor?: string;
     active: boolean;
-    type: string;
+    type?: string;
 }
 
 export default function LocationManagement() {
@@ -36,7 +37,7 @@ export default function LocationManagement() {
     const [locations, setLocations] = useState<Location[]>([]);
     const [loading, setLoading] = useState(true);
     const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-    const [newLoc, setNewLoc] = useState({ nombre: '', address: '', pastor: '', type: 'Sede' });
+    const [newLoc, setNewLoc] = useState({ name: '', address: '', phone: '' });
 
     const fetchLocations = useCallback(async (signal?: AbortSignal) => {
         if (!token) return;
@@ -61,11 +62,20 @@ export default function LocationManagement() {
 
     const handleCreate = async (e: React.FormEvent) => {
         e.preventDefault();
+        if (!newLoc.name.trim()) {
+            addToast("El nombre es requerido", "error");
+            return;
+        }
         try {
-            await apiFetch('/admin/locations', { method: 'POST', token, body: newLoc });
+            const body = {
+                name: newLoc.name.trim(),
+                ...(newLoc.address ? { address: newLoc.address.trim() } : {}),
+                ...(newLoc.phone ? { phone: newLoc.phone.trim() } : {}),
+            };
+            await apiFetch('/admin/locations', { method: 'POST', token, body });
             addToast("Sede registrada", "success");
             setIsDrawerOpen(false);
-            setNewLoc({ nombre: '', address: '', pastor: '', type: 'Sede' });
+            setNewLoc({ name: '', address: '', phone: '' });
             fetchLocations();
         } catch {
             addToast("Error al registrar sede", "error");
@@ -175,25 +185,15 @@ export default function LocationManagement() {
                 <form id="location-create-form" onSubmit={handleCreate} className="space-y-3">
                     <div className="space-y-2">
                         <label className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Nombre de la Sede *</label>
-                        <input required value={newLoc.nombre} onChange={e => setNewLoc({...newLoc, nombre: e.target.value})} className="w-full px-3 py-1.5 bg-[hsl(var(--surface-1))] dark:bg-black/20 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg text-sm font-bold outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.2] dark:text-white transition-all" placeholder="Ej: Sede Norte" />
+                        <input required value={newLoc.name} onChange={e => setNewLoc({...newLoc, name: e.target.value})} className="w-full px-3 py-1.5 bg-[hsl(var(--surface-1))] dark:bg-black/20 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg text-sm font-bold outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.2] dark:text-white transition-all" placeholder="Ej: Sede Norte" />
                     </div>
                     <div className="space-y-2">
                         <label className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Dirección</label>
                         <input value={newLoc.address} onChange={e => setNewLoc({...newLoc, address: e.target.value})} className="w-full px-3 py-1.5 bg-[hsl(var(--surface-1))] dark:bg-black/20 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg text-sm font-bold outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.2] dark:text-white transition-all" placeholder="Calle #, Barrio..." />
                     </div>
-                    <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                            <label className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Pastor Encargado</label>
-                            <input value={newLoc.pastor} onChange={e => setNewLoc({...newLoc, pastor: e.target.value})} className="w-full px-3 py-1.5 bg-[hsl(var(--surface-1))] dark:bg-black/20 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg text-sm font-bold outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.2] dark:text-white transition-all" placeholder="Nombre" />
-                        </div>
-                        <div className="space-y-2">
-                            <label className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Tipo</label>
-                            <select value={newLoc.type} onChange={e => setNewLoc({...newLoc, type: e.target.value})} className="w-full px-3 py-1.5 bg-[hsl(var(--surface-1))] dark:bg-black/20 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg text-sm font-bold outline-none transition-all appearance-none dark:text-white">
-                                <option value="Central">Central</option>
-                                <option value="Sede">Sede</option>
-                                <option value="Anexo">Anexo</option>
-                            </select>
-                        </div>
+                    <div className="space-y-2">
+                        <label className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Teléfono</label>
+                        <input value={newLoc.phone} onChange={e => setNewLoc({...newLoc, phone: e.target.value})} className="w-full px-3 py-1.5 bg-[hsl(var(--surface-1))] dark:bg-black/20 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg text-sm font-bold outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.2] dark:text-white transition-all" placeholder="+57 300 0000000" />
                     </div>
                 </form>
             </WorkspaceDrawer>

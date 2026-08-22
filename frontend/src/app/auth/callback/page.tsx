@@ -44,7 +44,7 @@ function AuthCallbackContent() {
 
             setStatus('Autenticación exitosa. Redirigiendo...');
             await login(token, refresh ?? undefined);
-            router.push('/plataforma/messages');
+            router.push('/plataforma/academy');
         }
 
         handleAuth();

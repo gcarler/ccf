@@ -648,7 +648,7 @@ section(f"RESUMEN: {PASS} passed, {FAIL} failed")
 info(f"Proyecto ID: {project.id}")
 info(f"Usuarios: {u1.username} (id={u1.id}), {u2.username} (id={u2.id}), {u3.username} (id={u3.id})")
 info("Contraseña de prueba: prueba123")
-info(f"URL del proyecto: https://elfarocc.tech/plataforma/projects/{project.id}")
+info(f"URL del proyecto: https://ministerioselfaro.org/plataforma/projects/{project.id}")
 
 if FAIL > 0:
     print(f"\n  {RED}⚠ {FAIL} test(s) fallaron. Revisar arriba.{NC}\n")

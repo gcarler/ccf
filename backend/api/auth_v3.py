@@ -91,8 +91,6 @@ def _create_refresh_token(db: Session, user_id: uuid.UUID) -> str:
 
 
 def _log_security(db, user_id, evento, ip=None, ua=None, detalles=None):
-    if user_id is None:
-        return
     try:
         ls = LogSeguridad(
             user_id=user_id,
@@ -750,16 +748,42 @@ def update_profile(
         user.is_email_verified = False
 
     if payload.new_password:
+        if len(payload.new_password) < 8:
+            raise HTTPException(status_code=400, detail="La nueva contraseña debe tener al menos 8 caracteres")
         if not payload.current_password:
             raise HTTPException(status_code=400, detail="Se requiere la contraseña actual")
         if not verify_password(payload.current_password, user.password_hash):
             raise HTTPException(status_code=403, detail="Contraseña actual incorrecta")
+        
+        # Check against recent password history
+        recent_history = (
+            db.query(HistorialContrasena)
+            .filter(HistorialContrasena.user_id == user.id)
+            .order_by(HistorialContrasena.created_at.desc())
+            .limit(5)
+            .all()
+        )
+        for past in recent_history:
+            if verify_password(payload.new_password, past.password_hash):
+                raise HTTPException(status_code=400, detail="No puedes reutilizar una contraseña reciente")
+
         user.password_hash = get_password_hash(payload.new_password)
         history = HistorialContrasena(user_id=user.id, password_hash=user.password_hash)
         db.add(history)
 
     db.commit()
     db.refresh(user)
+
+    ip = request.client.host if request.client else None
+    ua = request.headers.get("user-agent")
+    _log_security(
+        db,
+        user.id,
+        "CONTRASENA_CAMBIADA" if payload.new_password else "PERFIL_ACTUALIZADO",
+        ip=ip,
+        ua=ua,
+        detalles={"username_changed": bool(payload.username), "email_changed": bool(payload.email), "password_changed": bool(payload.new_password)},
+    )
 
     return {
         "auth_user_id": str(user.id),
@@ -925,6 +949,7 @@ def _require_auth(request: Request, db: Session = Depends(get_db)):
 @router.post("/logout", response_model=dict)
 def logout(
     response: Response,
+    request: Request,
     user_id: str = Depends(_require_auth),
     db: Session = Depends(get_db),
 ):
@@ -941,6 +966,11 @@ def logout(
     db.commit()
     response.delete_cookie(settings.access_token_cookie_name, path="/")
     response.delete_cookie(settings.refresh_token_cookie_name, path="/")
+
+    ip = request.client.host if request.client else None
+    ua = request.headers.get("user-agent")
+    _log_security(db, auth_user_id, "LOGOUT_EXITOSO", ip=ip, ua=ua)
+
     return {"status": "success"}
 
 
@@ -982,6 +1012,7 @@ def list_sessions(
 @router.post("/sessions/{session_id}/revoke", response_model=dict)
 def revoke_session(
     session_id: str,
+    request: Request,
     db: Session = Depends(get_db),
     current_user: Usuario = Depends(require_auth_dep),
 ):
@@ -1006,11 +1037,17 @@ def revoke_session(
 
     row.revoked = True
     db.commit()
+
+    ip = request.client.host if request.client else None
+    ua = request.headers.get("user-agent")
+    _log_security(db, auth_user_id, "SESION_REVOCADA", ip=ip, ua=ua, detalles={"session_id": str(target_session_id)})
+
     return {"status": "success", "session_id": str(row.id)}
 
 
 @router.post("/sessions/revoke-all", response_model=dict)
 def revoke_all_sessions(
+    request: Request,
     db: Session = Depends(get_db),
     current_user: Usuario = Depends(require_auth_dep),
 ):
@@ -1026,6 +1063,11 @@ def revoke_all_sessions(
         .update({TokenSesion.revoked: True}, synchronize_session=False)
     )
     db.commit()
+
+    ip = request.client.host if request.client else None
+    ua = request.headers.get("user-agent")
+    _log_security(db, auth_user_id, "TODAS_SESIONES_REVOCADAS", ip=ip, ua=ua, detalles={"count": int(revoked_count)})
+
     return {"status": "success", "revoked_count": int(revoked_count)}
 
 
@@ -1076,6 +1118,7 @@ def verify_email(
 def forgot_password(
     payload: ForgotPasswordRequest | None = None,
     email: Optional[str] = None,
+    request: Request = None,
     db: Session = Depends(get_db),
 ):
     """Solicita restablecimiento de contraseña. Envía email con token si el correo existe."""
@@ -1103,6 +1146,10 @@ def forgot_password(
     db.commit()
     db.refresh(token_row)
 
+    ip = request.client.host if request and request.client else None
+    ua = request.headers.get("user-agent") if request else None
+    _log_security(db, user.id, "PASSWORD_RESET_SOLICITADO", ip=ip, ua=ua)
+
     subject, html = render_reset_password(token_row.token)
     send_email(to=user.email, subject=subject, html=html)
 
@@ -1122,6 +1169,7 @@ def reset_password(
     payload: ResetPasswordRequest | None = None,
     token: Optional[str] = None,
     new_password: Optional[str] = None,
+    request: Request = None,
     db: Session = Depends(get_db),
 ):
     """Restablece la contraseña usando un token enviado por email."""
@@ -1154,8 +1202,26 @@ def reset_password(
     if not user:
         raise HTTPException(status_code=404, detail="Usuario no encontrado")
 
+    # Check against recent password history
+    recent_history = (
+        db.query(HistorialContrasena)
+        .filter(HistorialContrasena.user_id == user.id)
+        .order_by(HistorialContrasena.created_at.desc())
+        .limit(5)
+        .all()
+    )
+    for past in recent_history:
+        if verify_password(provided_password, past.password_hash):
+            raise HTTPException(status_code=400, detail="No puedes reutilizar una contraseña reciente")
+
     user.password_hash = get_password_hash(provided_password)
+    history = HistorialContrasena(user_id=user.id, password_hash=user.password_hash)
+    db.add(history)
     db.commit()
+
+    ip = request.client.host if request and request.client else None
+    ua = request.headers.get("user-agent") if request else None
+    _log_security(db, user.id, "PASSWORD_RESET_EXITOSO", ip=ip, ua=ua)
 
     return {"status": "success", "message": "Contraseña restablecida exitosamente"}
 

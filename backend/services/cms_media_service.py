@@ -46,19 +46,30 @@ def _uploads_root() -> str:
 
 
 def _guard_path(url: str) -> str:
-    """Resolve a media URL to an absolute path inside the upload root.
+    """Resolve a stored media URL to an absolute path inside uploads.
 
-    Mirrors the traversal guard used by the old v1 endpoints so that
-    a malicious ``url`` like ``../../etc/passwd`` cannot escape the
-    upload directory.
+    ``StorageService`` exposes local files through ``/api/static/`` while
+    older rows may use ``/static/`` or ``/uploads/``. Normalize all of those
+    public URL forms before applying the traversal/symlink boundary check.
 
     Raises:
-        ValueError: if the resolved path is outside the upload root.
+        ValueError: if the URL is not a supported local path or the resolved
+            path is outside the upload root.
     """
     uploads_root = _uploads_root()
-    if url.startswith("/") and not url.startswith("/uploads/"):
+    value = (url or "").strip()
+    prefixes = (
+        "/api/static/",
+        "api/static/",
+        "/static/",
+        "static/",
+        "/uploads/",
+        "uploads/",
+    )
+    rel_path = next((value[len(prefix) :] for prefix in prefixes if value.startswith(prefix)), None)
+    if not rel_path:
         raise ValueError("Invalid file path")
-    rel_path = url.lstrip("/").replace("uploads/", "", 1)
+
     full_path = os.path.normpath(os.path.join(uploads_root, rel_path))
     try:
         Path(full_path).resolve(strict=False).relative_to(Path(uploads_root).resolve(strict=False))

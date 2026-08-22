@@ -7,11 +7,13 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
 from sqlalchemy.orm import Session
 
 from backend import models
+from backend.core.audit import record_admin_action
 from backend.core.database import get_db
 from backend.core.permissions import require_module_access
 from backend.core.tenant import require_user_sede_id
 from backend.crud import agenda as crud
 from backend.crud.projects import get_user_persona_id
+from backend.models_shared import _utcnow
 from backend.schemas.agenda import (
     AgendaEvent,
     AgendaEventCommentCreate,
@@ -132,8 +134,8 @@ def list_events(
     db: Session = Depends(get_db),
     current_user: models.User = AgendaReader,
 ):
-    rows = crud.list_events(db, _sede_id(db, current_user))
-    return [_serialize_event(row) for row in rows[skip : skip + limit]]
+    rows = crud.list_events(db, _sede_id(db, current_user), skip=skip, limit=limit)
+    return [_serialize_event(row) for row in rows]
 
 
 @router.get("/events/by-date-range", response_model=list[AgendaEvent])
@@ -156,6 +158,7 @@ def create_event(
     current_user: models.User = AgendaEditor,
 ):
     row = crud.create_event(db, _event_payload(payload, _sede_id(db, current_user), current_user.id))
+    record_admin_action(db, current_user, "agenda.event.create", "agenda_event", str(row.id))
     return _serialize_event(row)
 
 
@@ -183,6 +186,7 @@ def update_event(
     if not row:
         raise HTTPException(status_code=404, detail="Evento no encontrado")
     row = crud.update_event(db, row, _event_payload(payload, sede_id, row.organizador_persona_id))
+    record_admin_action(db, current_user, "agenda.event.update", "agenda_event", str(row.id))
     return _serialize_event(row)
 
 
@@ -196,6 +200,7 @@ def archive_event(
     if not row:
         raise HTTPException(status_code=404, detail="Evento no encontrado")
     crud.archive_event(db, row)
+    record_admin_action(db, current_user, "agenda.event.delete", "agenda_event", str(row.id))
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
@@ -525,6 +530,14 @@ def update_event_comment(
     )
     if not comment:
         raise HTTPException(status_code=404, detail="Comentario no encontrado")
+    author_id = get_user_persona_id(db, current_user.id)
+    user_role = (getattr(current_user, "role", "") or "").lower()
+    if hasattr(current_user, "rol_plataforma") and current_user.rol_plataforma:
+        user_role = (getattr(current_user.rol_plataforma, "nombre", "") or "").lower()
+    is_admin_or_pastor = user_role in ("admin", "superadmin", "director", "pastor", "pastor_principal")
+    if comment.author_id != author_id and not is_admin_or_pastor:
+        raise HTTPException(status_code=403, detail="No autorizado para modificar este comentario")
+
     content = (payload.content or "").strip()
     if not content:
         raise HTTPException(status_code=400, detail="content is required")
@@ -577,6 +590,14 @@ def delete_event_comment(
     )
     if not comment:
         raise HTTPException(status_code=404, detail="Comentario no encontrado")
-    comment.deleted_at = datetime.now()
+    author_id = get_user_persona_id(db, current_user.id)
+    user_role = (getattr(current_user, "role", "") or "").lower()
+    if hasattr(current_user, "rol_plataforma") and current_user.rol_plataforma:
+        user_role = (getattr(current_user.rol_plataforma, "nombre", "") or "").lower()
+    is_admin_or_pastor = user_role in ("admin", "superadmin", "director", "pastor", "pastor_principal")
+    if comment.author_id != author_id and not is_admin_or_pastor:
+        raise HTTPException(status_code=403, detail="No autorizado para eliminar este comentario")
+
+    comment.deleted_at = _utcnow()
     db.commit()
     return Response(status_code=status.HTTP_204_NO_CONTENT)

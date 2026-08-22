@@ -505,7 +505,7 @@ def main() -> int:
             print()
             print("Next steps:")
             print("  1. Verify curl on the URLs above returns 200 + correct photo bytes.")
-            print("  2. Reload https://elfarocc.tech/pastores — pastors should match.")
+            print("  2. Reload https://ministerioselfaro.org/pastores — pastors should match.")
             print("  3. Run scripts/audit_public_media_cms.py to confirm cleanup targets.")
             return 0
 

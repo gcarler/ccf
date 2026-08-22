@@ -188,4 +188,4 @@ PR #8 merged a `main` (`ad1c945c` via develop), rama `feature/messaging-quality`
 | Tests event-registration | 48/48 ✅ |
 | Tests wiki | 48/48 ✅ |
 | TypeScript | 0 errores ✅ |
-| Producción | https://elfarocc.tech — online ✅ |
+| Producción | https://ministerioselfaro.org — online ✅ |
