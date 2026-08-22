@@ -623,6 +623,9 @@
     font-size: 0.85rem;
     letter-spacing: 0.08em;
     text-transform: uppercase;
+    background: var(--site-hero-accent-1) !important;
+    box-shadow: var(--site-hero-cta-shadow) !important;
+    color: var(--site-on-hero) !important;
     transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1),
                 box-shadow 0.35s cubic-bezier(0.16, 1, 0.3, 1);
 }
