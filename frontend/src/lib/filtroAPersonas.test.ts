@@ -90,6 +90,8 @@ describe('filtroAPersona', () => {
   it('matches by phone with partial input', () => {
     expect(filtroAPersona(persona, '300 123')).toBe(true);
     expect(filtroAPersona(persona, '1234567')).toBe(true);
+    expect(filtroAPersona(persona, '300123')).toBe(true);
+    expect(filtroAPersona(persona, '+57300123')).toBe(true);
   });
 
   it('matches by document number', () => {

@@ -24,7 +24,11 @@ export function normalizarBusquedaPersona(value: string | null | undefined): str
     .replace(/\s+/g, ' ')
     .trim();
   if (CACHE_NORMALIZACION.size >= CACHE_MAX_ENTRIES) {
-    CACHE_NORMALIZACION.clear();
+    // Evita vaciar todo el caché de golpe cuando una lista grande supera el
+    // límite. Map conserva el orden de inserción: retiramos la entrada más
+    // antigua y mantenemos calientes las demás.
+    const oldestKey = CACHE_NORMALIZACION.keys().next().value;
+    if (oldestKey !== undefined) CACHE_NORMALIZACION.delete(oldestKey);
   }
   CACHE_NORMALIZACION.set(key, normalized);
   return normalized;
@@ -142,7 +146,16 @@ export function filtroAPersona(persona: PersonaBusqueda | null | undefined, quer
     persona.document_number,
   ];
   for (const campo of identificadores) {
-    if (campo && normalizarBusquedaPersona(campo).includes(normalizedQuery)) return true;
+    if (!campo) continue;
+    const normalizedCampo = normalizarBusquedaPersona(campo);
+    if (normalizedCampo.includes(normalizedQuery)) return true;
+
+    // Los teléfonos suelen escribirse con espacios, guiones o prefijo
+    // internacional. Una comparación compacta permite buscar "300123" en
+    // un valor almacenado como "+57 300-123-4567".
+    const compactCampo = normalizedCampo.replace(/[^\d+]/g, '');
+    const compactQuery = normalizedQuery.replace(/[^\d+]/g, '');
+    if (compactQuery && compactCampo.includes(compactQuery)) return true;
   }
 
   for (const rol of [persona.church_role, persona.church_role_effective]) {
