@@ -224,7 +224,7 @@ export default function CursoDetailPage() {
                         initial={{ opacity: 0, scale: 0.9 }}
                         animate={{ opacity: 1, scale: 1 }}
                         transition={{ delay: 0.2 }}
-                        className="relative aspect-video lg:aspect-square rounded-lg overflow-hidden shadow-2xl border"
+                        className="relative aspect-video lg:aspect-square rounded-2xl overflow-hidden shadow-2xl border border-[hsl(var(--border))] dark:border-white/10"
                         style={{ borderColor: "var(--site-outline-variant)" }}
                     >
                         {course.imageUrl ? (
@@ -236,7 +236,20 @@ export default function CursoDetailPage() {
                                 priority
                             />
                         ) : (
-                            <div className="absolute inset-0 bg-gradient-to-br from-[hsl(var(--primary))/0.18] to-[hsl(var(--surface-2))/0.35]" />
+                            <div className="absolute inset-0 bg-gradient-to-br from-[hsl(var(--primary))]/15 via-[hsl(var(--surface-2))] to-[hsl(var(--surface-3))] flex flex-col items-center justify-center p-8 text-center">
+                                <div className="size-20 rounded-2xl bg-[hsl(var(--primary))]/10 border border-[hsl(var(--primary))]/20 text-[hsl(var(--primary))] flex items-center justify-center mb-4 shadow-lg">
+                                    <BookOpen size={42} strokeWidth={1.8} />
+                                </div>
+                                <span className="text-2xs font-black uppercase tracking-widest text-[hsl(var(--primary))] mb-1.5 px-3 py-1 rounded-full bg-[hsl(var(--primary))]/10">
+                                    {course.modality || "Online"}
+                                </span>
+                                <h3 className="text-lg font-bold text-[hsl(var(--text-primary))] dark:text-white line-clamp-2 max-w-xs">
+                                    {course.title}
+                                </h3>
+                                <p className="text-xs text-[hsl(var(--text-secondary))] mt-2 font-medium">
+                                    {course.lessons ? `${course.lessons} Semanas de Formación` : 'Programa de Formación CCF'}
+                                </p>
+                            </div>
                         )}
                     </motion.div>
                 </div>
