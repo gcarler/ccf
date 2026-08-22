@@ -476,6 +476,13 @@ BLOCKS = {
                 "que vivan en obediencia a Cristo, sean bautizados en Su nombre y reflejen Su gloria, para que el mundo "
                 "sea alcanzado, restaurado y reconciliado con Dios."
             ),
+            "founder_label": "Nuestros Pastores Principales",
+            "founder1_name": "Luis Ricardo Meza",
+            "founder1_role": "Pastor Principal",
+            "founder1_image": "/api/static/cms/pastores/593ca8b22fd549228f27a5ed6b532674.webp",
+            "founder2_name": "Histar Ariza",
+            "founder2_role": "Pastora Principal",
+            "founder2_image": "/api/static/cms/pastores/b8b07cb268184f9caf9aec8d93573ead.webp",
             "valores_title": "Valores que nos Guían",
             "valores": [
                 {

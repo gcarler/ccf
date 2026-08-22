@@ -385,6 +385,17 @@ def _build_pages(media_find: Any) -> dict[str, list[dict[str, Any]]]:
         "founder_cta_visit", "quote_author",
     ):
         about_content.pop(key, None)
+    about_content.update(
+        {
+            "founder_label": "Nuestros Pastores Principales",
+            "founder1_name": "Luis Ricardo Meza",
+            "founder1_role": "Pastor Principal",
+            "founder1_image": "/api/static/cms/pastores/593ca8b22fd549228f27a5ed6b532674.webp",
+            "founder2_name": "Histar Ariza",
+            "founder2_role": "Pastora Principal",
+            "founder2_image": "/api/static/cms/pastores/b8b07cb268184f9caf9aec8d93573ead.webp",
+        }
+    )
     about_content.setdefault("founder_cta_team", "Conoce al equipo")
     about_content.setdefault("founder_cta_visit", "Visítanos")
     about_content.setdefault("values_eyebrow", "Lo que nos define")
