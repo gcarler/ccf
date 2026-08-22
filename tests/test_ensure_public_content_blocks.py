@@ -4,7 +4,7 @@ Guards ``scripts/ensure_public_content_blocks.BLOCKS`` — the single source of
 truth for the CMS-managed ``PageContent`` blocks used by public pages (and the
 object lazily re-exported by ``scripts/seed_public_content``):
 
-* The canonical catalog has EXACTLY 25 keys — a frozen contract. Adding a new
+* The canonical catalog has EXACTLY 26 keys — a frozen contract. Adding a new
   block is a deliberate act: the key must be added to ``CANONICAL_KEYS`` here
   too.
 * Every block is a ``{title, content}`` payload: a non-empty string title and a
@@ -28,7 +28,7 @@ import json
 from scripts.ensure_public_content_blocks import BLOCKS, MERGE_BLOCKS
 
 # ── Frozen canonical contract ────────────────────────────────────────────
-# Exactly 25 blocks. If a new block is added, update this set deliberately.
+# Exactly 26 blocks. If a new block is added, update this set deliberately.
 CANONICAL_KEYS = frozenset(
     {
         "ccf_events_feed",
@@ -41,6 +41,7 @@ CANONICAL_KEYS = frozenset(
         "ccf_courses_feed",
         "ccf_discover_feed",
         "ccf_home_feed",
+        "ccf_home_discover_cta",
         "ccf_footer",
         "ccf_mobile_nav",
         "ccf_welcome",
@@ -65,8 +66,8 @@ CONTENT_IS_LIST = frozenset({"ccf_locations_feed"})
 
 class TestCanonicalCatalogKeys:
     def test_exactly_25_keys(self):
-        """The catalog is frozen at 25 keys — adding one is a deliberate act."""
-        assert len(BLOCKS) == 25
+        """The catalog is frozen at 26 keys — adding one is a deliberate act."""
+        assert len(BLOCKS) == 26
         assert set(BLOCKS) == CANONICAL_KEYS
 
     def test_all_keys_use_ccf_prefix(self):

@@ -135,9 +135,14 @@ def _alt_text(path: Path) -> str:
     return path.stem.replace("_", " ").replace("-", " ").strip().title() or path.name
 
 
-def _register_image(db, user, path: Path, existing: dict[str, models.CmsMediaItem]) -> tuple[str, bool]:
+def _register_image(db, user, path: Path, existing: dict[str, models.CmsMediaItem]) -> tuple[str | None, bool]:
     relative = path.relative_to(MIGRATION_SOURCE_DIR).as_posix()
     current = existing.get(relative)
+    if current is not None and current.status == "archived":
+        # An archived media item is an explicit editorial decision. Do not
+        # recreate an active row merely because the original source file is
+        # still present in the migration archive.
+        return None, False
     old_url = source_url(relative)
     content = path.read_bytes()
     digest = hashlib.sha256(content).hexdigest()[:16]
@@ -318,7 +323,8 @@ def run(*, apply: bool, remove_source: bool) -> int:
         for path in paths:
             relative = path.relative_to(MIGRATION_SOURCE_DIR).as_posix()
             url, was_created = _register_image(db, user, path, existing)
-            replacements[source_url(relative)] = url
+            if url is not None:
+                replacements[source_url(relative)] = url
             created += int(was_created)
 
         affected_page_ids: set[Any] = set()
