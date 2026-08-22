@@ -119,13 +119,16 @@ export default function WorkspaceInbox({ isOpen, onClose }: { isOpen: boolean, o
                                 <HeaderAction icon={Filter} tooltip="Filtrar" />
                                 <HeaderAction icon={Settings} tooltip="Ajustes" />
                                 <div className="w-[1px] h-4 bg-[hsl(var(--surface-3))] dark:bg-white/10 mx-2" />
-                                <HeaderAction
-                                    icon={isExpanded ? Minimize2 : Maximize2}
-                                    tooltip={isExpanded ? "Contraer panel" : "Expandir panel"}
-                                    ariaLabel={isExpanded ? "Contraer panel de notificaciones" : "Expandir panel de notificaciones"}
+                                <button
                                     onClick={() => setIsExpanded((expanded) => !expanded)}
-                                    pressed={isExpanded}
-                                />
+                                    className="inline-flex items-center gap-1.5 rounded-md border border-[hsl(var(--border))] dark:border-white/10 px-2 py-1 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-3))] dark:hover:bg-white/10 hover:text-[hsl(var(--text-primary))] dark:hover:text-white transition-all"
+                                    aria-label={isExpanded ? "Contraer panel de notificaciones" : "Expandir panel de notificaciones"}
+                                    aria-pressed={isExpanded}
+                                    title={isExpanded ? "Contraer panel" : "Expandir panel"}
+                                >
+                                    {isExpanded ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
+                                    <span>{isExpanded ? "Contraer" : "Expandir"}</span>
+                                </button>
                                 <button
                                     onClick={onClose}
                                     className="p-2 hover:bg-[hsl(var(--surface-3))] dark:hover:bg-white/10 rounded-md transition-all text-[hsl(var(--text-secondary))]"
