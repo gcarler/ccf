@@ -5,11 +5,13 @@ import Image from "next/image";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { ArrowRight, CheckCircle2, Clock, User } from "lucide-react";
+import { apiFetch } from "@/lib/http";
 import { useCmsV2Page } from "@/hooks/useCmsV2Page";
 import PublicHeroWithSlides, { type PublicSlide } from "@/components/public/PublicHeroWithSlides";
 import type { CourseSummary } from "@/types/academy";
 
 type PublicCourse = CourseSummary & {
+  slug?: string;
   cta?: string;
   lessons?: number;
   instructor?: string;
@@ -50,16 +52,19 @@ export default function CursosPage() {
     : "";
 
   useEffect(() => {
-    fetch('/api/public/courses')
-      .then(res => res.json())
+    const ctrl = new AbortController();
+    apiFetch<PublicCourse[]>('/public/courses', { signal: ctrl.signal, silent: true })
       .then(data => {
-        setCourses(data);
+        setCourses(Array.isArray(data) ? data : []);
         setLoading(false);
       })
       .catch(err => {
+        if (err instanceof DOMException && err.name === 'AbortError') return;
         console.error('Error fetching courses:', err);
+        setCourses([]);
         setLoading(false);
       });
+    return () => ctrl.abort();
   }, []);
 
   const featured = courses[0];
@@ -113,31 +118,51 @@ export default function CursosPage() {
         ) : featured ? (
           <div className="grid grid-cols-1 md:grid-cols-12 gap-5 md:gap-6">
             <motion.article className="md:col-span-8 group relative rounded-lg overflow-hidden min-h-[280px] md:min-h-[450px] cursor-pointer" style={{ background: "var(--site-surface-container-low)" }} whileHover={{ y: -2 }}>
-              <Link href={`/plataforma/academy/course/${featured.id}`} className="absolute inset-0 z-20" />
+              <Link
+                href={`/cursos/${featured.slug || featured.id}`}
+                onClick={() => {
+                  try {
+                    const payload = JSON.stringify({ id: featured.id, slug: featured.slug, title: featured.title });
+                    localStorage.setItem('ccf_pending_course', payload);
+                    document.cookie = `ccf_pending_course=${encodeURIComponent(payload)}; path=/; max-age=86400; SameSite=Lax`;
+                  } catch {}
+                }}
+                className="absolute inset-0 z-20"
+              />
               <div className="absolute inset-0">
                 <Image src={featured.imageUrl || heroImageUrl || "/og-default.png"} alt={featured.title} fill className="object-cover transition-transform duration-700 group-hover:scale-105" style={{ opacity: 0.5 }} />
               </div>
               <div className="absolute inset-0" style={{ background: "linear-gradient(to top, var(--site-surface-container-lowest) 0%, transparent 60%)" }} />
               <div className="absolute bottom-0 p-4 md:p-4 w-full relative z-10 flex flex-col justify-end h-full">
                 <span className="inline-block px-4 py-1.5 rounded-full text-xs font-semibold uppercase tracking-wide mb-3" style={{ background: "var(--site-card-highlight)", color: "var(--site-primary)" }}>
-                  {featured.modality || "Publicado por Academia"}
+                  {featured.modality || "Acceso Gratuito"}
                 </span>
                 <h3 className="text-2xl md:text-3xl font-black mb-4 text-[hsl(var(--text-primary))] dark:text-white">{featured.title}</h3>
                 <p className="text-base leading-relaxed max-w-2xl mb-6 text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">{featured.description || featured.title}</p>
-                <span className="inline-flex items-center gap-2 text-sm font-bold uppercase tracking-wide text-[hsl(var(--primary))]">{featured.cta || "Ver curso"} <ArrowRight size={16} /></span>
+                <span className="inline-flex items-center gap-2 text-sm font-bold uppercase tracking-wide text-[hsl(var(--primary))]">{featured.cta || "Inscribirme Gratis"} <ArrowRight size={16} /></span>
               </div>
             </motion.article>
 
             <div className="md:col-span-4 grid gap-4">
               {rest.slice(0, 3).map((course) => (
                 <motion.article key={course.id} className="group rounded-lg overflow-hidden border bg-[hsl(var(--surface-1))] border-[hsl(var(--border))] dark:border-white/10" whileHover={{ y: -2 }}>
-                  <Link href={`/plataforma/academy/course/${course.id}`} className="block">
+                  <Link
+                    href={`/cursos/${course.slug || course.id}`}
+                    onClick={() => {
+                      try {
+                        const payload = JSON.stringify({ id: course.id, slug: course.slug, title: course.title });
+                        localStorage.setItem('ccf_pending_course', payload);
+                        document.cookie = `ccf_pending_course=${encodeURIComponent(payload)}; path=/; max-age=86400; SameSite=Lax`;
+                      } catch {}
+                    }}
+                    className="block"
+                  >
                     <div className="relative h-40 bg-[hsl(var(--surface-2))]">
                       <Image src={course.imageUrl || heroImageUrl || "/og-default.png"} alt={course.title} fill className="object-cover" />
                     </div>
                     <div className="p-4">
                       <span className="inline-flex items-center px-2 py-0.5 rounded-full text-2xs font-semibold uppercase tracking-wide mb-3" style={{ background: "var(--site-primary-container)", color: "var(--site-primary)" }}>
-                        {course.modality || "Academia"}
+                        {course.modality || "Gratuito"}
                       </span>
                       <h3 className="font-bold text-[hsl(var(--text-primary))] dark:text-white line-clamp-2">{course.title}</h3>
                       <p className="mt-2 text-sm text-[hsl(var(--text-secondary))] line-clamp-2">{course.description || course.title}</p>
@@ -158,10 +183,21 @@ export default function CursosPage() {
       <section className="ccf-section ccf-container">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {rest.slice(3).map((course) => (
-            <Link key={course.id} href={`/plataforma/academy/course/${course.id}`} className="rounded-lg border p-5 bg-[hsl(var(--surface-1))] border-[hsl(var(--border))] dark:border-white/10 hover:shadow-lg transition-shadow">
+            <Link
+              key={course.id}
+              href={`/cursos/${course.slug || course.id}`}
+              onClick={() => {
+                try {
+                  const payload = JSON.stringify({ id: course.id, slug: course.slug, title: course.title });
+                  localStorage.setItem('ccf_pending_course', payload);
+                  document.cookie = `ccf_pending_course=${encodeURIComponent(payload)}; path=/; max-age=86400; SameSite=Lax`;
+                } catch {}
+              }}
+              className="rounded-lg border p-5 bg-[hsl(var(--surface-1))] border-[hsl(var(--border))] dark:border-white/10 hover:shadow-lg transition-shadow"
+            >
               <div className="flex items-center justify-between gap-3 mb-3">
                 <span className="inline-flex items-center px-2 py-0.5 rounded-full text-2xs font-semibold uppercase tracking-wide" style={{ background: "var(--site-surface-container)", color: "var(--site-primary)" }}>
-                  {course.modality || "Academia"}
+                  {course.modality || "Gratuito"}
                 </span>
                 <CheckCircle2 size={16} className="text-[hsl(var(--primary))]" />
               </div>
