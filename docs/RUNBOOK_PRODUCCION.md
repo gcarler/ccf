@@ -120,6 +120,37 @@ pm2 restart ccf-backend-staging --update-env
 
 > **Nota:** En esta instancia el frontend se sirve con `pm2`. Si hay cambios frontend, se requiere `cd frontend && npm run build` antes de `pm2 restart ccf-frontend-staging --update-env`. No mezclar `pm2` con `./startccf` o con `npm run start` manual.
 
+### Exclusividad del deploy y sesiones de agentes
+
+El directorio `/root/ccf/frontend` es el `cwd` que PM2 utiliza para servir
+producción. Por tanto, no se permite que dos sesiones construyan o desplieguen
+el frontend al mismo tiempo, ni que una sesión antigua del agente conserve un
+comando `npm run build`, `next build` o `pm2 restart` pendiente en tmux.
+
+Antes de iniciar un deploy, el operador debe verificar:
+
+```bash
+cd /root/ccf
+ps -eo pid,ppid,lstart,args | grep -E 'npm run build|build-safe|next build|run-managed-playwright' | grep -v grep
+cat frontend/.next-command.lock/owner.json 2>/dev/null || true
+```
+
+Si existe un proceso vivo, el deploy debe esperar o detener de forma controlada
+ese proceso y confirmar que no vuelva a ser relanzado. No se debe borrar
+`.next-command.lock` a ciegas: el archivo contiene el PID y el comando dueño.
+
+Los deploys autorizados son únicamente:
+
+1. `scripts/deploy_frontend.sh`, que realiza build seguro, swap, reinicio y
+   smoke check; o
+2. el procedimiento de worktree alternativo de esta sección, cuando el worktree
+   principal tenga trabajo local.
+
+Después del deploy se debe comprobar que el `BUILD_ID`, los chunks referidos
+por la página pública y el proceso `ccf-frontend-staging` pertenecen al mismo
+build. Si una sesión de agente vuelve a iniciar un build después de esa
+comprobación, el deploy queda invalidado y debe repetirse tras cerrar la sesión.
+
 ### Deploy desde worktree alternativo (cuando `/root/ccf` no está en `main`)
 
 > **⚠ Caso especial registrado el 2026-08-05 (ses_030a420dfffe).**
