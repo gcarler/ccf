@@ -265,7 +265,9 @@ La taxonomía central vive en `backend/core/permissions.py`:
 - `support:read|edit|manage`;
 - `analytics:read|manage`;
 - `dashboard:read|manage`;
-- `wiki:read|edit`.
+- `wiki:read|edit`;
+- `ai:use|manage`;
+- `mcp:execute`.
 
 La jerarquía es acumulativa: `manage` incluye `edit` y `read`; `edit` incluye `read`. `study` es un nivel específico de Academia.
 
