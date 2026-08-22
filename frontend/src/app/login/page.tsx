@@ -24,6 +24,7 @@ export default function LoginPage() {
     });
     const { login, isAuthenticated, user } = useAuth();
     const { logoUrl, logoLargeUrl, logoName } = useSiteBranding({ logoName: SITE_NAME });
+    const loginLogoUrl = logoLargeUrl || "/brand/faro-logo-white.svg";
     const router = useRouter();
 
     useEffect(() => {
@@ -144,10 +145,10 @@ export default function LoginPage() {
                     transition={{ delay: 0.6, duration: 0.8 }}
                     className="relative z-10"
                 >
-                    {(logoLargeUrl || logoUrl) ? (
+                    {loginLogoUrl ? (
                         <div className="max-w-[420px]">
                             <OptimizedImage
-                                src={logoLargeUrl || logoUrl}
+                                src={loginLogoUrl}
                                 alt={logoName || SITE_NAME}
                                 width={420}
                                 height={180}
