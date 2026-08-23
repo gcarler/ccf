@@ -137,7 +137,7 @@ export default function PastoresIndexPage() {
 
                             {/* Content */}
                             <div className="p-4 flex-1 flex flex-col bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))]">
-                                <p className="text-sm text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] mb-3 flex-1 leading-relaxed line-clamp-3">
+                                <p className="text-sm text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-primary))] mb-3 flex-1 leading-relaxed line-clamp-3">
                                     {plainText(pastor.bio_short || (pastor as CmsPastor).story)}
                                 </p>
 
