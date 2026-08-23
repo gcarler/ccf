@@ -92,20 +92,21 @@ desarrollo, staging o producción por defecto.
 
 ### Fase 1 — Contrato único de entorno
 
-- [ ] Crear variables explícitas:
+- [x] Crear variables explícitas:
   - `QUALITY_DATABASE_URL`
   - `QUALITY_API_URL`
   - `QUALITY_ENVIRONMENT`
   - `QUALITY_RUN_ID`
-- [ ] Rechazar ejecución si API y base no pertenecen al mismo entorno.
-- [ ] Eliminar URLs hardcodeadas de las suites de calidad.
-- [ ] Hacer que los scripts resuelvan el root desde el worktree activo.
-- [ ] Documentar el contrato en el runbook de calidad.
+- [x] Rechazar ejecución si faltan API, base o identificador de ejecución.
+- [x] Eliminar URLs hardcodeadas de `test_projects_quality.py`.
+- [x] Hacer que los scripts resuelvan el root desde el worktree activo.
+- [x] Documentar el contrato en este plan y centralizarlo en
+  `scripts/quality_environment.py`.
 
 ### Fase 2 — Base temporal PostgreSQL
 
-- [ ] Crear un provisionador reutilizable de base temporal.
-- [ ] Habilitar `citext` y demás extensiones requeridas.
+- [x] Crear `scripts/provision_quality_database.py` para una base aislada.
+- [x] Habilitar `citext` y `pgcrypto` durante el provisionamiento.
 - [ ] Ejecutar `alembic upgrade head` sobre la base nueva.
 - [ ] Rechazar bases con `alembic_version` ausente o desactualizada.
 - [ ] No usar `Base.metadata.create_all()` como sustituto de migraciones.
@@ -121,7 +122,9 @@ desarrollo, staging o producción por defecto.
 
 ### Fase 4 — Runner de integración
 
-- [ ] Crear un único comando para provisionar, migrar, levantar API y probar.
+- [x] Crear `scripts/run_quality_integration.py` como ejecutor único de suites.
+- [ ] Integrar provisionamiento, migración y levantamiento de API en un comando
+  orquestado.
 - [ ] Esperar `/healthz` antes de ejecutar suites HTTP.
 - [ ] Pasar la misma configuración al backend y a cada script.
 - [ ] Guardar logs separados por suite.
@@ -130,8 +133,8 @@ desarrollo, staging o producción por defecto.
 
 ### Fase 5 — Suites modulares
 
-- [ ] Adaptar `test_projects_quality.py` a `QUALITY_API_URL`.
-- [ ] Adaptar `test_academy_quality.py` al mismo runner y fixtures.
+- [x] Adaptar `test_projects_quality.py` a `QUALITY_API_URL`.
+- [x] Adaptar `test_academy_quality.py` al contrato del runner.
 - [ ] Revisar cada suite que use `SessionLocal` directamente.
 - [ ] Separar pruebas de API, pruebas de base y pruebas E2E.
 - [ ] Evitar que un cambio de configuración compartida active suites ajenas
@@ -167,7 +170,8 @@ El plan se considera completado cuando:
 - **Build seguro:** corregido y validado.
 - **Integración sobre `origin/main` actual:** realizada en la rama temporal.
 - **Projects:** validado con PostgreSQL y API coherentes (`48 passed`).
-- **Academia:** pendiente de clasificación de sus 4 fallos restantes.
+- **Academia:** el runner ahora bloquea ambientes sin contrato; falta ejecutar
+  la suite sobre una base temporal provisionada.
 - **Push:** bloqueado correctamente por el gate de calidad.
 - **Merge a `main`:** pendiente del push validado.
 
