@@ -225,6 +225,11 @@ Academia. Falló por tres dependencias estructurales del proceso:
   - filtro de sede no utilizado en dashboard.
 - [x] Hacer que el detector frontend resuelva `origin/main` o `main` según el
   ref disponible en el checkout.
+- [x] Hacer que el detector frontend use el diff de extremos cuando el
+  checkout shallow no conserva un ancestro común.
+- [x] Alinear el job de migraciones con el contrato del baseline canónico:
+  `upgrade baseline`, `stamp head`, `downgrade baseline` y repetición limpia.
+- [x] Validar localmente ese ciclo PostgreSQL: `MIGRATION_CONTRACT_OK`.
 - [x] Ejecutar validación local específica y el runner completo de calidad:
   Academia `9/9 suites OK`, Projects `49 passed`, build frontend `223 páginas`.
 - [x] Crear el commit exclusivo `4d0c4e77` de estas correcciones.
