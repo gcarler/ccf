@@ -309,3 +309,17 @@ conflictos a la fuerza ni se publica directamente sobre `main`.
   `90.38%` de funciones.
 - El commit fue publicado en la rama temporal y el hook pre-push confirmó
   `50 passed` y todas las validaciones obligatorias.
+
+### Orquestación automática del entorno local
+
+- El primer intento de publicar la rama sincronizada detectó que el hook
+  seleccionaba Academia y Projects, pero no les entregaba el contrato de
+  entorno; ambas suites terminaban con `QUALITY_ENVIRONMENT_ERROR` antes de
+  ejecutar pruebas.
+- La solución quedó en `scripts/run_quality_integration.py --auto-provision`:
+  cada suite crea una base con nombre y `QUALITY_RUN_ID` propios, aplica el
+  baseline y fixtures, reserva un puerto efímero, levanta `backend.main:app`,
+  espera `/openapi.json` y destruye proceso y base en `finally`.
+- El hook usa esa modalidad para Academia y Projects. Evidencia local:
+  Academia `9/9 suites OK`, Projects `49 passed, 0 failed`; ambas bases y
+  procesos temporales quedaron eliminados al terminar.

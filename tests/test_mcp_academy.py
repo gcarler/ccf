@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import asyncio
 import uuid
-from datetime import datetime, timezone
 
 import pytest
 from mcp.server.auth.middleware.auth_context import auth_context_var
