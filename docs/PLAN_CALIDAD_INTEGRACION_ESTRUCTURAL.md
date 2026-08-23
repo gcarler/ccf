@@ -288,3 +288,7 @@ conflictos a la fuerza ni se publica directamente sobre `main`.
 - El SHA actual `725f18a7` contiene el lockfile regenerado y el comando
   `npm ci --legacy-peer-deps` ya validado localmente. Falta que GitHub ejecute
   los checks sobre este SHA exacto.
+- La ejecución manual `32657326859` validó migraciones e instalación, y
+  encontró dos errores de lint frontend (`DSMetric` no usado y dependencia de
+  `openAttendance`). Ambos están corregidos en la rama; falta repetir el gate
+  oficial sobre el nuevo SHA.
