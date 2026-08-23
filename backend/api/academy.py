@@ -952,7 +952,7 @@ def forum_threads(
     # innerjoin para los hilos con course_id != NULL descarta automáticamente
     # los huérfanos/archivados (JOIN falla → row no aparece). Complementado con
     # el branch course_id IS NULL para los anuncios globales puros.
-    query = db.query(models.ForumThread)
+    query = db.query(models.ForumThread).filter(models.ForumThread.deleted_at.is_(None))
     if sede_id:
         # Hilos globales (course_id IS NULL) O hilos con Course no borrado de la sede.
         query = query.outerjoin(
@@ -1040,6 +1040,7 @@ def resolve_forum_thread(
         db.query(models.ForumThread)
         .filter(
             models.ForumThread.id == thread_id,
+            models.ForumThread.deleted_at.is_(None),
         )
         .first()
     )
@@ -1068,6 +1069,7 @@ def _get_scoped_forum_thread(db: Session, current_user: models.User, thread_id: 
         db.query(models.ForumThread)
         .filter(
             models.ForumThread.id == thread_id,
+            models.ForumThread.deleted_at.is_(None),
         )
         .first()
     )
