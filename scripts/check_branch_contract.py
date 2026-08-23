@@ -12,7 +12,6 @@ import argparse
 import subprocess
 import sys
 
-
 COMMON_PREFIXES = (
     "scripts/",
     "frontend/scripts/",
