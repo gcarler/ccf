@@ -34,10 +34,8 @@ Estas ramas contienen trabajo pendiente y no deben fusionarse automáticamente:
 
 | Área | Rama |
 |---|---|
-| Estructural | `feature/modulo-estructural` |
 | Academy | `feature/academy` |
 | Contextual / eventos | `feat/contextual-roles-recovery` |
-| Frontend UI | `feature/frontend-ui` |
 | Proyectos / Whiteboard | `feature/projects-whiteboard` |
 | Seguridad | `feature/security-hardening` |
 | Paleta | `fix/color-palette-regression` |
@@ -63,8 +61,6 @@ Al comparar cada rama contra `origin/main` con `git merge-tree` el 2026-08-23:
 | `chore/ignore-dev-build` | 9 |
 | `feat/contextual-roles-recovery` | 1 |
 | `feature/academy` | 7 |
-| `feature/frontend-ui` | 2 |
-| `feature/modulo-estructural` | 31 |
 | `feature/projects-whiteboard` | 2 |
 | `feature/security-hardening` | 3 |
 | `fix/color-palette-regression` | 7 |
@@ -118,6 +114,12 @@ La integración de gobierno quedó archivada en:
 - `archive/merged/feature-cms` — revisada y archivada 2026-08-23: testimonios pastorales ya integrados a main vía merges anteriores. No fusionar.
 - `archive/merged/feature-cms-merge` — cherry-pick de multiformat course lookups + auditoria de cursos públicos.
 - `archive/merged/integration-cms-merge-to-main` — rama de integración que llevó los cambios CMS a main.
+- `archive/merged/feature-frontend-ui` — revisada y archivada 2026-08-23: DSMetric Link refactor + dedup cms-v2 types extraídos via cherry-pick. El resto ya está en main.
+- `archive/merged/feature-frontend-ui-merge` — cherry-pick de DSMetric Link + dedup tipos.
+- `archive/merged/integration-frontend-ui-merge-to-main` — rama de integración.
+- `archive/merged/integration-frontend-ui-to-main` — integración anterior ya mergeada.
+- `archive/merged/feature-modulo-estructural` — revisada y archivada 2026-08-23: rama histórica con 1085 commits. Los scripts estructurales (pre-push hook, branch contract, push_branch.sh, quality checks) ya están en main en versiones más recientes. No fusionar — sería un downgrade.
+- `archive/merged/integration-modulo-estructural-to-main-20260823` — integración anterior ya mergeada.
 
 ## Procedimiento de mantenimiento
 
