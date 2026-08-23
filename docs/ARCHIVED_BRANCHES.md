@@ -15,6 +15,7 @@ Una rama listada aqui no debe reutilizarse, hacer push ni fusionarse de nuevo po
 | ARCHIVADA - NO REACTIVAR | `feature/security-hardening` | stale | `9cf48b7c6b2a0d4242a5f8e7d93c1b9479e220ff` | El hardening de CSV, URL publica y validaciones ya esta absorbido en `main`. |
 | ARCHIVADA - NO REACTIVAR | `feature/modulo-estructural` | stale | `41f735fd195831cd0be72fab900b91d16553693c` | Divergencia historica masiva; `main` es la version vigente. |
 | ARCHIVADA - NO REACTIVAR | `integration/modulo-estructural-to-main-20260823` | merged | `396acb467c369d92745522c9e34e4b3f9011f045` | Integracion antigua ya contenida en `main`; se conserva como evidencia. |
+| ARCHIVADA - NO REACTIVAR | `integration/archive-policy-20260823` | merged | `aad2a46871585d5c13f4d37298091de1c921b4e8` | Integracion de la politica de archivo ya publicada en `main`; se conserva como evidencia. |
 
 ## Fuera de este archivo
 
