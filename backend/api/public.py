@@ -193,10 +193,15 @@ def public_stats(db: Session = Depends(get_db)) -> PublicStatsResponse:
 
 
 class PublicCursoResponse(BaseModel):
-    """Respuesta pública de curso — campos alineados con el frontend CourseItem."""
+    """Contrato público estable para el catálogo de cursos."""
 
-    id: str  # slug, usado como URL key
+    id: str
+    slug: str
     title: str
+    description: Optional[str] = None
+    image_url: Optional[str] = None
+    instructor_name: Optional[str] = None
+    # Aliases conservados durante la transición de consumidores antiguos.
     desc: Optional[str] = None
     excerpt: Optional[str] = None
     tag: Optional[str] = None
@@ -211,9 +216,14 @@ class PublicCursoResponse(BaseModel):
 
 
 def _curso_to_public(curso: Course, lesson_count: int = 0) -> PublicCursoResponse:
+    slug = curso.slug or str(curso.id)
     return PublicCursoResponse(
-        id=curso.slug or str(curso.id),
+        id=slug,
+        slug=slug,
         title=curso.title,
+        description=curso.description,
+        image_url=curso.image_url,
+        instructor_name=curso.instructor_name,
         desc=curso.description,
         excerpt=curso.excerpt,
         tag=curso.tag,
@@ -226,8 +236,22 @@ def _curso_to_public(curso: Course, lesson_count: int = 0) -> PublicCursoRespons
     )
 
 
+def _public_site_sede_id(db: Session, site_key: str):
+    site = (
+        db.query(models.CmsSite)
+        .filter(models.CmsSite.site_key == site_key, models.CmsSite.is_active.is_(True))
+        .first()
+    )
+    return site.sede_id if site else None
+
+
 @router.get("/courses", response_model=list[PublicCursoResponse])
-def public_list_courses(db: Session = Depends(get_db)):
+def public_list_courses(
+    skip: int = Query(default=0, ge=0),
+    limit: int = Query(default=100, ge=1, le=200),
+    site_key: str = Query(default="ccf", min_length=1, max_length=80),
+    db: Session = Depends(get_db),
+):
     """Lista de cursos publicados para la landing page /cursos.
 
     Filtra por ``access_level`` IN ('open', 'persona') — ambos son valores del
@@ -240,38 +264,28 @@ def public_list_courses(db: Session = Depends(get_db)):
     visibles. Sin este ajuste, un curso ``open`` publicado tampoco aparecería
     en la landing (contradictorio — ``open`` es más "público" que ``persona``).
     """
-    cursos = (
+    query = (
         db.query(Course)
         .filter(
             Course.is_published.is_(True),
             Course.deleted_at.is_(None),
             Course.access_level.in_(["open", "persona"]),
         )
-        .order_by(Course.id)
-        .all()
     )
-    # Batch: count lessons per course in one query (N+1 fix).
-    course_ids = [c.id for c in cursos]
-    lesson_counts = {}
-    if course_ids:
-        rows = (
-            db.query(Lesson.course_id, func.count(Lesson.id))
-            .filter(
-                Lesson.course_id.in_(course_ids),
-                Lesson.deleted_at.is_(None),
-            )
-            .group_by(Lesson.course_id)
-            .all()
-        )
-        lesson_counts = {cid: cnt for cid, cnt in rows}
-    result = []
-    for c in cursos:
-        lecciones = lesson_counts.get(c.id, 0)
-        result.append(_curso_to_public(c, lecciones))
-    return result
+    site_sede_id = _public_site_sede_id(db, site_key)
+    if site_sede_id is not None:
+        query = query.filter(or_(Course.sede_id == site_sede_id, Course.sede_id.is_(None)))
+    cursos = query.order_by(Course.created_at.desc(), Course.id).offset(skip).limit(limit).all()
+    lesson_counts = dict(
+        db.query(Lesson.course_id, func.count(Lesson.id))
+        .filter(Lesson.course_id.in_([course.id for course in cursos]), Lesson.deleted_at.is_(None))
+        .group_by(Lesson.course_id)
+        .all()
+    ) if cursos else {}
+    return [_curso_to_public(course, lesson_counts.get(course.id, 0)) for course in cursos]
 
 
-def _find_public_course(db: Session, key: str) -> Optional[Course]:
+def _find_public_course(db: Session, key: str, site_key: str) -> Optional[Course]:
     curso_uuid = None
     try:
         curso_uuid = uuid.UUID(key)
@@ -282,21 +296,29 @@ def _find_public_course(db: Session, key: str) -> Optional[Course]:
     if curso_uuid:
         conds.append(Course.id == curso_uuid)
 
-    return (
+    query = (
         db.query(Course)
         .filter(
             or_(*conds),
             Course.is_published.is_(True),
             Course.deleted_at.is_(None),
+            Course.access_level.in_(["open", "persona"]),
         )
-        .first()
     )
+    site_sede_id = _public_site_sede_id(db, site_key)
+    if site_sede_id is not None:
+        query = query.filter(or_(Course.sede_id == site_sede_id, Course.sede_id.is_(None)))
+    return query.first()
 
 
 @router.get("/courses/{course_slug}", response_model=PublicCursoResponse)
-def public_get_course(course_slug: str, db: Session = Depends(get_db)):
+def public_get_course(
+    course_slug: str,
+    site_key: str = Query(default="ccf", min_length=1, max_length=80),
+    db: Session = Depends(get_db),
+):
     """Detalle de un curso por slug, código o UUID."""
-    curso = _find_public_course(db, course_slug)
+    curso = _find_public_course(db, course_slug, site_key)
     if not curso:
         raise HTTPException(status_code=404, detail="Curso no encontrado")
     lecciones = db.query(Lesson).filter(Lesson.course_id == curso.id, Lesson.deleted_at.is_(None)).count()
@@ -306,35 +328,43 @@ def public_get_course(course_slug: str, db: Session = Depends(get_db)):
 class PublicEnrollCreate(BaseModel):
     """Datos para inscripcion publica a un curso."""
 
-    full_name: Optional[str] = None
+    full_name: Optional[str] = Field(default=None, min_length=2, max_length=160)
     email: Optional[str] = None
     phone: Optional[str] = None
     landing_page: Optional[str] = None
     campaign: Optional[str] = None
 
 
-@router.post("/courses/{course_slug}/enroll", response_model=dict)
+@router.post(
+    "/courses/{course_slug}/enroll",
+    response_model=dict,
+    dependencies=[Depends(rate_limiter(limit=10, window_seconds=60))],
+)
 def public_course_enroll(
     course_slug: str,
     payload: PublicEnrollCreate,
+    site_key: str = Query(default="ccf", min_length=1, max_length=80),
     db: Session = Depends(get_db),
 ):
     """Inscripcion publica a un curso por slug, código o UUID. Crea Persona en el kernel."""
-    curso = _find_public_course(db, course_slug)
+    curso = _find_public_course(db, course_slug, site_key)
     if not curso:
         raise HTTPException(status_code=404, detail="Curso no encontrado")
 
     email = (payload.email or "").strip().lower()
     phone = (payload.phone or "").strip()
+    full_name = (payload.full_name or "").strip()
+    if not email and not phone:
+        raise HTTPException(status_code=422, detail="Debes proporcionar email o teléfono")
 
     result = tracker.record_contact(
         db,
         ContactRecord(
             email=email or None,
             phone=phone or None,
-            first_name=(payload.full_name or "").strip().split(" ", 1)[0] or "Visitante",
-            last_name=(payload.full_name or "").strip().split(" ", 1)[1]
-            if payload.full_name and " " in (payload.full_name or "").strip()
+            first_name=full_name.split(" ", 1)[0] or "Visitante",
+            last_name=full_name.split(" ", 1)[1]
+            if " " in full_name
             else "",
             source="academy-enrollment",
             landing_page=payload.landing_page,
