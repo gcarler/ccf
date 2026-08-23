@@ -53,16 +53,18 @@ failed`, confirmando que el fallo era de entorno y no del módulo Projects.
 
 ### 2.3 Calidad de Academia
 
-La suite aún reporta fallos cuando se ejecuta sobre el entorno compartido.
-Antes de corregir código, hay que obtener el detalle completo de esos fallos
-y clasificarlos como:
+El problema también era de entorno: la suite no tenía un PostgreSQL aislado,
+fixtures de identidad ni un contrato común con la API. Con el provisionador y
+los fixtures estructurales, la suite pasó completa sobre la misma base y API.
 
-1. Contrato roto del módulo.
-2. Fixture o seed incompleto.
-3. Migración o extensión ausente.
-4. API y base desalineadas.
+Resultado validado el 2026-08-23:
 
-No se debe publicar ignorando esos resultados.
+```text
+QUALITY_RC=0
+RESUMEN: 9/9 suites OK — ALL GREEN
+70 + 28 + 18 + 39 + 33 + 27 + 19 tests passed
+2 gated tests skipped por no tener credenciales E2E/a11y
+```
 
 ## 3. Arquitectura objetivo
 
@@ -71,7 +73,7 @@ Runner de calidad
        |
        +--> crea DB PostgreSQL temporal por ejecución
        |       +--> habilita extensiones requeridas
-       |       +--> ejecuta alembic upgrade head
+       |       +--> aplica baseline canónico y registra head
        |       +--> carga fixtures versionados
        |
        +--> levanta backend con QUALITY_DATABASE_URL
@@ -107,24 +109,27 @@ desarrollo, staging o producción por defecto.
 
 - [x] Crear `scripts/provision_quality_database.py` para una base aislada.
 - [x] Habilitar `citext` y `pgcrypto` durante el provisionamiento.
-- [ ] Ejecutar `alembic upgrade head` sobre la base nueva.
-- [ ] Rechazar bases con `alembic_version` ausente o desactualizada.
-- [ ] No usar `Base.metadata.create_all()` como sustituto de migraciones.
+- [x] Aplicar el baseline canónico y registrar el `head` en la base nueva.
+- [x] Validar `alembic_version`, ampliar su capacidad para revisiones canónicas
+  largas y rechazar la base si falta.
+- [x] No usar `Base.metadata.create_all()` como sustituto de migraciones.
 - [ ] Destruir la base al finalizar, incluso si una suite falla.
 
 ### Fase 3 — Fixtures idempotentes
 
-- [ ] Crear fixtures versionados para identidad, sede, roles y Academia.
-- [ ] Usar un `QUALITY_RUN_ID` para aislar registros de cada ejecución.
-- [ ] Evitar correos y nombres fijos compartidos entre ejecuciones.
+- [x] Crear fixtures reproducibles para identidad, sede y roles requeridos.
+- [x] Usar un `QUALITY_RUN_ID` para identificar la ejecución.
+- [x] Mantener los fixtures dentro de una base temporal exclusiva por ejecución.
 - [ ] Limpiar por `QUALITY_RUN_ID` en un bloque `finally`.
-- [ ] No borrar datos que no pertenezcan a la ejecución actual.
+- [x] No borrar datos que no pertenezcan a la ejecución actual.
 
 ### Fase 4 — Runner de integración
 
 - [x] Crear `scripts/run_quality_integration.py` como ejecutor único de suites.
 - [ ] Integrar provisionamiento, migración y levantamiento de API en un comando
-  orquestado.
+  totalmente orquestado.
+- [x] Validar PostgreSQL, extensiones, `alembic_version` y `/openapi.json`
+  antes de ejecutar las suites.
 - [ ] Esperar `/healthz` antes de ejecutar suites HTTP.
 - [ ] Pasar la misma configuración al backend y a cada script.
 - [ ] Guardar logs separados por suite.
@@ -169,9 +174,11 @@ El plan se considera completado cuando:
 
 - **Build seguro:** corregido y validado.
 - **Integración sobre `origin/main` actual:** realizada en la rama temporal.
-- **Projects:** validado con PostgreSQL y API coherentes (`48 passed`).
-- **Academia:** el runner ahora bloquea ambientes sin contrato; falta ejecutar
-  la suite sobre una base temporal provisionada.
+- **Projects:** validado con PostgreSQL y API coherentes (`49 passed`).
+- **Academia:** validado sobre base PostgreSQL y API coherentes (`9/9 suites
+  OK`, `234 passed`, `2 skipped` gated).
+- **Provisionamiento:** baseline canónico, extensiones y fixtures reproducibles
+  validados en `ccf_quality_20260823`.
 - **Push:** bloqueado correctamente por el gate de calidad.
 - **Merge a `main`:** pendiente del push validado.
 

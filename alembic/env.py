@@ -19,7 +19,7 @@ sys.path.insert(
     str(next(p for p in Path(__file__).resolve().parents if (p / "backend" / "__init__.py").is_file())),
 )
 
-from sqlalchemy import engine_from_config, pool  # noqa: E402
+from sqlalchemy import engine_from_config, inspect, pool, text  # noqa: E402
 
 import backend.models as models  # noqa: E402,F401
 from alembic import context  # noqa: E402
@@ -56,6 +56,7 @@ def run_migrations_online() -> None:
     )
 
     with connectable.connect() as connection:
+        _ensure_version_table_capacity(connection)
         context.configure(
             connection=connection,
             target_metadata=target_metadata,
@@ -65,6 +66,40 @@ def run_migrations_online() -> None:
 
         with context.begin_transaction():
             context.run_migrations()
+
+
+def _ensure_version_table_capacity(connection) -> None:
+    """Keep Alembic revision storage compatible with long canonical IDs.
+
+    Alembic's default ``VARCHAR(32)`` is shorter than several canonical CCF
+    revisions. The check runs before migrations so fresh and existing
+    PostgreSQL databases follow the same schema contract. SQLite keeps its
+    test-specific behavior and is intentionally not altered here.
+    """
+    if connection.dialect.name != "postgresql":
+        return
+
+    inspector = inspect(connection)
+    if "alembic_version" not in inspector.get_table_names():
+        connection.execute(
+            text(
+                "CREATE TABLE alembic_version ("
+                "version_num VARCHAR(255) NOT NULL PRIMARY KEY"
+                ")"
+            )
+        )
+        connection.commit()
+        return
+
+    version_column = next(
+        (column for column in inspector.get_columns("alembic_version") if column["name"] == "version_num"),
+        None,
+    )
+    if version_column and getattr(version_column["type"], "length", None) != 255:
+        connection.execute(
+            text("ALTER TABLE alembic_version ALTER COLUMN version_num TYPE VARCHAR(255)")
+        )
+        connection.commit()
 
 
 if context.is_offline_mode():

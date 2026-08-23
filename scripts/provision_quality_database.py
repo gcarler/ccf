@@ -96,13 +96,37 @@ def main() -> int:
             "ENV": "local",
         }
     )
+    baseline = "20260702_0001_canonical_baseline"
     result = subprocess.run(
-        [sys.executable, "-m", "alembic", "upgrade", "head"],
+        [sys.executable, "-m", "alembic", "upgrade", baseline],
         cwd=PROJECT_ROOT,
         env=env,
     )
     if result.returncode:
-        print("Alembic failed; destroy the isolated database before retrying.", file=sys.stderr)
+        print("Canonical baseline failed; destroy the isolated database before retrying.", file=sys.stderr)
+        return result.returncode
+
+    # The canonical baseline materializes the current ORM schema in one shot.
+    # Later historical revisions describe changes already represented by that
+    # snapshot, so replaying them would duplicate columns. Stamp head only
+    # after the baseline has completed successfully.
+    result = subprocess.run(
+        [sys.executable, "-m", "alembic", "stamp", "head"],
+        cwd=PROJECT_ROOT,
+        env=env,
+    )
+    if result.returncode:
+        print("Alembic stamp failed; destroy the isolated database before retrying.", file=sys.stderr)
+        return result.returncode
+
+    fixture_env = {**env, "QUALITY_RUN_ID": os.environ.get("QUALITY_RUN_ID", database_name)}
+    result = subprocess.run(
+        [sys.executable, "scripts/seed_quality_fixtures.py"],
+        cwd=PROJECT_ROOT,
+        env=fixture_env,
+    )
+    if result.returncode:
+        print("Quality fixtures failed; destroy the isolated database before retrying.", file=sys.stderr)
         return result.returncode
 
     with create_engine(args.database_url).connect() as connection:
