@@ -26,14 +26,15 @@ fi
 
 echo "→ Sincronizando base remota: $REMOTE/$BRANCH"
 if git ls-remote --exit-code --heads "$REMOTE" "refs/heads/$BRANCH" >/dev/null 2>&1; then
+    REMOTE_BRANCH_EXISTS=1
     git fetch --prune "$REMOTE" "$BRANCH"
 else
+    REMOTE_BRANCH_EXISTS=0
     echo "→ La rama $REMOTE/$BRANCH aún no existe; se validará contra $REMOTE/main"
     git fetch --prune "$REMOTE" main
 fi
 
-LOCAL_BASE="$(git rev-parse "refs/remotes/$REMOTE/$BRANCH" 2>/dev/null || true)"
-if [ -z "$LOCAL_BASE" ]; then
+if [ "$REMOTE_BRANCH_EXISTS" -eq 0 ]; then
     BASE_REF="refs/remotes/$REMOTE/main"
     if ! git rev-parse "$BASE_REF^{commit}" >/dev/null 2>&1; then
         echo "✗ No existe la base $REMOTE/main para publicar la rama nueva."
