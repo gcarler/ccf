@@ -283,7 +283,7 @@ export default function CmsTagsManagement() {
                 >
                   <div
                     onClick={() => setSelectedTag(tag)}
-                    className="size-6 rounded-md bg-[hsl(var(--domain-fuchsia)/10%)] dark:bg-[hsl(var(--domain-fuchsia)/10%)] text-[hsl(var(--domain-fuchsia)/90%)] flex items-center justify-center shrink-0 cursor-pointer"
+                    className="size-6 rounded-md bg-blue-50 dark:bg-blue-500/10 text-blue-600 flex items-center justify-center shrink-0 cursor-pointer"
                   >
                     <Tag size={14} />
                   </div>

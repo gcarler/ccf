@@ -403,7 +403,7 @@ export default function CmsPostsManagement() {
 
                   <div
                     onClick={() => openPost(post)}
-                    className="size-7 rounded-md bg-[hsl(var(--domain-fuchsia)/10%)] dark:bg-[hsl(var(--domain-fuchsia)/10%)] text-[hsl(var(--domain-fuchsia)/90%)] flex items-center justify-center shrink-0 cursor-pointer"
+                    className="size-7 rounded-md bg-blue-50 dark:bg-blue-500/10 text-blue-600 flex items-center justify-center shrink-0 cursor-pointer"
                   >
                     <FileText size={20} />
                   </div>
@@ -428,7 +428,7 @@ export default function CmsPostsManagement() {
                       </>}
                       {post.tags && post.tags.length > 0 && <>
                         <div className="size-1 bg-[hsl(var(--surface-3))] dark:bg-white/10 rounded-full" />
-                        <div className="flex items-center gap-1 text-xs text-[hsl(var(--domain-fuchsia)/90%)] dark:text-[hsl(var(--domain-fuchsia))]">
+                        <div className="flex items-center gap-1 text-xs text-blue-600 dark:text-blue-400">
                           <Tag size={11} />
                           {post.tags.map((t) => t.name).join(", ")}
                         </div>
@@ -493,7 +493,7 @@ export default function CmsPostsManagement() {
                       </td>
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-3">
-                          <div className="size-8 rounded-md bg-[hsl(var(--domain-fuchsia)/10%)] dark:bg-[hsl(var(--domain-fuchsia)/20%)] text-[hsl(var(--domain-fuchsia)/90%)] flex items-center justify-center shrink-0">
+                          <div className="size-8 rounded-md bg-blue-50 dark:bg-blue-900/20 text-blue-600 flex items-center justify-center shrink-0">
                             <FileText size={14} />
                           </div>
                           <span className="text-sm font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] truncate max-w-[200px]">{post.title}</span>
@@ -551,7 +551,7 @@ export default function CmsPostsManagement() {
                   onClick={() => openPost(post)}
                   className="group bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-secondary))] rounded-lg border border-[hsl(var(--border))]/70 dark:border-white/5 p-4 shadow-sm hover:shadow-xl hover:border-[hsl(var(--info)/100%)]/30 transition-all cursor-pointer flex items-center gap-4"
                 >
-                  <div className="size-6 rounded-md bg-[hsl(var(--domain-fuchsia)/10%)] dark:bg-[hsl(var(--domain-fuchsia)/10%)] text-[hsl(var(--domain-fuchsia)/90%)] flex items-center justify-center shrink-0 group-hover:bg-[hsl(var(--domain-fuchsia))] group-hover:text-white transition-all">
+                  <div className="size-6 rounded-md bg-blue-50 dark:bg-blue-500/10 text-blue-600 flex items-center justify-center shrink-0 group-hover:bg-blue-600 group-hover:text-white transition-all">
                     <FileText size={18} />
                   </div>
                   <div className="flex-1 min-w-0">
@@ -714,8 +714,8 @@ export default function CmsPostsManagement() {
                           className={clsx(
                             "px-3 py-1.5 rounded-md text-xs font-medium transition-all disabled:opacity-50",
                             isSelected
-                              ? "bg-[hsl(var(--domain-fuchsia)/20%)] text-[hsl(var(--domain-fuchsia)/90%)] dark:bg-[hsl(var(--domain-fuchsia)/20%)] dark:text-[hsl(var(--domain-fuchsia))] border border-[hsl(var(--domain-fuchsia)/30%)] dark:border-[hsl(var(--domain-fuchsia)/30%)]"
-                              : "bg-[hsl(var(--surface-2))] dark:bg-white/5 text-[hsl(var(--text-secondary))] border border-[hsl(var(--border))] dark:border-white/10 hover:border-[hsl(var(--domain-fuchsia)/100%)]"
+                              ? "bg-blue-100 text-blue-700 dark:bg-blue-900/20 dark:text-blue-300 border border-blue-200 dark:border-blue-500/30"
+                              : "bg-[hsl(var(--surface-2))] dark:bg-white/5 text-[hsl(var(--text-secondary))] border border-[hsl(var(--border))] dark:border-white/10 hover:border-blue-300"
                           )}
                         >
                           {tag.name}
@@ -1004,8 +1004,8 @@ export default function CmsPostsManagement() {
                               className={clsx(
                                 "px-2.5 py-1 rounded-md text-2xs font-medium transition-all disabled:opacity-50",
                                 isSelected
-                                  ? "bg-[hsl(var(--domain-fuchsia)/20%)] text-[hsl(var(--domain-fuchsia)/90%)] dark:text-[hsl(var(--domain-fuchsia))] border border-[hsl(var(--domain-fuchsia)/30%)]"
-                                  : "bg-[hsl(var(--surface-2))] dark:bg-white/5 text-[hsl(var(--text-secondary))] border border-[hsl(var(--border))] dark:border-white/10 hover:border-[hsl(var(--domain-fuchsia)/100%)]"
+                                  ? "bg-blue-100 text-blue-700 dark:text-blue-300 border border-blue-200"
+                                  : "bg-[hsl(var(--surface-2))] dark:bg-white/5 text-[hsl(var(--text-secondary))] border border-[hsl(var(--border))] dark:border-white/10 hover:border-blue-300"
                               )}
                             >
                               {tag.name}
