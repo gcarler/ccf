@@ -355,3 +355,30 @@ conflictos a la fuerza ni se publica directamente sobre `main`.
   mezclada con warnings como JSON, produciendo `0%`. El gate se corrige para
   calcular líneas cubiertas desde el `frontend/coverage/lcov.info` generado por
   el paso oficial, sin duplicar la suite.
+
+### Orquestación estructural de la suite backend
+
+- Las ejecuciones `32666062523` y `32668864632` quedaron detenidas en el paso
+  global de backend. La recolección local mostró `7.515` pruebas no-CRM; la
+  causa era operacional (una única cola pesada), no un fallo funcional del
+  cambio de Academia.
+- El commit `bcdf3c0d` hizo explícito el contrato de pytest con
+  `-o addopts=`, `--dist loadfile` y un límite de job, evitando heredar
+  cobertura duplicada desde `pytest.ini` y mezclando fixtures de archivos.
+- La validación por archivos confirmó que la suite global seguía siendo
+  demasiado pesada para una única cola. El commit `2f6d0b49` conserva el
+  alcance completo, pero distribuye los archivos no-CRM en cuatro shards
+  determinísticos, cada uno con cobertura propia; un job agregado combina los
+  datos y aplica el umbral global `COV_THRESHOLD=38`.
+- La ejecución oficial vigente de esta arquitectura es `32669613512`.
+
+### Estado operativo del plan
+
+- Rama de integración: `integration/academy-public-courses-20260823-v2`.
+- PR: `#13`, base `main`.
+- Pendiente antes de fusionar: que `32669613512` termine verdes sus cuatro
+  shards, el agregado de cobertura, frontend, CRM y migraciones.
+- Después del verde: merge a `main`, smoke post-merge, creación de
+  `archive/merged/integration-academy-public-courses-20260823-v2` y eliminación
+  de la rama temporal solamente después de comprobar que el archivo conserva
+  el SHA fusionado.
