@@ -168,6 +168,25 @@ if ! "$VENV/python" "$REPO_ROOT/scripts/check_branch_contract.py" \
     exit 1
 fi
 
+# A network failure can happen after every validation has passed but before
+# Git receives the pack. Allow a short, exact retry window for that same
+# branch/SHA/base tuple. This is evidence reuse, not a validation bypass: the
+# proof is written only after the complete gate succeeds below.
+VALIDATION_CACHE_DIR="${CCF_PRE_PUSH_VALIDATION_CACHE_DIR:-/tmp/ccf-pre-push-validations}"
+VALIDATION_CACHE_FILE="$VALIDATION_CACHE_DIR/$PUSH_LOCAL_SHA.proof"
+if [ "${CCF_PRE_PUSH_REUSE_VALIDATION:-0}" = "1" ] && [ -f "$VALIDATION_CACHE_FILE" ]; then
+    read -r CACHED_BRANCH CACHED_SHA CACHED_BASE CACHED_HEAD CACHED_AT < "$VALIDATION_CACHE_FILE" || true
+    NOW_EPOCH=$(date +%s)
+    if [ "$CACHED_BRANCH" = "$PUSH_BRANCH" ] \
+        && [ "$CACHED_SHA" = "$PUSH_LOCAL_SHA" ] \
+        && [ "$CACHED_BASE" = "$BASE_REF" ] \
+        && [ "$CACHED_HEAD" = "$HEAD_REF" ] \
+        && [ "$CACHED_AT" -ge $((NOW_EPOCH - 900)) ] 2>/dev/null; then
+        echo -e "${GREEN}✓ Reintento autorizado: evidencia completa vigente para $PUSH_LOCAL_SHA${NC}"
+        exit 0
+    fi
+fi
+
 case "$MODE" in
     fast|full) ;;
     *)
@@ -489,6 +508,11 @@ echo -e "  ${GREEN}╔═══════════════════�
 echo -e "  ${GREEN}║  ✓ TODAS LAS VALIDACIONES PASARON        ║${NC}"
 echo -e "  ${GREEN}╚══════════════════════════════════════════╝${NC}"
 echo ""
+
+mkdir -p "$VALIDATION_CACHE_DIR"
+printf '%s %s %s %s %s\n' \
+    "$PUSH_BRANCH" "$PUSH_LOCAL_SHA" "$BASE_REF" "$HEAD_REF" "$(date +%s)" \
+    > "$VALIDATION_CACHE_FILE"
 
 if [ "$DEPLOY_AFTER_VALIDATION" != "1" ]; then
     echo -e "  ${BLUE}ℹ Deploy omitido.${NC} Usa CCF_PRE_PUSH_DEPLOY=1 cuando quieras ejecutar release después del gate."
