@@ -1,10 +1,5 @@
 #!/usr/bin/env python3
-"""Enforce module ownership and branch/worktree boundaries before a push.
-
-The hook passes the branch and the exact diff base.  This guard deliberately
-checks only the files introduced by the push, so older history can be adopted
-without rewriting it while new cross-module drift is rejected early.
-"""
+"""Enforce module ownership and branch/worktree boundaries before a push."""
 
 from __future__ import annotations
 
@@ -24,7 +19,7 @@ COMMON_PREFIXES = (
 )
 
 MODULE_PREFIXES: dict[str, tuple[str, ...]] = {
-    "feature/modulo-estructural": (
+    "platform": (
         "backend/core/",
         "backend/models_kernel.py",
         "backend/models_auth.py",
@@ -35,7 +30,7 @@ MODULE_PREFIXES: dict[str, tuple[str, ...]] = {
         "frontend/src/context/",
         "frontend/src/lib/",
     ),
-    "feature/academy": (
+    "academy": (
         "backend/api/academy",
         "backend/crud/academy",
         "backend/models_academy",
@@ -48,7 +43,7 @@ MODULE_PREFIXES: dict[str, tuple[str, ...]] = {
         "docs/ESTADO_ACADEMY.md",
         "docs/PLAN_ACADEMY_",
     ),
-    "feature/messaging": (
+    "messaging": (
         "backend/api/messaging",
         "backend/api/chat",
         "backend/api/community",
@@ -65,8 +60,9 @@ MODULE_PREFIXES: dict[str, tuple[str, ...]] = {
         "docs/ESTADO_MESSAGING_",
         "docs/PLAN_MESSAGING_",
     ),
-    "feature/evangelism": (
+    "evangelism": (
         "backend/api/evangelism",
+        "backend/api/evangelism_main",
         "backend/crud/evangelism",
         "backend/models_evangelism",
         "backend/schemas/evangelism",
@@ -78,7 +74,7 @@ MODULE_PREFIXES: dict[str, tuple[str, ...]] = {
         "docs/ESTADO_EVANGELISMO.md",
         "docs/PLAN_EVANGELISMO_",
     ),
-    "feature/cms": (
+    "cms": (
         "backend/api/cms",
         "backend/api/cms_v2",
         "backend/api/enterprise_cms",
@@ -98,23 +94,110 @@ MODULE_PREFIXES: dict[str, tuple[str, ...]] = {
         "docs/ESTADO_CMS.md",
         "docs/PLAN_CMS_",
     ),
+    "crm": (
+        "backend/api/crm",
+        "backend/crud/crm",
+        "backend/models_crm",
+        "backend/schemas/crm",
+        "frontend/src/app/plataforma/crm/",
+        "frontend/src/components/crm/",
+        "frontend/tests/e2e/crm/",
+        "tests/test_crm_",
+        "docs/CRM_",
+        "docs/ESTADO_CRM.md",
+        "docs/PLAN_CRM_",
+    ),
+    "projects": (
+        "backend/api/projects",
+        "backend/crud/projects",
+        "backend/models_projects",
+        "backend/schemas/projects",
+        "frontend/src/app/plataforma/projects/",
+        "frontend/src/components/projects/",
+        "frontend/tests/e2e/projects/",
+        "tests/test_projects",
+        "docs/PROJECTS_",
+        "docs/ESTADO_PROYECTOS.md",
+    ),
+    "agenda": (
+        "backend/api/agenda",
+        "backend/crud/agenda",
+        "backend/models_agenda",
+        "backend/schemas/agenda",
+        "frontend/src/app/plataforma/agenda/",
+        "frontend/src/components/agenda/",
+        "frontend/tests/e2e/agenda/",
+        "tests/test_agenda",
+        "docs/AGENDA_",
+        "docs/ESTADO_AGENDA.md",
+    ),
+    "frontend": (
+        "frontend/src/",
+        "frontend/tests/",
+        "docs/FRONTEND_",
+    ),
 }
+
+BRANCH_MODULE_ALIASES = {
+    "feature/modulo-estructural": "platform",
+    "feature/security-hardening": "platform",
+    "feat/contextual-roles-recovery": "platform",
+    "feature/frontend-ui": "frontend",
+    "feature/events-evangelism": "evangelism",
+    "fix/color-palette-regression": "frontend",
+    "fix/public-legacy-redirects": "cms",
+}
+
+BRANCH_FAMILIES = ("feature", "feat", "fix", "refactor", "test")
 
 
 def _matches(path: str, prefixes: tuple[str, ...]) -> bool:
     return any(path == prefix or path.startswith(prefix) for prefix in prefixes)
 
 
-def ownership_violations(branch: str, files: list[str]) -> list[str]:
-    """Return changed paths that do not belong to the target module branch."""
+def module_for_branch(branch: str) -> str | None:
+    """Resolve a module owner from a conventional branch name."""
+    if branch in BRANCH_MODULE_ALIASES:
+        return BRANCH_MODULE_ALIASES[branch]
+    if "/" not in branch:
+        return None
+    family, suffix = branch.split("/", 1)
+    if family not in BRANCH_FAMILIES:
+        return None
+    for module in MODULE_PREFIXES:
+        if suffix == module or suffix.startswith(f"{module}-") or suffix.startswith(f"{module}/"):
+            return module
+    return None
 
-    prefixes = MODULE_PREFIXES.get(branch)
-    if prefixes is None:
-        # main/develop and unregistered feature branches are intentionally not
-        # assigned a module owner; the hook still validates their quality.
+
+def branch_name_violations(branch: str) -> list[str]:
+    """Validate names for branches that participate in the governed flow."""
+    if branch == "main" or branch.startswith("archive/merged/"):
         return []
+    if branch.startswith("integration/"):
+        return [] if branch != "integration/" else ["integration/ requiere un nombre de cambio"]
+    if branch.startswith("docs/") or branch.startswith("backup/") or branch.startswith("deploy/"):
+        return []
+    if branch.split("/", 1)[0] in BRANCH_FAMILIES and module_for_branch(branch) is None:
+        return [f"rama sin módulo propietario reconocido: {branch}"]
+    return []
 
-    allowed = prefixes + COMMON_PREFIXES
+
+def ownership_violations(branch: str, files: list[str]) -> list[str]:
+    """Return changed paths that do not belong to the target branch owner."""
+    name_violations = branch_name_violations(branch)
+    if name_violations:
+        return name_violations
+    if branch == "main" or branch.startswith("integration/") or branch.startswith("archive/merged/"):
+        return []
+    if branch.startswith("docs/"):
+        allowed = COMMON_PREFIXES + ("docs/",)
+        return [path for path in files if not _matches(path, allowed)]
+
+    module = module_for_branch(branch)
+    if module is None:
+        return []
+    allowed = MODULE_PREFIXES[module] + COMMON_PREFIXES
     return [path for path in files if not _matches(path, allowed)]
 
 
@@ -138,14 +221,13 @@ def main() -> int:
     files = changed_files(args.base, args.head)
     violations = ownership_violations(args.branch, files)
     if not violations:
-        print(f"✓ Branch contract OK: {args.branch} ({len(files)} changed files)")
+        print(f"Branch contract OK: {args.branch} ({len(files)} changed files)")
         return 0
 
-    print(f"✗ Branch contract violated by {args.branch}:", file=sys.stderr)
-    print("  Estos archivos pertenecen a otro módulo o requieren integración estructural:", file=sys.stderr)
+    print(f"Branch contract violated by {args.branch}:", file=sys.stderr)
     for path in violations:
         print(f"  - {path}", file=sys.stderr)
-    print("  Haz el commit en la rama propietaria y luego integra por el flujo definido.", file=sys.stderr)
+    print("Commit the change on its owning module branch, then integrate through integration/<change>.", file=sys.stderr)
     return 1
 
 

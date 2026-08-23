@@ -71,8 +71,15 @@ if [ "$PUSH_COUNT" -ne 1 ] || [[ "$PUSH_REMOTE_REF" != refs/heads/* ]]; then
 fi
 
 PUSH_BRANCH="${PUSH_REMOTE_REF#refs/heads/}"
+ZERO_SHA="0000000000000000000000000000000000000000"
 CURRENT_BRANCH="$(git symbolic-ref --quiet --short HEAD || true)"
-if [ "$CURRENT_BRANCH" != "$PUSH_BRANCH" ]; then
+if [ "$PUSH_BRANCH" = "main" ] && [ "${CCF_ALLOW_MAIN_PUSH:-0}" != "1" ]; then
+    echo -e "${RED}✗ Push directo a main bloqueado; integra mediante una rama temporal revisada.${NC}"
+    exit 2
+fi
+if [[ "$PUSH_BRANCH" != archive/merged/* ]] && [ "$PUSH_LOCAL_SHA" = "$ZERO_SHA" ]; then
+    : # Deletion is validated below by the immutable archive ref.
+elif [[ "$PUSH_BRANCH" != archive/merged/* ]] && [ "$CURRENT_BRANCH" != "$PUSH_BRANCH" ]; then
     echo -e "${RED}✗ Worktree incorrecto.${NC}"
     echo "  Rama activa: ${CURRENT_BRANCH:-detached}"
     echo "  Rama destino: $PUSH_BRANCH"
@@ -80,16 +87,42 @@ if [ "$CURRENT_BRANCH" != "$PUSH_BRANCH" ]; then
     exit 2
 fi
 
-# Deleting a branch is allowed only after its normalized archive ref exists.
-ZERO_SHA="0000000000000000000000000000000000000000"
-if [ "$PUSH_LOCAL_SHA" = "$ZERO_SHA" ]; then
-    ARCHIVE_BRANCH="${PUSH_BRANCH//\//-}"
-    if ! git ls-remote --exit-code "$PUSH_REMOTE" \
-        "refs/heads/archive/merged/$ARCHIVE_BRANCH" >/dev/null 2>&1; then
-        echo -e "${RED}✗ Eliminación bloqueada: falta archive/merged/$ARCHIVE_BRANCH.${NC}"
+# Archive refs are immutable evidence. They may only be created at the exact
+# source SHA and source deletion is allowed only after the archive exists.
+if [[ "$PUSH_BRANCH" == archive/merged/* ]]; then
+    if [ "$PUSH_LOCAL_SHA" = "$ZERO_SHA" ]; then
+        echo -e "${RED}✗ No se eliminan ramas archivadas.${NC}"
         exit 2
     fi
-    echo -e "${GREEN}✓ Eliminación validada: archive/merged/$ARCHIVE_BRANCH conserva la rama.${NC}"
+    if [ "$PUSH_REMOTE_SHA" != "$ZERO_SHA" ]; then
+        echo -e "${RED}✗ El archivo remoto ya existe; no se sobrescribe: $PUSH_BRANCH.${NC}"
+        exit 2
+    fi
+    if ! git rev-parse "origin/main^{commit}" >/dev/null 2>&1; then
+        echo -e "${RED}✗ Falta origin/main para validar el archivo.${NC}"
+        exit 2
+    fi
+    if ! git merge-base --is-ancestor "$PUSH_LOCAL_SHA" "origin/main"; then
+        echo -e "${RED}✗ Solo se archivan SHAs ya integrados en origin/main.${NC}"
+        exit 2
+    fi
+    echo -e "${GREEN}✓ Archivo nuevo validado: $PUSH_BRANCH -> $PUSH_LOCAL_SHA.${NC}"
+    exit 0
+fi
+
+# Deleting a branch is allowed only after its normalized archive ref exists.
+if [ "$PUSH_LOCAL_SHA" = "$ZERO_SHA" ]; then
+    ARCHIVE_BRANCH="archive/merged/${PUSH_BRANCH//\//-}"
+    ARCHIVE_SHA="$(git ls-remote --heads "$PUSH_REMOTE" "refs/heads/$ARCHIVE_BRANCH" | awk 'NR == 1 { print $1 }')"
+    if [ -z "$ARCHIVE_SHA" ]; then
+        echo -e "${RED}✗ Eliminación bloqueada: falta $ARCHIVE_BRANCH.${NC}"
+        exit 2
+    fi
+    if [ "$PUSH_REMOTE_SHA" != "$ZERO_SHA" ] && [ "$ARCHIVE_SHA" != "$PUSH_REMOTE_SHA" ]; then
+        echo -e "${RED}✗ Eliminación bloqueada: la rama fuente no coincide con el SHA archivado.${NC}"
+        exit 2
+    fi
+    echo -e "${GREEN}✓ Eliminación validada: $ARCHIVE_BRANCH conserva $ARCHIVE_SHA.${NC}"
     exit 0
 fi
 
