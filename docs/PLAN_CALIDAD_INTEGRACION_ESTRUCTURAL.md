@@ -225,8 +225,9 @@ Academia. Falló por tres dependencias estructurales del proceso:
   - filtro de sede no utilizado en dashboard.
 - [x] Hacer que el detector frontend resuelva `origin/main` o `main` según el
   ref disponible en el checkout.
-- [ ] Ejecutar validación local específica y el runner completo de calidad.
-- [ ] Crear un commit exclusivo de estas correcciones.
+- [x] Ejecutar validación local específica y el runner completo de calidad:
+  Academia `9/9 suites OK`, Projects `49 passed`, build frontend `223 páginas`.
+- [x] Crear el commit exclusivo `4d0c4e77` de estas correcciones.
 - [ ] Actualizar la rama temporal con `--force-with-lease` solo si el rebase
   cambia su historial; nunca usar `--no-verify`.
 - [ ] Esperar el resultado completo del PR #13 y corregir únicamente fallos
