@@ -37,8 +37,6 @@ Estas ramas contienen trabajo pendiente y no deben fusionarse automáticamente:
 | Estructural | `feature/modulo-estructural` |
 | Academy | `feature/academy` |
 | Contextual / eventos | `feat/contextual-roles-recovery` |
-| CMS | `feat/cms-quality-improvements` |
-| CMS / Nosotros histórico | `feat/cms-nosotros-stats` |
 | Frontend UI | `feature/frontend-ui` |
 | Proyectos / Whiteboard | `feature/projects-whiteboard` |
 | Seguridad | `feature/security-hardening` |
@@ -63,8 +61,6 @@ Al comparar cada rama contra `origin/main` con `git merge-tree` el 2026-08-23:
 | Rama | Conflictos detectados |
 |---|---:|
 | `chore/ignore-dev-build` | 9 |
-| `feat/cms-nosotros-stats` | 229 |
-| `feat/cms-quality-improvements` | 22 |
 | `feat/contextual-roles-recovery` | 1 |
 | `feature/academy` | 7 |
 | `feature/frontend-ui` | 2 |
@@ -117,6 +113,11 @@ La integración de gobierno quedó archivada en:
 - `archive/merged/feature-messaging` — revisada y archivada 2026-08-22: el 99% del contenido ya está en main vía merges anteriores. Solo se extrajo el filtro NFD de @mentions (cherry-pick a `feature/messaging-merge` → `integration/messaging-merge-to-main` → main). No fusionar — sería un downgrade.
 - `archive/merged/feature-messaging-merge` — cherry-pick del filtroAPersonas NFD para @mentions en chat.
 - `archive/merged/integration-messaging-merge-to-main` — rama de integración que llevó el filtro NFD a main.
+- `archive/merged/feat-cms-quality-improvements` — revisada y archivada 2026-08-23: la mayoría del contenido (form-builder, refactors estructurales, E2E tests) tiene conflictos con main que requieren resolución manual. Solo se extrajo multiformat course lookup (cherry-pick). El resto permanece archivado para extracción futura.
+- `archive/merged/feat-cms-nosotros-stats` — revisada y archivada 2026-08-23: rama histórica con 1180 commits cuyo contenido ya está en main vía merges anteriores. No fusionar — sería un downgrade.
+- `archive/merged/feature-cms` — revisada y archivada 2026-08-23: testimonios pastorales ya integrados a main vía merges anteriores. No fusionar.
+- `archive/merged/feature-cms-merge` — cherry-pick de multiformat course lookups + auditoria de cursos públicos.
+- `archive/merged/integration-cms-merge-to-main` — rama de integración que llevó los cambios CMS a main.
 
 ## Procedimiento de mantenimiento
 
