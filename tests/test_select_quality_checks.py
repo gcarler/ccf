@@ -52,6 +52,11 @@ def test_workspace_shell_selects_platform_and_frontend_only():
     assert checks == ["frontend_build", "platform_quality"]
 
 
+def test_next_config_selects_frontend_build_only():
+    checks = select_quality_checks(["frontend/next.config.mjs"])
+    assert checks == ["frontend_build"]
+
+
 def test_pre_push_selector_changes_select_platform_only():
     checks = select_quality_checks(["scripts/hooks/pre-push", "scripts/select_quality_checks.py"])
     assert checks == ["platform_quality"]

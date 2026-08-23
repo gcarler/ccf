@@ -248,7 +248,6 @@ SHARED_PREFIXES: tuple[str, ...] = (
     "backend/models.py",
     "backend/models_auth.py",
     "backend/models_shared.py",
-    "frontend/next.config.mjs",
     "frontend/src/app/plataforma/layout.tsx",
     "frontend/src/components/ui/TableView.tsx",
     "frontend/src/components/ui/UniversalTableView.tsx",
