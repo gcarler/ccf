@@ -150,11 +150,11 @@ desarrollo, staging o producción por defecto.
 
 ### Fase 6 — Integración y publicación
 
-- [ ] Ejecutar el runner completo sobre la rama temporal basada en el
+- [x] Ejecutar el runner completo sobre la rama temporal basada en el
   `origin/main` más reciente.
 - [x] Ejecutar contrato de rama, lint, pruebas, suites modulares y build.
 - [x] Publicar únicamente la rama temporal.
-- [x] Confirmar el SHA remoto validado (`afb5dfccec1eaf14f5687e7bcffb4d325c9c60a4`).
+- [x] Confirmar el SHA remoto validado (`13c08ae866b8e67bdcce5c02e14f1c3ddde2b3ab`).
 - [ ] Fusionar la rama temporal a `main`.
 - [ ] Ejecutar smoke post-merge.
 - [ ] Archivar la rama bajo `archive/merged/` después de confirmar la fusión.
@@ -183,12 +183,12 @@ El plan se considera completado cuando:
   validados en `ccf_quality_20260823`.
 - **Push:** publicado después de pasar contrato, lint, pruebas, suites
   modulares y build; el hook confirmó el SHA remoto
-  `afb5dfccec1eaf14f5687e7bcffb4d325c9c60a4`.
+  `13c08ae866b8e67bdcce5c02e14f1c3ddde2b3ab`.
 - **Selector:** `frontend/next.config.mjs` ya no escala artificialmente a
   todos los módulos; selecciona build frontend y conserva los propietarios
   reales del diff.
-- **Sincronización:** `origin/main` recibió commits posteriores a la
-  validación; antes del merge hay que rebasar y volver a ejecutar el gate.
+- **Sincronización:** la rama fue rebasada y validada sobre el `origin/main`
+  más reciente disponible (`38f10526`).
 - **Merge a `main`:** pendiente de esa nueva sincronización y validación.
 
 ## 7. Regla de trabajo para futuras sesiones
