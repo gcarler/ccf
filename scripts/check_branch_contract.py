@@ -203,7 +203,7 @@ def ownership_violations(branch: str, files: list[str]) -> list[str]:
 
 def changed_files(base: str, head: str) -> list[str]:
     result = subprocess.run(
-        ["git", "diff", "--diff-filter=ACMRTUXB", "--name-only", base, head],
+        ["git", "diff", "--diff-filter=ACMRTUXB", "--name-only", f"{base}...{head}"],
         check=True,
         capture_output=True,
         text=True,
