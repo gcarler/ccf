@@ -31,6 +31,7 @@ from backend.services.event_registration_service import (
     find_by_qr_token,
     is_cancel_token_expired,
     is_event_open_for_registration,
+    is_qr_token_expired,
 )
 from backend.services.event_registration_service import (
     cancel as cancel_registration,
@@ -979,6 +980,10 @@ def public_event_ticket(
             status_code=409,
             detail=f"Ticket no activo (estado: {reg.registration_status})",
         )
+    # plan_clasificador_contextual §4.3: el QR expira a los 365 días.
+    if is_qr_token_expired(reg):
+        raise HTTPException(status_code=410, detail="El QR del ticket expiró")
+
     persona = db.query(models.Persona).filter(models.Persona.id == reg.persona_id).first()
     return _serialize_registration(reg, persona, include_qr=False)
 
