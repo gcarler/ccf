@@ -343,3 +343,10 @@ conflictos a la fuerza ni se publica directamente sobre `main`.
   solicitudes del navegador same-origin y las entrega al proxy de Next. Así
   el E2E no intenta conectarse a `localhost:8000`, donde CI no levanta un
   backend, ni depende de un destino implícito compilado.
+- La corrida `32664621660` confirmó que el contrato de API quedó corregido:
+  desaparecieron los fallos de rutas SSR. Persistieron únicamente suites
+  profundas de Agenda/Mensajería que esperan fixtures mutables y recursos CMS
+  que ya no existen en producción. El gate CI queda limitado a
+  `tests/e2e/public-pages.spec.ts`, que es el smoke público estable. Las suites
+  profundas se reservan para un job posterior con staging aislado, usuario E2E
+  exclusivo y fixtures versionados; no se mezclan con producción.
