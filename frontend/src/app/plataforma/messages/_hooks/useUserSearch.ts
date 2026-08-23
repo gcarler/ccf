@@ -66,8 +66,13 @@ export function useUserSearch({ token, debounceMs = 200, minLength = 1 }: UseUse
             );
             if (controller.signal.aborted) return;
             const list = Array.isArray(data) ? data : [];
-            // Filtro reutilizable de personas: '@' → username; sin '@' → nombre/email.
-            const filtered = list.filter((u) => filtroAPersona(toPersonaBusqueda(u), debouncedQuery));
+            // El buscador de Mensajería admite nombre y username sin exigir
+            // que el usuario escriba '@'; el filtro transversal conserva su
+            // contrato estricto para los listados generales.
+            const filtered = list.filter((u) => {
+                const persona = toPersonaBusqueda(u);
+                return filtroAPersona(persona, debouncedQuery) || filtroAPersona(persona, `@${debouncedQuery}`);
+            });
             setResults(filtered);
             if (filtered.length === 0) setError('No se encontraron usuarios');
         } catch {

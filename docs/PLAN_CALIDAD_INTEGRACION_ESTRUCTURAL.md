@@ -292,3 +292,7 @@ conflictos a la fuerza ni se publica directamente sobre `main`.
   encontró dos errores de lint frontend (`DSMetric` no usado y dependencia de
   `openAttendance`). Ambos están corregidos en la rama; falta repetir el gate
   oficial sobre el nuevo SHA.
+- La ejecución manual `32658345384` confirmó lint, tipos e instalación, pero
+  encontró una regresión de Mensajería: su prueba esperaba buscar usernames sin
+  `@`. El consumidor especializado ahora admite nombre o username sin cambiar
+  el contrato estricto del filtro transversal; la prueba focalizada pasa `8/8`.
