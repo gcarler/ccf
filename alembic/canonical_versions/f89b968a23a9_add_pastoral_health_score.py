@@ -20,12 +20,23 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
-    with op.batch_alter_table("personas") as batch_op:
-        batch_op.add_column(sa.Column("health_score", sa.Integer(), nullable=True))
-        batch_op.add_column(sa.Column("health_status", sa.String(length=20), nullable=True))
+    existing = {column["name"] for column in sa.inspect(op.get_bind()).get_columns("personas")}
+    missing = {
+        "health_score": sa.Column("health_score", sa.Integer(), nullable=True),
+        "health_status": sa.Column("health_status", sa.String(length=20), nullable=True),
+    }
+    if any(name not in existing for name in missing):
+        with op.batch_alter_table("personas") as batch_op:
+            for name, column in missing.items():
+                if name not in existing:
+                    batch_op.add_column(column)
 
 
 def downgrade() -> None:
-    with op.batch_alter_table("personas") as batch_op:
-        batch_op.drop_column("health_status")
-        batch_op.drop_column("health_score")
+    existing = {column["name"] for column in sa.inspect(op.get_bind()).get_columns("personas")}
+    if "health_score" in existing or "health_status" in existing:
+        with op.batch_alter_table("personas") as batch_op:
+            if "health_status" in existing:
+                batch_op.drop_column("health_status")
+            if "health_score" in existing:
+                batch_op.drop_column("health_score")

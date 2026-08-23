@@ -19,6 +19,10 @@ if PROJECT_ROOT is None:
     raise RuntimeError(f"backend package not found above {HERE}")
 
 os.chdir(PROJECT_ROOT)
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
+
+from scripts.quality_environment import QualityEnvironment
 
 GREEN = "\033[0;32m"
 RED = "\033[0;31m"
@@ -95,6 +99,12 @@ def main() -> int:
     section("ACADEMY QUALITY — FULL SUITE (16 files)")
     info(f"Proyecto: {PROJECT_ROOT}")
     info(f"Python: {sys.executable}")
+    try:
+        quality_env = QualityEnvironment.from_process(require_api=False)
+    except Exception as exc:
+        fail(str(exc))
+        return 1
+    info(f"Entorno: {quality_env.describe()}")
 
     # Verify all test files exist
     missing = [f for f in ACADEMY_TEST_FILES if not (PROJECT_ROOT / f).is_file()]

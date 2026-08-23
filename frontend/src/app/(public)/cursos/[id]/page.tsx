@@ -83,6 +83,15 @@ export default function CursoDetailPage() {
 
     const [enrollSuccessData, setEnrollSuccessData] = useState<{ course_id?: string; redirect_url?: string } | null>(null);
 
+    useEffect(() => {
+        if (!showEnrollModal) return;
+        const handleEscape = (event: KeyboardEvent) => {
+            if (event.key === "Escape") setShowEnrollModal(false);
+        };
+        document.addEventListener("keydown", handleEscape);
+        return () => document.removeEventListener("keydown", handleEscape);
+    }, [showEnrollModal]);
+
     const submitEnroll = async (e: React.FormEvent) => {
         e.preventDefault();
         setEnrollSubmitting(true);
@@ -98,6 +107,8 @@ export default function CursoDetailPage() {
             });
             setEnrolled(true);
             setEnrollSuccessData(res);
+            setShowEnrollModal(false);
+            setEnrollForm({ fullName: "", email: "", phone: "" });
             const successToast = getString(cms, "enroll_success_toast");
             if (successToast) {
                 toast.success(applyTemplate(successToast, { title: course?.title ?? "" }));
