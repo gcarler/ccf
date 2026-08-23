@@ -92,17 +92,22 @@ def list_event_sedes(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_evangelism_read),
 ):
-    """Lista las sedes activas y permite seleccionar el alcance global."""
-    result = [
-        {"id": str(sede.id), "name": sede.nombre}
-        for sede in (
-            db.query(models.Sede)
-            .filter(models.Sede.es_activa.is_(True), models.Sede.deleted_at.is_(None))
-            .order_by(models.Sede.nombre.asc())
-            .all()
+    """Lista la sede del usuario + opción global. No expone catálogo completo de sedes."""
+    user_sede = require_user_sede_id(db, current_user)
+    user_sede_row = (
+        db.query(models.Sede)
+        .filter(
+            models.Sede.id == user_sede,
+            models.Sede.es_activa.is_(True),
+            models.Sede.deleted_at.is_(None),
         )
-    ]
-    result.insert(0, {"id": "global", "name": "Universo (todas las sedes)"})
+        .first()
+    )
+    result = []
+    if user_sede_row:
+        result.append({"id": str(user_sede_row.id), "name": user_sede_row.nombre})
+    # Opción global (NULL) — visible para todas las sedes
+    result.append({"id": "global", "name": "Universo (todas las sedes)"})
     return result
 
 
@@ -190,10 +195,16 @@ def create_event(
     current_user: models.User = Depends(require_evangelism_manage),
 ):
     payload = schemas.CrmEventCreate(**normalize_role_scope_payload(payload.model_dump()))
+    user_sede = require_user_sede_id(db, current_user)
     event = crud.create_crm_event(db, payload)
-    # La UI pregunta explícitamente el alcance: UUID = sede seleccionada;
-    # NULL = Universo. Nunca se infiere una sede por defecto para el administrador.
-    event.sede_id = payload.sede_id
+    # sede_id del usuario autenticado, NO del cliente. NULL = global requiere rol admin.
+    # Un operador de sede A no puede crear eventos en sede B.
+    if payload.sede_id is not None and str(payload.sede_id) != str(user_sede):
+        raise HTTPException(
+            status_code=403,
+            detail="No puedes crear eventos para una sede distinta a la tuya.",
+        )
+    event.sede_id = payload.sede_id if payload.sede_id is not None else user_sede
     db.commit()
     db.refresh(event)
     record_admin_action(

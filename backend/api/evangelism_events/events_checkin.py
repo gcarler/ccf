@@ -95,9 +95,9 @@ def fast_checkin_visitor(
         is_new_visitor = False
     else:
         is_new_visitor = True
-        # Un evento específico conserva su sede; un evento Universo asigna la
-        # persona a la sede del operador que realiza el check-in.
-        sede_id = event.sede_id or user_sede_id
+        # Sede del usuario autenticado, NO del evento (que puede estar contaminado).
+        # El visitante se asigna a la sede del operador que hace el check-in.
+        sede_id = user_sede_id
         new_visitor = models.Persona(
             first_name=visitor.first_name,
             last_name=visitor.last_name,
@@ -380,7 +380,7 @@ def unified_checkin(
                 last_name=payload.last_name,
                 phone=payload.phone,
                 email=payload.email,
-                sede_id=event.sede_id or user_sede_id,
+                sede_id=user_sede_id,
                 church_role="Visitante",
                 spiritual_status="Nuevo",
             )
