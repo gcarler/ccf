@@ -25,6 +25,7 @@ from backend.api.evangelism_shared import (
     session_read_value,
     utc_now,
 )
+from backend.core.audit import record_admin_action
 from backend.core.database import get_db
 from backend.core.permissions import (
     get_current_user,
@@ -33,7 +34,6 @@ from backend.core.permissions import (
     require_evangelism_read,
 )
 from backend.core.tenant import require_user_sede_id
-from backend.core.audit import record_admin_action
 from backend.models import GrupoEvangelismo, SesionGrupo
 
 router = APIRouter()

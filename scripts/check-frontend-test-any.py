@@ -61,10 +61,27 @@ def _git_diff_cmd(base_ref: str | None, *args: str) -> list[str]:
     return cmd
 
 
+def _resolve_base_ref(base_ref: str) -> str:
+    """Resolve CI's remote ref, tolerating checkout refspec differences."""
+    candidates = [base_ref]
+    if base_ref.startswith("origin/"):
+        candidates.append(base_ref.removeprefix("origin/"))
+    for candidate in candidates:
+        result = subprocess.run(
+            ["git", "rev-parse", "--verify", f"{candidate}^{{commit}}"],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        if result.returncode == 0:
+            return candidate
+    raise subprocess.CalledProcessError(128, ["git", "rev-parse", base_ref])
+
+
 def _range_spec(base_ref: str | None) -> str:
     if base_ref is None:
         return "--cached"
-    return f"{base_ref}...HEAD"
+    return f"{_resolve_base_ref(base_ref)}...HEAD"
 
 
 def get_changed_files(base_ref: str | None) -> list[str]:

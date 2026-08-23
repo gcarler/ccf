@@ -196,3 +196,74 @@ El plan se considera completado cuando:
 Antes de modificar código, consultar este documento y actualizar la sección
 `Estado actual`. Cada fase debe cerrar con evidencia: comando ejecutado,
 resultado y artefactos generados.
+
+## 8. Plan operativo vigente: cierre de los bloqueos de CI
+
+### Diagnóstico de la ejecución oficial
+
+La primera ejecución del PR #13 no falló por la funcionalidad pública de
+Academia. Falló por tres dependencias estructurales del proceso:
+
+1. El baseline canónico usaba columnas `CITEXT`, pero la creación de la
+   extensión solo estaba en el provisionador local. Una instalación limpia de
+   CI no podía ejecutar las migraciones.
+2. El gate backend encontró cinco errores Ruff reproducibles en archivos del
+   backend. Aunque eran preexistentes, bloqueaban correctamente la publicación
+   y debían corregirse en origen.
+3. El detector de `any` del frontend suponía que siempre existiría el ref
+   `origin/main`. El checkout del CI solo garantizaba el ref local `main`, por
+   lo que el detector fallaba antes de analizar los archivos.
+
+### Correcciones estructurales en curso
+
+- [x] Hacer que el baseline cree `citext` y `pgcrypto` en PostgreSQL antes de
+  construir el esquema.
+- [x] Corregir los cinco hallazgos Ruff sin silenciar el linter ni ampliar su
+  exclusión:
+  - imports desordenados en tres módulos de Evangelismo;
+  - variable de evento no utilizada en check-in;
+  - filtro de sede no utilizado en dashboard.
+- [x] Hacer que el detector frontend resuelva `origin/main` o `main` según el
+  ref disponible en el checkout.
+- [ ] Ejecutar validación local específica y el runner completo de calidad.
+- [ ] Crear un commit exclusivo de estas correcciones.
+- [ ] Actualizar la rama temporal con `--force-with-lease` solo si el rebase
+  cambia su historial; nunca usar `--no-verify`.
+- [ ] Esperar el resultado completo del PR #13 y corregir únicamente fallos
+  reproducibles.
+
+### Secuencia obligatoria de integración
+
+```text
+correcciones estructurales
+        ↓
+lint + pruebas focalizadas
+        ↓
+runner completo + build
+        ↓
+push únicamente de integration/academy-public-courses-20260823-v2
+        ↓
+CI verde del PR #13
+        ↓
+merge a main
+        ↓
+smoke post-merge sobre main
+        ↓
+archive/merged/integration-academy-public-courses-20260823-v2
+```
+
+### Regla de ramas
+
+`main` es la única rama canónica y estable. Cada módulo conserva su rama de
+trabajo. Los cambios transversales de calidad se mantienen en la rama
+temporal de integración hasta que el PR sea verde. No se mezclan ramas con
+conflictos a la fuerza ni se publica directamente sobre `main`.
+
+### Evidencia pendiente de cierre
+
+- Commit de remediación del CI.
+- SHA remoto validado después de la remediación.
+- Resultado verde de todos los checks del PR #13.
+- SHA de `main` posterior al merge.
+- Smoke post-merge y confirmación de que la rama archivada conserva el mismo
+  historial.

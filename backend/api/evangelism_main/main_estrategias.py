@@ -11,10 +11,10 @@ from sqlalchemy.orm import Session
 
 from backend import crud, models
 from backend.api.evangelism_shared import get_visible_strategy, sessions_grupo_has_estado_habilitacion
+from backend.core.audit import record_admin_action
 from backend.core.database import get_db
 from backend.core.permissions import require_evangelism_manage, require_evangelism_read
 from backend.core.tenant import require_user_sede_id
-from backend.core.audit import record_admin_action
 from backend.crud.evangelism import (
     create_estrategia as create_evangelism_strategy,
 )
