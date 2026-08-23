@@ -32,6 +32,13 @@ def test_structural_accepts_shared_platform_files():
     assert ownership_violations("feature/modulo-estructural", files) == []
 
 
+def test_evangelism_accepts_forensic_audit_report():
+    assert ownership_violations(
+        "feature/evangelism",
+        ["docs/AUDITORIA_FORENSE_EVANGELISMO_2026-08-23.md"],
+    ) == []
+
+
 def test_module_suffixes_preserve_thematic_branches():
     assert module_for_branch("feature/evangelism-audit") == "evangelism"
     assert module_for_branch("feat/cms-nosotros-stats") == "cms"

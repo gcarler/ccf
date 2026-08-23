@@ -75,6 +75,7 @@ MODULE_PREFIXES: dict[str, tuple[str, ...]] = {
         "docs/EVANGELISMO_",
         "docs/ESTADO_EVANGELISMO.md",
         "docs/PLAN_EVANGELISMO_",
+        "docs/AUDITORIA_FORENSE_EVANGELISMO_",
     ),
     "cms": (
         "backend/api/cms",
