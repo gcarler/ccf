@@ -26,6 +26,12 @@ def upgrade() -> None:
     from backend.core.database import Base
 
     bind = op.get_bind()
+    if bind.dialect.name == "postgresql":
+        # The canonical metadata contains CITEXT columns. Extensions belong
+        # to the migration contract so CI, fresh installs and quality
+        # provisioners all share the same prerequisite behavior.
+        bind.exec_driver_sql("CREATE EXTENSION IF NOT EXISTS citext")
+        bind.exec_driver_sql("CREATE EXTENSION IF NOT EXISTS pgcrypto")
     Base.metadata.create_all(bind=bind)
 
 

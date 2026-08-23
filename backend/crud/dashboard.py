@@ -1223,7 +1223,6 @@ def get_projects_dashboard(db: Session, sede_id: Optional[str] = None) -> Projec
     # Projects without sede_id (NULL) are global/demo and excluded
     # from seated actors to avoid cross-sede leakage.
     sede_filter = "AND p.sede_id = :sede_id" if sede_id else ""
-    task_sede_filter = "AND pt.sede_id = :sede_id" if sede_id else ""
     # For tasks joined via projects, filter at the project level.
     params: dict = {}
     if sede_id:

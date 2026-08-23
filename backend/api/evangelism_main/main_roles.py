@@ -9,10 +9,10 @@ from sqlalchemy.orm import Session
 
 from backend import models, schemas
 from backend.api.evangelism_shared import get_visible_strategy
+from backend.core.audit import record_admin_action
 from backend.core.database import get_db
 from backend.core.permissions import require_evangelism_manage, require_evangelism_read
 from backend.core.tenant import require_user_sede_id
-from backend.core.audit import record_admin_action
 
 roles_router = APIRouter(tags=["Evangelismo - Roles y Excusas"])
 
