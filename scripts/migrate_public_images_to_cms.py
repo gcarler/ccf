@@ -23,6 +23,8 @@ import sys
 from pathlib import Path
 from typing import Any, Iterable
 
+from sqlalchemy import inspect as sqlalchemy_inspect
+
 _HERE = Path(__file__).resolve()
 _PROJECT_ROOT = next(
     (p for p in _HERE.parents if (p / "backend" / "__init__.py").is_file()),
@@ -243,7 +245,8 @@ def rewrite_cms_references(
     # Announcements are optional across deployments; keep this migration
     # compatible with databases that do not load that legacy model.
     announcement_model = getattr(models, "Announcement", None)
-    if announcement_model is not None and hasattr(announcement_model, "image_url"):
+    announcements_table_exists = sqlalchemy_inspect(db.bind).has_table("announcements")
+    if announcement_model is not None and announcements_table_exists and hasattr(announcement_model, "image_url"):
         changed += _rewrite_model_field(db.query(announcement_model).all(), "image_url", replacements)
 
     return changed

@@ -99,7 +99,7 @@ export default function CmsMediaLibrary() {
     if (!token) { setLoading(false); return; }
     setLoading(true);
     try {
-      const data = await apiFetch<{ items: MediaItem[]; total: number }>("/cms/media", { token, cache: "no-store", query: { include_archived: true } });
+      const data = await apiFetch<{ items: MediaItem[]; total: number }>("/cms/media", { token, cache: "no-store", query: { include_archived: true, limit: 500 } });
       setItems(data?.items || []);
     } catch {
       setItems([]);
