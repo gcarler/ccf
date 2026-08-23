@@ -211,7 +211,7 @@ export default function PastorDetailPage() {
                                 {/* ── Quote ── */}
                                 <div className="relative p-6 md:p-7 bg-gradient-to-br from-[hsl(var(--surface-1))] to-white dark:from-white/[0.03] dark:to-white/[0.01] rounded-[1.25rem] border border-[hsl(var(--border))]/50 dark:border-white/[0.05] shadow-lg shadow-black/10/30 dark:shadow-none">
                                     <Quote className="absolute top-5 left-5 text-[hsl(var(--primary))/0.1]" size={40} />
-                                    <p className="relative z-10 text-base md:text-lg text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] font-medium italic leading-relaxed pt-8 pl-1">
+                                    <p className="relative z-10 text-base md:text-lg text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-primary))] font-medium italic leading-relaxed pt-8 pl-1">
                                         &ldquo;{plainText(pastor.bio_short || pastor.story)}&rdquo;
                                     </p>
                                     <div className="flex items-center gap-3 mt-5 pl-1">
@@ -297,7 +297,7 @@ export default function PastorDetailPage() {
                                         {getString(cms, "motto_label") && (
                                             <p className="text-2xs font-bold uppercase tracking-[0.2em] text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] mb-1.5">{getString(cms, "motto_label")}</p>
                                         )}
-                                        <p className="text-base md:text-lg text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] font-medium leading-relaxed">
+                                        <p className="text-base md:text-lg text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-primary))] font-medium leading-relaxed">
                                             {plainText(pastor.bio_short || pastor.story)}
                                         </p>
                                     </div>
@@ -339,22 +339,22 @@ export default function PastorDetailPage() {
                             {/* ── Contenido con tipografía premium ── */}
                             <div
                                 className="
-                                    text-base md:text-lg leading-[1.85] space-y-6
-                                    text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]
-                                    [&_p]:leading-[1.85] [&_p]:text-[hsl(var(--text-primary))] [&_p]:dark:text-[hsl(var(--text-secondary))]
-                                    [&_p:first-child]:text-lg [&_p:first-child]:md:text-xl [&_p:first-child]:font-medium [&_p:first-child]:text-[hsl(var(--text-primary))] [&_p:first-child]:dark:text-white
+                                    text-base md:text-lg leading-relaxed space-y-6
+                                    text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-primary))]
+                                    [&_p]:leading-relaxed [&_p]:text-[hsl(var(--text-primary))] [&_p]:dark:text-[hsl(var(--text-primary))]
+                                    [&_p:first-child]:font-medium
                                     [&_blockquote]:border-l-[3px] [&_blockquote]:border-l-[hsl(var(--primary))]
                                     [&_blockquote]:pl-6 [&_blockquote]:py-4 [&_blockquote]:my-8
                                     [&_blockquote]:bg-gradient-to-r [&_blockquote]:from-[hsl(var(--primary))/0.04] [&_blockquote]:to-transparent
                                     [&_blockquote]:rounded-r-xl
-                                    [&_blockquote_p]:text-lg [&_blockquote_p]:md:text-xl
-                                    [&_blockquote_p]:text-[hsl(var(--text-secondary))] [&_blockquote_p]:dark:text-[hsl(var(--text-secondary))]
+                                    [&_blockquote_p]:text-base [&_blockquote_p]:md:text-lg
+                                    [&_blockquote_p]:text-[hsl(var(--text-primary))] [&_blockquote_p]:dark:text-[hsl(var(--text-primary))]
                                     [&_blockquote_p]:font-medium [&_blockquote_p]:leading-relaxed
                                     [&_blockquote_p]:italic
                                     [&_blockquote_p]:before:content-['\\201C'] [&_blockquote_p]:before:text-[hsl(var(--primary))] [&_blockquote_p]:before:text-2xl [&_blockquote_p]:before:mr-1
                                     [&_blockquote_p]:after:content-['\\201D'] [&_blockquote_p]:after:text-[hsl(var(--primary))]
-                                    [&_strong]:text-[hsl(var(--text-primary))] [&_strong]:dark:text-white [&_strong]:font-bold
-                                    [&_em]:text-[hsl(var(--text-secondary))] [&_em]:dark:text-[hsl(var(--text-secondary))]
+                                    [&_strong]:text-[hsl(var(--text-primary))] [&_strong]:dark:text-[hsl(var(--text-primary))] [&_strong]:font-bold
+                                    [&_em]:text-[hsl(var(--text-primary))] [&_em]:dark:text-[hsl(var(--text-primary))]
                                 "
                             >
                                 {/* Renderizar bio_full como HTML seguro */}
