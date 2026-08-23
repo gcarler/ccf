@@ -112,9 +112,12 @@ jobs:
     name: Frontend Quality Gate
     runs-on: ubuntu-latest
     env:
-      # next.config.mjs resolves the API rewrite during `next build`, so the
-      # canonical public origin must be present before the E2E step starts.
+      # next.config.mjs resolves the API rewrite during `next build`. SSR uses
+      # the canonical API while browser requests remain same-origin through
+      # Next's /api proxy, so CI never depends on localhost:8000.
       API_PROXY_TARGET: https://ministerioselfaro.org
+      API_BASE_URL: https://ministerioselfaro.org/api
+      NEXT_PUBLIC_API_URL: /api
     steps:
       - uses: actions/checkout@v4
         with:
@@ -165,7 +168,7 @@ jobs:
           PLAYWRIGHT_MANAGED_WEBSERVER: "1"
           PLAYWRIGHT_BASE_URL: ""
           BASE_URL: http://localhost:4173
-          NEXT_PUBLIC_API_URL: http://localhost:8000
+          NEXT_PUBLIC_API_URL: /api
 
       - name: Upload frontend coverage
         uses: codecov/codecov-action@v4

@@ -338,3 +338,8 @@ conflictos a la fuerza ni se publica directamente sobre `main`.
   rewrites en tiempo de build. El origen quedó finalmente en el `env` del job
   `frontend-quality`, antes de `npm run build`, para que el artefacto generado
   y el servidor Playwright compartan el mismo contrato.
+- El contrato queda separado por contexto: `API_BASE_URL` apunta al origen
+  canónico para SSR, mientras `NEXT_PUBLIC_API_URL=/api` mantiene las
+  solicitudes del navegador same-origin y las entrega al proxy de Next. Así
+  el E2E no intenta conectarse a `localhost:8000`, donde CI no levanta un
+  backend, ni depende de un destino implícito compilado.
