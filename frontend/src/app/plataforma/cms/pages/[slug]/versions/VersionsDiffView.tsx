@@ -405,8 +405,8 @@ function sectionTone(status: SectionDiffT["status"]) {
     case "visibility-changed":
     case "status-changed":
       return {
-        container: "border-[hsl(var(--domain-fuchsia)/30%)] dark:border-[hsl(var(--domain-fuchsia)/30%)] bg-[hsl(var(--domain-fuchsia)/40%)] dark:bg-[hsl(var(--domain-fuchsia)/5%)]",
-        badge: "bg-[hsl(var(--domain-fuchsia)/20%)] dark:bg-[hsl(var(--domain-fuchsia)/20%)] text-[hsl(var(--domain-fuchsia)/90%)] dark:text-[hsl(var(--domain-fuchsia))]",
+        container: "border-blue-200 dark:border-blue-500/30 bg-blue-50 dark:bg-blue-500/5",
+        badge: "bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-300",
       };
     case "unchanged":
     default:
