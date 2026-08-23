@@ -25,7 +25,12 @@ if [ -n "$(git status --short)" ]; then
 fi
 
 echo "→ Sincronizando base remota: $REMOTE/$BRANCH"
-git fetch --prune "$REMOTE" "$BRANCH"
+if git ls-remote --exit-code --heads "$REMOTE" "refs/heads/$BRANCH" >/dev/null 2>&1; then
+    git fetch --prune "$REMOTE" "$BRANCH"
+else
+    echo "→ La rama $REMOTE/$BRANCH aún no existe; se validará contra $REMOTE/main"
+    git fetch --prune "$REMOTE" main
+fi
 
 LOCAL_BASE="$(git rev-parse "refs/remotes/$REMOTE/$BRANCH" 2>/dev/null || true)"
 if [ -z "$LOCAL_BASE" ]; then
