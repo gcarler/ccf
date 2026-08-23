@@ -350,3 +350,8 @@ conflictos a la fuerza ni se publica directamente sobre `main`.
   `tests/e2e/public-pages.spec.ts`, que es el smoke público estable. Las suites
   profundas se reservan para un job posterior con staging aislado, usuario E2E
   exclusivo y fixtures versionados; no se mezclan con producción.
+- En la corrida siguiente el smoke público pasó `25/25`; el único fallo fue el
+  parser del umbral de cobertura, que reejecutaba Vitest y trataba su salida
+  mezclada con warnings como JSON, produciendo `0%`. El gate se corrige para
+  calcular líneas cubiertas desde el `frontend/coverage/lcov.info` generado por
+  el paso oficial, sin duplicar la suite.
