@@ -20,10 +20,13 @@ Una rama listada aqui no debe reutilizarse, hacer push ni fusionarse de nuevo po
 | ARCHIVADA - NO REACTIVAR | `integration/archive-policy-consistency-20260823-v2` | merged | `a1320ba1b2044896f5239565d30de0e0d379af63` | Version v2 integrada en `main`; se conserva como evidencia. |
 
 | ARCHIVADA - NO REACTIVAR | `feature/projects-whiteboard` | stale | `8e0159d34b124d58b3a4671f2002849f0bae1363` | Whiteboard y WebSocket ya estan absorbidos en `main`; la rama conserva una version historica que no debe fusionarse completa. |
+| ARCHIVADA - NO REACTIVAR | `fix/color-palette-regression` | stale | `9e42a2a742188ed3653026bade99d040cd2b76dc` | Rama historica basada en un arbol antiguo; su correccion de paleta fue rescatada selectivamente desde el `main` actual. |
+| ARCHIVADA - NO REACTIVAR | `feature/frontend-color-palette-main-20260823` | merged | `68131cbfda3e3d4edd02d9449c18b36a067dbb9d` | Rescate selectivo de tokens de paleta prohibidos, integrado en `main`; se conserva como evidencia. |
+| ARCHIVADA - NO REACTIVAR | `integration/frontend-color-palette-main-20260823-v2` | merged | `add3e318365c00d80b4c7ba4cb7bae68e83e02d8` | Integracion v2 basada en el `main` mas reciente, ya absorbida en `main`; se conserva como evidencia. |
 
 ## Fuera de este archivo
 
-`fix/color-palette-regression` permanece activa para rescatar selectivamente los cambios que aun puedan ser utiles. No se debe fusionar completa sobre `main`.
+La correccion de paleta ya fue rescatada selectivamente en `feature/frontend-color-palette-main-20260823` y publicada en `main`. La rama historica no debe reactivarse ni fusionarse completa.
 
 ## Regla de reactivacion
 
