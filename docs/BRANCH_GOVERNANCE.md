@@ -3,7 +3,7 @@
 **Estado:** vigente
 **Corte del inventario:** 2026-08-23 (actualizado tras integrar tipografía pastoral)
 **Rama canónica:** `main`
-**`origin/main` actual:** `2a203fd4`
+**`origin/main` actual:** `43ee8ae1`
 
 Este documento es el mapa operativo para todos los agentes que trabajen en el
 repositorio CCF. Complementa `AGENTS_RULES_CCF.md`, `REGLAS.md` y la sección de
@@ -94,7 +94,7 @@ republicarse como ramas activas:
 - Normalización de color e interlineado en todas las vistas públicas de pastores.
 
 Los SHA funcionales de referencia son `dc16819d`, `365d7f5a` y `e479607c`;
-el merge vigente de `main` es `2a203fd4`.
+el merge vigente de `main` es `43ee8ae1`.
 
 ## Ramas archivadas
 
