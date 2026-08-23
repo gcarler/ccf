@@ -3,6 +3,8 @@
 # Si cualquier validación crítica falla, el push se bloquea.
 set -euo pipefail
 
+PUSH_REMOTE="${1:-origin}"
+
 REPO_ROOT="$(git rev-parse --show-toplevel)"
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -76,6 +78,19 @@ if [ "$CURRENT_BRANCH" != "$PUSH_BRANCH" ]; then
     echo "  Rama destino: $PUSH_BRANCH"
     echo "  Cambia al worktree de la rama destino antes de hacer push."
     exit 2
+fi
+
+# Deleting a branch is allowed only after its normalized archive ref exists.
+ZERO_SHA="0000000000000000000000000000000000000000"
+if [ "$PUSH_LOCAL_SHA" = "$ZERO_SHA" ]; then
+    ARCHIVE_BRANCH="${PUSH_BRANCH//\//-}"
+    if ! git ls-remote --exit-code "$PUSH_REMOTE" \
+        "refs/heads/archive/merged/$ARCHIVE_BRANCH" >/dev/null 2>&1; then
+        echo -e "${RED}✗ Eliminación bloqueada: falta archive/merged/$ARCHIVE_BRANCH.${NC}"
+        exit 2
+    fi
+    echo -e "${GREEN}✓ Eliminación validada: archive/merged/$ARCHIVE_BRANCH conserva la rama.${NC}"
+    exit 0
 fi
 
 if [ -z "${CCF_PRE_PUSH_BASE:-}" ]; then
