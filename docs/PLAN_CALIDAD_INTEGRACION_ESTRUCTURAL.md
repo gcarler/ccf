@@ -151,8 +151,8 @@ desarrollo, staging o producción por defecto.
 - [ ] Ejecutar el runner completo sobre la rama temporal basada en el
   `origin/main` más reciente.
 - [ ] Ejecutar contrato de rama, lint, pruebas, suites modulares y build.
-- [ ] Publicar únicamente la rama temporal.
-- [ ] Confirmar el SHA remoto.
+- [x] Publicar únicamente la rama temporal.
+- [x] Confirmar el SHA remoto (`daa7e3ced180482a7bed88b4362d74d949e7436d`).
 - [ ] Fusionar la rama temporal a `main`.
 - [ ] Ejecutar smoke post-merge.
 - [ ] Archivar la rama bajo `archive/merged/` después de confirmar la fusión.
@@ -179,8 +179,11 @@ El plan se considera completado cuando:
   OK`, `234 passed`, `2 skipped` gated).
 - **Provisionamiento:** baseline canónico, extensiones y fixtures reproducibles
   validados en `ccf_quality_20260823`.
-- **Push:** bloqueado correctamente por el gate de calidad.
-- **Merge a `main`:** pendiente del push validado.
+- **Push:** publicado después de pasar contrato, lint, pruebas, suites
+  modulares y build; el hook confirmó el SHA remoto.
+- **Sincronización:** `origin/main` recibió commits posteriores a la
+  validación; antes del merge hay que rebasar y volver a ejecutar el gate.
+- **Merge a `main`:** pendiente de esa nueva sincronización y validación.
 
 ## 7. Regla de trabajo para futuras sesiones
 
