@@ -276,3 +276,15 @@ conflictos a la fuerza ni se publica directamente sobre `main`.
 - SHA de `main` posterior al merge.
 - Smoke post-merge y confirmación de que la rama archivada conserva el mismo
   historial.
+
+### Registro de ejecución oficial más reciente
+
+- `32656502099` confirmó el detector frontend corregido, pero falló por la
+  instalación desincronizada del lockfile y quedó cancelada.
+- `32656739727` confirmó migraciones (`success`) y los gates backend/CRM
+  avanzaron, pero usaba el commit anterior a la política de instalación
+  reproducible del lockfile; también quedó cancelada para evitar publicar un
+  diagnóstico obsoleto.
+- El SHA actual `725f18a7` contiene el lockfile regenerado y el comando
+  `npm ci --legacy-peer-deps` ya validado localmente. Falta que GitHub ejecute
+  los checks sobre este SHA exacto.
