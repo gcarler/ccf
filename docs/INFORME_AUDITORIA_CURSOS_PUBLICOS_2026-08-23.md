@@ -1,7 +1,7 @@
 # Informe de auditoría forense — Cursos públicos
 
-**Fecha:** 2026-08-23  
-**Alcance:** `/cursos`, `/cursos/[id]`, API pública de cursos, inscripción pública y contratos Academy relacionados.  
+**Fecha:** 2026-08-23
+**Alcance:** `/cursos`, `/cursos/[id]`, API pública de cursos, inscripción pública y contratos Academy relacionados.
 **Metodología:** Octógono Forense CCF: Frontend, Backend, Base de Datos, Integración, Seguridad, Trazabilidad, Resiliencia y Rendimiento.
 
 ## Dictamen ejecutivo
@@ -27,7 +27,7 @@ Se encontraron fallos de severidad alta en el contrato de visibilidad pública, 
 
 ### CURSOS-001 — El detalle público expone cursos no destinados a captación
 
-**Severidad:** Crítica  
+**Severidad:** Crítica
 **Dimensiones:** Backend, Seguridad, Integración
 
 `public_list_courses()` filtra correctamente `access_level` a `open` y `persona`, pero `_find_public_course()` solo valida slug/código/UUID, publicación y borrado lógico.
@@ -45,7 +45,7 @@ Evidencia:
 
 ### CURSOS-002 — Contrato de campos desalineado entre API y frontend
 
-**Severidad:** Alta  
+**Severidad:** Alta
 **Dimensión:** Integración
 
 La respuesta `PublicCursoResponse` entrega `desc`, `imageUrl`, `instructor` e `id`, mientras el listado TypeScript utiliza parcialmente `description`, `imageUrl`, `instructor` y un `slug` opcional que la API no devuelve.
@@ -64,7 +64,7 @@ Evidencia:
 
 ### CURSOS-003 — El listado no diferencia error de API y catálogo vacío
 
-**Severidad:** Alta  
+**Severidad:** Alta
 **Dimensiones:** Frontend, Resiliencia
 
 Ante un error de red o backend, la página vacía `courses` y muestra el estado de catálogo vacío.
@@ -80,7 +80,7 @@ Evidencia:
 
 ### CURSOS-004 — Inscripción pública sin control antiabuso específico
 
-**Severidad:** Alta  
+**Severidad:** Alta
 **Dimensiones:** Seguridad, Trazabilidad, Resiliencia
 
 La ruta pública de inscripción acepta todos los campos como opcionales y no tiene un limitador específico en el decorador del endpoint.
@@ -97,7 +97,7 @@ Evidencia:
 
 ### CURSOS-005 — Catálogo global sin criterio explícito de sede o sitio
 
-**Severidad:** Media  
+**Severidad:** Media
 **Dimensiones:** Base de Datos, Seguridad, Arquitectura
 
 `public_list_courses()` consulta todos los cursos publicados con nivel de acceso público sin filtrar `sede_id` ni recibir `site_key`.
@@ -113,7 +113,7 @@ Evidencia:
 
 ### CURSOS-006 — Listado sin paginación
 
-**Severidad:** Media  
+**Severidad:** Media
 **Dimensión:** Rendimiento
 
 El endpoint usa `.all()` para cargar todos los cursos publicados.
@@ -128,7 +128,7 @@ Evidencia:
 
 ### CURSOS-007 — Drawer de inscripción sin semántica completa de accesibilidad
 
-**Severidad:** Media  
+**Severidad:** Media
 **Dimensiones:** Frontend, Accesibilidad, Resiliencia
 
 El flujo visual es un panel lateral, pero se maneja con el estado `showEnrollModal`, no declara `role="dialog"`, `aria-modal`, etiqueta accesible ni gestión de foco.
@@ -161,3 +161,31 @@ Evidencia:
 ## Estado de cambios
 
 Este informe es únicamente de auditoría. No se modificó código de la aplicación como resultado de esta revisión. El informe quedó registrado en el commit `1222ddc8`; todavía no se ha hecho push.
+
+## Resolución ejecutada por el equipo de desarrollo
+
+La remediación se implementó en `feature/academy` mediante:
+
+- `0bdccf2c fix(academy): proteger catalogo publico y contratos de cursos`
+- `fb88ed8a fix(academy): estabilizar experiencia publica de cursos`
+
+Cambios incluidos:
+
+- Contrato público con `slug`, `description`, `image_url` e `instructor_name`, conservando aliases compatibles.
+- Bloqueo de cursos `advanced` y niveles no públicos en detalle e inscripción.
+- Rate limit de inscripción pública y validación de email o teléfono.
+- Filtro por sede asociada al `site_key`, manteniendo cursos globales.
+- Paginación y conteo agrupado de lecciones para evitar N+1.
+- Uso de `apiFetch()` en la página pública.
+- Enlaces públicos hacia `/cursos/[slug]`.
+- Estados diferenciados de carga, error, vacío y reintento.
+- Mejoras de accesibilidad en el drawer de inscripción.
+
+## Validación de remediación
+
+- `tests/test_public_100pct_coverage.py`: **9 passed**.
+- ESLint de las páginas públicas de cursos: **pasó**.
+- TypeScript: **pasó**.
+- Ruff sobre backend y pruebas: **pasó**.
+
+El Victory Audit final debe ejecutarse después del push y del despliegue para confirmar el comportamiento HTTP real en producción.
