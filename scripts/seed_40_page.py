@@ -67,7 +67,9 @@ def seed_40_page():
                 "Celebra con nosotros cuatro décadas de luz en la Comunidad Cristiana Faro. "
                 "Agenda del aniversario, nuestra historia y un muro de gratitud. ¡Acompáñanos!"
             ),
-            "meta_image": "/aniversario40/gallery-01.jpg",
+            # Absolute URL required by Next metadata/Open Graph in production;
+            # a relative path resolves against the local origin (localhost:3000).
+            "meta_image": "https://ministerioselfaro.org/aniversario40/gallery-01.jpg",
         }
 
         # Check if page already exists

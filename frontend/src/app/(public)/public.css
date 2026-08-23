@@ -501,6 +501,20 @@
     padding-bottom: clamp(6rem, 10vw, 9rem);
 }
 
+.ccf-anniversary-page {
+    padding-top: 0;
+}
+
+.ccf-anniversary-page .ccf-video-hero {
+    min-height: clamp(500px, calc(72vh + 5rem), 840px);
+}
+
+@media (max-width: 767px) {
+    .ccf-anniversary-page .ccf-video-hero {
+        min-height: clamp(460px, calc(72vh + 3rem), 700px);
+    }
+}
+
 .ccf-section-panel {
     background: var(--site-surface-container-low);
     border: 1px solid color-mix(in srgb, var(--site-outline-variant) 42%, transparent);
