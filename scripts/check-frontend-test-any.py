@@ -61,10 +61,39 @@ def _git_diff_cmd(base_ref: str | None, *args: str) -> list[str]:
     return cmd
 
 
+def _resolve_base_ref(base_ref: str) -> str:
+    """Resolve CI's remote ref, tolerating checkout refspec differences."""
+    candidates = [base_ref]
+    if base_ref.startswith("origin/"):
+        candidates.append(base_ref.removeprefix("origin/"))
+    for candidate in candidates:
+        result = subprocess.run(
+            ["git", "rev-parse", "--verify", f"{candidate}^{{commit}}"],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        if result.returncode == 0:
+            return candidate
+    raise subprocess.CalledProcessError(128, ["git", "rev-parse", base_ref])
+
+
 def _range_spec(base_ref: str | None) -> str:
     if base_ref is None:
         return "--cached"
-    return f"{base_ref}...HEAD"
+    resolved_base = _resolve_base_ref(base_ref)
+    merge_base = subprocess.run(
+        ["git", "merge-base", resolved_base, "HEAD"],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    if merge_base.returncode == 0:
+        return f"{resolved_base}...HEAD"
+    # PR checkouts can contain only the base tip and the synthetic merge tip.
+    # A two-dot endpoint diff remains deterministic and avoids failing before
+    # the changed test files can be inspected.
+    return f"{resolved_base}..HEAD"
 
 
 def get_changed_files(base_ref: str | None) -> list[str]:
