@@ -141,31 +141,6 @@ El wrapper bloquea worktrees sucios, ramas equivocadas y bases remotas
 desactualizadas. El hook `pre-push` añade la validación de propietario de
 archivos: si Academy toca Evangelismo, CMS u otro módulo, el push se rechaza.
 
-### Flujo sectorizado de ramas y push
-
-Cada módulo se publica desde su propia rama y worktree. No se deben empujar
-commits de un módulo desde la rama de otro módulo:
-
-| Propietario | Rama |
-|---|---|
-| Núcleo estructural | `feature/modulo-estructural` |
-| Academy | `feature/academy` |
-| Mensajería | `feature/messaging` |
-| Evangelismo | `feature/evangelism` |
-| CMS | `feature/cms` |
-
-Usa el wrapper para que el proceso haga fetch, valide que el worktree está
-limpio, mantenga viva la conexión SSH durante el gate y confirme el SHA remoto:
-
-```bash
-cd /root/ccf-academy-push
-/root/ccf/scripts/push_branch.sh origin feature/academy
-```
-
-El wrapper bloquea worktrees sucios, ramas equivocadas y bases remotas
-desactualizadas. El hook `pre-push` añade la validación de propietario de
-archivos: si Academy toca Evangelismo, CMS u otro módulo, el push se rechaza.
-
 ### Pre-Deploy Checklist
 
 - [ ] 1. `git status --short` — sin cambios locales no deseados
