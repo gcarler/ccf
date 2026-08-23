@@ -323,3 +323,14 @@ conflictos a la fuerza ni se publica directamente sobre `main`.
 - El hook usa esa modalidad para Academia y Projects. Evidencia local:
   Academia `9/9 suites OK`, Projects `49 passed, 0 failed`; ambas bases y
   procesos temporales quedaron eliminados al terminar.
+
+### Corrección del origen E2E
+
+- El CI `32661908589` dejó verdes migraciones, backend, CRM, lint, tipos y
+  build, pero el E2E falló con `58` errores en cascada. La causa no era cada
+  pantalla: `API_PROXY_TARGET` apuntaba a `https://elfarocc.tech`, cuyo TLS
+  devolvía `internal error` desde el runner.
+- La comprobación directa confirmó que el origen canónico
+  `https://ministerioselfaro.org` responde `200` para `/api/system/health` y
+  `/api/cms/v2/public/sites/ccf/pages/home`. El workflow ahora usa ese origen;
+  se mantiene la dependencia explícita y verificable del despliegue público.
