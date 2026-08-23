@@ -59,6 +59,8 @@ frontend/.env.local
 frontend/.eslintcache
 frontend/.lighthouseci/
 frontend/.next/
+frontend/.next-dev/
+frontend/.next-command.lock/
 frontend/.next.backup-*/
 # Directorios de build del deploy seguro (nunca servidos directamente)
 frontend/.next-build/
