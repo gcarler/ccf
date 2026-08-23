@@ -130,6 +130,8 @@ desarrollo, staging o producción por defecto.
   totalmente orquestado.
 - [x] Validar PostgreSQL, extensiones, `alembic_version` y `/openapi.json`
   antes de ejecutar las suites.
+- [x] Permitir reintento de red mediante evidencia temporal exacta de
+  rama/SHA/base, sin repetir ni omitir el gate.
 - [ ] Esperar `/healthz` antes de ejecutar suites HTTP.
 - [ ] Pasar la misma configuración al backend y a cada script.
 - [ ] Guardar logs separados por suite.
@@ -150,9 +152,9 @@ desarrollo, staging o producción por defecto.
 
 - [ ] Ejecutar el runner completo sobre la rama temporal basada en el
   `origin/main` más reciente.
-- [ ] Ejecutar contrato de rama, lint, pruebas, suites modulares y build.
+- [x] Ejecutar contrato de rama, lint, pruebas, suites modulares y build.
 - [x] Publicar únicamente la rama temporal.
-- [x] Confirmar el SHA remoto (`daa7e3ced180482a7bed88b4362d74d949e7436d`).
+- [x] Confirmar el SHA remoto validado (`afb5dfccec1eaf14f5687e7bcffb4d325c9c60a4`).
 - [ ] Fusionar la rama temporal a `main`.
 - [ ] Ejecutar smoke post-merge.
 - [ ] Archivar la rama bajo `archive/merged/` después de confirmar la fusión.
@@ -180,7 +182,11 @@ El plan se considera completado cuando:
 - **Provisionamiento:** baseline canónico, extensiones y fixtures reproducibles
   validados en `ccf_quality_20260823`.
 - **Push:** publicado después de pasar contrato, lint, pruebas, suites
-  modulares y build; el hook confirmó el SHA remoto.
+  modulares y build; el hook confirmó el SHA remoto
+  `afb5dfccec1eaf14f5687e7bcffb4d325c9c60a4`.
+- **Selector:** `frontend/next.config.mjs` ya no escala artificialmente a
+  todos los módulos; selecciona build frontend y conserva los propietarios
+  reales del diff.
 - **Sincronización:** `origin/main` recibió commits posteriores a la
   validación; antes del merge hay que rebasar y volver a ejecutar el gate.
 - **Merge a `main`:** pendiente de esa nueva sincronización y validación.
