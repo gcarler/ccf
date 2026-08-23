@@ -37,7 +37,6 @@ Estas ramas contienen trabajo pendiente y no deben fusionarse automáticamente:
 | Estructural | `feature/modulo-estructural` |
 | Academy | `feature/academy` |
 | Contextual / eventos | `feat/contextual-roles-recovery` |
-| Mensajería | `feature/messaging` |
 | CMS | `feat/cms-quality-improvements` |
 | CMS / Nosotros histórico | `feat/cms-nosotros-stats` |
 | Frontend UI | `feature/frontend-ui` |
@@ -69,7 +68,6 @@ Al comparar cada rama contra `origin/main` con `git merge-tree` el 2026-08-23:
 | `feat/contextual-roles-recovery` | 1 |
 | `feature/academy` | 7 |
 | `feature/frontend-ui` | 2 |
-| `feature/messaging` | 232 |
 | `feature/modulo-estructural` | 31 |
 | `feature/projects-whiteboard` | 2 |
 | `feature/security-hardening` | 3 |
@@ -116,6 +114,9 @@ La integración de gobierno quedó archivada en:
 - `archive/merged/feature-events-evangelism` — revisada y archivada 2026-08-22: todo el contenido ya está en main vía merges anteriores + fixes del Octógono Forense. No fusionar — sería un downgrade masivo.
 - `archive/merged/feature-evangelism-fixes` — fixes del Octógono Forense (C-1, C-2, A-1, A-4), integrada a main vía `integration/evangelism-fixes-to-main`.
 - `archive/merged/integration-evangelism-fixes-to-main` — rama de integración que llevó los fixes del Octógono a main.
+- `archive/merged/feature-messaging` — revisada y archivada 2026-08-22: el 99% del contenido ya está en main vía merges anteriores. Solo se extrajo el filtro NFD de @mentions (cherry-pick a `feature/messaging-merge` → `integration/messaging-merge-to-main` → main). No fusionar — sería un downgrade.
+- `archive/merged/feature-messaging-merge` — cherry-pick del filtroAPersonas NFD para @mentions en chat.
+- `archive/merged/integration-messaging-merge-to-main` — rama de integración que llevó el filtro NFD a main.
 
 ## Procedimiento de mantenimiento
 
