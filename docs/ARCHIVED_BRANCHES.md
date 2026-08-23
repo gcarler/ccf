@@ -27,6 +27,8 @@ Una rama listada aqui no debe reutilizarse, hacer push ni fusionarse de nuevo po
 | ARCHIVADA - NO REACTIVAR | `integration/archive-color-palette-20260823` | stale | `7ad336e12be7f28674837f4c93208d2a4976420a` | Integracion supersedida cuando `main` avanzo con cambios concurrentes. |
 | ARCHIVADA - NO REACTIVAR | `integration/archive-color-palette-20260823-v2` | stale | `53c982af2050340ff829a5c3e18b562b8dd0310f` | Integracion supersedida por la v3 basada en un `main` mas reciente. |
 | ARCHIVADA - NO REACTIVAR | `integration/archive-color-palette-20260823-v3` | merged | `81c6807314044b9c91c824ed90f225c726e8eff4` | Integracion final del registro, absorbida en `main`; se conserva como evidencia. |
+| ARCHIVADA - NO REACTIVAR | `docs/archive-color-palette-final-20260823` | stale | `406f13c7c9c8e4e7b0ab13b45876d03d259c58c5` | Rama documental supersedida por la integracion final del registro; se conserva como evidencia. |
+| ARCHIVADA - NO REACTIVAR | `integration/archive-color-palette-final-20260823` | merged | `b0aafee608ed066393cfa958b5eacf40a8a3251d` | Integracion final del registro absorbida en `main`; se conserva como evidencia. |
 
 ## Fuera de este archivo
 
