@@ -3,19 +3,113 @@
 # Si cualquier validación crítica falla, el push se bloquea.
 set -euo pipefail
 
-VENV="/root/ccf/venv/bin"
-MODE="${CCF_PRE_PUSH_MODE:-fast}"
-DEPLOY_AFTER_VALIDATION="${CCF_PRE_PUSH_DEPLOY:-0}"
-RUN_FRONTEND_E2E="${CCF_PRE_PUSH_E2E:-0}"
-BASE_REF="${CCF_PRE_PUSH_BASE:-origin/main}"
-HEAD_REF="${CCF_PRE_PUSH_HEAD:-HEAD}"
+REPO_ROOT="$(git rev-parse --show-toplevel)"
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m'
+if [ -x "$REPO_ROOT/venv/bin/python" ]; then
+    VENV="$REPO_ROOT/venv/bin"
+elif [ -x "/root/ccf/venv/bin/python" ]; then
+    # Los worktrees normalmente comparten el entorno virtual principal.
+    VENV="/root/ccf/venv/bin"
+else
+    echo -e "${RED}✗ No se encontró el entorno virtual de Python${NC}"
+    exit 2
+fi
+MODE="${CCF_PRE_PUSH_MODE:-fast}"
+DEPLOY_AFTER_VALIDATION="${CCF_PRE_PUSH_DEPLOY:-0}"
+RUN_FRONTEND_E2E="${CCF_PRE_PUSH_E2E:-0}"
+QUALITY_TIMEOUT_SECONDS="${CCF_PRE_PUSH_CHECK_TIMEOUT:-300}"
+HEAD_REF="${CCF_PRE_PUSH_HEAD:-HEAD}"
 
 FAIL=0
+
+# Git supplies one line per ref being pushed on stdin.  Read it before any
+# quality work so the hook can derive the real target branch and remote base.
+# This prevents validating Academy against origin/main or pushing from the
+# wrong worktree by accident.
+PUSH_INPUT="$(cat)"
+PUSH_COUNT=0
+PUSH_BRANCH=""
+PUSH_LOCAL_REF=""
+PUSH_LOCAL_SHA=""
+PUSH_REMOTE_REF=""
+PUSH_REMOTE_SHA=""
+while read -r local_ref local_sha remote_ref remote_sha; do
+    [ -n "${local_ref:-}" ] || continue
+    PUSH_COUNT=$((PUSH_COUNT + 1))
+    PUSH_LOCAL_REF="$local_ref"
+    PUSH_LOCAL_SHA="$local_sha"
+    PUSH_REMOTE_REF="$remote_ref"
+    PUSH_REMOTE_SHA="$remote_sha"
+done <<< "$PUSH_INPUT"
+
+# When the hook is invoked directly for a local quality rehearsal there is no
+# Git stdin payload.  Reconstruct the single current-branch push metadata so
+# the same branch contract is exercised without weakening real git pushes.
+if [ -z "$PUSH_INPUT" ]; then
+    CURRENT_BRANCH="$(git symbolic-ref --quiet --short HEAD || true)"
+    if [ -z "$CURRENT_BRANCH" ]; then
+        echo -e "${RED}✗ No se puede validar una rama detached.${NC}"
+        exit 2
+    fi
+    PUSH_LOCAL_REF="refs/heads/$CURRENT_BRANCH"
+    PUSH_LOCAL_SHA="$(git rev-parse HEAD)"
+    PUSH_REMOTE_REF="refs/heads/$CURRENT_BRANCH"
+    PUSH_REMOTE_SHA="$(git rev-parse "origin/$CURRENT_BRANCH" 2>/dev/null || printf '%040d' 0)"
+    PUSH_COUNT=1
+fi
+
+if [ "$PUSH_COUNT" -ne 1 ] || [[ "$PUSH_REMOTE_REF" != refs/heads/* ]]; then
+    echo -e "${RED}✗ Push ambiguo: solo se permite una rama local hacia una rama remota.${NC}"
+    echo "  Usa: scripts/push_branch.sh <rama>"
+    exit 2
+fi
+
+PUSH_BRANCH="${PUSH_REMOTE_REF#refs/heads/}"
+CURRENT_BRANCH="$(git symbolic-ref --quiet --short HEAD || true)"
+if [ "$CURRENT_BRANCH" != "$PUSH_BRANCH" ]; then
+    echo -e "${RED}✗ Worktree incorrecto.${NC}"
+    echo "  Rama activa: ${CURRENT_BRANCH:-detached}"
+    echo "  Rama destino: $PUSH_BRANCH"
+    echo "  Cambia al worktree de la rama destino antes de hacer push."
+    exit 2
+fi
+
+if [ -z "${CCF_PRE_PUSH_BASE:-}" ]; then
+    BASE_REF="origin/$PUSH_BRANCH"
+else
+    BASE_REF="$CCF_PRE_PUSH_BASE"
+fi
+
+if [ "$PUSH_REMOTE_SHA" != "0000000000000000000000000000000000000000" ]; then
+    if ! BASE_SHA="$(git rev-parse "$BASE_REF^{commit}" 2>/dev/null)"; then
+        echo -e "${RED}✗ No existe la base local $BASE_REF.${NC}"
+        echo "  Ejecuta: git fetch origin $PUSH_BRANCH"
+        exit 2
+    fi
+    if [ "$BASE_SHA" != "$PUSH_REMOTE_SHA" ]; then
+        echo -e "${RED}✗ La rama remota avanzó; push rechazado para evitar desorden.${NC}"
+        echo "  Base local:  $BASE_SHA"
+        echo "  Base remota: $PUSH_REMOTE_SHA"
+        echo "  Ejecuta: git fetch origin $PUSH_BRANCH y revisa la rama antes de continuar."
+        exit 2
+    fi
+fi
+
+if [ -z "${CCF_PRE_PUSH_HEAD:-}" ]; then
+    HEAD_REF="$PUSH_LOCAL_REF"
+fi
+
+echo -e "  ${BLUE}Rama validada:${NC} $PUSH_BRANCH"
+echo -e "  ${BLUE}Base remota:${NC} $BASE_REF"
+
+if ! "$VENV/python" "$REPO_ROOT/scripts/check_branch_contract.py" \
+    --branch "$PUSH_BRANCH" --base "$BASE_REF" --head "$HEAD_REF"; then
+    exit 1
+fi
 
 case "$MODE" in
     fast|full) ;;
@@ -31,6 +125,7 @@ echo "🔍 Pre-push: validando cambios antes de enviar a producción..."
 echo -e "  ${BLUE}Modo:${NC} $MODE"
 echo -e "  ${BLUE}Deploy automático:${NC} $DEPLOY_AFTER_VALIDATION"
 echo -e "  ${BLUE}Frontend E2E autenticado:${NC} $RUN_FRONTEND_E2E"
+echo -e "  ${BLUE}Timeout por check:${NC} ${QUALITY_TIMEOUT_SECONDS}s"
 echo -e "  ${BLUE}Diff base/head:${NC} $BASE_REF..$HEAD_REF"
 echo ""
 
@@ -41,7 +136,7 @@ CHANGED_FILES=$(git diff --diff-filter=ACMRTUXB --name-only "$BASE_REF" "$HEAD_R
 PY_FILES=$(printf '%s\n' "$CHANGED_FILES" | grep '\.py$' | while IFS= read -r f; do [ -f "$f" ] && printf '%s\n' "$f"; done || true)
 FRONTEND_FILES=$(printf '%s\n' "$CHANGED_FILES" | grep '^frontend/' | while IFS= read -r f; do [ -f "$f" ] && printf '%s\n' "$f"; done || true)
 ALEMBIC_FILES=$(printf '%s\n' "$CHANGED_FILES" | grep '^alembic/canonical_versions/.*\.py$' || true)
-QUALITY_SELECTOR="$VENV/python /root/ccf/scripts/select_quality_checks.py --base $BASE_REF --head $HEAD_REF"
+QUALITY_SELECTOR="$VENV/python $REPO_ROOT/scripts/select_quality_checks.py --base $BASE_REF --head $HEAD_REF"
 QUALITY_SUMMARY=$($QUALITY_SELECTOR --summary 2>/dev/null || echo "No quality selector summary available.")
 mapfile -t QUALITY_CHECKS < <($QUALITY_SELECTOR 2>/dev/null || true)
 mapfile -t QUALITY_EXPLANATIONS < <($QUALITY_SELECTOR --explain 2>/dev/null || true)
@@ -50,17 +145,38 @@ run_quality_check() {
     local check_id="$1"
     local label="$2"
     local cmd="$3"
-    echo "      - $label"
-    if eval "$cmd" > /tmp/ccf-quality-check.log 2>&1; then
+    local log_file="/tmp/ccf-quality-check-${check_id}.log"
+    local started_at=$SECONDS
+    local rc=0
+    echo "      - $label (máximo ${QUALITY_TIMEOUT_SECONDS}s)"
+    : > "$log_file"
+    timeout --kill-after=10s "${QUALITY_TIMEOUT_SECONDS}s" bash -lc "$cmd" >"$log_file" 2>&1 &
+    local pid=$!
+    while kill -0 "$pid" 2>/dev/null; do
+        sleep 10
+        if kill -0 "$pid" 2>/dev/null; then
+            echo "        … $check_id sigue ejecutándose ($((SECONDS - started_at))s)"
+        fi
+    done
+    if wait "$pid"; then
+        rc=0
+    else
+        rc=$?
+    fi
+    if [ "$rc" -eq 0 ]; then
         local tail_line
-        tail_line=$(tail -n 1 /tmp/ccf-quality-check.log 2>/dev/null || true)
+        tail_line=$(tail -n 1 "$log_file" 2>/dev/null || true)
         echo -e "        ${GREEN}✓${NC} $check_id"
         if [ -n "$tail_line" ]; then
             echo "          $tail_line"
         fi
     else
-        echo -e "        ${RED}✗${NC} $check_id"
-        tail -n 20 /tmp/ccf-quality-check.log 2>/dev/null | sed 's/^/          /'
+        if [ "$rc" -eq 124 ]; then
+            echo -e "        ${RED}✗${NC} $check_id — timeout después de ${QUALITY_TIMEOUT_SECONDS}s"
+        else
+            echo -e "        ${RED}✗${NC} $check_id (exit $rc)"
+        fi
+        tail -n 20 "$log_file" 2>/dev/null | sed 's/^/          /'
         FAIL=1
     fi
 }
@@ -113,7 +229,7 @@ fi
 if [ -n "$ALEMBIC_FILES" ]; then
     echo "  [Migraciones] Cadena Alembic..."    # Validate the active canonical chain through Alembic itself. The legacy
     # alembic/versions directory is archived and is not version_location.
-    cd /root/ccf
+    cd "$REPO_ROOT"
     MIGRATION_CHECK=$($VENV/python -c "
 from alembic.config import Config
 from alembic.script import ScriptDirectory
@@ -142,7 +258,7 @@ fi
 
 # ─── 4. TESTS RÁPIDOS ────────────────────────────────────────────────────────
 echo "  [Tests base] Smoke + structural..."
-cd /root/ccf
+cd "$REPO_ROOT"
 TEST_OUTPUT=$($VENV/python -m pytest tests/test_smoke.py tests/test_structural_contracts.py --override-ini="addopts=-p no:cacheprovider" -v --tb=short -q -x 2>&1) || TEST_RC=$?
 cd - > /dev/null
 
@@ -168,29 +284,29 @@ else
     for check_id in "${QUALITY_CHECKS[@]}"; do
         case "$check_id" in
             academy_quality)
-                run_quality_check "$check_id" "Academy quality" "$VENV/python /root/ccf/scripts/test_academy_quality.py"
+                run_quality_check "$check_id" "Academy quality" "$VENV/python $REPO_ROOT/scripts/test_academy_quality.py"
                 ;;
             cms_quality)
                 if [ "$MODE" = "fast" ] && { [ -z "${E2E_EMAIL:-}" ] || [ -z "${E2E_PASSWORD:-}" ]; }; then
                     echo -e "        ${YELLOW}⚠ cms_quality omitido en modo fast: faltan E2E_EMAIL/E2E_PASSWORD${NC}"
                 else
-                    run_quality_check "$check_id" "CMS quality" "$VENV/python /root/ccf/scripts/test_cms_quality.py"
+                    run_quality_check "$check_id" "CMS quality" "$VENV/python $REPO_ROOT/scripts/test_cms_quality.py"
                 fi
                 ;;
             crm_quality)
-                run_quality_check "$check_id" "CRM quality" "$VENV/python /root/ccf/scripts/test_crm_quality.py"
+                run_quality_check "$check_id" "CRM quality" "$VENV/python $REPO_ROOT/scripts/test_crm_quality.py"
                 ;;
             evangelism_quality)
-                run_quality_check "$check_id" "Evangelism quality" "$VENV/python /root/ccf/scripts/test_evangelism_quality.py"
+                run_quality_check "$check_id" "Evangelism quality" "$VENV/python $REPO_ROOT/scripts/test_evangelism_quality.py"
                 ;;
             messaging_quality)
                 run_quality_check \
                     "$check_id" \
                     "Messaging quality" \
-                    "$VENV/python /root/ccf/scripts/test_messaging_quality.py"
+                    "$VENV/python $REPO_ROOT/scripts/test_messaging_quality.py"
                 ;;
             agenda_quality)
-                run_quality_check "$check_id" "Agenda quality" "$VENV/python /root/ccf/scripts/test_agenda_quality.py"
+                run_quality_check "$check_id" "Agenda quality" "$VENV/python $REPO_ROOT/scripts/test_agenda_quality.py"
                 ;;
             frontend_build)
                 # verify-build.mjs compila a un directorio desechable (.next-verify)
@@ -205,14 +321,14 @@ else
                     run_quality_check \
                         "$check_id" \
                         "Frontend production build" \
-                        "cd /root/ccf/frontend && node scripts/verify-build.mjs"
+                        "cd $REPO_ROOT/frontend && node scripts/verify-build.mjs"
                 fi
                 ;;
             platform_quality)
-                run_quality_check "$check_id" "Platform quality" "$VENV/python /root/ccf/scripts/test_platform_quality.py"
+                run_quality_check "$check_id" "Platform quality" "$VENV/python $REPO_ROOT/scripts/test_platform_quality.py"
                 ;;
             projects_quality)
-                run_quality_check "$check_id" "Projects quality" "$VENV/python /root/ccf/scripts/test_projects_quality.py"
+                run_quality_check "$check_id" "Projects quality" "$VENV/python $REPO_ROOT/scripts/test_projects_quality.py"
                 ;;
             *)
                 echo -e "      ${YELLOW}⚠ Check no reconocido: $check_id${NC}"
@@ -230,7 +346,7 @@ if [ "$MODE" = "full" ] && [ "$RUN_FRONTEND_E2E" = "1" ]; then
         run_quality_check \
             "frontend_e2e_modules" \
             "Frontend modular authenticated smoke" \
-            "cd /root/ccf/frontend && npm run test:e2e:modules"
+            "cd $REPO_ROOT/frontend && npm run test:e2e:modules"
     fi
 fi
 
@@ -247,15 +363,15 @@ if [ "$MODE" = "full" ]; then
 
     if [ -n "$FRONTEND_FILES" ]; then
         echo "  [Runtime full] Estado de build frontend..."
-        BUILD_ID="/root/ccf/frontend/.next/BUILD_ID"
+        BUILD_ID="$REPO_ROOT/frontend/.next/BUILD_ID"
 
         if [ ! -f "$BUILD_ID" ]; then
             echo -e "  ${RED}✗ No hay build de Next.js en .next/${NC}"
-            echo -e "  ${YELLOW}  Ejecuta: cd /root/ccf/frontend && npm run build${NC}"
+            echo -e "  ${YELLOW}  Ejecuta: cd $REPO_ROOT/frontend && npm run build${NC}"
             FAIL=1
-        elif [ ! -d "/root/ccf/frontend/.next/server" ]; then
+        elif [ ! -d "$REPO_ROOT/frontend/.next/server" ]; then
             echo -e "  ${RED}✗ Build incompleto — falta .next/server/${NC}"
-            echo -e "  ${YELLOW}  Ejecuta: cd /root/ccf/frontend && rm -rf .next && npm run build${NC}"
+            echo -e "  ${YELLOW}  Ejecuta: cd $REPO_ROOT/frontend && rm -rf .next && npm run build${NC}"
             FAIL=1
         else
             BUILD_AGE=$(( $(date +%s) - $(stat -c %Y "$BUILD_ID") ))
@@ -328,8 +444,8 @@ echo ""
 # Migraciones Alembic
 if [ -n "$ALEMBIC_FILES" ]; then
     echo "  [deploy] Aplicando migraciones Alembic..."
-    cd /root/ccf
-    if PYTHONPATH=/root/ccf $VENV/alembic upgrade head > /tmp/alembic_deploy.log 2>&1; then
+    cd "$REPO_ROOT"
+    if PYTHONPATH="$REPO_ROOT" $VENV/alembic upgrade head > /tmp/alembic_deploy.log 2>&1; then
         echo -e "  ${GREEN}✓ Migraciones aplicadas${NC}"
     else
         echo -e "  ${YELLOW}⚠ Error en migraciones — revisa /tmp/alembic_deploy.log${NC}"
@@ -368,7 +484,7 @@ fi
 # del HTML de /login era frágil y podía omitir el restart.
 if [ -n "$FRONTEND_FILES" ]; then
     echo "  [deploy] Frontend: build + restart seguros (scripts/deploy_frontend.sh)..."
-    if bash /root/ccf/scripts/deploy_frontend.sh; then
+    if bash "$REPO_ROOT/scripts/deploy_frontend.sh"; then
         echo -e "  ${GREEN}✓ Frontend desplegado — build nuevo en servicio${NC}"
     else
         echo -e "  ${RED}✗ Deploy del frontend falló — revisa los logs${NC}"
