@@ -103,8 +103,6 @@ export default function NosotrosPage() {
             { src: "/api/static/cms/public-site/a663278641a340028b26d6831b08f063.webp", alt: "Comunidad Cristiana El Faro — Nosotros" },
             { src: "/api/static/cms/public-site/7ca9cbaf381a48bc841a6f858abae2cb.webp", alt: "Comunidad Cristiana El Faro — Nosotros" },
         ];
-    const visionImage = heroSlides[1] || heroSlides[0];
-    const misionImage = heroSlides[2] || heroSlides[0];
 
     return (
         <main className="min-h-screen bg-site-background pt-[88px] overflow-hidden">
@@ -120,23 +118,12 @@ export default function NosotrosPage() {
             )}
 
             {hasHero && stats.length > 0 && (
-                <section className="py-14 md:py-20 ccf-container relative z-10">
-                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 md:gap-12 items-start">
+                <section className="ccf-section-tight ccf-container">
+                    <div className="flex flex-wrap gap-8 md:gap-12">
                         {stats.map((s, i) => (
-                            <div
-                                key={i}
-                                className="group cursor-default select-none transition-all duration-300 transform hover:-translate-y-1.5"
-                            >
-                                <p
-                                    className="font-black tracking-tighter leading-none transition-all duration-300 text-site-primary group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-site-primary group-hover:via-site-primary-container group-hover:to-site-primary group-hover:animate-gradient-flow group-hover:drop-shadow-[0_8px_20px_var(--site-glow-subtle)]"
-                                    style={{ fontSize: "clamp(2.8rem, 6.75vw, 6rem)" }}
-                                >
-                                    {s.value}
-                                </p>
-                                <p className="text-xs sm:text-sm md:text-base font-extrabold uppercase tracking-widest text-site-on-surface-variant group-hover:text-site-primary mt-3 md:mt-4 transition-colors duration-300">
-                                    {s.label}
-                                </p>
-                                <div className="h-0.5 w-10 bg-site-primary/30 group-hover:w-20 group-hover:bg-site-primary mt-2 transition-all duration-300 rounded-full" />
+                            <div key={i}>
+                                <p className="text-3xl md:text-4xl font-black text-site-primary">{s.value}</p>
+                                <p className="text-xs font-bold uppercase tracking-widest text-site-outline mt-0.5">{s.label}</p>
                             </div>
                         ))}
                     </div>
@@ -145,86 +132,58 @@ export default function NosotrosPage() {
 
             {/* ── VISIÓN Y MISIÓN ── */}
             {hasVisionMission && (
-                <section className="relative overflow-hidden bg-site-surface-container-low/60 py-8 md:py-12">
-                    <div className="pointer-events-none absolute left-1/4 top-0 h-80 w-80 -translate-y-1/2 rounded-full bg-site-primary/10 blur-3xl" />
-                    <div className="pointer-events-none absolute bottom-0 right-1/4 h-96 w-96 translate-y-1/2 rounded-full bg-site-primary-container/15 blur-3xl" />
-
-                    <div className="relative z-10 space-y-8 md:space-y-12">
-                        {/* Visión: imagen a la izquierda, texto a la derecha */}
+                <section className="ccf-section bg-site-surface-container-low">
+                    <div className="ccf-container grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
+                        {/* Visión */}
                         {(visionTitle || visionText) && (
-                            <article className="group grid w-full overflow-hidden bg-site-surface lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)]">
-                                <div className="relative min-h-[18rem] overflow-hidden sm:min-h-[24rem] lg:min-h-[32rem]">
-                                    {visionImage && (
-                                        <Image
-                                            src={visionImage.src}
-                                            alt={visionImage.alt || "Nuestra Visión"}
-                                            fill
-                                            sizes="(max-width: 1024px) 100vw, 45vw"
-                                            className="object-cover transition-transform duration-700 group-hover:scale-105"
-                                        />
-                                    )}
-                                    <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/5 to-transparent" />
-                                    <span className="absolute bottom-6 left-6 text-xs font-bold uppercase tracking-[0.22em] text-white drop-shadow-lg sm:left-10">
-                                        Nuestra Visión
-                                    </span>
+                            <div className="ccf-card relative p-8 md:p-10 overflow-hidden bg-site-surface">
+                                <div className="absolute top-6 right-6 opacity-[0.06] text-site-primary">
+                                    <Target size={100} />
                                 </div>
-                                <div className="flex flex-col justify-center px-6 py-10 sm:px-10 md:px-14 lg:px-[clamp(3rem,8vw,10rem)]">
-                                    <div className="mb-6 flex items-center gap-3 text-xs font-bold uppercase tracking-[0.22em] text-site-primary">
-                                        <span className="h-0.5 w-10 bg-site-primary" />
-                                        <span>01 · Hacia dónde vamos</span>
-                                    </div>
-                                    {visionTitle && (
-                                        <h2 className="ccf-headline mb-6 text-3xl font-black tracking-tight text-site-on-surface sm:text-4xl md:text-5xl">
-                                            {visionTitle}
-                                        </h2>
-                                    )}
-                                    {visionText && (
-                                        <RichText
-                                            html={visionText}
-                                            className="ccf-body max-w-2xl text-base leading-relaxed text-site-on-surface-variant sm:text-lg [&_strong]:text-site-on-surface"
-                                        />
-                                    )}
+                                <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-site-primary/10 border border-site-primary/20 text-site-primary text-2xs font-bold uppercase tracking-widest mb-5">
+                                    <Target size={11} /> Visión
                                 </div>
-                            </article>
+                                {visionTitle && (
+                                    <h2 className="ccf-headline text-2xl md:text-3xl font-black text-site-on-surface mb-4">
+                                        {visionTitle}
+                                    </h2>
+                                )}
+                                {visionText && (
+                                    <RichText
+                                        html={visionText}
+                                        className="ccf-body text-base md:text-lg text-site-on-surface-variant [&_strong]:text-site-on-surface"
+                                    />
+                                )}
+                            </div>
                         )}
 
-                        {/* Misión: texto a la izquierda, imagen a la derecha */}
+                        {/* Misión */}
                         {(misionTitle || misionText) && (
-                            <article className="group grid w-full overflow-hidden lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)]">
-                                <div className="relative order-2 flex flex-col justify-center bg-site-surface px-6 py-10 text-site-on-surface sm:px-10 md:order-1 md:px-14 lg:px-[clamp(3rem,8vw,10rem)]">
-                                    <div className="absolute inset-y-0 left-0 w-1 bg-[var(--site-hero-cta-gradient)]" />
-                                    <div className="mb-6 flex items-center gap-3 text-xs font-bold uppercase tracking-[0.22em] text-site-primary">
-                                        <span className="h-0.5 w-10 bg-site-primary" />
-                                        <span>02 · Nuestra razón de ser</span>
-                                    </div>
-                                    {misionTitle && (
-                                        <h2 className="ccf-headline mb-6 text-3xl font-black tracking-tight text-site-on-surface sm:text-4xl md:text-5xl">
-                                            {misionTitle}
-                                        </h2>
-                                    )}
-                                    {misionText && (
-                                        <RichText
-                                            html={misionText}
-                                            className="ccf-body max-w-2xl text-base leading-relaxed text-site-on-surface-variant sm:text-lg [&_strong]:text-site-on-surface"
-                                        />
-                                    )}
+                            <div
+                                className="relative rounded-2xl p-8 md:p-10 overflow-hidden shadow-2xl"
+                                style={{
+                                    background: "var(--site-hero-cta-gradient)",
+                                    boxShadow: "0 20px 60px -10px var(--site-glow-intense)",
+                                }}
+                            >
+                                <div className="absolute top-6 right-6 opacity-10">
+                                    <Sparkles size={100} className="text-white" />
                                 </div>
-                                <div className="relative order-1 min-h-[18rem] overflow-hidden sm:min-h-[24rem] md:order-2 lg:min-h-[32rem]">
-                                    {misionImage && (
-                                        <Image
-                                            src={misionImage.src}
-                                            alt={misionImage.alt || "Nuestra Misión"}
-                                            fill
-                                            sizes="(max-width: 1024px) 100vw, 45vw"
-                                            className="object-cover transition-transform duration-700 group-hover:scale-105"
-                                        />
-                                    )}
-                                    <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/5 to-transparent" />
-                                    <span className="absolute bottom-6 left-6 text-xs font-bold uppercase tracking-[0.22em] text-white drop-shadow-lg sm:left-10">
-                                        Nuestra Misión
-                                    </span>
+                                <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/15 border border-white/20 text-white text-2xs font-bold uppercase tracking-widest mb-5">
+                                    <Sparkles size={11} /> Misión
                                 </div>
-                            </article>
+                                {misionTitle && (
+                                    <h2 className="ccf-headline text-2xl md:text-3xl font-black text-white mb-4">
+                                        {misionTitle}
+                                    </h2>
+                                )}
+                                {misionText && (
+                                    <RichText
+                                        html={misionText}
+                                        className="ccf-body text-base md:text-lg text-white/85 [&_strong]:text-white"
+                                    />
+                                )}
+                            </div>
                         )}
                     </div>
                 </section>
@@ -288,27 +247,17 @@ export default function NosotrosPage() {
 
                         {/* Texto */}
                         <div className="w-full lg:w-7/12">
-                            <div className="inline-flex items-center gap-2.5 px-4 py-2 rounded-full bg-site-primary/10 border border-site-primary/20 text-site-primary text-xs font-bold uppercase tracking-widest mb-4">
-                                <Heart size={14} className="text-site-primary" />
-                                <span>Liderazgo Pastoral</span>
-                            </div>
-
                             {founderLabel && (
-                                <h2 className="ccf-headline text-3xl sm:text-4xl md:text-5xl font-black text-site-on-surface mb-6 tracking-tight">
-                                    {founderLabel}
-                                </h2>
+                                <span className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-site-primary mb-4">
+                                    <Heart size={12} /> {founderLabel}
+                                </span>
                             )}
-
                             {(founderTitle || founderTitleAccent) && (
-                                <h3 className="ccf-headline text-2xl sm:text-3xl md:text-4xl font-black text-site-on-surface mb-6 tracking-tight">
+                                <h2 className="ccf-headline text-3xl md:text-4xl lg:text-5xl font-black text-site-on-surface mb-5">
                                     {founderTitle}
-                                    {founderTitleAccent && (
-                                        <>
-                                            <br />
-                                            <span className="text-site-primary">{founderTitleAccent}</span>
-                                        </>
-                                    )}
-                                </h3>
+                                    <br />
+                                    <span className="text-site-primary">{founderTitleAccent}</span>
+                                </h2>
                             )}
                             {(founderBio || founderBio2) && (
                                 <div className="ccf-body space-y-4 text-base md:text-lg text-site-on-surface-variant [&_strong]:text-site-on-surface [&_em]:text-site-outline">
