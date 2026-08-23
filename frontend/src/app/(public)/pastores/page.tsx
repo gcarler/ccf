@@ -10,6 +10,13 @@ import { getPublicPastoralTeam, type PastoralProfile } from '@/lib/cms/v2';
 import { SITE_KEY } from '@/lib/site-config';
 import { safeJsonParse } from '@/lib/safeJson';
 
+function plainText(value: string | undefined): string {
+    return (value || '')
+        .replace(/<[^>]*>/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+}
+
 type CmsPastor = {
     id?: string;
     slug: string;
@@ -131,7 +138,7 @@ export default function PastoresIndexPage() {
                             {/* Content */}
                             <div className="p-4 flex-1 flex flex-col bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))]">
                                 <p className="text-sm text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] mb-3 flex-1 leading-relaxed line-clamp-3">
-                                    {pastor.bio_short || (pastor as CmsPastor).story || ''}
+                                    {plainText(pastor.bio_short || (pastor as CmsPastor).story)}
                                 </p>
 
                                 {/* CTA */}
