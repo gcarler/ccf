@@ -23,10 +23,14 @@ Una rama listada aqui no debe reutilizarse, hacer push ni fusionarse de nuevo po
 | ARCHIVADA - NO REACTIVAR | `fix/color-palette-regression` | stale | `9e42a2a742188ed3653026bade99d040cd2b76dc` | Rama historica basada en un arbol antiguo; su correccion de paleta fue rescatada selectivamente desde el `main` actual. |
 | ARCHIVADA - NO REACTIVAR | `feature/frontend-color-palette-main-20260823` | merged | `68131cbfda3e3d4edd02d9449c18b36a067dbb9d` | Rescate selectivo de tokens de paleta prohibidos, integrado en `main`; se conserva como evidencia. |
 | ARCHIVADA - NO REACTIVAR | `integration/frontend-color-palette-main-20260823-v2` | merged | `add3e318365c00d80b4c7ba4cb7bae68e83e02d8` | Integracion v2 basada en el `main` mas reciente, ya absorbida en `main`; se conserva como evidencia. |
+| ARCHIVADA - NO REACTIVAR | `docs/archive-color-palette-20260823` | stale | `f83376adbb4943b59aa25a82dc86a6bfc0bd5b5b` | Rama documental supersedida por la integracion final del registro; se conserva como evidencia. |
+| ARCHIVADA - NO REACTIVAR | `integration/archive-color-palette-20260823` | stale | `7ad336e12be7f28674837f4c93208d2a4976420a` | Integracion supersedida cuando `main` avanzo con cambios concurrentes. |
+| ARCHIVADA - NO REACTIVAR | `integration/archive-color-palette-20260823-v2` | stale | `53c982af2050340ff829a5c3e18b562b8dd0310f` | Integracion supersedida por la v3 basada en un `main` mas reciente. |
+| ARCHIVADA - NO REACTIVAR | `integration/archive-color-palette-20260823-v3` | merged | `81c6807314044b9c91c824ed90f225c726e8eff4` | Integracion final del registro, absorbida en `main`; se conserva como evidencia. |
 
 ## Fuera de este archivo
 
-La correccion de paleta ya fue rescatada selectivamente en `feature/frontend-color-palette-main-20260823` y publicada en `main`. La rama historica no debe reactivarse ni fusionarse completa.
+La correccion de paleta ya fue rescatada selectivamente en `feature/frontend-color-palette-main-20260823` y publicada en `main`. La rama historica y las ramas temporales del proceso no deben reactivarse ni fusionarse por su nombre original.
 
 ## Regla de reactivacion
 
