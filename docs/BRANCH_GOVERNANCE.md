@@ -1,8 +1,9 @@
 # Gobierno de ramas y worktrees CCF
 
 **Estado:** vigente
-**Corte del inventario:** 2026-08-23
+**Corte del inventario:** 2026-08-23 (actualizado tras integrar tipografía pastoral)
 **Rama canónica:** `main`
+**`origin/main` actual:** `5292fff5`
 
 Este documento es el mapa operativo para todos los agentes que trabajen en el
 repositorio CCF. Complementa `AGENTS_RULES_CCF.md`, `REGLAS.md` y la sección de
@@ -61,16 +62,16 @@ Al comparar cada rama contra `origin/main` con `git merge-tree` el 2026-08-23:
 
 | Rama | Conflictos detectados |
 |---|---:|
-| `chore/ignore-dev-build` | 6 |
-| `feat/cms-nosotros-stats` | 223 |
+| `chore/ignore-dev-build` | 9 |
+| `feat/cms-nosotros-stats` | 229 |
 | `feat/cms-quality-improvements` | 22 |
 | `feat/contextual-roles-recovery` | 1 |
 | `feature/academy` | 7 |
 | `feature/evangelism-quality` | 5 |
 | `feature/events-evangelism` | 16 |
 | `feature/frontend-ui` | 2 |
-| `feature/messaging` | 227 |
-| `feature/modulo-estructural` | 22 |
+| `feature/messaging` | 232 |
+| `feature/modulo-estructural` | 31 |
 | `feature/projects-whiteboard` | 2 |
 | `feature/security-hardening` | 3 |
 | `fix/color-palette-regression` | 7 |
@@ -78,6 +79,22 @@ Al comparar cada rama contra `origin/main` con `git merge-tree` el 2026-08-23:
 Un conflicto no implica que el trabajo sea descartable: indica que debe
 extraerse por commits funcionales o reconstruirse sobre `origin/main` con QA
 del módulo. La rama conflictiva permanece activa hasta cerrar esa revisión.
+
+Los contadores son evidencia del análisis de `merge-tree` en este corte, no una
+estimación del número de archivos que deben conservarse. La decisión de
+integración se toma por commit funcional y ownership del módulo.
+
+## Integraciones cerradas en este corte
+
+Estas unidades ya pasaron su gate, fueron integradas en `main` y no deben
+republicarse como ramas activas:
+
+- Expiración de QR de inscripción a 365 días en check-in y ticket público.
+- Fix y contenido de testimonios pastorales públicos, incluido Luis Ricardo.
+- Normalización de color e interlineado en todas las vistas públicas de pastores.
+
+Los SHA funcionales de referencia son `dc16819d`, `365d7f5a` y `e479607c`;
+el merge vigente de `main` es `5292fff5`.
 
 ## Ramas archivadas
 
@@ -90,6 +107,10 @@ La integración de gobierno quedó archivada en:
 - `archive/merged/feature-ops-push-protocol`
 - `archive/merged/docs-branch-governance`
 - `archive/merged/integration-branch-governance-to-main`
+- `archive/merged/integration-pastores-production`
+- `archive/merged/integration-qr-expiry-into-main`
+- `archive/merged/integration-qr-expiry-main-final`
+- `archive/merged/fix-pastores-typography`
 
 ## Procedimiento de mantenimiento
 
