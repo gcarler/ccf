@@ -1,11 +1,12 @@
 'use client';
 
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
 import { ArrowLeft, Quote, BookOpen, Cross, Sparkles, Instagram, Heart } from 'lucide-react';
-import { SITE_NAME } from '@/lib/site-config';
+import { getPublicPastoralTeam, type PastoralProfile } from '@/lib/cms/v2';
+import { SITE_KEY, SITE_NAME } from '@/lib/site-config';
 import ShareButtons from '@/components/public/ShareButtons';
 import { useCmsV2Page } from '@/hooks/useCmsV2Page';
 import { sanitizeCmsHtml } from '@/lib/cms/sanitize';
@@ -23,6 +24,13 @@ function getStringArray(props: Record<string, unknown> | undefined, key: string)
 
 function applyTemplate(template: string, vars: Record<string, string>): string {
     return template.replace(/\{(\w+)\}/g, (_, name) => vars[name] ?? "");
+}
+
+function plainText(value: string | undefined): string {
+    return (value || "")
+        .replace(/<[^>]*>/g, " ")
+        .replace(/\s+/g, " ")
+        .trim();
 }
 
 type CmsPastor = {
@@ -48,13 +56,54 @@ export default function PastorDetailPage() {
 
     const pastorsPage = useCmsV2Page('pastors');
     const pastorsCms = pastorsPage?.blocks?.pastors;
-    const cms = pastorsPage?.blocks?.detail_template as Record<string, unknown> | undefined;
+    const cms: Record<string, unknown> = {
+        badge_label: 'Liderazgo Pastoral',
+        role_fallback: 'Pastor',
+        quote_subtitle: 'Filosofía de vida',
+        tags: ['Pastor', 'Líder', 'Consejero'],
+        motto_label: 'Versículo Lema',
+        story_title: 'Su Historia',
+        story_subtitle: 'Testimonio de vida y ministerio',
+        cta_eyebrow: 'Comunidad de Fe',
+        cta_description: '¿Deseas conectar con el Pastor {first_name} o saber más sobre su ministerio?',
+        cta_primary_label: 'Conocer al equipo',
+        cta_secondary_label: 'Nuestras sedes',
+        ...(pastorsPage?.blocks?.detail_template as Record<string, unknown> | undefined),
+    };
+    const [apiPastors, setApiPastors] = useState<PastoralProfile[]>([]);
+    const [apiLoading, setApiLoading] = useState(true);
+
+    useEffect(() => {
+        getPublicPastoralTeam(SITE_KEY)
+            .then((data) => setApiPastors(Array.isArray(data) ? data : []))
+            .catch(() => setApiPastors([]))
+            .finally(() => setApiLoading(false));
+    }, []);
+
     const pastor = useMemo(() => {
+        const apiPastor = apiPastors.find((profile) => profile.slug === slug);
+        if (apiPastor) {
+            return {
+                id: apiPastor.id,
+                slug: apiPastor.slug,
+                name: apiPastor.name,
+                role: apiPastor.role ?? undefined,
+                photo_url: apiPastor.photo_url ?? undefined,
+                bio_short: apiPastor.bio_short ?? undefined,
+                bio_full: apiPastor.bio_full ?? undefined,
+                social_instagram: apiPastor.social_instagram ?? undefined,
+                social_facebook: apiPastor.social_facebook ?? undefined,
+                social_twitter: apiPastor.social_twitter ?? undefined,
+                is_main_pastor: apiPastor.is_main_pastor,
+            } satisfies CmsPastor;
+        }
+
         const list = (pastorsCms as unknown as { pastors?: CmsPastor[] } | null)?.pastors;
         if (!Array.isArray(list)) return null;
         return list.find(p => p.slug === slug) || null;
-    }, [pastorsCms, slug]);
-    if (!pastorsCms) {
+    }, [apiPastors, pastorsCms, slug]);
+
+    if (apiLoading && !pastor) {
         return (
             <div className="min-h-screen bg-[hsl(var(--bg-primary))] dark:bg-[#0b0d11] flex items-center justify-center pt-[88px]">
                 <div className="w-10 h-10 rounded-full border-2 border-[hsl(var(--primary))] border-t-transparent animate-spin" />
@@ -163,7 +212,7 @@ export default function PastorDetailPage() {
                                 <div className="relative p-6 md:p-7 bg-gradient-to-br from-[hsl(var(--surface-1))] to-white dark:from-white/[0.03] dark:to-white/[0.01] rounded-[1.25rem] border border-[hsl(var(--border))]/50 dark:border-white/[0.05] shadow-lg shadow-black/10/30 dark:shadow-none">
                                     <Quote className="absolute top-5 left-5 text-[hsl(var(--primary))/0.1]" size={40} />
                                     <p className="relative z-10 text-base md:text-lg text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] font-medium italic leading-relaxed pt-8 pl-1">
-                                        &ldquo;{pastor.bio_short || pastor.story || ''}&rdquo;
+                                        &ldquo;{plainText(pastor.bio_short || pastor.story)}&rdquo;
                                     </p>
                                     <div className="flex items-center gap-3 mt-5 pl-1">
                                         <div className="h-px flex-1 bg-gradient-to-r from-[hsl(var(--primary))/0.3] to-transparent max-w-[80px]" />
@@ -249,7 +298,7 @@ export default function PastorDetailPage() {
                                             <p className="text-2xs font-bold uppercase tracking-[0.2em] text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] mb-1.5">{getString(cms, "motto_label")}</p>
                                         )}
                                         <p className="text-base md:text-lg text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] font-medium leading-relaxed">
-                                            {pastor.bio_short || pastor.story || ''}
+                                            {plainText(pastor.bio_short || pastor.story)}
                                         </p>
                                     </div>
                                 </div>
