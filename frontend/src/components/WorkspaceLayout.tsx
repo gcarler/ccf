@@ -77,6 +77,22 @@ function WorkspaceLayoutInner({
     const [viewportMode, setViewportMode] = useState<'mobile' | 'tablet' | 'desktop'>('desktop');
     const { isModalOpen, closeModal, defaultType } = useCreation();
     const previousLayerStateRef = useRef<{ s1: boolean; s2: boolean } | null>(null);
+    const workspaceHeaderRef = useRef<HTMLDivElement>(null);
+    const [workspaceHeaderHeight, setWorkspaceHeaderHeight] = useState(40);
+
+    useEffect(() => {
+        const header = workspaceHeaderRef.current;
+        if (!header) return;
+
+        const syncHeaderHeight = () => {
+            setWorkspaceHeaderHeight(header.getBoundingClientRect().height);
+        };
+
+        syncHeaderHeight();
+        const observer = new ResizeObserver(syncHeaderHeight);
+        observer.observe(header);
+        return () => observer.disconnect();
+    }, []);
 
     // â”€â”€ Layer state â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     const { layers, openLayer, closeLayer } = useSidebarLayers();
@@ -374,7 +390,10 @@ function WorkspaceLayoutInner({
 
     return (
         <ProtectedRoute allowedRoles={allowedRoles} allowedPermissions={allowedPermissions}>
-            <div className="workspace-platform flex h-[100dvh] w-full flex-col overflow-hidden bg-[hsl(var(--surface-1))] font-display transition-colors duration-500 dark:bg-[hsl(var(--surface-2))]">
+            <div
+                className="workspace-platform flex h-[100dvh] w-full flex-col overflow-hidden bg-[hsl(var(--surface-1))] font-display transition-colors duration-500 dark:bg-[hsl(var(--surface-2))]"
+                style={{ '--workspace-header-height': `${workspaceHeaderHeight}px` } as React.CSSProperties}
+            >
 
                 <motion.div
                     className="absolute top-0 left-0 right-0 h-[2px] bg-[hsl(var(--primary))] z-[10000]"
@@ -386,7 +405,7 @@ function WorkspaceLayoutInner({
                 <UniversalCreationDrawer isOpen={isModalOpen} onClose={closeModal} initialType={defaultType} />
 
                 {/* ── UNIFIED TOOLBAR / HEADER (100% WIDTH) ── */}
-                <div className="w-full shrink-0 z-[60]">
+                <div ref={workspaceHeaderRef} className="w-full shrink-0 z-[60]">
                     {breadcrumbs ? (
                         <WorkspaceToolbar
                             breadcrumbs={breadcrumbs}

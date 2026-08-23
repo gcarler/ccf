@@ -1,8 +1,9 @@
 "use client";
 
-import React, { useCallback, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, MoreHorizontal, MessageSquare, Clock, Sparkles } from 'lucide-react';
+import { X, MoreHorizontal, MessageSquare, Clock, Sparkles, Maximize2, Minimize2, type LucideIcon } from 'lucide-react';
+import clsx from 'clsx';
 
 interface WorkspaceDrawerProps {
     isOpen: boolean;
@@ -25,7 +26,17 @@ export default function WorkspaceDrawer({
     actions
 }: WorkspaceDrawerProps) {
     const [width, setWidth] = useState(DEFAULT_WIDTH);
+    const [isExpanded, setIsExpanded] = useState(false);
     const drawerRef = useRef<HTMLDivElement>(null);
+
+    const handleClose = useCallback(() => {
+        setIsExpanded(false);
+        onClose();
+    }, [onClose]);
+
+    useEffect(() => {
+        if (!isOpen) setIsExpanded(false);
+    }, [isOpen]);
 
     const handleResizeDrag = useCallback((e: React.MouseEvent) => {
         e.preventDefault();
@@ -53,9 +64,12 @@ export default function WorkspaceDrawer({
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
                         data-testid="workspace-drawer-backdrop"
-                        className="fixed inset-x-0 bottom-0 top-10 dark:bg-black/40 backdrop-blur-[2px] z-[1000]"
-                        style={{ backgroundColor: 'hsl(var(--bg-primary) / 0.35)' }}
-                        onClick={onClose}
+                        className="fixed inset-x-0 bottom-0 dark:bg-black/40 backdrop-blur-[2px] z-[1000]"
+                        style={{
+                            top: 'var(--workspace-header-height, 2.5rem)',
+                            backgroundColor: 'hsl(var(--bg-primary) / 0.35)',
+                        }}
+                        onClick={handleClose}
                     />
 
                     <motion.div
@@ -64,8 +78,15 @@ export default function WorkspaceDrawer({
                         animate={{ x: 0 }}
                         exit={{ x: '100%' }}
                         transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-                        style={{ width: typeof window !== 'undefined' && window.innerWidth < 640 ? '100vw' : width }}
-                        className="fixed top-10 right-0 h-[calc(100dvh-2.5rem)] max-w-full bg-[hsl(var(--surface-1))] dark:bg-[hsl(var(--surface-1))] shadow-[var(--shadow-floating)] z-[1001] border-l border-[hsl(var(--border))] flex flex-col focus:outline-none overflow-hidden"
+                        className={clsx(
+                            "fixed max-w-full bg-[hsl(var(--surface-1))] dark:bg-[hsl(var(--surface-1))] shadow-[var(--shadow-floating)] z-[1001] border-l border-[hsl(var(--border))] flex flex-col focus:outline-none overflow-hidden",
+                            isExpanded ? "inset-x-0 bottom-0 h-auto" : "right-0 h-auto"
+                        )}
+                        style={{
+                            width: isExpanded || (typeof window !== 'undefined' && window.innerWidth < 640) ? '100vw' : width,
+                            top: 'var(--workspace-header-height, 2.5rem)',
+                            height: 'calc(100dvh - var(--workspace-header-height, 2.5rem))',
+                        }}
                         role="complementary"
                         aria-label={title}
                     >
@@ -84,8 +105,17 @@ export default function WorkspaceDrawer({
                             style={{ backgroundColor: 'hsl(var(--surface-2) / 0.5)' }}
                         >
                             <div className="flex min-w-0 items-center gap-3 sm:gap-4 overflow-hidden">
-                                <button onClick={onClose} aria-label="Cerrar" className="p-2 hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/10 rounded-md transition-colors text-[hsl(var(--text-secondary))]">
+                                <button onClick={handleClose} aria-label="Cerrar" title="Cerrar panel" className="p-2 hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/10 rounded-md transition-colors text-[hsl(var(--text-secondary))] shrink-0">
                                     <X size={20} />
+                                </button>
+                                <button
+                                    onClick={() => setIsExpanded((expanded) => !expanded)}
+                                    aria-label={isExpanded ? "Contraer panel" : "Expandir panel"}
+                                    aria-pressed={isExpanded}
+                                    title={isExpanded ? "Contraer" : "Expandir"}
+                                    className="inline-flex size-10 shrink-0 items-center justify-center rounded-md border border-[hsl(var(--border))] text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/10 hover:text-[hsl(var(--text-primary))] transition-all focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[hsl(var(--primary))]"
+                                >
+                                    {isExpanded ? <Minimize2 size={20} /> : <Maximize2 size={20} />}
                                 </button>
                                 <div className="h-6 w-[1px] bg-[hsl(var(--border))] dark:bg-white/10" />
                                 <div className="flex flex-col overflow-hidden">
@@ -132,7 +162,7 @@ export default function WorkspaceDrawer({
     );
 }
 
-function HeaderButton({ icon: Icon, onClick, tooltip }: { icon: any, onClick?: () => void, tooltip: string }) {
+function HeaderButton({ icon: Icon, onClick, tooltip }: { icon: LucideIcon, onClick?: () => void, tooltip: string }) {
     return (
         <div className="relative group/drawer-btn">
             <button

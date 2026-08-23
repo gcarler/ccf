@@ -1,7 +1,7 @@
 import React from 'react';
 import { describe, it, expect, vi, beforeEach, type Mock } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
-import EventCreateDrawer, { type EventCreateForm, type AudiencePresetData } from './EventCreateDrawer';
+import EventCreateDrawer, { type EventCreateForm, type AudiencePresetData, type EventSedeOption } from './EventCreateDrawer';
 import type { Persona, RoleDefinition } from '@/app/plataforma/evangelism/types';
 
 interface MockDrawerProps {
@@ -34,6 +34,7 @@ const DEFAULT_FORM: EventCreateForm = {
 };
 
 const ROLES: RoleDefinition[] = [{ id: 'r1', name: 'Lider' }, { id: 'r2', name: 'Ujier' }];
+const SEDES: EventSedeOption[] = [];
 const PERSONAS: Persona[] = [
   { id: 'p1', nombre_completo: 'Juan Perez', email: 'j@x.com', church_role: 'Lider' },
 ];
@@ -48,6 +49,7 @@ function makeProps(over: Partial<CreateProps> = {}): CreateProps {
     form: DEFAULT_FORM,
     setForm: vi.fn() as unknown as Mock,
     roles: ROLES,
+    sedes: SEDES,
     presets: [],
     onApplyPreset: vi.fn(),
     onDeletePreset: vi.fn(),
