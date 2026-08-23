@@ -42,12 +42,20 @@ Sistema de autenticación de la plataforma CCF. Maneja login, registro, verifica
 ### Endpoints principales
 
 - `POST /api/v3/auth/login` — Inicio de sesión
-- `POST /api/v3/auth/register` — Registro
+- `GET /api/v3/auth/google` — Login con Google (crea `Usuario` + `Persona` si el correo no existe)
+- `POST /api/v3/auth/initialize-password` — Configurar contraseña inicial (token de un solo uso)
+- `POST /api/v3/auth/change-password` — Cambiar contraseña autenticado
 - `POST /api/v3/auth/forgot-password` — Recuperación
 - `POST /api/v3/auth/reset-password` — Restablecer contraseña
 - `GET /api/v3/auth/me` — Perfil del usuario autenticado
-- `PUT /api/v3/auth/me` — Actualizar perfil
+- `PATCH /api/v3/auth/me` — Actualizar perfil
+- `POST /api/v3/auth/verify-email` — Verificar correo
+- `POST /api/v3/auth/send-verification-email` — Reenviar correo de verificación
 - `GET /api/v3/auth/check-email` — Verificar disponibilidad de email
+
+> No existe un endpoint público de registro (`POST /api/v3/auth/register`):
+> las cuentas se crean vía Google SSO o aprovisionamiento administrativo con
+> `initialize-password`.
 
 ---
 
@@ -56,10 +64,10 @@ Sistema de autenticación de la plataforma CCF. Maneja login, registro, verifica
 | Endpoint | Permiso |
 |---|---|
 | `/api/v3/auth/login` | Público |
-| `/api/v3/auth/register` | Público |
+| `/api/v3/auth/initialize-password` | Público (token de un solo uso) |
 | `/api/v3/auth/forgot-password` | Público |
 | `/api/v3/auth/reset-password` | Público |
-| `/api/v3/auth/me` (GET/PUT) | Usuario autenticado |
+| `/api/v3/auth/me` (GET/PATCH) | Usuario autenticado |
 | `/api/v3/auth/check-email` | Público |
 
 ---

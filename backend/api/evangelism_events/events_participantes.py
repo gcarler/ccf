@@ -120,6 +120,11 @@ def register_bulk_attendance(
             status_code=409,
             detail="No se puede registrar asistencia en eventos cancelados",
         )
+    if event.attendance_closed_at is not None:
+        raise HTTPException(
+            status_code=409,
+            detail="La asistencia de este evento ya fue cerrada",
+        )
 
     normalized_persona_ids: list[str] = []
     invalid_persona_ids: list[object] = []
@@ -138,7 +143,15 @@ def register_bulk_attendance(
             invalid_persona_ids.append(pid)
 
     valid_persona_uuids = (
-        {row[0] for row in db.query(models.Persona.id).filter(models.Persona.id.in_(normalized_persona_uuids)).all()}
+        {
+            row[0]
+            for row in db.query(models.Persona.id)
+            .filter(
+                models.Persona.id.in_(normalized_persona_uuids),
+                models.Persona.sede_id == event.sede_id,
+            )
+            .all()
+        }
         if normalized_persona_uuids
         else set()
     )
@@ -171,6 +184,11 @@ def register_bulk_attendance(
             row.scanned_at = now
             row.check_in_at = now
             row.check_out_at = None
+            if row.deleted_at is not None:
+                # Reactivar fila soft-deleted: la UniqueConstraint
+                # (event_id, session_date, persona_id) no considera deleted_at,
+                # así que se reutiliza la fila en lugar de insertar un duplicado.
+                row.deleted_at = None
             if not was_attended:
                 marked_present_count += 1
         else:
@@ -189,6 +207,9 @@ def register_bulk_attendance(
 
     for row in existing_rows:
         if row.persona_id in selected_persona_uuids:
+            continue
+        if row.deleted_at is not None:
+            # Fila soft-deleted no seleccionada: no revivirla como ausente.
             continue
         if row.attended or row.status != "absent":
             row.attended = False
@@ -255,6 +276,10 @@ def get_event_session_detail(
 
     attendee_list = []
     for att in attendances_db:
+        # Los registros ausentes se mantienen para el historial, pero no
+        # deben aparecer en la lista de asistentes que consume el frontend.
+        if not att.attended:
+            continue
         persona = att.persona
         if not persona:
             continue
