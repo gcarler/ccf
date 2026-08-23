@@ -111,6 +111,7 @@ La integración de gobierno quedó archivada en:
 - `archive/merged/integration-qr-expiry-into-main`
 - `archive/merged/integration-qr-expiry-main-final`
 - `archive/merged/fix-pastores-typography`
+- `archive/merged/docs-branch-governance-current`
 
 ## Procedimiento de mantenimiento
 
