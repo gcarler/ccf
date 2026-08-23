@@ -19,9 +19,11 @@ Una rama listada aqui no debe reutilizarse, hacer push ni fusionarse de nuevo po
 | ARCHIVADA - NO REACTIVAR | `integration/archive-policy-consistency-20260823` | stale | `bfd4bbdf016cad1eefabe63a93311efdba09343c` | Integracion supersedida por la version v2 basada en el `main` mas reciente. |
 | ARCHIVADA - NO REACTIVAR | `integration/archive-policy-consistency-20260823-v2` | merged | `a1320ba1b2044896f5239565d30de0e0d379af63` | Version v2 integrada en `main`; se conserva como evidencia. |
 
+| ARCHIVADA - NO REACTIVAR | `feature/projects-whiteboard` | stale | `8e0159d34b124d58b3a4671f2002849f0bae1363` | Whiteboard y WebSocket ya estan absorbidos en `main`; la rama conserva una version historica que no debe fusionarse completa. |
+
 ## Fuera de este archivo
 
-`feature/projects-whiteboard` y `fix/color-palette-regression` permanecen activas para rescatar selectivamente los cambios que aun puedan ser utiles. No se deben fusionar completas sobre `main`.
+`fix/color-palette-regression` permanece activa para rescatar selectivamente los cambios que aun puedan ser utiles. No se debe fusionar completa sobre `main`.
 
 ## Regla de reactivacion
 
