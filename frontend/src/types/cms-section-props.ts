@@ -257,6 +257,7 @@ export interface VideoHeroProps {
   cta_label?: string;
   cta_href?: string;
   video_url?: string;
+  full_bleed?: boolean;
 }
 
 export interface RichTextProps {
@@ -896,6 +897,12 @@ export interface VideoEmbedProps {
 
 export interface GalleryMasonryProps {
   title?: string;
+  body?: string;
+  layout?: "masonry" | "carousel" | string;
+  album_url?: string;
+  album_label?: string;
+  autoplay?: boolean;
+  full_bleed?: boolean;
   columns?: number | string;
   images?: GalleryMasonryImage[];
 }

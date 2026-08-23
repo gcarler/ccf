@@ -23,7 +23,7 @@ Archivos:
 Contrato vigente:
 
 - login canonico: `POST /api/v3/auth/login`
-- register canonico: `POST /api/v3/auth/register`
+- registro de cuenta: vía Google SSO (`GET /api/v3/auth/google`) o aprovisionamiento admin + `POST /api/v3/auth/initialize-password`; **no existe** un endpoint público `POST /api/v3/auth/register`
 - refresh canonico: `POST /api/v3/auth/refresh`
 - sesiones propias: `GET /api/v3/auth/sessions`, `POST /api/v3/auth/sessions/{session_id}/revoke`, `POST /api/v3/auth/sessions/revoke-all`
 - Google OAuth: `GET /api/v3/auth/google` y callback asociado

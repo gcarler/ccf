@@ -182,6 +182,34 @@ PERMISSIONS: Dict[str, Dict[str, str]] = {
         "label": "Wiki: editor",
         "description": "Crear y editar documentos de la wiki",
     },
+    "support:read": {
+        "label": "Soporte: lector",
+        "description": "Consultar tickets y base de conocimiento de soporte",
+    },
+    "support:edit": {
+        "label": "Soporte: editor",
+        "description": "Crear y actualizar tickets de soporte",
+    },
+    "support:manage": {
+        "label": "Soporte: gestor",
+        "description": "Gestionar soporte y su base de conocimiento",
+    },
+    "analytics:read": {
+        "label": "Analítica: lector",
+        "description": "Consultar indicadores y reportes analíticos",
+    },
+    "analytics:manage": {
+        "label": "Analítica: gestor",
+        "description": "Gestionar consultas y reportes analíticos",
+    },
+    "dashboard:read": {
+        "label": "Dashboards: lector",
+        "description": "Consultar dashboards de la plataforma",
+    },
+    "dashboard:manage": {
+        "label": "Dashboards: gestor",
+        "description": "Gestionar dashboards e indicadores",
+    },
 }
 
 # ── Permission expansion helpers (must be before DEFAULT_ROLES) ────────
@@ -228,6 +256,9 @@ MODULE_PERMISSION_MAP: Dict[str, Dict[str, str]] = {
         "manage": "spiritual_life:manage",
     },
     "wiki": {"read": "wiki:read", "edit": "wiki:edit", "manage": "wiki:edit"},
+    "support": {"read": "support:read", "edit": "support:edit", "manage": "support:manage"},
+    "analytics": {"read": "analytics:read", "edit": "analytics:manage", "manage": "analytics:manage"},
+    "dashboard": {"read": "dashboard:read", "edit": "dashboard:manage", "manage": "dashboard:manage"},
 }
 
 
@@ -590,6 +621,59 @@ def _has_permission(role: str, user_perms: set | dict, required: str) -> bool:
     return False
 
 
+def role_allows_permission(role: str, permission: str) -> bool:
+    """Allowances por rol para usuarios sin permisos granulares explícitos.
+
+    Fuente única de verdad de la matriz que concede ``require_permission``
+    (REST) y ``require_mcp_permission`` (superficies MCP), de modo que ambas
+    fronteras resuelvan exactamente los mismos permisos por rol
+    (pastor/coordinador/docente/estudiante/lector/miembro/aspirante).
+    """
+    role = normalize_role(role)
+
+    if role in {"admin", "administrador"}:
+        return True
+    if permission.startswith("crm:") and role == "pastor":
+        return True
+    # Evangelismo: pastor tiene acceso total (gestión pastoral);
+    # coordinador (líder de célula) puede leer y editar (reportar
+    # asistencia, crear seguimientos), pero no gestionar (crear
+    # estrategias, dividir grupos, etc.) a menos que tenga el permiso
+    # granular explícito.
+    if permission.startswith("evangelism:") and role == "pastor":
+        return True
+    if permission in {"evangelism:read", "evangelism:edit"} and role == "coordinador":
+        return True
+    if permission in {"academy:read", "academy:study"} and role in {
+        "coordinador",
+        "docente",
+        "pastor",
+        "estudiante",
+        "lector",
+        "miembro",
+        "aspirante",
+    }:
+        return True
+    if permission == "academy:edit" and role in {"coordinador", "docente", "pastor"}:
+        return True
+    if permission == "academy:manage" and role in {"coordinador", "pastor"}:
+        return True
+    if permission.startswith("projects:") and role in {
+        "coordinador",
+        "docente",
+        "pastor",
+    }:
+        return True
+    if permission.startswith("wiki:") and role in {
+        "coordinador",
+        "docente",
+        "pastor",
+        "admin",
+    }:
+        return True
+    return False
+
+
 def check_ws_module_access(db: "Session", user, module: str, level: str = "read") -> bool:
     """Check module access for WebSocket handlers (no FastAPI DI).
 
@@ -648,45 +732,9 @@ def require_permission(permission: str):
             return current_user
 
         # Role-based allowance for platform roles without explicit granular permissions.
-        if role in {"admin", "administrador"}:
-            return current_user
-        if permission.startswith("crm:") and role == "pastor":
-            return current_user
-        # Evangelismo: pastor tiene acceso total (gestión pastoral);
-        # coordinador (líder de célula) puede leer y editar (reportar
-        # asistencia, crear seguimientos), pero no gestionar (crear
-        # estrategias, dividir grupos, etc.) a menos que tenga el permiso
-        # granular explícito.
-        if permission.startswith("evangelism:") and role == "pastor":
-            return current_user
-        if permission in {"evangelism:read", "evangelism:edit"} and role == "coordinador":
-            return current_user
-        if permission in {"academy:read", "academy:study"} and role in {
-            "coordinador",
-            "docente",
-            "pastor",
-            "estudiante",
-            "lector",
-            "miembro",
-            "aspirante",
-        }:
-            return current_user
-        if permission == "academy:edit" and role in {"coordinador", "docente", "pastor"}:
-            return current_user
-        if permission == "academy:manage" and role in {"coordinador", "pastor"}:
-            return current_user
-        if permission.startswith("projects:") and role in {
-            "coordinador",
-            "docente",
-            "pastor",
-        }:
-            return current_user
-        if permission.startswith("wiki:") and role in {
-            "coordinador",
-            "docente",
-            "pastor",
-            "admin",
-        }:
+        # La matriz vive en ``role_allows_permission`` — fuente única compartida
+        # con ``require_mcp_permission`` (superficies MCP).
+        if role_allows_permission(role, permission):
             return current_user
 
         raise HTTPException(

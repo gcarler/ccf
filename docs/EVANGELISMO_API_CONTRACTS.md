@@ -228,6 +228,7 @@ Reglas:
 - `EventAudienceUpdate` exige roles cuando `target_audience == "ROLE"`
 - `DELETE /events/{event_id}` es soft delete operativo: estado cancelado + `deleted_at`
 - `attendance/bulk` debe responder `400` si recibe IDs inválidos, no ignorarlos silenciosamente
+- `attendance/bulk` filtra `persona_ids` por la `sede_id` del evento y rechaza una asistencia ya cerrada (`409`)
 - El check-in rápido de visitantes evita duplicados de attendance para misma persona/fecha/evento
 - Todo detalle, analytics, export y mutación de evento queda restringido a la sede del usuario y excluye eventos con `deleted_at`.
 

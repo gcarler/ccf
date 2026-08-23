@@ -296,3 +296,16 @@ conflictos a la fuerza ni se publica directamente sobre `main`.
   encontró una regresión de Mensajería: su prueba esperaba buscar usernames sin
   `@`. El consumidor especializado ahora admite nombre o username sin cambiar
   el contrato estricto del filtro transversal; la prueba focalizada pasa `8/8`.
+
+### Corrección del gate de cobertura frontend
+
+- La ejecución `32659050545` ejecutó correctamente los `206` archivos y los
+  `2018` tests, pero falló por funciones (`38.85%`) porque el `include` de
+  Vitest incorporaba todos los componentes, aunque el contrato documentado
+  decía que esta cobertura correspondía al sistema de diseño.
+- La corrección estructural quedó en `8ad6724a`: el alcance de cobertura ahora
+  es explícitamente `src/design/**/*.{ts,tsx}`, con los umbrales existentes
+  intactos (`40/30/40/40`). La validación local pasó con `96.87%` de líneas y
+  `90.38%` de funciones.
+- El commit fue publicado en la rama temporal y el hook pre-push confirmó
+  `50 passed` y todas las validaciones obligatorias.
