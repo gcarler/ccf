@@ -87,7 +87,10 @@ const nextConfig = {
     typescript: {
         ignoreBuildErrors: false,
     },
-    outputFileTracingRoot: process.env.OUTPUT_FILE_TRACING_ROOT || '/root/ccf/frontend',
+    // Resolve the tracing root from the active worktree. A hardcoded path to
+    // the canonical checkout makes isolated integration/build worktrees reuse
+    // the wrong Next artifacts and can leave the staging manifest incomplete.
+    outputFileTracingRoot: process.env.OUTPUT_FILE_TRACING_ROOT || __dirname,
     outputFileTracingExcludes: {
         '*': ['**/@swc/core*', '**/@esbuild/**', '**/terser/**'],
     },
