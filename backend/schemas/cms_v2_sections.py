@@ -453,6 +453,7 @@ class VideoHeroProps(_PermissiveProps):
     cta_label: str = ""
     cta_href: str = "/"
     video_url: str = ""
+    full_bleed: bool = False
 
 
 class RichTextProps(_PermissiveProps):
