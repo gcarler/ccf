@@ -120,16 +120,16 @@ function GroupDetailPage() {
                   {/* Stat strip */}
                   <div className="flex gap-4">
                     <div className="flex-1 bg-[hsl(var(--bg-primary))] border border-[hsl(var(--border-primary))] rounded-lg p-4 text-center">
-                      <p className="text-lg font-bold text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))]">{loadingAtt ? 'â€”' : attendance?.total ?? 0}</p>
+                      <p className="text-lg font-bold text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))]">{loadingAtt ? '—' : attendance?.total ?? 0}</p>
                       <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mt-1">Presentes</p>
                     </div>
                     <div className="flex-1 bg-[hsl(var(--bg-primary))] border border-[hsl(var(--border-primary))] rounded-lg p-4 text-center">
-                      <p className="text-lg font-bold text-[hsl(var(--text-primary))]">{house.capacity ?? 'â€”'}</p>
+                      <p className="text-lg font-bold text-[hsl(var(--text-primary))]">{house.capacity ?? '—'}</p>
                       <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mt-1">Capacidad</p>
                     </div>
                     <div className="flex-1 bg-[hsl(var(--bg-primary))] border border-[hsl(var(--border-primary))] rounded-lg p-4 text-center">
-                      <p className="text-lg font-bold text-success-text dark:emerald-400">
-                        {house.capacity && attendance ? `${Math.round(attendance.total / house.capacity * 100)}%` : 'â€”'}
+                      <p className="text-lg font-bold text-success-text dark:text-emerald-400">
+                        {house.capacity && attendance ? `${Math.round(attendance.total / house.capacity * 100)}%` : '—'}
                       </p>
                       <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mt-1">Ocupación</p>
                     </div>

@@ -450,6 +450,17 @@
     animation: shimmer 2s infinite;
   }
 
+  /* Scanner line sweep (evangelism scanner page) */
+  @keyframes scan {
+    0% { top: 0; }
+    50% { top: calc(100% - 4px); }
+    100% { top: 0; }
+  }
+
+  .animate-scan {
+    animation: scan 2.5s ease-in-out infinite;
+  }
+
   /* ── Semantic Color Utilities ── */
   .shadow-primary { box-shadow: 0 4px 12px 0 hsl(var(--primary) / 0.15); }
   .shadow-success { box-shadow: 0 4px 12px 0 hsl(var(--success) / 0.15); }

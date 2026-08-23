@@ -16,7 +16,8 @@ import { useToast } from '@/context/ToastContext';
 import { useWikiDocument } from '@/hooks/useWikiDocument';
 import { apiFetch } from '@/lib/http';
 import { parseAndValidateTime } from '@/lib/time';
-import React, { useEffect, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
+import React, { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { formatLocalDate, getErrorMessage } from '../utils';
 
@@ -42,6 +43,9 @@ interface AudiencePreset {
 
 export function useEventsPage() {
  const { token, hasModuleAccess } = useAuth();
+ const searchParams = useSearchParams();
+ const requestedEventId = searchParams?.get('event_id');
+ const autoOpenedEventRef = useRef<string | null>(null);
  const canManageEvents = hasModuleAccess('evangelism', 'manage');
  const canEditEvents = hasModuleAccess('evangelism', 'edit');
  const { addToast } = useToast();
@@ -109,6 +113,8 @@ export function useEventsPage() {
 
  // Attendance State
  const [attendanceDate, setAttendanceDate] = useState(() => formatLocalDate(new Date()));
+ const [attendancePersonas, setAttendancePersonas] = useState<Persona[]>([]);
+ const [attendanceUniverseLoaded, setAttendanceUniverseLoaded] = useState(false);
  const [attendedPersonaIds, setAttendedPersonaIds] = useState<string[]>([]);
  const [attendanceSearch, setAttendanceSearch] = useState('');
  const [attendanceLoading, setAttendanceLoading] = useState(false);
@@ -236,8 +242,8 @@ export function useEventsPage() {
  const normalized = query.trim().toLowerCase();
  if (!normalized) return sortedPersonas;
  return sortedPersonas.filter((persona) =>
- (persona.nombre_completo || '').toLowerCase().includes(normalized) ||
- persona.email.toLowerCase().includes(normalized) ||
+ (persona.nombre_completo || '').toLowerCase().startsWith(normalized) ||
+ (persona.email || '').toLowerCase().includes(normalized) ||
  (persona.church_role || '').toLowerCase().includes(normalized)
  );
  };
@@ -491,6 +497,8 @@ const openAttendance = (ev: MinistryEvent) => {
  if (!canEditEvents) return;
  setSelectedEvent(normalizeMinistryEvent(ev));
  setIsAttendanceDrawerOpen(true);
+ setAttendancePersonas([]);
+ setAttendanceUniverseLoaded(false);
  setAttendanceDate(formatLocalDate(new Date()));
  setAttendedPersonaIds([]);
  setShowScanner(false);
@@ -498,6 +506,14 @@ const openAttendance = (ev: MinistryEvent) => {
  setAttendanceRoleFilter('ALL');
  setAttendanceStatusFilter('ALL');
  };
+
+ useEffect(() => {
+  if (!requestedEventId || !canEditEvents || autoOpenedEventRef.current === requestedEventId) return;
+  const event = events.find((item) => String(item.id) === requestedEventId);
+  if (!event) return;
+  autoOpenedEventRef.current = requestedEventId;
+  openAttendance(event);
+ }, [canEditEvents, events, requestedEventId]);
 
  useEffect(() => {
  if (!token || !selectedEvent || !isAttendanceDrawerOpen || !attendanceDate) return;
@@ -518,6 +534,24 @@ const openAttendance = (ev: MinistryEvent) => {
  loadAttendanceSession();
  return () => abort.abort();
  }, [attendanceDate, isAttendanceDrawerOpen, selectedEvent, token]);
+
+ useEffect(() => {
+  if (!token || !selectedEvent || !isAttendanceDrawerOpen) return;
+  const abort = new AbortController();
+  apiFetch<Persona[]>(`/evangelism/events/personas/${selectedEvent.id}`, {
+   token,
+   silent: true,
+   cache: 'no-store',
+   signal: abort.signal,
+  }).then((data) => {
+   if (abort.signal.aborted) return;
+   setAttendancePersonas(Array.isArray(data) ? data : []);
+   setAttendanceUniverseLoaded(true);
+  }).catch(() => {
+   if (!abort.signal.aborted) setAttendanceUniverseLoaded(false);
+  });
+  return () => abort.abort();
+ }, [isAttendanceDrawerOpen, selectedEvent, token]);
 
 const saveAttendance = async (forceEmpty = false) => {
  if (!selectedEvent || !canEditEvents) return;
@@ -567,7 +601,8 @@ const saveAttendance = async (forceEmpty = false) => {
  );
  };
 
- const expectedUniversePersonas = personas.filter((persona) => {
+ const attendanceSourcePersonas = attendanceUniverseLoaded ? attendancePersonas : personas;
+ const expectedUniversePersonas = attendanceSourcePersonas.filter((persona) => {
  if (!selectedEvent) {
  return true;
  }
@@ -593,7 +628,7 @@ const saveAttendance = async (forceEmpty = false) => {
 
  const filteredPersonas = expectedUniversePersonas.filter((persona) => {
  const query = attendanceSearch.trim().toLowerCase();
- const matchesSearch = !query || (persona.nombre_completo || '').toLowerCase().includes(query) || persona.email.toLowerCase().includes(query);
+ const matchesSearch = !query || (persona.nombre_completo || '').toLowerCase().startsWith(query) || (persona.email || '').toLowerCase().includes(query);
  const matchesRole = attendanceRoleFilter === 'ALL' || (persona.church_role || 'Sin rol') === attendanceRoleFilter;
  const isPresent = attendedPersonaIds.includes(persona.id);
  const matchesStatus =

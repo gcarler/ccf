@@ -29,15 +29,15 @@ export function GroupHeader({ house, avgAttendance, onBack }: GroupHeaderProps) 
           </div>
         </div>
         <div className="flex gap-3 shrink-0">
-          <div className="text-center px-3 py-1.5 bg-[hsl(var(--bg-primary))] dark:bg-[#252528] rounded-md border border-[hsl(var(--border-primary))] shadow-sm">
+          <div className="text-center px-3 py-1.5 bg-[hsl(var(--bg-primary))] dark:bg-[var(--admin-bg-secondary)] rounded-md border border-[hsl(var(--border-primary))] shadow-sm">
             <p className="text-base font-bold text-[hsl(var(--text-primary))]">{house.total_sessions}</p>
             <p className="text-2xs text-[hsl(var(--text-secondary))] font-semibold uppercase tracking-wide mt-0.5">Sesiones</p>
           </div>
-          <div className="text-center px-3 py-1.5 bg-[hsl(var(--bg-primary))] dark:bg-[#252528] rounded-md border border-[hsl(var(--border-primary))] shadow-sm">
+          <div className="text-center px-3 py-1.5 bg-[hsl(var(--bg-primary))] dark:bg-[var(--admin-bg-secondary)] rounded-md border border-[hsl(var(--border-primary))] shadow-sm">
             <p className="text-base font-bold text-[hsl(var(--text-primary))]">{house.total_attendance}</p>
             <p className="text-2xs text-[hsl(var(--text-secondary))] font-semibold uppercase tracking-wide mt-0.5">Asistentes</p>
           </div>
-          <div className="text-center px-3 py-1.5 bg-[hsl(var(--bg-primary))] dark:bg-[#252528] rounded-md border border-[hsl(var(--border-primary))] shadow-sm">
+          <div className="text-center px-3 py-1.5 bg-[hsl(var(--bg-primary))] dark:bg-[var(--admin-bg-secondary)] rounded-md border border-[hsl(var(--border-primary))] shadow-sm">
             <p className="text-base font-bold text-[hsl(var(--text-primary))]">{avgAttendance}</p>
             <p className="text-2xs text-[hsl(var(--text-secondary))] font-semibold uppercase tracking-wide mt-0.5">Promedio</p>
           </div>

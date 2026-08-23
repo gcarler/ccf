@@ -27,6 +27,14 @@ import type {
 } from './strategyDetailShared';
 import { getErrorMessage } from '../../utils';
 
+const normalizeRootClass = (value: string | null | undefined): string => {
+  const normalized = String(value || '').trim().toLowerCase().replace(/\s+/g, '_');
+  if (normalized === 'relacional' || normalized === 'evento_masivo' || normalized === 'sectorial') {
+    return normalized;
+  }
+  return '';
+};
+
 // ── Hook: Estrategia ────────────────────────────────────────────────
 
 export function useStrategy(id: string, token: string | null) {
@@ -58,7 +66,10 @@ export function useStrategy(id: string, token: string | null) {
       setEditType(result.strategy_type || '');
       setEditStatus(result.status || 'pending');
       setEditActiva(result.activa !== undefined ? result.activa : true);
-      setEditClaseRaiz(result.clase_raiz || result.typology || '');
+      // The API persists clase_raiz in uppercase (e.g. RELACIONAL), while
+      // the selector values are lowercase. Normalize on read so the active
+      // button is visibly selected when opening an existing strategy.
+      setEditClaseRaiz(normalizeRootClass(result.clase_raiz) || normalizeRootClass(result.typology));
       setEditDefaultRoleId(result.default_role_id ?? null);
       setEditStartDate(result.start_date ? result.start_date.substring(0, 10) : '');
       setEditEndDate(result.end_date ? result.end_date.substring(0, 10) : '');
