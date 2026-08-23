@@ -145,14 +145,14 @@ export default function NosotrosPage() {
 
             {/* ── VISIÓN Y MISIÓN ── */}
             {hasVisionMission && (
-                <section className="relative overflow-hidden bg-site-surface-container-low/60 py-16 md:py-24">
+                <section className="relative overflow-hidden bg-site-surface-container-low/60 py-8 md:py-12">
                     <div className="pointer-events-none absolute left-1/4 top-0 h-80 w-80 -translate-y-1/2 rounded-full bg-site-primary/10 blur-3xl" />
                     <div className="pointer-events-none absolute bottom-0 right-1/4 h-96 w-96 translate-y-1/2 rounded-full bg-site-primary-container/15 blur-3xl" />
 
-                    <div className="ccf-container relative z-10 space-y-10 md:space-y-14">
+                    <div className="relative z-10 space-y-8 md:space-y-12">
                         {/* Visión: imagen a la izquierda, texto a la derecha */}
                         {(visionTitle || visionText) && (
-                            <article className="group grid overflow-hidden rounded-[2rem] border border-site-outline-variant/15 bg-site-surface shadow-lg transition-all duration-500 hover:-translate-y-1 hover:border-site-primary/30 hover:shadow-2xl lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)]">
+                            <article className="group grid w-full overflow-hidden bg-site-surface lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)]">
                                 <div className="relative min-h-[18rem] overflow-hidden sm:min-h-[24rem] lg:min-h-[32rem]">
                                     {visionImage && (
                                         <Image
@@ -164,11 +164,11 @@ export default function NosotrosPage() {
                                         />
                                     )}
                                     <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/5 to-transparent" />
-                                    <span className="absolute bottom-5 left-5 rounded-full border border-white/25 bg-black/20 px-4 py-2 text-xs font-bold uppercase tracking-[0.2em] text-white backdrop-blur-md">
+                                    <span className="absolute bottom-6 left-6 text-xs font-bold uppercase tracking-[0.22em] text-white drop-shadow-lg sm:left-10">
                                         Nuestra Visión
                                     </span>
                                 </div>
-                                <div className="flex flex-col justify-center p-8 sm:p-10 md:p-14">
+                                <div className="flex flex-col justify-center px-6 py-10 sm:px-10 md:px-14 lg:px-[clamp(3rem,8vw,10rem)]">
                                     <div className="mb-6 flex items-center gap-3 text-xs font-bold uppercase tracking-[0.22em] text-site-primary">
                                         <span className="h-0.5 w-10 bg-site-primary" />
                                         <span>01 · Hacia dónde vamos</span>
@@ -190,8 +190,8 @@ export default function NosotrosPage() {
 
                         {/* Misión: texto a la izquierda, imagen a la derecha */}
                         {(misionTitle || misionText) && (
-                            <article className="group grid overflow-hidden rounded-[2rem] border border-site-primary/20 bg-site-surface shadow-lg transition-all duration-500 hover:-translate-y-1 hover:border-site-primary/40 hover:shadow-2xl lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)]">
-                                <div className="order-2 flex flex-col justify-center bg-[var(--site-hero-cta-gradient)] p-8 text-white sm:p-10 md:order-1 md:p-14">
+                            <article className="group grid w-full overflow-hidden lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)]">
+                                <div className="order-2 flex flex-col justify-center bg-[var(--site-hero-cta-gradient)] px-6 py-10 text-white sm:px-10 md:order-1 md:px-14 lg:px-[clamp(3rem,8vw,10rem)]">
                                     <div className="mb-6 flex items-center gap-3 text-xs font-bold uppercase tracking-[0.22em] text-white/85">
                                         <span className="h-0.5 w-10 bg-white" />
                                         <span>02 · Nuestra razón de ser</span>
@@ -219,7 +219,7 @@ export default function NosotrosPage() {
                                         />
                                     )}
                                     <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/5 to-transparent" />
-                                    <span className="absolute bottom-5 left-5 rounded-full border border-white/25 bg-black/20 px-4 py-2 text-xs font-bold uppercase tracking-[0.2em] text-white backdrop-blur-md">
+                                    <span className="absolute bottom-6 left-6 text-xs font-bold uppercase tracking-[0.22em] text-white drop-shadow-lg sm:left-10">
                                         Nuestra Misión
                                     </span>
                                 </div>
