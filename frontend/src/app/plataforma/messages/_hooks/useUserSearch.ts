@@ -3,12 +3,27 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { apiFetch } from '@/lib/http';
 import { useDebounce } from '@/hooks/useDebounce';
+import { filtroAPersona, type PersonaBusqueda } from '@/lib/filtroAPersonas';
 
 export interface SearchedUser {
     id: string;
+    // username REAL de la cuenta (auth_users): la mención inserta @username.
     username: string;
+    // Nombre completo de la persona, para mostrar.
+    name?: string;
     email: string;
     avatar_url: string | null;
+    church_role?: string | null;
+}
+
+/** Mapea un usuario buscado a la forma que entiende filtroAPersona. */
+function toPersonaBusqueda(user: SearchedUser): PersonaBusqueda {
+    return {
+        id: user.id,
+        username: user.username,
+        nombre_completo: user.name ?? null,
+        email: user.email,
+    };
 }
 
 interface UseUserSearchOptions {
@@ -42,14 +57,19 @@ export function useUserSearch({ token, debounceMs = 200, minLength = 1 }: UseUse
         setLoading(true);
         setError(null);
         try {
+            // El server no entiende el '@' (estilo mención); se lo quitamos
+            // antes de enviar y la semántica de username la aplica el filtro.
+            const searchTerm = debouncedQuery.trim().replace(/^@+/, '');
             const data = await apiFetch<SearchedUser[]>(
-                `/chat/users/search?q=${encodeURIComponent(debouncedQuery.trim())}`,
+                `/chat/users/search?q=${encodeURIComponent(searchTerm)}`,
                 { token, signal: controller.signal }
             );
             if (controller.signal.aborted) return;
             const list = Array.isArray(data) ? data : [];
-            setResults(list);
-            if (list.length === 0) setError('No se encontraron usuarios');
+            // Filtro reutilizable de personas: '@' → username; sin '@' → nombre/email.
+            const filtered = list.filter((u) => filtroAPersona(toPersonaBusqueda(u), debouncedQuery));
+            setResults(filtered);
+            if (filtered.length === 0) setError('No se encontraron usuarios');
         } catch {
             if (controller.signal.aborted) return;
             setError('Error al buscar usuarios');

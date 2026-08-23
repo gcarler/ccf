@@ -19,6 +19,7 @@ from __future__ import annotations
 
 import json
 import logging
+import unicodedata
 import uuid as _uuid
 from datetime import datetime
 from typing import List, Optional
@@ -42,6 +43,13 @@ router = APIRouter()
 
 
 # ── Helpers de persona ────────────────────────────────────────────────────────
+
+
+def _nfd(value: str) -> str:
+    """Normaliza sin acentos ni diacríticos para comparar en Python."""
+    return "".join(
+        char for char in unicodedata.normalize("NFD", value.casefold()) if not unicodedata.combining(char)
+    )
 
 
 def _get_persona_id(db: Session, current_user: models.User):
@@ -517,32 +525,74 @@ def search_chat_users(
     user_sede = get_user_sede_id(db, current_user.id)
     current_persona_id = _get_persona_id(db, current_user)
 
+    # A leading '@' is a UI affordance for username mentions; strip it so
+    # '@luis' searches 'luis' (the frontend strips it too, this is defensive).
+    q = q.lstrip('@')
+    if not q:
+        return []
+
     # Escape LIKE wildcards to prevent unintended pattern matching
     safe_q = q.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
     pattern = f"%{safe_q}%"
-    query = (
-        db.query(models.Persona, models.Usuario)
-        .join(models.Usuario, models.Usuario.id == models.Persona.id)
-        .filter(models.Usuario.is_active.is_(True))
-        .filter(
-            (models.Persona.first_name.ilike(pattern))
-            | (models.Persona.last_name.ilike(pattern))
-            | (models.Persona.email.ilike(pattern))
-            | (models.Usuario.username.ilike(pattern))
-            | (models.Usuario.email.ilike(pattern))
+
+    def _base_user_query():
+        return (
+            db.query(models.Persona, models.Usuario)
+            .join(models.Usuario, models.Usuario.id == models.Persona.id)
+            .filter(models.Usuario.is_active.is_(True))
         )
+
+    query = _base_user_query().filter(
+        (models.Persona.first_name.ilike(pattern))
+        | (models.Persona.last_name.ilike(pattern))
+        | (models.Persona.nombre_completo.ilike(pattern))
+        | (models.Persona.email.ilike(pattern))
+        | (models.Usuario.username.ilike(pattern))
+        | (models.Usuario.email.ilike(pattern))
     )
     if user_sede is not None:
         query = query.filter(models.Persona.sede_id == user_sede)
     if current_persona_id:
         query = query.filter(models.Persona.id != current_persona_id)
     users = query.order_by(models.Persona.first_name, models.Persona.last_name).limit(limit).all()
+
+    # PostgreSQL ILIKE no distingue acentos; si el pool queda corto, se hace
+    # un bucket por primera letra y se compara normalizado (NFD) en Python
+    # (mismo patrón que la búsqueda de personas de evangelismo).
+    if len(users) < limit and safe_q:
+        normalized_q = _nfd(safe_q.casefold())
+        first = safe_q[0]
+        bucket = _base_user_query().filter(
+            (models.Persona.first_name.ilike(f"{first}%"))
+            | (models.Persona.last_name.ilike(f"{first}%"))
+            | (models.Persona.email.ilike(f"{first}%"))
+            | (models.Usuario.username.ilike(f"{first}%"))
+            | (models.Usuario.email.ilike(f"{first}%"))
+        )
+        if user_sede is not None:
+            bucket = bucket.filter(models.Persona.sede_id == user_sede)
+        if current_persona_id:
+            bucket = bucket.filter(models.Persona.id != current_persona_id)
+        bucket_rows = bucket.order_by(models.Persona.first_name, models.Persona.last_name).limit(200).all()
+        by_id = {str(persona.id): (persona, usuario) for persona, usuario in users}
+        for persona, usuario in bucket_rows:
+            haystack = _nfd(
+                f"{persona.nombre_completo} {usuario.username} {persona.email or ''} {usuario.email or ''}"
+            )
+            if normalized_q in haystack:
+                by_id[str(persona.id)] = (persona, usuario)
+        users = list(by_id.values())[:limit]
+
     return [
         {
             "id": str(persona.id),
-            "username": persona.nombre_completo or usuario.username or "",
+            # username REAL de la cuenta (auth_users), no el nombre: la mención
+            # inserta @username y el highlight de mensajes funciona sin espacios.
+            "username": usuario.username or "",
+            "name": persona.nombre_completo or usuario.username or "",
             "email": persona.email or usuario.email or "",
             "avatar_url": getattr(persona, "photo_url", None),
+            "church_role": persona.church_role,
         }
         for persona, usuario in users
     ]
