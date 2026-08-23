@@ -4,17 +4,10 @@ import process from 'node:process';
 import { spawn } from 'node:child_process';
 import { snapshotNextConfig, restoreNextConfig } from './preserve-next-config.mjs';
 
-// verify-build.mjs — Valida que el frontend compila SIN tocar el build en
-// producción. Compila a un directorio desechable (.next-verify) y lo elimina
-// al terminar, con el mismo lock de build que el deploy real.
-//
-// Uso: desde el gate de calidad del pre-push — así se puede verificar un build
-// mientras el proceso `next start` sigue sirviendo el .next actual intacto.
 const cwd = process.cwd();
 const verifyDir = join(cwd, '.next-verify');
 
 await rm(verifyDir, { recursive: true, force: true });
-
 // next build muta tsconfig.json / next-env.d.ts (apuntan al distDir); los
 // restauramos para no ensuciar el working tree del gate.
 const configSnap = await snapshotNextConfig(cwd);

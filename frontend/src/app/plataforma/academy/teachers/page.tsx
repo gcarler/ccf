@@ -11,6 +11,7 @@ type TeacherRow = {
     id: string;
     name?: string;
     full_name?: string;
+    username?: string;
     email?: string;
     specialty?: string;
     course_count?: number;
@@ -106,10 +107,10 @@ export default function AcademyTeachersPage() {
                             >
                                 <div className="mb-3 flex items-center gap-3">
                                     <div className="flex size-8 items-center justify-center rounded-lg bg-[hsl(var(--primary))] text-sm font-semibold text-white">
-                                        {(teacher.full_name || teacher.name || "F").slice(0, 2).toUpperCase()}
+                                        {(teacher.full_name || teacher.name || teacher.username || "F").slice(0, 2).toUpperCase()}
                                     </div>
                                     <div>
-                                        <h2 className="font-bold text-[hsl(var(--text-primary))] dark:text-white">{teacher.full_name || teacher.name || "Facilitador"}</h2>
+                                        <h2 className="font-bold text-[hsl(var(--text-primary))] dark:text-white">{teacher.full_name || teacher.name || teacher.username || "Facilitador"}</h2>
                                         <p className="text-xs font-semibold text-[hsl(var(--text-secondary))]">{teacher.email || "Sin correo"}</p>
                                     </div>
                                 </div>

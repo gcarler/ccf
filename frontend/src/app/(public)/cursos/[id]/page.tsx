@@ -8,6 +8,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { CourseItem } from "@/lib/data/cursos";
 import { ArrowLeft, CheckCircle2, Clock, User, BookOpen, Share2 } from "lucide-react";
 import { apiFetch } from "@/lib/http";
+import { SITE_KEY } from "@/lib/site-config";
 import { toast } from "sonner";
 import { Header, Footer_Simple } from "@/components/public/Shared";
 import { useCmsV2Page } from "@/hooks/useCmsV2Page";
@@ -28,6 +29,7 @@ export default function CursoDetailPage() {
 
     const [course, setCourse] = useState<CourseItem | null>(null);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(false);
     const [toastMessage, setToastMessage] = useState<string | null>(null);
     const [enrolled, setEnrolled] = useState(false);
     const [showEnrollModal, setShowEnrollModal] = useState(false);
@@ -39,9 +41,10 @@ export default function CursoDetailPage() {
 
     useEffect(() => {
         // First try the API
-        apiFetch<CourseItem>(`/public/courses/${id}`, { silent: true })
+        apiFetch<CourseItem>(`/public/courses/${id}?site_key=${encodeURIComponent(SITE_KEY)}`, { silent: true })
             .then(data => {
                 setCourse(data);
+                setError(false);
                 setLoading(false);
                 if (data && typeof window !== 'undefined') {
                     try {
@@ -54,6 +57,7 @@ export default function CursoDetailPage() {
                 }
             })
             .catch(() => {
+                setError(true);
                 setLoading(false);
             });
     }, [id]);
@@ -68,13 +72,22 @@ export default function CursoDetailPage() {
         setShowEnrollModal(true);
     };
 
+    useEffect(() => {
+        if (!showEnrollModal) return;
+        const handleEscape = (event: KeyboardEvent) => {
+            if (event.key === "Escape") setShowEnrollModal(false);
+        };
+        document.addEventListener("keydown", handleEscape);
+        return () => document.removeEventListener("keydown", handleEscape);
+    }, [showEnrollModal]);
+
     const [enrollSuccessData, setEnrollSuccessData] = useState<{ course_id?: string; redirect_url?: string } | null>(null);
 
     const submitEnroll = async (e: React.FormEvent) => {
         e.preventDefault();
         setEnrollSubmitting(true);
         try {
-            const res = await apiFetch<{ status: string; course_id?: string; redirect_url?: string }>(`/public/courses/${id}/enroll`, {
+            const res = await apiFetch<{ status: string; course_id?: string; redirect_url?: string }>(`/public/courses/${id}/enroll?site_key=${encodeURIComponent(SITE_KEY)}`, {
                 method: "POST",
                 body: {
                     full_name: enrollForm.fullName,
@@ -109,12 +122,12 @@ export default function CursoDetailPage() {
         return (
             <main className="pt-[120px] pb-4 min-h-[70vh] flex flex-col items-center justify-center text-center px-3">
                 <BookOpen size={80} className="mb-3 opacity-20" style={{ color: "var(--site-primary)" }} />
-                <h1 className="text-lg font-bold mb-4" style={{ color: "var(--site-on-background)" }}>Curso no encontrado</h1>
+                <h1 className="text-lg font-bold mb-4" style={{ color: "var(--site-on-background)" }}>{error ? "No pudimos cargar el curso" : "Curso no encontrado"}</h1>
                 <p className="text-xl mb-3 opacity-70 max-w-lg" style={{ color: "var(--site-on-surface-variant)" }}>
-                    El curso que buscas ya no está disponible o el enlace es incorrecto.
+                    {error ? "Comprueba tu conexión e inténtalo nuevamente." : "El curso que buscas ya no está disponible o el enlace es incorrecto."}
                 </p>
                 <button
-                    onClick={() => router.push('/cursos')}
+                    onClick={() => error ? window.location.reload() : router.push('/cursos')}
                     className="flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-semibold uppercase tracking-wide transition-all hover:-translate-x-2"
                     style={{ background: "var(--site-primary)", color: "var(--site-on-primary)" }}
                 >
@@ -307,6 +320,9 @@ export default function CursoDetailPage() {
                             onClick={() => setShowEnrollModal(false)}
                         />
                         <motion.aside
+                            role="dialog"
+                            aria-modal="true"
+                            aria-labelledby="course-enroll-title"
                             initial={{ x: "100%", opacity: 0 }}
                             animate={{ x: 0, opacity: 1 }}
                             exit={{ x: "100%", opacity: 0 }}
@@ -321,7 +337,7 @@ export default function CursoDetailPage() {
                                 <div className="flex items-start justify-between gap-4 border-b px-5 py-5" style={{ borderColor: "var(--site-outline-variant)" }}>
                                     <div className="min-w-0">
                                         {getString(cms, "enroll_drawer_title") && (
-                                            <h3 className="text-lg font-bold leading-tight" style={{ color: "var(--site-on-surface)" }}>
+                                            <h3 id="course-enroll-title" className="text-lg font-bold leading-tight" style={{ color: "var(--site-on-surface)" }}>
                                                 {applyTemplate(getString(cms, "enroll_drawer_title"), { title: course?.title ?? "" })}
                                             </h3>
                                         )}
@@ -334,6 +350,7 @@ export default function CursoDetailPage() {
                                     <button
                                         type="button"
                                         onClick={() => setShowEnrollModal(false)}
+                                        aria-label="Cerrar inscripción"
                                         className="size-10 rounded-lg border text-sm transition-all"
                                         style={{
                                             background: "var(--site-surface-container)",

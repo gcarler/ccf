@@ -1306,6 +1306,8 @@ def academy_personas(
             "id": persona.id,
             "persona_id": persona.id,
             "username": _persona_display_name(persona),
+            "name": _persona_display_name(persona),
+            "full_name": _persona_display_name(persona),
             "email": persona.email,
             "role": role or "student",
             # M-06 (cierre 2026-07-24): estado activo real desde

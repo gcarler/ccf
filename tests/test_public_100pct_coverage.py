@@ -169,7 +169,7 @@ class TestPublicApi100PctCoverage:
     # huérfano del enum canónico Literal["open","persona","advanced"]).+Ajuste: el filtro ahora admite ['open','persona'] y excluye 'advanced'
     # (curso avanzado para inscritos, no captación pública) y cualquier
     # valor fuera del enum ('privado' o futuro). La migración
-    # 20260803_0005 normaliza los 4 cursos 'privado' (valor pre-enum) a 'persona'.
+    # 20260803_0005 normaliza los 4 cursos legacy 'privado' a 'persona'.
 
     def test_public_list_courses_admits_open_and_persona_excludes_advanced(self, client, db_session):
         """public_list_courses admite access_level en {'open','persona'},
@@ -204,14 +204,14 @@ class TestPublicApi100PctCoverage:
         (valor huérfano heredado de inserciones pre-enum) NO aparece en
         /cursos hasta que la migración 20260803_0005 lo normalice a 'persona'.
         El test consagra el contrato: el filtro por sí solo NO restaura la
-        visibilidad de los 4 cursos preexistentes — la migración es necesaria.
+        visibilidad de los 4 cursos legacy — la migración es necesaria.
         """
 
         c_privado = Course(
             id=uuid.uuid4(),
             code="LID-REG-PRIVADO",
-            title="Curso Privado Pre-enum",
-            slug="curso-privado-pre-enum",
+            title="Curso Privado Legacy",
+            slug="curso-privado-legacy",
             modality="online",
             is_published=True,
             access_level="privado",  # bypass del validator Pydantic (inserción directa ORM)
@@ -227,10 +227,50 @@ class TestPublicApi100PctCoverage:
             "la migración 20260803_0005 es la que restaura la visibilidad, no el filtro"
         )
 
-        # Detalle por slug sigue disponible (public_get_course no filtra access_level
-        # — sólo published+deleted_at), así que mientras se normaliza, el curso
-        # sigue siendo accesible vía /api/public/courses/{slug}, incluso si no aparece
-        # en el listado. Verificamos que el detalle no rompe con el valor huérfano.
+        # El detalle debe mantener el mismo contrato de visibilidad del listado:
+        # un nivel heredado no público no se puede consultar por enlace directo.
         res_detail = client.get(f"/api/public/courses/{c_privado.slug}")
-        assert res_detail.status_code == 200
-        assert res_detail.json()["id"] == c_privado.slug
+        assert res_detail.status_code == 404
+
+    def test_public_detail_and_enroll_exclude_advanced(self, client, db_session):
+        course = Course(
+            id=uuid.uuid4(),
+            code="LID-ADVANCED-BLOCKED",
+            title="Curso avanzado no público",
+            slug="curso-advanced-blocked",
+            modality="online",
+            is_published=True,
+            access_level="advanced",
+        )
+        db_session.add(course)
+        db_session.commit()
+
+        assert client.get(f"/api/public/courses/{course.slug}").status_code == 404
+        assert client.post(
+            f"/api/public/courses/{course.slug}/enroll",
+            json={"email": "blocked@example.com"},
+        ).status_code == 404
+
+    def test_public_course_contract_has_canonical_fields(self, client, db_session):
+        course = Course(
+            id=uuid.uuid4(),
+            code="LID-CONTRACT-01",
+            title="Curso contrato público",
+            slug="curso-contrato-publico",
+            description="Descripción pública",
+            instructor_name="Equipo Academy",
+            image_url="/api/static/course.webp",
+            modality="online",
+            is_published=True,
+            access_level="open",
+        )
+        db_session.add(course)
+        db_session.commit()
+
+        response = client.get("/api/public/courses/curso-contrato-publico")
+        assert response.status_code == 200
+        body = response.json()
+        assert body["slug"] == course.slug
+        assert body["description"] == course.description
+        assert body["image_url"] == course.image_url
+        assert body["instructor_name"] == course.instructor_name
