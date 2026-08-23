@@ -136,8 +136,19 @@ scripts/archive_merged_branch.sh origin integration/academy-<fecha>
 
 `archive_merged_branch.sh` solo acepta ramas `integration/*` cuyo SHA ya sea
 ancestro de `origin/main`; crea `archive/merged/<rama-normalizada>` con el mismo
-SHA y confirma el respaldo antes de borrar la rama temporal. Las ramas de módulo
-permanecen activas y las ramas con conflictos no se archivan ni se eliminan.
+SHA y confirma el respaldo antes de borrar la rama temporal. Para ramas antiguas
+absorbidas parcialmente usa el helper explicito:
+
+```bash
+scripts/archive_branch.sh origin stale feature/security-hardening
+```
+
+El helper exige un worktree limpio y que la rama fuente no tenga un worktree activo.
+Conserva el SHA exacto bajo `archive/merged/` o `archive/stale/`, verifica el
+respaldo remoto y solo despues elimina la rama fuente. El registro visible
+`docs/ARCHIVED_BRANCHES.md` marca cada entrada como `ARCHIVADA - NO REACTIVAR`.
+Las ramas que aun tengan trabajo rescatable permanecen activas y las ramas con
+conflictos no se archivan ni se eliminan.
 
 ## 3. Procedimiento de Deploy
 

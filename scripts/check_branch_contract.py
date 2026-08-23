@@ -13,6 +13,7 @@ COMMON_PREFIXES = (
     "tests/test_structural_contracts.py",
     "tests/test_select_quality_checks.py",
     "tests/test_branch_contract.py",
+    "tests/test_archive_policy.py",
     "docs/RUNBOOK_PRODUCCION.md",
     "AGENTS_RULES_CCF.md",
     "REGLAS.md",
@@ -172,7 +173,7 @@ def module_for_branch(branch: str) -> str | None:
 
 def branch_name_violations(branch: str) -> list[str]:
     """Validate names for branches that participate in the governed flow."""
-    if branch == "main" or branch.startswith("archive/merged/"):
+    if branch == "main" or branch.startswith("archive/merged/") or branch.startswith("archive/stale/"):
         return []
     if branch.startswith("integration/"):
         return [] if branch != "integration/" else ["integration/ requiere un nombre de cambio"]
@@ -188,7 +189,12 @@ def ownership_violations(branch: str, files: list[str]) -> list[str]:
     name_violations = branch_name_violations(branch)
     if name_violations:
         return name_violations
-    if branch == "main" or branch.startswith("integration/") or branch.startswith("archive/merged/"):
+    if (
+        branch == "main"
+        or branch.startswith("integration/")
+        or branch.startswith("archive/merged/")
+        or branch.startswith("archive/stale/")
+    ):
         return []
     if branch.startswith("docs/"):
         allowed = COMMON_PREFIXES + ("docs/",)

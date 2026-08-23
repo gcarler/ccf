@@ -77,9 +77,9 @@ if [ "$PUSH_BRANCH" = "main" ] && [ "${CCF_ALLOW_MAIN_PUSH:-0}" != "1" ]; then
     echo -e "${RED}✗ Push directo a main bloqueado; integra mediante una rama temporal revisada.${NC}"
     exit 2
 fi
-if [[ "$PUSH_BRANCH" != archive/merged/* ]] && [ "$PUSH_LOCAL_SHA" = "$ZERO_SHA" ]; then
+if [[ "$PUSH_BRANCH" != archive/merged/* && "$PUSH_BRANCH" != archive/stale/* ]] && [ "$PUSH_LOCAL_SHA" = "$ZERO_SHA" ]; then
     : # Deletion is validated below by the immutable archive ref.
-elif [[ "$PUSH_BRANCH" != archive/merged/* ]] && [ "$CURRENT_BRANCH" != "$PUSH_BRANCH" ]; then
+elif [[ "$PUSH_BRANCH" != archive/merged/* && "$PUSH_BRANCH" != archive/stale/* ]] && [ "$CURRENT_BRANCH" != "$PUSH_BRANCH" ]; then
     echo -e "${RED}✗ Worktree incorrecto.${NC}"
     echo "  Rama activa: ${CURRENT_BRANCH:-detached}"
     echo "  Rama destino: $PUSH_BRANCH"
@@ -89,7 +89,7 @@ fi
 
 # Archive refs are immutable evidence. They may only be created at the exact
 # source SHA and source deletion is allowed only after the archive exists.
-if [[ "$PUSH_BRANCH" == archive/merged/* ]]; then
+if [[ "$PUSH_BRANCH" == archive/merged/* || "$PUSH_BRANCH" == archive/stale/* ]]; then
     if [ "$PUSH_LOCAL_SHA" = "$ZERO_SHA" ]; then
         echo -e "${RED}✗ No se eliminan ramas archivadas.${NC}"
         exit 2
@@ -102,8 +102,8 @@ if [[ "$PUSH_BRANCH" == archive/merged/* ]]; then
         echo -e "${RED}✗ Falta origin/main para validar el archivo.${NC}"
         exit 2
     fi
-    if ! git merge-base --is-ancestor "$PUSH_LOCAL_SHA" "origin/main"; then
-        echo -e "${RED}✗ Solo se archivan SHAs ya integrados en origin/main.${NC}"
+    if [[ "$PUSH_BRANCH" == archive/merged/* ]] && ! git merge-base --is-ancestor "$PUSH_LOCAL_SHA" "origin/main"; then
+        echo -e "${RED}✗ Solo se archivan como merged los SHAs ya integrados en origin/main.${NC}"
         exit 2
     fi
     echo -e "${GREEN}✓ Archivo nuevo validado: $PUSH_BRANCH -> $PUSH_LOCAL_SHA.${NC}"
@@ -112,10 +112,19 @@ fi
 
 # Deleting a branch is allowed only after its normalized archive ref exists.
 if [ "$PUSH_LOCAL_SHA" = "$ZERO_SHA" ]; then
+    if [[ "$PUSH_BRANCH" == archive/* ]]; then
+        echo -e "${RED}✗ No se eliminan ramas de archivo.${NC}"
+        exit 2
+    fi
     ARCHIVE_BRANCH="archive/merged/${PUSH_BRANCH//\//-}"
+    STALE_ARCHIVE_BRANCH="archive/stale/${PUSH_BRANCH//\//-}"
     ARCHIVE_SHA="$(git ls-remote --heads "$PUSH_REMOTE" "refs/heads/$ARCHIVE_BRANCH" | awk 'NR == 1 { print $1 }')"
     if [ -z "$ARCHIVE_SHA" ]; then
-        echo -e "${RED}✗ Eliminación bloqueada: falta $ARCHIVE_BRANCH.${NC}"
+        ARCHIVE_BRANCH="$STALE_ARCHIVE_BRANCH"
+        ARCHIVE_SHA="$(git ls-remote --heads "$PUSH_REMOTE" "refs/heads/$ARCHIVE_BRANCH" | awk 'NR == 1 { print $1 }')"
+    fi
+    if [ -z "$ARCHIVE_SHA" ]; then
+        echo -e "${RED}✗ Eliminación bloqueada: falta archive/merged o archive/stale para $PUSH_BRANCH.${NC}"
         exit 2
     fi
     if [ "$PUSH_REMOTE_SHA" != "$ZERO_SHA" ] && [ "$ARCHIVE_SHA" != "$PUSH_REMOTE_SHA" ]; then
