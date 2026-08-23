@@ -123,18 +123,6 @@ def list_event_personas(
     return [schemas.PersonaResponse.model_validate(person).model_dump(mode="json") for person in people]
 
 
-@static_router.get("/events/personas/{event_id}", response_model=List[dict])
-def list_event_personas(
-    event_id: UUID,
-    db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_evangelism_read),
-):
-    """Lista el universo de personas del evento respetando su alcance."""
-    event = require_event_access(db, current_user, event_id)
-    people = get_expected_personas_for_event(db, event)
-    return [schemas.PersonaResponse.model_validate(person).model_dump(mode="json") for person in people]
-
-
 def _strategy_event_matches(event: models.CrmEvent, strategy_id: UUID) -> bool:
     settings = event.settings_json if isinstance(event.settings_json, dict) else {}
     return str(settings.get("evangelism_strategy_id") or "") == str(strategy_id)
