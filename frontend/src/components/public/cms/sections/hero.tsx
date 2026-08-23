@@ -36,9 +36,10 @@ export function VideoHeroSection({ section }: { section: CmsSection<"video_hero"
   const ctaLabel = val(p, "cta_label", "");
   const ctaHref = val(p, "cta_href", "/");
   const videoUrl = val(p, "video_url", "");
+  const fullBleed = Boolean(p.full_bleed);
 
   return (
-    <section className="relative overflow-hidden rounded-2xl min-h-[480px] flex items-center">
+    <section className={`ccf-video-hero relative overflow-hidden ${fullBleed ? "left-1/2 w-screen -translate-x-1/2 rounded-none" : "rounded-2xl"} min-h-[clamp(420px,72vh,760px)] flex items-center`}>
       {videoUrl && (
         <video autoPlay loop muted playsInline className="absolute inset-0 w-full h-full object-cover">
           <source src={videoUrl} type="video/mp4" />
