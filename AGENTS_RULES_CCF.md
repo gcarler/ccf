@@ -100,6 +100,13 @@ Este protocolo aplica a cualquier agente y mantiene una sola línea estable:
 8. **Cerrar con evidencia.** Comprobar `git ls-remote`, registrar los SHA y dejar
    limpios los worktrees. El deploy es una operación aparte y sigue
    `docs/RUNBOOK_PRODUCCION.md`.
+9. **Las ramas retiradas se archivan con aviso visible.** Usa
+   `scripts/archive_branch.sh origin merged|stale <rama>`. El helper conserva el
+   SHA exacto bajo `archive/merged/` o `archive/stale/`, exige que el worktree de
+   la rama fuente ya no este activo y elimina la fuente solo despues de confirmar
+   el respaldo remoto. Una rama en `docs/ARCHIVED_BRANCHES.md` esta marcada como
+   `ARCHIVADA - NO REACTIVAR`: cualquier rescate debe comenzar en una rama nueva
+   basada en el `main` actual. `archive/*` es inmutable y no se sobrescribe.
 
 Comandos canónicos:
 
@@ -112,6 +119,7 @@ scripts/push_branch.sh origin "$(git branch --show-current)"
 git ls-remote --heads origin "$(git branch --show-current)"
 scripts/create_integration_branch.sh origin feature/academy integration/academy-<fecha>
 scripts/archive_merged_branch.sh origin integration/academy-<fecha>
+scripts/archive_branch.sh origin stale feature/security-hardening
 ```
 
 ## 6. Checklist de Auditoría CCF
@@ -156,3 +164,5 @@ Todo auditor/reviewer/challenger/victory_auditor DEBE verificar:
 - [ ] Push realizado con `scripts/push_branch.sh`, sin `--no-verify`
 - [ ] SHA remoto confirmado con `git ls-remote`
 - [ ] Rama temporal archivada bajo `archive/merged/` solo después de fusionar a `main`
+- [ ] Rama stale archivada bajo `archive/stale/` con aviso en `docs/ARCHIVED_BRANCHES.md`
+- [ ] Ninguna rama marcada `ARCHIVADA - NO REACTIVAR` fue reutilizada
