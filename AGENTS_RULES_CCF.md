@@ -68,34 +68,38 @@ Todo agente que opere en la plataforma CCF (/root/ccf) DEBE conocer y aplicar es
 - **Ruta canónica** — los deploys del frontend deben usar `scripts/deploy_frontend.sh` o el procedimiento de worktree alternativo documentado en `docs/RUNBOOK_PRODUCCION.md`. Una sesión `agy`/agente no debe dejar un comando de deploy persistente en tmux.
 - **Producción** — todas las pruebas read-only y seguras para datos de producción.
 
-### 5.1 Protocolo obligatorio de commit y push
+### 5.1 Protocolo obligatorio de commit, integración y push
 
-Este protocolo aplica a cualquier agente, independientemente de la herramienta o
-sesión que utilice:
+Este protocolo aplica a cualquier agente y mantiene una sola línea estable:
 
-1. **Identificar la rama propietaria antes de editar.** Cada cambio debe vivir en
-   la rama del módulo o de la capa que lo posee. `main` es la rama canónica de
-   integración y no se usa como worktree de trabajo sucio.
-2. **Revisar el worktree antes de tocarlo.** Ejecutar `git status --short --branch`
-   y preservar cambios ajenos; nunca incluirlos por accidente en un commit.
-3. **Planificar antes de implementar.** Para cambios que crucen frontend, backend,
-   datos, CMS o despliegue debe existir un plan y una validación proporcional.
-4. **Hacer commits pequeños y temáticos.** Un commit debe contener una unidad de
-   trabajo coherente, con prefijo convencional (`feat`, `fix`, `docs`, `chore`,
-   `refactor`, `test`). No se permite mezclar módulos sin integración explícita.
-5. **Validar antes de publicar.** El commit debe pasar `git diff --check`, las
-   pruebas proporcionales y el contrato de rama. El `pre-push` es obligatorio;
-   está prohibido usar `git push --no-verify` para saltarlo.
-6. **Publicar solo la rama activa.** Desde el worktree correcto usar:
-   `scripts/push_branch.sh origin <rama>`. El helper hace fetch, rechaza un
-   worktree sucio, comprueba la base remota, ejecuta el hook y confirma el SHA
-   remoto. Nunca usar `git push origin main` como atajo de integración.
-7. **Integrar por flujo controlado.** Los cambios llegan a `main` mediante la
-   rama propietaria y revisión/integración; después se archiva la rama integrada.
-   No se borran ramas activas ni se fuerza la historia sin autorización explícita.
-8. **Cerrar con evidencia.** Después del push comprobar `git ls-remote`, registrar
-   el SHA publicado y dejar el worktree limpio. El deploy es una operación aparte
-   y sigue `docs/RUNBOOK_PRODUCCION.md`.
+1. **`main` es la única rama canónica y estable.** Nunca se usa como worktree de
+   trabajo sucio ni se publica directamente.
+2. **Cada módulo tiene una rama propietaria.** Usa `feature/academy`,
+   `feature/evangelism`, `feature/cms`, `feature/messaging` u otra rama aprobada
+   para el módulo. Un commit debe contener una unidad temática.
+3. **La rama propietaria se publica sola.** Desde su worktree limpio usa
+   `scripts/push_branch.sh origin <rama>`. El helper comprueba la rama activa, la
+   base remota, el contrato de ownership, lint, pruebas y build/validación
+   proporcional mediante el `pre-push`. Está prohibido `--no-verify`.
+4. **Toda integración nace desde el último `origin/main`.** Ejecuta:
+   `scripts/create_integration_branch.sh origin <rama-propietaria> integration/<tema>`.
+   La rama temporal debe incorporar una sola rama propietaria y publicarse como
+   la unidad que se revisará.
+5. **Los gates son obligatorios antes de publicar o fusionar:** contrato de rama,
+   `git diff --check`, lint, pruebas proporcionales y build frontend o validación
+   backend según el diff. La evidencia debe acompañar la integración.
+6. **Los conflictos se conservan separados.** Si el merge falla, se deja la rama
+   `integration/*` con el conflicto visible para resolución manual. No se usa
+   `merge -X theirs`, force push ni una fusión a la fuerza.
+7. **Después de fusionar a `main`, se archiva la rama temporal.** Ejecuta
+   `scripts/archive_merged_branch.sh origin integration/<tema>`. El helper exige
+   que el SHA de la integración sea ancestro de `origin/main`, crea
+   `archive/merged/integration-<tema>`, confirma el mismo SHA remoto y solo
+   entonces elimina la rama temporal. La rama propietaria del módulo permanece
+   activa para trabajo posterior.
+8. **Cerrar con evidencia.** Comprobar `git ls-remote`, registrar los SHA y dejar
+   limpios los worktrees. El deploy es una operación aparte y sigue
+   `docs/RUNBOOK_PRODUCCION.md`.
 
 Comandos canónicos:
 
@@ -106,6 +110,8 @@ git diff --check
   --branch "$(git branch --show-current)" --base origin/main --head HEAD
 scripts/push_branch.sh origin "$(git branch --show-current)"
 git ls-remote --heads origin "$(git branch --show-current)"
+scripts/create_integration_branch.sh origin feature/academy integration/academy-<fecha>
+scripts/archive_merged_branch.sh origin integration/academy-<fecha>
 ```
 
 ## 6. Checklist de Auditoría CCF
@@ -143,6 +149,10 @@ Todo auditor/reviewer/challenger/victory_auditor DEBE verificar:
 - [ ] No substring `"legacy"` en archivos nuevos
 - [ ] Commit prefix correcto (`feat(cms):` / `docs(cms):` / `fix(cms):`)
 - [ ] Rama propietaria confirmada y worktree sin cambios ajenos
+- [ ] Integración creada desde el último `origin/main`
 - [ ] `scripts/check_branch_contract.py` pasó para la rama objetivo
+- [ ] Lint, pruebas y build/validación proporcional registrados
+- [ ] Conflictos resueltos explícitamente o rama temporal conservada separada
 - [ ] Push realizado con `scripts/push_branch.sh`, sin `--no-verify`
 - [ ] SHA remoto confirmado con `git ls-remote`
+- [ ] Rama temporal archivada bajo `archive/merged/` solo después de fusionar a `main`

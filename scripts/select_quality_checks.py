@@ -338,7 +338,7 @@ def _is_explicit_shared_file(path: str) -> bool:
 
 def changed_files_from_git(base: str, head: str) -> list[str]:
     result = subprocess.run(
-        ["git", "diff", "--name-only", base, head],
+        ["git", "diff", "--name-only", f"{base}...{head}"],
         cwd=ROOT,
         check=False,
         capture_output=True,

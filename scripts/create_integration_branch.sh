@@ -51,6 +51,19 @@ if [ "$(git rev-parse "$MAIN_REF^{commit}")" = "$(git rev-parse "$SOURCE_REF^{co
     exit 2
 fi
 
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+PYTHON="${CCF_PYTHON:-$REPO_ROOT/venv/bin/python}"
+if [ ! -x "$PYTHON" ] && [ -x "/root/ccf/venv/bin/python" ]; then
+    PYTHON="/root/ccf/venv/bin/python"
+fi
+if [ -x "$PYTHON" ]; then
+    "$PYTHON" "$REPO_ROOT/scripts/check_branch_contract.py" \
+        --branch "$SOURCE_BRANCH" --base "$MAIN_REF" --head "$SOURCE_REF"
+else
+    echo "✗ No se encontró Python para validar el contrato de $SOURCE_BRANCH." >&2
+    exit 2
+fi
+
 git switch -c "$INTEGRATION_BRANCH" "$MAIN_REF"
 if git merge --no-ff --no-commit "$SOURCE_REF"; then
     echo "✓ Integración preparada: $INTEGRATION_BRANCH"

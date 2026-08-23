@@ -9,7 +9,7 @@
 ## 📋 Índice
 
 1. [Arquitectura del Sistema](#1-arquitectura-del-sistema)
-2. [Protocolo de Commit y Push](#2-protocolo-de-commit-y-push)
+2. [Protocolo de Ramas, Integración y Push](#2-protocolo-de-ramas-integración-y-push)
 3. [Procedimiento de Deploy](#3-procedimiento-de-deploy)
 4. [Rollback](#4-rollback)
 5. [Monitoreo y Alertas](#5-monitoreo-y-alertas)
@@ -65,11 +65,13 @@
 
 ---
 
-## 2. Protocolo de Commit y Push
+## 2. Protocolo de Ramas, Integración y Push
 
 Este es el flujo obligatorio para todos los agentes y herramientas que trabajen
-en CCF. La rama `main` es la base canónica; los módulos se publican desde su
-rama propietaria y se integran después de revisión.
+en CCF. `main` es la única rama canónica y estable; los módulos se publican desde
+su rama propietaria y se integran mediante una rama temporal creada desde el
+último `origin/main`. Las ramas con conflictos permanecen separadas hasta su
+resolución explícita.
 
 ### 2.1 Antes del commit
 
@@ -113,6 +115,29 @@ git status --short --branch
 
 El operador registra el SHA remoto y deja el worktree limpio. Publicar código y
 desplegarlo son acciones distintas: el deploy solo continúa por la sección 3.
+
+### 2.5 Integración temporal y archivado
+
+```bash
+# Desde un worktree limpio, sobre el último main remoto
+scripts/create_integration_branch.sh origin feature/academy integration/academy-<fecha>
+
+# Resolver y revisar manualmente si el merge deja conflictos; nunca forzar
+# la resolución. Ejecutar los gates antes de publicar la rama temporal:
+git diff --check
+./venv/bin/python scripts/check_branch_contract.py \
+  --branch "$(git branch --show-current)" --base origin/main --head HEAD
+scripts/push_branch.sh origin "$(git branch --show-current)"
+
+# Tras fusionar la integración verificada a main, conservar la rama propietaria
+# y eliminarla solo después de crear el respaldo remoto:
+scripts/archive_merged_branch.sh origin integration/academy-<fecha>
+```
+
+`archive_merged_branch.sh` solo acepta ramas `integration/*` cuyo SHA ya sea
+ancestro de `origin/main`; crea `archive/merged/<rama-normalizada>` con el mismo
+SHA y confirma el respaldo antes de borrar la rama temporal. Las ramas de módulo
+permanecen activas y las ramas con conflictos no se archivan ni se eliminan.
 
 ## 3. Procedimiento de Deploy
 

@@ -164,10 +164,12 @@ Si reaparece un `_tmp_*` el commit debe rechazarse (ver
 - [ ] El push se hizo con `scripts/push_branch.sh`, nunca con `--no-verify`.
 - [ ] El SHA remoto fue confirmado después del push.
 
-## 10.1 Protocolo de Commit y Push
+## 10.1 Protocolo de ramas, integración y push
 
 El protocolo operativo compartido por todos los agentes está definido en
-`AGENTS_RULES_CCF.md`, sección 5.1, y se ejecuta con:
+`AGENTS_RULES_CCF.md`, sección 5.1. `main` es la única rama canónica y estable;
+las ramas de módulo se publican individualmente y se integran mediante una rama
+temporal creada desde el último `origin/main`.
 
 ```bash
 git status --short --branch
@@ -175,11 +177,17 @@ git diff --check
 ./venv/bin/python scripts/check_branch_contract.py \
   --branch "$(git branch --show-current)" --base origin/main --head HEAD
 scripts/push_branch.sh origin "$(git branch --show-current)"
+scripts/create_integration_branch.sh origin feature/academy integration/academy-<fecha>
+# Después de revisar y fusionar la integración a main:
+scripts/archive_merged_branch.sh origin integration/academy-<fecha>
 git ls-remote --heads origin "$(git branch --show-current)"
 ```
 
-No se permite publicar desde un worktree sucio, mezclar módulos en un commit,
-forzar historia ni saltar el `pre-push` con `--no-verify`.
+Antes de publicar o fusionar deben pasar contrato de rama, lint, pruebas
+proporcionales y build frontend o validación backend según el diff. No se permite
+publicar desde un worktree sucio, mezclar módulos en un commit, forzar historia
+ni saltar el `pre-push` con `--no-verify`. Una rama con conflictos permanece
+separada hasta su resolución explícita.
 
 ## 11. Verificacion Recomendada
 
