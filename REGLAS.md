@@ -158,6 +158,28 @@ Si reaparece un `_tmp_*` el commit debe rechazarse (ver
 - [ ] Las rutas nuevas usan contratos v3.
 - [ ] La prueba proporcional fue ejecutada.
 - [ ] La plataforma responde despues del cambio si se toco runtime.
+- [ ] La rama propietaria y el worktree fueron comprobados.
+- [ ] El commit contiene una sola unidad temática y no incluye cambios ajenos.
+- [ ] El contrato de rama pasó antes del push.
+- [ ] El push se hizo con `scripts/push_branch.sh`, nunca con `--no-verify`.
+- [ ] El SHA remoto fue confirmado después del push.
+
+## 10.1 Protocolo de Commit y Push
+
+El protocolo operativo compartido por todos los agentes está definido en
+`AGENTS_RULES_CCF.md`, sección 5.1, y se ejecuta con:
+
+```bash
+git status --short --branch
+git diff --check
+./venv/bin/python scripts/check_branch_contract.py \
+  --branch "$(git branch --show-current)" --base origin/main --head HEAD
+scripts/push_branch.sh origin "$(git branch --show-current)"
+git ls-remote --heads origin "$(git branch --show-current)"
+```
+
+No se permite publicar desde un worktree sucio, mezclar módulos en un commit,
+forzar historia ni saltar el `pre-push` con `--no-verify`.
 
 ## 11. Verificacion Recomendada
 

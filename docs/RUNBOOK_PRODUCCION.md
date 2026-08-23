@@ -1,6 +1,6 @@
 # Runbook de Operaciones — Plataforma CCF v3.0
 
-**Fecha:** 2026-06-05
+**Fecha:** 2026-08-23 (revisado; última revisión previa: 2026-06-05)
 **Autor:** Equipo de Arquitectura CCF
 **Audiencia:** DevOps, Desarrolladores Backend, Administradores
 
@@ -9,11 +9,12 @@
 ## 📋 Índice
 
 1. [Arquitectura del Sistema](#1-arquitectura-del-sistema)
-2. [Procedimiento de Deploy](#2-procedimiento-de-deploy)
-3. [Rollback](#3-rollback)
-4. [Monitoreo y Alertas](#4-monitoreo-y-alertas)
-5. [Procedimientos de Emergencia](#5-procedimientos-de-emergencia)
-6. [Mantenimiento Programado](#6-mantenimiento-programado)
+2. [Protocolo de Commit y Push](#2-protocolo-de-commit-y-push)
+3. [Procedimiento de Deploy](#3-procedimiento-de-deploy)
+4. [Rollback](#4-rollback)
+5. [Monitoreo y Alertas](#5-monitoreo-y-alertas)
+6. [Procedimientos de Emergencia](#6-procedimientos-de-emergencia)
+7. [Mantenimiento Programado](#7-mantenimiento-programado)
 
 ---
 
@@ -64,7 +65,56 @@
 
 ---
 
-## 2. Procedimiento de Deploy
+## 2. Protocolo de Commit y Push
+
+Este es el flujo obligatorio para todos los agentes y herramientas que trabajen
+en CCF. La rama `main` es la base canónica; los módulos se publican desde su
+rama propietaria y se integran después de revisión.
+
+### 2.1 Antes del commit
+
+```bash
+cd /root/ccf
+git status --short --branch
+git diff --check
+```
+
+Si aparecen cambios ajenos, se conservan y no se agregan al commit. Cada commit
+debe representar una sola unidad temática y usar un prefijo convencional.
+
+### 2.2 Validación de la rama
+
+```bash
+BRANCH="$(git branch --show-current)"
+./venv/bin/python scripts/check_branch_contract.py \
+  --branch "$BRANCH" --base origin/main --head HEAD
+```
+
+El contrato evita mezclar archivos de módulos distintos. Si el cambio requiere
+otra rama, se detiene el trabajo y se crea o usa el worktree propietario.
+
+### 2.3 Push sectorizado
+
+```bash
+scripts/push_branch.sh origin "$BRANCH"
+```
+
+El helper verifica worktree limpio, sincroniza la base remota, ejecuta el
+`pre-push`, bloquea pushes ambiguos o desfasados y confirma que el SHA remoto
+coincida con el commit local. Está prohibido usar `git push --no-verify`, hacer
+push directo a `main` como atajo o forzar historia.
+
+### 2.4 Cierre obligatorio
+
+```bash
+git ls-remote --heads origin "$BRANCH"
+git status --short --branch
+```
+
+El operador registra el SHA remoto y deja el worktree limpio. Publicar código y
+desplegarlo son acciones distintas: el deploy solo continúa por la sección 3.
+
+## 3. Procedimiento de Deploy
 
 ### Flujo sectorizado de ramas y push
 
@@ -220,7 +270,7 @@ git worktree prune
 
 ---
 
-## 3. Rollback
+## 4. Rollback
 
 ### Rollback Rápido (Cambio de código)
 
@@ -264,7 +314,7 @@ curl -f https://elfarocc.tech/api/system/health
 
 ---
 
-## 4. Monitoreo y Alertas
+## 5. Monitoreo y Alertas
 
 ### Comandos de Diagnóstico
 
@@ -312,7 +362,7 @@ psql -U ccf_user ccf_production -c "SELECT query, calls, total_time FROM pg_stat
 
 ---
 
-## 5. Procedimientos de Emergencia
+## 6. Procedimientos de Emergencia
 
 ### Pérdida de Datos
 
@@ -338,7 +388,7 @@ psql -U ccf_user ccf_production -c "SELECT query, calls, total_time FROM pg_stat
 
 ---
 
-## 6. Mantenimiento Programado
+## 7. Mantenimiento Programado
 
 ### Tareas Semanales
 

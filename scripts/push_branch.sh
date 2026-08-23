@@ -13,6 +13,11 @@ if [ -z "$BRANCH" ] || [ "$CURRENT_BRANCH" != "$BRANCH" ]; then
     exit 2
 fi
 
+if [ "$BRANCH" = "main" ] && [ "${CCF_ALLOW_MAIN_PUSH:-0}" != "1" ]; then
+    echo "✗ Push directo a main bloqueado. Usa una rama propietaria e integración revisada."
+    exit 2
+fi
+
 if [ -n "$(git status --short)" ]; then
     echo "✗ Worktree sucio: no se permite push con cambios sin commit."
     git status --short
@@ -20,15 +25,27 @@ if [ -n "$(git status --short)" ]; then
 fi
 
 echo "→ Sincronizando base remota: $REMOTE/$BRANCH"
-git fetch --prune "$REMOTE" "$BRANCH"
-
-LOCAL_BASE="$(git rev-parse "refs/remotes/$REMOTE/$BRANCH" 2>/dev/null || true)"
-if [ -z "$LOCAL_BASE" ]; then
-    echo "✗ No existe la rama remota $REMOTE/$BRANCH. Créala explícitamente o revisa el nombre."
-    exit 2
+if git ls-remote --exit-code --heads "$REMOTE" "refs/heads/$BRANCH" >/dev/null 2>&1; then
+    REMOTE_BRANCH_EXISTS=1
+    git fetch --prune "$REMOTE" "$BRANCH"
+else
+    REMOTE_BRANCH_EXISTS=0
+    echo "→ La rama $REMOTE/$BRANCH aún no existe; se validará contra $REMOTE/main"
+    git fetch --prune "$REMOTE" main
 fi
 
-export CCF_PRE_PUSH_BASE="$REMOTE/$BRANCH"
+if [ "$REMOTE_BRANCH_EXISTS" -eq 0 ]; then
+    BASE_REF="refs/remotes/$REMOTE/main"
+    if ! git rev-parse "$BASE_REF^{commit}" >/dev/null 2>&1; then
+        echo "✗ No existe la base $REMOTE/main para publicar la rama nueva."
+        exit 2
+    fi
+    echo "→ Primera publicación de $BRANCH; usando $REMOTE/main como base de validación"
+else
+    BASE_REF="refs/remotes/$REMOTE/$BRANCH"
+fi
+
+export CCF_PRE_PUSH_BASE="${BASE_REF#refs/remotes/}"
 export GIT_SSH_COMMAND="${GIT_SSH_COMMAND:-ssh -o ServerAliveInterval=30 -o ServerAliveCountMax=20}"
 
 echo "→ Validando y publicando únicamente $BRANCH"
