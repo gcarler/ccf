@@ -174,13 +174,13 @@ echo -e "  ${BLUE}Modo:${NC} $MODE"
 echo -e "  ${BLUE}Deploy automático:${NC} $DEPLOY_AFTER_VALIDATION"
 echo -e "  ${BLUE}Frontend E2E autenticado:${NC} $RUN_FRONTEND_E2E"
 echo -e "  ${BLUE}Timeout por check:${NC} ${QUALITY_TIMEOUT_SECONDS}s"
-echo -e "  ${BLUE}Diff base/head:${NC} $BASE_REF..$HEAD_REF"
+echo -e "  ${BLUE}Diff base/head:${NC} $BASE_REF...$HEAD_REF"
 echo ""
 
 # Archivos modificados respecto a la base configurada
 # Only validate files that exist in the pushed snapshot. Deleted paths must not
 # be handed to py_compile/Ruff from the dirty working tree.
-CHANGED_FILES=$(git diff --diff-filter=ACMRTUXB --name-only "$BASE_REF" "$HEAD_REF" 2>/dev/null || true)
+CHANGED_FILES=$(git diff --diff-filter=ACMRTUXB --name-only "$BASE_REF...$HEAD_REF" 2>/dev/null || true)
 PY_FILES=$(printf '%s\n' "$CHANGED_FILES" | grep '\.py$' | while IFS= read -r f; do [ -f "$f" ] && printf '%s\n' "$f"; done || true)
 FRONTEND_FILES=$(printf '%s\n' "$CHANGED_FILES" | grep '^frontend/' | while IFS= read -r f; do [ -f "$f" ] && printf '%s\n' "$f"; done || true)
 ALEMBIC_FILES=$(printf '%s\n' "$CHANGED_FILES" | grep '^alembic/canonical_versions/.*\.py$' || true)
