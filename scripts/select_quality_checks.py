@@ -255,7 +255,6 @@ SHARED_PREFIXES: tuple[str, ...] = (
     "frontend/src/components/ui/UniversalCalendarView.tsx",
     "frontend/src/components/ui/UniversalGanttView.tsx",
     "frontend/src/components/ui/inline-editors/",
-    "frontend/src/components/WorkspaceLayout.tsx",
     "frontend/src/components/WorkspaceMainSidebar.tsx",
     "frontend/src/components/WorkspaceMiniSidebar.tsx",
     "frontend/src/components/ProtectedRoute.tsx",
@@ -268,6 +267,8 @@ SHARED_PREFIXES: tuple[str, ...] = (
     "scripts/hooks/pre-push",
     "scripts/select_quality_checks.py",
     "tests/test_select_quality_checks.py",
+    # The workspace shell is platform infrastructure. It requires the
+    # platform gate and frontend build, not every module's live quality suite.
 )
 
 # Infraestructura del gate: debe validarse con el contrato de plataforma, pero
@@ -278,6 +279,7 @@ QUALITY_INFRASTRUCTURE_PREFIXES: tuple[str, ...] = (
     "scripts/install-hooks.sh",
     "scripts/select_quality_checks.py",
     "tests/test_select_quality_checks.py",
+    "frontend/src/components/WorkspaceLayout.tsx",
 )
 
 
@@ -361,6 +363,9 @@ def explain_selection(changed_files: list[str]) -> dict[str, list[str]]:
             reason = f"platform-infrastructure:{path}"
             selected.add("platform_quality")
             reasons.setdefault("platform_quality", set()).add(reason)
+            if _matches(path, "frontend/src/components/WorkspaceLayout.tsx"):
+                selected.add("frontend_build")
+                reasons.setdefault("frontend_build", set()).add(reason)
             continue
         if any(_matches(path, prefix) for prefix in SHARED_PREFIXES) and (
             _is_explicit_shared_file(path) or not _is_test_file(path)
