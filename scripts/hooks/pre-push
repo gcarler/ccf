@@ -4,6 +4,11 @@
 set -euo pipefail
 
 REPO_ROOT="$(git rev-parse --show-toplevel)"
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+NC='\033[0m'
 if [ -x "$REPO_ROOT/venv/bin/python" ]; then
     VENV="$REPO_ROOT/venv/bin"
 elif [ -x "/root/ccf/venv/bin/python" ]; then
@@ -17,15 +22,94 @@ MODE="${CCF_PRE_PUSH_MODE:-fast}"
 DEPLOY_AFTER_VALIDATION="${CCF_PRE_PUSH_DEPLOY:-0}"
 RUN_FRONTEND_E2E="${CCF_PRE_PUSH_E2E:-0}"
 QUALITY_TIMEOUT_SECONDS="${CCF_PRE_PUSH_CHECK_TIMEOUT:-300}"
-BASE_REF="${CCF_PRE_PUSH_BASE:-origin/main}"
 HEAD_REF="${CCF_PRE_PUSH_HEAD:-HEAD}"
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-BLUE='\033[0;34m'
-NC='\033[0m'
 
 FAIL=0
+
+# Git supplies one line per ref being pushed on stdin.  Read it before any
+# quality work so the hook can derive the real target branch and remote base.
+# This prevents validating Academy against origin/main or pushing from the
+# wrong worktree by accident.
+PUSH_INPUT="$(cat)"
+PUSH_COUNT=0
+PUSH_BRANCH=""
+PUSH_LOCAL_REF=""
+PUSH_LOCAL_SHA=""
+PUSH_REMOTE_REF=""
+PUSH_REMOTE_SHA=""
+while read -r local_ref local_sha remote_ref remote_sha; do
+    [ -n "${local_ref:-}" ] || continue
+    PUSH_COUNT=$((PUSH_COUNT + 1))
+    PUSH_LOCAL_REF="$local_ref"
+    PUSH_LOCAL_SHA="$local_sha"
+    PUSH_REMOTE_REF="$remote_ref"
+    PUSH_REMOTE_SHA="$remote_sha"
+done <<< "$PUSH_INPUT"
+
+# When the hook is invoked directly for a local quality rehearsal there is no
+# Git stdin payload.  Reconstruct the single current-branch push metadata so
+# the same branch contract is exercised without weakening real git pushes.
+if [ -z "$PUSH_INPUT" ]; then
+    CURRENT_BRANCH="$(git symbolic-ref --quiet --short HEAD || true)"
+    if [ -z "$CURRENT_BRANCH" ]; then
+        echo -e "${RED}✗ No se puede validar una rama detached.${NC}"
+        exit 2
+    fi
+    PUSH_LOCAL_REF="refs/heads/$CURRENT_BRANCH"
+    PUSH_LOCAL_SHA="$(git rev-parse HEAD)"
+    PUSH_REMOTE_REF="refs/heads/$CURRENT_BRANCH"
+    PUSH_REMOTE_SHA="$(git rev-parse "origin/$CURRENT_BRANCH" 2>/dev/null || printf '%040d' 0)"
+    PUSH_COUNT=1
+fi
+
+if [ "$PUSH_COUNT" -ne 1 ] || [[ "$PUSH_REMOTE_REF" != refs/heads/* ]]; then
+    echo -e "${RED}✗ Push ambiguo: solo se permite una rama local hacia una rama remota.${NC}"
+    echo "  Usa: scripts/push_branch.sh <rama>"
+    exit 2
+fi
+
+PUSH_BRANCH="${PUSH_REMOTE_REF#refs/heads/}"
+CURRENT_BRANCH="$(git symbolic-ref --quiet --short HEAD || true)"
+if [ "$CURRENT_BRANCH" != "$PUSH_BRANCH" ]; then
+    echo -e "${RED}✗ Worktree incorrecto.${NC}"
+    echo "  Rama activa: ${CURRENT_BRANCH:-detached}"
+    echo "  Rama destino: $PUSH_BRANCH"
+    echo "  Cambia al worktree de la rama destino antes de hacer push."
+    exit 2
+fi
+
+if [ -z "${CCF_PRE_PUSH_BASE:-}" ]; then
+    BASE_REF="origin/$PUSH_BRANCH"
+else
+    BASE_REF="$CCF_PRE_PUSH_BASE"
+fi
+
+if [ "$PUSH_REMOTE_SHA" != "0000000000000000000000000000000000000000" ]; then
+    if ! BASE_SHA="$(git rev-parse "$BASE_REF^{commit}" 2>/dev/null)"; then
+        echo -e "${RED}✗ No existe la base local $BASE_REF.${NC}"
+        echo "  Ejecuta: git fetch origin $PUSH_BRANCH"
+        exit 2
+    fi
+    if [ "$BASE_SHA" != "$PUSH_REMOTE_SHA" ]; then
+        echo -e "${RED}✗ La rama remota avanzó; push rechazado para evitar desorden.${NC}"
+        echo "  Base local:  $BASE_SHA"
+        echo "  Base remota: $PUSH_REMOTE_SHA"
+        echo "  Ejecuta: git fetch origin $PUSH_BRANCH y revisa la rama antes de continuar."
+        exit 2
+    fi
+fi
+
+if [ -z "${CCF_PRE_PUSH_HEAD:-}" ]; then
+    HEAD_REF="$PUSH_LOCAL_REF"
+fi
+
+echo -e "  ${BLUE}Rama validada:${NC} $PUSH_BRANCH"
+echo -e "  ${BLUE}Base remota:${NC} $BASE_REF"
+
+if ! "$VENV/python" "$REPO_ROOT/scripts/check_branch_contract.py" \
+    --branch "$PUSH_BRANCH" --base "$BASE_REF" --head "$HEAD_REF"; then
+    exit 1
+fi
 
 case "$MODE" in
     fast|full) ;;
