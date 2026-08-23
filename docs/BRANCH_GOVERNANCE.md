@@ -37,8 +37,6 @@ Estas ramas contienen trabajo pendiente y no deben fusionarse automáticamente:
 | Estructural | `feature/modulo-estructural` |
 | Academy | `feature/academy` |
 | Contextual / eventos | `feat/contextual-roles-recovery` |
-| Evangelismo QA | `feature/evangelism-quality` |
-| Eventos Evangelismo | `feature/events-evangelism` |
 | Mensajería | `feature/messaging` |
 | CMS | `feat/cms-quality-improvements` |
 | CMS / Nosotros histórico | `feat/cms-nosotros-stats` |
@@ -70,8 +68,6 @@ Al comparar cada rama contra `origin/main` con `git merge-tree` el 2026-08-23:
 | `feat/cms-quality-improvements` | 22 |
 | `feat/contextual-roles-recovery` | 1 |
 | `feature/academy` | 7 |
-| `feature/evangelism-quality` | 5 |
-| `feature/events-evangelism` | 16 |
 | `feature/frontend-ui` | 2 |
 | `feature/messaging` | 232 |
 | `feature/modulo-estructural` | 31 |
@@ -116,6 +112,10 @@ La integración de gobierno quedó archivada en:
 - `archive/merged/fix-pastores-typography`
 - `archive/merged/docs-branch-governance-current`
 - `archive/merged/docs-branch-governance-archive-list`
+- `archive/merged/feature-evangelism-quality` — revisada y archivada 2026-08-22: todo el contenido ya está en main vía merges anteriores + fixes del Octógono Forense (C-1, C-2, A-1, A-4). No fusionar — sería un downgrade.
+- `archive/merged/feature-events-evangelism` — revisada y archivada 2026-08-22: todo el contenido ya está en main vía merges anteriores + fixes del Octógono Forense. No fusionar — sería un downgrade masivo.
+- `archive/merged/feature-evangelism-fixes` — fixes del Octógono Forense (C-1, C-2, A-1, A-4), integrada a main vía `integration/evangelism-fixes-to-main`.
+- `archive/merged/integration-evangelism-fixes-to-main` — rama de integración que llevó los fixes del Octógono a main.
 
 ## Procedimiento de mantenimiento
 
