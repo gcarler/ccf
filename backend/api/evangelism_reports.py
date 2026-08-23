@@ -251,8 +251,11 @@ async def attendance_pdf(
     leader_name = _get_leader_name(db, grupo)
     rows = _build_session_rows(db, grupo_id)
 
-    loop = asyncio.get_event_loop()
-    buf = await loop.run_in_executor(None, lambda: _generate_attendance_pdf(grupo, leader_name, rows))
+    # The report is small and deterministic. Generate it in-process so the
+    # ASGI test client and production use the same execution path; the former
+    # intentionally runs synchronous handlers inline and an executor here can
+    # leave the response awaiting a thread that never joins.
+    buf = _generate_attendance_pdf(grupo, leader_name, rows)
 
     filename = f"asistencia_grupo_{grupo_id}.pdf"
     return StreamingResponse(
@@ -362,8 +365,7 @@ async def attendance_excel(
     leader_name = _get_leader_name(db, grupo)
     rows = _build_session_rows(db, grupo_id)
 
-    loop = asyncio.get_event_loop()
-    buf = await loop.run_in_executor(None, lambda: _generate_attendance_excel(grupo, leader_name, rows))
+    buf = _generate_attendance_excel(grupo, leader_name, rows)
 
     filename = f"asistencia_grupo_{grupo_id}.xlsx"
     return StreamingResponse(
