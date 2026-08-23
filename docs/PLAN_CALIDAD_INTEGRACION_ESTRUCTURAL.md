@@ -230,6 +230,9 @@ Academia. Falló por tres dependencias estructurales del proceso:
 - [x] Alinear el job de migraciones con el contrato del baseline canónico:
   `upgrade baseline`, `stamp head`, `downgrade baseline` y repetición limpia.
 - [x] Validar localmente ese ciclo PostgreSQL: `MIGRATION_CONTRACT_OK`.
+- [x] Regenerar `frontend/package-lock.json` desde `package.json` y fijar en
+  CI la misma política reproducible `npm ci --legacy-peer-deps`, necesaria por
+  el grafo Storybook/Vite actualmente versionado.
 - [x] Ejecutar validación local específica y el runner completo de calidad:
   Academia `9/9 suites OK`, Projects `49 passed`, build frontend `223 páginas`.
 - [x] Crear el commit exclusivo `4d0c4e77` de estas correcciones.
