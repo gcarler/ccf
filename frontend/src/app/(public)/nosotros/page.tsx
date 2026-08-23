@@ -191,20 +191,21 @@ export default function NosotrosPage() {
                         {/* Misión: texto a la izquierda, imagen a la derecha */}
                         {(misionTitle || misionText) && (
                             <article className="group grid w-full overflow-hidden lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)]">
-                                <div className="order-2 flex flex-col justify-center bg-[var(--site-hero-cta-gradient)] px-6 py-10 text-white sm:px-10 md:order-1 md:px-14 lg:px-[clamp(3rem,8vw,10rem)]">
-                                    <div className="mb-6 flex items-center gap-3 text-xs font-bold uppercase tracking-[0.22em] text-white/85">
-                                        <span className="h-0.5 w-10 bg-white" />
+                                <div className="relative order-2 flex flex-col justify-center bg-site-surface px-6 py-10 text-site-on-surface sm:px-10 md:order-1 md:px-14 lg:px-[clamp(3rem,8vw,10rem)]">
+                                    <div className="absolute inset-y-0 left-0 w-1 bg-[var(--site-hero-cta-gradient)]" />
+                                    <div className="mb-6 flex items-center gap-3 text-xs font-bold uppercase tracking-[0.22em] text-site-primary">
+                                        <span className="h-0.5 w-10 bg-site-primary" />
                                         <span>02 · Nuestra razón de ser</span>
                                     </div>
                                     {misionTitle && (
-                                        <h2 className="ccf-headline mb-6 text-3xl font-black tracking-tight text-white sm:text-4xl md:text-5xl">
+                                        <h2 className="ccf-headline mb-6 text-3xl font-black tracking-tight text-site-on-surface sm:text-4xl md:text-5xl">
                                             {misionTitle}
                                         </h2>
                                     )}
                                     {misionText && (
                                         <RichText
                                             html={misionText}
-                                            className="ccf-body max-w-2xl text-base leading-relaxed text-white/90 sm:text-lg [&_strong]:text-white"
+                                            className="ccf-body max-w-2xl text-base leading-relaxed text-site-on-surface-variant sm:text-lg [&_strong]:text-site-on-surface"
                                         />
                                     )}
                                 </div>
