@@ -32,6 +32,13 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)) + "/..")
 os.chdir(os.path.dirname(os.path.abspath(__file__)) + "/..")
 
+from scripts.quality_environment import QualityEnvironment
+
+QUALITY_ENV = QualityEnvironment.from_process(require_api=True)
+os.environ["DATABASE_URL"] = QUALITY_ENV.database_url
+os.environ["database_url"] = QUALITY_ENV.database_url
+QUALITY_API_URL = QUALITY_ENV.api_url
+
 from backend.core.database import SessionLocal
 from backend.core.security import get_password_hash
 from backend.models import *  # noqa: F401
@@ -507,7 +514,7 @@ import httpx
 
 # Login como GESTOR de prueba (endpoint v3) — credenciales conocidas del script
 login_resp = httpx.post(
-    "http://127.0.0.1:8000/api/v3/auth/login",
+    f"{QUALITY_API_URL}/api/v3/auth/login",
     json={
         "email": "prueba3@ccf.test",
         "password": "prueba123",
@@ -521,7 +528,7 @@ if login_resp.status_code == 200:
     ok("Login GESTOR de prueba exitoso")
 
     # GET /projects
-    resp = httpx.get("http://127.0.0.1:8000/api/projects", headers=headers)
+    resp = httpx.get(f"{QUALITY_API_URL}/api/projects", headers=headers)
     if resp.status_code == 200:
         projects = resp.json()
         found = [p for p in projects if str(p["id"]) == str(project.id)]
@@ -533,7 +540,7 @@ if login_resp.status_code == 200:
         fail(f"GET /projects → HTTP {resp.status_code}")
 
     # GET /projects/{id}
-    resp = httpx.get(f"http://127.0.0.1:8000/api/projects/{project.id}", headers=headers)
+    resp = httpx.get(f"{QUALITY_API_URL}/api/projects/{project.id}", headers=headers)
     if resp.status_code == 200:
         data = resp.json()
         ok(f"GET /projects/{project.id} → '{data.get('title')}' ({len(data.get('tasks', []))} tareas)")
@@ -541,7 +548,7 @@ if login_resp.status_code == 200:
         fail(f"GET /projects/{project.id} → HTTP {resp.status_code}")
 
     # GET /projects/{id}/tasks
-    resp = httpx.get(f"http://127.0.0.1:8000/api/projects/{project.id}/tasks", headers=headers)
+    resp = httpx.get(f"{QUALITY_API_URL}/api/projects/{project.id}/tasks", headers=headers)
     if resp.status_code == 200:
         tasks = resp.json()
         ok(f"GET /projects/{project.id}/tasks → {len(tasks)} tareas")
@@ -549,7 +556,7 @@ if login_resp.status_code == 200:
         fail(f"GET /projects/{project.id}/tasks → HTTP {resp.status_code}")
 
     # GET /projects/comments?project_id={id}
-    resp = httpx.get(f"http://127.0.0.1:8000/api/projects/comments?project_id={project.id}", headers=headers)
+    resp = httpx.get(f"{QUALITY_API_URL}/api/projects/comments?project_id={project.id}", headers=headers)
     if resp.status_code == 200:
         comments = resp.json()
         ok(f"GET /projects/comments?project_id={project.id} → {len(comments)} comentarios")
@@ -557,7 +564,7 @@ if login_resp.status_code == 200:
         fail(f"GET /projects/comments?project_id={project.id} → HTTP {resp.status_code}")
 
     # GET /projects/{id}/milestones
-    resp = httpx.get(f"http://127.0.0.1:8000/api/projects/{project.id}/milestones", headers=headers)
+    resp = httpx.get(f"{QUALITY_API_URL}/api/projects/{project.id}/milestones", headers=headers)
     if resp.status_code == 200:
         mss = resp.json()
         ok(f"GET /projects/{project.id}/milestones → {len(mss)} milestones")
@@ -565,7 +572,7 @@ if login_resp.status_code == 200:
         fail(f"GET /projects/{project.id}/milestones → HTTP {resp.status_code}")
 
     # GET /projects/{id}/wiki
-    resp = httpx.get(f"http://127.0.0.1:8000/api/projects/{project.id}/wiki", headers=headers)
+    resp = httpx.get(f"{QUALITY_API_URL}/api/projects/{project.id}/wiki", headers=headers)
     if resp.status_code == 200:
         wiki_data = resp.json()
         ok(f"GET /projects/{project.id}/wiki → '{wiki_data.get('title')}'")
@@ -574,7 +581,7 @@ if login_resp.status_code == 200:
 
     # POST new comment as test (create a new comment via API)
     resp = httpx.post(
-        f"http://127.0.0.1:8000/api/projects/{project.id}/comments",
+        f"{QUALITY_API_URL}/api/projects/{project.id}/comments",
         headers={**headers, "Content-Type": "application/json"},
         json={"content": "Comentario creado vía API para validar el endpoint.", "task_id": None},
     )
@@ -585,7 +592,7 @@ if login_resp.status_code == 200:
 
     # Login como usuario_prueba_2 (docente, tiene acceso a projects) y verificar que ve el proyecto
     login_u2 = httpx.post(
-        "http://127.0.0.1:8000/api/v3/auth/login",
+        f"{QUALITY_API_URL}/api/v3/auth/login",
         json={
             "email": "prueba2@ccf.test",
             "password": "prueba123",
@@ -597,7 +604,7 @@ if login_resp.status_code == 200:
         headers_u2 = {"Authorization": f"Bearer {token_u2}"}
         ok("Login usuario_prueba_2 (docente) exitoso")
 
-        resp = httpx.get("http://127.0.0.1:8000/api/projects", headers=headers_u2)
+        resp = httpx.get(f"{QUALITY_API_URL}/api/projects", headers=headers_u2)
         if resp.status_code == 200:
             projs = resp.json()
             found = [p for p in projs if str(p["id"]) == str(project.id)]
@@ -609,7 +616,7 @@ if login_resp.status_code == 200:
             fail(f"usuario_prueba_2 GET /projects → HTTP {resp.status_code}")
 
         # Ver tareas asignadas a u2
-        resp = httpx.get("http://127.0.0.1:8000/api/projects/tasks", headers=headers_u2)
+        resp = httpx.get(f"{QUALITY_API_URL}/api/projects/tasks", headers=headers_u2)
         if resp.status_code == 200:
             my_tasks = resp.json()
             ok(f"usuario_prueba_2 tiene {len(my_tasks)} tarea(s) asignada(s)")
@@ -620,7 +627,7 @@ if login_resp.status_code == 200:
 
     # Verificar que usuario_prueba_1 (miembro sin permiso projects) NO tiene acceso a projects (expected: 403)
     login_u1b = httpx.post(
-        "http://127.0.0.1:8000/api/v3/auth/login",
+        f"{QUALITY_API_URL}/api/v3/auth/login",
         json={
             "email": "prueba1@ccf.test",
             "password": "prueba123",
@@ -630,7 +637,7 @@ if login_resp.status_code == 200:
     if login_u1b.status_code == 200:
         token_u1b = login_u1b.json().get("access_token", "")
         headers_u1b = {"Authorization": f"Bearer {token_u1b}"}
-        resp = httpx.get("http://127.0.0.1:8000/api/projects", headers=headers_u1b)
+        resp = httpx.get(f"{QUALITY_API_URL}/api/projects", headers=headers_u1b)
         if resp.status_code == 403:
             ok("usuario_prueba_1 (estudiante) bloqueado de projects — correcto (403)")
         else:

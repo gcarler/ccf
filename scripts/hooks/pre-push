@@ -341,7 +341,8 @@ else
     for check_id in "${QUALITY_CHECKS[@]}"; do
         case "$check_id" in
             academy_quality)
-                run_quality_check "$check_id" "Academy quality" "$VENV/python $REPO_ROOT/scripts/test_academy_quality.py"
+                run_quality_check "$check_id" "Academy quality" \
+                    "$VENV/python $REPO_ROOT/scripts/run_quality_integration.py --suite academy --test-database-url '${TEST_DATABASE_URL:-sqlite://}'"
                 ;;
             cms_quality)
                 if [ "$MODE" = "fast" ] && { [ -z "${E2E_EMAIL:-}" ] || [ -z "${E2E_PASSWORD:-}" ]; }; then
@@ -385,7 +386,8 @@ else
                 run_quality_check "$check_id" "Platform quality" "$VENV/python $REPO_ROOT/scripts/test_platform_quality.py"
                 ;;
             projects_quality)
-                run_quality_check "$check_id" "Projects quality" "$VENV/python $REPO_ROOT/scripts/test_projects_quality.py"
+                run_quality_check "$check_id" "Projects quality" \
+                    "$VENV/python $REPO_ROOT/scripts/run_quality_integration.py --suite projects --test-database-url '${TEST_DATABASE_URL:-sqlite://}'"
                 ;;
             *)
                 echo -e "      ${YELLOW}⚠ Check no reconocido: $check_id${NC}"
