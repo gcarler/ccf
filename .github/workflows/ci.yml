@@ -129,7 +129,11 @@ jobs:
           cache-dependency-path: frontend/package-lock.json
 
       - name: Install dependencies
-        run: cd frontend && npm ci
+        # The repository lockfile is generated with the workspace's explicit
+        # legacy-peer-deps policy. Keep CI and local reproducible installs on
+        # the same resolver contract while the Storybook/Vite peer graph is
+        # being converged.
+        run: cd frontend && npm ci --legacy-peer-deps
 
       - name: Lint (ESLint)
         run: cd frontend && npm run lint
