@@ -18,7 +18,6 @@ type PublicCourse = CourseSummary & {
   cta?: string;
   lessons?: number;
   instructor?: string;
-  description?: string;
   modality?: string;
   imageUrl?: string;
 };
