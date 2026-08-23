@@ -50,6 +50,35 @@ Cada integración debe revisar conflictos, ownership, tests y contrato del
 módulo. La rama `feature/ops-push-protocol` es la referencia publicada para el
 flujo de commit y push.
 
+## Resultado de la auditoría de integración
+
+Al comparar cada rama contra `origin/main` con `git merge-tree` el 2026-08-23:
+
+- `feature/ops-push-protocol` y `docs/branch-governance`: integrables sin
+  conflictos; ya están reunidas en `integration/branch-governance-to-main`.
+- Las siguientes ramas tienen conflictos y requieren un plan propio; no se
+  fusionan automáticamente:
+
+| Rama | Conflictos detectados |
+|---|---:|
+| `chore/ignore-dev-build` | 6 |
+| `feat/cms-nosotros-stats` | 223 |
+| `feat/cms-quality-improvements` | 22 |
+| `feat/contextual-roles-recovery` | 1 |
+| `feature/academy` | 7 |
+| `feature/evangelism-quality` | 5 |
+| `feature/events-evangelism` | 16 |
+| `feature/frontend-ui` | 2 |
+| `feature/messaging` | 227 |
+| `feature/modulo-estructural` | 22 |
+| `feature/projects-whiteboard` | 2 |
+| `feature/security-hardening` | 3 |
+| `fix/color-palette-regression` | 7 |
+
+Un conflicto no implica que el trabajo sea descartable: indica que debe
+extraerse por commits funcionales o reconstruirse sobre `origin/main` con QA
+del módulo. La rama conflictiva permanece activa hasta cerrar esa revisión.
+
 ## Ramas archivadas
 
 Las ramas integradas se conservan bajo `origin/archive/merged/` para trazabilidad
