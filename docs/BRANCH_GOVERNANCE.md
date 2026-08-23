@@ -43,19 +43,19 @@ Estas ramas contienen trabajo pendiente y no deben fusionarse automáticamente:
 | Seguridad | `feature/security-hardening` |
 | Paleta | `fix/color-palette-regression` |
 | Workspace | `chore/ignore-dev-build` |
-| Protocolo operativo | `feature/ops-push-protocol` |
 
 La pertenencia a esta tabla no significa que una rama esté lista para merge.
 Cada integración debe revisar conflictos, ownership, tests y contrato del
-módulo. La rama `feature/ops-push-protocol` es la referencia publicada para el
-flujo de commit y push.
+módulo. El protocolo vigente está integrado en `main` y en
+`AGENTS_RULES_CCF.md`.
 
 ## Resultado de la auditoría de integración
 
 Al comparar cada rama contra `origin/main` con `git merge-tree` el 2026-08-23:
 
 - `feature/ops-push-protocol` y `docs/branch-governance`: integrables sin
-  conflictos; ya están reunidas en `integration/branch-governance-to-main`.
+  conflictos; fueron reunidas en `integration/branch-governance-to-main` y ya
+  están integradas en `main`.
 - Las siguientes ramas tienen conflictos y requieren un plan propio; no se
   fusionan automáticamente:
 
@@ -84,6 +84,12 @@ del módulo. La rama conflictiva permanece activa hasta cerrar esa revisión.
 Las ramas integradas se conservan bajo `origin/archive/merged/` para trazabilidad
 y rollback documental. No se recrea una rama activa con el mismo nombre salvo
 que exista una tarea nueva y una base explícita en `origin/main`.
+
+La integración de gobierno quedó archivada en:
+
+- `archive/merged/feature-ops-push-protocol`
+- `archive/merged/docs-branch-governance`
+- `archive/merged/integration-branch-governance-to-main`
 
 ## Procedimiento de mantenimiento
 
