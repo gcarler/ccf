@@ -23,6 +23,7 @@ jobs:
   backend-quality:
     name: Backend Quality Gate
     runs-on: ubuntu-latest
+    timeout-minutes: 60
     env:
       # Los tests corren sobre SQLite en memoria (mismo comportamiento que
       # el entorno dev: tests/conftest.py cae a ``sqlite://`` con StaticPool).
@@ -81,11 +82,13 @@ jobs:
         # - rm -f .coverage*: un .coverage previo (corrupto o de otra versión de
         #   coverage.py) rompe el gate con "no such table: tracer" y deja la
         #   cobertura en 0. Siempre arrancamos con estado limpio.
-        # - -n auto: paraleliza en N workers (1 por CPU). La suite completa
-        #   (>15 min en Postgres serial) baja a ~2-4 min en SQLite paralelo.
+        # - -o addopts= hace explícito el contrato del gate y evita heredar
+        #   cobertura duplicada u otras opciones ocultas desde pytest.ini.
+        # - --dist loadfile mantiene cada archivo de pruebas en un worker,
+        #   evitando que fixtures globales de módulos distintos se intercalen.
         run: |
           rm -f .coverage .coverage.*
-          pytest tests/ -q -n auto --cov=backend --cov-report=xml --cov-report=term --cov-fail-under=$COV_THRESHOLD --ignore-glob='tests/test_crm_*.py'
+          pytest -o addopts= tests/ -q -n auto --dist loadfile --cov=backend --cov-report=xml --cov-report=term --cov-fail-under=$COV_THRESHOLD --ignore-glob='tests/test_crm_*.py'
 
       - name: Upload coverage
         uses: codecov/codecov-action@v4
