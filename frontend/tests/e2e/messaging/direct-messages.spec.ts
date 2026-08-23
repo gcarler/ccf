@@ -104,7 +104,9 @@ const MESSAGE_SEED: Record<string, Array<{
 const SEARCH_RESULTS = [
   {
     id: 'persona-maria',
-    username: 'María Salcedo',
+    // username REAL de la cuenta (auth_users); name es el nombre para mostrar.
+    username: 'maria.salcedo',
+    name: 'María Salcedo',
     email: 'maria.salcedo@ccf.local',
     avatar_url: null,
   },

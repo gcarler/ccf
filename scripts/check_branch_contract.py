@@ -57,6 +57,7 @@ MODULE_PREFIXES: dict[str, tuple[str, ...]] = {
         "frontend/tests/e2e/messaging/",
         "tests/test_messaging",
         "tests/test_chat_sede_isolation.py",
+        "tests/test_chat_api.py",
         "docs/MESSAGING_",
         "docs/ESTADO_MESSAGING_",
         "docs/PLAN_MESSAGING_",
