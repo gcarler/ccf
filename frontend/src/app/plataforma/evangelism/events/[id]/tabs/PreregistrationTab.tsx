@@ -273,18 +273,11 @@ export default function PreregistrationTab({ eventId, token }: { eventId: string
                     Enviados: {c.sent_count}{c.last_sent_at ? ` · Último envío: ${new Date(c.last_sent_at).toLocaleString("es-CO")}` : " · Sin envíos"}
                   </p>
                   <button
-                    onClick={async () => {
-                      try {
-                        const res = await apiFetch(`/evangelism/events/${eventId}/campaigns/${c.id}/deliveries?limit=10`, { token, silent: true });
-                        const items = (res as { items?: Array<{ status: string; channel: string; sent_at: string }> }).items || [];
-                        if (items.length === 0) {
-                          toast.info("Sin entregas registradas para esta campaña");
-                        } else {
-                          const summary = items.map((d) => `${d.status} (${d.channel}) — ${new Date(d.sent_at).toLocaleString("es-CO")}`).join("\n");
-                          toast.info(`${items.length} entregas:\n${summary}`);
-                        }
-                      } catch {
-                        toast.error("No se pudieron cargar las entregas");
+                    onClick={() => {
+                      if (!c.sent_count || c.sent_count === 0) {
+                        toast.info("Sin entregas registradas para esta campaña");
+                      } else {
+                        toast.info(`${c.sent_count} envíos realizados${c.last_sent_at ? ` · Último envío: ${new Date(c.last_sent_at).toLocaleString("es-CO")}` : ""}`);
                       }
                     }}
                     className="text-xs text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] transition-all"
