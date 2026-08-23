@@ -334,3 +334,7 @@ conflictos a la fuerza ni se publica directamente sobre `main`.
   `https://ministerioselfaro.org` responde `200` para `/api/system/health` y
   `/api/cms/v2/public/sites/ccf/pages/home`. El workflow ahora usa ese origen;
   se mantiene la dependencia explícita y verificable del despliegue público.
+- La primera corrección aún dejó el E2E sin proxy porque Next resuelve los
+  rewrites en tiempo de build. El origen quedó finalmente en el `env` del job
+  `frontend-quality`, antes de `npm run build`, para que el artefacto generado
+  y el servidor Playwright compartan el mismo contrato.

@@ -111,6 +111,10 @@ jobs:
   frontend-quality:
     name: Frontend Quality Gate
     runs-on: ubuntu-latest
+    env:
+      # next.config.mjs resolves the API rewrite during `next build`, so the
+      # canonical public origin must be present before the E2E step starts.
+      API_PROXY_TARGET: https://ministerioselfaro.org
     steps:
       - uses: actions/checkout@v4
         with:
@@ -158,10 +162,6 @@ jobs:
         # PLAYWRIGHT_MANAGED_WEBSERVER enables the managed webServer in config.
         run: cd frontend && npx playwright test --grep-invert @auth
         env:
-          # E2E must exercise the canonical public deployment. The former
-          # elfarocc.tech target is not the production origin and its TLS
-          # endpoint is not reachable from the runner.
-          API_PROXY_TARGET: https://ministerioselfaro.org
           PLAYWRIGHT_MANAGED_WEBSERVER: "1"
           PLAYWRIGHT_BASE_URL: ""
           BASE_URL: http://localhost:4173
