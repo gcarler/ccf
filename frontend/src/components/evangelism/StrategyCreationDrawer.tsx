@@ -369,7 +369,7 @@ export default function StrategyCreationDrawer({
                                     <DSButton
                                         type="button"
                                         onClick={() => remove(i)}
-                                        className="p-1.5 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--destructive))] rounded-md hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                                        className="p-1.5 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--destructive))] rounded-md hover:bg-[hsl(var(--destructive)/0.08)] dark:hover:bg-[hsl(var(--destructive)/0.1)] transition-colors"
                                     >
                                         <X size={14} />
                                     </DSButton>

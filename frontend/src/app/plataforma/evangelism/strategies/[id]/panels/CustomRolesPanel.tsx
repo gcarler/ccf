@@ -100,7 +100,7 @@ export default function CustomRolesPanel({
                 {r.descripcion && <p className="text-2xs text-[hsl(var(--text-secondary))]">{r.descripcion}</p>}
               </div>
               {canManage ? (
-                <button onClick={() => onRequestDeleteRole(r)} className="p-1 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--destructive))] rounded hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors">
+                <button onClick={() => onRequestDeleteRole(r)} className="p-1 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--destructive))] rounded hover:bg-[hsl(var(--destructive)/0.08)] dark:hover:bg-[hsl(var(--destructive)/0.1)] transition-colors">
                   <X size={12} />
                 </button>
               ) : null}

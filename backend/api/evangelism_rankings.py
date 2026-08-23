@@ -21,7 +21,7 @@ from sqlalchemy import func as _func
 from sqlalchemy.orm import Session
 
 from backend import models
-from backend.api.evangelism_shared import ATTENDED_STATES, analytics_cache_scope, ttl_cache
+from backend.api.evangelism_shared import ATTENDED_STATES, _utcnow, analytics_cache_scope, ttl_cache
 from backend.core.database import get_db
 from backend.core.permissions import require_evangelism_read
 from backend.core.tenant import require_user_sede_id
@@ -45,12 +45,12 @@ def _month_range(year: int, month: int):
 
 
 def _this_month_range():
-    now = _dt.datetime.now(_dt.timezone.utc)
+    now = _utcnow()
     return _month_range(now.year, now.month)
 
 
 def _last_month_range():
-    now = _dt.datetime.now(_dt.timezone.utc)
+    now = _utcnow()
     if now.month == 1:
         return _month_range(now.year - 1, 12)
     return _month_range(now.year, now.month - 1)

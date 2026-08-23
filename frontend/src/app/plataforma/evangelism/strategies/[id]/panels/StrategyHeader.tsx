@@ -40,7 +40,7 @@ export default function StrategyHeader({ strategy, groupCount, canManage, onDele
       </div>
       {canManage ? (
         <button onClick={onDelete}
-          className="p-2 rounded-lg text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--destructive))] hover:bg-red-50 dark:hover:bg-red-500/10 transition-all" title="Eliminar estrategia">
+          className="p-2 rounded-lg text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--destructive))] hover:bg-[hsl(var(--destructive)/0.08)] dark:hover:bg-[hsl(var(--destructive)/0.1)] transition-all" title="Eliminar estrategia">
           <Trash2 size={16} />
         </button>
       ) : null}

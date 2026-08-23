@@ -363,7 +363,7 @@ export default function GroupPage() {
  <h3 className="text-xl font-bold text-[hsl(var(--text-primary))] mb-2 tracking-tight">{s.name}</h3>
  <p className="text-sm text-[hsl(var(--text-secondary))] font-bold mb-3">{s.start_date} → {s.end_date}</p>
  {s.status === 'Activa' && (
- <button onClick={() => handleCloseSeason(s.id)} className="w-full py-2 bg-red-50 text-[hsl(var(--destructive))] dark:bg-red-500/10 dark:text-[hsl(var(--destructive))] rounded-md text-2xs font-semibold uppercase tracking-wide hover:bg-red-100 dark:hover:bg-red-500/20 transition-colors">
+ <button onClick={() => handleCloseSeason(s.id)} className="w-full py-2 bg-[hsl(var(--destructive)/0.08)] text-[hsl(var(--destructive))] dark:bg-[hsl(var(--destructive)/0.1)] dark:text-[hsl(var(--destructive))] rounded-md text-2xs font-semibold uppercase tracking-wide hover:bg-[hsl(var(--destructive)/0.15)] dark:hover:bg-[hsl(var(--destructive)/0.18)] transition-colors">
  Finalizar Temporada
  </button>
  )}

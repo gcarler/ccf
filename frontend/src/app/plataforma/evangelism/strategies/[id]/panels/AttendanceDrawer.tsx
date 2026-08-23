@@ -209,7 +209,7 @@ export default function AttendanceDrawer({
     <div className="flex items-center gap-1">
     {([
     { status: 'present', label: 'P', cls: 'bg-green-100 text-[hsl(var(--secondary))] dark:bg-green-900/30 dark:text-[hsl(var(--secondary))]', activeCls: 'ring-2 ring-green-500' },
-    { status: 'absent', label: 'A', cls: 'bg-red-100 text-[hsl(var(--destructive))] dark:bg-red-900/30 dark:text-[hsl(var(--destructive))]', activeCls: 'ring-2 ring-red-500' },
+    { status: 'absent', label: 'A', cls: 'bg-[hsl(var(--destructive)/0.1)] text-[hsl(var(--destructive))] dark:bg-[hsl(var(--destructive)/0.15)] dark:text-[hsl(var(--destructive))]', activeCls: 'ring-2 ring-[hsl(var(--destructive)/0.4)]' },
     { status: 'first_time', label: '1°', cls: 'bg-[hsl(var(--info-muted))] text-[hsl(var(--primary))] dark:bg-[hsl(var(--info))]/30 dark:text-[hsl(var(--primary))]', activeCls: 'ring-2 ring-[hsl(var(--primary))]' },
     ] as const).map(opt => (
     <button key={opt.status}
@@ -220,7 +220,7 @@ export default function AttendanceDrawer({
     ))}
     {m.role === 'visitante' && (
     <button onClick={() => setPersonas(prev => prev.filter((_, j) => j !== i))}
-    className="w-7 h-7 ml-1 flex items-center justify-center rounded-lg text-[hsl(var(--text-secondary))] hover:bg-red-50 hover:text-[hsl(var(--destructive))] dark:hover:bg-red-900/20 transition-colors">
+    className="w-7 h-7 ml-1 flex items-center justify-center rounded-lg text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--destructive)/0.08)] hover:text-[hsl(var(--destructive))] dark:hover:bg-[hsl(var(--destructive)/0.1)] transition-colors">
     <X size={12} />
     </button>
     )}

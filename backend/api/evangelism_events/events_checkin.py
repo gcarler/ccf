@@ -14,6 +14,7 @@ from sqlalchemy.orm import Session
 
 from backend import models, schemas
 from backend.api.evangelism_events._shared import require_event_access
+from backend.api.evangelism_shared import _utcnow
 from backend.core.audit import record_admin_action
 from backend.core.database import get_db
 from backend.core.permissions import require_evangelism_edit
@@ -148,10 +149,6 @@ def fast_checkin_visitor(
 # =============================================================================
 # CHECK-IN UNIFICADO (plan_de_preregistro, Fase 4)
 # =============================================================================
-
-
-def _utcnow() -> datetime.datetime:
-    return datetime.datetime.now(datetime.timezone.utc)
 
 
 def _qr_token_secret_hash(qr_token: str) -> str:

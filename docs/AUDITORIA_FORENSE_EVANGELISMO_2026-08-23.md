@@ -133,15 +133,15 @@ npx eslint 'src/app/plataforma/evangelism/**/*.{ts,tsx}' 'src/components/evangel
 
 ---
 
-## Hallazgos abiertos
+## Hallazgos (G-01…G-05 — CERRADOS 2026-08-23)
 
-| ID | Severidad | Hallazgo | Evidencia | Recomendación |
-|---|---|---|---|---|
-| G-01 | **Media** | `docs/EVANGELISMO_API_CONTRACTS.md` desactualizado | la línea 107 dice `GET /grupos/mine → get_current_user` pero el código real usa `require_evangelism_read` (línea 180, `grupos_main.py`); la línea 114 documenta `POST /grupos/visitors → require_evangelism_manage` y el código real usa `require_evangelism_edit`; `GET /strategies/{id}/roles` también aparece como `manage` cuando hoy es `read`. Rutas `assignment-summary` y `macro-despliegue` (existentes) no figuran en el doc. | Actualizar contratos al estado real del código |
-| G-02 | **Media** | `docs/ESTADO_EVANGELISMO.md` LOC counts desactualizados (doc dice ~11 300 backend y 4 215 frontend; real backend directo incl. models/crud/schemas ≈ 13 000, frontend con repetidos dir ≈ 16 690). | `wc -l` 2026-08-23 | Actualizar sección 3 con conteo actual |
-| G-03 | **Baja** | 2 usos de colores planos `bg-red-50`/`hover:bg-red-500/10` (p. ej. `StrategyHeader.tsx:43`, `groups/page.tsx:366`) | tokens semánticos accesibles (`--destructive`) para el fondo también | Migrar a `bg-[hsl(var(--destructive)/10%)]` o similar |
-| G-04 | **Baja** | `test_evangelism_roles_coverage.py::test_delete_role` marcado `xfail(strict=False)` por issue de CRUD en test DB — no es fallo, pero el xfail no estricto puede enmascarar una regresión futura | pytest.mark.xfail(strict=False) | Convertir a test real una vez resuelto el path CRUD en fixtures o usar `strict=True` |
-| G-05 | Baja | `evangelism_events/events_checkin.py` y analytics usan distintos helpers `_utcnow()` (duplicado menor) | 1 helper por archivo evento en vez de uno canónico | Unificar en `evangelism_shared.py` |
+| ID | Severidad | Hallazgo | Estado |
+|---|---|---|---|
+| G-01 | Media | `docs/EVANGELISMO_API_CONTRACTS.md` desactualizado (`grupos/mine`, `grupos/visitors`, roles; rutas `assignment-summary` y `macro-despliegue` ausentes) | ✅ **CERRADO** — contratos actualizados al estado real del código (verificación 2026-08-23): `GET /grupos/mine` → `read`, `GET /grupos/assignment-summary` y `GET /macro-despliegue` añadidos, `POST /grupos/visitors` → `edit`, `GET /strategies/{id}/roles` y `GET /excuses` → `read`, `PUT /strategies/{id}/roles/{role_id}` añadido, `dashboard-stats`/`analytics/global`/`multiplication/check|history` → `read` |
+| G-02 | Media | `docs/ESTADO_EVANGELISMO.md` LOC counts desactualizados (doc decía ~11 300 backend / 4 215 frontend) | ✅ **CERRADO** — backend directo ≈ **12 560 LOC** y frontend ≈ **16 690 LOC** (verificado `wc -l` 2026-08-23) |
+| G-03 | Baja | Usos de colores planos `bg-red-50`/`hover:bg-red-500/10` en el módulo | ✅ **CERRADO** — migrados 7 spots (groups/page, StrategyHeader, SessionsSection, CustomRolesPanel, AttendanceDrawer ×2, StrategyCreationDrawer) a `bg-[hsl(var(--destructive)/…)]` |
+| G-04 | Baja | `test_evangelism_roles_coverage.py::test_delete_role` con `xfail(strict=False)` | ✅ **CERRADO** — causa raíz: helper `_make_role` usaba `nombre=`/`permisos=` (el modelo usa `nombre_rol`); corregido, xfail eliminado y aserción endurecida a `== 200` + `ok: true` (14 passed) |
+| G-05 | Baja | `_utcnow()` duplicado en `events_checkin.py` y timestamps inline en analytics/rankings | ✅ **CERRADO** — helper canónico `_utcnow()` en `evangelism_shared.py`; `events_checkin`, `evangelism_analytics` y `evangelism_rankings` lo usan |
 
 **No se detectaron:** endpoints sin handler, schemas faltantes en grupos, dead code relevante, endpoints con única-semántica-huérfana, drift de tipos frontend↔backend (0 errores TS), `extra="forbid"` inconsistente.
 

@@ -55,8 +55,7 @@ def _make_role(db, estrategia_id, nombre="Rol Test"):
     r = RolPersonalizadoEstrategia(
         id=uuid.uuid4(),
         estrategia_id=estrategia_id,
-        nombre=nombre,
-        permisos={},
+        nombre_rol=nombre,
     )
     db.add(r)
     db.flush()
@@ -108,7 +107,6 @@ class TestRolesEndpoints:
         )
         assert resp.status_code == 404
 
-    @pytest.mark.xfail(reason="CRUD permission issue in test DB", strict=False)
     def test_delete_role(self, full):
         c, h = full["c"], full["h"]
         s = _make_strategy(full["db"], full["sede"].id)
@@ -116,7 +114,8 @@ class TestRolesEndpoints:
         rol = _make_role(full["db"], s.id)
         full["db"].commit()
         resp = c.delete(f"/api/evangelism/strategies/{s.id}/roles/{rol.id}", headers=h)
-        assert resp.status_code in (200, 204, 404), f"Unexpected {resp.status_code}"
+        assert resp.status_code == 200, f"Expected 200, got {resp.status_code}: {resp.text[:200]}"
+        assert resp.json().get("ok") is True
 
     def test_delete_role_not_found(self, full):
         c, h = full["c"], full["h"]

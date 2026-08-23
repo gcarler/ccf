@@ -49,7 +49,13 @@ __all__ = [
     "ttl_cache",
     "invalidate_ttl_cache",
     "analytics_cache_scope",
+    "_utcnow",
 ]
+
+
+def _utcnow() -> datetime.datetime:
+    """Timestamp UTC canónico del módulo (timezone-aware)."""
+    return datetime.datetime.now(datetime.timezone.utc)
 
 
 # ── In-memory TTL cache shared by evangelismo endpoints ──

@@ -2,7 +2,7 @@
 
 > **Objetivo:** fijar el contrato operativo real de `/api/evangelism` para frontend, tests y mantenimiento.
 >
-> **Fecha de verificación:** 2026-07-18
+> **Fecha de verificación:** 2026-08-23
 > **Fuente de verdad:** código en `backend/api/evangelism*.py`, `backend/schemas/evangelism.py`, `backend/core/permissions.py`
 
 ## 1. Reglas generales
@@ -82,10 +82,11 @@ Archivo: `backend/api/evangelism_main/main_roles.py`
 
 | Método | Ruta | Guard |
 |---|---|---|
-| `GET` | `/strategies/{strategy_id}/roles` | `require_evangelism_manage` |
+| `GET` | `/strategies/{strategy_id}/roles` | `require_evangelism_read` |
 | `POST` | `/strategies/{strategy_id}/roles` | `require_evangelism_manage` |
+| `PUT` | `/strategies/{strategy_id}/roles/{role_id}` | `require_evangelism_manage` |
 | `DELETE` | `/strategies/{strategy_id}/roles/{role_id}` | `require_evangelism_manage` |
-| `GET` | `/excuses` | `require_evangelism_manage` |
+| `GET` | `/excuses` | `require_evangelism_read` |
 | `POST` | `/excuses` | `require_evangelism_manage` |
 | `PATCH` | `/excuses/{excusa_id}` | `require_evangelism_manage` |
 | `DELETE` | `/excuses/{excusa_id}` | `require_evangelism_manage` |
@@ -104,14 +105,16 @@ Archivo: `backend/api/evangelism_grupos/grupos_main.py`
 | Método | Ruta canónica | Alias | Guard |
 |---|---|---|---|
 | `GET` | `/grupos` | `/groups` | `require_evangelism_read` |
-| `GET` | `/grupos/mine` | `/groups/mine` | `get_current_user` |
+| `GET` | `/grupos/mine` | `/groups/mine` | `require_evangelism_read` |
+| `GET` | `/grupos/assignment-summary` | `/groups/assignment-summary` | `require_evangelism_read` |
 | `GET` | `/grupos/{grupo_id}` | `/groups/{grupo_id}`, `/micro/{grupo_id}` | `get_current_user` + `_can_manage_grupo(...)` |
 | `POST` | `/grupos` | `/groups` | `require_evangelism_manage` |
 | `PUT` | `/grupos/{grupo_id}` | `/groups/{grupo_id}` | `require_evangelism_manage` |
 | `DELETE` | `/grupos/{grupo_id}` | `/groups/{grupo_id}` | `require_evangelism_manage` |
 | `GET/POST/PATCH` | `/grupos/seasons` | `/groups/seasons` | canónico según operación |
 | `GET` | `/grupos/analytics` | `/groups/analytics` | `require_evangelism_read` |
-| `POST` | `/grupos/visitors` | — | `require_evangelism_manage` |
+| `POST` | `/grupos/visitors` | `/groups/visitors` | `require_evangelism_edit` |
+| `GET` | `/macro-despliegue` | `/macro/despliegue` | `require_evangelism_read` |
 
 Reglas:
 
@@ -186,8 +189,8 @@ Archivos:
 | `PUT` | `/events/{event_id}` | `require_evangelism_manage` |
 | `DELETE` | `/events/{event_id}` | `require_evangelism_manage` |
 | `PUT` | `/events/{event_id}/audience` | `require_evangelism_manage` |
-| `GET` | `/events/dashboard-stats` | `require_evangelism_manage` |
-| `GET` | `/events/analytics/global` | `require_evangelism_manage` |
+| `GET` | `/events/dashboard-stats` | `require_evangelism_read` |
+| `GET` | `/events/analytics/global` | `require_evangelism_read` |
 
 ### 9.2 Analytics y export
 
@@ -238,9 +241,9 @@ Archivo: `backend/api/evangelism_multiplication.py`
 
 | Método | Ruta | Guard |
 |---|---|---|
-| `GET` | `/multiplication/check` | `require_evangelism_manage` |
+| `GET` | `/multiplication/check` | `require_evangelism_read` |
 | `POST` | `/multiplication/split` | `require_evangelism_manage` |
-| `GET` | `/multiplication/history` | `require_evangelism_manage` |
+| `GET` | `/multiplication/history` | `require_evangelism_read` |
 
 Contratos de shape relevantes:
 

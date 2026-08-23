@@ -28,6 +28,7 @@ from backend import models
 from backend.api.evangelism_shared import (
     ATTENDED_STATES,
     FIRST_TIME_STATES,
+    _utcnow,
     analytics_cache_scope,
     get_visible_strategy,
     normalize_attendance_status,
@@ -89,12 +90,12 @@ def _parse_period(period: str) -> int:
 
 
 def _date_range(days: int):
-    now = _dt.datetime.now(_dt.timezone.utc)
+    now = _utcnow()
     return now - _dt.timedelta(days=days), now
 
 
 def _prev_range(days: int):
-    now = _dt.datetime.now(_dt.timezone.utc)
+    now = _utcnow()
     end = now - _dt.timedelta(days=days)
     return end - _dt.timedelta(days=days), end
 
@@ -758,14 +759,14 @@ def strategy_alerts(
             )
 
     # ── Alert type 2: Groups without a session in 30+ days ──
-    cutoff = _dt.datetime.now(_dt.timezone.utc) - _dt.timedelta(days=30)
+    cutoff = _utcnow() - _dt.timedelta(days=30)
     for gid in group_ids:
         last = max_date_by_group.get(gid)
         if last is not None and hasattr(last, "tzinfo") and last.tzinfo is None:
             last = last.replace(tzinfo=_dt.timezone.utc)
         if last is None or last < cutoff:
             g = group_map.get(gid)
-            days_ago = int((_dt.datetime.now(_dt.timezone.utc) - last).days) if last else None
+            days_ago = int((_utcnow() - last).days) if last else None
             alerts.append(
                 {
                     "type": "no_recent_session",
@@ -795,7 +796,7 @@ def strategy_alerts(
             )
 
     # Alert type 4: People with 2+ consecutive absences (top 10)
-    thirty_days_ago = _dt.datetime.now(_dt.timezone.utc) - _dt.timedelta(days=30)
+    thirty_days_ago = _utcnow() - _dt.timedelta(days=30)
     if group_ids:
         participant_ids = (
             db.query(_func.distinct(models.ParticipanteGrupo.persona_id))
