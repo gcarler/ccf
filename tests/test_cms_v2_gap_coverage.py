@@ -2080,12 +2080,12 @@ class TestPublicPageCacheInvalidation:
         )
         assert _ok(r.status_code)
         sec_id = r.json()["id"]
-        # Publish sin published_version (path de secciones live)
+        # A published page without a snapshot must never expose live sections.
         page = db_session.query(models.CmsPage).filter(models.CmsPage.slug == "secpage").first()
         page.status = "published"
         db_session.commit()
         first = c.get(f"/api/cms/v2/public/sites/{key}/pages/secpage")
-        assert any(s["type"] == "rich_text" for s in first.json()["sections"])
+        assert first.status_code == 503
         resp = c.delete(
             f"/api/cms/v2/sites/{key}/pages/secpage/sections/{sec_id}",
             headers=h,
