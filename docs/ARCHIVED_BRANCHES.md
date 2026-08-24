@@ -27,6 +27,23 @@ Una rama listada aqui no debe reutilizarse, hacer push ni fusionarse de nuevo po
 | ARCHIVADA - NO REACTIVAR | `integration/archive-color-palette-20260823` | stale | `7ad336e12be7f28674837f4c93208d2a4976420a` | Integracion supersedida cuando `main` avanzo con cambios concurrentes. |
 | ARCHIVADA - NO REACTIVAR | `integration/archive-color-palette-20260823-v2` | stale | `53c982af2050340ff829a5c3e18b562b8dd0310f` | Integracion supersedida por la v3 basada en un `main` mas reciente. |
 | ARCHIVADA - NO REACTIVAR | `integration/archive-color-palette-20260823-v3` | merged | `81c6807314044b9c91c824ed90f225c726e8eff4` | Integracion final del registro, absorbida en `main`; se conserva como evidencia. |
+| ARCHIVADA - NO REACTIVAR | `docs/archive-color-palette-20260823` | merged | `f83376adbb4943b59aa25a82dc86a6bfc0bd5b5b` | Registro documental absorbido en `main`; se conserva como evidencia. |
+| ARCHIVADA - NO REACTIVAR | `docs/archive-color-palette-complete-20260823` | stale | `dfd781f6be98f61a9a93451f97e42b40a394160d` | Version documental supersedida; se conserva como evidencia. |
+| ARCHIVADA - NO REACTIVAR | `docs/archive-color-palette-final-20260823` | merged | `406f13c7ff5baaa319aa448653bad353628639f9` | Version final documental absorbida en `main`. |
+| ARCHIVADA - NO REACTIVAR | `docs/archive-policy-20260823` | merged | `80c942ccf01928c685f4cba56196e04d95e766e4` | Politica de archivado absorbida en `main`. |
+| ARCHIVADA - NO REACTIVAR | `docs/archive-policy-consistency-20260823` | merged | `ec693a3f7d34bf8a6a0299fe7e7aa9fd5c1e4923` | Registro de consistencia absorbido en `main`. |
+| ARCHIVADA - NO REACTIVAR | `docs/archive-policy-final-registry-20260823` | merged | `72e845e6df08362862d3f68d489cd03f9c76d060` | Registro final absorbido en `main`. |
+| ARCHIVADA - NO REACTIVAR | `docs/archive-projects-whiteboard-20260823` | merged | `c0274b1712f8a60c5a495f877f026ee00fa1eccd` | Documentacion de proyectos absorbida en `main`. |
+| ARCHIVADA - NO REACTIVAR | `docs/branch-governance-protocol` | merged | `097f90a1716d3fba91fbee0ec1afe2bab326957d` | Protocolo de ramas absorbido en `main`. |
+| ARCHIVADA - NO REACTIVAR | `feature/academy` | stale | `aed8eb7cb0d288c2cfd8e6d6602e18f8524f08eb` | Conserva trabajo de Academy pendiente de rescate selectivo desde el `main` actual. |
+| ARCHIVADA - NO REACTIVAR | `feature/cms-aniversario` | merged | `0a04a366cff1d145fcaf33c35530075e9d9ad393` | Cambios de CMS/Aniversario absorbidos en `main`. |
+| ARCHIVADA - NO REACTIVAR | `feature/evangelism-20260823` | stale | `600abee0547a8e8b40b1138cfc83d2039b0226a2` | Conserva dos correcciones de Evangelismo pendientes de rescate selectivo. |
+| ARCHIVADA - NO REACTIVAR | `integration/academy-courses-to-main-20260823` | merged | `ca7aec8c7550c6b194ec525eebffe363269a828b` | Integracion de Academy absorbida en `main`. |
+| ARCHIVADA - NO REACTIVAR | `integration/academy-public-courses-20260823-v2` | stale | `18481aede9fea1d1dcd78c9456d279d64ad045c9` | Conserva mejoras de cursos publicos y CI pendientes de rescate selectivo. |
+| ARCHIVADA - NO REACTIVAR | `integration/cms-aniversario-to-main` | stale | `f2fb106cf9f094162649c589575557492775c921` | Integracion antigua supersedida por el `main` vigente. |
+| ARCHIVADA - NO REACTIVAR | `integration/evangelism-recent-to-main-20260823` | merged | `018a1f14c4868dde8c6707fad8cc813a4b02dcad` | Integracion reciente de Evangelismo absorbida en `main`. |
+| ARCHIVADA - NO REACTIVAR | `integration/recent-modules-to-main-20260823` | stale | `c2573698705f66a8bf0e433c7997120f7f8280a5` | Conserva cambios recientes de Academy/CMS pendientes de rescate selectivo. |
+| ARCHIVADA - NO REACTIVAR | `sitiopublico` | stale | `6ee41f588f69a5a9d64db1c6d289285e3d28497c` | Rama publica antigua; `main` es la fuente vigente. |
 
 ## Fuera de este archivo
 
