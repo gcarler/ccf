@@ -2066,8 +2066,8 @@ class TestPublicPageCacheInvalidation:
         assert c.get(f"/api/cms/v2/public/sites/{key}/pages/rbpage").status_code == 404
 
     def test_public_page_cache_invalidated_on_section_archive(self, full, db_session):
-        """Archivar una sección oculta su render en la página pública de
-        inmediato (cuando la página se sirve por secciones live)."""
+        """Una página sin snapshot permanece fuera del render público aunque
+        se archive una sección de su borrador."""
         from backend import models
 
         c, h = full["c"], full["h"]
@@ -2092,7 +2092,7 @@ class TestPublicPageCacheInvalidation:
         )
         assert resp.status_code == 204
         second = c.get(f"/api/cms/v2/public/sites/{key}/pages/secpage")
-        assert all(s["type"] != "rich_text" for s in second.json()["sections"])
+        assert second.status_code == 503
 
 
 class TestPublicPostCacheInvalidation:
