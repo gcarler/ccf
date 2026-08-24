@@ -163,3 +163,29 @@ El plan solo se declara completo cuando:
 - frontend y backend pasan sus gates;
 - el smoke público confirma las rutas principales y `/aniversario40`;
 - la integración está fusionada a `main` y la rama temporal archivada.
+
+## 8. Estado de ejecución — 2026-08-24
+
+### Commits completados en `modulo/sitios-publicos`
+
+- `8b684569` — sitemap, `SITE_KEY` y dominio público canónicos.
+- `02f612a3` — eliminación de imágenes editoriales fijas en `/nosotros`.
+- `58f564d1` — equipo pastoral servido únicamente desde la API canónica.
+- `6467d457` — páginas publicadas requieren snapshot inmutable.
+- `6960ae85` — bootstrap sin consultas a páginas CMS inexistentes.
+- `fb4dec84` — estadísticas y búsqueda interna mediante `apiFetch`.
+- `54fdbd74` — footer respetando únicamente `footer_config` publicado.
+- `f97b6993` — CTA editorial de home solo cuando existe en CMS.
+
+### Evidencia actual
+
+- TypeScript frontend: pasa.
+- Regresión CMS pública y aislamiento: `325 passed, 1 skipped`.
+- Lint focalizado de superficies públicas modificadas: pasa.
+- Lint global: bloqueado por deuda previa fuera de esta rama:
+  `frontend/src/app/plataforma/academy/AcademyClient.tsx:8` (`DSMetric` no usado)
+  y `frontend/src/app/plataforma/evangelism/events/useEventsPage.ts:516`
+  (dependencia de `useEffect`). Estos fallos no se mezclan en el módulo de
+  sitios públicos.
+- La rama está limpia y nació desde `origin/main`; todavía no se publica ni
+  se crea la rama temporal de integración.
