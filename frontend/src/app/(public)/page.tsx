@@ -5,7 +5,7 @@ import { buildCmsPageBlocks } from "@/lib/cms/pageBlocks";
 import { SITE_KEY } from "@/lib/site-config";
 import type { CmsPublicPage } from "@/types/cms-v2";
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://ccf.org";
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://ministerioselfaro.org";
 
 export async function generateMetadata(): Promise<Metadata> {
   try {

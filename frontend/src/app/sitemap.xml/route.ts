@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
+import { serverApiFetch } from "@/lib/serverApi";
+import { SITE_KEY, SITE_URL } from "@/lib/site-config";
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://ccfministerio.com";
+const PUBLIC_SITE_URL = SITE_URL.replace(/\/$/, "");
 
 interface SitemapEntry {
   loc: string;
@@ -9,22 +11,26 @@ interface SitemapEntry {
   priority?: number;
 }
 
+interface PublishedPageSummary {
+  slug?: string;
+  status?: string;
+  updated_at?: string | null;
+}
+
 async function fetchPublishedPages(): Promise<SitemapEntry[]> {
   try {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || ""}/api/cms/v2/public/sites/default/pages`, {
-      headers: { Accept: "application/json" },
-      next: { revalidate: 3600 },
-    });
-    if (!res.ok) return [];
-    const data = await res.json();
-    const items = Array.isArray(data) ? data : data?.items || [];
+    const data = await serverApiFetch<{ items?: PublishedPageSummary[] }>(
+      `/cms/v2/public/sites/${SITE_KEY}/pages?limit=500`,
+      { cache: "no-store" },
+    );
+    const items = Array.isArray(data?.items) ? data.items : [];
     return items
-      .filter((p: any) => p.status === "published" && p.slug)
-      .map((p: any) => ({
-        loc: `${SITE_URL}/${p.slug}`,
-        lastmod: p.updated_at ? new Date(p.updated_at).toISOString() : undefined,
+      .filter((page) => page.status === "published" && page.slug && page.slug !== "footer")
+      .map((page) => ({
+        loc: page.slug === "home" ? `${PUBLIC_SITE_URL}/` : `${PUBLIC_SITE_URL}/${page.slug}`,
+        lastmod: page.updated_at ? new Date(page.updated_at).toISOString() : undefined,
         changefreq: "weekly",
-        priority: p.slug === "home" || p.slug === "" ? 1.0 : 0.7,
+        priority: page.slug === "home" ? 1.0 : 0.7,
       }));
   } catch {
     return [];
@@ -32,18 +38,30 @@ async function fetchPublishedPages(): Promise<SitemapEntry[]> {
 }
 
 const STATIC_ROUTES: SitemapEntry[] = [
-  { loc: `${SITE_URL}/`, changefreq: "daily", priority: 1.0 },
-  { loc: `${SITE_URL}/nosotros`, changefreq: "monthly", priority: 0.8 },
-  { loc: `${SITE_URL}/pastores`, changefreq: "monthly", priority: 0.8 },
-  { loc: `${SITE_URL}/conocer-a-jesus`, changefreq: "monthly", priority: 0.9 },
-  { loc: `${SITE_URL}/eventos`, changefreq: "weekly", priority: 0.8 },
-  { loc: `${SITE_URL}/predicas`, changefreq: "weekly", priority: 0.8 },
-  { loc: `${SITE_URL}/cursos`, changefreq: "weekly", priority: 0.7 },
-  { loc: `${SITE_URL}/sedes`, changefreq: "monthly", priority: 0.7 },
-  { loc: `${SITE_URL}/boletin`, changefreq: "weekly", priority: 0.7 },
-  { loc: `${SITE_URL}/testimonios`, changefreq: "weekly", priority: 0.8 },
-  { loc: `${SITE_URL}/privacy`, changefreq: "yearly", priority: 0.3 },
+  { loc: `${PUBLIC_SITE_URL}/`, changefreq: "daily", priority: 1.0 },
+  { loc: `${PUBLIC_SITE_URL}/nosotros`, changefreq: "monthly", priority: 0.8 },
+  { loc: `${PUBLIC_SITE_URL}/pastores`, changefreq: "monthly", priority: 0.8 },
+  { loc: `${PUBLIC_SITE_URL}/conocer-a-jesus`, changefreq: "monthly", priority: 0.9 },
+  { loc: `${PUBLIC_SITE_URL}/eventos`, changefreq: "weekly", priority: 0.8 },
+  { loc: `${PUBLIC_SITE_URL}/predicas`, changefreq: "weekly", priority: 0.8 },
+  { loc: `${PUBLIC_SITE_URL}/cursos`, changefreq: "weekly", priority: 0.7 },
+  { loc: `${PUBLIC_SITE_URL}/sedes`, changefreq: "monthly", priority: 0.7 },
+  { loc: `${PUBLIC_SITE_URL}/boletin`, changefreq: "weekly", priority: 0.7 },
+  { loc: `${PUBLIC_SITE_URL}/testimonios`, changefreq: "weekly", priority: 0.8 },
+  { loc: `${PUBLIC_SITE_URL}/privacy`, changefreq: "yearly", priority: 0.3 },
 ];
+
+function deduplicateEntries(entries: SitemapEntry[]): SitemapEntry[] {
+  return Array.from(new Map(entries.map((entry) => [entry.loc, entry])).values());
+}
+
+/*
+ * The CMS page list is authoritative for published routes. Static routes are
+ * retained for dedicated renderers, while duplicate CMS entries are removed.
+ */
+function buildEntries(cmsPages: SitemapEntry[]): SitemapEntry[] {
+  return deduplicateEntries([...STATIC_ROUTES, ...cmsPages]);
+}
 
 function buildSitemapXml(entries: SitemapEntry[]): string {
   const urlEntries = entries
@@ -69,7 +87,7 @@ function escapeXml(text: string): string {
 
 export async function GET() {
   const cmsPages = await fetchPublishedPages();
-  const allEntries = [...STATIC_ROUTES, ...cmsPages];
+  const allEntries = buildEntries(cmsPages);
   const xml = buildSitemapXml(allEntries);
 
   return new NextResponse(xml, {
