@@ -70,13 +70,23 @@ function RightPanel({
             animate={{ x: 0, opacity: 1 }}
             exit={{ x: width, opacity: 0 }}
             transition={{ type: 'tween', duration: 0.28, ease: [0.4, 0, 0.2, 1] }}
-            style={{ width: isExpanded ? '100vw' : `min(${width}px, 100vw)`, minWidth: 0, maxWidth: '100vw' }}
+            style={{
+                width: isExpanded ? '100vw' : `min(${width}px, 100vw)`,
+                minWidth: 0,
+                maxWidth: '100vw',
+                ...(isOverlay
+                    ? {
+                          top: 'var(--workspace-header-height, 2.5rem)',
+                          height: 'calc(100dvh - var(--workspace-header-height, 2.5rem))',
+                      }
+                    : {}),
+            }}
             className={clsx(
                 'flex flex-col bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-elevated))] border-l border-[hsl(var(--border))] dark:border-[hsl(var(--border))]',
                 isExpanded
-                    ? 'fixed inset-0 h-screen z-[1001] shadow-2xl border-l-0'
+                    ? 'fixed inset-x-0 bottom-0 z-[1001] shadow-2xl border-l-0'
                     : isControlled || rightMode === 'overlay'
-                    ? 'fixed right-0 top-10 h-[calc(100vh-2.5rem)] z-[35] shadow-[-24px_0_60px_hsl(var(--shadow-floating))]'
+                    ? 'fixed right-0 bottom-0 z-[35] shadow-[-24px_0_60px_hsl(var(--shadow-floating))]'
                     : 'relative h-full z-[25] shadow-[-8px_0_24px_hsl(var(--shadow-floating))]'
             )}
             tabIndex={-1}
@@ -85,29 +95,27 @@ function RightPanel({
             aria-label={title}
         >
             {/* Panel header */}
-            <div className="h-10 flex items-center justify-between px-4 border-b border-[hsl(var(--border))] dark:border-[hsl(var(--border))] shrink-0">
-                <span className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
+            <div className="h-10 flex items-center gap-2 px-3 border-b border-[hsl(var(--border))] dark:border-[hsl(var(--border))] shrink-0">
+                <button
+                    onClick={handleClose}
+                    aria-label="Cerrar panel"
+                    title="Cerrar panel"
+                    className="inline-flex size-8 shrink-0 items-center justify-center rounded-md text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] dark:hover:text-[hsl(var(--text-primary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-[hsl(var(--surface-2))] transition-all focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[hsl(var(--primary))]"
+                >
+                    <X size={14} />
+                </button>
+                <button
+                    onClick={() => setIsExpanded((expanded) => !expanded)}
+                    aria-label={isExpanded ? 'Contraer panel' : 'Expandir panel'}
+                    aria-pressed={isExpanded}
+                    title={isExpanded ? 'Contraer panel' : 'Expandir panel'}
+                    className="inline-flex size-8 shrink-0 items-center justify-center rounded-md border border-[hsl(var(--border))] text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/10 transition-all focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[hsl(var(--primary))]"
+                >
+                    {isExpanded ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
+                </button>
+                <span className="min-w-0 truncate text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
                     {title}
                 </span>
-                <div className="flex items-center gap-1">
-                    <button
-                        onClick={() => setIsExpanded((expanded) => !expanded)}
-                        aria-label={isExpanded ? 'Contraer panel' : 'Expandir panel'}
-                        aria-pressed={isExpanded}
-                        title={isExpanded ? 'Contraer panel' : 'Expandir panel'}
-                        className="inline-flex items-center gap-1 rounded-md border border-[hsl(var(--border))] px-2 py-1 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/10 transition-all focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[hsl(var(--primary))]"
-                    >
-                        {isExpanded ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
-                        <span>{isExpanded ? 'Contraer' : 'Expandir'}</span>
-                    </button>
-                    <button
-                        onClick={handleClose}
-                        aria-label="Cerrar panel"
-                        className="p-1 rounded-md text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] dark:hover:text-[hsl(var(--text-primary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-[hsl(var(--surface-2))] transition-all focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[hsl(var(--primary))]"
-                    >
-                        <X size={14} />
-                    </button>
-                </div>
             </div>
 
             {/* Scrollable content */}
@@ -132,9 +140,9 @@ function RightPanel({
                                 exit={{ opacity: 0 }}
                                 transition={{ duration: 0.2 }}
                                 className={clsx(
-                                    'z-[34] bg-[hsl(var(--bg-muted))]/20 backdrop-blur-[1px]',
-                                    isExpanded || isControlled ? 'fixed inset-0' : 'absolute inset-0'
+                                    'fixed inset-x-0 bottom-0 z-[34] bg-[hsl(var(--bg-muted))]/20 backdrop-blur-[1px]'
                                 )}
+                                style={{ top: 'var(--workspace-header-height, 2.5rem)' }}
                                 onClick={handleClose}
                                 aria-hidden="true"
                             />
