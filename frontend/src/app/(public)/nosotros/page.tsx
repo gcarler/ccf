@@ -94,15 +94,16 @@ export default function NosotrosPage() {
     const hasQuote = quoteText && quoteAuthor;
     const hasCta = ctaTitle || ctaDesc;
 
-    const heroSlides = Array.isArray(hero?.slides) && hero!.slides.length > 0
-        ? (hero!.slides as Array<{ src?: string; alt?: string; title?: string; caption?: string }>)
-            .filter(s => s && typeof s.src === "string")
-            .map(s => ({ src: s.src!, alt: s.alt || "Comunidad Cristiana El Faro", title: s.title, caption: s.caption }))
-        : [
-            { src: "/api/static/cms/public-site/1930936676f84f6b97df83da209fd657.webp", alt: "Comunidad Cristiana El Faro — Nosotros" },
-            { src: "/api/static/cms/public-site/a663278641a340028b26d6831b08f063.webp", alt: "Comunidad Cristiana El Faro — Nosotros" },
-            { src: "/api/static/cms/public-site/7ca9cbaf381a48bc841a6f858abae2cb.webp", alt: "Comunidad Cristiana El Faro — Nosotros" },
-        ];
+    const heroSlides = Array.isArray(hero?.slides)
+        ? (hero.slides as Array<{ src?: string; alt?: string; title?: string; caption?: string }>)
+            .filter((slide) => slide && typeof slide.src === "string" && slide.src.trim())
+            .map((slide) => ({
+                src: slide.src!,
+                alt: slide.alt || "Comunidad Cristiana El Faro",
+                title: slide.title,
+                caption: slide.caption,
+            }))
+        : [];
 
     return (
         <main className="min-h-screen bg-site-background pt-[88px] overflow-hidden">
