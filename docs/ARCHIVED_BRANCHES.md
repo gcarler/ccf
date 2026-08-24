@@ -44,6 +44,8 @@ Una rama listada aqui no debe reutilizarse, hacer push ni fusionarse de nuevo po
 | ARCHIVADA - NO REACTIVAR | `integration/evangelism-recent-to-main-20260823` | merged | `018a1f14c4868dde8c6707fad8cc813a4b02dcad` | Integracion reciente de Evangelismo absorbida en `main`. |
 | ARCHIVADA - NO REACTIVAR | `integration/recent-modules-to-main-20260823` | stale | `c2573698705f66a8bf0e433c7997120f7f8280a5` | Conserva cambios recientes de Academy/CMS pendientes de rescate selectivo. |
 | ARCHIVADA - NO REACTIVAR | `sitiopublico` | stale | `6ee41f588f69a5a9d64db1c6d289285e3d28497c` | Rama publica antigua; `main` es la fuente vigente. |
+| ARCHIVADA - NO REACTIVAR | `feature/platform-sidebar-right-controls-20260824` | merged | `d51e4e0db4584a5405e7654ad5ef1a5cef474b05` | Correccion del sidebar derecho integrada en `main`. |
+| ARCHIVADA - NO REACTIVAR | `integration/platform-sidebar-right-controls-20260824` | merged | `9bf2f1c71f2c0c88834d36222662c864a4e56650` | Integracion verificada del sidebar derecho, absorbida en `main`. |
 
 ## Fuera de este archivo
 
