@@ -65,11 +65,14 @@ export default function PublicHomePage({ initialHomePage }: { initialHomePage?: 
     const activitiesViewAllHref = (homeFeed?.activities_view_all_href as string) ?? "/eventos";
     const activitiesEmpty = (homeFeed?.activities_empty as string) ?? "";
     const scrollIndicator = (homeFeed?.scroll_indicator as string) ?? "";
-    const discoverCtaEyebrow = (discoverCtaContent?.eyebrow as string) ?? "Una invitación para ti";
-    const discoverCtaTitle = (discoverCtaContent?.title as string) ?? "¿Quieres conocer a Jesús?";
-    const discoverCtaDescription = (discoverCtaContent?.description as string) ?? "No es una religión, es el comienzo de una relación que transforma la vida. Da el siguiente paso hoy.";
-    const discoverCtaLabel = (discoverCtaContent?.cta_label as string) ?? "Quiero conocer a Jesús";
-    const discoverCtaHref = (discoverCtaContent?.cta_href as string) || "/conocer-a-jesus";
+    const discoverCtaEyebrow = (discoverCtaContent?.eyebrow as string) ?? "";
+    const discoverCtaTitle = (discoverCtaContent?.title as string) ?? "";
+    const discoverCtaDescription = (discoverCtaContent?.description as string) ?? "";
+    const discoverCtaLabel = (discoverCtaContent?.cta_label as string) ?? "";
+    const discoverCtaHref = (discoverCtaContent?.cta_href as string) ?? "";
+    const hasDiscoverCta = Boolean(
+        discoverCtaEyebrow || discoverCtaTitle || discoverCtaDescription || (discoverCtaLabel && discoverCtaHref),
+    );
     const newsletterEyebrow = (homeFeed?.newsletter_eyebrow as string) ?? "";
     const newsletterTitle = (homeFeed?.newsletter_title as string) ?? "";
     const newsletterDescription = (homeFeed?.newsletter_description as string) ?? "";
@@ -543,7 +546,7 @@ export default function PublicHomePage({ initialHomePage }: { initialHomePage?: 
             )}
 
             {/* ─── CTA: QUIERO CONOCER A JESÚS ───────────────────────── */}
-            <section
+            {hasDiscoverCta && <section
                 className="ccf-section overflow-hidden"
                 style={{ background: "var(--site-surface-container-lowest)" }}
             >
@@ -596,7 +599,7 @@ export default function PublicHomePage({ initialHomePage }: { initialHomePage?: 
                         </Link>
                     )}
                 </motion.div>
-            </section>
+            </section>}
         </div>
         </>
     );
