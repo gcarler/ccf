@@ -55,7 +55,6 @@ export default function PastorDetailPage() {
     const slug = params?.slug as string;
 
     const pastorsPage = useCmsV2Page('pastors');
-    const pastorsCms = pastorsPage?.blocks?.pastors;
     const cms: Record<string, unknown> = {
         badge_label: 'Liderazgo Pastoral',
         role_fallback: 'Pastor',
@@ -98,10 +97,8 @@ export default function PastorDetailPage() {
             } satisfies CmsPastor;
         }
 
-        const list = (pastorsCms as unknown as { pastors?: CmsPastor[] } | null)?.pastors;
-        if (!Array.isArray(list)) return null;
-        return list.find(p => p.slug === slug) || null;
-    }, [apiPastors, pastorsCms, slug]);
+        return null;
+    }, [apiPastors, slug]);
 
     if (apiLoading && !pastor) {
         return (

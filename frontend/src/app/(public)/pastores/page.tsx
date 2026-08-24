@@ -38,7 +38,7 @@ export default function PastoresIndexPage() {
     const heroContent = safeJsonParse<Record<string, unknown>>(heroCms?.content, {});
     const feedContent = safeJsonParse<Record<string, unknown>>(feedCms?.content, {});
 
-    // Fetch pastors from the pastoral-team API (source of truth)
+    // The pastoral-team API is the only source for people shown publicly.
     const [apiPastors, setApiPastors] = useState<PastoralProfile[]>([]);
     const [apiLoading, setApiLoading] = useState(true);
     useEffect(() => {
@@ -48,24 +48,15 @@ export default function PastoresIndexPage() {
             .finally(() => setApiLoading(false));
     }, []);
 
-    const pastors = useMemo(() => {
-        // Use API data as source of truth; fall back to CMS block if API empty
-        if (apiPastors.length > 0) {
-            return apiPastors.map((p) => ({
-                id: p.id,
-                slug: p.slug,
-                name: p.name,
-                role: p.role ?? undefined,
-                photo_url: p.photo_url ?? undefined,
-                bio_short: p.bio_short ?? undefined,
-                is_main_pastor: p.is_main_pastor,
-            }));
-        }
-        // Fallback: read from CMS content block
-        const pastorsCms = page?.blocks?.pastors;
-        const list = (pastorsCms as unknown as { pastors?: CmsPastor[] } | null)?.pastors;
-        return Array.isArray(list) ? list : [];
-    }, [apiPastors, page]);
+    const pastors = useMemo(() => apiPastors.map((p) => ({
+        id: p.id,
+        slug: p.slug,
+        name: p.name,
+        role: p.role ?? undefined,
+        photo_url: p.photo_url ?? undefined,
+        bio_short: p.bio_short ?? undefined,
+        is_main_pastor: p.is_main_pastor,
+    })), [apiPastors]);
     const heroBadge = typeof feedContent?.hero_badge === "string" ? feedContent.hero_badge : "";
     const heroTitle = typeof heroContent?.title === "string" ? heroContent.title : "";
     const heroDescription = typeof heroContent?.description === "string" ? heroContent.description : "";
