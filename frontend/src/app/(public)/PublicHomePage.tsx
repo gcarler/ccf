@@ -13,27 +13,6 @@ import { toast } from "sonner";
 import PublicHeroWithSlides, { type PublicSlide } from "@/components/public/PublicHeroWithSlides";
 import type { CmsPublicPage } from "@/types/cms-v2";
 
-// Media ya publicada en el CMS. Se usa como respaldo mientras la sección Hero
-// de producción no exponga sus slides; no reemplaza la configuración editable.
-const PUBLISHED_HOME_HERO_MEDIA: PublicSlide[] = [
-    {
-        src: "/api/static/cms/public-site/645a6f5cfc2e41a290ace6da2bd16b55.webp",
-        alt: "Comunidad reunida en adoración",
-    },
-    {
-        src: "/api/static/cms/public-site/e96c6969f75347878c48ec968518c4a7.webp",
-        alt: "Comunidad reunida en oración",
-    },
-    {
-        src: "/api/static/cms/public-site/f5b69d948d934412a9470f557faf4f7f.webp",
-        alt: "Comunidad celebrando junta",
-    },
-    {
-        src: "/api/static/cms/public-site/5fff1d0f797e40c09b42873b6973bf7e.webp",
-        alt: "Mensaje en comunidad",
-    },
-];
-
 /**
  * La home es un client component, pero el hero sticky se renderiza en SSR
  * desde ``initialHomePage`` (fetched en page.tsx) para que el árbol servidor
