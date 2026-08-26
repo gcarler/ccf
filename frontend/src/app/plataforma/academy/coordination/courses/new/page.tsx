@@ -53,7 +53,6 @@ export default function NewCoursePage() {
             toast.success('¡Programa creado con éxito!');
             router.push('/plataforma/academy/coordination');
         } catch (err) {
-            console.error(err);
             toast.error('Error al crear el curso');
         } finally {
             setLoading(false);

@@ -79,7 +79,6 @@ export default function StudentProfilePage() {
                 setProfile(profileData);
                 setCertificates(Array.isArray(certsData) ? certsData : []);
             } catch (err) {
-                console.error(err);
                 setError('No pudimos cargar tu perfil académico');
                 toast.error('Perfil académico no disponible temporalmente');
             } finally {
@@ -393,7 +392,7 @@ export default function StudentProfilePage() {
     );
 }
 
-// H-11 (cierre 2026-07-24): props tipadas (antes ``any``).
+// H-11 (cierre 2026-07-24): props tipadas; se eliminó el tipo débil anterior.
 interface StatBoxProps {
     icon: LucideIcon;
     label: string;

@@ -13,7 +13,7 @@ from html import escape as _html_escape
 from typing import Annotated, Any
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, Request, UploadFile, status
+from fastapi import APIRouter, BackgroundTasks, Depends, File, Form, HTTPException, Query, Request, UploadFile, status
 from sqlalchemy import and_, func, or_
 from sqlalchemy.orm import Session, contains_eager, joinedload, selectinload
 
@@ -34,6 +34,7 @@ from backend.core.uploads import sanitize_filename
 from backend.crud.crm import get_user_sede_id
 from backend.models_shared import _utcnow
 from backend.schemas import academy as schemas
+from backend.tasks.academy_notifications import queue_academy_notification
 
 router = APIRouter(prefix="/academy", tags=["Academy"])
 
@@ -328,6 +329,7 @@ def submit_assessment(
     assessment_id: UUID,
     payload: schemas.AssessmentAttemptSubmit,
     current_user: AcademyStudent,
+    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
 ):
     # ACAD-LOW-002: aceptar enrollment_id opcional del payload pero siempre derivar
@@ -396,6 +398,16 @@ def submit_assessment(
     # un intento previo aprobó, se conserva aprobado; sólo cambia a False
     # si no ha habido intento aprobado y éste reprueba.
     enrollment.approved = bool(enrollment.approved or attempt.passed)
+    queue_academy_notification(
+        db,
+        background_tasks,
+        recipient_id=current_user.id,
+        title="Evaluación calificada",
+        content=f"Obtuviste {score:.2f}/100 en {assessment.title}.",
+        subject="Tu evaluación de Academy fue calificada",
+        url=f"/plataforma/academy/assessments/{assessment.id}",
+        sede_id=get_user_sede_id(db, current_user.id),
+    )
     db.commit()
     db.refresh(attempt)
     return attempt
@@ -947,7 +959,11 @@ def export_my_academy_data(
 @router.post("/enrollments/{enrollment_id}/request-certificate")
 @academy_limiter.limit("5/minute")
 def request_certificate(
-    enrollment_id: UUID, request: Request, current_user: AcademyStudent, db: Session = Depends(get_db)
+    enrollment_id: UUID,
+    request: Request,
+    current_user: AcademyStudent,
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(get_db),
 ):
     enrollment = _get_own_enrollment(db, current_user, enrollment_id)
     if enrollment.status != "completed" and not enrollment.approved:
@@ -964,6 +980,16 @@ def request_certificate(
     enrollment.certificate_issued = True
     enrollment.certificate_code = code
     db.add(certificate)
+    queue_academy_notification(
+        db,
+        background_tasks,
+        recipient_id=current_user.id,
+        title="Certificado emitido",
+        content=f"Tu certificado de {enrollment.course.title} ya está disponible.",
+        subject="Tu certificado de Academy está disponible",
+        url=f"/plataforma/academy/certificates/{code}",
+        sede_id=get_user_sede_id(db, current_user.id),
+    )
     db.commit()
     db.refresh(certificate)
     _invalidate_dashboard_for(db, current_user)  # M-04 — contador de certificados fresh
@@ -1271,9 +1297,10 @@ def create_forum_comment(
     thread_id: UUID,
     payload: schemas.ForumCommentCreate,
     current_user: AcademyStudent,
+    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
 ):
-    _get_scoped_forum_thread(db, current_user, thread_id)
+    thread = _get_scoped_forum_thread(db, current_user, thread_id)
     if payload.parent_id:
         parent = (
             db.query(models.ForumComment)
@@ -1293,6 +1320,27 @@ def create_forum_comment(
         content=_sanitize_text(payload.content.strip()) or "",
     )
     db.add(comment)
+    if thread.author_persona_id != current_user.id:
+        course_title = "Academy"
+        if thread.course_id:
+            course = db.query(models.Course.title, models.Course.sede_id).filter(models.Course.id == thread.course_id).first()
+            if course:
+                course_title = course.title
+                sede_id = course.sede_id
+            else:
+                sede_id = get_user_sede_id(db, current_user.id)
+        else:
+            sede_id = get_user_sede_id(db, current_user.id)
+        queue_academy_notification(
+            db,
+            background_tasks,
+            recipient_id=thread.author_persona_id,
+            title="Nueva respuesta en el foro",
+            content=f"Tu hilo recibió una respuesta: {payload.content.strip()}",
+            subject="Nueva respuesta en tu foro de Academy",
+            url=f"/plataforma/academy/forum/{thread.id}",
+            sede_id=sede_id,
+        )
     db.commit()
     db.refresh(comment)
     return comment
@@ -1600,6 +1648,7 @@ def grade_submission(
     submission_id: UUID,
     current_user: AcademyEditor,
     payload: schemas.GradeSubmissionPayload,
+    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
 ):
     # Axioma 3 — Multi-Tenant: una entrega sólo puede mutarse si su Course pertenece
@@ -1627,6 +1676,7 @@ def grade_submission(
     submission = query.first()
     if not submission:
         raise HTTPException(status_code=404, detail="Entrega no encontrada")
+    enrollment = db.query(models.Enrollment).filter(models.Enrollment.id == submission.enrollment_id).first()
     submission.grade = payload.grade
     submission.teacher_feedback = payload.feedback
     db.add(
@@ -1644,6 +1694,18 @@ def grade_submission(
             },
         )
     )
+    if enrollment is not None:
+        course_title = submission.lesson.course.title if submission.lesson and submission.lesson.course else "Academy"
+        queue_academy_notification(
+            db,
+            background_tasks,
+            recipient_id=enrollment.persona_id,
+            title="Entrega calificada",
+            content=f"Tu entrega de {course_title} recibió una calificación de {payload.grade:.2f}.",
+            subject="Tu entrega de Academy fue calificada",
+            url=f"/plataforma/academy/course/{enrollment.course_id}",
+            sede_id=get_user_sede_id(db, current_user.id),
+        )
     db.commit()
     db.refresh(submission)
     return submission

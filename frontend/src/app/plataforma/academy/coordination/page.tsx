@@ -45,7 +45,6 @@ export default function CoordinationConsole() {
                 setReadiness(readinessData);
                 setCourses(Array.isArray(coursesData) ? coursesData : []);
             } catch (err) {
-                console.error(err);
                 toast.error('No pudimos sincronizar los datos de coordinación');
             } finally {
                 setLoading(false);

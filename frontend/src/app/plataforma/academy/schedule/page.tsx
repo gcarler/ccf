@@ -89,7 +89,6 @@ export default function StudentSchedule() {
             URL.revokeObjectURL(url);
             toast.success('Calendario exportado');
         } catch (err) {
-            console.error(err);
             toast.error('No pudimos generar el calendario');
         } finally {
             setIcsGenerating(false);

@@ -60,7 +60,6 @@ export default function TeacherWorkspace() {
         } catch (err: unknown) {
             // H-11 (cierre 2026-07-24): AbortError filtrado tipo-safe.
             if (err instanceof DOMException && err.name === 'AbortError') return;
-            console.error(err);
             toast.error('No pudimos cargar los datos del panel');
         } finally {
             setLoading(false);
@@ -102,7 +101,6 @@ export default function TeacherWorkspace() {
             toast.success(decision === 'approve' ? 'Calificación registrada' : 'Solicitud de ajustes enviada');
             await loadData();
         } catch (err) {
-            console.error(err);
             toast.error('No se pudo registrar la calificación');
         } finally {
             setGradingId(null);

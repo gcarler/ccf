@@ -38,7 +38,6 @@ export default function AcademyTeachersPage() {
                 });
                 setTeachers(Array.isArray(data) ? data : []);
             } catch (error) {
-                console.error("Error loading academy teachers", error);
                 setTeachers([]);
             } finally {
                 setLoading(false);

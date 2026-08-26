@@ -39,7 +39,6 @@ export default function PublicCertificatePage() {
                 setCertificate(data);
             } catch (err: unknown) {
                 if (!(err instanceof DOMException && err.name === 'AbortError')) {
-                    console.error("Error validating certificate:", err);
                 }
                 setError(true);
             } finally {

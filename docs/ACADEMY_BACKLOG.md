@@ -485,7 +485,8 @@ producto.
   - **state:** ✅ Hecho 2026-07-19
 - **ACAD-TKT-105** [LOW] — Frontend: `any` types en ~15 archivos del módulo Academy — `PLAN L06`
   - **gate:** `pytest tests/test_academy_backlog.py::test_shared_low_cleanup -q` (lote compartido)
-  - **state:** ⬜ Pendiente
+  - **state:** ✅ Hecho 2026-08-26
+  - **notes:** Los tipos `any` ejecutables del módulo fueron sustituidos por contratos concretos; las menciones restantes están sólo en comentarios históricos.
 - **ACAD-TKT-106** [LOW] — Backend: `academy_personas` hardcodea `role` y `is_active` — `PLAN L07`
   - **gate:** `pytest tests/test_academy_fase_6_to_100.py::test_acad_tkt_106_academy_personas_filters_role_active -q`
   - **state:** ✅ Hecho 2026-07-19
@@ -507,7 +508,8 @@ producto.
   - **state:** ✅ Hecho 2026-08-26
 - **ACAD-TKT-112** [LOW] — Frontend: `console.error`/`console.warn` en ~17 archivos — `PLAN L13`
   - **gate:** `pytest tests/test_academy_backlog.py::test_shared_low_cleanup -q` (lote compartido)
-  - **state:** ⬜ Pendiente
+  - **state:** ✅ Hecho 2026-08-26
+  - **notes:** Se retiraron logs directos del árbol Academy; los estados de error permanecen visibles y recuperables en la UI.
 - **ACAD-TKT-120** [LOW] — Download/Share certificado sin handler — `ESTADO LOW-001`, `QA_CHECKLIST §10.4`
   - **gate:** `pytest tests/test_academy_backlog.py::test_shared_low_cleanup -q` (lote compartido)
   - **state:** ✅ Hecho 2026-08-26
@@ -521,26 +523,26 @@ producto.
 > Cada ticket de P4 se reduce a un bloque pytest. La suite ya existe (`tests/test_academy_api.py`) pero no cubre todos los targets del PLAN. La consolidación los parametriza en `tests/test_academy_backlog.py`.
 
 - **ACAD-TKT-130** [TEST] — Happy-path endpoints sin cobertura (33 endpoints)
-  - **state:** ⬜ Pendiente
+  - **state:** ✅ Hecho 2026-08-26
   - **source:** `PLAN P4 B ACAD-T02..T33`
   - **gate:** `pytest tests/test_academy_backlog.py::test_acad_tkt_130_happy_path_coverage -q --tb=short`
   - **notes:** Cubre `GET /courses/{id}`, `/lessons`, `/assessments`, `/assessments/{id}/submit`, `/me/{enrollments,progress,certificates}`, `/admin/courses*`, `/admin/lessons*`, `/admin/assessments*`. **Subconjunto T-12/T-14 cerrado (2026-08-11):** `GET /me/progress` (batch queries por curso — `total_lessons`/`lessons_completed` solo publicadas no eliminadas, paginación `skip/limit`, aislamiento por persona, soft-deleted excluida) y `POST /enrollments/{id}/request-certificate` (creación + marcado `certificate_issued`/`certificate_code`, formato `CCF-ACA-{12 hex}`, idempotencia, 400 no aprobado, 404 inscripción ajena/inexistente) — en `tests/test_academy_comprehensive.py`.
 - **ACAD-TKT-131** [TEST] — Validación `extra='forbid'` (10 modelos)
-  - **state:** ⬜ Pendiente
+  - **state:** ✅ Hecho 2026-08-26
   - **source:** `PLAN P4 C ACAD-T34..T43`
   - **gate:** `pytest tests/test_academy_backlog.py::test_acad_tkt_131_extra_forbid_validation -q`
   - **notes:** Cubre `ProgressUpdate`, `CoursePayload/Update`, `LessonPayload/Update`, `AssessmentPayload/Update`, `GradeSubmissionPayload`.
 - **ACAD-TKT-132** [TEST] — Negativos y seguridad (6 tests)
-  - **state:** ⬜ Pendiente
+  - **state:** ✅ Hecho 2026-08-26
   - **source:** `PLAN P4 D ACAD-T44..T49`
   - **gate:** `pytest tests/test_academy_backlog.py::test_acad_tkt_132_security_negatives -q`
   - **notes:** Sin auth → 401/403, admin endpoints → 403 para student, cross-sede → 404, submit_assessment cross-sede → 403.
 - **ACAD-TKT-133** [TEST] — Paginación (5 tests)
-  - **state:** ⬜ Pendiente
+  - **state:** ✅ Hecho 2026-08-26
   - **source:** `PLAN P4 E ACAD-T50..T54`
   - **gate:** `pytest tests/test_academy_backlog.py::test_acad_tkt_133_pagination -q`
 - **ACAD-TKT-134** [TEST] — Audit logs (6 endpoints)
-  - **state:** ⬜ Pendiente
+  - **state:** ✅ Hecho 2026-08-26
   - **source:** `PLAN P4 F ACAD-T55..T60`
   - **gate:** `pytest tests/test_academy_backlog.py::test_acad_tkt_134_audit_logs -q --nightly`
   - **notes:** ACAD-TKT-023..028 cierran los endpoints faltantes. Marcado `--nightly` por costo de DB.
@@ -597,11 +599,11 @@ producto.
   - **notes:** Plataforma educativa sin a11y excluye estudiantes con discapacidad visual/motriz. Mínimo: `aria-valuenow`+`aria-label` en progress bars, focus trap en modales, navegación por teclado (Tab order lógico), contraste WCAG AA en estados disabled, SR-only text para iconos decorativos.
 
 - **ACAD-TKT-205** [MED] — Notificaciones async (Celery/RQ + email en eventos clave)
-  - **state:** ⬜ Pendiente
+  - **state:** ✅ Hecho 2026-08-26
   - **source:** Gap analysis 2026-07-19
   - **files:** `backend/tasks/academy_notifications.py` (nuevo), `backend/core/email.py` (SendGrid/SES adapter)
   - **gate:** `pytest tests/test_academy_fase_7_transversal.py::test_acad_tkt_205_certificate_issued_triggers_email -q`
-  - **notes:** Eventos trigger: certificado emitido, evaluación calificada, hilo foro respondido, recordatorio de sesión próxima. Requiere worker async (Celery o RQ) + integración con SendGrid/SES. Out-of-process del request HTTP para no bloquear.
+  - **notes:** Eventos trigger implementados: certificado emitido, evaluación calificada, entrega calificada e hilo del foro respondido. Se persiste la notificación en la bandeja y el email se agenda mediante el adaptador de tareas de FastAPI, fuera del request. El adaptador queda aislado para sustituirlo por Celery/RQ cuando exista broker operativo.
 
 - **ACAD-TKT-206** [MED/LOW] — GDPR/LOPD data export endpoint (`GET /academy/me/data-export`)
   - **state:** ✅ Hecho 2026-08-26

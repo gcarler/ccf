@@ -79,7 +79,6 @@ export default function AssessmentPage() {
                 const data = await apiFetch<AssessmentData>(`/academy/assessments/${id}`, { token, signal: ctrl.signal });
                 setAssessment(data);
             } catch (err) {
-                console.error("Error fetching assessment:", err);
                 toast.error('Error al cargar la evaluación');
             } finally {
                 setLoading(false);
@@ -118,7 +117,6 @@ export default function AssessmentPage() {
             });
             setResult(data);
         } catch (err) {
-            console.error("Failed to submit assessment:", err);
             toast.error('Error al enviar la evaluación');
         } finally {
             setIsSubmitting(false);

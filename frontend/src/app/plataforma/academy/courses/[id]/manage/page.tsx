@@ -77,7 +77,6 @@ export default function CourseManagementPage() {
                 setCourse(courseData);
                 setStudents(Array.isArray(studentsData) ? studentsData : []);
             } catch (err) {
-                console.error(err);
                 toast.error('Error al cargar datos del curso');
             } finally {
                 setLoading(false);
