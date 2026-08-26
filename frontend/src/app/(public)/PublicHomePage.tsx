@@ -41,6 +41,7 @@ export default function PublicHomePage({ initialHomePage }: { initialHomePage?: 
     const heroDescription = (heroContent?.description as string) ?? "";
     const heroPrimaryCta = (heroContent?.primary_cta as string) ?? "";
     const heroSecondaryCta = (heroContent?.secondary_cta as string) ?? "";
+    const heroBgImage = heroContent?.bg_image ? String(heroContent.bg_image) : "";
 
     const homeFeed = (homeFeedContent?.parsed && typeof homeFeedContent.parsed === "object" && !Array.isArray(homeFeedContent.parsed))
         ? homeFeedContent.parsed as Record<string, unknown>
