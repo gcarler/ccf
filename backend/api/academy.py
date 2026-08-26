@@ -1498,13 +1498,52 @@ def dashboard_metrics(
 
 
 @router.get("/dashboard/pilot-readiness")
-def pilot_readiness(current_user: AcademyManager):
-    checklist = [
-        {"key": "uuid", "label": "Identidad UUID", "completed": True},
-        {"key": "permissions", "label": "Permisos por módulo", "completed": True},
-        {"key": "schema", "label": "Esquema Academy único", "completed": True},
+def pilot_readiness(current_user: AcademyManager, db: Session = Depends(get_db)):
+    """Estado real de preparación del módulo, calculado desde Academy.
+
+    Este endpoint es operacional: no puede anunciar 100% sólo porque la ruta
+    exista. Cada indicador se deriva de datos/configuración que el coordinador
+    puede verificar y el porcentaje se expresa de 0 a 100.
+    """
+    checks = [
+        ("uuid", "Identidad UUID", True),
+        ("permissions", "Permisos por módulo", True),
+        (
+            "published_courses",
+            "Cursos publicados con contenido",
+            db.query(models.Course)
+            .join(models.Lesson, models.Lesson.course_id == models.Course.id)
+            .filter(
+                models.Course.deleted_at.is_(None),
+                models.Course.is_published.is_(True),
+                models.Lesson.deleted_at.is_(None),
+                models.Lesson.is_published.is_(True),
+            )
+            .first()
+            is not None,
+        ),
+        (
+            "assessment_path",
+            "Evaluaciones configuradas",
+            db.query(models.Assessment)
+            .join(models.Course, models.Course.id == models.Assessment.course_id)
+            .filter(models.Course.deleted_at.is_(None), models.Assessment.deleted_at.is_(None))
+            .first()
+            is not None,
+        ),
+        (
+            "certificate_path",
+            "Certificación disponible",
+            db.query(models.Certificate)
+            .join(models.Enrollment, models.Enrollment.id == models.Certificate.enrollment_id)
+            .filter(models.Enrollment.deleted_at.is_(None))
+            .first()
+            is not None,
+        ),
     ]
-    return {"environment_ready": True, "readiness_score": 100, "checklist": checklist}
+    checklist = [{"key": key, "label": label, "completed": completed} for key, label, completed in checks]
+    score = round(sum(completed for _, _, completed in checks) / len(checks) * 100)
+    return {"environment_ready": score == 100, "readiness_score": score, "checklist": checklist}
 
 
 @router.get("/admin/submissions")

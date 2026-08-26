@@ -209,37 +209,37 @@ producto.
   - **gate:** `pytest tests/test_academy_backlog.py::test_high_pending_tickets_have_negative_evidence -q` ✅
 
 - **ACAD-TKT-023** [HIGH] — `archive_course_admin` sin audit log
-  - **state:** ⬜ Pendiente
+  - **state:** ✅ Hecho 2026-08-26
   - **source:** `PLAN P1 ACAD-H04`
   - **files:** `backend/api/academy.py::archive_course_admin` (líneas 1056-1060)
   - **gate:** `pytest tests/test_academy_backlog.py::test_acad_tkt_023_archive_course_writes_audit_log -q`
 
 - **ACAD-TKT-024** [HIGH] — `archive_lesson_admin` sin audit log
-  - **state:** ⬜ Pendiente
+  - **state:** ✅ Hecho 2026-08-26
   - **source:** `PLAN P1 ACAD-H05`
   - **files:** `backend/api/academy.py::archive_lesson_admin` (líneas 1151-1158)
   - **gate:** `pytest tests/test_academy_backlog.py::test_acad_tkt_024_archive_lesson_writes_audit_log -q`
 
 - **ACAD-TKT-025** [HIGH] — `grade_submission` sin audit log
-  - **state:** ⬜ Pendiente
+  - **state:** ✅ Hecho 2026-08-26
   - **source:** `PLAN P1 ACAD-H06`
   - **files:** `backend/api/academy.py::grade_submission` (líneas 988-1023)
   - **gate:** `pytest tests/test_academy_backlog.py::test_acad_tkt_025_grade_submission_writes_audit_log -q`
 
 - **ACAD-TKT-026** [HIGH] — `update_course_admin` sin audit log
-  - **state:** ⬜ Pendiente
+  - **state:** ✅ Hecho 2026-08-26
   - **source:** `PLAN P1 ACAD-H07`
   - **files:** `backend/api/academy.py::update_course_admin` (líneas 1037-1053)
   - **gate:** `pytest tests/test_academy_backlog.py::test_acad_tkt_026_update_course_writes_audit_log -q`
 
 - **ACAD-TKT-027** [HIGH] — `update_lesson_admin` sin audit log
-  - **state:** ⬜ Pendiente
+  - **state:** ✅ Hecho 2026-08-26
   - **source:** `PLAN P1 ACAD-H08`
   - **files:** `backend/api/academy.py::update_lesson_admin` (líneas 1132-1148)
   - **gate:** `pytest tests/test_academy_backlog.py::test_acad_tkt_027_update_lesson_writes_audit_log -q`
 
 - **ACAD-TKT-028** [HIGH] — `resolve_forum_thread` sin audit log
-  - **state:** ⬜ Pendiente
+  - **state:** ✅ Hecho 2026-08-26
   - **source:** `PLAN P1 ACAD-H09`
   - **files:** `backend/api/academy.py::resolve_forum_thread` (líneas 792-807)
   - **gate:** `pytest tests/test_academy_backlog.py::test_acad_tkt_028_resolve_forum_writes_audit_log -q`
@@ -339,66 +339,66 @@ producto.
 > A continuación lista compacta con referencia. Cada uno tiene su `gate` designado en el closure commit cuando se cierre.
 
 - **ACAD-TKT-050** [MED] — Backend: max_length en `CoursePayload`/`CourseUpdate` (code=50, title=200) — `PLAN M01`
-  - **state:** ⬜ Pendiente
+  - **state:** ✅ Hecho 2026-08-26
   - **source:** `PLAN P2 ACAD-M01`
   - **files:** `backend/api/academy.py:49-77`
   - **gate:** `pytest tests/test_academy_backlog.py::test_acad_tkt_050_course_max_length -q`
 - **ACAD-TKT-051** [MED] — Backend: `ModalityEnum` para `modality` — `PLAN M02`
-  - **state:** ⬜ Pendiente
+  - **state:** ✅ Hecho 2026-08-26
   - **source:** `PLAN P2 ACAD-M02`
   - **files:** `backend/api/academy.py:52,69`
   - **gate:** `pytest tests/test_academy_backlog.py::test_acad_tkt_051_modality_enum -q`
 - **ACAD-TKT-052** [MED] — Backend: `Literal["open","persona","advanced"]` para `access_level` — `PLAN M03`
-  - **state:** ⬜ Pendiente
+  - **state:** ✅ Hecho 2026-08-26
   - **source:** `PLAN P2 ACAD-M03`
   - **files:** `backend/api/academy.py:60,77,1028,1046`
   - **gate:** `pytest tests/test_academy_backlog.py::test_acad_tkt_052_access_level_literal -q`
 - **ACAD-TKT-053** [MED] — Backend: max_length `LessonPayload`/`LessonUpdate` (title=200, content_type=50) — `PLAN M04`
-  - **state:** ⬜ Pendiente
+  - **state:** ✅ Hecho 2026-08-26
   - **source:** `PLAN P2 ACAD-M04`
   - **files:** `backend/api/academy.py:83-97`
   - **gate:** `pytest tests/test_academy_backlog.py::test_acad_tkt_053_lesson_max_length -q`
 - **ACAD-TKT-054** [MED] — Backend: `ContentTypeEnum` para `content_type` — `PLAN M05`
-  - **state:** ⬜ Pendiente
+  - **state:** ✅ Hecho 2026-08-26
   - **source:** `PLAN P2 ACAD-M05`
   - **files:** `backend/api/academy.py:85,97`
   - **gate:** `pytest tests/test_academy_backlog.py::test_acad_tkt_054_content_type_enum -q`
 - **ACAD-TKT-055** [MED] — Backend: max_length `AssessmentPayload`/`AssessmentUpdate` title=200 — `PLAN M06`
-  - **state:** ⬜ Pendiente
+  - **state:** ✅ Hecho 2026-08-26
   - **source:** `PLAN P2 ACAD-M06`
   - **files:** `backend/api/academy.py:109,118`
   - **gate:** `pytest tests/test_academy_backlog.py::test_acad_tkt_055_assessment_max_length -q`
 - **ACAD-TKT-056** [MED] — Backend: paginación `skip`/`limit` en `list_lessons` — `PLAN M07`
   - **gate:** `pytest tests/test_academy_backlog.py::test_shared_pagination_enums -q` (lote compartido)
-  - **state:** ⬜ Pendiente
+  - **state:** ✅ Hecho 2026-08-26
 - **ACAD-TKT-057** [MED] — Backend: paginación `list_assessments` — `PLAN M08`
   - **gate:** `pytest tests/test_academy_backlog.py::test_shared_pagination_enums -q` (lote compartido)
-  - **state:** ⬜ Pendiente
+  - **state:** ✅ Hecho 2026-08-26
 - **ACAD-TKT-058** [MED] — Backend: paginación `academy_schedule` — `PLAN M09`
   - **gate:** `pytest tests/test_academy_backlog.py::test_shared_pagination_enums -q` (lote compartido)
-  - **state:** ⬜ Pendiente
+  - **state:** ✅ Hecho 2026-08-26
 - **ACAD-TKT-059** [MED] — Backend: paginación `academy_personas` (eliminar hardcode limit=500) — `PLAN M10`
   - **gate:** `pytest tests/test_academy_backlog.py::test_shared_pagination_enums -q` (lote compartido)
-  - **state:** ⬜ Pendiente
+  - **state:** ✅ Hecho 2026-08-26
 - **ACAD-TKT-060** [MED] — Backend: paginación `my_enrollments` — `PLAN M11`
   - **gate:** `pytest tests/test_academy_backlog.py::test_shared_pagination_enums -q` (lote compartido)
-  - **state:** ⬜ Pendiente
+  - **state:** ✅ Hecho 2026-08-26
 - **ACAD-TKT-061** [MED] — Backend: paginación `my_certificates` — `PLAN M12`
   - **gate:** `pytest tests/test_academy_backlog.py::test_shared_pagination_enums -q` (lote compartido)
-  - **state:** ⬜ Pendiente
+  - **state:** ✅ Hecho 2026-08-26
 - **ACAD-TKT-062** [MED] — Backend: paginación `my_progress` — `PLAN M13`
   - **gate:** `pytest tests/test_academy_backlog.py::test_shared_pagination_enums -q` (lote compartido)
-  - **state:** ⬜ Pendiente
+  - **state:** ✅ Hecho 2026-08-26
 - **ACAD-TKT-063** [MED] — Backend: import `datetime` movido al top de `academy.py:873` — `PLAN M14`
   - **gate:** `pytest tests/test_academy_backlog.py::test_shared_pagination_enums -q` (lote compartido)
-  - **state:** ⬜ Pendiente
+  - **state:** ✅ Hecho 2026-08-26
 - **ACAD-TKT-064** [MED] — Backend: enum `ForumCategory` para `ForumThreadCreate.category` — `PLAN M15`
   - **gate:** `pytest tests/test_academy_api.py::test_forum_category_filter_and_resource_lifecycle_are_scoped -q` ✅
   - **state:** ✅ Hecho 2026-07-19
   - **notes:** `ForumCategory` normaliza etiquetas históricas a un vocabulario canónico sin romper la UI existente.
 - **ACAD-TKT-065** [MED] — Backend: max_length=200 `ForumThreadCreate.title` — `PLAN M16`
   - **gate:** `pytest tests/test_academy_backlog.py::test_shared_pagination_enums -q` (lote compartido)
-  - **state:** ⬜ Pendiente
+  - **state:** ✅ Hecho 2026-08-26
   - **gate (todos los ACAD-TKT-056 a 065):** `pytest tests/test_academy_backlog.py::test_acad_tkt_pagination_and_enums -q`
 
 ### 4.4. MED frontend (ACAD-MF*)
@@ -439,10 +439,12 @@ producto.
   - **notes:** El flujo de inscripción no tiene contrato de pagos; se reemplazaron precios ficticios y métodos de pago simulados por confirmación de matrícula y aviso de coordinación.
 - **ACAD-TKT-081** [MED] — Frontend: fallback video URL hardcodeado en `course/[id]/page.tsx:340` — `PLAN MF12`
   - **gate:** `pytest tests/test_academy_backlog.py::test_shared_frontend_hardcoded_cleanup -q` (lote compartido)
-  - **state:** ⬜ Pendiente
+  - **state:** ✅ Hecho 2026-08-26
+  - **notes:** Si la lección no tiene `media_url`, se informa que el video está pendiente; no se reproduce contenido externo ficticio.
 - **ACAD-TKT-082** [MED] — Frontend: AI insight hardcodeado en `AcademyClient.tsx:172-174` — `PLAN MF13`
   - **gate:** `pytest tests/test_academy_backlog.py::test_shared_frontend_hardcoded_cleanup -q` (lote compartido)
-  - **state:** ⬜ Pendiente
+  - **state:** ✅ Hecho 2026-08-26
+  - **notes:** El dashboard sólo muestra métricas y catálogo provenientes de la API; no presenta una recomendación IA inventada.
 - **ACAD-TKT-083** [MED] — Frontend: timer hardcodeado "45:00" en `assessments/[id]/page.tsx:169` — `PLAN MF14`
   - **gate:** `pytest tests/test_academy_backlog.py::test_shared_frontend_hardcoded_cleanup -q` (lote compartido)
   - **state:** ✅ Hecho 2026-08-26
@@ -452,12 +454,14 @@ producto.
 ### 4.5. MED módulos menores + ESTADO §15.3 pendientes
 
 - **ACAD-TKT-090** [MED] — Foro con `course_id=None` abierto a cualquier student
-  - **state:** ⬜ Pendiente
+  - **state:** ✅ Hecho 2026-08-26
+  - **notes:** Los hilos globales requieren permiso editorial/managerial; los hilos de curso se validan contra la matrícula del estudiante.
   - **source:** `ESTADO §15.3 ACAD-MED-001`, `QA_CHECKLIST §10.3`
   - **files:** `backend/api/academy.py::create_forum_thread`
   - **gate:** `pytest tests/test_academy_backlog.py::test_acad_tkt_090_global_thread_403 -q`
 - **ACAD-TKT-091** [MED] — `ForumThread.is_resolved` sin endpoint PATCH
-  - **state:** ⬜ Pendiente
+  - **state:** ✅ Hecho 2026-08-26
+  - **notes:** Existe endpoint de resolución con control de acceso y registro de actividad.
   - **source:** `ESTADO §15.3 ACAD-MED-002`
   - **files:** `backend/api/academy.py` (nuevo endpoint `PATCH /forum/threads/{id}/resolve`)
   - **gate:** `pytest tests/test_academy_backlog.py::test_acad_tkt_091_resolve_endpoint_exists -q`
@@ -487,7 +491,8 @@ producto.
   - **state:** ✅ Hecho 2026-07-19
 - **ACAD-TKT-107** [LOW] — Backend: `pilot_readiness` endpoint hardcodeado estático — `PLAN L08`
   - **gate:** `pytest tests/test_academy_backlog.py::test_shared_low_cleanup -q` (lote compartido)
-  - **state:** ⬜ Pendiente
+  - **state:** ✅ Hecho 2026-08-26
+  - **notes:** El porcentaje y checklist se calculan desde cursos publicados, lecciones publicadas, evaluaciones y certificaciones existentes.
 - **ACAD-TKT-108** [LOW] — Backend: `my_profile` usa `getattr` frágil — `PLAN L09`
   - **gate:** `pytest tests/test_academy_fase_6_to_100.py::test_acad_tkt_108_my_profile_no_getattr_fragil -q`
   - **state:** ✅ Hecho 2026-07-19
