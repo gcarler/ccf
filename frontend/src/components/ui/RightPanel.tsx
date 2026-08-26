@@ -16,6 +16,8 @@ interface RightPanelProps {
     /** Modo controlado: cuando se pasa open/onClose, el panel se comporta como Drawer overlay fijo */
     open?: boolean;
     onClose?: () => void;
+    /** Convierte el panel en modal y bloquea el área de trabajo. Desactivado por defecto. */
+    modal?: boolean;
 }
 
 /**
@@ -36,6 +38,7 @@ function RightPanel({
     showTrigger = false,
     open: controlledOpen,
     onClose,
+    modal = false,
 }: RightPanelProps) {
     const { layers, closeLayer, rightMode } = useSidebarLayers();
     const isControlled = controlledOpen !== undefined;
@@ -44,6 +47,7 @@ function RightPanel({
     const [isExpanded, setIsExpanded] = useState(false);
 
     const isOverlay = isControlled || rightMode === 'overlay';
+    const isModal = isOverlay && modal;
 
     const handleClose = () => {
         if (isControlled) {
@@ -56,7 +60,7 @@ function RightPanel({
     // Focus trap + Escape: only in controlled/overlay mode where the panel
     // behaves as a modal drawer. In push mode it is part of the normal layout.
     useFocusTrap(panelRef, {
-        active: isOpen && isOverlay,
+        active: isOpen && isModal,
         onEscape: handleClose,
     });
 
@@ -90,8 +94,8 @@ function RightPanel({
                     : 'relative h-full z-[25] shadow-[-8px_0_24px_hsl(var(--shadow-floating))]'
             )}
             tabIndex={-1}
-            role={isOverlay ? 'dialog' : 'complementary'}
-            aria-modal={isOverlay ? 'true' : undefined}
+            role={isModal ? 'dialog' : 'complementary'}
+            aria-modal={isModal ? 'true' : undefined}
             aria-label={title}
         >
             {/* Panel header */}
@@ -132,20 +136,20 @@ function RightPanel({
                 <AnimatePresence>
                     {isOpen && (
                         <>
-                            {/* Backdrop */}
-                            <motion.div
-                                key="right-backdrop"
-                                initial={{ opacity: 0 }}
-                                animate={{ opacity: 1 }}
-                                exit={{ opacity: 0 }}
-                                transition={{ duration: 0.2 }}
-                                className={clsx(
-                                    'fixed inset-x-0 bottom-0 z-[34] bg-[hsl(var(--bg-muted))]/20 backdrop-blur-[1px]'
-                                )}
-                                style={{ top: 'var(--workspace-header-height, 2.5rem)' }}
-                                onClick={handleClose}
-                                aria-hidden="true"
-                            />
+                            {isModal && (
+                                <motion.div
+                                    key="right-backdrop"
+                                    initial={{ opacity: 0 }}
+                                    animate={{ opacity: 1 }}
+                                    exit={{ opacity: 0 }}
+                                    transition={{ duration: 0.2 }}
+                                    className="fixed inset-x-0 bottom-0 z-[34] bg-[hsl(var(--bg-muted))]/20 backdrop-blur-[1px]"
+                                    data-testid="right-backdrop"
+                                    style={{ top: 'var(--workspace-header-height, 2.5rem)' }}
+                                    onClick={handleClose}
+                                    aria-hidden="true"
+                                />
+                            )}
                             {panel}
                         </>
                     )}
