@@ -26,19 +26,35 @@ export type { Page, APIRequestContext };
 const ACADEMY_PASSWORD =
   process.env.ACADEMY_SEED_PASSWORD || 'E2E-Academy-2026!';
 
-function resolveApiBaseUrl(): string {
+const loginCache = new Map<string, { accessToken: string; refreshToken: string | null }>();
+
+function resolveConfiguredApiRoot(): string {
   return (
     process.env.E2E_API_URL ||
     process.env.API_BASE_URL ||
     process.env.NEXT_PUBLIC_API_URL ||
     ''
-  ).replace(/\/$/, '');
+  )
+    .replace(/\/$/, '')
+    .replace(/\/api$/, '');
+}
+
+function resolveAuthBaseUrl(): string {
+  return resolveConfiguredApiRoot();
+}
+
+function resolveApiBaseUrl(): string {
+  const root = resolveConfiguredApiRoot();
+  return root ? `${root}/api` : '';
 }
 
 async function login(
   email: string,
 ): Promise<{ accessToken: string; refreshToken: string | null }> {
-  const apiBase = resolveApiBaseUrl();
+  const cached = loginCache.get(email);
+  if (cached) return cached;
+
+  const apiBase = resolveAuthBaseUrl();
   test.skip(
     !apiBase || !apiBase.startsWith('http'),
     'Set E2E_API_URL (absolute) so seed-academy-roles + login can run.',
@@ -57,7 +73,9 @@ async function login(
     access_token: string;
     refresh_token?: string;
   };
-  return { accessToken: payload.access_token, refreshToken: payload.refresh_token ?? null };
+  const result = { accessToken: payload.access_token, refreshToken: payload.refresh_token ?? null };
+  loginCache.set(email, result);
+  return result;
 }
 
 // Each `*Page` fixture logs the role user in and writes tokens to

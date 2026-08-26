@@ -45,7 +45,7 @@ function NavItem({ icon: Icon, href, label, badge, pathname, onClick }: NavItemP
     const isActive = href === '/' ? (pathname === '/' || !pathname) : pathname?.startsWith(href) ?? false;
     return (
         <DSTooltip content={label} side="right">
-            <Link href={href} prefetch={false} className="relative" onClick={onClick}>
+            <Link href={href} prefetch={false} className="relative" onClick={onClick} aria-label={label}>
                 <div
                     className={clsx(
                         "size-10 rounded-lg flex items-center justify-center transition-all duration-200 cursor-pointer sidebar-nav-item",
@@ -131,7 +131,7 @@ export default function WorkspaceMiniSidebar({ onHide }: { onHide: () => void })
             {/* ── Footer: solo Settings + Collapse (SIN ThemeToggle — ya está en el header) */}
             <div className="flex flex-col items-center gap-1 mb-2">
                 <DSTooltip content="Ajustes" side="right">
-                    <Link href="/plataforma/settings" prefetch={false}>
+                    <Link href="/plataforma/settings" prefetch={false} aria-label="Ajustes">
                         <div className="size-10 rounded-lg flex items-center justify-center text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5 sidebar-nav-item transition-all duration-200 cursor-pointer">
                             <Settings size={19} />
                         </div>
