@@ -61,7 +61,9 @@ export default function CoordinationConsole() {
         }
     }, [viewType]);
 
-    const readinessPerc = readiness?.readiness_score != null ? Math.round(readiness.readiness_score * 100) : 0;
+    const readinessPerc = readiness?.readiness_score != null
+        ? Math.round(readiness.readiness_score <= 1 ? readiness.readiness_score * 100 : readiness.readiness_score)
+        : 0;
     const filteredCourses = useMemo(() => {
         return courses.filter((course) => {
             const matchesSearch = course.title.toLowerCase().includes(search.toLowerCase());

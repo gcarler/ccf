@@ -351,10 +351,10 @@ export default function CourseViewPage() {
  className="w-full p-4 lg:p-4 lg:pt-8 space-y-3 pb-4"
                     >
                         <div className="relative group/player rounded-lg overflow-hidden shadow-[var(--shadow-floating)] border border-[hsl(var(--border))] dark:border-white/5 bg-[hsl(var(--surface-2))] dark:bg-black aspect-video flex items-center justify-center">
-                            {(!activeLesson?.content_type || activeLesson.content_type === 'video') && (
+                            {(!activeLesson?.content_type || activeLesson.content_type === 'video') && activeLesson?.media_url && (
                                 <>
                                     <VideoPlayer
-                                        src={activeLesson?.media_url || "https://sample-videos.com/video123/mp4/720/big_buck_bunny_720p_1mb.mp4"}
+                                        src={activeLesson.media_url}
                                         onProgress={handleVideoProgress}
                                         onComplete={handleLessonComplete}
                                         initialTime={progress?.last_position_seconds || 0}
@@ -364,6 +364,13 @@ export default function CourseViewPage() {
                                         <div className="px-3 py-1 bg-[hsl(var(--info))]/80 backdrop-blur-md rounded-full text-2xs font-semibold uppercase tracking-wide text-white flex items-center gap-1.5"><Sparkles size={10} /> Optimus Enhanced</div>
                                     </div>
                                 </>
+                            )}
+                            {(!activeLesson?.content_type || activeLesson.content_type === 'video') && !activeLesson?.media_url && (
+                                <div className="flex h-full flex-col items-center justify-center gap-3 p-6 text-center">
+                                    <PlayCircle size={48} className="text-[hsl(var(--text-secondary))]" />
+                                    <h3 className="text-base font-semibold text-[hsl(var(--text-primary))] dark:text-white">Video pendiente de publicación</h3>
+                                    <p className="max-w-md text-sm text-[hsl(var(--text-secondary))]">Esta lección todavía no tiene un recurso audiovisual configurado por coordinación.</p>
+                                </div>
                             )}
                             {activeLesson?.content_type === 'pdf' && (
                                 <div className="w-full h-full flex flex-col items-center justify-center p-4 text-center bg-[hsl(var(--surface-1))] dark:bg-black space-y-3">
