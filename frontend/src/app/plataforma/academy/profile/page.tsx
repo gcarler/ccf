@@ -38,6 +38,32 @@ export default function StudentProfilePage() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [viewType, setViewType] = useState<ViewType>('grid');
+    const [exporting, setExporting] = useState(false);
+
+    const handleExport = async () => {
+        if (!token || exporting) return;
+        setExporting(true);
+        try {
+            const payload = await apiFetch<Record<string, unknown>>('/academy/me/data-export', {
+                token,
+                cache: 'no-store',
+            });
+            const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `academy-data-export-${new Date().toISOString().slice(0, 10)}.json`;
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            URL.revokeObjectURL(url);
+            toast.success('Exportación de Academy descargada');
+        } catch {
+            toast.error('No pudimos exportar tus datos de Academy');
+        } finally {
+            setExporting(false);
+        }
+    };
 
     useEffect(() => {
         const ctrl = new AbortController();
@@ -106,12 +132,24 @@ export default function StudentProfilePage() {
                 setViewType={setViewType}
                 availableViews={['grid', 'list', 'table']}
                 rightActions={
-                    <button
-                        aria-label="Editar perfil pastoral"
-                        className="flex items-center gap-2 px-4 py-2 bg-[hsl(var(--bg-primary))] dark:bg-white/5 hover:bg-[hsl(var(--surface-1))] rounded-md text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] transition-all border border-[hsl(var(--border))] dark:border-white/10 shadow-sm active:scale-95"
-                    >
-                        <Edit3 size={14} aria-hidden="true" /> Editar Perfil
-                    </button>
+                    <div className="flex items-center gap-2">
+                        <button
+                            type="button"
+                            onClick={handleExport}
+                            disabled={exporting}
+                            aria-label="Exportar mis datos de Academy"
+                            className="flex items-center gap-2 px-4 py-2 bg-[hsl(var(--bg-primary))] dark:bg-white/5 hover:bg-[hsl(var(--surface-1))] rounded-md text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] transition-all border border-[hsl(var(--border))] dark:border-white/10 shadow-sm active:scale-95 disabled:opacity-60"
+                        >
+                            <Download size={14} aria-hidden="true" /> {exporting ? 'Exportando...' : 'Exportar datos'}
+                        </button>
+                        <button
+                            type="button"
+                            aria-label="Editar perfil pastoral"
+                            className="flex items-center gap-2 px-4 py-2 bg-[hsl(var(--bg-primary))] dark:bg-white/5 hover:bg-[hsl(var(--surface-1))] rounded-md text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] transition-all border border-[hsl(var(--border))] dark:border-white/10 shadow-sm active:scale-95"
+                        >
+                            <Edit3 size={14} aria-hidden="true" /> Editar Perfil
+                        </button>
+                    </div>
                 }
             />
 

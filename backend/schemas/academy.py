@@ -427,6 +427,20 @@ class AcademyStudentProfile(BaseModel):
     recent_certificates: list[Certificate] = Field(default_factory=list)
 
 
+class AcademyDataExport(BaseModel):
+    """GDPR/LOPD export of the authenticated student's Academy data."""
+
+    export_version: str = "1.0"
+    exported_at: datetime
+    profile: dict[str, Any]
+    enrollments: list[dict[str, Any]] = Field(default_factory=list)
+    progress: list[dict[str, Any]] = Field(default_factory=list)
+    certificates: list[dict[str, Any]] = Field(default_factory=list)
+    forum_threads: list[dict[str, Any]] = Field(default_factory=list)
+    forum_comments: list[dict[str, Any]] = Field(default_factory=list)
+    assignment_submissions: list[dict[str, Any]] = Field(default_factory=list)
+
+
 class ForumCategory(str, Enum):
     GENERAL = "general"
     ANNOUNCEMENT = "announcement"

@@ -62,6 +62,30 @@ def test_lector_can_enroll_and_update_own_progress(client, db_session):
     assert profile.json()["enrollments_count"] == 1
 
 
+def test_lector_can_export_only_own_academy_data(client, db_session):
+    student, persona, _ = seed_user_with_role(
+        db_session,
+        role_name="LECTOR",
+        email="academy.export@example.com",
+        password="testpass123",
+    )
+    student.rol_plataforma.permisos = {"academy:study": "allow"}
+    course = models.Course(code="ACA-EXPORT", title="Curso exportable", modality="online", is_published=True)
+    db_session.add(course)
+    db_session.commit()
+    db_session.add(models.Enrollment(persona_id=persona.id, course_id=course.id, status="active"))
+    db_session.commit()
+
+    headers = auth_headers(client, email=student.email, password="testpass123")
+    response = client.get("/api/academy/me/data-export", headers=headers)
+
+    assert response.status_code == 200, response.text
+    payload = response.json()
+    assert payload["export_version"] == "1.0"
+    assert payload["profile"]["persona_id"] == str(persona.id)
+    assert [row["course_title"] for row in payload["enrollments"]] == ["Curso exportable"]
+
+
 def test_lector_cannot_enroll_another_persona(client, db_session):
     student, _, _ = seed_user_with_role(
         db_session,
