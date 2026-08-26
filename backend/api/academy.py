@@ -785,7 +785,7 @@ def my_certificates(
 
 
 @router.get("/me/data-export", response_model=schemas.AcademyDataExport)
-@academy_limiter.limit("3/hour")
+@academy_limiter.limit("1/day")
 def export_my_academy_data(
     request: Request,
     current_user: AcademyStudent,
@@ -846,6 +846,12 @@ def export_my_academy_data(
         .all()
         if enrollment_ids
         else []
+    )
+    activity_logs = (
+        db.query(models.AcademyActivityLog)
+        .filter(models.AcademyActivityLog.persona_id == current_user.id)
+        .order_by(models.AcademyActivityLog.created_at.asc())
+        .all()
     )
 
     return {
@@ -923,6 +929,17 @@ def export_my_academy_data(
                 "created_at": submission.created_at,
             }
             for submission in submissions
+        ],
+        "activity_logs": [
+            {
+                "id": str(log.id),
+                "event_type": log.event_type,
+                "course_id": str(log.course_id) if log.course_id else None,
+                "value": log.value,
+                "payload_json": log.payload_json,
+                "created_at": log.created_at,
+            }
+            for log in activity_logs
         ],
     }
 

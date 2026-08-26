@@ -439,6 +439,7 @@ class AcademyDataExport(BaseModel):
     forum_threads: list[dict[str, Any]] = Field(default_factory=list)
     forum_comments: list[dict[str, Any]] = Field(default_factory=list)
     assignment_submissions: list[dict[str, Any]] = Field(default_factory=list)
+    activity_logs: list[dict[str, Any]] = Field(default_factory=list)
 
 
 class ForumCategory(str, Enum):
