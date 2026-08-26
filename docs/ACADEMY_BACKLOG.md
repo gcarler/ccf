@@ -405,34 +405,34 @@ producto.
 
 - **ACAD-TKT-070** [MED] — Frontend: delay artificial 800ms en `coordination/courses/new` — `PLAN MF01`
   - **gate:** `pytest tests/test_academy_backlog.py::test_shared_frontend_hardcoded_cleanup -q` (lote compartido)
-  - **state:** ⬜ Pendiente
+  - **state:** ✅ Hecho 2026-08-26
 - **ACAD-TKT-071** [MED] — Frontend: delay artificial 600ms en `profile/progress` — `PLAN MF02`
   - **gate:** `pytest tests/test_academy_backlog.py::test_shared_frontend_hardcoded_cleanup -q` (lote compartido)
-  - **state:** ⬜ Pendiente
+  - **state:** ✅ Hecho 2026-08-26
 - **ACAD-TKT-072** [MED] — Frontend: catch muerto post `Promise.allSettled` en `courses/[id]/lessons:65` — `PLAN MF03`
   - **gate:** `pytest tests/test_academy_backlog.py::test_shared_frontend_hardcoded_cleanup -q` (lote compartido)
-  - **state:** ⬜ Pendiente
+  - **state:** ✅ Hecho 2026-08-26
 - **ACAD-TKT-073** [MED] — Frontend: mixed toast (sonner + ToastContext) en `forum/[id]` — `PLAN MF04`
   - **gate:** `pytest tests/test_academy_backlog.py::test_shared_frontend_hardcoded_cleanup -q` (lote compartido)
-  - **state:** ⬜ Pendiente
+  - **state:** ✅ Hecho 2026-08-26
 - **ACAD-TKT-074** [MED] — Frontend: `setTimeout` sin cleanup en `certificates/page.tsx:72` — `PLAN MF05`
   - **gate:** `pytest tests/test_academy_backlog.py::test_shared_frontend_hardcoded_cleanup -q` (lote compartido)
-  - **state:** ⬜ Pendiente
+  - **state:** ✅ Hecho 2026-08-26
 - **ACAD-TKT-075** [MED] — Frontend: `setTimeout` sin cleanup en `CertificateView.tsx:39,42` — `PLAN MF06`
   - **gate:** `pytest tests/test_academy_backlog.py::test_shared_frontend_hardcoded_cleanup -q` (lote compartido)
-  - **state:** ⬜ Pendiente
+  - **state:** ✅ Hecho 2026-08-26
 - **ACAD-TKT-076** [MED] — Frontend: missing `noopener` en `course/[id]/page.tsx:358` — `PLAN MF07`
   - **gate:** `pytest tests/test_academy_backlog.py::test_shared_frontend_hardcoded_cleanup -q` (lote compartido)
-  - **state:** ⬜ Pendiente
+  - **state:** ✅ Hecho 2026-08-26
 - **ACAD-TKT-077** [MED] — Frontend: missing `noopener` en `teacher/page.tsx:278` — `PLAN MF08`
   - **gate:** `pytest tests/test_academy_backlog.py::test_shared_frontend_hardcoded_cleanup -q` (lote compartido)
-  - **state:** ⬜ Pendiente
+  - **state:** ✅ Hecho 2026-08-26
 - **ACAD-TKT-078** [MED] — Frontend: unstable dep `user` (object) en `profile/page.tsx:64` — `PLAN MF09`
   - **gate:** `pytest tests/test_academy_backlog.py::test_shared_frontend_hardcoded_cleanup -q` (lote compartido)
-  - **state:** ⬜ Pendiente
+  - **state:** ✅ Hecho 2026-08-26
 - **ACAD-TKT-079** [MED] — Frontend: unstable dep `completionRate` en `course/[id]/page.tsx:182` — `PLAN MF10`
   - **gate:** `pytest tests/test_academy_backlog.py::test_shared_frontend_hardcoded_cleanup -q` (lote compartido)
-  - **state:** ⬜ Pendiente
+  - **state:** ✅ Hecho 2026-08-26
 - **ACAD-TKT-080** [MED] — Frontend: precios hardcodeados ($200, $50) en `enroll/[id]/page.tsx:188-198` — `PLAN MF11`
   - **gate:** `pytest tests/test_academy_backlog.py::test_shared_frontend_hardcoded_cleanup -q` (lote compartido)
   - **state:** ✅ Hecho 2026-08-26
@@ -470,13 +470,13 @@ producto.
 
 - **ACAD-TKT-100** [LOW] — Frontend: `p-4 p-4` duplicado en `coordination/page.tsx:129` — `PLAN L01`
   - **gate:** `pytest tests/test_academy_backlog.py::test_shared_low_cleanup -q` (lote compartido)
-  - **state:** ⬜ Pendiente
+  - **state:** ✅ Hecho 2026-08-26
 - **ACAD-TKT-101** [LOW] — Frontend: `p-4 p-4` duplicado en `teacher/page.tsx:151` — `PLAN L02`
   - **gate:** `pytest tests/test_academy_backlog.py::test_shared_low_cleanup -q` (lote compartido)
-  - **state:** ⬜ Pendiente
+  - **state:** ✅ Hecho 2026-08-26
 - **ACAD-TKT-102** [LOW] — Frontend: index-as-key en `AcademyClient.tsx:122,154` — `PLAN L03`
   - **gate:** `pytest tests/test_academy_backlog.py::test_shared_low_cleanup -q` (lote compartido)
-  - **state:** ⬜ Pendiente
+  - **state:** ✅ Hecho 2026-08-26
 - **ACAD-TKT-103** [LOW] — Frontend: index-as-key en `account/page.tsx:148` — `PLAN L04`
   - **gate:** `pytest tests/test_academy_fase_6_to_100.py::test_acad_tkt_103_account_no_index_as_key -q`
   - **state:** ✅ Hecho 2026-07-19
@@ -504,13 +504,13 @@ producto.
   - **state:** ✅ Hecho 2026-07-19
 - **ACAD-TKT-111** [LOW] — Frontend: import fuera de orden en `courses/[id]/page.tsx:203` — `PLAN L12`
   - **gate:** `pytest tests/test_academy_backlog.py::test_shared_low_cleanup -q` (lote compartido)
-  - **state:** ⬜ Pendiente
+  - **state:** ✅ Hecho 2026-08-26
 - **ACAD-TKT-112** [LOW] — Frontend: `console.error`/`console.warn` en ~17 archivos — `PLAN L13`
   - **gate:** `pytest tests/test_academy_backlog.py::test_shared_low_cleanup -q` (lote compartido)
   - **state:** ⬜ Pendiente
 - **ACAD-TKT-120** [LOW] — Download/Share certificado sin handler — `ESTADO LOW-001`, `QA_CHECKLIST §10.4`
   - **gate:** `pytest tests/test_academy_backlog.py::test_shared_low_cleanup -q` (lote compartido)
-  - **state:** ⬜ Pendiente
+  - **state:** ✅ Hecho 2026-08-26
 - **ACAD-TKT-121** [LOW] — `enrollment_id` redundante en payload `submit_assessment` — `ESTADO LOW-002`
   - **gate:** `pytest tests/test_academy_fase_6_to_100.py::test_acad_tkt_121_submit_assessment_derives_enrollment_id -q`
   - **state:** ✅ Hecho 2026-07-19 (drift detectado — código ya derivaba correctamente)
