@@ -52,7 +52,7 @@ describe('RightPanel', () => {
     expect(expandButton).toHaveTextContent('');
     fireEvent.click(expandButton);
 
-    const panel = screen.getByRole('dialog');
+    const panel = screen.getByRole('complementary');
     expect(panel).toHaveStyle({
       top: 'var(--workspace-header-height, 2.5rem)',
       height: 'calc(100dvh - var(--workspace-header-height, 2.5rem))',
@@ -60,6 +60,27 @@ describe('RightPanel', () => {
     expect(panel.className).toContain('inset-x-0');
     expect(panel.className).not.toContain('inset-0');
     expect(screen.getByRole('button', { name: 'Contraer panel' })).toBeInTheDocument();
+  });
+
+  it('does not block workspace interaction by default', () => {
+    renderWithProvider(
+      <RightPanel open title="Panel no modal">
+        <button>Acción del panel</button>
+      </RightPanel>
+    );
+
+    expect(screen.getByRole('complementary')).toBeInTheDocument();
+    expect(screen.queryByTestId('right-backdrop')).not.toBeInTheDocument();
+  });
+
+  it('supports an explicitly modal panel when needed', () => {
+    renderWithProvider(
+      <RightPanel open modal title="Panel modal">
+        <p>Contenido</p>
+      </RightPanel>
+    );
+
+    expect(screen.getByRole('dialog')).toHaveAttribute('aria-modal', 'true');
   });
 
   it('supports trigger rendering in controlled mode', () => {
