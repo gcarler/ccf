@@ -65,7 +65,7 @@ def full(client, db_session):
             site_id=site.id,
             slug=slug,
             title=slug.replace("-", " ").title(),
-            status="published",
+            status="draft",
             seo_json={"description": f"Page {slug}"},
         )
         db_session.add(p)
@@ -97,6 +97,14 @@ def full(client, db_session):
     db_session.commit()
 
     headers = _auth_headers(client, email=admin.email, password="testpass123")
+    for slug in page_slugs:
+        publish_response = client.post(
+            f"/api/cms/v2/sites/faro/pages/{slug}/workflow",
+            json={"action": "publish"},
+            headers=headers,
+        )
+        assert publish_response.status_code == 200, publish_response.text
+
     return {
         "c": client,
         "h": headers,

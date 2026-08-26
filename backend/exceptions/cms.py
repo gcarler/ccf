@@ -231,6 +231,12 @@ class CmsServiceUnavailableError(CmsError):
     detail: str = "Service unavailable"
 
 
+class PublishedSnapshotUnavailableError(CmsServiceUnavailableError):
+    """Raised when published content has no immutable snapshot to render."""
+
+    detail: str = "Published page snapshot unavailable"
+
+
 # ── Aliases mapped to consistent HTTP status codes ────────────────────────────
 
 CmsNotFound = CmsNotFoundError

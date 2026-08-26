@@ -2040,6 +2040,28 @@ class TestPublicPageCacheInvalidation:
         second = c.get(f"/api/cms/v2/public/sites/{key}/pages")
         assert all(p["slug"] != "gone" for p in second.json()["items"])
 
+    def test_public_sitemap_cache_invalidated_on_delete(self, full):
+        """El sitemap debe reflejar de inmediato una eliminación pública."""
+        c, h = full["c"], full["h"]
+        key = _make_site(c, h, "pubsitemapinv")
+        _make_page(c, h, key, "gone-from-sitemap")
+        c.post(
+            f"/api/cms/v2/sites/{key}/pages/gone-from-sitemap/workflow",
+            json={"action": "publish"},
+            headers=h,
+        )
+
+        first = c.get(f"/api/cms/v2/public/sites/{key}/sitemap.xml")
+        assert first.status_code == 200
+        assert "/gone-from-sitemap" in first.text
+
+        resp = c.delete(f"/api/cms/v2/sites/{key}/pages/gone-from-sitemap", headers=h)
+        assert resp.status_code == 204
+
+        second = c.get(f"/api/cms/v2/public/sites/{key}/sitemap.xml")
+        assert second.status_code == 200
+        assert "/gone-from-sitemap" not in second.text
+
     def test_public_page_cache_invalidated_on_rollback(self, full):
         """Rollback a published page → draft: la caché pública debe dar 404
         de inmediato (no servir el snapshot stale hasta el TTL)."""
@@ -2066,8 +2088,8 @@ class TestPublicPageCacheInvalidation:
         assert c.get(f"/api/cms/v2/public/sites/{key}/pages/rbpage").status_code == 404
 
     def test_public_page_cache_invalidated_on_section_archive(self, full, db_session):
-        """Archivar una sección oculta su render en la página pública de
-        inmediato (cuando la página se sirve por secciones live)."""
+        """Una página sin snapshot permanece fuera del render público aunque
+        se archive una sección de su borrador."""
         from backend import models
 
         c, h = full["c"], full["h"]
@@ -2080,19 +2102,19 @@ class TestPublicPageCacheInvalidation:
         )
         assert _ok(r.status_code)
         sec_id = r.json()["id"]
-        # Publish sin published_version (path de secciones live)
+        # A published page without a snapshot must never expose live sections.
         page = db_session.query(models.CmsPage).filter(models.CmsPage.slug == "secpage").first()
         page.status = "published"
         db_session.commit()
         first = c.get(f"/api/cms/v2/public/sites/{key}/pages/secpage")
-        assert any(s["type"] == "rich_text" for s in first.json()["sections"])
+        assert first.status_code == 503
         resp = c.delete(
             f"/api/cms/v2/sites/{key}/pages/secpage/sections/{sec_id}",
             headers=h,
         )
         assert resp.status_code == 204
         second = c.get(f"/api/cms/v2/public/sites/{key}/pages/secpage")
-        assert all(s["type"] != "rich_text" for s in second.json()["sections"])
+        assert second.status_code == 503
 
 
 class TestPublicPostCacheInvalidation:

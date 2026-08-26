@@ -26,7 +26,7 @@ from backend.core.seo import (
     build_breadcrumb_items_from_slug,
     build_breadcrumb_list_json_ld,
 )
-from backend.exceptions.cms import PageNotFoundError
+from backend.exceptions.cms import PageNotFoundError, PublishedSnapshotUnavailableError
 from backend.schemas import PaginatedResponse
 
 logger = logging.getLogger(__name__)
@@ -50,7 +50,11 @@ def public_pages_list(
     query = (
         db.query(models.CmsPage)
         .options(lazyload("*"))
-        .filter(models.CmsPage.site_id == site.id, models.CmsPage.status == "published")
+        .filter(
+            models.CmsPage.site_id == site.id,
+            models.CmsPage.status == "published",
+            models.CmsPage.published_version_id.is_not(None),
+        )
     )
     total = query.count()
     pages = query.order_by(models.CmsPage.updated_at.desc()).offset(skip).limit(limit).all()
@@ -91,6 +95,15 @@ def public_page(site_key: str, slug: str, db: Session = Depends(get_db)):
             .filter(models.CmsPageVersion.page_id == page.id, models.CmsPageVersion.id == page.published_version_id)
             .first()
         )
+
+    if page.status == "published" and published_version is None:
+        logger.error(
+            "Published CMS page has no readable snapshot: site=%s slug=%s page_id=%s",
+            site_key,
+            page.slug,
+            page.id,
+        )
+        raise PublishedSnapshotUnavailableError(error_code="published_snapshot_unavailable")
 
     settings = get_settings()
     base_url = settings.frontend_url.rstrip("/")

@@ -7,7 +7,7 @@ import { getCmsPublicPage } from "@/lib/cms/v2";
 import { SITE_KEY } from "@/lib/site-config";
 import { CmsPublicPage } from "@/types/cms-v2";
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://ccf.org";
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://ministerioselfaro.org";
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string[] }> }): Promise<Metadata> {
   const resolvedParams = await params;

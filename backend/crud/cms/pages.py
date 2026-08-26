@@ -355,6 +355,10 @@ def _invalidate_public_page_cache(db: Session, row: models.CmsPage) -> None:
             return
         invalidate_cached_public("public_page", site_key=site_key, slug=row.slug)
         invalidate_cached_public_pattern("public_pages_list")
+        # El sitemap publica el conjunto de páginas publicadas del sitio.
+        # Sin esta invalidación, una publicación/archivo podía permanecer
+        # oculto o visible hasta que venciera el TTL de cinco minutos.
+        invalidate_cached_public("public_sitemap", site_key=site_key)
     except Exception:  # la invalidación nunca debe romper la mutación
         _logger.debug("public page cache invalidation skipped", exc_info=True)
 
@@ -595,6 +599,5 @@ def get_public_cms_page(db: Session, site_id: uuid.UUID, slug: str):
         )
         .first()
     )
-
 
 

@@ -2,7 +2,7 @@ import React from "react";
 import { SITE_NAME } from "@/lib/site-config";
 import { getCmsPublicPage } from "@/lib/cms/v2";
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://ccf.org";
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://ministerioselfaro.org";
 const SITE_KEY = process.env.NEXT_PUBLIC_SITE_KEY || "ccf";
 
 type PublicCmsHeadProps = {

@@ -47,15 +47,6 @@ export default function PublicHomePage({ initialHomePage }: { initialHomePage?: 
         ? homeFeedContent.parsed as Record<string, unknown>
         : null;
     const discoverCtaContent = (homePage?.blocks?.discover_cta as Record<string, unknown> | undefined) ?? null;
-    const homeGallerySection = homePage?.sections?.find(
-        (section) => section.type === "gallery" && Array.isArray(section.props_json?.items),
-    );
-    const homeGallerySource =
-        homePage?.blocks?.home_hero_gallery
-        ?? homePage?.sections?.find((section) => section.section_key === "home_hero_gallery" && Array.isArray(section.props_json?.items))
-        ?? homePage?.blocks?.gallery
-        ?? homePage?.blocks?.media_gallery
-        ?? homeGallerySection;
     const homeEyebrow = (homeFeed?.eyebrow as string) ?? "";
     const homeSectionTitle = (homeFeed?.section_title as string) ?? "";
     const homeSectionDescription = (homeFeed?.section_description as string) ?? "";
@@ -65,11 +56,14 @@ export default function PublicHomePage({ initialHomePage }: { initialHomePage?: 
     const activitiesViewAllHref = (homeFeed?.activities_view_all_href as string) ?? "/eventos";
     const activitiesEmpty = (homeFeed?.activities_empty as string) ?? "";
     const scrollIndicator = (homeFeed?.scroll_indicator as string) ?? "";
-    const discoverCtaEyebrow = (discoverCtaContent?.eyebrow as string) ?? "Una invitación para ti";
-    const discoverCtaTitle = (discoverCtaContent?.title as string) ?? "¿Quieres conocer a Jesús?";
-    const discoverCtaDescription = (discoverCtaContent?.description as string) ?? "No es una religión, es el comienzo de una relación que transforma la vida. Da el siguiente paso hoy.";
-    const discoverCtaLabel = (discoverCtaContent?.cta_label as string) ?? "Quiero conocer a Jesús";
-    const discoverCtaHref = (discoverCtaContent?.cta_href as string) || "/conocer-a-jesus";
+    const discoverCtaEyebrow = (discoverCtaContent?.eyebrow as string) ?? "";
+    const discoverCtaTitle = (discoverCtaContent?.title as string) ?? "";
+    const discoverCtaDescription = (discoverCtaContent?.description as string) ?? "";
+    const discoverCtaLabel = (discoverCtaContent?.cta_label as string) ?? "";
+    const discoverCtaHref = (discoverCtaContent?.cta_href as string) ?? "";
+    const hasDiscoverCta = Boolean(
+        discoverCtaEyebrow || discoverCtaTitle || discoverCtaDescription || (discoverCtaLabel && discoverCtaHref),
+    );
     const newsletterEyebrow = (homeFeed?.newsletter_eyebrow as string) ?? "";
     const newsletterTitle = (homeFeed?.newsletter_title as string) ?? "";
     const newsletterDescription = (homeFeed?.newsletter_description as string) ?? "";
@@ -96,23 +90,6 @@ export default function PublicHomePage({ initialHomePage }: { initialHomePage?: 
             href: typeof item.href === "string" ? item.href : undefined,
         }))
         .filter((slide) => Boolean(slide.src));
-    const homeGallery = (() => {
-        if (!homeGallerySource) return [];
-        if ("parsed" in homeGallerySource) {
-            const parsed = homeGallerySource.parsed;
-            if (parsed && typeof parsed === "object" && !Array.isArray(parsed) && Array.isArray((parsed as Record<string, unknown>).items)) {
-                return (parsed as { items: Array<Record<string, unknown>> }).items;
-            }
-        }
-        if ("props_json" in homeGallerySource) {
-            const propsJson = homeGallerySource.props_json;
-            if (propsJson && typeof propsJson === "object" && !Array.isArray(propsJson) && Array.isArray((propsJson as Record<string, unknown>).items)) {
-                return (propsJson as { items: Array<Record<string, unknown>> }).items;
-            }
-        }
-        return [];
-    })();
-
     const hasBento = homeFeaturedCard?.title || homeFeaturedCard?.desc || homeCards.length > 0;
     const hasNewsletter = newsletterTitle || newsletterDescription;
 
@@ -150,50 +127,16 @@ export default function PublicHomePage({ initialHomePage }: { initialHomePage?: 
         ? (eventsContent?.parsed as PublicEventItem[]).filter((event) => event.status !== "archived")
         : [];
 
-    const gallerySlides: PublicSlide[] = (homeGallery
-        .map((item, index) => {
-            const src = typeof item.url === "string" ? item.url : typeof item.src === "string" ? item.src : "";
-            if (!src) return null;
-            return {
-                src,
-                alt: typeof item.alt === "string" && item.alt.trim() ? item.alt : `Foto ${index + 1}`,
-                title: typeof item.caption === "string" && item.caption.trim() ? item.caption : undefined,
-                caption: typeof item.description === "string" && item.description.trim() ? item.description : undefined,
-            };
-        }) as (PublicSlide | null)[])
-        .filter((slide): slide is PublicSlide => Boolean(slide));
-
     const homeSlides: PublicSlide[] = [
         ...cmsHeroSlides,
-        ...(gallerySlides.length > 0
-            ? gallerySlides
-            : cmsHeroSlides.length === 0 && heroBgImage
-                ? [{
-                    src: heroBgImage,
-                    alt: heroTitleLead || heroTitleAccent || heroTitleTail || "Imagen principal",
-                    title: heroTitleLead || heroTitleAccent || heroTitleTail || "CCF",
-                    caption: heroDescription || undefined,
-                }]
-                : []),
-        ...(homeFeaturedCard?.img
+        ...(cmsHeroSlides.length === 0 && heroBgImage
             ? [{
-                src: String(homeFeaturedCard.img),
-                alt: typeof homeFeaturedCard.alt === "string" && homeFeaturedCard.alt ? String(homeFeaturedCard.alt) : "Imagen destacada",
-                title: typeof homeFeaturedCard.title === "string" ? homeFeaturedCard.title : undefined,
-                caption: typeof homeFeaturedCard.desc === "string" ? homeFeaturedCard.desc : undefined,
+                src: heroBgImage,
+                alt: heroTitleLead || heroTitleAccent || heroTitleTail || "Imagen principal",
+                title: heroTitleLead || heroTitleAccent || heroTitleTail || "CCF",
+                caption: heroDescription || undefined,
             }]
             : []),
-        ...homeCards
-            .map((item, index) => {
-                const src = typeof item.img === "string" ? item.img : "";
-                if (!src) return null;
-                return {
-                    src,
-                    alt: typeof item.alt === "string" && item.alt.trim() ? item.alt : `Card ${index + 1}`,
-                    title: typeof item.title === "string" ? item.title : undefined,
-                    caption: typeof item.desc === "string" ? item.desc : undefined,
-                };
-            }),
     ].filter((slide): slide is PublicSlide => Boolean(slide));
     const hasHero = homeSlides.length > 0 || heroTitleLead || heroTitleAccent || heroTitleTail || heroDescription;
 
@@ -543,7 +486,7 @@ export default function PublicHomePage({ initialHomePage }: { initialHomePage?: 
             )}
 
             {/* ─── CTA: QUIERO CONOCER A JESÚS ───────────────────────── */}
-            <section
+            {hasDiscoverCta && <section
                 className="ccf-section overflow-hidden"
                 style={{ background: "var(--site-surface-container-lowest)" }}
             >
@@ -596,7 +539,7 @@ export default function PublicHomePage({ initialHomePage }: { initialHomePage?: 
                         </Link>
                     )}
                 </motion.div>
-            </section>
+            </section>}
         </div>
         </>
     );
