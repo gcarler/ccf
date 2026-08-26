@@ -36,6 +36,11 @@ interface Assessment {
     questions: Question[];
 }
 
+interface AssessmentAttemptResult {
+    passed: boolean;
+    score: number;
+}
+
 interface AssessmentDrawerProps {
     assessmentId: string;
     enrollmentId: string;
@@ -58,9 +63,8 @@ export default function AssessmentDrawer({ assessmentId, enrollmentId, token, on
             try {
                 const data = await apiFetch<Assessment>(`/academy/assessments/${assessmentId}`, { token, signal: ctrl.signal });
                 setAssessment(data);
-            } catch (err: any) {
-                if (err?.name === 'AbortError') return;
-                console.error("Error fetching assessment", err);
+            } catch (err: unknown) {
+                if (err instanceof DOMException && err.name === 'AbortError') return;
             } finally {
                 setLoading(false);
             }
@@ -81,7 +85,7 @@ export default function AssessmentDrawer({ assessmentId, enrollmentId, token, on
                 selected_option_id: oId
             }));
 
-            const res = await apiFetch<any>(`/academy/assessments/${assessmentId}/submit`, {
+            const res = await apiFetch<AssessmentAttemptResult>(`/academy/assessments/${assessmentId}/submit`, {
                 method: 'POST',
                 token,
                 body: {
@@ -95,7 +99,6 @@ export default function AssessmentDrawer({ assessmentId, enrollmentId, token, on
                 onSuccess(res.score);
             }
         } catch (err) {
-            console.error("Error submitting assessment", err);
         } finally {
             setSubmitting(false);
         }

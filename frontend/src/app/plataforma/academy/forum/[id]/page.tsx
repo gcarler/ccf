@@ -56,7 +56,7 @@ export default function ForumThreadDetail() {
                 setThread(data);
             } catch (err: unknown) {
                 // H-11 (cierre 2026-07-24): catch unknown — AbortError es de
-                // tipo DOMException, filtrar por nombre sin ``any``.
+                // tipo DOMException, filtrar por nombre sin tipos débiles.
                 if (!(err instanceof DOMException && err.name === 'AbortError')) {
                     toast.error('Error al cargar el debate');
                 }

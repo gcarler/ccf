@@ -528,6 +528,15 @@ def test_request_certificate(client, db_session):
     data = resp.json()
     assert "certificate_code" in data
     assert data["enrollment_id"] == str(enrollment.id)
+    notification = (
+        db_session.query(models.NotificacionUsuario)
+        .filter(
+            models.NotificacionUsuario.user_id == student.id,
+            models.NotificacionUsuario.title == "Certificado emitido",
+        )
+        .first()
+    )
+    assert notification is not None
 
 
 def test_t14_request_certificate_creates_and_marks_enrollment(client, db_session):

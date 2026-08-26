@@ -52,7 +52,6 @@ export default function AcademyForumPage() {
                 const data = await apiFetch<ForumThreadRecord[]>("/academy/forum/threads", { token, signal: ctrl.signal });
                 setThreads((Array.isArray(data) ? data : []).map((thread) => normalizeThread(thread)));
             } catch (err) {
-                console.error(err);
                 toast.error('Error al cargar hilos del foro');
             } finally {
                 setLoading(false);

@@ -71,7 +71,6 @@ export default function StudentProgressPage() {
                     certificates: certs
                 });
             } catch (err) {
-                console.error(err);
                 toast.error('No pudimos cargar tu progreso académico');
             } finally {
                 setLoading(false);
@@ -309,7 +308,7 @@ export default function StudentProgressPage() {
     );
 }
 
-// H-11 (cierre 2026-07-24): prop tipada (antes ``any``).
+// H-11 (cierre 2026-07-24): prop tipada sin tipo débil.
 interface HeaderStatProps {
     label: string;
     value: number | string;

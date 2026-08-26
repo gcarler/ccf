@@ -86,7 +86,6 @@ export default function CourseViewPage() {
                 }).catch(() => {});
             }
         } catch (err) {
-            console.error(err);
         } finally {
             setLoading(false);
         }
@@ -106,7 +105,6 @@ export default function CourseViewPage() {
                 body: { progress_percent: percent, last_position_seconds: Math.floor(currentTime) }
             });
         } catch (err) {
-            console.error(err);
         }
     };
 
@@ -126,7 +124,6 @@ export default function CourseViewPage() {
                 ))
             } : null);
         } catch (err) {
-            console.error(err);
         }
     };
 

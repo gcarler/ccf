@@ -42,7 +42,6 @@ export default function AcademyStudentsPage() {
                 });
                 setStudents(Array.isArray(data) ? data : []);
             } catch (error) {
-                console.error("Error loading academy students", error);
                 setStudents([]);
             } finally {
                 setLoading(false);

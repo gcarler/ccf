@@ -18,7 +18,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 const INPUT = "w-full bg-[hsl(var(--surface-1))] dark:bg-black/20 border-2 border-transparent dark:border-white/5 rounded-lg px-4 py-1.5 text-sm font-bold outline-none focus:border-[hsl(var(--info)/100%)]/50 focus:ring-4 focus:ring-[hsl(var(--primary))]/5 transition-all text-[hsl(var(--text-primary))] dark:text-white";
 const LABEL = "text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]";
 
-// H-11 (cierre 2026-07-24): ``icon`` tipado como LucideIcon (antes ``any``).
+// H-11 (cierre 2026-07-24): ``icon`` tipado como LucideIcon.
 const CONTENT_TYPE_META: Record<string, { label: string; icon: LucideIcon; color: string; bg: string }> = {
     video:    { label: 'Video',    icon: Video,     color: 'text-[hsl(var(--destructive))]',   bg: 'bg-[hsl(var(--destructive)/0.08)]' },
     text:     { label: 'Texto',    icon: FileText,  color: 'text-[hsl(var(--primary))]',   bg: 'bg-info-soft dark:bg-[hsl(var(--info))]/10' },
