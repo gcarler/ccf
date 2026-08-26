@@ -43,6 +43,7 @@ interface AssessmentData {
     title: string;
     course_id: string;
     min_score: number;
+    time_limit_minutes?: number | null;
     questions: AssessmentQuestion[];
 }
 
@@ -202,7 +203,8 @@ export default function AssessmentPage() {
                         aria-label="Tiempo restante de la evaluación"
                         className="flex items-center gap-3 px-3 py-1 bg-[hsl(var(--surface-2))] dark:bg-white/5 rounded-full text-xs font-bold text-[hsl(var(--text-secondary))]"
                     >
-                        <Clock size={14} aria-hidden="true" /> 45:00
+                        <Clock size={14} aria-hidden="true" />
+                        {assessment.time_limit_minutes ? `${assessment.time_limit_minutes}:00` : 'Sin límite'}
                     </div>
                 }
             />

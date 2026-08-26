@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import {
-    Mail, BookOpen, Award,
+    Mail, BookOpen, Award, Download,
     Edit2, Camera, Calendar, ShieldCheck, GraduationCap, Star
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
@@ -15,6 +15,32 @@ export default function AcademyAccountPage() {
     const { token, user } = useAuth();
     const [profile, setProfile] = useState<AcademyStudentProfile | null>(null);
     const [loading, setLoading] = useState(true);
+    const [exporting, setExporting] = useState(false);
+
+    const handleExport = async () => {
+        if (!token || exporting) return;
+        setExporting(true);
+        try {
+            const payload = await apiFetch<Record<string, unknown>>('/academy/me/data-export', {
+                token,
+                cache: 'no-store',
+            });
+            const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `academy-data-export-${new Date().toISOString().slice(0, 10)}.json`;
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            URL.revokeObjectURL(url);
+            toast.success('Exportación de Academy descargada');
+        } catch {
+            toast.error('No pudimos exportar tus datos de Academy');
+        } finally {
+            setExporting(false);
+        }
+    };
 
     useEffect(() => {
         if (!token) return;
@@ -68,9 +94,19 @@ export default function AcademyAccountPage() {
                             </p>
                         </div>
                         <div className="ml-auto pb-1">
-                            <button className="flex items-center gap-2 px-3 py-1.5 bg-white/20 hover:bg-white/30 backdrop-blur border border-white/20 text-white rounded-lg text-xs font-semibold uppercase tracking-wide transition-all">
-                                <Edit2 size={14} /> Editar Perfil
-                            </button>
+                            <div className="flex items-center gap-2">
+                                <button
+                                    type="button"
+                                    onClick={handleExport}
+                                    disabled={exporting}
+                                    className="flex items-center gap-2 px-3 py-1.5 bg-white/20 hover:bg-white/30 backdrop-blur border border-white/20 text-white rounded-lg text-xs font-semibold uppercase tracking-wide transition-all disabled:opacity-60"
+                                >
+                                    <Download size={14} /> {exporting ? 'Exportando...' : 'Exportar datos'}
+                                </button>
+                                <button type="button" className="flex items-center gap-2 px-3 py-1.5 bg-white/20 hover:bg-white/30 backdrop-blur border border-white/20 text-white rounded-lg text-xs font-semibold uppercase tracking-wide transition-all">
+                                    <Edit2 size={14} /> Editar Perfil
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
