@@ -19,10 +19,10 @@
 //                                    "Inscribirme" button AFFORDANCE absent in DOM
 //   ESTUDIANTE (academy:study):      POST /api/academy/admin/courses        → HTTP 403
 //                                    "Inscribirme" affordance IS visible on first course
-//   MAESTRO (DOCENTE, academy:edit): POST /api/academy/admin/courses        → HTTP 403
-//                                    GET  /api/academy/admin/lessons       → HTTP 403 (no manage)
+//   MAESTRO (DOCENTE, academy:edit): POST /api/academy/admin/courses        → HTTP 201
+//                                    GET  /api/academy/dashboard/metrics  → HTTP 403 (no manage)
 //   ADMIN   (academy:manage):        POST /api/academy/admin/courses        → HTTP 200/201
-//                                    GET  /api/academy/admin/lessons       → HTTP 200
+//                                    GET  /api/academy/dashboard/metrics  → HTTP 200
 //
 // All routes asserted below were pre-verified to mount a Next.js page.tsx.
 // ``body innerText`` regex check was REMOVED in favor of the structural
@@ -42,12 +42,15 @@ import { test, expect, type Page, type APIRequestContext } from './fixtures/role
 const ACADEMY_BASE = '/plataforma/academy';
 
 function resolveApiBaseUrl(): string {
-  return (
+  const root = (
     process.env.E2E_API_URL ||
     process.env.API_BASE_URL ||
     process.env.NEXT_PUBLIC_API_URL ||
     ''
-  ).replace(/\/$/, '');
+  )
+    .replace(/\/$/, '')
+    .replace(/\/api$/, '');
+  return root ? `${root}/api` : '';
 }
 
 const SHORT_TIMEOUT_MS = 8_000;
@@ -100,23 +103,18 @@ test.describe('TKT-202 — Academy multi-role happy path @academy-multi-role', (
   }) => {
     const page = estudiantePage;
 
-    // Steps 1-4: catalog + assessment + forum + profile mount.
+    // Step 1: catalog and discover a real course before moving to the
+    // assessment/forum routes (those routes intentionally change the page).
     await assertMounted(page, '/courses');
+    const courseEntries = page.getByRole('button', { name: /Entrar al Aula/i });
+    await expect(
+      courseEntries.first(),
+      'Student catalog must render at least one published course.',
+    ).toBeVisible({ timeout: SHORT_TIMEOUT_MS });
+
+    // Steps 2-4: assessment compatibility entry and forum mount.
     await assertMounted(page, '/assessments');
     await assertMounted(page, '/forum');
-
-    // Step 2-discover: catalog renders >= 1 course link?
-    const courseLinks = page.locator(
-      'a[href^="/plataforma/academy/courses/"]',
-    );
-    const courseCount = await courseLinks.count();
-    if (courseCount === 0) {
-      test.skip(
-        true,
-        'Catalog renders empty — seed a course for downstream step assertions.',
-      );
-    }
-    await expect(courseLinks.first()).toBeVisible();
 
     // Tier rail 1: ESTUDIANTE has academy:study but NOT academy:manage, so
     // POST /api/academy/admin/courses must return 403 (the canonical
@@ -164,7 +162,7 @@ test.describe('TKT-202 — Academy multi-role happy path @academy-multi-role', (
     );
   });
 
-  test('Maestro (DOCENTE, academy:read+edit): backend manage endpoints still denied', async ({
+  test('Maestro (DOCENTE, academy:read+edit): content write allowed, manage endpoints denied', async ({
     maestroPage,
     maestroRequest,
   }) => {
@@ -177,22 +175,22 @@ test.describe('TKT-202 — Academy multi-role happy path @academy-multi-role', (
     await assertMounted(page, '/assessments');
     await assertMounted(page, '/forum');
 
-    // Tier rail 1: DOCENTE has academy:read+edit but NOT academy:manage,
-    // so POST /api/academy/admin/courses MUST return 403 — distinguishing
-    // DOCENTE from ADMINISTRADOR via backend tier (the canonical source).
+    // Tier rail 1: DOCENTE has academy:read+edit and may create course
+    // content. This is distinct from academy:manage, which protects
+    // cross-course operations and destructive administration.
     await assertApiTier(
       maestroRequest,
       'POST',
       '/academy/admin/courses',
-      403,
+      201,
       { code: `E2E-DOC-${Date.now()}`, title: 'E2E Maestro Test', modality: 'non_formal' },
     );
 
-    // Tier rail 2: DOCENTE cannot read manage-only admin sub-resources.
+    // Tier rail 2: DOCENTE cannot read manager-only dashboard metrics.
     await assertApiTier(
       maestroRequest,
       'GET',
-      '/academy/admin/lessons',
+      '/academy/dashboard/metrics',
       403,
     );
   });
@@ -215,7 +213,7 @@ test.describe('TKT-202 — Academy multi-role happy path @academy-multi-role', (
     const apiBase = resolveApiBaseUrl();
     test.skip(!apiBase, 'Set E2E_API_URL for ADMIN tier rail.');
 
-    const response = await adminRequest.fetch(`${apiBase}/academy/admin/lessons`, {
+    const response = await adminRequest.fetch(`${apiBase}/academy/dashboard/metrics`, {
       method: 'GET',
       timeout: SHORT_TIMEOUT_MS,
     });

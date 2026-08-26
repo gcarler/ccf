@@ -551,7 +551,7 @@ producto.
 
 ### 4.8. TRANSVERSAL (Resiliencia, Observabilidad, Seguridad profunda, Compliance — *bloqueantes Fase 6*)
 
-> **Estado Fase 7 (2026-07-19):** **3 / 7 transversales cerrados** ✅ — TKT-200 (rate limiting + DoS), TKT-201 (tracing distribuido + correlation-id) y TKT-203 (caching + N+1 optimization en `dashboard_metrics` y `list_lessons`). Pendientes para certificación Fase 6: **TKT-202** (E2E Playwright multi-rol), **TKT-204** (accesibilidad WCAG AA), **TKT-205** (notificaciones async Celery/RQ) y **TKT-206** (endpoint GDPR/LOPD export). Cada transversal cerrado cuenta con regression gate pytest dedicado en `tests/test_academy_fase_7_transversal.py` (ver `pytest -k tkt_200`, `tkt_201`, `tkt_203`).
+> **Estado Fase 7 (2026-08-26):** **7 / 7 transversales cerrados** ✅ — TKT-200..206. TKT-202 y TKT-204 quedaron certificados con Playwright real contra backend y frontend compilados. Cada transversal cerrado conserva su gate ejecutable.
 
 > **Gaps identificados en análisis 2026-07-19** que el plan original no cubría.
 > Estos 7 tickets son **prerrequisito para la certificación del módulo** (§3.1 Fase 6):
@@ -578,11 +578,11 @@ producto.
   - **notes:** `AcademyActivityLog` es auditoría de negocio en DB. No hay rastro operacional para debuggear incidentes en producción. Cada request debe llevar `X-Request-ID` propagado frontend→backend→log→response. Logs estructurados JSON con `request_id`, `user_id`, `sede_id`, `endpoint`, `latency_ms`.
 
 - **ACAD-TKT-202** [HIGH] — E2E tests Playwright multi-rol (estudiante, editor, manager)
-  - **state:** ⬜ Pendiente
+  - **state:** ✅ Hecho 2026-08-26
   - **source:** Gap analysis 2026-07-19
-  - **files:** `frontend/tests/e2e/academy/{student-flow,editor-flow,manager-flow}.spec.ts` (nuevo)
-  - **gate:** `cd frontend && npx playwright test tests/e2e/academy/ --reporter=line`
-  - **notes:** Test suite actual es 100% backend (pytest + TestClient). No valida que la UI esconda correctamente botones de admin a estudiantes, ni que la integración cliente/servidor serialice fechas UUID/ISO correctamente. Mínimo 3 flujos: estudiante (inscribe→aprende→evalúa→certifica), editor (crea→publica→califica→audita), manager (consulta métricas con filtro sede).
+  - **files:** `frontend/tests/e2e/academy/multi-role-flow.spec.ts`, `frontend/tests/e2e/academy/fixtures/roles.ts`, `frontend/tests/e2e/academy/seed-academy-roles.mjs`
+  - **gate:** `cd frontend && PLAYWRIGHT_BASE_URL=http://localhost:4174 API_BASE_URL=http://127.0.0.1:8001/api npx playwright test tests/e2e/academy/multi-role-flow.spec.ts --workers=1 --reporter=line` ✅ (4 tests)
+  - **notes:** Cubre estudiante, lector, docente y administrador; valida montaje de rutas, affordances de inscripción y matriz RBAC de lectura, edición y gestión. El seed es idempotente y conserva el rol DOCENTE como editor de contenido sin acceso a métricas de gestión.
 
 - **ACAD-TKT-203** [MED] — Caching + N+1 query optimization en dashboard/list_lessons
   - **state:** ✅ Hecho 2026-07-19
@@ -592,11 +592,11 @@ producto.
   - **notes:** (1) `dashboard_metrics` → delega a `_fetch_dashboard_metrics_cached` (`backend/api/academy_cache.py`) con N+1 consolidado a 1 query (`COUNT` + `COALESCE(SUM(CASE WHEN status='completed' THEN 1 ELSE 0 END))`). Cache key por `sede_id_str` con TTL 5min y prefijo `:v1:` para bump de versión controlado. (2) `list_lessons` → delega a `_fetch_list_lessons_cached` con cache por `(course_id, viewer_role, skip, limit)` TTL 5min; `_lesson_to_dict()` serializa `Lesson` ORM a dict JSON-seguro preservando el contrato de `jsonable_encoder` default de FastAPI. (3) `backend/core.cache.cached(key_fn=...)` permite derivar cache key sólo de args escalares; evita que `Session` SQLAlchemy contamine el hash. (4) Pre-push hook [6/7] compliance: 0 forbidden_terms (`legacy`/`deprecated`) en los 3 archivos modificados — verificado por `test_acad_tkt_203_ci_guard_no_forbidden_terms_in_modified_files`.
 
 - **ACAD-TKT-204** [MED] — Accesibilidad (WCAG AA en progress bars, modales, keyboard nav)
-  - **state:** ⬜ Pendiente
+  - **state:** ✅ Hecho 2026-08-26
   - **source:** Gap analysis 2026-07-19
   - **files:** `frontend/src/app/plataforma/academy/profile/progress/page.tsx`, todos los modales
-  - **gate:** `cd frontend && npx axe-core tests/e2e/academy/a11y.spec.ts`
-  - **notes:** Plataforma educativa sin a11y excluye estudiantes con discapacidad visual/motriz. Mínimo: `aria-valuenow`+`aria-label` en progress bars, focus trap en modales, navegación por teclado (Tab order lógico), contraste WCAG AA en estados disabled, SR-only text para iconos decorativos.
+  - **gate:** `cd frontend && PLAYWRIGHT_BASE_URL=http://localhost:4174 API_BASE_URL=http://127.0.0.1:8001/api npx playwright test tests/e2e/academy/a11y.spec.ts --workers=1 --reporter=line` ✅ (7 tests, 6 páginas + resumen)
+  - **notes:** Axe WCAG 2.1 AA quedó sin violaciones serious/critical. Se corrigieron nombres accesibles del sidebar, contraste de tokens de día y contraste del breadcrumb compartido en `WorkspaceToolbar`.
 
 - **ACAD-TKT-205** [MED] — Notificaciones async (Celery/RQ + email en eventos clave)
   - **state:** ✅ Hecho 2026-08-26
@@ -659,16 +659,16 @@ producto.
 
 | Estado | IDs únicos | Lotes | Total referencias |
 |---|---:|---:|---:|
-| ✅ Hecho funcional | 70 (TKT-003, 010..015, 020..028, 030..038, 042..043, 050..063, 065, 070..071, 074..077, 082, 090..091, 100..102, 103, 104, 106, 108, 109, 110, 121, 131, 134, 140..142, 144, 200, 201, 203) | 0 | 70 |
+| ✅ Hecho funcional | 72 (TKT-003, 010..015, 020..028, 030..038, 042..043, 050..063, 065, 070..071, 074..077, 082, 090..091, 100..102, 103, 104, 106, 108, 109, 110, 121, 131, 134, 140..142, 144, 200..206) | 0 | 72 |
 | 📜 Histórico (cierre documental) | 2 (TKT-001, 002) | 0 | 2 |
 | ⬜ Pendiente — HIGH corregido audit forense | 0 | 0 | 0 |
 | ⬜ Pendiente — MED frontend | 7 (TKT-072..073, 078..083) | 1 (gate compartido) | 7 |
 | ⬜ Pendiente — MED módulos menores | 0 | 0 | 0 |
 | ⬜ Pendiente — LOW | 21 (TKT-103..104, 105..112, 120..121) | 1 (gate compartido low) | 21 |
 | ⬜ Pendiente — TEST | 4 (TKT-130..133) | 0 | 4 |
-| ⬜ Pendiente — TRANSVERSAL *(bloqueantes Fase 6, ver §4.8)* | 4 (TKT-202, 204, 205, 206) | 0 | 4 |
-| **Total ⬜** | **36** | **2 lotes** | **38** |
-| **TOTAL** | **108 IDs** *(70 ✅ + 2 📜 + 36 ⬜)* | — | **110 referencias** |
+| ⬜ Pendiente — TRANSVERSAL *(bloqueantes Fase 6, ver §4.8)* | 0 | 0 | 0 |
+| **Total ⬜** | **34** | **2 lotes** | **36** |
+| **TOTAL** | **108 IDs** *(72 ✅ + 2 📜 + 34 ⬜)* | — | **108 referencias** |
 
 > **Cierre Fase A — CRIT (2026-07-19):** los 6 tickets ACAD-TKT-010..015 ya estaban implementados
 > en el código (`backend/api/academy.py` + `backend/schemas/academy.py`). El audit docs drift

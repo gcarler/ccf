@@ -18,6 +18,7 @@ inestables entre sesiones).
 from __future__ import annotations
 
 import logging
+import uuid
 from datetime import datetime, timedelta, timezone
 from typing import Any
 
@@ -91,8 +92,15 @@ def _fetch_dashboard_metrics_cached(
     """
     courses_query = db.query(models.Course).filter(models.Course.deleted_at.is_(None))
     if sede_id_str != "_global_":
-        courses_query = courses_query.filter(or_(models.Course.sede_id == sede_id_str, models.Course.sede_id.is_(None)))
-    course_ids = [str(row.id) for row in courses_query.with_entities(models.Course.id).all()]
+        try:
+            sede_id = uuid.UUID(sede_id_str)
+        except (TypeError, ValueError):
+            logger.warning("academy_cache: ignoring invalid sede_id cache key %r", sede_id_str)
+            sede_id = None
+        courses_query = courses_query.filter(or_(models.Course.sede_id == sede_id, models.Course.sede_id.is_(None)))
+    # Preserve UUID objects at the ORM boundary. Converting them to strings
+    # breaks SQLite's UUID bind processor and is unnecessary for PostgreSQL.
+    course_ids = [row.id for row in courses_query.with_entities(models.Course.id).all()]
     total_courses = len(course_ids)
 
     # ----- N+1 consolidado: total + completed en un único query -----

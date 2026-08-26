@@ -27,14 +27,16 @@ import { fileURLToPath } from 'node:url';
 
 const repoRoot = path.resolve(
   path.dirname(fileURLToPath(import.meta.url)),
-  '../../..',
+  '../../../..',
 );
 
 const apiBase = (
   process.env.E2E_API_URL ||
   process.env.NEXT_PUBLIC_API_URL ||
   ''
-).replace(/\/$/, '');
+)
+  .replace(/\/$/, '')
+  .replace(/\/api$/, '');
 
 const password =
   process.env.ACADEMY_SEED_PASSWORD || 'E2E-Academy-2026!';

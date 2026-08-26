@@ -8,7 +8,7 @@
   --bg-primary: 0 0% 100%;
   --bg-secondary: 210 40% 98%;
   --text-primary: 222 47% 11%;
-  --text-secondary: 215 16% 47%;
+  --text-secondary: 215 20% 40%;
 
   /* Base brand colors — sourced from CSS variables so Tailwind config can reference them */
   --navy-dark: 210 41% 12%;
@@ -22,7 +22,7 @@
   --glass: 0 0% 100% / 0.1;
   --glass-border: 0 0% 100% / 0.2;
 
-  --primary: 197 98% 37%; /* rgb(1,138,189) — azul CCF */
+  --primary: 197 98% 31%; /* azul CCF con contraste WCAG AA */
   --primary-foreground: 0 0% 100%;
 
   --surface-1: 0 0% 100%;
@@ -46,7 +46,7 @@
   --warning-foreground: 0 0% 100%;
   --warning-muted: 38 92% 95%;
   --warning-text: 30 80% 28%;
-  --info: 197 98% 37%;
+  --info: 197 98% 31%;
   --info-foreground: 0 0% 100%;
   --info-muted: 197 98% 95%;
   --info-text: 197 90% 25%;

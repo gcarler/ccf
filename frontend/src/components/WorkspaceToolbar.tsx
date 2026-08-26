@@ -58,7 +58,7 @@ export default function WorkspaceToolbar({
             {/* Left: leftActions + Breadcrumbs + View Switcher */}
             <div className="flex min-w-0 flex-1 items-center gap-1.5 overflow-hidden sm:gap-2">
                 {leftActions && <>{leftActions}<div className="w-px h-4 bg-[hsl(var(--surface-3))] dark:bg-white/10 mx-0.5 shrink-0" /></>}
-                <div className="hidden items-center gap-1 px-1.5 py-1 hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5 rounded-md cursor-pointer text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] transition-colors shrink-0 sm:flex">
+                <div className="hidden items-center gap-1 px-1.5 py-1 hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5 rounded-md cursor-pointer text-[hsl(var(--text-secondary))] transition-colors shrink-0 sm:flex">
                     <Home size={13} />
                     <ChevronRight size={13} />
                 </div>
@@ -73,7 +73,7 @@ export default function WorkspaceToolbar({
                                 className="flex min-w-0 items-center gap-1.5 px-2 py-1 hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5 rounded-md cursor-pointer group transition-all"
                             >
                                 {bc.icon && <bc.icon size={13} className="text-[hsl(var(--text-secondary))] group-hover:text-[hsl(var(--primary))] transition-colors shrink-0" />}
-                                <span className={`text-xs font-semibold tracking-tight truncate ${isLast ? 'text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]' : 'text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]'}`}>
+                                <span className={`text-xs font-semibold tracking-tight truncate ${isLast ? 'text-[hsl(var(--text-primary))]' : 'text-[hsl(var(--text-secondary))]'}`}>
                                     {bc.label}
                                 </span>
                             </motion.div>
@@ -83,7 +83,7 @@ export default function WorkspaceToolbar({
                             <div key={idx} className={`${isLast ? 'flex' : 'hidden md:flex'} min-w-0 items-center gap-0.5 shrink ${isLast ? 'max-w-[48vw] sm:max-w-[220px]' : 'max-w-[160px] lg:max-w-[200px]'}`}>
                                 {bc.href ? <Link href={bc.href} prefetch={false}>{content}</Link> : content}
                                 {idx < breadcrumbs.length - 1 && (
-                                    <ChevronRight size={13} className="hidden text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] shrink-0 md:block" />
+                                    <ChevronRight size={13} className="hidden text-[hsl(var(--text-secondary))] shrink-0 md:block" />
                                 )}
                             </div>
                         );
