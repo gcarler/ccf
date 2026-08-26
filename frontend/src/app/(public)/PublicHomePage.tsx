@@ -47,15 +47,6 @@ export default function PublicHomePage({ initialHomePage }: { initialHomePage?: 
         ? homeFeedContent.parsed as Record<string, unknown>
         : null;
     const discoverCtaContent = (homePage?.blocks?.discover_cta as Record<string, unknown> | undefined) ?? null;
-    const homeGallerySection = homePage?.sections?.find(
-        (section) => section.type === "gallery" && Array.isArray(section.props_json?.items),
-    );
-    const homeGallerySource =
-        homePage?.blocks?.home_hero_gallery
-        ?? homePage?.sections?.find((section) => section.section_key === "home_hero_gallery" && Array.isArray(section.props_json?.items))
-        ?? homePage?.blocks?.gallery
-        ?? homePage?.blocks?.media_gallery
-        ?? homeGallerySection;
     const homeEyebrow = (homeFeed?.eyebrow as string) ?? "";
     const homeSectionTitle = (homeFeed?.section_title as string) ?? "";
     const homeSectionDescription = (homeFeed?.section_description as string) ?? "";
@@ -99,23 +90,6 @@ export default function PublicHomePage({ initialHomePage }: { initialHomePage?: 
             href: typeof item.href === "string" ? item.href : undefined,
         }))
         .filter((slide) => Boolean(slide.src));
-    const homeGallery = (() => {
-        if (!homeGallerySource) return [];
-        if ("parsed" in homeGallerySource) {
-            const parsed = homeGallerySource.parsed;
-            if (parsed && typeof parsed === "object" && !Array.isArray(parsed) && Array.isArray((parsed as Record<string, unknown>).items)) {
-                return (parsed as { items: Array<Record<string, unknown>> }).items;
-            }
-        }
-        if ("props_json" in homeGallerySource) {
-            const propsJson = homeGallerySource.props_json;
-            if (propsJson && typeof propsJson === "object" && !Array.isArray(propsJson) && Array.isArray((propsJson as Record<string, unknown>).items)) {
-                return (propsJson as { items: Array<Record<string, unknown>> }).items;
-            }
-        }
-        return [];
-    })();
-
     const hasBento = homeFeaturedCard?.title || homeFeaturedCard?.desc || homeCards.length > 0;
     const hasNewsletter = newsletterTitle || newsletterDescription;
 
@@ -153,50 +127,16 @@ export default function PublicHomePage({ initialHomePage }: { initialHomePage?: 
         ? (eventsContent?.parsed as PublicEventItem[]).filter((event) => event.status !== "archived")
         : [];
 
-    const gallerySlides: PublicSlide[] = (homeGallery
-        .map((item, index) => {
-            const src = typeof item.url === "string" ? item.url : typeof item.src === "string" ? item.src : "";
-            if (!src) return null;
-            return {
-                src,
-                alt: typeof item.alt === "string" && item.alt.trim() ? item.alt : `Foto ${index + 1}`,
-                title: typeof item.caption === "string" && item.caption.trim() ? item.caption : undefined,
-                caption: typeof item.description === "string" && item.description.trim() ? item.description : undefined,
-            };
-        }) as (PublicSlide | null)[])
-        .filter((slide): slide is PublicSlide => Boolean(slide));
-
     const homeSlides: PublicSlide[] = [
         ...cmsHeroSlides,
-        ...(gallerySlides.length > 0
-            ? gallerySlides
-            : cmsHeroSlides.length === 0 && heroBgImage
-                ? [{
-                    src: heroBgImage,
-                    alt: heroTitleLead || heroTitleAccent || heroTitleTail || "Imagen principal",
-                    title: heroTitleLead || heroTitleAccent || heroTitleTail || "CCF",
-                    caption: heroDescription || undefined,
-                }]
-                : []),
-        ...(homeFeaturedCard?.img
+        ...(cmsHeroSlides.length === 0 && heroBgImage
             ? [{
-                src: String(homeFeaturedCard.img),
-                alt: typeof homeFeaturedCard.alt === "string" && homeFeaturedCard.alt ? String(homeFeaturedCard.alt) : "Imagen destacada",
-                title: typeof homeFeaturedCard.title === "string" ? homeFeaturedCard.title : undefined,
-                caption: typeof homeFeaturedCard.desc === "string" ? homeFeaturedCard.desc : undefined,
+                src: heroBgImage,
+                alt: heroTitleLead || heroTitleAccent || heroTitleTail || "Imagen principal",
+                title: heroTitleLead || heroTitleAccent || heroTitleTail || "CCF",
+                caption: heroDescription || undefined,
             }]
             : []),
-        ...homeCards
-            .map((item, index) => {
-                const src = typeof item.img === "string" ? item.img : "";
-                if (!src) return null;
-                return {
-                    src,
-                    alt: typeof item.alt === "string" && item.alt.trim() ? item.alt : `Card ${index + 1}`,
-                    title: typeof item.title === "string" ? item.title : undefined,
-                    caption: typeof item.desc === "string" ? item.desc : undefined,
-                };
-            }),
     ].filter((slide): slide is PublicSlide => Boolean(slide));
     const hasHero = homeSlides.length > 0 || heroTitleLead || heroTitleAccent || heroTitleTail || heroDescription;
 

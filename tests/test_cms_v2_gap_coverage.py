@@ -2040,6 +2040,28 @@ class TestPublicPageCacheInvalidation:
         second = c.get(f"/api/cms/v2/public/sites/{key}/pages")
         assert all(p["slug"] != "gone" for p in second.json()["items"])
 
+    def test_public_sitemap_cache_invalidated_on_delete(self, full):
+        """El sitemap debe reflejar de inmediato una eliminación pública."""
+        c, h = full["c"], full["h"]
+        key = _make_site(c, h, "pubsitemapinv")
+        _make_page(c, h, key, "gone-from-sitemap")
+        c.post(
+            f"/api/cms/v2/sites/{key}/pages/gone-from-sitemap/workflow",
+            json={"action": "publish"},
+            headers=h,
+        )
+
+        first = c.get(f"/api/cms/v2/public/sites/{key}/sitemap.xml")
+        assert first.status_code == 200
+        assert "/gone-from-sitemap" in first.text
+
+        resp = c.delete(f"/api/cms/v2/sites/{key}/pages/gone-from-sitemap", headers=h)
+        assert resp.status_code == 204
+
+        second = c.get(f"/api/cms/v2/public/sites/{key}/sitemap.xml")
+        assert second.status_code == 200
+        assert "/gone-from-sitemap" not in second.text
+
     def test_public_page_cache_invalidated_on_rollback(self, full):
         """Rollback a published page → draft: la caché pública debe dar 404
         de inmediato (no servir el snapshot stale hasta el TTL)."""
