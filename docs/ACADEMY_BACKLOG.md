@@ -435,7 +435,8 @@ producto.
   - **state:** ⬜ Pendiente
 - **ACAD-TKT-080** [MED] — Frontend: precios hardcodeados ($200, $50) en `enroll/[id]/page.tsx:188-198` — `PLAN MF11`
   - **gate:** `pytest tests/test_academy_backlog.py::test_shared_frontend_hardcoded_cleanup -q` (lote compartido)
-  - **state:** ⬜ Pendiente
+  - **state:** ✅ Hecho 2026-08-26
+  - **notes:** El flujo de inscripción no tiene contrato de pagos; se reemplazaron precios ficticios y métodos de pago simulados por confirmación de matrícula y aviso de coordinación.
 - **ACAD-TKT-081** [MED] — Frontend: fallback video URL hardcodeado en `course/[id]/page.tsx:340` — `PLAN MF12`
   - **gate:** `pytest tests/test_academy_backlog.py::test_shared_frontend_hardcoded_cleanup -q` (lote compartido)
   - **state:** ⬜ Pendiente
@@ -444,7 +445,8 @@ producto.
   - **state:** ⬜ Pendiente
 - **ACAD-TKT-083** [MED] — Frontend: timer hardcodeado "45:00" en `assessments/[id]/page.tsx:169` — `PLAN MF14`
   - **gate:** `pytest tests/test_academy_backlog.py::test_shared_frontend_hardcoded_cleanup -q` (lote compartido)
-  - **state:** ⬜ Pendiente
+  - **state:** ✅ Hecho 2026-08-26
+  - **notes:** El frontend ahora consume `time_limit_minutes` cuando el contrato lo exponga y muestra `Sin límite` cuando no existe; no inventa duración.
   - **gate (todos los ACAD-TKT-070 a 083):** `pytest tests/test_academy_backlog.py::test_acad_tkt_frontend_hardcoded_cleanup -q`
 
 ### 4.5. MED módulos menores + ESTADO §15.3 pendientes

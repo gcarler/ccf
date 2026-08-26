@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useParams, useRouter } from 'next/navigation';
 import { apiFetch } from '@/lib/http';
-import { BookOpen, Upload, CreditCard, Wallet, Landmark, Lock, CheckCircle2, Loader2, ArrowRight } from 'lucide-react';
+import { BookOpen, Upload, CreditCard, Lock, CheckCircle2, Loader2, ArrowRight } from 'lucide-react';
 import { useToast } from '@/context/ToastContext';
 import type { CourseDetail } from '@/types/academy';
 
@@ -22,7 +22,6 @@ export default function EnrollmentWizard() {
     const [course, setCourse] = useState<CourseDetail | null>(null);
     const [loading, setLoading] = useState(true);
     const [enrolling, setEnrolling] = useState(false);
-    const [paymentMethod, setPaymentMethod] = useState('card');
 
     useEffect(() => {
         if (!isAuthenticated) {
@@ -58,7 +57,7 @@ export default function EnrollmentWizard() {
                 token,
                 body: { persona_id: user?.id, course_id: courseId }
             });
-            addToast("¡Inscripción y pago exitosos!", "success");
+            addToast("¡Inscripción exitosa!", "success");
             setStep(3); // Success step
         } catch {
             addToast("Error de conexión.", "error");
@@ -176,46 +175,19 @@ export default function EnrollmentWizard() {
                                 <div className="surface-card p-4 bg-[hsl(var(--surface-2))] border-[hsl(var(--border))]">
                                     <div className="flex flex-col items-center text-center mb-3">
                                         <div className="size-8 rounded-lg bg-[hsl(var(--primary)/0.1)] border border-[hsl(var(--primary)/0.2)] flex items-center justify-center text-[hsl(var(--primary))] mb-4">
-                                            <Wallet size={32} />
+                                            <CheckCircle2 size={32} />
                                         </div>
-                                        <h3 className="text-base font-bold tracking-tighter mb-1">Resumen de Cargo</h3>
-                                        <p className="text-xs text-[hsl(var(--text-secondary))] font-medium">Inscripción al ciclo académico actual</p>
+                                        <h3 className="text-base font-bold tracking-tighter mb-1">Confirmar inscripción</h3>
+                                        <p className="text-xs text-[hsl(var(--text-secondary))] font-medium">La plataforma registrará tu matrícula en este curso.</p>
                                     </div>
 
-                                    <div className="space-y-4 pt-4">
-                                        <div className="flex justify-between items-center text-xs">
-                                            <span className="font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Matrícula Base</span>
-                                            <span className="font-semibold">$200.00 USD</span>
+                                    <div className="space-y-3 pt-4">
+                                        <div className="flex items-center gap-3 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-3))] p-4">
+                                            <Lock size={20} className="text-[hsl(var(--primary))]" />
+                                            <p className="text-xs font-semibold text-[hsl(var(--text-secondary))]">
+                                                No se procesan pagos en este flujo. Cualquier costo o requisito económico debe ser comunicado por la coordinación antes de confirmar.
+                                            </p>
                                         </div>
-                                        <div className="flex justify-between items-center text-xs pb-4 border-b border-[hsl(var(--border))]">
-                                            <span className="font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Derechos de Admisión</span>
-                                            <span className="font-semibold">$50.00 USD</span>
-                                        </div>
-                                        <div className="flex justify-between items-center bg-[hsl(var(--surface-3))] p-4 rounded-lg">
-                                            <span className="text-xs font-semibold uppercase tracking-wide">Inversión Total</span>
-                                            <span className="text-lg font-bold text-[hsl(var(--primary))] tracking-tighter">$250.00</span>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div className="space-y-3">
-                                    <p className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide ml-1 mb-2">Método de Financiamiento</p>
-                                    <div className="grid grid-cols-1 gap-3">
-                                        {['card', 'paypal', 'bank'].map((id) => (
-                                            <label key={id} className={`flex items-center gap-4 p-3 rounded-lg border transition-all cursor-pointer ${paymentMethod === id ? 'bg-[hsl(var(--primary)/0.1)] border-[hsl(var(--primary)/0.5)]' : 'bg-[hsl(var(--surface-1))] border-[hsl(var(--border))] hover:bg-[hsl(var(--surface-2))]'}`}>
-                                                <input type="radio" name="pay-opt" value={id} className="hidden" onChange={(e) => setPaymentMethod(e.target.value)} checked={paymentMethod === id} />
-                                                <div className={`size-9 rounded-md flex items-center justify-center border transition-all ${paymentMethod === id ? 'bg-[hsl(var(--primary))] border-[hsl(var(--primary))] text-white shadow-lg shadow-primary/20' : 'bg-[hsl(var(--surface-2))] border-[hsl(var(--border))] text-[hsl(var(--text-secondary))]'}`}>
-                                                    {id === 'card' && <CreditCard size={24} />}
-                                                    {id === 'paypal' && <Wallet size={24} />}
-                                                    {id === 'bank' && <Landmark size={24} />}
-                                                </div>
-                                                <div className="flex-1">
-                                                    <p className="text-xs font-semibold uppercase tracking-wider">{id === 'card' ? 'Tarjeta de Crédito' : id === 'paypal' ? 'PayPal Checkout' : 'Depósito Directo'}</p>
-                                                    <p className="text-2xs text-[hsl(var(--text-secondary))] font-bold uppercase tracking-wide">{id === 'card' ? 'Mastercard / Visa' : 'Transferencia Segura'}</p>
-                                                </div>
-                                                {paymentMethod === id && <CheckCircle2 size={20} className="text-[hsl(var(--primary))]" />}
-                                            </label>
-                                        ))}
                                     </div>
                                 </div>
                             </motion.div>
