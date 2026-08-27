@@ -11,7 +11,7 @@
 - Backend service: `backend/services/event_registration_service.py` (1036 LOC)
 - Tests: `tests/test_event_registrations.py` (685 LOC), `tests/test_event_registration_quality.py`, `tests/test_event_registrations_dynamic_form.py`
 - Docs de referencia: `docs/PLAN_PREREGISTRO_EVENTOS_MASIVOS.md`, `docs/PLAN_CLASIFICADOR_CONTEXTUAL_PERSONAS_EVENTO.md`
-- URL de producción: `https://elfarocc.tech/public/events/cc47a8e0-333a-40c9-ba17-d90c54fff2cb/register`
+- URL de producción: `https://ministerioselfaro.org/public/events/cc47a8e0-333a-40c9-ba17-d90c54fff2cb/register`
 
 ---
 

@@ -59,7 +59,7 @@ cd frontend
 npx vitest run src/lib/cms/heroPopup.test.ts tests/cms-components.test.ts
 
 # E2E público contra producción
-PLAYWRIGHT_BASE_URL=https://elfarocc.tech npx playwright test tests/e2e/cms-public-contract.spec.ts --project=chromium
+PLAYWRIGHT_BASE_URL=https://ministerioselfaro.org npx playwright test tests/e2e/cms-public-contract.spec.ts --project=chromium
 
 # Build reproducible
 npm run build
@@ -92,7 +92,7 @@ verde y un árbol Git limpio.
 
 ### Corte global verificado — 2026-08-10
 
-Se verificaron los gates locales de backend y se identificó que el readiness web debe ejecutarse contra el frontend (`127.0.0.1:3000`), mientras el backend API vive en `127.0.0.1:8000`. El corte histórico contra `https://elfarocc.tech` se conserva como referencia de despliegue anterior.
+Se verificaron los gates locales de backend y se identificó que el readiness web debe ejecutarse contra el frontend (`127.0.0.1:3000`), mientras el backend API vive en `127.0.0.1:8000`. El dominio público vigente es `https://ministerioselfaro.org`.
 
 | Métrica | Resultado | Lectura correcta |
 |---|---:|---|

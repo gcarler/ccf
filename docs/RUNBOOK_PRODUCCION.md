@@ -29,7 +29,7 @@
 ┌───────────────────────────▼─────────────────────────────────────┐
 │                    NGINX (Proxy Inverso)                        │
 │   SSL termination (Let's Encrypt), proxy_pass, static files     │
-│   Dominio: elfarocc.tech                                        │
+│   Dominio: ministerioselfaro.org                                │
 └───────────────────────┬──────────────────┬──────────────────────┘
                         │                  │
           ┌─────────────▼─────┐    ┌───────▼──────────────┐
@@ -60,7 +60,7 @@
 |---|---|
 | `/root/ccf/startccf` | Arranque manual alterno; no usar si la instancia ya está bajo PM2 |
 | `/root/ccf/stopccf` | Detiene procesos de forma limpia con `_kill_with_verify()` |
-| `/etc/nginx/sites-available/elfarocc.tech` | Configuración de proxy inverso |
+| `/etc/nginx/sites-available/ministerioselfaro.org` | Configuración de proxy inverso |
 | `/root/ccf/.env` | Variables de entorno (DB, secretos, API keys) |
 
 ---
@@ -214,9 +214,9 @@ pm2 restart ccf-backend-staging --update-env
 pm2 restart ccf-frontend-staging --update-env
 
 # 7. Verificar health checks
-curl -f https://elfarocc.tech/healthz
-curl -f https://elfarocc.tech/api/system/health
-curl -f https://elfarocc.tech/
+curl -f https://ministerioselfaro.org/healthz
+curl -f https://ministerioselfaro.org/api/system/health
+curl -f https://ministerioselfaro.org/
 python3 scripts/auditing/production_readiness.py
 ```
 
@@ -267,16 +267,16 @@ pm2 restart ccf-frontend-staging
 #    (backend NO tiene el acoplamiento de cwd — reimporta Python al restart, es 1 paso)
 
 # 6. Verificar con fingerprinting de chunk (definitivo)
-curl -s https://elfarocc.tech/plataforma/admin/reports | grep -oE 'app/[^"]+/page-[a-z0-9]+\.js' | head -1
+curl -s https://ministerioselfaro.org/plataforma/admin/reports | grep -oE 'app/[^"]+/page-[a-z0-9]+\.js' | head -1
 #   → extrae ej. "app/plataforma/admin/reports/page-340be6eed4ccfc2a.js"
 find /root/ccf/frontend/.next -name "page-340be6eed4ccfc2a.js"   # debe existir
 find /root/ccf/frontend/.next.backup-* -name "page-340be6eed4ccfc2a.js" 2>/dev/null
 #   NO debe existir en el backup = confirms que se sirve el build NUEVO
 
 # 7. Health checks
-curl -f https://elfarocc.tech/healthz
-curl -f https://elfarocc.tech/                      # HTTP 200 home público
-curl -f -o /dev/null https://elfarocc.tech/plataforma # HTTP 307 (login redirect, esperado)
+curl -f https://ministerioselfaro.org/healthz
+curl -f https://ministerioselfaro.org/                      # HTTP 200 home público
+curl -f -o /dev/null https://ministerioselfaro.org/plataforma # HTTP 307 (login redirect, esperado)
 
 # 8. Limpiar worktree temporal cuando ya no se necesite
 cd /root/ccf
@@ -298,11 +298,11 @@ git worktree prune
 > # El BUILD_ID debe cambiar entre el nuevo y cualquier backup (cada `next build` lo regenera)
 > ```
 
-> **Aclaración de "producción" en este VPS:** nginx (`/etc/nginx/sites-available/elfarocc`)
-> proxiea `elfarocc.tech` directamente a `127.0.0.1:3000` (frontend) y `127.0.0.1:8000` (backend),
+> **Aclaración de "producción" en este VPS:** nginx (`/etc/nginx/sites-available/ministerioselfaro.org`)
+> proxiea `ministerioselfaro.org` directamente a `127.0.0.1:3000` (frontend) y `127.0.0.1:8000` (backend),
 > que son los puertos de `ccf-frontend-staging` y `ccf-backend-staging`. **No existe cluster
 > separado de producción** — lo que reinicies en PM2 staging **es** lo que se publica en
-> elfarocc.tech. El sufijo "-staging" es un misnomer a nivel PM2.
+> ministerioselfaro.org. El sufijo "-staging" es un misnomer a nivel PM2.
 
 ---
 
@@ -320,7 +320,7 @@ git revert HEAD --no-edit
 ./startccf
 
 # 3. Verificar
-curl -f https://elfarocc.tech/healthz
+curl -f https://ministerioselfaro.org/healthz
 ```
 
 ### Rollback Completo (con BD)
@@ -344,8 +344,8 @@ git checkout <commit-anterior>
 ./startccf
 
 # 6. Verificar
-curl -f https://elfarocc.tech/healthz
-curl -f https://elfarocc.tech/api/system/health
+curl -f https://ministerioselfaro.org/healthz
+curl -f https://ministerioselfaro.org/api/system/health
 ```
 
 ---

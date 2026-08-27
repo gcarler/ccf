@@ -35,8 +35,8 @@ Activar rollback si ocurre al menos una condicion:
 3. Subir app:
    - `./startccf`
 4. Verificacion:
-   - `curl -f https://elfarocc.tech/healthz`
-   - `curl -f https://elfarocc.tech/api/system/health`
+   - `curl -f https://ministerioselfaro.org/healthz`
+   - `curl -f https://ministerioselfaro.org/api/system/health`
 
 ### Opcion B: Volver a commit anterior (controlado)
 
@@ -47,7 +47,7 @@ Activar rollback si ocurre al menos una condicion:
 3. Subir app:
    - `./startccf`
 4. Verificacion:
-   - `curl -f https://elfarocc.tech/healthz`
+   - `curl -f https://ministerioselfaro.org/healthz`
 
 ## 4. Datos y migraciones
 
@@ -62,8 +62,8 @@ Activar rollback si ocurre al menos una condicion:
    - dashboard
    - CRM y evangelismo (eventos/asistencia)
 2. Confirmar recuperacion tecnica:
-   - `curl -f https://elfarocc.tech/healthz` → 200
-   - `curl -f https://elfarocc.tech/` → 200
+   - `curl -f https://ministerioselfaro.org/healthz` → 200
+   - `curl -f https://ministerioselfaro.org/` → 200
 3. Documentar postmortem minimo:
    - SHA desplegado
    - causa raiz
