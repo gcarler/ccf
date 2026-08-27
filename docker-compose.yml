@@ -1,0 +1,127 @@
+name: ccf-sandbox
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-ccf_db}
+      POSTGRES_USER: ${POSTGRES_USER:-ccf_app}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env.docker}
+    volumes:
+      - ccf_postgres_sandbox:/var/lib/postgresql/data
+      - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/00-ccf-extensions.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks: [ccf_network]
+
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - ccf_redis_sandbox:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks: [ccf_network]
+
+  seaweedfs:
+    image: chrislusf/seaweedfs:3.80
+    command: ["server", "-s3", "-dir=/data", "-s3.port=8333", "-volume.minFreeSpace=10"]
+    volumes:
+      - ccf_seaweed_sandbox:/data
+    expose: ["8333"]
+    healthcheck:
+      test: ["CMD-SHELL", "wget --quiet --spider http://127.0.0.1:8333/ || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+    networks: [ccf_network]
+
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    environment:
+      ENV: ${ENV:-local}
+      DATABASE_URL: postgresql+psycopg2://${POSTGRES_USER:-ccf_app}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-ccf_db}
+      SECRET_KEY: ${SECRET_KEY:?Set SECRET_KEY in .env.docker}
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY:?Set ENCRYPTION_KEY in .env.docker}
+      REDIS_URL: redis://redis:6379/0
+      UPLOADS_DIR: /app/uploads
+      ANALYTICS_DB_PATH: /app/analytics/warehouse.duckdb
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3001}
+      STUB_COMMS: ${STUB_COMMS:-true}
+    ports:
+      - "127.0.0.1:18001:8000"
+    volumes:
+      - ccf_uploads_sandbox:/app/uploads
+      - ccf_analytics_sandbox:/app/analytics
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+      seaweedfs:
+        condition: service_healthy
+    restart: unless-stopped
+    cpus: 4
+    mem_limit: 4g
+    networks: [ccf_network]
+
+  migrate:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    environment:
+      ENV: ${ENV:-local}
+      DATABASE_URL: postgresql+psycopg2://${POSTGRES_USER:-ccf_app}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-ccf_db}
+      SECRET_KEY: ${SECRET_KEY:?Set SECRET_KEY in .env.docker}
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY:?Set ENCRYPTION_KEY in .env.docker}
+    command:
+      - sh
+      - -c
+      - >-
+        alembic upgrade 20260702_0001_canonical_baseline &&
+        python -c 'from sqlalchemy import text; from backend.core.database import engine; c=engine.connect(); t=c.begin(); c.execute(text("UPDATE alembic_version SET version_num=:revision"), {"revision": "20260822_0002_evangelism_sede_indexes"}); t.commit(); c.close()'
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: "no"
+    networks: [ccf_network]
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:18001/api}
+    environment:
+      NODE_ENV: production
+      API_BASE_URL: http://backend:8000/api
+      API_PROXY_TARGET: http://backend:8000
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:18001/api}
+    ports:
+      - "127.0.0.1:13001:3000"
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: unless-stopped
+    cpus: 2
+    mem_limit: 2g
+    networks: [ccf_network]
+
+networks:
+  ccf_network:
+    driver: bridge
+
+volumes:
+  ccf_postgres_sandbox:
+  ccf_redis_sandbox:
+  ccf_seaweed_sandbox:
+  ccf_uploads_sandbox:
+  ccf_analytics_sandbox:

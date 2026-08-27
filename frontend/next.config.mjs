@@ -11,6 +11,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const nextConfig = {
+    output: 'standalone',
     allowedDevOrigins: ['elfarocc.tech', 'www.elfarocc.tech'],
     // distDir dinámico: el deploy seguro (build-safe.mjs) compila a .next-build
     // y hace swap atómico al final, para que el proceso en servicio nunca vea

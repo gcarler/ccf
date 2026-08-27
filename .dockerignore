@@ -10,4 +10,9 @@ __pycache__/
 *.pyd
 .db
 .sqlite3
+uploads/
+storage/
+analytics/
+backups/
+*.dump
 node_modules/
