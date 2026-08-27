@@ -10,15 +10,21 @@
 # - Optional upload to remote storage (S3/SeaweedFS)
 
 set -euo pipefail
+umask 077
 
-DB_HOST="127.0.0.1"
-DB_USER="ccf_admin"
-DB_NAME="ccf_db"
-DB_PASS="ccf_password_secret_123"
+DB_HOST="${DB_HOST:-127.0.0.1}"
+DB_PORT="${DB_PORT:-5432}"
+DB_USER="${DB_USER:-ccf_admin}"
+DB_NAME="${DB_NAME:-ccf_db}"
+DB_PASS="${DB_PASS:-}"
+if [[ -z "$DB_PASS" ]]; then
+    echo "ERROR: DB_PASS must be provided through the environment or a password file." >&2
+    exit 2
+fi
 export PGPASSWORD="$DB_PASS"
 
-BACKUP_DIR="/root/ccf/backups"
-RETENTION_DAYS=14
+BACKUP_DIR="${BACKUP_DIR:-/root/ccf/backups}"
+RETENTION_DAYS="${RETENTION_DAYS:-14}"
 TIMESTAMP=$(date -u '+%Y%m%d_%H%M%S')
 BACKUP_FILE="$BACKUP_DIR/ccf_db_${TIMESTAMP}.dump"
 LOG_FILE="$BACKUP_DIR/backup_${TIMESTAMP}.log"
@@ -33,6 +39,7 @@ START_TIME=$(date +%s)
 
 pg_dump \
     -h "$DB_HOST" \
+    -p "$DB_PORT" \
     -U "$DB_USER" \
     -d "$DB_NAME" \
     --format=custom \

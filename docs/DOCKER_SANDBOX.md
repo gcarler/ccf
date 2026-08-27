@@ -30,6 +30,13 @@ revisión `20260822_0002_evangelism_sede_indexes`. Sus volúmenes son nombrados
 con el prefijo del proyecto y no reutilizan `uploads`, `storage`, `analytics`
 ni las bases de producción.
 
+El backend instala `requirements.docker.lock`; para actualizar dependencias se
+regenera el lock en una revisión controlada y se vuelve a construir la imagen.
+
+La prueba de recuperación ejecutada para este sandbox fue: `pg_dump` en formato
+custom, validación con `pg_restore --list` y restauración completa en una base
+temporal. El resultado fue 205 tablas restauradas.
+
 ## Estado de la migración
 
 Este artefacto valida el sandbox y el rollback técnico. No configura Nginx ni

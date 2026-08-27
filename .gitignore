@@ -30,6 +30,7 @@ seaweed_s3.json
 *_test_output.txt
 *storybook.log
 .env
+.env.docker
 .pytest_cache/
 .pytest_tmp/
 .ruff_cache/
