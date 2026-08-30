@@ -56,6 +56,16 @@ export default function PublicHeroWithSlides({
     return () => window.clearInterval(id);
   }, [totalSlides]);
 
+  useEffect(() => {
+    // Deja las imágenes siguientes en la caché antes de que el carrusel las
+    // necesite. Así el cambio de slide no depende de una nueva descarga.
+    safeSlides.forEach((slide) => {
+      const image = new window.Image();
+      image.decoding = "async";
+      image.src = slide.src;
+    });
+  }, [safeSlides]);
+
   const activeSlide = safeSlides[activeIndex] || safeSlides[0];
   const titleBlock = title ?? (
     <>
