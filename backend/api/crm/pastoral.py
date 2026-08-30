@@ -298,6 +298,12 @@ def create_caso_crm(
 ):
     data = payload.model_dump()
     if not payload.persona_id:
+        # Flujo "Nuevo Prospecto": crear la Persona desde los datos de contacto.
+        if not (str(data.get("first_name") or "").strip() or str(data.get("phone") or "").strip()):
+            raise HTTPException(
+                status_code=422,
+                detail="Se requiere persona_id o first_name/phone para crear un prospecto",
+            )
         user_sede = get_user_sede_id(db, current_user.id)
         if not user_sede:
             raise HTTPException(status_code=400, detail="El usuario no tiene sede asignada")

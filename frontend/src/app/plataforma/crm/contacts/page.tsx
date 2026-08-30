@@ -104,7 +104,6 @@ export default function ContactsPage() {
                     first_name: newLead.first_name,
                     last_name: newLead.last_name,
                     phone: newLead.phone,
-                    source: newLead.source,
                     spiritual_status: 'Prospecto',
                 }
             });
