@@ -2,7 +2,7 @@
 
 **Estado:** vigente como arquitectura objetivo  
 **Primera versión:** 2026-08-31  
-**Rama de trabajo:** `feature/architecture-modular-monolith-20260831`
+**Rama de trabajo:** `feature/platform-architecture-20260831`
 
 ## 1. Decisión arquitectónica
 
@@ -153,6 +153,11 @@ encapsula el código; solo se cambia la ruta si existe una decisión explícita.
 - Crear paquetes de contratos de identidad, auth, sedes, errores y eventos.
 - Separar el barrel global `backend/models.py` de los imports internos nuevos.
 - Prohibir imports internos de módulos desde el núcleo.
+
+Entrega inicial: `backend/core/identity.py` concentra la resolución de
+persona y sede para los consumidores nuevos. Los módulos propietarios deben
+migrar sus imports en ramas separadas antes de retirar las excepciones del
+registro de límites.
 
 ### Fase 2 — Encapsulación por módulo
 
