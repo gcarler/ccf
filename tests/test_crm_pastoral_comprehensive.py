@@ -38,6 +38,40 @@ class TestCasosCRUD:
         assert _ok(resp.status_code), f"create caso: {resp.status_code} {resp.text[:200]}"
         assert resp.json()["persona_id"] == str(p.id)
 
+    def test_create_prospecto_creates_persona_and_case(self, full, db_session):
+        c, h, s = full["c"], full["h"], full["s"]
+        resp = c.post(
+            "/api/crm/casos",
+            json={
+                "first_name": "Prospecto",
+                "last_name": "Nuevo",
+                "phone": "3001234567",
+                "source": "Visitante",
+                "stage": "new",
+                "notes": "Registro desde contactos",
+                "spiritual_status": "Prospecto",
+            },
+            headers=h,
+        )
+        assert _ok(resp.status_code), f"create prospecto: {resp.status_code} {resp.text[:300]}"
+        created = resp.json()
+        assert created["persona_id"]
+        case_response = c.get(f"/api/crm/casos/{created['id']}", headers=h)
+        assert case_response.status_code == 200
+        assert case_response.json()["nombre_completo"] == "Prospecto Nuevo"
+
+        listed = c.get("/api/crm/casos", headers=h)
+        assert listed.status_code == 200
+        assert any(case["id"] == created["id"] for case in listed.json()["cases"])
+
+    def test_create_prospecto_requires_identity_fields(self, full):
+        resp = full["c"].post(
+            "/api/crm/casos",
+            json={"phone": "3007654321", "source": "Visitante"},
+            headers=full["h"],
+        )
+        assert resp.status_code == 422
+
     def test_get_caso(self, full, db_session):
         c, h, s = full["c"], full["h"], full["s"]
         p = self._create_persona(db_session, s)
