@@ -414,8 +414,6 @@ def crear_caso_nuevo_visitante(
     origen_evento_id: Optional[UUID] = None,
     *,
     commit: bool = True,
-    pipeline: Optional[PipelineCRM] = None,
-    etapa: Optional[EtapaPipeline] = None,
 ) -> Optional[CasoCRM]:
     """Crea un caso CRM de nuevos visitantes usando el pipeline canónico por sede.
 
@@ -423,12 +421,12 @@ def crear_caso_nuevo_visitante(
     Los flujos compuestos (registro/check-in/cierre de evento) pasan
     ``commit=False`` para que el caller controle una única transacción.
     """
-    pipeline = pipeline or _obtener_o_crear_pipeline_nuevos_visitantes(db, sede_id)
+    pipeline = _obtener_o_crear_pipeline_nuevos_visitantes(db, sede_id)
     if pipeline is None:
         logger.warning("No se pudo obtener/crear pipeline para sede=%s — skipping caso creation", sede_id)
         return None
 
-    etapa = etapa or _obtener_o_crear_etapa_nuevo_contacto(db, pipeline, sede_id)
+    etapa = _obtener_o_crear_etapa_nuevo_contacto(db, pipeline, sede_id)
     if not etapa:
         logger.warning("No se pudo garantizar una etapa inicial para pipeline %s (sede=%s)", pipeline.id, sede_id)
         return None

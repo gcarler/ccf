@@ -55,6 +55,7 @@ from backend.schemas.crm.base import (
     VolunteerUpdate,
 )
 from backend.services.evangelism_crm_bridge import (
+    _insert_caso_nuevo_visitante,
     _obtener_o_crear_etapa_nuevo_contacto,
     _obtener_o_crear_pipeline_nuevos_visitantes,
     crear_caso_nuevo_visitante,
@@ -341,15 +342,15 @@ def create_caso_crm(
             db.add(persona)
             db.flush()
 
-        case = crear_caso_nuevo_visitante(
-            db,
-            persona,
-            sede_uuid,
-            titulo_prefix="Caso CRM",
-            commit=False,
+        case = _insert_caso_nuevo_visitante(
+            db=db,
+            persona=persona,
+            sede_id=sede_uuid,
             pipeline=pipeline,
             etapa=etapa,
+            titulo_prefix="Caso CRM",
         )
+        db.flush()
         if not case:
             raise HTTPException(status_code=500, detail="No se pudo crear el caso CRM")
         _update_case_field(case, "stage", data.get("stage", "new"))
