@@ -29,7 +29,7 @@ import UniversalGanttView from "@/components/ui/UniversalGanttView";
 import UniversalWikiView from "@/components/ui/UniversalWikiView";
 
 interface MediaItem {
-  id: number;
+  id: string;
   url: string;
   filename: string;
   mime_type?: string;
@@ -86,23 +86,33 @@ export default function CmsMediaLibrary() {
   const [filter, setFilter] = useState<FilterType>("all");
   const [viewType, setViewType] = useState<ViewType>("grid");
   const [selectedItem, setSelectedItem] = useState<MediaItem | null>(null);
-  const [copiedId, setCopiedId] = useState<number | null>(null);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
   const [isDraggingOver, setIsDraggingOver] = useState(false);
-  const [deletingId, setDeletingId] = useState<number | null>(null);
-  const [optimizingId, setOptimizingId] = useState<number | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [optimizingId, setOptimizingId] = useState<string | null>(null);
   const [_metadataSaving, setMetadataSaving] = useState(false);
   const [pendingAction, setPendingAction] = useState<{ item: MediaItem, action: 'archive' | 'delete' } | null>(null);
   const [tagsText, setTagsText] = useState("");
+  const [totalItems, setTotalItems] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const fetchMedia = useCallback(async () => {
     if (!token) { setLoading(false); return; }
     setLoading(true);
     try {
-      const data = await apiFetch<{ items: MediaItem[]; total: number }>("/cms/media", { token, cache: "no-store", query: { include_archived: true } });
+      // La biblioteca debe cargar el inventario completo que devuelve el
+      // endpoint. El valor predeterminado de la API es paginado y dejaba
+      // medios reales fuera de la pantalla sin avisar al editor.
+      const data = await apiFetch<{ items: MediaItem[]; total: number }>("/cms/media", {
+        token,
+        cache: "no-store",
+        query: { include_archived: true, limit: 500 },
+      });
       setItems(data?.items || []);
+      setTotalItems(data?.total || 0);
     } catch {
       setItems([]);
+      setTotalItems(0);
     } finally {
       setLoading(false);
     }
@@ -383,7 +393,7 @@ export default function CmsMediaLibrary() {
             Biblioteca de Medios
           </h1>
           <span className="text-2xs font-semibold text-[hsl(var(--text-secondary))] bg-[hsl(var(--surface-2))] dark:bg-white/5 px-2 py-0.5 rounded-full shrink-0">
-            {filtered.length} archivos
+            {search || filter !== "all" ? `${filtered.length} de ${totalItems}` : totalItems} archivos
           </span>
         </div>
 
