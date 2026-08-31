@@ -194,18 +194,32 @@ export default function ConsolidationPipelinePage() {
 
     const handleCreateLead = async (e: React.FormEvent) => {
         e.preventDefault();
+        const firstName = newLeadForm.first_name.trim();
+        const lastName = newLeadForm.last_name.trim();
+        if (firstName.length < 2 || lastName.length < 2) {
+            addToast('Nombre y apellido son obligatorios', 'error');
+            return;
+        }
         setIsSavingLead(true);
         try {
             await apiFetch('/crm/casos', {
                 method: 'POST', token,
-                body: { ...newLeadForm, spiritual_status: 'Prospecto' }
+                body: {
+                    first_name: firstName,
+                    last_name: lastName,
+                    phone: newLeadForm.phone.trim() || undefined,
+                    source: newLeadForm.source,
+                    stage: newLeadForm.stage,
+                    notes: newLeadForm.notes.trim() || undefined,
+                    spiritual_status: 'Prospecto',
+                }
             });
             addToast('✅ Prospecto creado exitosamente', 'success');
             setIsNewLeadDrawerOpen(false);
             setNewLeadForm({ first_name: '', last_name: '', phone: '', source: 'Visitante', notes: '', stage: 'new' });
             fetchPipeline();
-        } catch {
-            addToast('Error al crear el prospecto', 'error');
+        } catch (err: unknown) {
+            addToast(extractErrorMessage(err, 'Error al crear el prospecto'), 'error');
         } finally {
             setIsSavingLead(false);
         }

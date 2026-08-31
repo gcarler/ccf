@@ -95,16 +95,23 @@ export default function ContactsPage() {
 
     const handleCreate = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!newLead.first_name.trim()) return;
+        const firstName = newLead.first_name.trim();
+        const lastName = newLead.last_name.trim();
+        if (firstName.length < 2 || lastName.length < 2) {
+            addToast('Nombre y apellido son obligatorios', 'error');
+            return;
+        }
         setIsSaving(true);
         try {
-            await apiFetch('/crm/personas/', {
+            await apiFetch('/crm/casos', {
                 method: 'POST', token,
                 body: {
-                    first_name: newLead.first_name,
-                    last_name: newLead.last_name,
-                    phone: newLead.phone,
+                    first_name: firstName,
+                    last_name: lastName,
+                    phone: newLead.phone.trim() || undefined,
                     source: newLead.source,
+                    stage: newLead.stage,
+                    notes: newLead.notes.trim() || undefined,
                     spiritual_status: 'Prospecto',
                 }
             });
@@ -112,8 +119,8 @@ export default function ContactsPage() {
             setIsCreateOpen(false);
             setNewLead({ first_name: '', last_name: '', phone: '', source: 'Visitante', stage: 'new', notes: '' });
             fetchLeads();
-        } catch {
-            addToast('Error al registrar contacto', 'error');
+        } catch (err: unknown) {
+            addToast(extractErrorMessage(err, 'Error al registrar contacto'), 'error');
         } finally {
             setIsSaving(false);
         }
@@ -441,8 +448,10 @@ export default function ContactsPage() {
                             />
                         </div>
                         <div className="space-y-2">
-                            <label className="text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Apellido</label>
+                            <label className="text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Apellido *</label>
                             <input
+                                required
+                                minLength={2}
                                 value={newLead.last_name}
                                 onChange={e => setNewLead({ ...newLead, last_name: e.target.value })}
                                 placeholder="Pérez"
