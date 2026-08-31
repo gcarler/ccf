@@ -1149,11 +1149,25 @@ class CaseCall(BaseModel):
 class CasoCreate(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    persona_id: UUID
+    # persona_id is optional when the CRM receives a new prospect. In that
+    # mode the endpoint creates the canonical Persona and its initial case in
+    # one transaction. Existing-persona flows still send persona_id.
+    persona_id: Optional[UUID] = None
+    first_name: Optional[str] = Field(default=None, min_length=2, max_length=100)
+    last_name: Optional[str] = Field(default=None, min_length=2, max_length=100)
+    email: Optional[str] = None
+    phone: Optional[str] = Field(default=None, max_length=50)
+    spiritual_status: Optional[str] = None
     stage: str = "new"
     source: Optional[str] = None
     source_campaign: Optional[str] = None
     notes: Optional[str] = None
+
+    @model_validator(mode="after")
+    def validate_new_prospect_identity(self):
+        if self.persona_id is None and (not self.first_name or not self.last_name):
+            raise ValueError("first_name y last_name son obligatorios al crear un prospecto")
+        return self
 
 
 class MessagingSend(BaseModel):

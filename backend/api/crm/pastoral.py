@@ -54,7 +54,11 @@ from backend.schemas.crm.base import (
     VolunteerCreate,
     VolunteerUpdate,
 )
-from backend.services.evangelism_crm_bridge import crear_caso_nuevo_visitante
+from backend.services.evangelism_crm_bridge import (
+    _obtener_o_crear_etapa_nuevo_contacto,
+    _obtener_o_crear_pipeline_nuevos_visitantes,
+    crear_caso_nuevo_visitante,
+)
 from backend.services.messaging import (
     MessagingGateway,
     get_messaging_gateway,
@@ -301,6 +305,15 @@ def create_caso_crm(
         user_sede = get_user_sede_id(db, current_user.id)
         if not user_sede:
             raise HTTPException(status_code=400, detail="El usuario no tiene sede asignada")
+        sede_uuid = uuid.UUID(str(user_sede))
+
+        # Ensure CRM infrastructure before adding a new Persona. The bridge
+        # uses savepoints while bootstrapping a pipeline; doing that after a
+        # pending Persona can roll back that pending identity on SQLite.
+        pipeline = _obtener_o_crear_pipeline_nuevos_visitantes(db, sede_uuid)
+        etapa = _obtener_o_crear_etapa_nuevo_contacto(db, pipeline, sede_uuid) if pipeline else None
+        if pipeline is None or etapa is None:
+            raise HTTPException(status_code=500, detail="No se pudo preparar el pipeline CRM")
 
         phone = str(data.get("phone") or "").strip() or None
         email = str(data.get("email") or "").strip() or None
@@ -316,13 +329,14 @@ def create_caso_crm(
         )
         if not persona:
             persona = models.Persona(
-                first_name=str(data.get("first_name") or "Prospecto").strip() or "Prospecto",
+                first_name=str(data.get("first_name") or "").strip(),
                 last_name=str(data.get("last_name") or "").strip(),
                 phone=phone,
                 email=email,
                 spiritual_status=str(data.get("spiritual_status") or "Prospecto"),
+                estado_vital="ACTIVO",
                 church_role="Visitante",
-                sede_id=uuid.UUID(str(user_sede)),
+                sede_id=sede_uuid,
             )
             db.add(persona)
             db.flush()
@@ -330,13 +344,17 @@ def create_caso_crm(
         case = crear_caso_nuevo_visitante(
             db,
             persona,
-            uuid.UUID(str(persona.sede_id or user_sede)),
+            sede_uuid,
             titulo_prefix="Caso CRM",
+            commit=False,
+            pipeline=pipeline,
+            etapa=etapa,
         )
         if not case:
             raise HTTPException(status_code=500, detail="No se pudo crear el caso CRM")
         _update_case_field(case, "stage", data.get("stage", "new"))
         _update_case_field(case, "source", data.get("source", "Visitante"))
+        _update_case_field(case, "source_campaign", data.get("source_campaign"))
         _update_case_field(case, "notes", data.get("notes"))
         db.commit()
         db.refresh(case)
@@ -354,10 +372,11 @@ def create_caso_crm(
         persona,
         persona.sede_id,
         titulo_prefix="Consolidacion",
+        commit=False,
     )
     if not case:
         raise HTTPException(status_code=500, detail="No se pudo crear el caso de consolidacion")
-    for key in ("stage", "status", "source", "notes", "assigned_pastor_id", "assigned_leader_id"):
+    for key in ("stage", "status", "source", "source_campaign", "notes", "assigned_pastor_id", "assigned_leader_id"):
         if key in data:
             _update_case_field(case, key, data[key])
     db.commit()
