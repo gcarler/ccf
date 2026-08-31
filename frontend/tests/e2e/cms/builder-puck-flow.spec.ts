@@ -108,6 +108,16 @@ async function setupPuckBuilderMocks(page: Page) {
     await route.fallback();
   });
 
+  // Mock page workflow so the test validates the editor flow without sending
+  // the synthetic E2E token to a real backend instance.
+  await page.route(`**/cms/v2/sites/${SITE_KEY}/pages/${PAGE_SLUG}/workflow`, async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ id: 'page-home-1', slug: PAGE_SLUG, title: 'Home', status: 'published' }),
+    });
+  });
+
   // Mock theme endpoint
   await page.route(`**/cms/v2/public/sites/${SITE_KEY}/theme**`, async (route) => {
     await route.fulfill({
@@ -140,11 +150,11 @@ async function setupPuckBuilderMocks(page: Page) {
     await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({}) });
   });
 
-  await page.route('**/cms/v2/sites**', async (route) => {
+  await page.route('**/cms/v2/sites', async (route) => {
     await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify([]) });
   });
 
-  await page.route('**/cms/v2/sites/ccf/themes**', async (route) => {
+  await page.route('**/cms/v2/sites/ccf/themes', async (route) => {
     await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify([]) });
   });
 }
