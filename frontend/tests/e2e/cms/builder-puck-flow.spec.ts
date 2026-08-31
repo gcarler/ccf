@@ -62,7 +62,7 @@ async function setupPuckBuilderMocks(page: Page) {
   });
 
   // Mock initial sections list
-  await page.route(`**/api/cms/v2/sites/${SITE_KEY}/pages/${PAGE_SLUG}/sections`, async (route) => {
+  await page.route(`**/cms/v2/sites/${SITE_KEY}/pages/${PAGE_SLUG}/sections**`, async (route) => {
     const method = route.request().method();
     if (method === 'POST') {
       const body = route.request().postDataJSON() as Record<string, unknown>;
@@ -87,7 +87,7 @@ async function setupPuckBuilderMocks(page: Page) {
   });
 
   // Mock section PATCH / update
-  await page.route(`**/api/cms/v2/sites/${SITE_KEY}/pages/${PAGE_SLUG}/sections/*`, async (route) => {
+  await page.route(`**/cms/v2/sites/${SITE_KEY}/pages/${PAGE_SLUG}/sections/*`, async (route) => {
     const method = route.request().method();
     if (method === 'PATCH' || method === 'PUT') {
       const body = route.request().postDataJSON() as Record<string, unknown>;
@@ -109,7 +109,7 @@ async function setupPuckBuilderMocks(page: Page) {
   });
 
   // Mock theme endpoint
-  await page.route(`**/api/cms/v2/public/sites/${SITE_KEY}/theme`, async (route) => {
+  await page.route(`**/cms/v2/public/sites/${SITE_KEY}/theme**`, async (route) => {
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
@@ -118,7 +118,7 @@ async function setupPuckBuilderMocks(page: Page) {
   });
 
   // Mock CMS media endpoint
-  await page.route('**/api/cms/media', async (route) => {
+  await page.route('**/cms/media**', async (route) => {
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
@@ -127,7 +127,7 @@ async function setupPuckBuilderMocks(page: Page) {
   });
 
   // Mock AI text generation endpoint
-  await page.route('**/api/system/ai/generate', async (route) => {
+  await page.route('**/system/ai/generate**', async (route) => {
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
@@ -136,15 +136,15 @@ async function setupPuckBuilderMocks(page: Page) {
   });
 
   // Mock layout and configuration endpoints to prevent 401 redirects
-  await page.route('**/api/workspace/config', async (route) => {
+  await page.route('**/workspace/config**', async (route) => {
     await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({}) });
   });
 
-  await page.route('**/api/cms/v2/sites', async (route) => {
+  await page.route('**/cms/v2/sites**', async (route) => {
     await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify([]) });
   });
 
-  await page.route('**/api/cms/v2/sites/ccf/themes', async (route) => {
+  await page.route('**/cms/v2/sites/ccf/themes**', async (route) => {
     await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify([]) });
   });
 }
