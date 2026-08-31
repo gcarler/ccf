@@ -144,6 +144,22 @@ function setAtPath(value: JsonValue, path: JsonPath, nextValue: unknown): JsonVa
   return updateAtPath(value, path, nextValue) as JsonValue;
 }
 
+function humanizeKey(key: string): string {
+  return key
+    .replace(/[_-]+/g, " ")
+    .replace(/\b\w/g, (letter) => letter.toUpperCase());
+}
+
+function isLongTextKey(key: string, value: string): boolean {
+  const normalized = key.toLowerCase();
+  return value.length > 120
+    || normalized.includes("body")
+    || normalized.includes("description")
+    || normalized.includes("content")
+    || normalized.includes("text")
+    || normalized.includes("caption");
+}
+
 export default function CmsJsonMediaField({
   label = "Contenido editable (JSON)",
   value = "{}",
@@ -172,6 +188,16 @@ export default function CmsJsonMediaField({
   };
 
   const updateMedia = (path: JsonPath, nextValue: string) => updateJson(path, nextValue);
+
+  const guidedFields = useMemo(() => {
+    if (!parsed) return [];
+    return Object.entries(parsed).filter(([, fieldValue]) =>
+      fieldValue === null
+      || typeof fieldValue === "string"
+      || typeof fieldValue === "number"
+      || typeof fieldValue === "boolean",
+    ).filter(([key, fieldValue]) => !(typeof fieldValue === "string" && (isMediaKey(key) || looksLikeImageUrl(fieldValue))));
+  }, [parsed]);
 
   const renameThumbnailOverride = (path: JsonPath, oldKey: string, nextKey: string) => {
     if (!parsed || !nextKey.trim() || oldKey === nextKey) return;
@@ -281,16 +307,77 @@ export default function CmsJsonMediaField({
           ))}
         </div>
       )}
-      <textarea
-        aria-label={label}
-        value={value}
-        onChange={(event) => onChange(event.target.value)}
-        className="min-h-48 w-full rounded-md border border-[hsl(var(--border))] bg-transparent p-3 font-mono text-xs dark:border-white/10"
-        spellCheck={false}
-      />
-      <p className="text-3xs text-[hsl(var(--text-secondary))]">
-        Las rutas de imagen detectadas pueden seleccionarse desde la biblioteca CMS sin editar la URL a mano.
-      </p>
+      {guidedFields.length > 0 && (
+        <div className="space-y-3 rounded-md border border-[hsl(var(--border))] p-3 dark:border-white/10">
+          <div>
+            <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Campos editables</p>
+            <p className="mt-1 text-2xs text-[hsl(var(--text-secondary))]">Modifica el contenido sin escribir código ni conocer la estructura interna.</p>
+          </div>
+          {guidedFields.map(([key, fieldValue]) => {
+            const fieldPath: JsonPath = [key];
+            const fieldLabel = humanizeKey(key);
+            if (typeof fieldValue === "boolean") {
+              return (
+                <label key={key} className="flex items-center gap-2 text-xs font-medium text-[hsl(var(--text-primary))] dark:text-white">
+                  <input
+                    type="checkbox"
+                    checked={fieldValue}
+                    onChange={(event) => updateJson(fieldPath, event.target.checked)}
+                    className="size-4 rounded border-[hsl(var(--border))] text-[hsl(var(--primary))] focus:ring-[hsl(var(--primary))]"
+                  />
+                  {fieldLabel}
+                </label>
+              );
+            }
+            if (typeof fieldValue === "number") {
+              return (
+                <label key={key} className="block space-y-1 text-xs font-medium text-[hsl(var(--text-primary))] dark:text-white">
+                  <span>{fieldLabel}</span>
+                  <input
+                    type="number"
+                    value={fieldValue}
+                    onChange={(event) => updateJson(fieldPath, Number(event.target.value))}
+                    className="w-full rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] px-3 py-2 text-xs dark:border-white/10 dark:bg-[hsl(var(--admin-bg-secondary))]"
+                  />
+                </label>
+              );
+            }
+            const textValue = fieldValue == null ? "" : String(fieldValue);
+            const inputClass = "w-full rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] px-3 py-2 text-xs dark:border-white/10 dark:bg-[hsl(var(--admin-bg-secondary))]";
+            return (
+              <label key={key} className="block space-y-1 text-xs font-medium text-[hsl(var(--text-primary))] dark:text-white">
+                <span>{fieldLabel}</span>
+                {isLongTextKey(key, textValue) ? (
+                  <textarea
+                    value={textValue}
+                    onChange={(event) => updateJson(fieldPath, event.target.value)}
+                    className={`${inputClass} min-h-24 resize-y`}
+                  />
+                ) : (
+                  <input
+                    value={textValue}
+                    onChange={(event) => updateJson(fieldPath, event.target.value)}
+                    className={inputClass}
+                  />
+                )}
+              </label>
+            );
+          })}
+        </div>
+      )}
+      <details className="rounded-md border border-dashed border-[hsl(var(--border))] p-3 dark:border-white/10">
+        <summary className="cursor-pointer text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Opciones avanzadas</summary>
+        <div className="mt-3 space-y-2">
+          <p className="text-2xs text-[hsl(var(--text-secondary))]">Usa esta vista solo para listas o estructuras especiales. Para textos e imágenes utiliza los campos anteriores.</p>
+          <textarea
+            aria-label={`${label} avanzado`}
+            value={value}
+            onChange={(event) => onChange(event.target.value)}
+            className="min-h-48 w-full rounded-md border border-[hsl(var(--border))] bg-transparent p-3 font-mono text-xs dark:border-white/10"
+            spellCheck={false}
+          />
+        </div>
+      </details>
     </div>
   );
 }

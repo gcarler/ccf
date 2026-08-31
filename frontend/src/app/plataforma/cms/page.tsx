@@ -417,6 +417,26 @@ export default function CmsHomePage() {
           </a>
         </div>
 
+        <section className="rounded-xl border border-[hsl(var(--info)/25%)] bg-[hsl(var(--info)/8%)] p-4 dark:bg-[hsl(var(--info)/10%)]">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <div>
+              <p className="text-2xs font-bold uppercase tracking-[0.18em] text-[hsl(var(--primary))]">Edición del sitio</p>
+              <h1 className="mt-1 text-xl font-bold text-[hsl(var(--text-primary))] dark:text-white">¿Qué quieres cambiar?</h1>
+              <p className="mt-1 max-w-2xl text-sm text-[hsl(var(--text-secondary))]">
+                Elige una página para editar sus textos, imágenes, botones y secciones desde un solo lugar.
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <Link href="/plataforma/cms/pages" className="inline-flex items-center gap-2 rounded-lg bg-[hsl(var(--primary))] px-4 py-2 text-xs font-bold text-white shadow-sm transition hover:opacity-90">
+                <FileText size={15} /> Editar una página
+              </Link>
+              <Link href="/plataforma/cms/media" className="inline-flex items-center gap-2 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] px-4 py-2 text-xs font-bold text-[hsl(var(--text-primary))] transition hover:border-[hsl(var(--primary)/40%)] dark:bg-white/5 dark:text-white">
+                <ImageIcon size={15} /> Gestionar imágenes
+              </Link>
+            </div>
+          </div>
+        </section>
+
         {/* Metric cards */}
         <section className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-5">
           {loading ? (

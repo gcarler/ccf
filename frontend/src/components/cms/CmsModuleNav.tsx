@@ -38,7 +38,10 @@ import { SITE_KEY } from "@/lib/site-config";
 
 const CMS_TABS = [
   { id: "resumen", label: "Resumen", href: "/plataforma/cms", icon: LayoutDashboard },
-  { id: "paginas", label: "Paginas", href: "/plataforma/cms/pages", icon: FileText },
+  { id: "paginas", label: "Páginas", href: "/plataforma/cms/pages", icon: FileText },
+  { id: "builder", label: "Editor de contenido", href: "/plataforma/cms/builder", icon: PanelsTopLeft },
+  { id: "media", label: "Imágenes y archivos", href: "/plataforma/cms/media", icon: ImageIcon },
+  { id: "menus", label: "Menús", href: "/plataforma/cms/menus", icon: Link2 },
   { id: "comments", label: "Comentarios", href: "/plataforma/cms/comments", icon: MessageCircle },
   { id: "ab-testing", label: "A/B Testing", href: "/plataforma/cms/ab-testing", icon: FlaskConical },
   { id: "newsletter", label: "Newsletter", href: "/plataforma/cms/newsletter", icon: Mail },
@@ -47,9 +50,6 @@ const CMS_TABS = [
 
   { id: "readiness", label: "Readiness", href: "/plataforma/cms/readiness", icon: Gauge },
   { id: "testimonios", label: "Testimonios", href: "/plataforma/cms/testimonials", icon: MessageCircle },
-  { id: "menus", label: "Menus", href: "/plataforma/cms/menus", icon: Link2 },
-  { id: "media", label: "Media", href: "/plataforma/cms/media", icon: ImageIcon },
-  { id: "builder", label: "Builder", href: "/plataforma/cms/builder", icon: PanelsTopLeft },
   { id: "resources", label: "Recursos", href: "/plataforma/cms/resources", icon: PackageOpen },
   { id: "themes", label: "Temas", href: "/plataforma/cms/themes", icon: Palette },
   { id: "sites", label: "Sitios", href: "/plataforma/cms/sites", icon: Globe },
@@ -57,7 +57,7 @@ const CMS_TABS = [
   { id: "notifications", label: "Notificaciones", href: "/plataforma/cms/notifications", icon: Bell },
   { id: "webhooks", label: "Webhooks", href: "/plataforma/cms/webhooks", icon: Webhook },
   { id: "custom-types", label: "Tipos Custom", href: "/plataforma/cms/custom-types", icon: Puzzle },
-  { id: "section-types", label: "Tipos Seccion", href: "/plataforma/cms/section-types", icon: Layers3 },
+  { id: "section-types", label: "Tipos de sección", href: "/plataforma/cms/section-types", icon: Layers3 },
   { id: "glossary", label: "Glosario", href: "/plataforma/cms/glossary", icon: FileText },
   { id: "search-admin", label: "Busqueda", href: "/plataforma/cms/search-admin", icon: Search },
   { id: "sessions", label: "Sesiones", href: "/plataforma/cms/sessions", icon: Shield },

@@ -1171,10 +1171,11 @@ export default function PuckBuilderPage() {
           </button>
           <div>
             <span className="text-3xs uppercase tracking-wider font-semibold text-[hsl(var(--text-secondary))] flex items-center gap-1.5">
-              <LayoutPanelTop size={10} /> Puck Editor
+              <LayoutPanelTop size={10} /> Editor de contenido
             </span>
             <h1 className="text-md font-bold tracking-tight mt-0.5">
               Editando página: <span className="text-primary">/{pageSlug}</span>
+              <span className="mt-1 block text-2xs font-normal text-[hsl(var(--text-secondary))]">Edita textos, imágenes y secciones. Guarda como borrador y publica cuando esté listo.</span>
             </h1>
           </div>
         </div>

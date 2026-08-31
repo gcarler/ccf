@@ -281,7 +281,9 @@ export default function CmsPagesManagement() {
     });
   };
 
-  const openPage = (page: CmsPage) => router.push(`/plataforma/cms/pages/${page.slug}`);
+  // La acción principal de una página es editar su contenido. El detalle
+  // intermedio solo mostraba un contador y hacía difícil descubrir el editor.
+  const openPage = (page: CmsPage) => router.push(`/plataforma/cms/builder?site=${siteKey}&page=${page.slug}`);
 
   const openPreview = (page: CmsPage) => {
     window.open(`/plataforma/cms/preview?site=${encodeURIComponent(siteKey)}&page=${encodeURIComponent(page.slug)}`, "_blank");
