@@ -39,6 +39,15 @@ export default function BuilderSectionInspector({
                 {/* Hero-specific editor */}
                 {activeSection.type === "hero" ? (
                   <div className="space-y-3">
+                    <div className="rounded-lg border border-[hsl(var(--info)/30%)] bg-info-soft/40 dark:bg-[hsl(var(--info))]/10 px-3 py-2.5">
+                      <p className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--primary))]">Hero público</p>
+                      <p className="mt-1 text-2xs leading-relaxed text-[hsl(var(--text-secondary))]">
+                        Estos campos controlan el texto visible en el hero de la página pública del home.
+                      </p>
+                      <p className="mt-2 text-xs font-semibold text-[hsl(var(--text-primary))] dark:text-white">
+                        {safeString(activeSection.props_json?.title_lead)} {safeString(activeSection.props_json?.title_accent)} {safeString(activeSection.props_json?.title_tail)}
+                      </p>
+                    </div>
                     <div>
                       <label className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-1 block">Eyebrow</label>
                       <input
