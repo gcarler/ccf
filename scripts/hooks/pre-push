@@ -360,8 +360,16 @@ else
     for check_id in "${QUALITY_CHECKS[@]}"; do
         case "$check_id" in
             academy_quality)
-                run_quality_check "$check_id" "Academy quality" \
-                    "$VENV/python $REPO_ROOT/scripts/run_quality_integration.py --suite academy --test-database-url '${TEST_DATABASE_URL:-sqlite://}'"
+                if [ "$MODE" = "fast" ] && {
+                    [ -z "${QUALITY_DATABASE_URL:-}" ] ||
+                    [ -z "${QUALITY_API_URL:-}" ] ||
+                    [ -z "${QUALITY_RUN_ID:-}" ]
+                }; then
+                    echo -e "        ${YELLOW}⚠ academy_quality omitido en modo fast: falta entorno QUALITY_*${NC}"
+                else
+                    run_quality_check "$check_id" "Academy quality" \
+                        "$VENV/python $REPO_ROOT/scripts/run_quality_integration.py --suite academy --test-database-url '${TEST_DATABASE_URL:-sqlite://}'"
+                fi
                 ;;
             cms_quality)
                 if [ "$MODE" = "fast" ] && { [ -z "${E2E_EMAIL:-}" ] || [ -z "${E2E_PASSWORD:-}" ]; }; then
