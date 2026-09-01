@@ -63,10 +63,10 @@ function SubmitButton({ submitting, label }: { submitting: boolean; label: strin
 export function ContactFormSection({ section }: { section: CmsSection<"contact_form"> }) {
   const props: ContactFormProps = section.props_json ?? {};
   const p = asProps(props);
-  const title = val(p, "title", "Hablemos de Tu Caminar");
+  const title = val(p, "title");
   const subtitle = val(p, "subtitle", "");
   const actionUrl = val(p, "action_url", "/public/contact");
-  const resetLabel = val(p, "reset_label", "Enviar otro mensaje");
+  const resetLabel = val(p, "reset_label");
   const [status, setStatus] = useState<"idle" | "submitting" | "success" | "error">("idle");
   const [error, setError] = useState<string | null>(null);
 
@@ -119,33 +119,33 @@ export function ContactFormSection({ section }: { section: CmsSection<"contact_f
       {subtitle && <p className="mt-3 text-base" style={{ color: "var(--site-on-surface-variant)" }}>{subtitle}</p>}
       {status === "success" ? (
         <FormSuccess
-          message={val(p, "success_message", "Gracias. Te contactaremos pronto.")}
+          message={val(p, "success_message")}
           resetLabel={resetLabel}
           onReset={() => setStatus("idle")}
         />
       ) : (
         <form onSubmit={handleSubmit} className="mt-8 space-y-5 max-w-xl">
           <div className="space-y-2">
-            <FieldLabel htmlFor="cms-contact-full-name" icon={<User size={15} />}>{val(p, "name_label", "Nombre completo")}</FieldLabel>
-            <input id="cms-contact-full-name" name="full_name" required minLength={2} maxLength={160} type="text" placeholder={val(p, "name_placeholder", "Tu nombre")} autoComplete="name" className={inputClass} style={inputStyle()} />
+          <FieldLabel htmlFor="cms-contact-full-name" icon={<User size={15} />}>{val(p, "name_label")}</FieldLabel>
+            <input id="cms-contact-full-name" name="full_name" required minLength={2} maxLength={160} type="text" placeholder={val(p, "name_placeholder")} autoComplete="name" className={inputClass} style={inputStyle()} />
           </div>
           <div className="grid gap-5 sm:grid-cols-2">
             <div className="space-y-2">
-              <FieldLabel htmlFor="cms-contact-email" icon={<Mail size={15} />}>{val(p, "email_label", "Correo electrónico")}</FieldLabel>
-              <input id="cms-contact-email" name="email" type="email" maxLength={255} placeholder={val(p, "email_placeholder", "tu@email.com (opcional)")} autoComplete="email" className={inputClass} style={inputStyle()} />
+              <FieldLabel htmlFor="cms-contact-email" icon={<Mail size={15} />}>{val(p, "email_label")}</FieldLabel>
+            <input id="cms-contact-email" name="email" type="email" maxLength={255} placeholder={val(p, "email_placeholder")} autoComplete="email" className={inputClass} style={inputStyle()} />
             </div>
             <div className="space-y-2">
-              <FieldLabel htmlFor="cms-contact-phone" icon={<Phone size={15} />}>{val(p, "phone_label", "WhatsApp")}</FieldLabel>
-              <input id="cms-contact-phone" name="phone" type="tel" maxLength={40} placeholder={val(p, "phone_placeholder", "+57 300...")} autoComplete="tel" className={inputClass} style={inputStyle()} />
+              <FieldLabel htmlFor="cms-contact-phone" icon={<Phone size={15} />}>{val(p, "phone_label")}</FieldLabel>
+            <input id="cms-contact-phone" name="phone" type="tel" maxLength={40} placeholder={val(p, "phone_placeholder")} autoComplete="tel" className={inputClass} style={inputStyle()} />
             </div>
           </div>
           <div className="space-y-2">
-            <FieldLabel htmlFor="cms-contact-notes" icon={<MessageSquare size={15} />}>{val(p, "message_label", "¿En qué podemos ayudarte?")}</FieldLabel>
-            <textarea id="cms-contact-notes" name="notes" required minLength={2} maxLength={5000} rows={4} placeholder={val(p, "message_placeholder", "Cuéntanos un poco sobre ti...")} className={inputClass} style={inputStyle()} />
+            <FieldLabel htmlFor="cms-contact-notes" icon={<MessageSquare size={15} />}>{val(p, "message_label")}</FieldLabel>
+            <textarea id="cms-contact-notes" name="notes" required minLength={2} maxLength={5000} rows={4} placeholder={val(p, "message_placeholder")} className={inputClass} style={inputStyle()} />
           </div>
           <input name="website" tabIndex={-1} autoComplete="off" aria-hidden="true" className="hidden" />
           {status === "error" && <p role="alert" aria-live="assertive" className="text-sm font-semibold text-[hsl(var(--destructive))]">{error}</p>}
-          <SubmitButton submitting={status === "submitting"} label={val(p, "submit_label", "Enviar mensaje y conectar")} />
+          <SubmitButton submitting={status === "submitting"} label={val(p, "submit_label")} />
         </form>
       )}
     </section>
@@ -157,11 +157,11 @@ export function ContactFormSection({ section }: { section: CmsSection<"contact_f
 export function PrayerFormSection({ section }: { section: CmsSection<"prayer_form"> }) {
   const props: PrayerFormProps = section.props_json ?? {};
   const p = asProps(props);
-  const title = val(p, "title", "Pedir oración");
+  const title = val(p, "title");
   const subtitle = val(p, "subtitle", "");
   const actionUrl = val(p, "action_url", "/crm/prayer-requests/public");
   const category = val(p, "category", "General");
-  const resetLabel = val(p, "reset_label", "Enviar otra petición");
+  const resetLabel = val(p, "reset_label");
   const [status, setStatus] = useState<"idle" | "submitting" | "success" | "error">("idle");
   const [error, setError] = useState<string | null>(null);
 
@@ -207,23 +207,23 @@ export function PrayerFormSection({ section }: { section: CmsSection<"prayer_for
       {subtitle && <p className="mt-3 text-base" style={{ color: "var(--site-on-surface-variant)" }}>{subtitle}</p>}
       {status === "success" ? (
         <FormSuccess
-          message={val(p, "success_message", "Tu petición ha sido enviada.")}
+          message={val(p, "success_message")}
           resetLabel={resetLabel}
           onReset={() => setStatus("idle")}
         />
       ) : (
         <form onSubmit={handleSubmit} className="mt-8 space-y-5 max-w-xl">
           <div className="space-y-2">
-            <FieldLabel htmlFor="cms-prayer-name" icon={<User size={15} />}>{val(p, "name_label", "Nombre")}</FieldLabel>
-            <input id="cms-prayer-name" name="requester_name" required minLength={2} maxLength={160} type="text" placeholder={val(p, "name_placeholder", "Tu nombre")} autoComplete="name" className={inputClass} style={inputStyle()} />
+            <FieldLabel htmlFor="cms-prayer-name" icon={<User size={15} />}>{val(p, "name_label")}</FieldLabel>
+            <input id="cms-prayer-name" name="requester_name" required minLength={2} maxLength={160} type="text" placeholder={val(p, "name_placeholder")} autoComplete="name" className={inputClass} style={inputStyle()} />
           </div>
           <div className="space-y-2">
-            <FieldLabel htmlFor="cms-prayer-request" icon={<HeartHandshake size={15} />}>{val(p, "request_label", "Petición de oración")}</FieldLabel>
-            <textarea id="cms-prayer-request" name="request_text" required minLength={2} maxLength={5000} rows={4} placeholder={val(p, "request_placeholder", "Comparte tu necesidad...")} className={inputClass} style={inputStyle()} />
+            <FieldLabel htmlFor="cms-prayer-request" icon={<HeartHandshake size={15} />}>{val(p, "request_label")}</FieldLabel>
+            <textarea id="cms-prayer-request" name="request_text" required minLength={2} maxLength={5000} rows={4} placeholder={val(p, "request_placeholder")} className={inputClass} style={inputStyle()} />
           </div>
           <input name="website" tabIndex={-1} autoComplete="off" aria-hidden="true" className="hidden" />
           {status === "error" && <p role="alert" aria-live="assertive" className="text-sm font-semibold text-[hsl(var(--destructive))]">{error}</p>}
-          <SubmitButton submitting={status === "submitting"} label={val(p, "submit_label", "Enviar al equipo pastoral")} />
+          <SubmitButton submitting={status === "submitting"} label={val(p, "submit_label")} />
         </form>
       )}
     </section>
