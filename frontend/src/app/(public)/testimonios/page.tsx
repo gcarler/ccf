@@ -327,7 +327,7 @@ export default function TestimoniosPage() {
                                     key={t.id}
                                     t={t}
                                     isHighlight={index === 0 && searchQuery === ""}
-                                    readMoreLabel={readMoreLabel || "Leer más"}
+                                    readMoreLabel={readMoreLabel}
                                 />
                             ))}
                         </motion.div>

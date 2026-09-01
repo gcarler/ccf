@@ -109,7 +109,7 @@ export default function BoletinPage() {
                                             className="ccf-button disabled:opacity-60 disabled:cursor-not-allowed"
                                             style={{ background: "var(--site-cta-gradient)", color: "var(--site-on-primary)" }}
                                         >
-                                            {status === "sending" ? sendingLabel || "Enviando..." : ctaText}
+                                            {status === "sending" ? sendingLabel : ctaText}
                                         </button>
                                     )}
                                 </form>
