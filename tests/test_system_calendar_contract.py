@@ -1,6 +1,6 @@
 from pathlib import Path
 
-SYSTEM_API_PATH = Path("/root/ccf/backend/api/system.py")
+SYSTEM_API_PATH = Path(__file__).resolve().parents[1] / "backend/api/system.py"
 
 
 def test_system_calendar_uses_frontend_canonical_crm_types():

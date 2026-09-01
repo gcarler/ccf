@@ -923,7 +923,7 @@ def test_sign_request_decline(client, db_session):
         json={
             "title": "To decline",
             "document_url": "https://test.com/doc.pdf",
-            "signers": [{"email": "decliner@test.com", "full_name": "Decliner"}],
+            "signers": [{"email": "admin@example.com", "full_name": "Admin"}],
         },
         headers=headers,
     )
