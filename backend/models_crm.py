@@ -16,7 +16,6 @@ from sqlalchemy.orm import validates
 # case model from this module while the implementation lives in the pipeline
 # model module.
 from backend.models_crm_pipeline import CasoCRM as CrmCaso
-
 from backend.models_shared import *  # noqa: F403 — re-exports SQLAlchemy primitives (Base, Column, UUID, etc.) used throughout this module
 from backend.models_shared import _utcnow
 
