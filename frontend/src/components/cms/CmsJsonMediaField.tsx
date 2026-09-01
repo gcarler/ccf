@@ -160,6 +160,18 @@ function isLongTextKey(key: string, value: string): boolean {
     || normalized.includes("caption");
 }
 
+function collectPrimitiveFields(value: unknown, path: JsonPath = []): Array<{ path: JsonPath; key: string; value: string | number | boolean | null }> {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return [];
+  return Object.entries(value).flatMap(([key, child]) => {
+    const childPath = [...path, key];
+    if (child === null || typeof child === "string" || typeof child === "number" || typeof child === "boolean") {
+      if (typeof child === "string" && (isMediaKey(key) || looksLikeImageUrl(child))) return [];
+      return [{ path: childPath, key, value: child }];
+    }
+    return collectPrimitiveFields(child, childPath);
+  });
+}
+
 export default function CmsJsonMediaField({
   label = "Contenido editable (JSON)",
   value = "{}",
@@ -196,7 +208,13 @@ export default function CmsJsonMediaField({
       || typeof fieldValue === "string"
       || typeof fieldValue === "number"
       || typeof fieldValue === "boolean",
-    ).filter(([key, fieldValue]) => !(typeof fieldValue === "string" && (isMediaKey(key) || looksLikeImageUrl(fieldValue))));
+    ).filter(([key, fieldValue]) => key !== "content" && !(typeof fieldValue === "string" && (isMediaKey(key) || looksLikeImageUrl(fieldValue))));
+  }, [parsed]);
+
+  const nestedContentFields = useMemo(() => {
+    if (!parsed || Array.isArray(parsed) || typeof parsed.content !== "string") return [];
+    const nested = parseNestedJson(parsed.content);
+    return nested && !Array.isArray(nested) ? collectPrimitiveFields(nested, ["content"]) : [];
   }, [parsed]);
 
   const renameThumbnailOverride = (path: JsonPath, oldKey: string, nextKey: string) => {
@@ -365,12 +383,45 @@ export default function CmsJsonMediaField({
           })}
         </div>
       )}
+      {nestedContentFields.length > 0 && (
+        <div className="space-y-3 rounded-md border border-[hsl(var(--border))] p-3 dark:border-white/10">
+          <div>
+            <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Textos editables de la sección</p>
+            <p className="mt-1 text-2xs text-[hsl(var(--text-secondary))]">Estos textos están publicados en la página y se pueden editar directamente.</p>
+          </div>
+          {nestedContentFields.map(({ path, key, value: fieldValue }) => {
+            const fieldLabel = humanizeKey(key);
+            const inputClass = "w-full rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] px-3 py-2 text-xs dark:border-white/10 dark:bg-[hsl(var(--admin-bg-secondary))]";
+            if (typeof fieldValue === "boolean") {
+              return (
+                <label key={path.join(".")} className="flex items-center gap-2 text-xs font-medium text-[hsl(var(--text-primary))] dark:text-white">
+                  <input type="checkbox" checked={fieldValue} onChange={(event) => updateJson(path, event.target.checked)} className="size-4 rounded border-[hsl(var(--border))] text-[hsl(var(--primary))] focus:ring-[hsl(var(--primary))]" />
+                  {fieldLabel}
+                </label>
+              );
+            }
+            const textValue = fieldValue == null ? "" : String(fieldValue);
+            return (
+              <label key={path.join(".")} className="block space-y-1 text-xs font-medium text-[hsl(var(--text-primary))] dark:text-white">
+                <span>{fieldLabel}</span>
+                {typeof fieldValue === "number" ? (
+                  <input type="number" value={fieldValue} onChange={(event) => updateJson(path, Number(event.target.value))} className={inputClass} />
+                ) : isLongTextKey(key, textValue) ? (
+                  <textarea value={textValue} onChange={(event) => updateJson(path, event.target.value)} className={`${inputClass} min-h-24 resize-y`} />
+                ) : (
+                  <input value={textValue} onChange={(event) => updateJson(path, event.target.value)} className={inputClass} />
+                )}
+              </label>
+            );
+          })}
+        </div>
+      )}
       <details className="rounded-md border border-dashed border-[hsl(var(--border))] p-3 dark:border-white/10">
         <summary className="cursor-pointer text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Opciones avanzadas</summary>
         <div className="mt-3 space-y-2">
           <p className="text-2xs text-[hsl(var(--text-secondary))]">Usa esta vista solo para listas o estructuras especiales. Para textos e imágenes utiliza los campos anteriores.</p>
           <textarea
-            aria-label={`${label} avanzado`}
+            aria-label={label}
             value={value}
             onChange={(event) => onChange(event.target.value)}
             className="min-h-48 w-full rounded-md border border-[hsl(var(--border))] bg-transparent p-3 font-mono text-xs dark:border-white/10"
