@@ -115,6 +115,12 @@ export default function EventosPage() {
     const monthNames = rawMonthNames && rawMonthNames.length === 12 && rawMonthNames.every((m) => typeof m === "string" && (m as string).trim())
         ? (rawMonthNames as string[])
         : [];
+    const weekdayNames = Array.isArray(feed.weekday_names)
+        ? (feed.weekday_names as unknown[]).filter((value): value is string => typeof value === "string")
+        : [];
+    const weekdayShortNames = Array.isArray(feed.weekday_short_names)
+        ? (feed.weekday_short_names as unknown[]).filter((value): value is string => typeof value === "string")
+        : [];
     const weekViewLabel = typeof feed.week_view_label === "string" ? feed.week_view_label : "";
     const monthViewLabel = typeof feed.month_view_label === "string" ? feed.month_view_label : "";
     const yearViewLabel = typeof feed.year_view_label === "string" ? feed.year_view_label : "";
@@ -567,7 +573,9 @@ export default function EventosPage() {
                             </div>
 
                             <div className="grid grid-cols-7 gap-1 mb-2">
-                                {[["D","Dom"], ["L","Lun"], ["M","Mar"], ["X","Mie"], ["J","Jue"], ["V","Vie"], ["S","Sab"]].map(([short, full]) => (
+                                {weekdayShortNames.map((short, index) => {
+                                    const full = weekdayNames[index] || short;
+                                    return (
                                     <div
                                         key={full}
                                         className="text-center py-2 text-2xs sm:text-2xs font-semibold uppercase tracking-wide"
@@ -576,7 +584,8 @@ export default function EventosPage() {
                                         <span className="sm:hidden">{short}</span>
                                         <span className="hidden sm:inline">{full}</span>
                                     </div>
-                                ))}
+                                    );
+                                })}
                             </div>
 
                             <div className="grid grid-cols-7 gap-1">
