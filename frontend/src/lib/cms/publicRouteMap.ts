@@ -14,6 +14,7 @@ const CMS_TO_PUBLIC_ROUTE: Record<string, string> = {
   blog: "/blog",
   events: "/eventos",
   donate: "/donate",
+  books: "/books",
   privacy: "/privacy",
   terms: "/terms",
   aniversario40: "/aniversario40",
