@@ -82,14 +82,14 @@ jobs:
       # blocking the quality gate indefinitely.
 
   backend-test-shards:
-    name: Backend Tests (${{ matrix.shard }}/4)
+    name: Backend Tests (${{ matrix.shard }}/8)
     needs: backend-quality
     runs-on: ubuntu-latest
     timeout-minutes: 30
     strategy:
       fail-fast: false
       matrix:
-        shard: [0, 1, 2, 3]
+        shard: [0, 1, 2, 3, 4, 5, 6, 7]
     env:
       DATABASE_URL: "sqlite://"
       TEST_DATABASE_URL: "sqlite://"
@@ -124,7 +124,7 @@ jobs:
               for path in Path("tests").glob("*.py")
               if not path.name.startswith("test_crm_")
           )
-          selected = [path for index, path in enumerate(files) if index % 4 == shard]
+          selected = [path for index, path in enumerate(files) if index % 8 == shard]
           print("\n".join(selected))
           print(f"Selected {len(selected)} files for shard {shard}", file=sys.stderr)
           PY
