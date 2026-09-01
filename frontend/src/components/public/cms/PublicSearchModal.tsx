@@ -4,6 +4,7 @@ import React, { useState, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
 import { Search, X, Loader2, Star, Tag, Folder, ArrowRight } from "lucide-react";
 import { uiList, uiRecord, uiText, usePublicUiCopy } from "./usePublicUiCopy";
+import { apiFetch } from "@/lib/http";
 
 export interface SearchResultItem {
   entity_type: string;
@@ -114,17 +115,15 @@ export default function PublicSearchModal({
       setHasSearched(true);
 
       try {
-        const params = new URLSearchParams();
-        params.set("site_key", siteKey);
-        if (searchTerm.trim()) params.set("q", searchTerm.trim());
-        if (cat) params.set("category", cat);
-        if (tags.length > 0) params.set("tags", tags.join(","));
-
-        const res = await fetch(`/api/cms/v2/search?${params.toString()}`);
-        if (!res.ok) {
-          throw new Error(`Search failed: ${res.statusText}`);
-        }
-        const data: SearchApiResponse = await res.json();
+        const data = await apiFetch<SearchApiResponse>("/cms/v2/search", {
+          query: {
+            site_key: siteKey,
+            q: searchTerm.trim() || undefined,
+            category: cat || undefined,
+            tags: tags.length > 0 ? tags.join(",") : undefined,
+          },
+          silent: true,
+        });
         setResults(data.results || []);
         setPromoted(data.promoted || []);
       } catch (err) {

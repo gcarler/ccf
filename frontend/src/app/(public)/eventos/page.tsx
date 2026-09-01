@@ -35,6 +35,10 @@ function formatMonthDay(date?: string) {
     };
 }
 
+function getCategoryFilters(feed: Record<string, unknown>): string[] {
+    return Array.isArray(feed.filters) ? (feed.filters as string[]) : [];
+}
+
 export default function EventosPage() {
     const heroPage = useCmsV2Page('events');
     const heroContent = heroPage?.blocks?.hero;
@@ -57,7 +61,17 @@ export default function EventosPage() {
         : eventsContent?.parsed && typeof eventsContent.parsed === "object" && !Array.isArray(eventsContent.parsed)
             ? eventsContent.parsed as Record<string, unknown>
             : {};
-    const categoryFilters = Array.isArray(feed.filters) ? (feed.filters as string[]) : [];
+    const categoryFilters = useMemo(
+        () => {
+            const filterFeed = typeof eventsContent?.content === "string"
+                ? safeJsonParse<Record<string, unknown>>(eventsContent.content, {})
+                : eventsContent?.parsed && typeof eventsContent.parsed === "object" && !Array.isArray(eventsContent.parsed)
+                    ? eventsContent.parsed as Record<string, unknown>
+                    : {};
+            return getCategoryFilters(filterFeed);
+        },
+        [eventsContent?.content, eventsContent?.parsed],
+    );
     const filtersTitle = typeof feed.filters_title === "string" ? feed.filters_title : "";
     const syncCalendarCta = typeof feed.sync_calendar_cta === "string" ? feed.sync_calendar_cta : "";
     const syncCalendarToast = typeof feed.sync_calendar_toast === "string" ? feed.sync_calendar_toast : "";
@@ -104,7 +118,7 @@ export default function EventosPage() {
     const filteredEvents = useMemo(() => {
         if (!activeFilter || activeFilter === categoryFilters[0]) return parsedEvents;
         return parsedEvents.filter((e) => e.category === activeFilter);
-    }, [parsedEvents, activeFilter]);
+    }, [parsedEvents, activeFilter, categoryFilters]);
 
     const featuredEvent = filteredEvents.find((event) => event.featured) || filteredEvents[0];
     const upcomingEvent = filteredEvents[1];

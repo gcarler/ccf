@@ -33,8 +33,6 @@ export default function DonatePage() {
     const hero = safeJsonParse<Record<string, unknown>>(cmsHero?.content, {});
     const feed = safeJsonParse<Record<string, unknown>>(cmsFeed?.content, {});
 
-    if (!cmsPage) return null;
-
     // All editorial copy is owned by the CMS page sections.
     const str = (obj: Record<string, unknown>, key: string) =>
         typeof obj[key] === "string" ? (obj[key] as string) : "";
@@ -114,6 +112,8 @@ export default function DonatePage() {
             setPaymentStatus('pending');
         }
     }, [addToast, toastMpFailure, toastMpPending]);
+
+    if (!cmsPage) return null;
 
     const handleManualDonation = async () => {
         setLoading(true);

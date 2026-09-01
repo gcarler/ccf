@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { Target, Sparkles, Quote, Heart, Users, BookOpen, Cross, ArrowRight } from "lucide-react";
 import { useCmsV2Page } from "@/hooks/useCmsV2Page";
+import { apiFetch } from "@/lib/http";
 
 import RichText from "@/components/public/RichText";
 import PublicHeroWithSlides from "@/components/public/PublicHeroWithSlides";
@@ -26,16 +27,15 @@ export default function NosotrosPage() {
     const [liveStats, setLiveStats] = React.useState<Array<{ value: string; label: string }> | null>(null);
 
     React.useEffect(() => {
-        let mounted = true;
-        fetch('/api/public/stats')
-            .then(res => res.ok ? res.json() : null)
+        const abort = new AbortController();
+        apiFetch<{ stats?: Array<{ value: string; label: string }> }>("/public/stats", { signal: abort.signal, silent: true })
             .then(data => {
-                if (mounted && data?.stats && Array.isArray(data.stats) && data.stats.length > 0) {
+                if (data?.stats && Array.isArray(data.stats) && data.stats.length > 0) {
                     setLiveStats(data.stats);
                 }
             })
             .catch(() => {});
-        return () => { mounted = false; };
+        return () => abort.abort();
     }, []);
 
     const hero = (heroCms?.parsed && typeof heroCms.parsed === "object" && !Array.isArray(heroCms.parsed))
