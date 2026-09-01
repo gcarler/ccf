@@ -5,12 +5,16 @@ import { toast } from "sonner";
 import { MessageSquare, CornerDownRight, Send, X, Loader2 } from "lucide-react";
 import { createPublicPostComment, getPublicPostComments } from "@/lib/cms/v2";
 import { CmsPublicPostComment } from "@/types/cms-v2";
+import { uiRecord, uiText, usePublicUiCopy } from "./usePublicUiCopy";
 
 interface PostCommentsProps {
   postId: string;
 }
 
 export function PostComments({ postId }: PostCommentsProps) {
+  const copy = uiRecord(usePublicUiCopy().comments);
+  const text = (key: string) => uiText(copy, key);
+  const replyTitle = (author: string) => text("reply_title_template").replace("{author}", author);
   const [comments, setComments] = useState<CmsPublicPostComment[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
 
@@ -60,7 +64,7 @@ export function PostComments({ postId }: PostCommentsProps) {
   const handleCreateRootComment = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim() || !email.trim() || !content.trim()) {
-      toast.error("Por favor completa todos los campos.");
+      toast.error(text("required_error"));
       return;
     }
     setSubmitting(true);
@@ -70,12 +74,12 @@ export function PostComments({ postId }: PostCommentsProps) {
         author_email: email.trim(),
         content: content.trim(),
       });
-      toast.success("Comentario enviado con éxito. Pendiente de moderación.");
+      toast.success(text("comment_success"));
       setName("");
       setEmail("");
       setContent("");
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Error al enviar el comentario.";
+      const msg = err instanceof Error ? err.message : text("comment_error");
       toast.error(msg);
     } finally {
       setSubmitting(false);
@@ -85,7 +89,7 @@ export function PostComments({ postId }: PostCommentsProps) {
   const handleCreateReply = async (parentId: string, e: React.FormEvent) => {
     e.preventDefault();
     if (!replyName.trim() || !replyEmail.trim() || !replyContent.trim()) {
-      toast.error("Por favor completa todos los campos para responder.");
+      toast.error(text("reply_required_error"));
       return;
     }
     setReplySubmitting(true);
@@ -96,13 +100,13 @@ export function PostComments({ postId }: PostCommentsProps) {
         content: replyContent.trim(),
         parent_id: parentId,
       });
-      toast.success("Respuesta enviada con éxito. Pendiente de moderación.");
+      toast.success(text("reply_success"));
       setReplyName("");
       setReplyEmail("");
       setReplyContent("");
       setActiveReplyId(null);
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Error al enviar la respuesta.";
+      const msg = err instanceof Error ? err.message : text("reply_error");
       toast.error(msg);
     } finally {
       setReplySubmitting(false);
@@ -114,7 +118,7 @@ export function PostComments({ postId }: PostCommentsProps) {
       {/* Header Badge */}
       <div className="flex items-center gap-3 border-b border-gray-200 pb-4 dark:border-gray-800">
         <MessageSquare className="h-6 w-6 text-primary" />
-        <h3 className="text-xl font-bold text-gray-900 dark:text-white">Comentarios</h3>
+        <h3 className="text-xl font-bold text-gray-900 dark:text-white">{text("title")}</h3>
         <span
           className="rounded-full bg-primary/10 px-3 py-0.5 text-xs font-semibold text-primary"
           data-testid="comments-count-badge"
@@ -125,39 +129,39 @@ export function PostComments({ postId }: PostCommentsProps) {
 
       {/* Main Comment Form */}
       <form onSubmit={handleCreateRootComment} className="space-y-4 rounded-xl border border-gray-200 bg-gray-50/50 p-5 dark:border-gray-800 dark:bg-gray-900/50">
-        <h4 className="text-sm font-semibold text-gray-900 dark:text-white">Deja un comentario</h4>
+        <h4 className="text-sm font-semibold text-gray-900 dark:text-white">{text("form_title")}</h4>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
-            <label className="block text-xs font-medium text-gray-700 dark:text-gray-300">Nombre</label>
+            <label className="block text-xs font-medium text-gray-700 dark:text-gray-300">{text("name_label")}</label>
             <input
               type="text"
               required
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="Tu nombre"
+              placeholder={text("name_placeholder")}
               className="mt-1 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary dark:border-gray-700 dark:bg-gray-800 dark:text-white"
             />
           </div>
           <div>
-            <label className="block text-xs font-medium text-gray-700 dark:text-gray-300">Correo Electrónico</label>
+            <label className="block text-xs font-medium text-gray-700 dark:text-gray-300">{text("email_label")}</label>
             <input
               type="email"
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="tu@email.com"
+              placeholder={text("email_placeholder")}
               className="mt-1 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary dark:border-gray-700 dark:bg-gray-800 dark:text-white"
             />
           </div>
         </div>
         <div>
-          <label className="block text-xs font-medium text-gray-700 dark:text-gray-300">Comentario</label>
+          <label className="block text-xs font-medium text-gray-700 dark:text-gray-300">{text("comment_label")}</label>
           <textarea
             required
             rows={3}
             value={content}
             onChange={(e) => setContent(e.target.value)}
-            placeholder="Escribe tu comentario aquí..."
+            placeholder={text("comment_placeholder")}
             className="mt-1 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary dark:border-gray-700 dark:bg-gray-800 dark:text-white"
           />
         </div>
@@ -167,7 +171,7 @@ export function PostComments({ postId }: PostCommentsProps) {
           className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary/90 disabled:opacity-50"
         >
           {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-          Enviar Comentario
+          {text("submit_label")}
         </button>
       </form>
 
@@ -179,7 +183,7 @@ export function PostComments({ postId }: PostCommentsProps) {
         </div>
       ) : comments.length === 0 ? (
         <div className="py-8 text-center text-sm text-gray-500 dark:text-gray-400">
-          No hay comentarios aprobados aún. ¡Sé el primero en comentar!
+          {text("empty_label")}
         </div>
       ) : (
         <div className="space-y-6" data-testid="comments-tree">
@@ -217,7 +221,7 @@ export function PostComments({ postId }: PostCommentsProps) {
                   className="inline-flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-medium text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800"
                 >
                   <CornerDownRight className="h-3.5 w-3.5" />
-                  Responder
+                  {text("reply_label")}
                 </button>
               </div>
 
@@ -234,7 +238,7 @@ export function PostComments({ postId }: PostCommentsProps) {
                   data-testid="inline-reply-form"
                 >
                   <div className="flex items-center justify-between">
-                    <h5 className="text-xs font-semibold text-primary">Responder a {comment.author_name}</h5>
+                    <h5 className="text-xs font-semibold text-primary">{replyTitle(comment.author_name)}</h5>
                     <button
                       type="button"
                       onClick={() => setActiveReplyId(null)}
@@ -249,7 +253,7 @@ export function PostComments({ postId }: PostCommentsProps) {
                       required
                       value={replyName}
                       onChange={(e) => setReplyName(e.target.value)}
-                      placeholder="Tu nombre"
+                      placeholder={text("reply_name_placeholder")}
                       className="w-full rounded-md border border-gray-300 bg-white px-3 py-1.5 text-xs text-gray-900 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
                     />
                     <input
@@ -257,7 +261,7 @@ export function PostComments({ postId }: PostCommentsProps) {
                       required
                       value={replyEmail}
                       onChange={(e) => setReplyEmail(e.target.value)}
-                      placeholder="Tu correo"
+                      placeholder={text("reply_email_placeholder")}
                       className="w-full rounded-md border border-gray-300 bg-white px-3 py-1.5 text-xs text-gray-900 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
                     />
                   </div>
@@ -266,7 +270,7 @@ export function PostComments({ postId }: PostCommentsProps) {
                     rows={2}
                     value={replyContent}
                     onChange={(e) => setReplyContent(e.target.value)}
-                    placeholder="Escribe tu respuesta..."
+                    placeholder={text("reply_content_placeholder")}
                     className="w-full rounded-md border border-gray-300 bg-white px-3 py-1.5 text-xs text-gray-900 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
                   />
                   <div className="flex justify-end gap-2">
@@ -275,7 +279,7 @@ export function PostComments({ postId }: PostCommentsProps) {
                       onClick={() => setActiveReplyId(null)}
                       className="rounded-md border border-gray-300 px-3 py-1 text-xs font-medium text-gray-600 hover:bg-gray-100 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
                     >
-                      Cancelar
+                      {text("cancel_label")}
                     </button>
                     <button
                       type="submit"
@@ -283,7 +287,7 @@ export function PostComments({ postId }: PostCommentsProps) {
                       className="inline-flex items-center gap-1.5 rounded-md bg-primary px-3 py-1 text-xs font-semibold text-white hover:bg-primary/90 disabled:opacity-50"
                     >
                       {replySubmitting ? <Loader2 className="h-3 w-3 animate-spin" /> : <Send className="h-3 w-3" />}
-                      Enviar Respuesta
+                      {text("reply_submit_label")}
                     </button>
                   </div>
                 </form>

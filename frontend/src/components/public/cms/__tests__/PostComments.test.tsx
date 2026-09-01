@@ -17,6 +17,38 @@ vi.mock("sonner", () => ({
   },
 }));
 
+vi.mock("../usePublicUiCopy", () => ({
+  usePublicUiCopy: () => ({
+    comments: {
+      title: "Comentarios",
+      form_title: "Deja un comentario",
+      name_label: "Nombre",
+      name_placeholder: "Tu nombre",
+      email_label: "Correo Electrónico",
+      email_placeholder: "tu@email.com",
+      comment_label: "Comentario",
+      comment_placeholder: "Escribe tu comentario aquí...",
+      submit_label: "Enviar Comentario",
+      empty_label: "No hay comentarios aprobados aún. ¡Sé el primero en comentar!",
+      reply_label: "Responder",
+      reply_title_template: "Responder a {author}",
+      reply_name_placeholder: "Tu nombre",
+      reply_email_placeholder: "Tu correo",
+      reply_content_placeholder: "Escribe tu respuesta...",
+      cancel_label: "Cancelar",
+      reply_submit_label: "Enviar Respuesta",
+      required_error: "Por favor completa todos los campos.",
+      comment_success: "Comentario enviado con éxito. Pendiente de moderación.",
+      comment_error: "Error al enviar el comentario.",
+      reply_required_error: "Por favor completa todos los campos para responder.",
+      reply_success: "Respuesta enviada con éxito. Pendiente de moderación.",
+      reply_error: "Error al enviar la respuesta.",
+    },
+  }),
+  uiRecord: (value: unknown) => value || {},
+  uiText: (copy: Record<string, unknown>, key: string) => typeof copy[key] === "string" ? copy[key] : "",
+}));
+
 describe("PostComments Component", () => {
   const mockPostId = "post-123-uuid";
 
