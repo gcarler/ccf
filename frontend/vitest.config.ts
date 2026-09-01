@@ -29,7 +29,16 @@ export default defineConfig({
         functions: 40,
         statements: 40,
       },
-      include: ["src/design/**/*.{ts,tsx}", "src/components/**/*.{ts,tsx}"],
+      include: [
+        "src/design/**/*.{ts,tsx}",
+        "src/components/**/*.{ts,tsx}",
+        "src/app/plataforma/messages/_hooks/useUserSearch.ts",
+        "src/app/plataforma/messages/_hooks/useChatThread.ts",
+        "src/app/plataforma/messages/_components/MessageInput.tsx",
+        "src/app/plataforma/messages/page.tsx",
+        "src/app/plataforma/inbox/chat/page.tsx",
+        "src/hooks/useWorkspaceSocket.ts",
+      ],
       exclude: [
         "src/**/*.d.ts",
         "src/**/*.stories.tsx",
