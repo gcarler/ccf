@@ -157,11 +157,11 @@ jobs:
         run: cd frontend && npx playwright install --with-deps chromium
 
       - name: Run E2E smoke tests
-        # Playwright managed webServer boots `npm run dev` automatically.
-        # The build step above ensures .next/ exists for the dev server.
-        # BASE_URL is consumed by public-pages.spec.ts (absolute URLs);
-        # PLAYWRIGHT_MANAGED_WEBSERVER enables the managed webServer in config.
-        run: cd frontend && npx playwright test --grep-invert @auth
+        # This frontend-only job intentionally runs the contract smoke suite.
+        # The remaining E2E suites require a provisioned backend, database and
+        # seeded tenant; they belong in the environment-backed E2E workflow.
+        # Playwright managed webServer boots `npm run start` automatically.
+        run: cd frontend && npx playwright test tests/e2e/smoke.spec.ts
         env:
           API_PROXY_TARGET: https://ministerioselfaro.org
           PLAYWRIGHT_MANAGED_WEBSERVER: "1"
