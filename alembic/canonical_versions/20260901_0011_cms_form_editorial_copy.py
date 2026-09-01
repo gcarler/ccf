@@ -28,12 +28,33 @@ def upgrade() -> None:
           "message_placeholder":"Cuéntanos un poco sobre ti...",
           "submit_label":"Enviar mensaje y conectar",
           "success_message":"Gracias. Te contactaremos pronto.",
-          "reset_label":"Enviar otro mensaje"
+          "reset_label":"Enviar otro mensaje",
+          "sending_label":"Enviando...",
+          "error_message":"No se pudo enviar el mensaje."
         }'::jsonb)::json
         FROM cms_pages p JOIN cms_sites st ON st.id=p.site_id
         WHERE p.id=s.page_id AND st.site_key='ccf'
-          AND p.slug='conocer-a-jesus' AND s.section_key='feed'
-          AND s.type='contact_form'
+          AND p.slug='conocer-a-jesus' AND s.type='contact_form'
+    """)
+
+    op.execute("""
+        UPDATE cms_sections s
+        SET props_json = (s.props_json::jsonb || '{
+          "sending_label":"Enviando...",
+          "error_message":"No se pudo enviar el mensaje."
+        }'::jsonb)::json
+        FROM cms_pages p JOIN cms_sites st ON st.id=p.site_id
+        WHERE p.id=s.page_id AND st.site_key='ccf' AND s.type='contact_form'
+    """)
+
+    op.execute("""
+        UPDATE cms_sections s
+        SET props_json = (s.props_json::jsonb || '{
+          "sending_label":"Enviando...",
+          "error_message":"No se pudo enviar la petición."
+        }'::jsonb)::json
+        FROM cms_pages p JOIN cms_sites st ON st.id=p.site_id
+        WHERE p.id=s.page_id AND st.site_key='ccf' AND s.type='prayer_form'
     """)
 
 

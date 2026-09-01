@@ -46,7 +46,7 @@ function FormSuccess({ message, resetLabel, onReset }: { message: string; resetL
   );
 }
 
-function SubmitButton({ submitting, label }: { submitting: boolean; label: string }) {
+function SubmitButton({ submitting, label, submittingLabel }: { submitting: boolean; label: string; submittingLabel: string }) {
   return (
     <button
       type="submit"
@@ -55,7 +55,7 @@ function SubmitButton({ submitting, label }: { submitting: boolean; label: strin
       style={{ background: "var(--site-cta-gradient)", boxShadow: "var(--site-cta-shadow)" }}
     >
       {submitting ? <Loader2 size={16} className="animate-spin" /> : <Send size={15} />}
-      {submitting ? "Enviando..." : label}
+      {submitting ? submittingLabel : label}
     </button>
   );
 }
@@ -67,6 +67,8 @@ export function ContactFormSection({ section }: { section: CmsSection<"contact_f
   const subtitle = val(p, "subtitle", "");
   const actionUrl = val(p, "action_url", "/public/contact");
   const resetLabel = val(p, "reset_label");
+  const submittingLabel = val(p, "sending_label");
+  const errorMessage = val(p, "error_message");
   const [status, setStatus] = useState<"idle" | "submitting" | "success" | "error">("idle");
   const [error, setError] = useState<string | null>(null);
 
@@ -109,7 +111,7 @@ export function ContactFormSection({ section }: { section: CmsSection<"contact_f
       formElement.reset();
     } catch (submissionError) {
       setStatus("error");
-      setError(extractErrorMessage(submissionError, "No se pudo enviar el mensaje."));
+      setError(extractErrorMessage(submissionError, errorMessage));
     }
   };
 
@@ -145,7 +147,7 @@ export function ContactFormSection({ section }: { section: CmsSection<"contact_f
           </div>
           <input name="website" tabIndex={-1} autoComplete="off" aria-hidden="true" className="hidden" />
           {status === "error" && <p role="alert" aria-live="assertive" className="text-sm font-semibold text-[hsl(var(--destructive))]">{error}</p>}
-          <SubmitButton submitting={status === "submitting"} label={val(p, "submit_label")} />
+          <SubmitButton submitting={status === "submitting"} label={val(p, "submit_label")} submittingLabel={submittingLabel} />
         </form>
       )}
     </section>
@@ -160,8 +162,10 @@ export function PrayerFormSection({ section }: { section: CmsSection<"prayer_for
   const title = val(p, "title");
   const subtitle = val(p, "subtitle", "");
   const actionUrl = val(p, "action_url", "/crm/prayer-requests/public");
-  const category = val(p, "category", "General");
+  const category = val(p, "category");
   const resetLabel = val(p, "reset_label");
+  const submittingLabel = val(p, "sending_label");
+  const errorMessage = val(p, "error_message");
   const [status, setStatus] = useState<"idle" | "submitting" | "success" | "error">("idle");
   const [error, setError] = useState<string | null>(null);
 
@@ -197,7 +201,7 @@ export function PrayerFormSection({ section }: { section: CmsSection<"prayer_for
       formElement.reset();
     } catch (submissionError) {
       setStatus("error");
-      setError(extractErrorMessage(submissionError, "No se pudo enviar la petición."));
+      setError(extractErrorMessage(submissionError, errorMessage));
     }
   };
 
@@ -223,7 +227,7 @@ export function PrayerFormSection({ section }: { section: CmsSection<"prayer_for
           </div>
           <input name="website" tabIndex={-1} autoComplete="off" aria-hidden="true" className="hidden" />
           {status === "error" && <p role="alert" aria-live="assertive" className="text-sm font-semibold text-[hsl(var(--destructive))]">{error}</p>}
-          <SubmitButton submitting={status === "submitting"} label={val(p, "submit_label")} />
+          <SubmitButton submitting={status === "submitting"} label={val(p, "submit_label")} submittingLabel={submittingLabel} />
         </form>
       )}
     </section>
