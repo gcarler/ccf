@@ -147,6 +147,11 @@ jobs:
 
       - name: Build
         run: cd frontend && npm run build
+        env:
+          # next.config.mjs materializes rewrites during the build. The
+          # previous value was provided only to Playwright, after the build
+          # had already captured the fallback http://backend:8000.
+          API_PROXY_TARGET: https://ministerioselfaro.org
 
       - name: Install Playwright browsers
         run: cd frontend && npx playwright install --with-deps chromium
@@ -158,7 +163,7 @@ jobs:
         # PLAYWRIGHT_MANAGED_WEBSERVER enables the managed webServer in config.
         run: cd frontend && npx playwright test --grep-invert @auth
         env:
-          API_PROXY_TARGET: https://elfarocc.tech
+          API_PROXY_TARGET: https://ministerioselfaro.org
           PLAYWRIGHT_MANAGED_WEBSERVER: "1"
           PLAYWRIGHT_BASE_URL: ""
           BASE_URL: http://localhost:4173
