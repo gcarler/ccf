@@ -144,38 +144,30 @@ def ac(client, db_session):
 class TestMassGETCoverage:
     """Hit every GET endpoint to maximize code coverage."""
 
-    @pytest.mark.parametrize("path", GET_ENDPOINTS[:60])
-    def test_batch_1(self, ac, path):
+    @staticmethod
+    def _check_batch(ac, paths):
         c, h, s, p = ac
-        resp = c.get(path, headers=h)
-        assert resp.status_code in (200, 401, 403, 404, 405, 422, 500)
+        for path in paths:
+            resp = c.get(path, headers=h)
+            assert resp.status_code in (200, 401, 403, 404, 405, 422, 500), (
+                f"Unexpected status for GET {path}: "
+                f"{resp.status_code} {resp.text[:300]}"
+            )
 
-    @pytest.mark.parametrize("path", GET_ENDPOINTS[60:120])
-    def test_batch_2(self, ac, path):
-        c, h, s, p = ac
-        resp = c.get(path, headers=h)
-        assert resp.status_code in (200, 401, 403, 404, 405, 422, 500)
+    def test_batch_1(self, ac):
+        self._check_batch(ac, GET_ENDPOINTS[:60])
 
-    @pytest.mark.parametrize("path", GET_ENDPOINTS[120:180])
-    def test_batch_3(self, ac, path):
-        c, h, s, p = ac
-        resp = c.get(path, headers=h)
-        assert resp.status_code in (200, 401, 403, 404, 405, 422, 500)
+    def test_batch_2(self, ac):
+        self._check_batch(ac, GET_ENDPOINTS[60:120])
 
-    @pytest.mark.parametrize("path", GET_ENDPOINTS[180:240])
-    def test_batch_4(self, ac, path):
-        c, h, s, p = ac
-        resp = c.get(path, headers=h)
-        assert resp.status_code in (200, 401, 403, 404, 405, 422, 500)
+    def test_batch_3(self, ac):
+        self._check_batch(ac, GET_ENDPOINTS[120:180])
 
-    @pytest.mark.parametrize("path", GET_ENDPOINTS[240:300])
-    def test_batch_5(self, ac, path):
-        c, h, s, p = ac
-        resp = c.get(path, headers=h)
-        assert resp.status_code in (200, 401, 403, 404, 405, 422, 500)
+    def test_batch_4(self, ac):
+        self._check_batch(ac, GET_ENDPOINTS[180:240])
 
-    @pytest.mark.parametrize("path", GET_ENDPOINTS[300:])
-    def test_batch_6(self, ac, path):
-        c, h, s, p = ac
-        resp = c.get(path, headers=h)
-        assert resp.status_code in (200, 401, 403, 404, 405, 422, 500)
+    def test_batch_5(self, ac):
+        self._check_batch(ac, GET_ENDPOINTS[240:300])
+
+    def test_batch_6(self, ac):
+        self._check_batch(ac, GET_ENDPOINTS[300:])
