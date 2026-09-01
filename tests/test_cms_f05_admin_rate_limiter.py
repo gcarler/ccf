@@ -21,6 +21,8 @@ para no correr 429 en la 100+ test suite. Estos tests validan:
 from __future__ import annotations
 
 from backend.api import cms_v2
+from backend.api.cms import seo as cms_seo
+from backend.api.cms.public import themes as cms_public_themes
 
 # ── Structural verification ────────────────────────────────────────
 
@@ -78,7 +80,7 @@ class TestF05PublicEndpointOverrides:
 
     def _find_public_route(self, path_suffix: str):
         """Busca una ruta cuyo path termine con ``path_suffix``."""
-        for r in self._iter_routes(cms_v2.router):
+        for r in self._iter_routes(cms_seo.router):
             if hasattr(r, "path") and r.path.endswith(path_suffix):
                 return r
         return None
@@ -112,7 +114,7 @@ class TestF05PublicEndpointOverrides:
         """El endpoint ``GET /public/sites/{site_key}/theme`` DEBE tener su
         propio rate_limiter override (``PUBLIC_CMS_RATE_LIMIT = 240``)."""
         r = None
-        for route in self._iter_routes(cms_v2.router):
+        for route in self._iter_routes(cms_public_themes.router):
             if (
                 hasattr(route, "path")
                 and route.path.endswith("/public/sites/{site_key}/theme")
@@ -136,7 +138,8 @@ class TestF05LimiterNoOpInTest:
     def test_router_loads_cleanly(self):
         """El router debe importarse y ser usable en pytest."""
         assert cms_v2.router is not None
-        mounted = list(TestF05PublicEndpointOverrides._iter_routes(cms_v2.router))
+        mounted = list(TestF05PublicEndpointOverrides._iter_routes(module.router) for module in cms_v2.SUBROUTERS)
+        mounted = [route for routes in mounted for route in routes]
         assert len(mounted) >= 70  # Current CMS v2 surface is larger than 70 endpoints.
 
     def test_router_prefix_is_cms_v2(self):

@@ -188,10 +188,12 @@ def _dependency_names(route):
 
 
 def test_dashboard_routes_require_authenticated_user():
+    from backend.api import dashboard
+
     protected = {
-        route.path: _dependency_names(route)
-        for route in app.routes
-        if getattr(route, "path", "") in {"/api/dashboard/{module}", "/api/dashboard/modules/list"}
+        f"/api{route.path}": _dependency_names(route)
+        for route in dashboard.router.routes
+        if getattr(route, "path", "") in {"/dashboard/{module}", "/dashboard/modules/list"}
     }
 
     assert protected
