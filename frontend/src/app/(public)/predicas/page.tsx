@@ -87,7 +87,7 @@ function SkeletonCard() {
 /* ── Card de video ── */
 function VideoCard({
     video, featured = false, watched, onPlay, onShare, onCopy, copied,
-    featuredBadge, shareWhatsapp, copyLinkLabel,
+    featuredBadge, watchedLabel, shareWhatsapp, copyLinkLabel,
 }: {
     video: YTVideo;
     featured?: boolean;
@@ -97,6 +97,7 @@ function VideoCard({
     onCopy: () => void;
     copied: boolean;
     featuredBadge: string;
+    watchedLabel: string;
     shareWhatsapp: string;
     copyLinkLabel: string;
 }) {
@@ -141,7 +142,7 @@ function VideoCard({
                     )}
                     {watched && (
                         <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-black/60 text-white text-2xs font-bold uppercase tracking-wider backdrop-blur-sm">
-                            <Eye size={9} /> Visto
+                            <Eye size={9} /> {watchedLabel}
                         </span>
                     )}
                 </div>
@@ -548,6 +549,7 @@ export default function PredicasPage() {
                                             onCopy={() => copyLink(featured)}
                                             copied={copied === featured.id}
                                             featuredBadge={featuredBadge}
+                                            watchedLabel={watchedLabel}
                                             shareWhatsapp={shareWhatsapp}
                                             copyLinkLabel={copyLinkLabel}
                                         />
@@ -578,6 +580,7 @@ export default function PredicasPage() {
                                                     onCopy={() => copyLink(v)}
                                                     copied={copied === v.id}
                                                     featuredBadge={featuredBadge}
+                                                    watchedLabel={watchedLabel}
                                                     shareWhatsapp={shareWhatsapp}
                                                     copyLinkLabel={copyLinkLabel}
                                                 />

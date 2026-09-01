@@ -62,6 +62,9 @@ export default function CursosPage() {
   const retryLabel = typeof feedContent?.parsed === "object" && feedContent?.parsed && !Array.isArray(feedContent.parsed) && typeof (feedContent.parsed as Record<string, unknown>).retry_label === "string"
     ? String((feedContent.parsed as Record<string, unknown>).retry_label)
     : "";
+  const lessonsLabel = typeof feedContent?.parsed === "object" && feedContent?.parsed && !Array.isArray(feedContent.parsed) && typeof (feedContent.parsed as Record<string, unknown>).lessons_label === "string"
+    ? String((feedContent.parsed as Record<string, unknown>).lessons_label)
+    : "";
 
   useEffect(() => {
     const ctrl = new AbortController();
@@ -234,7 +237,7 @@ export default function CursosPage() {
               <h3 className="font-bold mb-2">{course.title}</h3>
               <p className="text-sm text-[hsl(var(--text-secondary))] line-clamp-3">{course.description || course.title}</p>
               <div className="mt-4 flex items-center gap-4 text-xs text-[hsl(var(--text-secondary))]">
-                {course.lessons ? <span className="inline-flex items-center gap-1"><Clock size={12} /> {course.lessons} clases</span> : null}
+                {course.lessons ? <span className="inline-flex items-center gap-1"><Clock size={12} /> {course.lessons} {lessonsLabel}</span> : null}
                 {course.instructor ? <span className="inline-flex items-center gap-1"><User size={12} /> {course.instructor}</span> : null}
               </div>
             </Link>

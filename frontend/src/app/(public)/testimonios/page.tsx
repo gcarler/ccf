@@ -25,7 +25,7 @@ function getTestimonialMediaUrl(t: PublicTestimonialItem): string {
 }
 
 // Extracted Component for Expandable Testimonial Card
-function TestimonialCard({ t, isHighlight, readMoreLabel = "Leer más" }: { t: PublicTestimonialItem; isHighlight: boolean; readMoreLabel?: string }) {
+function TestimonialCard({ t, isHighlight, readMoreLabel, mediaLabels }: { t: PublicTestimonialItem; isHighlight: boolean; readMoreLabel?: string; mediaLabels: { video: string; podcast: string; image: string } }) {
     const limit = isHighlight ? 180 : 120;
     const isLongText = t.content.length > limit;
     const mediaUrl = getTestimonialMediaUrl(t);
@@ -148,7 +148,7 @@ function TestimonialCard({ t, isHighlight, readMoreLabel = "Leer más" }: { t: P
                                     style={{ background: "var(--site-surface-dim)", color: "var(--site-on-surface-variant)" }}
                                 >
                                     {t.media_type === "video" ? <PlayCircle size={12} /> : t.media_type === "podcast" ? <Headphones size={12} /> : <ImageIcon size={12} />}
-                                    {t.media_type === "video" ? "Video" : t.media_type === "podcast" ? "Podcast" : "Imagen"}
+                                    {t.media_type === "video" ? mediaLabels.video : t.media_type === "podcast" ? mediaLabels.podcast : mediaLabels.image}
                                 </span>
                             )}
                         </div>
@@ -194,6 +194,11 @@ export default function TestimoniosPage() {
     const storyCta = typeof feed.cta_label === "string" ? feed.cta_label : "";
     const ctaTitle = typeof feed.cta_title === "string" ? feed.cta_title : "";
     const ctaDescription = typeof feed.cta_description === "string" ? feed.cta_description : "";
+    const mediaLabels = {
+        video: typeof feed.media_video_label === "string" ? feed.media_video_label : "",
+        podcast: typeof feed.media_podcast_label === "string" ? feed.media_podcast_label : "",
+        image: typeof feed.media_image_label === "string" ? feed.media_image_label : "",
+    };
 
     const hasHero = heroTitleLead || heroTitleAccent || heroDescription || heroEyebrow;
     const hasCtaBanner = ctaTitle || ctaDescription || storyCta;
@@ -328,6 +333,7 @@ export default function TestimoniosPage() {
                                     t={t}
                                     isHighlight={index === 0 && searchQuery === ""}
                                     readMoreLabel={readMoreLabel}
+                                    mediaLabels={mediaLabels}
                                 />
                             ))}
                         </motion.div>
