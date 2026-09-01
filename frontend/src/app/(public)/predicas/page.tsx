@@ -33,15 +33,18 @@ interface YTResponse {
 }
 
 /* ── Helpers ── */
-function timeAgo(iso: string) {
+type TimeLabels = { today: string; yesterday: string; days: string; weeks: string; months: string; year: string; years: string };
+
+function timeAgo(iso: string, labels: TimeLabels) {
     if (!iso) return "";
     const days = Math.floor((Date.now() - new Date(iso).getTime()) / 86_400_000);
-    if (days === 0) return "hoy";
-    if (days === 1) return "ayer";
-    if (days < 7)  return `hace ${days} días`;
-    if (days < 30) return `hace ${Math.floor(days / 7)} sem.`;
-    if (days < 365) return `hace ${Math.floor(days / 30)} meses`;
-    return `hace ${Math.floor(days / 365)} año${Math.floor(days / 365) > 1 ? "s" : ""}`;
+    if (days === 0) return labels.today;
+    if (days === 1) return labels.yesterday;
+    if (days < 7) return labels.days.replace("{count}", String(days));
+    if (days < 30) return labels.weeks.replace("{count}", String(Math.floor(days / 7)));
+    if (days < 365) return labels.months.replace("{count}", String(Math.floor(days / 30)));
+    const years = Math.floor(days / 365);
+    return (years > 1 ? labels.years : labels.year).replace("{count}", String(years));
 }
 function formatViews(n: number) {
     if (!n) return "";
@@ -87,7 +90,7 @@ function SkeletonCard() {
 /* ── Card de video ── */
 function VideoCard({
     video, featured = false, watched, onPlay, onShare, onCopy, copied,
-    featuredBadge, watchedLabel, shareWhatsapp, copyLinkLabel,
+    featuredBadge, watchedLabel, timeLabels, shareWhatsapp, copyLinkLabel,
 }: {
     video: YTVideo;
     featured?: boolean;
@@ -98,6 +101,7 @@ function VideoCard({
     copied: boolean;
     featuredBadge: string;
     watchedLabel: string;
+    timeLabels: TimeLabels;
     shareWhatsapp: string;
     copyLinkLabel: string;
 }) {
@@ -149,7 +153,7 @@ function VideoCard({
 
                 {/* Tiempo */}
                 <span className="absolute bottom-2 right-2 px-2 py-0.5 rounded text-2xs font-semibold text-white backdrop-blur-md" style={{ background: "rgba(0,0,0,0.6)" }}>
-                    {timeAgo(video.published_at)}
+                    {timeAgo(video.published_at, timeLabels)}
                 </span>
             </div>
 
@@ -366,6 +370,15 @@ export default function PredicasPage() {
     const copiedLabel = feedString("copied_label");
     const viewOnYoutube = feedString("view_on_youtube");
     const watchedLabel = feedString("watched_label");
+    const timeLabels: TimeLabels = {
+        today: feedString("time_today"),
+        yesterday: feedString("time_yesterday"),
+        days: feedString("time_days"),
+        weeks: feedString("time_weeks"),
+        months: feedString("time_months"),
+        year: feedString("time_year"),
+        years: feedString("time_years"),
+    };
     const searchPlaceholder = feedString("search_placeholder");
     const featuredLabel = feedString("featured_label");
     const channelLinkLabel = feedString("channel_link_label");
@@ -550,6 +563,7 @@ export default function PredicasPage() {
                                             copied={copied === featured.id}
                                             featuredBadge={featuredBadge}
                                             watchedLabel={watchedLabel}
+                                            timeLabels={timeLabels}
                                             shareWhatsapp={shareWhatsapp}
                                             copyLinkLabel={copyLinkLabel}
                                         />
@@ -581,6 +595,7 @@ export default function PredicasPage() {
                                                     copied={copied === v.id}
                                                     featuredBadge={featuredBadge}
                                                     watchedLabel={watchedLabel}
+                                                    timeLabels={timeLabels}
                                                     shareWhatsapp={shareWhatsapp}
                                                     copyLinkLabel={copyLinkLabel}
                                                 />
