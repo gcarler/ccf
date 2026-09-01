@@ -28,6 +28,7 @@ const STATUS_CONFIG: Record<string, { label: string; color: string }> = {
 };
 
 import { slugify } from "@/lib/format";
+import { publicRouteForCmsSlug } from "@/lib/cms/publicRouteMap";
 
 export default function CmsPagesManagement() {
   const router = useRouter();
@@ -472,8 +473,9 @@ export default function CmsPagesManagement() {
                       <h3 className="text-base font-semibold text-[hsl(var(--text-primary))] dark:text-white truncate">{page.title}</h3>
                       <span className={clsx("px-2 py-0.5 rounded-full text-2xs font-semibold uppercase tracking-wide", st.color)}>{st.label}</span>
                     </div>
-                    <div className="flex items-center gap-3">
-                      <div className="flex items-center gap-1 text-xs text-[hsl(var(--text-secondary))]"><Globe size={11} /><span>/{page.slug}</span></div>
+                      <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-1 text-xs text-[hsl(var(--text-secondary))]"><Globe size={11} /><span>/{page.slug}</span></div>
+                        {publicRouteForCmsSlug(page.slug) && <span className="text-xs text-[hsl(var(--primary))]">Público: {publicRouteForCmsSlug(page.slug)}</span>}
                       {page.updated_at && <>
                         <div className="size-1 bg-[hsl(var(--surface-3))] dark:bg-white/10 rounded-full" />
                         <div className="flex items-center gap-1 text-xs text-[hsl(var(--text-secondary))]"><Calendar size={11} /><span>{new Date(page.updated_at).toLocaleDateString()}</span></div>
@@ -636,7 +638,10 @@ export default function CmsPagesManagement() {
                         </div>
                       </td>
                       <td className="px-4 py-3 hidden md:table-cell">
-                        <span className="text-xs font-mono text-[hsl(var(--text-secondary))]">/{page.slug}</span>
+                        <div className="flex flex-col gap-0.5">
+                          <span className="text-xs font-mono text-[hsl(var(--text-secondary))]">CMS: /{page.slug}</span>
+                          {publicRouteForCmsSlug(page.slug) && <span className="text-2xs text-[hsl(var(--primary))]">Público: {publicRouteForCmsSlug(page.slug)}</span>}
+                        </div>
                       </td>
                       <td className="px-4 py-3 hidden lg:table-cell">
                         <span className={clsx("px-2 py-0.5 rounded-full text-2xs font-semibold uppercase tracking-wide", st.color)}>{st.label}</span>
