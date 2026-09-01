@@ -16,7 +16,12 @@ export default function BoletinPage() {
     const [status, setStatus] = useState<"idle" | "sending" | "sent" | "error">("idle");
     const [email, setEmail] = useState("");
 
-    const content = safeJsonParse<Record<string, unknown>>(cms?.content, {});
+    // El boletín usa una sección hero del CMS. Aceptamos tanto el formato
+    // directo como el legado serializado para que el editor y el publicado
+    // lean exactamente la misma fuente.
+    const content = typeof cms?.content === "string"
+        ? safeJsonParse<Record<string, unknown>>(cms.content, {})
+        : (cms as Record<string, unknown> | undefined) ?? {};
     const title = typeof content?.title === "string" ? content.title : "";
     const subtitle = typeof content?.subtitle === "string" ? content.subtitle : "";
     const description = typeof content?.description === "string" ? content.description : "";
@@ -24,6 +29,8 @@ export default function BoletinPage() {
     const successMessage = typeof content?.success_message === "string" ? content.success_message : "";
     const emailPlaceholder = typeof content?.email_placeholder === "string" ? content.email_placeholder : "";
     const sendingLabel = typeof content?.sending_label === "string" ? content.sending_label : "";
+    const errorMessage = typeof content?.error_message === "string" ? content.error_message : "";
+    const successToast = typeof content?.success_toast === "string" ? content.success_toast : "";
 
     const hasContent = title || subtitle || description || ctaText;
 
@@ -36,10 +43,10 @@ export default function BoletinPage() {
                 body: { site_key: "ccf", email },
             });
             setStatus("sent");
-            toast.success(`¡Suscrito al boletín de ${SITE_NAME}!`);
+            toast.success(successToast || `¡Suscrito al boletín de ${SITE_NAME}!`);
         } catch {
             setStatus("error");
-            toast.error("No se pudo suscribir. Intenta de nuevo.");
+            toast.error(errorMessage || "No se pudo suscribir. Intenta de nuevo.");
         }
     };
 

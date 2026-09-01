@@ -97,4 +97,27 @@ describe("CmsJsonMediaField", () => {
 
     expect(onChange).toHaveBeenCalledWith("{}");
   });
+
+  it("exposes and updates editorial fields inside serialized content", () => {
+    const onChange = vi.fn();
+    const value = JSON.stringify({
+      content: JSON.stringify({
+        empty_title: "Esperando agenda desde el CMS",
+        calendar_description: "Organiza tu tiempo con nuestras actividades comunitarias.",
+      }),
+    });
+
+    render(<CmsJsonMediaField value={value} token="token" onChange={onChange} />);
+
+    expect(screen.getByDisplayValue("Esperando agenda desde el CMS")).toBeInTheDocument();
+    fireEvent.change(screen.getByDisplayValue("Esperando agenda desde el CMS"), {
+      target: { value: "Agenda publicada" },
+    });
+
+    const next = JSON.parse(onChange.mock.calls.at(-1)?.[0] as string) as { content: string };
+    expect(JSON.parse(next.content)).toMatchObject({
+      empty_title: "Agenda publicada",
+      calendar_description: "Organiza tu tiempo con nuestras actividades comunitarias.",
+    });
+  });
 });
