@@ -178,11 +178,14 @@ jobs:
 
       - name: Check frontend coverage threshold
         run: |
-          COVERAGE=$(cd frontend && npx vitest run --coverage --reporter=json 2>/dev/null | python3 -c "
-          import sys, json
-          data = json.load(sys.stdin)
-          print(f\"{data.get('total', {}).get('lines', {}).get('pct', 0):.1f}\")
-          " 2>/dev/null || echo "0")
+          cd frontend
+          npx vitest run --coverage >/dev/null
+          COVERAGE=$(python3 -c "
+          import json
+          with open('coverage/coverage-summary.json', encoding='utf-8') as stream:
+              data = json.load(stream)
+          print(f\"{data['total']['lines']['pct']:.1f}\")
+          ")
           echo "Frontend Coverage: $COVERAGE%"
           if (( $(echo "$COVERAGE < 40" | bc -l) )); then
             echo "❌ Frontend coverage below 40% threshold"

@@ -20,7 +20,7 @@ export default defineConfig({
     setupFiles: ["./tests/setup.ts"],
     coverage: {
       provider: "v8",
-      reporter: ["text", "html", "lcov"],
+      reporter: ["text", "html", "lcov", "json-summary"],
       // Coverage scoped to the design system — the only module with tests.
       // Expand the include glob and raise thresholds as more tests are added.
       thresholds: {
