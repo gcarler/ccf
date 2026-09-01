@@ -53,7 +53,7 @@ def upgrade() -> None:
                             LIMIT 1
                        )
                    AND section_key = 'hero'
-                   AND (props_json->'slides' IS NULL OR jsonb_array_length(props_json->'slides') = 0)
+                   AND (props_json->'slides' IS NULL OR json_array_length(props_json->'slides') = 0)
                 """
             ),
             {"slug": slug, "payload": json.dumps({"slides": slides})},
