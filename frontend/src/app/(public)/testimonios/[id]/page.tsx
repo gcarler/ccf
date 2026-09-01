@@ -43,11 +43,10 @@ export default function TestimonioDetailPage() {
 
     const cmsPage = useCmsV2Page("testimonials");
     const cms = cmsPage?.blocks?.detail_template as Record<string, unknown> | undefined;
-    const backLabel = getString(cms, "back_label") || "Volver a testimonios";
-    const notFoundTitle = getString(cms, "not_found_title") || "Testimonio no encontrado";
-    const notFoundDescription = getString(cms, "not_found_description")
-        || "Parece que la historia que buscas ya no está disponible o el enlace es incorrecto.";
-    const notFoundCta = getString(cms, "not_found_cta") || "Ver más testimonios";
+    const backLabel = getString(cms, "back_label");
+    const notFoundTitle = getString(cms, "not_found_title");
+    const notFoundDescription = getString(cms, "not_found_description");
+    const notFoundCta = getString(cms, "not_found_cta");
 
     useEffect(() => {
         if (!slug) {

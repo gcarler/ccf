@@ -21,10 +21,10 @@ export default function CategoryArchivePage() {
   const feedContent = cmsPage?.blocks?.feed;
   const categoryTitlePrefix = (archiveContent?.category_title_prefix as string) ?? "";
   const categoryDescriptionTemplate = (archiveContent?.category_description_template as string) ?? "";
-  const backToBlogLabel = (archiveContent?.back_to_blog_label as string) ?? "Volver al blog";
-  const emptyCategoryTitle = (archiveContent?.empty_category_title as string) ?? "Sin artículos en esta categoría";
-  const emptyCategoryDescription = (archiveContent?.empty_category_description as string) ?? "No hay posts publicados en esta categoría todavía.";
-  const readMoreLabel = (feedContent?.read_more_label as string) ?? "Leer más";
+  const backToBlogLabel = (archiveContent?.back_to_blog_label as string) ?? "";
+  const emptyCategoryTitle = (archiveContent?.empty_category_title as string) ?? "";
+  const emptyCategoryDescription = (archiveContent?.empty_category_description as string) ?? "";
+  const readMoreLabel = (feedContent?.read_more_label as string) ?? "";
 
   const params = useParams();
   const slug = params?.slug && typeof params.slug === "string" ? params.slug : "";

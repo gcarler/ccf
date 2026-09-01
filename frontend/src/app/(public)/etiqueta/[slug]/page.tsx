@@ -21,10 +21,10 @@ export default function TagArchivePage() {
   const feedContent = cmsPage?.blocks?.feed;
   const tagTitlePrefix = (archiveContent?.tag_title_prefix as string) ?? "";
   const tagDescriptionTemplate = (archiveContent?.tag_description_template as string) ?? "";
-  const backToBlogLabel = (archiveContent?.back_to_blog_label as string) ?? "Volver al blog";
-  const emptyTagTitle = (archiveContent?.empty_tag_title as string) ?? "Sin artículos con esta etiqueta";
-  const emptyTagDescription = (archiveContent?.empty_tag_description as string) ?? "No hay posts publicados con esta etiqueta todavía.";
-  const readMoreLabel = (feedContent?.read_more_label as string) ?? "Leer más";
+  const backToBlogLabel = (archiveContent?.back_to_blog_label_tag as string) ?? "";
+  const emptyTagTitle = (archiveContent?.empty_tag_title as string) ?? "";
+  const emptyTagDescription = (archiveContent?.empty_tag_description as string) ?? "";
+  const readMoreLabel = (feedContent?.read_more_label as string) ?? "";
 
   const params = useParams();
   const slug = params?.slug && typeof params.slug === "string" ? params.slug : "";

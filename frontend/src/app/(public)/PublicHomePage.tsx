@@ -5,7 +5,6 @@ import React from "react";
 import Image from "next/image";
 import { ArrowRight, Sparkles } from "lucide-react";
 import { motion } from "framer-motion";
-import { SITE_NAME } from "@/lib/site-config";
 import { useCmsV2Page } from "@/hooks/useCmsV2Page";
 import { useState } from "react";
 import { apiFetch } from "@/lib/http";
@@ -77,9 +76,9 @@ export default function PublicHomePage({ initialHomePage }: { initialHomePage?: 
     const newsletterDescription = (homeFeed?.newsletter_description as string) ?? "";
     const newsletterPlaceholder = (homeFeed?.newsletter_placeholder as string) ?? "";
     const newsletterSubmit = (homeFeed?.newsletter_submit as string) ?? "";
-    const newsletterSendingLabel = (homeFeed?.newsletter_sending_label as string) ?? "Enviando...";
-    const newsletterSuccessToast = (homeFeed?.newsletter_success_toast as string) ?? `¡Suscrito al boletín de ${SITE_NAME}!`;
-    const newsletterErrorToast = (homeFeed?.newsletter_error_toast as string) ?? "No se pudo suscribir. Intenta de nuevo.";
+    const newsletterSendingLabel = (homeFeed?.newsletter_sending_label as string) ?? "";
+    const newsletterSuccessToast = (homeFeed?.newsletter_success_toast as string) ?? "";
+    const newsletterErrorToast = (homeFeed?.newsletter_error_toast as string) ?? "";
     const newsletterSuccessTitle = (homeFeed?.newsletter_success_title as string) ?? "";
     const newsletterSuccessDesc = (homeFeed?.newsletter_success_desc as string) ?? "";
     const homeFeaturedCard = (homeFeed?.featured_card && typeof homeFeed.featured_card === "object" && !Array.isArray(homeFeed.featured_card))
