@@ -8,15 +8,15 @@ import RichText from '@/components/public/RichText';
 
 export default function TermsPage() {
     const cmsPage = useCmsV2Page('terms');
+    if (!cmsPage) return null;
     const cmsContent = cmsPage?.blocks?.hero;
     const content = safeJsonParse<Record<string, unknown>>(cmsContent?.content, {});
 
-    const str = (key: string, fallback = "") =>
-        typeof content[key] === "string" && (content[key] as string).trim() ? (content[key] as string) : fallback;
+    const str = (key: string) => typeof content[key] === "string" ? (content[key] as string) : "";
 
-    const title = str("title", "Términos de Servicio");
-    const subtitle = str("subtitle", "Última actualización: 12 de Marzo, 2026");
-    const body = str("body", "Los términos de servicio de la plataforma se encuentran en construcción. Para dudas, contacta al equipo pastoral.");
+    const title = str("title");
+    const subtitle = str("subtitle");
+    const body = str("body");
 
     return (
         <div className="min-h-screen bg-[hsl(var(--surface-1))] dark:bg-background-dark">

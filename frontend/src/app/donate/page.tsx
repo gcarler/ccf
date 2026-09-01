@@ -33,62 +33,66 @@ export default function DonatePage() {
     const hero = safeJsonParse<Record<string, unknown>>(cmsHero?.content, {});
     const feed = safeJsonParse<Record<string, unknown>>(cmsFeed?.content, {});
 
-    // ── CMS-driven text content (with fallbacks to current hardcoded values) ──
-    const str = (obj: Record<string, unknown>, key: string, fallback = "") =>
-        typeof obj[key] === "string" && (obj[key] as string).trim() ? (obj[key] as string) : fallback;
+    if (!cmsPage) return null;
+
+    // All editorial copy is owned by the CMS page sections.
+    const str = (obj: Record<string, unknown>, key: string) =>
+        typeof obj[key] === "string" ? (obj[key] as string) : "";
 
     // Header & hero
-    const headerLabel = str(hero, "header_label", "Generosidad");
-    const heroBadge = str(hero, "badge", "Tu siembra tiene propósito");
-    const heroTitle = str(hero, "title", "Honramos a Dios");
-    const heroTitleAccent = str(hero, "title_accent", "generosidad.");
-    const heroDescription = str(hero, "description", "Cada ofrenda y diezmo fortalece la misión de transformar vidas y comunidades a través del evangelio.");
+    const headerLabel = str(hero, "header_label");
+    const heroBadge = str(hero, "badge");
+    const heroTitle = str(hero, "title");
+    const heroTitleAccent = str(hero, "title_accent");
+    const heroTitleConnector = str(hero, "title_connector");
+    const heroDescription = str(hero, "description");
 
     // Benefits
-    const benefit1Title = str(hero, "benefit1_title", "Seguridad Total");
-    const benefit1Desc = str(hero, "benefit1_desc", "Tus transacciones están protegidas con encriptación de nivel bancario.");
-    const benefit2Title = str(hero, "benefit2_title", "Impacto Global");
-    const benefit2Desc = str(hero, "benefit2_desc", "Apoyas misiones y ayuda social en toda la región.");
+    const benefit1Title = str(hero, "benefit1_title");
+    const benefit1Desc = str(hero, "benefit1_desc");
+    const benefit2Title = str(hero, "benefit2_title");
+    const benefit2Desc = str(hero, "benefit2_desc");
 
     // Amount & type selectors
-    const amountsLabel = str(feed, "amounts_label", "Selecciona un monto");
-    const customAmountLabel = str(feed, "custom_amount_label", "Otra cantidad personalizada");
-    const typeLabel = str(feed, "type_label", "Destino de la semilla");
-    const diezmoLabel = str(feed, "diezmo_label", "Diezmo");
-    const ofrendaLabel = str(feed, "ofrenda_label", "Ofrenda");
+    const amountsLabel = str(feed, "amounts_label");
+    const customAmountLabel = str(feed, "custom_amount_label");
+    const typeLabel = str(feed, "type_label");
+    const diezmoValue = str(feed, "diezmo_value");
+    const ofrendaValue = str(feed, "ofrenda_value");
+    const diezmoLabel = str(feed, "diezmo_label");
+    const ofrendaLabel = str(feed, "ofrenda_label");
 
     // Buttons
-    const payButtonLabel = str(feed, "pay_button_label", "Pagar con MercadoPago");
-    const connectingLabel = str(feed, "connecting_label", "Conectando...");
-    const manualButtonLabel = str(feed, "manual_button_label", "Registrar como recibido");
-    const manualDividerLabel = str(feed, "manual_divider_label", "O registra manualmente");
+    const payButtonLabel = str(feed, "pay_button_label");
+    const connectingLabel = str(feed, "connecting_label");
+    const manualButtonLabel = str(feed, "manual_button_label");
+    const manualDividerLabel = str(feed, "manual_divider_label");
 
     // Footer badges
-    const sslLabel = str(feed, "ssl_label", "Secure SSL");
-    const verifiedLabel = str(feed, "verified_label", "Verified Merchant");
+    const sslLabel = str(feed, "ssl_label");
+    const verifiedLabel = str(feed, "verified_label");
 
     // Success screen
-    const successTitleApproved = str(feed, "success_title_approved", "¡Ofrenda Recibida!");
-    const successTitlePending = str(feed, "success_title_pending", "Pago Pendiente");
-    const successDescApproved = str(feed, "success_desc_approved", "Tu generosidad permite que el ministerio siga creciendo y alcanzando más vidas.");
-    const successDescPending = str(feed, "success_desc_pending", "Tu pago está siendo procesado. Te notificaremos cuando se confirme.");
-    const amountLabel = str(feed, "amount_label", "Monto Sembrado");
-    const categoryLabel = str(feed, "category_label", "Categoría");
-    const backHomeLabel = str(feed, "back_home_label", "Volver al Inicio");
+    const successTitleApproved = str(feed, "success_title_approved");
+    const successTitlePending = str(feed, "success_title_pending");
+    const successDescApproved = str(feed, "success_desc_approved");
+    const successDescPending = str(feed, "success_desc_pending");
+    const amountLabel = str(feed, "amount_label");
+    const categoryLabel = str(feed, "category_label");
+    const backHomeLabel = str(feed, "back_home_label");
 
     // Toasts
-    const toastSuccess = str(feed, "toast_success", "¡Gracias por tu generosidad!");
-    const toastError = str(feed, "toast_error", "Error al procesar");
-    const toastMpError = str(feed, "toast_mp_error", "Error al iniciar pago con MercadoPago");
-    const toastMpPending = str(feed, "toast_mp_pending", "Tu pago está siendo procesado.");
-    const toastMpFailure = str(feed, "toast_mp_failure", "El pago no pudo completarse. Intenta de nuevo.");
+    const toastSuccess = str(feed, "toast_success");
+    const toastError = str(feed, "toast_error");
+    const toastMpError = str(feed, "toast_mp_error");
+    const toastMpPending = str(feed, "toast_mp_pending");
+    const toastMpFailure = str(feed, "toast_mp_failure");
 
     // Amounts (editable from CMS)
-    const cmsAmounts = Array.isArray(feed.amounts) ? (feed.amounts as string[]) : ['20', '50', '100', '200'];
-    const AMOUNTS = cmsAmounts.length > 0 ? cmsAmounts : ['20', '50', '100', '200'];
+    const AMOUNTS = Array.isArray(feed.amounts) ? (feed.amounts as string[]) : [];
 
-    const [amount, setAmount] = useState('50');
-    const [type, setType] = useState('Diezmo');
+    const [amount, setAmount] = useState(() => str(feed, "default_amount"));
+    const [type, setType] = useState(() => diezmoValue);
     const [isCustom, setIsCustom] = useState(false);
     const [loading, setLoading] = useState(false);
     const [mpLoading, setMpLoading] = useState(false);
@@ -220,7 +224,7 @@ export default function DonatePage() {
                         <HandHeart size={14} /> {heroBadge}
                     </div>
                     <h2 className="text-lg lg:text-xl font-bold text-[hsl(var(--text-primary))] dark:text-white tracking-tighter leading-[0.9]">
-                        {heroTitle} <br /> con nuestra <br /> <span className="text-[hsl(var(--primary))]">{heroTitleAccent}</span>
+                        {heroTitle} <br /> {heroTitleConnector} <br /> <span className="text-[hsl(var(--primary))]">{heroTitleAccent}</span>
                     </h2>
                     <p className="text-lg text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] font-medium max-w-md leading-relaxed">
                         {heroDescription}
@@ -281,8 +285,8 @@ export default function DonatePage() {
                     <div className="space-y-4">
                         <p className="text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide text-center">{typeLabel}</p>
                         <div className="grid grid-cols-2 gap-3">
-                            <TypeOption active={type === 'Diezmo'} onClick={() => setType('Diezmo')} icon={Building} label={diezmoLabel} />
-                            <TypeOption active={type === 'Ofrenda'} onClick={() => setType('Ofrenda')} icon={Heart} label={ofrendaLabel} />
+                            <TypeOption active={type === diezmoValue} onClick={() => setType(diezmoValue)} icon={Building} label={diezmoLabel} />
+                            <TypeOption active={type === ofrendaValue} onClick={() => setType(ofrendaValue)} icon={Heart} label={ofrendaLabel} />
                         </div>
                     </div>
 
