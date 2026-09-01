@@ -233,6 +233,14 @@ interface CmsFormRendererProps {
   className?: string;
 }
 
+function publicFormCopy(form: CmsFormPublicRead): Record<string, string> {
+  const value = form.settings_json?.public_ui;
+  if (!value || typeof value !== "object" || Array.isArray(value)) return {};
+  return Object.fromEntries(
+    Object.entries(value).filter((entry): entry is [string, string] => typeof entry[1] === "string"),
+  );
+}
+
 const INPUT_CLASS =
   "w-full px-3 py-2 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] focus:bg-[hsl(var(--bg-primary))] focus:ring-4 focus:ring-[hsl(var(--primary))]/10 focus:border-[hsl(var(--info)/100%)] outline-none font-medium text-[hsl(var(--text-primary))] transition-all placeholder:text-[hsl(var(--text-secondary))] placeholder:font-normal";
 
@@ -703,6 +711,8 @@ export default function CmsFormRenderer({
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  const copy = useMemo(() => publicFormCopy(form), [form]);
+  const text = useCallback((key: string) => copy[key] ?? "", [copy]);
 
   const steps = useMemo(() => buildSteps(form.fields || []), [form.fields]);
   const currentFields = useMemo(() => steps[Math.min(step, steps.length - 1)] ?? [], [steps, step]);
@@ -836,7 +846,7 @@ export default function CmsFormRenderer({
       return;
     }
     if (form.captcha_enabled && !captchaToken) {
-      setErrorMessage("Debes completar el captcha para continuar.");
+      setErrorMessage(text("captcha_required"));
       return;
     }
     if (!onSubmit) return;
@@ -855,7 +865,7 @@ export default function CmsFormRenderer({
         }
         // Error específico de un campo: mápalo a inline y vuelve al paso.
         if (detail?.field_id) {
-          setErrors((prev) => ({ ...prev, [detail.field_id as string]: detail?.detail || "Valor inválido" }));
+          setErrors((prev) => ({ ...prev, [detail.field_id as string]: detail?.detail || text("invalid_value") }));
           setReviewMode(false);
           const field = form.fields?.find((f) => f.id === detail.field_id);
           if (field) {
@@ -865,9 +875,9 @@ export default function CmsFormRenderer({
           focusFirstError();
           return;
         }
-        setErrorMessage(detail?.detail || extractErrorMessage(err, "Ocurrió un error al enviar el formulario."));
+        setErrorMessage(detail?.detail || extractErrorMessage(err, text("submit_error")));
       } else {
-        setErrorMessage(extractErrorMessage(err, "Ocurrió un error al enviar el formulario."));
+        setErrorMessage(extractErrorMessage(err, text("submit_error")));
       }
     }
   };
@@ -902,7 +912,7 @@ export default function CmsFormRenderer({
             onClick={resetForm}
             className="text-xs font-semibold text-[hsl(var(--primary))] hover:underline"
           >
-            Enviar otra respuesta
+            {text("reset_label")}
           </button>
         )}
       </div>
@@ -931,14 +941,14 @@ export default function CmsFormRenderer({
         // ── Vista de revisión final ──────────────────────────────────────────
         <div className="space-y-4">
           <div className="text-center pb-2 border-b border-[hsl(var(--border))]">
-            <h3 className="text-base font-bold text-[hsl(var(--text-primary))]">Revisa tus respuestas</h3>
+            <h3 className="text-base font-bold text-[hsl(var(--text-primary))]">{text("review_title")}</h3>
             <p className="text-xs text-[hsl(var(--text-secondary))] mt-1">
-              {isMultiStep ? `Paso ${steps.length} de ${steps.length} · ` : ""}Confirma antes de enviar.
+              {isMultiStep ? `${text("step_label")} ${steps.length} ${text("of_label")} ${steps.length} · ` : ""}{text("review_description")}
             </p>
           </div>
           <dl className="space-y-2.5">
             {reviewFields.length === 0 ? (
-              <p className="text-sm text-[hsl(var(--text-secondary))]">No hay campos completados.</p>
+              <p className="text-sm text-[hsl(var(--text-secondary))]">{text("review_empty")}</p>
             ) : (
               reviewFields.map((f) => (
                 <div key={f.id} className="flex items-start justify-between gap-3 text-sm">
@@ -961,7 +971,7 @@ export default function CmsFormRenderer({
                 onReset={() => setCaptchaToken(null)}
                 disabled={status === "loading"}
               />
-              {form.captcha_enabled && !captchaToken && errorMessage === "Debes completar el captcha para continuar." && (
+              {form.captcha_enabled && !captchaToken && errorMessage === text("captcha_required") && (
                 <p role="alert" className="text-xs font-semibold text-[hsl(var(--destructive))] mt-1">{errorMessage}</p>
               )}
             </div>
@@ -998,7 +1008,7 @@ export default function CmsFormRenderer({
                 onReset={() => setCaptchaToken(null)}
                 disabled={status === "loading"}
               />
-              {form.captcha_enabled && !captchaToken && errorMessage === "Debes completar el captcha para continuar." && (
+              {form.captcha_enabled && !captchaToken && errorMessage === text("captcha_required") && (
                 <p role="alert" className="text-xs font-semibold text-[hsl(var(--destructive))] mt-1">{errorMessage}</p>
               )}
             </div>
@@ -1006,7 +1016,7 @@ export default function CmsFormRenderer({
         </div>
       )}
 
-      {status === "error" && errorMessage && errorMessage !== "Debes completar el captcha para continuar." && (
+      {status === "error" && errorMessage && errorMessage !== text("captcha_required") && (
         <div className="mt-4 p-4 bg-[hsl(var(--destructive)/10%)] text-[hsl(var(--destructive))] rounded-lg text-sm font-semibold flex items-start gap-3" role="alert" aria-live="assertive">
           <span>⚠</span> {errorMessage}
         </div>
@@ -1020,7 +1030,7 @@ export default function CmsFormRenderer({
             disabled={step === 0 && !reviewMode}
             className="inline-flex items-center gap-1 px-4 py-2.5 rounded-lg border border-[hsl(var(--border))] text-sm font-semibold text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--bg-muted))] transition-colors disabled:opacity-40"
           >
-            <ChevronLeft size={16} /> Anterior
+            <ChevronLeft size={16} /> {text("previous_label")}
           </button>
         ) : (
           <span />
@@ -1035,10 +1045,10 @@ export default function CmsFormRenderer({
           >
             {status === "loading" && <Loader2 size={16} className="animate-spin" />}
             {isLastStep
-              ? (isMultiStep ? (<>Revisar <ChevronRight size={16} /></>) : (form.submit_button_text || "Enviar"))
+              ? (isMultiStep ? (<> {text("review_button_label")} <ChevronRight size={16} /></>) : form.submit_button_text)
               : (
                 <>
-                  Continuar <ChevronRight size={16} />
+                  {text("next_label")} <ChevronRight size={16} />
                 </>
               )}
           </button>
@@ -1052,7 +1062,7 @@ export default function CmsFormRenderer({
             className="inline-flex items-center gap-2 px-5 py-2.5 bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))]/90 text-white rounded-lg text-sm font-semibold uppercase tracking-wide shadow-lg shadow-black/10 transition-all disabled:opacity-60 flex-1 sm:flex-none justify-center"
           >
             {status === "loading" && <Loader2 size={16} className="animate-spin" />}
-            {form.submit_button_text || "Enviar"}
+            {form.submit_button_text}
           </button>
         )}
       </div>

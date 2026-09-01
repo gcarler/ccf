@@ -25,7 +25,22 @@ function form(overrides: Partial<CmsFormPublicRead> = {}): CmsFormPublicRead {
     captcha_provider: "hcaptcha",
     captcha_site_key: null,
     honeypot_enabled: false,
-    settings_json: {},
+    settings_json: {
+      public_ui: {
+        captcha_required: "Debes completar el captcha para continuar.",
+        invalid_value: "Valor inválido",
+        submit_error: "Ocurrió un error al enviar el formulario.",
+        reset_label: "Enviar otra respuesta",
+        review_title: "Revisa tus respuestas",
+        step_label: "Paso",
+        of_label: "de",
+        review_description: "Confirma antes de enviar.",
+        review_empty: "No hay campos completados.",
+        previous_label: "Anterior",
+        review_button_label: "Revisar",
+        next_label: "Continuar",
+      },
+    },
     is_active: true,
     ...overrides,
   };
