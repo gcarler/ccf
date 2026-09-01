@@ -130,7 +130,7 @@ export default function PastoresIndexPage() {
                                 )}
                                 <div className="absolute bottom-4 left-5 right-5 z-20">
                                     <h3 className="text-lg font-bold text-white drop-shadow-sm">{pastor.name}</h3>
-                                    <p className="text-xs font-bold uppercase tracking-widest text-[hsl(var(--primary))] drop-shadow-sm">{pastor.role || 'Pastor'}</p>
+                                    <p className="text-xs font-bold uppercase tracking-widest text-[hsl(var(--primary))] drop-shadow-sm">{pastor.role || ''}</p>
                                 </div>
                                 <div className="absolute top-0 right-0 w-20 h-20 bg-gradient-to-bl from-[hsl(var(--primary))/0.15] to-transparent rounded-bl-[100%] pointer-events-none" />
                             </Link>

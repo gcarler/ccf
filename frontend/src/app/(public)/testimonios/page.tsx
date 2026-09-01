@@ -119,13 +119,13 @@ function TestimonialCard({ t, isHighlight, readMoreLabel = "Leer más" }: { t: P
                             )}
                             <div className="min-w-0">
                                 <p className="font-semibold text-base truncate" style={{ color: "var(--site-on-surface)" }}>
-                                    {t.author?.username ?? "Anónimo"}
+                                    {t.author?.username ?? ""}
                                 </p>
                                 <p
                                     className="text-2xs uppercase tracking-wide font-bold opacity-80 truncate"
                                     style={{ color: "var(--site-on-surface-variant)" }}
                                 >
-                                    {t.author?.role ?? "Persona"}
+                                    {t.author?.role ?? ""}
                                 </p>
                             </div>
                         </div>

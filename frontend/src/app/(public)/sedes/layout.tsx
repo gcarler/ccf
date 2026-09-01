@@ -1,11 +1,9 @@
-import { Metadata } from "next";
+import type { Metadata } from "next";
+import { publicCmsMetadata } from "@/lib/cms/publicMetadata";
 
-const siteName = process.env.NEXT_PUBLIC_SITE_NAME ?? "Mi Comunidad";
-
-export const metadata: Metadata = {
-    title: `Nuestras Sedes | ${siteName}`,
-    description: "Nuestra presencia. Encuentra la sede más cercana a ti.",
-};
+export async function generateMetadata(): Promise<Metadata> {
+    return publicCmsMetadata("locations");
+}
 
 export default function Layout({ children }: { children: React.ReactNode }) {
     return <>{children}</>;

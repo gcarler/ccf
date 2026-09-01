@@ -198,7 +198,7 @@ export default function PublicHomePage({ initialHomePage }: { initialHomePage?: 
     // como CTA persistente (ej. banner de aniversario).
     const heroAnniversarySlide = cmsHeroSlides.find((s) => s.href);
     const heroTertiaryCta = heroAnniversarySlide
-        ? { label: heroAnniversarySlide.title || "Celebrar aniversario", href: heroAnniversarySlide.href! }
+        ? { label: heroAnniversarySlide.title || "", href: heroAnniversarySlide.href! }
         : undefined;
 
     return (
@@ -531,7 +531,7 @@ export default function PublicHomePage({ initialHomePage }: { initialHomePage?: 
                                         color: "var(--site-on-primary)",
                                     }}
                                 >
-                                    {nlStatus === "sending" ? (newsletterSendingLabel || "Enviando...") : newsletterSubmit}
+                                    {nlStatus === "sending" ? newsletterSendingLabel : newsletterSubmit}
                                 </button>
                             </form>
                         )}

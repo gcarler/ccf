@@ -156,11 +156,11 @@ export default function CursosPage() {
               <div className="absolute inset-0" style={{ background: "linear-gradient(to top, var(--site-surface-container-lowest) 0%, transparent 60%)" }} />
               <div className="absolute bottom-0 p-4 md:p-4 w-full relative z-10 flex flex-col justify-end h-full">
                 <span className="inline-block px-4 py-1.5 rounded-full text-xs font-semibold uppercase tracking-wide mb-3" style={{ background: "var(--site-card-highlight)", color: "var(--site-primary)" }}>
-                  {featured.modality || "Acceso Gratuito"}
+                  {featured.modality || ""}
                 </span>
                 <h3 className="text-2xl md:text-3xl font-black mb-4 text-[hsl(var(--text-primary))] dark:text-white">{featured.title}</h3>
                 <p className="text-base leading-relaxed max-w-2xl mb-6 text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">{featured.description || featured.title}</p>
-                <span className="inline-flex items-center gap-2 text-sm font-bold uppercase tracking-wide text-[hsl(var(--primary))]">{featured.cta || "Inscribirme Gratis"} <ArrowRight size={16} /></span>
+                <span className="inline-flex items-center gap-2 text-sm font-bold uppercase tracking-wide text-[hsl(var(--primary))]">{featured.cta || ""} <ArrowRight size={16} /></span>
               </div>
             </motion.article>
 
@@ -183,7 +183,7 @@ export default function CursosPage() {
                     </div>
                     <div className="p-4">
                       <span className="inline-flex items-center px-2 py-0.5 rounded-full text-2xs font-semibold uppercase tracking-wide mb-3" style={{ background: "var(--site-primary-container)", color: "var(--site-primary)" }}>
-                        {course.modality || "Gratuito"}
+                        {course.modality || ""}
                       </span>
                       <h3 className="font-bold text-[hsl(var(--text-primary))] dark:text-white line-clamp-2">{course.title}</h3>
                       <p className="mt-2 text-sm text-[hsl(var(--text-secondary))] line-clamp-2">{course.description || course.title}</p>
@@ -218,7 +218,7 @@ export default function CursosPage() {
             >
               <div className="flex items-center justify-between gap-3 mb-3">
                 <span className="inline-flex items-center px-2 py-0.5 rounded-full text-2xs font-semibold uppercase tracking-wide" style={{ background: "var(--site-surface-container)", color: "var(--site-primary)" }}>
-                  {course.modality || "Gratuito"}
+                  {course.modality || ""}
                 </span>
                 <CheckCircle2 size={16} className="text-[hsl(var(--primary))]" />
               </div>

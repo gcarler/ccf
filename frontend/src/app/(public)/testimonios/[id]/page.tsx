@@ -169,10 +169,10 @@ export default function TestimonioDetailPage() {
                             </span>
                         )}
                         <h1 className="text-xl md:text-xl font-bold tracking-tight mb-2" style={{ color: "var(--site-on-background)" }}>
-                            {testimonial.author?.username ?? "Anónimo"}
+                            {testimonial.author?.username ?? ""}
                         </h1>
                         <p className="text-xl md:text-lg opacity-70 font-medium" style={{ color: "var(--site-on-surface-variant)" }}>
-                            {testimonial.author?.role ?? "Persona de la comunidad"}
+                            {testimonial.author?.role ?? ""}
                         </p>
                     </div>
                 </motion.header>
