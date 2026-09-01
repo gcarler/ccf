@@ -14,9 +14,13 @@ import { asItems, asProps, val } from "./shared";
 export function CountdownSection({ section }: { section: CmsSection<"countdown"> }) {
   const props: CountdownProps = section.props_json ?? {};
   const p = asProps(props);
-  const title = val(p, "title", "Próximo Evento");
+  const title = val(p, "title");
   const targetDate = val(p, "target_date", "");
   const body = val(p, "body", "");
+  const expiredLabel = val(p, "expired_label");
+  const unitLabels = [
+    val(p, "days_label"), val(p, "hours_label"), val(p, "minutes_label"), val(p, "seconds_label"),
+  ];
 
   const [timeLeft, setTimeLeft] = useState({ d: 0, h: 0, m: 0, s: 0, expired: false });
 
@@ -44,10 +48,10 @@ export function CountdownSection({ section }: { section: CmsSection<"countdown">
   }, [targetDate]);
 
   const units = [
-    { label: "DÍAS", value: timeLeft.d },
-    { label: "HORAS", value: timeLeft.h },
-    { label: "MIN", value: timeLeft.m },
-    { label: "SEG", value: timeLeft.s },
+    { label: unitLabels[0], value: timeLeft.d },
+    { label: unitLabels[1], value: timeLeft.h },
+    { label: unitLabels[2], value: timeLeft.m },
+    { label: unitLabels[3], value: timeLeft.s },
   ];
 
   return (
@@ -58,7 +62,7 @@ export function CountdownSection({ section }: { section: CmsSection<"countdown">
       <h2 className="text-2xl md:text-3xl font-black text-white">{title}</h2>
       {body && <p className="mt-3 text-white/80 text-base">{body}</p>}
       {timeLeft.expired ? (
-        <p className="mt-8 text-white text-xl font-bold">¡El evento ya comenzó!</p>
+        <p className="mt-8 text-white text-xl font-bold">{expiredLabel}</p>
       ) : (
         <div className="mt-8 flex justify-center gap-3 md:gap-6">
           {units.map((unit) => (
@@ -88,7 +92,7 @@ export function CountdownSection({ section }: { section: CmsSection<"countdown">
 export function PricingSection({ section }: { section: CmsSection<"pricing"> }) {
   const props: PricingProps = section.props_json ?? {};
   const p = asProps(props);
-  const title = val(p, "title", "Opciones");
+  const title = val(p, "title");
   const items = asItems(p).slice(0, 4) as Array<{ name?: string; price?: string; features?: string; btn?: string; btn_href?: string; featured?: boolean | string }>;
 
   return (

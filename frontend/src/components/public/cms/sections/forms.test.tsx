@@ -15,12 +15,41 @@ function section<T extends "contact_form" | "prayer_form">(
   type: T,
   props_json: Record<string, unknown> = {},
 ): CmsSection<T> {
+  const cmsDefaults = type === "contact_form"
+    ? {
+        title: "Hablemos de Tu Caminar",
+        name_label: "Nombre completo",
+        name_placeholder: "Tu nombre",
+        email_label: "Correo electrónico",
+        email_placeholder: "tu@email.com (opcional)",
+        phone_label: "WhatsApp",
+        phone_placeholder: "+57 300...",
+        message_label: "¿En qué podemos ayudarte?",
+        message_placeholder: "Cuéntanos un poco sobre ti...",
+        submit_label: "Enviar mensaje y conectar",
+        success_message: "Gracias. Te contactaremos pronto.",
+        reset_label: "Enviar otro mensaje",
+        sending_label: "Enviando...",
+        error_message: "No se pudo enviar el mensaje.",
+      }
+    : {
+        title: "Pedir oración",
+        name_label: "Nombre",
+        name_placeholder: "Tu nombre",
+        request_label: "Petición de oración",
+        request_placeholder: "Comparte tu necesidad...",
+        submit_label: "Enviar al equipo pastoral",
+        success_message: "Tu petición ha sido enviada.",
+        reset_label: "Enviar otra petición",
+        sending_label: "Enviando...",
+        error_message: "No se pudo enviar la petición.",
+      };
   return {
     id: `${type}-1`,
     page_id: "page-1",
     section_key: type,
     type,
-    props_json: props_json as CmsSection<T>["props_json"],
+    props_json: { ...cmsDefaults, ...props_json } as unknown as CmsSection<T>["props_json"],
     sort_order: 0,
     is_visible: true,
     status: "active",

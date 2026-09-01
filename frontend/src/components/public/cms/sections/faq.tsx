@@ -27,7 +27,7 @@ export function FaqSection({ section }: { section: CmsSection<"faq"> }) {
                 className="w-full flex items-center justify-between gap-4 p-5 text-left"
               >
                 <span className="font-bold text-base" style={{ color: "var(--site-on-surface)" }}>
-                  {item.q || `Pregunta ${i + 1}`}
+                  {item.q || ""}
                 </span>
                 {isOpen ? (
                   <ChevronUp size={18} style={{ color: "var(--site-primary)", flexShrink: 0 }} />
@@ -45,7 +45,7 @@ export function FaqSection({ section }: { section: CmsSection<"faq"> }) {
                     className="overflow-hidden"
                   >
                     <p className="px-5 pb-5 text-sm leading-relaxed" style={{ color: "var(--site-on-surface-variant)" }}>
-                      {item.a || "Respuesta pendiente"}
+                      {item.a || ""}
                     </p>
                   </motion.div>
                 )}

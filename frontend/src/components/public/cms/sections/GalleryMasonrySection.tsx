@@ -10,7 +10,7 @@ export function GalleryMasonrySection({ section }: { section: Partial<CmsSection
   const body = section.props_json?.body;
   const layout = section.props_json?.layout || "masonry";
   const albumUrl = section.props_json?.album_url || "";
-  const albumLabel = section.props_json?.album_label || "Ver más fotos";
+  const albumLabel = section.props_json?.album_label || "";
   const autoplay = Boolean(section.props_json?.autoplay);
   const fullBleed = Boolean(section.props_json?.full_bleed);
   const rawColumns = section.props_json?.columns;
@@ -104,7 +104,7 @@ export function GalleryMasonrySection({ section }: { section: Partial<CmsSection
                 )}
               </button>
             ) : (
-              <div className="flex aspect-[4/3] items-center justify-center text-sm text-gray-500 sm:aspect-[16/9]">Añade imágenes desde el editor CMS.</div>
+              <div className="aspect-[4/3] sm:aspect-[16/9]" aria-hidden="true" />
             )}
           </div>
           {images.length > 1 && (

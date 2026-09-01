@@ -77,7 +77,7 @@ export function DividerSection({ section }: { section: CmsSection<"divider"> }) 
 export function SocialLinksSection({ section }: { section: CmsSection<"social_links"> }) {
   const props: SocialLinksProps = section.props_json ?? {};
   const p = asProps(props);
-  const title = val(p, "title", "Síguenos");
+  const title = val(p, "title");
   const links = asItems(p).filter(Boolean);
   const layout = val(p, "layout", "row");
   const showLabels = p.show_labels !== false;
@@ -128,7 +128,7 @@ export function SpacerSection({ section }: { section: CmsSection<"spacer"> }) {
 export function CalendarSection({ section }: { section: CmsSection<"calendar"> }) {
   const props: CalendarProps = section.props_json ?? {};
   const p = asProps(props);
-  const title = val(p, "title", "Próximos Eventos");
+  const title = val(p, "title");
   const items = asItems(p).filter(Boolean);
   const shouldShowTime = p.show_time !== false;
   const shouldShowLocation = p.show_location !== false;
@@ -144,7 +144,7 @@ export function CalendarSection({ section }: { section: CmsSection<"calendar"> }
               <Calendar size={18} />
             </div>
             <div className="flex-1">
-              <p className="font-bold" style={{ color: "var(--site-on-surface)" }}>{val(item, "title", "Evento")}</p>
+                <p className="font-bold" style={{ color: "var(--site-on-surface)" }}>{val(item, "title")}</p>
               <div className="flex flex-wrap gap-3 text-xs mt-1" style={{ color: "var(--site-on-surface-variant)" }}>
                 {shouldShowTime && val(item, "date") && <span>{val(item, "date")}{val(item, "time") ? ` · ${val(item, "time")}` : ""}</span>}
                 {shouldShowLocation && val(item, "location") && <span>{val(item, "location")}</span>}
@@ -162,7 +162,7 @@ export function CalendarSection({ section }: { section: CmsSection<"calendar"> }
 export function MapSection({ section }: { section: CmsSection<"map"> }) {
   const props: MapProps = section.props_json ?? {};
   const p = asProps(props);
-  const title = val(p, "title", "Encuéntranos");
+  const title = val(p, "title");
   const embedUrl = val(p, "embed_url", "");
   const address = val(p, "address", "");
   const height = parseInt(val(p, "height", "400"));

@@ -10,9 +10,13 @@ import { asProps, val } from "./shared";
 export function NewsletterSection({ section }: { section: CmsSection<"newsletter"> }) {
   const props: NewsletterProps = section.props_json ?? {};
   const p = asProps(props);
-  const title = val(p, "title", "Mantente conectado");
+  const title = val(p, "title");
   const body = val(p, "body", "");
-  const btnLabel = val(p, "cta_label", "Suscribirse");
+  const btnLabel = val(p, "cta_label");
+  const successMessage = val(p, "success_message");
+  const namePlaceholder = val(p, "name_placeholder");
+  const sendingLabel = val(p, "sending_label");
+  const errorMessage = val(p, "error_message");
   const actionUrl = val(p, "action_url", "");
 
   const [name, setName] = useState("");
@@ -48,7 +52,7 @@ export function NewsletterSection({ section }: { section: CmsSection<"newsletter
       }
       setSent(true);
     } catch {
-      setSubmitError("No se pudo enviar. Intenta de nuevo.");
+      setSubmitError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -64,7 +68,7 @@ export function NewsletterSection({ section }: { section: CmsSection<"newsletter
       {sent ? (
         <div className="mt-8 inline-flex items-center gap-3 rounded-xl px-6 py-4" style={{ background: "var(--site-surface-container)" }}>
           <span className="text-2xl">🎉</span>
-          <p className="font-bold" style={{ color: "var(--site-on-surface)" }}>¡Gracias! Te mantendremos al tanto.</p>
+          <p className="font-bold" style={{ color: "var(--site-on-surface)" }}>{successMessage}</p>
         </div>
       ) : (
         <form onSubmit={handleSubmit} className="mt-8 flex flex-col sm:flex-row gap-3 max-w-md mx-auto">
@@ -72,7 +76,7 @@ export function NewsletterSection({ section }: { section: CmsSection<"newsletter
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="Tu nombre"
+            placeholder={namePlaceholder}
             className="flex-1 rounded-xl px-4 py-3 text-sm border outline-none"
             style={{ background: "var(--site-surface-container)", borderColor: "var(--site-outline-variant, rgba(0,0,0,0.15))", color: "var(--site-on-surface)" }}
           />
@@ -91,7 +95,7 @@ export function NewsletterSection({ section }: { section: CmsSection<"newsletter
             className="inline-flex items-center justify-center gap-2 rounded-xl px-5 py-3 text-sm font-bold text-white whitespace-nowrap disabled:opacity-60 transition-opacity hover:opacity-90"
             style={{ background: "var(--site-cta-gradient)" }}
           >
-            <Send size={14} /> {loading ? "Enviando..." : btnLabel}
+            <Send size={14} /> {loading ? sendingLabel : btnLabel}
           </button>
         </form>
       )}
@@ -107,10 +111,17 @@ export function NewsletterSection({ section }: { section: CmsSection<"newsletter
 export function DocumentUploadSection({ section }: { section: CmsSection<"document_upload"> }) {
   const props: DocumentUploadProps = section.props_json ?? {};
   const p = asProps(props);
-  const title = val(p, "title", "Subir Documento");
+  const title = val(p, "title");
   const description = val(p, "description", "");
   const acceptedTypes = val(p, "accepted_types", ".pdf,.doc,.docx,.jpg,.png");
   const maxSize = parseInt(val(p, "max_size_mb", "10"));
+  const fileSizeErrorTemplate = val(p, "file_size_error_template");
+  const fileSelectLabel = val(p, "file_select_label");
+  const submitLabel = val(p, "submit_label");
+  const sendingLabel = val(p, "sending_label");
+  const errorMessage = val(p, "error_message");
+  const maxSizeLabel = val(p, "max_size_label");
+  const acceptedTypesLabel = val(p, "accepted_types_label");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
   const [uploaded, setUploaded] = useState(false);
@@ -120,7 +131,7 @@ export function DocumentUploadSection({ section }: { section: CmsSection<"docume
     const file = e.target.files?.[0];
     if (file) {
       if (file.size > maxSize * 1024 * 1024) {
-        setError(`El archivo excede ${maxSize}MB`);
+        setError(fileSizeErrorTemplate.replace("{size}", String(maxSize)));
         return;
       }
       setSelectedFile(file);
@@ -137,8 +148,8 @@ export function DocumentUploadSection({ section }: { section: CmsSection<"docume
       formData.append("file", selectedFile);
       await apiFetch<void>("/public/documents", { method: "POST", body: formData, silent: true });
       setUploaded(true);
-    } catch (err: any) {
-      setError(err.message || "Error al subir el documento");
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : errorMessage);
     } finally {
       setUploading(false);
     }
@@ -148,7 +159,7 @@ export function DocumentUploadSection({ section }: { section: CmsSection<"docume
     <section className="py-8 md:py-12 px-3 md:px-6 lg:px-8 xl:px-12">
       <div className="rounded-lg p-6 text-center" style={{ background: "var(--site-primary-container)" }}>
         <CheckCircle2 size={48} className="mx-auto mb-3" style={{ color: "var(--site-primary)" }} />
-        <p className="text-lg font-bold" style={{ color: "var(--site-on-primary)" }}>{val(p, "success_message", "Documento enviado correctamente")}</p>
+        <p className="text-lg font-bold" style={{ color: "var(--site-on-primary)" }}>{val(p, "success_message")}</p>
       </div>
     </section>
   );
@@ -161,7 +172,7 @@ export function DocumentUploadSection({ section }: { section: CmsSection<"docume
         {description && <p className="text-sm mb-4" style={{ color: "var(--site-on-surface-variant)" }}>{description}</p>}
         {error && <p className="text-sm mb-3 text-[hsl(var(--destructive))] font-semibold">{error}</p>}
         <label className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold cursor-pointer hover:scale-105 transition-all" style={{ background: "var(--site-primary)", color: "var(--site-on-primary)" }}>
-          <Upload size={16} /> Seleccionar archivo
+          <Upload size={16} /> {fileSelectLabel}
           <input type="file" accept={acceptedTypes} onChange={handleFile} className="hidden" />
         </label>
         {selectedFile && (
@@ -169,11 +180,11 @@ export function DocumentUploadSection({ section }: { section: CmsSection<"docume
             <span className="font-medium">{selectedFile.name}</span>
             <span className="mx-2 opacity-50">({(selectedFile.size / 1024).toFixed(0)}KB)</span>
             <button onClick={handleUpload} disabled={uploading} className="ml-3 px-3 py-1 rounded bg-[hsl(var(--success))] text-white text-xs font-semibold hover:bg-[hsl(var(--success)/0.8)] disabled:opacity-50">
-              {uploading ? "Subiendo..." : "Enviar"}
+              {uploading ? sendingLabel : submitLabel}
             </button>
           </div>
         )}
-        <p className="text-xs mt-3 opacity-50" style={{ color: "var(--site-on-surface-variant)" }}>Máx: {maxSize}MB · Tipos: {acceptedTypes}</p>
+        <p className="text-xs mt-3 opacity-50" style={{ color: "var(--site-on-surface-variant)" }}>{maxSizeLabel}: {maxSize}MB · {acceptedTypesLabel}: {acceptedTypes}</p>
       </div>
     </section>
   );

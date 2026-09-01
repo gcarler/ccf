@@ -13,7 +13,7 @@ import { asItems, asProps, val } from "./shared";
 export function CivicFileDownloadsSection({ section }: { section: CmsSection<"civic_file_downloads"> }) {
   const props: CivicFileDownloadsProps = section.props_json ?? {};
   const p = asProps(props);
-  const title = val(p, "title", "Documentos para descarga");
+  const title = val(p, "title");
   const body = val(p, "body", "");
   const items = asItems(p) as Array<{
     name?: string; file_url?: string; format?: string;

@@ -13,7 +13,7 @@ import { asItems, asProps, val } from "./shared";
 export function CivicConvocatoriaCardsSection({ section }: { section: CmsSection<"civic_convocatoria_cards"> }) {
   const props: CivicConvocatoriaCardsProps = section.props_json ?? {};
   const p = asProps(props);
-  const title = val(p, "title", "Convocatorias");
+  const title = val(p, "title");
   const body = val(p, "body", "");
   const items = asItems(p) as Array<{
     title?: string; description?: string;
@@ -98,9 +98,9 @@ export function CivicHeroSearchSection({ section }: { section: CmsSection<"civic
   const props: CivicHeroSearchProps = section.props_json ?? {};
   const p = asProps(props);
   const eyebrow = val(p, "eyebrow", "");
-  const title = val(p, "title", "¿Qué trámite buscas?");
-  const subtitle = val(p, "subtitle", "Encuentra todo en un solo lugar.");
-  const placeholder = val(p, "placeholder", "Buscar trámites, convocatorias, noticias...");
+  const title = val(p, "title");
+  const subtitle = val(p, "subtitle");
+  const placeholder = val(p, "placeholder");
   const actionUrl = val(p, "action_url", "/buscar");
   const backgroundImage = val(p, "background_image", "");
   const suggestions = Array.isArray(p.suggestions) ? (p.suggestions as string[]) : [];
@@ -170,7 +170,7 @@ export function CivicHeroSearchSection({ section }: { section: CmsSection<"civic
 export function CivicQuickLinksSection({ section }: { section: CmsSection<"civic_quick_links"> }) {
   const props: CivicQuickLinksProps = section.props_json ?? {};
   const p = asProps(props);
-  const title = val(p, "title", "Accesos Rápidos");
+  const title = val(p, "title");
   const body = val(p, "body", "");
   const columns = Math.max(2, Math.min(6, parseInt(val(p, "columns", "4"), 10)));
   const colClasses: Record<number, string> = {

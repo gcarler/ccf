@@ -14,7 +14,7 @@ import { asItems, asProps, val } from "./shared";
 export function TestimonialsSection({ section }: { section: CmsSection<"testimonials"> }) {
   const props: TestimonialsProps = section.props_json ?? {};
   const p = asProps(props);
-  const title = val(p, "title", "Testimonios");
+  const title = val(p, "title");
   const items = asItems(p).slice(0, 6) as Array<{ author?: string; role?: string; content?: string; stars?: number | string }>;
 
   return (
@@ -35,7 +35,7 @@ export function TestimonialsSection({ section }: { section: CmsSection<"testimon
                 ))}
               </div>
               <p className="text-base leading-relaxed italic flex-1" style={{ color: "var(--site-on-surface)" }}>
-                &ldquo;{item.content || "Testimonio"}&rdquo;
+                &ldquo;{item.content || ""}&rdquo;
               </p>
               <div className="flex items-center gap-3 pt-2 border-t" style={{ borderColor: "var(--site-outline-variant, rgba(0,0,0,0.1))" }}>
                 <div
@@ -45,7 +45,7 @@ export function TestimonialsSection({ section }: { section: CmsSection<"testimon
                   {(item.author || "A")[0].toUpperCase()}
                 </div>
                 <div>
-                  <p className="font-bold text-sm" style={{ color: "var(--site-on-surface)" }}>{item.author || "Anónimo"}</p>
+                  <p className="font-bold text-sm" style={{ color: "var(--site-on-surface)" }}>{item.author || ""}</p>
                   {item.role && <p className="text-xs" style={{ color: "var(--site-on-surface-variant)" }}>{item.role}</p>}
                 </div>
               </div>
@@ -127,7 +127,7 @@ export function StatsSection({ section }: { section: CmsSection<"stats"> }) {
             <p className="text-3xl md:text-4xl font-black text-white">
               <AnimatedNumber target={item.value || "0"} />
             </p>
-            <p className="mt-2 text-xs font-bold uppercase tracking-widest text-white/70">{item.label || "Métrica"}</p>
+            <p className="mt-2 text-xs font-bold uppercase tracking-widest text-white/70">{item.label || ""}</p>
           </div>
         ))}
       </div>
@@ -140,7 +140,7 @@ export function StatsSection({ section }: { section: CmsSection<"stats"> }) {
 export function TeamSection({ section }: { section: CmsSection<"team"> }) {
   const props: TeamProps = section.props_json ?? {};
   const p = asProps(props);
-  const title = val(p, "title", "Nuestro Equipo");
+  const title = val(p, "title");
   const items = asItems(p).slice(0, 12) as Array<{ name?: string; role?: string; image?: string; bio?: string }>;
 
   return (
@@ -162,10 +162,10 @@ export function TeamSection({ section }: { section: CmsSection<"team"> }) {
                 backgroundPosition: "center",
               }}
             >
-              {!item.image && (item.name || "?")[0].toUpperCase()}
+              {!item.image && item.name?.[0]?.toUpperCase()}
             </div>
             <div>
-              <p className="font-bold text-base" style={{ color: "var(--site-on-surface)" }}>{item.name || "Nombre"}</p>
+              <p className="font-bold text-base" style={{ color: "var(--site-on-surface)" }}>{item.name || ""}</p>
               {item.role && <p className="text-xs font-medium mt-0.5" style={{ color: "var(--site-primary)" }}>{item.role}</p>}
               {item.bio && <p className="text-xs mt-2 leading-relaxed" style={{ color: "var(--site-on-surface-variant)" }}>{item.bio}</p>}
             </div>
@@ -181,7 +181,7 @@ export function TeamSection({ section }: { section: CmsSection<"team"> }) {
 export function TestimonialsMasonrySection({ section }: { section: CmsSection<"testimonials_masonry"> }) {
   const props: TestimonialsMasonryProps = section.props_json ?? {};
   const p = asProps(props);
-  const title = val(p, "title", "Historias de Transformación");
+  const title = val(p, "title");
   const subtitle = val(p, "subtitle", "");
   return (
     <section className="ccf-section-panel p-7 md:p-12 lg:p-14" style={{ background: "var(--site-surface-container-low)" }}>

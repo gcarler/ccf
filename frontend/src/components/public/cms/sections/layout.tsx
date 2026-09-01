@@ -18,7 +18,7 @@ import { asItems, asProps, val } from "./shared";
 export function TocSection({ section }: { section: CmsSection<"toc"> }) {
   const props: TocProps = section.props_json ?? {};
   const p = asProps(props);
-  const title = val(p, "title", "En esta página");
+  const title = val(p, "title");
   const items = asItems(p).filter(Boolean);
   return (
     <section className="py-6 md:py-8 px-3 md:px-6 lg:px-8 xl:px-12">
@@ -46,7 +46,7 @@ export function TocSection({ section }: { section: CmsSection<"toc"> }) {
 export function CollapsibleSection({ section }: { section: CmsSection<"collapsible"> }) {
   const props: CollapsibleProps = section.props_json ?? {};
   const p = asProps(props);
-  const title = val(p, "title", "Información");
+  const title = val(p, "title");
   const defaultOpen = p.default_open === true;
   const contentHtml = sanitizeCmsHtml(val(p, "content_html", ""));
   const [open, setOpen] = useState(defaultOpen);
@@ -124,7 +124,7 @@ export function AccordionSection({ section }: { section: CmsSection<"accordion">
         {items.map((item, i) => (
           <div key={i} className="rounded-lg border overflow-hidden" style={{ background: "var(--site-surface)", borderColor: "var(--site-outline-variant)" }}>
             <button onClick={() => setOpenIdx(openIdx === i ? null : i)} className="w-full flex items-center justify-between p-4 text-left" style={{ color: "var(--site-on-surface)" }}>
-              <span className="font-semibold">{val(item, "question", `Pregunta ${i + 1}`)}</span>
+              <span className="font-semibold">{val(item, "question")}</span>
               <ChevronDown size={18} className={`transition-transform duration-300 ${openIdx === i ? "rotate-180" : ""}`} />
             </button>
             <AnimatePresence>
@@ -148,7 +148,7 @@ export function AccordionSection({ section }: { section: CmsSection<"accordion">
 export function PolicyDocumentSection({ section }: { section: CmsSection<"policy_document"> }) {
   const props: PolicyDocumentProps = section.props_json ?? {};
   const p = asProps(props);
-  const title = val(p, "title", "Política de Privacidad");
+  const title = val(p, "title");
   const lastUpdate = val(p, "last_update", "");
   const summary = val(p, "summary", "");
   const items = asItems(p).slice(0, 50) as Array<{ id?: string; title?: string; content?: string }>;

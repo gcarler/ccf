@@ -150,7 +150,7 @@ export function ImageTextSection({ section }: { section: CmsSection<"image_text"
 export function VideoGridSection({ section }: { section: CmsSection<"video_grid"> }) {
   const props: VideoGridProps = section.props_json ?? {};
   const p = asProps(props);
-  const title = val(p, "title", "Prédicas & Mensajes");
+  const title = val(p, "title");
   const subtitle = val(p, "subtitle", "");
   return (
     <section className="ccf-section-panel p-7 md:p-12 lg:p-14" style={{ background: "var(--site-surface-container-low)" }}>
@@ -170,7 +170,7 @@ export function VideoGridSection({ section }: { section: CmsSection<"video_grid"
 export function EventsCalendarSection({ section }: { section: CmsSection<"events_calendar"> }) {
   const props: EventsCalendarProps = section.props_json ?? {};
   const p = asProps(props);
-  const title = val(p, "title", "Próximos Eventos");
+  const title = val(p, "title");
   const subtitle = val(p, "subtitle", "");
   return (
     <section className="ccf-section-panel p-7 md:p-12 lg:p-14" style={{ background: "var(--site-surface-container-low)" }}>
@@ -190,7 +190,7 @@ export function EventsCalendarSection({ section }: { section: CmsSection<"events
 export function LocationsListSection({ section }: { section: CmsSection<"locations_list"> }) {
   const props: LocationsListProps = section.props_json ?? {};
   const p = asProps(props);
-  const title = val(p, "title", "Nuestras Sedes");
+  const title = val(p, "title");
   const subtitle = val(p, "subtitle", "");
   return (
     <section className="ccf-section-panel p-7 md:p-12 lg:p-14" style={{ background: "var(--site-surface-container-low)" }}>
@@ -210,7 +210,7 @@ export function LocationsListSection({ section }: { section: CmsSection<"locatio
 export function CourseGridSection({ section }: { section: CmsSection<"course_grid"> }) {
   const props: CourseGridProps = section.props_json ?? {};
   const p = asProps(props);
-  const title = val(p, "title", "Cursos & Academia");
+  const title = val(p, "title");
   const subtitle = val(p, "subtitle", "");
   return (
     <section className="ccf-section-panel p-7 md:p-12 lg:p-14" style={{ background: "var(--site-surface-container-low)" }}>
@@ -230,7 +230,7 @@ export function CourseGridSection({ section }: { section: CmsSection<"course_gri
 export function BookShopSection({ section }: { section: CmsSection<"book_shop"> }) {
   const props: BookShopProps = section.props_json ?? {};
   const p = asProps(props);
-  const title = val(p, "title", "Nuestra Librería");
+  const title = val(p, "title");
   const subtitle = val(p, "subtitle", "");
   return (
     <section className="ccf-section-panel p-7 md:p-12 lg:p-14" style={{ background: "var(--site-surface-container-low)" }}>
@@ -370,7 +370,7 @@ export function FeedSection({ section }: { section: CmsSection<"feed"> }) {
                   {val(featuredCard, "title", "")}
                 </span>
                 <p className="text-base md:text-lg font-medium text-white mb-3 max-w-xl">{val(featuredCard, "desc", "")}</p>
-                <span className="inline-flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-white">{val(featuredCard, "cta", "Ver más")} →</span>
+                <span className="inline-flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-white">{val(featuredCard, "cta")} →</span>
               </div>
             </div>
           </Link>
@@ -386,9 +386,9 @@ export function FeedSection({ section }: { section: CmsSection<"feed"> }) {
                   </div>
                 )}
                 <div className="p-5 flex flex-col gap-3">
-                  <h3 className="font-bold" style={{ color: "var(--site-on-surface)" }}>{val(card, "title", `Tarjeta ${i + 1}`)}</h3>
+                  <h3 className="font-bold" style={{ color: "var(--site-on-surface)" }}>{val(card, "title")}</h3>
                   {val(card, "desc", "") && <p className="text-sm leading-relaxed flex-1" style={{ color: "var(--site-on-surface-variant)" }}>{val(card, "desc", "")}</p>}
-                  {val(card, "href", "") && <span className="text-xs font-bold uppercase tracking-widest mt-auto" style={{ color: "var(--site-primary)" }}>Ver más →</span>}
+                  {val(card, "href", "") && val(card, "cta", "") && <span className="text-xs font-bold uppercase tracking-widest mt-auto" style={{ color: "var(--site-primary)" }}>{val(card, "cta")} →</span>}
                 </div>
               </Link>
             ))}
@@ -470,7 +470,7 @@ export function FeedSection({ section }: { section: CmsSection<"feed"> }) {
     const heroTitleAccent = val(p, "hero_title_accent", "");
     const heroDescription = val(p, "hero_description", "");
     const ctaLabel = val(p, "cta_label", "");
-    const channelUrl = val(p, "youtube_channel_url", "https://youtube.com/@comunidadccf");
+    const channelUrl = val(p, "youtube_channel_url");
 
     return (
       <section className="ccf-section-panel p-7 md:p-12 lg:p-14" style={{ background: "var(--site-surface-container-low)" }}>
@@ -525,7 +525,7 @@ export function FeedSection({ section }: { section: CmsSection<"feed"> }) {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {ctaImages.slice(0, 3).map((img, i) => (
               <div key={i} className="relative aspect-[4/3] rounded-xl overflow-hidden group">
-                <OptimizedImage src={val(img, "src", "")} alt={val(img, "alt", `Curso ${i + 1}`)} fill sizes="(max-width: 768px) 50vw, 33vw" className="object-cover transition-transform duration-500 group-hover:scale-105" />
+                <OptimizedImage src={val(img, "src")} alt={val(img, "alt")} fill sizes="(max-width: 768px) 50vw, 33vw" className="object-cover transition-transform duration-500 group-hover:scale-105" />
               </div>
             ))}
           </div>
@@ -627,7 +627,7 @@ export function FeedSection({ section }: { section: CmsSection<"feed"> }) {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {locations.map((loc, i) => (
             <div key={i} className="rounded-xl p-6 border" style={{ borderColor: "var(--site-outline)", background: "var(--site-surface-container)" }}>
-              <h2 className="text-lg font-bold mb-2" style={{ color: "var(--site-on-surface)" }}>{val(loc, "name") || `Sede ${i + 1}`}</h2>
+              <h2 className="text-lg font-bold mb-2" style={{ color: "var(--site-on-surface)" }}>{val(loc, "name")}</h2>
               {val(loc, "address", "") && <p className="text-sm mb-1" style={{ color: "var(--site-on-surface-variant)" }}>{val(loc, "address", "")}</p>}
               {val(loc, "phone", "") && <p className="text-sm mb-1" style={{ color: "var(--site-on-surface-variant)" }}>{val(loc, "phone", "")}</p>}
               {val(loc, "schedule", "") && <p className="text-sm" style={{ color: "var(--site-on-surface-variant)" }}>{val(loc, "schedule", "")}</p>}
@@ -649,11 +649,11 @@ export function FeedSection({ section }: { section: CmsSection<"feed"> }) {
             <div key={val(pastor, "slug") || i} className="rounded-xl overflow-hidden border" style={{ borderColor: "var(--site-outline)", background: "var(--site-surface-container)" }}>
               {val(pastor, "image", "") && (
                 <div className="relative aspect-[4/3]">
-                  <OptimizedImage src={val(pastor, "image", "")} alt={val(pastor, "name", `Pastor ${i + 1}`)} fill sizes="(max-width: 768px) 50vw, 33vw" className="object-cover object-top" />
+                  <OptimizedImage src={val(pastor, "image")} alt={val(pastor, "name")} fill sizes="(max-width: 768px) 50vw, 33vw" className="object-cover object-top" />
                 </div>
               )}
               <div className="p-5">
-                <h2 className="font-bold" style={{ color: "var(--site-on-surface)" }}>{val(pastor, "name", `Pastor ${i + 1}`)}</h2>
+                <h2 className="font-bold" style={{ color: "var(--site-on-surface)" }}>{val(pastor, "name")}</h2>
                 {val(pastor, "role", "") && <p className="text-xs font-bold uppercase tracking-widest mt-1" style={{ color: "var(--site-primary)" }}>{val(pastor, "role", "")}</p>}
                 {val(pastor, "story", "") && <p className="mt-3 text-sm leading-relaxed line-clamp-3" style={{ color: "var(--site-on-surface-variant)" }}>{val(pastor, "story", "")}</p>}
               </div>
