@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
 import { Search, X, Loader2, Star, Tag, Folder, ArrowRight } from "lucide-react";
+import { uiList, uiRecord, uiText, usePublicUiCopy } from "./usePublicUiCopy";
 
 export interface SearchResultItem {
   entity_type: string;
@@ -48,9 +49,13 @@ export default function PublicSearchModal({
   isOpen,
   onClose,
   siteKey = "ccf",
-  availableCategories = ["General", "Noticias", "Eventos", "Recursos"],
-  availableTags = ["anuncio", "tutorial", "iglesia", "comunidad"],
+  availableCategories,
+  availableTags,
 }: PublicSearchModalProps) {
+  const ui = uiRecord(usePublicUiCopy().search);
+  const categories = availableCategories ?? uiList(ui, "categories");
+  const tags = availableTags ?? uiList(ui, "tags");
+  const text = (key: string) => uiText(ui, key);
   const [query, setQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
@@ -175,7 +180,7 @@ export default function PublicSearchModal({
             id="search-modal-title"
             type="text"
             className="w-full bg-transparent text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 focus:outline-none text-lg"
-            placeholder="Buscar en el sitio... (p.ej. noticias, eventos)"
+            placeholder={text("placeholder")}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
           />
@@ -185,7 +190,7 @@ export default function PublicSearchModal({
             <button
               onClick={() => setQuery("")}
               className="p-1 rounded-full text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 transition-colors"
-              aria-label="Limpiar búsqueda"
+              aria-label={text("clear_label")}
             >
               <X className="w-4 h-4" />
             </button>
@@ -194,16 +199,16 @@ export default function PublicSearchModal({
             onClick={onClose}
             className="ml-3 px-2 py-1 text-xs font-medium text-zinc-500 bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 rounded transition-colors"
           >
-            Esc
+            {text("close_label")}
           </button>
         </div>
 
         {/* Filter Pills */}
         <div className="px-4 py-2.5 bg-zinc-50 dark:bg-zinc-950 border-b border-zinc-200 dark:border-zinc-800 flex flex-wrap items-center gap-2 text-xs">
           <span className="font-semibold text-zinc-500 dark:text-zinc-400 flex items-center gap-1">
-            <Folder className="w-3.5 h-3.5" /> Categoría:
+            <Folder className="w-3.5 h-3.5" /> {text("category_label")}
           </span>
-          {availableCategories.map((cat) => (
+          {categories.map((cat) => (
             <button
               key={cat}
               onClick={() => toggleCategory(cat)}
@@ -218,9 +223,9 @@ export default function PublicSearchModal({
           ))}
 
           <span className="font-semibold text-zinc-500 dark:text-zinc-400 flex items-center gap-1 ml-2">
-            <Tag className="w-3.5 h-3.5" /> Etiquetas:
+            <Tag className="w-3.5 h-3.5" /> {text("tags_label")}
           </span>
-          {availableTags.map((t) => {
+          {tags.map((t) => {
             const isSelected = selectedTags.includes(t);
             return (
               <button
@@ -244,15 +249,15 @@ export default function PublicSearchModal({
           {loading && results.length === 0 && (
             <div className="py-12 flex flex-col items-center justify-center text-zinc-400">
               <Loader2 className="w-8 h-8 animate-spin mb-2 text-sky-500" />
-              <p className="text-sm">Buscando resultados...</p>
+              <p className="text-sm">{text("loading_label")}</p>
             </div>
           )}
 
           {/* Empty State */}
           {!loading && hasSearched && results.length === 0 && promoted.length === 0 && (
             <div className="py-12 text-center text-zinc-500 dark:text-zinc-400">
-              <p className="text-base font-medium">No se encontraron resultados</p>
-              <p className="text-xs mt-1">Intenta con otros términos o elimina los filtros aplicados.</p>
+              <p className="text-base font-medium">{text("empty_title")}</p>
+              <p className="text-xs mt-1">{text("empty_description")}</p>
             </div>
           )}
 
@@ -260,7 +265,7 @@ export default function PublicSearchModal({
           {promoted.length > 0 && (
             <div className="space-y-2">
               <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-amber-600 dark:text-amber-400">
-                <Star className="w-4 h-4 fill-amber-500" /> Resultados Destacados
+                <Star className="w-4 h-4 fill-amber-500" /> {text("promoted_label")}
               </div>
               <div className="grid gap-2">
                 {promoted.map((item, idx) => {
@@ -277,7 +282,7 @@ export default function PublicSearchModal({
                       <div>
                         <div className="flex items-center gap-2">
                           <span className="text-xs font-bold px-2 py-0.5 rounded bg-amber-200 dark:bg-amber-800 text-amber-900 dark:text-amber-100">
-                            Promocionado
+                            {text("promoted_badge")}
                           </span>
                           <span className="font-semibold text-zinc-900 dark:text-zinc-100 group-hover:text-amber-700 dark:group-hover:text-amber-300">
                             {item.title || item.entity_id}
@@ -296,7 +301,7 @@ export default function PublicSearchModal({
           {results.length > 0 && (
             <div className="space-y-2">
               <div className="text-xs font-semibold uppercase tracking-wider text-zinc-400">
-                Resultados ({results.length})
+                {text("results_label")} ({results.length})
               </div>
               <div className="divide-y divide-zinc-100 dark:divide-zinc-800">
                 {results.map((item, idx) => {
@@ -345,8 +350,8 @@ export default function PublicSearchModal({
 
         {/* Footer info */}
         <div className="px-4 py-2 bg-zinc-50 dark:bg-zinc-950 border-t border-zinc-200 dark:border-zinc-800 flex justify-between items-center text-[11px] text-zinc-400">
-          <span>Usa <kbd className="px-1 py-0.5 bg-zinc-200 dark:bg-zinc-800 rounded">⌘K</kbd> / <kbd className="px-1 py-0.5 bg-zinc-200 dark:bg-zinc-800 rounded">Ctrl+K</kbd> para abrir o cerrar</span>
-          <span>Búsqueda CMS 2.0</span>
+          <span>{text("shortcut_prefix")} <kbd className="px-1 py-0.5 bg-zinc-200 dark:bg-zinc-800 rounded">⌘K</kbd> / <kbd className="px-1 py-0.5 bg-zinc-200 dark:bg-zinc-800 rounded">Ctrl+K</kbd> {text("shortcut_suffix")}</span>
+          <span>{text("product_label")}</span>
         </div>
       </div>
     </div>
