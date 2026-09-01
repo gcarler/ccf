@@ -40,7 +40,7 @@ export default function EventosPage() {
     const heroContent = heroPage?.blocks?.hero;
     const feedContent = heroPage?.blocks?.feed;
     const eventsContent = feedContent;
-    const [activeFilter, setActiveFilter] = useState("Todos");
+    const [activeFilter, setActiveFilter] = useState("");
     const [calendarView, setCalendarView] = useState<"Semanal" | "Mensual" | "Anual">("Mensual");
     const today = useMemo(() => new Date(), []);
     const [currentMonth, setCurrentMonth] = useState(today.getMonth());
@@ -102,7 +102,7 @@ export default function EventosPage() {
     );
 
     const filteredEvents = useMemo(() => {
-        if (activeFilter === "Todos") return parsedEvents;
+        if (!activeFilter || activeFilter === categoryFilters[0]) return parsedEvents;
         return parsedEvents.filter((e) => e.category === activeFilter);
     }, [parsedEvents, activeFilter]);
 

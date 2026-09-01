@@ -46,7 +46,7 @@ export default function BoletinPage() {
             toast.success(successToast || `¡Suscrito al boletín de ${SITE_NAME}!`);
         } catch {
             setStatus("error");
-            toast.error(errorMessage || "No se pudo suscribir. Intenta de nuevo.");
+            if (errorMessage) toast.error(errorMessage);
         }
     };
 

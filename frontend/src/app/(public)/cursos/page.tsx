@@ -110,7 +110,7 @@ export default function CursosPage() {
       return {
         src,
         alt: typeof slide.alt === "string" && slide.alt.trim() ? slide.alt : `Curso ${index + 1}`,
-        title: index === 0 ? coursesTitle || "Formación" : undefined,
+        title: index === 0 ? coursesTitle || undefined : undefined,
         caption: index === 0 ? coursesDescription || undefined : undefined,
       };
     }),
