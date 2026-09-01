@@ -53,6 +53,15 @@ export default function CursosPage() {
   const emptyDescription = typeof feedContent?.parsed === "object" && feedContent?.parsed && !Array.isArray(feedContent.parsed) && typeof (feedContent.parsed as Record<string, unknown>).empty_description === "string"
     ? String((feedContent.parsed as Record<string, unknown>).empty_description)
     : "";
+  const loadErrorTitle = typeof feedContent?.parsed === "object" && feedContent?.parsed && !Array.isArray(feedContent.parsed) && typeof (feedContent.parsed as Record<string, unknown>).load_error_title === "string"
+    ? String((feedContent.parsed as Record<string, unknown>).load_error_title)
+    : "";
+  const loadErrorDescription = typeof feedContent?.parsed === "object" && feedContent?.parsed && !Array.isArray(feedContent.parsed) && typeof (feedContent.parsed as Record<string, unknown>).load_error_description === "string"
+    ? String((feedContent.parsed as Record<string, unknown>).load_error_description)
+    : "";
+  const retryLabel = typeof feedContent?.parsed === "object" && feedContent?.parsed && !Array.isArray(feedContent.parsed) && typeof (feedContent.parsed as Record<string, unknown>).retry_label === "string"
+    ? String((feedContent.parsed as Record<string, unknown>).retry_label)
+    : "";
 
   useEffect(() => {
     const ctrl = new AbortController();
@@ -130,10 +139,10 @@ export default function CursosPage() {
           </div>
         ) : error ? (
           <div className="rounded-lg p-8 text-center" style={{ background: "var(--site-surface-container-low)" }}>
-            <h3 className="text-xl font-bold mb-2">No pudimos cargar los cursos</h3>
-            <p className="text-sm mb-4" style={{ color: "var(--site-on-surface-variant)" }}>Intenta recargar la página en unos segundos.</p>
+            <h3 className="text-xl font-bold mb-2">{loadErrorTitle}</h3>
+            <p className="text-sm mb-4" style={{ color: "var(--site-on-surface-variant)" }}>{loadErrorDescription}</p>
             <button type="button" onClick={() => window.location.reload()} className="rounded-full px-5 py-2 text-sm font-semibold" style={{ background: "var(--site-primary)", color: "var(--site-on-primary)" }}>
-              Reintentar
+              {retryLabel}
             </button>
           </div>
         ) : featured ? (

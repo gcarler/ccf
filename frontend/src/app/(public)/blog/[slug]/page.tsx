@@ -10,12 +10,18 @@ import { getCmsPublicPost } from "@/lib/cms/v2";
 import { CmsPublicPost } from "@/types/cms-v2";
 import { SITE_KEY } from "@/lib/site-config";
 import { sanitizeCmsHtml } from "@/lib/cms/sanitize";
+import { useCmsV2Page } from "@/hooks/useCmsV2Page";
 
 export default function BlogPostPage() {
   const params = useParams();
   const slug = params?.slug && typeof params.slug === "string" ? params.slug : "";
   const [post, setPost] = useState<CmsPublicPost | null>(null);
   const [loading, setLoading] = useState(true);
+  const cmsPage = useCmsV2Page("blog");
+  const feed = cmsPage?.blocks?.feed as Record<string, unknown> | undefined;
+  const notFoundTitle = typeof feed?.not_found_title === "string" ? feed.not_found_title : "";
+  const notFoundDescription = typeof feed?.not_found_description === "string" ? feed.not_found_description : "";
+  const backLabel = typeof feed?.back_to_blog_label === "string" ? feed.back_to_blog_label : "";
 
   useEffect(() => {
     if (!slug) return;
@@ -40,10 +46,10 @@ export default function BlogPostPage() {
     return (
       <main className="pt-[88px] pb-4 min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <h1 className="text-2xl font-bold mb-4" style={{ color: "var(--site-on-surface)" }}>Artículo no encontrado</h1>
-          <p className="mb-6" style={{ color: "var(--site-on-surface-variant)" }}>El post que buscas no existe o no está publicado.</p>
+          <h1 className="text-2xl font-bold mb-4" style={{ color: "var(--site-on-surface)" }}>{notFoundTitle}</h1>
+          <p className="mb-6" style={{ color: "var(--site-on-surface-variant)" }}>{notFoundDescription}</p>
           <Link href="/blog" className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-bold uppercase tracking-wide" style={{ background: "var(--site-primary)", color: "var(--site-on-primary)" }}>
-            <ArrowLeft size={16} /> Volver al blog
+            <ArrowLeft size={16} /> {backLabel}
           </Link>
         </div>
       </main>
@@ -77,7 +83,7 @@ export default function BlogPostPage() {
         >
           {/* Back link */}
           <Link href="/blog" className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wide mb-6 transition-opacity hover:opacity-70" style={{ color: "var(--site-primary)" }}>
-            <ArrowLeft size={14} /> Volver al blog
+            <ArrowLeft size={14} /> {backLabel}
           </Link>
 
           {/* Meta */}
