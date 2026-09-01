@@ -23,6 +23,7 @@ jobs:
   backend-quality:
     name: Backend Quality Gate
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     env:
       # Los tests corren sobre SQLite en memoria (mismo comportamiento que
       # el entorno dev: tests/conftest.py cae a ``sqlite://`` con StaticPool).
@@ -76,36 +77,110 @@ jobs:
           pip install mypy
           mypy backend/ --config-file mypy.ini --ignore-missing-imports
 
-      - name: Run non-CRM tests with coverage (SQLite + xdist)
-        # CRM tests have their own dedicated job to surface regressions quickly.
-        # - rm -f .coverage*: un .coverage previo (corrupto o de otra versión de
-        #   coverage.py) rompe el gate con "no such table: tracer" y deja la
-        #   cobertura en 0. Siempre arrancamos con estado limpio.
-        # - -n auto: paraleliza en N workers (1 por CPU). La suite completa
-        #   (>15 min en Postgres serial) baja a ~2-4 min en SQLite paralelo.
+      # The full non-CRM suite runs in deterministic shards below. Keeping
+      # this job focused on static checks prevents a single test process from
+      # blocking the quality gate indefinitely.
+
+  backend-test-shards:
+    name: Backend Tests (${{ matrix.shard }}/4)
+    needs: backend-quality
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [0, 1, 2, 3]
+    env:
+      DATABASE_URL: "sqlite://"
+      TEST_DATABASE_URL: "sqlite://"
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run deterministic test shard
+        env:
+          SHARD: ${{ matrix.shard }}
         run: |
           rm -f .coverage .coverage.*
-          pytest tests/ -q -n auto --cov=backend --cov-report=xml --cov-report=term --cov-fail-under=$COV_THRESHOLD --ignore-glob='tests/test_crm_*.py'
+          python - <<'PY' > /tmp/test-files.txt
+          import os
+          from pathlib import Path
+          import sys
 
-      - name: Upload coverage
+          shard = int(os.environ["SHARD"])
+          files = sorted(
+              path.as_posix()
+              for path in Path("tests").glob("*.py")
+              if not path.name.startswith("test_crm_")
+          )
+          selected = [path for index, path in enumerate(files) if index % 4 == shard]
+          print("\n".join(selected))
+          print(f"Selected {len(selected)} files for shard {shard}", file=sys.stderr)
+          PY
+          mapfile -t TEST_FILES < /tmp/test-files.txt
+          pytest -o addopts= "${TEST_FILES[@]}" -q -n auto --dist loadfile --cov=backend --cov-report=term
+
+      - name: Upload shard coverage
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-coverage-${{ matrix.shard }}
+          path: .coverage*
+          include-hidden-files: true
+          if-no-files-found: error
+
+  backend-coverage:
+    name: Backend Coverage Aggregate
+    needs: backend-test-shards
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      COV_THRESHOLD: "38"
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install coverage tooling
+        run: python -m pip install coverage==7.14.1
+
+      - name: Download shard coverage
+        uses: actions/download-artifact@v4
+        with:
+          pattern: backend-coverage-*
+          path: coverage-shards
+
+      - name: Combine and enforce backend coverage
+        run: |
+          index=0
+          while IFS= read -r coverage_file; do
+            cp "$coverage_file" ".coverage.shard-$index"
+            index=$((index + 1))
+          done < <(find coverage-shards -type f -name '.coverage*' | sort)
+          coverage combine
+          coverage report --fail-under="$COV_THRESHOLD"
+          coverage xml -o coverage.xml
+
+      - name: Upload backend coverage
         uses: codecov/codecov-action@v4
         with:
           file: ./coverage.xml
           fail_ci_if_error: false
-
-      - name: Check coverage threshold
-        # Fuente única de verdad: COV_THRESHOLD (env del job) — debe coincidir
-        # con `make coverage-gate`. pytest-cov ya falla la corrida si no se
-        # alcanza (--cov-fail-under=$COV_THRESHOLD); este paso lo verifica de
-        # nuevo sobre coverage.xml para un mensaje explícito.
-        run: |
-          THRESHOLD=${COV_THRESHOLD:-38}
-          COVERAGE=$(python -c "import xml.etree.ElementTree as ET; tree=ET.parse('coverage.xml'); root=tree.getroot(); rate=float(root.get('line-rate')); print(f'{rate*100:.1f}')")
-          echo "Coverage: $COVERAGE% (threshold: $THRESHOLD%)"
-          if (( $(echo "$COVERAGE < $THRESHOLD" | bc -l) )); then
-            echo "❌ Coverage below $THRESHOLD% threshold"
-            exit 1
-          fi
 
   # ── Frontend Quality Gate ────────────────────────────────────
   frontend-quality:
