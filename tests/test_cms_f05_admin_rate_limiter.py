@@ -21,7 +21,6 @@ para no correr 429 en la 100+ test suite. Estos tests validan:
 from __future__ import annotations
 
 from backend.api import cms_v2
-from backend.app import app
 
 # ── Structural verification ────────────────────────────────────────
 
@@ -68,9 +67,18 @@ class TestF05PublicEndpointOverrides:
     """Los endpoints publicos que ya tenian su propio ``rate_limiter``
     DEBEN conservarlo — el router-level no los reemplaza."""
 
+    @staticmethod
+    def _iter_routes(router):
+        for route in getattr(router, "routes", []) or []:
+            nested = getattr(route, "routes", None)
+            if nested is not None:
+                yield from TestF05PublicEndpointOverrides._iter_routes(route)
+            elif hasattr(route, "path"):
+                yield route
+
     def _find_public_route(self, path_suffix: str):
         """Busca una ruta cuyo path termine con ``path_suffix``."""
-        for r in app.routes:
+        for r in self._iter_routes(cms_v2.router):
             if hasattr(r, "path") and r.path.endswith(path_suffix):
                 return r
         return None
@@ -104,7 +112,7 @@ class TestF05PublicEndpointOverrides:
         """El endpoint ``GET /public/sites/{site_key}/theme`` DEBE tener su
         propio rate_limiter override (``PUBLIC_CMS_RATE_LIMIT = 240``)."""
         r = None
-        for route in app.routes:
+        for route in self._iter_routes(cms_v2.router):
             if (
                 hasattr(route, "path")
                 and route.path.endswith("/public/sites/{site_key}/theme")
@@ -128,7 +136,7 @@ class TestF05LimiterNoOpInTest:
     def test_router_loads_cleanly(self):
         """El router debe importarse y ser usable en pytest."""
         assert cms_v2.router is not None
-        mounted = [route for route in app.routes if route.path.startswith("/api/cms/v2/")]
+        mounted = list(TestF05PublicEndpointOverrides._iter_routes(cms_v2.router))
         assert len(mounted) >= 70  # Current CMS v2 surface is larger than 70 endpoints.
 
     def test_router_prefix_is_cms_v2(self):

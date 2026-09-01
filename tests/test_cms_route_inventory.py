@@ -8,11 +8,14 @@ from backend.app import app
 
 
 def _mounted_methods_and_paths() -> list[tuple[str, str]]:
+    # OpenAPI is generated from the fully mounted application and therefore
+    # remains correct when FastAPI stores an included router as a nested node.
     return [
-        (method, route.path)
-        for route in app.routes
-        if getattr(route, "path", "").startswith("/api/cms")
-        for method in (getattr(route, "methods", set()) or set())
+        (method.upper(), path)
+        for path, operations in app.openapi().get("paths", {}).items()
+        if path.startswith("/api/cms")
+        for method in operations
+        if method.lower() in {"get", "post", "put", "patch", "delete", "options", "head"}
     ]
 
 

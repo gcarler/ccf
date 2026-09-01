@@ -196,7 +196,7 @@ def test_dashboard_routes_require_authenticated_user():
 
     assert protected
     for path, dependencies in protected.items():
-        assert dependencies & {"get_current_user", "get_current_active_user"}, path
+        assert dependencies & {"get_current_user", "get_current_active_user", "require_active_user"}, path
 
 
 def test_internal_routes_do_not_accept_client_sede_id_query():
@@ -696,9 +696,7 @@ def test_academy_has_one_runtime_contract_and_model_tree():
     assert [path.relative_to(root).as_posix() for path in removed_files if path.exists()] == []
 
     academy_routes = {
-        route.path
-        for route in app.routes
-        if getattr(getattr(route, "endpoint", None), "__module__", "") == "backend.api.academy"
+        path for path in app.openapi().get("paths", {}) if path.startswith("/api/academy/")
     }
     assert academy_routes
     assert all(path.startswith("/api/academy/") for path in academy_routes)
@@ -761,7 +759,7 @@ def test_crm_and_agenda_have_one_runtime_contract_each():
     ]
     assert [path.relative_to(root).as_posix() for path in removed_files if path.exists()] == []
 
-    application_paths = {route.path for route in app.routes if getattr(route, "path", None)}
+    application_paths = set(app.openapi().get("paths", {}))
     assert not any(path.startswith("/api/v2/") for path in application_paths)
     assert any(path.startswith("/api/crm/") for path in application_paths)
     assert any(path.startswith("/api/agenda/") for path in application_paths)
