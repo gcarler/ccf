@@ -30,6 +30,10 @@ MODULE_PREFIXES: dict[str, tuple[str, ...]] = {
         "frontend/src/design/",
         "frontend/src/context/",
         "frontend/src/lib/",
+        "docs/ARCHITECTURE_",
+        "docs/modular_",
+        "tests/test_modular_boundaries.py",
+        "tests/test_core_",
     ),
     "academy": (
         "backend/api/academy",

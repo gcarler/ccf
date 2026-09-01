@@ -1,0 +1,139 @@
+{
+  "version": 1,
+  "purpose": "Temporary, owned exceptions while historical cross-module dependencies are extracted.",
+  "exceptions": [
+    {
+      "source": "backend/api/crm/pastoral.py",
+      "imported": "backend.services.evangelism_crm_bridge",
+      "owner": "evangelism",
+      "reason": "Historical CRM-to-Evangelism bridge; replace with an explicit integration contract.",
+      "review_after": "2026-09-30"
+    },
+    {
+      "source": "backend/api/evangelism_main/main_utils.py",
+      "imported": "backend.services.messaging_outcomes",
+      "owner": "messaging",
+      "reason": "Shared outcome vocabulary; move to a core event contract.",
+      "review_after": "2026-09-30"
+    },
+    {
+      "source": "backend/api/academy.py",
+      "imported": "backend.crud.crm",
+      "owner": "crm",
+      "reason": "Historical canonical-person lookup; replace with a core identity adapter.",
+      "review_after": "2026-09-30"
+    },
+    {
+      "source": "backend/api/agenda.py",
+      "imported": "backend.crud.projects",
+      "owner": "projects",
+      "reason": "Historical shared scheduling dependency; replace with an agenda contract.",
+      "review_after": "2026-09-30"
+    },
+    {
+      "source": "backend/api/chat.py",
+      "imported": "backend.crud.crm",
+      "owner": "crm",
+      "reason": "Historical canonical-person lookup; replace with a core identity adapter.",
+      "review_after": "2026-09-30"
+    },
+    {
+      "source": "backend/api/crm/_shared.py",
+      "imported": "backend.services.messaging_outcomes",
+      "owner": "messaging",
+      "reason": "Shared outcome vocabulary; move to a core event contract.",
+      "review_after": "2026-09-30"
+    },
+    {
+      "source": "backend/api/crm/pastoral.py",
+      "imported": "backend.services.messaging",
+      "owner": "messaging",
+      "reason": "CRM messaging orchestration; replace with a messaging application contract.",
+      "review_after": "2026-09-30"
+    },
+    {
+      "source": "backend/api/crm/resources.py",
+      "imported": "backend.services.messaging",
+      "owner": "messaging",
+      "reason": "CRM template delivery; replace with a messaging application contract.",
+      "review_after": "2026-09-30"
+    },
+    {
+      "source": "backend/api/messaging.py",
+      "imported": "backend.api.crm._shared",
+      "owner": "crm",
+      "reason": "Historical CRM serialization dependency; replace with a messaging DTO contract.",
+      "review_after": "2026-09-30"
+    },
+    {
+      "source": "backend/api/messaging.py",
+      "imported": "backend.crud.crm",
+      "owner": "crm",
+      "reason": "Historical canonical-person lookup; replace with a core identity adapter.",
+      "review_after": "2026-09-30"
+    },
+    {
+      "source": "backend/api/projects.py",
+      "imported": "backend.crud.crm",
+      "owner": "crm",
+      "reason": "Historical canonical-person lookup; replace with a core identity adapter.",
+      "review_after": "2026-09-30"
+    },
+    {
+      "source": "backend/api/spiritual_life.py",
+      "imported": "backend.crud.crm",
+      "owner": "crm",
+      "reason": "Historical canonical-person lookup; replace with a core identity adapter.",
+      "review_after": "2026-09-30"
+    },
+    {
+      "source": "backend/crud/cms/_shared.py",
+      "imported": "backend.crud.crm",
+      "owner": "crm",
+      "reason": "Historical public author/person lookup; replace with a core identity adapter.",
+      "review_after": "2026-09-30"
+    },
+    {
+      "source": "backend/crud/cms/media.py",
+      "imported": "backend.crud.crm",
+      "owner": "crm",
+      "reason": "Historical media owner/person lookup; replace with a core identity adapter.",
+      "review_after": "2026-09-30"
+    },
+    {
+      "source": "backend/crud/cms/pages.py",
+      "imported": "backend.crud.crm",
+      "owner": "crm",
+      "reason": "Historical author/person lookup; replace with a core identity adapter.",
+      "review_after": "2026-09-30"
+    },
+    {
+      "source": "backend/crud/cms/posts.py",
+      "imported": "backend.crud.crm",
+      "owner": "crm",
+      "reason": "Historical author/person lookup; replace with a core identity adapter.",
+      "review_after": "2026-09-30"
+    },
+    {
+      "source": "backend/crud/cms/sites.py",
+      "imported": "backend.crud.crm",
+      "owner": "crm",
+      "reason": "Historical site author/person lookup; replace with a core identity adapter.",
+      "review_after": "2026-09-30"
+    },
+    {
+      "source": "backend/crud/cms/ugc.py",
+      "imported": "backend.crud.crm",
+      "owner": "crm",
+      "reason": "Historical UGC owner/person lookup; replace with a core identity adapter.",
+      "review_after": "2026-09-30"
+    },
+    {
+      "source": "backend/crud/projects.py",
+      "imported": "backend.crud.crm",
+      "owner": "crm",
+      "reason": "Historical canonical-person lookup; replace with a core identity adapter.",
+      "review_after": "2026-09-30"
+    }
+  ]
+}
