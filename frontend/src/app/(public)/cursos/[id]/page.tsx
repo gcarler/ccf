@@ -184,7 +184,7 @@ export default function CursoDetailPage() {
                         className="inline-flex items-center gap-2 text-sm font-semibold uppercase tracking-wide transition-all hover:opacity-70"
                         style={{ color: "var(--site-primary)" }}
                     >
-                        <ArrowLeft size={16} /> Volver a Academia
+                        <ArrowLeft size={16} /> {getString(cms, "back_to_courses_label")}
                     </Link>
                 </motion.div>
 
@@ -197,7 +197,7 @@ export default function CursoDetailPage() {
                             className="inline-block px-4 py-2 rounded-full text-xs font-semibold uppercase tracking-wide mb-3"
                             style={{ background: "var(--site-primary-container)", color: "var(--site-primary)" }}
                         >
-                            {course.tag || "Academia"}
+                            {course.tag || getString(cms, "course_tag_fallback")}
                         </span>
                         <h1 className="text-xl md:text-xl font-bold tracking-tight mb-3 leading-[1.05]" style={{ color: "var(--site-on-surface)" }}>
                             {course.title}
@@ -215,7 +215,7 @@ export default function CursoDetailPage() {
                             )}
                             <span className="flex items-center gap-2 text-sm font-bold uppercase tracking-wide" style={{ color: "var(--site-on-surface)" }}>
                                 <User size={16} style={{ color: "var(--site-primary)" }} />
-                                {course.modality || "Online"}
+                                {course.modality || getString(cms, "course_modality_fallback")}
                             </span>
                         </div>
 
@@ -265,13 +265,13 @@ export default function CursoDetailPage() {
                                     <BookOpen size={42} strokeWidth={1.8} />
                                 </div>
                                 <span className="text-2xs font-black uppercase tracking-widest text-[hsl(var(--primary))] mb-1.5 px-3 py-1 rounded-full bg-[hsl(var(--primary))]/10">
-                                    {course.modality || "Online"}
+                                    {course.modality || getString(cms, "course_modality_fallback")}
                                 </span>
                                 <h3 className="text-lg font-bold text-[hsl(var(--text-primary))] dark:text-white line-clamp-2 max-w-xs">
                                     {course.title}
                                 </h3>
                                 <p className="text-xs text-[hsl(var(--text-secondary))] mt-2 font-medium">
-                                    {course.lessons ? `${course.lessons} Semanas de Formación` : 'Programa de Formación CCF'}
+                                    {course.lessons ? `${course.lessons} ${getString(cms, "course_lessons_suffix")}` : getString(cms, "course_lessons_fallback")}
                                 </p>
                             </div>
                         )}

@@ -56,20 +56,7 @@ export default function PastorDetailPage() {
 
     const pastorsPage = useCmsV2Page('pastors');
     const pastorsCms = pastorsPage?.blocks?.pastors;
-    const cms: Record<string, unknown> = {
-        badge_label: 'Liderazgo Pastoral',
-        role_fallback: 'Pastor',
-        quote_subtitle: 'Filosofía de vida',
-        tags: ['Pastor', 'Líder', 'Consejero'],
-        motto_label: 'Versículo Lema',
-        story_title: 'Su Historia',
-        story_subtitle: 'Testimonio de vida y ministerio',
-        cta_eyebrow: 'Comunidad de Fe',
-        cta_description: '¿Deseas conectar con el Pastor {first_name} o saber más sobre su ministerio?',
-        cta_primary_label: 'Conocer al equipo',
-        cta_secondary_label: 'Nuestras sedes',
-        ...(pastorsPage?.blocks?.detail_template as Record<string, unknown> | undefined),
-    };
+    const cms = (pastorsPage?.blocks?.detail_template as Record<string, unknown> | undefined) ?? {};
     const [apiPastors, setApiPastors] = useState<PastoralProfile[]>([]);
     const [apiLoading, setApiLoading] = useState(true);
 
@@ -119,14 +106,14 @@ export default function PastorDetailPage() {
                         <Heart size={28} className="text-[hsl(var(--primary))]" />
                     </div>
                     <div>
-                        <h1 className="text-2xl font-bold text-[hsl(var(--text-primary))] dark:text-white">Pastor no encontrado</h1>
-                        <p className="text-sm text-[hsl(var(--text-secondary))] mt-1">El enlace que buscas no existe o ha sido movido.</p>
+                        <h1 className="text-2xl font-bold text-[hsl(var(--text-primary))] dark:text-white">{getString(cms, "not_found_title")}</h1>
+                        <p className="text-sm text-[hsl(var(--text-secondary))] mt-1">{getString(cms, "not_found_description")}</p>
                     </div>
                     <button
                         onClick={() => router.push('/pastores')}
                         className="px-6 py-3 rounded-xl bg-[hsl(var(--primary))] text-white text-sm font-bold uppercase tracking-wider hover:scale-105 transition-all shadow-xl shadow-[hsl(var(--primary))/0.25]"
                     >
-                        Ver todos los pastores
+                        {getString(cms, "back_to_pastors_label")}
                     </button>
                 </div>
             </div>
@@ -152,9 +139,9 @@ export default function PastorDetailPage() {
                         className="inline-flex items-center gap-2 text-sm font-bold text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] transition-colors group"
                     >
                         <ArrowLeft size={15} className="group-hover:-translate-x-1 transition-transform" />
-                        Todos los pastores
+                        {getString(cms, "back_to_pastors_label")}
                     </Link>
-                    <ShareButtons title={`${pastor.name} — ${pastor.role || 'Pastor'} | ${SITE_NAME}`} />
+                    <ShareButtons title={`${pastor.name} — ${pastor.role || getString(cms, "role_fallback")} | ${SITE_NAME}`} />
                 </div>
 
                 {/* ════════════════════════════════════════
@@ -247,7 +234,7 @@ export default function PastorDetailPage() {
 
                                 {/* ── Redes Sociales ── siempre visibles, monocromáticas */}
                                 <div className="flex items-center gap-3">
-                                    <span className="text-2xs font-bold uppercase tracking-widest text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">Síguelo en</span>
+                                    <span className="text-2xs font-bold uppercase tracking-widest text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">{getString(cms, "social_follow_label")}</span>
                                     <div className="flex items-center gap-2">
                                         {/* Instagram */}
                                         {pastor.social_instagram ? (
