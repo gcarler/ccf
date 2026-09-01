@@ -12,6 +12,11 @@ from sqlalchemy.dialects.postgresql import ARRAY
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import validates
 
+# Compatibility alias for integrations that still import the canonical CRM
+# case model from this module while the implementation lives in the pipeline
+# model module.
+from backend.models_crm_pipeline import CasoCRM as CrmCaso
+
 from backend.models_shared import *  # noqa: F403 — re-exports SQLAlchemy primitives (Base, Column, UUID, etc.) used throughout this module
 from backend.models_shared import _utcnow
 

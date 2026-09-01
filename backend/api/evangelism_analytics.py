@@ -75,8 +75,9 @@ def _rol_to_funnel_stage(nombre_rol: str) -> str:
         return "asistente"
     if any(k in n for k in ("visitante", "invitado", "nuevo")):
         return "visitante"
-    # Unknown custom role — return as-is so UI can show it
-    return "personalizado"
+    # Unknown labels are not custom-role records. Keep a stable funnel bucket;
+    # explicit custom roles are handled by the caller via role_base.
+    return "Otro"
 
 
 # ─────────────────────────────────────────────────────────
