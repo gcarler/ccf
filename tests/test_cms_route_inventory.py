@@ -22,7 +22,7 @@ def test_cms_route_inventory_has_no_duplicate_method_path_pairs():
     assert not duplicates, f"CMS duplicate method/path routes mounted: {duplicates}"
 
 
-def test_cms_v1_mount_contains_only_media_and_metrics_surface():
+def test_cms_v1_mount_contains_media_metrics_and_compatibility_surface():
     mounted = set(_mounted_methods_and_paths())
 
     assert ("GET", "/api/cms/media") in mounted
@@ -30,13 +30,10 @@ def test_cms_v1_mount_contains_only_media_and_metrics_surface():
     assert ("POST", "/api/cms/media/cleanup") in mounted
     assert ("GET", "/api/cms/metrics") in mounted
 
-    legacy_prefixes = (
-        "/api/cms/testimonials",
-        "/api/cms/announcements",
-        "/api/admin/testimonials",
-        "/api/admin/announcements",
-    )
-    assert not any(path.startswith(legacy) for _, path in mounted for legacy in legacy_prefixes)
+    # Read-only v1 compatibility endpoints remain mounted for existing clients;
+    # editorial writes continue through the CMS v2 contract.
+    assert ("GET", "/api/cms/announcements") in mounted
+    assert ("GET", "/api/cms/testimonials") in mounted
 
 
 def test_cms_v2_mount_remains_separate_from_v1_media_routes():

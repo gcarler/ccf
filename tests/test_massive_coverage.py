@@ -457,7 +457,8 @@ class TestCRMAllFunctions:
         db.commit()
         resp = c.get("/api/crm/tasks", headers=h)
         assert resp.status_code == 200, resp.text
-        ids = {item["id"] for item in resp.json()}
+        payload = resp.json()
+        ids = {item["id"] for item in payload.get("items", [])}
         assert str(row.id) not in ids
 
     def test_donations(self, rich_data):

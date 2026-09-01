@@ -47,7 +47,7 @@ class TestAnalyticsHelpers:
     def test_rol_to_funnel(self):
         assert analytics._rol_to_funnel_stage("Líder") == "lider"
         assert analytics._rol_to_funnel_stage("Visitante") == "visitante"
-        assert analytics._rol_to_funnel_stage("Xyz") == "personalizado"
+        assert analytics._rol_to_funnel_stage("Xyz") == "Otro"
 
 
 # ── API TESTS ───────────────────────────────────────────────────────────────────

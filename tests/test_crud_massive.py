@@ -230,7 +230,6 @@ class TestCRMPrayer:
         req = create_prayer_request(
             db_session,
             PrayerRequestCreate(
-                persona_id=str(uuid.uuid4()),
                 requester_name="Test Person",
                 request_text="Please pray for me",
             ),

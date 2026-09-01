@@ -90,11 +90,37 @@ class TestFullEndpointWithCrmAndChild:
         db_session.add(child)
         db_session.flush()
 
-        # CrmCaso linked to parent grupo
-        from backend.models_crm import CrmCaso
-        caso = CrmCaso(
-            id=uuid.uuid4(), persona_id=p1.id, origen_grupo_id=g.id,
-            title="Test Case", tipo="seguimiento",
+        # CasoCRM uses the canonical pipeline contract.
+        from backend.models_crm_pipeline import (
+            CanalOrigenEnum,
+            CasoCRM,
+            EtapaPipeline,
+            PipelineCRM,
+            TipoPipelineEnum,
+        )
+
+        pipeline = PipelineCRM(
+            id=uuid.uuid4(),
+            sede_id=s.id,
+            nombre="Analytics",
+            tipo=TipoPipelineEnum.NUEVOS_VISITANTES,
+        )
+        db_session.add(pipeline)
+        db_session.flush()
+        stage = EtapaPipeline(
+            id=uuid.uuid4(), pipeline_id=pipeline.id, nombre="Nuevo", orden=1
+        )
+        db_session.add(stage)
+        db_session.flush()
+        caso = CasoCRM(
+            id=uuid.uuid4(),
+            persona_id=p1.id,
+            sede_id=s.id,
+            pipeline_id=pipeline.id,
+            etapa_actual_id=stage.id,
+            titulo_caso="Test Case",
+            origen_canal=CanalOrigenEnum.EVANGELISMO,
+            origen_grupo_id=g.id,
         )
         db_session.add(caso)
         db_session.flush()

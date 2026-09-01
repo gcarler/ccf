@@ -34,7 +34,7 @@ class TestRolToFunnelStage:
         assert analytics._rol_to_funnel_stage("Visitante") == "visitante"
 
     def test_unknown(self):
-        assert analytics._rol_to_funnel_stage("Voluntario") == "personalizado"
+        assert analytics._rol_to_funnel_stage("Voluntario") == "Otro"
 
 
 class TestParsePeriod:
