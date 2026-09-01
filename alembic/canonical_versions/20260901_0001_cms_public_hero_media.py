@@ -42,7 +42,7 @@ def upgrade() -> None:
             sa.text(
                 """
                 UPDATE cms_sections
-                   SET props_json = props_json || CAST(:payload AS jsonb),
+                   SET props_json = CAST((CAST(props_json AS jsonb) || CAST(:payload AS jsonb)) AS json),
                        updated_at = CURRENT_TIMESTAMP
                  WHERE page_id = (
                            SELECT p.id
