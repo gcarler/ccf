@@ -281,7 +281,10 @@ export default function CmsPagesManagement() {
     });
   };
 
-  const openPage = (page: CmsPage) => router.push(`/plataforma/cms/pages/${page.slug}`);
+  // La acción principal de una página es editar su contenido. El detalle
+  // intermedio solo mostraba un contador y hacía difícil descubrir el editor.
+  const openPage = (page: CmsPage) => router.push(`/plataforma/cms/builder?site=${siteKey}&page=${page.slug}`);
+  const openContentPage = (page: CmsPage) => router.push(`/plataforma/cms/builder?site=${siteKey}&page=${page.slug}&mode=content`);
 
   const openPreview = (page: CmsPage) => {
     window.open(`/plataforma/cms/preview?site=${encodeURIComponent(siteKey)}&page=${encodeURIComponent(page.slug)}`, "_blank");
@@ -323,6 +326,12 @@ export default function CmsPagesManagement() {
                       className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-info-soft dark:bg-[hsl(var(--info))]/20 text-[hsl(var(--primary))] text-2xs font-semibold uppercase tracking-wide hover:bg-[hsl(var(--info-muted))] transition-all"
                     >
                       <PenTool size={11} /> Editar
+                    </button>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); openContentPage(page); }}
+                      className="flex items-center gap-1.5 rounded-md bg-success-soft px-3 py-1.5 text-2xs font-semibold uppercase tracking-wide text-success-text transition-all hover:bg-[hsl(var(--success-muted))]"
+                    >
+                      <FileText size={11} /> Contenido
                     </button>
           </motion.div>
         );

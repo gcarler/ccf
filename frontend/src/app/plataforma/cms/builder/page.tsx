@@ -120,6 +120,7 @@ export default function PuckBuilderPage() {
 
   const siteKey = searchParams?.get("site") || SITE_KEY;
   const pageSlug = searchParams?.get("page") || "";
+  const contentMode = searchParams?.get("mode") === "content";
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -1157,6 +1158,20 @@ export default function PuckBuilderPage() {
     );
   }
 
+  if (contentMode) {
+    return (
+      <PublicContentEditor
+        siteKey={siteKey}
+        pageSlug={pageSlug}
+        sections={dbSections}
+        token={token}
+        canEdit={canEdit}
+        canPublish={canPublish}
+        onBack={() => router.push(`/plataforma/cms/pages?site=${siteKey}`)}
+      />
+    );
+  }
+
   return (
     <main aria-label="Editor visual Puck" className="h-screen flex flex-col bg-[hsl(var(--bg-primary))]" style={themeStyles}>
       {/* Header bar */}
@@ -1228,6 +1243,133 @@ export default function PuckBuilderPage() {
           }}
         />
       )}
+    </main>
+  );
+}
+
+type ContentSection = {
+  id: string;
+  section_key: string;
+  type: string;
+  props_json?: Record<string, unknown> | null;
+  sort_order?: number;
+};
+
+const CONTENT_LABELS: Record<string, string> = {
+  eyebrow: "Etiqueta superior",
+  title: "Título",
+  title_lead: "Título · primera línea",
+  title_accent: "Título · énfasis",
+  title_tail: "Título · última línea",
+  description: "Descripción",
+  body: "Contenido",
+  primary_cta: "Botón principal",
+  secondary_cta: "Botón secundario",
+  scroll_indicator: "Indicador de desplazamiento",
+};
+
+function contentLabel(key: string): string {
+  return CONTENT_LABELS[key] || key.replaceAll("_", " ").replace(/^./, (letter) => letter.toUpperCase());
+}
+
+function PublicContentEditor({
+  siteKey,
+  pageSlug,
+  sections,
+  token,
+  canEdit,
+  canPublish,
+  onBack,
+}: {
+  siteKey: string;
+  pageSlug: string;
+  sections: ContentSection[];
+  token: string;
+  canEdit: boolean;
+  canPublish: boolean;
+  onBack: () => void;
+}) {
+  const [drafts, setDrafts] = useState<Record<string, Record<string, string>>>({});
+  const [saving, setSaving] = useState(false);
+  const [publishing, setPublishing] = useState(false);
+
+  useEffect(() => {
+    setDrafts(Object.fromEntries(sections.map((section) => [
+      section.id,
+      Object.fromEntries(Object.entries(section.props_json || {}).filter(([, value]) => typeof value === "string")) as Record<string, string>,
+    ])));
+  }, [sections]);
+
+  const textFields = (section: ContentSection) => Object.entries(drafts[section.id] || {})
+    .filter(([key]) => !key.endsWith("_href") && key !== "bg_image" && key !== "image_url")
+    .sort(([first], [second]) => (first === "eyebrow" ? -1 : second === "eyebrow" ? 1 : first.localeCompare(second)));
+
+  const saveDraft = async () => {
+    if (!canEdit) return;
+    setSaving(true);
+    try {
+      await Promise.all(sections.map((section) => patchCmsSection(siteKey, pageSlug, section.id, {
+        props_json: { ...(section.props_json || {}), ...(drafts[section.id] || {}) },
+      }, token)));
+      toast.success("Contenido guardado como borrador");
+    } catch {
+      toast.error("No se pudo guardar el contenido");
+      throw new Error("No se pudo guardar el contenido");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const publish = async () => {
+    if (!canPublish) return;
+    setPublishing(true);
+    try {
+      await saveDraft();
+      await workflowCmsPage(siteKey, pageSlug, "publish", "Publicado desde Contenido público", token);
+      toast.success("Contenido publicado");
+    } catch {
+      toast.error("No se pudo publicar el contenido");
+    } finally {
+      setPublishing(false);
+    }
+  };
+
+  return (
+    <main className="min-h-screen bg-[hsl(var(--bg-primary))] text-[hsl(var(--text-primary))] dark:bg-[hsl(var(--admin-bg-deep))]">
+      <header className="sticky top-0 z-20 flex items-center justify-between gap-4 border-b border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))]/95 px-4 py-3 backdrop-blur dark:border-white/10 dark:bg-[hsl(var(--surface-2))]/95">
+        <div className="flex items-center gap-3">
+          <button type="button" onClick={onBack} className="rounded-lg border border-[hsl(var(--border))] p-2 hover:bg-[hsl(var(--surface-2))]" aria-label="Volver a páginas"><ArrowLeft size={16} /></button>
+          <div>
+            <p className="text-2xs font-bold uppercase tracking-[0.16em] text-[hsl(var(--primary))]">Contenido público</p>
+            <h1 className="text-lg font-bold">Editar contenido de /{pageSlug}</h1>
+          </div>
+        </div>
+        <div className="flex gap-2">
+          <button type="button" onClick={saveDraft} disabled={!canEdit || saving || publishing} className="rounded-lg border border-[hsl(var(--border))] px-3 py-2 text-xs font-semibold disabled:opacity-50">{saving ? "Guardando…" : "Guardar borrador"}</button>
+          <button type="button" onClick={publish} disabled={!canPublish || saving || publishing} className="rounded-lg bg-[hsl(var(--primary))] px-3 py-2 text-xs font-semibold text-white disabled:opacity-50">{publishing ? "Publicando…" : "Publicar"}</button>
+        </div>
+      </header>
+      <div className="mx-auto max-w-4xl space-y-4 px-4 py-6">
+        <div className="rounded-xl border border-[hsl(var(--info)/30%)] bg-info-soft/30 px-4 py-3 text-sm text-[hsl(var(--text-secondary))]">
+          Aquí editas las palabras que lee el visitante. Los cambios se guardan como borrador; usa Publicar para hacerlos visibles.
+        </div>
+        {[...sections].sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0)).map((section) => (
+          <section key={section.id} className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-4 shadow-sm dark:border-white/10 dark:bg-white/[0.03]">
+            <div className="mb-4 flex items-center justify-between gap-3 border-b border-[hsl(var(--border))] pb-3 dark:border-white/10">
+              <div><h2 className="font-bold">{section.section_key === "hero" ? "Hero principal" : contentLabel(section.section_key)}</h2><p className="text-2xs text-[hsl(var(--text-secondary))]">{section.type}</p></div>
+              {section.section_key === "hero" && <span className="rounded-full bg-info-soft px-2 py-1 text-2xs font-bold uppercase text-[hsl(var(--primary))]">Visible al inicio</span>}
+            </div>
+            <div className="grid gap-4 md:grid-cols-2">
+              {textFields(section).map(([key, value]) => (
+                <label key={key} className={key === "description" || key === "body" ? "md:col-span-2" : ""}>
+                  <span className="mb-1 block text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{contentLabel(key)}</span>
+                  {value.length > 100 || key === "description" || key === "body" ? <textarea value={value} onChange={(event) => setDrafts((current) => ({ ...current, [section.id]: { ...current[section.id], [key]: event.target.value } }))} rows={4} disabled={!canEdit} className="w-full rounded-lg border border-[hsl(var(--border))] bg-transparent px-3 py-2 text-sm disabled:opacity-60" /> : <input value={value} onChange={(event) => setDrafts((current) => ({ ...current, [section.id]: { ...current[section.id], [key]: event.target.value } }))} disabled={!canEdit} className="w-full rounded-lg border border-[hsl(var(--border))] bg-transparent px-3 py-2 text-sm disabled:opacity-60" />}
+                </label>
+              ))}
+            </div>
+          </section>
+        ))}
+      </div>
     </main>
   );
 }
