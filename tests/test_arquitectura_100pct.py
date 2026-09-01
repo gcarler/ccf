@@ -185,11 +185,7 @@ def test_no_old_ccf_mbr_in_live_code():
         for path in ROOT.rglob("*"):
             if path.is_dir():
                 continue
-            if "alembic/versions" in path.as_posix():
-                continue
-            if path.name.startswith("test_arquitectura"):
-                continue
-            if any(s in path.as_posix() for s in ("__pycache__", ".venv/", "venv/", "node_modules/")):
+            if not is_live_code(path):
                 continue
             try:
                 content = path.read_text(errors="ignore")

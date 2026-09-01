@@ -21,6 +21,7 @@ para no correr 429 en la 100+ test suite. Estos tests validan:
 from __future__ import annotations
 
 from backend.api import cms_v2
+from backend.app import app
 
 # ── Structural verification ────────────────────────────────────────
 
@@ -69,7 +70,7 @@ class TestF05PublicEndpointOverrides:
 
     def _find_public_route(self, path_suffix: str):
         """Busca una ruta cuyo path termine con ``path_suffix``."""
-        for r in cms_v2.router.routes:
+        for r in app.routes:
             if hasattr(r, "path") and r.path.endswith(path_suffix):
                 return r
         return None
@@ -103,7 +104,7 @@ class TestF05PublicEndpointOverrides:
         """El endpoint ``GET /public/sites/{site_key}/theme`` DEBE tener su
         propio rate_limiter override (``PUBLIC_CMS_RATE_LIMIT = 240``)."""
         r = None
-        for route in cms_v2.router.routes:
+        for route in app.routes:
             if (
                 hasattr(route, "path")
                 and route.path.endswith("/public/sites/{site_key}/theme")
@@ -127,7 +128,8 @@ class TestF05LimiterNoOpInTest:
     def test_router_loads_cleanly(self):
         """El router debe importarse y ser usable en pytest."""
         assert cms_v2.router is not None
-        assert len(cms_v2.router.routes) >= 70  # 79 endpoints
+        mounted = [route for route in app.routes if route.path.startswith("/api/cms/v2/")]
+        assert len(mounted) >= 70  # Current CMS v2 surface is larger than 70 endpoints.
 
     def test_router_prefix_is_cms_v2(self):
         assert cms_v2.router.prefix == "/cms/v2"

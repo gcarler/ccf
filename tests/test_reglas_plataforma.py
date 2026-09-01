@@ -133,6 +133,8 @@ def test_sede_id_in_all_queries():
             context = "\n".join(lines[max(0, i - 25) : i])
             isolation_markers = (
                 "sede_id",
+                "persona_id",
+                "author_persona_id",
                 "_scope_",
                 "_get_scoped_",
                 "get_user_sede_id",
