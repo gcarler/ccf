@@ -133,9 +133,9 @@ export default function CursoDetailPage() {
         return (
             <main className="pt-[120px] pb-4 min-h-[70vh] flex flex-col items-center justify-center text-center px-3">
                 <BookOpen size={80} className="mb-3 opacity-20" style={{ color: "var(--site-primary)" }} />
-                <h1 className="text-lg font-bold mb-4" style={{ color: "var(--site-on-background)" }}>{error ? "No pudimos cargar el curso" : "Curso no encontrado"}</h1>
+                <h1 className="text-lg font-bold mb-4" style={{ color: "var(--site-on-background)" }}>{error ? getString(cms, "load_error_title") : getString(cms, "not_found_title")}</h1>
                 <p className="text-xl mb-3 opacity-70 max-w-lg" style={{ color: "var(--site-on-surface-variant)" }}>
-                    {error ? "Comprueba tu conexión e inténtalo nuevamente." : "El curso que buscas ya no está disponible o el enlace es incorrecto."}
+                    {error ? getString(cms, "load_error_description") : getString(cms, "not_found_description")}
                 </p>
                 <button
                     onClick={() => error ? window.location.reload() : router.push('/cursos')}
