@@ -20,6 +20,7 @@ import type { CmsPublicPage } from "@/types/cms-v2";
  */
 export default function PublicHomePage({ initialHomePage }: { initialHomePage?: CmsPublicPage | null }) {
     const homePage = useCmsV2Page('home') ?? initialHomePage;
+    const discoverPage = useCmsV2Page('discover');
     const heroContent = homePage?.blocks?.hero;
     const homeFeedContent = homePage?.blocks?.feed;
     const eventsPage = useCmsV2Page('events');
@@ -45,7 +46,7 @@ export default function PublicHomePage({ initialHomePage }: { initialHomePage?: 
     const homeFeed = (homeFeedContent?.parsed && typeof homeFeedContent.parsed === "object" && !Array.isArray(homeFeedContent.parsed))
         ? homeFeedContent.parsed as Record<string, unknown>
         : null;
-    const discoverCtaContent = (homePage?.blocks?.discover_cta as Record<string, unknown> | undefined) ?? null;
+    const discoverHero = discoverPage?.blocks?.hero as Record<string, unknown> | undefined;
     const homeGallerySection = homePage?.sections?.find(
         (section) => section.type === "gallery" && Array.isArray(section.props_json?.items),
     );
@@ -64,11 +65,13 @@ export default function PublicHomePage({ initialHomePage }: { initialHomePage?: 
     const activitiesViewAllHref = (homeFeed?.activities_view_all_href as string) ?? "/eventos";
     const activitiesEmpty = (homeFeed?.activities_empty as string) ?? "";
     const scrollIndicator = (homeFeed?.scroll_indicator as string) ?? "";
-    const discoverCtaEyebrow = (discoverCtaContent?.eyebrow as string) ?? "Una invitación para ti";
-    const discoverCtaTitle = (discoverCtaContent?.title as string) ?? "¿Quieres conocer a Jesús?";
-    const discoverCtaDescription = (discoverCtaContent?.description as string) ?? "No es una religión, es el comienzo de una relación que transforma la vida. Da el siguiente paso hoy.";
-    const discoverCtaLabel = (discoverCtaContent?.cta_label as string) ?? "Quiero conocer a Jesús";
-    const discoverCtaHref = (discoverCtaContent?.cta_href as string) || "/conocer-a-jesus";
+    const discoverCtaEyebrow = typeof discoverHero?.eyebrow === "string" ? discoverHero.eyebrow : "";
+    const discoverCtaTitle = [discoverHero?.title_lead, discoverHero?.title_accent, discoverHero?.title_tail]
+        .filter((value): value is string => typeof value === "string" && value.trim().length > 0)
+        .join(" ");
+    const discoverCtaDescription = typeof discoverHero?.description === "string" ? discoverHero.description : "";
+    const discoverCtaLabel = typeof discoverHero?.cta === "string" ? discoverHero.cta : "";
+    const discoverCtaHref = discoverCtaLabel ? "/conocer-a-jesus" : "";
     const newsletterEyebrow = (homeFeed?.newsletter_eyebrow as string) ?? "";
     const newsletterTitle = (homeFeed?.newsletter_title as string) ?? "";
     const newsletterDescription = (homeFeed?.newsletter_description as string) ?? "";

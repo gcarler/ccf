@@ -24,6 +24,7 @@ const PUBLIC_PAGE_SLUGS = [
     "pastors",
     "blog",
     "events",
+    "discover",
     "donate",
     "privacy",
     "terms",
