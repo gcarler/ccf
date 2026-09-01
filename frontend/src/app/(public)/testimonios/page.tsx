@@ -10,6 +10,7 @@ import PublicHeroWithSlides from "@/components/public/PublicHeroWithSlides";
 
 import { getPublicTestimonials, PublicTestimonialItem } from "@/lib/cms/v2";
 import { SITE_KEY } from "@/lib/site-config";
+import { safeJsonParse } from "@/lib/safeJson";
 
 const itemVariants = {
     hidden: { opacity: 0, y: 20 },
@@ -177,9 +178,14 @@ export default function TestimoniosPage() {
     const heroTitleLead = typeof heroContent?.title_lead === "string" ? heroContent.title_lead : "";
     const heroTitleAccent = typeof heroContent?.title_accent === "string" ? heroContent.title_accent : "";
     const heroDescription = typeof heroContent?.description === "string" ? heroContent.description : "";
-    const feed = feedContent?.parsed && typeof feedContent.parsed === "object" && !Array.isArray(feedContent.parsed)
-        ? feedContent.parsed as Record<string, unknown>
-        : {};
+    // La configuración editorial llega en `content` serializado desde CMS.
+    // `parsed` en este caso contiene el envoltorio de la sección, no sus
+    // campos editoriales.
+    const feed = typeof feedContent?.content === "string"
+        ? safeJsonParse<Record<string, unknown>>(feedContent.content, {})
+        : feedContent?.parsed && typeof feedContent.parsed === "object" && !Array.isArray(feedContent.parsed)
+            ? feedContent.parsed as Record<string, unknown>
+            : {};
     const searchPlaceholder = typeof feed.search_placeholder === "string" ? feed.search_placeholder : "";
     const loadingLabel = typeof feed.loading_label === "string" ? feed.loading_label : "";
     const readMoreLabel = typeof feed.read_more_label === "string" ? feed.read_more_label : "";

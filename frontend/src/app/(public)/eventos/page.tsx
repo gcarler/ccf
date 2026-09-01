@@ -7,6 +7,7 @@ import { useCmsV2Page } from "@/hooks/useCmsV2Page";
 import { Bell, ChevronLeft, ChevronRight, MapPin, Star } from "lucide-react";
 import Image from "next/image";
 import { toast } from "sonner";
+import { safeJsonParse } from "@/lib/safeJson";
 
 interface PublicEventItem {
     title?: string;
@@ -48,9 +49,14 @@ export default function EventosPage() {
     const heroEyebrow = typeof heroContent?.eyebrow === "string" ? heroContent.eyebrow : "";
     const heroTitle = typeof heroContent?.title === "string" ? heroContent.title : "";
     const heroDescription = typeof heroContent?.description === "string" ? heroContent.description : "";
-    const feed = eventsContent?.parsed && typeof eventsContent.parsed === "object" && !Array.isArray(eventsContent.parsed)
-        ? eventsContent.parsed as Record<string, unknown>
-        : {};
+    // El CMS guarda la configuración editorial de esta sección en `content`
+    // como JSON serializado. Leer `parsed` directamente devolvía solo
+    // `{content: string}` y hacía que los textos del CMS desaparecieran.
+    const feed = typeof eventsContent?.content === "string"
+        ? safeJsonParse<Record<string, unknown>>(eventsContent.content, {})
+        : eventsContent?.parsed && typeof eventsContent.parsed === "object" && !Array.isArray(eventsContent.parsed)
+            ? eventsContent.parsed as Record<string, unknown>
+            : {};
     const categoryFilters = Array.isArray(feed.filters) ? (feed.filters as string[]) : [];
     const filtersTitle = typeof feed.filters_title === "string" ? feed.filters_title : "";
     const syncCalendarCta = typeof feed.sync_calendar_cta === "string" ? feed.sync_calendar_cta : "";
