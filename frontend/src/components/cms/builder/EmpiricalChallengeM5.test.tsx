@@ -8,7 +8,7 @@ import { toast } from "sonner";
 
 // Mocks
 vi.mock("next/navigation", () => ({
-  useSearchParams: () => new URLSearchParams("site=ccf&page=home"),
+  useSearchParams: () => new URLSearchParams("site=ccf&page=home&mode=visual"),
   useRouter: () => ({ push: vi.fn() }),
 }));
 
