@@ -84,7 +84,7 @@ def create_popup(
 ):
     _assert_role(current_user, CMS_EDITOR_ROLES)
     site = _get_scoped_site_or_404(db, site_key, current_user)
-    return crud.create_cms_popup(db, site.id, payload)
+    return crud.create_cms_popup(db, site.id, payload, actor_user_id=current_user.id)
 
 
 @router.get("/sites/{site_key}/popups/{id}", response_model=schemas.CmsPopupRead)
@@ -109,7 +109,7 @@ def update_popup(
     _assert_role(current_user, CMS_EDITOR_ROLES)
     site = _get_scoped_site_or_404(db, site_key, current_user)
     popup = _get_popup_or_404(db, site.id, id)
-    return crud.update_cms_popup(db, popup, payload)
+    return crud.update_cms_popup(db, popup, payload, actor_user_id=current_user.id)
 
 
 @router.delete("/sites/{site_key}/popups/{id}", status_code=204)
@@ -123,4 +123,4 @@ def delete_popup(
     _assert_role(current_user, CMS_EDITOR_ROLES)
     site = _get_scoped_site_or_404(db, site_key, current_user)
     popup = _get_popup_or_404(db, site.id, id)
-    crud.delete_cms_popup(db, popup)
+    crud.delete_cms_popup(db, popup, actor_user_id=current_user.id)

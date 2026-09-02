@@ -110,7 +110,7 @@ def create_newsletter(
 ):
     _assert_role(current_user, CMS_EDITOR_ROLES)
     site = _get_scoped_site_or_404(db, site_key, current_user)
-    return crud.create_cms_newsletter(db, site.id, payload)
+    return crud.create_cms_newsletter(db, site.id, payload, actor_user_id=current_user.id)
 
 
 @router.get("/sites/{site_key}/newsletters/{id}", response_model=schemas.CmsNewsletterRead)
@@ -135,7 +135,7 @@ def update_newsletter(
     _assert_role(current_user, CMS_EDITOR_ROLES)
     site = _get_scoped_site_or_404(db, site_key, current_user)
     newsletter = _get_newsletter_or_404(db, site.id, id)
-    return crud.update_cms_newsletter(db, newsletter, payload)
+    return crud.update_cms_newsletter(db, newsletter, payload, actor_user_id=current_user.id)
 
 
 @router.delete("/sites/{site_key}/newsletters/{id}", status_code=status.HTTP_200_OK)
@@ -148,7 +148,7 @@ def delete_newsletter(
     _assert_role(current_user, CMS_EDITOR_ROLES)
     site = _get_scoped_site_or_404(db, site_key, current_user)
     newsletter = _get_newsletter_or_404(db, site.id, id)
-    crud.delete_cms_newsletter(db, newsletter)
+    crud.delete_cms_newsletter(db, newsletter, actor_user_id=current_user.id)
     return {"success": True, "message": "Boletín eliminado correctamente."}
 
 
@@ -162,7 +162,7 @@ def send_newsletter(
     _assert_role(current_user, CMS_EDITOR_ROLES)
     site = _get_scoped_site_or_404(db, site_key, current_user)
     newsletter = _get_newsletter_or_404(db, site.id, id)
-    return crud.send_cms_newsletter(db, newsletter)
+    return crud.send_cms_newsletter(db, newsletter, actor_user_id=current_user.id)
 
 
 # ── Admin CRUD Endpoints — Subscribers ──────────────────────────────────────
@@ -196,7 +196,7 @@ def create_subscriber(
 ):
     _assert_role(current_user, CMS_EDITOR_ROLES)
     site = _get_scoped_site_or_404(db, site_key, current_user)
-    return crud.create_cms_subscriber(db, site.id, payload)
+    return crud.create_cms_subscriber(db, site.id, payload, actor_user_id=current_user.id)
 
 
 @router.post("/sites/{site_key}/subscribers/import")
@@ -208,7 +208,7 @@ def import_subscribers(
 ):
     _assert_role(current_user, CMS_EDITOR_ROLES)
     site = _get_scoped_site_or_404(db, site_key, current_user)
-    result = crud.import_cms_subscribers(db, site.id, payload)
+    result = crud.import_cms_subscribers(db, site.id, payload, actor_user_id=current_user.id)
     return {"success": True, **result}
 
 
@@ -234,7 +234,7 @@ def update_subscriber(
     _assert_role(current_user, CMS_EDITOR_ROLES)
     site = _get_scoped_site_or_404(db, site_key, current_user)
     subscriber = _get_subscriber_or_404(db, site.id, id)
-    return crud.update_cms_subscriber(db, subscriber, payload)
+    return crud.update_cms_subscriber(db, subscriber, payload, actor_user_id=current_user.id)
 
 
 @router.delete("/sites/{site_key}/subscribers/{id}", status_code=status.HTTP_200_OK)
@@ -247,5 +247,5 @@ def delete_subscriber(
     _assert_role(current_user, CMS_EDITOR_ROLES)
     site = _get_scoped_site_or_404(db, site_key, current_user)
     subscriber = _get_subscriber_or_404(db, site.id, id)
-    crud.delete_cms_subscriber(db, subscriber)
+    crud.delete_cms_subscriber(db, subscriber, actor_user_id=current_user.id)
     return {"success": True, "message": "Suscriptor eliminado correctamente."}

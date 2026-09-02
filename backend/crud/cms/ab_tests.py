@@ -17,6 +17,7 @@ from sqlalchemy.orm import Session
 
 from backend import models, schemas
 from backend.crud._utils import _utcnow
+from backend.crud.cms._shared import validate_cms_actor_site
 
 _logger = logging.getLogger(__name__)
 
@@ -72,7 +73,9 @@ def get_cms_ab_test_by_id(db: Session, test_id: uuid.UUID) -> models.CmsAbTest |
 
 
 
-def create_cms_ab_test(db: Session, site_id: uuid.UUID, payload: schemas.CmsAbTestCreate) -> models.CmsAbTest:
+def create_cms_ab_test(db: Session, site_id: uuid.UUID, payload: schemas.CmsAbTestCreate, *, actor_user_id=None) -> models.CmsAbTest:
+    if actor_user_id is not None:
+        validate_cms_actor_site(db, actor_user_id, site_id)
     row = models.CmsAbTest(
         site_id=site_id,
         page_id=payload.page_id,
@@ -90,7 +93,9 @@ def create_cms_ab_test(db: Session, site_id: uuid.UUID, payload: schemas.CmsAbTe
 
 
 
-def update_cms_ab_test(db: Session, row: models.CmsAbTest, payload: schemas.CmsAbTestUpdate) -> models.CmsAbTest:
+def update_cms_ab_test(db: Session, row: models.CmsAbTest, payload: schemas.CmsAbTestUpdate, *, actor_user_id=None) -> models.CmsAbTest:
+    if actor_user_id is not None:
+        validate_cms_actor_site(db, actor_user_id, row.site_id)
     data = payload.model_dump(exclude_unset=True)
     if "status" in data and data["status"] == "completed" and row.status != "completed":
         row.ended_at = _utcnow()
@@ -102,7 +107,9 @@ def update_cms_ab_test(db: Session, row: models.CmsAbTest, payload: schemas.CmsA
 
 
 
-def delete_cms_ab_test(db: Session, row: models.CmsAbTest) -> bool:
+def delete_cms_ab_test(db: Session, row: models.CmsAbTest, *, actor_user_id=None) -> bool:
+    if actor_user_id is not None:
+        validate_cms_actor_site(db, actor_user_id, row.site_id)
     row.deleted_at = _utcnow()
     row.status = "deleted"
     db.commit()
@@ -184,7 +191,11 @@ def apply_cms_ab_test_winner(
     site_id: uuid.UUID,
     test_id: uuid.UUID,
     payload: schemas.CmsAbTestApplyWinner | None = None,
+    *,
+    actor_user_id=None,
 ) -> models.CmsAbTest:
+    if actor_user_id is not None:
+        validate_cms_actor_site(db, actor_user_id, site_id)
     test = get_cms_ab_test(db, site_id, test_id)
     if not test:
         raise ValueError("A/B test not found")
@@ -226,4 +237,3 @@ def apply_cms_ab_test_winner(
     db.commit()
     db.refresh(test)
     return test
-

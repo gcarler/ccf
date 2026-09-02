@@ -247,7 +247,7 @@ def create_form(
     _assert_role(current_user, CMS_EDITOR_ROLES)
     site = _get_scoped_site_or_404(db, site_key, current_user)
     _validate_fields_spec(payload.fields)
-    return crud.create_cms_form(db, site.id, payload)
+    return crud.create_cms_form(db, site.id, payload, actor_user_id=current_user.id)
 
 
 @router.get("/sites/{site_key}/forms/{form_id}", response_model=schemas.CmsFormRead)
@@ -275,7 +275,7 @@ def update_form(
     form = _get_form_or_404(db, site.id, form_id)
     if payload.fields is not None:
         _validate_fields_spec(payload.fields)
-    return crud.update_cms_form(db, form, payload)
+    return crud.update_cms_form(db, form, payload, actor_user_id=current_user.id)
 
 
 @router.delete("/sites/{site_key}/forms/{form_id}", status_code=204)
@@ -288,7 +288,7 @@ def delete_form(
     _assert_role(current_user, CMS_EDITOR_ROLES)
     site = _get_scoped_site_or_404(db, site_key, current_user)
     form = _get_form_or_404(db, site.id, form_id)
-    crud.delete_cms_form(db, form)
+    crud.delete_cms_form(db, form, actor_user_id=current_user.id)
 
 
 @router.get(

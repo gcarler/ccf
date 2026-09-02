@@ -52,7 +52,7 @@ def create_menu(
     site = _get_scoped_site_or_404(db, site_key, current_user)
     if crud.get_cms_menu(db, site.id, payload.menu_key.strip().lower()):
         raise MenuKeyConflictError()
-    row = crud.create_cms_menu(db, site.id, payload, commit_with_conflict_check=True)
+    row = crud.create_cms_menu(db, site.id, payload, commit_with_conflict_check=True, actor_user_id=current_user.id)
     if row is None:
         raise MenuKeyConflictError()
     return row
@@ -80,7 +80,7 @@ def patch_menu(
     _assert_role(current_user, CMS_EDITOR_ROLES)
     site = _get_scoped_site_or_404(db, site_key, current_user)
     row = _get_menu_or_404(db, site.id, menu_key)
-    return crud.update_cms_menu(db, row, payload)
+    return crud.update_cms_menu(db, row, payload, actor_user_id=current_user.id)
 
 
 @router.delete("/sites/{site_key}/menus/{menu_key}", status_code=204)
@@ -93,7 +93,7 @@ def delete_menu(
     _assert_role(current_user, CMS_EDITOR_ROLES)
     site = _get_scoped_site_or_404(db, site_key, current_user)
     row = _get_menu_or_404(db, site.id, menu_key)
-    crud.delete_cms_menu(db, row)
+    crud.delete_cms_menu(db, row, actor_user_id=current_user.id)
 
 
 # ── Menu Items CRUD ──────────────────────────────────────────────────────────
@@ -129,7 +129,9 @@ def create_menu_item(
     _assert_role(current_user, CMS_EDITOR_ROLES)
     site = _get_scoped_site_or_404(db, site_key, current_user)
     menu = _get_menu_or_404(db, site.id, menu_key)
-    row = crud.create_cms_menu_item(db, menu.id, payload, commit_with_conflict_check=True)
+    row = crud.create_cms_menu_item(
+        db, menu.id, payload, commit_with_conflict_check=True, actor_user_id=current_user.id
+    )
     if row is None:
         raise MenuItemConflictError()
     return row
@@ -153,7 +155,7 @@ def patch_menu_item(
     item = crud.get_cms_menu_item(db, menu.id, item_id, site_id=site.id)
     if not item:
         raise MenuItemNotFoundError()
-    return crud.update_cms_menu_item(db, item, payload)
+    return crud.update_cms_menu_item(db, item, payload, actor_user_id=current_user.id)
 
 
 @router.delete("/sites/{site_key}/menus/{menu_key}/items/{item_id}", status_code=204)
@@ -170,7 +172,7 @@ def delete_menu_item(
     item = crud.get_cms_menu_item(db, menu.id, item_id, site_id=site.id)
     if not item:
         raise MenuItemNotFoundError()
-    crud.delete_cms_menu_item(db, item)
+    crud.delete_cms_menu_item(db, item, actor_user_id=current_user.id)
 
 
 @router.post(
@@ -187,4 +189,4 @@ def reorder_menu_items(
     _assert_role(current_user, CMS_EDITOR_ROLES)
     site = _get_scoped_site_or_404(db, site_key, current_user)
     menu = _get_menu_or_404(db, site.id, menu_key)
-    return crud.reorder_cms_menu_items(db, menu.id, payload.items)
+    return crud.reorder_cms_menu_items(db, menu.id, payload.items, actor_user_id=current_user.id)

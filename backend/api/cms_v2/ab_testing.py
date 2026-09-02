@@ -100,7 +100,7 @@ def create_ab_test(
 ):
     _assert_role(current_user, CMS_EDITOR_ROLES)
     site = _get_scoped_site_or_404(db, site_key, current_user)
-    return crud.create_cms_ab_test(db, site.id, payload)
+    return crud.create_cms_ab_test(db, site.id, payload, actor_user_id=current_user.id)
 
 
 @router.get("/sites/{site_key}/ab-tests/{id}", response_model=schemas.CmsAbTestRead)
@@ -125,7 +125,7 @@ def update_ab_test(
     _assert_role(current_user, CMS_EDITOR_ROLES)
     site = _get_scoped_site_or_404(db, site_key, current_user)
     test = _get_ab_test_or_404(db, site.id, id)
-    return crud.update_cms_ab_test(db, test, payload)
+    return crud.update_cms_ab_test(db, test, payload, actor_user_id=current_user.id)
 
 
 @router.delete("/sites/{site_key}/ab-tests/{id}")
@@ -138,7 +138,7 @@ def delete_ab_test(
     _assert_role(current_user, CMS_EDITOR_ROLES)
     site = _get_scoped_site_or_404(db, site_key, current_user)
     test = _get_ab_test_or_404(db, site.id, id)
-    crud.delete_cms_ab_test(db, test)
+    crud.delete_cms_ab_test(db, test, actor_user_id=current_user.id)
     return {"message": "A/B test deleted"}
 
 
@@ -171,4 +171,6 @@ def apply_ab_test_winner(
     _assert_role(current_user, CMS_EDITOR_ROLES)
     site = _get_scoped_site_or_404(db, site_key, current_user)
     test = _get_ab_test_or_404(db, site.id, id)
-    return crud.apply_cms_ab_test_winner(db, site.id, test.id, payload)
+    return crud.apply_cms_ab_test_winner(
+        db, site.id, test.id, payload, actor_user_id=current_user.id
+    )

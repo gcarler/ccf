@@ -17,6 +17,7 @@ from sqlalchemy.orm import Session
 
 from backend import models, schemas
 from backend.crud._utils import _utcnow
+from backend.crud.cms._shared import validate_cms_actor_site
 
 _logger = logging.getLogger(__name__)
 
@@ -49,8 +50,10 @@ def get_cms_newsletter(db: Session, site_id: uuid.UUID, newsletter_id: uuid.UUID
 
 
 def create_cms_newsletter(
-    db: Session, site_id: uuid.UUID, payload: schemas.CmsNewsletterCreate
+    db: Session, site_id: uuid.UUID, payload: schemas.CmsNewsletterCreate, *, actor_user_id=None
 ) -> models.CmsNewsletter:
+    if actor_user_id is not None:
+        validate_cms_actor_site(db, actor_user_id, site_id)
     row = models.CmsNewsletter(
         site_id=site_id,
         name=payload.name,
@@ -67,8 +70,10 @@ def create_cms_newsletter(
 
 
 def update_cms_newsletter(
-    db: Session, row: models.CmsNewsletter, payload: schemas.CmsNewsletterUpdate
+    db: Session, row: models.CmsNewsletter, payload: schemas.CmsNewsletterUpdate, *, actor_user_id=None
 ) -> models.CmsNewsletter:
+    if actor_user_id is not None:
+        validate_cms_actor_site(db, actor_user_id, row.site_id)
     data = payload.model_dump(exclude_unset=True)
     for field, val in data.items():
         setattr(row, field, val)
@@ -78,14 +83,18 @@ def update_cms_newsletter(
 
 
 
-def delete_cms_newsletter(db: Session, row: models.CmsNewsletter) -> bool:
+def delete_cms_newsletter(db: Session, row: models.CmsNewsletter, *, actor_user_id=None) -> bool:
+    if actor_user_id is not None:
+        validate_cms_actor_site(db, actor_user_id, row.site_id)
     db.delete(row)
     db.commit()
     return True
 
 
 
-def send_cms_newsletter(db: Session, row: models.CmsNewsletter) -> models.CmsNewsletter:
+def send_cms_newsletter(db: Session, row: models.CmsNewsletter, *, actor_user_id=None) -> models.CmsNewsletter:
+    if actor_user_id is not None:
+        validate_cms_actor_site(db, actor_user_id, row.site_id)
     active_count = (
         db.query(func.count(models.CmsSubscriber.id))
         .filter(models.CmsSubscriber.site_id == row.site_id, models.CmsSubscriber.is_active.is_(True))
@@ -157,8 +166,10 @@ def get_cms_subscriber(db: Session, site_id: uuid.UUID, subscriber_id: uuid.UUID
 
 
 def create_cms_subscriber(
-    db: Session, site_id: uuid.UUID, payload: schemas.CmsSubscriberCreate
+    db: Session, site_id: uuid.UUID, payload: schemas.CmsSubscriberCreate, *, actor_user_id=None
 ) -> models.CmsSubscriber:
+    if actor_user_id is not None:
+        validate_cms_actor_site(db, actor_user_id, site_id)
     email_clean = payload.email.strip().lower()
     existing = (
         db.query(models.CmsSubscriber)
@@ -189,7 +200,9 @@ def create_cms_subscriber(
 
 
 
-def import_cms_subscribers(db: Session, site_id: uuid.UUID, payload: schemas.CmsSubscriberImportPayload) -> dict:
+def import_cms_subscribers(db: Session, site_id: uuid.UUID, payload: schemas.CmsSubscriberImportPayload, *, actor_user_id=None) -> dict:
+    if actor_user_id is not None:
+        validate_cms_actor_site(db, actor_user_id, site_id)
     imported_count = 0
     items_to_process: list[tuple[str, str | None]] = []
 
@@ -244,8 +257,10 @@ def import_cms_subscribers(db: Session, site_id: uuid.UUID, payload: schemas.Cms
 
 
 def update_cms_subscriber(
-    db: Session, row: models.CmsSubscriber, payload: schemas.CmsSubscriberUpdate
+    db: Session, row: models.CmsSubscriber, payload: schemas.CmsSubscriberUpdate, *, actor_user_id=None
 ) -> models.CmsSubscriber:
+    if actor_user_id is not None:
+        validate_cms_actor_site(db, actor_user_id, row.site_id)
     data = payload.model_dump(exclude_unset=True)
     if "is_active" in data:
         if data["is_active"] is False and row.is_active:
@@ -260,7 +275,9 @@ def update_cms_subscriber(
 
 
 
-def delete_cms_subscriber(db: Session, row: models.CmsSubscriber) -> bool:
+def delete_cms_subscriber(db: Session, row: models.CmsSubscriber, *, actor_user_id=None) -> bool:
+    if actor_user_id is not None:
+        validate_cms_actor_site(db, actor_user_id, row.site_id)
     db.delete(row)
     db.commit()
     return True
@@ -309,6 +326,5 @@ def public_unsubscribe(db: Session, email: str, site_id: uuid.UUID | None = None
         row.unsubscribed_at = _utcnow()
     db.commit()
     return True
-
 
 
