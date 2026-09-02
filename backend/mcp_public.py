@@ -272,7 +272,7 @@ def upsert_public_page_section(
                 sort_order=sort_order,
                 is_visible=is_visible,
             )
-            row = crud.update_cms_section(db, row, payload)
+            row = crud.update_cms_section(db, row, payload, actor_user_id=_user.id)
         else:
             payload = schemas.CmsSectionCreate(
                 type=section_type,
@@ -281,7 +281,7 @@ def upsert_public_page_section(
                 is_visible=is_visible,
                 status="active",
             )
-            row = crud.create_cms_section(db, page.id, payload, commit_with_conflict_check=True)
+            row = crud.create_cms_section(db, page.id, payload, commit_with_conflict_check=True, actor_user_id=_user.id)
         if row is None:
             raise ValueError("No se pudo guardar la sección.")
         index_cms_page(db, page)

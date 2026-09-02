@@ -212,7 +212,7 @@ def create_section(
         raise UnsupportedSectionStatusError()
     site = _get_scoped_site_or_404(db, site_key, current_user)
     page = _get_page_or_404(db, site.id, slug)
-    row = crud.create_cms_section(db, page.id, payload, commit_with_conflict_check=True)
+    row = crud.create_cms_section(db, page.id, payload, commit_with_conflict_check=True, actor_user_id=current_user.id)
     if row is None:
         raise SectionConflictError()
     index_cms_page(db, page)
@@ -247,7 +247,7 @@ def patch_section(
             payload.props_json = validate_section_props(effective_type, payload.props_json)
         except ValueError as exc:
             raise CmsValidationError(str(exc)) from exc
-    res = crud.update_cms_section(db, row, payload)
+    res = crud.update_cms_section(db, row, payload, actor_user_id=current_user.id)
     index_cms_page(db, page)
     return res
 

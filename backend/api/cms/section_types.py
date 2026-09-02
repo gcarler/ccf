@@ -21,6 +21,7 @@ from backend.api.cms_v2._shared import (
     _commit_or_raise_conflict,
 )
 from backend.core.database import get_db
+from backend.core.audit import record_admin_action
 from backend.core.permissions import require_module_access
 from backend.exceptions.cms import (
     CmsValidationError,
@@ -92,6 +93,7 @@ def create_section_type(
     db.add(row)
     _commit_or_raise_conflict(db, detail="section type already exists")
     db.refresh(row)
+    record_admin_action(db, current_user, "cms.section_type.create", "cms_section_type", str(row.id))
     return row
 
 
@@ -112,6 +114,7 @@ def patch_section_type(
         setattr(row, key, value)
     db.commit()
     db.refresh(row)
+    record_admin_action(db, current_user, "cms.section_type.update", "cms_section_type", str(row.id))
     return row
 
 
@@ -125,6 +128,7 @@ def delete_section_type(
     row = _get_section_type_or_404(db, name)
     row.is_active = False
     db.commit()
+    record_admin_action(db, current_user, "cms.section_type.archive", "cms_section_type", str(row.id))
     return None
 
 

@@ -161,13 +161,12 @@ describe("PublicSectionRenderer dispatch", () => {
     },
   );
 
-  it("falls back to RichTextSection for an unknown type", () => {
+  it("renders an explicit guard for an unknown type", () => {
     const section = makeSection("__nonexistent_type__");
-    const { getByTestId } = render(<PublicSectionRenderer section={section} />);
-    // The default case calls RichTextSection. Since asTyped is a runtime
-    // no-op, the section's type stays "__nonexistent_type__" — the stub
-    // renders data-testid="section:__nonexistent_type__". We just verify
-    // SOMETHING rendered (i.e. the dispatch didn't crash on unknown types).
-    expect(() => getByTestId("section:__nonexistent_type__")).not.toThrow();
+    const { getByLabelText } = render(<PublicSectionRenderer section={section} />);
+    expect(getByLabelText("Sección no disponible")).toHaveAttribute(
+      "data-cms-unsupported-section",
+      "__nonexistent_type__",
+    );
   });
 });

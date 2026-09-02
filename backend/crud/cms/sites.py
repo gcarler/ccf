@@ -32,7 +32,13 @@ _logger = logging.getLogger(__name__)
 
 
 from backend.core.cache_v2 import invalidate_cached_public, invalidate_cached_public_pattern
-from backend.crud.cms._shared import _commit_or_conflict, resolve_site_key
+from backend.crud.cms._shared import (
+    _actor_sede_or_none_cms,
+    _commit_or_conflict,
+    _crud_scope_re_check_cms_site_content,
+    validate_cms_actor_site,
+    resolve_site_key,
+)
 
 
 def list_cms_sites(db: Session, *, only_active: bool = False, sede_id: uuid.UUID | None = None):
@@ -57,7 +63,13 @@ def create_cms_site(
     payload: schemas.CmsSiteCreate,
     *,
     commit_with_conflict_check: bool = False,
+    actor_user_id: str | uuid.UUID | None = None,
 ):
+    if actor_user_id is not None:
+        actor_sede = _actor_sede_or_none_cms(db, actor_user_id)
+        if actor_sede is not None and payload.sede_id is not None and str(payload.sede_id) != str(actor_sede):
+            from fastapi import HTTPException
+            raise HTTPException(status_code=404, detail="CMS site creation blocked")
     row = models.CmsSite(
         site_key=payload.site_key.strip().lower(),
         name=payload.name.strip(),
@@ -75,7 +87,9 @@ def create_cms_site(
 
 
 
-def update_cms_site(db: Session, row: models.CmsSite, payload: schemas.CmsSiteUpdate):
+def update_cms_site(db: Session, row: models.CmsSite, payload: schemas.CmsSiteUpdate, *, actor_user_id=None):
+    if actor_user_id is not None:
+        validate_cms_actor_site(db, actor_user_id, row.id)
     data = payload.model_dump(exclude_unset=True)
     was_active = row.is_active
     if "name" in data and data["name"] is not None:
@@ -96,7 +110,9 @@ def update_cms_site(db: Session, row: models.CmsSite, payload: schemas.CmsSiteUp
 
 
 
-def archive_cms_site(db: Session, row: models.CmsSite) -> models.CmsSite:
+def archive_cms_site(db: Session, row: models.CmsSite, *, actor_user_id=None) -> models.CmsSite:
+    if actor_user_id is not None:
+        validate_cms_actor_site(db, actor_user_id, row.id)
     row.is_active = False
     db.commit()
     db.refresh(row)
@@ -122,7 +138,12 @@ def create_cms_theme(
     site_id: uuid.UUID,
     payload: schemas.CmsThemeCreate,
     created_by: uuid.UUID | str | None,
+    *,
+    actor_user_id: str | uuid.UUID | None = None,
 ):
+    if actor_user_id is not None:
+        actor_sede = _actor_sede_or_none_cms(db, actor_user_id)
+        _crud_scope_re_check_cms_site_content(db, actor_user_id, actor_sede=actor_sede, site_id=site_id)
     version = db.query(func.max(models.CmsTheme.version)).filter(models.CmsTheme.site_id == site_id).scalar() or 0
     status = (payload.status or "active").strip().lower()
     row = models.CmsTheme(
@@ -133,6 +154,7 @@ def create_cms_theme(
         status=status,
         version=int(version) + 1,
         created_by_persona_id=resolve_persona_uuid_for_user(db, created_by),
+        updated_by_persona_id=resolve_persona_uuid_for_user(db, actor_user_id or created_by),
     )
     db.add(row)
     if row.is_active:
@@ -154,7 +176,16 @@ def get_cms_theme(db: Session, site_id: uuid.UUID, theme_id: uuid.UUID):
 
 
 
-def update_cms_theme(db: Session, row: models.CmsTheme, payload: schemas.CmsThemeUpdate):
+def update_cms_theme(
+    db: Session,
+    row: models.CmsTheme,
+    payload: schemas.CmsThemeUpdate,
+    *,
+    actor_user_id: str | uuid.UUID | None = None,
+):
+    if actor_user_id is not None:
+        actor_sede = _actor_sede_or_none_cms(db, actor_user_id)
+        _crud_scope_re_check_cms_site_content(db, actor_user_id, actor_sede=actor_sede, site_id=row.site_id)
     data = payload.model_dump(exclude_unset=True)
     if "name" in data and data["name"] is not None:
         row.name = str(data["name"]).strip()
@@ -172,6 +203,8 @@ def update_cms_theme(db: Session, row: models.CmsTheme, payload: schemas.CmsThem
                 models.CmsTheme.site_id == row.site_id,
                 models.CmsTheme.id != row.id,
             ).update({"is_active": False})
+    if actor_user_id is not None:
+        row.updated_by_persona_id = resolve_persona_uuid_for_user(db, actor_user_id)
     db.commit()
     db.refresh(row)
     # Cierre de staleness: name/tokens/is_active/status alteran la
@@ -181,13 +214,24 @@ def update_cms_theme(db: Session, row: models.CmsTheme, payload: schemas.CmsThem
 
 
 
-def activate_cms_theme(db: Session, site_id: uuid.UUID, theme_id: uuid.UUID):
+def activate_cms_theme(
+    db: Session,
+    site_id: uuid.UUID,
+    theme_id: uuid.UUID,
+    *,
+    actor_user_id: str | uuid.UUID | None = None,
+):
+    if actor_user_id is not None:
+        actor_sede = _actor_sede_or_none_cms(db, actor_user_id)
+        _crud_scope_re_check_cms_site_content(db, actor_user_id, actor_sede=actor_sede, site_id=site_id)
     row = get_cms_theme(db, site_id, theme_id)
     if not row:
         return None
     db.query(models.CmsTheme).filter(models.CmsTheme.site_id == site_id).update({"is_active": False})
     row.is_active = True
     row.status = "active"
+    if actor_user_id is not None:
+        row.updated_by_persona_id = resolve_persona_uuid_for_user(db, actor_user_id)
     db.commit()
     db.refresh(row)
     # Cierre de staleness: el theme activo cambió — refresca la caché pública.
@@ -196,9 +240,19 @@ def activate_cms_theme(db: Session, site_id: uuid.UUID, theme_id: uuid.UUID):
 
 
 
-def archive_cms_theme(db: Session, row: models.CmsTheme) -> models.CmsTheme:
+def archive_cms_theme(
+    db: Session,
+    row: models.CmsTheme,
+    *,
+    actor_user_id: str | uuid.UUID | None = None,
+) -> models.CmsTheme:
+    if actor_user_id is not None:
+        actor_sede = _actor_sede_or_none_cms(db, actor_user_id)
+        _crud_scope_re_check_cms_site_content(db, actor_user_id, actor_sede=actor_sede, site_id=row.site_id)
     row.is_active = False
     row.status = "archived"
+    if actor_user_id is not None:
+        row.updated_by_persona_id = resolve_persona_uuid_for_user(db, actor_user_id)
     db.commit()
     db.refresh(row)
     # Cierre de staleness: archivar el theme activo deja de servirlo en
@@ -242,7 +296,10 @@ def create_cms_menu(
     payload: schemas.CmsMenuCreate,
     *,
     commit_with_conflict_check: bool = False,
+    actor_user_id=None,
 ):
+    if actor_user_id is not None:
+        validate_cms_actor_site(db, actor_user_id, site_id)
     row = models.CmsMenu(
         site_id=site_id,
         menu_key=payload.menu_key.strip().lower(),
@@ -259,7 +316,9 @@ def create_cms_menu(
 
 
 
-def update_cms_menu(db: Session, row: models.CmsMenu, payload: schemas.CmsMenuUpdate):
+def update_cms_menu(db: Session, row: models.CmsMenu, payload: schemas.CmsMenuUpdate, *, actor_user_id=None):
+    if actor_user_id is not None:
+        validate_cms_actor_site(db, actor_user_id, row.site_id)
     data = payload.model_dump(exclude_unset=True)
     if "name" in data and data["name"] is not None:
         row.name = str(data["name"]).strip()
@@ -274,7 +333,9 @@ def update_cms_menu(db: Session, row: models.CmsMenu, payload: schemas.CmsMenuUp
 
 
 
-def delete_cms_menu(db: Session, row: models.CmsMenu) -> bool:
+def delete_cms_menu(db: Session, row: models.CmsMenu, *, actor_user_id=None) -> bool:
+    if actor_user_id is not None:
+        validate_cms_actor_site(db, actor_user_id, row.site_id)
     row.is_active = False
     db.commit()
     # Invalidación de caché pública: un menú soft-deleteado debe dejar de
@@ -419,7 +480,11 @@ def create_cms_menu_item(
     payload: schemas.CmsMenuItemCreate,
     *,
     commit_with_conflict_check: bool = False,
+    actor_user_id=None,
 ):
+    if actor_user_id is not None:
+        site_id = db.query(models.CmsMenu.site_id).filter(models.CmsMenu.id == menu_id).scalar()
+        validate_cms_actor_site(db, actor_user_id, site_id)
     row = models.CmsMenuItem(
         menu_id=menu_id,
         parent_id=payload.parent_id,
@@ -470,7 +535,10 @@ def get_cms_menu_item(
 
 
 
-def update_cms_menu_item(db: Session, row: models.CmsMenuItem, payload: schemas.CmsMenuItemUpdate):
+def update_cms_menu_item(db: Session, row: models.CmsMenuItem, payload: schemas.CmsMenuItemUpdate, *, actor_user_id=None):
+    if actor_user_id is not None:
+        site_id = db.query(models.CmsMenu.site_id).filter(models.CmsMenu.id == row.menu_id).scalar()
+        validate_cms_actor_site(db, actor_user_id, site_id)
     data = payload.model_dump(exclude_unset=True)
     for field in ["parent_id", "target", "is_external", "visibility", "sort_order"]:
         if field in data:
@@ -490,7 +558,10 @@ def update_cms_menu_item(db: Session, row: models.CmsMenuItem, payload: schemas.
 
 
 
-def delete_cms_menu_item(db: Session, row: models.CmsMenuItem) -> bool:
+def delete_cms_menu_item(db: Session, row: models.CmsMenuItem, *, actor_user_id=None) -> bool:
+    if actor_user_id is not None:
+        site_id = db.query(models.CmsMenu.site_id).filter(models.CmsMenu.id == row.menu_id).scalar()
+        validate_cms_actor_site(db, actor_user_id, site_id)
     row.visibility = "hidden"
     db.commit()
     # Cierre de staleness: ocultar un item cambia la respuesta pública
@@ -500,7 +571,10 @@ def delete_cms_menu_item(db: Session, row: models.CmsMenuItem) -> bool:
 
 
 
-def reorder_cms_menu_items(db: Session, menu_id: uuid.UUID, items: list[schemas.CmsMenuItemReorderItem]):
+def reorder_cms_menu_items(db: Session, menu_id: uuid.UUID, items: list[schemas.CmsMenuItemReorderItem], *, actor_user_id=None):
+    if actor_user_id is not None:
+        site_id = db.query(models.CmsMenu.site_id).filter(models.CmsMenu.id == menu_id).scalar()
+        validate_cms_actor_site(db, actor_user_id, site_id)
     rows_by_id = {
         row.id: row for row in db.query(models.CmsMenuItem).filter(models.CmsMenuItem.menu_id == menu_id).all()
     }
@@ -515,6 +589,3 @@ def reorder_cms_menu_items(db: Session, menu_id: uuid.UUID, items: list[schemas.
     # pública (order_by sort_order) — la caché debe refrescarse ya.
     _invalidate_public_menu_by_id_cache(db, menu_id)
     return list_cms_menu_items(db, menu_id)
-
-
-

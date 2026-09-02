@@ -60,7 +60,7 @@ def create_site(
             payload.sede_id = actor_sede
         elif payload.sede_id is None:
             payload.sede_id = actor_sede
-    row = crud.create_cms_site(db, payload, commit_with_conflict_check=True)
+    row = crud.create_cms_site(db, payload, commit_with_conflict_check=True, actor_user_id=current_user.id)
     if row is None:
         raise SiteKeyAlreadyExistsError()
     return row
@@ -90,7 +90,7 @@ def patch_site(
             "sede_id cannot be changed via site update; create a new site instead",
             error_code="sede_id_immutable",
         )
-    return crud.update_cms_site(db, row, payload)
+    return crud.update_cms_site(db, row, payload, actor_user_id=current_user.id)
 
 
 @router.delete("/sites/{site_key}", status_code=204)
@@ -101,5 +101,5 @@ def delete_site(
 ):
     _assert_role(current_user, CMS_SITE_MANAGE_ROLES)
     row = _get_scoped_site_or_404(db, site_key, current_user)
-    crud.archive_cms_site(db, row)
+    crud.archive_cms_site(db, row, actor_user_id=current_user.id)
     return None
