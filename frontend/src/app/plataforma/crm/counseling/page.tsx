@@ -11,7 +11,7 @@ import { useAuth } from '@/context/AuthContext';
 import CrmShell from '@/components/crm/CrmShell';
 import { ViewType, getStoredView } from '@/components/ViewSwitcher';
 import SplitDropdownButton from '@/components/ui/SplitDropdownButton';
-import CrmViewPlaceholder from '@/components/crm/CrmViewPlaceholder';
+import CrmOperationalDataView from '@/components/crm/CrmOperationalDataView';
 import { useSidebarLayers } from '@/context/SidebarLayerContext';
 import CounselingDetailSidebar from '@/components/crm/CounselingDetailSidebar';
 import WorkspaceDrawer from '@/components/WorkspaceDrawer';
@@ -21,6 +21,8 @@ import { CounselingSession } from '@/types/crm';
 
 const STATUS_ORDER = ['Pendiente', 'Realizada', 'Cancelada'];
 const STATUS_PROGRESS: Record<string, number> = { Pendiente: 30, Realizada: 100, Cancelada: 0 };
+const COUNSELING_STATUS_TO_UI: Record<string, string> = { open: 'Pendiente', in_progress: 'Pendiente', resolved: 'Realizada', cancelled: 'Cancelada' };
+const COUNSELING_STATUS_TO_API: Record<string, string> = { Pendiente: 'open', Realizada: 'resolved', Cancelada: 'cancelled' };
 
 export default function CounselingPage() {
     const { token } = useAuth();
@@ -69,8 +71,14 @@ export default function CounselingPage() {
         setLoading(true);
         setSessionsError(null);
         try {
-            const sessionsData = await apiFetch<CounselingSession[]>('/crm/counseling/', { token, cache: 'no-store', signal });
-            setSessions(Array.isArray(sessionsData) ? sessionsData : []);
+            const sessionsData = await apiFetch<{ items: CounselingSession[]; total: number }>('/crm/counseling/', { token, cache: 'no-store', signal });
+            setSessions(Array.isArray(sessionsData?.items) ? sessionsData.items.map((session) => ({
+                ...session,
+                topic: session.topic || session.subject,
+                status: COUNSELING_STATUS_TO_UI[session.status] || session.status,
+                scheduled_at: session.scheduled_at || session.created_at,
+                duration_minutes: session.duration_minutes || 60,
+            })) : []);
         } catch (err: unknown) {
             if ((err as Error)?.name === 'AbortError') return;
             setSessions([]);
@@ -102,10 +110,20 @@ export default function CounselingPage() {
         }
         setIsSaving(true);
         try {
+            if (!newSession.persona_id) {
+                setDrawerErrors({ topic: false, scheduled_at: true });
+                addToast('Selecciona una persona', 'warning');
+                return;
+            }
             await apiFetch('/crm/counseling/', {
                 method: 'POST',
                 token,
-                body: newSession,
+                body: {
+                    persona_id: newSession.persona_id,
+                    subject: newSession.topic.trim(),
+                    notes: newSession.notes.trim() || null,
+                    status: 'open',
+                },
             });
             addToast('Sesión agendada correctamente', 'success');
             setIsDrawerOpen(false);
@@ -121,7 +139,7 @@ export default function CounselingPage() {
     const handleUpdateStatus = async (id: string, status: string) => {
         if (!token) return;
         try {
-            await apiFetch(`/crm/counseling/${id}`, { method: 'PATCH', token, body: { status } });
+            await apiFetch(`/crm/counseling/${id}`, { method: 'PATCH', token, body: { status: COUNSELING_STATUS_TO_API[status] || status } });
             addToast(`Estado actualizado a ${status}`, 'success');
             fetchSessions();
         } catch {
@@ -720,7 +738,19 @@ export default function CounselingPage() {
         )}
 
         {!['table', 'list', 'grid', 'board', 'kanban', 'gantt', 'calendar', 'wiki'].includes(viewType) && (
-            <CrmViewPlaceholder moduleName="Consejeria" viewType={viewType} />
+            <CrmOperationalDataView
+                moduleName="Consejería"
+                items={filteredSessions.map((session) => ({
+                    id: session.id,
+                    title: session.topic || 'Sesión sin tema',
+                    subtitle: session.persona_id || 'Persona no especificada',
+                    meta: session.status,
+                }))}
+                onSelect={(item) => {
+                    const session = filteredSessions.find((candidate) => candidate.id === item.id);
+                    if (session) openSessionDetail(session);
+                }}
+            />
         )}
 
         {/* ─── Drawer: Agendar Sesión ─── (NO modal) */}
