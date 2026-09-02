@@ -57,6 +57,11 @@ from backend.models_projects import (
 )
 
 db = SessionLocal()
+# Este script mantiene entidades de prueba en memoria entre varios commits.
+# Evitamos que SQLAlchemy expire el usuario administrador después de cada
+# commit; de lo contrario, el siguiente acceso intenta recargar una entidad
+# que el flujo de limpieza puede haber invalidado y produce ObjectDeletedError.
+db.expire_on_commit = False
 
 GREEN = "\033[0;32m"
 RED = "\033[0;31m"
@@ -87,6 +92,14 @@ def section(msg):
     print(f"\n{'=' * 60}")
     print(f"  {msg}")
     print(f"{'=' * 60}")
+
+
+def user_by_id(user_id):
+    """Resolve the canonical test user for a Persona foreign key."""
+    user = test_users_by_id.get(user_id)
+    if user is not None:
+        return user
+    return db.query(User).filter(User.id == user_id).first()
 
 
 # ──────────────────────────────────────────────────────────────
@@ -138,16 +151,43 @@ else:
     fail("No se encontró usuario admin@ccf.com")
 
 users_data = [
-    {"email": "prueba1@ccf.test", "username": "usuario_prueba_1", "role_name": "MIEMBRO", "name": "Usuario Prueba 1"},
-    {"email": "prueba2@ccf.test", "username": "usuario_prueba_2", "role_name": "EDITOR", "name": "Usuario Prueba 2"},
-    {"email": "prueba3@ccf.test", "username": "usuario_prueba_3", "role_name": "GESTOR", "name": "Usuario Prueba 3"},
+    {"email": "prueba1@ccf.test", "username": "usuario_prueba_1", "role_name": None, "name": "Usuario Prueba 1"},
+    {"email": "prueba2@ccf.test", "username": "usuario_prueba_2", "role_name": "PROJECTS_QA", "name": "Usuario Prueba 2"},
+    {"email": "prueba3@ccf.test", "username": "usuario_prueba_3", "role_name": "PROJECTS_QA", "name": "Usuario Prueba 3"},
 ]
+
+project_qa_role = db.query(_RolPlataforma).filter(_RolPlataforma.nombre == "PROJECTS_QA").first()
+if not project_qa_role:
+    project_qa_role = _RolPlataforma(
+        nombre="PROJECTS_QA",
+        permisos={
+            "projects:read": "allow",
+            "projects:edit": "allow",
+            "projects:manage": "allow",
+        },
+    )
+    db.add(project_qa_role)
+    db.commit()
 
 created_users = []
 for ud in users_data:
+    role_obj = (
+        db.query(_RolPlataforma).filter(_RolPlataforma.nombre == ud["role_name"]).first()
+        if ud["role_name"]
+        else None
+    )
     existing = db.query(User).filter(User.email == ud["email"]).first()
     if existing:
         ok(f"Usuario '{ud['name']}' ya existe (id={existing.id})")
+        changed = False
+        if admin_user and existing.sede_id != admin_user.sede_id:
+            existing.sede_id = admin_user.sede_id
+            changed = True
+        if role_obj and existing.rol_plataforma_id != role_obj.id:
+            existing.rol_plataforma_id = role_obj.id
+            changed = True
+        if changed:
+            db.commit()
         created_users.append(existing)
     else:
         # Create a Persona first (required FK for auth_users.id)
@@ -166,7 +206,6 @@ for ud in users_data:
             is_active=True,
             sede_id=getattr(admin_user, "sede_id", None) if admin_user else None,
         )
-        role_obj = db.query(_RolPlataforma).filter(_RolPlataforma.nombre == ud["role_name"]).first()
         if role_obj:
             u.rol_plataforma_id = role_obj.id
         db.add(u)
@@ -179,6 +218,12 @@ if not admin_user:
     admin_user = created_users[0]  # fallback
 
 u1, u2, u3 = created_users
+test_users_by_id = {u.id: u for u in created_users}
+# Projects stores owner/assignee values as Persona IDs. The legacy admin
+# account may not have a matching Persona row, so use the canonical Persona
+# behind the seeded GESTOR account as the project owner in this smoke test.
+owner_user = u3
+owner_persona_id = owner_user.id
 
 # ──────────────────────────────────────────────────────────────
 section("3. CREACIÓN DEL PROYECTO 'CREATIVIDAD'")
@@ -188,7 +233,7 @@ project = Project(
     title="Proyecto Prueba - Creatividad",
     description="Proyecto de calidad para probar el módulo completo de proyectos. Incluye tareas, documentos y comentarios entre 3 usuarios.",
     status="active",
-    owner_id=admin_user.id,
+    owner_id=owner_persona_id,
     sede_id=getattr(admin_user, "sede_id", None),
     color="#3b82f6",
     icon="palette",
@@ -221,7 +266,7 @@ ok("4 fases kanban creadas (Por Hacer, En Curso, Revisión, Completado)")
 db.add(
     ProjectActivityLog(
         project_id=project.id,
-        persona_id=admin_user.id,
+        persona_id=owner_persona_id,
         action_type="project_created",
         description=f"Proyecto creado por {admin_user.username}",
     )
@@ -279,7 +324,7 @@ tasks_data = [
         "description": "Definir fechas clave y hitos del proyecto completo.",
         "priority": "high",
         "status": "todo",
-        "assignee_id": admin_user.id,
+        "assignee_id": owner_persona_id,
         "start_date": now,
         "due_date": now + datetime.timedelta(days=4),
         "labels": ["planificación"],
@@ -303,14 +348,14 @@ for td in tasks_data:
     db.commit()
     db.refresh(task)
 
-    assignee = db.query(User).filter(User.id == td["assignee_id"]).first()
+    assignee = user_by_id(td["assignee_id"])
     ok(f"Tarea '{task.title}' → asignada a {assignee.username} (id={task.id})")
     created_tasks.append(task)
 
     db.add(
         ProjectActivityLog(
             project_id=project.id,
-            persona_id=admin_user.id,
+            persona_id=owner_persona_id,
             action_type="task_created",
             description=f"Tarea creada: {task.title} → {assignee.username}",
         )
@@ -376,7 +421,7 @@ Desarrollar una campaña creativa para la iglesia que incluya diseño, contenido
 - Documentación: Google Docs
 - Presentación: PowerPoint / Google Slides
 """,
-    author_id=admin_user.id,
+    author_id=owner_persona_id,
 )
 db.add(wiki)
 db.commit()
@@ -385,7 +430,7 @@ ok(f"Documento wiki creado: '{wiki.title}' (id={wiki.id})")
 db.add(
     ProjectActivityLog(
         project_id=project.id,
-        persona_id=admin_user.id,
+            persona_id=owner_persona_id,
         action_type="wiki_updated",
         description="Documento wiki creado: Guía del Proyecto",
     )
@@ -413,7 +458,7 @@ comments_data = [
         "task_id": created_tasks[2].id,
     },
     {
-        "author_id": admin_user.id,
+        "author_id": owner_persona_id,
         "content": "Excelente trabajo equipo. Recuerden que la presentación es el viernes. Vamos bien con los tiempos.",
         "task_id": None,  # Comentario general del proyecto
     },
@@ -430,7 +475,7 @@ comments_data = [
 ]
 
 for cd in comments_data:
-    author = db.query(User).filter(User.id == cd["author_id"]).first()
+    author = user_by_id(cd["author_id"])
     comment = ProjectComment(
         project_id=project.id,
         task_id=cd["task_id"],
@@ -512,7 +557,7 @@ section("9. PRUEBA DE API (ENDPOINTS)")
 
 import httpx
 
-# Login como GESTOR de prueba (endpoint v3) — credenciales conocidas del script
+# Login como usuario con acceso de módulo (endpoint v3).
 login_resp = httpx.post(
     f"{QUALITY_API_URL}/api/v3/auth/login",
     json={
@@ -525,7 +570,7 @@ login_resp = httpx.post(
 if login_resp.status_code == 200:
     token = login_resp.json().get("access_token", "")
     headers = {"Authorization": f"Bearer {token}"}
-    ok("Login GESTOR de prueba exitoso")
+    ok("Login usuario con acceso de módulo exitoso")
 
     # GET /projects
     resp = httpx.get(f"{QUALITY_API_URL}/api/projects", headers=headers)
@@ -588,7 +633,7 @@ if login_resp.status_code == 200:
     if resp.status_code in (200, 201):
         ok("POST /projects/{id}/comments → comentario creado vía API")
     else:
-        fail(f"POST /projects/{id}/comments → HTTP {resp.status_code}: {resp.text[:100]}")
+        fail(f"POST /projects/{project.id}/comments → HTTP {resp.status_code}: {resp.text[:100]}")
 
     # Login como usuario_prueba_2 (docente, tiene acceso a projects) y verificar que ve el proyecto
     login_u2 = httpx.post(
