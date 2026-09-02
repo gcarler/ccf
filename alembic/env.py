@@ -88,18 +88,21 @@ def _ensure_version_table_capacity(connection) -> None:
                 ")"
             )
         )
-        connection.commit()
-        return
-
-    version_column = next(
-        (column for column in inspector.get_columns("alembic_version") if column["name"] == "version_num"),
-        None,
-    )
-    if version_column and getattr(version_column["type"], "length", None) != 255:
-        connection.execute(
-            text("ALTER TABLE alembic_version ALTER COLUMN version_num TYPE VARCHAR(255)")
+    else:
+        version_column = next(
+            (column for column in inspector.get_columns("alembic_version") if column["name"] == "version_num"),
+            None,
         )
-        connection.commit()
+        if version_column and getattr(version_column["type"], "length", None) != 255:
+            connection.execute(
+                text("ALTER TABLE alembic_version ALTER COLUMN version_num TYPE VARCHAR(255)")
+            )
+
+    # Inspector queries also open a transaction in SQLAlchemy. Commit it even
+    # when the schema was already correct; otherwise Alembic's following
+    # ``stamp`` transaction can be treated as nested and rolled back when the
+    # connection closes, silently losing the new revision.
+    connection.commit()
 
 
 if context.is_offline_mode():
