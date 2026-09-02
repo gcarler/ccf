@@ -293,7 +293,7 @@ def update_cms_section(
     from backend.schemas.cms_v2_sections import validate_section_props
 
     data = payload.model_dump(exclude_unset=True)
-    for field in ["type", "sort_order", "is_visible", "status", "is_global", "global_key"]:
+    for field in ["type", "sort_order", "is_visible", "status", "global_key"]:
         if field in data and data[field] is not None:
             setattr(row, field, data[field])
     if "props_json" in data and data["props_json"] is not None:
@@ -606,5 +606,4 @@ def get_public_cms_page(db: Session, site_id: uuid.UUID, slug: str):
         )
         .first()
     )
-
 

@@ -183,5 +183,6 @@ def delete_global_block(
     if not block:
         raise BlockNotFoundError()
     block.deleted_at = _utcnow()
+    block.updated_by_persona_id = resolve_persona_id_for_user(db, current_user.id)
     db.commit()
     return None
