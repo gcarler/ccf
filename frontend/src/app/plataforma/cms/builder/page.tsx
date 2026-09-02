@@ -1196,6 +1196,29 @@ export default function PuckBuilderPage() {
     );
   }
 
+  // Home uses the canonical public-content model. Do not expose the legacy
+  // generic Puck hero fields (title/body/cta) for this page.
+  const hasCanonicalHomeHero = dbSections.some((section) => {
+    const props = section?.props_json;
+    return section?.section_key === "hero" && props && typeof props === "object" && (
+      "title_lead" in props || "title_accent" in props || "title_tail" in props
+    );
+  });
+
+  if (pageSlug === "home" && hasCanonicalHomeHero && !heroMediaMode) {
+    return (
+      <PublicContentEditor
+        siteKey={siteKey}
+        pageSlug={pageSlug}
+        sections={dbSections}
+        token={token}
+        canEdit={canEdit}
+        canPublish={canPublish}
+        onBack={() => router.push(`/plataforma/cms/pages?site=${siteKey}`)}
+      />
+    );
+  }
+
   if (heroMediaMode) {
     return (
       <HeroMediaEditor
@@ -1325,7 +1348,8 @@ const HOME_HERO_CONTENT_FIELDS = [
   "secondary_cta",
 ];
 
-function contentLabel(key: string): string {
+function contentLabel(key?: string): string {
+  if (!key) return "Sección";
   return CONTENT_LABELS[key] || key.replaceAll("_", " ").replace(/^./, (letter) => letter.toUpperCase());
 }
 
