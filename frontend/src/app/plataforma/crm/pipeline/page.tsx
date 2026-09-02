@@ -24,6 +24,7 @@ import { useWikiDocument } from '@/hooks/useWikiDocument';
 import { useRouter } from 'next/navigation';
 import CrmShell from '@/components/crm/CrmShell';
 import type { PipelineLead, PipelineStage } from '@/types/crm';
+import { fetchAllCrmCases } from '@/app/plataforma/crm/cases';
 
 import { useSidebarLayers } from '@/context/SidebarLayerContext';
 import { ViewType, getStoredView } from '@/components/ViewSwitcher';
@@ -95,12 +96,7 @@ export default function ConsolidationPipelinePage() {
         setLoading(true);
         setLeadsError(null);
         try {
-            const data = await apiFetch<PipelineLead[] | { cases: PipelineLead[] }>('/crm/casos', { token, cache: 'no-store', signal });
-            const items = Array.isArray(data)
-                ? data
-                : Array.isArray(data?.cases)
-                    ? data.cases
-                    : [];
+            const items = await fetchAllCrmCases<PipelineLead>(token, signal);
             setLeads(items);
         } catch (err: unknown) {
             if ((err as Error)?.name === 'AbortError') return;
