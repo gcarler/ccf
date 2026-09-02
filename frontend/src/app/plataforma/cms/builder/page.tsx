@@ -4,7 +4,7 @@ import React, { useEffect, useState, useMemo, useRef, useCallback } from "react"
 import { Puck, Config } from "@puckeditor/core";
 import "@puckeditor/core/dist/index.css";
 import { useSearchParams, useRouter } from "next/navigation";
-import { LayoutPanelTop, ArrowLeft, Loader2, Palette, CheckCircle2, AlertTriangle, Save } from "lucide-react";
+import { LayoutPanelTop, ArrowLeft, Loader2, Palette, CheckCircle2, AlertTriangle, Save, ImageIcon, Trash2, Plus } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { canEditCms, canPublishCms } from "@/lib/cms/permissions";
 import { listCmsSections, patchCmsSection, createCmsSection, deleteCmsSection, workflowCmsPage } from "@/lib/cms/v2";
@@ -16,6 +16,7 @@ import MediaPicker from "@/components/cms/builder/MediaPicker";
 import MediaPickerField, { setMediaPickerTrigger } from "@/components/cms/builder/MediaPickerField";
 import CmsJsonMediaField from "@/components/cms/CmsJsonMediaField";
 import AiField from "@/components/cms/builder/AiField";
+import OptimizedImage from "@/components/ui/OptimizedImage";
 
 export type SaveStatus = "saved" | "dirty" | "saving" | "error";
 
@@ -121,6 +122,7 @@ export default function PuckBuilderPage() {
   const siteKey = searchParams?.get("site") || SITE_KEY;
   const pageSlug = searchParams?.get("page") || "";
   const contentMode = searchParams?.get("mode") === "content";
+  const heroMediaMode = searchParams?.get("mode") === "hero-media";
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -1194,6 +1196,20 @@ export default function PuckBuilderPage() {
     );
   }
 
+  if (heroMediaMode) {
+    return (
+      <HeroMediaEditor
+        siteKey={siteKey}
+        pageSlug={pageSlug}
+        sections={dbSections}
+        token={token}
+        canEdit={canEdit}
+        canPublish={canPublish}
+        onBack={() => router.push(`/plataforma/cms/pages?site=${siteKey}`)}
+      />
+    );
+  }
+
   return (
     <main aria-label="Editor visual Puck" className="h-screen flex flex-col bg-[hsl(var(--bg-primary))]" style={themeStyles}>
       {/* Header bar */}
@@ -1275,6 +1291,14 @@ type ContentSection = {
   type: string;
   props_json?: Record<string, unknown> | null;
   sort_order?: number;
+};
+
+type HeroSlide = {
+  src: string;
+  alt?: string;
+  title?: string;
+  caption?: string;
+  href?: string;
 };
 
 const CONTENT_LABELS: Record<string, string> = {
@@ -1412,6 +1436,96 @@ function PublicContentEditor({
           </section>
         ))}
       </div>
+    </main>
+  );
+}
+
+function HeroMediaEditor({
+  siteKey,
+  pageSlug,
+  sections,
+  token,
+  canEdit,
+  canPublish,
+  onBack,
+}: {
+  siteKey: string;
+  pageSlug: string;
+  sections: ContentSection[];
+  token: string;
+  canEdit: boolean;
+  canPublish: boolean;
+  onBack: () => void;
+}) {
+  const hero = sections.find((section) => section.section_key === "hero" && section.type === "hero");
+  const [background, setBackground] = useState("");
+  const [slides, setSlides] = useState<HeroSlide[]>([]);
+  const [mediaOpen, setMediaOpen] = useState(false);
+  const [mediaTarget, setMediaTarget] = useState<"background" | number>("background");
+  const [saving, setSaving] = useState(false);
+  const [publishing, setPublishing] = useState(false);
+
+  useEffect(() => {
+    const props = hero?.props_json || {};
+    setBackground(typeof props.bg_image === "string" ? props.bg_image : "");
+    setSlides(Array.isArray(props.slides) ? props.slides.filter((item): item is Record<string, unknown> => Boolean(item) && typeof item === "object").map((item) => ({
+      src: typeof item.src === "string" ? item.src : "",
+      alt: typeof item.alt === "string" ? item.alt : "Imagen del hero",
+      title: typeof item.title === "string" ? item.title : "",
+      caption: typeof item.caption === "string" ? item.caption : "",
+      href: typeof item.href === "string" ? item.href : "",
+    })) : []);
+  }, [hero]);
+
+  const chooseMedia = (target: "background" | number) => {
+    setMediaTarget(target);
+    setMediaOpen(true);
+  };
+
+  const selectMedia = (item: { url?: string }) => {
+    const url = item.url || "";
+    if (mediaTarget === "background") setBackground(url);
+    else setSlides((current) => current.map((slide, index) => index === mediaTarget ? { ...slide, src: url } : slide));
+    setMediaOpen(false);
+  };
+
+  const save = async (publish = false) => {
+    if (!hero || !canEdit) return;
+    if (publish && !canPublish) return;
+    setSaving(!publish);
+    setPublishing(publish);
+    try {
+      await patchCmsSection(siteKey, pageSlug, hero.id, {
+        props_json: { ...(hero.props_json || {}), bg_image: background, slides },
+      }, token);
+      if (publish) {
+        await workflowCmsPage(siteKey, pageSlug, "publish", "Publicado desde Imágenes del hero", token);
+        toast.success("Imágenes del hero publicadas");
+      } else {
+        toast.success("Imágenes del hero guardadas como borrador");
+      }
+    } catch {
+      toast.error(publish ? "No se pudieron publicar las imágenes" : "No se pudieron guardar las imágenes");
+    } finally {
+      setSaving(false);
+      setPublishing(false);
+    }
+  };
+
+  return (
+    <main className="min-h-screen bg-[hsl(var(--bg-primary))] text-[hsl(var(--text-primary))] dark:bg-[hsl(var(--admin-bg-deep))]">
+      <header className="sticky top-0 z-20 flex items-center justify-between gap-4 border-b border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))]/95 px-4 py-3 backdrop-blur dark:border-white/10 dark:bg-[hsl(var(--surface-2))]/95">
+        <div className="flex items-center gap-3"><button type="button" onClick={onBack} className="rounded-lg border border-[hsl(var(--border))] p-2" aria-label="Volver a páginas"><ArrowLeft size={16} /></button><div><p className="text-2xs font-bold uppercase tracking-[0.16em] text-[hsl(var(--primary))]">Media pública</p><h1 className="text-lg font-bold">Imágenes del hero</h1></div></div>
+        <div className="flex gap-2"><button type="button" onClick={() => save()} disabled={!canEdit || saving || publishing} className="rounded-lg border border-[hsl(var(--border))] px-3 py-2 text-xs font-semibold disabled:opacity-50">{saving ? "Guardando…" : "Guardar borrador"}</button><button type="button" onClick={() => save(true)} disabled={!canPublish || saving || publishing} className="rounded-lg bg-[hsl(var(--primary))] px-3 py-2 text-xs font-semibold text-white disabled:opacity-50">{publishing ? "Publicando…" : "Publicar"}</button></div>
+      </header>
+      <div className="mx-auto max-w-5xl space-y-5 px-4 py-6">
+        <div className="rounded-xl border border-[hsl(var(--info)/30%)] bg-info-soft/30 px-4 py-3 text-sm text-[hsl(var(--text-secondary))]">Este editor modifica únicamente la sección Hero de /{pageSlug}. El contenido y las demás secciones permanecen intactos.</div>
+        {!hero ? <div className="rounded-xl border border-[hsl(var(--danger)/30%)] p-6">No se encontró la sección Hero de esta página.</div> : <>
+          <section className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-4 shadow-sm"><h2 className="mb-3 font-bold">Imagen de respaldo</h2><div className="flex flex-col gap-3 sm:flex-row sm:items-center"><div className="relative h-28 w-full overflow-hidden rounded-lg bg-[hsl(var(--surface-2))] sm:w-52"><OptimizedImage src={background} alt="Imagen de respaldo del hero" fill sizes="208px" /></div><div className="min-w-0 flex-1"><p className="mb-2 break-all text-xs text-[hsl(var(--text-secondary))]">{background || "Sin imagen seleccionada"}</p><button type="button" onClick={() => chooseMedia("background")} disabled={!canEdit} className="inline-flex items-center gap-2 rounded-lg bg-[hsl(var(--primary))] px-3 py-2 text-xs font-semibold text-white disabled:opacity-50"><ImageIcon size={14} />Elegir de Media</button></div></div></section>
+          <section className="space-y-3"><div className="flex items-center justify-between"><h2 className="font-bold">Carrusel del hero ({slides.length})</h2><button type="button" onClick={() => setSlides((current) => current.length >= 12 ? current : [...current, { src: "", alt: "Imagen del hero" }])} disabled={!canEdit || slides.length >= 12} className="inline-flex items-center gap-2 rounded-lg border border-[hsl(var(--border))] px-3 py-2 text-xs font-semibold disabled:opacity-50"><Plus size={14} />Agregar imagen</button></div>{slides.map((slide, index) => <article key={`${index}-${slide.src}`} className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-4 shadow-sm"><div className="flex flex-col gap-4 lg:flex-row"><div className="relative h-36 w-full shrink-0 overflow-hidden rounded-lg bg-[hsl(var(--surface-2))] lg:w-64"><OptimizedImage src={slide.src} alt={slide.alt || `Imagen ${index + 1}`} fill sizes="256px" /></div><div className="grid flex-1 gap-3 sm:grid-cols-2"><button type="button" onClick={() => chooseMedia(index)} disabled={!canEdit} className="rounded-lg border border-[hsl(var(--border))] px-3 py-2 text-left text-xs font-semibold disabled:opacity-50"><ImageIcon className="mr-2 inline" size={14} />Elegir imagen desde Media</button><button type="button" onClick={() => setSlides((current) => current.filter((_, itemIndex) => itemIndex !== index))} disabled={!canEdit} className="rounded-lg border border-[hsl(var(--danger)/30%)] px-3 py-2 text-xs font-semibold text-danger-text disabled:opacity-50"><Trash2 className="mr-2 inline" size={14} />Quitar imagen</button>{(["alt", "title", "caption", "href"] as const).map((field) => <label key={field} className={field === "caption" ? "sm:col-span-2" : ""}><span className="mb-1 block text-2xs font-bold uppercase text-[hsl(var(--text-secondary))]">{field === "alt" ? "Texto alternativo" : field === "href" ? "Enlace opcional" : field === "title" ? "Título" : "Descripción"}</span><input value={slide[field] || ""} onChange={(event) => setSlides((current) => current.map((item, itemIndex) => itemIndex === index ? { ...item, [field]: event.target.value } : item))} disabled={!canEdit} className="w-full rounded-lg border border-[hsl(var(--border))] bg-transparent px-3 py-2 text-sm disabled:opacity-60" /></label>)}</div></div></article>)}</section>
+        </>}
+      </div>
+      {mediaOpen && <MediaPicker open token={token} selectedUrl={mediaTarget === "background" ? background : slides[mediaTarget]?.src || ""} onClose={() => setMediaOpen(false)} onSelect={selectMedia} />}
     </main>
   );
 }
