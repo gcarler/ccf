@@ -2,7 +2,7 @@
 import React from "react";
 import { render, screen, waitFor, fireEvent, act } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import CmsBuilderPage from "./page";
+import CmsBuilderPage, { preserveSelectedMediaId } from "./page";
 import * as cmsV2 from "@/lib/cms/v2";
 import { apiFetch } from "@/lib/http";
 import { toast } from "sonner";
@@ -104,6 +104,28 @@ describe("CmsBuilderPage (Puck visual editor main route)", () => {
       },
     ]);
     (cmsV2.workflowCmsPage as any).mockResolvedValue({ status: "published" });
+  });
+
+  it("preserves the selected media id alongside its URL in native and JSON sections", () => {
+    const data = {
+      content: [
+        { type: "hero", props: { bg_image: "/hero.jpg" } },
+        {
+          type: "feed",
+          props: { __cms_json: JSON.stringify({ gallery: [{ url: "/hero.jpg" }] }) },
+        },
+      ],
+    };
+
+    expect(preserveSelectedMediaId(data, { url: "/hero.jpg", media_id: "media-1" })).toEqual({
+      content: [
+        { type: "hero", props: { bg_image: "/hero.jpg", media_id: "media-1" } },
+        {
+          type: "feed",
+          props: { __cms_json: JSON.stringify({ gallery: [{ url: "/hero.jpg", media_id: "media-1" }] }, null, 2) },
+        },
+      ],
+    });
   });
 
   it("renders the main Puck builder page layout and header elements", async () => {
