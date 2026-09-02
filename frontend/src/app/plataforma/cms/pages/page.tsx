@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import OptimizedImage from "@/components/ui/OptimizedImage";
-import { Archive, Calendar, Eye, FileText, Globe, Plus, RotateCcw, Search, Zap, PenTool, Check } from "lucide-react";
+import { Archive, Calendar, Eye, FileText, Globe, Plus, RotateCcw, Search, Zap, PenTool, Check, ImageIcon } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import SidePanel from "@/components/ui/SidePanel";
 import clsx from "clsx";
@@ -281,7 +281,11 @@ export default function CmsPagesManagement() {
     });
   };
 
-  const openPage = (page: CmsPage) => router.push(`/plataforma/cms/pages/${page.slug}`);
+  // La acción principal de una página es editar su contenido. El detalle
+  // intermedio solo mostraba un contador y hacía difícil descubrir el editor.
+  const openPage = (page: CmsPage) => router.push(`/plataforma/cms/builder?site=${siteKey}&page=${page.slug}`);
+  const openContentPage = (page: CmsPage) => router.push(`/plataforma/cms/builder?site=${siteKey}&page=${page.slug}&mode=content`);
+  const openHeroMediaPage = (page: CmsPage) => router.push(`/plataforma/cms/builder?site=${siteKey}&page=${page.slug}&mode=hero-media`);
 
   const openPreview = (page: CmsPage) => {
     window.open(`/plataforma/cms/preview?site=${encodeURIComponent(siteKey)}&page=${encodeURIComponent(page.slug)}`, "_blank");
@@ -324,6 +328,18 @@ export default function CmsPagesManagement() {
                     >
                       <PenTool size={11} /> Editar
                     </button>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); openContentPage(page); }}
+                      className="flex items-center gap-1.5 rounded-md bg-success-soft px-3 py-1.5 text-2xs font-semibold uppercase tracking-wide text-success-text transition-all hover:bg-[hsl(var(--success-muted))]"
+                    >
+                      <FileText size={11} /> Contenido
+                    </button>
+                    {page.slug === "home" && <button
+                      onClick={(e) => { e.stopPropagation(); openHeroMediaPage(page); }}
+                      className="flex items-center gap-1.5 rounded-md bg-warning-soft px-3 py-1.5 text-2xs font-semibold uppercase tracking-wide text-warning-text transition-all hover:bg-warning-muted"
+                    >
+                      <ImageIcon size={11} /> Imágenes hero
+                    </button>}
           </motion.div>
         );
       })}
