@@ -283,7 +283,7 @@ export default function CmsPagesManagement() {
 
   // La acción principal de una página es editar su contenido. El detalle
   // intermedio solo mostraba un contador y hacía difícil descubrir el editor.
-  const openPage = (page: CmsPage) => router.push(`/plataforma/cms/builder?site=${siteKey}&page=${page.slug}`);
+  const openPage = (page: CmsPage) => router.push(`/plataforma/cms/builder?site=${siteKey}&page=${page.slug}&mode=visual`);
   const openContentPage = (page: CmsPage) => router.push(`/plataforma/cms/builder?site=${siteKey}&page=${page.slug}&mode=content`);
   const openHeroMediaPage = (page: CmsPage) => router.push(`/plataforma/cms/builder?site=${siteKey}&page=${page.slug}&mode=hero-media`);
 
@@ -323,7 +323,7 @@ export default function CmsPagesManagement() {
                       <Eye size={11} /> Preview
                     </button>
                     <button
-                      onClick={(e) => { e.stopPropagation(); router.push(`/plataforma/cms/builder?site=${siteKey}&page=${page.slug}`); }}
+                      onClick={(e) => { e.stopPropagation(); openPage(page); }}
                       className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-info-soft dark:bg-[hsl(var(--info))]/20 text-[hsl(var(--primary))] text-2xs font-semibold uppercase tracking-wide hover:bg-[hsl(var(--info-muted))] transition-all"
                     >
                       <PenTool size={11} /> Editar
@@ -504,7 +504,7 @@ export default function CmsPagesManagement() {
                       <Eye size={11} /> Preview
                     </button>
                     <button
-                      onClick={() => router.push(`/plataforma/cms/builder?site=${siteKey}&page=${page.slug}`)}
+                      onClick={() => openPage(page)}
                       className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-info-soft dark:bg-[hsl(var(--info))]/20 text-[hsl(var(--primary))] text-2xs font-semibold uppercase tracking-wide hover:bg-[hsl(var(--info-muted))] transition-all"
                     >
                       <PenTool size={11} /> Editar
@@ -716,7 +716,7 @@ export default function CmsPagesManagement() {
         onClose={() => setSelectedPage(null)}
         title={selectedPage?.title || ""}
         subtitle={selectedPage ? `Slug: /${selectedPage.slug}` : undefined}
-        fullViewHref={selectedPage ? `/plataforma/cms/builder?site=${siteKey}&page=${selectedPage.slug}` : undefined}
+        fullViewHref={selectedPage ? `/plataforma/cms/builder?site=${siteKey}&page=${selectedPage.slug}&mode=visual` : undefined}
       >
         {selectedPage && (
           <div className="space-y-3">

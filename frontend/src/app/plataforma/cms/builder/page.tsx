@@ -122,7 +122,7 @@ export default function PuckBuilderPage() {
 
   const siteKey = searchParams?.get("site") || SITE_KEY;
   const pageSlug = searchParams?.get("page") || "";
-  const contentMode = searchParams?.get("mode") === "content";
+  const visualMode = searchParams?.get("mode") === "visual";
   const heroMediaMode = searchParams?.get("mode") === "hero-media";
 
   const [loading, setLoading] = useState(true);
@@ -1195,7 +1195,9 @@ export default function PuckBuilderPage() {
     );
   }
 
-  if (contentMode || pageSlug === "footer") {
+  // The public-content editor is the canonical default for every public page.
+  // The visual Puck editor remains available explicitly with mode=visual.
+  if (!visualMode && !heroMediaMode) {
     return (
       <PublicContentEditor
         siteKey={siteKey}

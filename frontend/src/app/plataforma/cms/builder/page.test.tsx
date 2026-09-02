@@ -10,7 +10,7 @@ import { toast } from "sonner";
 
 // ── Mocks ───────────────────────────────────────────────────────────────────
 
-let mockSearchParams = new URLSearchParams("site=ccf&page=home");
+let mockSearchParams = new URLSearchParams("site=ccf&page=home&mode=visual");
 const mockPush = vi.fn();
 
 vi.mock("next/navigation", () => ({
@@ -93,7 +93,7 @@ vi.mock("@puckeditor/core", () => ({
 describe("CmsBuilderPage (Puck visual editor main route)", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockSearchParams = new URLSearchParams("site=ccf&page=home");
+    mockSearchParams = new URLSearchParams("site=ccf&page=home&mode=visual");
     mockAuth = { token: "mock-token", user: { role: "admin" } };
     puckPropsCaptured = null;
     (cmsV2.listCmsSections as any).mockResolvedValue([
