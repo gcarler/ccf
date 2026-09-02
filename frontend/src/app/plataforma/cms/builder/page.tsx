@@ -1269,6 +1269,16 @@ const CONTENT_LABELS: Record<string, string> = {
   scroll_indicator: "Indicador de desplazamiento",
 };
 
+const HOME_HERO_CONTENT_FIELDS = [
+  "eyebrow",
+  "title_lead",
+  "title_accent",
+  "title_tail",
+  "description",
+  "primary_cta",
+  "secondary_cta",
+];
+
 function contentLabel(key: string): string {
   return CONTENT_LABELS[key] || key.replaceAll("_", " ").replace(/^./, (letter) => letter.toUpperCase());
 }
@@ -1301,9 +1311,19 @@ function PublicContentEditor({
     ])));
   }, [sections]);
 
-  const textFields = (section: ContentSection) => Object.entries(drafts[section.id] || {})
-    .filter(([key]) => !key.endsWith("_href") && key !== "bg_image" && key !== "image_url")
-    .sort(([first], [second]) => (first === "eyebrow" ? -1 : second === "eyebrow" ? 1 : first.localeCompare(second)));
+  const textFields = (section: ContentSection) => {
+    const visibleEntries = Object.entries(drafts[section.id] || {})
+      .filter(([key]) => !key.endsWith("_href") && key !== "bg_image" && key !== "image_url")
+      .filter(([key]) => !(pageSlug === "home" && section.section_key === "hero" && !HOME_HERO_CONTENT_FIELDS.includes(key)));
+
+    if (pageSlug === "home" && section.section_key === "hero") {
+      return visibleEntries.sort(
+        ([first], [second]) => HOME_HERO_CONTENT_FIELDS.indexOf(first) - HOME_HERO_CONTENT_FIELDS.indexOf(second),
+      );
+    }
+
+    return visibleEntries.sort(([first], [second]) => (first === "eyebrow" ? -1 : second === "eyebrow" ? 1 : first.localeCompare(second)));
+  };
 
   const saveDraft = async () => {
     if (!canEdit) return;
