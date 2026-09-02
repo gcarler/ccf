@@ -40,4 +40,28 @@ def downgrade() -> None:
     from backend.core.database import Base
 
     bind = op.get_bind()
-    Base.metadata.drop_all(bind=bind)
+    if bind.dialect.name == "postgresql":
+        # The ORM graph contains intentional cycles (for example the
+        # evangelism strategy/group/persona relationships), and several
+        # historical FKs are unnamed. SQLAlchemy cannot topologically sort
+        # that graph for DROP. The canonical baseline owns the public schema
+        # on a fresh install, so drop its tables with PostgreSQL CASCADE while
+        # preserving Alembic's own revision table for the version update.
+        bind.exec_driver_sql(
+            """
+            DO $$
+            DECLARE table_record RECORD;
+            BEGIN
+                FOR table_record IN
+                    SELECT tablename
+                    FROM pg_catalog.pg_tables
+                    WHERE schemaname = 'public'
+                      AND tablename <> 'alembic_version'
+                LOOP
+                    EXECUTE format('DROP TABLE IF EXISTS public.%%I CASCADE', table_record.tablename);
+                END LOOP;
+            END $$;
+            """
+        )
+    else:
+        Base.metadata.drop_all(bind=bind)
