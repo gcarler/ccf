@@ -257,7 +257,7 @@ describe("CmsPagesManagement", () => {
     fireEvent.click(screen.getByRole("button", { name: /^editar$/i }));
 
     expect(routerPush).toHaveBeenCalledWith(
-      "/plataforma/cms/builder?site=ccf&page=inicio",
+      "/plataforma/cms/builder?site=ccf&page=inicio&mode=visual",
     );
   });
 
