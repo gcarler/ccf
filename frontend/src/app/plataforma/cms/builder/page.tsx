@@ -136,7 +136,6 @@ export default function PuckBuilderPage() {
   const latestDataRef = useRef<{ content: any[] }>({ content: [] });
   const saveSequenceRef = useRef<number>(0);
   const latestCompletedSeqRef = useRef<number>(0);
-  const saveQueueRef = useRef<Promise<void>>(Promise.resolve());
   const isInitialLoadRef = useRef<boolean>(true);
   const dbSectionsRef = useRef<any[]>([]);
   const savingRef = useRef<boolean>(false);
@@ -978,14 +977,6 @@ export default function PuckBuilderPage() {
       }
 
       const currentSeq = ++saveSequenceRef.current;
-      const previousSave = saveQueueRef.current;
-      const queuedSave = previousSave.then(async () => {
-        // Autosaves are latest-wins. Do not issue any API mutation for a
-        // snapshot that was superseded while an earlier save was in flight.
-        if (options.isAutoSave && currentSeq !== saveSequenceRef.current) {
-          return;
-        }
-
       if (options.isAutoSave) {
         setSaveStatus("saving");
       } else {
@@ -1110,16 +1101,11 @@ export default function PuckBuilderPage() {
           toast.error("Error en el auto-guardado", { id: "autosave-err" });
         }
       } finally {
-        if (!options.isAutoSave) {
+        if (!options.isAutoSave && currentSeq === saveSequenceRef.current) {
           setSaving(false);
           savingRef.current = false;
         }
       }
-      });
-      // Keep the queue alive after a handled failure so later saves are not
-      // blocked by a rejected promise.
-      saveQueueRef.current = queuedSave.catch(() => undefined);
-      return queuedSave;
     },
     [token, pageSlug, canEdit, canPublish, siteKey]
   );
