@@ -340,7 +340,7 @@ def test_legacy_media_hides_global_scope_from_sede_less_non_admin(client, db_ses
     seed_rol_plataforma(db_session)
     user, persona, _ = seed_user_with_role(
         db_session,
-        role_name="editor",
+        role_name="GESTOR",
         email=f"media-no-sede-{_uuid.uuid4().hex[:8]}@example.com",
         password="testpass123",
     )
