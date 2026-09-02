@@ -78,6 +78,29 @@ def _pastor_in(db, sede_id, name_suffix, is_main_pastor=False):
     return p
 
 
+def _global_block_in(db, site, owner, suffix):
+    page = models.CmsPage(
+        id=_uuid.uuid4(),
+        site_id=site.id,
+        slug="_global_blocks",
+        title="Global Blocks",
+        status="draft",
+    )
+    block = models.CmsSection(
+        id=_uuid.uuid4(),
+        page_id=page.id,
+        section_key=f"global-{suffix}",
+        type="hero",
+        props_json={"title": f"Block {suffix}"},
+        is_global=True,
+        global_key=f"global-{suffix}",
+        created_by_persona_id=owner.id,
+    )
+    db.add_all([page, block])
+    db.flush()
+    return block
+
+
 # ════════════════════════════════════════════════════════════════════════════
 # 1) cms_pastoral_profile_update — IDOR crítico FIX
 # ════════════════════════════════════════════════════════════════════════════
@@ -260,6 +283,83 @@ def test_delete_admin_media_blocks_cross_sede(client, db_session):
     assert resp.status_code == 404
     db_session.refresh(m_cross)
     assert m_cross.status == "active"
+
+
+def test_global_block_patch_and_delete_require_site_ownership(client, db_session):
+    (admin_a, persona_a, sede_a), (_, persona_b, sede_b) = _seed_two_sedes(db_session)
+    site_a = models.CmsSite(
+        id=_uuid.uuid4(), site_key=f"site-a-{_uuid.uuid4().hex[:6]}", name="Site A",
+        base_path=f"/site-a-{_uuid.uuid4().hex[:6]}", sede_id=sede_a.id,
+    )
+    site_b = models.CmsSite(
+        id=_uuid.uuid4(), site_key=f"site-b-{_uuid.uuid4().hex[:6]}", name="Site B",
+        base_path=f"/site-b-{_uuid.uuid4().hex[:6]}", sede_id=sede_b.id,
+    )
+    db_session.add_all([site_a, site_b])
+    db_session.flush()
+    block_b = _global_block_in(db_session, site_b, persona_b, "cross-site")
+    db_session.commit()
+
+    headers_a = auth_headers(client, email="cmsFase5A@example.com")
+    for method in ("patch", "delete"):
+        response = getattr(client, method)(
+            f"/api/cms/v2/global-blocks/{block_b.id}?site_key={site_a.site_key}",
+            headers=headers_a,
+            json={"props_json": {"title": "MUTATED"}} if method == "patch" else None,
+        )
+        assert response.status_code == 404, response.text
+
+    db_session.refresh(block_b)
+    assert block_b.props_json == {"title": "Block cross-site"}
+    assert block_b.deleted_at is None
+
+
+def test_global_block_patch_validates_catalog_and_props(client, db_session):
+    (admin_a, persona_a, sede_a), _ = _seed_two_sedes(db_session)
+    site = models.CmsSite(
+        id=_uuid.uuid4(), site_key=f"site-{_uuid.uuid4().hex[:6]}", name="Site",
+        base_path=f"/site-{_uuid.uuid4().hex[:6]}", sede_id=sede_a.id,
+    )
+    db_session.add(site)
+    db_session.flush()
+    block = _global_block_in(db_session, site, persona_a, "validation")
+    db_session.commit()
+    headers_a = auth_headers(client, email="cmsFase5A@example.com")
+    endpoint = f"/api/cms/v2/global-blocks/{block.id}?site_key={site.site_key}"
+
+    unsupported = client.patch(endpoint, headers=headers_a, json={"type": "not-in-catalog"})
+    assert unsupported.status_code == 422, unsupported.text
+    invalid_props = client.patch(endpoint, headers=headers_a, json={"props_json": {"title": 12345}})
+    assert invalid_props.status_code == 422, invalid_props.text
+    db_session.refresh(block)
+    assert block.type == "hero"
+    assert block.props_json == {"title": "Block validation"}
+
+
+def test_legacy_media_hides_global_scope_from_sede_less_non_admin(client, db_session):
+    seed_rol_plataforma(db_session)
+    user, persona, _ = seed_user_with_role(
+        db_session,
+        role_name="editor",
+        email=f"media-no-sede-{_uuid.uuid4().hex[:8]}@example.com",
+        password="testpass123",
+    )
+    persona.sede_id = None
+    db_session.commit()
+    (_, owner_persona, sede_a), _ = _seed_two_sedes(db_session)
+    media = models.CmsMediaItem(
+        id=_uuid.uuid4(), url="https://cdn.example.com/global.png", alt_text="GLOBAL MEDIA",
+        section="hero", created_by_persona_id=owner_persona.id, sede_id=sede_a.id,
+    )
+    db_session.add(media)
+    db_session.commit()
+
+    headers = auth_headers(client, email=user.email)
+    listed = client.get("/api/cms/media", headers=headers)
+    assert listed.status_code == 200, listed.text
+    assert listed.json()["total"] == 0
+    fetched = client.get(f"/api/cms/media/{media.id}", headers=headers)
+    assert fetched.status_code == 404
 
 
 # ════════════════════════════════════════════════════════════════════════════

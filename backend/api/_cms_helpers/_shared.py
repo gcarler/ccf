@@ -37,6 +37,7 @@ from sqlalchemy.orm import Session
 
 from backend import models, schemas
 from backend.api.crm._shared import _get_scoped_persona  # noqa: F401
+from backend.core.permissions import normalize_role
 from backend.crud.crm import get_user_sede_id
 
 # ─────────────────────────────────────────────────────────────────
@@ -61,7 +62,19 @@ def _scope_cms_media_by_user_sede(db: Session, current_user: models.User, query)
     user_sede = _actor_sede_or_none(db, current_user)
     if user_sede:
         query = query.filter(models.CmsMediaItem.sede_id == user_sede)
+    elif not _is_global_media_admin(current_user):
+        # Missing tenant identity is not a global-scope grant.  Keep legacy
+        # media completely invisible to non-admin actors without a sede.
+        query = query.filter(models.CmsMediaItem.id.is_(None))
     return query
+
+
+def _is_global_media_admin(current_user: models.User) -> bool:
+    """Return whether a user may access media across all sedes."""
+    role = normalize_role(getattr(current_user, "role", ""))
+    if not role and hasattr(current_user, "rol_plataforma") and current_user.rol_plataforma:
+        role = normalize_role(current_user.rol_plataforma.nombre)
+    return role in {"admin", "administrador", "super administrador"}
 
 
 def _scope_cms_pastoral_team_by_user_sede(db: Session, current_user: models.User, query):
