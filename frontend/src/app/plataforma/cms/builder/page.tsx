@@ -1209,7 +1209,7 @@ export default function PuckBuilderPage() {
     );
   }
 
-  if (contentMode) {
+  if (contentMode || pageSlug === "footer") {
     return (
       <PublicContentEditor
         siteKey={siteKey}
