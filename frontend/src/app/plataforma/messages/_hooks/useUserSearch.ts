@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { apiFetch } from '@/lib/http';
 import { useDebounce } from '@/hooks/useDebounce';
-import { filtroAPersona, type PersonaBusqueda } from '@/lib/filtroAPersonas';
+import { filtroAPersona, normalizarBusquedaPersona, type PersonaBusqueda } from '@/lib/filtroAPersonas';
 
 export interface SearchedUser {
     id: string;
@@ -66,8 +66,19 @@ export function useUserSearch({ token, debounceMs = 200, minLength = 1 }: UseUse
             );
             if (controller.signal.aborted) return;
             const list = Array.isArray(data) ? data : [];
-            // Filtro reutilizable de personas: '@' → username; sin '@' → nombre/email.
-            const filtered = list.filter((u) => filtroAPersona(toPersonaBusqueda(u), debouncedQuery));
+            // Filtro reutilizable de personas: '@' → username; sin '@' →
+            // nombre y, en este buscador de cuentas, username. The generic
+            // person filter intentionally excludes usernames without '@', so
+            // the account search adds that explicit field match here.
+            const normalizedUsernameQuery = normalizarBusquedaPersona(searchTerm);
+            const filtered = list.filter((u) => {
+                if (filtroAPersona(toPersonaBusqueda(u), debouncedQuery)) return true;
+                return Boolean(
+                    normalizedUsernameQuery &&
+                    u.username &&
+                    normalizarBusquedaPersona(u.username).startsWith(normalizedUsernameQuery),
+                );
+            });
             setResults(filtered);
             if (filtered.length === 0) setError('No se encontraron usuarios');
         } catch {
