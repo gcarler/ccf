@@ -283,7 +283,6 @@ export default function CmsPagesManagement() {
 
   // La acción principal de una página es editar su contenido. El detalle
   // intermedio solo mostraba un contador y hacía difícil descubrir el editor.
-  const openPage = (page: CmsPage) => router.push(`/plataforma/cms/builder?site=${siteKey}&page=${page.slug}&mode=visual`);
   const openContentPage = (page: CmsPage) => router.push(`/plataforma/cms/builder?site=${siteKey}&page=${page.slug}&mode=content`);
   const openHeroMediaPage = (page: CmsPage) => router.push(`/plataforma/cms/builder?site=${siteKey}&page=${page.slug}&mode=hero-media`);
 
@@ -323,16 +322,10 @@ export default function CmsPagesManagement() {
                       <Eye size={11} /> Preview
                     </button>
                     <button
-                      onClick={(e) => { e.stopPropagation(); openPage(page); }}
+                      onClick={(e) => { e.stopPropagation(); openContentPage(page); }}
                       className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-info-soft dark:bg-[hsl(var(--info))]/20 text-[hsl(var(--primary))] text-2xs font-semibold uppercase tracking-wide hover:bg-[hsl(var(--info-muted))] transition-all"
                     >
-                      <PenTool size={11} /> Editar
-                    </button>
-                    <button
-                      onClick={(e) => { e.stopPropagation(); openContentPage(page); }}
-                      className="flex items-center gap-1.5 rounded-md bg-success-soft px-3 py-1.5 text-2xs font-semibold uppercase tracking-wide text-success-text transition-all hover:bg-[hsl(var(--success-muted))]"
-                    >
-                      <FileText size={11} /> Contenido
+                      <PenTool size={11} /> Editar contenido
                     </button>
                     {page.slug === "home" && <button
                       onClick={(e) => { e.stopPropagation(); openHeroMediaPage(page); }}
@@ -360,7 +353,7 @@ export default function CmsPagesManagement() {
               {column.pages.map((page) => (
                 <button
                   key={page.id}
-                  onClick={() => openPage(page)}
+                  onClick={() => openContentPage(page)}
                   className="w-full text-left bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-secondary))] border border-[hsl(var(--border))] dark:border-white/5 rounded-lg p-4 hover:border-[hsl(var(--info)/40%)] hover:shadow-lg transition-all"
                 >
                   <p className="text-sm font-bold text-[hsl(var(--text-primary))] dark:text-white truncate">{page.title}</p>
@@ -504,10 +497,10 @@ export default function CmsPagesManagement() {
                       <Eye size={11} /> Preview
                     </button>
                     <button
-                      onClick={() => openPage(page)}
+                      onClick={() => openContentPage(page)}
                       className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-info-soft dark:bg-[hsl(var(--info))]/20 text-[hsl(var(--primary))] text-2xs font-semibold uppercase tracking-wide hover:bg-[hsl(var(--info-muted))] transition-all"
                     >
-                      <PenTool size={11} /> Editar
+                      <PenTool size={11} /> Editar contenido
                     </button>
                     {page.status === "archived" ? (
                       <button
@@ -547,7 +540,7 @@ export default function CmsPagesManagement() {
                 const page = meta?.pageId
                   ? visiblePages.find((item) => item.id === meta.pageId)
                   : visiblePages.find((item) => `${item.id}::updated` === event.id || item.id === event.id);
-                if (page) openPage(page);
+                if (page) openContentPage(page);
               }}
             />
             {upcomingSchedules.length > 0 && (
@@ -572,7 +565,7 @@ export default function CmsPagesManagement() {
                     return (
                       <button
                         key={row.page.id}
-                        onClick={() => openPage(row.page)}
+                        onClick={() => openContentPage(row.page)}
                         className="w-full flex items-center gap-3 p-3 rounded-lg bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-primary))] border border-[hsl(var(--border))] dark:border-white/5 hover:border-[hsl(var(--primary))] transition-all group text-left"
                       >
                         <div className={clsx(
@@ -602,7 +595,7 @@ export default function CmsPagesManagement() {
             items={ganttItems}
             onItemClick={(item) => {
               const page = visiblePages.find((entry) => entry.id === item.id);
-              if (page) openPage(page);
+              if (page) openContentPage(page);
             }}
           />
         ) : viewType === "wiki" ? (
@@ -716,7 +709,7 @@ export default function CmsPagesManagement() {
         onClose={() => setSelectedPage(null)}
         title={selectedPage?.title || ""}
         subtitle={selectedPage ? `Slug: /${selectedPage.slug}` : undefined}
-        fullViewHref={selectedPage ? `/plataforma/cms/builder?site=${siteKey}&page=${selectedPage.slug}&mode=visual` : undefined}
+        fullViewHref={selectedPage ? `/plataforma/cms/builder?site=${siteKey}&page=${selectedPage.slug}&mode=content` : undefined}
       >
         {selectedPage && (
           <div className="space-y-3">
