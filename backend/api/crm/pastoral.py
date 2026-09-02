@@ -2447,6 +2447,7 @@ def get_newsletter_leads(
                 "nombre_completo": persona.nombre_completo if persona else "",
                 "email": persona.email if persona else None,
                 "telefono": persona.telefono if persona else None,
+                "phone": persona.telefono if persona else None,
                 "source": case.origen_detalle_id,
                 "stage": str(case.estado.value) if case.estado else None,
                 "notes": case.titulo_caso,
