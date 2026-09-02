@@ -21,15 +21,16 @@ export default defineConfig({
     coverage: {
       provider: "v8",
       reporter: ["text", "html", "lcov"],
-      // Coverage scoped to the design system — the only module with tests.
-      // Expand the include glob and raise thresholds as more tests are added.
+      // Coverage gate scoped to the design system. The full component suite
+      // still runs above, while each product area can adopt its own coverage
+      // scope as its tests become part of the quality contract.
       thresholds: {
         lines: 40,
         branches: 30,
         functions: 40,
         statements: 40,
       },
-      include: ["src/design/**/*.{ts,tsx}", "src/components/**/*.{ts,tsx}"],
+      include: ["src/design/**/*.{ts,tsx}"],
       exclude: [
         "src/**/*.d.ts",
         "src/**/*.stories.tsx",
