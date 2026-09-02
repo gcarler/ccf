@@ -1196,7 +1196,7 @@ export default function PuckBuilderPage() {
     );
   }
 
-  // Home uses the canonical public-content model. Do not expose the legacy
+// Home uses the canonical public-content model. Do not expose the previous
   // generic Puck hero fields (title/body/cta) for this page.
   const hasCanonicalHomeHero = dbSections.some((section) => {
     const props = section?.props_json;
