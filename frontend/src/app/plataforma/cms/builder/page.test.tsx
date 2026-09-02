@@ -2,7 +2,8 @@
 import React from "react";
 import { render, screen, waitFor, fireEvent, act } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import CmsBuilderPage, { preserveSelectedMediaId } from "./page";
+import CmsBuilderPage from "./page";
+import { preserveSelectedMediaId } from "./media-utils";
 import * as cmsV2 from "@/lib/cms/v2";
 import { apiFetch } from "@/lib/http";
 import { toast } from "sonner";

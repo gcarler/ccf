@@ -12,6 +12,7 @@ import { apiFetch } from "@/lib/http";
 import { SITE_KEY } from "@/lib/site-config";
 import type { CmsTheme } from "@/types/cms-v2";
 import { toast } from "sonner";
+import { preserveSelectedMediaId, type SelectedMedia } from "./media-utils";
 import MediaPicker from "@/components/cms/builder/MediaPicker";
 import MediaPickerField, { setMediaPickerTrigger } from "@/components/cms/builder/MediaPickerField";
 import CmsJsonMediaField from "@/components/cms/CmsJsonMediaField";
@@ -52,44 +53,6 @@ const NATIVE_PUCK_SECTION_TYPES = new Set([
   "gallery",
   "cards",
 ]);
-
-type SelectedMedia = { url: string; media_id: string | number };
-
-const MEDIA_URL_KEYS = new Set(["bg_image", "image_url", "url", "src", "photo_url", "thumbnail_url"]);
-
-function attachSelectedMediaId(value: unknown, selected: SelectedMedia): unknown {
-  if (Array.isArray(value)) {
-    return value.map((item) => attachSelectedMediaId(item, selected));
-  }
-  if (!value || typeof value !== "object") {
-    return value;
-  }
-
-  const object = value as Record<string, unknown>;
-  const next: Record<string, unknown> = {};
-  let matched = false;
-  for (const [key, child] of Object.entries(object)) {
-    if (key === "__cms_json" && typeof child === "string") {
-      try {
-        next[key] = JSON.stringify(attachSelectedMediaId(JSON.parse(child), selected), null, 2);
-      } catch {
-        next[key] = child;
-      }
-      continue;
-    }
-    next[key] = attachSelectedMediaId(child, selected);
-    matched = matched || (MEDIA_URL_KEYS.has(key) && child === selected.url);
-  }
-
-  if (matched) {
-    next.media_id = selected.media_id;
-  }
-  return next;
-}
-
-export function preserveSelectedMediaId(data: { content: any[] }, selected: SelectedMedia): { content: any[] } {
-  return attachSelectedMediaId(data, selected) as { content: any[] };
-}
 
 function serializeJsonProps(props: Record<string, unknown>): Record<string, unknown> {
   return {
@@ -1360,7 +1323,7 @@ export default function PuckBuilderPage() {
           selectedUrl={mediaPickerValue}
           onClose={() => setMediaPickerOpen(false)}
           onSelect={(item) => {
-            const selected = typeof item === "string" ? { url: item, media_id: item } : item as { url?: string; id?: string | number };
+            const selected: { url?: string; id?: string | number } = typeof item === "string" ? { url: item } : item as { url?: string; id?: string | number };
             const url = selected.url || "";
             if (typeof item !== "string" && selected.id !== undefined) {
               selectedMediaRef.current = { url, media_id: selected.id };
