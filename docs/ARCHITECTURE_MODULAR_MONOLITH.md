@@ -1,7 +1,7 @@
 # Arquitectura objetivo — Monolito modular estricto CCF
 
-**Estado:** vigente como arquitectura objetivo  
-**Primera versión:** 2026-08-31  
+**Estado:** vigente como arquitectura objetivo
+**Primera versión:** 2026-08-31
 **Rama de trabajo:** `feature/platform-architecture-20260831`
 
 ## 1. Decisión arquitectónica
