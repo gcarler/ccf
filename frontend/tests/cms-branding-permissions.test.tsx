@@ -22,6 +22,7 @@ vi.mock("@/lib/site-branding", () => ({
 }));
 
 vi.mock("@/lib/cms/v2", () => ({
+  listCmsSites: vi.fn().mockResolvedValue([]),
   listCmsThemes: vi.fn(),
   patchCmsTheme: vi.fn(),
 }));
@@ -79,20 +80,19 @@ describe("CmsBrandingPage", () => {
     expect(screen.getByText(/solo lectura/i)).toBeTruthy();
   });
 
-  it.each(EDITABLE_ROLES)("habilita la edición para rol '%s'", (role) => {
+  it.each(EDITABLE_ROLES)("habilita la edición para rol '%s'", async (role) => {
     authMock.role = role;
     render(<CmsBrandingPage />);
 
-    expect(screen.getByRole("button", { name: /guardar/i })).toBeEnabled();
+    await waitFor(() => expect(screen.getByRole("button", { name: /guardar/i })).toBeEnabled());
     expect(screen.getByRole("button", { name: /subir imagen/i })).toBeEnabled();
     expect(screen.queryByText(/solo lectura/i)).toBeNull();
   });
 
-  it("documenta el guard de UI: el botón Guardar disabled impide llegar al backend", () => {
+  it("documenta el guard de UI: el botón Guardar disabled impide mutar el backend", () => {
     render(<CmsBrandingPage />);
     fireEvent.click(screen.getByRole("button", { name: /guardar/i }));
 
-    expect(listCmsThemes).not.toHaveBeenCalled();
     expect(patchCmsTheme).not.toHaveBeenCalled();
   });
 
@@ -116,6 +116,7 @@ describe("CmsBrandingPage", () => {
     authMock.role = "admin";
     render(<CmsBrandingPage />);
 
+    await waitFor(() => expect(listCmsThemes).toHaveBeenCalledWith("ccf", "test-token"));
     fireEvent.change(screen.getByPlaceholderText("El Faro"), {
       target: { value: "Comunidad El Faro" },
     });
@@ -123,6 +124,7 @@ describe("CmsBrandingPage", () => {
       target: { value: "/api/static/cms/site_logo/logo.png" },
     });
 
+    await waitFor(() => expect(screen.getByRole("button", { name: /guardar/i })).toBeEnabled());
     fireEvent.click(screen.getByRole("button", { name: /guardar/i }));
 
     await waitFor(() => {

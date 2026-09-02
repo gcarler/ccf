@@ -154,7 +154,13 @@ def get_cms_theme(db: Session, site_id: uuid.UUID, theme_id: uuid.UUID):
 
 
 
-def update_cms_theme(db: Session, row: models.CmsTheme, payload: schemas.CmsThemeUpdate):
+def update_cms_theme(
+    db: Session,
+    row: models.CmsTheme,
+    payload: schemas.CmsThemeUpdate,
+    *,
+    updated_by_user_id: uuid.UUID | None = None,
+):
     data = payload.model_dump(exclude_unset=True)
     if "name" in data and data["name"] is not None:
         row.name = str(data["name"]).strip()
@@ -172,6 +178,8 @@ def update_cms_theme(db: Session, row: models.CmsTheme, payload: schemas.CmsThem
                 models.CmsTheme.site_id == row.site_id,
                 models.CmsTheme.id != row.id,
             ).update({"is_active": False})
+    if updated_by_user_id is not None:
+        row.updated_by_persona_id = resolve_persona_uuid_for_user(db, updated_by_user_id)
     db.commit()
     db.refresh(row)
     # Cierre de staleness: name/tokens/is_active/status alteran la
@@ -515,6 +523,5 @@ def reorder_cms_menu_items(db: Session, menu_id: uuid.UUID, items: list[schemas.
     # pública (order_by sort_order) — la caché debe refrescarse ya.
     _invalidate_public_menu_by_id_cache(db, menu_id)
     return list_cms_menu_items(db, menu_id)
-
 
 

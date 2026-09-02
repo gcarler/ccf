@@ -89,7 +89,7 @@ def patch_theme(
     row = crud.get_cms_theme(db, site.id, theme_id)
     if not row:
         raise ThemeNotFoundError()
-    return crud.update_cms_theme(db, row, payload)
+    return crud.update_cms_theme(db, row, payload, updated_by_user_id=current_user.id)
 
 
 @router.post("/sites/{site_key}/themes/{theme_id}/activate", response_model=schemas.CmsThemeRead)

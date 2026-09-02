@@ -25,6 +25,6 @@ function attachSelectedMediaId(value: unknown, selected: SelectedMedia): unknown
   return next;
 }
 
-export function preserveSelectedMediaId(data: { content: any[] }, selected: SelectedMedia): { content: any[] } {
-  return attachSelectedMediaId(data, selected) as { content: any[] };
+export function preserveSelectedMediaId(data: { content: unknown[] }, selected: SelectedMedia): { content: unknown[] } {
+  return attachSelectedMediaId(data, selected) as { content: unknown[] };
 }
