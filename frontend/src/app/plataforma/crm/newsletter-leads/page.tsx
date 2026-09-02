@@ -1,7 +1,6 @@
 "use client";
 
 import CrmShell from '@/components/crm/CrmShell';
-import CrmViewPlaceholder from '@/components/crm/CrmViewPlaceholder';
 import { DSSkeleton } from '@/design';
 import { ViewType,getStoredView } from '@/components/ViewSwitcher';
 import { useAuth } from '@/context/AuthContext';
@@ -27,13 +26,14 @@ import { useRouter } from 'next/navigation';
 import { useCallback,useEffect,useMemo,useState } from 'react';
 
 interface NewsletterLead {
-    case_id: number;
+    case_id: string;
     persona_id: string | null;
     nombre_completo?: string;
     first_name?: string;
     last_name?: string;
     email: string | null;
     phone: string | null;
+    telefono?: string | null;
     source: string;
     stage: string;
     notes: string | null;
@@ -74,7 +74,11 @@ export default function NewsletterLeadsPage() {
     const [exporting, setExporting] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
     const [page, setPage] = useState(1);
-    const [viewType, setViewType] = useState<ViewType>(() => getStoredView('crm_newsletter_view', 'list'));
+    const [viewType, setViewType] = useState<ViewType>(() => {
+        const stored = getStoredView('crm_newsletter_view', 'list');
+        return ['list', 'table', 'calendar', 'wiki'].includes(stored) ? stored : 'list';
+    });
+    const [loadError, setLoadError] = useState<string | null>(null);
     const [dateFrom, setDateFrom] = useState('');
     const [showFilters, setShowFilters] = useState(false);
     const { content: wikiNotes, setContent: setWikiNotes } = useWikiDocument('crm_newsletter_wiki_notes', {
@@ -84,6 +88,7 @@ export default function NewsletterLeadsPage() {
     const fetchLeads = useCallback(async (signal?: AbortSignal) => {
         if (!token) return;
         setLoading(true);
+        setLoadError(null);
         try {
             const params = new URLSearchParams({ page: String(page), page_size: '50' });
             if (dateFrom) params.set('date_from', dateFrom);
@@ -95,6 +100,7 @@ export default function NewsletterLeadsPage() {
         } catch (err) {
             if (signal?.aborted) return; // M-05 — unmount
             addToast('Error al cargar leads del newsletter', 'error');
+            setLoadError('No fue posible cargar los leads del newsletter.');
         } finally {
             if (!signal?.aborted) setLoading(false);
         }
@@ -256,6 +262,12 @@ export default function NewsletterLeadsPage() {
 
                 {/* Content */}
                 <div className="flex-1 overflow-y-auto p-4 space-y-3">
+                    {loadError && (
+                        <div className="rounded-lg border border-[hsl(var(--danger)/30%)] bg-danger-soft p-4 text-sm text-danger">
+                            <p className="font-bold">{loadError}</p>
+                            <button onClick={() => fetchLeads()} className="mt-3 rounded-md bg-[hsl(var(--primary))] px-3 py-2 text-xs font-bold uppercase tracking-wide text-white">Reintentar</button>
+                        </div>
+                    )}
                     {loading ? (
                         [...Array(5)].map((_, i) => <DSSkeleton key={i} className="h-20 w-full rounded-md" />)
                     ) : filteredLeads.length === 0 ? (
@@ -286,7 +298,7 @@ export default function NewsletterLeadsPage() {
                                             </h3>
                                             <p className="text-xs text-[hsl(var(--text-secondary))] flex items-center gap-1.5 mt-0.5">
                                                 <Mail size={11} /> {lead.email || 'Sin email'}
-                                                {lead.phone && <><span className="text-[hsl(var(--text-secondary))]">·</span> {lead.phone}</>}
+                                                {(lead.phone || lead.telefono) && <><span className="text-[hsl(var(--text-secondary))]">·</span> {lead.phone || lead.telefono}</>}
                                             </p>
                                         </div>
                                     </div>
@@ -405,9 +417,7 @@ export default function NewsletterLeadsPage() {
                                 className="w-full min-h-[360px] rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-black/20 p-4 text-sm font-medium text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.2]"
                             />
                         </div>
-                    ) : (
-                        <CrmViewPlaceholder moduleName="Newsletter Leads" viewType={viewType} />
-                    )}
+                    ) : null}
                 </div>
 
                 {/* Pagination */}

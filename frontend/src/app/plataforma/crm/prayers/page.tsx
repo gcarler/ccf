@@ -26,7 +26,7 @@ import { DSSkeleton, DSTable } from '@/design';
 import StatusPicker, { StatusOption } from '@/components/ui/StatusPicker';
 import clsx from 'clsx';
 import { ViewType, getStoredView } from '@/components/ViewSwitcher';
-import CrmViewPlaceholder from '@/components/crm/CrmViewPlaceholder';
+import CrmOperationalDataView from '@/components/crm/CrmOperationalDataView';
 import CrmShell from '@/components/crm/CrmShell';
 import type { PrayerRequest } from '@/types/crm';
 
@@ -66,9 +66,9 @@ export default function PrayerSupportCenter() {
         setLoading(true);
         setRequestsError(null);
         try {
-            const data = await apiFetch<PrayerRequest[]>('/crm/prayer-requests', { token, signal });
-            if (Array.isArray(data)) {
-                setRequests(data.map((r) => {
+            const data = await apiFetch<{ items: PrayerRequest[]; total: number }>('/crm/prayer-requests', { token, signal });
+            if (Array.isArray(data?.items)) {
+                setRequests(data.items.map((r) => {
                     const rr = r as PrayerRequest & { name?: string; request?: string; is_answered?: boolean; is_urgent?: boolean };
                     return {
                     id: rr.id,
@@ -119,7 +119,16 @@ export default function PrayerSupportCenter() {
         if (!newPrayer.request.trim()) return;
         setIsSaving(true);
         try {
-            await apiFetch('/crm/prayer-requests', { method: 'POST', token, body: newPrayer });
+            await apiFetch('/crm/prayer-requests', {
+                method: 'POST', token,
+                body: {
+                    requester_name: newPrayer.name.trim() || 'Anónimo',
+                    request_text: newPrayer.request.trim(),
+                    category: newPrayer.category,
+                    is_public: false,
+                    source: 'crm',
+                },
+            });
             addToast('Petición registrada', 'success');
             setIsCreateDrawerOpen(false);
             setNewPrayer({ name: '', request: '', category: 'General', is_urgent: false });
@@ -401,7 +410,22 @@ export default function PrayerSupportCenter() {
                         </div>
                     ) : (
                         <div className="p-4">
-                            <CrmViewPlaceholder moduleName="Muro de Intercesion" viewType={viewType} />
+                            <CrmOperationalDataView
+                                moduleName="Muro de Intercesión"
+                                items={requests.map((request) => ({
+                                    id: request.id,
+                                    title: request.name || 'Anónimo',
+                                    subtitle: request.request,
+                                    meta: request.status,
+                                }))}
+                                onSelect={(item) => {
+                                    const request = requests.find((candidate) => candidate.id === item.id);
+                                    if (request) {
+                                        setSelectedRequest(request);
+                                        setIsDrawerOpen(true);
+                                    }
+                                }}
+                            />
                         </div>
                     )}
                 </div>

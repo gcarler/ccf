@@ -14,8 +14,8 @@ import {
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import clsx from 'clsx';
+import { toast } from 'sonner';
 import CrmShell from '@/components/crm/CrmShell';
-import CrmViewPlaceholder from '@/components/crm/CrmViewPlaceholder';
 import { ViewType, getStoredView } from '@/components/ViewSwitcher';
 import { useAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/lib/http';
@@ -28,13 +28,17 @@ const NUMBER_FORMATTER = new Intl.NumberFormat('es-CO');
 
 export default function CrmAnalyticsPage() {
     const { token } = useAuth();
-    const [viewType, setViewType] = useState<ViewType>(() => getStoredView('crm_analytics_view', 'grid'));
+    const [viewType, setViewType] = useState<ViewType>(() => {
+        const stored = getStoredView('crm_analytics_view', 'grid');
+        return ALL_VIEWS.includes(stored) ? stored : 'grid';
+    });
     const { content: wikiNotes, setContent: setWikiNotes } = useWikiDocument('crm_analytics_wiki_notes', {
         title: 'Wiki analitica CRM',
     });
     const [analytics, setAnalytics] = useState<CrmAnalyticsSummary | null>(null);
     const [loadingAnalytics, setLoadingAnalytics] = useState(true);
     const [analyticsError, setAnalyticsError] = useState<string | null>(null);
+    const [reloadToken, setReloadToken] = useState(0);
 
 
     useEffect(() => {
@@ -61,7 +65,7 @@ export default function CrmAnalyticsPage() {
         return () => {
             alive = false;
         };
-    }, [token]);
+    }, [reloadToken, token]);
 
     const activeRate = analytics?.total_personas
         ? Math.round((analytics.active_personas / analytics.total_personas) * 100)
@@ -69,7 +73,7 @@ export default function CrmAnalyticsPage() {
 
     const kpiRows = useMemo<KpiRow[]>(() => {
         if (!analytics) return [];
-        const casesByStage = analytics.cases_by_stage ?? {};
+        const casesByStage = analytics.pipeline_by_stage ?? {};
 
         return [
             {
@@ -86,7 +90,7 @@ export default function CrmAnalyticsPage() {
             },
             {
                 label: 'Casos en Pipeline',
-                value: formatCount(analytics.total_cases),
+                value: formatCount(analytics.total_leads),
                 context: `${Object.keys(casesByStage).length} etapas activas`,
                 tone: 'neutral',
             },
@@ -101,8 +105,8 @@ export default function CrmAnalyticsPage() {
 
     const funnelRows = useMemo<FunnelRow[]>(() => {
         if (!analytics) return [];
-        const casesByStage = analytics.cases_by_stage ?? {};
-        const total = Math.max(analytics.total_cases, 1);
+        const casesByStage = analytics.pipeline_by_stage ?? {};
+        const total = Math.max(analytics.total_leads, 1);
 
         return Object.entries(casesByStage)
             .map(([stage, value]) => ({
@@ -113,6 +117,21 @@ export default function CrmAnalyticsPage() {
             }))
             .sort((a, b) => b.value - a.value);
     }, [analytics]);
+
+    const exportReport = () => window.print();
+    const shareReport = async () => {
+        try {
+            const url = window.location.href;
+            if (navigator.share) {
+                await navigator.share({ title: 'Analítica CRM', url });
+                return;
+            }
+            await navigator.clipboard.writeText(url);
+            toast.success('Enlace de analítica copiado');
+        } catch {
+            toast.error('No fue posible compartir la analítica');
+        }
+    };
 
     const containerVariants = {
         hidden: { opacity: 0 },
@@ -135,10 +154,10 @@ export default function CrmAnalyticsPage() {
             onViewChange={setViewType}
             rightActions={
                 <div className="flex items-center gap-2">
-                    <button className="flex items-center gap-2 px-3 py-2 bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-md text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] transition-all">
+                    <button type="button" onClick={exportReport} className="flex items-center gap-2 px-3 py-2 bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-md text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] transition-all">
                         <Download size={13} /> Exportar PDF
                     </button>
-                    <button className="flex items-center gap-2 px-3 py-2 bg-[hsl(var(--primary))] text-white rounded-md text-2xs font-bold uppercase tracking-wide shadow-xl shadow-[hsl(var(--info)/20%)] active:scale-95 transition-all">
+                    <button type="button" onClick={() => { void shareReport(); }} className="flex items-center gap-2 px-3 py-2 bg-[hsl(var(--primary))] text-white rounded-md text-2xs font-bold uppercase tracking-wide shadow-xl shadow-[hsl(var(--info)/20%)] active:scale-95 transition-all">
                         <Share2 size={13} /> Compartir
                     </button>
                 </div>
@@ -163,7 +182,16 @@ export default function CrmAnalyticsPage() {
                 )}
                 {analyticsError && (
                     <StatusBanner tone="warning">
-                        {analyticsError}
+                        <div className="flex flex-wrap items-center justify-between gap-3">
+                            <span>{analyticsError}</span>
+                            <button
+                                type="button"
+                                onClick={() => setReloadToken((value) => value + 1)}
+                                className="rounded-md bg-[hsl(var(--primary))] px-3 py-1.5 text-xs font-bold uppercase tracking-wide text-white"
+                            >
+                                Reintentar
+                            </button>
+                        </div>
                     </StatusBanner>
                 )}
 
@@ -173,10 +201,6 @@ export default function CrmAnalyticsPage() {
                 {viewType === 'calendar' && <CalendarView analytics={analytics} />}
                 {viewType === 'gantt' && <GanttView rows={funnelRows} />}
                 {viewType === 'wiki' && <WikiView wikiNotes={wikiNotes} onChange={setWikiNotes} />}
-
-                {!['table', 'list', 'grid', 'board', 'kanban', 'gantt', 'calendar', 'wiki'].includes(viewType) && (
-                    <CrmViewPlaceholder moduleName="Analitica CRM" viewType={viewType} />
-                )}
 
                 {viewType === 'grid' && (
                     <motion.div

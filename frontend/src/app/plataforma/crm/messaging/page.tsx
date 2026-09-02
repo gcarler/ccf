@@ -18,7 +18,6 @@ import {
     Clock,
     AlertCircle,
     Image as ImageIcon,
-    FileText,
     Target,
     BarChart3
 } from 'lucide-react';
@@ -30,7 +29,6 @@ import { extractErrorMessage, apiFetch } from '@/lib/http';
 import { useWikiDocument } from '@/hooks/useWikiDocument';
 import clsx from 'clsx';
 import { ViewType, getStoredView } from '@/components/ViewSwitcher';
-import CrmViewPlaceholder from '@/components/crm/CrmViewPlaceholder';
 import CrmShell from '@/components/crm/CrmShell';
 
 import { Channel, MessagingHistoryRow } from '@/types/crm';
@@ -74,7 +72,10 @@ export default function MessagingCampaignCenter() {
     const [isSending, setIsSending] = useState(false);
     const [loadingHistory, setLoadingHistory] = useState(true);
     const [campaignErrors, setCampaignErrors] = useState<{ campaignName?: boolean; message?: boolean; segments?: boolean }>({});
-    const [viewType, setViewType] = useState<ViewType>(() => getStoredView('crm_messaging_view', 'grid'));
+    const [viewType, setViewType] = useState<ViewType>(() => {
+        const stored = getStoredView('crm_messaging_view', 'grid');
+        return ['table', 'list', 'grid', 'board', 'kanban', 'gantt', 'calendar', 'wiki'].includes(stored) ? stored : 'grid';
+    });
     const { content: wikiNotes, setContent: setWikiNotes } = useWikiDocument('crm_messaging_wiki_notes', {
         title: 'Wiki de mensajeria CRM',
     });
@@ -88,8 +89,9 @@ export default function MessagingCampaignCenter() {
         setLoadingHistory(true);
         try {
             setHistoryError(null);
-            const data = await apiFetch('/crm/messaging/history', { token });
-            setHistory(Array.isArray(data) ? data.map(normalizeHistoryRow) : []);
+            const data = await apiFetch<MessagingHistoryResponse>('/crm/messaging/history', { token });
+            const rows = Array.isArray(data) ? data : data.items;
+            setHistory(rows.map((row) => normalizeHistoryRow(row as Record<string, unknown>)));
         } catch (err) {
             setHistory([]);
             const message = extractErrorMessage(err, 'No se pudo cargar el historial de mensajeria');
@@ -172,7 +174,7 @@ export default function MessagingCampaignCenter() {
             viewType={viewType}
             onViewChange={setViewType}
             rightActions={canEditCrm ? (
-                <button className="flex items-center gap-2 px-4 py-2 bg-[hsl(var(--surface-1))] dark:bg-white/5 hover:bg-[hsl(var(--surface-1))] rounded-md text-xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] border border-[hsl(var(--border))] dark:border-white/10 shadow-sm transition-all active:scale-95">
+                <button onClick={() => document.getElementById('crm-messaging-history')?.scrollIntoView({ behavior: 'smooth', block: 'start' })} className="flex items-center gap-2 px-4 py-2 bg-[hsl(var(--surface-1))] dark:bg-white/5 hover:bg-[hsl(var(--surface-1))] rounded-md text-xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] border border-[hsl(var(--border))] dark:border-white/10 shadow-sm transition-all active:scale-95">
                     <History size={14} /> Historial Detallado
                 </button>
             ) : undefined}
@@ -459,11 +461,7 @@ export default function MessagingCampaignCenter() {
                             </div>
 
                             <div className="pt-6 border-t border-[hsl(var(--border))] dark:border-white/5 flex items-center justify-between">
-                                <div className="flex gap-2">
-                                    <button disabled={!canEditCrm} className="flex items-center gap-2 px-4 py-2 text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-secondary))] transition-colors disabled:opacity-50">
-                                        <FileText size={14} /> Guardar Borrador
-                                    </button>
-                                </div>
+                                <div />
                                 <button
                                     onClick={handleSendCampaign} disabled={isSending || !canEditCrm}
                                     className="flex items-center gap-3 px-3 py-2 bg-[hsl(var(--primary))] text-white rounded-lg text-xs font-bold uppercase tracking-wide shadow-xl shadow-[hsl(var(--info)/20%)] active:scale-95 transition-all disabled:opacity-50"
@@ -487,7 +485,7 @@ export default function MessagingCampaignCenter() {
 
                     {/* Right Column: Targeting & History */}
                     <div className="lg:col-span-5 space-y-3">
-                        <section className="bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg p-3 shadow-xl space-y-3">
+                        <section id="crm-messaging-history" className="bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg p-3 shadow-xl space-y-3">
                             <div className="flex items-center justify-between">
                                 <h3 className="text-sm font-bold tracking-tight uppercase tracking-wide leading-none">Audiencia</h3>
                                 <Filter size={18} className="text-[hsl(var(--text-secondary))]" />
@@ -554,19 +552,15 @@ export default function MessagingCampaignCenter() {
                                     </div>
                                 ))}
                             </div>
-                            <button className="w-full py-2 bg-[hsl(var(--bg-muted))] dark:bg-white/5 text-white rounded-lg text-2xs font-bold uppercase tracking-wide hover:bg-[hsl(var(--surface-2))] transition-all">
-                                Ver Reporte Completo
-                            </button>
                         </section>
                     </div>
                 </div>
                 )}
 
-                {!['table', 'list', 'grid', 'board', 'kanban', 'gantt', 'calendar', 'wiki'].includes(viewType) && (
-                    <CrmViewPlaceholder moduleName="Centro de Mensajeria" viewType={viewType} />
-                )}
                 </div>
             </div>
         </CrmShell>
     );
 }
+
+type MessagingHistoryResponse = MessagingHistoryRow[] | { items: Record<string, unknown>[]; total: number };

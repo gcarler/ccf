@@ -27,7 +27,7 @@ import { ViewType, getStoredView } from '@/components/ViewSwitcher';
 import { useRegisterCommands } from '@/context/CommandCenterContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import clsx from 'clsx';
-import CrmViewPlaceholder from '@/components/crm/CrmViewPlaceholder';
+import CrmOperationalDataView from '@/components/crm/CrmOperationalDataView';
 import { ConsolidationTask } from '@/types/crm';
 
 const STATUS_PROGRESS: Record<string, number> = { urgent: 15, pending: 35, in_progress: 70, done: 100 };
@@ -80,8 +80,8 @@ export default function CrmTasksPage() {
         setLoading(true);
         setTasksError(null);
         try {
-            const data = await apiFetch<ConsolidationTask[]>('/crm/tasks', { token, cache: 'no-store', signal });
-            setTasks(Array.isArray(data) ? data : []);
+            const data = await apiFetch<{ items: ConsolidationTask[]; total: number }>('/crm/tasks', { token, cache: 'no-store', signal });
+            setTasks(Array.isArray(data?.items) ? data.items : []);
         } catch (err: unknown) {
             if ((err as Error)?.name === 'AbortError') return;
             setTasks([]);
@@ -423,7 +423,22 @@ export default function CrmTasksPage() {
 
                 {!['board', 'kanban', 'grid', 'list', 'table', 'calendar', 'gantt', 'wiki'].includes(viewType) && (
                     <motion.div key="pending-view" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="p-4">
-                        <CrmViewPlaceholder moduleName="Tareas de consolidación" viewType={viewType} />
+                        <CrmOperationalDataView
+                            moduleName="Tareas de consolidación"
+                            items={tasks.map((task) => ({
+                                id: task.id,
+                                title: task.title,
+                                subtitle: task.persona_name,
+                                meta: `${task.priority} · ${task.status}`,
+                            }))}
+                            onSelect={(item) => {
+                                const task = tasks.find((candidate) => candidate.id === item.id);
+                                if (task) {
+                                    setSelectedTask(task);
+                                    setIsDetailOpen(true);
+                                }
+                            }}
+                        />
                     </motion.div>
                 )}
             </AnimatePresence>

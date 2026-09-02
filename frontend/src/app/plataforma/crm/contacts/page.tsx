@@ -6,13 +6,13 @@ import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
 import { useCrmAccess } from '@/hooks/useCrmAccess';
 import { extractErrorMessage, apiFetch } from '@/lib/http';
+import { fetchAllCrmCases } from '@/app/plataforma/crm/cases';
 import { useWikiDocument } from '@/hooks/useWikiDocument';
 import { Search, UserPlus, Phone, MessageSquare, Link2, Users, Plus, Loader2, Send, Calendar, BarChart3, BookOpen } from 'lucide-react';
 import CrmShell from '@/components/crm/CrmShell';
 import { DSSkeleton } from '@/design';
 import WorkspaceDrawer from '@/components/WorkspaceDrawer';
 import { ViewType, getStoredView } from '@/components/ViewSwitcher';
-import CrmViewPlaceholder from '@/components/crm/CrmViewPlaceholder';
 
 const PIPELINE_STAGES = ['new', 'call', 'visit', 'discipleship', 'consolidated'];
 const STAGE_LABELS: Record<string, string> = {
@@ -69,7 +69,7 @@ export default function ContactsPage() {
         first_name: '', last_name: '', phone: '', source: 'Visitante', stage: 'new', notes: ''
     });
 
-    const fetchLeads = useCallback(async () => {
+    const fetchLeads = useCallback(async (signal?: AbortSignal) => {
         if (!token) {
             setLoading(false);
             return;
@@ -77,10 +77,10 @@ export default function ContactsPage() {
         setLoading(true);
         setLeadsError(null);
         try {
-            const data = await apiFetch<Array<{ id: string; nombre_completo?: string; source?: string; phone?: string; telefono?: string; stage?: string; created_at?: string }> | { cases?: Array<{ id: string; nombre_completo?: string; source?: string; phone?: string; telefono?: string; stage?: string; created_at?: string }> }>('/crm/casos', { token, cache: 'no-store' });
-            const items = Array.isArray(data) ? data : Array.isArray(data?.cases) ? data.cases : [];
+            const items = await fetchAllCrmCases<{ id: string; nombre_completo?: string; source?: string; phone?: string; telefono?: string; stage?: string; created_at?: string }>(token, signal);
             setLeads(items);
         } catch (err) {
+            if (signal?.aborted) return;
             setLeads([]);
             const message = extractErrorMessage(err, 'Error al cargar contactos');
             setLeadsError(message);
@@ -90,7 +90,11 @@ export default function ContactsPage() {
         }
     }, [token, addToast]);
 
-    useEffect(() => { fetchLeads(); }, [fetchLeads]);
+    useEffect(() => {
+        const controller = new AbortController();
+        fetchLeads(controller.signal);
+        return () => controller.abort();
+    }, [fetchLeads]);
 
 
     const handleCreate = async (e: React.FormEvent) => {
@@ -179,7 +183,7 @@ export default function ContactsPage() {
                             </p>
                         </div>
                         <button
-                            onClick={fetchLeads}
+                            onClick={() => fetchLeads()}
                             className="shrink-0 px-3 py-2 rounded-lg bg-[hsl(var(--primary))] text-white text-2xs font-bold uppercase tracking-wide shadow-lg shadow-[hsl(var(--info)/20%)] hover:opacity-90 transition-all"
                         >
                             Reintentar
@@ -400,7 +404,27 @@ export default function ContactsPage() {
                             />
                         </div>
                     ) : (
-                        <CrmViewPlaceholder moduleName="Contactos / Leads" viewType={viewType} />
+                        <div className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-white/5 p-4 space-y-3">
+                            <div className="flex items-center justify-between gap-3">
+                                <div>
+                                    <h3 className="text-sm font-bold uppercase tracking-wide text-[hsl(var(--text-primary))] dark:text-white">Resumen de contactos</h3>
+                                    <p className="text-xs text-[hsl(var(--text-secondary))]">Datos reales del pipeline de consolidación.</p>
+                                </div>
+                                <span className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{filtered.length} visibles</span>
+                            </div>
+                            {filtered.length === 0 ? (
+                                <p className="py-8 text-center text-sm text-[hsl(var(--text-secondary))]">No hay contactos para mostrar.</p>
+                            ) : (
+                                <div className="divide-y divide-[hsl(var(--border))] dark:divide-white/10">
+                                    {filtered.map((lead) => (
+                                        <button key={lead.id} type="button" onClick={() => router.push(`/plataforma/crm/contacts/${lead.id}`)} className="flex w-full items-center justify-between gap-3 py-3 text-left hover:bg-[hsl(var(--surface-2))]/40">
+                                            <span className="min-w-0 truncate text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-white">{lead.nombre_completo || 'Contacto sin nombre'}</span>
+                                            <span className="shrink-0 text-xs text-[hsl(var(--text-secondary))]">{STAGE_LABELS[lead.stage ?? 'new'] ?? lead.stage ?? 'Nuevo'}</span>
+                                        </button>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
                     )}
                 </div>
             </div>
