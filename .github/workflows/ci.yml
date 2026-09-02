@@ -147,6 +147,11 @@ jobs:
 
       - name: Build
         run: cd frontend && npm run build
+        # Next.js materializes the /api rewrite target during `next build`.
+        # Keep it aligned with the E2E runtime target; setting it only on the
+        # Playwright step leaves the generated app pointing at `backend:8000`.
+        env:
+          API_PROXY_TARGET: https://elfarocc.tech
 
       - name: Install Playwright browsers
         run: cd frontend && npx playwright install --with-deps chromium
