@@ -63,7 +63,7 @@ def _scope_cms_media_by_user_sede(db: Session, current_user: models.User, query)
     if user_sede:
         query = query.filter(models.CmsMediaItem.sede_id == user_sede)
     elif not _is_global_media_admin(current_user):
-        # Missing tenant identity is not a global-scope grant.  Keep legacy
+        # Missing tenant identity is not a global-scope grant. Keep scoped
         # media completely invisible to non-admin actors without a sede.
         query = query.filter(models.CmsMediaItem.id.is_(None))
     return query
