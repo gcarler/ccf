@@ -29,7 +29,7 @@ Todo agente que opere en la plataforma CCF (/root/ccf) DEBE conocer y aplicar es
 - **`upgrade()` y `downgrade()` reversibles** — toda migración nueva debe ser reversible.
 - **Sin scripts `_tmp_*`/`_scratch_*`** en `scripts/`.
 - **SQLite tz-info loss** — helper defensivo `_as_aware_utc()` en comparaciones timestamp contra SQLite.
-- **Alembic head:** `20260810_0002_kernel_roles_uuid_pk`.
+- **Alembic head:** `20260822_0002_evangelism_sede_indexes`.
 
 ## 3. Frontend (Next.js 15 + React 19 + TypeScript)
 
