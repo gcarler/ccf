@@ -3,7 +3,7 @@
 **Estado:** En ejecución  
 **Fecha de inicio:** 2026-08-23  
 **Propietario:** Equipo de desarrollo CCF  
-**Rama de trabajo actual:** `integration/academy-public-courses-20260823-v2`
+**Rama de trabajo actual:** `integration/projects-quality-to-main-20260902`
 
 ## 1. Objetivo
 
@@ -154,7 +154,7 @@ desarrollo, staging o producción por defecto.
   `origin/main` más reciente.
 - [x] Ejecutar contrato de rama, lint, pruebas, suites modulares y build.
 - [x] Publicar únicamente la rama temporal.
-- [x] Confirmar el SHA remoto validado (`13c08ae866b8e67bdcce5c02e14f1c3ddde2b3ab`).
+- [x] Confirmar el SHA remoto validado (`367c366a803564a369c8e97bcb9dc0c4f48aad9d`).
 - [ ] Fusionar la rama temporal a `main`.
 - [ ] Ejecutar smoke post-merge.
 - [ ] Archivar la rama bajo `archive/merged/` después de confirmar la fusión.
@@ -183,12 +183,12 @@ El plan se considera completado cuando:
   validados en `ccf_quality_20260823`.
 - **Push:** publicado después de pasar contrato, lint, pruebas, suites
   modulares y build; el hook confirmó el SHA remoto
-  `13c08ae866b8e67bdcce5c02e14f1c3ddde2b3ab`.
+  `367c366a803564a369c8e97bcb9dc0c4f48aad9d`.
 - **Selector:** `frontend/next.config.mjs` ya no escala artificialmente a
   todos los módulos; selecciona build frontend y conserva los propietarios
   reales del diff.
-- **Sincronización:** la rama fue rebasada y validada sobre el `origin/main`
-  más reciente disponible (`38f10526`).
+- **Sincronización:** la rama temporal fue fusionada con el `origin/main`
+  más reciente disponible (`7fe61d94`) y validada por el contrato de rama.
 - **Merge a `main`:** pendiente de esa nueva sincronización y validación.
 
 ## 7. Regla de trabajo para futuras sesiones
@@ -236,8 +236,27 @@ Academia. Falló por tres dependencias estructurales del proceso:
 - [x] Ejecutar validación local específica y el runner completo de calidad:
   Academia `9/9 suites OK`, Projects `49 passed`, build frontend `223 páginas`.
 - [x] Crear el commit exclusivo `4d0c4e77` de estas correcciones.
-- [ ] Actualizar la rama temporal con `--force-with-lease` solo si el rebase
-  cambia su historial; nunca usar `--no-verify`.
+- [x] Actualizar la rama temporal con el `origin/main` más reciente sin forzar
+  historia; nunca usar `--no-verify`.
+
+## 9. Ejecución vigente — 2026-09-02
+
+- La rama temporal se sincronizó con el `origin/main` más reciente (`7fe61d94`)
+  y quedó publicada en `367c366a803564a369c8e97bcb9dc0c4f48aad9d`.
+- El hook oficial pasó contrato de rama, pruebas base (53) y build frontend;
+  el deploy fue omitido conforme al runbook.
+- El gate E2E del job frontend quedó reducido al contrato público determinista
+  (`smoke.spec.ts` y `cms-public-contract.spec.ts`). Las suites profundas y
+  autenticadas requieren credenciales y fixtures, por lo que no deben ejecutarse
+  como si fueran smoke público.
+- Validación pública directa: 15/16 pruebas pasan. El único fallo reproducible
+  es una referencia CMS publicada a
+  `/api/static/cms/external/0dc14650193bef5f2b5e4c38768b2d35.jpg`, que responde
+  404 en la portada. Es un dato roto del CMS, no una razón para debilitar el
+  test ni para ocultar el error con una excepción.
+- La ejecución oficial del PR sobre el SHA vigente continúa en curso. No se
+  autoriza merge a `main` hasta obtener el resultado final y resolver los
+  bloqueos reales.
 - [ ] Esperar el resultado completo del PR #13 y corregir únicamente fallos
   reproducibles.
 
