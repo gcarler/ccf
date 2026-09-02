@@ -246,7 +246,7 @@ describe("CmsPagesManagement", () => {
 
     fireEvent.click(screen.getByText("Inicio"));
 
-    expect(routerPush).toHaveBeenCalledWith("/plataforma/cms/pages/inicio");
+    expect(routerPush).toHaveBeenCalledWith("/plataforma/cms/builder?site=ccf&page=inicio&mode=content");
   });
 
   it("abre el builder desde el botón Editar", async () => {

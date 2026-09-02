@@ -301,7 +301,7 @@ export default function CmsPagesManagement() {
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: index * 0.025 }}
-            onClick={() => openPage(page)}
+            onClick={() => openContentPage(page)}
             className="group bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-secondary))] rounded-lg border border-[hsl(var(--border))]/70 dark:border-white/5 p-4 shadow-sm hover:shadow-xl hover:border-[hsl(var(--info)/100%)]/30 transition-all cursor-pointer flex items-center gap-4"
           >
             <div className="size-6 rounded-md bg-info-soft dark:bg-[hsl(var(--info))]/10 text-[hsl(var(--primary))] flex items-center justify-center shrink-0 group-hover:bg-[hsl(var(--primary))] group-hover:text-white transition-all">
@@ -475,13 +475,13 @@ export default function CmsPagesManagement() {
                   </button>
 
                   <div
-                    onClick={() => router.push(`/plataforma/cms/pages/${page.slug}`)}
+                    onClick={() => openContentPage(page)}
                     className="size-7 rounded-md bg-info-soft dark:bg-[hsl(var(--info))]/10 text-[hsl(var(--primary))] flex items-center justify-center shrink-0 group-hover:bg-[hsl(var(--primary))] group-hover:text-white transition-all cursor-pointer"
                   >
                     <FileText size={20} />
                   </div>
 
-                  <div className="flex-1 min-w-0 cursor-pointer" onClick={() => router.push(`/plataforma/cms/pages/${page.slug}`)}>
+                  <div className="flex-1 min-w-0 cursor-pointer" onClick={() => openContentPage(page)}>
                     <div className="flex items-center gap-2 mb-0.5">
                       <h3 className="text-base font-semibold text-[hsl(var(--text-primary))] dark:text-white truncate">{page.title}</h3>
                       <span className={clsx("px-2 py-0.5 rounded-full text-2xs font-semibold uppercase tracking-wide", st.color)}>{st.label}</span>
