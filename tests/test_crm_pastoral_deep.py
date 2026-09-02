@@ -34,6 +34,52 @@ class TestCasosAdvanced:
             headers=h)
         assert _ok(resp.status_code)
 
+    def test_create_prospecto_from_contact_fields(self, full, db_session):
+        """The Nuevo Prospecto flow creates a Persona and its initial case."""
+        c, h, s = full["c"], full["h"], full["s"]
+        suffix = uuid.uuid4().hex[:10]
+        payload = {
+            "first_name": "Juan",
+            "last_name": "Pérez",
+            "phone": f"+57 300 {suffix}",
+            "email": f"prospecto-{suffix}@example.test",
+            "source": "Visitante",
+            "source_campaign": "web",
+            "notes": "Llegó por la página web",
+            "stage": "new",
+            "spiritual_status": "Prospecto",
+        }
+
+        resp = c.post("/api/crm/casos", json=payload, headers=h)
+
+        assert _ok(resp.status_code), resp.text
+        case = resp.json()
+        assert case.get("id")
+
+        # The endpoint commits through its own request session. Re-read using
+        # the test session to verify the canonical Persona was persisted.
+        db_session.expire_all()
+        persona = (
+            db_session.query(models.Persona)
+            .filter(models.Persona.phone == payload["phone"])
+            .first()
+        )
+        assert persona is not None, "Persona was not created from contact fields"
+        assert persona.first_name == payload["first_name"]
+        assert persona.last_name == payload["last_name"]
+        assert persona.spiritual_status == payload["spiritual_status"]
+        assert str(persona.sede_id) == str(s.id)
+
+    def test_create_prospecto_rejects_empty_payload(self, full):
+        """Neither persona_id nor contact data may create a phantom case."""
+        resp = full["c"].post(
+            "/api/crm/casos",
+            json={"source": "Visitante"},
+            headers=full["h"],
+        )
+
+        assert resp.status_code == 422
+
     def test_update_caso_invalid_id(self, full):
         assert full["c"].patch(f"/api/crm/casos/{uuid.uuid4()}",
             json={"notes": "x"}, headers=full["h"]).status_code == 404
