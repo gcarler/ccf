@@ -219,7 +219,7 @@ if not admin_user:
 
 u1, u2, u3 = created_users
 test_users_by_id = {u.id: u for u in created_users}
-# Projects stores owner/assignee values as Persona IDs. The legacy admin
+# Projects stores owner/assignee values as Persona IDs. The historical admin
 # account may not have a matching Persona row, so use the canonical Persona
 # behind the seeded GESTOR account as the project owner in this smoke test.
 owner_user = u3
