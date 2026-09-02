@@ -12,6 +12,7 @@ import { apiFetch } from "@/lib/http";
 import { SITE_KEY } from "@/lib/site-config";
 import type { CmsTheme } from "@/types/cms-v2";
 import { toast } from "sonner";
+import { preserveSelectedMediaId, type SelectedMedia } from "./media-utils";
 import MediaPicker from "@/components/cms/builder/MediaPicker";
 import MediaPickerField, { setMediaPickerTrigger } from "@/components/cms/builder/MediaPickerField";
 import CmsJsonMediaField from "@/components/cms/CmsJsonMediaField";
@@ -135,6 +136,7 @@ export default function PuckBuilderPage() {
   const latestDataRef = useRef<{ content: any[] }>({ content: [] });
   const saveSequenceRef = useRef<number>(0);
   const latestCompletedSeqRef = useRef<number>(0);
+  const saveQueueRef = useRef<Promise<void>>(Promise.resolve());
   const isInitialLoadRef = useRef<boolean>(true);
   const dbSectionsRef = useRef<any[]>([]);
   const savingRef = useRef<boolean>(false);
@@ -154,6 +156,7 @@ export default function PuckBuilderPage() {
   // MediaPicker state
   const [mediaPickerOpen, setMediaPickerOpen] = useState(false);
   const mediaPickerCallbackRef = useRef<((url: string) => void) | null>(null);
+  const selectedMediaRef = useRef<SelectedMedia | null>(null);
   const [mediaPickerValue, setMediaPickerValue] = useState("");
 
   // Setup global trigger callback for Puck's custom field renderers
@@ -975,6 +978,14 @@ export default function PuckBuilderPage() {
       }
 
       const currentSeq = ++saveSequenceRef.current;
+      const previousSave = saveQueueRef.current;
+      const queuedSave = previousSave.then(async () => {
+        // Autosaves are latest-wins. Do not issue any API mutation for a
+        // snapshot that was superseded while an earlier save was in flight.
+        if (options.isAutoSave && currentSeq !== saveSequenceRef.current) {
+          return;
+        }
+
       if (options.isAutoSave) {
         setSaveStatus("saving");
       } else {
@@ -991,6 +1002,9 @@ export default function PuckBuilderPage() {
         const contentToSave = dataToSave?.content || [];
         // 1. Process inserts and updates
         for (let i = 0; i < contentToSave.length; i++) {
+          if (currentSeq !== saveSequenceRef.current) {
+            return;
+          }
           const item = contentToSave[i];
           const id = item.props?.id;
 
@@ -1041,6 +1055,9 @@ export default function PuckBuilderPage() {
         // 2. Process deletions: Archive database sections missing from Puck
         const missingFromPuck = currentDbSections.filter((s) => !activeIdsInPuck.has(s.id));
         for (const sectionToDelete of missingFromPuck) {
+          if (currentSeq !== saveSequenceRef.current) {
+            return;
+          }
           await deleteCmsSection(siteKey, pageSlug, sectionToDelete.id, token);
         }
 
@@ -1098,18 +1115,28 @@ export default function PuckBuilderPage() {
           savingRef.current = false;
         }
       }
+      });
+      // Keep the queue alive after a handled failure so later saves are not
+      // blocked by a rejected promise.
+      saveQueueRef.current = queuedSave.catch(() => undefined);
+      return queuedSave;
     },
     [token, pageSlug, canEdit, canPublish, siteKey]
   );
 
   const handlePuckChange = (newData: { content: any[] }) => {
+    const dataWithMediaId = selectedMediaRef.current
+      ? preserveSelectedMediaId(newData, selectedMediaRef.current)
+      : newData;
+    selectedMediaRef.current = null;
+
     if (isInitialLoadRef.current) {
       isInitialLoadRef.current = false;
-      latestDataRef.current = newData;
+      latestDataRef.current = dataWithMediaId;
       return;
     }
 
-    latestDataRef.current = newData;
+    latestDataRef.current = dataWithMediaId;
     setSaveStatus("dirty");
 
     if (debounceTimerRef.current) {
@@ -1196,7 +1223,7 @@ export default function PuckBuilderPage() {
     );
   }
 
-// Home uses the canonical public-content model. Do not expose the previous
+  // Home uses the canonical public-content model. Do not expose the retired
   // generic Puck hero fields (title/body/cta) for this page.
   const hasCanonicalHomeHero = dbSections.some((section) => {
     const props = section?.props_json;
@@ -1296,7 +1323,11 @@ export default function PuckBuilderPage() {
           selectedUrl={mediaPickerValue}
           onClose={() => setMediaPickerOpen(false)}
           onSelect={(item) => {
-            const url = typeof item === "string" ? item : (item as { url?: string }).url || "";
+            const selected: { url?: string; id?: string | number } = typeof item === "string" ? { url: item } : item as { url?: string; id?: string | number };
+            const url = selected.url || "";
+            if (typeof item !== "string" && selected.id !== undefined) {
+              selectedMediaRef.current = { url, media_id: selected.id };
+            }
             if (mediaPickerCallbackRef.current) {
               mediaPickerCallbackRef.current(url);
             }

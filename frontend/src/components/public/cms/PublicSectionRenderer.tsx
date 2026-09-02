@@ -210,6 +210,21 @@ function renderSection(section: CmsSection) {
     case "video_embed":            return <VideoEmbedSection section={asTyped<"video_embed">(section)} />;
     case "gallery_masonry":        return <GalleryMasonrySection section={asTyped<"gallery_masonry">(section)} />;
     case "map_embed":              return <MapEmbedSection section={asTyped<"map_embed">(section)} />;
-    default:                       return <RichTextSection section={asTyped<"rich_text">(section)} />;
+    default:                       return <UnsupportedSection type={section.type} />;
   }
+}
+
+function UnsupportedSection({ type }: { type: string }) {
+  if (process.env.NODE_ENV !== "production") {
+    console.warn(`[CMS] Tipo de sección sin renderer público: ${type}`);
+  }
+  return (
+    <section
+      aria-label="Sección no disponible"
+      data-cms-unsupported-section={type}
+      className="mx-auto my-6 max-w-6xl rounded-lg border border-dashed border-[hsl(var(--border))] p-6 text-center text-sm text-[hsl(var(--text-secondary))]"
+    >
+      Esta sección todavía no está disponible para publicación.
+    </section>
+  );
 }

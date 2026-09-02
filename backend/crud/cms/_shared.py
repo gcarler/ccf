@@ -278,6 +278,14 @@ def _crud_scope_re_check_cms_site_content(
         raise _HTTPException(status_code=404, detail="CMS site content blocked")
 
 
+def validate_cms_actor_site(db: Session, actor_user_id, site_id) -> None:
+    """Require and validate the authenticated actor for site CMS mutations."""
+    actor_sede = _actor_sede_or_none_cms(db, actor_user_id)
+    _crud_scope_re_check_cms_site_content(
+        db, actor_user_id, actor_sede=actor_sede, site_id=site_id
+    )
+
+
 
 def _crud_scope_re_check_pastoral_profile(
     db: Session,
@@ -334,6 +342,5 @@ def resolve_site_key(db: Session, site_id) -> str | None:
     if not row or row[0] is None:
         return None
     return str(row[0])
-
 
 

@@ -10,10 +10,10 @@ import {
   Upload,
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
-import { useSiteBranding } from "@/lib/site-branding";
 import { apiFetch } from "@/lib/http";
 import { SITE_KEY } from "@/lib/site-config";
-import { listCmsThemes, patchCmsTheme } from "@/lib/cms/v2";
+import { listCmsSites, listCmsThemes, patchCmsTheme } from "@/lib/cms/v2";
+import { CmsSite } from "@/types/cms-v2";
 import { canEditCms } from "@/lib/cms/permissions";
 import OptimizedImage from "@/components/ui/OptimizedImage";
 import { toast } from "sonner";
@@ -31,22 +31,64 @@ interface CmsMediaItem {
 export default function CmsBrandingPage() {
   const { token, user } = useAuth();
   const canEdit = canEditCms(user?.role);
-  const { logoUrl: currentLogoUrl, logoName: currentLogoName } = useSiteBranding();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const [sites, setSites] = useState<CmsSite[]>([]);
+  const [siteKey, setSiteKey] = useState(SITE_KEY);
   const [logoUrl, setLogoUrl] = useState("");
   const [logoName, setLogoName] = useState("");
+  const [loadingTheme, setLoadingTheme] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [mediaItems, setMediaItems] = useState<CmsMediaItem[]>([]);
   const [showMediaPicker, setShowMediaPicker] = useState(false);
   const [pendingRemoveLogo, setPendingRemoveLogo] = useState(false);
 
-  // Initialize from current branding
+  // Load the available sites once, keeping the configured site as the fallback.
   useEffect(() => {
-    setLogoUrl(currentLogoUrl || "");
-    setLogoName(currentLogoName || "");
-  }, [currentLogoUrl, currentLogoName]);
+    if (!token) {
+      setLoadingTheme(false);
+      return;
+    }
+    listCmsSites(token)
+      .then((rows) => {
+        const nextSites = Array.isArray(rows) ? rows : [];
+        setSites(nextSites);
+        if (nextSites.length > 0 && !nextSites.some((site) => site.site_key === siteKey)) {
+          setSiteKey(nextSites[0].site_key);
+        }
+      })
+      .catch(() => {
+        setSites([]);
+        toast.error("Error al cargar sitios CMS");
+      });
+  }, [token, siteKey]);
+
+  // Read branding from the selected site's active theme.
+  useEffect(() => {
+    if (!token || !siteKey) return;
+    let mounted = true;
+    setLoadingTheme(true);
+    setLogoUrl("");
+    setLogoName("");
+    listCmsThemes(siteKey, token)
+      .then((themes) => {
+        if (!mounted) return;
+        const activeTheme = themes?.find((theme) => theme.is_active) || themes?.[0];
+        const tokens = activeTheme?.tokens_json || {};
+        setLogoUrl(typeof tokens["--site-logo-url"] === "string" ? tokens["--site-logo-url"] : "");
+        setLogoName(typeof tokens["--site-logo-name"] === "string" ? tokens["--site-logo-name"] : "");
+      })
+      .catch(() => {
+        if (mounted) toast.error("Error al cargar el branding del sitio");
+      })
+      .finally(() => {
+        if (mounted) setLoadingTheme(false);
+      });
+    return () => {
+      mounted = false;
+    };
+  }, [siteKey, token]);
 
   // Load media items for picker
   useEffect(() => {
@@ -99,8 +141,8 @@ export default function CmsBrandingPage() {
     }
     setSaving(true);
     try {
-      // Get the active theme for this site
-      const themes = await listCmsThemes(SITE_KEY, token);
+      // Get the active theme for the selected site
+      const themes = await listCmsThemes(siteKey, token);
       const activeTheme = themes?.find((t) => t.is_active) || themes?.[0];
       if (!activeTheme) {
         toast.error("No hay un tema activo para este sitio");
@@ -112,7 +154,7 @@ export default function CmsBrandingPage() {
         "--site-logo-url": logoUrl,
         "--site-logo-name": logoName,
       };
-      await patchCmsTheme(SITE_KEY, activeTheme.id, { tokens_json: updatedTokens }, token);
+      await patchCmsTheme(siteKey, activeTheme.id, { tokens_json: updatedTokens }, token);
       toast.success("Branding guardado correctamente");
     } catch {
       toast.error("Error al guardar el branding");
@@ -150,14 +192,31 @@ export default function CmsBrandingPage() {
             </p>
           )}
         </div>
-        <button
-          onClick={handleSave}
-          disabled={saving || !canEdit}
-          className="inline-flex items-center gap-2 rounded-lg bg-[hsl(var(--primary))] text-white px-4 py-2 text-xs font-semibold uppercase tracking-wide hover:opacity-90 transition-opacity disabled:opacity-50"
-        >
-          {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
-          Guardar
-        </button>
+        <div className="flex items-center gap-2">
+          <label htmlFor="cms-branding-site" className="sr-only">Sitio CMS</label>
+          <select
+            id="cms-branding-site"
+            value={siteKey}
+            onChange={(event) => setSiteKey(event.target.value)}
+            className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] px-3 py-2 text-xs text-[hsl(var(--text-primary))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]/50"
+            aria-label="Sitio CMS"
+          >
+            {sites.length === 0 && <option value={siteKey}>{siteKey}</option>}
+            {sites.map((site) => (
+              <option key={site.site_key} value={site.site_key}>
+                {site.name} ({site.site_key})
+              </option>
+            ))}
+          </select>
+          <button
+            onClick={handleSave}
+            disabled={saving || loadingTheme || !canEdit}
+            className="inline-flex items-center gap-2 rounded-lg bg-[hsl(var(--primary))] text-white px-4 py-2 text-xs font-semibold uppercase tracking-wide hover:opacity-90 transition-opacity disabled:opacity-50"
+          >
+            {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
+            Guardar
+          </button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

@@ -24,6 +24,7 @@ from backend.api.cms_v2._shared import (
 from backend.api.cms_v2.section_types import get_allowed_section_types
 from backend.core.database import get_db
 from backend.core.permissions import require_module_access
+from backend.crud.crm import resolve_persona_id_for_user
 from backend.exceptions.cms import (
     BlockNotFoundError,
     CmsValidationError,
@@ -105,7 +106,7 @@ def create_global_block(
     payload.is_global = True
     payload.is_visible = True if payload.is_visible is None else payload.is_visible
     payload.section_key = payload.section_key or f"global_{uuid.uuid4().hex[:8]}"
-    block = crud.create_cms_section(db, page.id, payload)
+    block = crud.create_cms_section(db, page.id, payload, actor_user_id=current_user.id)
     db.refresh(block)
     return schemas.CmsSectionRead.model_validate(block)
 
@@ -119,20 +120,41 @@ def patch_global_block(
     current_user: models.User = Depends(require_module_access("cms", "edit")),
 ):
     _assert_role(current_user, CMS_EDITOR_ROLES)
+    site = _get_scoped_site_or_404(db, site_key, current_user)
     block = (
         db.query(models.CmsSection)
+        .join(models.CmsPage, models.CmsSection.page_id == models.CmsPage.id)
         .filter(
             models.CmsSection.id == section_id,
+            models.CmsPage.site_id == site.id,
             models.CmsSection.is_global,
+            models.CmsSection.deleted_at.is_(None),
         )
         .first()
     )
     if not block:
         raise BlockNotFoundError()
     data = payload.model_dump(exclude_unset=True)
-    for key in ["type", "props_json", "sort_order", "is_visible", "status", "is_global", "global_key"]:
+    effective_type = data.get("type", block.type)
+    allowed_types = get_allowed_section_types(db)
+    if effective_type not in allowed_types:
+        raise UnsupportedSectionTypeError()
+    if "props_json" in data and data["props_json"] is not None:
+        try:
+            data["props_json"] = validate_section_props(effective_type, data["props_json"])
+        except ValueError as e:
+            raise CmsValidationError(str(e))
+    elif "type" in data:
+        try:
+            validate_section_props(effective_type, block.props_json or {})
+        except ValueError as e:
+            raise CmsValidationError(str(e))
+    if "is_global" in data and data["is_global"] is False:
+        raise CmsValidationError("Global blocks must remain global", error_code="global_block_required")
+    for key in ["type", "props_json", "sort_order", "is_visible", "status", "global_key"]:
         if key in data and data[key] is not None:
             setattr(block, key, data[key])
+    block.updated_by_persona_id = resolve_persona_id_for_user(db, current_user.id)
     db.commit()
     db.refresh(block)
     return schemas.CmsSectionRead.model_validate(block)
@@ -146,16 +168,21 @@ def delete_global_block(
     current_user: models.User = Depends(require_module_access("cms", "edit")),
 ):
     _assert_role(current_user, CMS_EDITOR_ROLES)
+    site = _get_scoped_site_or_404(db, site_key, current_user)
     block = (
         db.query(models.CmsSection)
+        .join(models.CmsPage, models.CmsSection.page_id == models.CmsPage.id)
         .filter(
             models.CmsSection.id == section_id,
+            models.CmsPage.site_id == site.id,
             models.CmsSection.is_global,
+            models.CmsSection.deleted_at.is_(None),
         )
         .first()
     )
     if not block:
         raise BlockNotFoundError()
     block.deleted_at = _utcnow()
+    block.updated_by_persona_id = resolve_persona_id_for_user(db, current_user.id)
     db.commit()
     return None

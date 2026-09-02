@@ -62,7 +62,9 @@ def create_theme(
     if payload.is_active:
         _assert_role(current_user, CMS_PUBLISHER_ROLES, detail="Only publishers can activate a theme")
     site = _get_scoped_site_or_404(db, site_key, current_user)
-    return crud.create_cms_theme(db, site.id, payload, created_by=current_user.id)
+    return crud.create_cms_theme(
+        db, site.id, payload, created_by=current_user.id, actor_user_id=current_user.id
+    )
 
 
 @router.patch("/sites/{site_key}/themes/{theme_id}", response_model=schemas.CmsThemeRead)
@@ -80,7 +82,7 @@ def patch_theme(
     row = crud.get_cms_theme(db, site.id, theme_id)
     if not row:
         raise ThemeNotFoundError()
-    return crud.update_cms_theme(db, row, payload)
+    return crud.update_cms_theme(db, row, payload, actor_user_id=current_user.id)
 
 
 @router.post("/sites/{site_key}/themes/{theme_id}/activate", response_model=schemas.CmsThemeRead)
@@ -92,7 +94,7 @@ def activate_theme(
 ):
     _assert_role(current_user, CMS_PUBLISHER_ROLES)
     site = _get_scoped_site_or_404(db, site_key, current_user)
-    row = crud.activate_cms_theme(db, site.id, theme_id)
+    row = crud.activate_cms_theme(db, site.id, theme_id, actor_user_id=current_user.id)
     if not row:
         raise ThemeNotFoundError()
     return row
@@ -110,5 +112,5 @@ def delete_theme(
     row = crud.get_cms_theme(db, site.id, theme_id)
     if not row:
         raise ThemeNotFoundError()
-    crud.archive_cms_theme(db, row)
+    crud.archive_cms_theme(db, row, actor_user_id=current_user.id)
     return None

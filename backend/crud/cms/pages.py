@@ -230,6 +230,7 @@ def create_cms_section(
     payload: schemas.CmsSectionCreate,
     *,
     commit_with_conflict_check: bool = False,
+    actor_user_id: uuid.UUID | None = None,
 ):
     row = models.CmsSection(
         page_id=page_id,
@@ -240,6 +241,8 @@ def create_cms_section(
         is_visible=payload.is_visible,
         status=(payload.status or "active").strip().lower(),
         is_global=getattr(payload, "is_global", False) or False,
+        created_by_persona_id=resolve_persona_uuid_for_user(db, actor_user_id),
+        updated_by_persona_id=resolve_persona_uuid_for_user(db, actor_user_id),
     )
     db.add(row)
     if commit_with_conflict_check and not _commit_or_conflict(db):
@@ -280,11 +283,17 @@ def get_cms_section(
 
 
 
-def update_cms_section(db: Session, row: models.CmsSection, payload: schemas.CmsSectionUpdate):
+def update_cms_section(
+    db: Session,
+    row: models.CmsSection,
+    payload: schemas.CmsSectionUpdate,
+    *,
+    actor_user_id: uuid.UUID | None = None,
+):
     from backend.schemas.cms_v2_sections import validate_section_props
 
     data = payload.model_dump(exclude_unset=True)
-    for field in ["type", "sort_order", "is_visible", "status", "is_global", "global_key"]:
+    for field in ["type", "sort_order", "is_visible", "status", "global_key"]:
         if field in data and data[field] is not None:
             setattr(row, field, data[field])
     if "props_json" in data and data["props_json"] is not None:
@@ -292,6 +301,8 @@ def update_cms_section(db: Session, row: models.CmsSection, payload: schemas.Cms
         # the caller already validated it. This protects direct CRUD callers.
         section_type = data.get("type") or row.type
         row.props_json = validate_section_props(section_type, data["props_json"])
+    if actor_user_id is not None:
+        row.updated_by_persona_id = resolve_persona_uuid_for_user(db, actor_user_id)
     db.commit()
     db.refresh(row)
     # Cierre de staleness: type/sort_order/is_visible/status/props alteran
@@ -595,6 +606,4 @@ def get_public_cms_page(db: Session, site_id: uuid.UUID, slug: str):
         )
         .first()
     )
-
-
 

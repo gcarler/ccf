@@ -31,19 +31,18 @@ function inferThemeMode(themeName?: string, tokens?: Record<string, unknown>): T
     return "light";
 }
 
-const CMS_TOKEN_ALLOWLIST = new Set([
-    "--site-logo-url",
-    "--site-logo-name",
-    "--site-brand-tagline",
-    "--site-header-cta-label",
-    "--site-header-cta-href",
-    "--site-header-location-title",
-    "--site-header-theme-title",
-    "--site-header-dropdown-label",
-    "--site-header-mobile-menu-label",
-    "--site-header-open-menu-label",
-    "--site-header-close-menu-label",
-]);
+const CMS_TOKEN_ALLOWLIST = /^--site-[a-z0-9]+(?:-[a-z0-9]+)*$/i;
+
+function isSafeCmsToken(key: string, value: unknown): value is string {
+    return CMS_TOKEN_ALLOWLIST.test(key) && typeof value === "string";
+}
+
+function safeCmsTokens(tokens?: Record<string, unknown> | null): Record<string, string> {
+    if (!tokens || typeof tokens !== "object") return {};
+    return Object.fromEntries(
+        Object.entries(tokens).filter(([key, value]) => isSafeCmsToken(key, value)),
+    ) as Record<string, string>;
+}
 
 export function useTheme() {
     return useContext(ThemeContext);
@@ -54,13 +53,15 @@ export const useFaroTheme = useTheme;
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
     const bootstrapTheme = usePublicBootstrap()?.theme ?? null;
     const [theme, setTheme] = useState<Theme>("light");
-    const [remoteTokens, setRemoteTokens] = useState<Record<string, string>>(bootstrapTheme?.tokens_json || {});
+    const [remoteTokens, setRemoteTokens] = useState<Record<string, string>>(
+        safeCmsTokens(bootstrapTheme?.tokens_json),
+    );
     const [hasManualOverride, setHasManualOverride] = useState(false);
 
     useEffect(() => {
         if (bootstrapTheme?.name || bootstrapTheme?.tokens_json) {
             if (bootstrapTheme.tokens_json) {
-                setRemoteTokens(bootstrapTheme.tokens_json);
+                setRemoteTokens(safeCmsTokens(bootstrapTheme.tokens_json));
             }
             if (!hasManualOverride) {
                 setTheme(inferThemeMode(bootstrapTheme.name, bootstrapTheme.tokens_json));
@@ -93,7 +94,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
                 if (bootstrapTheme?.name || bootstrapTheme?.tokens_json) return;
                 const row = await apiFetch<{ name?: string; tokens_json?: Record<string, string> }>(`/cms/v2/public/sites/${SITE_KEY}/theme`, { silent: true });
                 if (mounted && row?.tokens_json && typeof row.tokens_json === "object") {
-                    setRemoteTokens(row.tokens_json);
+                    setRemoteTokens(safeCmsTokens(row.tokens_json));
                 }
                 if (mounted && !hasManualOverride) {
                     setTheme(inferThemeMode(row?.name, row?.tokens_json));
@@ -144,7 +145,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     useEffect(() => {
         const root = document.documentElement;
         Object.entries(remoteTokens).forEach(([key, value]) => {
-            if (!CMS_TOKEN_ALLOWLIST.has(key) || typeof value !== "string") return;
+            if (!isSafeCmsToken(key, value)) return;
             root.style.setProperty(key, value);
         });
     }, [remoteTokens]);
