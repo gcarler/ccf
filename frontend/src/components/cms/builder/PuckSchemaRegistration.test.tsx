@@ -7,7 +7,7 @@ import type { Config } from "@puckeditor/core";
 
 // Mock dependencies for PuckBuilderPage
 vi.mock("next/navigation", () => ({
-  useSearchParams: () => new URLSearchParams("site=ccf&page=home"),
+  useSearchParams: () => new URLSearchParams("site=ccf&page=home&mode=visual"),
   useRouter: () => ({ push: vi.fn() }),
 }));
 
@@ -244,5 +244,4 @@ describe("Puck Block Schema Registrations for MediaPicker", () => {
     expect(screen.getAllByText("Sin imagen").length).toBeGreaterThan(0);
   });
 });
-
 

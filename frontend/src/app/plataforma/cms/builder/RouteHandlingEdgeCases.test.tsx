@@ -6,7 +6,7 @@ import * as cmsV2 from "@/lib/cms/v2";
 
 // ── Mocks ───────────────────────────────────────────────────────────────────
 
-let mockSearchParams: URLSearchParams | null = new URLSearchParams("site=ccf&page=home");
+let mockSearchParams: URLSearchParams | null = new URLSearchParams("site=ccf&page=home&mode=visual");
 const mockPush = vi.fn();
 
 vi.mock("next/navigation", () => ({
@@ -63,7 +63,7 @@ describe("CmsBuilderPage Route Handling & Edge Cases", () => {
   });
 
   it("uses fallback SITE_KEY ('ccf') when 'site' query parameter is missing", async () => {
-    mockSearchParams = new URLSearchParams("page=contacto");
+    mockSearchParams = new URLSearchParams("page=contacto&mode=visual");
 
     render(<CmsBuilderPage />);
 
@@ -92,7 +92,7 @@ describe("CmsBuilderPage Route Handling & Edge Cases", () => {
   });
 
   it("renders selection fallback when auth token is missing / null", async () => {
-    mockSearchParams = new URLSearchParams("site=ccf&page=home");
+    mockSearchParams = new URLSearchParams("site=ccf&page=home&mode=visual");
     mockAuth = { token: null, user: null };
 
     render(<CmsBuilderPage />);
@@ -101,7 +101,7 @@ describe("CmsBuilderPage Route Handling & Edge Cases", () => {
   });
 
   it("preserves custom site parameter in back navigation when provided", async () => {
-    mockSearchParams = new URLSearchParams("site=sede-sur&page=eventos");
+    mockSearchParams = new URLSearchParams("site=sede-sur&page=eventos&mode=visual");
 
     render(<CmsBuilderPage />);
 
@@ -114,7 +114,7 @@ describe("CmsBuilderPage Route Handling & Edge Cases", () => {
   });
 
   it("gracefully handles API errors during initial section and theme loading", async () => {
-    mockSearchParams = new URLSearchParams("site=ccf&page=home");
+    mockSearchParams = new URLSearchParams("site=ccf&page=home&mode=visual");
     vi.mocked(cmsV2.listCmsSections).mockRejectedValueOnce(new Error("Network Error"));
 
     render(<CmsBuilderPage />);
