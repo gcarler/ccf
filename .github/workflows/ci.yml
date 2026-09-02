@@ -23,6 +23,9 @@ jobs:
   backend-quality:
     name: Backend Quality Gate
     runs-on: ubuntu-latest
+    # The full non-CRM suite normally finishes in ~20–25 minutes. A bounded
+    # job prevents an orphaned xdist worker from occupying CI indefinitely.
+    timeout-minutes: 35
     env:
       # Los tests corren sobre SQLite en memoria (mismo comportamiento que
       # el entorno dev: tests/conftest.py cae a ``sqlite://`` con StaticPool).
@@ -85,7 +88,9 @@ jobs:
         #   (>15 min en Postgres serial) baja a ~2-4 min en SQLite paralelo.
         run: |
           rm -f .coverage .coverage.*
-          pytest tests/ -q -n auto --cov=backend --cov-report=xml --cov-report=term --cov-fail-under=$COV_THRESHOLD --ignore-glob='tests/test_crm_*.py'
+          pytest tests/ -q -n auto --timeout=300 --timeout-method=thread --durations=20 \
+            --cov=backend --cov-report=xml --cov-report=term --cov-fail-under=$COV_THRESHOLD \
+            --ignore-glob='tests/test_crm_*.py'
 
       - name: Upload coverage
         uses: codecov/codecov-action@v4

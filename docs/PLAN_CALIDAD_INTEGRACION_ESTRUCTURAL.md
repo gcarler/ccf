@@ -257,7 +257,11 @@ Academia. Falló por tres dependencias estructurales del proceso:
 - La ejecución oficial del PR sobre el SHA vigente continúa en curso. No se
   autoriza merge a `main` hasta obtener el resultado final y resolver los
   bloqueos reales.
-- [ ] Esperar el resultado completo del PR #13 y corregir únicamente fallos
+- La suite backend alcanzó 98% y quedó 45 minutos sin progreso; se canceló el
+  run para liberar workers huérfanos. El gate ahora incorpora `pytest-timeout`
+  (300 s por prueba) y límite de 35 minutos por job para producir un fallo
+  diagnóstico en lugar de quedar bloqueado indefinidamente.
+- [ ] Esperar el resultado completo del PR #29 y corregir únicamente fallos
   reproducibles.
 
 ### Secuencia obligatoria de integración
