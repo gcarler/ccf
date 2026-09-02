@@ -129,7 +129,16 @@ jobs:
           print(f"Selected {len(selected)} files for shard {shard}", file=sys.stderr)
           PY
           mapfile -t TEST_FILES < /tmp/test-files.txt
-          pytest -o addopts= "${TEST_FILES[@]}" -q -n auto --dist loadfile --cov=backend --cov-report=term
+          # El shard 13 contiene suites con estado global de ciclo de vida
+          # (clientes de prueba y workers asíncronos). En runners remotos
+          # xdist puede cerrar el proceso con código 1 aunque todas las
+          # pruebas terminen; aislarlo serialmente conserva cobertura y
+          # evita carreras entre workers. Los demás shards siguen paralelos.
+          if [ "$SHARD" -eq 13 ]; then
+            pytest -o addopts= "${TEST_FILES[@]}" -q -n 0 --cov=backend --cov-report=term
+          else
+            pytest -o addopts= "${TEST_FILES[@]}" -q -n auto --dist loadfile --cov=backend --cov-report=term
+          fi
 
       - name: Upload shard coverage
         uses: actions/upload-artifact@v4
