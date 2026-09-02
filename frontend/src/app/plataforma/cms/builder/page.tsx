@@ -298,13 +298,35 @@ export default function PuckBuilderPage() {
                 <MediaPickerField label="Imagen de Fondo" value={value} onChange={onChange} />
               )
             },
+            slides: {
+              type: "array",
+              label: "Imágenes del carrusel",
+              min: 0,
+              max: 12,
+              getItemSummary: (item: any, idx?: number) =>
+                item?.alt || item?.title || `Imagen #${(idx ?? 0) + 1}`,
+              defaultItemProps: { src: "", alt: "Imagen principal", title: "", caption: "", href: "" },
+              arrayFields: {
+                src: {
+                  type: "custom",
+                  label: "Imagen",
+                  render: ({ value, onChange }: any) => (
+                    <MediaPickerField label="Imagen del slide" value={value} onChange={onChange} />
+                  ),
+                },
+                alt: { type: "text", label: "Texto alternativo" },
+                title: { type: "text", label: "Título opcional" },
+                caption: { type: "text", label: "Descripción opcional" },
+                href: { type: "text", label: "Enlace opcional" },
+              },
+            },
           },
-          render: ({ title, body, cta_label, cta_href, bg_image }: any) => (
+          render: ({ title, body, cta_label, cta_href, bg_image, slides }: any) => (
             <section
               className="relative py-20 px-6 text-center bg-cover bg-center rounded-lg overflow-hidden my-4 border border-[var(--site-outline-variant,rgba(255,255,255,0.05))]"
               style={{
-                backgroundImage: bg_image 
-                  ? `linear-gradient(rgba(0,0,0,0.65), rgba(0,0,0,0.65)), url(${bg_image})` 
+                backgroundImage: bg_image || slides?.[0]?.src
+                  ? `linear-gradient(rgba(0,0,0,0.65), rgba(0,0,0,0.65)), url(${bg_image || slides?.[0]?.src})`
                   : "var(--site-cta-gradient, linear-gradient(135deg, #004581, #018abd))",
                 minHeight: "380px",
               }}
