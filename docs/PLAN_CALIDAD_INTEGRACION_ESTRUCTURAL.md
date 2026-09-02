@@ -261,6 +261,14 @@ Academia. Falló por tres dependencias estructurales del proceso:
   run para liberar workers huérfanos. El gate ahora incorpora `pytest-timeout`
   (300 s por prueba) y límite de 35 minutos por job para producir un fallo
   diagnóstico en lugar de quedar bloqueado indefinidamente.
+- Se corrigió la base activa `ccf_recovery_20260823` con respaldo previo
+  (`/root/backups/ccf_recovery_pre_cms_fix_20260902_222944.dump`): las secciones
+  `ccf/home` y `ccf/inicio` dejaron de apuntar al recurso eliminado de “Sedes”,
+  y `ccf/home` recuperó el canonical del dominio `ministerioselfaro.org`.
+  Se republicaron los snapshots como `home` v16 e `inicio` v3 y se invalidaron
+  16 entradas de caché pública.
+- Smoke público posterior a la corrección: `16 passed`, incluyendo todos los
+  endpoints CMS públicos y las rutas `/`, `/conocer-a-jesus` y `/privacidad`.
 - [ ] Esperar el resultado completo del PR #29 y corregir únicamente fallos
   reproducibles.
 
