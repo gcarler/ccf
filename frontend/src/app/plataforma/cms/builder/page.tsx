@@ -1383,6 +1383,35 @@ function contentLabel(key?: string): string {
   return CONTENT_LABELS[key] || key.replaceAll("_", " ").replace(/^./, (letter) => letter.toUpperCase());
 }
 
+type EditablePath = { path: string[]; value: string };
+
+function flattenEditableStrings(value: unknown, path: string[] = []): EditablePath[] {
+  if (typeof value === "string" && !path.some((part) => /(^|_)(href|url|src|image)$/i.test(part))) {
+    return [{ path, value }];
+  }
+  if (Array.isArray(value)) {
+    return value.flatMap((item, index) => flattenEditableStrings(item, [...path, String(index)]));
+  }
+  if (value && typeof value === "object") {
+    return Object.entries(value).flatMap(([key, child]) => flattenEditableStrings(child, [...path, key]));
+  }
+  return [];
+}
+
+function setNestedValue(source: Record<string, unknown>, path: string[], value: string): Record<string, unknown> {
+  if (path.length === 0) return source;
+  const next: Record<string, unknown> = Array.isArray(source) ? [...source] as unknown as Record<string, unknown> : { ...source };
+  const [head, ...tail] = path;
+  if (tail.length === 0) {
+    next[head] = value;
+    return next;
+  }
+  const child = next[head];
+  const childRecord = child && typeof child === "object" ? child as Record<string, unknown> : {};
+  next[head] = setNestedValue(childRecord, tail, value);
+  return next;
+}
+
 function PublicContentEditor({
   siteKey,
   pageSlug,
@@ -1400,29 +1429,28 @@ function PublicContentEditor({
   canPublish: boolean;
   onBack: () => void;
 }) {
-  const [drafts, setDrafts] = useState<Record<string, Record<string, string>>>({});
+  const [drafts, setDrafts] = useState<Record<string, Record<string, unknown>>>({});
   const [saving, setSaving] = useState(false);
   const [publishing, setPublishing] = useState(false);
 
   useEffect(() => {
     setDrafts(Object.fromEntries(sections.map((section) => [
       section.id,
-      Object.fromEntries(Object.entries(section.props_json || {}).filter(([, value]) => typeof value === "string")) as Record<string, string>,
+      section.props_json || {},
     ])));
   }, [sections]);
 
-  const textFields = (section: ContentSection) => {
-    const visibleEntries = Object.entries(drafts[section.id] || {})
-      .filter(([key]) => !key.endsWith("_href") && key !== "bg_image" && key !== "image_url")
-      .filter(([key]) => !(pageSlug === "home" && section.section_key === "hero" && !HOME_HERO_CONTENT_FIELDS.includes(key)));
+  const textFields = (section: ContentSection): EditablePath[] => {
+    const visibleEntries = flattenEditableStrings(drafts[section.id] || {})
+      .filter(({ path }) => !(pageSlug === "home" && section.section_key === "hero" && !HOME_HERO_CONTENT_FIELDS.includes(path[0])));
 
     if (pageSlug === "home" && section.section_key === "hero") {
       return visibleEntries.sort(
-        ([first], [second]) => HOME_HERO_CONTENT_FIELDS.indexOf(first) - HOME_HERO_CONTENT_FIELDS.indexOf(second),
+        ({ path: first }, { path: second }) => HOME_HERO_CONTENT_FIELDS.indexOf(first[0]) - HOME_HERO_CONTENT_FIELDS.indexOf(second[0]),
       );
     }
 
-    return visibleEntries.sort(([first], [second]) => (first === "eyebrow" ? -1 : second === "eyebrow" ? 1 : first.localeCompare(second)));
+    return visibleEntries.sort(({ path: first }, { path: second }) => (first[0] === "eyebrow" ? -1 : second[0] === "eyebrow" ? 1 : first.join(".").localeCompare(second.join("."))));
   };
 
   const saveDraft = async () => {
@@ -1430,7 +1458,7 @@ function PublicContentEditor({
     setSaving(true);
     try {
       await Promise.all(sections.map((section) => patchCmsSection(siteKey, pageSlug, section.id, {
-        props_json: { ...(section.props_json || {}), ...(drafts[section.id] || {}) },
+        props_json: drafts[section.id] || section.props_json || {},
       }, token)));
       toast.success("Contenido guardado como borrador");
     } catch {
@@ -1481,12 +1509,16 @@ function PublicContentEditor({
               {section.section_key === "hero" && <span className="rounded-full bg-info-soft px-2 py-1 text-2xs font-bold uppercase text-[hsl(var(--primary))]">Visible al inicio</span>}
             </div>
             <div className="grid gap-4 md:grid-cols-2">
-              {textFields(section).map(([key, value]) => (
-                <label key={key} className={key === "description" || key === "body" ? "md:col-span-2" : ""}>
-                  <span className="mb-1 block text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{contentLabel(key)}</span>
-                  {value.length > 100 || key === "description" || key === "body" ? <textarea value={value} onChange={(event) => setDrafts((current) => ({ ...current, [section.id]: { ...current[section.id], [key]: event.target.value } }))} rows={4} disabled={!canEdit} className="w-full rounded-lg border border-[hsl(var(--border))] bg-transparent px-3 py-2 text-sm disabled:opacity-60" /> : <input value={value} onChange={(event) => setDrafts((current) => ({ ...current, [section.id]: { ...current[section.id], [key]: event.target.value } }))} disabled={!canEdit} className="w-full rounded-lg border border-[hsl(var(--border))] bg-transparent px-3 py-2 text-sm disabled:opacity-60" />}
+              {textFields(section).map(({ path, value }) => {
+                const key = path[path.length - 1];
+                const fieldKey = path.join(".");
+                return (
+                <label key={fieldKey} className={value.length > 100 || key === "description" || key === "body" ? "md:col-span-2" : ""}>
+                  <span className="mb-1 block text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{contentLabel(key)} <span className="font-normal normal-case opacity-60">({fieldKey})</span></span>
+                  {value.length > 100 || key === "description" || key === "body" ? <textarea value={value} onChange={(event) => setDrafts((current) => ({ ...current, [section.id]: setNestedValue(current[section.id] || {}, path, event.target.value) }))} rows={4} disabled={!canEdit} className="w-full rounded-lg border border-[hsl(var(--border))] bg-transparent px-3 py-2 text-sm disabled:opacity-60" /> : <input value={value} onChange={(event) => setDrafts((current) => ({ ...current, [section.id]: setNestedValue(current[section.id] || {}, path, event.target.value) }))} disabled={!canEdit} className="w-full rounded-lg border border-[hsl(var(--border))] bg-transparent px-3 py-2 text-sm disabled:opacity-60" />}
                 </label>
-              ))}
+                );
+              })}
             </div>
           </section>
         ))}
