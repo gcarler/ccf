@@ -48,7 +48,7 @@ function isValidCssToken(key: string): boolean {
     return (
         key.startsWith("--site-") ||
         key.startsWith("--cms-") ||
-        CMS_TOKEN_ALLOWLIST.has(key)
+        CMS_TOKEN_ALLOWLIST.test(key)
     ) && /^[a-zA-Z0-9\-_]+$/.test(key);
 }
 
