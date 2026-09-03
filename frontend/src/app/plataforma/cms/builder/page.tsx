@@ -1457,6 +1457,29 @@ function setNestedValue(source: Record<string, unknown>, path: string[], value: 
   return next;
 }
 
+// ── Agrupación de campos por categoría dentro del editor ─────────────────────
+// Evita que secciones como "feed" muestren 20 campos sin contexto.
+// Cada grupo tiene un label visible y los prefijos de campo que contiene.
+const SECTION_FIELD_GROUPS: Record<string, Array<{ label: string; emoji: string; prefixes: string[] }>> = {
+  feed: [
+    { label: "Presentación", emoji: "🏠", prefixes: ["eyebrow", "section_title", "section_description", "scroll_indicator", "featured_card", "cards"] },
+    { label: "Actividades recientes", emoji: "📅", prefixes: ["activities_"] },
+    { label: "Boletín semanal", emoji: "📧", prefixes: ["newsletter_"] },
+  ],
+};
+
+function getFieldGroup(sectionType: string, fieldKey: string): string | null {
+  const groups = SECTION_FIELD_GROUPS[sectionType];
+  if (!groups) return null;
+  for (const group of groups) {
+    if (group.prefixes.some((p) => fieldKey === p || fieldKey.startsWith(p))) {
+      return group.label;
+    }
+  }
+  return null;
+}
+
+
 function PublicContentEditor({
   siteKey,
   pageSlug,
@@ -1683,18 +1706,84 @@ function PublicContentEditor({
             )}
 
             {/* ── Campos de texto ─────────────────────────────────────── */}
-            <div className="grid gap-4 md:grid-cols-2">
-              {textFields(section).map(({ path, value }) => {
-                const key = path[path.length - 1];
-                const fieldKey = path.join(".");
+            {(() => {
+              const fields = textFields(section);
+              const groups = SECTION_FIELD_GROUPS[section.type];
+              if (!groups) {
+                // Sin agrupación — render plano
                 return (
-                <label key={fieldKey} className={value.length > 100 || key === "description" || key === "body" ? "md:col-span-2" : ""}>
-                  <span className="mb-1 block text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{contentLabel(key)} <span className="font-normal normal-case opacity-60">({fieldKey})</span></span>
-                  {value.length > 100 || key === "description" || key === "body" ? <textarea value={value} onChange={(event) => setDrafts((current) => ({ ...current, [section.id]: setNestedValue(current[section.id] || {}, path, event.target.value) }))} rows={4} disabled={!canEdit} className="w-full rounded-lg border border-[hsl(var(--border))] bg-transparent px-3 py-2 text-sm disabled:opacity-60" /> : <input value={value} onChange={(event) => setDrafts((current) => ({ ...current, [section.id]: setNestedValue(current[section.id] || {}, path, event.target.value) }))} disabled={!canEdit} className="w-full rounded-lg border border-[hsl(var(--border))] bg-transparent px-3 py-2 text-sm disabled:opacity-60" />}
-                </label>
+                  <div className="grid gap-4 md:grid-cols-2">
+                    {fields.map(({ path, value }) => {
+                      const key = path[path.length - 1];
+                      const fieldKey = path.join(".");
+                      return (
+                        <label key={fieldKey} className={value.length > 100 || key === "description" || key === "body" ? "md:col-span-2" : ""}>
+                          <span className="mb-1 block text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{contentLabel(key)}</span>
+                          {value.length > 100 || key === "description" || key === "body"
+                            ? <textarea value={value} onChange={(e) => setDrafts((c) => ({ ...c, [section.id]: setNestedValue(c[section.id] || {}, path, e.target.value) }))} rows={4} disabled={!canEdit} className="w-full rounded-lg border border-[hsl(var(--border))] bg-transparent px-3 py-2 text-sm disabled:opacity-60" />
+                            : <input value={value} onChange={(e) => setDrafts((c) => ({ ...c, [section.id]: setNestedValue(c[section.id] || {}, path, e.target.value) }))} disabled={!canEdit} className="w-full rounded-lg border border-[hsl(var(--border))] bg-transparent px-3 py-2 text-sm disabled:opacity-60" />}
+                        </label>
+                      );
+                    })}
+                  </div>
                 );
-              })}
-            </div>
+              }
+              // Con agrupación — agrupar campos por categoría
+              return (
+                <div className="space-y-6">
+                  {groups.map((group) => {
+                    const groupFields = fields.filter(({ path }) => {
+                      const key = path.join(".");
+                      return group.prefixes.some((p) => key === p || key.startsWith(p));
+                    });
+                    if (groupFields.length === 0) return null;
+                    return (
+                      <div key={group.label}>
+                        <div className="mb-3 flex items-center gap-2 border-b border-[hsl(var(--border))] pb-2">
+                          <span className="text-base">{group.emoji}</span>
+                          <span className="text-xs font-bold uppercase tracking-wider text-[hsl(var(--text-secondary))]">{group.label}</span>
+                        </div>
+                        <div className="grid gap-4 md:grid-cols-2">
+                          {groupFields.map(({ path, value }) => {
+                            const key = path[path.length - 1];
+                            const fieldKey = path.join(".");
+                            return (
+                              <label key={fieldKey} className={value.length > 100 || key === "description" || key === "body" ? "md:col-span-2" : ""}>
+                                <span className="mb-1 block text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{contentLabel(key)}</span>
+                                {value.length > 100 || key === "description" || key === "body"
+                                  ? <textarea value={value} onChange={(e) => setDrafts((c) => ({ ...c, [section.id]: setNestedValue(c[section.id] || {}, path, e.target.value) }))} rows={4} disabled={!canEdit} className="w-full rounded-lg border border-[hsl(var(--border))] bg-transparent px-3 py-2 text-sm disabled:opacity-60" />
+                                  : <input value={value} onChange={(e) => setDrafts((c) => ({ ...c, [section.id]: setNestedValue(c[section.id] || {}, path, e.target.value) }))} disabled={!canEdit} className="w-full rounded-lg border border-[hsl(var(--border))] bg-transparent px-3 py-2 text-sm disabled:opacity-60" />}
+                              </label>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    );
+                  })}
+                  {/* Campos sin grupo asignado */}
+                  {(() => {
+                    const ungrouped = fields.filter(({ path }) => getFieldGroup(section.type, path.join(".")) === null);
+                    if (ungrouped.length === 0) return null;
+                    return (
+                      <div className="grid gap-4 md:grid-cols-2">
+                        {ungrouped.map(({ path, value }) => {
+                          const key = path[path.length - 1];
+                          const fieldKey = path.join(".");
+                          return (
+                            <label key={fieldKey} className={value.length > 100 || key === "description" || key === "body" ? "md:col-span-2" : ""}>
+                              <span className="mb-1 block text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{contentLabel(key)}</span>
+                              {value.length > 100 || key === "description" || key === "body"
+                                ? <textarea value={value} onChange={(e) => setDrafts((c) => ({ ...c, [section.id]: setNestedValue(c[section.id] || {}, path, e.target.value) }))} rows={4} disabled={!canEdit} className="w-full rounded-lg border border-[hsl(var(--border))] bg-transparent px-3 py-2 text-sm disabled:opacity-60" />
+                                : <input value={value} onChange={(e) => setDrafts((c) => ({ ...c, [section.id]: setNestedValue(c[section.id] || {}, path, e.target.value) }))} disabled={!canEdit} className="w-full rounded-lg border border-[hsl(var(--border))] bg-transparent px-3 py-2 text-sm disabled:opacity-60" />}
+                            </label>
+                          );
+                        })}
+                      </div>
+                    );
+                  })()}
+                </div>
+              );
+            })()}
           </section>
         ))}
       </div>
