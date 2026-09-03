@@ -125,6 +125,23 @@ export default function PuckBuilderPage() {
   const visualMode = searchParams?.get("mode") === "visual";
   const heroMediaMode = searchParams?.get("mode") === "hero-media";
 
+  // Pages fully managed by platform — block builder access entirely
+  const PLATFORM_MANAGED_SLUGS = new Set(["sermons"]);
+
+  // Pages where only the hero/banner is editable from CMS
+  const PLATFORM_PARTIAL_SLUGS = new Set(["events", "courses"]);
+
+  const isPlatformManaged = pageSlug ? PLATFORM_MANAGED_SLUGS.has(pageSlug) : false;
+  const isPlatformPartial = pageSlug ? PLATFORM_PARTIAL_SLUGS.has(pageSlug) : false;
+
+  useEffect(() => {
+    if (isPlatformManaged) {
+      toast.error(`La página "${pageSlug}" es gestionada por la plataforma y no se puede editar desde el CMS.`);
+      router.replace("/plataforma/cms/pages");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isPlatformManaged, router]);
+
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [initialData, setInitialData] = useState<{ content: any[] }>({ content: [] });
@@ -194,6 +211,7 @@ export default function PuckBuilderPage() {
               ? (sec.props_json || {})
               : serializeJsonProps(sec.props_json || {})),
             id: sec.id, // Store database ID in Puck block properties
+            section_key: sec.section_key || sec.type,
           },
         }));
 
@@ -1022,6 +1040,17 @@ export default function PuckBuilderPage() {
               ? { ...(existingSection.props_json || {}), ...deserializedProps }
               : deserializedProps;
 
+          const sectionKey = (item.props as Record<string, unknown>)?.section_key as string || existingSection?.section_key || item.type;
+          if (cleanProps.title && !cleanProps.title_lead) {
+            cleanProps.title_lead = cleanProps.title;
+          }
+          if (cleanProps.body && !cleanProps.description) {
+            cleanProps.description = cleanProps.body;
+          }
+          if (cleanProps.cta_label && !cleanProps.primary_cta) {
+            cleanProps.primary_cta = cleanProps.cta_label;
+          }
+
           if (id && existingSection) {
             // Exists in DB: Update sort_order and props_json
             activeIdsInPuck.add(id);
@@ -1029,7 +1058,7 @@ export default function PuckBuilderPage() {
               siteKey,
               pageSlug,
               id,
-              { sort_order: i, props_json: cleanProps },
+              { sort_order: i, props_json: cleanProps, section_key: sectionKey },
               token
             );
           } else {
@@ -1037,7 +1066,7 @@ export default function PuckBuilderPage() {
             const created = await createCmsSection(
               siteKey,
               pageSlug,
-              { type: item.type, sort_order: i, props_json: cleanProps },
+              { type: item.type, section_key: sectionKey, sort_order: i, props_json: cleanProps },
               token
             );
             if (created?.id) {
@@ -1045,8 +1074,9 @@ export default function PuckBuilderPage() {
               // Patch in-memory id so next edits track it correctly
               if (item.props) {
                 item.props.id = created.id;
+                item.props.section_key = sectionKey;
               } else {
-                item.props = { id: created.id };
+                item.props = { id: created.id, section_key: sectionKey };
               }
             }
           }
@@ -1305,6 +1335,19 @@ export default function PuckBuilderPage() {
           </button>
         </div>
       </div>
+
+      {/* Platform partial notice */}
+      {isPlatformPartial && (
+        <div className="flex items-center gap-3 px-4 py-2.5 bg-amber-500/10 border-b border-amber-500/20 text-amber-700 dark:text-amber-400 text-xs font-medium shrink-0">
+          <span className="text-lg">⚠️</span>
+          <span>
+            <strong>Solo puedes editar el banner (textos e imágenes).</strong>{" "}
+            {pageSlug === "events"
+              ? "Los eventos se gestionan desde el módulo de Evangelismo → Agenda."
+              : "Los cursos se gestionan desde el módulo Academia."}
+          </span>
+        </div>
+      )}
 
       {/* Editor Frame */}
       <div className="flex-1 overflow-hidden relative">

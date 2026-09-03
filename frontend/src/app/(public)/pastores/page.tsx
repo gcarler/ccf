@@ -63,7 +63,8 @@ export default function PastoresIndexPage() {
         }
         // Fallback: read from CMS content block
         const pastorsCms = page?.blocks?.pastors;
-        const list = (pastorsCms as unknown as { pastors?: CmsPastor[] } | null)?.pastors;
+        const rawList = (pastorsCms as unknown as { pastors?: CmsPastor[]; items?: CmsPastor[]; parsed?: { items?: CmsPastor[]; pastors?: CmsPastor[] } } | null);
+        const list = rawList?.items || rawList?.pastors || rawList?.parsed?.items || rawList?.parsed?.pastors || [];
         return Array.isArray(list) ? list : [];
     }, [apiPastors, page]);
     const heroBadge = typeof feedContent?.hero_badge === "string" ? feedContent.hero_badge : "";

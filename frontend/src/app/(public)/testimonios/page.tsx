@@ -188,6 +188,7 @@ export default function TestimoniosPage() {
     const storyCta = typeof feed.cta_label === "string" ? feed.cta_label : "";
     const ctaTitle = typeof feed.cta_title === "string" ? feed.cta_title : "";
     const ctaDescription = typeof feed.cta_description === "string" ? feed.cta_description : "";
+    const ctaHref = typeof feed.cta_href === "string" && feed.cta_href ? feed.cta_href : "/conocer-a-jesus";
 
     const hasHero = heroTitleLead || heroTitleAccent || heroDescription || heroEyebrow;
     const hasCtaBanner = ctaTitle || ctaDescription || storyCta;
@@ -280,7 +281,7 @@ export default function TestimoniosPage() {
                             </div>
                             {storyCta && (
                                 <Link
-                                    href="/conocer-a-jesus"
+                                    href={ctaHref}
                                     className="ccf-button w-full justify-center md:w-auto"
                                     style={{
                                         background: "var(--site-primary)",

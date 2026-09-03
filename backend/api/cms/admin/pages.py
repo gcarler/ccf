@@ -120,6 +120,23 @@ def patch_page(
         raise CmsValidationError("expires_at must be >= publish_at", error_code="invalid_expires_at")
     site = _get_scoped_site_or_404(db, site_key, current_user)
     row = _get_page_or_404(db, site.id, slug)
+    if payload.slug is not None:
+        normalized_slug = _slugify(payload.slug)
+        if not normalized_slug:
+            raise CmsValidationError("Invalid slug", error_code="invalid_slug")
+        payload.slug = normalized_slug
+        collision = (
+            db.query(models.CmsPage)
+            .filter(
+                models.CmsPage.site_id == site.id,
+                models.CmsPage.slug == normalized_slug,
+                models.CmsPage.id != row.id,
+                models.CmsPage.deleted_at.is_(None),
+            )
+            .first()
+        )
+        if collision:
+            raise SlugAlreadyExistsError("Slug already exists on this site")
     updated = crud.update_cms_page(db, row, payload, current_user.id)
     if payload.publish_at is not None:
         wf = PageWorkflowService(db)

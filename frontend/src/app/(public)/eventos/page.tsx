@@ -74,26 +74,39 @@ export default function EventosPage() {
 
     const hasHero = Boolean(heroTitle || heroDescription || heroEyebrow);
 
-    const parsedEvents = useMemo(
-        () =>
-            Array.isArray(eventsContent?.parsed)
-                ? (eventsContent?.parsed as PublicEventItem[]).filter((event) => event.status !== "archived")
-                : [],
-        [eventsContent?.parsed],
-    );
-    const heroSlides = useMemo(
-        () =>
-            parsedEvents
-                .filter((event) => Boolean(event.img))
-                .slice(0, 4)
-                .map((event) => ({
-                    src: String(event.img),
-                    alt: event.title || "Evento",
-                    title: event.title || undefined,
-                    caption: event.location || event.category || undefined,
-                })),
-        [parsedEvents],
-    );
+    const parsedEvents = useMemo(() => {
+        const raw = eventsContent?.parsed ?? heroPage?.blocks?.events?.parsed ?? heroPage?.blocks?.events;
+        const list = Array.isArray(raw)
+            ? raw
+            : Array.isArray((raw as Record<string, unknown>)?.items)
+            ? (raw as Record<string, unknown>).items
+            : [];
+        return (list as PublicEventItem[]).filter((event) => event.status !== "archived");
+    }, [eventsContent, heroPage]);
+
+    const heroSlides = useMemo(() => {
+        const eventSlides = parsedEvents
+            .filter((event) => Boolean(event.img))
+            .slice(0, 4)
+            .map((event) => ({
+                src: String(event.img),
+                alt: event.title || "Evento",
+                title: event.title || undefined,
+                caption: event.location || event.category || undefined,
+            }));
+        if (eventSlides.length > 0) return eventSlides;
+        if (Array.isArray(heroContent?.slides) && (heroContent.slides as unknown[]).length > 0) {
+            return (heroContent.slides as Array<{ src?: string; alt?: string; title?: string; caption?: string }>)
+                .filter((s) => s && typeof s.src === "string")
+                .map((s) => ({
+                    src: s.src!,
+                    alt: s.alt || heroTitle || "Evento",
+                    title: s.title,
+                    caption: s.caption,
+                }));
+        }
+        return [];
+    }, [parsedEvents, heroContent, heroTitle]);
 
     const filteredEvents = useMemo(() => {
         if (activeFilter === "Todos") return parsedEvents;

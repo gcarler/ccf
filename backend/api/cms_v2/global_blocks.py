@@ -125,6 +125,7 @@ def patch_global_block(
         db.query(models.CmsSection)
         .join(models.CmsPage, models.CmsSection.page_id == models.CmsPage.id)
         .filter(
+            models.CmsPage.site_id == site.id,
             models.CmsSection.id == section_id,
             models.CmsPage.site_id == site.id,
             models.CmsSection.is_global,
@@ -173,6 +174,7 @@ def delete_global_block(
         db.query(models.CmsSection)
         .join(models.CmsPage, models.CmsSection.page_id == models.CmsPage.id)
         .filter(
+            models.CmsPage.site_id == site.id,
             models.CmsSection.id == section_id,
             models.CmsPage.site_id == site.id,
             models.CmsSection.is_global,

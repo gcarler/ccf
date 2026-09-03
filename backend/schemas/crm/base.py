@@ -1149,11 +1149,24 @@ class CaseCall(BaseModel):
 class CasoCreate(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    persona_id: UUID
+    # persona_id es opcional: sin él, el endpoint crea la Persona a partir de
+    # los datos de contacto (flujo "Nuevo Prospecto" del pipeline CRM).
+    persona_id: Optional[UUID] = None
+    first_name: Optional[str] = Field(default=None, max_length=100)
+    last_name: Optional[str] = Field(default=None, max_length=100)
+    phone: Optional[str] = Field(default=None, max_length=40)
+    email: Optional[str] = Field(default=None, max_length=255)
+    spiritual_status: Optional[str] = Field(default=None, max_length=50)
     stage: str = "new"
     source: Optional[str] = None
     source_campaign: Optional[str] = None
     notes: Optional[str] = None
+
+    @model_validator(mode="after")
+    def require_target(self) -> "CasoCreate":
+        if self.persona_id is None and not (self.first_name or self.phone):
+            raise ValueError("persona_id or first_name/phone is required")
+        return self
 
 
 class MessagingSend(BaseModel):
