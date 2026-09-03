@@ -1528,6 +1528,34 @@ function PublicContentEditor({
     }
   };
 
+  // ── Inline image editing ───────────────────────────────────────────────────
+  const [mediaOpen, setMediaOpen] = useState(false);
+  const [mediaTarget, setMediaTarget] = useState<{ sectionId: string; field: string; slideIndex?: number } | null>(null);
+
+  const openMediaPicker = (sectionId: string, field: string, slideIndex?: number) => {
+    setMediaTarget({ sectionId, field, slideIndex });
+    setMediaOpen(true);
+  };
+
+  const onMediaSelect = (item: { url: string }) => {
+    if (!mediaTarget) return;
+    const url = item.url || "";
+    const { sectionId, field, slideIndex } = mediaTarget;
+    setDrafts((current) => {
+      const props = { ...(current[sectionId] || {}) };
+      if (field === "bg_image") {
+        props.bg_image = url;
+      } else if (field === "slides" && typeof slideIndex === "number") {
+        const slides = Array.isArray(props.slides) ? [...props.slides as Record<string, unknown>[]] : [];
+        slides[slideIndex] = { ...(slides[slideIndex] as Record<string, unknown> || {}), src: url };
+        props.slides = slides;
+      }
+      return { ...current, [sectionId]: props };
+    });
+    setMediaOpen(false);
+    setMediaTarget(null);
+  };
+
   return (
     <main className="min-h-screen bg-[hsl(var(--bg-primary))] text-[hsl(var(--text-primary))] dark:bg-[hsl(var(--admin-bg-deep))]">
       <header className="sticky top-0 z-20 flex items-center justify-between gap-4 border-b border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))]/95 px-4 py-3 backdrop-blur dark:border-white/10 dark:bg-[hsl(var(--surface-2))]/95">
@@ -1545,7 +1573,7 @@ function PublicContentEditor({
       </header>
       <div className="mx-auto max-w-4xl space-y-4 px-4 py-6">
         <div className="rounded-xl border border-[hsl(var(--info)/30%)] bg-info-soft/30 px-4 py-3 text-sm text-[hsl(var(--text-secondary))]">
-          Aquí editas las palabras que lee el visitante. Los cambios se guardan como borrador; usa Publicar para hacerlos visibles.
+          Aquí editas los textos y las imágenes de cada sección. Guarda como borrador o publica directamente.
         </div>
         {[...sections].sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0)).map((section) => (
           <section key={section.id} className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-4 shadow-sm dark:border-white/10 dark:bg-white/[0.03]">
@@ -1553,6 +1581,108 @@ function PublicContentEditor({
               <div><h2 className="font-bold">{section.section_key === "hero" ? "Hero principal" : contentLabel(section.section_key)}</h2><p className="text-2xs text-[hsl(var(--text-secondary))]">{section.type}</p></div>
               {section.section_key === "hero" && <span className="rounded-full bg-info-soft px-2 py-1 text-2xs font-bold uppercase text-[hsl(var(--primary))]">Visible al inicio</span>}
             </div>
+
+            {/* ── Imagen de fondo ─────────────────────────────────────── */}
+            {"bg_image" in (drafts[section.id] || section.props_json || {}) && (
+              <div className="mb-6">
+                <p className="mb-2 text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Imagen de fondo</p>
+                <div className="flex items-center gap-3">
+                  {(drafts[section.id]?.bg_image as string) ? (
+                    <div className="relative h-20 w-32 overflow-hidden rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))]">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={drafts[section.id]?.bg_image as string} alt="Fondo" className="h-full w-full object-cover" />
+                    </div>
+                  ) : (
+                    <div className="flex h-20 w-32 items-center justify-center rounded-lg border-2 border-dashed border-[hsl(var(--border))] bg-[hsl(var(--surface-2))]">
+                      <ImageIcon size={20} className="opacity-40" />
+                    </div>
+                  )}
+                  <div className="flex flex-col gap-2">
+                    <button
+                      type="button"
+                      disabled={!canEdit}
+                      onClick={() => openMediaPicker(section.id, "bg_image")}
+                      className="rounded-lg border border-[hsl(var(--border))] px-3 py-2 text-xs font-semibold hover:bg-[hsl(var(--surface-2))] disabled:opacity-50"
+                    >
+                      <ImageIcon className="mr-1.5 inline" size={13} />
+                      {(drafts[section.id]?.bg_image as string) ? "Cambiar imagen" : "Elegir imagen"}
+                    </button>
+                    {(drafts[section.id]?.bg_image as string) && (
+                      <button
+                        type="button"
+                        disabled={!canEdit}
+                        onClick={() => setDrafts((c) => ({ ...c, [section.id]: { ...c[section.id], bg_image: "" } }))}
+                        className="rounded-lg border border-[hsl(var(--danger)/30%)] px-3 py-2 text-xs font-semibold text-danger-text disabled:opacity-50"
+                      >
+                        <Trash2 className="mr-1.5 inline" size={13} />Quitar imagen
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* ── Carrusel de slides ───────────────────────────────────── */}
+            {Array.isArray((drafts[section.id] || section.props_json || {} as Record<string,unknown>).slides) && (
+              <div className="mb-6">
+                <div className="mb-2 flex items-center justify-between">
+                  <p className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
+                    Imágenes del carrusel ({((drafts[section.id]?.slides as unknown[]) || []).length})
+                  </p>
+                  <button
+                    type="button"
+                    disabled={!canEdit || ((drafts[section.id]?.slides as unknown[]) || []).length >= 12}
+                    onClick={() => setDrafts((c) => ({ ...c, [section.id]: { ...c[section.id], slides: [...(c[section.id]?.slides as unknown[] || []), { src: "", alt: "Imagen del hero", title: "", caption: "", href: "" }] } }))}
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-[hsl(var(--border))] px-3 py-1.5 text-xs font-semibold disabled:opacity-50"
+                  >
+                    <Plus size={13} />Agregar imagen
+                  </button>
+                </div>
+                <div className="space-y-3">
+                  {((drafts[section.id]?.slides || []) as Record<string, unknown>[]).map((slide, index) => (
+                    <div key={index} className="flex items-center gap-3 rounded-lg border border-[hsl(var(--border))] p-3">
+                      <div className="relative h-16 w-24 shrink-0 overflow-hidden rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))]">
+                        {slide.src ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={slide.src as string} alt={(slide.alt as string) || `Imagen ${index + 1}`} className="h-full w-full object-cover" />
+                        ) : (
+                          <div className="flex h-full w-full items-center justify-center"><ImageIcon size={16} className="opacity-40" /></div>
+                        )}
+                      </div>
+                      <div className="flex flex-1 flex-col gap-1.5">
+                        <div className="flex gap-2">
+                          <button
+                            type="button"
+                            disabled={!canEdit}
+                            onClick={() => openMediaPicker(section.id, "slides", index)}
+                            className="rounded-lg border border-[hsl(var(--border))] px-3 py-1.5 text-xs font-semibold hover:bg-[hsl(var(--surface-2))] disabled:opacity-50"
+                          >
+                            <ImageIcon className="mr-1 inline" size={12} />{slide.src ? "Cambiar" : "Elegir imagen"}
+                          </button>
+                          <button
+                            type="button"
+                            disabled={!canEdit}
+                            onClick={() => setDrafts((c) => ({ ...c, [section.id]: { ...c[section.id], slides: (c[section.id]?.slides as unknown[]).filter((_, i) => i !== index) } }))}
+                            className="rounded-lg border border-[hsl(var(--danger)/30%)] px-3 py-1.5 text-xs font-semibold text-danger-text disabled:opacity-50"
+                          >
+                            <Trash2 className="mr-1 inline" size={12} />Quitar
+                          </button>
+                        </div>
+                        <input
+                          value={(slide.alt as string) || ""}
+                          onChange={(e) => setDrafts((c) => ({ ...c, [section.id]: { ...c[section.id], slides: (c[section.id]?.slides as Record<string,unknown>[]).map((s, i) => i === index ? { ...s, alt: e.target.value } : s) } }))}
+                          disabled={!canEdit}
+                          placeholder="Texto alternativo (accesibilidad)"
+                          className="rounded-lg border border-[hsl(var(--border))] bg-transparent px-3 py-1.5 text-xs disabled:opacity-60"
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* ── Campos de texto ─────────────────────────────────────── */}
             <div className="grid gap-4 md:grid-cols-2">
               {textFields(section).map(({ path, value }) => {
                 const key = path[path.length - 1];
@@ -1568,6 +1698,16 @@ function PublicContentEditor({
           </section>
         ))}
       </div>
+
+      {/* Media picker modal */}
+      {mediaOpen && (
+        <MediaPicker
+          open={mediaOpen}
+          onClose={() => { setMediaOpen(false); setMediaTarget(null); }}
+          onSelect={onMediaSelect}
+          token={token}
+        />
+      )}
     </main>
   );
 }
