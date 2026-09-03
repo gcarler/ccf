@@ -56,8 +56,10 @@ CANONICAL_KEYS = frozenset(
         "ccf_locations_hero",
         "ccf_locations_feed",
         "ccf_nav_items",
+        "ccf_home_discover_cta",  # Bloque CTA "Conocer a Jesús" en la home — agregado 2026-09-03
     }
 )
+
 
 # The only block whose ``content`` is a list instead of a dict.
 CONTENT_IS_LIST = frozenset({"ccf_locations_feed"})
@@ -65,8 +67,8 @@ CONTENT_IS_LIST = frozenset({"ccf_locations_feed"})
 
 class TestCanonicalCatalogKeys:
     def test_exactly_25_keys(self):
-        """The catalog is frozen at 25 keys — adding one is a deliberate act."""
-        assert len(BLOCKS) == 25
+        """El catálogo tiene ahora 26 claves — ccf_home_discover_cta fue agregado deliberadamente 2026-09-03."""
+        assert len(BLOCKS) == 26
         assert set(BLOCKS) == CANONICAL_KEYS
 
     def test_all_keys_use_ccf_prefix(self):

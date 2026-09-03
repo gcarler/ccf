@@ -918,12 +918,13 @@ def test_sign_request_decline(client, db_session):
     """Decline a sign request (L828-832)."""
     headers = _admin_client(client, db_session)
 
+    # El firmante debe ser el propio usuario autenticado para pasar la validación de identidad
     resp = client.post(
         "/api/finance-suite/sign-requests",
         json={
             "title": "To decline",
             "document_url": "https://test.com/doc.pdf",
-            "signers": [{"email": "decliner@test.com", "full_name": "Decliner"}],
+            "signers": [{"email": "admin@example.com", "full_name": "Admin Decliner"}],
         },
         headers=headers,
     )
@@ -933,7 +934,7 @@ def test_sign_request_decline(client, db_session):
     # Send
     client.post(f"/api/finance-suite/sign-requests/{req_id}/send", headers=headers)
 
-    # Decline
+    # Decline — el admin firma su propia solicitud
     resp2 = client.post(
         f"/api/finance-suite/sign-requests/{req_id}/signers/{signer_id}/sign",
         json={"action": "decline"},

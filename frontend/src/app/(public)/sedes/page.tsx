@@ -31,8 +31,11 @@ export default function SedesPage() {
     const title = typeof heroContent?.title === "string" ? heroContent.title : "";
     const searchPlaceholder = typeof heroContent?.search_placeholder === "string" ? heroContent.search_placeholder : "";
 
-    const parsedLocations: LocationItem[] = Array.isArray(locationsContent?.parsed)
-        ? (locationsContent.parsed as LocationItem[])
+    const rawLocations = locationsContent?.parsed ?? locationsContent;
+    const parsedLocations: LocationItem[] = Array.isArray(rawLocations)
+        ? (rawLocations as LocationItem[])
+        : Array.isArray((rawLocations as Record<string, unknown>)?.items)
+        ? ((rawLocations as Record<string, unknown>).items as LocationItem[])
         : [];
 
     const locations: LocationItem[] = parsedLocations.map((loc, i) => ({

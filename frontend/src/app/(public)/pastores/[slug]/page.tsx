@@ -98,9 +98,10 @@ export default function PastorDetailPage() {
             } satisfies CmsPastor;
         }
 
-        const list = (pastorsCms as unknown as { pastors?: CmsPastor[] } | null)?.pastors;
+        const rawList = (pastorsCms as unknown as { pastors?: CmsPastor[]; items?: CmsPastor[]; parsed?: { items?: CmsPastor[]; pastors?: CmsPastor[] } } | null);
+        const list = rawList?.items || rawList?.pastors || rawList?.parsed?.items || rawList?.parsed?.pastors || [];
         if (!Array.isArray(list)) return null;
-        return list.find(p => p.slug === slug) || null;
+        return list.find(p => p.slug === slug || p.slug?.replace(/-gutierrez|-herrera/g, '') === slug?.replace(/-gutierrez|-herrera/g, '')) || null;
     }, [apiPastors, pastorsCms, slug]);
 
     if (apiLoading && !pastor) {

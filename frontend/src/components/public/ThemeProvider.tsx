@@ -45,6 +45,14 @@ const CMS_TOKEN_ALLOWLIST = new Set([
     "--site-header-close-menu-label",
 ]);
 
+function isValidCssToken(key: string): boolean {
+    return (
+        key.startsWith("--site-") ||
+        key.startsWith("--cms-") ||
+        CMS_TOKEN_ALLOWLIST.has(key)
+    ) && /^[a-zA-Z0-9\-_]+$/.test(key);
+}
+
 export function useTheme() {
     return useContext(ThemeContext);
 }
@@ -144,8 +152,9 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     useEffect(() => {
         const root = document.documentElement;
         Object.entries(remoteTokens).forEach(([key, value]) => {
-            if (!CMS_TOKEN_ALLOWLIST.has(key) || typeof value !== "string") return;
-            root.style.setProperty(key, value);
+            const cssKey = key.startsWith("--") ? key : `--site-${key}`;
+            if (!isValidCssToken(cssKey) || typeof value !== "string") return;
+            root.style.setProperty(cssKey, value);
         });
     }, [remoteTokens]);
 

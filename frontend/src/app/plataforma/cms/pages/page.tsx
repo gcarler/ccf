@@ -78,10 +78,19 @@ export default function CmsPagesManagement() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token, siteKey]);
 
+  // Pages fully managed by platform modules — hidden from CMS admin entirely.
+  // Sermons content comes from YouTube and cannot be managed from here.
+  const PLATFORM_MANAGED_SLUGS = new Set(["sermons"]);
+
+  // Pages where only the hero/banner (texts & images) is editable from CMS.
+  // The actual content (events list, courses grid) comes from platform modules.
+  const PLATFORM_PARTIAL_SLUGS = new Set(["events", "courses"]);
+
   const visiblePages = useMemo(() => {
     const term = search.trim().toLowerCase();
-    if (!term) return pages;
-    return pages.filter((page) => page.title.toLowerCase().includes(term) || page.slug.toLowerCase().includes(term));
+    const filtered = pages.filter((page) => !PLATFORM_MANAGED_SLUGS.has(page.slug));
+    if (!term) return filtered;
+    return filtered.filter((page) => page.title.toLowerCase().includes(term) || page.slug.toLowerCase().includes(term));
   }, [pages, search]);
 
   const groupedPages = useMemo(() => {
@@ -284,13 +293,34 @@ export default function CmsPagesManagement() {
   const openPage = (page: CmsPage) => router.push(`/plataforma/cms/pages/${page.slug}`);
 
   const openPreview = (page: CmsPage) => {
-    window.open(`/plataforma/cms/preview?site=${encodeURIComponent(siteKey)}&page=${encodeURIComponent(page.slug)}`, "_blank");
+    const publicRouteMap: Record<string, string> = {
+      home: "/",
+      about: "/nosotros",
+      pastors: "/pastores",
+      courses: "/cursos",
+      sermons: "/predicas",
+      events: "/eventos",
+      locations: "/sedes",
+      testimonials: "/testimonios",
+      newsletter: "/boletin",
+      discover: "/conocer-a-jesus",
+      donate: "/donate",
+      privacy: "/privacy",
+      terms: "/terms",
+    };
+    const publicUrl = publicRouteMap[page.slug];
+    if (publicUrl) {
+      window.open(publicUrl, "_blank");
+    } else {
+      window.open(`/plataforma/cms/preview?site=${encodeURIComponent(siteKey)}&page=${encodeURIComponent(page.slug)}`, "_blank");
+    }
   };
 
   const renderPageList = () => (
  <div className="space-y-3 w-full">
       {visiblePages.map((page, index) => {
         const st = STATUS_CONFIG[page.status] ?? STATUS_CONFIG["draft"];
+        const isPlatformPartial = PLATFORM_PARTIAL_SLUGS.has(page.slug);
         return (
           <motion.div
             key={page.id}
@@ -307,23 +337,34 @@ export default function CmsPagesManagement() {
               <div className="flex items-center gap-2 mb-1">
                 <h3 className="text-base font-semibold text-[hsl(var(--text-primary))] dark:text-white truncate">{page.title}</h3>
                 <span className={clsx("px-2 py-0.5 rounded-full text-2xs font-semibold uppercase tracking-wide", st.color)}>{st.label}</span>
+                {isPlatformPartial && (
+                  <span className="px-2 py-0.5 rounded-full text-2xs font-semibold uppercase tracking-wide bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
+                    Solo banner
+                  </span>
+                )}
               </div>
               <div className="flex items-center gap-3 text-xs text-[hsl(var(--text-secondary))]">
                 <span className="flex items-center gap-1"><Globe size={11} />/{page.slug}</span>
                 <span className="flex items-center gap-1"><Calendar size={11} />{page.updated_at ? new Date(page.updated_at).toLocaleDateString() : "Sin fecha"}</span>
+                {isPlatformPartial && (
+                  <span className="flex items-center gap-1 text-amber-500">
+                    El contenido real lo gestiona la plataforma
+                  </span>
+                )}
               </div>
-            </div>                    <button
-                      onClick={(e) => { e.stopPropagation(); openPreview(page); }}
-                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-success-soft dark:bg-[hsl(var(--success))]/20 text-success-text dark:text-[hsl(var(--success))] text-2xs font-semibold uppercase tracking-wide hover:bg-[hsl(var(--success-muted))] transition-all"
-                    >
-                      <Eye size={11} /> Preview
-                    </button>
-                    <button
-                      onClick={(e) => { e.stopPropagation(); router.push(`/plataforma/cms/builder?site=${siteKey}&page=${page.slug}`); }}
-                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-info-soft dark:bg-[hsl(var(--info))]/20 text-[hsl(var(--primary))] text-2xs font-semibold uppercase tracking-wide hover:bg-[hsl(var(--info-muted))] transition-all"
-                    >
-                      <PenTool size={11} /> Editar
-                    </button>
+            </div>
+            <button
+              onClick={(e) => { e.stopPropagation(); openPreview(page); }}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-success-soft dark:bg-[hsl(var(--success))]/20 text-success-text dark:text-[hsl(var(--success))] text-2xs font-semibold uppercase tracking-wide hover:bg-[hsl(var(--success-muted))] transition-all"
+            >
+              <Eye size={11} /> Preview
+            </button>
+            <button
+              onClick={(e) => { e.stopPropagation(); router.push(`/plataforma/cms/builder?site=${siteKey}&page=${page.slug}`); }}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-info-soft dark:bg-[hsl(var(--info))]/20 text-[hsl(var(--primary))] text-2xs font-semibold uppercase tracking-wide hover:bg-[hsl(var(--info-muted))] transition-all"
+            >
+              <PenTool size={11} /> {isPlatformPartial ? "Editar banner" : "Editar"}
+            </button>
           </motion.div>
         );
       })}

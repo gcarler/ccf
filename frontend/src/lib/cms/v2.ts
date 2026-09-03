@@ -230,7 +230,7 @@ export async function listCmsSections(siteKey: string, slug: string, token?: str
 export async function createCmsSection(
   siteKey: string,
   slug: string,
-  payload: { type: string; props_json: Record<string, unknown>; sort_order?: number; is_visible?: boolean; status?: string },
+  payload: { type: string; section_key?: string; props_json: Record<string, unknown>; sort_order?: number; is_visible?: boolean; status?: string },
   token?: string | null,
 ) {
   return apiFetch<CmsSection>(`/cms/v2/sites/${siteKey}/pages/${slug}/sections`, {
@@ -244,7 +244,7 @@ export async function patchCmsSection(
   siteKey: string,
   slug: string,
   sectionId: string,
-  payload: { type?: string; props_json?: Record<string, unknown>; sort_order?: number; is_visible?: boolean; status?: string },
+  payload: { type?: string; section_key?: string; props_json?: Record<string, unknown>; sort_order?: number; is_visible?: boolean; status?: string },
   token?: string | null,
 ) {
   return apiFetch<CmsSection>(`/cms/v2/sites/${siteKey}/pages/${slug}/sections/${sectionId}`, {

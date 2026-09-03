@@ -119,17 +119,27 @@ def patch_global_block(
     current_user: models.User = Depends(require_module_access("cms", "edit")),
 ):
     _assert_role(current_user, CMS_EDITOR_ROLES)
+    site = _get_scoped_site_or_404(db, site_key, current_user)
     block = (
         db.query(models.CmsSection)
+        .join(models.CmsPage, models.CmsSection.page_id == models.CmsPage.id)
         .filter(
+            models.CmsPage.site_id == site.id,
             models.CmsSection.id == section_id,
             models.CmsSection.is_global,
+            models.CmsSection.deleted_at.is_(None),
         )
         .first()
     )
     if not block:
         raise BlockNotFoundError()
     data = payload.model_dump(exclude_unset=True)
+    if "props_json" in data and data["props_json"] is not None:
+        try:
+            target_type = data.get("type", block.type)
+            data["props_json"] = validate_section_props(target_type, data["props_json"])
+        except ValueError as e:
+            raise CmsValidationError(str(e))
     for key in ["type", "props_json", "sort_order", "is_visible", "status", "is_global", "global_key"]:
         if key in data and data[key] is not None:
             setattr(block, key, data[key])
@@ -146,11 +156,15 @@ def delete_global_block(
     current_user: models.User = Depends(require_module_access("cms", "edit")),
 ):
     _assert_role(current_user, CMS_EDITOR_ROLES)
+    site = _get_scoped_site_or_404(db, site_key, current_user)
     block = (
         db.query(models.CmsSection)
+        .join(models.CmsPage, models.CmsSection.page_id == models.CmsPage.id)
         .filter(
+            models.CmsPage.site_id == site.id,
             models.CmsSection.id == section_id,
             models.CmsSection.is_global,
+            models.CmsSection.deleted_at.is_(None),
         )
         .first()
     )

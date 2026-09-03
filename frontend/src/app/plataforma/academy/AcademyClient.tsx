@@ -5,7 +5,7 @@ import EmptyState from '@/components/ui/EmptyState';
 import { useAuth } from '@/context/AuthContext';
 import { DSCard } from '@/design';
 import { DSChart } from '@/design';
-import { DSMetric } from '@/design';
+
 import { apiFetch } from '@/lib/http';
 import { GraduationCap, TrendingUp, AlertTriangle, Sparkles, BookOpen, CheckCircle2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';

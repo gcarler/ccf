@@ -57,16 +57,36 @@ def public_pages_list(
     return PaginatedResponse[schemas.CmsPageRead](items=pages, total=total, skip=skip, limit=limit)
 
 
+SLUG_ALIASES: dict[str, str] = {
+    "inicio": "home",
+    "nosotros": "about",
+    "cursos": "courses",
+    "predicas": "sermons",
+    "eventos": "events",
+    "sedes": "locations",
+    "testimonios": "testimonials",
+    "pastores": "pastors",
+    "boletin": "newsletter",
+    "privacidad": "privacy",
+    "bienvenida": "welcome",
+    "conocer-a-jesus": "discover",
+}
+
 @router.get(
     "/public/sites/{site_key}/pages/{slug}",
     response_model=schemas.CmsPublicPageRead,
     dependencies=[Depends(rate_limiter(limit=PUBLIC_CMS_RATE_LIMIT, window_seconds=60))],
 )
-@cached_public(ttl=300)
+@cached_public(ttl=5)
 def public_page(site_key: str, slug: str, db: Session = Depends(get_db)):
-    # Optimizado N+1: 1 query JOIN CmsPage+CmsSite (evita el site lookup
-    # separado). ``lazyload('*')`` previene el cascade de JOINs de
-    # ``CmsPage.site``/``published_version`` y de los joined de ``CmsSection``.
+    # Modo tiempo real: lee directo de cms_sections (sin snapshot).
+    # TTL de 5s en Redis previene hammering en picos de tráfico pero
+    # garantiza que los cambios del CMS se vean en ~5 segundos.
+
+    norm_slug = _slugify(slug)
+    canonical_alias = SLUG_ALIASES.get(norm_slug, norm_slug)
+    candidate_slugs = list({norm_slug, canonical_alias})
+
     page = (
         db.query(models.CmsPage)
         .options(lazyload("*"))
@@ -74,90 +94,28 @@ def public_page(site_key: str, slug: str, db: Session = Depends(get_db)):
         .filter(
             models.CmsSite.site_key == site_key.strip().lower(),
             models.CmsSite.is_active.is_(True),
-            models.CmsPage.slug == _slugify(slug),
+            models.CmsPage.slug.in_(candidate_slugs),
             models.CmsPage.status == "published",
+            models.CmsPage.deleted_at.is_(None),
         )
+        .order_by(models.CmsPage.updated_at.desc())
         .first()
     )
     if not page:
         raise PageNotFoundError("Published page not found")
     site = page.site
 
-    published_version = None
-    if page.published_version_id:
-        published_version = (
-            db.query(models.CmsPageVersion)
-            .options(lazyload("*"))
-            .filter(models.CmsPageVersion.page_id == page.id, models.CmsPageVersion.id == page.published_version_id)
-            .first()
-        )
 
+    # ── MODO TIEMPO REAL (WordPress-like) ──────────────────────────────────────
+    # Siempre leemos directo de cms_sections para que cualquier cambio guardado
+    # en el CMS se refleje inmediatamente en el sitio público, sin necesidad de
+    # "publicar" un snapshot. Los snapshots se preservan en cms_page_versions
+    # solo para auditoría/versiones históricas, pero ya no controlan lo que ve
+    # el visitante.
+    # ──────────────────────────────────────────────────────────────────────────
     settings = get_settings()
     base_url = settings.frontend_url.rstrip("/")
     defaults_cache: dict[str, dict[str, Any]] = {}
-
-    if published_version:
-        snapshot = published_version.snapshot_json or {}
-        page_snapshot = snapshot.get("page") if isinstance(snapshot, dict) else {}
-        sections_snapshot = snapshot.get("sections") if isinstance(snapshot, dict) else []
-        section_rows = [
-            _snapshot_section_read(section_data, page_id=page.id, index=index, timestamp=published_version.created_at)
-            for index, section_data in enumerate(
-                sorted(
-                    [item for item in sections_snapshot if isinstance(item, dict)],
-                    key=lambda item: item.get("sort_order") if isinstance(item.get("sort_order"), int) else 0,
-                )
-            )
-            if section_data.get("is_visible", True) is not False and section_data.get("status", "active") != "archived"
-        ]
-        section_rows = [
-            schemas.CmsSectionRead(
-                **{
-                    **s.model_dump(),
-                    "props_json": _build_section_defaults(
-                        db, site_key, s.type, s.props_json, defaults_cache=defaults_cache
-                    ),
-                }
-            )
-            for s in section_rows
-        ]
-        slug_val = str(page_snapshot.get("slug") or page.slug) if isinstance(page_snapshot, dict) else page.slug
-        title_val = str(page_snapshot.get("title") or page.title) if isinstance(page_snapshot, dict) else page.title
-        breadcrumb_items = build_breadcrumb_items_from_slug(
-            slug_val, title_val, base_url=base_url, site_name=site.name or "Home"
-        )
-        breadcrumb_json_ld = build_breadcrumb_list_json_ld(breadcrumb_items, base_url=base_url)
-        page_url = f"{base_url}/{slug_val.lstrip('/')}"
-        canonical = (
-            page_snapshot.get("canonical_url")
-            if isinstance(page_snapshot, dict) and page_snapshot.get("canonical_url")
-            else None
-        )
-        json_ld_data = auto_json_ld_for_page(
-            page,
-            site,
-            sections=section_rows,
-            base_url=base_url,
-            site_name=_get_system_var(db, site_key, "church_name", site.name),
-        )
-        snapshot_seo = (
-            page_snapshot.get("seo_json")
-            if isinstance(page_snapshot, dict) and isinstance(page_snapshot.get("seo_json"), dict)
-            else {}
-        )
-        if snapshot_seo.get("json_ld"):
-            json_ld_data = snapshot_seo["json_ld"]
-        return schemas.CmsPublicPageRead(
-            site_key=site.site_key,
-            slug=slug_val,
-            title=title_val,
-            seo_json=snapshot_seo,
-            sections=section_rows,
-            json_ld=json_ld_data,
-            canonical_url=canonical or page_url,
-            breadcrumbs=breadcrumb_items,
-            breadcrumb_json_ld=breadcrumb_json_ld,
-        )
 
     sections_list = (
         db.query(models.CmsSection)

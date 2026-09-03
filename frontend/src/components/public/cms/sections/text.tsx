@@ -10,6 +10,7 @@ import type {
 } from "@/types/cms-section-props";
 import Link from "next/link";
 import OptimizedImage from "@/components/ui/OptimizedImage";
+import RichText from "@/components/public/RichText";
 import { asItems, asProps, val } from "./shared";
 
 export function RichTextSection({ section }: { section: CmsSection<"rich_text"> }) {
@@ -175,13 +176,13 @@ export function AboutSection({ section }: { section: CmsSection<"about"> }) {
           {visionTitle && (
             <div className="p-6 rounded-xl" style={{ background: "var(--site-surface-container)" }}>
               <h3 className="text-xl font-bold mb-3" style={{ color: "var(--site-on-surface)" }}>{visionTitle}</h3>
-              <div className="prose prose-sm" style={{ color: "var(--site-on-surface-variant)" }} dangerouslySetInnerHTML={{ __html: visionText }} />
+              <RichText html={visionText} className="text-sm" />
             </div>
           )}
           {misionTitle && (
             <div className="p-6 rounded-xl" style={{ background: "var(--site-surface-container)" }}>
               <h3 className="text-xl font-bold mb-3" style={{ color: "var(--site-on-surface)" }}>{misionTitle}</h3>
-              <div className="prose prose-sm" style={{ color: "var(--site-on-surface-variant)" }} dangerouslySetInnerHTML={{ __html: misionText }} />
+              <RichText html={misionText} className="text-sm" />
             </div>
           )}
         </div>
@@ -200,7 +201,7 @@ export function AboutSection({ section }: { section: CmsSection<"about"> }) {
                 <div>
                   <h4 className="text-lg font-bold" style={{ color: "var(--site-on-surface)" }}>{founder1Name}</h4>
                   {founder1Role && <p className="text-sm" style={{ color: "var(--site-primary)" }}>{founder1Role}</p>}
-                  {founderBio && <div className="prose prose-sm mt-2" style={{ color: "var(--site-on-surface-variant)" }} dangerouslySetInnerHTML={{ __html: founderBio }} />}
+                  {founderBio && <RichText html={founderBio} className="text-sm mt-2" />}
                 </div>
               </div>
             )}
@@ -212,7 +213,7 @@ export function AboutSection({ section }: { section: CmsSection<"about"> }) {
                 <div>
                   <h4 className="text-lg font-bold" style={{ color: "var(--site-on-surface)" }}>{founder2Name}</h4>
                   {founder2Role && <p className="text-sm" style={{ color: "var(--site-primary)" }}>{founder2Role}</p>}
-                  {founderBio2 && <div className="prose prose-sm mt-2" style={{ color: "var(--site-on-surface-variant)" }} dangerouslySetInnerHTML={{ __html: founderBio2 }} />}
+                  {founderBio2 && <RichText html={founderBio2} className="text-sm mt-2" />}
                 </div>
               </div>
             )}
