@@ -1458,18 +1458,36 @@ function setNestedValue(source: Record<string, unknown>, path: string[], value: 
 }
 
 // ── Agrupación de campos por categoría dentro del editor ─────────────────────
-// Evita que secciones como "feed" muestren 20 campos sin contexto.
-// Cada grupo tiene un label visible y los prefijos de campo que contiene.
+// Keyed por section_key (no por type) para mayor precisión.
 const SECTION_FIELD_GROUPS: Record<string, Array<{ label: string; emoji: string; prefixes: string[] }>> = {
+  // Home — sección feed
   feed: [
     { label: "Presentación", emoji: "🏠", prefixes: ["eyebrow", "section_title", "section_description", "scroll_indicator", "featured_card", "cards"] },
     { label: "Actividades recientes", emoji: "📅", prefixes: ["activities_"] },
     { label: "Boletín semanal", emoji: "📧", prefixes: ["newsletter_"] },
   ],
+  // Quiénes Somos — sección about
+  about: [
+    { label: "Estadísticas", emoji: "📊", prefixes: ["stats"] },
+    { label: "Visión y Misión", emoji: "🎯", prefixes: ["vision_", "mision_"] },
+    { label: "Pastores Fundadores", emoji: "👥", prefixes: ["founder_", "founder1_", "founder2_"] },
+    { label: "Valores", emoji: "🌟", prefixes: ["valores", "values_"] },
+    { label: "Cita destacada", emoji: "💬", prefixes: ["quote_"] },
+    { label: "Llamado a la acción", emoji: "🚪", prefixes: ["cta_"] },
+  ],
+  // Pastores — sección feed (textos de la lista) → compound key: pastors_feed
+  pastors_feed: [
+    { label: "Encabezado de la lista", emoji: "🏷️", prefixes: ["hero_badge", "hero_title", "hero_description"] },
+    { label: "Textos de interfaz", emoji: "✏️", prefixes: ["loading_label", "empty_title", "card_cta", "principal_label"] },
+  ],
+  // Pastores — sección detail_template
+  detail_template: [
+    { label: "Página de perfil pastoral", emoji: "📄", prefixes: ["not_found_", "role_fallback", "social_follow_label", "back_to_pastors_label"] },
+  ],
 };
 
-function getFieldGroup(sectionType: string, fieldKey: string): string | null {
-  const groups = SECTION_FIELD_GROUPS[sectionType];
+function getFieldGroup(sectionKey: string, fieldKey: string): string | null {
+  const groups = SECTION_FIELD_GROUPS[sectionKey];
   if (!groups) return null;
   for (const group of groups) {
     if (group.prefixes.some((p) => fieldKey === p || fieldKey.startsWith(p))) {
@@ -1477,6 +1495,12 @@ function getFieldGroup(sectionType: string, fieldKey: string): string | null {
     }
   }
   return null;
+}
+
+// Campos de imagen que NO son bg_image/slides pero deben mostrar control de imagen
+const IMAGE_FIELD_SUFFIXES = ["_image", "_photo", "_avatar", "_cover", "_thumbnail", "_banner"];
+function isInlineImageField(key: string): boolean {
+  return IMAGE_FIELD_SUFFIXES.some((suffix) => key.endsWith(suffix));
 }
 
 
@@ -1572,6 +1596,9 @@ function PublicContentEditor({
         const slides = Array.isArray(props.slides) ? [...props.slides as Record<string, unknown>[]] : [];
         slides[slideIndex] = { ...(slides[slideIndex] as Record<string, unknown> || {}), src: url };
         props.slides = slides;
+      } else {
+        // Inline image field (e.g. founder1_image) — field is a dot-path
+        props = setNestedValue(props, field.split("."), url) as Record<string, unknown>;
       }
       return { ...current, [sectionId]: props };
     });
@@ -1645,6 +1672,49 @@ function PublicContentEditor({
               </div>
             )}
 
+            {/* ── Imágenes inline (founder1_image, founder2_image, etc.) ── */}
+            {Object.entries(drafts[section.id] || section.props_json || {})
+              .filter(([key]) => isInlineImageField(key) && key !== "bg_image")
+              .map(([fieldKey, fieldValue]) => (
+                <div key={fieldKey} className="mb-4">
+                  <p className="mb-2 text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{contentLabel(fieldKey)}</p>
+                  <div className="flex items-center gap-3">
+                    {(fieldValue as string) ? (
+                      <div className="relative h-20 w-20 overflow-hidden rounded-full border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))]">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={fieldValue as string} alt={fieldKey} className="h-full w-full object-cover" />
+                      </div>
+                    ) : (
+                      <div className="flex h-20 w-20 items-center justify-center rounded-full border-2 border-dashed border-[hsl(var(--border))] bg-[hsl(var(--surface-2))]">
+                        <ImageIcon size={18} className="opacity-40" />
+                      </div>
+                    )}
+                    <div className="flex flex-col gap-2">
+                      <button
+                        type="button"
+                        disabled={!canEdit}
+                        onClick={() => openMediaPicker(section.id, fieldKey)}
+                        className="rounded-lg border border-[hsl(var(--border))] px-3 py-2 text-xs font-semibold hover:bg-[hsl(var(--surface-2))] disabled:opacity-50"
+                      >
+                        <ImageIcon className="mr-1.5 inline" size={13} />
+                        {(fieldValue as string) ? "Cambiar foto" : "Elegir foto"}
+                      </button>
+                      {(fieldValue as string) && (
+                        <button
+                          type="button"
+                          disabled={!canEdit}
+                          onClick={() => setDrafts((c) => ({ ...c, [section.id]: { ...c[section.id], [fieldKey]: "" } }))}
+                          className="rounded-lg border border-[hsl(var(--danger)/30%)] px-3 py-2 text-xs font-semibold text-danger-text disabled:opacity-50"
+                        >
+                          <Trash2 className="mr-1.5 inline" size={13} />Quitar foto
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))
+            }
+
             {/* ── Carrusel de slides ───────────────────────────────────── */}
             {Array.isArray((drafts[section.id] || section.props_json || {} as Record<string,unknown>).slides) && (
               <div className="mb-6">
@@ -1708,7 +1778,11 @@ function PublicContentEditor({
             {/* ── Campos de texto ─────────────────────────────────────── */}
             {(() => {
               const fields = textFields(section);
-              const groups = SECTION_FIELD_GROUPS[section.type];
+              // Intentar primero la clave compuesta (pageSlug+section_key) para diferenciar
+              // secciones con el mismo section_key en distintas páginas (ej. feed en home vs pastors).
+              const compoundKey = `${pageSlug}_${section.section_key}`;
+              const groups = SECTION_FIELD_GROUPS[compoundKey] ?? SECTION_FIELD_GROUPS[section.section_key];
+              const groupKey = SECTION_FIELD_GROUPS[compoundKey] ? compoundKey : section.section_key;
               if (!groups) {
                 // Sin agrupación — render plano
                 return (
@@ -1762,7 +1836,7 @@ function PublicContentEditor({
                   })}
                   {/* Campos sin grupo asignado */}
                   {(() => {
-                    const ungrouped = fields.filter(({ path }) => getFieldGroup(section.type, path.join(".")) === null);
+                    const ungrouped = fields.filter(({ path }) => getFieldGroup(groupKey, path.join(".")) === null);
                     if (ungrouped.length === 0) return null;
                     return (
                       <div className="grid gap-4 md:grid-cols-2">
