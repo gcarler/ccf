@@ -1589,7 +1589,7 @@ function PublicContentEditor({
     const url = item.url || "";
     const { sectionId, field, slideIndex } = mediaTarget;
     setDrafts((current) => {
-      const props = { ...(current[sectionId] || {}) };
+      let props = { ...(current[sectionId] || {}) };
       if (field === "bg_image") {
         props.bg_image = url;
       } else if (field === "slides" && typeof slideIndex === "number") {
