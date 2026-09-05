@@ -21,6 +21,9 @@ function isMediaKey(key: string): boolean {
     || normalized.includes("photo")
     || normalized.includes("thumbnail")
     || normalized.includes("poster")
+    || normalized.includes("avatar")
+    || normalized.includes("cover")
+    || normalized.includes("banner")
     || normalized === "img"
     || normalized === "bg";
 }
