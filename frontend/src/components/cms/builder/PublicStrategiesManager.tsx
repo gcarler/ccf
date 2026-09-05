@@ -3,7 +3,7 @@ import { apiFetch } from "@/lib/http";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 
-export default function PublicStrategiesManager({ token }: { token: string }) {
+export default function PublicStrategiesManager({ token }: { token: string }): React.ReactElement | null {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [strategies, setStrategies] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);

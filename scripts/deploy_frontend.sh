@@ -50,6 +50,27 @@ echo "  [deploy] (1/3) npm run build (swap seguro)..."
 # el smoke confirme el build nuevo → rollback real si restart/smoke fallan.
 ( cd "$FRONTEND_DIR" && KEEP_OLD_BUILD=1 npm run build )
 
+# ── Sync al directorio legado si PM2 apunta ahí ─────────────────────────────
+# Si ccf-frontend-staging tiene exec_cwd=/root/ccf/frontend, copiamos el .next
+# nuevo allá para que PM2 sirva el código correcto sin importar desde dónde corra.
+LEGACY_FRONTEND="/root/ccf/frontend"
+PM2_CWD=$("$PM2_BIN" jlist 2>/dev/null | python3 -c "
+import sys, json
+try:
+  for p in json.load(sys.stdin):
+    if p.get('name') == 'ccf-frontend-staging':
+      print(p.get('pm2_env',{}).get('pm_cwd',''))
+except: pass
+" 2>/dev/null || true)
+
+if [ "$PM2_CWD" = "$LEGACY_FRONTEND" ] && [ -d "$LEGACY_FRONTEND" ]; then
+  echo "  [deploy] sincronizando .next → $LEGACY_FRONTEND (PM2 legacy path)..."
+  cp -r "$FRONTEND_DIR/.next" "$LEGACY_FRONTEND/.next-new"
+  [ -d "$LEGACY_FRONTEND/.next" ] && mv "$LEGACY_FRONTEND/.next" "$LEGACY_FRONTEND/.next-old-sync"
+  mv "$LEGACY_FRONTEND/.next-new" "$LEGACY_FRONTEND/.next"
+  rm -rf "$LEGACY_FRONTEND/.next-old-sync"
+fi
+
 echo "  [deploy] (2/3) reiniciando frontend para servir el build nuevo..."
 if "$PM2_BIN" jlist 2>/dev/null | grep -q '"name":"ccf-frontend-staging"'; then
     "$PM2_BIN" restart ccf-frontend-staging >/dev/null
