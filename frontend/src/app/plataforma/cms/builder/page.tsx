@@ -17,6 +17,7 @@ import MediaPicker from "@/components/cms/builder/MediaPicker";
 import MediaPickerField, { setMediaPickerTrigger } from "@/components/cms/builder/MediaPickerField";
 import CmsJsonMediaField from "@/components/cms/CmsJsonMediaField";
 import AiField from "@/components/cms/builder/AiField";
+import PublicStrategiesManager from "@/components/cms/builder/PublicStrategiesManager";
 import OptimizedImage from "@/components/ui/OptimizedImage";
 
 export type SaveStatus = "saved" | "dirty" | "saving" | "error";
@@ -1350,14 +1351,20 @@ export default function PuckBuilderPage() {
       )}
 
       {/* Editor Frame */}
-      <div className="flex-1 overflow-hidden relative">
-        <Puck
-          config={puckConfig}
-          data={initialData}
-          onChange={handlePuckChange}
-          onPublish={handlePublish}
-          iframe={{ enabled: false }}
-        />
+      <div className="flex-1 overflow-hidden relative flex flex-col">
+        <div className="flex-1 min-h-0 relative">
+          <Puck
+            config={puckConfig}
+            data={initialData}
+            onChange={handlePuckChange}
+            onPublish={handlePublish}
+            iframe={{ enabled: false }}
+          />
+        </div>
+        
+        {pageSlug === "events" && (
+          <PublicStrategiesManager token={token} />
+        )}
       </div>
 
       {/* Custom MediaPicker Drawer integration */}

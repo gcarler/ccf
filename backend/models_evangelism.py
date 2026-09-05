@@ -174,6 +174,7 @@ class EstrategiaEvangelismo(Base):
     descripcion = Column(Text, nullable=True)
     clase_raiz = Column(String(50), nullable=True, index=True)
     activa = Column(Boolean, default=True, index=True)
+    is_public = Column(Boolean, default=False)
 
     # Tipología
     typology = Column(String(50), nullable=True, index=True)  # relacional | evento_masivo | sectorial

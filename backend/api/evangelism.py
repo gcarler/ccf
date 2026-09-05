@@ -10,6 +10,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from backend import models
+from backend.api.evangelism_public import router as public_events_router
 from backend.api.evangelism_analytics import router as analytics_router
 from backend.api.evangelism_events import router as events_router
 from backend.api.evangelism_grupos import router as grupos_router
@@ -30,6 +31,7 @@ router.include_router(estrategias_router)
 router.include_router(roles_router)
 router.include_router(multiplication_router)
 router.include_router(notifications_router)
+router.include_router(public_events_router)
 router.include_router(rankings_router)
 router.include_router(reports_router)
 router.include_router(analytics_router)

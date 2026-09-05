@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
+import { apiFetch } from "@/lib/http";
 
 import PublicHeroWithSlides from "@/components/public/PublicHeroWithSlides";
 import { useCmsV2Page } from "@/hooks/useCmsV2Page";
@@ -44,6 +45,17 @@ export default function EventosPage() {
     const today = useMemo(() => new Date(), []);
     const [currentMonth, setCurrentMonth] = useState(today.getMonth());
     const [currentYear, setCurrentYear] = useState(today.getFullYear());
+
+    const [publicStrategies, setPublicStrategies] = useState<any[]>([]);
+    
+    useEffect(() => {
+        fetch("/api/evangelism/public/upcoming-events")
+            .then(res => res.json())
+            .then(data => {
+                if (Array.isArray(data)) setPublicStrategies(data);
+            })
+            .catch(console.error);
+    }, []);
 
     const heroEyebrow = typeof heroContent?.eyebrow === "string" ? heroContent.eyebrow : "";
     const heroTitle = typeof heroContent?.title === "string" ? heroContent.title : "";
@@ -166,6 +178,32 @@ export default function EventosPage() {
                     description={heroDescription}
                     slides={heroSlides}
                 />
+            )}
+
+            {publicStrategies.length > 0 && (
+                <section className="ccf-container mb-12">
+                    <h2 className="text-2xl font-bold mb-6" style={{ color: "var(--site-on-surface)" }}>
+                        Próximas Estrategias de Evangelismo
+                    </h2>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5">
+                        {publicStrategies.map(st => (
+                            <div key={st.id} className="p-5 rounded-xl border transition-all hover:scale-[1.02]" style={{ borderColor: "var(--site-outline-variant)", background: "var(--site-surface-1)" }}>
+                                <div className="w-10 h-10 rounded-full flex items-center justify-center mb-4" style={{ background: "var(--site-primary-container)", color: "var(--site-on-primary-container)" }}>
+                                    <Star size={20} />
+                                </div>
+                                <h3 className="font-bold text-lg mb-1" style={{ color: "var(--site-on-surface)" }}>{st.nombre}</h3>
+                                <p className="text-sm font-medium mb-3 uppercase tracking-wider" style={{ color: "var(--site-primary)" }}>{st.typology?.replace('_', ' ')}</p>
+                                <div className="flex items-center gap-2 text-sm" style={{ color: "var(--site-on-surface-variant)" }}>
+                                    <MapPin size={16} />
+                                    <span>
+                                        {new Date(st.next_datetime).toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+                                        {' a las '}{st.hora_reunion}
+                                    </span>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </section>
             )}
 
             {(hasEvents || categoryFilters.length > 0) && (
