@@ -4,40 +4,43 @@ import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 
 export default function PublicStrategiesManager({ token }: { token: string }) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [strategies, setStrategies] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    const fetchStrategies = async () => {
+      try {
+        const res = (await apiFetch("/api/evangelism/strategies/public-config", {
+          headers: { Authorization: `Bearer ${token}` }
+        })) as Response;
+        
+        if (res.ok) {
+          const data = await res.json();
+          setStrategies(data);
+        }
+      } catch (e) {
+        console.error(e);
+        toast.error("Error al cargar estrategias");
+      } finally {
+        setLoading(false);
+      }
+    };
+
     fetchStrategies();
   }, [token]);
 
-  const fetchStrategies = async () => {
-    try {
-      const res = await apiFetch("/api/evangelism/strategies/public-config", {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setStrategies(data);
-      }
-    } catch (e) {
-      console.error(e);
-      toast.error("Error al cargar estrategias");
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const togglePublic = async (id: string, currentVal: boolean) => {
     try {
-      const res = await apiFetch(`/api/evangelism/strategies/${id}/toggle-public`, {
+      const res = (await apiFetch(`/api/evangelism/strategies/${id}/toggle-public`, {
         method: "PATCH",
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json"
         },
         body: JSON.stringify({ is_public: !currentVal })
-      });
+      })) as Response;
+      
       if (res.ok) {
         setStrategies(s => s.map(st => st.id === id ? { ...st, is_public: !currentVal } : st));
         toast.success("Estado actualizado");

@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState, useEffect } from "react";
-import { apiFetch } from "@/lib/http";
+
 
 import PublicHeroWithSlides from "@/components/public/PublicHeroWithSlides";
 import { useCmsV2Page } from "@/hooks/useCmsV2Page";
@@ -46,6 +46,7 @@ export default function EventosPage() {
     const [currentMonth, setCurrentMonth] = useState(today.getMonth());
     const [currentYear, setCurrentYear] = useState(today.getFullYear());
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [publicStrategies, setPublicStrategies] = useState<any[]>([]);
     
     useEffect(() => {

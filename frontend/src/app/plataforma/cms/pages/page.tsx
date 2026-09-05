@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import OptimizedImage from "@/components/ui/OptimizedImage";
-import { Archive, Calendar, Eye, FileText, Globe, Plus, RotateCcw, Search, Zap, PenTool, Check, ImageIcon } from "lucide-react";
+import { Archive, Calendar, Eye, FileText, Globe, Plus, RotateCcw, Search, Zap, PenTool, Check } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import SidePanel from "@/components/ui/SidePanel";
 import clsx from "clsx";
@@ -293,7 +293,7 @@ export default function CmsPagesManagement() {
   // La acción principal de una página es editar su contenido. El detalle
   // intermedio solo mostraba un contador y hacía difícil descubrir el editor.
   const openContentPage = (page: CmsPage) => router.push(`/plataforma/cms/builder?site=${siteKey}&page=${page.slug}&mode=content`);
-  const openHeroMediaPage = (page: CmsPage) => router.push(`/plataforma/cms/builder?site=${siteKey}&page=${page.slug}&mode=hero-media`);
+  (page: CmsPage) => router.push(`/plataforma/cms/builder?site=${siteKey}&page=${page.slug}&mode=hero-media`);
 
   const openPreview = (page: CmsPage) => {
     const publicRouteMap: Record<string, string> = {
