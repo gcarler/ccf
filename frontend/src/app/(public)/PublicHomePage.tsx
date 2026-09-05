@@ -190,25 +190,6 @@ export default function PublicHomePage({ initialHomePage }: { initialHomePage?: 
             : cmsHeroSlides.length === 0
                 ? PUBLISHED_HOME_HERO_MEDIA
                 : []),
-        ...(homeFeaturedCard?.img
-            ? [{
-                src: String(homeFeaturedCard.img),
-                alt: typeof homeFeaturedCard.alt === "string" && homeFeaturedCard.alt ? String(homeFeaturedCard.alt) : "Imagen destacada",
-                title: typeof homeFeaturedCard.title === "string" ? homeFeaturedCard.title : undefined,
-                caption: typeof homeFeaturedCard.desc === "string" ? homeFeaturedCard.desc : undefined,
-            }]
-            : []),
-        ...homeCards
-            .map((item, index) => {
-                const src = typeof item.img === "string" ? item.img : "";
-                if (!src) return null;
-                return {
-                    src,
-                    alt: typeof item.alt === "string" && item.alt.trim() ? item.alt : `Card ${index + 1}`,
-                    title: typeof item.title === "string" ? item.title : undefined,
-                    caption: typeof item.desc === "string" ? item.desc : undefined,
-                };
-            }),
     ].filter((slide): slide is PublicSlide => Boolean(slide));
     const hasHero = homeSlides.length > 0 || heroTitleLead || heroTitleAccent || heroTitleTail || heroDescription;
 
