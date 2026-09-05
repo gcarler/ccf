@@ -1715,6 +1715,47 @@ function PublicContentEditor({
               ))
             }
 
+            {/* ── Imágenes de tarjetas (feed: Bienvenidos a Casa) ────────── */}
+            {section.type === "feed" && (() => {
+              const props = (drafts[section.id] || section.props_json || {}) as Record<string, unknown>;
+              const featuredCard = (props.featured_card || {}) as Record<string, unknown>;
+              const cards = Array.isArray(props.cards) ? props.cards as Record<string, unknown>[] : [];
+              const allCards = [
+                { label: "Tarjeta destacada (Conocer a Jesús)", path: "featured_card.img", img: featuredCard.img as string },
+                ...cards.map((c, i) => ({ label: (c.title as string) || `Tarjeta ${i + 1}`, path: `cards.${i}.img`, img: c.img as string })),
+              ];
+              return (
+                <div className="mb-6">
+                  <p className="mb-3 text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Imágenes de tarjetas</p>
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    {allCards.map(({ label, path, img }) => (
+                      <div key={path} className="flex items-center gap-3 rounded-lg border border-[hsl(var(--border))] p-3">
+                        <div className="relative h-16 w-24 shrink-0 overflow-hidden rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))]">
+                          {img ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img src={img} alt={label} className="h-full w-full object-cover" />
+                          ) : (
+                            <div className="flex h-full w-full items-center justify-center"><ImageIcon size={16} className="opacity-40" /></div>
+                          )}
+                        </div>
+                        <div className="flex flex-col gap-1.5">
+                          <p className="text-xs font-semibold">{label}</p>
+                          <button
+                            type="button"
+                            disabled={!canEdit}
+                            onClick={() => openMediaPicker(section.id, path)}
+                            className="rounded-lg border border-[hsl(var(--border))] px-3 py-1.5 text-xs font-semibold hover:bg-[hsl(var(--surface-2))] disabled:opacity-50"
+                          >
+                            <ImageIcon className="mr-1 inline" size={12} />{img ? "Cambiar" : "Elegir imagen"}
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              );
+            })()}
+
             {/* ── Carrusel de slides ───────────────────────────────────── */}
             {Array.isArray((drafts[section.id] || section.props_json || {} as Record<string,unknown>).slides) && (
               <div className="mb-6">
