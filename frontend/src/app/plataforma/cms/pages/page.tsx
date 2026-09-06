@@ -83,8 +83,8 @@ export default function CmsPagesManagement() {
   const PLATFORM_MANAGED_SLUGS = new Set(["sermons"]);
 
   // Pages where only the hero/banner (texts & images) is editable from CMS.
-  // The actual content (events list, courses grid) comes from platform modules.
-  const PLATFORM_PARTIAL_SLUGS = new Set(["events", "courses"]);
+  // The actual content (events list) comes from platform modules.
+  const PLATFORM_PARTIAL_SLUGS = new Set(["events"]);
 
   const visiblePages = useMemo(() => {
     const term = search.trim().toLowerCase();

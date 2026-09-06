@@ -1509,6 +1509,21 @@ const CONTENT_LABELS: Record<string, string> = {
   quote_subtitle: "Subtítulo de la cita",
   cta_view_sedes: "Texto botón ver sedes",
   cta_view_events: "Texto botón ver eventos",
+
+  // Cursos — Secciones modulares y campos
+  courses_title: "Título de la sección de cursos",
+  courses_description: "Descripción de la sección de cursos",
+  featured_badge: "Etiqueta curso destacado",
+  featured_cta: "Texto botón inscripción",
+  featured_image: "Imagen personalizada curso destacado",
+  hero_image_url: "Imagen de portada alternativa",
+  empty_title: "Título cuando no hay cursos",
+  empty_description: "Descripción cuando no hay cursos",
+  library_title: "Título de librería",
+  library_description: "Descripción de librería",
+  not_found_title: "Título de curso no encontrado",
+  load_error_title: "Título de error al cargar",
+  course_tag_fallback: "Etiqueta por defecto",
 };
 
 const HOME_HERO_CONTENT_FIELDS = [
@@ -1620,6 +1635,17 @@ const SECTION_FIELD_GROUPS: Record<string, Array<{ label: string; emoji: string;
   detail_template: [
     { label: "Página de perfil pastoral", emoji: "📄", prefixes: ["not_found_", "role_fallback", "social_follow_label", "back_to_pastors_label"] },
   ],
+  // Cursos — sección feed (catálogo y textos) → compound key: courses_feed
+  courses_feed: [
+    { label: "Catálogo y Títulos", emoji: "📚", prefixes: ["courses_title", "courses_description", "featured_badge", "featured_cta"] },
+    { label: "Imagen de Portada", emoji: "🖼️", prefixes: ["featured_image", "hero_image_url"] },
+    { label: "Librería y Recursos", emoji: "📖", prefixes: ["library_title", "library_description"] },
+    { label: "Estados Vacíos", emoji: "ℹ️", prefixes: ["empty_title", "empty_description"] },
+  ],
+  // Cursos — sección detail_template → compound key: courses_detail_template
+  courses_detail_template: [
+    { label: "Plantilla de Detalle", emoji: "📄", prefixes: ["not_found_title", "load_error_title", "course_tag_fallback"] },
+  ],
 };
 
 function getFieldGroup(sectionKey: string, fieldKey: string): string | null {
@@ -1635,8 +1661,9 @@ function getFieldGroup(sectionKey: string, fieldKey: string): string | null {
 
 // Campos de imagen que NO son bg_image/slides pero deben mostrar control de imagen
 const IMAGE_FIELD_SUFFIXES = ["_image", "_photo", "_avatar", "_cover", "_thumbnail", "_banner"];
+const INLINE_IMAGE_KEYS = new Set(["hero_image_url", "featured_image"]);
 function isInlineImageField(key: string): boolean {
-  return IMAGE_FIELD_SUFFIXES.some((suffix) => key.endsWith(suffix));
+  return INLINE_IMAGE_KEYS.has(key) || IMAGE_FIELD_SUFFIXES.some((suffix) => key.endsWith(suffix));
 }
 
 
@@ -1919,16 +1946,19 @@ function PublicContentEditor({
                 <div key={fieldKey} className="mb-4">
                   <p className="mb-2 text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{contentLabel(fieldKey)}</p>
                   <div className="flex items-center gap-3">
-                    {(fieldValue as string) ? (
-                      <div className="relative h-20 w-20 overflow-hidden rounded-full border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))]">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src={fieldValue as string} alt={fieldKey} className="h-full w-full object-cover" />
-                      </div>
-                    ) : (
-                      <div className="flex h-20 w-20 items-center justify-center rounded-full border-2 border-dashed border-[hsl(var(--border))] bg-[hsl(var(--surface-2))]">
-                        <ImageIcon size={18} className="opacity-40" />
-                      </div>
-                    )}
+                    {(() => {
+                      const isAvatar = fieldKey.endsWith("_avatar") || fieldKey.includes("founder");
+                      return (fieldValue as string) ? (
+                        <div className={`relative overflow-hidden border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] ${isAvatar ? "h-20 w-20 rounded-full" : "h-20 w-32 rounded-lg"}`}>
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img src={fieldValue as string} alt={fieldKey} className="h-full w-full object-cover" />
+                        </div>
+                      ) : (
+                        <div className={`flex items-center justify-center border-2 border-dashed border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] ${isAvatar ? "h-20 w-20 rounded-full" : "h-20 w-32 rounded-lg"}`}>
+                          <ImageIcon size={18} className="opacity-40" />
+                        </div>
+                      );
+                    })()}
                     <div className="flex flex-col gap-2">
                       <button
                         type="button"

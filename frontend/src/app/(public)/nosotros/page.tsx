@@ -37,7 +37,7 @@ function NosotrosStatsSection({
         ? (raw.stats as Array<{ value: string; label: string }>)
         : (Array.isArray(fallback.stats) ? (fallback.stats as Array<{ value: string; label: string }>) : []);
 
-    const stats = (liveStats && liveStats.length > 0) ? liveStats : rawStats;
+    const stats = (rawStats && rawStats.length > 0) ? rawStats : (liveStats && liveStats.length > 0 ? liveStats : []);
     if (!stats || stats.length === 0) return null;
 
     return (
