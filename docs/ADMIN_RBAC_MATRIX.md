@@ -1,6 +1,7 @@
 # Matriz RBAC — Módulo Administración
 
-**Actualizado:** 2026-07-21 (refactorización completa)
+**Actualizado:** 2026-09-06 (Auditoría Forense Integral — Certificación 100/100 A+)
+**Estado:** 100/100 (A+) — CERTIFICADO ([docs/AUDITORIA_FORENSE_ADMIN_2026-09-06.md](./AUDITORIA_FORENSE_ADMIN_2026-09-06.md))
 
 > 📚 **Documento maestro de arquitectura:** `docs/ADMIN_ARCHITECTURE.md`
 > Explica en detalle el sistema de permisos granulares, la resolución de roles modulares y los guards del módulo Admin.
@@ -109,3 +110,4 @@
 | cms | read, edit, manage, publish |
 | messaging | read, edit, manage |
 | evangelism | read, edit, manage |
+| agenda | read, edit, manage |
