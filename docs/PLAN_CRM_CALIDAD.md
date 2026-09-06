@@ -232,3 +232,18 @@ Criterio de salida:
 Toda sesión que labore en módulos CCF debe registrar el plan en el sistema `task` (T1 root + sub-tareas T1.1, T1.2, …) ANTES de codear. Sub-tareas individuales (C-01, M-04, F-01, etc.) son la unidad atómica de seguimiento y deben marcarse `start` antes de trabajarlas y `done` inmediatamente tras cerrarlas. Rationale: ante caída/suspensión de sesión o internet, el próximo agente retoma por donde quedó sin reconstruir contexto desde cero ni pisar trabajo ya hecho. Promovida a project `MEMORY.md` ## Rules como `PLAN DE TRABAJO FORMAL OBLIGATORIO`.
 
 CRM es uno de los **módulos más sensibles de la plataforma CCF** (junto con Evangelismo) por identidad, sede isolation, automations y cruces con evangelismo. Cualquier cambio futuro en CRM debe pasar smoke canónico 138 + RBAC 33 verdes antes de commitear. Esta sensibilidad operativa está documentada en MEMORY.md y §18.4 de ESTADO_CRM.md.
+
+## 11. Cierre Formal y Certificación Integral (2026-09-06)
+
+**Estado:** **CERRADO Y CERTIFICADO — 100/100 (A+)**
+
+- **Reporte Conclusivo:** `docs/AUDITORIA_FORENSE_CRM_2026-09-06.md`
+- **Resultados de Verificación:**
+  - 1,279 tests automatizados en `tests/test_crm_*.py` aprobados al 100% (0 fallos).
+  - 56 tests de servicios core (`automation_engine`, `evangelism_crm_bridge`, `task_notifications`, `conversation_memory`) aprobados al 100%.
+  - 0 llamadas a `db.delete(` en todo el backend CRM.
+  - 0 llamadas a `datetime.utcnow` (100% `timezone.utc`).
+  - Frontend verificado con `tsc --noEmit` y ESLint con 0 errores y 0 warnings.
+  - 0 clases de alerta prohibidas (`bg-red-50/100`), 0 modales flotantes.
+- El Plan de Calidad de CRM queda completado en su totalidad.
+
