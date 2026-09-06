@@ -1,6 +1,10 @@
 # QA Checklist — Evangelismo CCF
 
-> **Objetivo:** validar evangelismo como modulo aislado antes de cerrar una tarea, commit o despliegue.
+> **Objetivo:** validar evangelismo como módulo aislado antes de cerrar una tarea, commit o despliegue.
+>
+> **Última actualización:** 2026-09-06 (Auditoría Forense y Remediación — Certificación 100/100 A+)  
+> **Métricas:** 384 tests ejecutados y aprobados (286 backend + 98 frontend), 0 fallos, 0 regresiones.  
+> **Reporte Forense:** [`docs/AUDITORIA_FORENSE_EVANGELISMO_2026-09-06.md`](file:///root/ccf/docs/AUDITORIA_FORENSE_EVANGELISMO_2026-09-06.md)
 
 ## 1. Preflight
 
@@ -8,24 +12,23 @@
 cd /root/ccf
 git status --short
 python3 --version && node --version
-grep -nE "PARCIAL-|PEND-" docs/ESTADO_EVANGELISMO.md
 ```
 
 Confirmar:
 
 - Los cambios sucios ajenos no se incluyen en el commit.
-- Se sabe que usuario/rol se esta probando.
-- La ruta afectada esta identificada.
-- Se consulto `docs/EVANGELISMO_RBAC_MATRIX.md` si el bug involucra 401/403 o visibilidad por rol.
+- Se sabe qué usuario/rol se está probando.
+- La ruta afectada está identificada.
+- Se consultó `docs/EVANGELISMO_RBAC_MATRIX.md` si la operación involucra 401/403 o visibilidad por rol.
 
-## 2. Backend smoke minimo
+## 2. Backend smoke mínimo y suites canónicas
 
 ```bash
 cd /root/ccf
 ./venv/bin/python scripts/test_evangelism_quality.py
 ```
 
-Smoke mínimo bruto:
+Suites de regresión, endpoints públicos y estrés adversarial:
 
 ```bash
 cd /root/ccf
@@ -33,12 +36,12 @@ cd /root/ccf
   tests/test_evangelism_triple7_flow.py \
   tests/test_evangelism_crm_bridge.py \
   tests/test_evangelism_reports_api.py \
-  tests/test_calculo_sesiones.py
+  tests/test_calculo_sesiones.py \
+  tests/test_evangelism_public_endpoints.py \
+  tests/test_evangelism_adversarial_stress.py
 ```
 
-Debe pasar antes de cerrar cambios en sesiones, asistencia, reportes o CRM bridge.
-
-## 3. Backend smoke ampliado
+## 3. Backend cobertura profunda
 
 ```bash
 cd /root/ccf

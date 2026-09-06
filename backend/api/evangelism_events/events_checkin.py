@@ -340,7 +340,15 @@ def unified_checkin(
             raise HTTPException(status_code=400, detail="Prefijo de QR desconocido")
 
     elif payload.persona_id:
-        persona = db.query(models.Persona).filter(models.Persona.id == payload.persona_id).first()
+        user_sede_id = require_user_sede_id(db, current_user)
+        persona = (
+            db.query(models.Persona)
+            .filter(
+                models.Persona.id == payload.persona_id,
+                models.Persona.sede_id == user_sede_id,
+            )
+            .first()
+        )
         if not persona:
             raise HTTPException(status_code=404, detail="Persona no encontrada")
         # Si el evento requiere pre-registro, validar inscripción CONFIRMED.

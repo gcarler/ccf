@@ -25,6 +25,7 @@ from backend import models
 from backend.api.evangelism_shared import (
     ATTENDED_STATES,
     analytics_cache_scope,
+    get_visible_group,
     get_visible_strategy,
     is_absent_status,
     is_attended_status,
@@ -243,10 +244,10 @@ async def attendance_pdf(
     current_user=Depends(require_evangelism_read),
 ):
     """Genera PDF de asistencia del grupo con tabla de sesiones y línea de firma."""
-    grupo = _get_group_or_404(db, grupo_id)
     user_sede = require_user_sede_id(db, current_user)
-    if user_sede is not None and grupo.sede_id and str(grupo.sede_id) != str(user_sede):
-        raise HTTPException(status_code=403, detail="Grupo no pertenece a tu sede")
+    grupo = get_visible_group(db, grupo_id, user_sede)
+    if not grupo:
+        raise HTTPException(status_code=404, detail="Grupo no encontrado")
     leader_name = _get_leader_name(db, grupo)
     rows = _build_session_rows(db, grupo_id)
 
@@ -357,10 +358,10 @@ async def attendance_excel(
     current_user=Depends(require_evangelism_read),
 ):
     """Genera Excel de asistencia del grupo con tabla de sesiones."""
-    grupo = _get_group_or_404(db, grupo_id)
     user_sede = require_user_sede_id(db, current_user)
-    if user_sede is not None and grupo.sede_id and str(grupo.sede_id) != str(user_sede):
-        raise HTTPException(status_code=403, detail="Grupo no pertenece a tu sede")
+    grupo = get_visible_group(db, grupo_id, user_sede)
+    if not grupo:
+        raise HTTPException(status_code=404, detail="Grupo no encontrado")
     leader_name = _get_leader_name(db, grupo)
     rows = _build_session_rows(db, grupo_id)
 
