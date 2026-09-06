@@ -96,3 +96,11 @@ Nota operativa:
 - `PEND-FRONTEND-E2E-PROJECTS-001` cerrada el 2026-07-16 con `frontend/tests/e2e/projects/smoke.spec.ts`
 - `PEND-FRONTEND-E2E-PROJECTS-DETAIL-001` cerrada el 2026-07-16 con `frontend/tests/e2e/projects/detail.spec.ts`
 - `PEND-FRONTEND-E2E-WHITEBOARD-001` cerrada el 2026-07-25 con `frontend/tests/e2e/projects/whiteboard.spec.ts`
+
+## 8. Certificación Final (2026-09-06)
+
+- Estado: **100/100 (A+) CERTIFICADO** (`docs/AUDITORIA_FORENSE_PROYECTOS_2026-09-06.md`).
+- 460 tests backend + 45 tests frontend aprobados al 100%.
+- 0 llamadas a `db.delete(`; 0 `datetime.utcnow`.
+- 0 clases de alerta vetadas en frontend.
+

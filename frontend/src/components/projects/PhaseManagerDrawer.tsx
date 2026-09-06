@@ -283,7 +283,7 @@ export function PhaseManagerDrawer({ projectId, onClose }: Props) {
                             {/* Delete */}
                             <button
                                 onClick={() => handleRemove(i)}
-                                className="size-7 rounded-lg flex items-center justify-center text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--destructive))] hover:bg-red-50 dark:hover:bg-red-900/20 opacity-0 group-hover:opacity-100 transition-all shrink-0"
+                                className="size-7 rounded-lg flex items-center justify-center text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--destructive))] hover:bg-[hsl(var(--destructive)/0.1)] opacity-0 group-hover:opacity-100 transition-all shrink-0"
                             >
                                 <Trash2 size={12} />
                             </button>

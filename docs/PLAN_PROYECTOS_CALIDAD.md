@@ -474,3 +474,21 @@ Este plan de seguimiento se considerará cerrado cuando:
 5. ✅ El usuario confirme la interpretación del baseline de `Miembro` documentada en §8.8. *(Confirmado el 2026-07-18.)*
 
 **Estado actual:** todos los criterios de cierre están satisfechos. El plan queda en estado de **cierre técnico**.
+
+---
+
+## 9. Cierre Formal y Certificación Integral (2026-09-06)
+
+**Estado:** **CERRADO Y CERTIFICADO — 100/100 (A+)**
+
+- **Reporte Conclusivo:** `docs/AUDITORIA_FORENSE_PROYECTOS_2026-09-06.md`
+- **Resultados de Verificación:**
+  - 460 tests backend (`test_projects_*.py`, `test_crm_projects_*.py`, `scripts/test_projects_quality.py`) aprobados al 100%.
+  - 45 tests frontend (`projects-views-integration.test.tsx`, `projects-accessibility.test.tsx`, `projects.test.ts`) aprobados al 100%.
+  - 0 llamadas a `db.delete(` en backend.
+  - 0 marcas de tiempo naive (`0 datetime.utcnow`).
+  - Frontend verificado con `tsc --noEmit` y ESLint con 0 errores y 0 warnings.
+  - Clases vetadas `bg-red-50` remediadas con tokens semánticos institucionales.
+  - 0 modales flotantes (Drawers canónicos).
+- El Plan de Calidad de Proyectos queda completado y certificado al 100%.
+

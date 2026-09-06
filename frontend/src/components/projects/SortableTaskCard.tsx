@@ -19,8 +19,8 @@ interface Props {
 }
 
 const PRIORITY_CONFIG: Record<string, { label: string; color: string; bg: string }> = {
-    urgent: { label: PRIORITY_LABELS.urgent, color: 'text-[hsl(var(--destructive))]',    bg: 'bg-red-50 dark:bg-red-900/20'    },
-    high:   { label: PRIORITY_LABELS.high,   color: 'text-orange-500', bg: 'bg-orange-50 dark:bg-orange-900/20' },
+    urgent: { label: PRIORITY_LABELS.urgent, color: 'text-[hsl(var(--destructive))]',    bg: 'bg-[hsl(var(--destructive)/0.12)]'    },
+    high:   { label: PRIORITY_LABELS.high,   color: 'text-[hsl(var(--warning))]', bg: 'bg-[hsl(var(--warning)/0.12)]' },
     medium: { label: PRIORITY_LABELS.medium, color: 'text-[hsl(var(--primary))]',   bg: 'bg-info-soft dark:bg-[hsl(var(--info))]/20'  },
     low:    { label: PRIORITY_LABELS.low,    color: 'text-[hsl(var(--text-secondary))]',  bg: 'bg-[hsl(var(--surface-1))] dark:bg-white/5'     },
 };
