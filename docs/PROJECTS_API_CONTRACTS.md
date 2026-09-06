@@ -243,6 +243,8 @@ Cobertura:
 2. `PUT /projects/{id}/phases` requiere `projects:manage`.
    - **Estado actual** (`PEND-QUALITY-PHASES-RBAC-001`, cierre 2026-07-16): **gap cerrado**. El decorador fue alineado con el docstring; `Editor` recibe **403** y `Gestor`/`Admin` pasan. El test `TestPermissionGranularityGaps::test_editor_blocked_from_put_phases` congela el comportamiento.
 3. La matriz RBAC compacta vive en `docs/PROJECTS_RBAC_MATRIX.md`; mantenerla sincronizada con `tests/test_projects_rbac.py`.
+4. **Certificación Final (2026-09-06):** El módulo de Proyectos queda evaluado y certificado formalmente con **100/100 (A+)** (`docs/AUDITORIA_FORENSE_PROYECTOS_2026-09-06.md`). 52 endpoints operativos y validados.
+
 
 ### 11.1 Phase sync (`PEND-QUALITY-PHASE-SYNC-001`, cierre 2026-07-16)
 
