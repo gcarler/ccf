@@ -1473,6 +1473,42 @@ const CONTENT_LABELS: Record<string, string> = {
   secondary_cta_label: "Texto botón secundario",
   secondary_cta_href: "Enlace botón secundario",
   bg_style: "Estilo de fondo",
+
+  // Quiénes Somos — Secciones modulares
+  stats: "📊 Estadísticas e Impacto",
+  vision_mision: "🎯 Visión y Misión",
+  founders: "👥 Pastores Fundadores",
+  values: "🌟 Valores Institucionales",
+  quote: "💬 Cita Pastoral Destacada",
+  cta: "🚪 Conectar y Visitar",
+  about: "ℹ️ Quiénes Somos (Consolidado)",
+
+  // Quiénes Somos — Campos individuales
+  vision_title: "Título de Visión",
+  vision_text: "Texto de Visión",
+  mision_title: "Título de Misión",
+  mision_text: "Texto de Misión",
+  founder_label: "Etiqueta superior de fundadores",
+  founder_title: "Título de fundadores",
+  founder_title_accent: "Énfasis de título",
+  founder_bio: "Biografía de los fundadores (párrafo 1)",
+  founder_bio2: "Biografía de los fundadores (párrafo 2)",
+  founder1_name: "Nombre Pastor Principal",
+  founder1_role: "Cargo Pastor Principal",
+  founder1_image: "Fotografía Pastor Principal",
+  founder2_name: "Nombre Pastor/a Principal",
+  founder2_role: "Cargo Pastor/a Principal",
+  founder2_image: "Fotografía Pastor/a Principal",
+  founder_cta_team: "Texto botón equipo",
+  founder_cta_visit: "Texto botón sedes",
+  values_eyebrow: "Etiqueta superior de valores",
+  valores_title: "Título de valores",
+  valores: "Lista de valores",
+  quote_text: "Texto de la cita",
+  quote_author: "Autor de la cita",
+  quote_subtitle: "Subtítulo de la cita",
+  cta_view_sedes: "Texto botón ver sedes",
+  cta_view_events: "Texto botón ver eventos",
 };
 
 const HOME_HERO_CONTENT_FIELDS = [
@@ -1542,7 +1578,7 @@ const SECTION_FIELD_GROUPS: Record<string, Array<{ label: string; emoji: string;
     { label: "Actividades recientes", emoji: "📅", prefixes: ["activities_"] },
     { label: "Boletín semanal", emoji: "📧", prefixes: ["newsletter_"] },
   ],
-  // Quiénes Somos — sección about
+  // Quiénes Somos — sección monolítica (compatibilidad)
   about: [
     { label: "Estadísticas", emoji: "📊", prefixes: ["stats"] },
     { label: "Visión y Misión", emoji: "🎯", prefixes: ["vision_", "mision_"] },
@@ -1550,6 +1586,30 @@ const SECTION_FIELD_GROUPS: Record<string, Array<{ label: string; emoji: string;
     { label: "Valores", emoji: "🌟", prefixes: ["valores", "values_"] },
     { label: "Cita destacada", emoji: "💬", prefixes: ["quote_"] },
     { label: "Llamado a la acción", emoji: "🚪", prefixes: ["cta_"] },
+  ],
+  // Quiénes Somos — secciones atómicas individuales
+  stats: [
+    { label: "Métricas de Impacto", emoji: "📊", prefixes: ["stats"] },
+  ],
+  vision_mision: [
+    { label: "Visión de la Iglesia", emoji: "👁️", prefixes: ["vision_"] },
+    { label: "Misión de la Iglesia", emoji: "🎯", prefixes: ["mision_"] },
+  ],
+  founders: [
+    { label: "Encabezado y Mensaje", emoji: "📜", prefixes: ["founder_label", "founder_title", "founder_title_accent", "founder_bio", "founder_bio2"] },
+    { label: "Pastor Principal", emoji: "👤", prefixes: ["founder1_"] },
+    { label: "Pastor/a Principal", emoji: "👤", prefixes: ["founder2_"] },
+    { label: "Botones de Acción", emoji: "🔗", prefixes: ["founder_cta_"] },
+  ],
+  values: [
+    { label: "Encabezado de Valores", emoji: "🏷️", prefixes: ["values_eyebrow", "valores_title"] },
+    { label: "Valores Institucionales", emoji: "🌟", prefixes: ["valores"] },
+  ],
+  quote: [
+    { label: "Cita Pastoral", emoji: "💬", prefixes: ["quote_"] },
+  ],
+  cta: [
+    { label: "Llamado a la Acción", emoji: "🚪", prefixes: ["cta_"] },
   ],
   // Pastores — sección feed (textos de la lista) → compound key: pastors_feed
   pastors_feed: [

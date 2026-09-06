@@ -90,6 +90,7 @@ tmp/
 tmp_mcp/
 tmp_stitch/
 uploads/
+uploads
 venv/
 .venv/
 ccf_final.db
