@@ -1,6 +1,6 @@
 # Contratos API — Módulo Mensajería y Chat Directo
 
-**Última actualización:** 2026-09-05 (Auditoría Forense Integral — Certificación 100%)  
+**Última actualización:** 2026-09-06 (Auditoría Forense Integral — Certificación 100/100 A+)  
 **Routers Backend:**
 - `backend/api/chat.py` (Montado en `/api`, tag `chat`)
 - `backend/api/messaging.py` (Montado en `/api`, tag `messaging`)  

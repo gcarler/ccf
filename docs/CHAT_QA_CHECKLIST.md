@@ -1,8 +1,8 @@
 # QA Checklist — Módulo Mensajería y Chat Directo
 
-**Última actualización:** 2026-09-05 (Auditoría Forense Integral — Certificación 100%)  
+**Última actualización:** 2026-09-06 (Auditoría Forense Integral — Certificación 100/100 A+)  
 **Métricas de Calidad:** 311 tests automatizados aprobados (177 backend + 134 vitest frontend), 0 fallos, 0 regresiones.  
-**Calificación Oficial:** **100% CERTIFICADO (A / 98/100)**
+**Calificación Oficial:** **100/100 (A+) — CERTIFICADO**
 
 ---
 

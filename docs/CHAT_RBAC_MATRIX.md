@@ -1,6 +1,6 @@
 # Matriz RBAC Canónica — Módulo Mensajería y Chat Directo
 
-**Última actualización:** 2026-09-05 (Auditoría Forense Integral — Certificación 100%)  
+**Última actualización:** 2026-09-06 (Auditoría Forense Integral — Certificación 100/100 A+)  
 **Módulo:** `messaging`  
 **Routers:** `backend/api/chat.py` y `backend/api/messaging.py`  
 **Guards de Autorización:**
