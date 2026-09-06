@@ -20,6 +20,7 @@ import { PROJECTS_LIST_ROUTE } from '@/app/plataforma/projects/projectsLinks';
 export default function Navbar() {
     const { isAuthenticated, logout } = useAuth();
     const { logoUrl, logoName } = useSiteBranding({ logoName: SITE_NAME });
+    const [logoError, setLogoError] = useState(false);
     const [isScrolled, setIsScrolled] = useState(false);
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const navItems = [
@@ -53,8 +54,15 @@ export default function Navbar() {
                     {/* Logo */}
                     <Link href="/" className="flex items-center gap-2 group">
                         <div className="bg-[hsl(var(--primary))] p-1.5 rounded-md group-hover:scale-105 transition-transform shadow-md shadow-[hsl(var(--info)/20%)] overflow-hidden">
-                            {logoUrl ? (
-                                <OptimizedImage src={logoUrl} alt={siteName} width={16} height={16} className="w-4 h-4 object-contain" />
+                            {logoUrl && !logoError ? (
+                                <OptimizedImage
+                                    src={logoUrl}
+                                    alt={siteName}
+                                    width={16}
+                                    height={16}
+                                    className="w-4 h-4 object-contain"
+                                    onError={() => setLogoError(true)}
+                                />
                             ) : (
                                 <Church size={16} className="text-white" />
                             )}

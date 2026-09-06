@@ -20,6 +20,7 @@ export default function LoginPage() {
     const [expired] = useState(() => typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('expired') === '1');
     const { login, isAuthenticated, user } = useAuth();
     const { logoUrl, logoName } = useSiteBranding({ logoName: SITE_NAME });
+    const [logoError, setLogoError] = useState(false);
     const router = useRouter();
 
     useEffect(() => {
@@ -140,7 +141,7 @@ export default function LoginPage() {
                     transition={{ delay: 0.6, duration: 0.8 }}
                     className="relative z-10"
                 >
-                    {logoUrl ? (
+                    {logoUrl && !logoError ? (
                         <div className="max-w-[420px]">
                             <OptimizedImage
                                 src={logoUrl}
@@ -150,6 +151,7 @@ export default function LoginPage() {
                                 className="w-full h-auto object-contain drop-shadow-[0_12px_28px_rgba(0,0,0,0.25)]"
                                 objectFit="contain"
                                 priority
+                                onError={() => setLogoError(true)}
                             />
                         </div>
                     ) : (

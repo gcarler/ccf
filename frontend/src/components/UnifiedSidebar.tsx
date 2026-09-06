@@ -12,6 +12,7 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import clsx from 'clsx';
 import { SITE_NAME } from '@/lib/site-config';
+import { useSiteBranding } from '@/lib/site-branding';
 import { PROJECTS_LIST_ROUTE } from '@/app/plataforma/projects/projectsLinks';
 
 export default function UnifiedSidebar({
@@ -23,8 +24,8 @@ export default function UnifiedSidebar({
 }) {
     const pathname = usePathname();
     const [isMini, setIsMini] = useState(false);
-    const logoUrl: string | undefined = undefined;
-    const logoDisplayName: string = title || SITE_NAME;
+    const { logoUrl, logoName } = useSiteBranding({ logoName: "El Faro" });
+    const logoDisplayName: string = title || logoName || "El Faro";
     const [expandedFolders, setExpandedFolders] = useState<string[]>(['contextual-root', 'Income']);
 
     // Persist sidebar state
@@ -162,9 +163,10 @@ export default function UnifiedSidebar({
                         {logoUrl ? (
                             <OptimizedImage src={logoUrl} alt={logoDisplayName} fill className="w-full h-full object-contain p-1" />
                         ) : (
-                            <div className="w-3.5 h-3.5 rounded-full border-2 border-white dark:border-[hsl(var(--border))] relative">
-                                <div className="absolute top-[-2px] right-[-2px] w-1.5 h-1.5 bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--bg-muted))]" />
-                            </div>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-5 h-5 text-blue-600 dark:text-blue-400">
+                                <path d="M8 22L10 6L12 2L14 6L16 22H8Z" strokeLinejoin="round" />
+                                <circle cx="12" cy="4" r="1.5" fill="currentColor" />
+                            </svg>
                         )}
                     </div>
                     {!isMini && (

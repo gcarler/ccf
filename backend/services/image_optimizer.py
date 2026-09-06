@@ -95,13 +95,18 @@ class ImageOptimizer:
         except Exception as exc:  # pragma: no cover - best-effort orientation fix
             log.debug("image_optimizer: EXIF orientation fix failed: %s", exc)
 
-        # --- RGBA → RGB  (WebP supports alpha, but JPEG doesn't — we output
-        # WebP so alpha is fine; still strip alpha for truly opaque images)
+        # --- RGBA preservation for WebP ---
+        # WebP natively supports alpha channels. If the image has transparency,
+        # preserve RGBA mode so logos and transparent graphics are not flattened into solid white blocks.
         if img.mode in ("RGBA", "LA"):
-            background = Image.new("RGB", img.size, (255, 255, 255))
-            background.paste(img, mask=img.split()[-1] if img.mode == "RGBA" else None)  # type: ignore[arg-type]
-            img = background
-        elif img.mode != "RGB":
+            alpha = img.split()[-1]
+            min_alpha, _ = alpha.getextrema()
+            if min_alpha < 255:
+                if img.mode != "RGBA":
+                    img = img.convert("RGBA")
+            else:
+                img = img.convert("RGB")
+        elif img.mode not in ("RGB", "RGBA"):
             img = img.convert("RGB")
 
         # --- Resize (preserve aspect ratio) ---

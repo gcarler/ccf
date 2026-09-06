@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
 import type { LucideIcon } from 'lucide-react';
 import { Church, Heart, Mail, Globe } from 'lucide-react';
@@ -46,6 +46,7 @@ const footerLinks: FooterGroup[] = [
 
 export default function Footer() {
     const { logoUrl, logoName } = useSiteBranding();
+    const [logoError, setLogoError] = useState(false);
     return (
         <footer className="w-full bg-[hsl(var(--bg-primary))] border-t border-white/5">
             <div className="w-full px-4 lg:px-4 py-8">
@@ -53,8 +54,15 @@ export default function Footer() {
                     {/* Brand */}
                     <div className="md:col-span-1 space-y-2">
                         <div className="flex items-center gap-2 text-white">
-                            {logoUrl ? (
-                                <OptimizedImage src={logoUrl} alt={logoName || SITE_NAME} width={20} height={20} className="size-5 rounded object-contain" />
+                            {logoUrl && !logoError ? (
+                                <OptimizedImage
+                                    src={logoUrl}
+                                    alt={logoName || SITE_NAME}
+                                    width={20}
+                                    height={20}
+                                    className="size-5 rounded object-contain"
+                                    onError={() => setLogoError(true)}
+                                />
                             ) : (
                                 <Church size={16} className="text-[hsl(var(--primary))]" />
                             )}

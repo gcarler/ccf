@@ -131,6 +131,7 @@ function FooterLinkColumn({ title, links }: { title: string; links: PublicLink[]
 
 export default function Footer() {
     const { logoUrl, logoName, tagline } = useSiteBranding({ logoName: SITE_NAME });
+    const [logoError, setLogoError] = useState(false);
     const bootstrappedFooterPage = usePublicBootstrap()?.footerPage ?? null;
     const [footerConfig, setFooterConfig] = useState<FooterConfig | null>(() => {
         const section = bootstrappedFooterPage?.sections?.find((s) => s.type === "footer_config");
@@ -209,8 +210,15 @@ export default function Footer() {
                                         borderColor: "var(--site-outline-variant)",
                                     }}
                                 >
-                                    {logoUrl ? (
-                                        <OptimizedImage src={logoUrl} alt={brandName} width={80} height={80} className="h-full w-full object-contain p-3" />
+                                    {logoUrl && !logoError ? (
+                                        <OptimizedImage
+                                            src={logoUrl}
+                                            alt={brandName}
+                                            width={80}
+                                            height={80}
+                                            className="h-full w-full object-contain p-3"
+                                            onError={() => setLogoError(true)}
+                                        />
                                     ) : (
                                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="38" height="38" className="shrink-0" style={{ color: "var(--site-primary)" }}>
                                             <path d="M8 22L10 6L12 2L14 6L16 22H8Z" strokeLinejoin="round" />

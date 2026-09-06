@@ -22,6 +22,7 @@ type PublicNavItem = {
 export default function Navbar() {
     const { toggle, themeTokens } = useTheme();
     const { logoUrl, logoName, tagline } = useSiteBranding({ logoName: SITE_NAME });
+    const [logoError, setLogoError] = useState(false);
     const pathname = usePathname();
     const [scrolled, setScrolled] = useState(false);
     const [mobileOpen, setMobileOpen] = useState(false);
@@ -163,7 +164,7 @@ export default function Navbar() {
                 >
                     {/* Logo */}
                     <Link href="/" className="group flex min-w-0 shrink-0 items-center gap-3 rounded-full pr-2 transition-opacity hover:opacity-90">
-                        {logoUrl ? (
+                        {logoUrl && !logoError ? (
                             <span
                                 className="grid h-11 w-11 place-items-center rounded-full border md:h-12 md:w-12"
                                 style={{
@@ -171,7 +172,14 @@ export default function Navbar() {
                                     borderColor: "var(--site-outline-variant)",
                                 }}
                             >
-                                <OptimizedImage src={logoUrl} alt={logoName} width={42} height={42} className="h-8 w-8 object-contain md:h-9 md:w-9" />
+                                <OptimizedImage
+                                    src={logoUrl}
+                                    alt={logoName}
+                                    width={42}
+                                    height={42}
+                                    className="h-8 w-8 object-contain md:h-9 md:w-9"
+                                    onError={() => setLogoError(true)}
+                                />
                             </span>
                         ) : (
                             <div
@@ -337,7 +345,7 @@ export default function Navbar() {
                 >
                     <div className="flex h-[82px] items-center justify-between px-5">
                         <Link href="/" className="flex min-w-0 items-center gap-3" onClick={() => setMobileOpen(false)}>
-                            {logoUrl ? (
+                            {logoUrl && !logoError ? (
                                 <span
                                     className="grid h-11 w-11 place-items-center rounded-full border"
                                     style={{
@@ -345,7 +353,14 @@ export default function Navbar() {
                                         borderColor: "var(--site-outline-variant)",
                                     }}
                                 >
-                                    <OptimizedImage src={logoUrl} alt={logoName} width={40} height={40} className="h-8 w-8 object-contain" />
+                                    <OptimizedImage
+                                        src={logoUrl}
+                                        alt={logoName}
+                                        width={40}
+                                        height={40}
+                                        className="h-8 w-8 object-contain"
+                                        onError={() => setLogoError(true)}
+                                    />
                                 </span>
                             ) : (
                                 <div className="h-11 w-11 rounded-full border p-2 text-site-primary" style={{ borderColor: "var(--site-outline-variant)" }}>

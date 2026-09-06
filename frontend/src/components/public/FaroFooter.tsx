@@ -69,6 +69,7 @@ function asPublicLinks(value: unknown): PublicLink[] {
 
 export default function FaroFooter() {
     const { logoUrl, logoName } = useSiteBranding({ logoName: SITE_NAME });
+    const [logoError, setLogoError] = useState(false);
     const [footerConfig, setFooterConfig] = useState<FooterConfig | null>(null);
 
     useEffect(() => {
@@ -133,8 +134,15 @@ export default function FaroFooter() {
                                     className="w-14 h-14 sm:w-16 sm:h-16 rounded-full flex items-center justify-center shrink-0 overflow-hidden"
                                     style={{ background: "var(--site-surface-container)" }}
                                 >
-                                    {logoUrl ? (
-                                        <OptimizedImage src={logoUrl} alt={brandName} width={56} height={56} className="w-full h-full object-contain p-2" />
+                                    {logoUrl && !logoError ? (
+                                        <OptimizedImage 
+                                            src={logoUrl} 
+                                            alt={brandName} 
+                                            width={56} 
+                                            height={56} 
+                                            className="w-full h-full object-contain p-2" 
+                                            onError={() => setLogoError(true)}
+                                        />
                                     ) : (
                                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="28" height="28" className="shrink-0 w-7 h-7 sm:w-8 sm:h-8" style={{ color: "var(--site-primary)" }}>
                                             <path d="M8 22L10 6L12 2L14 6L16 22H8Z" strokeLinejoin="round" />

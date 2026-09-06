@@ -14,6 +14,7 @@ import { useSiteBranding } from "@/lib/site-branding";
 export default function FaroNavbar() {
     const { toggle, themeTokens } = useFaroTheme();
     const { logoUrl, logoName } = useSiteBranding({ logoName: SITE_NAME });
+    const [logoError, setLogoError] = useState(false);
     const pathname = usePathname();
     const [scrolled, setScrolled] = useState(false);
     const [mobileOpen, setMobileOpen] = useState(false);
@@ -81,8 +82,15 @@ export default function FaroNavbar() {
                 <nav className="ccf-container max-w-[1400px] h-[88px] md:h-[96px] flex items-center justify-between gap-4">
                     {/* Logo */}
                     <Link href="/" className="flex items-center gap-3.5 shrink-0">
-                        {logoUrl ? (
-                            <OptimizedImage src={logoUrl} alt={logoName} width={40} height={40} className="h-10 object-contain" />
+                        {logoUrl && !logoError ? (
+                            <OptimizedImage
+                                src={logoUrl}
+                                alt={logoName}
+                                width={40}
+                                height={40}
+                                className="h-10 object-contain"
+                                onError={() => setLogoError(true)}
+                            />
                         ) : (
                             <div className="w-10 h-10 relative">
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-full h-full text-site-primary">

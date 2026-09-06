@@ -137,16 +137,13 @@ export default function PublicHeroWithSlides({
               )}
             </motion.div>
         </div>
-        <div className="absolute inset-x-0 top-0 z-20 flex items-center justify-between p-4 md:p-6 text-white/90">
-          <span className="ccf-kicker rounded-full border border-white/20 bg-white/10 px-3 py-1 text-2xs uppercase backdrop-blur">
-            Home
-          </span>
-          {totalSlides > 1 && (
+        {totalSlides > 1 && (
+          <div className="absolute inset-x-0 top-0 z-20 flex items-center justify-end p-4 md:p-6 text-white/90">
             <span className="ccf-kicker rounded-full border border-white/20 bg-white/10 px-3 py-1 text-2xs uppercase backdrop-blur">
               {String(activeIndex + 1).padStart(2, "0")} / {String(totalSlides).padStart(2, "0")}
             </span>
-          )}
-        </div>
+          </div>
+        )}
           {totalSlides > 1 && (
           <div className="absolute bottom-4 right-4 z-20 flex gap-2">
             {safeSlides.slice(0, 6).map((slide, index) => (
@@ -255,16 +252,13 @@ export default function PublicHeroWithSlides({
             {activeSlide && (
               <>
                 <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_20%,rgba(255,255,255,0.2),transparent_30%),linear-gradient(to_top,rgba(0,0,0,0.9)_0%,rgba(0,0,0,0.42)_45%,transparent_100%)]" />
-                <div className="absolute inset-x-0 top-0 flex items-center justify-between p-4 md:p-6 text-white/90">
-                  <span className="ccf-kicker rounded-full border border-white/20 bg-white/10 px-3 py-1 text-2xs uppercase backdrop-blur">
-                    Banner
-                  </span>
-                  {totalSlides > 1 && (
+                {totalSlides > 1 && (
+                  <div className="absolute inset-x-0 top-0 flex items-center justify-end p-4 md:p-6 text-white/90">
                     <span className="ccf-kicker rounded-full border border-white/20 bg-white/10 px-3 py-1 text-2xs uppercase backdrop-blur">
                       {String(activeIndex + 1).padStart(2, "0")} / {String(totalSlides).padStart(2, "0")}
                     </span>
-                  )}
-                </div>
+                  </div>
+                )}
                 <div className="absolute inset-x-0 bottom-0 p-5 md:p-8 text-white">
                   {activeSlide.title && <h2 className="text-xl md:text-3xl mb-3 max-w-xl">{activeSlide.title}</h2>}
                   {activeSlide.caption && <p className="ccf-copy text-white/86 max-w-2xl">{activeSlide.caption}</p>}
