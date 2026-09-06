@@ -137,11 +137,11 @@ export function CivicHeroSearchSection({ section }: { section: CmsSection<"civic
           onChange={e => setQuery(e.target.value)}
           placeholder={placeholder}
           aria-label="Buscar trámites"
-          className="flex-1 px-5 py-4 text-base outline-none bg-[hsl(var(--bg-primary))] text-[hsl(var(--text-primary))] placeholder:text-[hsl(var(--text-secondary))]"
+          className="flex-1 px-5 py-4 text-base outline-none bg-site-surface text-site-on-surface placeholder:text-site-on-surface-variant"
         />
         <button
           type="submit"
-          className="px-6 py-4 font-black text-sm uppercase tracking-wide text-[hsl(var(--text-primary))] dark:text-white bg-[hsl(var(--bg-muted))] hover:bg-[hsl(var(--surface-2))] transition-colors flex items-center gap-2 whitespace-nowrap"
+          className="px-6 py-4 font-black text-sm uppercase tracking-wide text-site-on-surface bg-site-surface-container-high hover:bg-site-surface-bright transition-colors flex items-center gap-2 whitespace-nowrap"
         >
           <Search size={16} /> Buscar
         </button>

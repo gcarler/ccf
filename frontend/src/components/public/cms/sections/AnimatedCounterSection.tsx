@@ -52,12 +52,12 @@ function CounterItem({ label, value, suffix = "", prefix = "", duration_ms = 200
   }, [isVisible, targetValue, duration_ms]);
 
   return (
-    <div className="flex flex-col items-center justify-center p-6 bg-white dark:bg-zinc-900/50 rounded-xl border border-gray-100 dark:border-zinc-800 shadow-sm text-center">
-      <div className="text-4xl md:text-5xl font-extrabold text-[hsl(var(--primary))] tracking-tight">
+    <div className="flex flex-col items-center justify-center p-6 bg-site-surface-container-low rounded-xl border border-site-outline-variant/30 shadow-sm text-center">
+      <div className="text-4xl md:text-5xl font-extrabold text-site-primary tracking-tight">
         {prefix}{currentValue.toLocaleString()}{suffix}
       </div>
       {label && (
-        <div className="mt-2 text-sm font-medium text-gray-600 dark:text-gray-400">
+        <div className="mt-2 text-sm font-medium text-site-on-surface-variant">
           {label}
         </div>
       )}
@@ -103,7 +103,7 @@ export function AnimatedCounterSection({ section }: { section: Partial<CmsSectio
   return (
     <section ref={containerRef} className="py-12 md:py-16 px-4 max-w-7xl mx-auto">
       {title && (
-        <h2 className="text-2xl md:text-3xl font-bold text-center mb-8 md:mb-12 text-gray-900 dark:text-white">
+        <h2 className="text-2xl md:text-3xl font-bold text-center mb-8 md:mb-12 text-site-on-surface">
           {title}
         </h2>
       )}

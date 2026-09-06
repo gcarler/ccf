@@ -91,11 +91,11 @@ export function GalleryMasonrySection({ section }: { section: Partial<CmsSection
         </h2>
       )}
 
-      {body && <p className="mx-auto mb-8 max-w-2xl px-4 text-center text-sm leading-relaxed text-gray-600 dark:text-gray-300">{body}</p>}
+      {body && <p className="mx-auto mb-8 max-w-2xl px-4 text-center text-sm leading-relaxed text-site-on-surface-variant">{body}</p>}
 
       {isCarousel ? (
         <div className="relative">
-          <div className={`overflow-hidden bg-gray-100 shadow-xl dark:bg-zinc-900 ${fullBleed ? "rounded-none" : "rounded-2xl"}`}>
+          <div className={`overflow-hidden bg-site-surface-container-low shadow-xl ${fullBleed ? "rounded-none" : "rounded-2xl"}`}>
             {images.length > 0 ? (
               <button type="button" onClick={() => setLightboxIndex(carouselIndex)} className="relative block aspect-[4/3] w-full cursor-zoom-in sm:aspect-[16/9]" aria-label={`Ampliar ${images[carouselIndex]?.alt || `imagen ${carouselIndex + 1}`}`}>
                 <OptimizedImage src={images[carouselIndex]?.url || ""} alt={images[carouselIndex]?.alt || `Imagen ${carouselIndex + 1}`} fill sizes="(max-width: 640px) 100vw, 1200px" className="object-cover" />
@@ -104,7 +104,7 @@ export function GalleryMasonrySection({ section }: { section: Partial<CmsSection
                 )}
               </button>
             ) : (
-              <div className="flex aspect-[4/3] items-center justify-center text-sm text-gray-500 sm:aspect-[16/9]">Añade imágenes desde el editor CMS.</div>
+              <div className="flex aspect-[4/3] items-center justify-center text-sm text-site-on-surface-variant sm:aspect-[16/9]">Añade imágenes desde el editor CMS.</div>
             )}
           </div>
           {images.length > 1 && (
@@ -112,11 +112,11 @@ export function GalleryMasonrySection({ section }: { section: Partial<CmsSection
               <button type="button" onClick={prevCarousel} aria-label="Foto anterior" className="absolute left-3 top-1/2 -translate-y-1/2 rounded-full bg-black/55 p-3 text-white transition hover:bg-black/75"><ChevronLeft size={24} /></button>
               <button type="button" onClick={nextCarousel} aria-label="Foto siguiente" className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full bg-black/55 p-3 text-white transition hover:bg-black/75"><ChevronRight size={24} /></button>
               <div className="mt-4 flex justify-center gap-1.5" aria-label="Selector de fotografía">
-                {images.map((_, index) => <button key={index} type="button" onClick={() => setCarouselIndex(index)} aria-label={`Ir a la imagen ${index + 1}`} className={`h-2 rounded-full transition-all ${index === carouselIndex ? "w-6 bg-[hsl(var(--primary))]" : "w-2 bg-gray-300 dark:bg-zinc-700"}`} />)}
+                {images.map((_, index) => <button key={index} type="button" onClick={() => setCarouselIndex(index)} aria-label={`Ir a la imagen ${index + 1}`} className={`h-2 rounded-full transition-all ${index === carouselIndex ? "w-6 bg-site-primary" : "w-2 bg-site-outline-variant"}`} />)}
               </div>
             </>
           )}
-          {albumUrl && <div className="mt-7 text-center"><a href={albumUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center rounded-full bg-[hsl(var(--primary))] px-6 py-3 text-sm font-bold text-white shadow-lg transition hover:-translate-y-0.5 hover:shadow-xl">{albumLabel}</a></div>}
+          {albumUrl && <div className="mt-7 text-center"><a href={albumUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center rounded-full bg-site-primary px-6 py-3 text-sm font-bold text-site-on-primary shadow-lg transition hover:-translate-y-0.5 hover:shadow-xl">{albumLabel}</a></div>}
         </div>
       ) : (
       <div className={columnClass}>
@@ -131,7 +131,7 @@ export function GalleryMasonrySection({ section }: { section: Partial<CmsSection
             <div
               key={idx}
               onClick={() => openLightbox(idx)}
-              className="relative mb-4 break-inside-avoid overflow-hidden rounded-xl group cursor-pointer border border-gray-100 dark:border-zinc-800 shadow-sm transition-transform duration-300 hover:-translate-y-0.5"
+              className="relative mb-4 break-inside-avoid overflow-hidden rounded-xl group cursor-pointer border border-site-outline-variant/30 shadow-sm transition-transform duration-300 hover:-translate-y-0.5"
             >
               <OptimizedImage
                 src={imgUrl}

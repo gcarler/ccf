@@ -39,17 +39,17 @@ export function MapEmbedSection({ section }: { section: Partial<CmsSection<"map_
   return (
     <section className="py-12 md:py-16 px-4 max-w-7xl mx-auto">
       {title && (
-        <h2 className="text-2xl md:text-3xl font-bold text-center mb-6 text-gray-900 dark:text-white">
+        <h2 className="text-2xl md:text-3xl font-bold text-center mb-6 text-site-on-surface">
           {title}
         </h2>
       )}
       {address && (
-        <p className="text-center text-sm font-medium text-gray-600 dark:text-gray-400 mb-6">
+        <p className="text-center text-sm font-medium text-site-on-surface-variant mb-6">
           📍 {address}
         </p>
       )}
       <div
-        className="w-full rounded-xl overflow-hidden shadow-lg border border-gray-200 dark:border-zinc-800 bg-gray-100 dark:bg-zinc-900"
+        className="w-full rounded-xl overflow-hidden shadow-lg border border-site-outline-variant/30 bg-site-surface-container-low"
         style={{ height: `${heightPx}px` }}
       >
         {embedUrl ? (

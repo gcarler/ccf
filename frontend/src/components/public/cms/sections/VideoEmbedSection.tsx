@@ -15,13 +15,13 @@ export function VideoEmbedSection({ section }: { section: Partial<CmsSection<"vi
   return (
     <section className="py-12 md:py-16 px-4 max-w-5xl mx-auto">
       {title && (
-        <h2 className="text-2xl md:text-3xl font-bold text-center mb-6 text-gray-900 dark:text-white">
+        <h2 className="text-2xl md:text-3xl font-bold text-center mb-6 text-site-on-surface">
           {title}
         </h2>
       )}
-      <div className="relative w-full aspect-video rounded-xl overflow-hidden shadow-lg bg-black border border-gray-200 dark:border-zinc-800">
+      <div className="relative w-full aspect-video rounded-xl overflow-hidden shadow-lg bg-black border border-site-outline-variant/30">
         {!videoInfo ? (
-          <div className="w-full h-full flex items-center justify-center text-gray-400 text-sm">
+          <div className="w-full h-full flex items-center justify-center text-site-on-surface-variant text-sm">
             Sin URL de video configurada
           </div>
         ) : videoInfo.type === "youtube" || videoInfo.type === "vimeo" ? (
@@ -45,7 +45,7 @@ export function VideoEmbedSection({ section }: { section: Partial<CmsSection<"vi
         )}
       </div>
       {caption && (
-        <p className="mt-3 text-center text-sm text-gray-600 dark:text-gray-400 italic">
+        <p className="mt-3 text-center text-sm text-site-on-surface-variant italic">
           {caption}
         </p>
       )}
