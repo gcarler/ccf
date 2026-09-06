@@ -44,13 +44,21 @@ function NosotrosStatsSection({
         <section
             data-testid="public-nosotros-stats"
             data-section-key="stats"
-            className="ccf-section-tight ccf-container"
+            className="ccf-section-tight ccf-container py-6 md:py-10"
         >
-            <div className="flex flex-wrap gap-8 md:gap-12">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-8 md:gap-12 border-y border-site-outline-variant/15 py-8 md:py-12">
                 {stats.map((s, i) => (
-                    <div key={i}>
-                        <p className="text-3xl md:text-4xl font-black text-site-primary">{s.value}</p>
-                        <p className="text-xs font-bold uppercase tracking-widest text-site-outline mt-0.5">{s.label}</p>
+                    <div
+                        key={i}
+                        className="group relative flex flex-col cursor-default select-none transition-all duration-300"
+                    >
+                        <p className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-black tracking-tight leading-none bg-gradient-to-br from-site-primary via-site-primary to-site-secondary/90 bg-clip-text text-transparent transition-all duration-500 group-hover:scale-105 group-hover:-translate-y-1 group-hover:from-site-secondary group-hover:to-site-primary group-hover:drop-shadow-[0_12px_24px_rgba(1,138,189,0.3)] origin-left">
+                            {s.value}
+                        </p>
+                        <div className="h-1 w-8 rounded-full bg-site-primary/25 group-hover:w-16 group-hover:bg-site-secondary transition-all duration-500 mt-3" />
+                        <p className="text-xs sm:text-sm font-extrabold uppercase tracking-[0.18em] text-site-outline group-hover:text-site-on-surface transition-colors duration-300 mt-2">
+                            {s.label}
+                        </p>
                     </div>
                 ))}
             </div>
