@@ -1361,11 +1361,14 @@ export default function PuckBuilderPage() {
             iframe={{ enabled: false }}
           />
         </div>
-        
-        {pageSlug === "events" && (
-          <PublicStrategiesManager token={token} />
-        )}
       </div>
+
+      {/* Panel de estrategias de evangelismo — visible debajo del editor */}
+      {pageSlug === "events" && (
+        <div className="border-t shrink-0 overflow-y-auto max-h-[40vh]">
+          <PublicStrategiesManager token={token} />
+        </div>
+      )}
 
       {/* Custom MediaPicker Drawer integration */}
       {mediaPickerOpen && (
