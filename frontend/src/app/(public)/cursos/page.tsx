@@ -158,15 +158,15 @@ export default function CursosPage() {
                 <span className="inline-block px-4 py-1.5 rounded-full text-xs font-semibold uppercase tracking-wide mb-3" style={{ background: "var(--site-card-highlight)", color: "var(--site-primary)" }}>
                   {featured.modality || "Acceso Gratuito"}
                 </span>
-                <h3 className="text-2xl md:text-3xl font-black mb-4 text-[hsl(var(--text-primary))] dark:text-white">{featured.title}</h3>
-                <p className="text-base leading-relaxed max-w-2xl mb-6 text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">{featured.description || featured.title}</p>
-                <span className="inline-flex items-center gap-2 text-sm font-bold uppercase tracking-wide text-[hsl(var(--primary))]">{featured.cta || "Inscribirme Gratis"} <ArrowRight size={16} /></span>
+                <h3 className="text-2xl md:text-3xl font-black mb-4 text-site-on-surface">{featured.title}</h3>
+                <p className="text-base leading-relaxed max-w-2xl mb-6 text-site-on-surface-variant">{featured.description || featured.title}</p>
+                <span className="inline-flex items-center gap-2 text-sm font-bold uppercase tracking-wide text-site-primary">{featured.cta || "Inscribirme Gratis"} <ArrowRight size={16} /></span>
               </div>
             </motion.article>
 
             <div className="md:col-span-4 grid gap-4">
               {rest.slice(0, 3).map((course) => (
-                <motion.article key={course.id} className="group rounded-lg overflow-hidden border bg-[hsl(var(--surface-1))] border-[hsl(var(--border))] dark:border-white/10" whileHover={{ y: -2 }}>
+                <motion.article key={course.id} className="group rounded-xl overflow-hidden border bg-site-surface-container-low border-site-outline-variant/30" whileHover={{ y: -2 }}>
                   <Link
                     href={`/cursos/${course.slug || course.id}`}
                     onClick={() => {
@@ -178,15 +178,15 @@ export default function CursosPage() {
                     }}
                     className="block"
                   >
-                    <div className="relative h-40 bg-[hsl(var(--surface-2))]">
+                    <div className="relative h-40 bg-site-surface-container">
                       <Image src={course.image_url || course.imageUrl || heroImageUrl || "/og-default.png"} alt={course.title} fill className="object-cover" />
                     </div>
                     <div className="p-4">
                       <span className="inline-flex items-center px-2 py-0.5 rounded-full text-2xs font-semibold uppercase tracking-wide mb-3" style={{ background: "var(--site-primary-container)", color: "var(--site-primary)" }}>
                         {course.modality || "Gratuito"}
                       </span>
-                      <h3 className="font-bold text-[hsl(var(--text-primary))] dark:text-white line-clamp-2">{course.title}</h3>
-                      <p className="mt-2 text-sm text-[hsl(var(--text-secondary))] line-clamp-2">{course.description || course.title}</p>
+                      <h3 className="font-bold text-site-on-surface line-clamp-2">{course.title}</h3>
+                      <p className="mt-2 text-sm text-site-on-surface-variant line-clamp-2">{course.description || course.title}</p>
                     </div>
                   </Link>
                 </motion.article>
@@ -196,7 +196,7 @@ export default function CursosPage() {
         ) : (
           <div className="rounded-lg p-8 text-center" style={{ background: "var(--site-surface-container-low)" }}>
             {emptyTitle && <h3 className="text-xl font-bold mb-2">{emptyTitle}</h3>}
-            {emptyDescription && <p className="text-sm text-[hsl(var(--text-secondary))]">{emptyDescription}</p>}
+            {emptyDescription && <p className="text-sm text-site-on-surface-variant">{emptyDescription}</p>}
           </div>
         )}
       </section>
@@ -214,17 +214,17 @@ export default function CursosPage() {
                   document.cookie = `ccf_pending_course=${encodeURIComponent(payload)}; path=/; max-age=86400; SameSite=Lax`;
                 } catch {}
               }}
-              className="rounded-lg border p-5 bg-[hsl(var(--surface-1))] border-[hsl(var(--border))] dark:border-white/10 hover:shadow-lg transition-shadow"
+              className="rounded-xl border p-5 bg-site-surface-container-low border-site-outline-variant/30 hover:shadow-lg transition-shadow"
             >
               <div className="flex items-center justify-between gap-3 mb-3">
                 <span className="inline-flex items-center px-2 py-0.5 rounded-full text-2xs font-semibold uppercase tracking-wide" style={{ background: "var(--site-surface-container)", color: "var(--site-primary)" }}>
                   {course.modality || "Gratuito"}
                 </span>
-                <CheckCircle2 size={16} className="text-[hsl(var(--primary))]" />
+                <CheckCircle2 size={16} className="text-site-primary" />
               </div>
               <h3 className="font-bold mb-2">{course.title}</h3>
-              <p className="text-sm text-[hsl(var(--text-secondary))] line-clamp-3">{course.description || course.title}</p>
-              <div className="mt-4 flex items-center gap-4 text-xs text-[hsl(var(--text-secondary))]">
+              <p className="text-sm text-site-on-surface-variant line-clamp-3">{course.description || course.title}</p>
+              <div className="mt-4 flex items-center gap-4 text-xs text-site-on-surface-variant">
                 {course.lessons ? <span className="inline-flex items-center gap-1"><Clock size={12} /> {course.lessons} clases</span> : null}
                 {course.instructor ? <span className="inline-flex items-center gap-1"><User size={12} /> {course.instructor}</span> : null}
               </div>

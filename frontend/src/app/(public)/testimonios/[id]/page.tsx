@@ -10,7 +10,6 @@ import { Testimonial } from "@/lib/data/testimonios";
 import { apiFetch } from "@/lib/http";
 import { SITE_KEY } from "@/lib/site-config";
 import { getCmsPublicPost } from "@/lib/cms/v2";
-import { Header, Footer_Simple } from "@/components/public/Shared";
 import { useCmsV2Page } from "@/hooks/useCmsV2Page";
 import { toast } from "sonner";
 
@@ -82,36 +81,28 @@ export default function TestimonioDetailPage() {
 
     if (loading) {
         return (
-            <div className="min-h-screen flex flex-col" style={{ background: "var(--site-background)" }}>
-                <Header />
-                <main className="pt-[120px] pb-4 min-h-screen flex items-center justify-center">
-                    <div className="w-8 h-8 border-4 border-t-transparent rounded-full animate-spin" style={{ borderColor: "var(--site-primary) transparent transparent transparent" }} />
-                </main>
-                <Footer_Simple />
-            </div>
+            <main className="pt-28 pb-16 min-h-[60vh] flex items-center justify-center">
+                <div className="w-8 h-8 border-4 border-t-transparent rounded-full animate-spin" style={{ borderColor: "var(--site-primary) transparent transparent transparent" }} />
+            </main>
         );
     }
 
     if (!testimonial) {
         return (
-            <div className="min-h-screen flex flex-col" style={{ background: "var(--site-background)" }}>
-                <Header />
-                <main className="pt-[120px] pb-4 min-h-[70vh] flex flex-col items-center justify-center text-center px-3">
-                    <Quote size={80} className="mb-3 opacity-20" style={{ color: "var(--site-primary)" }} />
-                    <h1 className="text-lg font-bold mb-4" style={{ color: "var(--site-on-background)" }}>{notFoundTitle}</h1>
-                    <p className="text-xl mb-3 opacity-70 max-w-lg" style={{ color: "var(--site-on-surface-variant)" }}>
-                        {notFoundDescription}
-                    </p>
-                    <button
-                        onClick={() => router.push('/testimonios')}
-                        className="flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-semibold uppercase tracking-wide transition-all hover:-translate-x-2"
-                        style={{ background: "var(--site-primary)", color: "var(--site-on-primary)" }}
-                    >
-                        <ArrowLeft size={16} /> {notFoundCta}
-                    </button>
-                </main>
-                <Footer_Simple />
-            </div>
+            <main className="pt-28 pb-16 min-h-[70vh] flex flex-col items-center justify-center text-center px-4">
+                <Quote size={80} className="mb-3 opacity-20" style={{ color: "var(--site-primary)" }} />
+                <h1 className="text-2xl font-bold mb-4" style={{ color: "var(--site-on-background)" }}>{notFoundTitle}</h1>
+                <p className="text-base mb-6 opacity-70 max-w-lg" style={{ color: "var(--site-on-surface-variant)" }}>
+                    {notFoundDescription}
+                </p>
+                <button
+                    onClick={() => router.push('/testimonios')}
+                    className="flex items-center gap-2 px-6 py-2.5 rounded-full text-sm font-semibold uppercase tracking-wide transition-all hover:-translate-x-1"
+                    style={{ background: "var(--site-primary)", color: "var(--site-on-primary)" }}
+                >
+                    <ArrowLeft size={16} /> {notFoundCta}
+                </button>
+            </main>
         );
     }
 
@@ -119,9 +110,8 @@ export default function TestimonioDetailPage() {
 
     return (
         <div className="min-h-screen flex flex-col" style={{ background: "var(--site-background)", color: "var(--site-on-background)" }}>
-            <Header />
-            <main className="pt-[120px] pb-4 min-h-screen">
-            <article className="px-3 lg:px-0">
+            <main className="pt-24 md:pt-28 pb-16 min-h-screen">
+                <article className="max-w-4xl mx-auto px-4 md:px-6">
                 {/* ── BACK BUTTON ────────────────────────────────────── */}
                 <motion.div
                     initial={{ opacity: 0, x: -20 }}
@@ -390,7 +380,6 @@ export default function TestimonioDetailPage() {
                 </AnimatePresence>
             </article>
             </main>
-            <Footer_Simple />
         </div>
     );
 }

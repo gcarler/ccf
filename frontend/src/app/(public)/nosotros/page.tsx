@@ -185,8 +185,8 @@ function NosotrosFoundersSection({
                                     className="object-cover object-top"
                                 />
                             ) : (
-                                <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-[hsl(var(--primary))/0.18] to-[hsl(var(--surface-2))/0.35]">
-                                    <span className="text-4xl font-black text-[hsl(var(--primary))/0.35]">
+                                <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-site-primary/20 to-site-surface-container-low">
+                                    <span className="text-4xl font-black text-site-primary/40">
                                         {founder1Name.charAt(0) || "?"}
                                     </span>
                                 </div>
@@ -206,8 +206,8 @@ function NosotrosFoundersSection({
                                     className="object-cover object-top"
                                 />
                             ) : (
-                                <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-[hsl(var(--primary))/0.18] to-[hsl(var(--surface-2))/0.35]">
-                                    <span className="text-4xl font-black text-[hsl(var(--primary))/0.35]">
+                                <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-site-primary/20 to-site-surface-container-low">
+                                    <span className="text-4xl font-black text-site-primary/40">
                                         {founder2Name.charAt(0) || "?"}
                                     </span>
                                 </div>
@@ -428,7 +428,7 @@ function NosotrosCtaSection({
                             {ctaViewSedes && (
                                 <Link
                                     href="/sedes"
-                                    className="ccf-button bg-[hsl(var(--bg-primary))] text-site-primary shadow-xl"
+                                    className="ccf-button bg-site-surface text-site-primary shadow-xl"
                                 >
                                     {ctaViewSedes} <ArrowRight size={14} />
                                 </Link>

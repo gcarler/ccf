@@ -258,7 +258,7 @@ function PlayerModal({
                             onClick={onCopy}
                             title={copyLinkLabel}
                             className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg text-xs font-bold transition-all"
-                            style={{ color: copied ? "hsl(var(--success))" : "rgba(255,255,255,0.7)" }}
+                            style={{ color: copied ? "var(--site-primary)" : "var(--site-on-surface-variant)" }}
                         >
                             {copied
                                 ? <><Check size={14} /> <span className="hidden sm:inline">{copiedLabel}</span></>

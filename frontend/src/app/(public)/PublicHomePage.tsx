@@ -111,7 +111,7 @@ export function HomeWelcomeSection({
                                     className="object-cover transition-transform duration-700 group-hover:scale-105"
                                 />
                             ) : (
-                                <div className="absolute inset-0 bg-gradient-to-br from-[hsl(var(--primary))/0.2] via-[hsl(var(--secondary))/0.18] to-[hsl(var(--background))]" />
+                                <div className="absolute inset-0 bg-gradient-to-br from-site-primary/20 via-site-secondary/20 to-site-background" />
                             )}
                             <div className="absolute inset-0" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.3) 55%, transparent 100%)" }} />
                             <div className="relative z-10 p-8">
@@ -166,7 +166,7 @@ export function HomeWelcomeSection({
                                             className="object-cover transition-transform duration-500 group-hover:scale-105"
                                         />
                                     ) : (
-                                        <div className="absolute inset-0 bg-gradient-to-br from-[hsl(var(--primary))/0.18] to-[hsl(var(--surface-2))/0.35]" />
+                                        <div className="absolute inset-0 bg-gradient-to-br from-site-primary/20 to-site-surface-container-low" />
                                     )}
                                     <div className="absolute inset-0" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.78) 0%, rgba(0,0,0,0.1) 60%, transparent 100%)" }} />
                                     <div className="relative z-10 p-5">
@@ -312,7 +312,7 @@ export function HomeActivitiesSection({
                                             className="object-cover group-hover:scale-105 transition-transform duration-700"
                                         />
                                     ) : (
-                                        <div className="absolute inset-0 bg-gradient-to-br from-[hsl(var(--primary))/0.18] to-[hsl(var(--surface-2))/0.35]" />
+                                        <div className="absolute inset-0 bg-gradient-to-br from-site-primary/20 to-site-surface-container-low" />
                                     )}
                                 </div>
                                 <div className="flex gap-3 mb-3 items-center">

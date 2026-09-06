@@ -91,23 +91,23 @@ export default function PastoresIndexPage() {
             )}
 
             {/* ── Pastors Grid ── */}
-            <section className="ccf-section ccf-container pt-[3cm]">
+            <section className="ccf-section ccf-container">
                 {apiLoading && !pastors.length ? (
                     <div className="flex items-center justify-center py-20">
-                        <div className="w-8 h-8 rounded-full border-2 border-[hsl(var(--primary))] border-t-transparent animate-spin" />
+                        <div className="w-8 h-8 rounded-full border-2 border-site-primary border-t-transparent animate-spin" />
                         <span className="sr-only">{loadingLabel}</span>
                     </div>
                 ) : pastors.length === 0 ? (
-                    emptyTitle && <p className="text-center text-[hsl(var(--text-secondary))] py-20">{emptyTitle}</p>
+                    emptyTitle && <p className="text-center text-site-on-surface-variant py-20">{emptyTitle}</p>
                 ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8">
                     {pastors.map((pastor, idx) => (
-                        <div key={pastor.id || pastor.slug} className="group relative bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))] rounded-2xl overflow-hidden border border-[hsl(var(--border))]/70 dark:border-white/[0.06] shadow-lg shadow-black/10/40 dark:shadow-[0_8px_32px_rgba(0,0,0,0.3)] hover:shadow-2xl hover:shadow-[hsl(var(--primary))/0.15] dark:hover:shadow-[0_16px_48px_rgba(0,0,0,0.5)] hover:-translate-y-1.5 transition-all duration-500 flex flex-col"
+                        <div key={pastor.id || pastor.slug} className="group relative bg-site-surface-container-low rounded-2xl overflow-hidden border border-site-outline-variant/30 shadow-lg shadow-black/5 hover:shadow-2xl hover:shadow-site-primary/10 hover:-translate-y-1.5 transition-all duration-500 flex flex-col"
                             style={{ animationDelay: `${idx * 100}ms` }}>
 
                             {/* Image */}
-                            <Link href={`/pastores/${pastor.slug}`} className="relative h-52 w-full bg-[hsl(var(--surface-2))] dark:bg-[hsl(var(--surface-2))] overflow-hidden block">
-                                <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-gradient-to-br from-[hsl(var(--primary))/0.1] to-transparent pointer-events-none z-10" />
+                            <Link href={`/pastores/${pastor.slug}`} className="relative h-52 w-full bg-site-surface-container overflow-hidden block">
+                                <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-gradient-to-br from-site-primary/10 to-transparent pointer-events-none z-10" />
                                 {pastor.photo_url || (pastor as CmsPastor).image ? (
                                     <Image
                                         src={pastor.photo_url || (pastor as CmsPastor).image || ""}
@@ -117,45 +117,45 @@ export default function PastoresIndexPage() {
                                         sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
                                     />
                                 ) : (
-                                    <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-[hsl(var(--primary))/0.1] to-[hsl(var(--secondary))/0.05]">
-                                        <span className="text-4xl font-bold text-[hsl(var(--primary))/0.3]">{pastor.name.charAt(0)}</span>
+                                    <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-site-primary/10 to-site-secondary/5">
+                                        <span className="text-4xl font-bold text-site-primary/30">{pastor.name.charAt(0)}</span>
                                     </div>
                                 )}
-                                <div className="absolute inset-0 bg-gradient-to-t from-[hsl(var(--surface-2))/0.9] via-black/30 to-transparent" />
+                                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
                                 {pastor.is_main_pastor && principalLabel && (
                                     <div className="absolute top-3 left-3 z-20">
-                                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-[hsl(var(--primary))] text-white text-2xs font-bold uppercase tracking-wider shadow-lg">
+                                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-site-primary text-site-on-primary text-2xs font-bold uppercase tracking-wider shadow-lg">
                                             <Sparkles size={8} /> {principalLabel}
                                         </span>
                                     </div>
                                 )}
                                 <div className="absolute bottom-4 left-5 right-5 z-20">
                                     <h3 className="text-lg font-bold text-white drop-shadow-sm">{pastor.name}</h3>
-                                    <p className="text-xs font-bold uppercase tracking-widest text-[hsl(var(--primary))] drop-shadow-sm">{pastor.role || 'Pastor'}</p>
+                                    <p className="text-xs font-bold uppercase tracking-widest text-site-primary drop-shadow-sm">{pastor.role || 'Pastor'}</p>
                                 </div>
-                                <div className="absolute top-0 right-0 w-20 h-20 bg-gradient-to-bl from-[hsl(var(--primary))/0.15] to-transparent rounded-bl-[100%] pointer-events-none" />
+                                <div className="absolute top-0 right-0 w-20 h-20 bg-gradient-to-bl from-site-primary/15 to-transparent rounded-bl-[100%] pointer-events-none" />
                             </Link>
 
                             {/* Content */}
-                            <div className="p-4 flex-1 flex flex-col bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))]">
-                                <p className="text-sm text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-primary))] mb-3 flex-1 leading-relaxed line-clamp-3">
+                            <div className="p-4 flex-1 flex flex-col bg-site-surface-container-low">
+                                <p className="text-sm text-site-on-surface mb-3 flex-1 leading-relaxed line-clamp-3">
                                     {plainText(pastor.bio_short || (pastor as CmsPastor).story)}
                                 </p>
 
                                 {/* CTA */}
-                                <Link href={`/pastores/${pastor.slug}`} className="flex items-center justify-between pt-3 border-t border-[hsl(var(--border))] dark:border-white/[0.06]">
+                                <Link href={`/pastores/${pastor.slug}`} className="flex items-center justify-between pt-3 border-t border-site-outline-variant/20">
                                     {cardCta && (
-                                        <span className="text-xs font-bold uppercase tracking-widest text-[hsl(var(--primary))] group-hover:tracking-[0.15em] transition-all duration-300">
+                                        <span className="text-xs font-bold uppercase tracking-widest text-site-primary group-hover:tracking-[0.15em] transition-all duration-300">
                                             {cardCta}
                                         </span>
                                     )}
-                                    <div className="w-9 h-9 rounded-xl bg-[hsl(var(--primary))/0.08] dark:bg-[hsl(var(--primary))/0.12] flex items-center justify-center group-hover:bg-[hsl(var(--primary))] group-hover:text-white transition-all duration-300 group-hover:shadow-lg group-hover:shadow-[hsl(var(--primary))/0.3]">
+                                    <div className="w-9 h-9 rounded-xl bg-site-primary/10 flex items-center justify-center group-hover:bg-site-primary group-hover:text-site-on-primary transition-all duration-300 group-hover:shadow-lg group-hover:shadow-site-primary/30">
                                         <ChevronRight size={15} className="group-hover:translate-x-0.5 transition-transform duration-300" />
                                     </div>
                                 </Link>
                             </div>
 
-                            <div className="absolute inset-0 rounded-2xl ring-1 ring-inset ring-[hsl(var(--border))]/50 dark:ring-white/[0.04] group-hover:ring-[hsl(var(--primary))/0.3] transition-all duration-500 pointer-events-none" />
+                            <div className="absolute inset-0 rounded-2xl ring-1 ring-inset ring-site-outline-variant/30 group-hover:ring-site-primary/30 transition-all duration-500 pointer-events-none" />
                         </div>
                     ))}
                 </div>

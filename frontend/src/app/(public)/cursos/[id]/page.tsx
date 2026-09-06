@@ -10,7 +10,6 @@ import { ArrowLeft, CheckCircle2, Clock, User, BookOpen, Share2 } from "lucide-r
 import { apiFetch } from "@/lib/http";
 import { SITE_KEY } from "@/lib/site-config";
 import { toast } from "sonner";
-import { Header, Footer_Simple } from "@/components/public/Shared";
 import { useCmsV2Page } from "@/hooks/useCmsV2Page";
 
 function getString(props: Record<string, unknown> | undefined, key: string): string {
@@ -150,7 +149,6 @@ export default function CursoDetailPage() {
 
     return (
         <div className="min-h-screen flex flex-col" style={{ background: "var(--site-background)", color: "var(--site-on-background)" }}>
-            <Header />
 
             {/* ── TOAST NOTIFICATION ────────────────────── */}
             <AnimatePresence>
@@ -173,7 +171,7 @@ export default function CursoDetailPage() {
             </AnimatePresence>
 
             {/* ── HEADER ──────────────────────────────────── */}
-            <header className="relative px-3 md:px-6 lg:px-8 xl:px-12 py-6 md:py-10 lg:py-14">
+            <header className="relative px-3 md:px-6 lg:px-8 xl:px-12 pt-24 md:pt-28 pb-6 md:pb-10 lg:pb-14">
                 <motion.div
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
@@ -248,8 +246,7 @@ export default function CursoDetailPage() {
                         initial={{ opacity: 0, scale: 0.9 }}
                         animate={{ opacity: 1, scale: 1 }}
                         transition={{ delay: 0.2 }}
-                        className="relative aspect-video lg:aspect-square rounded-2xl overflow-hidden shadow-2xl border border-[hsl(var(--border))] dark:border-white/10"
-                        style={{ borderColor: "var(--site-outline-variant)" }}
+                        className="relative aspect-video lg:aspect-square rounded-2xl overflow-hidden shadow-2xl border border-site-outline-variant/30"
                     >
                         {course.imageUrl ? (
                             <Image
@@ -260,17 +257,17 @@ export default function CursoDetailPage() {
                                 priority
                             />
                         ) : (
-                            <div className="absolute inset-0 bg-gradient-to-br from-[hsl(var(--primary))]/15 via-[hsl(var(--surface-2))] to-[hsl(var(--surface-3))] flex flex-col items-center justify-center p-8 text-center">
-                                <div className="size-20 rounded-2xl bg-[hsl(var(--primary))]/10 border border-[hsl(var(--primary))]/20 text-[hsl(var(--primary))] flex items-center justify-center mb-4 shadow-lg">
+                            <div className="absolute inset-0 bg-gradient-to-br from-site-primary/15 via-site-surface-container to-site-surface-container-high flex flex-col items-center justify-center p-8 text-center">
+                                <div className="size-20 rounded-2xl bg-site-primary/10 border border-site-primary/20 text-site-primary flex items-center justify-center mb-4 shadow-lg">
                                     <BookOpen size={42} strokeWidth={1.8} />
                                 </div>
-                                <span className="text-2xs font-black uppercase tracking-widest text-[hsl(var(--primary))] mb-1.5 px-3 py-1 rounded-full bg-[hsl(var(--primary))]/10">
+                                <span className="text-2xs font-black uppercase tracking-widest text-site-primary mb-1.5 px-3 py-1 rounded-full bg-site-primary/10">
                                     {course.modality || "Online"}
                                 </span>
-                                <h3 className="text-lg font-bold text-[hsl(var(--text-primary))] dark:text-white line-clamp-2 max-w-xs">
+                                <h3 className="text-lg font-bold text-site-on-surface line-clamp-2 max-w-xs">
                                     {course.title}
                                 </h3>
-                                <p className="text-xs text-[hsl(var(--text-secondary))] mt-2 font-medium">
+                                <p className="text-xs text-site-on-surface-variant mt-2 font-medium">
                                     {course.lessons ? `${course.lessons} Semanas de Formación` : 'Programa de Formación CCF'}
                                 </p>
                             </div>
@@ -327,7 +324,7 @@ export default function CursoDetailPage() {
                             animate={{ opacity: 1 }}
                             exit={{ opacity: 0 }}
                             className="fixed inset-0 z-50 backdrop-blur-sm"
-                            style={{ backgroundColor: "hsl(var(--site-background) / 0.70)" }}
+                            style={{ backgroundColor: "var(--site-overlay-bg)" }}
                             onClick={() => setShowEnrollModal(false)}
                         />
                         <motion.aside
@@ -494,8 +491,6 @@ export default function CursoDetailPage() {
                     </>
                 )}
             </AnimatePresence>
-
-            <Footer_Simple />
         </div>
     );
 }
