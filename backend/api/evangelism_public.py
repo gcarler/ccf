@@ -1,13 +1,14 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from backend.core.database import get_db
-from backend.core.permissions import require_evangelism_manage
+from backend.core.permissions import get_current_active_user
 from backend.models_evangelism import EstrategiaEvangelismo
 import datetime
 from pydantic import BaseModel
 from typing import List, Optional
 
 router = APIRouter(prefix="", tags=["Evangelism Public"])
+
 
 DIAS_SEMANA = {
     "lunes": 0, "martes": 1, "miercoles": 2, "miércoles": 2, 
@@ -63,7 +64,7 @@ def get_upcoming_public_events(db: Session = Depends(get_db)):
     return events
 
 @router.get("/strategies/public-config")
-def get_public_strategies_config(db: Session = Depends(get_db), _: dict = Depends(require_evangelism_manage)):
+def get_public_strategies_config(db: Session = Depends(get_db), _=Depends(get_current_active_user)):
     estrategias = db.query(EstrategiaEvangelismo).filter(
         EstrategiaEvangelismo.deleted_at == None
     ).order_by(EstrategiaEvangelismo.nombre).all()
@@ -88,7 +89,7 @@ def toggle_public_strategy(
     estrategia_id: str, 
     payload: TogglePublicPayload,
     db: Session = Depends(get_db), 
-    _: dict = Depends(require_evangelism_manage)
+    _=Depends(get_current_active_user)
 ):
     est = db.query(EstrategiaEvangelismo).filter(EstrategiaEvangelismo.id == estrategia_id).first()
     if not est:
