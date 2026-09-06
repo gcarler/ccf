@@ -430,7 +430,30 @@ class PastoralProfileRead(BaseModel):
     is_pastoral_published: bool = True
 
 
+class PastoralProfileCreate(BaseModel):
+    name: Optional[str] = None
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    role: Optional[str] = "Pastor"
+    church_role: Optional[str] = "Pastor"
+    photo_url: Optional[str] = None
+    bio_short: Optional[str] = None
+    bio_full: Optional[str] = None
+    social_instagram: Optional[str] = None
+    social_facebook: Optional[str] = None
+    social_twitter: Optional[str] = None
+    is_main_pastor: bool = False
+    pastoral_sort_order: int = 0
+    is_pastoral_published: bool = True
+    sede_id: Optional[UUID] = None
+
+
 class PastoralProfileUpdate(BaseModel):
+    name: Optional[str] = None
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    role: Optional[str] = None
+    church_role: Optional[str] = None
     photo_url: Optional[str] = None
     bio_short: Optional[str] = None
     bio_full: Optional[str] = None

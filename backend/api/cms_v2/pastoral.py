@@ -66,6 +66,32 @@ def cms_pastoral_team_list(
     return result
 
 
+@router.post("/cms/pastoral-team", response_model=schemas.PastoralProfileRead, status_code=201)
+def cms_pastoral_profile_create(
+    payload: schemas.PastoralProfileCreate,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("cms", "edit")),
+):
+    _assert_role(current_user, CMS_EDITOR_ROLES)
+    persona = crud.create_pastoral_profile(db, payload, actor_user_id=str(current_user.id))
+    name = persona.nombre_completo
+    return schemas.PastoralProfileRead(
+        id=str(persona.id),
+        name=name,
+        slug=_slugify(name),
+        photo_url=persona.photo_url,
+        bio_short=persona.bio_short,
+        bio_full=persona.bio_full,
+        role=_pastoral_role(persona),
+        social_instagram=persona.social_instagram,
+        social_facebook=persona.social_facebook,
+        social_twitter=persona.social_twitter,
+        is_main_pastor=persona.is_main_pastor or False,
+        pastoral_sort_order=getattr(persona, "pastoral_sort_order", 0) or 0,
+        is_pastoral_published=getattr(persona, "is_pastoral_published", True),
+    )
+
+
 @router.patch("/cms/pastoral-team/{persona_id}", response_model=schemas.PastoralProfileRead)
 def cms_pastoral_profile_update(
     persona_id: str,
@@ -92,3 +118,15 @@ def cms_pastoral_profile_update(
         pastoral_sort_order=getattr(persona, "pastoral_sort_order", 0) or 0,
         is_pastoral_published=getattr(persona, "is_pastoral_published", True),
     )
+
+
+@router.delete("/cms/pastoral-team/{persona_id}", status_code=204)
+def cms_pastoral_profile_delete(
+    persona_id: str,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("cms", "edit")),
+):
+    _assert_role(current_user, CMS_EDITOR_ROLES)
+    persona = _get_scoped_persona(db, current_user, persona_id)
+    crud.remove_pastoral_profile(db, persona, actor_user_id=str(current_user.id))
+    return None

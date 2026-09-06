@@ -56,7 +56,14 @@ def update_pastoral_profile(
     )
     update_data = payload.model_dump(exclude_unset=True)
     for key, value in update_data.items():
-        setattr(persona, key, value)
+        if key in ("role", "church_role") and value is not None:
+            persona.church_role = value
+        elif key == "name" and value:
+            parts = value.strip().split(" ", 1)
+            persona.first_name = parts[0]
+            persona.last_name = parts[1] if len(parts) > 1 else ""
+        elif hasattr(persona, key):
+            setattr(persona, key, value)
     db.commit()
     db.refresh(persona)
     # Cierre de staleness: el perfil pastoral (bio/photo/rol/is_pastoral_*
@@ -68,6 +75,73 @@ def update_pastoral_profile(
     except Exception:  # la invalidación nunca debe romper la mutación
         _logger.debug("public pastoral team cache invalidation skipped", exc_info=True)
     return persona
+
+
+def create_pastoral_profile(
+    db: Session,
+    payload: schemas.PastoralProfileCreate,
+    *,
+    actor_user_id: str | uuid.UUID,
+) -> models.Persona:
+    actor_sede = _actor_sede_or_none_cms(db, actor_user_id)
+    target_sede = payload.sede_id or actor_sede
+
+    first_name = payload.first_name or ""
+    last_name = payload.last_name or ""
+    if not first_name and payload.name:
+        parts = payload.name.strip().split(" ", 1)
+        first_name = parts[0]
+        last_name = parts[1] if len(parts) > 1 else ""
+
+    persona = models.Persona(
+        id=uuid.uuid4(),
+        sede_id=target_sede,
+        first_name=first_name,
+        last_name=last_name,
+        church_role=payload.role or payload.church_role or "Pastor",
+        is_pastoral_leader=True,
+        is_pastoral_published=payload.is_pastoral_published if payload.is_pastoral_published is not None else True,
+        is_main_pastor=payload.is_main_pastor or False,
+        pastoral_sort_order=payload.pastoral_sort_order or 0,
+        photo_url=payload.photo_url,
+        bio_short=payload.bio_short,
+        bio_full=payload.bio_full,
+        social_instagram=payload.social_instagram,
+        social_facebook=payload.social_facebook,
+        social_twitter=payload.social_twitter,
+    )
+    db.add(persona)
+    db.commit()
+    db.refresh(persona)
+    try:
+        invalidate_cached_public_pattern("public_pastoral_team")
+    except Exception:
+        _logger.debug("public pastoral team cache invalidation skipped", exc_info=True)
+    return persona
+
+
+def remove_pastoral_profile(
+    db: Session,
+    persona: models.Persona,
+    *,
+    actor_user_id: str | uuid.UUID,
+) -> None:
+    actor_sede = _actor_sede_or_none_cms(db, actor_user_id)
+    target_persona_sede = str(persona.sede_id) if getattr(persona, "sede_id", None) else None
+    _crud_scope_re_check_pastoral_profile(
+        db,
+        actor_user_id,
+        actor_sede=actor_sede,
+        target_persona_id=persona.id,
+        target_persona_sede=target_persona_sede,
+    )
+    persona.is_pastoral_leader = False
+    persona.is_pastoral_published = False
+    db.commit()
+    try:
+        invalidate_cached_public_pattern("public_pastoral_team")
+    except Exception:
+        _logger.debug("public pastoral team cache invalidation skipped", exc_info=True)
 
 
 

@@ -226,6 +226,7 @@ from backend.schemas.cms import (
     CmsThemeUpdate,
     CmsWorkflowAction,
     PageSeoAudit,
+    PastoralProfileCreate,
     PastoralProfileRead,
     PastoralProfileUpdate,
     SchedulePagePublish,

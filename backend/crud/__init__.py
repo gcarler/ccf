@@ -183,6 +183,8 @@ from backend.crud.cms import (
     update_cms_site,
     update_cms_tag,
     update_cms_theme,
+    create_pastoral_profile,
+    remove_pastoral_profile,
     update_pastoral_profile,
     create_cms_newsletter,
     get_cms_newsletter,

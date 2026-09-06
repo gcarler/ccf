@@ -354,11 +354,36 @@ export async function getCmsPastoralTeam(token?: string | null): Promise<Pastora
   return apiFetch<PastoralProfile[]>(`/cms/v2/cms/pastoral-team`, { token });
 }
 
-export async function updateCmsPastoralProfile(personaId: string, payload: Partial<PastoralProfile>, token?: string | null): Promise<PastoralProfile> {
+export async function createCmsPastoralProfile(
+  payload: Partial<PastoralProfile> & { name?: string; first_name?: string; last_name?: string; church_role?: string },
+  token?: string | null,
+): Promise<PastoralProfile> {
+  return apiFetch<PastoralProfile>(`/cms/v2/cms/pastoral-team`, {
+    method: "POST",
+    token,
+    body: payload,
+  });
+}
+
+export async function updateCmsPastoralProfile(
+  personaId: string,
+  payload: Partial<PastoralProfile> & { name?: string; church_role?: string },
+  token?: string | null,
+): Promise<PastoralProfile> {
   return apiFetch<PastoralProfile>(`/cms/v2/cms/pastoral-team/${personaId}`, {
     method: "PATCH",
     token,
     body: payload,
+  });
+}
+
+export async function deleteCmsPastoralProfile(
+  personaId: string,
+  token?: string | null,
+): Promise<void> {
+  return apiFetch<void>(`/cms/v2/cms/pastoral-team/${personaId}`, {
+    method: "DELETE",
+    token,
   });
 }
 

@@ -91,7 +91,9 @@ from backend.crud.cms.pages import (
     update_cms_section,
 )
 from backend.crud.cms.pastoral import (
+    create_pastoral_profile,
     list_pastoral_team,
+    remove_pastoral_profile,
     update_pastoral_profile,
 )
 from backend.crud.cms.popups import (

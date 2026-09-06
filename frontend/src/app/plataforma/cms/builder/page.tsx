@@ -18,6 +18,7 @@ import MediaPickerField, { setMediaPickerTrigger } from "@/components/cms/builde
 import CmsJsonMediaField from "@/components/cms/CmsJsonMediaField";
 import AiField from "@/components/cms/builder/AiField";
 import PublicStrategiesManager from "@/components/cms/builder/PublicStrategiesManager";
+import PublicPastoralManager from "@/components/cms/builder/PublicPastoralManager";
 import OptimizedImage from "@/components/ui/OptimizedImage";
 
 export type SaveStatus = "saved" | "dirty" | "saving" | "error";
@@ -130,7 +131,7 @@ export default function PuckBuilderPage() {
   const PLATFORM_MANAGED_SLUGS = new Set(["sermons"]);
 
   // Pages where only the hero/banner is editable from CMS
-  const PLATFORM_PARTIAL_SLUGS = new Set(["events", "courses"]);
+  const PLATFORM_PARTIAL_SLUGS = new Set(["events"]);
 
   const isPlatformManaged = pageSlug ? PLATFORM_MANAGED_SLUGS.has(pageSlug) : false;
   const isPlatformPartial = pageSlug ? PLATFORM_PARTIAL_SLUGS.has(pageSlug) : false;
@@ -1372,6 +1373,13 @@ export default function PuckBuilderPage() {
         </div>
       )}
 
+      {/* Panel de gestión del equipo pastoral — visible debajo del editor */}
+      {pageSlug === "pastors" && (
+        <div className="border-t shrink-0 overflow-y-auto max-h-[50vh]">
+          <PublicPastoralManager token={token} />
+        </div>
+      )}
+
       {/* Custom MediaPicker Drawer integration */}
       {mediaPickerOpen && (
         <MediaPicker
@@ -2295,6 +2303,13 @@ function PublicContentEditor({
       {pageSlug === "events" && (
         <div className="mx-auto max-w-4xl px-4 pb-8">
           <PublicStrategiesManager token={token} />
+        </div>
+      )}
+
+      {/* Panel de gestión del equipo pastoral — solo en /pastors */}
+      {pageSlug === "pastors" && (
+        <div className="mx-auto max-w-5xl px-4 pb-8">
+          <PublicPastoralManager token={token} />
         </div>
       )}
 
