@@ -1,5 +1,10 @@
 # Contratos API — Messaging / Community
 
+> [!IMPORTANT]
+> **AVISO DE DESACOPLAMIENTO MODULAR:** Desde el 2026-07-31, los módulos operan con contratos independientes:
+> - **Mensajería y Chat:** Consultar el documento canónico [`docs/CHAT_API_CONTRACTS.md`](file:///root/ccf/docs/CHAT_API_CONTRACTS.md).
+> - **Comunidad:** Consultar [`docs/ESTADO_COMMUNITY.md`](file:///root/ccf/docs/ESTADO_COMMUNITY.md).
+
 ## 1. Alcance
 
 Este documento cubre cuatro superficies distintas:

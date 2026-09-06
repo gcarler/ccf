@@ -1,5 +1,10 @@
 # Matriz RBAC — Messaging / Community
 
+> [!IMPORTANT]
+> **AVISO DE DESACOPLAMIENTO MODULAR:** Desde el 2026-07-31, los módulos operan con matrices RBAC independientes:
+> - **Mensajería y Chat:** Consultar el documento canónico [`docs/CHAT_RBAC_MATRIX.md`](file:///root/ccf/docs/CHAT_RBAC_MATRIX.md).
+> - **Comunidad:** Consultar [`docs/ESTADO_COMMUNITY.md`](file:///root/ccf/docs/ESTADO_COMMUNITY.md).
+
 ## 1. Proposito
 
 Este documento fija la matriz RBAC operativa de Messaging / Community contra el código actual. No describe una intención futura; documenta los guards reales y las asimetrías existentes.
