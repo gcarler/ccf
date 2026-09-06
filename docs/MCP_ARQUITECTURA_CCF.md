@@ -129,10 +129,10 @@ Allowances por rol (además de los permisos granulares explícitos en BD):
 | Rol | Permisos concedidos por rol | Módulos sin allowance |
 |---|---|---|
 | `admin` / `administrador` | Todos (`system:config`, `profile:manage` y cada `módulo:read/edit/manage`) | — (bypass total) |
-| `pastor` | `crm:*`, `evangelism:*`, `academy:read/study/edit/manage`, `projects:*`, `wiki:*` | CMS, finanzas, soporte, comunidad, etc. |
-| `coordinador` | `evangelism:read/edit`, `academy:read/study/edit/manage`, `projects:*`, `wiki:*` | `evangelism:manage`, `crm:*`, CMS, finanzas, etc. |
-| `docente` | `academy:read/study/edit`, `projects:*`, `wiki:*` | `academy:manage`, `evangelism:*`, `crm:*`, etc. |
-| `estudiante`, `lector`, `miembro`, `aspirante` | `academy:read/study` | Todo lo demás |
+| `pastor` | `crm:*`, `evangelism:*`, `academy:read/study/edit/manage`, `projects:*`, `wiki:*`, `agenda:*` | CMS, finanzas, soporte, comunidad, etc. |
+| `coordinador` | `evangelism:read/edit`, `academy:read/study/edit/manage`, `projects:*`, `wiki:*`, `agenda:*` | `evangelism:manage`, `crm:*`, CMS, finanzas, etc. |
+| `docente` | `academy:read/study/edit`, `projects:*`, `wiki:*`, `agenda:*` | `academy:manage`, `evangelism:*`, `crm:*`, etc. |
+| `estudiante`, `lector`, `miembro`, `aspirante` | `academy:read/study`, `agenda:read` | Todo lo demás |
 
 Donde `módulo:*` significa `read` + `edit` + `manage`, y la jerarquía sigue
 siendo `manage → edit → read`. Un `coordinador` puede reportar asistencia de

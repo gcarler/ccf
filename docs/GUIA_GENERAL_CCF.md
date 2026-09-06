@@ -262,6 +262,7 @@ La taxonomía central vive en `backend/core/permissions.py`:
 - `evangelism:read|edit|manage`;
 - `community:read|edit|manage`;
 - `spiritual_life:read|edit|manage`;
+- `agenda:read|edit|manage`;
 - `support:read|edit|manage`;
 - `analytics:read|manage`;
 - `dashboard:read|manage`;
