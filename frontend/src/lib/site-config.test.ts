@@ -15,7 +15,7 @@ describe("site-config", () => {
     // valores por defecto — los assert si no hay env vars; si los hay,
     // simplemente validamos tipo.
     if (!process.env.NEXT_PUBLIC_SITE_KEY) expect(SITE_KEY).toBe("ccf");
-    if (!process.env.NEXT_PUBLIC_SITE_NAME) expect(SITE_NAME).toBe("Mi Comunidad");
+    if (!process.env.NEXT_PUBLIC_SITE_NAME) expect(SITE_NAME).toBe("El Faro");
     if (!process.env.NEXT_PUBLIC_SITE_URL) expect(SITE_URL).toBe("");
     if (!process.env.NEXT_PUBLIC_SITE_EMAIL) expect(SITE_EMAIL).toBe("");
   });

@@ -11,7 +11,7 @@ vi.mock("@/lib/http", () => ({
 
 vi.mock("next/navigation", () => ({
   useSearchParams: () => ({
-    get: (param: string) => (param === "site" ? "ccf" : param === "page" ? "home" : null),
+    get: (param: string) => (param === "site" ? "ccf" : param === "page" ? "home" : param === "mode" ? "visual" : null),
   }),
   useRouter: () => ({
     push: vi.fn(),

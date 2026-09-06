@@ -219,7 +219,7 @@ describe("CmsBuilderPage (Puck visual editor main route)", () => {
         "ccf",
         "home",
         "sec-feed-1",
-        { sort_order: 0, props_json: { title: "Texto publicado desde Puck", nested: { enabled: false } } },
+        { sort_order: 0, section_key: "feed", props_json: { title: "Texto publicado desde Puck", title_lead: "Texto publicado desde Puck", nested: { enabled: false } } },
         "mock-token",
       );
       expect(cmsV2.workflowCmsPage).toHaveBeenCalledWith(
