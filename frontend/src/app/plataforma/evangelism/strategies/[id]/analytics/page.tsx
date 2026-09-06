@@ -350,6 +350,7 @@ export default function StrategyAnalyticsPage() {
               ))}
             </div>
             <button onClick={fetchData}
+              aria-label="Actualizar métricas"
               className="p-2 rounded-lg bg-[hsl(var(--bg-muted))] hover:bg-[hsl(var(--border-primary))] text-[hsl(var(--text-secondary))] transition-colors">
               <RefreshCw size={14} />
             </button>

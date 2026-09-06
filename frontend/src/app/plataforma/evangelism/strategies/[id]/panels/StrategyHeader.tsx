@@ -15,6 +15,7 @@ export default function StrategyHeader({ strategy, groupCount, canManage, onDele
     <div className="flex items-start justify-between gap-4">
       <div className="flex items-start gap-3">
         <button onClick={onBack}
+          aria-label="Volver"
           className="p-1.5 rounded-lg hover:bg-[hsl(var(--bg-muted))] text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-secondary))] dark:hover:text-white transition-all mt-1">
           <ArrowLeft size={16} />
         </button>
@@ -23,13 +24,13 @@ export default function StrategyHeader({ strategy, groupCount, canManage, onDele
           <div className="flex items-center gap-3 mt-1 text-xs text-[hsl(var(--text-secondary))] font-medium flex-wrap">
             {strategy.typology && (
               <span className="px-2 py-0.5 rounded-full text-2xs font-bold"
-                style={{ backgroundColor: `${TYPOLOGY_COLORS[strategy.typology]}18`, color: TYPOLOGY_COLORS[strategy.typology] }}>
+                style={{ backgroundColor: `color-mix(in srgb, ${TYPOLOGY_COLORS[strategy.typology]} 12%, transparent)`, color: TYPOLOGY_COLORS[strategy.typology] }}>
                 {TYPOLOGY_LABELS[strategy.typology]}
               </span>
             )}
             {strategy.recurrence && <span className="inline-flex items-center gap-1.5"><Clock size={12} />{strategy.recurrence}</span>}
             <span className="px-2 py-0.5 rounded-full text-2xs font-bold"
-              style={{ backgroundColor: `${STATUS_COLORS[strategy.status]}18`, color: STATUS_COLORS[strategy.status] }}>
+              style={{ backgroundColor: `color-mix(in srgb, ${STATUS_COLORS[strategy.status]} 12%, transparent)`, color: STATUS_COLORS[strategy.status] }}>
               {STATUS_LABELS[strategy.status]}
             </span>
             {groupCount !== null && strategy.typology !== 'evento_masivo' && (
@@ -40,7 +41,8 @@ export default function StrategyHeader({ strategy, groupCount, canManage, onDele
       </div>
       {canManage ? (
         <button onClick={onDelete}
-          className="p-2 rounded-lg text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--destructive))] hover:bg-red-50 dark:hover:bg-red-500/10 transition-all" title="Eliminar estrategia">
+          aria-label="Eliminar estrategia"
+          className="p-2 rounded-lg text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--destructive))] hover:bg-[hsl(var(--destructive)/0.1)] dark:hover:bg-[hsl(var(--destructive)/0.15)] transition-all" title="Eliminar estrategia">
           <Trash2 size={16} />
         </button>
       ) : null}

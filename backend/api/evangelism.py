@@ -10,13 +10,13 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from backend import models
-from backend.api.evangelism_public import router as public_events_router
 from backend.api.evangelism_analytics import router as analytics_router
 from backend.api.evangelism_events import router as events_router
 from backend.api.evangelism_grupos import router as grupos_router
 from backend.api.evangelism_main import estrategias_router, roles_router
 from backend.api.evangelism_multiplication import router as multiplication_router
 from backend.api.evangelism_notifications import router as notifications_router
+from backend.api.evangelism_public import router as public_events_router
 from backend.api.evangelism_rankings import router as rankings_router
 from backend.api.evangelism_reports import router as reports_router
 from backend.api.evangelism_shared import utc_now
@@ -25,13 +25,13 @@ from backend.core.permissions import require_module_access
 from backend.core.tenant import require_user_sede_id
 
 router = APIRouter()
+router.include_router(public_events_router)
 router.include_router(events_router)
 router.include_router(grupos_router)
 router.include_router(estrategias_router)
 router.include_router(roles_router)
 router.include_router(multiplication_router)
 router.include_router(notifications_router)
-router.include_router(public_events_router)
 router.include_router(rankings_router)
 router.include_router(reports_router)
 router.include_router(analytics_router)

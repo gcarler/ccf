@@ -132,11 +132,12 @@ export default function SessionsSection({
             <input
               value={search}
               onChange={e => onSearchChange(e.target.value)}
+              aria-label="Buscar sesiones"
               placeholder="Buscar por tema, grupo o mes (ej. 2025-03)…"
               className="w-full pl-8 pr-8 h-8 text-xs rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-primary))] text-[hsl(var(--text-primary))] placeholder:text-[hsl(var(--text-secondary))] focus:outline-none focus:ring-1 focus:ring-[hsl(var(--info))]"
             />
             {search && (
-              <button onClick={() => onSearchChange('')} className="absolute right-2 top-1/2 -translate-y-1/2 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-secondary))]">
+              <button onClick={() => onSearchChange('')} aria-label="Limpiar búsqueda" className="absolute right-2 top-1/2 -translate-y-1/2 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-secondary))]">
                 <X size={12} />
               </button>
             )}
@@ -256,6 +257,7 @@ export default function SessionsSection({
                   {canManage ? (
                     <div className="relative">
                       <button onClick={() => onMenuToggle(String(s.id))}
+                        aria-label="Opciones de sesión"
                         className="w-7 h-7 flex items-center justify-center rounded-lg text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--bg-muted))] dark:hover:bg-white/10 hover:text-[hsl(var(--text-secondary))] dark:hover:text-white transition-colors">
                         <span className="text-base leading-none">⋯</span>
                       </button>
@@ -263,7 +265,7 @@ export default function SessionsSection({
                         <div className="absolute right-0 top-8 z-20 bg-[hsl(var(--bg-primary))] dark:bg-[var(--admin-bg-elevated)] border border-[hsl(var(--border-primary))] rounded-lg shadow-lg py-1 min-w-[130px]">
                           <button
                             onClick={() => onRequestDelete(String(s.id))}
-                            className="w-full text-left px-3 py-2 text-xs text-[hsl(var(--destructive))] dark:text-[hsl(var(--destructive))] hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-2">
+                            className="w-full text-left px-3 py-2 text-xs text-[hsl(var(--destructive))] dark:text-[hsl(var(--destructive))] hover:bg-[hsl(var(--destructive)/0.1)] dark:hover:bg-[hsl(var(--destructive)/0.15)] flex items-center gap-2">
                             <Trash2 size={12} />Eliminar sesión
                           </button>
                         </div>

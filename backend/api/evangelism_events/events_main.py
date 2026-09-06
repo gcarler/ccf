@@ -196,7 +196,6 @@ def create_event(
 ):
     payload = schemas.CrmEventCreate(**normalize_role_scope_payload(payload.model_dump()))
     user_sede = require_user_sede_id(db, current_user)
-    event = crud.create_crm_event(db, payload)
     # sede_id del usuario autenticado, NO del cliente. NULL = global requiere rol admin.
     # Un operador de sede A no puede crear eventos en sede B.
     if payload.sede_id is not None and str(payload.sede_id) != str(user_sede):
@@ -204,7 +203,9 @@ def create_event(
             status_code=403,
             detail="No puedes crear eventos para una sede distinta a la tuya.",
         )
-    event.sede_id = payload.sede_id if payload.sede_id is not None else user_sede
+    payload.sede_id = user_sede
+    event = crud.create_crm_event(db, payload)
+    event.sede_id = user_sede
     db.commit()
     db.refresh(event)
     record_admin_action(

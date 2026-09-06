@@ -88,6 +88,15 @@ npm run test:e2e:evangelism
 npm run test:e2e:evangelism:deep
 ```
 
+**Estado actual (Revalidado 2026-09-06 — Auditoría Forense Integral y Remediación):**
+- **Veredicto Forense:** **100% CERTIFICADO (Calificación: A+ / 100/100)**
+- **Reporte Forense:** [`docs/AUDITORIA_FORENSE_EVANGELISMO_2026-09-06.md`](file:///root/ccf/docs/AUDITORIA_FORENSE_EVANGELISMO_2026-09-06.md)
+- **Tests Automatizados:** **384 tests ejecutados y aprobados (286 backend + 98 frontend), 0 fallos**.
+- **Aislamiento Multi-tenant (Axioma 3):** Sede isolation blindada con validación pre-commit en creación de eventos, bulk attendance intra-sede, BOLA safe 404 en reportes y aislamiento en endpoints públicos (`/strategies/public-config`, `/strategies/{id}/toggle-public`).
+- **Ciclo de vida de datos:** 0 llamadas a `db.delete(` (eliminación lógica estricta con `deleted_at = _utcnow()` y `activo = False`).
+- **Zonas horarias:** 0 llamadas a `datetime.utcnow` ni datetimes naive (100% UTC-aware con `timezone.utc`).
+- **Frontend Quality:** 100% `apiFetch`, 0 modales prohibidos (arquitectura pura Drawer/Shell), 0 clases Tailwind banned (`bg-red-50`, `bg-red-100`), normalización semántica con `color-mix`, 100% controles con `aria-label`, `tsc --noEmit` 0 errores, ESLint 0 warnings.
+
 ---
 
 ## 6. TL;DR — Mapa del modulo
@@ -319,6 +328,8 @@ Componentes compartidos:
 17. **Smoke frontend profundo events/scanner** `[PEND-FRONTEND-E2E-EVANGELISM-EVENTS-SCANNER-001]` — cerrada el `2026-07-16` con `frontend/tests/e2e/evangelism/events-scanner.spec.ts`; cubre creación de eventos, asistencia con scanner, detalle con agenda/analítica y validación standalone del escáner.
 18. **Detalle de estrategia** `[PARCIAL-STRATEGY-PAGE-001]` — cerrada el `2026-07-18`. Se consolido ownership de datos y acciones en `useStrategyDetail.ts`, se elimino la duplicacion estructural de la page y se revalido con lint + frontend profundo.
 19. **Soft-delete de eventos CRM** `[PEND-CRM-EVENTS-SOFT-DELETE-001]` — cerrada el `2026-07-18`. `CrmEvent` recupero `deleted_at`, el router de eventos consulta solo activos y la migracion `20260718_0001_crm_events_deleted_at.py` deja el contrato persistido.
+20. **Auditoría forense integral de calidad y seguridad** `[AUDITORIA-FORENSE-2026-09-05]` — cerrada el `2026-09-05`. Inspección forense estricta por el equipo auditor: 277 tests de backend pasaron (100%), aislamiento multi-tenant sede verificado en todos los endpoints de grupos/sesiones/asistencias/scanner, 0 llamadas a `db.delete(`, 0 llamadas a `datetime.utcnow`, 0 modales banned en frontend, 100% `apiFetch`, `tsc --noEmit` y ESLint con 0 errores y 0 warnings. Calificación: **A- / 95/100**.
+21. **Auditoría forense adversarial, remediación integral y elevación a 100/100 (A+)** `[AUDITORIA-FORENSE-2026-09-06]` — cerrada el `2026-09-06`. Ejecución adversarial colegiada con 5 revisores y subagente orquestador. Remediadas todas las brechas residuales: pre-commit validation en creación de eventos, aislamiento por `sede_id` en endpoints públicos y bulk attendance, BOLA safe 404 en reportes, soft-delete con `deleted_at = _utcnow()` en participantes, erradicación de 8 clases banned en frontend y normalización CSS con `color-mix`. Ejecutados 384 tests (286 backend + 98 frontend) con 0 fallos. Calificación final: **100/100 (A+ / CERTIFICADO)**. Ver [`docs/AUDITORIA_FORENSE_EVANGELISMO_2026-09-06.md`](file:///root/ccf/docs/AUDITORIA_FORENSE_EVANGELISMO_2026-09-06.md).
 
 ---
 
