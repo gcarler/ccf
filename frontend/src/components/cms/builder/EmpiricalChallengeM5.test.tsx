@@ -8,7 +8,7 @@ import { toast } from "sonner";
 
 // Mocks
 vi.mock("next/navigation", () => ({
-  useSearchParams: () => new URLSearchParams("site=ccf&page=home"),
+  useSearchParams: () => new URLSearchParams("site=ccf&page=home&mode=visual"),
   useRouter: () => ({ push: vi.fn() }),
 }));
 
@@ -183,7 +183,7 @@ describe("Empirical Challenge M5: Keyboard Shortcuts, Save Button UI & Toast Not
       // Fire 1st save shortcut
       const event1 = new KeyboardEvent("keydown", { key: "s", ctrlKey: true, bubbles: true, cancelable: true });
       const preventDefault1 = vi.spyOn(event1, "preventDefault");
-      act(() => {
+      await act(async () => {
         window.dispatchEvent(event1);
       });
       expect(preventDefault1).toHaveBeenCalledTimes(1);
@@ -192,7 +192,7 @@ describe("Empirical Challenge M5: Keyboard Shortcuts, Save Button UI & Toast Not
       // Fire 2nd save shortcut while 1st is in flight
       const event2 = new KeyboardEvent("keydown", { key: "s", ctrlKey: true, bubbles: true, cancelable: true });
       const preventDefault2 = vi.spyOn(event2, "preventDefault");
-      act(() => {
+      await act(async () => {
         window.dispatchEvent(event2);
       });
 
@@ -225,7 +225,7 @@ describe("Empirical Challenge M5: Keyboard Shortcuts, Save Button UI & Toast Not
       expect(button).not.toBeDisabled();
 
       // Click button to start manual save
-      act(() => {
+      await act(async () => {
         fireEvent.click(button);
       });
 
@@ -274,7 +274,7 @@ describe("Empirical Challenge M5: Keyboard Shortcuts, Save Button UI & Toast Not
       });
 
       // Fast-forward 3000ms to trigger auto-save
-      act(() => {
+      await act(async () => {
         vi.advanceTimersByTime(3000);
       });
 
