@@ -319,7 +319,7 @@ export default function StrategyCreationDrawer({
                                         className={clsx(
                                             'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex-1 justify-center',
                                             watch('eventFormat') === f.id
-                                                ? 'bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400 border border-orange-200 dark:border-orange-800'
+                                                ? 'bg-[hsl(var(--warning)/0.12)] dark:bg-[hsl(var(--warning)/0.2)] text-[hsl(var(--warning))] dark:text-[hsl(var(--warning))] border border-[hsl(var(--warning)/0.3)] dark:border-[hsl(var(--warning)/0.4)]'
                                                 : 'bg-[hsl(var(--surface-1))] dark:bg-white/5 text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/10 border border-[hsl(var(--border))] dark:border-white/10'
                                         )}
                                     >
@@ -368,8 +368,9 @@ export default function StrategyCreationDrawer({
                                     />
                                     <DSButton
                                         type="button"
+                                        aria-label="Eliminar fase"
                                         onClick={() => remove(i)}
-                                        className="p-1.5 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--destructive))] rounded-md hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                                        className="p-1.5 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--destructive))] rounded-md hover:bg-[hsl(var(--destructive)/0.1)] dark:hover:bg-[hsl(var(--destructive)/0.15)] transition-colors"
                                     >
                                         <X size={14} />
                                     </DSButton>

@@ -141,6 +141,7 @@ export default function ScannerPage() {
  <div className="relative">
  <input
  type="text"
+ aria-label="Token manual de asistencia"
  placeholder="Ingresar Token Manualmente"
  value={manualToken}
  onChange={(e) => setManualToken(e.target.value)}

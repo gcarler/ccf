@@ -231,7 +231,7 @@ export default function EvangelismClient() {
  <span
  className="px-2.5 py-1 rounded-full text-2xs font-bold"
  style={{
- backgroundColor: `${statusColors[strategy.status]}12`,
+ backgroundColor: `color-mix(in srgb, ${statusColors[strategy.status]} 12%, transparent)`,
  color: statusColors[strategy.status]
  }}
  >
@@ -351,7 +351,7 @@ export default function EvangelismClient() {
  <div className="flex items-start gap-4 flex-1 min-w-0">
  <div
  className="size-10 rounded-md flex items-center justify-center shrink-0"
- style={{ backgroundColor: `${statusColors[strategy.status]}12`, color: statusColors[strategy.status] }}
+ style={{ backgroundColor: `color-mix(in srgb, ${statusColors[strategy.status]} 12%, transparent)`, color: statusColors[strategy.status] }}
  >
  <Flame size={20} />
  </div>
@@ -383,7 +383,7 @@ export default function EvangelismClient() {
  <span
  className="px-2.5 py-1 rounded-full text-2xs font-bold shrink-0"
  style={{
- backgroundColor: `${statusColors[strategy.status]}12`,
+ backgroundColor: `color-mix(in srgb, ${statusColors[strategy.status]} 12%, transparent)`,
  color: statusColors[strategy.status]
  }}
  >

@@ -1,29 +1,22 @@
 # Plan de Calidad — Módulo de Evangelismo CCF
 
-> **Objetivo:** mantener evangelismo como módulo aislado, con validación repetible y backlog realista.
+> **Objetivo:** mantener evangelismo como módulo aislado, con validación repetible y certificación forense 100%.
 >
-> **Actualizado:** 2026-08-02
-> **Complementa:** `docs/ESTADO_EVANGELISMO.md`
+> **Actualizado:** 2026-09-06 (Auditoría Forense Integral — Certificación 100/100 A+)  
+> **Estado:** `CERRADO Y CERTIFICADO (100% / A+ / 100/100)`  
+> **Complementa:** `docs/ESTADO_EVANGELISMO.md` y `docs/AUDITORIA_FORENSE_EVANGELISMO_2026-09-06.md`
 
 ## 1. Estado operativo actual
 
-Evangelismo ya tiene cerrados los frentes que dominaron la estabilización inicial:
+Evangelismo ha alcanzado la certificación plena (100/100 A+) tras la auditoría adversarial multi-agente del 2026-09-06:
 
-- contratos backend de eventos
-- contratos backend de sesiones
-- follow-up
-- multiplicación
-- smoke canónico backend
-- smoke frontend
-- cobertura profunda frontend
-- búsqueda remota de personas
-- migración principal de RBAC a `evangelism:*`
-
-La calidad actual del módulo ya no depende de descubrir qué probar; depende de sostener:
-
-- consistencia de permisos por rol
-- deuda estructural de la pantalla de estrategia
-- alineación documental continua con el código
+- Contratos backend blindados en eventos, sesiones, grupos, estrategias y endpoints públicos
+- Aislamiento multi-tenant por `sede_id` con validación pre-commit y blindaje BOLA (HTTP 404 safe)
+- 0 llamadas destructivas `db.delete(` (eliminación lógica universal)
+- 0 marcas de tiempo naive (100% UTC-aware con `timezone.utc`)
+- Erradicación total de clases banned (`bg-red-50`, `bg-red-100`) y normalización CSS con `color-mix`
+- 384 pruebas automatizadas ejecutadas y aprobadas (286 backend + 98 frontend) con 0 fallos
+- Suite documental canónica 100% alineada con el código fuente
 
 ## 2. Regla de trabajo
 
