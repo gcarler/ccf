@@ -12,6 +12,7 @@ import {
   createCmsForm,
   createCmsNewsletter,
   createCmsPage,
+  createCmsPastoralProfile,
   createCmsPopup,
   createCmsPostByCategory,
   createCmsSection,
@@ -20,6 +21,7 @@ import {
   deleteCmsAbTest,
   deleteCmsForm,
   deleteCmsMenu,
+  deleteCmsPastoralProfile,
   deleteCmsPopup,
   deleteCmsSection,
   deleteCmsTheme,
@@ -637,12 +639,22 @@ describe("v2: wrappers apiFetch (contrato de llamada)", () => {
     await updateCmsPastoralProfile("pers-1", { name: "X" }, "tok");
     expect(mocks.apiFetch.mock.calls[2][1].method).toBe("PATCH");
 
+    mocks.apiFetch.mockResolvedValueOnce({ id: "p-new" });
+    await createCmsPastoralProfile({ name: "Pastor Nuevo" }, "tok");
+    expect(mocks.apiFetch.mock.calls[3][0]).toContain("/cms/pastoral-team");
+    expect(mocks.apiFetch.mock.calls[3][1].method).toBe("POST");
+
+    mocks.apiFetch.mockResolvedValueOnce(undefined);
+    await deleteCmsPastoralProfile("pers-1", "tok");
+    expect(mocks.apiFetch.mock.calls[4][0]).toContain("/cms/pastoral-team/pers-1");
+    expect(mocks.apiFetch.mock.calls[4][1].method).toBe("DELETE");
+
     mocks.apiFetch.mockResolvedValueOnce({ slug: "inicio" });
     await getCmsPublicPage("ccf", "inicio");
-    expect(mocks.apiFetch.mock.calls[3][1].silent).toBe(true);
+    expect(mocks.apiFetch.mock.calls[5][1].silent).toBe(true);
 
     mocks.apiFetch.mockResolvedValueOnce({ slug: "inicio" });
     await getCmsPagePreview("ccf", "inicio", "tok");
-    expect(mocks.apiFetch.mock.calls[4][1].cache).toBe("no-store");
+    expect(mocks.apiFetch.mock.calls[6][1].cache).toBe("no-store");
   });
 });

@@ -21,7 +21,6 @@ import {
   ExternalLink,
   BookOpen,
   Quote,
-  AlertTriangle,
   Loader2,
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";

@@ -19,6 +19,7 @@ from backend.api.cms_v2._shared import (
     _pastoral_role,
     _slugify,
 )
+from backend.core.audit import record_admin_action
 from backend.core.database import get_db
 from backend.core.permissions import require_module_access
 
@@ -74,6 +75,14 @@ def cms_pastoral_profile_create(
 ):
     _assert_role(current_user, CMS_EDITOR_ROLES)
     persona = crud.create_pastoral_profile(db, payload, actor_user_id=str(current_user.id))
+    record_admin_action(
+        db,
+        current_user,
+        action="cms.pastoral_team.create",
+        resource_type="pastoral_profile",
+        resource_id=str(persona.id),
+        metadata={"name": persona.nombre_completo, "role": persona.church_role},
+    )
     name = persona.nombre_completo
     return schemas.PastoralProfileRead(
         id=str(persona.id),
@@ -102,6 +111,14 @@ def cms_pastoral_profile_update(
     _assert_role(current_user, CMS_EDITOR_ROLES)
     persona = _get_scoped_persona(db, current_user, persona_id)
     persona = crud.update_pastoral_profile(db, persona, payload, actor_user_id=str(current_user.id))
+    record_admin_action(
+        db,
+        current_user,
+        action="cms.pastoral_team.update",
+        resource_type="pastoral_profile",
+        resource_id=str(persona.id),
+        metadata={"name": persona.nombre_completo, "updated_fields": list(payload.model_dump(exclude_unset=True).keys())},
+    )
     name = persona.nombre_completo
     return schemas.PastoralProfileRead(
         id=str(persona.id),
@@ -129,4 +146,12 @@ def cms_pastoral_profile_delete(
     _assert_role(current_user, CMS_EDITOR_ROLES)
     persona = _get_scoped_persona(db, current_user, persona_id)
     crud.remove_pastoral_profile(db, persona, actor_user_id=str(current_user.id))
+    record_admin_action(
+        db,
+        current_user,
+        action="cms.pastoral_team.delete",
+        resource_type="pastoral_profile",
+        resource_id=str(persona.id),
+        metadata={"name": persona.nombre_completo},
+    )
     return None

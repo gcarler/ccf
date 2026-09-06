@@ -436,12 +436,12 @@ class PastoralProfileCreate(BaseModel):
     last_name: Optional[str] = None
     role: Optional[str] = "Pastor"
     church_role: Optional[str] = "Pastor"
-    photo_url: Optional[str] = None
+    photo_url: Optional[str] = Field(None, max_length=500)
     bio_short: Optional[str] = None
     bio_full: Optional[str] = None
-    social_instagram: Optional[str] = None
-    social_facebook: Optional[str] = None
-    social_twitter: Optional[str] = None
+    social_instagram: Optional[str] = Field(None, max_length=200)
+    social_facebook: Optional[str] = Field(None, max_length=200)
+    social_twitter: Optional[str] = Field(None, max_length=200)
     is_main_pastor: bool = False
     pastoral_sort_order: int = 0
     is_pastoral_published: bool = True
@@ -454,12 +454,12 @@ class PastoralProfileUpdate(BaseModel):
     last_name: Optional[str] = None
     role: Optional[str] = None
     church_role: Optional[str] = None
-    photo_url: Optional[str] = None
+    photo_url: Optional[str] = Field(None, max_length=500)
     bio_short: Optional[str] = None
     bio_full: Optional[str] = None
-    social_instagram: Optional[str] = None
-    social_facebook: Optional[str] = None
-    social_twitter: Optional[str] = None
+    social_instagram: Optional[str] = Field(None, max_length=200)
+    social_facebook: Optional[str] = Field(None, max_length=200)
+    social_twitter: Optional[str] = Field(None, max_length=200)
     is_main_pastor: Optional[bool] = None
     is_pastoral_leader: Optional[bool] = None
     pastoral_sort_order: Optional[int] = None

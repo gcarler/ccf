@@ -98,7 +98,7 @@ def update_pastoral_profile(
     try:
         invalidate_cached_public_pattern("public_pastoral_team")
     except Exception:  # la invalidación nunca debe romper la mutación
-        _logger.debug("public pastoral team cache invalidation skipped", exc_info=True)
+        _logger.warning("public pastoral team cache invalidation failed", exc_info=True)
     return persona
 
 
@@ -109,7 +109,7 @@ def create_pastoral_profile(
     actor_user_id: str | uuid.UUID,
 ) -> models.Persona:
     actor_sede = _actor_sede_or_none_cms(db, actor_user_id)
-    target_sede = payload.sede_id or actor_sede
+    target_sede = actor_sede or payload.sede_id
 
     first_name = payload.first_name or ""
     last_name = payload.last_name or ""
@@ -141,7 +141,7 @@ def create_pastoral_profile(
     try:
         invalidate_cached_public_pattern("public_pastoral_team")
     except Exception:
-        _logger.debug("public pastoral team cache invalidation skipped", exc_info=True)
+        _logger.warning("public pastoral team cache invalidation failed", exc_info=True)
     return persona
 
 
@@ -166,7 +166,7 @@ def remove_pastoral_profile(
     try:
         invalidate_cached_public_pattern("public_pastoral_team")
     except Exception:
-        _logger.debug("public pastoral team cache invalidation skipped", exc_info=True)
+        _logger.warning("public pastoral team cache invalidation failed", exc_info=True)
 
 
 
