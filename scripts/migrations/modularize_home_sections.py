@@ -44,14 +44,15 @@ if str(_PROJECT_ROOT / "scripts") not in sys.path:
     sys.path.insert(0, str(_PROJECT_ROOT / "scripts"))
 
 from dotenv import load_dotenv
+
 load_dotenv(_PROJECT_ROOT / ".env")
 
 import backend.models  # noqa: F401  # registers all models
 import backend.models_cms as m
-from backend.core.database import SessionLocal
-from backend.models_shared import _utcnow
-from backend.crud.cms.pages import _invalidate_public_page_sections_cache
 from backend.core.cache_v2 import invalidate_cached_public, invalidate_cached_public_pattern
+from backend.core.database import SessionLocal
+from backend.crud.cms.pages import _invalidate_public_page_sections_cache
+from backend.models_shared import _utcnow
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 logger = logging.getLogger("modularize_home_sections")

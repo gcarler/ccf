@@ -1321,11 +1321,9 @@ def create_forum_comment(
     )
     db.add(comment)
     if thread.author_persona_id != current_user.id:
-        course_title = "Academy"
         if thread.course_id:
             course = db.query(models.Course.title, models.Course.sede_id).filter(models.Course.id == thread.course_id).first()
             if course:
-                course_title = course.title
                 sede_id = course.sede_id
             else:
                 sede_id = get_user_sede_id(db, current_user.id)
