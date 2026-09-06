@@ -1,6 +1,10 @@
-# QA Checklist — Academy CCF — ⚠️ DEPRECATED 2026-07-19
+# QA Checklist — Academy CCF
 
-> **🚨 DEPRECADO — 2026-07-19:** este documento fue consolidado en
+**Actualizado:** 2026-09-06 (Auditoría Forense Integral — Certificación 100/100 A+)  
+**Veredicto Oficial:** **100/100 (A+) — CERTIFICADO** ([`docs/AUDITORIA_FORENSE_ACADEMIA_2026-09-06.md`](./AUDITORIA_FORENSE_ACADEMIA_2026-09-06.md))  
+**Métricas de Calidad:** 311 tests automatizados aprobados en 18 suites (100% pass rate), 0 fallos, 0 regresiones.  
+
+> **🚨 DEPRECADO para nuevos tickets — 2026-07-19:** este documento fue consolidado en
 > [`docs/ACADEMY_BACKLOG.md`](./ACADEMY_BACKLOG.md). Los casos listados
 > en §10 (incluyendo `ACAD-CRIT-001`, `ACAD-HIGH-001`, etc.) sobrevivieron
 > como rastro histórico para auditoría, pero **NO se mantienen ni

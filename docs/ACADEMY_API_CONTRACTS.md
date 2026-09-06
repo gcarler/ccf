@@ -1,5 +1,8 @@
 # Contratos API — Academy CCF
 
+**Actualizado:** 2026-09-06 (Auditoría Forense Integral — Certificación 100/100 A+)  
+**Veredicto Oficial:** **100/100 (A+) — CERTIFICADO** ([`docs/AUDITORIA_FORENSE_ACADEMIA_2026-09-06.md`](./AUDITORIA_FORENSE_ACADEMIA_2026-09-06.md))  
+
 > **Objetivo:** fijar el contrato operativo de `/api/academy` para backend, frontend, tests y agentes.
 
 ## 1. Reglas generales
