@@ -7,7 +7,7 @@ import { ArrowRight, Sparkles } from "lucide-react";
 import { motion } from "framer-motion";
 import { SITE_NAME } from "@/lib/site-config";
 import { useCmsV2Page } from "@/hooks/useCmsV2Page";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { apiFetch } from "@/lib/http";
 import { toast } from "sonner";
 import PublicHeroWithSlides, { type PublicSlide } from "@/components/public/PublicHeroWithSlides";
@@ -27,8 +27,18 @@ export default function PublicHomePage({ initialHomePage }: { initialHomePage?: 
     const eventsPage = useCmsV2Page('events');
     const eventsContent = eventsPage?.blocks?.events;
 
-
-
+    // ── Eventos de evangelismo públicos ──────────────────────────────────────
+    type EvangelismEvent = {
+        id: string; nombre: string; typology: string;
+        dia_reunion: string; hora_reunion: string;
+        next_date: string; next_datetime: string;
+    };
+    const [evangelismEvents, setEvangelismEvents] = useState<EvangelismEvent[]>([]);
+    useEffect(() => {
+        apiFetch<EvangelismEvent[]>("/evangelism/public/upcoming-events", { silent: true })
+            .then(setEvangelismEvents)
+            .catch(() => setEvangelismEvents([]));
+    }, []);
 
 
 
@@ -147,9 +157,30 @@ export default function PublicHomePage({ initialHomePage }: { initialHomePage?: 
         }
     };
 
-    const publicEvents: PublicEventItem[] = Array.isArray(eventsContent?.parsed)
+    const cmsEvents: PublicEventItem[] = Array.isArray(eventsContent?.parsed)
         ? (eventsContent?.parsed as PublicEventItem[]).filter((event) => event.status !== "archived")
         : [];
+
+    // Convertir eventos de evangelismo al formato PublicEventItem
+    const DIAS_ES: Record<string, string> = {
+        lunes: "Lunes", martes: "Martes", miércoles: "Miércoles", miercoles: "Miércoles",
+        jueves: "Jueves", viernes: "Viernes", sábado: "Sábado", sabado: "Sábado", domingo: "Domingo",
+    };
+    const evangelismAsEvents: PublicEventItem[] = evangelismEvents.map((ev) => {
+        const fecha = new Date(ev.next_datetime);
+        const dateLabel = fecha.toLocaleDateString("es-CO", { day: "numeric", month: "long" });
+        return {
+            title: ev.nombre,
+            date: `${DIAS_ES[ev.dia_reunion?.toLowerCase()] ?? ev.dia_reunion} ${dateLabel} · ${ev.hora_reunion}`,
+            tag: ev.typology ?? "Evangelismo",
+            desc: `Próxima actividad: ${DIAS_ES[ev.dia_reunion?.toLowerCase()] ?? ev.dia_reunion} a las ${ev.hora_reunion}`,
+            img: "",
+            status: "published",
+        } as PublicEventItem;
+    });
+
+    const publicEvents: PublicEventItem[] = [...cmsEvents, ...evangelismAsEvents];
+
 
     const gallerySlides: PublicSlide[] = (homeGallery
         .map((item, index) => {
