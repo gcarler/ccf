@@ -13,11 +13,14 @@ import {
 Calendar,
 ChevronRight,
 Flame,
+Globe,
 Plus
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useCallback,useEffect,useMemo,useState } from 'react';
 import type { Strategy } from './types';
+import PublicStrategiesManager from '@/components/cms/builder/PublicStrategiesManager';
+
 
 // Antes: este archivo redeclaraba una interfaz EvangelismStrategy local
 // que duplicaba (y divergía parcialmente de) Strategy en ./types.ts.
@@ -158,23 +161,36 @@ export default function EvangelismClient() {
  ) : null
  }
  >
- <div className="h-full flex flex-col relative">
- {loading ? (
- <div className="p-4 space-y-4">
- {[1, 2, 3].map(i => <DSSkeleton key={i} className="h-8 w-full rounded-lg" />)}
- </div>
- ) : filteredData.length === 0 ? (
- <EmptyState
- title="No hay estrategias"
- description="Las estrategias te permiten planificar campañas de alcance, consolidación y discipulado en tu comunidad."
- icon={Flame}
- onAction={canManageStrategies ? handleAddItem : undefined}
- actionLabel={canManageStrategies ? "Crear estrategia" : undefined}
- />
- ) : (
- <div className="pb-16 flex-1">
- {/* ── TABLE VIEW ─────────────────────────────── */}
- {viewType === 'table' && (
+  <div className="h-full flex flex-col relative">
+  {/* ── VISIBILIDAD WEB ─────────────────────────────── */}
+  {token && (
+  <details className="border-b border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-muted))]/40">
+    <summary className="flex cursor-pointer select-none items-center gap-2 px-4 py-2.5 text-xs font-semibold text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--bg-muted))] transition-colors">
+      <Globe size={13} className="text-[hsl(var(--primary))]" />
+      <span>Visibilidad en el sitio web (home y /eventos)</span>
+      <span className="ml-auto text-2xs opacity-60">Haz clic para ver</span>
+    </summary>
+    <div className="border-t border-[hsl(var(--border-primary))]">
+      <PublicStrategiesManager token={token} />
+    </div>
+  </details>
+  )}
+  {loading ? (
+  <div className="p-4 space-y-4">
+  {[1, 2, 3].map(i => <DSSkeleton key={i} className="h-8 w-full rounded-lg" />)}
+  </div>
+  ) : filteredData.length === 0 ? (
+  <EmptyState
+  title="No hay estrategias"
+  description="Las estrategias te permiten planificar campañas de alcance, consolidación y discipulado en tu comunidad."
+  icon={Flame}
+  onAction={canManageStrategies ? handleAddItem : undefined}
+  actionLabel={canManageStrategies ? "Crear estrategia" : undefined}
+  />
+  ) : (
+  <div className="pb-16 flex-1">
+  {/* ── TABLE VIEW ─────────────────────────────── */}
+  {viewType === 'table' && (
  <div className="overflow-x-auto border border-[hsl(var(--border-primary))] dark:border-white/[0.06] rounded-lg bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))]">
  <table className="w-full text-left border-collapse">
  <thead>
