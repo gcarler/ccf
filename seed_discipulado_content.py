@@ -1,8 +1,8 @@
 import sys
+
 sys.path.insert(0, '/root/ccf')
 from backend.core.database import SessionLocal
 from backend.models_academy_core import Course, Lesson
-import backend.models
 
 CONTENT_MAP = {
     "La Salvación por Gracia": """# La Salvación por Gracia

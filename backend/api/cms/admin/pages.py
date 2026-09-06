@@ -136,7 +136,7 @@ def patch_page(
             .first()
         )
         if collision:
-            raise SlugAlreadyExistsError("Slug already exists on this site")
+            raise SlugConflictError("Slug already exists on this site")
     updated = crud.update_cms_page(db, row, payload, current_user.id)
     if payload.publish_at is not None:
         wf = PageWorkflowService(db)

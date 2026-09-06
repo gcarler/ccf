@@ -1,9 +1,11 @@
-import sys, os
+import sys
+
 sys.path.insert(0, '/root/ccf')
-from backend.core.database import SessionLocal
-import backend.models
-from backend.models_academy_core import Course, Lesson
 from sqlalchemy import text
+
+from backend.core.database import SessionLocal
+from backend.models_academy_core import Course, Lesson
+
 
 def seed_discipulado():
     with SessionLocal() as db:

@@ -11,7 +11,6 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import clsx from 'clsx';
-import { SITE_NAME } from '@/lib/site-config';
 import { useSiteBranding } from '@/lib/site-branding';
 import { PROJECTS_LIST_ROUTE } from '@/app/plataforma/projects/projectsLinks';
 

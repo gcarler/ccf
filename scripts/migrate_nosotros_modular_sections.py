@@ -1,6 +1,7 @@
 import json
-import psycopg2
 import uuid
+
+import psycopg2
 
 DB_URI = "postgresql://ccf_admin:ccf_password_secret_123@localhost:5432/ccf_recovery_20260823"
 SITE_ID = "9b2bf82b-6cc5-4aeb-ac64-30a2d2bbd4f1"

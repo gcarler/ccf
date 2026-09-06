@@ -1,7 +1,7 @@
 import sys
+
 sys.path.insert(0, '/root/ccf')
 from backend.core.database import SessionLocal
-import backend.models
 from backend.models_academy_core import Course, Lesson
 
 CONTENT_MAP = {
@@ -46,7 +46,7 @@ Establecer que la Biblia es la Palabra infalible, inerrante e inspirada por Dios
 La Biblia fue escrita por aproximadamente 40 autores diferentes, a lo largo de 1,500 años, en tres continentes distintos. Sin embargo, tiene un hilo conductor perfecto. Esto se debe a que su verdadero Autor es el Espíritu Santo.
 > *"Toda la Escritura es inspirada por Dios, y útil para enseñar, para redargüir, para corregir, para instruir en justicia, a fin de que el hombre de Dios sea perfecto, enteramente preparado para toda buena obra."* — **2 Timoteo 3:16-17 (RVR1960)**
 
-La frase "inspirada por Dios" en el original griego es *theopneustos*, que literalmente significa "exhalada o soplada por Dios". 
+La frase "inspirada por Dios" en el original griego es *theopneustos*, que literalmente significa "exhalada o soplada por Dios".
 
 ## 3. Desarrollo: La Naturaleza de la Palabra
 *   **Infalible e Inerrante:** No contiene errores en sus manuscritos originales y no falla en cumplir su propósito.
