@@ -204,7 +204,7 @@ function PlanificadorInner() {
   if (error) {
     return (
       <div className="flex flex-col items-center justify-center h-full gap-4 p-4 flex-1">
-        <div className="size-12 rounded-full bg-red-50 dark:bg-red-500/10 flex items-center justify-center">
+        <div className="size-12 rounded-full bg-destructive/10 flex items-center justify-center">
           <AlertTriangle size={24} className="text-[hsl(var(--destructive))]" />
         </div>
         <p className="text-base font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">{error}</p>

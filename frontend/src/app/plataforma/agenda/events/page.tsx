@@ -315,7 +315,7 @@ export default function AgendaEventsPage() {
                                                             <button
                                                                 onClick={() => handleInlineDelete(event.id)}
                                                                 disabled={deletingEventId === event.id}
-                                                                className="inline-flex items-center gap-1 rounded-md border border-red-200 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-[hsl(var(--destructive))] transition-all hover:bg-red-50 disabled:opacity-50 dark:border-red-500/20 dark:hover:bg-red-500/10"
+                                                                className="inline-flex items-center gap-1 rounded-md border border-destructive/20 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-destructive transition-all hover:bg-destructive/10 disabled:opacity-50 dark:border-destructive/30 dark:hover:bg-destructive/20"
                                                             >
                                                                 <Trash2 size={12} />
                                                                 {deletingEventId === event.id ? "Eliminando..." : "Eliminar"}
@@ -389,7 +389,7 @@ export default function AgendaEventsPage() {
                                                     <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
                                                         <div className="space-y-2">
                                                             <button
-                                                                onClick={() => router.push(`/agenda/events/${event.id}`)}
+                                                                onClick={() => router.push(`/plataforma/agenda/events/${event.id}`)}
                                                                 className="text-left"
                                                             >
                                                                 <h3 className="text-lg font-bold text-[hsl(var(--text-primary))] transition-colors hover:text-[hsl(var(--primary))] dark:text-white dark:hover:text-[hsl(var(--primary))]">{event.title}</h3>
@@ -405,7 +405,7 @@ export default function AgendaEventsPage() {
                                                             <button
                                                                 onClick={() => handleInlineDelete(event.id)}
                                                                 disabled={deletingEventId === event.id}
-                                                                className="inline-flex items-center gap-1 rounded-md border border-red-200 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-[hsl(var(--destructive))] transition-all hover:bg-red-50 disabled:opacity-50 dark:border-red-500/20 dark:hover:bg-red-500/10"
+                                                                className="inline-flex items-center gap-1 rounded-md border border-destructive/20 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-destructive transition-all hover:bg-destructive/10 disabled:opacity-50 dark:border-destructive/30 dark:hover:bg-destructive/20"
                                                             >
                                                                 <Trash2 size={12} />
                                                                 {deletingEventId === event.id ? "Eliminando..." : "Eliminar"}
