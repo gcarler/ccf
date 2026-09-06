@@ -1913,6 +1913,13 @@ function PublicContentEditor({
         ))}
       </div>
 
+      {/* Panel de estrategias de evangelismo — solo en /events */}
+      {pageSlug === "events" && (
+        <div className="mx-auto max-w-4xl px-4 pb-8">
+          <PublicStrategiesManager token={token} />
+        </div>
+      )}
+
       {/* Media picker modal */}
       {mediaOpen && (
         <MediaPicker
