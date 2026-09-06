@@ -4,10 +4,10 @@ import React, { useEffect, useState, useMemo, useRef, useCallback } from "react"
 import { Puck, Config } from "@puckeditor/core";
 import "@puckeditor/core/dist/index.css";
 import { useSearchParams, useRouter } from "next/navigation";
-import { LayoutPanelTop, ArrowLeft, Loader2, Palette, CheckCircle2, AlertTriangle, Save, ImageIcon, Trash2, Plus } from "lucide-react";
+import { LayoutPanelTop, ArrowLeft, ArrowUp, ArrowDown, Loader2, Palette, CheckCircle2, AlertTriangle, Save, ImageIcon, Trash2, Plus } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { canEditCms, canPublishCms } from "@/lib/cms/permissions";
-import { listCmsSections, patchCmsSection, createCmsSection, deleteCmsSection, workflowCmsPage } from "@/lib/cms/v2";
+import { listCmsSections, patchCmsSection, createCmsSection, deleteCmsSection, workflowCmsPage, reorderCmsSections } from "@/lib/cms/v2";
 import { apiFetch } from "@/lib/http";
 import { SITE_KEY } from "@/lib/site-config";
 import type { CmsTheme } from "@/types/cms-v2";
@@ -1252,6 +1252,7 @@ export default function PuckBuilderPage() {
         canEdit={canEdit}
         canPublish={canPublish}
         onBack={() => router.push(`/plataforma/cms/pages?site=${siteKey}`)}
+        onSectionsChange={setDbSections}
       />
     );
   }
@@ -1275,6 +1276,7 @@ export default function PuckBuilderPage() {
         canEdit={canEdit}
         canPublish={canPublish}
         onBack={() => router.push(`/plataforma/cms/pages?site=${siteKey}`)}
+        onSectionsChange={setDbSections}
       />
     );
   }
@@ -1394,7 +1396,7 @@ export default function PuckBuilderPage() {
   );
 }
 
-type ContentSection = {
+export type ContentSection = {
   id: string;
   section_key: string;
   type: string;
@@ -1411,6 +1413,14 @@ type HeroSlide = {
 };
 
 const CONTENT_LABELS: Record<string, string> = {
+  // Encabezados de sección (Card Headers)
+  welcome: "🏠 Bienvenidos a Casa",
+  activities: "📅 Actividades Recientes",
+  newsletter: "📧 Boletín Semanal",
+  discover_cta: "✨ Conocer a Jesús",
+  feed: "📰 Feed principal",
+
+  // Campos estándar
   eyebrow: "Etiqueta superior",
   title: "Título",
   title_lead: "Título · primera línea",
@@ -1421,6 +1431,48 @@ const CONTENT_LABELS: Record<string, string> = {
   primary_cta: "Botón principal",
   secondary_cta: "Botón secundario",
   scroll_indicator: "Indicador de desplazamiento",
+
+  // Campos de presentación / bienvenidos
+  section_title: "Título de la sección",
+  section_description: "Descripción de la sección",
+  featured_card: "Tarjeta destacada",
+  cards: "Tarjetas Bento",
+
+  // Campos de actividades
+  activities_eyebrow: "Etiqueta superior",
+  activities_title: "Título de actividades",
+  activities_view_all: "Texto ver todas",
+  activities_view_all_href: "Enlace ver todas",
+  activities_empty: "Mensaje sin actividades",
+  view_all: "Texto ver todas",
+  view_all_href: "Enlace ver todas",
+  empty: "Mensaje sin actividades",
+
+  // Campos de boletín semanal
+  newsletter_eyebrow: "Etiqueta superior",
+  newsletter_title: "Título del boletín",
+  newsletter_description: "Descripción del boletín",
+  newsletter_placeholder: "Marcador de texto (placeholder)",
+  newsletter_submit: "Texto del botón",
+  newsletter_sending_label: "Texto enviando",
+  newsletter_success_title: "Título de éxito",
+  newsletter_success_desc: "Descripción de éxito",
+  newsletter_success_toast: "Notificación de éxito",
+  newsletter_error_toast: "Notificación de error",
+  placeholder: "Marcador de texto (placeholder)",
+  submit: "Texto del botón",
+  sending_label: "Texto enviando",
+  success_title: "Título de éxito",
+  success_desc: "Descripción de éxito",
+  success_toast: "Notificación de éxito",
+  error_toast: "Notificación de error",
+
+  // Campos de discover_cta
+  cta_label: "Texto del botón",
+  cta_href: "Enlace del botón",
+  secondary_cta_label: "Texto botón secundario",
+  secondary_cta_href: "Enlace botón secundario",
+  bg_style: "Estilo de fondo",
 };
 
 const HOME_HERO_CONTENT_FIELDS = [
@@ -1441,7 +1493,7 @@ function contentLabel(key?: string): string {
 type EditablePath = { path: string[]; value: string };
 
 function flattenEditableStrings(value: unknown, path: string[] = []): EditablePath[] {
-  if (typeof value === "string" && !path.some((part) => /(^|_)(href|url|src|image)$/i.test(part))) {
+  if (typeof value === "string" && !path.some((part) => /(^|_)(href|url|src|image|img)$/i.test(part))) {
     return [{ path, value }];
   }
   if (Array.isArray(value)) {
@@ -1470,6 +1522,20 @@ function setNestedValue(source: Record<string, unknown>, path: string[], value: 
 // ── Agrupación de campos por categoría dentro del editor ─────────────────────
 // Keyed por section_key (no por type) para mayor precisión.
 const SECTION_FIELD_GROUPS: Record<string, Array<{ label: string; emoji: string; prefixes: string[] }>> = {
+  // Secciones modulares de la Home
+  welcome: [
+    { label: "Presentación y Bento", emoji: "🏠", prefixes: ["eyebrow", "section_title", "title", "section_description", "description", "scroll_indicator", "featured_card", "cards"] },
+  ],
+  activities: [
+    { label: "Actividades recientes", emoji: "📅", prefixes: ["eyebrow", "activities_eyebrow", "title", "activities_title", "view_all", "activities_view_all", "view_all_href", "activities_view_all_href", "empty", "activities_empty"] },
+  ],
+  newsletter: [
+    { label: "Boletín semanal", emoji: "📧", prefixes: ["eyebrow", "newsletter_eyebrow", "title", "newsletter_title", "description", "newsletter_description", "placeholder", "newsletter_placeholder", "submit", "newsletter_submit", "sending_label", "newsletter_sending_label", "success_title", "newsletter_success_title", "success_desc", "newsletter_success_desc", "success_toast", "newsletter_success_toast", "error_toast", "newsletter_error_toast"] },
+  ],
+  discover_cta: [
+    { label: "Llamado a la acción", emoji: "✨", prefixes: ["eyebrow", "title", "description", "cta_label", "cta_href", "secondary_cta_label", "secondary_cta_href", "bg_style"] },
+  ],
+
   // Home — sección feed
   feed: [
     { label: "Presentación", emoji: "🏠", prefixes: ["eyebrow", "section_title", "section_description", "scroll_indicator", "featured_card", "cards"] },
@@ -1522,6 +1588,7 @@ function PublicContentEditor({
   canEdit,
   canPublish,
   onBack,
+  onSectionsChange,
 }: {
   siteKey: string;
   pageSlug: string;
@@ -1530,17 +1597,70 @@ function PublicContentEditor({
   canEdit: boolean;
   canPublish: boolean;
   onBack: () => void;
+  onSectionsChange?: (sections: ContentSection[]) => void;
 }) {
+  const [localSections, setLocalSections] = useState<ContentSection[]>(() =>
+    [...sections].sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0))
+  );
+  const [isReordering, setIsReordering] = useState(false);
+  const isReorderingRef = useRef(false);
   const [drafts, setDrafts] = useState<Record<string, Record<string, unknown>>>({});
   const [saving, setSaving] = useState(false);
   const [publishing, setPublishing] = useState(false);
 
   useEffect(() => {
-    setDrafts(Object.fromEntries(sections.map((section) => [
-      section.id,
-      section.props_json || {},
-    ])));
+    if (!isReorderingRef.current) {
+      setLocalSections([...sections].sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0)));
+    }
   }, [sections]);
+
+  useEffect(() => {
+    setDrafts((current) => {
+      const next: Record<string, Record<string, unknown>> = {};
+      for (const section of sections) {
+        next[section.id] = current[section.id] ?? section.props_json ?? {};
+      }
+      return next;
+    });
+  }, [sections]);
+
+  const handleMoveSection = async (index: number, direction: "up" | "down") => {
+    if (!canEdit || isReordering || isReorderingRef.current) return;
+    const targetIndex = direction === "up" ? index - 1 : index + 1;
+    if (index < 0 || index >= localSections.length || targetIndex < 0 || targetIndex >= localSections.length) {
+      return;
+    }
+
+    const previousSections = [...localSections];
+    const nextSections = [...localSections];
+    const [movedItem] = nextSections.splice(index, 1);
+    nextSections.splice(targetIndex, 0, movedItem);
+
+    const updatedSections = nextSections.map((sec, idx) => ({
+      ...sec,
+      sort_order: idx,
+    }));
+
+    setLocalSections(updatedSections);
+    setIsReordering(true);
+    isReorderingRef.current = true;
+
+    try {
+      const items = updatedSections.map((sec, idx) => ({
+        id: sec.id,
+        sort_order: idx,
+      }));
+      await reorderCmsSections(siteKey, pageSlug, items, token);
+      onSectionsChange?.(updatedSections);
+      toast.success(direction === "up" ? "Sección movida hacia arriba" : "Sección movida hacia abajo");
+    } catch {
+      setLocalSections(previousSections);
+      toast.error("Error al reordenar las secciones. Se han restaurado los cambios.");
+    } finally {
+      setIsReordering(false);
+      isReorderingRef.current = false;
+    }
+  };
 
   const textFields = (section: ContentSection): EditablePath[] => {
     const visibleEntries = flattenEditableStrings(drafts[section.id] || {})
@@ -1559,7 +1679,7 @@ function PublicContentEditor({
     if (!canEdit) return;
     setSaving(true);
     try {
-      await Promise.all(sections.map((section) => patchCmsSection(siteKey, pageSlug, section.id, {
+      await Promise.all(localSections.map((section) => patchCmsSection(siteKey, pageSlug, section.id, {
         props_json: drafts[section.id] || section.props_json || {},
       }, token)));
       toast.success("Contenido guardado como borrador");
@@ -1607,6 +1727,18 @@ function PublicContentEditor({
         slides[slideIndex] = { ...(slides[slideIndex] as Record<string, unknown> || {}), src: url };
         props.slides = slides;
       } else {
+        if (field.startsWith("cards.")) {
+          const defaultCards = [
+            { title: "Primera Escuela Dominical", img: "" },
+            { title: "Segunda Escuela Dominical", img: "" },
+            { title: "FAROS EN CASA", img: "" },
+          ];
+          const existingCards = Array.isArray(props.cards) ? [...props.cards as Record<string, unknown>[]] : [];
+          while (existingCards.length < 3) {
+            existingCards.push(defaultCards[existingCards.length] || { title: `Actividad ${existingCards.length + 1}`, img: "" });
+          }
+          props.cards = existingCards;
+        }
         // Inline image field (e.g. founder1_image) — field is a dot-path
         props = setNestedValue(props, field.split("."), url) as Record<string, unknown>;
       }
@@ -1635,11 +1767,49 @@ function PublicContentEditor({
         <div className="rounded-xl border border-[hsl(var(--info)/30%)] bg-info-soft/30 px-3 py-2 text-xs text-[hsl(var(--text-secondary))] sm:px-4 sm:py-3 sm:text-sm">
           Edita los textos e imágenes de cada sección. Guarda como borrador o publica directamente.
         </div>
-        {[...sections].sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0)).map((section) => (
-          <section key={section.id} className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-3 shadow-sm dark:border-white/10 dark:bg-white/[0.03] sm:p-4">
+        {localSections.map((section, index) => (
+          <section
+            key={section.id}
+            data-testid={`section-card-${section.id}`}
+            data-section-id={section.id}
+            className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-3 shadow-sm dark:border-white/10 dark:bg-white/[0.03] sm:p-4"
+          >
             <div className="mb-4 flex items-center justify-between gap-3 border-b border-[hsl(var(--border))] pb-3 dark:border-white/10">
-              <div><h2 className="font-bold">{section.section_key === "hero" ? "Hero principal" : contentLabel(section.section_key)}</h2><p className="text-2xs text-[hsl(var(--text-secondary))]">{section.type}</p></div>
-              {section.section_key === "hero" && <span className="rounded-full bg-info-soft px-2 py-1 text-2xs font-bold uppercase text-[hsl(var(--primary))]">Visible al inicio</span>}
+              <div>
+                <h2 className="font-bold">{section.section_key === "hero" ? "Hero principal" : contentLabel(section.section_key)}</h2>
+                <p className="text-2xs text-[hsl(var(--text-secondary))]">{section.type}</p>
+              </div>
+              <div className="flex items-center gap-2">
+                {section.section_key === "hero" && (
+                  <span className="rounded-full bg-info-soft px-2 py-1 text-2xs font-bold uppercase text-[hsl(var(--primary))]">
+                    Visible al inicio
+                  </span>
+                )}
+                <div className="flex items-center gap-1" data-testid={`reorder-controls-${section.id}`}>
+                  <button
+                    type="button"
+                    onClick={() => handleMoveSection(index, "up")}
+                    disabled={!canEdit || isReordering || index === 0}
+                    aria-label="Mover arriba"
+                    title="Mover arriba"
+                    data-testid={`move-up-${section.id}`}
+                    className="flex h-7 w-7 items-center justify-center rounded-lg border border-[hsl(var(--border))] text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] hover:text-[hsl(var(--text-primary))] disabled:cursor-not-allowed disabled:opacity-30 transition-colors"
+                  >
+                    <ArrowUp size={14} />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleMoveSection(index, "down")}
+                    disabled={!canEdit || isReordering || index === localSections.length - 1}
+                    aria-label="Mover abajo"
+                    title="Mover abajo"
+                    data-testid={`move-down-${section.id}`}
+                    className="flex h-7 w-7 items-center justify-center rounded-lg border border-[hsl(var(--border))] text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] hover:text-[hsl(var(--text-primary))] disabled:cursor-not-allowed disabled:opacity-30 transition-colors"
+                  >
+                    <ArrowDown size={14} />
+                  </button>
+                </div>
+              </div>
             </div>
 
             {/* ── Imagen de fondo ─────────────────────────────────────── */}
@@ -1761,6 +1931,124 @@ function PublicContentEditor({
                         </div>
                       </div>
                     ))}
+                  </div>
+                </div>
+              );
+            })()}
+
+            {/* ── Imágenes de Actividades Recientes ─────────────────────── */}
+            {(section.section_key === "activities" || (pageSlug === "home" && section.type === "events_calendar")) && (() => {
+              const props = (drafts[section.id] || section.props_json || {}) as Record<string, unknown>;
+              const defaultActivities = [
+                { title: "Primera Escuela Dominical", img: "" },
+                { title: "Segunda Escuela Dominical", img: "" },
+                { title: "FAROS EN CASA", img: "" },
+              ];
+              const cards = Array.isArray(props.cards) && props.cards.length > 0 
+                ? (props.cards as Record<string, unknown>[]) 
+                : defaultActivities;
+              const defaultImage = (props.default_image as string) || "";
+
+              return (
+                <div className="mb-6 space-y-4">
+                  <div>
+                    <p className="mb-1 text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
+                      Imágenes de Actividades Recientes
+                    </p>
+                    <p className="text-xs text-[hsl(var(--text-secondary))]">
+                      Asigna imágenes a cada actividad o define una imagen por defecto para las tarjetas.
+                    </p>
+                  </div>
+
+                  {/* Imagen por defecto */}
+                  <div className="flex items-center gap-3 rounded-lg border border-dashed border-[hsl(var(--border))] p-3 bg-[hsl(var(--surface-2))]/30">
+                    <div className="relative h-16 w-24 shrink-0 overflow-hidden rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))]">
+                      {defaultImage ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={defaultImage} alt="Imagen por defecto" className="h-full w-full object-cover" />
+                      ) : (
+                        <div className="flex h-full w-full items-center justify-center"><ImageIcon size={16} className="opacity-40" /></div>
+                      )}
+                    </div>
+                    <div className="flex flex-col gap-1.5">
+                      <p className="text-xs font-semibold">Imagen por defecto (para cualquier actividad)</p>
+                      <div className="flex gap-2 items-center">
+                        <button
+                          type="button"
+                          disabled={!canEdit}
+                          onClick={() => openMediaPicker(section.id, "default_image")}
+                          className="rounded-lg border border-[hsl(var(--border))] px-3 py-1.5 text-xs font-semibold hover:bg-[hsl(var(--surface-2))] disabled:opacity-50"
+                        >
+                          <ImageIcon className="mr-1 inline" size={12} />{defaultImage ? "Cambiar" : "Elegir imagen"}
+                        </button>
+                        {defaultImage && (
+                          <button
+                            type="button"
+                            disabled={!canEdit}
+                            onClick={() => {
+                              setDrafts((current) => ({
+                                ...current,
+                                [section.id]: { ...current[section.id], default_image: "" },
+                              }));
+                            }}
+                            className="text-2xs text-danger-text hover:underline"
+                          >
+                            Quitar
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Tarjetas individuales de actividades */}
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    {cards.map((card, i) => {
+                      const path = `cards.${i}.img`;
+                      const img = (card.img as string) || "";
+                      const title = (card.title as string) || `Actividad ${i + 1}`;
+                      return (
+                        <div key={path} className="flex items-center gap-3 rounded-lg border border-[hsl(var(--border))] p-3">
+                          <div className="relative h-16 w-24 shrink-0 overflow-hidden rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))]">
+                            {img ? (
+                              // eslint-disable-next-line @next/next/no-img-element
+                              <img src={img} alt={title} className="h-full w-full object-cover" />
+                            ) : (
+                              <div className="flex h-full w-full items-center justify-center"><ImageIcon size={16} className="opacity-40" /></div>
+                            )}
+                          </div>
+                          <div className="flex flex-col gap-1.5 min-w-0 flex-1">
+                            <p className="text-xs font-semibold truncate" title={title}>
+                              {i + 1}. {title}
+                            </p>
+                            <div className="flex gap-2 items-center">
+                              <button
+                                type="button"
+                                disabled={!canEdit}
+                                onClick={() => openMediaPicker(section.id, path)}
+                                className="rounded-lg border border-[hsl(var(--border))] px-2.5 py-1.5 text-xs font-semibold hover:bg-[hsl(var(--surface-2))] disabled:opacity-50"
+                              >
+                                <ImageIcon className="mr-1 inline" size={12} />{img ? "Cambiar" : "Elegir"}
+                              </button>
+                              {img && (
+                                <button
+                                  type="button"
+                                  disabled={!canEdit}
+                                  onClick={() => {
+                                    setDrafts((current) => {
+                                      const updated = setNestedValue(current[section.id] || {}, path.split("."), "") as Record<string, unknown>;
+                                      return { ...current, [section.id]: updated };
+                                    });
+                                  }}
+                                  className="text-2xs text-danger-text hover:underline"
+                                >
+                                  Quitar
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
               );
@@ -1932,6 +2220,8 @@ function PublicContentEditor({
     </main>
   );
 }
+
+PuckBuilderPage.PublicContentEditor = PublicContentEditor;
 
 function HeroMediaEditor({
   siteKey,

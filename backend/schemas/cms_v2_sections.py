@@ -220,6 +220,7 @@ class PopupProps(BaseModel):
 
 
 class EventsCalendarProps(BaseModel):
+    model_config = {"extra": "ignore"}
     title: str = "Próximos Eventos"
     subtitle: str = ""
     show_filters: bool = True
@@ -230,6 +231,23 @@ class EventsCalendarProps(BaseModel):
     empty_description: str = "Cuando el CMS publique eventos, aparecerán aquí."
     featured_badge: str = "Destacado"
     reserve_cta: str = "Reservar lugar"
+
+    # CCF Home modular activities fields (normalized & compatibility aliases)
+    eyebrow: Optional[str] = None
+    view_all: Optional[str] = None
+    view_all_href: Optional[str] = None
+    empty: Optional[str] = None
+    activities_eyebrow: Optional[str] = None
+    activities_title: Optional[str] = None
+    activities_view_all: Optional[str] = None
+    activities_view_all_href: Optional[str] = None
+    activities_empty: Optional[str] = None
+    cards: Optional[List[Dict[str, Any]]] = None
+    activity_images: Optional[List[Dict[str, Any]]] = None
+    default_image: Optional[str] = None
+    bg_image: Optional[str] = None
+    items: Optional[List[Dict[str, Any]]] = None
+
 
 
 class VideoGridProps(BaseModel):
@@ -627,7 +645,9 @@ class EmbedProps(_PermissiveProps):
 class FeedProps(_PermissiveProps):
     # Home / landing page style
     eyebrow: Optional[str] = None
+    title: Optional[str] = None
     section_title: Optional[str] = None
+    description: Optional[str] = None
     section_description: Optional[str] = None
     featured_card: Optional[Dict[str, Any]] = None
     cards: Optional[List[Dict[str, Any]]] = None
@@ -645,6 +665,8 @@ class FeedProps(_PermissiveProps):
     newsletter_sending_label: Optional[str] = None
     newsletter_success_title: Optional[str] = None
     newsletter_success_desc: Optional[str] = None
+    newsletter_success_toast: Optional[str] = None
+    newsletter_error_toast: Optional[str] = None
 
     # Sermons / predicas style
     content: Optional[str] = None
@@ -822,6 +844,27 @@ class NewsletterProps(_PermissiveProps):
     body: str = ""
     cta_label: str = "Suscribirse"
     action_url: str = ""
+
+    # CCF Home modular newsletter fields (normalized & compatibility aliases)
+    eyebrow: Optional[str] = None
+    description: Optional[str] = None
+    placeholder: Optional[str] = None
+    submit: Optional[str] = None
+    sending_label: Optional[str] = None
+    success_title: Optional[str] = None
+    success_desc: Optional[str] = None
+    success_toast: Optional[str] = None
+    error_toast: Optional[str] = None
+    newsletter_eyebrow: Optional[str] = None
+    newsletter_title: Optional[str] = None
+    newsletter_description: Optional[str] = None
+    newsletter_placeholder: Optional[str] = None
+    newsletter_submit: Optional[str] = None
+    newsletter_sending_label: Optional[str] = None
+    newsletter_success_title: Optional[str] = None
+    newsletter_success_desc: Optional[str] = None
+    newsletter_success_toast: Optional[str] = None
+    newsletter_error_toast: Optional[str] = None
 
 
 class CivicHeroSearchProps(_PermissiveProps):
