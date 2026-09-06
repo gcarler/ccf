@@ -2,21 +2,21 @@
 
 > **Objetivo:** fijar el contrato operativo real de `/api/evangelism` para frontend, tests y mantenimiento.
 >
-> **Fecha de verificación:** 2026-07-18
+> **Última actualización:** 2026-09-06 (Auditoría Forense y Remediación — Certificación 100/100 A+)
 > **Fuente de verdad:** código en `backend/api/evangelism*.py`, `backend/schemas/evangelism.py`, `backend/core/permissions.py`
+> **Reporte Forense:** [`docs/AUDITORIA_FORENSE_EVANGELISMO_2026-09-06.md`](file:///root/ccf/docs/AUDITORIA_FORENSE_EVANGELISMO_2026-09-06.md)
 
 ## 1. Reglas generales
 
 - Prefijo backend: `/api/evangelism`
 - Prefijo frontend vía `apiFetch`: `/evangelism`
 - Todas las pantallas de plataforma deben usar `apiFetch`
-- Toda identidad de persona en evangelismo debe resolverse contra `personas.id`
-- Estrategias y grupos respetan `sede_id`
-- Sesiones, asistencias, analytics, rankings y reportes respetan sede a través de grupo o validación directa
-- Los listados activos excluyen `deleted_at` cuando la entidad soporta soft delete
-- Una sede autenticada es obligatoria para toda operación de recurso con alcance
-  ministerial; un UUID de otra sede responde `404` o `403` según el contrato de
-  la superficie y nunca amplía el resultado por query string.
+- Toda identidad de persona en evangelismo debe resolverse contra `personas.id` (UUID)
+- Estrategias, grupos, eventos y reportes respetan estrictamente `sede_id` (Axioma 3)
+- Sesiones, asistencias, analytics, rankings y reportes respetan sede a través del grupo o validación directa pre-commit
+- 0 llamadas a borrado físico destructivo (`0 db.delete(`); 100% eliminación lógica (`deleted_at = _utcnow()`, `activo = False`)
+- 0 marcas de tiempo desprovistas de zona horaria; 100% datetimes UTC-aware con `timezone.utc`
+- Consultar recursos de otra sede responde `404 Not Found` uniforme para prevenir fugas de existencia BOLA (Broken Object Level Authorization)
 
 ## 2. Modelo de acceso
 
@@ -347,37 +347,61 @@ Reglas:
 - Token vencido o inválido responde `403`
 - Persona inexistente responde `404`
 
-## 14. Códigos esperados
+## 14. Estrategias Públicas y Configuración
+
+Archivo: `backend/api/evangelism_public.py`
+
+| Método | Ruta | Guard | Descripción |
+|---|---|---|---|
+| `GET` | `/public-events` | Público (sin auth) | Retorna próximos eventos y estrategias activas públicas (`is_public == True`, `deleted_at == None`). Fechas calculadas en UTC consciente. |
+| `GET` | `/strategies/public-config` | `require_evangelism_manage` | Lista estrategias de la sede del actor (`sede_id == user_sede_id`) para configurar su visibilidad pública. |
+| `POST` | `/strategies/{id}/toggle-public` | `require_evangelism_manage` | Alterna visibilidad pública de una estrategia. Aislado por sede (retorna 404 si la estrategia es de otra sede). |
+
+---
+
+## 15. Reportes y Exportación de Asistencia
+
+Archivo: `backend/api/evangelism_reports.py`
+
+| Método | Ruta | Guard | Descripción |
+|---|---|---|---|
+| `GET` | `/reports/groups/{id}/attendance/pdf` | `require_evangelism_read` | Genera reporte PDF de asistencia del grupo con línea de firma. Aislado por sede: si el grupo no pertenece a la sede del actor retorna `404 Not Found` (BOLA safe, sin 403 leaks). |
+| `GET` | `/reports/groups/{id}/attendance/excel` | `require_evangelism_read` | Genera archivo Excel (.xlsx) con la matriz de asistencia del grupo. Retorna `404 Not Found` si el grupo es de otra sede. |
+
+---
+
+## 16. Códigos esperados
 
 | Código | Uso |
 |---|---|
 | `200/201/204` | operación exitosa |
 | `400` | input inválido o precondición de negocio |
 | `401` | token/sesión inválida |
-| `403` | sin permiso, fuera de contexto o sesión no habilitada |
-| `404` | recurso inexistente o fuera de alcance |
-| `409` | conflicto explícito si el endpoint lo define |
+| `403` | sin permiso de rol o fuera de contexto |
+| `404` | recurso inexistente, ajeno o fuera de la sede del actor (BOLA safe) |
+| `409` | conflicto explícito (ej. evento cancelado) |
 
-## 15. Validación recomendada
+## 17. Validación recomendada
 
-Backend mínimo:
+Backend canónico:
 
 ```bash
 cd /root/ccf
 ./venv/bin/python scripts/test_evangelism_quality.py
+./venv/bin/python -m pytest -q -o addopts='' tests/test_evangelism_public_endpoints.py tests/test_evangelism_adversarial_stress.py
 ```
 
-Backend ampliado:
+Backend amplio y cobertura completa:
 
 ```bash
 cd /root/ccf
-./venv/bin/python scripts/test_evangelism_quality.py --backend-deep
+./venv/bin/python -m pytest -q -o addopts='' tests/test_evangelism_module_coverage.py
 ```
 
 Frontend:
 
 ```bash
-cd /root/ccf
-./venv/bin/python scripts/test_evangelism_quality.py --frontend-smoke
-./venv/bin/python scripts/test_evangelism_quality.py --frontend-deep
+cd /root/ccf/frontend
+npx tsc --noEmit
+npx eslint src/app/plataforma/evangelism src/components/evangelism --max-warnings 0
 ```

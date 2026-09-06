@@ -208,8 +208,8 @@ export default function AttendanceDrawer({
     </div>
     <div className="flex items-center gap-1">
     {([
-    { status: 'present', label: 'P', cls: 'bg-green-100 text-[hsl(var(--secondary))] dark:bg-green-900/30 dark:text-[hsl(var(--secondary))]', activeCls: 'ring-2 ring-green-500' },
-    { status: 'absent', label: 'A', cls: 'bg-red-100 text-[hsl(var(--destructive))] dark:bg-red-900/30 dark:text-[hsl(var(--destructive))]', activeCls: 'ring-2 ring-red-500' },
+    { status: 'present', label: 'P', cls: 'bg-[hsl(var(--secondary)/0.12)] text-[hsl(var(--secondary))] dark:bg-[hsl(var(--secondary)/0.2)] dark:text-[hsl(var(--secondary))]', activeCls: 'ring-2 ring-[hsl(var(--secondary))]' },
+    { status: 'absent', label: 'A', cls: 'bg-[hsl(var(--destructive)/0.1)] text-[hsl(var(--destructive))] dark:bg-[hsl(var(--destructive)/0.2)] dark:text-[hsl(var(--destructive))]', activeCls: 'ring-2 ring-[hsl(var(--destructive))]' },
     { status: 'first_time', label: '1°', cls: 'bg-[hsl(var(--info-muted))] text-[hsl(var(--primary))] dark:bg-[hsl(var(--info))]/30 dark:text-[hsl(var(--primary))]', activeCls: 'ring-2 ring-[hsl(var(--primary))]' },
     ] as const).map(opt => (
     <button key={opt.status}
@@ -220,7 +220,8 @@ export default function AttendanceDrawer({
     ))}
     {m.role === 'visitante' && (
     <button onClick={() => setPersonas(prev => prev.filter((_, j) => j !== i))}
-    className="w-7 h-7 ml-1 flex items-center justify-center rounded-lg text-[hsl(var(--text-secondary))] hover:bg-red-50 hover:text-[hsl(var(--destructive))] dark:hover:bg-red-900/20 transition-colors">
+    aria-label="Remover visitante"
+    className="w-7 h-7 ml-1 flex items-center justify-center rounded-lg text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--destructive)/0.1)] hover:text-[hsl(var(--destructive))] dark:hover:bg-[hsl(var(--destructive)/0.15)] transition-colors">
     <X size={12} />
     </button>
     )}
@@ -240,7 +241,7 @@ export default function AttendanceDrawer({
     <Search size={13} />Buscar existente
     </button>
     <button onClick={() => setShowNewVisitorForm(true)}
-    className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg border border-dashed border-[hsl(var(--border-primary))] dark:border-white/20 text-xs text-[hsl(var(--text-secondary))] hover:border-green-400 hover:text-[hsl(var(--secondary))] dark:hover:border-green-700 dark:hover:text-[hsl(var(--secondary))] transition-colors">
+    className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg border border-dashed border-[hsl(var(--border-primary))] dark:border-white/20 text-xs text-[hsl(var(--text-secondary))] hover:border-[hsl(var(--secondary))] hover:text-[hsl(var(--secondary))] dark:hover:border-[hsl(var(--secondary))] dark:hover:text-[hsl(var(--secondary))] transition-colors">
     <UserPlus size={13} />Crear persona nueva
     </button>
     </div>

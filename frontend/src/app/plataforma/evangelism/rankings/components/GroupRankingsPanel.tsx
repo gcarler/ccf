@@ -43,7 +43,7 @@ const tabs: { id: RankBy; label: string; icon: LucideIcon }[] = [
 
 function renderPodiumIcon(index: number) {
   if (index === 0) return <Crown size={16} className="text-[hsl(var(--warning))]" />;
-  if (index === 1) return <Medal size={16} className="text-slate-400" />;
+  if (index === 1) return <Medal size={16} className="text-[hsl(var(--text-secondary))]" />;
   if (index === 2) return <Medal size={16} className="text-warning-text" />;
   return <span className="text-xs font-bold text-[hsl(var(--text-secondary))] w-4 text-center">{index + 1}</span>;
 }

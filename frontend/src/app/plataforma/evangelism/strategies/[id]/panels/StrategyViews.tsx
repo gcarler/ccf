@@ -118,7 +118,7 @@ export default function StrategyViews({
             const filtered = sessions.filter(s => s.status === label);
             return (
               <div key={label} className="min-w-[280px] w-[280px] shrink-0">
-                <div className="rounded-lg p-3 mb-2 text-xs font-bold uppercase" style={{ background: `${colors[label]}15`, color: colors[label] }}>
+                <div className="rounded-lg p-3 mb-2 text-xs font-bold uppercase" style={{ background: `color-mix(in srgb, ${colors[label]} 15%, transparent)`, color: colors[label] }}>
                   {label} ({filtered.length})
                 </div>
                 <div className="space-y-2">
