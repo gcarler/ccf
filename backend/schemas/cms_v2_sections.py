@@ -242,6 +242,12 @@ class EventsCalendarProps(BaseModel):
     activities_view_all: Optional[str] = None
     activities_view_all_href: Optional[str] = None
     activities_empty: Optional[str] = None
+    cards: Optional[List[Dict[str, Any]]] = None
+    activity_images: Optional[List[Dict[str, Any]]] = None
+    default_image: Optional[str] = None
+    bg_image: Optional[str] = None
+    items: Optional[List[Dict[str, Any]]] = None
+
 
 
 class VideoGridProps(BaseModel):

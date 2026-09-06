@@ -1493,7 +1493,7 @@ function contentLabel(key?: string): string {
 type EditablePath = { path: string[]; value: string };
 
 function flattenEditableStrings(value: unknown, path: string[] = []): EditablePath[] {
-  if (typeof value === "string" && !path.some((part) => /(^|_)(href|url|src|image)$/i.test(part))) {
+  if (typeof value === "string" && !path.some((part) => /(^|_)(href|url|src|image|img)$/i.test(part))) {
     return [{ path, value }];
   }
   if (Array.isArray(value)) {
@@ -1727,6 +1727,18 @@ function PublicContentEditor({
         slides[slideIndex] = { ...(slides[slideIndex] as Record<string, unknown> || {}), src: url };
         props.slides = slides;
       } else {
+        if (field.startsWith("cards.")) {
+          const defaultCards = [
+            { title: "Primera Escuela Dominical", img: "" },
+            { title: "Segunda Escuela Dominical", img: "" },
+            { title: "FAROS EN CASA", img: "" },
+          ];
+          const existingCards = Array.isArray(props.cards) ? [...props.cards as Record<string, unknown>[]] : [];
+          while (existingCards.length < 3) {
+            existingCards.push(defaultCards[existingCards.length] || { title: `Actividad ${existingCards.length + 1}`, img: "" });
+          }
+          props.cards = existingCards;
+        }
         // Inline image field (e.g. founder1_image) — field is a dot-path
         props = setNestedValue(props, field.split("."), url) as Record<string, unknown>;
       }
@@ -1919,6 +1931,124 @@ function PublicContentEditor({
                         </div>
                       </div>
                     ))}
+                  </div>
+                </div>
+              );
+            })()}
+
+            {/* ── Imágenes de Actividades Recientes ─────────────────────── */}
+            {(section.section_key === "activities" || (pageSlug === "home" && section.type === "events_calendar")) && (() => {
+              const props = (drafts[section.id] || section.props_json || {}) as Record<string, unknown>;
+              const defaultActivities = [
+                { title: "Primera Escuela Dominical", img: "" },
+                { title: "Segunda Escuela Dominical", img: "" },
+                { title: "FAROS EN CASA", img: "" },
+              ];
+              const cards = Array.isArray(props.cards) && props.cards.length > 0 
+                ? (props.cards as Record<string, unknown>[]) 
+                : defaultActivities;
+              const defaultImage = (props.default_image as string) || "";
+
+              return (
+                <div className="mb-6 space-y-4">
+                  <div>
+                    <p className="mb-1 text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
+                      Imágenes de Actividades Recientes
+                    </p>
+                    <p className="text-xs text-[hsl(var(--text-secondary))]">
+                      Asigna imágenes a cada actividad o define una imagen por defecto para las tarjetas.
+                    </p>
+                  </div>
+
+                  {/* Imagen por defecto */}
+                  <div className="flex items-center gap-3 rounded-lg border border-dashed border-[hsl(var(--border))] p-3 bg-[hsl(var(--surface-2))]/30">
+                    <div className="relative h-16 w-24 shrink-0 overflow-hidden rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))]">
+                      {defaultImage ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={defaultImage} alt="Imagen por defecto" className="h-full w-full object-cover" />
+                      ) : (
+                        <div className="flex h-full w-full items-center justify-center"><ImageIcon size={16} className="opacity-40" /></div>
+                      )}
+                    </div>
+                    <div className="flex flex-col gap-1.5">
+                      <p className="text-xs font-semibold">Imagen por defecto (para cualquier actividad)</p>
+                      <div className="flex gap-2 items-center">
+                        <button
+                          type="button"
+                          disabled={!canEdit}
+                          onClick={() => openMediaPicker(section.id, "default_image")}
+                          className="rounded-lg border border-[hsl(var(--border))] px-3 py-1.5 text-xs font-semibold hover:bg-[hsl(var(--surface-2))] disabled:opacity-50"
+                        >
+                          <ImageIcon className="mr-1 inline" size={12} />{defaultImage ? "Cambiar" : "Elegir imagen"}
+                        </button>
+                        {defaultImage && (
+                          <button
+                            type="button"
+                            disabled={!canEdit}
+                            onClick={() => {
+                              setDrafts((current) => ({
+                                ...current,
+                                [section.id]: { ...current[section.id], default_image: "" },
+                              }));
+                            }}
+                            className="text-2xs text-danger-text hover:underline"
+                          >
+                            Quitar
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Tarjetas individuales de actividades */}
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    {cards.map((card, i) => {
+                      const path = `cards.${i}.img`;
+                      const img = (card.img as string) || "";
+                      const title = (card.title as string) || `Actividad ${i + 1}`;
+                      return (
+                        <div key={path} className="flex items-center gap-3 rounded-lg border border-[hsl(var(--border))] p-3">
+                          <div className="relative h-16 w-24 shrink-0 overflow-hidden rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))]">
+                            {img ? (
+                              // eslint-disable-next-line @next/next/no-img-element
+                              <img src={img} alt={title} className="h-full w-full object-cover" />
+                            ) : (
+                              <div className="flex h-full w-full items-center justify-center"><ImageIcon size={16} className="opacity-40" /></div>
+                            )}
+                          </div>
+                          <div className="flex flex-col gap-1.5 min-w-0 flex-1">
+                            <p className="text-xs font-semibold truncate" title={title}>
+                              {i + 1}. {title}
+                            </p>
+                            <div className="flex gap-2 items-center">
+                              <button
+                                type="button"
+                                disabled={!canEdit}
+                                onClick={() => openMediaPicker(section.id, path)}
+                                className="rounded-lg border border-[hsl(var(--border))] px-2.5 py-1.5 text-xs font-semibold hover:bg-[hsl(var(--surface-2))] disabled:opacity-50"
+                              >
+                                <ImageIcon className="mr-1 inline" size={12} />{img ? "Cambiar" : "Elegir"}
+                              </button>
+                              {img && (
+                                <button
+                                  type="button"
+                                  disabled={!canEdit}
+                                  onClick={() => {
+                                    setDrafts((current) => {
+                                      const updated = setNestedValue(current[section.id] || {}, path.split("."), "") as Record<string, unknown>;
+                                      return { ...current, [section.id]: updated };
+                                    });
+                                  }}
+                                  className="text-2xs text-danger-text hover:underline"
+                                >
+                                  Quitar
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
               );

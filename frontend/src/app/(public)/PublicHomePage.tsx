@@ -277,7 +277,20 @@ export function HomeActivitiesSection({
                     ) : null
                 ) : (
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5 md:gap-6">
-                        {publicEvents.slice(0, 3).map(({ img, tag, date, title: eventTitle, desc }, idx: number) => (
+                        {publicEvents.slice(0, 3).map(({ img, tag, date, title: eventTitle, desc }, idx: number) => {
+                            const activityCards = Array.isArray(raw.cards) ? (raw.cards as Array<Record<string, unknown>>) : [];
+                            const matchedCard = activityCards.find(
+                                (c) => typeof c?.title === "string" && eventTitle && c.title.trim().toLowerCase() === eventTitle.trim().toLowerCase()
+                            );
+                            const slotCard = activityCards[idx];
+                            const resolvedImg = img 
+                                || (matchedCard?.img as string) 
+                                || (slotCard?.img as string) 
+                                || (raw.default_image as string) 
+                                || (fallback.default_image as string) 
+                                || "";
+
+                            return (
                             <motion.div
                                 key={eventTitle || idx}
                                 initial={{ opacity: 0, y: 40 }}
@@ -290,9 +303,9 @@ export function HomeActivitiesSection({
                                     className="relative aspect-video rounded-lg overflow-hidden mb-4 shadow-md"
                                     style={{ background: "var(--site-surface-container-high)" }}
                                 >
-                                    {img ? (
+                                    {resolvedImg ? (
                                         <Image
-                                            src={img}
+                                            src={resolvedImg}
                                             alt={eventTitle || "Image"}
                                             fill
                                             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
@@ -332,7 +345,8 @@ export function HomeActivitiesSection({
                                     {desc}
                                 </p>
                             </motion.div>
-                        ))}
+                            );
+                        })}
                     </div>
                 )}
             </div>
