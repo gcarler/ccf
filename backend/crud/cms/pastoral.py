@@ -26,6 +26,25 @@ _logger = logging.getLogger(__name__)
 
 
 
+def _normalize_social_url(val: str | None, platform: str) -> str | None:
+    if not val:
+        return None
+    val = val.strip()
+    if not val:
+        return None
+    if val.startswith("@"):
+        handle = val[1:]
+        if platform == "instagram":
+            return f"https://instagram.com/{handle}"
+        if platform == "facebook":
+            return f"https://facebook.com/{handle}"
+        if platform in ("twitter", "x"):
+            return f"https://x.com/{handle}"
+    if not (val.startswith("http://") or val.startswith("https://")):
+        return f"https://{val}"
+    return val
+
+
 def update_pastoral_profile(
     db: Session,
     persona: models.Persona,
@@ -62,6 +81,12 @@ def update_pastoral_profile(
             parts = value.strip().split(" ", 1)
             persona.first_name = parts[0]
             persona.last_name = parts[1] if len(parts) > 1 else ""
+        elif key == "social_instagram":
+            persona.social_instagram = _normalize_social_url(value, "instagram")
+        elif key == "social_facebook":
+            persona.social_facebook = _normalize_social_url(value, "facebook")
+        elif key == "social_twitter":
+            persona.social_twitter = _normalize_social_url(value, "twitter")
         elif hasattr(persona, key):
             setattr(persona, key, value)
     db.commit()
@@ -106,9 +131,9 @@ def create_pastoral_profile(
         photo_url=payload.photo_url,
         bio_short=payload.bio_short,
         bio_full=payload.bio_full,
-        social_instagram=payload.social_instagram,
-        social_facebook=payload.social_facebook,
-        social_twitter=payload.social_twitter,
+        social_instagram=_normalize_social_url(payload.social_instagram, "instagram"),
+        social_facebook=_normalize_social_url(payload.social_facebook, "facebook"),
+        social_twitter=_normalize_social_url(payload.social_twitter, "twitter"),
     )
     db.add(persona)
     db.commit()

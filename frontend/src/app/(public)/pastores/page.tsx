@@ -3,7 +3,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { ChevronRight, Sparkles } from 'lucide-react';
+import { ChevronRight, Sparkles, Instagram, Facebook, Twitter } from 'lucide-react';
 import { useCmsV2Page } from '@/hooks/useCmsV2Page';
 import PublicHeroWithSlides from '@/components/public/PublicHeroWithSlides';
 import { getPublicPastoralTeam, type PastoralProfile } from '@/lib/cms/v2';
@@ -17,6 +17,21 @@ function plainText(value: string | undefined): string {
         .trim();
 }
 
+function formatSocialUrl(url: string | undefined | null, platform: "instagram" | "facebook" | "twitter"): string | null {
+    if (!url || !url.trim()) return null;
+    let clean = url.trim();
+    if (clean.startsWith("@")) {
+        const handle = clean.substring(1);
+        if (platform === "instagram") return `https://instagram.com/${handle}`;
+        if (platform === "facebook") return `https://facebook.com/${handle}`;
+        if (platform === "twitter") return `https://x.com/${handle}`;
+    }
+    if (!/^https?:\/\//i.test(clean)) {
+        return `https://${clean}`;
+    }
+    return clean;
+}
+
 type CmsPastor = {
     id?: string;
     slug: string;
@@ -26,6 +41,9 @@ type CmsPastor = {
     photo_url?: string;
     story?: string;
     bio_short?: string;
+    social_instagram?: string;
+    social_facebook?: string;
+    social_twitter?: string;
     isMain?: boolean;
     is_main_pastor?: boolean;
 };
@@ -58,6 +76,9 @@ export default function PastoresIndexPage() {
                 role: p.role ?? undefined,
                 photo_url: p.photo_url ?? undefined,
                 bio_short: p.bio_short ?? undefined,
+                social_instagram: p.social_instagram ?? undefined,
+                social_facebook: p.social_facebook ?? undefined,
+                social_twitter: p.social_twitter ?? undefined,
                 is_main_pastor: p.is_main_pastor,
             }));
         }
@@ -142,17 +163,63 @@ export default function PastoresIndexPage() {
                                     {plainText(pastor.bio_short || (pastor as CmsPastor).story)}
                                 </p>
 
-                                {/* CTA */}
-                                <Link href={`/pastores/${pastor.slug}`} className="flex items-center justify-between pt-3 border-t border-site-outline-variant/20">
-                                    {cardCta && (
-                                        <span className="text-xs font-bold uppercase tracking-widest text-site-primary group-hover:tracking-[0.15em] transition-all duration-300">
-                                            {cardCta}
-                                        </span>
-                                    )}
-                                    <div className="w-9 h-9 rounded-xl bg-site-primary/10 flex items-center justify-center group-hover:bg-site-primary group-hover:text-site-on-primary transition-all duration-300 group-hover:shadow-lg group-hover:shadow-site-primary/30">
-                                        <ChevronRight size={15} className="group-hover:translate-x-0.5 transition-transform duration-300" />
-                                    </div>
-                                </Link>
+                                {/* CTA & Social Links */}
+                                {(() => {
+                                    const igUrl = formatSocialUrl(pastor.social_instagram, "instagram");
+                                    const fbUrl = formatSocialUrl(pastor.social_facebook, "facebook");
+                                    const twUrl = formatSocialUrl(pastor.social_twitter, "twitter");
+                                    const hasSocial = Boolean(igUrl || fbUrl || twUrl);
+                                    return (
+                                        <div className="flex items-center justify-between pt-3 border-t border-site-outline-variant/20">
+                                            <div className="flex items-center gap-1.5">
+                                                {igUrl && (
+                                                    <a
+                                                        href={igUrl}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className="w-7 h-7 rounded-lg bg-site-surface-container border border-site-outline-variant/30 flex items-center justify-center text-site-on-surface-variant hover:text-site-primary hover:scale-110 transition-all shadow-sm"
+                                                        title="Instagram"
+                                                        aria-label={`${pastor.name} en Instagram`}
+                                                    >
+                                                        <Instagram size={13} />
+                                                    </a>
+                                                )}
+                                                {fbUrl && (
+                                                    <a
+                                                        href={fbUrl}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className="w-7 h-7 rounded-lg bg-site-surface-container border border-site-outline-variant/30 flex items-center justify-center text-site-on-surface-variant hover:text-site-primary hover:scale-110 transition-all shadow-sm"
+                                                        title="Facebook"
+                                                        aria-label={`${pastor.name} en Facebook`}
+                                                    >
+                                                        <Facebook size={13} />
+                                                    </a>
+                                                )}
+                                                {twUrl && (
+                                                    <a
+                                                        href={twUrl}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className="w-7 h-7 rounded-lg bg-site-surface-container border border-site-outline-variant/30 flex items-center justify-center text-site-on-surface-variant hover:text-site-primary hover:scale-110 transition-all shadow-sm"
+                                                        title="X (Twitter)"
+                                                        aria-label={`${pastor.name} en X`}
+                                                    >
+                                                        <Twitter size={13} />
+                                                    </a>
+                                                )}
+                                                {cardCta && (
+                                                    <Link href={`/pastores/${pastor.slug}`} className={`text-xs font-bold uppercase tracking-widest text-site-primary group-hover:tracking-[0.15em] transition-all duration-300 ${hasSocial ? 'ml-1' : ''}`}>
+                                                        {cardCta}
+                                                    </Link>
+                                                )}
+                                            </div>
+                                            <Link href={`/pastores/${pastor.slug}`} className="w-9 h-9 rounded-xl bg-site-primary/10 flex items-center justify-center group-hover:bg-site-primary group-hover:text-site-on-primary transition-all duration-300 group-hover:shadow-lg group-hover:shadow-site-primary/30">
+                                                <ChevronRight size={15} className="group-hover:translate-x-0.5 transition-transform duration-300" />
+                                            </Link>
+                                        </div>
+                                    );
+                                })()}
                             </div>
 
                             <div className="absolute inset-0 rounded-2xl ring-1 ring-inset ring-site-outline-variant/30 group-hover:ring-site-primary/30 transition-all duration-500 pointer-events-none" />

@@ -33,6 +33,21 @@ function plainText(value: string | undefined): string {
         .trim();
 }
 
+function formatSocialUrl(url: string | undefined | null, platform: "instagram" | "facebook" | "twitter"): string | null {
+    if (!url || !url.trim()) return null;
+    let clean = url.trim();
+    if (clean.startsWith("@")) {
+        const handle = clean.substring(1);
+        if (platform === "instagram") return `https://instagram.com/${handle}`;
+        if (platform === "facebook") return `https://facebook.com/${handle}`;
+        if (platform === "twitter") return `https://x.com/${handle}`;
+    }
+    if (!/^https?:\/\//i.test(clean)) {
+        return `https://${clean}`;
+    }
+    return clean;
+}
+
 type CmsPastor = {
     id?: string;
     slug: string;
@@ -247,47 +262,54 @@ export default function PastorDetailPage() {
                                 })()}
 
                                 {/* ── Redes Sociales ── siempre visibles, monocromáticas */}
-                                <div className="flex items-center gap-3">
-                                    <span className="text-2xs font-bold uppercase tracking-widest text-site-on-surface-variant">Síguelo en</span>
-                                    <div className="flex items-center gap-2">
-                                        {/* Instagram */}
-                                        {pastor.social_instagram ? (
-                                            <a href={pastor.social_instagram} target="_blank" rel="noopener noreferrer"
-                                                className="w-9 h-9 rounded-xl bg-site-surface-container-high border border-site-outline-variant/30 flex items-center justify-center text-site-on-surface-variant hover:scale-110 hover:text-site-primary hover:bg-site-surface-bright transition-all shadow-sm"
-                                                aria-label="Instagram">
-                                                <Instagram size={16} className="shrink-0" />
-                                            </a>
-                                        ) : (
-                                            <span className="w-9 h-9 rounded-xl bg-site-surface-container-low border border-site-outline-variant/20 flex items-center justify-center text-site-on-surface-variant/40 opacity-40 cursor-not-allowed" aria-label="Instagram no configurado">
-                                                <Instagram size={16} className="shrink-0" />
-                                            </span>
-                                        )}
-                                        {/* Facebook */}
-                                        {pastor.social_facebook ? (
-                                            <a href={pastor.social_facebook} target="_blank" rel="noopener noreferrer"
-                                                className="w-9 h-9 rounded-xl bg-site-surface-container-high border border-site-outline-variant/30 flex items-center justify-center text-site-on-surface-variant hover:scale-110 hover:text-site-primary hover:bg-site-surface-bright transition-all shadow-sm"
-                                                aria-label="Facebook">
-                                                <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16" className="shrink-0"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
-                                            </a>
-                                        ) : (
-                                            <span className="w-9 h-9 rounded-xl bg-site-surface-container-low border border-site-outline-variant/20 flex items-center justify-center text-site-on-surface-variant/40 opacity-40 cursor-not-allowed" aria-label="Facebook no configurado">
-                                                <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16" className="shrink-0"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
-                                            </span>
-                                        )}
-                                        {/* X */}
-                                        {pastor.social_twitter ? (
-                                            <a href={pastor.social_twitter} target="_blank" rel="noopener noreferrer"
-                                                className="w-9 h-9 rounded-xl bg-site-surface-container-high border border-site-outline-variant/30 flex items-center justify-center text-site-on-surface-variant hover:scale-110 hover:text-site-primary hover:bg-site-surface-bright transition-all shadow-sm"
-                                                aria-label="X">
-                                                <svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14" className="shrink-0"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L1.254 2.25H8.08l4.253 5.622zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
-                                            </a>
-                                        ) : (
-                                            <span className="w-9 h-9 rounded-xl bg-site-surface-container-low border border-site-outline-variant/20 flex items-center justify-center text-site-on-surface-variant/40 opacity-40 cursor-not-allowed" aria-label="X no configurado">
-                                                <svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14" className="shrink-0"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L1.254 2.25H8.08l4.253 5.622zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
-                                            </span>
-                                        )}
-                                    </div>
-                                </div>
+                                {(() => {
+                                    const instagramUrl = formatSocialUrl(pastor.social_instagram, "instagram");
+                                    const facebookUrl = formatSocialUrl(pastor.social_facebook, "facebook");
+                                    const twitterUrl = formatSocialUrl(pastor.social_twitter, "twitter");
+                                    return (
+                                        <div className="flex items-center gap-3">
+                                            <span className="text-2xs font-bold uppercase tracking-widest text-site-on-surface-variant">Síguelo en</span>
+                                            <div className="flex items-center gap-2">
+                                                {/* Instagram */}
+                                                {instagramUrl ? (
+                                                    <a href={instagramUrl} target="_blank" rel="noopener noreferrer"
+                                                        className="w-9 h-9 rounded-xl bg-site-surface-container-high border border-site-outline-variant/30 flex items-center justify-center text-site-on-surface-variant hover:scale-110 hover:text-site-primary hover:bg-site-surface-bright transition-all shadow-sm"
+                                                        aria-label="Instagram">
+                                                        <Instagram size={16} className="shrink-0" />
+                                                    </a>
+                                                ) : (
+                                                    <span className="w-9 h-9 rounded-xl bg-site-surface-container-low border border-site-outline-variant/20 flex items-center justify-center text-site-on-surface-variant/40 opacity-40 cursor-not-allowed" aria-label="Instagram no configurado">
+                                                        <Instagram size={16} className="shrink-0" />
+                                                    </span>
+                                                )}
+                                                {/* Facebook */}
+                                                {facebookUrl ? (
+                                                    <a href={facebookUrl} target="_blank" rel="noopener noreferrer"
+                                                        className="w-9 h-9 rounded-xl bg-site-surface-container-high border border-site-outline-variant/30 flex items-center justify-center text-site-on-surface-variant hover:scale-110 hover:text-site-primary hover:bg-site-surface-bright transition-all shadow-sm"
+                                                        aria-label="Facebook">
+                                                        <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16" className="shrink-0"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+                                                    </a>
+                                                ) : (
+                                                    <span className="w-9 h-9 rounded-xl bg-site-surface-container-low border border-site-outline-variant/20 flex items-center justify-center text-site-on-surface-variant/40 opacity-40 cursor-not-allowed" aria-label="Facebook no configurado">
+                                                        <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16" className="shrink-0"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+                                                    </span>
+                                                )}
+                                                {/* X */}
+                                                {twitterUrl ? (
+                                                    <a href={twitterUrl} target="_blank" rel="noopener noreferrer"
+                                                        className="w-9 h-9 rounded-xl bg-site-surface-container-high border border-site-outline-variant/30 flex items-center justify-center text-site-on-surface-variant hover:scale-110 hover:text-site-primary hover:bg-site-surface-bright transition-all shadow-sm"
+                                                        aria-label="X">
+                                                        <svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14" className="shrink-0"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L1.254 2.25H8.08l4.253 5.622zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+                                                    </a>
+                                                ) : (
+                                                    <span className="w-9 h-9 rounded-xl bg-site-surface-container-low border border-site-outline-variant/20 flex items-center justify-center text-site-on-surface-variant/40 opacity-40 cursor-not-allowed" aria-label="X no configurado">
+                                                        <svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14" className="shrink-0"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L1.254 2.25H8.08l4.253 5.622zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+                                                    </span>
+                                                )}
+                                            </div>
+                                        </div>
+                                    );
+                                })()}
 
                                 {/* ── Versículo ── */}
                                 <div className="flex items-start gap-4 p-5 rounded-[1rem] bg-site-surface-container-low border border-site-outline-variant/30">
