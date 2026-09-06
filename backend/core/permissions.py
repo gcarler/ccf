@@ -174,6 +174,18 @@ PERMISSIONS: Dict[str, Dict[str, str]] = {
         "label": "Vida Espiritual: gestor",
         "description": "Gestionar el módulo de vida espiritual",
     },
+    "agenda:read": {
+        "label": "Agenda: lector",
+        "description": "Ver eventos y calendario de la agenda",
+    },
+    "agenda:edit": {
+        "label": "Agenda: editor",
+        "description": "Crear y editar eventos, participantes y reservas",
+    },
+    "agenda:manage": {
+        "label": "Agenda: gestor",
+        "description": "Gestionar agenda, recursos físicos y configuración",
+    },
     "wiki:read": {
         "label": "Wiki: lector",
         "description": "Ver documentos de la base de conocimiento",
@@ -227,6 +239,11 @@ MODULE_PERMISSION_MAP: Dict[str, Dict[str, str]] = {
         "edit": "spiritual_life:edit",
         "manage": "spiritual_life:manage",
     },
+    "agenda": {
+        "read": "agenda:read",
+        "edit": "agenda:edit",
+        "manage": "agenda:manage",
+    },
     "wiki": {"read": "wiki:read", "edit": "wiki:edit", "manage": "wiki:edit"},
 }
 
@@ -250,6 +267,7 @@ DEFAULT_ROLES: List[Dict[str, Any]] = [
             *expand_module_permissions("projects", "manage"),
             *expand_module_permissions("cms", "manage"),
             *expand_module_permissions("academy", "manage"),
+            *expand_module_permissions("agenda", "manage"),
             *expand_module_permissions("messaging", "edit"),
             *expand_module_permissions("wiki", "edit"),
             "profile:manage",
@@ -264,6 +282,7 @@ DEFAULT_ROLES: List[Dict[str, Any]] = [
             *expand_module_permissions("projects", "manage"),
             *expand_module_permissions("cms", "manage"),
             *expand_module_permissions("academy", "manage"),
+            *expand_module_permissions("agenda", "manage"),
             *expand_module_permissions("messaging", "edit"),
             *expand_module_permissions("wiki", "edit"),
             "profile:manage",
@@ -276,6 +295,7 @@ DEFAULT_ROLES: List[Dict[str, Any]] = [
             *expand_module_permissions("crm", "manage"),
             *expand_module_permissions("projects", "manage"),
             *expand_module_permissions("academy", "manage"),
+            *expand_module_permissions("agenda", "manage"),
             *expand_module_permissions("messaging", "edit"),
             # GESTOR gestiona contenido del CMS (editar) — política de producto.
             *expand_module_permissions("cms", "edit"),
@@ -289,6 +309,7 @@ DEFAULT_ROLES: List[Dict[str, Any]] = [
             *expand_module_permissions("crm", "edit"),
             *expand_module_permissions("projects", "edit"),
             *expand_module_permissions("academy", "edit"),
+            *expand_module_permissions("agenda", "edit"),
             *expand_module_permissions("messaging", "edit"),
             # EDITOR edita contenido del CMS (sin publicar ni gestionar sitios).
             *expand_module_permissions("cms", "edit"),
@@ -300,6 +321,7 @@ DEFAULT_ROLES: List[Dict[str, Any]] = [
         "label": "Lector",
         "permissions": [
             *expand_module_permissions("academy", "study"),
+            *expand_module_permissions("agenda", "read"),
             "profile:manage",
         ],
     },
@@ -308,6 +330,7 @@ DEFAULT_ROLES: List[Dict[str, Any]] = [
         "label": "Miembro",
         "permissions": [
             *expand_module_permissions("academy", "study"),
+            *expand_module_permissions("agenda", "read"),
             "profile:manage",
         ],
     },
@@ -316,6 +339,7 @@ DEFAULT_ROLES: List[Dict[str, Any]] = [
         "label": "Estudiante",
         "permissions": [
             *expand_module_permissions("academy", "study"),
+            *expand_module_permissions("agenda", "read"),
             "profile:manage",
         ],
     },
@@ -324,6 +348,7 @@ DEFAULT_ROLES: List[Dict[str, Any]] = [
         "label": "Aspirante",
         "permissions": [
             *expand_module_permissions("academy", "study"),
+            *expand_module_permissions("agenda", "read"),
             "profile:manage",
         ],
     },
@@ -568,6 +593,16 @@ def _has_permission(role: str, user_perms: set | dict, required: str) -> bool:
     if required in user_perms:
         return True
 
+    # Backward compatibility: spiritual_life permissions imply agenda permissions of equal or higher level
+    if module == "agenda":
+        fallback_map = {
+            "manage": {"spiritual_life:manage"},
+            "edit": {"spiritual_life:manage", "spiritual_life:edit"},
+            "read": {"spiritual_life:manage", "spiritual_life:edit", "spiritual_life:read"},
+        }
+        if any(sp_perm in user_perms for sp_perm in fallback_map.get(level, set())):
+            return True
+
     # Hierarchy: higher levels imply lower ones within the same module
     hierarchy = {
         "manage": {"manage", "edit", "read"},
@@ -688,6 +723,21 @@ def require_permission(permission: str):
             "admin",
         }:
             return current_user
+        if permission.startswith("agenda:") and role in {
+            "coordinador",
+            "docente",
+            "pastor",
+            "admin",
+            "administrador",
+        }:
+            return current_user
+        if permission == "agenda:read" and role in {
+            "estudiante",
+            "lector",
+            "miembro",
+            "aspirante",
+        }:
+            return current_user
 
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
@@ -754,6 +804,10 @@ async def require_pastor_or_admin(
 require_evangelism_read = require_module_access("evangelism", "read")
 require_evangelism_edit = require_module_access("evangelism", "edit")
 require_evangelism_manage = require_module_access("evangelism", "manage")
+
+require_agenda_read = require_module_access("agenda", "read")
+require_agenda_edit = require_module_access("agenda", "edit")
+require_agenda_manage = require_module_access("agenda", "manage")
 
 
 # ── Password auth helpers ──────────────────────────────────────────────

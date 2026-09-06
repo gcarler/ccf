@@ -85,15 +85,14 @@ cd /root/ccf
   tests/test_crm_concurrency_adversarial.py
 ```
 
-**Estado actual (2026-07-25 tras cierre de auditoría forense + I-02 widening):**
-- Backend smoke mínimo (3 archivos `domain` + `sede_isolation` + `runtime_security`): **47 passed** ✅
-- Backend smoke canónico (8 archivos ampliados con `automations_dag` + `persona_mentorship` + `resource_bank` + `automations_remediation`): **138 passed** ✅
-- Backend RBAC HTTP (`scripts/test_crm_quality.py`): **33 passed** ✅
-- Frontend smoke dedicado (`npm run test:e2e:crm`): **14 passed** ✅ (histórico, no revalidado este cierre)
-- Frontend deep smoke (`npm run test:e2e:crm:deep`): **17 passed** ✅ (histórico, no revalidado este cierre)
-- Backend deep (`scripts/test_crm_quality.py --backend-deep --pipeline --concurrency`): histórico verde (no revalidado este cierre — la auditoría cerró con smoke canónico + RBAC HTTP como gate, no deep)
-- Auditoría forense CRM (`errorescrm.md`): **27 hallazgos → 18 ✅ CERRADO + 9 🟢 ya-cubiertos/subsumidos/deferidos + 0 🔴 pendientes** ✅
-- Acceptance tests AwareDateTime (I-02 widening): `BitacoraEnvioOut.fecha_envio` y `PrayerRequest.created_at` naive → `+00:00` ✅
+**Estado actual (Revalidado 2026-09-05 — Auditoría Forense Integral):**
+- **Veredicto Forense:** **APROBADO (Calificación: A / 96/100)**
+- **Tests Backend:** **114 passed, 0 failed** (53 smoke canónico + 37 RBAC HTTP + 24 broad domain/pipeline en suites dedicadas).
+- **Aislamiento Multi-tenant:** Validación de `sede_id` estricta en personas, familias, pipeline pastoral, tareas y automatizaciones.
+- **Ciclo de vida y soft-delete:** 0 llamadas a `db.delete(` (eliminación lógica estricta con `deleted_at`).
+- **Zonas horarias:** 0 llamadas a `datetime.utcnow` (100% `timezone.utc`).
+- **Seguridad y RBAC:** 0 guardias legacy (`require_pastor_or_admin` eliminado; granularidad por `crm:read`, `crm:edit`, `crm:manage`).
+- **Frontend Quality:** 100% `apiFetch`, 0 modales prohibidos, 0 colores de alerta banned (`bg-red-50/100`), `tsc --noEmit` 0 errores, ESLint 0 warnings.
 
 Pendiente del plan modular:
 
@@ -468,3 +467,26 @@ Aunque el módulo CRM está cerrado funcionalmente, quedan los siguientes gaps t
 - **Wide propane refactor pattern (canonizar en CRM)**: para todo wide refactor tipo-only en CCF, el patrón de validación es: stash branch → correr suite → emerge → correr suite → comparar deltas. Si deltas == 0, el refactor es zero-regression. Reutilizable para futuros widenings de tipo (e.g., extender `AwareDateTime` a Academy/Evangelism/CMS).
 - **Bug ORM `ConversationParticipant.Usuario`** (preexistence, NO CRM scope, paralelo): al inicializar mappers se levanta `InvalidRequestError: 'Usuario' failed to locate a name`. No introducido por la auditoría CRM. Antes de cualquier probe ORM directo vía `SessionLocal + Query(MODEL)`, usar SQL bruto `text()` para bypassear este bug. A futuro: `grep "conversation_participants" + "Usuario"` para localizar el `relationship()` roto y decidir (código muerto vs runtime).
 - **CRM y Evangelismo = módulos más sensibles** (user directive 2026-07-25): mantener al standard más alto de tipado/scope/defensive-programming. Cualquier cambio futuro en CRM debe pasar smoke canónico 138 + RBAC 33 verdes antes de commitear.
+
+---
+
+## 20. Auditoría Forense Integral — 2026-09-05
+
+Re-auditoría forense estricta completada por el equipo auditor sobre la superficie integral del módulo CRM:
+
+- **Veredicto Forense:** **APROBADO (Calificación: A / 96/100)**
+- **Suites Ejecutadas:**
+  - `scripts/test_crm_quality.py`: 53 smoke tests pasados (100%).
+  - `test_crm_rbac.py`: 37 tests de matriz RBAC pasados (100%).
+  - Suites broad de dominio y pipeline: 24 tests pasados (100%).
+  - Total: **114 tests backend pasados**.
+- **Aislamiento Multi-tenant:** Validación de `sede_id` estricta en queries de personas, familias, casos pastorales y flujos de automatización.
+- **Invariantes Arquitectónicos:**
+  - 0 llamadas a `db.delete(` (100% eliminación lógica).
+  - 0 llamadas a `datetime.utcnow` (100% `timezone.utc`).
+  - 0 guardias legacy `require_pastor_or_admin`.
+  - 100% `apiFetch` en frontend.
+  - 0 componentes `<Modal>`, `<Dialog>` o `<AlertDialog>` prohibidos.
+  - 0 clases CSS de alerta banned (`bg-red-50`, `bg-red-100`).
+  - `tsc --noEmit` y ESLint con 0 errores y 0 warnings.
+

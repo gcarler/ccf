@@ -21,7 +21,7 @@ function toPersonaBusqueda(user: SearchedUser): PersonaBusqueda {
     return {
         id: user.id,
         username: user.username,
-        nombre_completo: user.name ?? null,
+        nombre_completo: user.name || user.username || null,
         email: user.email,
     };
 }

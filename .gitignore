@@ -62,6 +62,8 @@ frontend/.next/
 frontend/.next-dev/
 frontend/.next-command.lock/
 frontend/.next.backup-*/
+frontend/.next-bak*/
+frontend/.next-sep2-backup/
 # Directorios de build del deploy seguro (nunca servidos directamente)
 frontend/.next-build/
 frontend/.next-verify/

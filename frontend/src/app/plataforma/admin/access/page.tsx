@@ -14,6 +14,7 @@ import {
   Settings,
   Layout,
   BookOpen,
+  Calendar,
   ClipboardList,
   AlertCircle,
   UserCircle,
@@ -61,6 +62,7 @@ const MODULE_META: Record<
   evangelism: { label: 'Evangelismo', icon: Users, color: 'text-[hsl(var(--warning))]' },
   community: { label: 'Comunidad', icon: Users, color: 'text-[hsl(var(--domain-teal)/90%)]' },
   spiritual_life: { label: 'Vida Espiritual', icon: BookOpen, color: 'text-[hsl(var(--destructive))]' },
+  agenda: { label: 'Agenda y Calendario', icon: Calendar, color: 'text-[hsl(var(--primary))]' },
   wiki: { label: 'Wiki', icon: BookOpen, color: 'text-[hsl(var(--info))]' },
 };const LEVEL_LABELS: Record<AdminModuleLevel, string> = {
   none: 'Bloqueado',

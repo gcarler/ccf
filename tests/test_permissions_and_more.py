@@ -87,7 +87,7 @@ class TestGetDefaultRoles:
     def test_no_old_permission_aliases_in_defaults(self):
         from backend.core.permissions import get_default_roles
 
-        old_aliases = {"finances:", "agenda:"}
+        old_aliases = {"finances:"}
         for role in get_default_roles():
             for perm in role["permissions"]:
                 assert not any(alias in perm for alias in old_aliases)
@@ -99,8 +99,8 @@ class TestPermissionTaxonomy:
 
         assert "finance" in MODULE_PERMISSION_MAP
         assert "spiritual_life" in MODULE_PERMISSION_MAP
+        assert "agenda" in MODULE_PERMISSION_MAP
         assert "finances" not in MODULE_PERMISSION_MAP
-        assert "agenda" not in MODULE_PERMISSION_MAP
 
     def test_seed_roles_config_uses_only_known_modules(self):
         from backend.core.permissions import MODULE_PERMISSION_MAP
@@ -110,17 +110,23 @@ class TestPermissionTaxonomy:
         for module_levels in build_roles_config().values():
             assert set(module_levels.keys()) <= valid_modules
 
-    def test_expand_module_permissions_finance_and_spiritual_life(self):
+    def test_expand_module_permissions_finance_spiritual_life_and_agenda(self):
         from backend.core.permissions import expand_module_permissions
 
         assert expand_module_permissions("finance", "read") == ["finance:read"]
-        assert expand_module_permissions("spiritual_life", "edit") == [
-            "spiritual_life:edit",
-            "spiritual_life:read",
-        ] or expand_module_permissions("spiritual_life", "edit") == [
+        assert set(expand_module_permissions("spiritual_life", "edit")) == {
             "spiritual_life:read",
             "spiritual_life:edit",
-        ]
+        }
+        assert set(expand_module_permissions("agenda", "edit")) == {
+            "agenda:read",
+            "agenda:edit",
+        }
+        assert set(expand_module_permissions("agenda", "manage")) == {
+            "agenda:read",
+            "agenda:edit",
+            "agenda:manage",
+        }
 
 
 class TestKernelRbacAliases:
@@ -129,14 +135,33 @@ class TestKernelRbacAliases:
 
         with patch(
             "backend.crud.kernel.get_persona_effective_permissions",
-            return_value={"finances": ["read"], "agenda": ["edit"]},
+            return_value={"finances": ["read"]},
         ):
             perms = kernel_rbac._resolve_kernel_permissions(db_session, uuid.uuid4())
 
         assert "finance:read" in perms
-        assert "spiritual_life:edit" in perms
         assert "finances:read" not in perms
-        assert "agenda:edit" not in perms
+
+    def test_agenda_resolves_as_canonical_module(self, db_session):
+        from backend.core import kernel_rbac
+
+        with patch(
+            "backend.crud.kernel.get_persona_effective_permissions",
+            return_value={"agenda": ["edit"]},
+        ):
+            perms = kernel_rbac._resolve_kernel_permissions(db_session, uuid.uuid4())
+
+        assert "agenda:edit" in perms
+
+    def test_spiritual_life_fallback_for_agenda(self):
+        from backend.core.permissions import _has_permission
+
+        # spiritual_life:edit satisfies agenda:edit and agenda:read, but not agenda:manage
+        assert _has_permission("editor", {"spiritual_life:edit"}, "agenda:read") is True
+        assert _has_permission("editor", {"spiritual_life:edit"}, "agenda:edit") is True
+        assert _has_permission("editor", {"spiritual_life:edit"}, "agenda:manage") is False
+        # spiritual_life:manage satisfies agenda:manage
+        assert _has_permission("gestor", {"spiritual_life:manage"}, "agenda:manage") is True
 
 
 class TestHasPermission:

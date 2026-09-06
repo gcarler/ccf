@@ -26,17 +26,17 @@ def build_roles_config() -> dict[str, dict[str, str]]:
     """Retorna la matriz canónica de roles -> módulo -> nivel.
 
     Esta función usa únicamente ids de módulo válidos según
-    ``MODULE_PERMISSION_MAP``. Alias obsoletos como ``finances`` o ``agenda``
+    ``MODULE_PERMISSION_MAP``. Alias obsoletos como ``finances``
     no deben aparecer aquí.
     """
     roles_config = {
         "ADMINISTRADOR": {m: "manage" for m in MODULE_PERMISSION_MAP},
-        "GESTOR": {m: "manage" for m in ["crm", "academy", "projects", "evangelism", "community", "messaging"]},
+        "GESTOR": {m: "manage" for m in ["crm", "academy", "projects", "evangelism", "community", "messaging", "agenda"]},
         "EDITOR": {
-            m: "edit" for m in ["crm", "projects", "evangelism", "cms", "community", "messaging", "spiritual_life"]
+            m: "edit" for m in ["crm", "projects", "evangelism", "cms", "community", "messaging", "spiritual_life", "agenda"]
         },
         "LECTOR": {m: "read" for m in MODULE_PERMISSION_MAP},
-        "MIEMBRO": {"academy": "study"},
+        "MIEMBRO": {"academy": "study", "agenda": "read"},
     }
     roles_config["GESTOR"].update({"finance": "read", "cms": "edit", "spiritual_life": "manage"})
     roles_config["EDITOR"].update({"academy": "read", "finance": "read"})

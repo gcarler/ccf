@@ -307,3 +307,53 @@ En el componente `PublicSectionRenderer.tsx` y páginas públicas del CMS:
 - [ ] `cd frontend && npx tsc --noEmit` = 0 errores.
 - [ ] `PYTHONPATH=. python3 -m pytest tests/ -v` — todos los tests previos siguen pasando.
 - [ ] `git status` muestra working tree clean al finalizar (commit de cierre con prefijo `feat(cms):` o `docs(cms):`).
+
+## 2026-09-06T03:06:45Z
+
+Auditoría forense adversarial e independiente sobre el módulo de Calendario y Agenda de la plataforma CCF, validando de forma imparcial la remediación, el aislamiento multi-sede, los contratos API, la nueva taxonomía canónica RBAC (agenda:*) y emitiendo un reporte forense conclusivo.
+
+Working directory: /root/ccf
+Integrity mode: development
+
+## Requirements
+
+### R1. Auditoría Adversarial de Backend y Contratos API
+Validar de forma independiente la integridad operativa de los endpoints de agenda (`/api/agenda/*`) y el agregador cross-módulo (`/api/system/calendar`), ejecutando las suites de prueba de eventos, recursos, participantes y reservas con detección de solapamiento horario (409 Conflict). Comprobar que no existen llamadas a borrado destructivo (`db.delete`) ni datetimes naive sin zona horaria UTC.
+
+### R2. Auditoría Forense de Seguridad y RBAC Canónico
+Evaluar el aislamiento multi-inquilino estricto por `sede_id` y auditar la efectividad de la nueva taxonomía canónica `agenda:read`, `agenda:edit`, `agenda:manage` en los guards de `agenda.py`, matrices de `permissions.py` y `kernel_rbac.py`. Verificar tanto el bloqueo 403 Forbidden para actores sin permisos como la retrocompatibilidad transparente para actores con credenciales heredadas de `spiritual_life:*`.
+
+### R3. Auditoría de Calidad Frontend e Integración de Accesos
+Verificar las reglas de acceso en `workspaceAccess.ts`, la compilación estricta TypeScript (`tsc --noEmit`), el linter (`eslint --max-warnings=0`) y la erradicación total de clases banned (ej. `bg-red-50`) y modales prohibidos en las vistas de `/plataforma/calendar` y `/plataforma/agenda`.
+
+### R4. Reporte Forense Conclusivo Independiente
+Generar un reporte forense riguroso que detalle la matriz de evaluación por ejes, métricas cuantitativas de pruebas ejecutadas vs aprobadas, verificación de invariantes y veredicto final sobre la calificación 100/100 (A+).
+
+## Acceptance Criteria
+
+### Integridad Operativa y Pruebas
+- [ ] 100% de las pruebas automatizadas del módulo de agenda ejecutadas y aprobadas (mínimo 47 tests en suites canónicas).
+- [ ] 0 llamadas a borrado físico `db.delete(` en `backend/api/agenda.py` y `backend/crud/agenda.py`.
+- [ ] 0 marcas de tiempo naive o llamadas a `datetime.utcnow`.
+
+### Seguridad y Aislamiento
+- [ ] Verificación de aislamiento multi-inquilino (`sede_id`) en todas las consultas de agenda y en el agregador `/api/system/calendar`.
+- [ ] Verificación de que peticiones sin permisos requeridos reciben HTTP 403 Forbidden.
+- [ ] Verificación de que usuarios con permisos heredados `spiritual_life:*` conservan acceso válido por retrocompatibilidad.
+
+### Estándares de Frontend
+- [ ] Compilación TypeScript (`tsc --noEmit`) con 0 errores en frontend.
+- [ ] Análisis estático ESLint con 0 warnings y 0 errores en archivos de agenda y calendario.
+- [ ] 0 instancias de clases prohibidas (`bg-red-50`, `bg-red-100`) o modales prohibidos en la interfaz.
+
+### Reporte de Auditoría
+- [ ] Emisión de reporte forense documentando evidencia de cada verificación con veredicto final explícito.
+
+## Verification Resources
+
+- Suite canónica de agenda: `./venv/bin/python scripts/test_agenda_quality.py --backend-deep`
+- Suite de RBAC y taxonomía: `./venv/bin/python -m pytest tests/test_permissions_and_more.py`
+- Suite de control de acceso frontend: `npm test src/lib/workspaceAccess.test.ts` (en `/root/ccf/frontend`)
+- Typecheck frontend: `npx tsc --noEmit` (en `/root/ccf/frontend`)
+- Linter frontend: `npx eslint src/lib/workspaceAccess.ts src/app/plataforma/admin/access/page.tsx src/app/plataforma/calendar/page.tsx src/app/plataforma/agenda/events/page.tsx "src/app/plataforma/agenda/events/[id]/page.tsx" --max-warnings 0` (en `/root/ccf/frontend`)
+- Documentación de referencia: `docs/ESTADO_AGENDA.md`, `docs/AUDITORIA_FORENSE_AGENDA_2026-09-05.md`, `docs/SYSTEM_CALENDAR_CONTRACT.md`, `docs/AGENDA_RBAC_MATRIX.md`

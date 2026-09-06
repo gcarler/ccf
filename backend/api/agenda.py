@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timezone
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
@@ -29,8 +29,8 @@ from backend.services.mention_parser import resolve_mentions
 
 router = APIRouter(prefix="/agenda", tags=["Agenda"])
 
-AgendaReader = Depends(require_module_access("spiritual_life", "read"))
-AgendaEditor = Depends(require_module_access("spiritual_life", "edit"))
+AgendaReader = Depends(require_module_access("agenda", "read"))
+AgendaEditor = Depends(require_module_access("agenda", "edit"))
 
 
 def _sede_id(db: Session, user) -> UUID:
@@ -577,6 +577,6 @@ def delete_event_comment(
     )
     if not comment:
         raise HTTPException(status_code=404, detail="Comentario no encontrado")
-    comment.deleted_at = datetime.now()
+    comment.deleted_at = datetime.now(timezone.utc)
     db.commit()
     return Response(status_code=status.HTTP_204_NO_CONTENT)

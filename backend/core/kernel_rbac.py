@@ -25,7 +25,6 @@ log = logging.getLogger(__name__)
 
 MODULE_ALIASES: Dict[str, str] = {
     "finances": "finance",
-    "agenda": "spiritual_life",
 }
 
 
@@ -63,6 +62,9 @@ KERNEL_ROLE_PERMISSIONS: Dict[str, Set[str]] = {
         "spiritual_life:manage",
         "spiritual_life:read",
         "spiritual_life:edit",
+        "agenda:manage",
+        "agenda:read",
+        "agenda:edit",
         "profile:manage",
         "messaging:edit",
         "messaging:read",
@@ -94,6 +96,9 @@ KERNEL_ROLE_PERMISSIONS: Dict[str, Set[str]] = {
         "spiritual_life:manage",
         "spiritual_life:read",
         "spiritual_life:edit",
+        "agenda:manage",
+        "agenda:read",
+        "agenda:edit",
     },
     "EDITOR": {
         "crm:read",
@@ -110,11 +115,14 @@ KERNEL_ROLE_PERMISSIONS: Dict[str, Set[str]] = {
         "finance:read",
         "spiritual_life:read",
         "spiritual_life:edit",
+        "agenda:read",
+        "agenda:edit",
         "profile:manage",
         "messaging:read",
     },
     "LECTOR": {
         "academy:study",
+        "agenda:read",
         "profile:manage",
     },
 }
@@ -200,6 +208,17 @@ def has_permission(db: Session, user, permission: str) -> bool:
 
     # Jerarquía: manage implica edit y read
     module, level = permission.split(":", 1) if ":" in permission else (permission, "")
+
+    # Backward compatibility: spiritual_life permissions imply agenda permissions of equal or higher level
+    if module == "agenda":
+        fallback_map = {
+            "manage": {"spiritual_life:manage"},
+            "edit": {"spiritual_life:manage", "spiritual_life:edit"},
+            "read": {"spiritual_life:manage", "spiritual_life:edit", "spiritual_life:read"},
+        }
+        if any(sp_perm in effective for sp_perm in fallback_map.get(level, set())):
+            return True
+
     hierarchy = {
         "manage": {"manage", "edit", "read"},
         "edit": {"edit", "read"},

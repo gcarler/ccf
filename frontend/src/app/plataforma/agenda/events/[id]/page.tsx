@@ -133,7 +133,7 @@ export default function AgendaEventDetailPage() {
                                 <button
                                     onClick={handleDelete}
                                     disabled={!event || deleting}
-                                    className="inline-flex items-center gap-2 rounded-lg border border-red-200 px-4 py-3 text-xs font-semibold uppercase tracking-wide text-[hsl(var(--destructive))] transition-all hover:bg-red-50 disabled:opacity-50"
+                                    className="inline-flex items-center gap-2 rounded-lg border border-destructive/20 px-4 py-3 text-xs font-semibold uppercase tracking-wide text-destructive transition-all hover:bg-destructive/10 disabled:opacity-50"
                                 >
                                     <Trash2 size={14} />
                                     {deleting ? "Eliminando..." : "Eliminar"}
