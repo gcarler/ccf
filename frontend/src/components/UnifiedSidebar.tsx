@@ -159,11 +159,11 @@ export default function UnifiedSidebar({
             {/* Sidebar Header (Logo) */}
             <div className="h-12 flex items-center px-3 shrink-0">
                 <div className="flex items-center gap-3 w-full">
-                    <div className="w-8 h-8 rounded-md bg-[hsl(var(--bg-muted))] dark:bg-[hsl(var(--bg-primary))] flex items-center justify-center shrink-0 overflow-hidden">
+                    <div className="relative w-8 h-8 flex items-center justify-center shrink-0">
                         {logoUrl ? (
-                            <OptimizedImage src={logoUrl} alt={logoDisplayName} fill className="w-full h-full object-contain p-1" />
+                            <OptimizedImage src={logoUrl} alt={logoDisplayName} fill className="w-full h-full object-contain drop-shadow-sm" />
                         ) : (
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-5 h-5 text-blue-600 dark:text-blue-400">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-6 h-6 text-blue-600 dark:text-blue-400">
                                 <path d="M8 22L10 6L12 2L14 6L16 22H8Z" strokeLinejoin="round" />
                                 <circle cx="12" cy="4" r="1.5" fill="currentColor" />
                             </svg>

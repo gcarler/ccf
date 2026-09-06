@@ -203,29 +203,21 @@ export default function Footer() {
                     <div className="grid gap-10 py-14 sm:py-16 lg:grid-cols-[1.15fr_0.85fr] lg:items-center lg:py-20">
                         <div className="min-w-0">
                             <Link href="/" className="inline-flex max-w-full items-center gap-4">
-                                <span
-                                    className="grid h-16 w-16 shrink-0 place-items-center overflow-hidden rounded-2xl border sm:h-20 sm:w-20"
-                                    style={{
-                                        background: "var(--site-surface-container-lowest)",
-                                        borderColor: "var(--site-outline-variant)",
-                                    }}
-                                >
-                                    {logoUrl && !logoError ? (
-                                        <OptimizedImage
-                                            src={logoUrl}
-                                            alt={brandName}
-                                            width={80}
-                                            height={80}
-                                            className="h-full w-full object-contain p-3"
-                                            onError={() => setLogoError(true)}
-                                        />
-                                    ) : (
-                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="38" height="38" className="shrink-0" style={{ color: "var(--site-primary)" }}>
-                                            <path d="M8 22L10 6L12 2L14 6L16 22H8Z" strokeLinejoin="round" />
-                                            <circle cx="12" cy="4" r="1.5" fill="currentColor" />
-                                        </svg>
-                                    )}
-                                </span>
+                                {logoUrl && !logoError ? (
+                                    <OptimizedImage
+                                        src={logoUrl}
+                                        alt={brandName}
+                                        width={64}
+                                        height={64}
+                                        className="h-12 w-12 sm:h-14 sm:w-14 object-contain drop-shadow-sm"
+                                        onError={() => setLogoError(true)}
+                                    />
+                                ) : (
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="38" height="38" className="shrink-0 w-10 h-10 sm:w-12 sm:h-12 text-site-primary">
+                                        <path d="M8 22L10 6L12 2L14 6L16 22H8Z" strokeLinejoin="round" />
+                                        <circle cx="12" cy="4" r="1.5" fill="currentColor" />
+                                    </svg>
+                                )}
                                 <span className="min-w-0">
                                     <span className="block truncate text-2xl font-semibold leading-tight sm:text-3xl" style={{ color: "var(--site-on-surface)" }}>
                                         {brandName}

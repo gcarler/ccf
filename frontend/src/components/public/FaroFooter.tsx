@@ -130,26 +130,21 @@ export default function FaroFooter() {
                         {/* Brand column */}
                         <div className="col-span-2 lg:col-span-5 space-y-4 text-center sm:text-left">
                             <div className="flex flex-col items-center gap-3 sm:flex-row sm:gap-4">
-                                <div
-                                    className="w-14 h-14 sm:w-16 sm:h-16 rounded-full flex items-center justify-center shrink-0 overflow-hidden"
-                                    style={{ background: "var(--site-surface-container)" }}
-                                >
-                                    {logoUrl && !logoError ? (
-                                        <OptimizedImage 
-                                            src={logoUrl} 
-                                            alt={brandName} 
-                                            width={56} 
-                                            height={56} 
-                                            className="w-full h-full object-contain p-2" 
-                                            onError={() => setLogoError(true)}
-                                        />
-                                    ) : (
-                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="28" height="28" className="shrink-0 w-7 h-7 sm:w-8 sm:h-8" style={{ color: "var(--site-primary)" }}>
-                                            <path d="M8 22L10 6L12 2L14 6L16 22H8Z" strokeLinejoin="round" />
-                                            <circle cx="12" cy="4" r="1.5" fill="currentColor" />
-                                        </svg>
-                                    )}
-                                </div>
+                                {logoUrl && !logoError ? (
+                                    <OptimizedImage 
+                                        src={logoUrl} 
+                                        alt={brandName} 
+                                        width={56} 
+                                        height={56} 
+                                        className="w-12 h-12 sm:w-14 sm:h-14 object-contain drop-shadow-sm shrink-0" 
+                                        onError={() => setLogoError(true)}
+                                    />
+                                ) : (
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="28" height="28" className="shrink-0 w-7 h-7 sm:w-8 sm:h-8" style={{ color: "var(--site-primary)" }}>
+                                        <path d="M8 22L10 6L12 2L14 6L16 22H8Z" strokeLinejoin="round" />
+                                        <circle cx="12" cy="4" r="1.5" fill="currentColor" />
+                                    </svg>
+                                )}
                                 <div>
                                     <div className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight" style={{ color: "var(--site-on-surface)" }}>
                                         {brandName}

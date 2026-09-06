@@ -163,32 +163,18 @@ export default function Navbar() {
                     }}
                 >
                     {/* Logo */}
-                    <Link href="/" className="group flex min-w-0 shrink-0 items-center gap-3 rounded-full pr-2 transition-opacity hover:opacity-90">
+                    <Link href="/" className="group flex min-w-0 shrink-0 items-center gap-3 pr-2 transition-opacity hover:opacity-90">
                         {logoUrl && !logoError ? (
-                            <span
-                                className="grid h-11 w-11 place-items-center rounded-full border md:h-12 md:w-12"
-                                style={{
-                                    background: "var(--site-surface-container-low)",
-                                    borderColor: "var(--site-outline-variant)",
-                                }}
-                            >
-                                <OptimizedImage
-                                    src={logoUrl}
-                                    alt={logoName}
-                                    width={42}
-                                    height={42}
-                                    className="h-8 w-8 object-contain md:h-9 md:w-9"
-                                    onError={() => setLogoError(true)}
-                                />
-                            </span>
+                            <OptimizedImage
+                                src={logoUrl}
+                                alt={logoName}
+                                width={44}
+                                height={44}
+                                className="h-9 w-9 object-contain drop-shadow-sm md:h-10 md:w-10"
+                                onError={() => setLogoError(true)}
+                            />
                         ) : (
-                            <div
-                                className="relative h-11 w-11 rounded-full border p-2 md:h-12 md:w-12"
-                                style={{
-                                    background: "var(--site-surface-container-low)",
-                                    borderColor: "var(--site-outline-variant)",
-                                }}
-                            >
+                            <div className="relative h-9 w-9 md:h-10 md:w-10">
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-full h-full text-site-primary">
                                     <path d="M8 22L10 6L12 2L14 6L16 22H8Z" strokeLinejoin="round" />
                                     <circle cx="12" cy="4" r="1.5" fill="currentColor" />
@@ -346,24 +332,16 @@ export default function Navbar() {
                     <div className="flex h-[82px] items-center justify-between px-5">
                         <Link href="/" className="flex min-w-0 items-center gap-3" onClick={() => setMobileOpen(false)}>
                             {logoUrl && !logoError ? (
-                                <span
-                                    className="grid h-11 w-11 place-items-center rounded-full border"
-                                    style={{
-                                        background: "var(--site-surface-container-low)",
-                                        borderColor: "var(--site-outline-variant)",
-                                    }}
-                                >
-                                    <OptimizedImage
-                                        src={logoUrl}
-                                        alt={logoName}
-                                        width={40}
-                                        height={40}
-                                        className="h-8 w-8 object-contain"
-                                        onError={() => setLogoError(true)}
-                                    />
-                                </span>
+                                <OptimizedImage
+                                    src={logoUrl}
+                                    alt={logoName}
+                                    width={40}
+                                    height={40}
+                                    className="h-9 w-9 object-contain drop-shadow-sm"
+                                    onError={() => setLogoError(true)}
+                                />
                             ) : (
-                                <div className="h-11 w-11 rounded-full border p-2 text-site-primary" style={{ borderColor: "var(--site-outline-variant)" }}>
+                                <div className="h-9 w-9 text-site-primary">
                                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-full w-full">
                                         <path d="M8 22L10 6L12 2L14 6L16 22H8Z" strokeLinejoin="round" />
                                         <circle cx="12" cy="4" r="1.5" fill="currentColor" />

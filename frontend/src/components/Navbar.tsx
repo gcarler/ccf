@@ -52,21 +52,19 @@ export default function Navbar() {
                     : 'bg-transparent border border-transparent'
                     }`}>
                     {/* Logo */}
-                    <Link href="/" className="flex items-center gap-2 group">
-                        <div className="bg-[hsl(var(--primary))] p-1.5 rounded-md group-hover:scale-105 transition-transform shadow-md shadow-[hsl(var(--info)/20%)] overflow-hidden">
-                            {logoUrl && !logoError ? (
-                                <OptimizedImage
-                                    src={logoUrl}
-                                    alt={siteName}
-                                    width={16}
-                                    height={16}
-                                    className="w-4 h-4 object-contain"
-                                    onError={() => setLogoError(true)}
-                                />
-                            ) : (
-                                <Church size={16} className="text-white" />
-                            )}
-                        </div>
+                    <Link href="/" className="flex items-center gap-2.5 group">
+                        {logoUrl && !logoError ? (
+                            <OptimizedImage
+                                src={logoUrl}
+                                alt={siteName}
+                                width={28}
+                                height={28}
+                                className="w-7 h-7 object-contain drop-shadow-sm group-hover:scale-105 transition-transform"
+                                onError={() => setLogoError(true)}
+                            />
+                        ) : (
+                            <Church size={22} className="text-[hsl(var(--primary))]" />
+                        )}
                         <span className="font-bold text-sm tracking-tight text-[hsl(var(--text-primary))] dark:text-white transition-colors">
                             {siteName}
                         </span>
