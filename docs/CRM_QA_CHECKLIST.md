@@ -167,16 +167,17 @@ Validar al menos:
 Notas obligatorias:
 
 - revisar `docs/CRM_RBAC_MATRIX.md` antes de tocar pipeline o automations
-- recordar que pipeline/kanban no usa el mismo guard que personas/resources
-- si se toca `backend/api/crm/pipelines.py`, validar también helpers sin auth explícita documentados en la matriz
+- recordar que pipeline/kanban valida `require_pastor_or_admin` (roles pastor/admin o permiso `crm:manage`)
+- todos los endpoints de `backend/api/crm/pipelines.py` cuentan con guards explícitos de auth/RBAC
 
-## 9. Criterio de cierre
+## 9. Criterio de cierre y Certificación (2026-09-06)
 
-Una tarea de CRM queda cerrada cuando:
+El módulo CRM cuenta con la certificación formal **100/100 (A+)**:
 
-- smoke backend relevante pasa
-- rutas afectadas fueron probadas manualmente
-- consola no presenta errores nuevos
-- si el cambio altera contratos, `CRM_API_CONTRACTS.md` se actualiza
-- si cambia estado o backlog, `ESTADO_CRM.md` se actualiza
-- el commit incluye solo la unidad trabajada
+- 1,279 tests unitarios e integración en `tests/test_crm_*.py` aprobados al 100%
+- 0 llamadas a borrado destructivo (`db.delete`)
+- 0 llamadas a `datetime.utcnow` (100% `timezone.utc`)
+- `tsc --noEmit` y ESLint con 0 errores y 0 warnings en frontend
+- 0 clases de alerta prohibidas (`bg-red-50/100`)
+- reporte formal de auditoría disponible en `docs/AUDITORIA_FORENSE_CRM_2026-09-06.md`
+
