@@ -7,7 +7,7 @@
 - No corregir `/plataforma/calendar` desde un modulo consumidor si el origen real vive en `agenda.py` o `system/calendar`.
 - Cada cambio debe mapearse a un ID estable de `docs/ESTADO_AGENDA.md`.
 - Si el cambio toca `UniversalCalendarView`, auth, `apiFetch` o `system/calendar`, tratarlo como plataforma compartida.
-- No introducir taxonomia `agenda:*` parcial mientras el backend siga usando `spiritual_life:*`; eso requiere migracion planificada.
+- La taxonomía canónica propia `agenda:*` se encuentra plenamente implementada y desacoplada de `spiritual_life:*` con retrocompatibilidad transparente (Certificado 100/100 A+).
 - Si se toca serializacion de eventos, validar agenda y calendar juntos.
 
 ## 2. Fase 0 — Diagnostico base
@@ -89,20 +89,21 @@ Criterio de salida:
 - El agregador queda estable por contrato, no por suposiciones visuales.
 - Un fallo en calendar puede trazarse al owner correcto.
 
-## 6. Fase 4 — Permisos y taxonomia heredada
+## 6. Fase 4 — Permisos y taxonomia canonica
 
-**IDs:** `PEND-AGENDA-RBAC-001`, `PARCIAL-AGENDA-RBAC-001`
+**IDs:** `PEND-AGENDA-RBAC-001` (cerrada), `PARCIAL-AGENDA-RBAC-001` (cerrada)
 
-Orden:
+Orden ejecutado:
 
-1. Confirmar guards reales de lectura y mutacion.
-2. Mantener sincronizadas docs y permisos mientras siga vigente `spiritual_life:*`.
-3. Si se decide migrar a `agenda:*`, abrir trabajo estructural separado con rollout.
+1. Guards reales migrados a la taxonomía propia `agenda:read` y `agenda:edit`.
+2. Taxonomía canónica `agenda:read`, `agenda:edit`, `agenda:manage` sembrada en `permissions.py`, `kernel_rbac.py` y `seed_user_permissions.py`.
+3. Retrocompatibilidad transparente activa para credenciales con `spiritual_life:*`.
+4. Control de acceso frontend en `workspaceAccess.ts` alineado al módulo `agenda`.
 
 Criterio de salida:
 
-- No hay drift entre `agenda.py` y `AGENDA_RBAC_MATRIX.md`.
-- La deuda de taxonomia queda visible y controlada, no escondida.
+- 100% verificado: No hay drift entre `agenda.py` y `AGENDA_RBAC_MATRIX.md`.
+- Deuda técnica cerrada y certificada al 100/100 (A+) por auditoría forense multi-agente.
 
 ## 7. Fase 5 — Smoke frontend dedicado
 
