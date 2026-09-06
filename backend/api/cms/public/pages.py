@@ -15,7 +15,6 @@ from backend.api.cms_v2._shared import (
     _get_public_site_or_404,
     _get_system_var,
     _slugify,
-    _snapshot_section_read,
 )
 from backend.core.cache_v2 import cached_public
 from backend.core.config import get_settings
