@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { useState } from 'react';
 import { QrCode, ShieldCheck, Zap, RefreshCcw, UserCheck, Users } from 'lucide-react';
@@ -124,7 +124,7 @@ export default function ScannerPage() {
  <div className="absolute bottom-10 right-10 w-12 h-8 border-b-4 border-r-4 border-primary rounded-br-2xl"></div>
 
  {/* Animated scan line */}
- <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-transparent via-primary to-transparent shadow-[0_0_15px_rgba(66,66,240,0.8)] animate-scan"></div>
+ <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-transparent via-primary to-transparent shadow-[0_0_15px_hsl(var(--primary)/0.8)] animate-scan"></div>
  </div>
 
  <div className="flex flex-col items-center gap-4 p-4 text-center relative z-20">
@@ -141,6 +141,7 @@ export default function ScannerPage() {
  <div className="relative">
  <input
  type="text"
+ aria-label="Token manual de asistencia"
  placeholder="Ingresar Token Manualmente"
  value={manualToken}
  onChange={(e) => setManualToken(e.target.value)}
@@ -150,7 +151,7 @@ export default function ScannerPage() {
  <button
  onClick={() => handleScan(manualToken)}
  disabled={!manualToken || loading}
- className="w-full py-2 bg-primary hover:bg-primary-600 text-white rounded-lg font-semibold uppercase tracking-wide text-xs transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+ className="w-full py-2 bg-primary hover:opacity-90 text-white rounded-lg font-semibold uppercase tracking-wide text-xs transition-all disabled:opacity-50 flex items-center justify-center gap-2"
  >
  {loading ? <RefreshCcw className="animate-spin" size={16} /> : <UserCheck size={16} />}
  Validar Token
@@ -161,7 +162,7 @@ export default function ScannerPage() {
  ) : (
  /* SUCCESS STATE */
  <div className="animate-in zoom-in-95 duration-500 flex flex-col items-center justify-center p-4 text-center space-y-3">
- <div className="p-4 bg-[hsl(var(--success))]/20 rounded-full text-[hsl(var(--success))] shadow-[0_0_40px_rgba(16,185,129,0.2)]">
+ <div className="p-4 bg-[hsl(var(--success))]/20 rounded-full text-[hsl(var(--success))] shadow-[0_0_40px_hsl(var(--success)/0.2)]">
  <ShieldCheck size={80} />
  </div>
  <div className="space-y-2">

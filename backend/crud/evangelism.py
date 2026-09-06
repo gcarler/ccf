@@ -513,6 +513,7 @@ def actualizar_participante(
         .filter(
             ParticipanteGrupo.id == participante_id,
             ParticipanteGrupo.deleted_at.is_(None),
+            ParticipanteGrupo.activo.is_(True),
         )
         .first()
     )
@@ -567,6 +568,7 @@ def remover_participante(
         current_row_sede=grupo_sede,
     )
     db_obj.activo = False
+    db_obj.deleted_at = _utcnow()
     db.commit()
     return True
 

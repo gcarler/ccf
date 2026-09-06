@@ -118,7 +118,7 @@ export default function StrategyViews({
             const filtered = sessions.filter(s => s.status === label);
             return (
               <div key={label} className="min-w-[280px] w-[280px] shrink-0">
-                <div className="rounded-lg p-3 mb-2 text-xs font-bold uppercase" style={{ background: `${colors[label]}15`, color: colors[label] }}>
+                <div className="rounded-lg p-3 mb-2 text-xs font-bold uppercase" style={{ background: `color-mix(in srgb, ${colors[label]} 15%, transparent)`, color: colors[label] }}>
                   {label} ({filtered.length})
                 </div>
                 <div className="space-y-2">
@@ -401,7 +401,7 @@ export default function StrategyViews({
                 <p className="text-sm font-semibold text-[hsl(var(--text-primary))] truncate">{s.topic || `Sesión #${s.id}`}</p>
                 <p className="text-xs text-[hsl(var(--text-secondary))]">{groupName(s.grupo_id)} · {formatDate(s.session_date)}</p>
               </div>
-              <span className="px-2 py-0.5 rounded text-2xs font-bold" style={{ backgroundColor: s.status === 'Realizada' ? 'hsl(var(--success)/0.125)' : '#3B82F620', color: s.status === 'Realizada' ? 'hsl(var(--success))' : 'hsl(var(--info))' }}>{s.status}</span>
+              <span className="px-2 py-0.5 rounded text-2xs font-bold" style={{ backgroundColor: s.status === 'Realizada' ? 'hsl(var(--success)/0.125)' : 'hsl(var(--info)/0.125)', color: s.status === 'Realizada' ? 'hsl(var(--success))' : 'hsl(var(--info))' }}>{s.status}</span>
             </div>
           ))}
         </div>
@@ -431,7 +431,7 @@ export default function StrategyViews({
               <p className="text-xs text-[hsl(var(--text-secondary))] mt-1">{groupName(s.grupo_id)}</p>
               <div className="flex items-center justify-between mt-3">
                 <span className="text-xs text-[hsl(var(--text-secondary))]">{formatDate(s.session_date)}</span>
-                <span className="px-1.5 py-0.5 rounded text-2xs font-bold" style={{ backgroundColor: s.status === 'Realizada' ? 'hsl(var(--success)/0.125)' : '#3B82F620', color: s.status === 'Realizada' ? 'hsl(var(--success))' : 'hsl(var(--info))' }}>{s.status}</span>
+                <span className="px-1.5 py-0.5 rounded text-2xs font-bold" style={{ backgroundColor: s.status === 'Realizada' ? 'hsl(var(--success)/0.125)' : 'hsl(var(--info)/0.125)', color: s.status === 'Realizada' ? 'hsl(var(--success))' : 'hsl(var(--info))' }}>{s.status}</span>
               </div>
             </div>
           ))}

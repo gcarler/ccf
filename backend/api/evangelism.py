@@ -25,6 +25,7 @@ from backend.core.permissions import require_module_access
 from backend.core.tenant import require_user_sede_id
 
 router = APIRouter()
+router.include_router(public_events_router)
 router.include_router(events_router)
 router.include_router(grupos_router)
 router.include_router(estrategias_router)
@@ -33,7 +34,6 @@ router.include_router(multiplication_router)
 router.include_router(notifications_router)
 router.include_router(rankings_router)
 router.include_router(reports_router)
-router.include_router(public_events_router)
 router.include_router(analytics_router)
 
 

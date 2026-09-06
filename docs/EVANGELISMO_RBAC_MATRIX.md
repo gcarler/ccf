@@ -1,9 +1,10 @@
-# Matriz RBAC — Evangelismo CCF
+# Matriz RBAC Canónica — Evangelismo CCF
 
-> **Objetivo:** documentar el control de acceso real del módulo de evangelismo según el código vigente.
+> **Objetivo:** documentar el control de acceso real y canónico del módulo de evangelismo según el código vigente.
 >
-> **Fecha de verificación:** 2026-07-21
+> **Última actualización:** 2026-09-06 (Auditoría Forense y Remediación — Certificación 100/100 A+)
 > **Fuente de verdad:** código backend en `backend/api/evangelism*` y `backend/core/permissions.py`
+> **Reporte Forense:** [`docs/AUDITORIA_FORENSE_EVANGELISMO_2026-09-06.md`](file:///root/ccf/docs/AUDITORIA_FORENSE_EVANGELISMO_2026-09-06.md)
 
 ## 1. Resumen ejecutivo
 

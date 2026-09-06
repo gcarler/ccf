@@ -68,9 +68,11 @@ export default function CustomRolesPanel({
       {canManage && showRoleForm && (
         <div className="mb-3 p-3 bg-info-soft dark:bg-[hsl(var(--info))]/20 border border-[hsl(var(--info)/25%)] dark:border-[hsl(var(--info)/100%)] rounded-lg space-y-2">
           <input value={newRoleName} onChange={e => setNewRoleName(e.target.value)}
+          aria-label="Nombre del rol"
           placeholder="Nombre del rol (ej: Coordinador de zona)"
           className="w-full px-2.5 py-1.5 text-sm bg-[hsl(var(--bg-primary))] border border-[hsl(var(--border-primary))] rounded-lg text-[hsl(var(--text-primary))] outline-none" />
           <input value={newRoleDesc} onChange={e => setNewRoleDesc(e.target.value)}
+          aria-label="Descripción del rol"
           placeholder="Descripción (opcional)"
           className="w-full px-2.5 py-1.5 text-sm bg-[hsl(var(--bg-primary))] border border-[hsl(var(--border-primary))] rounded-lg text-[hsl(var(--text-primary))] outline-none" />
           <button onClick={onCreateRole} disabled={!newRoleName.trim()}
@@ -100,7 +102,9 @@ export default function CustomRolesPanel({
                 {r.descripcion && <p className="text-2xs text-[hsl(var(--text-secondary))]">{r.descripcion}</p>}
               </div>
               {canManage ? (
-                <button onClick={() => onRequestDeleteRole(r)} className="p-1 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--destructive))] rounded hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors">
+                <button onClick={() => onRequestDeleteRole(r)}
+                  aria-label="Eliminar rol"
+                  className="p-1 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--destructive))] rounded hover:bg-[hsl(var(--destructive)/0.1)] dark:hover:bg-[hsl(var(--destructive)/0.15)] transition-colors">
                   <X size={12} />
                 </button>
               ) : null}

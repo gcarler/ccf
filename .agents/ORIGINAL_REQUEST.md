@@ -357,3 +357,56 @@ Generar un reporte forense riguroso que detalle la matriz de evaluación por eje
 - Typecheck frontend: `npx tsc --noEmit` (en `/root/ccf/frontend`)
 - Linter frontend: `npx eslint src/lib/workspaceAccess.ts src/app/plataforma/admin/access/page.tsx src/app/plataforma/calendar/page.tsx src/app/plataforma/agenda/events/page.tsx "src/app/plataforma/agenda/events/[id]/page.tsx" --max-warnings 0` (en `/root/ccf/frontend`)
 - Documentación de referencia: `docs/ESTADO_AGENDA.md`, `docs/AUDITORIA_FORENSE_AGENDA_2026-09-05.md`, `docs/SYSTEM_CALENDAR_CONTRACT.md`, `docs/AGENDA_RBAC_MATRIX.md`
+
+## 2026-09-06T04:12:32Z
+
+Auditoría forense adversarial e independiente sobre el módulo de Evangelismo de CCF (`/api/evangelism/*` y `/plataforma/evangelism`), evaluando de forma imparcial la integridad operativa de estrategias, grupos, sesiones, asistencias, eventos, escáner QR y el puente CRM, remediando las brechas para elevar la calificación de 95/100 a 100/100 (A+), y certificando la suite documental canónica.
+
+Working directory: /root/ccf
+Integrity mode: development
+
+## Requirements
+
+### R1. Auditoría Adversarial de Backend y Contratos API
+Ejecutar de forma independiente las suites de prueba de Evangelismo (smoke canónico `scripts/test_evangelism_quality.py`, regresiones críticas, suite de cobertura profunda `test_evangelism_module_coverage.py` con 225 tests, flujo Triple 7 y puente CRM). Comprobar que todos los endpoints respetan los contratos, que no existen llamadas a borrado destructivo (`0 db.delete(`) ni datetimes naive sin zona horaria UTC (`0 datetime.utcnow`).
+
+### R2. Auditoría Forense de Seguridad, RBAC y Aislamiento Multi-Tenant
+Evaluar el aislamiento multi-inquilino estricto por `sede_id` (Axioma 3) en estrategias, grupos, sesiones, registro de asistencia, seguimiento post-evento, rankings y scanner QR. Auditar los guards canónicos `evangelism:read`, `evangelism:edit`, `evangelism:manage`, los bypasses autorizados de rol (pastor/coordinador), y la prevención de fugas de existencia BOLA en endpoints de consulta y mutación.
+
+### R3. Remediación Integral de Brechas y Elevación a 100/100 (A+)
+Identificar cualquier inconsistencia, fallo residual o advertencia que mantenga la calificación en 95/100 (A-). Implementar las correcciones necesarias en backend y frontend manteniendo 100% retrocompatibilidad y sin generar regresiones en otros módulos.
+
+### R4. Auditoría de Frontend y Estándares UI/UX
+Verificar la compilación TypeScript estricta (`tsc --noEmit`), el análisis estático ESLint (`--max-warnings=0`), el uso exclusivo de `apiFetch` (0 `fetch` nativo sin interceptores de sede/auth), 0 modales flotantes prohibidos (uso obligatorio de Drawer/Shell), 0 clases Tailwind banned (`bg-red-50`), y reglas de acceso en `workspaceAccess.ts`.
+
+### R5. Reporte Forense Conclusivo Independiente
+Generar un reporte forense riguroso (`docs/AUDITORIA_FORENSE_EVANGELISMO_2026-09-06.md`) que detalle la matriz de evaluación por ejes, métricas cuantitativas de pruebas ejecutadas vs aprobadas, remediaciones implementadas y veredicto final sobre la calificación 100/100 (A+).
+
+## Acceptance Criteria
+
+### Integridad Operativa y Pruebas
+- [ ] 100% de las pruebas automatizadas del módulo de Evangelismo ejecutadas y aprobadas (mínimo 277 tests sin fallos).
+- [ ] 0 llamadas a borrado físico `db.delete(` en `backend/api/evangelism*` y `backend/crud/evangelism.py`.
+- [ ] 0 marcas de tiempo naive o llamadas a `datetime.utcnow` en el módulo.
+
+### Seguridad y Aislamiento
+- [ ] Verificación de aislamiento multi-inquilino (`sede_id`) en todas las consultas y mutaciones de evangelismo.
+- [ ] Verificación de que peticiones sin permisos requeridos reciben HTTP 403 Forbidden o HTTP 404 safe según contrato.
+- [ ] Verificación de integridad en la sincronización del puente con CRM (`evangelism_crm_bridge.py`).
+
+### Estándares de Frontend
+- [ ] Compilación TypeScript (`tsc --noEmit`) con 0 errores en frontend.
+- [ ] Análisis estático ESLint con 0 warnings y 0 errores en archivos de `/plataforma/evangelism` y componentes asociados.
+- [ ] 0 instancias de clases prohibidas (`bg-red-50`, `bg-red-100`) o modales prohibidos en la interfaz.
+
+### Reporte de Auditoría
+- [ ] Emisión de reporte forense documentando evidencia de cada verificación con veredicto final explícito certificando la calificación 100/100 (A+).
+
+## Verification Resources
+
+- Smoke canónico de evangelismo: `./venv/bin/python scripts/test_evangelism_quality.py`
+- Suite de cobertura profunda: `./venv/bin/python -m pytest -q -o addopts='' tests/test_evangelism_module_coverage.py`
+- Suite de regresión y bridge: `./venv/bin/python -m pytest -q -o addopts='' tests/test_evangelism_triple7_flow.py tests/test_evangelism_crm_bridge.py tests/test_evangelism_reports_api.py tests/test_calculo_sesiones.py`
+- Typecheck frontend: `npx tsc --noEmit` (en `/root/ccf/frontend`)
+- Linter frontend: `npx eslint src/app/plataforma/evangelism src/components/evangelism --max-warnings 0` (en `/root/ccf/frontend`)
+- Documentación de referencia: `docs/ESTADO_EVANGELISMO.md`, `docs/EVANGELISMO_API_CONTRACTS.md`, `docs/EVANGELISMO_RBAC_MATRIX.md`, `docs/EVANGELISMO_QA_CHECKLIST.md`

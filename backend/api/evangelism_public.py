@@ -2,7 +2,9 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from backend.core.database import get_db
 from backend.core.permissions import require_evangelism_manage
+from backend.core.tenant import require_user_sede_id
 from backend.models_evangelism import EstrategiaEvangelismo
+from backend import models
 import datetime
 from pydantic import BaseModel
 from typing import List, Optional
@@ -25,7 +27,7 @@ def get_next_occurrence(dia_str, hora_str):
         hh_str, mm_str = hora_str.split(":")
         hh = int(hh_str)
         mm = int(mm_str)
-        now = datetime.datetime.now()
+        now = datetime.datetime.now(datetime.timezone.utc)
         
         days_ahead = dia_idx - now.weekday()
         if days_ahead < 0 or (days_ahead == 0 and (now.hour > hh or (now.hour == hh and now.minute >= mm))):
@@ -42,7 +44,7 @@ def get_upcoming_public_events(db: Session = Depends(get_db)):
     estrategias = db.query(EstrategiaEvangelismo).filter(
         EstrategiaEvangelismo.is_public == True,
         EstrategiaEvangelismo.activa == True,
-        EstrategiaEvangelismo.deleted_at == None
+        EstrategiaEvangelismo.deleted_at.is_(None)
     ).all()
     
     events = []
@@ -63,9 +65,14 @@ def get_upcoming_public_events(db: Session = Depends(get_db)):
     return events
 
 @router.get("/strategies/public-config")
-def get_public_strategies_config(db: Session = Depends(get_db), _: dict = Depends(require_evangelism_manage)):
+def get_public_strategies_config(
+    db: Session = Depends(get_db), 
+    current_user: models.User = Depends(require_evangelism_manage)
+):
+    user_sede_id = require_user_sede_id(db, current_user)
     estrategias = db.query(EstrategiaEvangelismo).filter(
-        EstrategiaEvangelismo.deleted_at == None
+        EstrategiaEvangelismo.sede_id == user_sede_id,
+        EstrategiaEvangelismo.deleted_at.is_(None)
     ).order_by(EstrategiaEvangelismo.nombre).all()
     
     return [
@@ -88,9 +95,14 @@ def toggle_public_strategy(
     estrategia_id: str, 
     payload: TogglePublicPayload,
     db: Session = Depends(get_db), 
-    _: dict = Depends(require_evangelism_manage)
+    current_user: models.User = Depends(require_evangelism_manage)
 ):
-    est = db.query(EstrategiaEvangelismo).filter(EstrategiaEvangelismo.id == estrategia_id).first()
+    user_sede_id = require_user_sede_id(db, current_user)
+    est = db.query(EstrategiaEvangelismo).filter(
+        EstrategiaEvangelismo.id == estrategia_id,
+        EstrategiaEvangelismo.sede_id == user_sede_id,
+        EstrategiaEvangelismo.deleted_at.is_(None)
+    ).first()
     if not est:
         raise HTTPException(status_code=404, detail="Estrategia no encontrada")
         

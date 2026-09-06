@@ -23,6 +23,7 @@ from backend.core.permissions import (
     require_evangelism_manage,
     require_evangelism_read,
 )
+from backend.core.tenant import require_user_sede_id
 from backend.crud._utils import _utcnow
 
 router = APIRouter()
@@ -115,6 +116,7 @@ def register_bulk_attendance(
         raise HTTPException(status_code=400, detail="persona_ids must be a list")
 
     event = require_event_access(db, current_user, event_id)
+    user_sede = require_user_sede_id(db, current_user)
     if str(event.status or "").upper() == "CANCELLED":
         raise HTTPException(
             status_code=409,
@@ -138,7 +140,15 @@ def register_bulk_attendance(
             invalid_persona_ids.append(pid)
 
     valid_persona_uuids = (
-        {row[0] for row in db.query(models.Persona.id).filter(models.Persona.id.in_(normalized_persona_uuids)).all()}
+        {
+            row[0]
+            for row in db.query(models.Persona.id)
+            .filter(
+                models.Persona.id.in_(normalized_persona_uuids),
+                models.Persona.sede_id == user_sede,
+            )
+            .all()
+        }
         if normalized_persona_uuids
         else set()
     )

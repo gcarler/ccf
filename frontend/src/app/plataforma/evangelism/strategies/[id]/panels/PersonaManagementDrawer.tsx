@@ -94,6 +94,7 @@ export default function PersonaManagementDrawer({
                     onChange={v => onRoleChange(m.id, v)}
                   />
                   <button onClick={() => onRemove(m.id)}
+                    aria-label="Remover participante"
                     className="p-1 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--destructive))] hover:bg-[hsl(var(--destructive)/0.08)] dark:hover:bg-[hsl(var(--destructive)/0.15)] rounded transition-colors">
                     <UserMinus size={13} />
                   </button>
