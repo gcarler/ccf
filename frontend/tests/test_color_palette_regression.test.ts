@@ -11,7 +11,7 @@ const FORBIDDEN_CLASS_PATTERN = new RegExp(
   `\\b${TAILWIND_UTILS}${UTIL_MODIFIER}-(${FORBIDDEN_COLORS.join("|")})-${COLOR_SHADES}(?:/[0-9]+)?\\b`,
   "g",
 );
-const FORBIDDEN_HEX_PATTERN = /#(?:d946ef|7c3aed)\b/gi;
+const FORBIDDEN_HEX_PATTERN = /#(?:d946ef|7c3aed|3a5cd4|3155d4|1a3ab8)\b/gi;
 const FORBIDDEN_SEMANTIC_TOKEN_PATTERN = /domain-fuchsia\b/g;
 
 const SCAN_ROOT = "src";

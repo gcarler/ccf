@@ -15,18 +15,20 @@ const POLL_INTERVAL_MS = 4000;
 
 const FALLBACK_TOKENS = {
   "--site-background": "#f8f9ff",
-  "--site-on-background": "#101828",
-  "--site-surface-container": "#ffffff",
-  "--site-surface-container-low": "#f0f4ff",
-  "--site-surface-container-high": "#e6ecff",
-  "--site-surface-container-highest": "#d9e2ff",
-  "--site-on-surface": "#101828",
-  "--site-on-surface-variant": "#475467",
-  "--site-primary": "#3155d4",
+  "--site-on-background": "#001b3d",
+  "--site-surface-container": "#f8f9ff",
+  "--site-surface-container-low": "#f0f3fa",
+  "--site-surface-container-high": "#e2e7f0",
+  "--site-surface-container-highest": "#d4e3ff",
+  "--site-on-surface": "#001b3d",
+  "--site-on-surface-variant": "#42474e",
+  "--site-primary": "#004581",
   "--site-on-primary": "#ffffff",
-  "--site-primary-container": "#e1e8ff",
-  "--site-on-primary-container": "#001a66",
-  "--site-secondary": "#e0a931",
+  "--site-primary-container": "#d4e3ff",
+  "--site-on-primary-container": "#001c3b",
+  "--site-secondary": "#018abd",
+  "--site-cta-gradient": "linear-gradient(to right, #004581, #018abd, #004581)",
+  "--site-outline-variant": "rgba(0,0,0,0.1)",
 } as React.CSSProperties;
 
 export default function CmsPreviewPage() {
