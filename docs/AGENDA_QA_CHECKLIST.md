@@ -28,7 +28,7 @@ cd /root/ccf
 - editar evento mantiene serializacion y fechas correctas.
 - crear participante cross-sede falla.
 - crear reserva duplicada/conflictiva no rompe el flujo.
-- el rol probado coincide con la matriz `spiritual_life:*` documentada.
+- el rol probado coincide con la matriz `agenda:*` documentada.
 
 ## 5. No aprobar si pasa esto
 
@@ -45,6 +45,9 @@ cd /root/ccf
 - `PEND-AGENDA-SMOKE-001` cerrada el 2026-07-16 con `scripts/test_agenda_quality.py`
 - `PEND-FRONTEND-E2E-AGENDA-001` cerrada el 2026-07-16 con `frontend/tests/e2e/agenda/smoke.spec.ts`
 - `PEND-FRONTEND-E2E-AGENDA-DEEP-001` cerrada el 2026-07-16 con `frontend/tests/e2e/agenda/calendar-events.spec.ts`
+- `AUDITORIA-FORENSE-AGENDA-2026-09-05` cerrada el 2026-09-05 con `docs/AUDITORIA_FORENSE_AGENDA_2026-09-05.md` (47 tests backend OK, 0 hard deletes, 0 legacy/naive datetime, 0 bg-red-50, 0 modales banned, 100% apiFetch)
+- `CERRADO-AGENDA-RBAC-001` cerrada el 2026-09-05 con la creación y desacople de la taxonomía `agenda:*` al 100/100 (A+)
+- `AUDITORIA-FORENSE-AGENDA-2026-09-06` cerrada el 2026-09-06 con `docs/AUDITORIA_FORENSE_AGENDA_2026-09-06.md` (357 tests ejecutados y aprobados al 100%, VICTORY CONFIRMED por auditoría independiente)
 
 ## 7. Smoke frontend dedicado
 

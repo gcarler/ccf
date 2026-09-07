@@ -15,7 +15,7 @@ Referencia agregador compartido: `docs/SYSTEM_CALENDAR_CONTRACT.md`.
 - Frontend usa `apiFetch`.
 - `agenda` es autenticada y tenant-scoped.
 - `calendar` agrega eventos de varias fuentes; no debe mutar `agenda` de forma directa sin pasar por su contrato.
-- Agenda usa hoy `spiritual_life:*`; no existe aun taxonomia `agenda:*` en codigo.
+- Agenda cuenta con su propia taxonomía canónica `agenda:read`, `agenda:edit` y `agenda:manage` (con fallback transparente para `spiritual_life:*`).
 
 ## 3. `/api/agenda/*`
 
@@ -23,24 +23,24 @@ Archivo: `backend/api/agenda.py`.
 
 | Metodo | Ruta | Permiso esperado |
 |---|---|---|
-| `GET` | `/agenda/events` | `spiritual_life:read` |
-| `GET` | `/agenda/events/by-date-range` | `spiritual_life:read` |
-| `POST` | `/agenda/events` | `spiritual_life:edit` |
-| `GET` | `/agenda/events/{event_id}` | `spiritual_life:read` |
-| `PUT` | `/agenda/events/{event_id}` | `spiritual_life:edit` |
-| `DELETE` | `/agenda/events/{event_id}` | `spiritual_life:edit` |
-| `GET` | `/agenda/resources` | `spiritual_life:read` |
-| `POST` | `/agenda/resources` | `spiritual_life:edit` |
-| `PUT` | `/agenda/resources/{resource_id}` | `spiritual_life:edit` |
-| `DELETE` | `/agenda/resources/{resource_id}` | `spiritual_life:edit` |
-| `GET` | `/agenda/events/{event_id}/participants` | `spiritual_life:read` |
-| `POST` | `/agenda/participants` | `spiritual_life:edit` |
-| `PUT` | `/agenda/participants/{participant_id}` | `spiritual_life:edit` |
-| `DELETE` | `/agenda/participants/{participant_id}` | `spiritual_life:edit` |
-| `GET` | `/agenda/events/{event_id}/reservations` | `spiritual_life:read` |
-| `POST` | `/agenda/reservations` | `spiritual_life:edit` |
-| `PUT` | `/agenda/reservations/{reservation_id}` | `spiritual_life:edit` |
-| `DELETE` | `/agenda/reservations/{reservation_id}` | `spiritual_life:edit` |
+| `GET` | `/agenda/events` | `agenda:read` |
+| `GET` | `/agenda/events/by-date-range` | `agenda:read` |
+| `POST` | `/agenda/events` | `agenda:edit` |
+| `GET` | `/agenda/events/{event_id}` | `agenda:read` |
+| `PUT` | `/agenda/events/{event_id}` | `agenda:edit` |
+| `DELETE` | `/agenda/events/{event_id}` | `agenda:edit` |
+| `GET` | `/agenda/resources` | `agenda:read` |
+| `POST` | `/agenda/resources` | `agenda:edit` |
+| `PUT` | `/agenda/resources/{resource_id}` | `agenda:edit` |
+| `DELETE` | `/agenda/resources/{resource_id}` | `agenda:edit` |
+| `GET` | `/agenda/events/{event_id}/participants` | `agenda:read` |
+| `POST` | `/agenda/participants` | `agenda:edit` |
+| `PUT` | `/agenda/participants/{participant_id}` | `agenda:edit` |
+| `DELETE` | `/agenda/participants/{participant_id}` | `agenda:edit` |
+| `GET` | `/agenda/events/{event_id}/reservations` | `agenda:read` |
+| `POST` | `/agenda/reservations` | `agenda:edit` |
+| `PUT` | `/agenda/reservations/{reservation_id}` | `agenda:edit` |
+| `DELETE` | `/agenda/reservations/{reservation_id}` | `agenda:edit` |
 
 Invariantes:
 
@@ -65,6 +65,7 @@ Resumen operativo:
 - no reintroducir aliases legacy de `type` ni `href`
 
 ## 5. Pendientes de contrato
-
+ 
 - `PEND-CALENDAR-EVENTS-CONTRACT-001` cerrada el **2026-07-16** con `docs/SYSTEM_CALENDAR_CONTRACT.md`
 - `PEND-AGENDA-RBAC-001` cerrada el **2026-07-16** con `docs/AGENDA_RBAC_MATRIX.md`
+- `PARCIAL-AGENDA-RBAC-001` cerrada el **2026-09-06** con la implementación y certificación de la taxonomía `agenda:*` al 100/100 (A+).

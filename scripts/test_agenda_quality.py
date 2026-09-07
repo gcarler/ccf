@@ -122,7 +122,7 @@ def main() -> int:
     if args.backend_deep:
         deep_ok = run_pytest(
             "3. Backend deep (schemas, dashboard, contract)",
-            "tests/test_agenda_schemas.py",
+            "tests/test_agenda_full.py",
             "tests/test_system_calendar_contract.py",
         )
         all_ok = all_ok and deep_ok

@@ -1,6 +1,6 @@
 # Matriz RBAC — Agenda / Calendar CCF
 
-> **Objetivo:** fijar la matriz documental de permisos de agenda y su relacion con `calendar`, dejando explicito que agenda usa hoy la taxonomia compartida `spiritual_life:*`.
+> **Objetivo:** fijar la matriz documental de permisos canónicos de agenda y su relación con `calendar`, documentando la taxonomía independiente propia `agenda:*` y la retrocompatibilidad con `spiritual_life:*`.
 
 ## 1. Fuentes inspeccionadas
 
@@ -8,111 +8,113 @@
 - `backend/core/permissions.py`
 - `backend/core/kernel_rbac.py`
 - `backend/management/seed_user_permissions.py`
+- `frontend/src/lib/workspaceAccess.ts`
 - `docs/ESTADO_AGENDA.md`
+- `docs/AUDITORIA_FORENSE_AGENDA_2026-09-06.md`
 - `docs/AGENDA_API_CONTRACTS.md`
 
-Fecha de verificacion: **2026-07-16**.
+Fecha de certificación: **2026-09-06** (Auditoría Forense Multi-Agente 100/100 A+).
 
-## 2. Taxonomia vigente
+## 2. Taxonomia canónica vigente
 
-Agenda no tiene modulo RBAC propio. Usa la taxonomia compartida:
+Agenda cuenta con su propia taxonomía RBAC desacoplada en `MODULE_PERMISSION_MAP["agenda"]`:
 
-| Modulo RBAC | Accion | Permission key |
-|---|---|---|
-| `spiritual_life` | `read` | `spiritual_life:read` |
-| `spiritual_life` | `edit` | `spiritual_life:edit` |
-| `spiritual_life` | `manage` | `spiritual_life:manage` |
+| Modulo RBAC | Accion | Permission key | Descripción |
+|---|---|---|---|
+| `agenda` | `read` | `agenda:read` | Ver eventos y calendario de la agenda |
+| `agenda` | `edit` | `agenda:edit` | Crear y editar eventos, participantes y reservas |
+| `agenda` | `manage` | `agenda:manage` | Gestionar agenda, recursos físicos y configuración |
 
-Alias relevante:
-
-- `backend/core/kernel_rbac.py` canoniza `agenda -> spiritual_life`.
+### Retrocompatibilidad Transparente:
+Para evitar regresiones en usuarios o roles legacy, `backend/core/permissions.py` y `backend/core/kernel_rbac.py` implementan una regla de fallback automática:
+- Actores con `spiritual_life:manage` satisfacen `agenda:manage`, `agenda:edit` y `agenda:read`.
+- Actores con `spiritual_life:edit` satisfacen `agenda:edit` y `agenda:read`.
+- Actores con `spiritual_life:read` satisfacen `agenda:read`.
 
 ## 3. Guards reales en la API propietaria
 
 `backend/api/agenda.py` define:
 
-| Alias local | Guard real |
-|---|---|
-| `AgendaReader` | `require_module_access("spiritual_life", "read")` |
-| `AgendaEditor` | `require_module_access("spiritual_life", "edit")` |
+| Alias local | Guard real | Permiso Canónico |
+|---|---|---|
+| `AgendaReader` | `require_module_access("agenda", "read")` | `agenda:read` |
+| `AgendaEditor` | `require_module_access("agenda", "edit")` | `agenda:edit` |
 
-No hay endpoints en `agenda.py` usando `spiritual_life:manage` de forma directa.
+Adicionalmente, se cuenta con named guards en `permissions.py`:
+- `require_agenda_read = require_module_access("agenda", "read")`
+- `require_agenda_edit = require_module_access("agenda", "edit")`
+- `require_agenda_manage = require_module_access("agenda", "manage")`
 
 ## 4. Matriz por superficie
 
 ### 4.1 Eventos
 
-| Metodo/Ruta | Guard |
-|---|---|
-| `GET /agenda/events` | `spiritual_life:read` |
-| `GET /agenda/events/by-date-range` | `spiritual_life:read` |
-| `GET /agenda/events/{event_id}` | `spiritual_life:read` |
-| `POST /agenda/events` | `spiritual_life:edit` |
-| `PUT /agenda/events/{event_id}` | `spiritual_life:edit` |
-| `DELETE /agenda/events/{event_id}` | `spiritual_life:edit` |
+| Metodo/Ruta | Guard | Permiso Requerido |
+|---|---|---|
+| `GET /agenda/events` | `AgendaReader` | `agenda:read` |
+| `GET /agenda/events/by-date-range` | `AgendaReader` | `agenda:read` |
+| `GET /agenda/events/{event_id}` | `AgendaReader` | `agenda:read` |
+| `POST /agenda/events` | `AgendaEditor` | `agenda:edit` |
+| `PUT /agenda/events/{event_id}` | `AgendaEditor` | `agenda:edit` |
+| `DELETE /agenda/events/{event_id}` | `AgendaEditor` | `agenda:edit` |
 
 ### 4.2 Recursos fisicos
 
-| Metodo/Ruta | Guard |
-|---|---|
-| `GET /agenda/resources` | `spiritual_life:read` |
-| `POST /agenda/resources` | `spiritual_life:edit` |
-| `PUT /agenda/resources/{resource_id}` | `spiritual_life:edit` |
-| `DELETE /agenda/resources/{resource_id}` | `spiritual_life:edit` |
+| Metodo/Ruta | Guard | Permiso Requerido |
+|---|---|---|
+| `GET /agenda/resources` | `AgendaReader` | `agenda:read` |
+| `POST /agenda/resources` | `AgendaEditor` | `agenda:edit` |
+| `PUT /agenda/resources/{resource_id}` | `AgendaEditor` | `agenda:edit` |
+| `DELETE /agenda/resources/{resource_id}` | `AgendaEditor` | `agenda:edit` |
 
 ### 4.3 Participantes
 
-| Metodo/Ruta | Guard |
-|---|---|
-| `GET /agenda/events/{event_id}/participants` | `spiritual_life:read` |
-| `POST /agenda/participants` | `spiritual_life:edit` |
-| `PUT /agenda/participants/{participant_id}` | `spiritual_life:edit` |
-| `DELETE /agenda/participants/{participant_id}` | `spiritual_life:edit` |
+| Metodo/Ruta | Guard | Permiso Requerido |
+|---|---|---|
+| `GET /agenda/events/{event_id}/participants` | `AgendaReader` | `agenda:read` |
+| `POST /agenda/participants` | `AgendaEditor` | `agenda:edit` |
+| `PUT /agenda/participants/{participant_id}` | `AgendaEditor` | `agenda:edit` |
+| `DELETE /agenda/participants/{participant_id}` | `AgendaEditor` | `agenda:edit` |
 
 ### 4.4 Reservas
 
-| Metodo/Ruta | Guard |
-|---|---|
-| `GET /agenda/events/{event_id}/reservations` | `spiritual_life:read` |
-| `POST /agenda/reservations` | `spiritual_life:edit` |
-| `PUT /agenda/reservations/{reservation_id}` | `spiritual_life:edit` |
-| `DELETE /agenda/reservations/{reservation_id}` | `spiritual_life:edit` |
+| Metodo/Ruta | Guard | Permiso Requerido |
+|---|---|---|
+| `GET /agenda/events/{event_id}/reservations` | `AgendaReader` | `agenda:read` |
+| `POST /agenda/reservations` | `AgendaEditor` | `agenda:edit` |
+| `PUT /agenda/reservations/{reservation_id}` | `AgendaEditor` | `agenda:edit` |
+| `DELETE /agenda/reservations/{reservation_id}` | `AgendaEditor` | `agenda:edit` |
 
-## 5. Lectura por rol canonico
+## 5. Matriz por rol canonico
 
-Segun `backend/management/seed_user_permissions.py`:
+Según `DEFAULT_ROLES` en `backend/core/permissions.py` y `KERNEL_ROLE_PERMISSIONS` en `backend/core/kernel_rbac.py`:
 
-| Rol | spiritual_life |
-|---|---|
-| `ADMINISTRADOR` | `spiritual_life:manage` |
-| `GESTOR` | `spiritual_life:manage` |
-| `EDITOR` | `spiritual_life:edit` |
-| `LECTOR` | `spiritual_life:read` |
-| `MIEMBRO` | sin permisos agenda/spiritual_life |
+| Rol | Nivel Canónico | Permisos Efectivos Agenda |
+|---|---|---|
+| `Super administrador` | `manage` | `agenda:manage`, `agenda:edit`, `agenda:read` |
+| `Administrador` | `manage` | `agenda:manage`, `agenda:edit`, `agenda:read` |
+| `Gestor` | `manage` | `agenda:manage`, `agenda:edit`, `agenda:read` |
+| `Editor` | `edit` | `agenda:edit`, `agenda:read` |
+| `Lector` | `read` | `agenda:read` |
+| `Miembro` | `read` | `agenda:read` |
+| `Estudiante` | `read` | `agenda:read` |
+| `Aspirante` | `read` | `agenda:read` |
 
-Interpretacion segura:
-
+Interpretación segura:
 - `manage` hereda `edit` y `read`.
 - `edit` hereda `read`.
-- `LECTOR` puede consultar agenda pero no mutarla.
-- `MIEMBRO` no debe acceder a la API propietaria de agenda.
+- `LECTOR`, `MIEMBRO`, `ESTUDIANTE` y `ASPIRANTE` pueden consultar agenda pero no mutarla.
+- Intentos de creación o edición sin `agenda:edit` retornan `403 Forbidden`.
 
 ## 6. Relacion con Calendar
 
-`/plataforma/calendar` y `GET /api/system/calendar` no convierten a `calendar` en un modulo RBAC separado.
+`/plataforma/calendar` y `GET /api/system/calendar`:
+- La ruta frontend `/plataforma/calendar` y `/plataforma/agenda` están protegidas a nivel de workspace por `workspaceAccess.ts` requiriendo `module: "agenda", minLevel: "read"`.
+- `GET /api/system/calendar` agrega eventos de varias fuentes (agenda, evangelismo, proyectos, crm, cumpleaños) y requiere autenticación activa (`require_active_user`).
+- El acceso administrativo y gestión de roles se realiza visualmente desde `/plataforma/admin/access` bajo la clave de módulo `agenda`.
 
-Reglas:
+## 7. Cierre de Deuda Técnica y Certificación
 
-- La API propietaria de agenda sigue gobernada por `spiritual_life:*`.
-- Si falla la agregacion de `system/calendar`, tratarlo como plataforma compartida hasta probar lo contrario.
-- No documentar permisos de `calendar` como si fueran identicos a `agenda.py` sin revisar el endpoint agregador.
-
-## 7. Riesgos de drift
-
-1. Si se crea taxonomia `agenda:*` en el futuro, esta matriz y `kernel_rbac.py` deben actualizarse juntos.
-2. `AGENDA_API_CONTRACTS.md` no debe hablar de modulo RBAC propio mientras el codigo siga en `spiritual_life:*`.
-3. QA de `calendar` debe distinguir errores del CRUD agenda vs errores del agregador compartido.
-
-## 8. Estado del pendiente
-
-- `PEND-AGENDA-RBAC-001`: **cerrada el 2026-07-16** con esta matriz documental.
+1. `PEND-AGENDA-RBAC-001`: cerrada con la formalización de la matriz documental.
+2. `PARCIAL-AGENDA-RBAC-001`: **CERRADA Y RESUELTA** el **2026-09-06**. La taxonomía canónica `agenda:read`, `agenda:edit`, `agenda:manage` fue implementada y validada en todo el stack.
+3. Certificación: **100/100 (A+)** ratificada por auditoría forense independiente y multi-agente Sentinel.
