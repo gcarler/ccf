@@ -5,6 +5,7 @@
 **Propósito.** Handover canónico. Este archivo existe para que cada sesión nueva de trabajo pueda leerlo al inicio y arrancar con el contexto ya cargado, sin redescubrir el módulo de cero.
 
 > **Cambios recientes (post handover 2026-07-15):**
+> - **Auditoría forense adversarial y certificación integral el 2026-09-06** — Certificación conclusiva 100/100 (A+) por el equipo auditor: 460 tests backend core y suites canónicas pasados (120 API + 116 RBAC + 78 CRM-Projects + 48 smoke canónico + 21 multi-tenant + 77 whiteboard/chat/wiki/kanban) + 45 tests frontend (integración de vistas, accesibilidad y mocks). Remediación total de clases banned (`bg-red-50/100`) a tokens semánticos HSL en `PhaseManagerDrawer.tsx` y `SortableTaskCard.tsx`. Sede isolation validada (Axioma 3). Invariantes confirmados: 0 llamadas a `db.delete(` (soft delete universal vía `deleted_at`), 0 llamadas a `datetime.utcnow` (100% `timezone.utc`), 100% `apiFetch` en frontend, 0 modales prohibidos, tipado estricto `tsc --noEmit` y ESLint con 0 errores y 0 warnings. Calificación final: **100/100 (A+) CERTIFICADO**. Reporte formal emitido en `docs/AUDITORIA_FORENSE_PROYECTOS_2026-09-06.md`.
 > - **Auditoría frontend↔backend completa el 2026-08-11** — Verificación total del módulo de Proyectos: 52 endpoints backend vs 34 archivos frontend. 7 fixes aplicados (FIX-01 a FIX-07): (1) mismatch de tipos dashboard corregido, (2) `get_projects_dashboard` ahora filtra por `sede_id` (Axioma 3), (3) removido `?unread_only=true` no soportado, (4) `type === 'mention'` → `type === 'comment'` en inbox/responses, (5) `create_project_comment` cambiado a `require_project_access` (miembros pueden comentar), (6) recarga client-side de proyectos + filtro de estado (6 botones), (7) navegación listado→detalle añadida en List y Table. Verificado con Playwright usando datos reales (usuario `prueba3@ccf.test`). Reporte completo en `docs/REPORTE_AUDITORIA_PROYECTOS_2026-08-11.md`.
 > - **`WHITEBOARD-SUPERPRO-001` el 2026-08-02** — Segunda oleada de mejoras de pizarra (PZ-09..PZ-20, ver `planpizarra.md` §4b). Añade: 10 plantillas reales (`lib/whiteboard/templates.ts`), notas pegajosas con picker de 6 colores (atajo `N`), marcos/frames con cabecera, 3 widgets de taller (votación/cronómetro/reacción, `lib/whiteboard/workshopWidgets.ts`), colaboración WS robusta (`hooks/useWhiteboardCollab.ts` reescrito: filtro de eco propio, reconexión con backoff, estado `connected` en cabecera), minimapa, modo presentación fullscreen (F5 / ←→ / Esc), conectores pulidos (poda de huérfanos + propiedad dash), texto enriquecido (subrayado + listas), export PDF nativo sin dependencias (`exportToPdf`), galería de 16 stickers y atajos/touch extendidos (Ctrl+D/L, zoom in/out, pinch-zoom, pan 1-dedo). Gates: `tsc --noEmit` 0 errores, eslint 0 warnings, 8 tests frontend y 20 backend verde.
 > - **`WHITEBOARD-REFACTOR-001` cerrada el 2026-07-25** — Refactor de la pizarra (whiteboard) del proyecto. Se centralizó la lógica del lienzo en `frontend/src/components/whiteboard/WhiteboardEditor.tsx`, reutilizado por `/plataforma/whiteboard/[id]` y por el modal `ProjectWhiteboard`. Se corrigió el bug por el que el lienzo cargaba pero las herramientas no respondían (el modal montaba el editor oculto). Se añadieron herramientas de formato de texto (negrita, cursiva, fuente, tamaño, color), exportación a PNG/SVG/JSON, compartir enlace, capas, deshacer/rehacer y panel de propiedades. Typecheck del área whiteboard sin errores; backend roundtrip tests verdes (10/10).
@@ -387,3 +388,22 @@ Búsqueda rápida para cualquier sesión:
 ```bash
 grep -nE "PARCIAL-|PEND-" /root/ccf/docs/ESTADO_PROYECTOS.md
 ```
+
+---
+
+## 11. Certificación Forense Adversarial y Cierre Definitivo — 2026-09-06
+
+El módulo de Proyectos ha completado su ciclo de auditoría forense adversarial, remediación de calidad UI y certificación canónica:
+
+- **Veredicto:** **100/100 (A+) — CERTIFICADO**
+- **Reporte Formal:** `docs/AUDITORIA_FORENSE_PROYECTOS_2026-09-06.md`
+- **Métricas de Verificación:**
+  - **460 tests backend** aprobados al 100% (334 en `test_projects_*.py`, 78 en `test_crm_projects_*.py`, 48 en `scripts/test_projects_quality.py`).
+  - **45 tests frontend** aprobados al 100% (`projects-views-integration.test.tsx`, `projects-accessibility.test.tsx`, `projects.test.ts`).
+  - **0 llamadas a borrado destructivo** (`0 db.delete(`).
+  - **0 marcas de tiempo naive** (`0 datetime.utcnow`).
+  - **0 clases vetadas en frontend**: clases `bg-red-50` y `bg-orange-50` remediadas a tokens semánticos HSL en `PhaseManagerDrawer.tsx` y `SortableTaskCard.tsx`.
+  - `tsc --noEmit` y ESLint con 0 errores y 0 warnings.
+  - Sede isolation estricta (Axioma 3) con respuestas 404 seguras anti-BOLA.
+- El módulo de Proyectos queda formalmente elevado y cerrado con la máxima calificación institucional.
+
