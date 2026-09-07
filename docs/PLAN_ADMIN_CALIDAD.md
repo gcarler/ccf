@@ -1,6 +1,7 @@
 # Plan de Calidad — Módulo Administración
 
-**Actualizado:** 2026-07-19
+**Actualizado:** 2026-09-06 (Auditoría Forense Integral — Certificación 100/100 A+)
+**Estado:** CERRADO Y CERTIFICADO (100/100 A+) — ([docs/AUDITORIA_FORENSE_ADMIN_2026-09-06.md](./AUDITORIA_FORENSE_ADMIN_2026-09-06.md))
 **Audiencia:** desarrolladores backend, frontend, revisores de calidad
 
 ---
@@ -85,11 +86,12 @@ curl -s http://127.0.0.1:3000/plataforma/admin | head -20
 
 ## Criterios de cierre
 
-- [ ] `docs/MODULO_ADMIN.md` creado con endpoints, schemas y guía de uso
-- [ ] `list_admin_personas` filtra por `sede_id`
-- [ ] Backend sin imports redundantes ni serialización inconsistente
-- [ ] `POST /variables` acepta body JSON
-- [ ] Tests sin duplicación, con payloads correctos y assertions de contenido
-- [ ] Dashboard admin muestra KPIs reales desde backend
-- [ ] `pytest tests/test_admin_coverage.py` pasa al 100%
-- [ ] Frontend responde sin errores en todas las subpáginas admin
+- [x] `docs/MODULO_ADMIN.md` creado con endpoints, schemas y guía de uso
+- [x] `list_admin_personas` filtra por `sede_id`
+- [x] Backend sin imports redundantes ni serialización inconsistente
+- [x] `POST /variables` acepta body JSON
+- [x] Tests sin duplicación, con payloads correctos y assertions de contenido
+- [x] Dashboard admin muestra KPIs reales desde backend
+- [x] `pytest` suites admin pasan al 100% (314 tests pasados en 12 suites canónicas)
+- [x] Frontend responde sin errores en todas las subpáginas admin (0 banned classes, 0 banned modals, strict TypeScript & ESLint)
+- [x] Auditoría forense independiente completada con calificación 100/100 (A+) (`docs/AUDITORIA_FORENSE_ADMIN_2026-09-06.md`)

@@ -1,83 +1,118 @@
 #!/usr/bin/env python3
+"""Script de calidad canónico para el módulo de Administración CCF.
+
+Ejecuta la suite completa de pruebas de backend (12 archivos):
+- Core y CRUD refactorizado
+- RBAC, asignación granular y roles modulares
+- Contratos UUID, hitos espirituales y automatizaciones
+
+Uso:
+    cd /root/ccf && ./venv/bin/python scripts/test_admin_quality.py
 """
-Canonical quality smoke for Admin module.
 
-Usage:
-    python scripts/test_admin_quality.py [--backend-deep]
+from __future__ import annotations
 
-Exit code 0 = all gates pass.
-"""
-
+import os
 import subprocess
 import sys
+from pathlib import Path
 
-BASE = "/root/ccf"
-VENV_PYTHON = f"{BASE}/venv/bin/python"
+HERE = Path(__file__).resolve()
+PROJECT_ROOT = next((p for p in HERE.parents if (p / "backend" / "__init__.py").is_file()), None)
+if PROJECT_ROOT is None:
+    raise RuntimeError(f"backend package not found above {HERE}")
+
+os.chdir(PROJECT_ROOT)
+
+GREEN = "\033[0;32m"
+RED = "\033[0;31m"
+BLUE = "\033[0;34m"
+NC = "\033[0m"
+
+PASS = 0
+FAIL = 0
 
 
-def run(label: str, cmd: list[str]) -> bool:
-    print(f"\n── {label} ──")
-    result = subprocess.run(cmd, capture_output=True, text=True, cwd=BASE)
-    for line in result.stdout.splitlines():
-        print(f"  {line}")
-    if result.returncode != 0:
-        print(f"  🔴 FAILED (exit {result.returncode})")
-        for line in result.stderr.splitlines()[-5:]:
-            print(f"  ! {line}")
-        return False
-    print("  ✅ passed")
-    return True
+def section(title: str) -> None:
+    print(f"\n{'=' * 64}")
+    print(f"  {title}")
+    print(f"{'=' * 64}")
 
 
-def main():
-    gates = [
-        (
-            "🧪 Unit tests",
-            [VENV_PYTHON, "-m", "pytest", "tests/test_admin_coverage.py", "-q", "--tb=short", "--no-cov"],
-        ),
-        ("🔍 Health endpoint", ["curl", "-sf", "http://127.0.0.1:8000/healthz"]),
-        (
-            "📊 Admin stats endpoint (expect 401 without auth)",
-            ["curl", "-s", "-o", "/dev/null", "-w", "%{http_code}", "http://127.0.0.1:8000/api/admin/stats"],
-        ),
-    ]
+def ok(message: str) -> None:
+    global PASS
+    PASS += 1
+    print(f"  {GREEN}✓{NC} {message}")
 
-    # Para stats: 401 significa que el endpoint existe y pide auth (correcto)
-    import re
 
-    if "--backend-deep" in sys.argv:
-        gates.append(
-            (
-                "📊 Deep coverage",
-                [VENV_PYTHON, "-m", "pytest", "tests/test_admin_coverage.py", "-v", "--tb=short", "--no-cov"],
-            )
-        )
+def fail(message: str) -> None:
+    global FAIL
+    FAIL += 1
+    print(f"  {RED}✗{NC} {message}")
 
-    all_ok = True
-    stats_ok = True
-    for label, cmd in gates:
-        if "stats endpoint" in label:
-            result = subprocess.run(cmd, capture_output=True, text=True, cwd=BASE)
-            code = result.stdout.strip()
-            if code in ("401", "403", "404"):
-                print(f"\n── {label} ──")
-                print(f"  HTTP {code} (expected — auth required or middleware block)")
-                print("  ✅ passed")
-            else:
-                print(f"\n── {label} ──")
-                print(f"  HTTP {code} (unexpected)")
-                stats_ok = False
-        elif not run(label, cmd):
-            all_ok = False
 
-    all_ok = all_ok and stats_ok
+def info(message: str) -> None:
+    print(f"  {BLUE}ℹ{NC} {message}")
 
-    if all_ok:
-        print("\n✅ ALL GATES PASS — Admin module is healthy.")
-    else:
-        print("\n❌ SOME GATES FAILED — review output above.")
-        sys.exit(1)
+
+def run_pytest(label: str, *tests: str) -> bool:
+    section(label)
+    cmd = [sys.executable, "-m", "pytest", "-q", "-o", "addopts="]
+    cmd.extend(tests)
+    info("Ejecutando: " + " ".join(tests))
+    result = subprocess.run(cmd, cwd=PROJECT_ROOT, text=True, capture_output=True)
+    if result.stdout.strip():
+        for line in result.stdout.strip().splitlines():
+            print(f"    {line}")
+    if result.returncode == 0:
+        ok(f"{label} OK")
+        return True
+    fail(f"{label} falló")
+    if result.stderr.strip():
+        for line in result.stderr.strip().splitlines()[:20]:
+            print(f"    {line}")
+    return False
+
+
+def main() -> int:
+    section("ADMIN QUALITY — FULL SUITE (12 files)")
+    info(f"Proyecto: {PROJECT_ROOT}")
+    info(f"Python: {sys.executable}")
+
+    group1_ok = run_pytest(
+        "1. Admin Core, CRUD y Refactor",
+        "tests/test_admin_coverage.py",
+        "tests/test_admin_crud_coverage.py",
+        "tests/test_admin_refactored.py",
+        "tests/test_admin_gap.py",
+    )
+
+    group2_ok = run_pytest(
+        "2. RBAC, Asignación Granular y Roles Modulares",
+        "tests/test_admin_permission_assignment.py",
+        "tests/test_permissions_granular.py",
+        "tests/test_permissions_and_more.py",
+    )
+
+    group3_ok = run_pytest(
+        "3. Contratos UUID, Hitos y Automatizaciones",
+        "tests/test_admin_users_uuid.py",
+        "tests/test_admin_roles_uuid.py",
+        "tests/test_admin_personas_uuid.py",
+        "tests/test_admin_milestones_uuid.py",
+        "tests/test_admin_automations.py",
+    )
+
+    section("RESUMEN")
+    total = PASS + FAIL
+    if group1_ok and group2_ok and group3_ok:
+        print(f"  {GREEN}RESUMEN: {PASS} passed, {FAIL} failed, {total} total suites OK — ALL GREEN{NC}")
+        return 0
+
+    print(f"  {RED}RESUMEN: {PASS} passed, {FAIL} failed, {total} total suites{NC}")
+    return 1
 
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())
+

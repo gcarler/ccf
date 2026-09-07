@@ -33,7 +33,7 @@ const CHURCH_ROLES = [
     { value: 'MIEMBRO_BAUTIZADO', label: 'Persona Bautizado', color: 'bg-success-soft text-success-text dark:bg-[hsl(var(--success))]/10 dark:text-[hsl(var(--success))]' },
     { value: 'SIMPATIZANTE', label: 'Simpatizante', color: 'bg-[hsl(var(--surface-1))] text-[hsl(var(--text-secondary))] dark:bg-white/5 dark:text-[hsl(var(--text-secondary))]' },
     { value: 'VISITANTE_SERVICIO', label: 'Visitante (Servicio)', color: 'bg-info-soft text-[hsl(var(--primary))] dark:bg-[hsl(var(--info))]/10 dark:text-[hsl(var(--primary))]' },
-    { value: 'VISITANTE_EVANGELISMO', label: 'Visitante (Evangelismo)', color: 'bg-orange-50 text-orange-600 dark:bg-orange-500/10 dark:text-orange-400' },
+    { value: 'VISITANTE_EVANGELISMO', label: 'Visitante (Evangelismo)', color: 'bg-[hsl(var(--warning)/10%)] text-[hsl(var(--warning))] dark:bg-[hsl(var(--warning)/15%)] dark:text-[hsl(var(--warning))]' },
     { value: 'VISITANTE_ONLINE', label: 'Visitante (Online)', color: 'bg-[hsl(var(--domain-cyan)/10%)] text-[hsl(var(--domain-cyan)/90%)] dark:bg-[hsl(var(--domain-cyan)/10%)] dark:text-[hsl(var(--domain-cyan))]' },
 ];
 
