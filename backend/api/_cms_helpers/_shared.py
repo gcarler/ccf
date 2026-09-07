@@ -92,6 +92,34 @@ def _scope_cms_pastoral_team_by_user_sede(db: Session, current_user: models.User
     return query
 
 
+def _get_scoped_pastoral_persona(db: Session, current_user: models.User, persona_id) -> models.Persona:
+    """Retrieve a pastoral leader persona scoped to the current CMS editor.
+
+    Axioma 3 rules for pastoral profiles:
+    - Global administrators (ADMINISTRADOR, ADMIN, SUPER ADMINISTRADOR) have global reach.
+    - Sede-scoped editors can access pastors belonging to their sede OR global pastors (sede_id is None).
+    """
+    from backend.crud._utils import _to_uuid
+
+    try:
+        persona_uuid = _to_uuid(persona_id)
+    except (TypeError, ValueError):
+        raise HTTPException(status_code=404, detail="Persona no encontrada")
+
+    query = db.query(models.Persona).filter(models.Persona.id == persona_uuid)
+    query = query.filter(models.Persona.estado_vital != "INACTIVO")
+
+    if not _is_global_media_admin(current_user):
+        user_sede = _actor_sede_or_none(db, current_user)
+        if user_sede:
+            query = query.filter((models.Persona.sede_id == user_sede) | (models.Persona.sede_id.is_(None)))
+
+    persona = query.first()
+    if not persona:
+        raise HTTPException(status_code=404, detail="Pastor no encontrado")
+    return persona
+
+
 def _get_scoped_cms_media(db: Session, current_user: models.User, media_id) -> models.CmsMediaItem:
     """Devuelve el CmsMediaItem o raise ``HTTPException(404)``.
 

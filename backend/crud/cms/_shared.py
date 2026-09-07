@@ -297,28 +297,57 @@ def _crud_scope_re_check_pastoral_profile(
 ) -> None:
     """Defense in depth para ``update_pastoral_profile``.
 
-    Cierra el IDOR crítico donde un editor CMS puede mutar cualquier
-    ``Persona`` del platform via ``cms_pastoral_profile_update``. El helper
-    API-layer ``_get_scoped_persona`` ya devuelve 404 cross-sede, pero el
-    CRUD re-valida para proteger contra callers no-API (workers, scripts,
-    tests directos).
+    Cierra el IDOR donde un editor CMS de una sede específica intenta mutar
+    pastores de otra sede distinta.
+
+    Reglas Axioma 3 pastoral:
+      - Si el pastor es central/global (target_persona_sede is None), cualquier
+        editor o administrador autorizado puede gestionarlo.
+      - Si el actor no tiene sede (superadmin), acceso global permitido.
+      - Si la sede del pastor coincide con la del actor (str match), permitido.
+      - Si el actor tiene rol administrativo de plataforma (admin, administrador,
+        super administrador), acceso global permitido.
+      - En cualquier otro caso (editor de Sede B mutando pastor asignado a Sede A),
+        bloqueado con 404 defensivo.
     """
     from fastapi import HTTPException as _HTTPException
+    from backend.core.permissions import normalize_role
 
+    # 1. Pastores globales (sin sede fija asignada)
+    if target_persona_sede is None:
+        return
+
+    # 2. Superadmin o actor sin sede asignada
     if not actor_sede:
-        return  # superadmin / anterior path
+        return
 
-    if target_persona_sede is None or str(target_persona_sede) != str(actor_sede):
-        _logger.warning(
-            "Axioma 3 scope violation: update_pastoral_profile cross-sede "
-            "(actor_sede=%s actor_user_id=%s target_persona_id=%s "
-            "target_sede=%s)",
-            actor_sede,
-            actor_user_id,
-            target_persona_id,
-            target_persona_sede,
-        )
-        raise _HTTPException(status_code=404, detail="Pastoral profile update blocked")
+    # 3. Misma sede
+    if str(target_persona_sede) == str(actor_sede):
+        return
+
+    # 4. Administradores con rol global en la plataforma
+    try:
+        actor_uuid = uuid.UUID(str(actor_user_id))
+        user = db.query(models.User).filter(models.User.id == actor_uuid).first()
+        if user:
+            role = normalize_role(getattr(user, "role", ""))
+            if not role and hasattr(user, "rol_plataforma") and user.rol_plataforma:
+                role = normalize_role(user.rol_plataforma.nombre)
+            if role in {"admin", "administrador", "super administrador"}:
+                return
+    except Exception:
+        pass
+
+    _logger.warning(
+        "Axioma 3 scope violation: update_pastoral_profile cross-sede "
+        "(actor_sede=%s actor_user_id=%s target_persona_id=%s "
+        "target_sede=%s)",
+        actor_sede,
+        actor_user_id,
+        target_persona_id,
+        target_persona_sede,
+    )
+    raise _HTTPException(status_code=404, detail="Pastoral profile update blocked")
 
 
 

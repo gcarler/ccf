@@ -13,7 +13,7 @@ from sqlalchemy import nullslast
 from sqlalchemy.orm import Session, lazyload
 
 from backend import crud, models, schemas
-from backend.api._cms_helpers import _get_scoped_persona, _scope_cms_pastoral_team_by_user_sede
+from backend.api._cms_helpers import _get_scoped_pastoral_persona, _scope_cms_pastoral_team_by_user_sede
 from backend.api.cms_v2._shared import (
     CMS_EDITOR_ROLES,
     _assert_role,
@@ -110,7 +110,7 @@ def cms_pastoral_profile_update(
     current_user: models.User = Depends(require_module_access("cms", "edit")),
 ):
     _assert_role(current_user, CMS_EDITOR_ROLES)
-    persona = _get_scoped_persona(db, current_user, persona_id)
+    persona = _get_scoped_pastoral_persona(db, current_user, persona_id)
     persona = crud.update_pastoral_profile(db, persona, payload, actor_user_id=str(current_user.id))
     record_admin_action(
         db,
@@ -145,7 +145,7 @@ def cms_pastoral_profile_delete(
     current_user: models.User = Depends(require_module_access("cms", "edit")),
 ):
     _assert_role(current_user, CMS_EDITOR_ROLES)
-    persona = _get_scoped_persona(db, current_user, persona_id)
+    persona = _get_scoped_pastoral_persona(db, current_user, persona_id)
     crud.remove_pastoral_profile(db, persona, actor_user_id=str(current_user.id))
     record_admin_action(
         db,

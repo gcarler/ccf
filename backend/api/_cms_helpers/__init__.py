@@ -17,6 +17,7 @@ from backend.api._cms_helpers._shared import (
     # ── Multi-tenant scope helpers (internals) ──
     _actor_sede_or_none,
     _get_scoped_cms_media,
+    _get_scoped_pastoral_persona,
     _get_scoped_persona,
     _scope_cms_media_by_user_sede,
     _scope_cms_pastoral_team_by_user_sede,
@@ -31,6 +32,7 @@ __all__ = (
     # ── Scope helpers (internals) ──
     "_actor_sede_or_none",
     "_get_scoped_cms_media",
+    "_get_scoped_pastoral_persona",
     "_get_scoped_persona",
     "_scope_cms_media_by_user_sede",
     "_scope_cms_pastoral_team_by_user_sede",

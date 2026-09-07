@@ -166,8 +166,8 @@ export default function PublicPastoralManager({
       setCreateModalOpen(false);
       setFormData(emptyFormData);
       await fetchPastors();
-    } catch {
-      toast.error("Error al crear el nuevo pastor");
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : "Error al crear el nuevo pastor");
     } finally {
       setSaving(false);
     }
@@ -205,8 +205,8 @@ export default function PublicPastoralManager({
       setEditModalOpen(false);
       setSelectedPastor(null);
       await fetchPastors();
-    } catch {
-      toast.error("Error al actualizar el pastor");
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : "Error al actualizar el pastor");
     } finally {
       setSaving(false);
     }
@@ -222,8 +222,8 @@ export default function PublicPastoralManager({
       setDeleteModalOpen(false);
       setSelectedPastor(null);
       await fetchPastors();
-    } catch {
-      toast.error("Error al remover el pastor");
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : "Error al remover el pastor");
     } finally {
       setSaving(false);
     }
@@ -260,8 +260,8 @@ export default function PublicPastoralManager({
       ]);
       toast.success(`Orden actualizado: ${current.name} movido hacia ${direction === "up" ? "arriba" : "abajo"}`);
       await fetchPastors();
-    } catch {
-      toast.error("Error al guardar el nuevo orden");
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : "Error al guardar el nuevo orden");
       await fetchPastors();
     }
   };
@@ -296,8 +296,8 @@ export default function PublicPastoralManager({
         );
         toast.success("Foto del pastor actualizada");
         await fetchPastors();
-      } catch {
-        toast.error("No se pudo actualizar la foto");
+      } catch (err: unknown) {
+        toast.error(err instanceof Error ? err.message : "No se pudo actualizar la foto");
       } finally {
         setMediaPickerOpen(false);
         setDirectPhotoPastorId(null);

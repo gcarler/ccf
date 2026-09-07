@@ -200,8 +200,8 @@ export default function PastoralTeamPage() {
       setSuccessMsg("Perfil pastoral e historia actualizados");
       fetchProfiles();
       setTimeout(closeDrawer, 1200);
-    } catch {
-      setError("Error al guardar los cambios");
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Error al guardar los cambios");
     } finally {
       setSaving(false);
     }
@@ -239,8 +239,8 @@ export default function PastoralTeamPage() {
       setSuccessMsg("Nuevo pastor creado correctamente");
       fetchProfiles();
       setTimeout(closeDrawer, 1200);
-    } catch {
-      setError("Error al crear el nuevo pastor");
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Error al crear el nuevo pastor");
     } finally {
       setSaving(false);
     }
@@ -255,8 +255,8 @@ export default function PastoralTeamPage() {
       setSuccessMsg("Pastor removido del equipo pastoral");
       fetchProfiles();
       setTimeout(closeDrawer, 1000);
-    } catch {
-      setError("Error al remover el pastor");
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Error al remover el pastor");
     } finally {
       setSaving(false);
     }
