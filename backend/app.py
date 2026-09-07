@@ -257,7 +257,7 @@ for router, prefix, tags in ROUTER_REGISTRY:
 app.mount("/api/mcp", mcp_app, name="ccf-cms-mcp")
 
 
-@app.get("/")
+@app.api_route("/", methods=["GET", "HEAD"])
 def read_root():
     return {
         "status": "online",
@@ -268,7 +268,7 @@ def read_root():
     }
 
 
-@app.get("/healthz")
+@app.api_route("/healthz", methods=["GET", "HEAD"])
 def health_check():
     return {"status": "ok", "version": "3.0.0-PRO"}
 
