@@ -57,7 +57,18 @@ Implementado el 2026-09-07 (`backend/services/agenda_recurrence.py`, `tests/test
 - `AgendaEventCreate` expone `recurrence_rule` (validada en el schema, 422 si es inválida; tope `COUNT<=366`), `recurrence_until` y `recurrence_exceptions` (fechas `YYYY-MM-DD`).
 - `GET /agenda/events/by-date-range` expande las series dentro de la ventana solicitada; cada ocurrencia viaja con `recurrence_id: "<event_id>:<fecha>"`, `start_at`/`end_at` desplazados e `is_recurring: false`. El evento ancla viaja además en la respuesta con `is_recurring: true`.
 - Techos de seguridad por serie: `MAX_OCCURRENCES_PER_SERIES = 366` y retro-búsqueda de anclas `MAX_SERIES_LOOKBACK_DAYS = 366`; series sin `fecha_limite_recurrencia` se expanden solo hacia adelante.
-- Semántica de edición (PUT): campo `recurrence_rule` omitido preserva la serie existente; cadena vacía `""` la elimina; regla distinta reancla la serie. La edición por ocurrencia individual (v1) no está soportada.
+- Semántica de edición (PUT, nivel serie): campo `recurrence_rule` omitido preserva la serie existente; cadena vacía `""` la elimina; regla distinta reancla la serie.
+
+### 3.2 Edición por ocurrencia (v2, 2026-09-07)
+
+Semántica RFC 5545 "sólo esta ocurrencia", sobre el par `event_id + occurrence_date`:
+
+- `PUT /agenda/events/{event_id}?occurrence_date=YYYY-MM-DD` — excluye la fecha de la serie (`excepciones_recurrencia`) y materializa los datos editados como **evento puntual independiente** (sin regla), con proveniencia `entidad_origen_id = "serie:<event_id>:<fecha>"`, expuesta en la respuesta como `derived_from`. Devuelve el nuevo evento (200).
+- `DELETE /agenda/events/{event_id}?occurrence_date=YYYY-MM-DD` — excluye la fecha; la serie conserva el resto de ocurrencias. Responde 204.
+- Validación: la fecha debe corresponder a una **ocurrencia vigente** de la serie (misma expansión que la lectura; fechas ya exceptuadas o inexistentes → 422). Evento sin `regla_recurrencia` → 422. `occurrence_date` con formato inválido → 422 (patrón de query).
+- Ambos endpoints exigen `agenda:edit` y aislamiento por sede (iguales que su homólogo nivel serie).
+- El agregador emite los hrefs de ocurrencias con `?occurrence=YYYY-MM-DD` para que el detalle precargue la ocurrencia y ofrezca el selector de alcance ("Sólo esta ocurrencia" / "Toda la serie").
+- Fuera de alcance v2: edición "ésta y siguientes" (partición de series).
 - El agregador `GET /api/system/calendar` expande las series con ventana acotada `today-90d .. today+2y`.
 
 ## 4. `GET /api/system/calendar`

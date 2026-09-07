@@ -20,7 +20,7 @@ día de inicio de la ocurrencia en UTC) que se omiten en la expansión.
 from __future__ import annotations
 
 import logging
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, timedelta, timezone
 from typing import Iterable
 
 from dateutil.rrule import rrulestr
@@ -136,3 +136,37 @@ def expand_event(
             )
             break
     return occurrences
+
+
+def occurrence_start_for(row, occurrence_date: str) -> datetime | None:
+    """Devuelve el inicio de la ocurrencia cuya fecha (UTC) es ``occurrence_date``.
+
+    Usa exactamente la misma expansión que la lectura, garantizando que sólo
+    se pueda editar/eliminar una ocurrencia que la serie realmente emite y
+    que no esté ya exceptuada. Devuelve ``None`` si la fecha no corresponde
+    a ninguna ocurrencia vigente.
+    """
+    raw = str(occurrence_date or "")[:10]
+    try:
+        target = date.fromisoformat(raw)
+    except ValueError:
+        return None
+
+    window_start = datetime(target.year, target.month, target.day, tzinfo=timezone.utc) - timedelta(days=1)
+    window_end = window_start + timedelta(days=3)
+    for occ_start, _occ_end in expand_event(row, window_start, window_end):
+        if occ_start.date() == target:
+            return occ_start
+    return None
+
+
+def add_exception(row, occurrence_date: str) -> list[str]:
+    """Agrega ``occurrence_date`` (YYYY-MM-DD) a las excepciones de la serie.
+
+    Normaliza y deduplica; devuelve la lista nueva sin mutar la fila.
+    """
+    target = str(occurrence_date or "")[:10]
+    date.fromisoformat(target)  # ValueError si la fecha es inválida
+    exceptions = {str(day)[:10] for day in (row.excepciones_recurrencia or [])}
+    exceptions.add(target)
+    return sorted(exceptions)

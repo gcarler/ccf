@@ -278,4 +278,179 @@ def test_system_calendar_expands_recurring_series(client, db_session):
     series_rows = [e for e in agenda_rows if e["id"].startswith(f"agenda-{event['id']}:")]
     assert len(series_rows) >= 1
     assert all(e.get("is_recurring") is True for e in series_rows)
-    assert all(e["href"].endswith(f"/agenda/events/{event['id']}") for e in series_rows)
+    assert all(e["href"].startswith(f"/plataforma/agenda/events/{event['id']}?occurrence=") for e in series_rows)
+
+
+# ── Edición por ocurrencia (v2) ──────────────────────────────────────
+
+
+def test_edit_single_occurrence_materializes_standalone(client, db_session):
+    admin, _, _ = seed_admin(db_session)
+    headers = auth_headers(client, email=admin.email)
+    event = _create(client, headers)
+
+    response = client.put(
+        f"/api/agenda/events/{event['id']}",
+        params={"occurrence_date": "2026-09-14"},
+        json=_base_payload(
+            title="Culto especial",
+            start_at=datetime(2026, 9, 14, 20, 0, tzinfo=timezone.utc).isoformat(),
+            end_at=datetime(2026, 9, 14, 21, 0, tzinfo=timezone.utc).isoformat(),
+        ),
+        headers=headers,
+    )
+    assert response.status_code == 200, response.text
+    standalone = response.json()
+    assert standalone["is_recurring"] is False
+    assert standalone["recurrence_rule"] is None
+    assert standalone["title"] == "Culto especial"
+    assert standalone["derived_from"] == f"serie:{event['id']}:2026-09-14"
+
+    start = datetime(2026, 9, 1, tzinfo=timezone.utc)
+    end = datetime(2026, 10, 5, tzinfo=timezone.utc)
+    range_response = client.get(
+        "/api/agenda/events/by-date-range",
+        params={"start": start.isoformat(), "end": end.isoformat()},
+        headers=headers,
+    )
+    assert range_response.status_code == 200, range_response.text
+    rows = range_response.json()
+    series_days = [r["start_at"][:10] for r in rows if r["id"] == event["id"]]
+    assert "2026-09-14" not in series_days
+    for day in ("2026-09-07", "2026-09-21", "2026-09-28"):
+        assert day in series_days
+    standalone_rows = [r for r in rows if r["id"] == standalone["id"]]
+    assert len(standalone_rows) == 1
+    assert standalone_rows[0]["start_at"].startswith("2026-09-14T20:00")
+
+    anchor = client.get(f"/api/agenda/events/{event['id']}", headers=headers).json()
+    assert "2026-09-14" in anchor["recurrence_exceptions"]
+
+
+def test_delete_single_occurrence_keeps_series(client, db_session):
+    admin, _, _ = seed_admin(db_session)
+    headers = auth_headers(client, email=admin.email)
+    event = _create(client, headers)
+
+    response = client.delete(
+        f"/api/agenda/events/{event['id']}",
+        params={"occurrence_date": "2026-09-14"},
+        headers=headers,
+    )
+    assert response.status_code == 204
+
+    start = datetime(2026, 9, 1, tzinfo=timezone.utc)
+    end = datetime(2026, 10, 1, tzinfo=timezone.utc)
+    rows = client.get(
+        "/api/agenda/events/by-date-range",
+        params={"start": start.isoformat(), "end": end.isoformat()},
+        headers=headers,
+    ).json()
+    starts = [r["start_at"][:10] for r in rows]
+    assert "2026-09-14" not in starts
+    assert {"2026-09-07", "2026-09-21", "2026-09-28"}.issubset(set(starts))
+
+
+def test_delete_occurrence_twice_returns_422(client, db_session):
+    admin, _, _ = seed_admin(db_session)
+    headers = auth_headers(client, email=admin.email)
+    event = _create(client, headers)
+
+    first = client.delete(
+        f"/api/agenda/events/{event['id']}",
+        params={"occurrence_date": "2026-09-14"},
+        headers=headers,
+    )
+    assert first.status_code == 204
+    second = client.delete(
+        f"/api/agenda/events/{event['id']}",
+        params={"occurrence_date": "2026-09-14"},
+        headers=headers,
+    )
+    assert second.status_code == 422
+
+
+def test_edit_occurrence_on_non_recurring_event_422(client, db_session):
+    admin, _, _ = seed_admin(db_session)
+    headers = auth_headers(client, email=admin.email)
+    event = _create(client, headers, recurrence_rule=None)
+
+    response = client.put(
+        f"/api/agenda/events/{event['id']}",
+        params={"occurrence_date": "2026-09-14"},
+        json=_base_payload(recurrence_rule=None),
+        headers=headers,
+    )
+    assert response.status_code == 422
+
+
+def test_occurrence_date_not_in_series_422(client, db_session):
+    admin, _, _ = seed_admin(db_session)
+    headers = auth_headers(client, email=admin.email)
+    event = _create(client, headers)
+
+    response = client.delete(
+        f"/api/agenda/events/{event['id']}",
+        params={"occurrence_date": "2026-09-15"},  # martes: la serie es semanal los lunes
+        headers=headers,
+    )
+    assert response.status_code == 422
+
+
+def test_malformed_occurrence_date_422(client, db_session):
+    admin, _, _ = seed_admin(db_session)
+    headers = auth_headers(client, email=admin.email)
+    event = _create(client, headers)
+
+    response = client.delete(
+        f"/api/agenda/events/{event['id']}",
+        params={"occurrence_date": "2026-13-45"},
+        headers=headers,
+    )
+    assert response.status_code == 422
+
+
+def test_edit_anchor_occurrence_excludes_first(client, db_session):
+    admin, _, _ = seed_admin(db_session)
+    headers = auth_headers(client, email=admin.email)
+    event = _create(client, headers)
+
+    response = client.delete(
+        f"/api/agenda/events/{event['id']}",
+        params={"occurrence_date": "2026-09-07"},
+        headers=headers,
+    )
+    assert response.status_code == 204
+
+    start = datetime(2026, 9, 1, tzinfo=timezone.utc)
+    end = datetime(2026, 10, 1, tzinfo=timezone.utc)
+    rows = client.get(
+        "/api/agenda/events/by-date-range",
+        params={"start": start.isoformat(), "end": end.isoformat()},
+        headers=headers,
+    ).json()
+    starts = [r["start_at"][:10] for r in rows]
+    assert "2026-09-07" not in starts
+    assert "2026-09-14" in starts
+
+
+def test_occurrence_start_for_and_add_exception_unit(db_session):
+    """Unidad: detección de ocurrencia y deduplicación de excepciones."""
+    from types import SimpleNamespace
+
+    from backend.services.agenda_recurrence import add_exception, occurrence_start_for
+
+    row = SimpleNamespace(
+        fecha_inicio=datetime(2026, 9, 7, 19, 0, tzinfo=timezone.utc),
+        fecha_fin=datetime(2026, 9, 7, 20, 0, tzinfo=timezone.utc),
+        regla_recurrencia="RRULE:FREQ=WEEKLY;BYDAY=MO",
+        excepciones_recurrencia=["2026-09-14"],
+    )
+    occ = occurrence_start_for(row, "2026-09-21")
+    assert occ is not None and occ.date().isoformat() == "2026-09-21"
+    assert occurrence_start_for(row, "2026-09-15") is None  # martes
+    assert occurrence_start_for(row, "2026-09-14") is None  # ya exceptuada
+    assert occurrence_start_for(row, "no-es-fecha") is None
+
+    assert add_exception(row, "2026-09-21") == ["2026-09-14", "2026-09-21"]
+    assert add_exception(row, "2026-09-21") == ["2026-09-14", "2026-09-21"]  # idempotente

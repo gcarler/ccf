@@ -24,7 +24,11 @@ from backend.schemas.agenda import (
     ResourceReservation,
     ResourceReservationCreate,
 )
-from backend.services.agenda_recurrence import expand_event
+from backend.services.agenda_recurrence import (
+    add_exception,
+    expand_event,
+    occurrence_start_for,
+)
 from backend.services.comment_notifications import notify_mention
 from backend.services.mention_parser import resolve_mentions
 
@@ -90,6 +94,11 @@ def _serialize_event(
         "recurrence_exceptions": row.excepciones_recurrencia or [],
         "recurrence_id": recurrence_id,
         "is_recurring": bool(raw_rule) and not is_occurrence,
+        "derived_from": (
+            row.entidad_origen_id
+            if isinstance(row.entidad_origen_id, str) and row.entidad_origen_id.startswith("serie:")
+            else None
+        ),
     }
 
 
@@ -176,7 +185,14 @@ def list_events_by_date_range(
                 )
         else:
             items.append(_serialize_event(row))
-    items.sort(key=lambda item: item["start_at"])
+    # Clave tz-safe: SQLite (tests) devuelve datetimes naive para filas
+    # almacenadas, mientras que las ocurrencias expandidas son aware; en
+    # PostgreSQL todo es timestamptz aware. Normalizar antes de comparar.
+    def _sort_start(item: dict) -> datetime:
+        value = item["start_at"]
+        return value if value.tzinfo else value.replace(tzinfo=timezone.utc)
+
+    items.sort(key=_sort_start)
     return items
 
 
@@ -202,17 +218,44 @@ def get_event(
     return _serialize_event(row)
 
 
+OCCURRENCE_DATE_PATTERN = r"^\d{4}-\d{2}-\d{2}$"
+
+
+def _require_series_occurrence(row: models.EventoAgenda, occurrence_date: str) -> None:
+    """Valida que la fila sea una serie y la fecha una ocurrencia vigente."""
+    if not (row.regla_recurrencia or "").strip():
+        raise HTTPException(status_code=422, detail="El evento no es una serie recurrente")
+    if occurrence_start_for(row, occurrence_date) is None:
+        raise HTTPException(
+            status_code=422,
+            detail="La fecha no corresponde a ninguna ocurrencia vigente de la serie",
+        )
+
+
 @router.put("/events/{event_id}", response_model=AgendaEvent)
 def update_event(
     event_id: UUID,
     payload: AgendaEventCreate,
     db: Session = Depends(get_db),
     current_user: models.User = AgendaEditor,
+    occurrence_date: str | None = Query(default=None, pattern=OCCURRENCE_DATE_PATTERN),
 ):
     sede_id = _sede_id(db, current_user)
     row = crud.get_event(db, event_id, sede_id)
     if not row:
         raise HTTPException(status_code=404, detail="Evento no encontrado")
+    if occurrence_date:
+        # Edición por ocurrencia (v2): la fecha se excluye de la serie y los
+        # datos editados se materializan como evento puntual independiente.
+        _require_series_occurrence(row, occurrence_date)
+        crud.update_event(db, row, {"excepciones_recurrencia": add_exception(row, occurrence_date)})
+        data = _event_payload(payload, sede_id, row.organizador_persona_id)
+        data["regla_recurrencia"] = None
+        data["fecha_limite_recurrencia"] = None
+        data["excepciones_recurrencia"] = []
+        data["entidad_origen_id"] = f"serie:{row.id}:{occurrence_date}"
+        standalone = crud.create_event(db, data)
+        return _serialize_event(standalone)
     data = _event_payload(payload, sede_id, row.organizador_persona_id)
     if payload.recurrence_rule is None:
         # PUT sin campo de recurrencia: preserva la serie existente en vez de
@@ -234,10 +277,16 @@ def archive_event(
     event_id: UUID,
     db: Session = Depends(get_db),
     current_user: models.User = AgendaEditor,
+    occurrence_date: str | None = Query(default=None, pattern=OCCURRENCE_DATE_PATTERN),
 ):
     row = crud.get_event(db, event_id, _sede_id(db, current_user))
     if not row:
         raise HTTPException(status_code=404, detail="Evento no encontrado")
+    if occurrence_date:
+        # Eliminación por ocurrencia (v2): la serie conserva el resto.
+        _require_series_occurrence(row, occurrence_date)
+        crud.update_event(db, row, {"excepciones_recurrencia": add_exception(row, occurrence_date)})
+        return Response(status_code=status.HTTP_204_NO_CONTENT)
     crud.archive_event(db, row)
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 

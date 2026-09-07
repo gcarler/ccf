@@ -31,6 +31,8 @@ cd /root/ccf
 - el rol probado coincide con la matriz `agenda:*` documentada.
 - crear un evento con repeticion semanal genera ocurrencias visibles en `by-date-range` y en `/plataforma/calendar`, cada una navegable al owner route del evento.
 - editar una serie sin tocar el campo repeticion la preserva; elegir "No se repite" sobre una serie activa la elimina; `recurrence_rule` invalida responde 422.
+- editar una ocurrencia concreta desde el calendario (detalle con `?occurrence=`) la convierte en evento independiente y la fecha desaparece de la serie; "Toda la serie" vuelve a los valores del ancla.
+- eliminar una ocurrencia concreta solo excluye esa fecha; el resto de la serie sigue visible en `by-date-range` y en calendar.
 
 ## 5. No aprobar si pasa esto
 
@@ -51,6 +53,7 @@ cd /root/ccf
 - `CERRADO-AGENDA-RBAC-001` cerrada el 2026-09-05 con la creación y desacople de la taxonomía `agenda:*` al 100/100 (A+)
 - `AUDITORIA-FORENSE-AGENDA-2026-09-06` cerrada el 2026-09-06 con `docs/AUDITORIA_FORENSE_AGENDA_2026-09-06.md` (357 tests ejecutados y aprobados al 100%, VICTORY CONFIRMED por auditoría independiente)
 - `PEND-AGENDA-RRULE-001` cerrada el 2026-09-07 con eventos recurrentes RFC 5545: `backend/services/agenda_recurrence.py`, expansión en `by-date-range` y agregador calendar, selector de repetición en `agenda/events` y `tests/test_agenda_recurrence.py` (14 tests)
+- `PEND-AGENDA-RRULE-OCCURRENCE-001` cerrada el 2026-09-07 con la edición por ocurrencia (v2): `PUT`/`DELETE /agenda/events/{id}?occurrence_date=` con semántica RFC 5545 de excepciones, evento derivado con proveniencia `derived_from`, selector de alcance en el detalle (`?occurrence=`), href del agregador con `?occurrence=`, y suite ampliada a 22 tests
 
 ## 7. Smoke frontend dedicado
 

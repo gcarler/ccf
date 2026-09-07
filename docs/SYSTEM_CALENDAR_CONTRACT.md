@@ -124,7 +124,7 @@ Rutas emitidas actualmente por el agregador:
 | `consolidation_task` | `/plataforma/crm/pipeline/{caso_id}` |
 | `task` | `/plataforma/projects/{project_id}` |
 | `project_milestone` | `/plataforma/projects/{project_id}` |
-| `agenda_event` | `/plataforma/agenda/events/{id}` |
+| `agenda_event` | `/plataforma/agenda/events/{id}`; las ocurrencias de series llevan `?occurrence=YYYY-MM-DD` |
 | `birthday` | `/plataforma/crm/personas/{id}` |
 
 Regla:
