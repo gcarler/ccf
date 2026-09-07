@@ -101,7 +101,7 @@ describe("CmsBuilderPage Route Handling & Edge Cases", () => {
   });
 
   it("preserves custom site parameter in back navigation when provided", async () => {
-    mockSearchParams = new URLSearchParams("site=sede-sur&page=eventos");
+    mockSearchParams = new URLSearchParams("site=sede-sur&page=eventos&mode=visual");
 
     render(<CmsBuilderPage />);
 
@@ -114,7 +114,7 @@ describe("CmsBuilderPage Route Handling & Edge Cases", () => {
   });
 
   it("gracefully handles API errors during initial section and theme loading", async () => {
-    mockSearchParams = new URLSearchParams("site=ccf&page=home");
+    mockSearchParams = new URLSearchParams("site=ccf&page=home&mode=visual");
     vi.mocked(cmsV2.listCmsSections).mockRejectedValueOnce(new Error("Network Error"));
 
     render(<CmsBuilderPage />);
