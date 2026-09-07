@@ -104,7 +104,13 @@ export default function Footer() {
             {/* Bottom bar */}
             <div className="w-full border-t border-white/5 px-4 lg:px-4 py-3">
                 <div className="flex flex-col sm:flex-row items-center justify-between gap-2 text-2xs text-[hsl(var(--text-secondary))]">
-                    <span>&copy; {new Date().getFullYear()} {SITE_NAME}. Todos los derechos reservados.</span>
+                    <span>
+                        &copy; {new Date().getFullYear()}{" "}
+                        <a href="https://ples.com.co" target="_blank" rel="noopener noreferrer" className="font-semibold text-white hover:underline transition-colors">
+                            PLES SAS
+                        </a>
+                        {" "}— El uso inteligente de la experiencia. Todos los derechos reservados.
+                    </span>
                     <div className="flex items-center gap-3">
                         <Link href="/" className="hover:text-white transition-colors">Sitio público</Link>
                         <Link href="/login" className="hover:text-white transition-colors">Acceso interno</Link>

@@ -17,6 +17,9 @@ type FooterConfig = {
   section_titles?: Record<string, unknown>;
   contact?: Record<string, unknown>;
   copyright?: Record<string, unknown>;
+  copyright_company?: string;
+  copyright_company_url?: string;
+  copyright_text?: string;
   privacy_label?: string;
   privacy_href?: string;
 };
@@ -107,9 +110,9 @@ export default function FaroFooter() {
     const newsletterHref = asString(contact.newsletter_href, "/boletin");
     const privacyHref = asString(cfg.privacy_href, "/privacy");
     const copyright = asRecord(cfg.copyright);
-    const copyrightCompany = asString(copyright.company);
-    const copyrightCompanyUrl = asString(copyright.company_url);
-    const copyrightText = asString(copyright.text);
+    const copyrightCompany = asString(copyright.company, asString(cfg.copyright_company, "PLES SAS"));
+    const copyrightCompanyUrl = asString(copyright.company_url, asString(cfg.copyright_company_url, "https://ples.com.co"));
+    const copyrightText = asString(copyright.text, asString(cfg.copyright_text, "El uso inteligente de la experiencia. Todos los derechos reservados."));
     const privacyLabel = asString(cfg.privacy_label);
     const navLinks = asPublicLinks(cfg.nav_links);
     const resourceLinks = asPublicLinks(cfg.resource_links);

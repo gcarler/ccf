@@ -26,7 +26,13 @@ export function Footer_Simple() {
     return (
         <footer className="bg-[hsl(var(--bg-muted))] dark:bg-[hsl(var(--surface-2))] text-[hsl(var(--text-primary))] dark:text-white py-8 mt-auto">
             <div className="container mx-auto px-4 text-center text-sm text-[hsl(var(--text-secondary))]">
-                <p>{SITE_NAME} &copy; {new Date().getFullYear()}</p>
+                <p>
+                    &copy; {new Date().getFullYear()}{" "}
+                    <a href="https://ples.com.co" target="_blank" rel="noopener noreferrer" className="font-semibold hover:underline">
+                        PLES SAS
+                    </a>
+                    {" "}— El uso inteligente de la experiencia. Todos los derechos reservados.
+                </p>
             </div>
         </footer>
     );
