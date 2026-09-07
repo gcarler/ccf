@@ -10,7 +10,8 @@ import { motion } from 'framer-motion';
 import clsx from 'clsx';
 
 interface Milestone {
-    milestone_id: number;
+    id?: string;
+    milestone_id?: number | string;
     type: string;
     event_date: string;
     notes?: string;
@@ -60,7 +61,7 @@ export default function SpiritualTimelinePanel() {
                             <Heart className="mx-auto text-[hsl(var(--text-secondary))] dark:text-white/10 mb-4 animate-pulse" size={48} />
                             <p className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Caminando hacia la meta...</p>
                         </div>
-                    ) : milestones.map((m) => {
+                    ) : milestones.map((m, i) => {
                         const def = MILESTONE_DEFS[m.type] ?? {
                             label: m.type,
                             icon: CheckCircle2,
@@ -71,7 +72,7 @@ export default function SpiritualTimelinePanel() {
                         const Icon = def.icon;
                         return (
                             <motion.div
-                                key={m.milestone_id}
+                                key={m.id || m.milestone_id || i}
                                 initial={{ opacity: 0, x: -10 }}
                                 animate={{ opacity: 1, x: 0 }}
                                 transition={{ delay: 0.1, type: 'spring', damping: 20 }}

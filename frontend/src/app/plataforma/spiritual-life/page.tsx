@@ -28,13 +28,13 @@ const MILESTONE_DEFS = [
     { key: 'Liderazgo',        label: 'Llamado al Liderazgo',   icon: Users,  color: 'text-[hsl(var(--primary))]',   bg: 'bg-info-soft dark:bg-[hsl(var(--info))]/20',    border: 'border-[hsl(var(--info)/25%)] dark:border-[hsl(var(--info)/100%)]/20' },
 ];
 
-// ── Discipleship steps
+// ── Discipleship steps mapped to canonical spiritual milestones
 const DISCIPULADO_STEPS = [
-    { id: 1, label: 'Descubriendo a Jesús',     desc: 'Las bases del evangelio y la salvación', done: true  },
-    { id: 2, label: 'Vida Nueva',               desc: 'Fundamentos de la vida cristiana',        done: true  },
-    { id: 3, label: 'Creciendo en Cristo',       desc: 'Hábitos espirituales y comunidad',        done: false },
-    { id: 4, label: 'Sirviendo con Propósito',  desc: 'Identificación y activación de dones',     done: false },
-    { id: 5, label: 'Multiplicando Vidas',      desc: 'Discipulado y reproducción ministerial',   done: false },
+    { id: 1, key: 'Decision_Fe',       label: 'Descubriendo a Jesús',     desc: 'Las bases del evangelio y la salvación' },
+    { id: 2, key: 'Bautismo_Aguas',    label: 'Vida Nueva',               desc: 'Fundamentos de la vida cristiana' },
+    { id: 3, key: 'Bautismo_Espiritu', label: 'Creciendo en Cristo',       desc: 'Hábitos espirituales y comunidad' },
+    { id: 4, key: 'Persona_Oficial',   label: 'Sirviendo con Propósito',  desc: 'Identificación y activación de dones' },
+    { id: 5, key: 'Liderazgo',         label: 'Multiplicando Vidas',      desc: 'Discipulado y reproducción ministerial' },
 ];
 
 export default function SpiritualLifePage() {
@@ -77,7 +77,11 @@ export default function SpiritualLifePage() {
 
     const nextMilestone = MILESTONE_DEFS.find(m => !milestones.includes(m.key));
     const progressPct = Math.round((milestones.length / MILESTONE_DEFS.length) * 100);
-    const discipuladoDone = DISCIPULADO_STEPS.filter(s => s.done).length;
+    const activeDiscipuladoSteps = DISCIPULADO_STEPS.map(step => ({
+        ...step,
+        done: milestones.includes(step.key),
+    }));
+    const discipuladoDone = activeDiscipuladoSteps.filter(s => s.done).length;
 
     return (
         <div className="flex flex-col h-full bg-[hsl(var(--surface-1))] dark:bg-[#111213] overflow-y-auto font-display">
@@ -218,7 +222,7 @@ export default function SpiritualLifePage() {
                                     <span className="font-semibold text-[hsl(var(--text-secondary))]">{discipuladoDone}/5</span>
                                 </div>
                                 <div className="divide-y divide-[hsl(var(--border))] dark:divide-white/5">
-                                    {DISCIPULADO_STEPS.map(step => (
+                                    {activeDiscipuladoSteps.map(step => (
                                         <div key={step.id} className={clsx(
                                             "flex items-start gap-3 px-3 py-3 transition-all",
                                             !step.done && "opacity-50"
