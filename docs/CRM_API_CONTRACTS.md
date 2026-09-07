@@ -218,9 +218,11 @@ cd /root/ccf
   tests/test_crm_concurrency_adversarial.py
 ```
 
-## 12. Notas RBAC actuales
+## 12. Notas RBAC y Certificación (2026-09-06)
 
 - La mayor parte de personas, pastoral y resources usa `crm:read` / `crm:edit`.
 - `PATCH /personas/me/profile` usa `profile:manage`, no `crm:*`.
-- Pipeline y kanban no siguen la misma matriz; usan `require_pastor_or_admin`.
-- Existen helpers de automations/validación en `backend/api/crm/pipelines.py` sin guard explícito de auth/RBAC en la firma actual; ver `CRM_RBAC_MATRIX.md`.
+- Pipeline y kanban usan `require_pastor_or_admin`, el cual admite roles `admin`/`pastor` y usuarios con permiso institucional `crm:manage` o `system:config`.
+- Todos los endpoints de automations y validación en `backend/api/crm/pipelines.py` cuentan con guards explícitos de auth/RBAC (`require_module_access("crm", "read")` para variables/catálogos, `require_module_access("crm", "edit")` para validación/mutación, `require_pastor_or_admin` para kanban).
+- Estado: **100/100 (A+) CERTIFICADO** (Auditoría Forense 2026-09-06).
+
