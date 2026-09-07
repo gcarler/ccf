@@ -249,3 +249,10 @@ Resumen de políticas que todo desarrollador del módulo Projects debe conocer p
 - [ ] Revisar `tests/test_projects_rbac.py` para entender el baseline.
 - [ ] Actualizar `PROJECTS_API_CONTRACTS.md`, `PROJECTS_RBAC_MATRIX.md` y `PROJECTS_QA_CHECKLIST.md` si cambia un guard.
 - [ ] Ejecutar `./venv/bin/python scripts/test_projects_quality.py` y `./venv/bin/python -m pytest -q -o addopts='' tests/test_projects_rbac.py`.
+
+### 10.5 Certificación de Calidad y RBAC (2026-09-06)
+
+- Estado: **100/100 (A+) CERTIFICADO** (`docs/AUDITORIA_FORENSE_PROYECTOS_2026-09-06.md`).
+- 116 tests RBAC + 21 tests multi-tenant aprobados al 100%.
+- 0 discrepancias de autorización o fugas entre sedes.
+
