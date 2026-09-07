@@ -523,12 +523,19 @@ export default function PublicPastoralManager({
         </div>
       )}
 
-      {/* ── CREATE / EDIT MODAL ── */}
+      {/* ── CREATE / EDIT DRAWER (SidePanel) ── */}
       {(createModalOpen || editModalOpen) && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fadeIn">
-          <div className="relative w-full max-w-2xl max-h-[90vh] bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] dark:border-white/10 rounded-2xl shadow-2xl overflow-hidden flex flex-col">
+        <div className="fixed inset-0 z-50 flex justify-end">
+          <div
+            className="absolute inset-0 bg-black/50 backdrop-blur-sm animate-fadeIn"
+            onClick={() => {
+              setCreateModalOpen(false);
+              setEditModalOpen(false);
+            }}
+          />
+          <div className="relative w-full max-w-2xl h-full bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-2))] border-l border-[hsl(var(--border))] dark:border-white/[0.06] shadow-2xl flex flex-col z-10 animate-in slide-in-from-right duration-300">
             {/* Header */}
-            <div className="px-6 py-4 border-b border-[hsl(var(--border))] dark:border-white/10 flex items-center justify-between shrink-0">
+            <div className="px-6 py-4 border-b border-[hsl(var(--border))] dark:border-white/[0.06] flex items-center justify-between shrink-0 bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-2))]">
               <div className="flex items-center gap-2">
                 <div className="w-8 h-8 rounded-lg bg-[hsl(var(--primary))/0.1] text-[hsl(var(--primary))] flex items-center justify-center">
                   {createModalOpen ? <UserPlus size={16} /> : <Pencil size={16} />}
@@ -552,7 +559,7 @@ export default function PublicPastoralManager({
             {/* Scrollable Form */}
             <form
               onSubmit={createModalOpen ? handleCreateSubmit : handleEditSubmit}
-              className="overflow-y-auto p-6 space-y-5"
+              className="flex-1 overflow-y-auto p-6 space-y-5"
             >
               {/* Name and Role */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -754,7 +761,7 @@ export default function PublicPastoralManager({
               </div>
 
               {/* Actions */}
-              <div className="flex items-center justify-end gap-3 pt-2">
+              <div className="sticky bottom-0 bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-2))] border-t border-[hsl(var(--border))] dark:border-white/[0.06] -mx-6 -mb-6 p-6 flex items-center justify-end gap-3 z-10">
                 <button
                   type="button"
                   onClick={() => {
@@ -786,21 +793,30 @@ export default function PublicPastoralManager({
         </div>
       )}
 
-      {/* ── DELETE CONFIRMATION MODAL ── */}
+      {/* ── DELETE CONFIRMATION DRAWER (SidePanel) ── */}
       {deleteModalOpen && selectedPastor && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fadeIn">
-          <div className="relative w-full max-w-md bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] dark:border-white/10 rounded-2xl shadow-2xl p-6">
-            <div className="w-12 h-12 rounded-2xl bg-red-500/10 text-red-500 flex items-center justify-center mb-4">
-              <AlertTriangle size={24} />
+        <div className="fixed inset-0 z-50 flex justify-end">
+          <div
+            className="absolute inset-0 bg-black/50 backdrop-blur-sm animate-fadeIn"
+            onClick={() => {
+              setDeleteModalOpen(false);
+              setSelectedPastor(null);
+            }}
+          />
+          <div className="relative w-full max-w-md h-full bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-2))] border-l border-[hsl(var(--border))] dark:border-white/[0.06] shadow-2xl p-6 flex flex-col justify-between z-10 animate-in slide-in-from-right duration-300">
+            <div>
+              <div className="w-12 h-12 rounded-2xl bg-[hsl(var(--destructive)/0.1)] text-[hsl(var(--destructive))] flex items-center justify-center mb-4">
+                <AlertTriangle size={24} />
+              </div>
+              <h3 className="font-bold text-base text-[hsl(var(--text-primary))] dark:text-white mb-2">
+                ¿Remover a {selectedPastor.name} del equipo pastoral?
+              </h3>
+              <p className="text-xs text-[hsl(var(--text-secondary))] leading-relaxed mb-6">
+                El pastor dejará de mostrarse en la página pública de pastores y en su URL de historia.
+                Sus datos personales en el CRM se conservan intactos.
+              </p>
             </div>
-            <h3 className="font-bold text-base text-[hsl(var(--text-primary))] dark:text-white mb-2">
-              ¿Remover a {selectedPastor.name} del equipo pastoral?
-            </h3>
-            <p className="text-xs text-[hsl(var(--text-secondary))] leading-relaxed mb-6">
-              El pastor dejará de mostrarse en la página pública de pastores y en su URL de historia.
-              Sus datos personales en el CRM se conservan intactos.
-            </p>
-            <div className="flex items-center justify-end gap-3">
+            <div className="flex items-center justify-end gap-3 pt-4 border-t border-[hsl(var(--border))] dark:border-white/[0.06]">
               <button
                 type="button"
                 onClick={() => {
@@ -816,7 +832,7 @@ export default function PublicPastoralManager({
                 type="button"
                 onClick={handleDeleteConfirm}
                 disabled={saving}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-bold uppercase tracking-wider transition-all"
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[hsl(var(--destructive))] hover:opacity-90 text-white text-xs font-bold uppercase tracking-wider transition-all shadow-md shadow-[hsl(var(--destructive)/0.2)]"
               >
                 {saving ? "Removiendo..." : "Confirmar Remoción"}
               </button>
