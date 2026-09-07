@@ -43,6 +43,8 @@ class AgendaEvent(AgendaEventCreate):
     updated_at: datetime
     recurrence_id: str | None = None
     is_recurring: bool = False
+    # Proveniencia de una edición por ocurrencia: "serie:<event_id>:<fecha>".
+    derived_from: str | None = None
 
 
 class AgendaEventCommentAttachment(BaseModel):

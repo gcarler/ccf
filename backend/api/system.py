@@ -313,7 +313,7 @@ def get_global_calendar(
                             "end": occ_end.isoformat() if occ_end else None,
                             "type": "agenda_event",
                             "allDay": ev.todo_el_dia,
-                            "href": f"/plataforma/agenda/events/{ev.id}",
+                            "href": f"/plataforma/agenda/events/{ev.id}?occurrence={occ_start.date().isoformat()}",
                             "location": ev.ubicacion_texto,
                             "recurrence_id": f"{ev.id}:{occ_start.date().isoformat()}",
                             "is_recurring": True,

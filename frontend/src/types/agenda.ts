@@ -6,11 +6,16 @@ export interface AgendaEvent {
   end_at?: string | null;
   location?: string | null;
   is_all_day: boolean;
+  color_hex?: string | null;
+  url_conferencia?: string | null;
+  visibilidad?: string;
   recurrence_rule?: string | null;
   recurrence_until?: string | null;
   recurrence_exceptions?: string[];
   recurrence_id?: string | null;
   is_recurring?: boolean;
+  /** Proveniencia de una edición por ocurrencia: "serie:<event_id>:<fecha>". */
+  derived_from?: string | null;
 }
 
 export type AgendaRecurrencePreset = "" | "DAILY" | "WEEKLY" | "BIWEEKLY" | "MONTHLY";
