@@ -34,12 +34,19 @@ def _normalize_social_url(val: str | None, platform: str) -> str | None:
         return None
     if val.startswith("@"):
         handle = val[1:]
+    elif not ("/" in val or "." in val):
+        handle = val
+    else:
+        handle = None
+
+    if handle is not None:
         if platform == "instagram":
             return f"https://instagram.com/{handle}"
         if platform == "facebook":
             return f"https://facebook.com/{handle}"
         if platform in ("twitter", "x"):
             return f"https://x.com/{handle}"
+
     if not (val.startswith("http://") or val.startswith("https://")):
         return f"https://{val}"
     return val

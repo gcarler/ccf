@@ -612,10 +612,10 @@ export default function PublicPastoralManager({
                     <Instagram size={10} /> Instagram
                   </label>
                   <input
-                    type="url"
+                    type="text"
                     value={formData.social_instagram}
                     onChange={(e) => setFormData({ ...formData, social_instagram: e.target.value })}
-                    placeholder="https://instagram.com/..."
+                    placeholder="@usuario o https://instagram.com/..."
                     className="w-full px-3 py-2 rounded-xl border border-[hsl(var(--border))] dark:border-white/10 bg-transparent text-xs focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.3]"
                   />
                 </div>
@@ -624,10 +624,10 @@ export default function PublicPastoralManager({
                     <Facebook size={10} /> Facebook
                   </label>
                   <input
-                    type="url"
+                    type="text"
                     value={formData.social_facebook}
                     onChange={(e) => setFormData({ ...formData, social_facebook: e.target.value })}
-                    placeholder="https://facebook.com/..."
+                    placeholder="@usuario o https://facebook.com/..."
                     className="w-full px-3 py-2 rounded-xl border border-[hsl(var(--border))] dark:border-white/10 bg-transparent text-xs focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.3]"
                   />
                 </div>
@@ -636,10 +636,10 @@ export default function PublicPastoralManager({
                     <Twitter size={10} /> X (Twitter)
                   </label>
                   <input
-                    type="url"
+                    type="text"
                     value={formData.social_twitter}
                     onChange={(e) => setFormData({ ...formData, social_twitter: e.target.value })}
-                    placeholder="https://x.com/..."
+                    placeholder="@usuario o https://x.com/..."
                     className="w-full px-3 py-2 rounded-xl border border-[hsl(var(--border))] dark:border-white/10 bg-transparent text-xs focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.3]"
                   />
                 </div>

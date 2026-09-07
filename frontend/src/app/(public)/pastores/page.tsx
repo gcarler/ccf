@@ -20,8 +20,9 @@ function plainText(value: string | undefined): string {
 function formatSocialUrl(url: string | undefined | null, platform: "instagram" | "facebook" | "twitter"): string | null {
     if (!url || !url.trim()) return null;
     const clean = url.trim();
-    if (clean.startsWith("@")) {
-        const handle = clean.substring(1);
+    const isHandle = clean.startsWith("@") || (!clean.includes("/") && !clean.includes("."));
+    if (isHandle) {
+        const handle = clean.startsWith("@") ? clean.substring(1) : clean;
         if (platform === "instagram") return `https://instagram.com/${handle}`;
         if (platform === "facebook") return `https://facebook.com/${handle}`;
         if (platform === "twitter") return `https://x.com/${handle}`;

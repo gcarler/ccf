@@ -779,9 +779,10 @@ export default function PastoralTeamPage() {
                   </label>
                   <input
                     name="social_instagram"
-                    type="url"
-                    defaultValue={editing.social_instagram || ""}
-                    placeholder="https://instagram.com/..."
+                    type="text"
+                    value={editing.social_instagram || ""}
+                    onChange={(e) => setEditing({ ...editing, social_instagram: e.target.value })}
+                    placeholder="@usuario o https://instagram.com/..."
                     className="w-full px-3 py-2 rounded-xl border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-white/5 text-xs focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.3]"
                   />
                 </div>
@@ -791,9 +792,10 @@ export default function PastoralTeamPage() {
                   </label>
                   <input
                     name="social_facebook"
-                    type="url"
-                    defaultValue={editing.social_facebook || ""}
-                    placeholder="https://facebook.com/..."
+                    type="text"
+                    value={editing.social_facebook || ""}
+                    onChange={(e) => setEditing({ ...editing, social_facebook: e.target.value })}
+                    placeholder="@usuario o https://facebook.com/..."
                     className="w-full px-3 py-2 rounded-xl border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-white/5 text-xs focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.3]"
                   />
                 </div>
@@ -803,9 +805,10 @@ export default function PastoralTeamPage() {
                   </label>
                   <input
                     name="social_twitter"
-                    type="url"
-                    defaultValue={editing.social_twitter || ""}
-                    placeholder="https://x.com/..."
+                    type="text"
+                    value={editing.social_twitter || ""}
+                    onChange={(e) => setEditing({ ...editing, social_twitter: e.target.value })}
+                    placeholder="@usuario o https://x.com/..."
                     className="w-full px-3 py-2 rounded-xl border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-white/5 text-xs focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.3]"
                   />
                 </div>
@@ -1074,30 +1077,30 @@ export default function PastoralTeamPage() {
                     <div>
                       <label className="block text-3xs font-bold uppercase text-[hsl(var(--text-secondary))] mb-1">Instagram</label>
                       <input
-                        type="url"
+                        type="text"
                         value={newPastor.social_instagram}
                         onChange={(e) => setNewPastor({ ...newPastor, social_instagram: e.target.value })}
-                        placeholder="https://..."
+                        placeholder="@usuario o https://..."
                         className="w-full px-2.5 py-1.5 rounded-lg border border-[hsl(var(--border))] text-xs"
                       />
                     </div>
                     <div>
                       <label className="block text-3xs font-bold uppercase text-[hsl(var(--text-secondary))] mb-1">Facebook</label>
                       <input
-                        type="url"
+                        type="text"
                         value={newPastor.social_facebook}
                         onChange={(e) => setNewPastor({ ...newPastor, social_facebook: e.target.value })}
-                        placeholder="https://..."
+                        placeholder="@usuario o https://..."
                         className="w-full px-2.5 py-1.5 rounded-lg border border-[hsl(var(--border))] text-xs"
                       />
                     </div>
                     <div>
                       <label className="block text-3xs font-bold uppercase text-[hsl(var(--text-secondary))] mb-1">X (Twitter)</label>
                       <input
-                        type="url"
+                        type="text"
                         value={newPastor.social_twitter}
                         onChange={(e) => setNewPastor({ ...newPastor, social_twitter: e.target.value })}
-                        placeholder="https://..."
+                        placeholder="@usuario o https://..."
                         className="w-full px-2.5 py-1.5 rounded-lg border border-[hsl(var(--border))] text-xs"
                       />
                     </div>
