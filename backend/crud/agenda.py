@@ -3,6 +3,7 @@ from __future__ import annotations
 from datetime import datetime
 from uuid import UUID
 
+from sqlalchemy import and_, or_
 from sqlalchemy.orm import Session
 
 from backend import models
@@ -36,13 +37,33 @@ def get_event(db: Session, event_id: UUID, sede_id: UUID) -> models.EventoAgenda
 def list_events_by_range(
     db: Session, sede_id: UUID, starts_at: datetime, ends_at: datetime
 ) -> list[models.EventoAgenda]:
+    """Eventos que tocan la ventana, más series cuyo ancla pueda expandirse
+    hacia ella (anclas hasta LOOKBACK atrás; el servicio descarta las
+    demasiado antiguas)."""
+    from datetime import timedelta
+
+    from backend.services.agenda_recurrence import MAX_SERIES_LOOKBACK_DAYS
+
+    series_anchor_floor = starts_at - timedelta(days=MAX_SERIES_LOOKBACK_DAYS)
     return (
         db.query(models.EventoAgenda)
         .filter(
             models.EventoAgenda.sede_id == sede_id,
-            models.EventoAgenda.fecha_inicio < ends_at,
-            models.EventoAgenda.fecha_fin > starts_at,
             models.EventoAgenda.deleted_at.is_(None),
+            # No recurrentes: solapan la ventana. Series: ancla dentro de
+            # [floor, ends_at) — la expansión decide ocurrencia por ocurrencia.
+            or_(
+                and_(
+                    models.EventoAgenda.regla_recurrencia.is_(None),
+                    models.EventoAgenda.fecha_inicio < ends_at,
+                    models.EventoAgenda.fecha_fin > starts_at,
+                ),
+                and_(
+                    models.EventoAgenda.regla_recurrencia.isnot(None),
+                    models.EventoAgenda.fecha_inicio >= series_anchor_floor,
+                    models.EventoAgenda.fecha_inicio < ends_at,
+                ),
+            ),
         )
         .order_by(models.EventoAgenda.fecha_inicio.asc())
         .all()

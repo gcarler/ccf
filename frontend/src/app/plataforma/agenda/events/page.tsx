@@ -2,14 +2,15 @@
 
 import React, { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Calendar, MapPin, Plus, Clock, FileText, Pencil, Save, Trash2, X } from "lucide-react";
+import { Calendar, MapPin, Plus, Clock, FileText, Pencil, Save, Trash2, X, Repeat } from "lucide-react";
 import WorkspaceLayout from "@/components/WorkspaceLayout";
 import { useAuth } from "@/context/AuthContext";
 import { apiFetch } from "@/lib/http";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
-import type { AgendaEvent, AgendaFormState } from "@/types/agenda";
+import type { AgendaEvent, AgendaFormState, AgendaRecurrencePreset } from "@/types/agenda";
+import { buildRecurrenceRule, describeRecurrence, presetFromRule } from "@/types/agenda";
 
 function formatEventWindow(event: AgendaEvent) {
     const start = new Date(event.start_at);
@@ -40,6 +41,8 @@ export default function AgendaEventsPage() {
         start_at: new Date().toISOString().slice(0, 10),
         end_at: new Date().toISOString().slice(0, 10),
         location: "",
+        recurrence: "",
+        recurrence_until: "",
     });
     const [editForm, setEditForm] = useState<AgendaFormState>({
         title: "",
@@ -47,6 +50,8 @@ export default function AgendaEventsPage() {
         start_at: new Date().toISOString().slice(0, 10),
         end_at: new Date().toISOString().slice(0, 10),
         location: "",
+        recurrence: "",
+        recurrence_until: "",
     });
 
     const sortedEvents = useMemo(
@@ -89,6 +94,7 @@ export default function AgendaEventsPage() {
                     end_at: new Date(form.end_at).toISOString(),
                     location: form.location.trim() || null,
                     is_all_day: true,
+                    recurrence_rule: buildRecurrenceRule(form.recurrence),
                 },
             });
             toast.success("Evento de agenda creado");
@@ -98,6 +104,8 @@ export default function AgendaEventsPage() {
                 start_at: new Date().toISOString().slice(0, 10),
                 end_at: new Date().toISOString().slice(0, 10),
                 location: "",
+                recurrence: "",
+                recurrence_until: "",
             });
             await loadEvents();
         } catch {
@@ -115,6 +123,8 @@ export default function AgendaEventsPage() {
             start_at: event.start_at.slice(0, 10),
             end_at: (event.end_at || event.start_at).slice(0, 10),
             location: event.location || "",
+            recurrence: presetFromRule(event.recurrence_rule),
+            recurrence_until: event.recurrence_until?.slice(0, 10) || "",
         });
     };
 
@@ -122,6 +132,11 @@ export default function AgendaEventsPage() {
         if (!token || !editForm.title.trim()) return;
         setEditingEventSaving(true);
         try {
+            // Tri-estado de la serie: preset elegido => actualiza la regla;
+            // "No se repite" sobre una serie activa => "" (elimina la serie);
+            // sin serie previa => undefined (el campo se omite en el PUT).
+            const event = events.find((e) => e.id === eventId);
+            const recurrenceRule = buildRecurrenceRule(editForm.recurrence);
             await apiFetch(`/agenda/events/${eventId}`, {
                 method: "PUT",
                 token,
@@ -132,6 +147,7 @@ export default function AgendaEventsPage() {
                     end_at: new Date(editForm.end_at).toISOString(),
                     location: editForm.location.trim() || null,
                     is_all_day: true,
+                    recurrence_rule: recurrenceRule ?? (event?.is_recurring ? "" : undefined),
                 },
             });
             toast.success("Evento actualizado");
@@ -242,6 +258,21 @@ export default function AgendaEventsPage() {
                                             className="w-full rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] px-4 py-3 text-sm font-bold text-[hsl(var(--text-primary))] outline-none focus:border-[hsl(var(--info)/100%)] dark:border-white/10 dark:bg-black/20 dark:text-white"
                                         />
                                     </div>
+                                </div>
+
+                                <div className="space-y-1.5">
+                                    <label className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Repetición</label>
+                                    <select
+                                        value={form.recurrence}
+                                        onChange={(e) => setForm((prev) => ({ ...prev, recurrence: e.target.value as AgendaRecurrencePreset }))}
+                                        className="w-full rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] px-4 py-3 text-sm font-bold text-[hsl(var(--text-primary))] outline-none focus:border-[hsl(var(--info)/100%)] dark:border-white/10 dark:bg-black/20 dark:text-white"
+                                    >
+                                        <option value="">No se repite</option>
+                                        <option value="DAILY">Todos los días</option>
+                                        <option value="WEEKLY">Semanalmente</option>
+                                        <option value="BIWEEKLY">Cada 2 semanas</option>
+                                        <option value="MONTHLY">Mensualmente</option>
+                                    </select>
                                 </div>
 
                                 <div className="space-y-1.5">
@@ -366,6 +397,25 @@ export default function AgendaEventsPage() {
                                                             />
                                                         </div>
                                                         <div className="space-y-1.5 md:col-span-2">
+                                                            <label className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Repetición</label>
+                                                            <select
+                                                                value={editForm.recurrence}
+                                                                onChange={(e) => setEditForm((prev) => ({ ...prev, recurrence: e.target.value as AgendaRecurrencePreset }))}
+                                                                className="w-full rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] px-4 py-3 text-sm font-bold text-[hsl(var(--text-primary))] outline-none focus:border-[hsl(var(--info)/100%)] dark:border-white/10 dark:bg-black/20 dark:text-white"
+                                                            >
+                                                                <option value="">No se repite</option>
+                                                                <option value="DAILY">Todos los días</option>
+                                                                <option value="WEEKLY">Semanalmente</option>
+                                                                <option value="BIWEEKLY">Cada 2 semanas</option>
+                                                                <option value="MONTHLY">Mensualmente</option>
+                                                            </select>
+                                                            {event.is_recurring && !editForm.recurrence ? (
+                                                                <p className="text-2xs font-medium text-[hsl(var(--text-secondary))]">
+                                                                    Serie activa ({describeRecurrence(event.recurrence_rule)}). Elige otro patrón para cambiarla, o &quot;No se repite&quot; para eliminarla.
+                                                                </p>
+                                                            ) : null}
+                                                        </div>
+                                                        <div className="space-y-1.5 md:col-span-2">
                                                             <label className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Ubicación</label>
                                                             <input
                                                                 value={editForm.location}
@@ -399,6 +449,12 @@ export default function AgendaEventsPage() {
                                                             ) : null}
                                                         </div>
                                                         <div className="flex items-center gap-2">
+                                                            {event.is_recurring ? (
+                                                                <span className="inline-flex items-center gap-1 rounded-full bg-success-soft px-3 py-1 text-2xs font-semibold uppercase tracking-wide text-success-text dark:bg-[hsl(var(--success))]/10 dark:text-success-text">
+                                                                    <Repeat size={10} />
+                                                                    {describeRecurrence(event.recurrence_rule)}
+                                                                </span>
+                                                            ) : null}
                                                             <span className="rounded-full bg-info-soft px-3 py-1 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--primary))] dark:bg-[hsl(var(--info))]/10 dark:text-[hsl(var(--primary))]">
                                                                 Agenda simple
                                                             </span>

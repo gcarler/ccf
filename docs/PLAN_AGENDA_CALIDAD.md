@@ -154,6 +154,13 @@ cd /root/ccf
   tests/test_fixed_routes.py
 ```
 
+Si se toca recurrencia (RRULE):
+
+```bash
+cd /root/ccf
+PYTHONPATH=. ./venv/bin/python -m pytest -q -o addopts='' tests/test_agenda_recurrence.py tests/test_agenda.py tests/test_agenda_rbac.py tests/test_system_calendar.py
+```
+
 Si se toca `system/calendar` o frontend reusable:
 
 ```bash

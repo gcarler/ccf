@@ -4,7 +4,9 @@ from datetime import datetime
 from typing import List
 from uuid import UUID
 
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
+
+from backend.services.agenda_recurrence import validate_rrule
 
 
 class AgendaEventCreate(BaseModel):
@@ -17,6 +19,15 @@ class AgendaEventCreate(BaseModel):
     color_hex: str | None = Field(default=None, max_length=10)
     url_conferencia: str | None = Field(default=None, max_length=255)
     visibilidad: str = Field(default="SEDE", pattern="^(PRIVADO|PUBLICO|COMUNIDAD|SEDE)$")
+    recurrence_rule: str | None = Field(default=None, max_length=255)
+    recurrence_until: datetime | None = None
+    recurrence_exceptions: List[str] = []
+
+    @field_validator("recurrence_rule")
+    @classmethod
+    def _validate_recurrence_rule(cls, value: str | None) -> str | None:
+        # Normaliza (prefijo RRULE:) y valida; ValueError -> 422 automático.
+        return validate_rrule(value) if value else value
 
     @model_validator(mode="after")
     def validate_range(self):
@@ -30,6 +41,8 @@ class AgendaEvent(AgendaEventCreate):
     created_by_persona_id: UUID
     created_at: datetime
     updated_at: datetime
+    recurrence_id: str | None = None
+    is_recurring: bool = False
 
 
 class AgendaEventCommentAttachment(BaseModel):

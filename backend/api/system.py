@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import logging
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from typing import Dict, List
 
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -296,7 +296,30 @@ def get_global_calendar(
             personal_filters.append(models.EventoAgenda.organizador_persona_id == current_persona_id)
 
         agenda_events = db.query(models.EventoAgenda).filter(*personal_filters).all()
+        # Series recurrentes se expanden en una ventana acotada (el agregador
+        # no recibe window del cliente): 30 días hacia atrás, 180 hacia adelante.
+        from backend.services.agenda_recurrence import expand_event
+
+        window_start = datetime.now(timezone.utc) - timedelta(days=30)
+        window_end = datetime.now(timezone.utc) + timedelta(days=180)
         for ev in agenda_events:
+            if ev.regla_recurrencia:
+                for occ_start, occ_end in expand_event(ev, window_start, window_end):
+                    events.append(
+                        {
+                            "id": f"agenda-{ev.id}:{occ_start.date().isoformat()}",
+                            "title": ev.titulo,
+                            "start": occ_start.isoformat(),
+                            "end": occ_end.isoformat() if occ_end else None,
+                            "type": "agenda_event",
+                            "allDay": ev.todo_el_dia,
+                            "href": f"/plataforma/agenda/events/{ev.id}",
+                            "location": ev.ubicacion_texto,
+                            "recurrence_id": f"{ev.id}:{occ_start.date().isoformat()}",
+                            "is_recurring": True,
+                        }
+                    )
+                continue
             events.append(
                 {
                     "id": f"agenda-{ev.id}",
