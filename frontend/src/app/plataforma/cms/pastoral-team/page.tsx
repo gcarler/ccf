@@ -857,7 +857,8 @@ export default function PastoralTeamPage() {
                   <input
                     name="pastoral_sort_order"
                     type="number"
-                    defaultValue={editing.pastoral_sort_order || 0}
+                    value={editing.pastoral_sort_order ?? 0}
+                    onChange={(e) => setEditing({ ...editing, pastoral_sort_order: parseInt(e.target.value) || 0 })}
                     min="0"
                     className="w-20 px-3 py-1.5 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-white/5 text-sm text-center font-mono focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.3]"
                   />

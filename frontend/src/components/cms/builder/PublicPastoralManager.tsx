@@ -20,6 +20,8 @@ import {
   Twitter,
   Quote,
   AlertTriangle,
+  ChevronUp,
+  ChevronDown,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -227,6 +229,43 @@ export default function PublicPastoralManager({
     }
   };
 
+  // Quick reorder
+  const handleQuickReorder = async (index: number, direction: "up" | "down") => {
+    const targetIndex = direction === "up" ? index - 1 : index + 1;
+    if (targetIndex < 0 || targetIndex >= pastors.length) return;
+    const current = pastors[index];
+    const target = pastors[targetIndex];
+    if (!current || !target) return;
+
+    const currentSort = current.pastoral_sort_order ?? index * 10;
+    const targetSort = target.pastoral_sort_order ?? targetIndex * 10;
+
+    let newCurrentSort = targetSort;
+    let newTargetSort = currentSort;
+    if (newCurrentSort === newTargetSort) {
+      newCurrentSort = direction === "up" ? targetSort - 1 : targetSort + 1;
+    }
+
+    // Optimistically update local state
+    const updated = [...pastors];
+    updated[index] = { ...current, pastoral_sort_order: newCurrentSort };
+    updated[targetIndex] = { ...target, pastoral_sort_order: newTargetSort };
+    updated.sort((a, b) => (a.pastoral_sort_order ?? 0) - (b.pastoral_sort_order ?? 0));
+    setPastors(updated);
+
+    try {
+      await Promise.all([
+        updateCmsPastoralProfile(current.id, { pastoral_sort_order: newCurrentSort }, token),
+        updateCmsPastoralProfile(target.id, { pastoral_sort_order: newTargetSort }, token),
+      ]);
+      toast.success(`Orden actualizado: ${current.name} movido hacia ${direction === "up" ? "arriba" : "abajo"}`);
+      await fetchPastors();
+    } catch {
+      toast.error("Error al guardar el nuevo orden");
+      await fetchPastors();
+    }
+  };
+
   // Direct photo change from card button
   const handleDirectPhotoClick = (pastorId: string) => {
     setDirectPhotoPastorId(pastorId);
@@ -332,7 +371,7 @@ export default function PublicPastoralManager({
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-          {pastors.map((p) => (
+          {pastors.map((p, idx) => (
             <div
               key={p.id}
               className="group relative bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-deep))] rounded-2xl border border-[hsl(var(--border))] dark:border-white/10 p-4 flex flex-col justify-between hover:shadow-lg hover:border-[hsl(var(--primary))/0.4] transition-all"
@@ -432,13 +471,33 @@ export default function PublicPastoralManager({
 
               {/* Action buttons */}
               <div className="mt-4 pt-3 border-t border-[hsl(var(--border))] dark:border-white/5 flex items-center justify-between gap-2">
-                <Link
-                  href={`/pastores/${p.slug}`}
-                  target="_blank"
-                  className="inline-flex items-center gap-1 text-2xs font-semibold text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] transition-colors"
-                >
-                  <ExternalLink size={11} /> Ver página
-                </Link>
+                <div className="flex items-center gap-1">
+                  <button
+                    type="button"
+                    disabled={idx === 0}
+                    onClick={() => handleQuickReorder(idx, "up")}
+                    className="p-1.5 rounded-lg hover:bg-[hsl(var(--surface-3))] text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] disabled:opacity-30 disabled:hover:bg-transparent transition-all"
+                    title="Mover arriba"
+                  >
+                    <ChevronUp size={14} />
+                  </button>
+                  <button
+                    type="button"
+                    disabled={idx === pastors.length - 1}
+                    onClick={() => handleQuickReorder(idx, "down")}
+                    className="p-1.5 rounded-lg hover:bg-[hsl(var(--surface-3))] text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] disabled:opacity-30 disabled:hover:bg-transparent transition-all"
+                    title="Mover abajo"
+                  >
+                    <ChevronDown size={14} />
+                  </button>
+                  <Link
+                    href={`/pastores/${p.slug}`}
+                    target="_blank"
+                    className="inline-flex items-center gap-1 text-2xs font-semibold text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] transition-colors ml-1"
+                  >
+                    <ExternalLink size={11} /> Ver página
+                  </Link>
+                </div>
 
                 <div className="flex items-center gap-1.5">
                   <button
