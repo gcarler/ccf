@@ -20,6 +20,7 @@ import AiField from "@/components/cms/builder/AiField";
 import PublicStrategiesManager from "@/components/cms/builder/PublicStrategiesManager";
 import PublicPastoralManager from "@/components/cms/builder/PublicPastoralManager";
 import PublicCoursesManager from "@/components/cms/builder/PublicCoursesManager";
+import PublicLocationsManager from "@/components/cms/builder/PublicLocationsManager";
 import OptimizedImage from "@/components/ui/OptimizedImage";
 
 export type SaveStatus = "saved" | "dirty" | "saving" | "error";
@@ -1388,6 +1389,13 @@ export default function PuckBuilderPage() {
         </div>
       )}
 
+      {/* Panel de sedes y mapa — visible debajo del editor */}
+      {(pageSlug === "locations" || pageSlug === "sedes") && (
+        <div className="border-t shrink-0 overflow-y-auto max-h-[50vh]">
+          <PublicLocationsManager token={token} />
+        </div>
+      )}
+
       {/* Custom MediaPicker Drawer integration */}
       {mediaPickerOpen && (
         <MediaPicker
@@ -2329,6 +2337,13 @@ function PublicContentEditor({
       {pageSlug === "courses" && (
         <div className="mx-auto max-w-5xl px-4 pb-8">
           <PublicCoursesManager token={token} />
+        </div>
+      )}
+
+      {/* Panel de sedes y mapa — solo en /locations y /sedes */}
+      {(pageSlug === "locations" || pageSlug === "sedes") && (
+        <div className="mx-auto max-w-5xl px-4 pb-8">
+          <PublicLocationsManager token={token} />
         </div>
       )}
 

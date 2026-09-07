@@ -1200,3 +1200,64 @@ class CmsCourseCreate(BaseModel):
     duration_hours: Optional[int] = 0
     sort_order: Optional[int] = 0
 
+
+# ── CMS Locations Management ────────────────────────────────────────────────
+
+
+class CmsLocationRead(BaseModel):
+    id: str
+    name: str
+    address: str
+    city: Optional[str] = None
+    phone: Optional[str] = None
+    pastor: Optional[str] = None
+    schedule: Optional[str] = None
+    midweek: Optional[str] = None
+    image: Optional[str] = None
+    maps_url: Optional[str] = None
+    map_embed_url: Optional[str] = None
+    lat: Optional[float] = None
+    lng: Optional[float] = None
+    is_main: bool = False
+    is_active: bool = True
+    sort_order: int = 0
+
+    model_config = orm_config
+
+
+class CmsLocationUpdate(BaseModel):
+    name: Optional[str] = None
+    address: Optional[str] = None
+    city: Optional[str] = None
+    phone: Optional[str] = None
+    pastor: Optional[str] = None
+    schedule: Optional[str] = None
+    midweek: Optional[str] = None
+    image: Optional[str] = None
+    maps_url: Optional[str] = None
+    map_embed_url: Optional[str] = None
+    lat: Optional[float] = None
+    lng: Optional[float] = None
+    is_main: Optional[bool] = None
+    is_active: Optional[bool] = None
+    sort_order: Optional[int] = None
+
+
+class CmsLocationCreate(BaseModel):
+    name: str
+    address: str
+    city: Optional[str] = None
+    phone: Optional[str] = None
+    pastor: Optional[str] = None
+    schedule: Optional[str] = None
+    midweek: Optional[str] = None
+    image: Optional[str] = None
+    maps_url: Optional[str] = None
+    map_embed_url: Optional[str] = None
+    lat: Optional[float] = None
+    lng: Optional[float] = None
+    is_main: Optional[bool] = False
+    is_active: Optional[bool] = True
+    sort_order: Optional[int] = 0
+
+

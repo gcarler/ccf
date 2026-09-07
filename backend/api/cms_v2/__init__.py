@@ -63,6 +63,9 @@ from backend.api.cms_v2 import (
     global_blocks as _blocks,
 )
 from backend.api.cms_v2 import (
+    locations as _locations,
+)
+from backend.api.cms_v2 import (
     newsletter as _newsletter,
 )
 from backend.api.cms_v2 import (
@@ -143,6 +146,7 @@ SUBROUTERS = (
     _public_themes,
     _public_pastoral,
     _courses,
+    _locations,
 )
 
 for _mod in SUBROUTERS:

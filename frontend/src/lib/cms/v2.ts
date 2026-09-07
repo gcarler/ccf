@@ -445,6 +445,65 @@ export async function deleteCmsCourse(
   });
 }
 
+// ── Locations Management (CMS Builder & Public Locations) ──────────────────
+
+export interface CmsLocation {
+  id: string;
+  name: string;
+  address: string;
+  city?: string | null;
+  phone?: string | null;
+  pastor?: string | null;
+  schedule?: string | null;
+  midweek?: string | null;
+  image?: string | null;
+  maps_url?: string | null;
+  map_embed_url?: string | null;
+  lat?: number | null;
+  lng?: number | null;
+  is_main: boolean;
+  is_active: boolean;
+  sort_order: number;
+}
+
+export async function getCmsLocations(token?: string | null): Promise<CmsLocation[]> {
+  return apiFetch<CmsLocation[]>(`/cms/v2/cms/locations`, { token });
+}
+
+export async function createCmsLocation(
+  payload: Partial<CmsLocation>,
+  token?: string | null,
+): Promise<CmsLocation> {
+  return apiFetch<CmsLocation>(`/cms/v2/cms/locations`, {
+    method: "POST",
+    token,
+    body: payload,
+  });
+}
+
+export async function updateCmsLocation(
+  locationId: string,
+  payload: Partial<CmsLocation>,
+  token?: string | null,
+): Promise<CmsLocation> {
+  return apiFetch<CmsLocation>(`/cms/v2/cms/locations/${locationId}`, {
+    method: "PATCH",
+    token,
+    body: payload,
+  });
+}
+
+export async function deleteCmsLocation(
+  locationId: string,
+  token?: string | null,
+): Promise<void> {
+  return apiFetch<void>(`/cms/v2/cms/locations/${locationId}`, {
+    method: "DELETE",
+    token,
+  });
+}
+
+
 
 // ── Section Types (platform-wide catalog) ─────────────────────────────────
 //
