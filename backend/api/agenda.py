@@ -24,6 +24,7 @@ from backend.schemas.agenda import (
     ResourceReservation,
     ResourceReservationCreate,
 )
+from backend.services.agenda_recurrence import expand_event
 from backend.services.comment_notifications import notify_mention
 from backend.services.mention_parser import resolve_mentions
 
@@ -52,16 +53,30 @@ def _event_payload(payload: AgendaEventCreate, sede_id: UUID, persona_id: UUID) 
         "estado": "ACTIVO",
         "color_hex": payload.color_hex,
         "url_conferencia": payload.url_conferencia,
+        "regla_recurrencia": payload.recurrence_rule,
+        "fecha_limite_recurrencia": payload.recurrence_until,
+        "excepciones_recurrencia": [
+            str(day)[:10] for day in payload.recurrence_exceptions or []
+        ],
     }
 
 
-def _serialize_event(row: models.EventoAgenda) -> dict:
+def _serialize_event(
+    row: models.EventoAgenda,
+    *,
+    occurrence_start: datetime | None = None,
+    occurrence_end: datetime | None = None,
+) -> dict:
+    """Serializa un evento; con ocurrencia, representa una instancia de serie."""
+    is_occurrence = occurrence_start is not None
+    raw_rule = (row.regla_recurrencia or "").strip()
+    recurrence_id = f"{row.id}:{occurrence_start.date().isoformat()}" if is_occurrence else None
     return {
         "id": row.id,
         "title": row.titulo,
         "description": row.descripcion,
-        "start_at": row.fecha_inicio,
-        "end_at": row.fecha_fin,
+        "start_at": occurrence_start or row.fecha_inicio,
+        "end_at": occurrence_end or row.fecha_fin,
         "location": row.ubicacion_texto,
         "is_all_day": row.todo_el_dia,
         "created_by_persona_id": row.organizador_persona_id,
@@ -70,6 +85,11 @@ def _serialize_event(row: models.EventoAgenda) -> dict:
         "color_hex": row.color_hex,
         "url_conferencia": row.url_conferencia,
         "visibilidad": row.visibilidad,
+        "recurrence_rule": row.regla_recurrencia,
+        "recurrence_until": row.fecha_limite_recurrencia,
+        "recurrence_exceptions": row.excepciones_recurrencia or [],
+        "recurrence_id": recurrence_id,
+        "is_recurring": bool(raw_rule) and not is_occurrence,
     }
 
 
@@ -145,8 +165,19 @@ def list_events_by_date_range(
 ):
     if end <= start:
         raise HTTPException(status_code=422, detail="end must be greater than start")
-    rows = crud.list_events_by_range(db, _sede_id(db, current_user), start, end)
-    return [_serialize_event(row) for row in rows]
+    sede_id = _sede_id(db, current_user)
+    rows = crud.list_events_by_range(db, sede_id, start, end)
+    items: list[dict] = []
+    for row in rows:
+        if row.regla_recurrencia:
+            for occ_start, occ_end in expand_event(row, start, end):
+                items.append(
+                    _serialize_event(row, occurrence_start=occ_start, occurrence_end=occ_end)
+                )
+        else:
+            items.append(_serialize_event(row))
+    items.sort(key=lambda item: item["start_at"])
+    return items
 
 
 @router.post("/events", response_model=AgendaEvent, status_code=status.HTTP_201_CREATED)
@@ -182,7 +213,19 @@ def update_event(
     row = crud.get_event(db, event_id, sede_id)
     if not row:
         raise HTTPException(status_code=404, detail="Evento no encontrado")
-    row = crud.update_event(db, row, _event_payload(payload, sede_id, row.organizador_persona_id))
+    data = _event_payload(payload, sede_id, row.organizador_persona_id)
+    if payload.recurrence_rule is None:
+        # PUT sin campo de recurrencia: preserva la serie existente en vez de
+        # borrarla por accidente (clientes que aún no conocen el campo).
+        data["regla_recurrencia"] = row.regla_recurrencia
+        data["fecha_limite_recurrencia"] = row.fecha_limite_recurrencia
+        data["excepciones_recurrencia"] = row.excepciones_recurrencia
+    elif payload.recurrence_rule == "":
+        # Cadena vacía explícita: elimina la serie.
+        data["regla_recurrencia"] = None
+        data["fecha_limite_recurrencia"] = None
+        data["excepciones_recurrencia"] = []
+    row = crud.update_event(db, row, data)
     return _serialize_event(row)
 
 

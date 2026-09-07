@@ -29,6 +29,8 @@ cd /root/ccf
 - crear participante cross-sede falla.
 - crear reserva duplicada/conflictiva no rompe el flujo.
 - el rol probado coincide con la matriz `agenda:*` documentada.
+- crear un evento con repeticion semanal genera ocurrencias visibles en `by-date-range` y en `/plataforma/calendar`, cada una navegable al owner route del evento.
+- editar una serie sin tocar el campo repeticion la preserva; elegir "No se repite" sobre una serie activa la elimina; `recurrence_rule` invalida responde 422.
 
 ## 5. No aprobar si pasa esto
 
@@ -48,6 +50,7 @@ cd /root/ccf
 - `AUDITORIA-FORENSE-AGENDA-2026-09-05` cerrada el 2026-09-05 con `docs/AUDITORIA_FORENSE_AGENDA_2026-09-05.md` (47 tests backend OK, 0 hard deletes, 0 legacy/naive datetime, 0 bg-red-50, 0 modales banned, 100% apiFetch)
 - `CERRADO-AGENDA-RBAC-001` cerrada el 2026-09-05 con la creación y desacople de la taxonomía `agenda:*` al 100/100 (A+)
 - `AUDITORIA-FORENSE-AGENDA-2026-09-06` cerrada el 2026-09-06 con `docs/AUDITORIA_FORENSE_AGENDA_2026-09-06.md` (357 tests ejecutados y aprobados al 100%, VICTORY CONFIRMED por auditoría independiente)
+- `PEND-AGENDA-RRULE-001` cerrada el 2026-09-07 con eventos recurrentes RFC 5545: `backend/services/agenda_recurrence.py`, expansión en `by-date-range` y agregador calendar, selector de repetición en `agenda/events` y `tests/test_agenda_recurrence.py` (14 tests)
 
 ## 7. Smoke frontend dedicado
 

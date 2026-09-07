@@ -108,6 +108,7 @@ Regla:
 - usa `sede_id` del actor para todas las fuentes multi-tenant
 - birthday filtra por `Persona.sede_id == sede_id`
 - agenda personal usa `organizador_persona_id == persona_id` cuando `view=personal`
+- los eventos de agenda con RRULE se expanden a ocurrencias dentro de la ventana acotada `today-90d .. today+2y`; cada ocurrencia conserva `type=agenda_event` y `href=/plataforma/agenda/events/{event_id}` (ver `docs/AGENDA_API_CONTRACTS.md` §3.1)
 - proyectos permite `Project.sede_id == sede_id` o `NULL`
 
 ## 7. Hrefs canónicos

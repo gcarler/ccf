@@ -50,6 +50,16 @@ Invariantes:
 - reservas no deben operar sobre recursos/eventos de otra sede
 - conflictos de horario en reservas retornan `409`
 
+### 3.1 Eventos recurrentes (RFC 5545 RRULE)
+
+Implementado el 2026-09-07 (`backend/services/agenda_recurrence.py`, `tests/test_agenda_recurrence.py`):
+
+- `AgendaEventCreate` expone `recurrence_rule` (validada en el schema, 422 si es inválida; tope `COUNT<=366`), `recurrence_until` y `recurrence_exceptions` (fechas `YYYY-MM-DD`).
+- `GET /agenda/events/by-date-range` expande las series dentro de la ventana solicitada; cada ocurrencia viaja con `recurrence_id: "<event_id>:<fecha>"`, `start_at`/`end_at` desplazados e `is_recurring: false`. El evento ancla viaja además en la respuesta con `is_recurring: true`.
+- Techos de seguridad por serie: `MAX_OCCURRENCES_PER_SERIES = 366` y retro-búsqueda de anclas `MAX_SERIES_LOOKBACK_DAYS = 366`; series sin `fecha_limite_recurrencia` se expanden solo hacia adelante.
+- Semántica de edición (PUT): campo `recurrence_rule` omitido preserva la serie existente; cadena vacía `""` la elimina; regla distinta reancla la serie. La edición por ocurrencia individual (v1) no está soportada.
+- El agregador `GET /api/system/calendar` expande las series con ventana acotada `today-90d .. today+2y`.
+
 ## 4. `GET /api/system/calendar`
 
 Contrato formal:
