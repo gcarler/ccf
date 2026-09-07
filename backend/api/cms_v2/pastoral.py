@@ -9,6 +9,7 @@ import logging
 from typing import List
 
 from fastapi import APIRouter, Depends
+from sqlalchemy import nullslast
 from sqlalchemy.orm import Session, lazyload
 
 from backend import crud, models, schemas
@@ -41,7 +42,7 @@ def cms_pastoral_team_list(
     base_query = _scope_cms_pastoral_team_by_user_sede(db, current_user, base_query)
     leaders = base_query.order_by(
         models.Persona.pastoral_sort_order.asc(),
-        models.Persona.is_main_pastor.desc(),
+        nullslast(models.Persona.is_main_pastor.desc()),
         models.Persona.nombre_completo.asc(),
     ).all()
     result = []
