@@ -44,21 +44,72 @@ function NosotrosStatsSection({
         <section
             data-testid="public-nosotros-stats"
             data-section-key="stats"
-            className="ccf-section-tight ccf-container py-6 md:py-10"
+            className="ccf-section-tight ccf-container py-8 md:py-16"
         >
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-8 md:gap-12 border-y border-site-outline-variant/15 py-8 md:py-12">
+            <style>{`
+                .ccf-stat-card {
+                    cursor: pointer;
+                    transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+                }
+                .ccf-stat-number {
+                    font-size: clamp(4.25rem, 8vw, 7.5rem);
+                    line-height: 0.95;
+                    font-weight: 900;
+                    letter-spacing: -0.04em;
+                    background: linear-gradient(135deg, var(--site-primary, #004581) 0%, var(--site-secondary, #018abd) 100%);
+                    -webkit-background-clip: text;
+                    -webkit-text-fill-color: transparent;
+                    display: inline-block;
+                    transform-origin: left bottom;
+                    transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), filter 0.4s ease;
+                    filter: drop-shadow(0 4px 14px rgba(0, 69, 129, 0.12));
+                    will-change: transform, filter;
+                }
+                .ccf-stat-card:hover .ccf-stat-number {
+                    transform: scale(1.1) translateY(-6px);
+                    filter: drop-shadow(0 16px 32px rgba(1, 138, 189, 0.45));
+                }
+                .ccf-stat-bar {
+                    height: 5px;
+                    width: 2.5rem;
+                    border-radius: 9999px;
+                    background: color-mix(in srgb, var(--site-primary, #004581) 35%, transparent);
+                    transition: width 0.4s cubic-bezier(0.16, 1, 0.3, 1), background-color 0.4s ease, box-shadow 0.4s ease;
+                }
+                .ccf-stat-card:hover .ccf-stat-bar {
+                    width: 5.5rem;
+                    background-color: var(--site-secondary, #018abd);
+                    box-shadow: 0 0 16px rgba(1, 138, 189, 0.6);
+                }
+                .ccf-stat-label {
+                    color: var(--site-outline, #535f70);
+                    transition: color 0.3s ease, transform 0.3s ease;
+                }
+                .ccf-stat-card:hover .ccf-stat-label {
+                    color: var(--site-on-surface, #181c20);
+                    transform: translateX(4px);
+                }
+            `}</style>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-8 md:gap-12 border-y border-site-outline-variant/15 py-10 md:py-16">
                 {stats.map((s, i) => (
                     <div
                         key={i}
-                        className="group relative flex flex-col cursor-default select-none transition-all duration-300"
+                        className="ccf-stat-card group relative flex flex-col cursor-pointer select-none"
                     >
-                        <p className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-black tracking-tight leading-none bg-gradient-to-br from-site-primary via-site-primary to-site-secondary/90 bg-clip-text text-transparent transition-all duration-500 group-hover:scale-105 group-hover:-translate-y-1 group-hover:from-site-secondary group-hover:to-site-primary group-hover:drop-shadow-[0_12px_24px_rgba(1,138,189,0.3)] origin-left">
+                        <span
+                            className="ccf-stat-number font-black origin-left"
+                            style={{
+                                fontSize: "clamp(4.25rem, 8vw, 7.5rem)",
+                                lineHeight: "0.95",
+                                letterSpacing: "-0.04em",
+                            }}
+                        >
                             {s.value}
-                        </p>
-                        <div className="h-1 w-8 rounded-full bg-site-primary/25 group-hover:w-16 group-hover:bg-site-secondary transition-all duration-500 mt-3" />
-                        <p className="text-xs sm:text-sm font-extrabold uppercase tracking-[0.18em] text-site-outline group-hover:text-site-on-surface transition-colors duration-300 mt-2">
+                        </span>
+                        <div className="ccf-stat-bar mt-4" />
+                        <span className="ccf-stat-label text-xs sm:text-sm md:text-base font-extrabold uppercase tracking-[0.18em] mt-3">
                             {s.label}
-                        </p>
+                        </span>
                     </div>
                 ))}
             </div>

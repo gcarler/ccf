@@ -654,3 +654,54 @@ html .ag-theme-quartz-dark {
   background-size: 200% 200%;
   animation: gradient-flow 3s ease infinite;
 }
+
+/* ── Massive Stat Numbers & Modern Hover (Quiénes Somos) ── */
+.ccf-stat-card {
+  cursor: pointer;
+  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.ccf-stat-number {
+  font-size: clamp(4.25rem, 8vw, 7.5rem);
+  line-height: 0.95;
+  font-weight: 900;
+  letter-spacing: -0.04em;
+  background: linear-gradient(135deg, var(--site-primary, #004581) 0%, var(--site-secondary, #018abd) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  display: inline-block;
+  transform-origin: left bottom;
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), filter 0.4s ease;
+  filter: drop-shadow(0 4px 14px rgba(0, 69, 129, 0.12));
+  will-change: transform, filter;
+}
+
+.ccf-stat-card:hover .ccf-stat-number {
+  transform: scale(1.1) translateY(-6px);
+  filter: drop-shadow(0 16px 32px rgba(1, 138, 189, 0.45));
+}
+
+.ccf-stat-bar {
+  height: 5px;
+  width: 2.5rem;
+  border-radius: 9999px;
+  background: color-mix(in srgb, var(--site-primary, #004581) 35%, transparent);
+  transition: width 0.4s cubic-bezier(0.16, 1, 0.3, 1), background-color 0.4s ease, box-shadow 0.4s ease;
+}
+
+.ccf-stat-card:hover .ccf-stat-bar {
+  width: 5.5rem;
+  background-color: var(--site-secondary, #018abd);
+  box-shadow: 0 0 16px rgba(1, 138, 189, 0.6);
+}
+
+.ccf-stat-label {
+  color: var(--site-outline, #535f70);
+  transition: color 0.3s ease, transform 0.3s ease;
+}
+
+.ccf-stat-card:hover .ccf-stat-label {
+  color: var(--site-on-surface, #181c20);
+  transform: translateX(4px);
+}
+
