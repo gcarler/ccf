@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import WorkspaceToolbar from '@/components/WorkspaceToolbar';
+import ConfirmActionDrawer from '@/components/ConfirmActionDrawer';
 import type { ViewType } from '@/components/ViewSwitcher';
 import { apiFetch } from '@/lib/http';
 import {
@@ -374,31 +375,17 @@ export default function MinisteriosPage() {
                 )}
             </AnimatePresence>
 
-            {/* Delete confirm global (grid view) */}
-            <AnimatePresence>
-                {deleteId !== null && !drawerOpen && (
-                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                        className="fixed inset-0 z-[110] bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
-                        <motion.div initial={{ scale: 0.92, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.92, opacity: 0 }}
-                            className="bg-[hsl(var(--bg-primary))] dark:bg-[var(--admin-bg-elevated)] rounded-lg border border-[hsl(var(--border))] dark:border-white/10 p-3 shadow-2xl max-w-sm w-full">
-                            <div className="size-7 bg-danger-soft dark:bg-[hsl(var(--danger))]/10 rounded-md flex items-center justify-center text-danger-text mb-4">
-                                <Trash2 size={20} />
-                            </div>
-                            <h3 className="text-base font-bold text-[hsl(var(--text-primary))] dark:text-white">¿Eliminar ministerio?</h3>
-                            <p className="text-sm text-[hsl(var(--text-secondary))] mt-1 mb-5">Esta acción no se puede deshacer.</p>
-                            <div className="flex gap-3">
-                                <button onClick={() => setDeleteId(null)} className="flex-1 py-3 rounded-md border border-[hsl(var(--border))] dark:border-white/10 text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5 transition-all">
-                                    Cancelar
-                                </button>
-                                <button onClick={() => handleDelete(deleteId!)}
-                                    className="flex-1 py-3 rounded-md bg-[hsl(var(--danger))] text-white text-xs font-semibold uppercase tracking-wide hover:bg-[hsl(var(--danger))] active:scale-95 transition-all shadow-lg shadow-[hsl(var(--danger)/20%)]">
-                                    Eliminar
-                                </button>
-                            </div>
-                        </motion.div>
-                    </motion.div>
-                )}
-            </AnimatePresence>
+            {/* Delete confirm Drawer */}
+            <ConfirmActionDrawer
+                action={deleteId !== null ? {
+                    title: '¿Eliminar ministerio?',
+                    description: 'Esta acción no se puede deshacer.',
+                    destructive: true,
+                    confirmLabel: 'Eliminar',
+                    onConfirm: () => handleDelete(deleteId),
+                } : null}
+                onClose={() => setDeleteId(null)}
+            />
         </div>
     );
 }

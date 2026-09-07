@@ -641,17 +641,42 @@ export default function IdentityManagementPage() {
                 </div>
             </WorkspaceDrawer>
 
-            {/* Password Reset Modal */}
-            {showResetModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-                    <div className="bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] dark:border-white/10 rounded-xl shadow-2xl w-full max-w-sm mx-4 p-5 space-y-4">
-                        <div className="flex items-center gap-2">
-                            <Key size={18} className="text-[hsl(var(--warning))]" />
-                            <h3 className="text-sm font-bold text-[hsl(var(--text-primary))] dark:text-white">Resetear Contraseña</h3>
-                        </div>
-                        <p className="text-xs text-[hsl(var(--text-secondary))]">
-                            Ingrese la nueva contraseña para <span className="font-semibold text-[hsl(var(--text-primary))] dark:text-white">{selectedUser?.username}</span>.
-                        </p>
+            {/* Password Reset Drawer */}
+            <WorkspaceDrawer
+                isOpen={showResetModal}
+                onClose={() => !saving && setShowResetModal(false)}
+                title="Resetear Contraseña"
+                subtitle={selectedUser?.username ? `Para ${selectedUser.username}` : undefined}
+                actions={
+                    <>
+                        <button
+                            type="button"
+                            onClick={() => setShowResetModal(false)}
+                            disabled={saving}
+                            className="px-4 py-2 text-xs font-bold text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] transition-colors"
+                        >
+                            Cancelar
+                        </button>
+                        <button
+                            type="button"
+                            disabled={saving || !resetPassword || resetPassword.length < 6}
+                            onClick={submitResetPassword}
+                            className="px-4 py-2 bg-[hsl(var(--primary))] text-white rounded-md text-xs font-semibold uppercase tracking-wide shadow-xl shadow-[hsl(var(--info)/20%)] flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
+                            Guardar
+                        </button>
+                    </>
+                }
+            >
+                <div className="space-y-4 py-2">
+                    <p className="text-xs text-[hsl(var(--text-secondary))]">
+                        Ingrese la nueva contraseña para <span className="font-semibold text-[hsl(var(--text-primary))] dark:text-white">{selectedUser?.username}</span>.
+                    </p>
+                    <div className="space-y-1.5">
+                        <label className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] block">
+                            Nueva contraseña
+                        </label>
                         <input
                             type="password"
                             value={resetPassword}
@@ -659,27 +684,11 @@ export default function IdentityManagementPage() {
                             placeholder="Mínimo 6 caracteres"
                             autoFocus
                             onKeyDown={e => { if (e.key === 'Enter') submitResetPassword(); if (e.key === 'Escape') setShowResetModal(false); }}
-                            className="w-full px-3 py-2 text-sm bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg outline-none focus:border-[hsl(var(--info)/100%)]"
+                            className="w-full px-3 py-2 text-sm bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg outline-none focus:border-[hsl(var(--info)/100%)] text-[hsl(var(--text-primary))] dark:text-white"
                         />
-                        <div className="flex justify-end gap-2">
-                            <button
-                                onClick={() => setShowResetModal(false)}
-                                className="px-3 py-2 text-xs font-bold text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] transition-colors"
-                            >
-                                Cancelar
-                            </button>
-                            <button
-                                disabled={saving || !resetPassword || resetPassword.length < 6}
-                                onClick={submitResetPassword}
-                                className="px-4 py-2 bg-[hsl(var(--primary))] text-white rounded-md text-xs font-semibold uppercase tracking-wide shadow-xl shadow-[hsl(var(--info)/20%)] flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                            >
-                                {saving ? <Loader2 className="animate-spin" size={14} /> : <Zap size={14} />}
-                                {saving ? 'Guardando...' : 'Confirmar'}
-                            </button>
-                        </div>
                     </div>
                 </div>
-            )}
+            </WorkspaceDrawer>
         </div>
     );
 }

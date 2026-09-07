@@ -4,6 +4,7 @@ import React, { useCallback, useEffect, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { apiFetch } from "@/lib/http";
 import WorkspaceToolbar from "@/components/WorkspaceToolbar";
+import ConfirmActionDrawer from "@/components/ConfirmActionDrawer";
 import {
     Wallet, Plus, LayoutDashboard, TrendingUp, X, Trash2, PencilLine, Save,
     Eye, EyeOff,
@@ -51,7 +52,6 @@ export default function FundsPage() {
     const [selected, setSelected] = useState<Fund | null>(null);
     const [saving, setSaving] = useState(false);
     const [deleteTarget, setDeleteTarget] = useState<Fund | null>(null);
-    const [deleting, setDeleting] = useState(false);
 
     // Form
     const [fName, setFName] = useState("");
@@ -117,7 +117,6 @@ export default function FundsPage() {
 
     const handleDelete = async () => {
         if (!deleteTarget) return;
-        setDeleting(true);
         try {
             await apiFetch(`/finance/admin/funds/${deleteTarget.id}`, { method: "DELETE", token });
             toast.success("Fondo eliminado");
@@ -125,8 +124,6 @@ export default function FundsPage() {
             loadFunds();
         } catch {
             toast.error("Error al eliminar fondo");
-        } finally {
-            setDeleting(false);
         }
     };
 
@@ -308,34 +305,17 @@ export default function FundsPage() {
                 )}
             </AnimatePresence>
 
-            {/* Delete Confirm Modal */}
-            <AnimatePresence>
-                {deleteTarget && (
-                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                        className="fixed inset-0 z-[110] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
-                        <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }}
-                            className="bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))] rounded-lg p-4 max-w-sm w-full shadow-2xl border border-[hsl(var(--border))] dark:border-white/10">
-                            <div className="size-7 rounded-lg bg-[hsl(var(--destructive)/0.08)] dark:bg-[hsl(var(--destructive)/0.1)] flex items-center justify-center text-[hsl(var(--destructive))] mb-5">
-                                <Trash2 size={24} />
-                            </div>
-                            <h3 className="text-lg font-bold text-[hsl(var(--text-primary))] dark:text-white mb-2">¿Eliminar fondo?</h3>
-                            <p className="text-sm text-[hsl(var(--text-secondary))] mb-3">
-                                Se eliminará <span className="font-bold">{deleteTarget.name}</span>. Esta acción no se puede deshacer.
-                            </p>
-                            <div className="flex gap-3">
-                                <button onClick={() => setDeleteTarget(null)}
-                                    className="flex-1 py-3 rounded-md border border-[hsl(var(--border))] dark:border-white/10 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] transition-all">
-                                    Cancelar
-                                </button>
-                                <button onClick={handleDelete} disabled={deleting}
-                                    className="flex-1 py-3 rounded-md bg-[hsl(var(--destructive))] text-white text-2xs font-semibold uppercase tracking-wide shadow-lg shadow-[hsl(var(--destructive))/0.2] hover:bg-[hsl(var(--destructive))] disabled:opacity-50 transition-all">
-                                    {deleting ? "Eliminando..." : "Sí, eliminar"}
-                                </button>
-                            </div>
-                        </motion.div>
-                    </motion.div>
-                )}
-            </AnimatePresence>
+            {/* Delete Confirm Drawer */}
+            <ConfirmActionDrawer
+                action={deleteTarget ? {
+                    title: '¿Eliminar fondo?',
+                    description: `Se eliminará ${deleteTarget.name}. Esta acción no se puede deshacer.`,
+                    destructive: true,
+                    confirmLabel: 'Sí, eliminar',
+                    onConfirm: handleDelete,
+                } : null}
+                onClose={() => setDeleteTarget(null)}
+            />
         </div>
     );
 }
