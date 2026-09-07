@@ -1492,10 +1492,14 @@ const CONTENT_LABELS: Record<string, string> = {
   about: "ℹ️ Quiénes Somos (Consolidado)",
 
   // Quiénes Somos — Campos individuales
+  vision_badge: "Insignia superior de Visión",
   vision_title: "Título de Visión",
   vision_text: "Texto de Visión",
+  vision_image: "Imagen de Visión (Borde Infinito Izquierdo)",
+  mision_badge: "Insignia superior de Misión",
   mision_title: "Título de Misión",
   mision_text: "Texto de Misión",
+  mision_image: "Imagen de Misión (Borde Infinito Derecho)",
   founder_label: "Etiqueta superior de fundadores",
   founder_title: "Título de fundadores",
   founder_title_accent: "Énfasis de título",

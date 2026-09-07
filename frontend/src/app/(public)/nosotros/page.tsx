@@ -127,10 +127,15 @@ function NosotrosVisionMisionSection({
     const raw = (section?.props_json as Record<string, unknown> | undefined) ?? {};
     const fallback = fallbackAbout ?? {};
 
-    const visionTitle = (raw.vision_title as string) ?? (fallback.vision_title as string) ?? "";
+    const visionTitle = (raw.vision_title as string) ?? (fallback.vision_title as string) ?? "¿A dónde vamos?";
     const visionText = (raw.vision_text as string) ?? (fallback.vision_text as string) ?? "";
-    const misionTitle = (raw.mision_title as string) ?? (fallback.mision_title as string) ?? "";
+    const visionBadge = (raw.vision_badge as string) ?? (fallback.vision_badge as string) ?? "Nuestra Visión";
+    const visionImage = (raw.vision_image as string) ?? (fallback.vision_image as string) ?? "/api/static/cms/public-site/76df8fc8fe0048b894ff73554e156fe6.webp";
+
+    const misionTitle = (raw.mision_title as string) ?? (fallback.mision_title as string) ?? "¿Por qué existimos?";
     const misionText = (raw.mision_text as string) ?? (fallback.mision_text as string) ?? "";
+    const misionBadge = (raw.mision_badge as string) ?? (fallback.mision_badge as string) ?? "Nuestra Misión";
+    const misionImage = (raw.mision_image as string) ?? (fallback.mision_image as string) ?? "/api/static/cms/public-site/267c556484f643b8a195189aae5960dc.webp";
 
     const hasVisionMission = Boolean(visionTitle || visionText || misionTitle || misionText);
     if (!hasVisionMission) return null;
@@ -139,61 +144,110 @@ function NosotrosVisionMisionSection({
         <section
             data-testid="public-nosotros-vision-mision"
             data-section-key="vision_mision"
-            className="ccf-section bg-site-surface-container-low"
+            className="w-full relative overflow-hidden"
         >
-            <div className="ccf-container grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
-                {/* Visión */}
-                {(visionTitle || visionText) && (
-                    <div className="ccf-card relative p-8 md:p-10 overflow-hidden bg-site-surface">
-                        <div className="absolute top-6 right-6 opacity-[0.06] text-site-primary">
-                            <Target size={100} />
-                        </div>
-                        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-site-primary/10 border border-site-primary/20 text-site-primary text-2xs font-bold uppercase tracking-widest mb-5">
-                            <Target size={11} /> Visión
-                        </div>
-                        {visionTitle && (
-                            <h2 className="ccf-headline text-2xl md:text-3xl font-black text-site-on-surface mb-4">
-                                {visionTitle}
-                            </h2>
-                        )}
-                        {visionText && (
-                            <RichText
-                                html={visionText}
-                                className="ccf-body text-base md:text-lg text-site-on-surface-variant [&_strong]:text-site-on-surface"
+            {/* ── BLOQUE 1: VISIÓN (Imagen a la izquierda desde el infinito, Texto a la derecha) ── */}
+            {(visionTitle || visionText) && (
+                <div className="w-full bg-site-surface border-b border-site-outline-variant/15 relative overflow-hidden">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 min-h-[580px] lg:min-h-[660px] xl:min-h-[720px]">
+                        {/* Columna Izquierda: Imagen que viene del infinito izquierdo del viewport */}
+                        <div className="relative w-full h-[380px] sm:h-[480px] lg:h-full min-h-[380px] lg:min-h-full overflow-hidden group">
+                            <Image
+                                src={visionImage}
+                                alt={visionTitle || "Nuestra Visión"}
+                                fill
+                                sizes="(max-width: 1024px) 100vw, 50vw"
+                                className="object-cover object-center transition-transform duration-700 ease-out group-hover:scale-105"
+                                priority
                             />
-                        )}
-                    </div>
-                )}
+                            {/* Gradiente de integración cinematográfica */}
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent lg:bg-gradient-to-r lg:from-transparent lg:via-transparent lg:to-site-surface/35 pointer-events-none" />
+                            {/* Badge flotante editorial */}
+                            <div className="absolute bottom-6 left-6 sm:bottom-8 sm:left-8 px-4 py-2.5 rounded-2xl backdrop-blur-md bg-black/45 border border-white/20 text-white shadow-2xl flex items-center gap-3">
+                                <div className="w-8 h-8 rounded-xl bg-site-primary/40 flex items-center justify-center border border-white/20 text-white">
+                                    <Target size={16} />
+                                </div>
+                                <div>
+                                    <p className="text-2xs font-extrabold uppercase tracking-widest text-white/75">Rumbo Estratégico</p>
+                                    <p className="text-xs font-black tracking-wide text-white">Comunidad Cristiana El Faro</p>
+                                </div>
+                            </div>
+                        </div>
 
-                {/* Misión */}
-                {(misionTitle || misionText) && (
-                    <div
-                        className="relative rounded-2xl p-8 md:p-10 overflow-hidden shadow-2xl"
-                        style={{
-                            background: "var(--site-hero-cta-gradient)",
-                            boxShadow: "0 20px 60px -10px var(--site-glow-intense)",
-                        }}
-                    >
-                        <div className="absolute top-6 right-6 opacity-10">
-                            <Sparkles size={100} className="text-white" />
+                        {/* Columna Derecha: Texto editorial */}
+                        <div className="flex flex-col justify-center px-6 sm:px-12 md:px-16 lg:px-16 xl:px-24 py-16 lg:py-24 bg-site-surface">
+                            <div className="max-w-xl">
+                                <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-site-primary/10 border border-site-primary/20 text-site-primary text-xs font-black uppercase tracking-widest mb-6 w-fit">
+                                    <Target size={13} /> {visionBadge}
+                                </div>
+                                {visionTitle && (
+                                    <h2 className="ccf-headline text-3xl sm:text-4xl md:text-5xl font-black text-site-on-surface tracking-tight leading-[1.15] mb-5">
+                                        {visionTitle}
+                                    </h2>
+                                )}
+                                <div className="h-1.5 w-16 rounded-full bg-gradient-to-r from-site-primary to-site-secondary mb-6" />
+                                {visionText && (
+                                    <RichText
+                                        html={visionText}
+                                        className="ccf-body text-base sm:text-lg md:text-xl text-site-on-surface-variant leading-relaxed [&_strong]:text-site-on-surface [&_strong]:font-black"
+                                    />
+                                )}
+                            </div>
                         </div>
-                        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/15 border border-white/20 text-white text-2xs font-bold uppercase tracking-widest mb-5">
-                            <Sparkles size={11} /> Misión
-                        </div>
-                        {misionTitle && (
-                            <h2 className="ccf-headline text-2xl md:text-3xl font-black text-white mb-4">
-                                {misionTitle}
-                            </h2>
-                        )}
-                        {misionText && (
-                            <RichText
-                                html={misionText}
-                                className="ccf-body text-base md:text-lg text-white/85 [&_strong]:text-white"
-                            />
-                        )}
                     </div>
-                )}
-            </div>
+                </div>
+            )}
+
+            {/* ── BLOQUE 2: MISIÓN (Texto a la izquierda, Imagen a la derecha hacia el infinito) ── */}
+            {(misionTitle || misionText) && (
+                <div className="w-full bg-site-surface-container-low relative overflow-hidden border-b border-site-outline-variant/15">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 min-h-[580px] lg:min-h-[660px] xl:min-h-[720px]">
+                        {/* Columna Izquierda: Texto editorial */}
+                        <div className="flex flex-col justify-center px-6 sm:px-12 md:px-16 lg:px-16 xl:px-24 py-16 lg:py-24 order-2 lg:order-1">
+                            <div className="max-w-xl lg:ml-auto">
+                                <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-site-secondary/15 border border-site-secondary/30 text-site-secondary text-xs font-black uppercase tracking-widest mb-6 w-fit">
+                                    <Sparkles size={13} /> {misionBadge}
+                                </div>
+                                {misionTitle && (
+                                    <h2 className="ccf-headline text-3xl sm:text-4xl md:text-5xl font-black text-site-on-surface tracking-tight leading-[1.15] mb-5">
+                                        {misionTitle}
+                                    </h2>
+                                )}
+                                <div className="h-1.5 w-16 rounded-full bg-gradient-to-r from-site-secondary to-site-primary mb-6" />
+                                {misionText && (
+                                    <RichText
+                                        html={misionText}
+                                        className="ccf-body text-base sm:text-lg md:text-xl text-site-on-surface-variant leading-relaxed [&_strong]:text-site-on-surface [&_strong]:font-black"
+                                    />
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Columna Derecha: Imagen que va hacia el infinito derecho del viewport */}
+                        <div className="relative w-full h-[380px] sm:h-[480px] lg:h-full min-h-[380px] lg:min-h-full overflow-hidden group order-1 lg:order-2">
+                            <Image
+                                src={misionImage}
+                                alt={misionTitle || "Nuestra Misión"}
+                                fill
+                                sizes="(max-width: 1024px) 100vw, 50vw"
+                                className="object-cover object-center transition-transform duration-700 ease-out group-hover:scale-105"
+                            />
+                            {/* Gradiente de integración cinematográfica */}
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent lg:bg-gradient-to-l lg:from-transparent lg:via-transparent lg:to-site-surface-container-low/35 pointer-events-none" />
+                            {/* Badge flotante editorial */}
+                            <div className="absolute bottom-6 right-6 sm:bottom-8 sm:right-8 px-4 py-2.5 rounded-2xl backdrop-blur-md bg-black/45 border border-white/20 text-white shadow-2xl flex items-center gap-3">
+                                <div className="w-8 h-8 rounded-xl bg-site-secondary/40 flex items-center justify-center border border-white/20 text-white">
+                                    <Sparkles size={16} />
+                                </div>
+                                <div className="text-right">
+                                    <p className="text-2xs font-extrabold uppercase tracking-widest text-white/75">Propósito en Acción</p>
+                                    <p className="text-xs font-black tracking-wide text-white">Luz y Esperanza a las Familias</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
         </section>
     );
 }
