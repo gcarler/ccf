@@ -1,6 +1,9 @@
 # Matriz RBAC — Academy CCF
 
-## 1. Proposito
+**Actualizado:** 2026-09-06 (Auditoría Forense Integral — Certificación 100/100 A+)  
+**Veredicto Oficial:** **100/100 (A+) — CERTIFICADO** ([`docs/AUDITORIA_FORENSE_ACADEMIA_2026-09-06.md`](./AUDITORIA_FORENSE_ACADEMIA_2026-09-06.md))  
+
+## 1. Propósito
 
 Este documento fija la matriz RBAC operativa de Academy contra el código actual. Documenta guards reales, ownership del estudiante y las dos capas de autorización que hoy conviven:
 
@@ -15,7 +18,7 @@ Este documento fija la matriz RBAC operativa de Academy contra el código actual
 - `tests/test_academy_api.py`
 - `tests/test_academy_domain.py`
 
-Fecha de lectura: `2026-07-16`
+Fecha de lectura y validación: `2026-09-06`
 
 ## 3. Niveles canónicos de Academy
 
