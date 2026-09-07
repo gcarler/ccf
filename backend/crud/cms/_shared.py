@@ -311,6 +311,7 @@ def _crud_scope_re_check_pastoral_profile(
         bloqueado con 404 defensivo.
     """
     from fastapi import HTTPException as _HTTPException
+
     from backend.core.permissions import normalize_role
 
     # 1. Pastores globales (sin sede fija asignada)
