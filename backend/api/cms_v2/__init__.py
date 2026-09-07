@@ -54,6 +54,9 @@ from backend.api.cms_v2 import (
     analytics_ops as _analytics,
 )
 from backend.api.cms_v2 import (
+    courses as _courses,
+)
+from backend.api.cms_v2 import (
     forms as _forms,
 )
 from backend.api.cms_v2 import (
@@ -139,6 +142,7 @@ SUBROUTERS = (
     _comments,
     _public_themes,
     _public_pastoral,
+    _courses,
 )
 
 for _mod in SUBROUTERS:

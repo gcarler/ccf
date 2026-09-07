@@ -387,6 +387,65 @@ export async function deleteCmsPastoralProfile(
   });
 }
 
+// ── Courses Management (CMS Builder & Public Courses) ──────────────────────
+
+export interface CmsCourse {
+  id: string;
+  code: string;
+  slug?: string;
+  title: string;
+  description?: string | null;
+  excerpt?: string | null;
+  instructor_name?: string | null;
+  modality?: string;
+  image_url?: string | null;
+  cta_text?: string | null;
+  is_published: boolean;
+  access_level?: string;
+  duration_hours?: number;
+  sort_order: number;
+  lessons_count?: number;
+  created_at?: string;
+}
+
+export async function getCmsCourses(token?: string | null): Promise<CmsCourse[]> {
+  return apiFetch<CmsCourse[]>(`/cms/v2/cms/courses`, { token });
+}
+
+export async function createCmsCourse(
+  payload: Partial<CmsCourse>,
+  token?: string | null,
+): Promise<CmsCourse> {
+  return apiFetch<CmsCourse>(`/cms/v2/cms/courses`, {
+    method: "POST",
+    token,
+    body: payload,
+  });
+}
+
+export async function updateCmsCourse(
+  courseId: string,
+  payload: Partial<CmsCourse>,
+  token?: string | null,
+): Promise<CmsCourse> {
+  return apiFetch<CmsCourse>(`/cms/v2/cms/courses/${courseId}`, {
+    method: "PATCH",
+    token,
+    body: payload,
+  });
+}
+
+export async function deleteCmsCourse(
+  courseId: string,
+  token?: string | null,
+): Promise<void> {
+  return apiFetch<void>(`/cms/v2/cms/courses/${courseId}`, {
+    method: "DELETE",
+    token,
+  });
+}
+
+
 // ── Section Types (platform-wide catalog) ─────────────────────────────────
 //
 // Endpoints are global (no site scoping). Read endpoints require cms:read;

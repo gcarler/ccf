@@ -44,6 +44,7 @@ class Course(Base):
     cohort_name = Column(String(100), nullable=True)
     certificate_type = Column(String(50), nullable=True)
     xp_per_lesson = Column(Integer, default=10, nullable=False)
+    sort_order = Column(Integer, default=0, nullable=False)
     image_url = Column(String(255), nullable=True)
     access_level = Column(String(20), nullable=False, default="persona", server_default="persona")
     created_at = Column(DateTime(timezone=True), default=_utcnow, nullable=False)

@@ -211,6 +211,7 @@ class PublicCursoResponse(BaseModel):
     imageUrl: Optional[str] = None
     syllabus: Optional[list] = None
     instructor: Optional[str] = None
+    sort_order: Optional[int] = 0
 
     model_config = {"from_attributes": True}
 
@@ -233,6 +234,7 @@ def _curso_to_public(curso: Course, lesson_count: int = 0) -> PublicCursoRespons
         imageUrl=curso.image_url,
         syllabus=curso.syllabus or [],
         instructor=curso.instructor_name,
+        sort_order=getattr(curso, "sort_order", 0) or 0,
     )
 
 
@@ -275,7 +277,7 @@ def public_list_courses(
     site_sede_id = _public_site_sede_id(db, site_key)
     if site_sede_id is not None:
         query = query.filter(or_(Course.sede_id == site_sede_id, Course.sede_id.is_(None)))
-    cursos = query.order_by(Course.created_at.desc(), Course.id).offset(skip).limit(limit).all()
+    cursos = query.order_by(Course.sort_order.asc(), Course.created_at.desc(), Course.id).offset(skip).limit(limit).all()
     lesson_counts = dict(
         db.query(Lesson.course_id, func.count(Lesson.id))
         .filter(Lesson.course_id.in_([course.id for course in cursos]), Lesson.deleted_at.is_(None))

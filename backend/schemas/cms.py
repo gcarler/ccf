@@ -1145,3 +1145,58 @@ class CmsFormSubmissionCreateV2(BaseModel):
     data: Dict[str, Any] = Field(default_factory=dict)
     captcha_token: Optional[str] = None
     hp: Optional[str] = None
+
+
+# ── CMS Courses Management ──────────────────────────────────────────────────
+
+
+class CmsCourseRead(BaseModel):
+    id: str
+    code: str
+    slug: Optional[str] = None
+    title: str
+    description: Optional[str] = None
+    excerpt: Optional[str] = None
+    instructor_name: Optional[str] = None
+    modality: Optional[str] = "online"
+    image_url: Optional[str] = None
+    cta_text: Optional[str] = "Inscribirme"
+    is_published: bool = False
+    access_level: str = "persona"
+    duration_hours: int = 0
+    sort_order: int = 0
+    lessons_count: int = 0
+    created_at: Optional[datetime] = None
+
+    model_config = orm_config
+
+
+class CmsCourseUpdate(BaseModel):
+    title: Optional[str] = None
+    description: Optional[str] = None
+    excerpt: Optional[str] = None
+    instructor_name: Optional[str] = None
+    modality: Optional[str] = None
+    image_url: Optional[str] = None
+    cta_text: Optional[str] = None
+    is_published: Optional[bool] = None
+    access_level: Optional[Literal["open", "persona", "advanced"]] = None
+    duration_hours: Optional[int] = None
+    sort_order: Optional[int] = None
+
+
+class CmsCourseCreate(BaseModel):
+    title: str
+    code: Optional[str] = None
+    slug: Optional[str] = None
+    description: Optional[str] = None
+    excerpt: Optional[str] = None
+    instructor_name: Optional[str] = None
+    modality: Optional[str] = "online"
+    image_url: Optional[str] = None
+    cta_text: Optional[str] = "Inscribirme"
+    is_published: Optional[bool] = True
+    access_level: Optional[Literal["open", "persona", "advanced"]] = "persona"
+    duration_hours: Optional[int] = 0
+    sort_order: Optional[int] = 0
+
