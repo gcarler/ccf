@@ -22,9 +22,9 @@ import type {
 } from '@/types/crm';
 
 const CANAL_META: Record<CanalEnvio, { label: string; icon: React.ElementType; color: string; bg: string }> = {
-  WHATSAPP: { label: 'WhatsApp', icon: MessageSquare, color: 'text-[hsl(var(--success))] dark:text-[hsl(var(--success))]', bg: 'bg-[hsl(var(--success-muted))] dark:bg-[hsl(var(--success)/0.2)]' },
-  EMAIL: { label: 'Email', icon: Mail, color: 'text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))]', bg: 'bg-[hsl(var(--info-muted))] dark:bg-[hsl(var(--primary)/0.2)]' },
-  SMS: { label: 'SMS', icon: Send, color: 'text-[hsl(var(--warning))] dark:text-[hsl(var(--warning))]', bg: 'bg-[hsl(var(--warning-muted))] dark:bg-[hsl(var(--warning)/0.2)]' },
+  WHATSAPP: { label: 'WhatsApp', icon: MessageSquare, color: 'text-[hsl(var(--success))]', bg: 'bg-[hsl(var(--success)/0.1)]' },
+  EMAIL: { label: 'Email', icon: Mail, color: 'text-[hsl(var(--primary))]', bg: 'bg-[hsl(var(--primary)/0.1)]' },
+  SMS: { label: 'SMS', icon: Send, color: 'text-[hsl(var(--warning))]', bg: 'bg-[hsl(var(--warning)/0.1)]' },
 };
 
 interface ResourceBankGalleryProps {
@@ -133,7 +133,7 @@ export default function ResourceBankGallery({
               value={search}
               onChange={e => setSearch(e.target.value)}
               placeholder="Buscar plantillas…"
-              className="w-full pl-9 pr-3 h-9 text-xs rounded-lg bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 text-[hsl(var(--text-primary))] dark:text-white placeholder:text-[hsl(var(--text-secondary))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.4)]"
+              className="w-full pl-9 pr-3 h-9 text-xs rounded-lg bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] text-[hsl(var(--text-primary))] placeholder:text-[hsl(var(--text-secondary))] focus:outline-hidden focus:ring-2 focus:ring-[hsl(var(--primary)/0.3)] transition-all"
             />
           </div>
           <div className="flex gap-2 overflow-x-auto pb-1 sm:pb-0">
@@ -142,13 +142,13 @@ export default function ResourceBankGallery({
               className={clsx(
                 'shrink-0 h-9 px-3 rounded-lg text-xs font-medium transition-colors',
                 selectedCategory === null
-                  ? 'bg-[hsl(var(--primary))] text-white'
-                  : 'bg-[hsl(var(--surface-2))] dark:bg-white/10 text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-3))] dark:hover:bg-white/20'
+                  ? 'bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))]'
+                  : 'bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-3))] hover:text-[hsl(var(--text-primary))]'
               )}
             >
               Todas
             </button>
-                      {categories.map(cat => (
+            {categories.map(cat => (
               <button
                 key={cat.nombre}
                 onClick={() =>
@@ -157,32 +157,32 @@ export default function ResourceBankGallery({
                 className={clsx(
                   'shrink-0 h-9 px-3 rounded-lg text-xs font-medium transition-colors flex items-center gap-1.5',
                   selectedCategory === cat.nombre
-                    ? 'bg-[hsl(var(--primary))] text-white'
-                    : 'bg-[hsl(var(--surface-2))] dark:bg-white/10 text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-3))] dark:hover:bg-white/20'
+                    ? 'bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))]'
+                    : 'bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-3))] hover:text-[hsl(var(--text-primary))]'
                 )}
-                >
-                  <span
-                    className="size-2 rounded-full"
-                  style={{ background: cat.color_ui_hex ?? '#6B7280' }}
-                  />
-                  {cat.nombre}
-                  <span className="text-2xs opacity-70">({categoryCounts.get(cat.nombre) ?? 0})</span>
-                </button>
-              ))}
+              >
+                <span
+                  className="size-2 rounded-full"
+                  style={{ background: cat.color_ui_hex ?? 'hsl(var(--text-secondary))' }}
+                />
+                {cat.nombre}
+                <span className="text-2xs opacity-70">({categoryCounts.get(cat.nombre) ?? 0})</span>
+              </button>
+            ))}
           </div>
         </div>
 
         {/* Content */}
         <div className="flex-1 overflow-y-auto p-6">
           {!loading && error && (
-            <div className="mb-4 flex items-center justify-between gap-3 rounded-lg border border-[hsl(var(--warning)/0.2)] bg-[hsl(var(--warning-muted))] px-4 py-3 text-[hsl(var(--warning))] dark:border-[hsl(var(--warning)/0.2)] dark:bg-[hsl(var(--warning)/0.1)] dark:text-[hsl(var(--warning))]">
+            <div className="mb-4 flex items-center justify-between gap-3 rounded-lg border border-[hsl(var(--warning)/0.3)] bg-[hsl(var(--warning)/0.1)] px-4 py-3 text-[hsl(var(--warning))]">
               <div>
                 <p className="text-xs font-bold uppercase tracking-wide">Banco de recursos sin respuesta</p>
                 <p className="text-xs">{error}</p>
               </div>
               <button
                 onClick={() => setReloadKey(key => key + 1)}
-                className="rounded-md border border-[hsl(var(--warning)/0.3)] px-3 py-1.5 text-xs font-bold uppercase tracking-wide hover:bg-[hsl(var(--warning-muted))] dark:border-[hsl(var(--warning)/0.4)] dark:hover:bg-[hsl(var(--warning)/0.2)]"
+                className="rounded-md border border-[hsl(var(--warning)/0.4)] px-3 py-1.5 text-xs font-bold uppercase tracking-wide hover:bg-[hsl(var(--warning)/0.2)] transition-colors"
               >
                 Reintentar
               </button>
@@ -198,7 +198,7 @@ export default function ResourceBankGallery({
 
           {!loading && !error && filteredTemplates.length === 0 && (
             <div className="flex flex-col items-center justify-center py-16 text-center">
-              <BookOpen size={40} className="text-[hsl(var(--text-secondary))] dark:text-white/20 mb-3" />
+              <BookOpen size={40} className="text-[hsl(var(--text-secondary))] mb-3 opacity-30" />
               <p className="text-sm font-medium text-[hsl(var(--text-secondary))]">No se encontraron plantillas</p>
               <p className="text-xs text-[hsl(var(--text-secondary))] mt-1">Prueba con otro término de búsqueda</p>
             </div>
@@ -211,7 +211,7 @@ export default function ResourceBankGallery({
               return (
                 <div
                   key={`${tpl.categoria}-${tpl.titulo}`}
-                  className="group rounded-xl border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-white/5 p-4 hover:border-[hsl(var(--primary)/0.5)] hover:shadow-lg transition-all flex flex-col"
+                  className="group rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-4 hover:border-[hsl(var(--primary)/0.5)] hover:shadow-md transition-all flex flex-col"
                 >
                   <div className="flex items-start justify-between gap-2 mb-2">
                     <div className="flex items-center gap-1.5">
@@ -236,7 +236,7 @@ export default function ResourceBankGallery({
                     </span>
                   </div>
 
-                  <h3 className="text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-white mb-2">
+                  <h3 className="text-sm font-semibold text-[hsl(var(--text-primary))] mb-2">
                     {tpl.titulo ?? 'Plantilla sin título'}
                   </h3>
 
@@ -249,7 +249,7 @@ export default function ResourceBankGallery({
                       {(tpl.variables_requeridas ?? []).map(v => (
                         <span
                           key={v}
-                          className="text-2xs font-mono bg-[hsl(var(--surface-2))] dark:bg-white/10 text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] px-1.5 py-0.5 rounded"
+                          className="text-2xs font-mono bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))] px-1.5 py-0.5 rounded"
                         >
                           {'{{' + v + '}}'}
                         </span>
@@ -260,7 +260,7 @@ export default function ResourceBankGallery({
                   <button
                     onClick={() => applyTemplate(tpl)}
                     disabled={applying === tpl.titulo}
-                    className="w-full h-8 rounded-lg bg-[hsl(var(--primary))] text-white text-xs font-medium hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-1.5 transition-opacity"
+                    className="w-full h-8 rounded-lg bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] text-xs font-medium hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-1.5 transition-opacity"
                   >
                     {applying === tpl.titulo ? (
                       <>

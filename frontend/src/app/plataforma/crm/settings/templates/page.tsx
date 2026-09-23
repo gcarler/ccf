@@ -96,12 +96,12 @@ export default function TemplatesPage() {
     <div className="p-8 max-w-6xl mx-auto">
       <div className="flex justify-between items-center mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-[hsl(var(--text-primary))] dark:text-white">Plantillas de Mensajes</h1>
+          <h1 className="text-2xl font-bold text-[hsl(var(--text-primary))]">Plantillas de Mensajes</h1>
           <p className="text-sm text-[hsl(var(--text-secondary))]">Configura plantillas para WhatsApp, Email y SMS.</p>
         </div>
         <button
           onClick={() => { setFormData({ canal: "WHATSAPP", variables_requeridas: [] }); setIsModalOpen(true); }}
-          className="bg-[hsl(var(--info))] hover:bg-[hsl(var(--info))] text-white px-4 py-2 rounded-md font-medium"
+          className="bg-[hsl(var(--primary))] hover:opacity-90 text-[hsl(var(--primary-foreground))] px-4 py-2 rounded-md font-medium transition-opacity"
         >
           Nueva Plantilla
         </button>
@@ -109,28 +109,28 @@ export default function TemplatesPage() {
 
       {loading ? (
         <div className="flex items-center justify-center py-10 gap-3">
-          <Loader2 size={20} className="animate-spin text-info-text" />
+          <Loader2 size={20} className="animate-spin text-[hsl(var(--primary))]" />
           <span className="text-sm text-[hsl(var(--text-secondary))]">Cargando plantillas...</span>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {plantillas.map(p => (
-            <div key={p.id} className="bg-[hsl(var(--surface-1))] dark:bg-[#1E1F21] rounded-lg shadow-sm border border-[hsl(var(--border))] dark:border-white/5 p-5 flex flex-col justify-between">
+            <div key={p.id} className="bg-[hsl(var(--surface-1))] rounded-lg shadow-xs border border-[hsl(var(--border))] p-5 flex flex-col justify-between">
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-xs font-semibold bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))] dark:bg-white/10 px-2 py-1 rounded">
+                  <span className="text-xs font-semibold bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))] px-2 py-1 rounded">
                     {p.canal}
                   </span>
                 </div>
-                <h3 className="text-lg font-semibold text-[hsl(var(--text-primary))] dark:text-white">{p.titulo}</h3>
+                <h3 className="text-lg font-semibold text-[hsl(var(--text-primary))]">{p.titulo}</h3>
                 <p className="text-sm text-[hsl(var(--text-secondary))] mt-2 line-clamp-3">
                   {p.contenido_texto}
                 </p>
               </div>
-              <div className="mt-4 pt-4 border-t border-[hsl(var(--border))] dark:border-white/5 flex justify-end">
+              <div className="mt-4 pt-4 border-t border-[hsl(var(--border))] flex justify-end">
                 <button
                   onClick={() => { setFormData(p); setIsModalOpen(true); }}
-                  className="text-sm text-info-text hover:text-info-text dark:text-[hsl(var(--info))] font-medium"
+                  className="text-sm text-[hsl(var(--primary))] hover:underline font-medium transition-all"
                 >
                   Editar
                 </button>
@@ -138,7 +138,7 @@ export default function TemplatesPage() {
             </div>
           ))}
           {plantillas.length === 0 && (
-            <div className="col-span-full text-center py-12 bg-[hsl(var(--surface-2))] rounded-lg border border-dashed border-[hsl(var(--border))] dark:border-white/10">
+            <div className="col-span-full text-center py-12 bg-[hsl(var(--surface-2))] rounded-lg border border-dashed border-[hsl(var(--border))]">
               <p className="text-[hsl(var(--text-secondary))]">No hay plantillas creadas.</p>
             </div>
           )}

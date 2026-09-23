@@ -181,7 +181,7 @@ export default function CrmSettingsPage() {
                 <button
                     onClick={handleSave}
                     disabled={isSaving}
-                    className="flex items-center gap-2 bg-[hsl(var(--primary))] px-4 py-1.5 rounded-lg text-xs font-bold tracking-wide text-white hover:bg-[hsl(var(--primary))] transition-all uppercase shadow-xl shadow-[hsl(var(--info)/20%)] disabled:opacity-50 active:scale-95"
+                    className="flex items-center gap-2 bg-[hsl(var(--primary))] px-4 py-1.5 rounded-lg text-xs font-bold tracking-wide text-[hsl(var(--primary-foreground))] hover:opacity-90 transition-all uppercase shadow-xl shadow-[hsl(var(--primary)/0.2)] disabled:opacity-50 active:scale-95"
                 >
                     {isSaving ? <SpinnerIcon className="animate-spin" size={14} /> : <Save size={14} />}
                     {isSaving ? 'Sincronizando...' : 'Guardar Cambios'}
@@ -193,12 +193,12 @@ export default function CrmSettingsPage() {
                 {/* 1. Header */}
                 <div className="flex flex-col space-y-1">
                     <div className="flex items-center gap-2 mb-2">
-                        <div className="inline-flex items-center gap-1.5 px-2 py-0.5 bg-[hsl(var(--danger-muted))] dark:bg-[hsl(var(--danger))]/20 text-danger-text dark:text-[hsl(var(--danger))] rounded-md text-2xs font-bold uppercase tracking-wide">
+                        <div className="inline-flex items-center gap-1.5 px-2 py-0.5 bg-[hsl(var(--destructive)/0.1)] text-[hsl(var(--destructive))] rounded-md text-2xs font-bold uppercase tracking-wide">
                             <Shield size={10} /> Privilegios Root
                         </div>
                     </div>
-                    <h1 className="text-base font-bold text-[hsl(var(--text-primary))] dark:text-white tracking-tight">Control Maestro</h1>
-                    <p className="text-xs font-medium text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">Administra los parámetros base, integraciones y seguridad del ecosistema.</p>
+                    <h1 className="text-base font-bold text-[hsl(var(--text-primary))] tracking-tight">Control Maestro</h1>
+                    <p className="text-xs font-medium text-[hsl(var(--text-secondary))]">Administra los parámetros base, integraciones y seguridad del ecosistema.</p>
                 </div>
 
                 {/* 2. Settings Grid Layout */}
@@ -217,9 +217,9 @@ export default function CrmSettingsPage() {
                     <motion.div variants={itemVariants} initial="hidden" animate="show" className="lg:col-span-3">
                         <AnimatePresence mode="wait">
                             {activeSection === 'general' && (
-                                <motion.div key="general" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-3 bg-[hsl(var(--surface-1))] dark:bg-[#1E1F21] rounded-lg border border-[hsl(var(--border))] dark:border-white/5 p-4 md:p-4 shadow-sm">
-                                    <div className="space-y-1 border-b border-[hsl(var(--border))] dark:border-white/5 pb-4">
-                                        <h3 className="text-sm font-bold text-[hsl(var(--text-primary))] dark:text-white">Parámetros de Identidad</h3>
+                                <motion.div key="general" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-3 bg-[hsl(var(--surface-1))] rounded-lg border border-[hsl(var(--border))] p-4 md:p-4 shadow-xs">
+                                    <div className="space-y-1 border-b border-[hsl(var(--border))] pb-4">
+                                        <h3 className="text-sm font-bold text-[hsl(var(--text-primary))]">Parámetros de Identidad</h3>
                                         <p className="text-sm text-[hsl(var(--text-secondary))] font-medium">Define cómo se identifica tu ministerio en reportes y correos.</p>
                                     </div>
 
@@ -228,7 +228,7 @@ export default function CrmSettingsPage() {
                                         <SettingInput disabled={!canEditCrm} label="Email de Respuesta Público" value={config.contactEmail as string} onChange={(val: string) => setConfig({...config, contactEmail: val})} />
                                         <div className="space-y-1.5">
                                             <label className="text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide pl-1">Zona Horaria Base</label>
-                                            <select disabled={!canEditCrm} className="w-full bg-[hsl(var(--surface-1))] hover:bg-[hsl(var(--surface-2))] dark:bg-black/20 dark:hover:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-md px-4 py-2.5 text-xs font-medium text-[hsl(var(--text-primary))] dark:text-white outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.3] transition-all appearance-none cursor-pointer disabled:opacity-50" value={config.timezone as string} onChange={e => setConfig({...config, timezone: e.target.value})}>
+                                            <select disabled={!canEditCrm} className="w-full bg-[hsl(var(--surface-1))] hover:bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] rounded-md px-4 py-2.5 text-xs font-medium text-[hsl(var(--text-primary))] outline-hidden focus:ring-2 focus:ring-[hsl(var(--primary)/0.3)] transition-all appearance-none cursor-pointer disabled:opacity-50" value={config.timezone as string} onChange={e => setConfig({...config, timezone: e.target.value})}>
                                                 <option value="America/Bogota">Bogotá (GMT-5)</option>
                                                 <option value="America/New_York">New York (GMT-4)</option>
                                                 <option value="Europe/Madrid">Madrid (GMT+2)</option>
@@ -239,32 +239,32 @@ export default function CrmSettingsPage() {
                             )}
 
                             {activeSection === 'integrations' && (
-                                <motion.div key="integrations" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-3 bg-[hsl(var(--surface-1))] dark:bg-[#1E1F21] rounded-lg border border-[hsl(var(--border))] dark:border-white/5 p-4 md:p-4 shadow-sm">
-                                    <div className="space-y-1 border-b border-[hsl(var(--border))] dark:border-white/5 pb-4">
-                                        <h3 className="text-sm font-bold text-[hsl(var(--text-primary))] dark:text-white">Pasarelas de Conexión</h3>
+                                <motion.div key="integrations" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-3 bg-[hsl(var(--surface-1))] rounded-lg border border-[hsl(var(--border))] p-4 md:p-4 shadow-xs">
+                                    <div className="space-y-1 border-b border-[hsl(var(--border))] pb-4">
+                                        <h3 className="text-sm font-bold text-[hsl(var(--text-primary))]">Pasarelas de Conexión</h3>
                                         <p className="text-sm text-[hsl(var(--text-secondary))] font-medium">Habilita canales oficiales para mensajería y automatizaciones.</p>
                                     </div>
 
                                     <div className="space-y-4">
                                         <ToggleSetting
                                             disabled={!canEditCrm}
-                                            icon={Smartphone} color="text-[hsl(var(--success))] bg-success-soft dark:bg-[hsl(var(--success))]/10" title="Canal de WhatsApp Business"
+                                            icon={Smartphone} color="text-[hsl(var(--success))] bg-[hsl(var(--success)/0.1)]" title="Canal de WhatsApp Business"
                                             desc="Habilita envío de notificaciones y seguimiento automático."
                                             active={Boolean(config.enableWhatsApp)} onToggle={(v: boolean) => setConfig({...config, enableWhatsApp: v})}
                                         />
                                         <ToggleSetting
                                             disabled={!canEditCrm}
-                                            icon={Smartphone} color="text-[hsl(var(--primary))] bg-info-soft dark:bg-[hsl(var(--info))]/10" title="Notificaciones SMS (Twilio)"
+                                            icon={Smartphone} color="text-[hsl(var(--primary))] bg-[hsl(var(--primary)/0.1)]" title="Notificaciones SMS (Twilio)"
                                             desc="Para alertas urgentes cuando no hay internet."
                                             active={Boolean(config.enableSMS)} onToggle={(v: boolean) => setConfig({...config, enableSMS: v})}
                                         />
                                         {Boolean(config.enableSMS) && (
-                                            <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} className="pl-4 ml-4 border-l-2 border-[hsl(var(--border))] dark:border-white/10 py-2 space-y-4">
+                                            <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} className="pl-4 ml-4 border-l-2 border-[hsl(var(--border))] py-2 space-y-4">
                                                 <SettingInput disabled={!canEditCrm} label="Twilio Account SID" value={config.twilioApiKey as string} onChange={(v: string) => setConfig({...config, twilioApiKey: v})} placeholder="ACxxxxxxxxxxxxxxxx" />
                                                 <SettingInput disabled={!canEditCrm} label="Auth Token" value="••••••••••••••••" onChange={() => {}} type="password" />
                                             </motion.div>
                                         )}
-                                        <div className="pt-4 mt-2 border-t border-[hsl(var(--border))] dark:border-white/5">
+                                        <div className="pt-4 mt-2 border-t border-[hsl(var(--border))]">
                                             <SettingInput disabled={!canEditCrm} label="Servidor SMTP Principal" value={config.smtpServer as string} onChange={(v: string) => setConfig({...config, smtpServer: v})} placeholder="smtp.mail.ccf.org" />
                                         </div>
                                     </div>
@@ -273,32 +273,32 @@ export default function CrmSettingsPage() {
 
                             {activeSection === 'security' && (
                                 <motion.div key="security" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-3">
-                                    <div className="bg-[hsl(var(--surface-1))] dark:bg-[#1E1F21] rounded-lg border border-[hsl(var(--border))] dark:border-white/5 p-4 md:p-4 shadow-sm space-y-3">
-                                        <div className="space-y-1 border-b border-[hsl(var(--border))] dark:border-white/5 pb-4">
-                                            <h3 className="text-sm font-bold text-[hsl(var(--text-primary))] dark:text-white">Políticas de Seguridad</h3>
+                                    <div className="bg-[hsl(var(--surface-1))] rounded-lg border border-[hsl(var(--border))] p-4 md:p-4 shadow-xs space-y-3">
+                                        <div className="space-y-1 border-b border-[hsl(var(--border))] pb-4">
+                                            <h3 className="text-sm font-bold text-[hsl(var(--text-primary))]">Políticas de Seguridad</h3>
                                             <p className="text-sm text-[hsl(var(--text-secondary))] font-medium">Controla la infraestructura y salvaguardia de datos.</p>
                                         </div>
 
-                                        <div className="flex items-center justify-between p-4 rounded-md bg-[hsl(var(--surface-1))] dark:bg-white/[0.02] border border-[hsl(var(--border))] dark:border-white/5">
+                                        <div className="flex items-center justify-between p-4 rounded-md bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))]">
                                             <div className="flex items-start gap-4">
-                                                <Database size={18} className="text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] mt-0.5" />
+                                                <Database size={18} className="text-[hsl(var(--primary))] mt-0.5" />
                                                 <div>
-                                                    <h4 className="text-xs font-bold text-[hsl(var(--text-primary))] dark:text-white">Respaldo Automático Base de Datos</h4>
+                                                    <h4 className="text-xs font-bold text-[hsl(var(--text-primary))]">Respaldo Automático Base de Datos</h4>
                                                     <p className="text-sm text-[hsl(var(--text-secondary))] mt-0.5">MESH encripta y guarda un backup cada 24h.</p>
                                                 </div>
                                             </div>
-                                            <span className="px-2 py-1 bg-[hsl(var(--success-muted))] dark:bg-[hsl(var(--success))]/30 text-success-text dark:text-[hsl(var(--success))] rounded-md text-2xs font-bold uppercase tracking-wide">Activo</span>
+                                            <span className="px-2 py-1 bg-[hsl(var(--success)/0.1)] text-[hsl(var(--success))] rounded-md text-2xs font-bold uppercase tracking-wide">Activo</span>
                                         </div>
 
-                                        <div className="flex items-center justify-between p-4 rounded-md bg-danger-soft dark:bg-[hsl(var(--danger))]/5 border border-[hsl(var(--danger)/20%)] dark:border-[hsl(var(--danger)/100%)]/20 mt-4">
+                                        <div className="flex items-center justify-between p-4 rounded-md bg-[hsl(var(--destructive)/0.08)] border border-[hsl(var(--destructive)/0.2)] mt-4">
                                             <div className="flex items-start gap-4">
-                                                <AlertTriangle size={18} className="text-danger-text dark:text-[hsl(var(--danger))] mt-0.5" />
+                                                <AlertTriangle size={18} className="text-[hsl(var(--destructive))] mt-0.5" />
                                                 <div>
-                                                    <h4 className="text-xs font-bold text-danger-text dark:text-[hsl(var(--danger))]">Purga del Sistema</h4>
-                                                    <p className="text-sm text-danger-text/70 dark:text-[hsl(var(--danger))]/80 mt-0.5">Atención: esto borrará todos los registros de personas permanentemente.</p>
+                                                    <h4 className="text-xs font-bold text-[hsl(var(--destructive))]">Purga del Sistema</h4>
+                                                    <p className="text-sm text-[hsl(var(--destructive)/0.8)] mt-0.5">Atención: esto borrará todos los registros de personas permanentemente.</p>
                                                 </div>
                                             </div>
-                                            <button className="px-3 py-1.5 bg-[hsl(var(--danger))] hover:bg-[hsl(var(--danger))] text-white rounded-lg text-xs font-bold shadow-sm transition-all active:scale-95 shrink-0">
+                                            <button className="px-3 py-1.5 bg-[hsl(var(--destructive))] hover:opacity-90 text-[hsl(var(--destructive-foreground))] rounded-lg text-xs font-bold shadow-xs transition-all active:scale-95 shrink-0">
                                                 Purga Manual
                                             </button>
                                         </div>
@@ -307,33 +307,33 @@ export default function CrmSettingsPage() {
                             )}
 
                             {activeSection === 'notifications' && (
-                                <motion.div key="notifications" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-3 bg-[hsl(var(--surface-1))] dark:bg-[#1E1F21] rounded-lg border border-[hsl(var(--border))] dark:border-white/5 p-4 md:p-4 shadow-sm">
+                                <motion.div key="notifications" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-3 bg-[hsl(var(--surface-1))] rounded-lg border border-[hsl(var(--border))] p-4 md:p-4 shadow-xs">
                                     <div className="flex flex-col items-center justify-center p-4 text-center text-[hsl(var(--text-secondary))]">
                                         <Bell size={32} className="mb-4 opacity-50 text-[hsl(var(--text-secondary))]" />
-                                        <h4 className="text-xs font-bold mb-1 text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">Sin notificaciones configuradas</h4>
+                                        <h4 className="text-xs font-bold mb-1 text-[hsl(var(--text-primary))]">Sin notificaciones configuradas</h4>
                                         <p className="text-sm">Las preferencias de alerta de sistema aparecerán aquí.</p>
                                     </div>
                                 </motion.div>
                             )}
 
                             {activeSection === 'consolidation' && (
-                                <motion.div key="consolidation" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-3 bg-[hsl(var(--surface-1))] dark:bg-[#1E1F21] rounded-lg border border-[hsl(var(--border))] dark:border-white/5 p-4 md:p-4 shadow-sm">
-                                    <div className="space-y-1 border-b border-[hsl(var(--border))] dark:border-white/5 pb-4">
-                                        <h3 className="text-sm font-bold text-[hsl(var(--text-primary))] dark:text-white">Cargos de Consolidación</h3>
+                                <motion.div key="consolidation" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-3 bg-[hsl(var(--surface-1))] rounded-lg border border-[hsl(var(--border))] p-4 md:p-4 shadow-xs">
+                                    <div className="space-y-1 border-b border-[hsl(var(--border))] pb-4">
+                                        <h3 className="text-sm font-bold text-[hsl(var(--text-primary))]">Cargos de Consolidación</h3>
                                         <p className="text-sm text-[hsl(var(--text-secondary))] font-medium">Define los roles nativos que operan el seguimiento de personas.</p>
                                     </div>
 
                                     <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
-                                        <div className="space-y-4 p-4 rounded-md bg-[hsl(var(--surface-1))] dark:bg-white/[0.02] border border-[hsl(var(--border))] dark:border-white/5">
+                                        <div className="space-y-4 p-4 rounded-md bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))]">
                                             <div className="flex items-center justify-between">
-                                                <h4 className="text-xs font-bold text-[hsl(var(--text-primary))] dark:text-white">
+                                                <h4 className="text-xs font-bold text-[hsl(var(--text-primary))]">
                                                     {editingPositionId ? 'Editar cargo' : 'Nuevo cargo'}
                                                 </h4>
                                                 {editingPositionId && (
                                                     <button
                                                         type="button"
                                                         onClick={resetPositionForm}
-                                                        className="text-xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] dark:hover:text-[hsl(var(--text-secondary))]"
+                                                        className="text-xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))]"
                                                     >
                                                         Cancelar
                                                     </button>
@@ -348,10 +348,10 @@ export default function CrmSettingsPage() {
                                                     value={positionForm.description}
                                                     onChange={(e) => setPositionForm({ ...positionForm, description: e.target.value })}
                                                     rows={4}
-                                                    className="w-full bg-[hsl(var(--surface-1))] hover:bg-[hsl(var(--surface-2))] dark:bg-black/20 dark:hover:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-md px-4 py-2.5 text-xs font-medium text-[hsl(var(--text-primary))] dark:text-white outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.3] transition-all placeholder:text-[hsl(var(--text-secondary))]"
+                                                    className="w-full bg-[hsl(var(--surface-1))] hover:bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] rounded-md px-4 py-2.5 text-xs font-medium text-[hsl(var(--text-primary))] outline-hidden focus:ring-2 focus:ring-[hsl(var(--primary)/0.3)] transition-all placeholder:text-[hsl(var(--text-secondary))]"
                                                 />
                                             </div>
-                                            <label className="flex items-center gap-3 text-xs font-medium text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">
+                                            <label className="flex items-center gap-3 text-xs font-medium text-[hsl(var(--text-primary))]">
                                                 <input
                                                     disabled={!canEditCrm}
                                                     type="checkbox"
@@ -366,7 +366,7 @@ export default function CrmSettingsPage() {
                                                     type="button"
                                                     onClick={handleSavePosition}
                                                     disabled={isCreatingPosition || !positionForm.name.trim()}
-                                                    className="inline-flex items-center justify-center gap-2 rounded-md bg-[hsl(var(--primary))] px-4 py-2 text-xs font-bold uppercase tracking-wide text-white hover:bg-[hsl(var(--primary))] transition-all disabled:opacity-50"
+                                                    className="inline-flex items-center justify-center gap-2 rounded-md bg-[hsl(var(--primary))] px-4 py-2 text-xs font-bold uppercase tracking-wide text-[hsl(var(--primary-foreground))] hover:opacity-90 transition-all disabled:opacity-50"
                                                 >
                                                     {isCreatingPosition ? <SpinnerIcon className="animate-spin" size={14} /> : <Plus size={14} />}
                                                     {editingPositionId ? 'Guardar cambios' : 'Crear cargo'}
@@ -374,9 +374,9 @@ export default function CrmSettingsPage() {
                                             )}
                                         </div>
 
-                                        <div className="space-y-4 p-4 rounded-md bg-[hsl(var(--surface-1))] dark:bg-white/[0.02] border border-[hsl(var(--border))] dark:border-white/5">
+                                        <div className="space-y-4 p-4 rounded-md bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))]">
                                             <div className="flex items-center justify-between">
-                                                <h4 className="text-xs font-bold text-[hsl(var(--text-primary))] dark:text-white">Catálogo actual</h4>
+                                                <h4 className="text-xs font-bold text-[hsl(var(--text-primary))]">Catálogo actual</h4>
                                                 <span className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
                                                     {isLoadingPositions ? 'Cargando...' : `${positions.length} cargos`}
                                                 </span>
@@ -385,21 +385,21 @@ export default function CrmSettingsPage() {
                                             {isLoadingPositions ? (
                                                 <div className="space-y-3">
                                                     {[...Array(3)].map((_, i) => (
-                                                        <div key={i} className="h-8 rounded-md bg-[hsl(var(--surface-1))] dark:bg-black/20 border border-[hsl(var(--border))] dark:border-white/10 animate-pulse" />
+                                                        <div key={i} className="h-8 rounded-md bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] animate-pulse" />
                                                     ))}
                                                 </div>
                                             ) : positions.length === 0 ? (
-                                                <div className="rounded-md border border-dashed border-[hsl(var(--border))] dark:border-white/10 p-4 text-center text-[hsl(var(--text-secondary))]">
+                                                <div className="rounded-md border border-dashed border-[hsl(var(--border))] p-4 text-center text-[hsl(var(--text-secondary))]">
                                                     No hay cargos registrados aún.
                                                 </div>
                                             ) : (
                                                 <div className="space-y-3 max-h-[420px] overflow-y-auto pr-1">
                                                     {positions.map((position) => (
-                                                        <div key={position.id} className="flex items-start justify-between gap-4 rounded-md bg-[hsl(var(--surface-1))] dark:bg-[#111317] border border-[hsl(var(--border))] dark:border-white/10 p-4">
+                                                        <div key={position.id} className="flex items-start justify-between gap-4 rounded-md bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] p-4">
                                                             <div className="min-w-0">
                                                                 <div className="flex items-center gap-2">
-                                                                    <p className="text-xs font-bold text-[hsl(var(--text-primary))] dark:text-white truncate">{position.name}</p>
-                                                                    <span className={`px-2 py-0.5 rounded-md text-2xs font-bold uppercase tracking-wide ${position.is_active ? 'bg-[hsl(var(--success-muted))] text-success-text dark:bg-[hsl(var(--success))]/10 dark:text-[hsl(var(--success))]' : 'bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))] dark:bg-white/5 dark:text-[hsl(var(--text-secondary))]'}`}>
+                                                                    <p className="text-xs font-bold text-[hsl(var(--text-primary))] truncate">{position.name}</p>
+                                                                    <span className={`px-2 py-0.5 rounded-md text-2xs font-bold uppercase tracking-wide ${position.is_active ? 'bg-[hsl(var(--success)/0.1)] text-[hsl(var(--success))]' : 'bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))]'}`}>
                                                                         {position.is_active ? 'Activo' : 'Inactivo'}
                                                                     </span>
                                                                 </div>
@@ -412,7 +412,7 @@ export default function CrmSettingsPage() {
                                                                 <button
                                                                     type="button"
                                                                     onClick={() => startEditPosition(position)}
-                                                                    className="inline-flex items-center gap-1.5 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 px-3 py-1.5 text-xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5"
+                                                                    className="inline-flex items-center gap-1.5 rounded-lg border border-[hsl(var(--border))] px-3 py-1.5 text-xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] hover:text-[hsl(var(--text-primary))] transition-colors"
                                                                 >
                                                                     <Pencil size={12} />
                                                                     Editar
