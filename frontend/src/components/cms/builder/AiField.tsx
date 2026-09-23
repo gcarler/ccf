@@ -145,7 +145,7 @@ export default function AiField({
   return (
     <div className="flex flex-col gap-1.5 my-2">
       {label && (
-        <label className="text-xs font-semibold text-gray-700 dark:text-gray-300">
+        <label className="text-xs font-semibold text-[hsl(var(--foreground))]">
           {label}
         </label>
       )}
@@ -157,7 +157,7 @@ export default function AiField({
           placeholder={placeholder || "Escribe el contenido..."}
           disabled={readOnly || loading}
           rows={rows}
-          className="w-full p-2 text-xs border rounded bg-white dark:bg-black/20 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-white/10 focus:outline-none focus:border-primary disabled:opacity-50"
+          className="w-full p-2 text-xs border rounded bg-[hsl(var(--surface-1))] text-[hsl(var(--foreground))] border-[hsl(var(--border))] focus:outline-none focus:border-[hsl(var(--primary))] disabled:opacity-50"
         />
       ) : (
         <input
@@ -166,14 +166,14 @@ export default function AiField({
           onChange={(e) => onChange(e.target.value)}
           placeholder={placeholder || "Escribe aquí..."}
           disabled={readOnly || loading}
-          className="w-full p-2 text-xs border rounded bg-white dark:bg-black/20 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-white/10 focus:outline-none focus:border-primary disabled:opacity-50"
+          className="w-full p-2 text-xs border rounded bg-[hsl(var(--surface-1))] text-[hsl(var(--foreground))] border-[hsl(var(--border))] focus:outline-none focus:border-[hsl(var(--primary))] disabled:opacity-50"
         />
       )}
 
-      <div className="flex flex-col gap-1.5 mt-1.5 p-2 bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded">
+      <div className="flex flex-col gap-1.5 mt-1.5 p-2 bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] rounded">
         <div className="flex items-center justify-between">
-          <span className="text-3xs font-semibold text-gray-600 dark:text-gray-400 flex items-center gap-1">
-            <Sparkles size={10} className="text-amber-500" /> Redactar con IA
+          <span className="text-3xs font-semibold text-[hsl(var(--muted-foreground))] flex items-center gap-1">
+            <Sparkles size={10} className="text-[hsl(var(--primary))]" /> Redactar con IA
           </span>
         </div>
 
@@ -188,7 +188,7 @@ export default function AiField({
                 handleAi(chip);
               }}
               disabled={loading || readOnly}
-              className="text-3xs px-2 py-0.5 bg-white dark:bg-black/30 hover:bg-primary/10 hover:text-primary border border-gray-200 dark:border-white/10 rounded transition-colors text-left truncate max-w-full disabled:opacity-50"
+              className="text-3xs px-2 py-0.5 bg-[hsl(var(--surface-1))] text-[hsl(var(--foreground))] hover:bg-[hsl(var(--primary)/10%)] hover:text-[hsl(var(--primary))] border border-[hsl(var(--border))] rounded transition-colors text-left truncate max-w-full disabled:opacity-50"
             >
               + {chip}
             </button>
@@ -209,13 +209,13 @@ export default function AiField({
               }
             }}
             disabled={loading || readOnly}
-            className="flex-1 px-2 py-1 text-3xs border rounded bg-white dark:bg-black/20 border-gray-300 dark:border-white/10 text-gray-900 dark:text-gray-100 focus:outline-none disabled:opacity-50"
+            className="flex-1 px-2 py-1 text-3xs border rounded bg-[hsl(var(--surface-1))] border-[hsl(var(--border))] text-[hsl(var(--foreground))] focus:outline-none focus:border-[hsl(var(--primary))] disabled:opacity-50"
           />
           <button
             type="button"
             onClick={() => handleAi()}
             disabled={loading || !prompt.trim() || readOnly}
-            className="px-2.5 py-1 bg-primary hover:bg-primary-hover text-white text-3xs font-semibold rounded disabled:opacity-50 transition-colors flex items-center gap-1 shrink-0"
+            className="px-2.5 py-1 bg-[hsl(var(--primary))] hover:opacity-90 text-[hsl(var(--primary-foreground))] text-3xs font-semibold rounded disabled:opacity-50 transition-colors flex items-center gap-1 shrink-0"
           >
             {loading ? (
               <>

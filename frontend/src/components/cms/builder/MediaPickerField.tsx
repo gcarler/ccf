@@ -23,7 +23,7 @@ export default function MediaPickerField({ label, value, onChange }: MediaPicker
   return (
     <div className="flex flex-col gap-1.5 my-2">
       {label && (
-        <label className="text-xs font-semibold text-gray-700 dark:text-gray-300">
+        <label className="text-xs font-semibold text-[hsl(var(--foreground))]">
           {label}
         </label>
       )}
@@ -32,7 +32,7 @@ export default function MediaPickerField({ label, value, onChange }: MediaPicker
           <img
             src={value}
             alt="Vista previa"
-            className="w-10 h-10 object-cover rounded border border-gray-200 dark:border-white/10 shrink-0"
+            className="w-10 h-10 object-cover rounded border border-[hsl(var(--border))] shrink-0"
             onError={(e) => {
               (e.target as HTMLElement).style.display = "none";
             }}
@@ -45,7 +45,7 @@ export default function MediaPickerField({ label, value, onChange }: MediaPicker
               mediaPickerTriggerRef(onChange, value || "");
             }
           }}
-          className="px-2.5 py-1 bg-gray-100 hover:bg-gray-200 dark:bg-white/5 dark:hover:bg-white/10 text-xs font-semibold rounded border border-gray-300 dark:border-white/10 text-gray-800 dark:text-gray-200 transition-colors"
+          className="px-2.5 py-1 bg-[hsl(var(--surface-2))] hover:bg-[hsl(var(--surface-2))]/80 text-xs font-semibold rounded border border-[hsl(var(--border))] text-[hsl(var(--foreground))] transition-colors"
         >
           {value ? "Cambiar Imagen" : "Seleccionar Imagen"}
         </button>
@@ -53,7 +53,7 @@ export default function MediaPickerField({ label, value, onChange }: MediaPicker
           <button
             type="button"
             onClick={() => onChange("")}
-            className="px-2 py-1 text-xs text-red-600 hover:text-red-700 dark:text-red-400 font-medium transition-colors"
+            className="px-2 py-1 text-xs text-[hsl(var(--destructive))] hover:opacity-80 font-medium transition-colors"
             title="Quitar imagen"
           >
             Quitar
@@ -61,7 +61,7 @@ export default function MediaPickerField({ label, value, onChange }: MediaPicker
         )}
       </div>
       {value && (
-        <span className="text-3xs text-gray-500 truncate max-w-[200px]" title={value}>
+        <span className="text-3xs text-[hsl(var(--muted-foreground))] truncate max-w-[200px]" title={value}>
           {value}
         </span>
       )}
