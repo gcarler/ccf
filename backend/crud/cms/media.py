@@ -9,6 +9,7 @@ seeding, llamada directa al CRUD) podría crear/mutar registros sin
 pasar por el helper API `_get_scoped_*` correspondiente.
 """
 
+from datetime import datetime, timezone
 import logging
 import os
 import uuid
@@ -106,7 +107,7 @@ def list_cms_media_items(
     limit: int = 50,
     include_archived: bool = False,
 ):
-    q = db.query(models.CmsMediaItem)
+    q = db.query(models.CmsMediaItem).filter(models.CmsMediaItem.deleted_at.is_(None))
     if not include_archived:
         q = q.filter(models.CmsMediaItem.status != "archived")
     if section:
@@ -127,7 +128,14 @@ def list_cms_media_items(
 
 
 def get_cms_media_item(db: Session, item_id: uuid.UUID):
-    return db.query(models.CmsMediaItem).filter(models.CmsMediaItem.id == item_id).first()
+    return (
+        db.query(models.CmsMediaItem)
+        .filter(
+            models.CmsMediaItem.id == item_id,
+            models.CmsMediaItem.deleted_at.is_(None),
+        )
+        .first()
+    )
 
 
 
@@ -207,8 +215,8 @@ def delete_cms_media_item(
     equivalente al ``_get_scoped_cms_media`` que ya hizo el API). El API
     layer traduce esto a ``HTTPException(404)``.
 
-    Si ``permanent=True``, ejecuta hard delete (db.delete) en vez de
-    soft delete (status='archived').
+    Si ``permanent=True``, ejecuta soft-delete canónico con status='archived'
+    y timestamp deleted_at en UTC.
     """
     row = get_cms_media_item(db, item_id)
     if not row:
@@ -221,10 +229,8 @@ def delete_cms_media_item(
         current_row_sede=str(row.sede_id) if row.sede_id else None,
         incoming_author_persona_id=row.created_by_persona_id,
     )
-    if permanent:
-        db.delete(row)
-    else:
-        row.status = "archived"
+    row.status = "archived"
+    row.deleted_at = datetime.now(timezone.utc)
     db.commit()
     return True
 
@@ -342,6 +348,7 @@ def _apply_cleanup_orphan_cms_media(
         db.query(models.CmsMediaItem)
         .filter(models.CmsMediaItem.sede_id == sede_id)
         .filter(models.CmsMediaItem.status != "archived")
+        .filter(models.CmsMediaItem.deleted_at.is_(None))
         .all()
     )
     orphans = [m for m in active_media if str(m.id) not in referenced]
@@ -350,6 +357,7 @@ def _apply_cleanup_orphan_cms_media(
         return len(orphans)
 
     purged = 0
+    now_utc = datetime.now(timezone.utc)
     for row in orphans:
         if permanent:
             # Guard H-05: path traversal hardening antes de os.remove.
@@ -364,17 +372,22 @@ def _apply_cleanup_orphan_cms_media(
                     # archivo fisico, pero se archiva el row (mas seguro
                     # que fallar el cleanup completo).
                     row.status = "archived"
+                    row.deleted_at = now_utc
                 else:
                     if os.path.exists(full) and os.path.isfile(full):
                         os.remove(full)
-                        db.delete(row)
+                        row.status = "archived"
+                        row.deleted_at = now_utc
                     else:
-                        # Archivo fisico ya ausente: borra el row.
-                        db.delete(row)
+                        # Archivo fisico ya ausente: soft-delete el row.
+                        row.status = "archived"
+                        row.deleted_at = now_utc
             else:
-                db.delete(row)
+                row.status = "archived"
+                row.deleted_at = now_utc
         else:
             row.status = "archived"
+            row.deleted_at = now_utc
         purged += 1
 
     if purged:

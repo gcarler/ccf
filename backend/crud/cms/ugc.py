@@ -56,7 +56,7 @@ def list_announcements(
     paginar) para que el caller nunca reciba filas de otras sedes mezcladas
     con las propias.
     """
-    q = db.query(models.Announcement)
+    q = db.query(models.Announcement).filter(models.Announcement.deleted_at.is_(None))
     if public_only:
         q = q.filter(
             models.Announcement.status == "published",
@@ -70,7 +70,14 @@ def list_announcements(
 
 
 def get_announcement(db: Session, announcement_id: uuid.UUID):
-    return db.query(models.Announcement).filter(models.Announcement.id == announcement_id).first()
+    return (
+        db.query(models.Announcement)
+        .filter(
+            models.Announcement.id == announcement_id,
+            models.Announcement.deleted_at.is_(None),
+        )
+        .first()
+    )
 
 
 def create_announcement(
@@ -181,10 +188,9 @@ def delete_announcement(
         current_row_sede=str(row.sede_id) if row.sede_id else None,
         incoming_author_persona_id=row.created_by_persona_id,
     )
-    if permanent:
-        db.delete(row)
-    else:
-        row.status = "archived"
+    row.status = "archived"
+    row.is_active = False
+    row.deleted_at = _now_utc()
     db.commit()
     return True
 
@@ -206,7 +212,7 @@ def list_testimonials(
     paginar) para que el caller nunca reciba filas de otras sedes mezcladas
     con las propias.
     """
-    q = db.query(models.Testimonial)
+    q = db.query(models.Testimonial).filter(models.Testimonial.deleted_at.is_(None))
     if approved_only:
         q = q.filter(
             models.Testimonial.is_approved.is_(True),
@@ -220,7 +226,14 @@ def list_testimonials(
 
 
 def get_testimonial(db: Session, testimonial_id: uuid.UUID):
-    return db.query(models.Testimonial).filter(models.Testimonial.id == testimonial_id).first()
+    return (
+        db.query(models.Testimonial)
+        .filter(
+            models.Testimonial.id == testimonial_id,
+            models.Testimonial.deleted_at.is_(None),
+        )
+        .first()
+    )
 
 
 def create_testimonial(
@@ -346,10 +359,8 @@ def delete_testimonial(
         current_row_sede=str(row.sede_id) if row.sede_id else None,
         incoming_author_persona_id=row.author_persona_id,
     )
-    if permanent:
-        db.delete(row)
-    else:
-        row.status = "archived"
+    row.status = "archived"
+    row.deleted_at = _now_utc()
     db.commit()
     return True
 

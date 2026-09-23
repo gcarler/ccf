@@ -31,6 +31,7 @@ class CmsMediaItem(Base):
     sede_id = Column(UUID(as_uuid=True), ForeignKey("sedes.id"), nullable=False, index=True)
     created_at = Column(DateTime(timezone=True), default=_utcnow)
     updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
+    deleted_at = Column(DateTime(timezone=True), nullable=True, index=True)
 
     # ── Relationships (núcleo CMS) ──────────────────────────────────────
     created_by_persona = relationship("Persona", foreign_keys=[created_by_persona_id], lazy="joined")
@@ -859,6 +860,7 @@ class Announcement(Base):
     published_at = Column(DateTime(timezone=True), nullable=True, index=True)
     created_at = Column(DateTime(timezone=True), default=_utcnow)
     updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
+    deleted_at = Column(DateTime(timezone=True), nullable=True, index=True)
 
     # Relationships
     created_by_persona = relationship("Persona", foreign_keys=[created_by_persona_id], lazy="joined")
@@ -899,6 +901,7 @@ class Testimonial(Base):
         index=True,
     )
     created_at = Column(DateTime(timezone=True), default=_utcnow)
+    deleted_at = Column(DateTime(timezone=True), nullable=True, index=True)
 
     # Relationships
     author_persona = relationship("Persona", foreign_keys=[author_persona_id], lazy="joined")
