@@ -59,7 +59,7 @@ export default function EventQrDrawer({ isOpen, selectedEvent, onClose }: EventQ
         actions={
           <button
             onClick={downloadQr}
-            className="px-4 py-2 bg-[hsl(var(--primary))] text-white rounded-lg text-xs font-semibold uppercase tracking-wide shadow-lg hover:bg-[hsl(var(--primary))] active:scale-95 transition-all flex items-center gap-2"
+            className="px-4 py-2 bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] rounded-lg text-xs font-semibold uppercase tracking-wide shadow-lg hover:bg-[hsl(var(--primary))] active:scale-95 transition-all flex items-center gap-2"
           >
             <Download size={14} /> Descargar
           </button>
@@ -84,7 +84,7 @@ export default function EventQrDrawer({ isOpen, selectedEvent, onClose }: EventQ
               href={registrationUrl || '#'}
               target="_blank"
               rel="noreferrer"
-              className="text-xs font-medium text-[hsl(var(--primary))] hover:text-[hsl(var(--primary))] transition-colors break-all bg-[hsl(var(--info-muted))] dark:bg-[hsl(var(--info)/0.1)] px-4 py-2 rounded-md inline-block mt-2"
+              className="text-xs font-medium text-[hsl(var(--primary))] hover:text-[hsl(var(--primary))] transition-colors break-all bg-[hsl(var(--info-muted))] px-4 py-2 rounded-md inline-block mt-2"
             >
               {registrationUrl}
             </a>

@@ -83,9 +83,9 @@ export default function GlobalEventAnalyticsPage() {
  <select
  value={period}
  onChange={e => setPeriod(e.target.value)}
- className="w-full bg-[hsl(var(--bg-muted))] dark:bg-black/20 border border-[hsl(var(--border-primary))] rounded-lg py-1.5 px-4 text-sm font-bold text-[hsl(var(--text-primary))] outline-none focus:ring-2 focus:ring-[hsl(var(--primary))] appearance-none"
+ className="w-full bg-[hsl(var(--bg-muted))] border border-[hsl(var(--border-primary))] rounded-lg py-1.5 px-4 text-sm font-bold text-[hsl(var(--text-primary))] outline-none focus:ring-2 focus:ring-[hsl(var(--primary))] appearance-none"
  >
- {periodOptions.map(o => <option key={o.value} value={o.value} className="dark:bg-[hsl(var(--bg-primary))]">{o.label}</option>)}
+ {periodOptions.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
  </select>
  </div>
  <div>
@@ -93,9 +93,9 @@ export default function GlobalEventAnalyticsPage() {
  <select
  value={eventType}
  onChange={e => setEventType(e.target.value)}
- className="w-full bg-[hsl(var(--bg-muted))] dark:bg-black/20 border border-[hsl(var(--border-primary))] rounded-lg py-1.5 px-4 text-sm font-bold text-[hsl(var(--text-primary))] outline-none focus:ring-2 focus:ring-[hsl(var(--primary))] appearance-none"
+ className="w-full bg-[hsl(var(--bg-muted))] border border-[hsl(var(--border-primary))] rounded-lg py-1.5 px-4 text-sm font-bold text-[hsl(var(--text-primary))] outline-none focus:ring-2 focus:ring-[hsl(var(--primary))] appearance-none"
  >
- {typeOptions.map(o => <option key={o.value} value={o.value} className="dark:bg-[hsl(var(--bg-primary))]">{o.label}</option>)}
+ {typeOptions.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
  </select>
  </div>
  </div>
@@ -143,7 +143,7 @@ export default function GlobalEventAnalyticsPage() {
  </div>
  </div>
 
- <div className="bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-2))] border border-[hsl(var(--border-primary))] rounded-md p-4 shadow-sm flex flex-col justify-between relative overflow-hidden group">
+ <div className="bg-[hsl(var(--bg-primary))] border border-[hsl(var(--border-primary))] rounded-md p-4 shadow-sm flex flex-col justify-between relative overflow-hidden group">
  <div className={`absolute top-0 inset-x-0 h-1 ${data.kpis.trend_percentage >= 0 ? 'bg-[hsl(var(--success))]' : 'bg-[hsl(var(--destructive))]'}`}></div>
  <div className={`size-9 rounded-lg flex items-center justify-center mb-3 ${data.kpis.trend_percentage >= 0 ? 'bg-success-muted text-success' : 'bg-danger-muted text-danger'}`}>
  <TrendingUp size={24} className={data.kpis.trend_percentage < 0 ? 'rotate-180' : ''} />
@@ -161,7 +161,7 @@ export default function GlobalEventAnalyticsPage() {
  </div>
 
  {/* GRÁFICO MOTOR CSS */}
- <div className="bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--bg-primary))] border border-[hsl(var(--border-primary))] rounded-md p-4 shadow-sm">
+ <div className="bg-[hsl(var(--bg-primary))] border border-[hsl(var(--border-primary))] rounded-md p-4 shadow-sm">
  <h3 className="text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-3 flex items-center gap-2">
  <BarChart3 size={16} /> Tendencia en el tiempo
  </h3>
@@ -178,7 +178,7 @@ export default function GlobalEventAnalyticsPage() {
  return (
  <div key={d.key} className="flex-1 min-w-[60px] max-w-[100px] flex flex-col items-center justify-end group relative h-full">
  {/* Tooltip */}
- <div className="opacity-0 group-hover:opacity-100 transition-opacity absolute -top-4 bg-[hsl(var(--bg-primary))] text-white text-2xs font-bold px-3 py-2 rounded-md whitespace-nowrap z-10 flex flex-col items-center shadow-xl">
+ <div className="opacity-0 group-hover:opacity-100 transition-opacity absolute -top-4 bg-[hsl(var(--bg-primary))] text-[hsl(var(--text-primary))] text-2xs font-bold px-3 py-2 rounded-md whitespace-nowrap z-10 flex flex-col items-center shadow-xl border border-[hsl(var(--border-primary))]">
  <span className="text-[hsl(var(--primary))] mb-1">{d.label}</span>
  <span>{d.total} asistentes</span>
  <span className="text-[hsl(var(--text-secondary))] text-2xs">{d.sessions} sesiones</span>

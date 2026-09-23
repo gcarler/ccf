@@ -201,13 +201,13 @@ export default function PreregistrationTab({ eventId, token }: { eventId: string
         <div className="flex gap-2">
           <button
             onClick={() => setShowCampaignForm(true)}
-            className="px-3 py-2 rounded-md bg-[hsl(var(--bg-muted))] hover:bg-[hsl(var(--primary))] text-[hsl(var(--text-secondary))] hover:text-white text-xs font-semibold uppercase tracking-wide transition-all flex items-center gap-2"
+            className="px-3 py-2 rounded-md bg-[hsl(var(--bg-muted))] hover:bg-[hsl(var(--primary))] text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary-foreground))] text-xs font-semibold uppercase tracking-wide transition-all flex items-center gap-2"
           >
             <Megaphone size={14} /> Nueva campaña
           </button>
           <button
             onClick={() => setShowConfigForm(true)}
-            className="px-3 py-2 rounded-md bg-[hsl(var(--bg-muted))] hover:bg-[hsl(var(--primary))] text-[hsl(var(--text-secondary))] hover:text-white text-xs font-semibold uppercase tracking-wide transition-all flex items-center gap-2"
+            className="px-3 py-2 rounded-md bg-[hsl(var(--bg-muted))] hover:bg-[hsl(var(--primary))] text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary-foreground))] text-xs font-semibold uppercase tracking-wide transition-all flex items-center gap-2"
           >
             <Settings2 size={14} /> Configurar
           </button>
@@ -305,7 +305,7 @@ export default function PreregistrationTab({ eventId, token }: { eventId: string
                       }
                     }}
                     disabled={sendingCampaignId !== null}
-                    className="px-3 py-1.5 rounded-md bg-info-soft dark:bg-[hsl(var(--info)/0.2)] text-[hsl(var(--primary))] text-2xs font-semibold uppercase flex items-center gap-1.5 hover:opacity-80 transition-all disabled:opacity-50"
+                    className="px-3 py-1.5 rounded-md bg-[hsl(var(--info-muted))] text-[hsl(var(--info))] text-2xs font-semibold uppercase flex items-center gap-1.5 hover:opacity-80 transition-all disabled:opacity-50"
                   >
                     {sendingCampaignId === c.id ? <Loader2 size={13} className="animate-spin" /> : <Send size={13} />} Enviar
                   </button>
@@ -320,7 +320,7 @@ export default function PreregistrationTab({ eventId, token }: { eventId: string
                         toast.error("No se pudo eliminar la campaña");
                       }
                     }}
-                    className="p-1.5 rounded-md text-[hsl(var(--text-secondary))] hover:text-danger-text hover:bg-danger-soft transition-all"
+                    className="p-1.5 rounded-md text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--destructive))] hover:bg-[hsl(var(--destructive)/0.08)] transition-all"
                   >
                     <Trash2 size={14} />
                   </button>
@@ -356,7 +356,7 @@ export default function PreregistrationTab({ eventId, token }: { eventId: string
             <button
               onClick={handleExportCsv}
               disabled={exportingCsv}
-              className="px-2.5 py-1.5 rounded-md bg-[hsl(var(--bg-muted))] hover:bg-[hsl(var(--primary))] text-[hsl(var(--text-secondary))] hover:text-white text-2xs font-semibold uppercase flex items-center gap-1.5 transition-all disabled:opacity-50"
+              className="px-2.5 py-1.5 rounded-md bg-[hsl(var(--bg-muted))] hover:bg-[hsl(var(--primary))] text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary-foreground))] text-2xs font-semibold uppercase flex items-center gap-1.5 transition-all disabled:opacity-50"
             >
               {exportingCsv ? <Loader2 size={13} className="animate-spin" /> : <Download size={13} />} CSV
             </button>
@@ -467,7 +467,7 @@ export default function PreregistrationTab({ eventId, token }: { eventId: string
                                 toast.error("No se pudo cancelar la inscripción");
                               }
                             }}
-                            className="p-1.5 rounded-md text-[hsl(var(--text-secondary))] hover:text-danger-text hover:bg-danger-soft transition-all"
+                            className="p-1.5 rounded-md text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--destructive))] hover:bg-[hsl(var(--destructive)/0.08)] transition-all"
                             title="Cancelar inscripción"
                           >
                             <X size={14} />
@@ -686,7 +686,7 @@ function ToggleRow({ label, hint, checked, onChange }: {
         {hint && <div className="text-xs font-medium text-[hsl(var(--text-secondary))]">{hint}</div>}
       </div>
       <div className={clsx("relative w-10 h-6 rounded-full transition-all shrink-0", checked ? "bg-[hsl(var(--primary))]" : "bg-[hsl(var(--bg-muted))]")}>
-        <div className={clsx("absolute top-0.5 w-5 h-5 rounded-full bg-white shadow transition-all", checked ? "left-4.5" : "left-0.5")} style={checked ? { left: "18px" } : { left: "2px" }} />
+        <div className={clsx("absolute top-0.5 w-5 h-5 rounded-full bg-[hsl(var(--primary-foreground))] shadow transition-all", checked ? "left-4.5" : "left-0.5")} style={checked ? { left: "18px" } : { left: "2px" }} />
       </div>
     </button>
   );

@@ -91,7 +91,7 @@ export default function EventAttendanceDrawer({
  <button
  onClick={() => onSave()}
  disabled={saving || loading || String(event?.status || '').toUpperCase() === 'CANCELLED' || String(event?.status || '').toUpperCase() === 'CANCELED'}
- className="px-3 py-2 bg-[hsl(var(--success))] text-white rounded-lg text-xs font-semibold uppercase tracking-wide shadow-lg hover:bg-[hsl(var(--success))] active:scale-95 transition-all disabled:opacity-60 disabled:active:scale-100"
+ className="px-3 py-2 bg-[hsl(var(--success))] text-[hsl(var(--primary-foreground))] rounded-lg text-xs font-semibold uppercase tracking-wide shadow-lg hover:bg-[hsl(var(--success))] active:scale-95 transition-all disabled:opacity-60 disabled:active:scale-100"
  >
  {saving ? 'Guardando...' : 'Guardar asistencia'}
  </button>
@@ -103,14 +103,14 @@ export default function EventAttendanceDrawer({
  <div>
  <button
  onClick={() => setShowScanner(s => !s)}
- className={`px-4 py-2 rounded-md text-2xs font-semibold uppercase tracking-wide transition-all ${showScanner ? 'bg-[hsl(var(--danger))] text-white' : 'bg-[hsl(var(--bg-primary))] text-white hover:opacity-80'}`}
+ className={`px-4 py-2 rounded-md text-2xs font-semibold uppercase tracking-wide transition-all ${showScanner ? 'bg-[hsl(var(--destructive))] text-[hsl(var(--destructive-foreground))]' : 'bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] hover:opacity-80'}`}
  >
  {showScanner ? 'Cerrar Escáner' : 'Modo Escáner'}
  </button>
  </div>
 
  {showScanner && (
- <div className="p-4 bg-[hsl(var(--bg-primary))] dark:bg-black/40 rounded-lg space-y-4">
+ <div className="p-4 bg-[hsl(var(--bg-primary))] rounded-lg space-y-4">
  <p className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide text-center">Ingresa el token del carnet (CCF-PER-ID-TOKEN)</p>
  <div className="flex gap-2">
  <input
@@ -118,13 +118,13 @@ export default function EventAttendanceDrawer({
  value={scannerToken}
  onChange={e => setScannerToken(e.target.value)}
  placeholder="CCF-PER-ID-XXXXXX"
- className="flex-1 bg-[hsl(var(--bg-primary))] border border-white/10 rounded-md px-4 py-1.5 text-sm text-white focus:outline-none focus:border-[hsl(var(--primary))]"
+ className="flex-1 bg-[hsl(var(--bg-primary))] border border-[hsl(var(--border-primary))] rounded-md px-4 py-1.5 text-sm text-[hsl(var(--text-primary))] focus:outline-none focus:border-[hsl(var(--primary))]"
  onKeyDown={e => e.key === 'Enter' && onScan()}
  />
  <button
  onClick={onScan}
  disabled={isScanning || !scannerToken}
- className="px-4 py-1.5 bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))] disabled:opacity-50 text-white rounded-md text-2xs font-semibold uppercase tracking-wide transition-all"
+ className="px-4 py-1.5 bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))] disabled:opacity-50 text-[hsl(var(--primary-foreground))] rounded-md text-2xs font-semibold uppercase tracking-wide transition-all"
  >
  {isScanning ? 'Validando...' : 'Validar'}
  </button>
@@ -138,12 +138,12 @@ export default function EventAttendanceDrawer({
  value={search}
  onChange={e => setSearch(e.target.value)}
  placeholder="Buscar por nombre o correo..."
- className="w-full rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-muted))] dark:bg-black/20 px-4 py-1.5 text-sm font-bold text-[hsl(var(--text-primary))] outline-none focus:ring-2 focus:ring-primary"
+ className="w-full rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-muted))] px-4 py-1.5 text-sm font-bold text-[hsl(var(--text-primary))] outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]"
  />
  <select
  value={roleFilter}
  onChange={e => setRoleFilter(e.target.value)}
- className="w-full rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-muted))] dark:bg-black/20 px-4 py-1.5 text-sm font-bold text-[hsl(var(--text-primary))] outline-none focus:ring-2 focus:ring-primary"
+ className="w-full rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-muted))] px-4 py-1.5 text-sm font-bold text-[hsl(var(--text-primary))] outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]"
  >
  <option value="ALL">Todos los roles</option>
  {roleOptions.map((role) => (
@@ -153,7 +153,7 @@ export default function EventAttendanceDrawer({
  <select
  value={statusFilter}
  onChange={e => setStatusFilter(e.target.value as 'ALL' | 'PENDING' | 'PRESENT')}
- className="w-full rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-muted))] dark:bg-black/20 px-4 py-1.5 text-sm font-bold text-[hsl(var(--text-primary))] outline-none focus:ring-2 focus:ring-primary"
+ className="w-full rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-muted))] px-4 py-1.5 text-sm font-bold text-[hsl(var(--text-primary))] outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]"
  >
  <option value="ALL">Todos</option>
  <option value="PENDING">Pendientes</option>
@@ -162,7 +162,7 @@ export default function EventAttendanceDrawer({
  <button
  onClick={onMarkFiltered}
  disabled={filteredPersonas.length === 0}
- className="px-4 py-1.5 rounded-lg border border-success dark:border-success bg-[hsl(var(--success-muted))] dark:bg-[hsl(var(--success)/0.1)] text-2xs font-semibold uppercase tracking-wide text-success-text dark:text-success transition-all hover:bg-success-muted disabled:opacity-50"
+ className="px-4 py-1.5 rounded-lg border border-[hsl(var(--success)/0.3)] bg-[hsl(var(--success-muted))] text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--success))] transition-all hover:bg-[hsl(var(--success)/0.2)] disabled:opacity-50"
  >
  Marcar filtrados
  </button>
@@ -176,7 +176,7 @@ export default function EventAttendanceDrawer({
  </div>
 
  {/* Summary badge */}
- <div className="flex items-center justify-between px-4 py-1.5 bg-[hsl(var(--success-muted))] dark:bg-[hsl(var(--success)/0.2)] rounded-lg border border-success-muted dark:border-success">
+ <div className="flex items-center justify-between px-4 py-1.5 bg-[hsl(var(--success-muted))] rounded-lg border border-[hsl(var(--success)/0.3)]">
  <div>
  <p className="text-sm font-bold text-[hsl(var(--text-secondary))]">Presentes</p>
  <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
@@ -215,18 +215,18 @@ export default function EventAttendanceDrawer({
   onClick={() => onToggle(persona.id)}
   onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onToggle(persona.id); } }}
   className={`flex items-center p-4 rounded-lg cursor-pointer transition-all border ${attendedIds.includes(persona.id)
- ? 'bg-[hsl(var(--success-muted))] dark:bg-[hsl(var(--success)/0.2)] border-success dark:border-success shadow-sm'
- : 'bg-[hsl(var(--bg-muted))] border-[hsl(var(--border-primary))] hover:border-[hsl(var(--border-primary))] dark:hover:border-white/10'
+ ? 'bg-[hsl(var(--success-muted))] border-[hsl(var(--success))] shadow-sm'
+ : 'bg-[hsl(var(--bg-muted))] border-[hsl(var(--border-primary))] hover:border-[hsl(var(--border-primary))] '
  }`}
  >
  <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center mr-4 transition-colors shrink-0 ${attendedIds.includes(persona.id)
- ? 'bg-[hsl(var(--success))] border-[hsl(var(--success))] text-white'
- : 'border-[hsl(var(--border-primary))] dark:border-white/20 bg-[hsl(var(--bg-primary))] dark:bg-black/20'
+ ? 'bg-[hsl(var(--success))] border-[hsl(var(--success))] text-[hsl(var(--primary-foreground))]'
+ : 'border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-primary))]'
  }`}>
  {attendedIds.includes(persona.id) && <Check size={12} strokeWidth={4} />}
  </div>
  <div>
- <p className={`font-bold text-sm ${attendedIds.includes(persona.id) ? 'text-success-text dark:text-success' : 'text-[hsl(var(--text-primary))]'}`}>
+ <p className={`font-bold text-sm ${attendedIds.includes(persona.id) ? 'text-[hsl(var(--success))]' : 'text-[hsl(var(--text-primary))]'}`}>
  {persona.nombre_completo}
  </p>
  <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
