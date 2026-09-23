@@ -254,12 +254,12 @@ export default function ConsolidationPipelinePage() {
                 const initials = `${initial1}${initial2}`.toUpperCase();
                 return (
                     <div className="flex items-center gap-3">
-                        <div className="size-9 rounded-md bg-[hsl(var(--primary))] flex items-center justify-center text-white font-bold text-xs shadow-lg shadow-[hsl(var(--info)/20%)] shrink-0">
+                        <div className="size-9 rounded-md bg-[hsl(var(--primary))] flex items-center justify-center text-[hsl(var(--primary-foreground))] font-bold text-xs shadow-lg shadow-[hsl(var(--primary)/0.2)] shrink-0">
                             {initials}
                         </div>
                         <div>
-                            <p className="font-bold text-[hsl(var(--text-primary))] dark:text-white text-xs leading-tight">{l.nombre_completo || ''}</p>
-                            <p className="text-2xs font-medium text-[hsl(var(--text-secondary))]">{l.telefono ?? l.phone}</p>
+                            <p className="font-bold text-[hsl(var(--foreground))] text-xs leading-tight">{l.nombre_completo || ''}</p>
+                            <p className="text-2xs font-medium text-[hsl(var(--muted-foreground))]">{l.telefono ?? l.phone}</p>
                         </div>
                     </div>
                 );
@@ -309,7 +309,7 @@ export default function ConsolidationPipelinePage() {
                 <button
                     onClick={(e) => { e.stopPropagation(); handleLeadSelect(row.original); }}
                     aria-label="Ver prospecto"
-                    className="p-1.5 rounded-lg text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] hover:bg-info-soft dark:hover:bg-[hsl(var(--info))]/40 transition-all"
+                    className="p-1.5 rounded-lg text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--primary))] hover:bg-[hsl(var(--primary)/0.1)] transition-all"
                 >
                     <ArrowRight size={14} />
                 </button>
@@ -449,18 +449,18 @@ export default function ConsolidationPipelinePage() {
             ) : undefined}
         >
             {leadsError && (
-                <div className="mx-4 mt-4 rounded-lg border border-[hsl(var(--warning)/30%)]/60 bg-warning-soft dark:bg-[hsl(var(--warning))]/10 dark:border-[hsl(var(--warning)/100%)]/30 p-3 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                <div className="mx-4 mt-4 rounded-lg border border-[hsl(var(--warning)/0.3)] bg-[hsl(var(--warning)/0.1)] p-3 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
                     <div className="min-w-0">
-                        <p className="text-xs font-bold uppercase tracking-wide text-warning-text dark:text-[hsl(var(--warning))]">
+                        <p className="text-xs font-bold uppercase tracking-wide text-[hsl(var(--warning))]">
                             No se pudo cargar el pipeline
                         </p>
-                        <p className="text-sm text-warning-text/80 dark:text-[hsl(var(--warning)/80%)] mt-1 break-words">
+                        <p className="text-sm text-[hsl(var(--warning))] mt-1 break-words">
                             {leadsError}
                         </p>
                     </div>
                     <button
                         onClick={() => fetchPipeline()}
-                        className="shrink-0 px-3 py-2 rounded-lg bg-[hsl(var(--primary))] text-white text-2xs font-bold uppercase tracking-wide shadow-lg shadow-[hsl(var(--info)/20%)] hover:opacity-90 transition-all"
+                        className="shrink-0 px-3 py-2 rounded-lg bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] text-2xs font-bold uppercase tracking-wide shadow-lg shadow-[hsl(var(--primary)/0.2)] hover:opacity-90 transition-all"
                     >
                         Reintentar
                     </button>
@@ -468,7 +468,7 @@ export default function ConsolidationPipelinePage() {
             )}
             <div className="flex flex-col md:flex-row h-full w-full overflow-hidden">
                 {/* ── Main Board ── */}
-                <div className="flex-1 flex flex-col h-full overflow-hidden bg-[hsl(var(--surface-1))]/50 dark:bg-[#1a1b1d]">
+                <div className="flex-1 flex flex-col h-full overflow-hidden bg-[hsl(var(--surface-1))]">
                     <main className="flex-1 overflow-hidden flex flex-col">
                         <AnimatePresence mode="wait">
                             {viewType === 'board' || viewType === 'kanban' ? (
@@ -502,17 +502,17 @@ export default function ConsolidationPipelinePage() {
                                                     role="button"
                                                     tabIndex={0}
                                                     onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleLeadSelect(lead); } }}
-                                                    className="p-3 bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-md shadow-sm hover:shadow-xl hover:border-[hsl(var(--info)/100%)]/30 transition-all cursor-pointer group"
+                                                    className="p-3 bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] rounded-md shadow-sm hover:shadow-xl hover:border-[hsl(var(--primary)/0.3)] transition-all cursor-pointer group"
                                                 >
                                                     <div className="flex items-center gap-3 mb-3">
-                                                        <div className="size-8 rounded-md bg-[hsl(var(--primary))] flex items-center justify-center text-white font-bold text-xs shadow-lg shadow-[hsl(var(--info)/20%)]">
+                                                        <div className="size-8 rounded-md bg-[hsl(var(--primary))] flex items-center justify-center text-[hsl(var(--primary-foreground))] font-bold text-xs shadow-lg shadow-[hsl(var(--primary)/0.2)]">
                                                             {lead.nombre_completo?.split(/\s+/).filter(Boolean)[0]?.[0] ?? ''}{lead.nombre_completo?.split(/\s+/).filter(Boolean).slice(-1)[0]?.[0] ?? ''}
                                                         </div>
                                                         <div className="flex-1 min-w-0">
-                                                            <p className="font-bold text-[hsl(var(--text-primary))] dark:text-white text-sm truncate">{lead.nombre_completo || ''}</p>
-                                                            <p className="text-2xs text-[hsl(var(--text-secondary))]">{lead.telefono ?? lead.phone}</p>
+                                                            <p className="font-bold text-[hsl(var(--foreground))] text-sm truncate">{lead.nombre_completo || ''}</p>
+                                                            <p className="text-2xs text-[hsl(var(--muted-foreground))]">{lead.telefono ?? lead.phone}</p>
                                                         </div>
-                                                        <ChevronRight size={14} className="text-[hsl(var(--text-secondary))] group-hover:text-[hsl(var(--primary))] transition-all" />
+                                                        <ChevronRight size={14} className="text-[hsl(var(--muted-foreground))] group-hover:text-[hsl(var(--primary))] transition-all" />
                                                     </div>
                                                     <div className="flex items-center justify-between">
                                                         {stage ? (
@@ -520,7 +520,7 @@ export default function ConsolidationPipelinePage() {
                                                                 <span className={clsx('size-1.5 rounded-full', stage.color)} /> {stage.label}
                                                             </span>
                                                         ) : null}
-                                                        <span className="text-2xs text-[hsl(var(--text-secondary))]">
+                                                        <span className="text-2xs text-[hsl(var(--muted-foreground))]">
                                                             {SOURCES[lead.source ?? ''] ?? '📌'} {lead.source}
                                                         </span>
                                                     </div>
@@ -532,17 +532,17 @@ export default function ConsolidationPipelinePage() {
                             ) : viewType === 'calendar' ? (
                                 <motion.div key="calendar" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex-1 p-4 overflow-y-auto space-y-4">
                                     {!leadsError && groupedByDate.length === 0 ? (
-                                        <div className="rounded-lg border border-dashed border-[hsl(var(--border))] dark:border-white/10 p-3 text-center text-[hsl(var(--text-secondary))]">Sin actividad de pipeline</div>
+                                        <div className="rounded-lg border border-dashed border-[hsl(var(--border))] p-3 text-center text-[hsl(var(--muted-foreground))]">Sin actividad de pipeline</div>
                                     ) : groupedByDate.map(([key, payload]) => (
-                                        <div key={key} className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-white/5 p-4">
-                                            <p className="mb-3 text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{payload.label}</p>
+                                        <div key={key} className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-4">
+                                            <p className="mb-3 text-2xs font-bold uppercase tracking-wide text-[hsl(var(--muted-foreground))]">{payload.label}</p>
                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                                 {payload.items.map((lead: PipelineLead) => {
                                                     const stageValue = lead.stage ?? 'new';
                                                     return (
-                                                        <button key={lead.id} onClick={() => setSelectedLead(lead)} className="rounded-md border border-[hsl(var(--border))] dark:border-white/10 px-3 py-2 text-left hover:border-[hsl(var(--info)/30%)] dark:hover:border-[hsl(var(--info)/100%)] transition-all">
-                                                            <p className="text-sm font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">{lead.nombre_completo || ''}</p>
-                                                            <p className="text-2xs text-[hsl(var(--text-secondary))]">{STAGE_LABEL[stageValue] ?? stageValue}</p>
+                                                        <button key={lead.id} onClick={() => setSelectedLead(lead)} className="rounded-md border border-[hsl(var(--border))] px-3 py-2 text-left hover:border-[hsl(var(--primary)/0.3)] transition-all">
+                                                            <p className="text-sm font-bold text-[hsl(var(--foreground))]">{lead.nombre_completo || ''}</p>
+                                                            <p className="text-2xs text-[hsl(var(--muted-foreground))]">{STAGE_LABEL[stageValue] ?? stageValue}</p>
                                                         </button>
                                                     );
                                                 })}
@@ -552,23 +552,23 @@ export default function ConsolidationPipelinePage() {
                                 </motion.div>
                             ) : viewType === 'gantt' ? (
                                 <motion.div key="gantt" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex-1 p-4 overflow-y-auto">
-                                    <div className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-white/5 p-4 space-y-3">
-                                        <p className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Evolucion de prospectos</p>
+                                    <div className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-4 space-y-3">
+                                        <p className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--muted-foreground))]">Evolucion de prospectos</p>
                                         {filteredLeads.map((lead: PipelineLead) => {
                                             const stageValue = lead.stage ?? 'new';
                                             return (
                                             <div key={lead.id} className="space-y-1">
                                                 <div className="flex items-center justify-between text-xs">
-                                                    <span className="font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">{lead.nombre_completo || ''}</span>
-                                                    <span className="font-bold text-[hsl(var(--text-secondary))]">{STAGE_PROGRESS[stageValue] ?? 0}%</span>
+                                                    <span className="font-bold text-[hsl(var(--foreground))]">{lead.nombre_completo || ''}</span>
+                                                    <span className="font-bold text-[hsl(var(--muted-foreground))]">{STAGE_PROGRESS[stageValue] ?? 0}%</span>
                                                 </div>
-                                                <div className="h-2 rounded-full bg-[hsl(var(--surface-2))] dark:bg-white/10 overflow-hidden">
+                                                <div className="h-2 rounded-full bg-[hsl(var(--surface-2))] overflow-hidden">
                                                     <div className="h-full bg-[hsl(var(--primary))]" style={{ width: `${STAGE_PROGRESS[stageValue] ?? 0}%` }} />
                                                 </div>
                                             </div>
                                             );
                                         })}
-                                        {!leadsError && filteredLeads.length === 0 && <div className="py-1.5 text-center text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Sin prospectos</div>}
+                                        {!leadsError && filteredLeads.length === 0 && <div className="py-1.5 text-center text-2xs font-bold uppercase tracking-wide text-[hsl(var(--muted-foreground))]">Sin prospectos</div>}
                                     </div>
                                 </motion.div>
                             ) : viewType === 'wiki' ? (
@@ -576,15 +576,15 @@ export default function ConsolidationPipelinePage() {
                                     {/* Wiki Header */}
                                     <div className="flex items-center justify-between">
                                         <div>
-                                            <h2 className="text-lg font-bold text-[hsl(var(--text-primary))] dark:text-white flex items-center gap-3 italic uppercase">
+                                            <h2 className="text-lg font-bold text-[hsl(var(--foreground))] flex items-center gap-3 italic uppercase">
                                                 <FileText className="text-[hsl(var(--primary))]" size={28} />
                                                 Manual de Consolidación
                                             </h2>
-                                            <p className="text-[hsl(var(--text-secondary))] font-medium text-sm mt-1">Playbooks pastorales y acuerdos de nivel de servicio (SLA)</p>
+                                            <p className="text-[hsl(var(--muted-foreground))] font-medium text-sm mt-1">Playbooks pastorales y acuerdos de nivel de servicio (SLA)</p>
                                         </div>
-                                        <div className="px-3 py-2 rounded-lg bg-info-soft dark:bg-[hsl(var(--info))]/20 border border-[hsl(var(--info)/20%)] dark:border-[hsl(var(--info)/30%)] flex items-center gap-2">
+                                        <div className="px-3 py-2 rounded-lg bg-[hsl(var(--primary)/0.1)] border border-[hsl(var(--primary)/0.2)] flex items-center gap-2">
                                             <Sparkles size={16} className="text-[hsl(var(--primary))]" />
-                                            <span className="text-2xs font-bold text-[hsl(var(--primary))] dark:text-info-text uppercase tracking-wide">Guía de Consolidación IA</span>
+                                            <span className="text-2xs font-bold text-[hsl(var(--primary))] uppercase tracking-wide">Guía de Consolidación IA</span>
                                         </div>
                                     </div>
 
@@ -593,28 +593,28 @@ export default function ConsolidationPipelinePage() {
                                         <div className="lg:col-span-2 space-y-3">
                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                                 {[
-                                                    { title: 'Primer Encuentro', icon: Users, desc: 'Contactar en menos de 24h. Usar tono cálido y empático.', color: 'text-[hsl(var(--primary))] bg-info-soft' },
-                                                    { title: 'Cierre de Etapa', icon: Target, desc: 'Validar disposición al bautismo o participación activa.', color: 'text-[hsl(var(--success))] bg-success-soft' }
+                                                    { title: 'Primer Encuentro', icon: Users, desc: 'Contactar en menos de 24h. Usar tono cálido y empático.', color: 'text-[hsl(var(--primary))] bg-[hsl(var(--primary)/0.1)]' },
+                                                    { title: 'Cierre de Etapa', icon: Target, desc: 'Validar disposición al bautismo o participación activa.', color: 'text-[hsl(var(--success))] bg-[hsl(var(--success)/0.1)]' }
                                                 ].map((card, i) => (
-                                                    <div key={i} className="p-4 rounded-md bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 shadow-sm hover:shadow-xl transition-all group">
+                                                    <div key={i} className="p-4 rounded-md bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] shadow-sm hover:shadow-xl transition-all group">
                                                         <div className={clsx("size-8 rounded-md flex items-center justify-center mb-4 transition-transform group-hover:scale-110", card.color.split(' ')[1])}>
                                                             <card.icon className={card.color.split(' ')[0]} size={20} />
                                                         </div>
-                                                        <h4 className="font-bold text-[hsl(var(--text-primary))] dark:text-white mb-2 uppercase italic">{card.title}</h4>
-                                                        <p className="text-xs text-[hsl(var(--text-secondary))] leading-relaxed font-medium">{card.desc}</p>
+                                                        <h4 className="font-bold text-[hsl(var(--foreground))] mb-2 uppercase italic">{card.title}</h4>
+                                                        <p className="text-xs text-[hsl(var(--muted-foreground))] leading-relaxed font-medium">{card.desc}</p>
                                                     </div>
                                                 ))}
                                             </div>
 
                                             {/* Notes Area with Premium Styling */}
-                                            <div className="p-1 rounded-md bg-gradient-to-br to-[hsl(var(--info)/10%)] via-transparent to-[hsl(var(--info)/10%)]">
-                                                <div className="p-4 rounded-lg bg-[hsl(var(--surface-1))] dark:bg-[hsl(var(--surface-1))] border border-white/20 shadow-2xl space-y-4">
-                                                    <label className="text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide block pl-1">Notas Dinámicas de Proceso</label>
+                                            <div className="p-1 rounded-md bg-gradient-to-br to-[hsl(var(--primary)/0.1)] via-transparent to-[hsl(var(--primary)/0.1)]">
+                                                <div className="p-4 rounded-lg bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] shadow-2xl space-y-4">
+                                                    <label className="text-2xs font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wide block pl-1">Notas Dinámicas de Proceso</label>
                                                     <textarea
                                                         value={wikiNotes}
                                                         onChange={(e) => setWikiNotes(e.target.value)}
                                                         placeholder="Documenta aquí lineamientos específicos de tu sede o equipo..."
-                                                        className="w-full min-h-[400px] border-none bg-transparent outline-none text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] font-medium leading-loose resize-none placeholder:text-[hsl(var(--text-secondary))]"
+                                                        className="w-full min-h-[400px] border-none bg-transparent outline-none text-[hsl(var(--foreground))] font-medium leading-loose resize-none placeholder:text-[hsl(var(--muted-foreground))]"
                                                     />
                                                 </div>
                                             </div>
@@ -622,7 +622,7 @@ export default function ConsolidationPipelinePage() {
 
                                         {/* SLA & Stats Sidebar */}
                                         <div className="space-y-3">
-                                            <div className="p-4 rounded-md bg-[hsl(var(--surface-1))] text-[hsl(var(--text-primary))] shadow-2xl relative overflow-hidden">
+                                            <div className="p-4 rounded-md bg-[hsl(var(--surface-1))] text-[hsl(var(--foreground))] shadow-2xl relative overflow-hidden">
                                                 <div className="absolute top-0 right-0 p-4 opacity-10">
                                                     <Clock size={80} />
                                                 </div>
@@ -635,10 +635,10 @@ export default function ConsolidationPipelinePage() {
                                                     ].map((item, i) => (
                                                         <div key={i} className="space-y-1">
                                                             <div className="flex justify-between text-xs font-bold">
-                                                                <span className="text-[hsl(var(--text-secondary))]">{item.label}</span>
+                                                                <span className="text-[hsl(var(--muted-foreground))]">{item.label}</span>
                                                                 <span>{item.time}</span>
                                                             </div>
-                                                            <div className="h-1 bg-white/10 rounded-full overflow-hidden">
+                                                            <div className="h-1 bg-[hsl(var(--surface-3))] rounded-full overflow-hidden">
                                                                 <div className="h-full bg-[hsl(var(--primary))] shadow-[0_0_8px_rgba(59,130,246,0.5)]" style={{ width: `${item.progress}%` }} />
                                                             </div>
                                                         </div>
@@ -646,14 +646,14 @@ export default function ConsolidationPipelinePage() {
                                                 </div>
                                             </div>
 
-                                            <div className="p-4 rounded-md bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10">
-                                                <h4 className="font-bold text-2xs tracking-wide uppercase text-[hsl(var(--text-secondary))] mb-4">Ayuda de Sistema</h4>
+                                            <div className="p-4 rounded-md bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))]">
+                                                <h4 className="font-bold text-2xs tracking-wide uppercase text-[hsl(var(--muted-foreground))] mb-4">Ayuda de Sistema</h4>
                                                 <div className="space-y-3">
-                                                    <div className="flex items-center gap-3 text-xs font-bold text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">
+                                                    <div className="flex items-center gap-3 text-xs font-bold text-[hsl(var(--muted-foreground))]">
                                                         <div className="size-2 rounded-full bg-[hsl(var(--primary))]" />
                                                         Arrastra para mover etapas
                                                     </div>
-                                                    <div className="flex items-center gap-3 text-xs font-bold text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">
+                                                    <div className="flex items-center gap-3 text-xs font-bold text-[hsl(var(--muted-foreground))]">
                                                         <div className="size-2 rounded-full bg-[hsl(var(--warning))]" />
                                                         Click para ver detalles
                                                     </div>
@@ -663,21 +663,21 @@ export default function ConsolidationPipelinePage() {
                                     </div>
                                 </motion.div>
                             ) : viewType === 'table' || viewType === 'list' ? (
-                                <motion.div key="list" className="flex-1 overflow-y-auto bg-[hsl(var(--surface-1))] dark:bg-[hsl(var(--surface-1))]">
+                                <motion.div key="list" className="flex-1 overflow-y-auto bg-[hsl(var(--surface-1))]">
                                     {selectedLeads.length > 0 && (
                                         <div
                                             role="region"
                                             aria-label="Acciones en lote"
-                                            className="flex items-center justify-between gap-3 px-3 py-2 mb-2 rounded-md border border-[hsl(var(--warning)/0.25)] bg-[hsl(var(--warning-muted))] dark:bg-[hsl(var(--warning))]/10"
+                                            className="flex items-center justify-between gap-3 px-3 py-2 mb-2 rounded-md border border-[hsl(var(--warning)/0.25)] bg-[hsl(var(--warning)/0.1)]"
                                         >
-                                            <p className="text-xs font-semibold text-[hsl(var(--text-primary))] dark:text-white">
+                                            <p className="text-xs font-semibold text-[hsl(var(--foreground))]">
                                                 {selectedLeads.length} caso{selectedLeads.length !== 1 ? 's' : ''} seleccionado{selectedLeads.length !== 1 ? 's' : ''}
                                             </p>
                                             <div className="flex items-center gap-2">
                                                 <button
                                                     type="button"
                                                     onClick={() => setSelectedLeads([])}
-                                                    className="text-xs font-semibold px-2.5 py-1.5 rounded-md hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5 text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] transition-colors"
+                                                    className="text-xs font-semibold px-2.5 py-1.5 rounded-md hover:bg-[hsl(var(--surface-2))] text-[hsl(var(--muted-foreground))] transition-colors"
                                                 >
                                                     Cancelar
                                                 </button>
@@ -687,7 +687,7 @@ export default function ConsolidationPipelinePage() {
                                                     disabled={isBulkDeleting || !canEditCrm}
                                                     className={clsx(
                                                         'inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1.5 rounded-md',
-                                                        'bg-[hsl(var(--destructive))] text-white',
+                                                        'bg-[hsl(var(--destructive))] text-[hsl(var(--destructive-foreground))]',
                                                         'hover:bg-[hsl(var(--destructive))]/90',
                                                         'disabled:opacity-50 disabled:cursor-not-allowed',
                                                         'transition-colors',
@@ -733,7 +733,7 @@ export default function ConsolidationPipelinePage() {
                         <button
                             type="button"
                             onClick={() => setIsNewLeadDrawerOpen(false)}
-                            className="px-4 py-2 text-xs font-bold text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] dark:hover:text-[hsl(var(--text-secondary))] transition-colors"
+                            className="px-4 py-2 text-xs font-bold text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] transition-colors"
                         >
                             Cancelar
                         </button>
@@ -741,7 +741,7 @@ export default function ConsolidationPipelinePage() {
                             form="new-lead-form"
                             type="submit"
                             disabled={isSavingLead}
-                            className="px-3 py-2.5 bg-[hsl(var(--primary))] text-white rounded-md text-xs font-bold uppercase tracking-wide shadow-lg shadow-[hsl(var(--info)/25%)] hover:bg-[hsl(var(--primary))] active:scale-95 transition-all flex items-center gap-2 disabled:opacity-60"
+                            className="px-3 py-2.5 bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] rounded-md text-xs font-bold uppercase tracking-wide shadow-lg shadow-[hsl(var(--primary)/0.25)] hover:bg-[hsl(var(--primary))] active:scale-95 transition-all flex items-center gap-2 disabled:opacity-60"
                         >
                             {isSavingLead ? <Loader2 size={13} className="animate-spin" /> : <UserPlus size={13} />}
                             Registrar Prospecto
@@ -753,38 +753,38 @@ export default function ConsolidationPipelinePage() {
                     {/* Nombre / Apellido */}
                     <div className="grid grid-cols-2 gap-3">
                         <div className="space-y-2">
-                            <label className="text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide block">Nombre <span className="text-[hsl(var(--primary))]">*</span></label>
+                            <label className="text-2xs font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wide block">Nombre <span className="text-[hsl(var(--primary))]">*</span></label>
                             <input
                                 required
                                 value={newLeadForm.first_name}
                                 onChange={e => setNewLeadForm({ ...newLeadForm, first_name: e.target.value })}
                                 placeholder="Juan"
-                                className="w-full px-4 py-1.5 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-black/20 outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.3] font-bold text-sm dark:text-white placeholder:text-[hsl(var(--text-secondary))] transition-all"
+                                className="w-full px-4 py-1.5 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.3)] font-bold text-sm text-[hsl(var(--foreground))] placeholder:text-[hsl(var(--muted-foreground))] transition-all"
                             />
                         </div>
                         <div className="space-y-2">
-                            <label className="text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide block">Apellido <span className="text-[hsl(var(--primary))]">*</span></label>
+                            <label className="text-2xs font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wide block">Apellido <span className="text-[hsl(var(--primary))]">*</span></label>
                             <input
                                 required
                                 value={newLeadForm.last_name}
                                 onChange={e => setNewLeadForm({ ...newLeadForm, last_name: e.target.value })}
                                 placeholder="Pérez"
-                                className="w-full px-4 py-1.5 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-black/20 outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.3] font-bold text-sm dark:text-white placeholder:text-[hsl(var(--text-secondary))] transition-all"
+                                className="w-full px-4 py-1.5 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.3)] font-bold text-sm text-[hsl(var(--foreground))] placeholder:text-[hsl(var(--muted-foreground))] transition-all"
                             />
                         </div>
                     </div>
 
                     {/* Teléfono */}
                     <div className="space-y-2">
-                        <label className="text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide block">Teléfono / WhatsApp <span className="text-[hsl(var(--primary))]">*</span></label>
+                        <label className="text-2xs font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wide block">Teléfono / WhatsApp <span className="text-[hsl(var(--primary))]">*</span></label>
                         <div className="relative">
-                            <Phone size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-[hsl(var(--text-secondary))]" />
+                            <Phone size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-[hsl(var(--muted-foreground))]" />
                             <input
                                 required
                                 value={newLeadForm.phone}
                                 onChange={e => setNewLeadForm({ ...newLeadForm, phone: e.target.value })}
                                 placeholder="+57 300 000 0000"
-                                className="w-full pl-10 pr-4 py-1.5 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-black/20 outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.3] font-bold text-sm dark:text-white placeholder:text-[hsl(var(--text-secondary))] transition-all"
+                                className="w-full pl-10 pr-4 py-1.5 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.3)] font-bold text-sm text-[hsl(var(--foreground))] placeholder:text-[hsl(var(--muted-foreground))] transition-all"
                             />
                         </div>
                     </div>
@@ -792,21 +792,21 @@ export default function ConsolidationPipelinePage() {
                     {/* Fuente / Etapa */}
                     <div className="grid grid-cols-2 gap-3">
                         <div className="space-y-2">
-                            <label className="text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide block">Fuente de Contacto</label>
+                            <label className="text-2xs font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wide block">Fuente de Contacto</label>
                             <select
                                 value={newLeadForm.source}
                                 onChange={e => setNewLeadForm({ ...newLeadForm, source: e.target.value })}
-                                className="w-full px-4 py-1.5 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-black/20 outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.3] font-bold text-sm dark:text-white appearance-none transition-all"
+                                className="w-full px-4 py-1.5 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.3)] font-bold text-sm text-[hsl(var(--foreground))] appearance-none transition-all"
                             >
                                 {sourceKeys.map(s => <option key={s} value={s}>{SOURCES[s]} {s}</option>)}
                             </select>
                         </div>
                         <div className="space-y-2">
-                            <label className="text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide block">Etapa Inicial</label>
+                            <label className="text-2xs font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wide block">Etapa Inicial</label>
                             <select
                                 value={newLeadForm.stage}
                                 onChange={e => setNewLeadForm({ ...newLeadForm, stage: e.target.value })}
-                                className="w-full px-4 py-1.5 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-black/20 outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.3] font-bold text-sm dark:text-white appearance-none transition-all"
+                                className="w-full px-4 py-1.5 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.3)] font-bold text-sm text-[hsl(var(--foreground))] appearance-none transition-all"
                             >
                                 {PIPELINE_STAGES.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
                             </select>
@@ -815,24 +815,24 @@ export default function ConsolidationPipelinePage() {
 
                     {/* Notas */}
                     <div className="space-y-2">
-                        <label className="text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide block">Notas del Primer Contacto</label>
+                        <label className="text-2xs font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wide block">Notas del Primer Contacto</label>
                         <textarea
                             value={newLeadForm.notes}
                             onChange={e => setNewLeadForm({ ...newLeadForm, notes: e.target.value })}
                             placeholder="¿Cómo llegó? ¿Qué contó? ¿Tiene familia en la iglesia?..."
                             rows={4}
-                            className="w-full px-4 py-1.5 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-black/20 outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.3] font-bold text-sm dark:text-white placeholder:text-[hsl(var(--text-secondary))] resize-none transition-all"
+                            className="w-full px-4 py-1.5 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.3)] font-bold text-sm text-[hsl(var(--foreground))] placeholder:text-[hsl(var(--muted-foreground))] resize-none transition-all"
                         />
                     </div>
 
                     {/* Preview chip */}
                     {(newLeadForm.first_name || newLeadForm.last_name) && (
-                        <div className="p-4 bg-info-soft dark:bg-[hsl(var(--info))]/20 rounded-lg border border-[hsl(var(--info)/20%)] dark:border-[hsl(var(--info)/30%)] flex items-center gap-3">
-                            <div className="size-8 rounded-md bg-[hsl(var(--primary))] flex items-center justify-center text-white font-bold text-xs shadow">
+                        <div className="p-4 bg-[hsl(var(--primary)/0.1)] rounded-lg border border-[hsl(var(--primary)/0.2)] flex items-center gap-3">
+                            <div className="size-8 rounded-md bg-[hsl(var(--primary))] flex items-center justify-center text-[hsl(var(--primary-foreground))] font-bold text-xs shadow">
                                 {newLeadForm.first_name?.[0] ?? ''}{newLeadForm.last_name?.[0] ?? ''}
                             </div>
                             <div>
-                                <p className="text-sm font-bold text-info-text dark:text-info-text">{`${newLeadForm.first_name ?? ''} ${newLeadForm.last_name ?? ''}`.trim()}</p>
+                                <p className="text-sm font-bold text-[hsl(var(--primary))]">{`${newLeadForm.first_name ?? ''} ${newLeadForm.last_name ?? ''}`.trim()}</p>
                                 <p className="text-2xs text-[hsl(var(--primary))] uppercase tracking-wide font-bold">Vista previa del prospecto</p>
                             </div>
                         </div>

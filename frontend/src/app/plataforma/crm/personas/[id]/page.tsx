@@ -778,7 +778,7 @@ export default function PersonaDetailPage() {
                             onClick={() => setActiveTab(tabId)}
                             className={clsx(
                                 "flex items-center gap-2 px-4 py-2 text-xs font-bold uppercase tracking-wider transition-all relative whitespace-nowrap shrink-0",
-                                active ? "text-[hsl(var(--primary))]" : "text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-secondary))] dark:hover:text-[hsl(var(--text-secondary))]"
+                                active ? "text-[hsl(var(--primary))]" : "text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))]"
                             )}
                         >
                             <Icon size={14} />

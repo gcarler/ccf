@@ -79,7 +79,7 @@ export default function CrmTaskDetailPage() {
                 </p>
                 <button
                     onClick={() => setReloadKey(key => key + 1)}
-                    className="rounded-md border border-[hsl(var(--border))] px-3 py-1.5 text-xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] transition-colors hover:bg-[hsl(var(--surface-1))] dark:border-white/10 dark:hover:bg-white/5"
+                    className="rounded-md border border-[hsl(var(--border))] px-3 py-1.5 text-xs font-bold uppercase tracking-wide text-[hsl(var(--muted-foreground))] transition-colors hover:bg-[hsl(var(--surface-1))]"
                 >
                     Reintentar
                 </button>
@@ -87,15 +87,15 @@ export default function CrmTaskDetailPage() {
         );
     }
 
-    if (loading) return <div className="p-4 text-center animate-pulse font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Cargando tarea pastoral...</div>;
+    if (loading) return <div className="p-4 text-center animate-pulse font-bold uppercase tracking-wide text-[hsl(var(--muted-foreground))]">Cargando tarea pastoral...</div>;
 
     if (!task) {
         return (
             <div className="mx-auto flex max-w-xl flex-col items-center gap-3 p-4 text-center">
-                <p className="font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">No se pudo cargar la tarea pastoral.</p>
+                <p className="font-bold uppercase tracking-wide text-[hsl(var(--muted-foreground))]">No se pudo cargar la tarea pastoral.</p>
                 <button
                     onClick={() => setReloadKey(key => key + 1)}
-                    className="rounded-md border border-[hsl(var(--border))] px-3 py-1.5 text-xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] transition-colors hover:bg-[hsl(var(--surface-1))] dark:border-white/10 dark:hover:bg-white/5"
+                    className="rounded-md border border-[hsl(var(--border))] px-3 py-1.5 text-xs font-bold uppercase tracking-wide text-[hsl(var(--muted-foreground))] transition-colors hover:bg-[hsl(var(--surface-1))]"
                 >
                     Reintentar
                 </button>
@@ -119,7 +119,7 @@ export default function CrmTaskDetailPage() {
                                 <DSBadge tone="blue" label={String(task.category ?? 'general').toUpperCase()} />
                                 <DSBadge tone={task.status === 'completed' ? 'emerald' : 'amber'} label={String(task.status ?? 'pending').toUpperCase()} />
                             </div>
-                            <h1 className="text-lg font-bold text-[hsl(var(--text-primary))] dark:text-white tracking-tight uppercase leading-none">
+                            <h1 className="text-lg font-bold text-[hsl(var(--foreground))] tracking-tight uppercase leading-none">
                                 {task.title}
                             </h1>
                         </div>
@@ -129,7 +129,7 @@ export default function CrmTaskDetailPage() {
                         <div className="lg:col-span-2 space-y-3">
                             <DSCard>
                                 <h3 className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-4">Detalle de la Actividad</h3>
-                                <p className="text-sm text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] leading-relaxed">
+                                <p className="text-sm text-[hsl(var(--foreground))] leading-relaxed">
                                     {task.description}
                                 </p>
                             </DSCard>
@@ -138,17 +138,17 @@ export default function CrmTaskDetailPage() {
                                 <h3 className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-4">Bitácora de Seguimiento</h3>
                                 <div className="space-y-4">
                                     <div className="flex gap-4">
-                                        <div className="size-8 rounded-full bg-[hsl(var(--surface-2))] dark:bg-white/5 flex items-center justify-center text-[hsl(var(--text-secondary))]">
+                                        <div className="size-8 rounded-full bg-[hsl(var(--surface-2))] flex items-center justify-center text-[hsl(var(--muted-foreground))]">
                                             <History size={16} />
                                         </div>
                                         <div className="flex-1 space-y-1">
-                                            <p className="text-xs font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">Tarea creada</p>
-                                            <p className="text-2xs text-[hsl(var(--text-secondary))] uppercase font-bold">12 ABR 2026 · 10:30 AM</p>
+                                            <p className="text-xs font-bold text-[hsl(var(--foreground))]">Tarea creada</p>
+                                            <p className="text-2xs text-[hsl(var(--muted-foreground))] uppercase font-bold">12 ABR 2026 · 10:30 AM</p>
                                         </div>
                                     </div>
-                                    <div className="h-8 border-l-2 border-[hsl(var(--border))] dark:border-white/5 ml-4" />
-                                    <div className="p-4 rounded-lg bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-dashed border-[hsl(var(--border))] dark:border-white/10 text-center">
-                                        <p className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Esperando actualizaciones...</p>
+                                    <div className="h-8 border-l-2 border-[hsl(var(--border))] ml-4" />
+                                    <div className="p-4 rounded-lg bg-[hsl(var(--surface-1))] border border-dashed border-[hsl(var(--border))] text-center">
+                                        <p className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--muted-foreground))]">Esperando actualizaciones...</p>
                                     </div>
                                 </div>
                             </DSCard>
@@ -159,8 +159,8 @@ export default function CrmTaskDetailPage() {
                                 <div className="space-y-3">
                                     <div className="space-y-2">
                                         <p className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Asignado a</p>
-                                        <div className="flex items-center gap-2 p-2 rounded-md bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/5">
-                                            <div className="size-8 rounded-lg bg-[hsl(var(--primary))] flex items-center justify-center text-white font-bold text-xs">
+                                        <div className="flex items-center gap-2 p-2 rounded-md bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))]">
+                                            <div className="size-8 rounded-lg bg-[hsl(var(--primary))] flex items-center justify-center text-[hsl(var(--primary-foreground))] font-bold text-xs">
                                                 {task.assigned_to?.charAt(0)}
                                             </div>
                                             <span className="text-xs font-bold">{task.assigned_to}</span>
@@ -171,7 +171,7 @@ export default function CrmTaskDetailPage() {
                                         <p className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Prioridad</p>
                                         <div className={clsx(
                                             'flex items-center gap-2 px-3 py-2 rounded-md text-xs font-bold',
-                                            task.priority === 'high' ? 'bg-[hsl(var(--danger))]/10 text-danger-text' : 'bg-[hsl(var(--warning))]/10 text-warning-text'
+                                            task.priority === 'high' ? 'bg-[hsl(var(--destructive)/0.1)] text-[hsl(var(--destructive))]' : 'bg-[hsl(var(--warning)/0.1)] text-[hsl(var(--warning))]'
                                         )}>
                                             <Flag size={14} /> {String(task.priority ?? 'normal').toUpperCase()}
                                         </div>
@@ -179,18 +179,18 @@ export default function CrmTaskDetailPage() {
 
                                     <div className="space-y-2">
                                         <p className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Vencimiento</p>
-                                        <div className="flex items-center gap-2 text-xs font-bold text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">
+                                        <div className="flex items-center gap-2 text-xs font-bold text-[hsl(var(--muted-foreground))]">
                                             <Calendar size={14} /> {task.due_date ? new Date(task.due_date).toLocaleDateString() : 'Sin fecha'}
                                         </div>
                                     </div>
 
-                                    <button className="w-full py-1.5 bg-[hsl(var(--secondary))] text-white rounded-md text-2xs font-bold uppercase tracking-wide shadow-lg shadow-[hsl(var(--secondary))/20] hover:scale-105 transition-all">
+                                    <button className="w-full py-1.5 bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] rounded-md text-2xs font-bold uppercase tracking-wide shadow-lg shadow-[hsl(var(--primary)/0.2)] hover:scale-105 transition-all">
                                         Marcar como Completada
                                     </button>
                                 </div>
                             </DSCard>
 
-                            <div className="p-4 bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))] rounded-md border border-[hsl(var(--border-primary))] text-[hsl(var(--text-primary))] space-y-4">
+                            <div className="p-4 bg-[hsl(var(--surface-1))] rounded-md border border-[hsl(var(--border))] text-[hsl(var(--foreground))] space-y-4">
                                 <div className="flex items-center gap-2 text-2xs font-bold uppercase tracking-wide text-[hsl(var(--secondary))]">
                                     <AlertCircle size={14} /> Optimus Guard
                                 </div>

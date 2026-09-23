@@ -68,10 +68,10 @@ export default function GroupDetailPage() {
     if (error) {
         return (
             <div className="mx-auto flex max-w-xl flex-col items-center gap-3 p-4 text-center">
-                <p className="font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{error}</p>
+                <p className="font-bold uppercase tracking-wide text-[hsl(var(--muted-foreground))]">{error}</p>
                 <button
                     onClick={() => setReloadKey(key => key + 1)}
-                    className="rounded-md border border-[hsl(var(--border))] px-3 py-1.5 text-xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] transition-colors hover:bg-[hsl(var(--surface-1))] dark:border-white/10 dark:hover:bg-white/5"
+                    className="rounded-md border border-[hsl(var(--border))] px-3 py-1.5 text-xs font-bold uppercase tracking-wide text-[hsl(var(--muted-foreground))] transition-colors hover:bg-[hsl(var(--surface-2))]"
                 >
                     Reintentar
                 </button>
@@ -81,7 +81,7 @@ export default function GroupDetailPage() {
 
     if (loading) {
         return (
-            <div className="p-4 text-center animate-pulse font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
+            <div className="p-4 text-center animate-pulse font-bold uppercase tracking-wide text-[hsl(var(--muted-foreground))]">
                 Recuperando informacion del grupo...
             </div>
         );
@@ -90,12 +90,12 @@ export default function GroupDetailPage() {
     if (!group) {
         return (
             <div className="mx-auto flex max-w-xl flex-col items-center gap-3 p-4 text-center">
-                <p className="font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
+                <p className="font-bold uppercase tracking-wide text-[hsl(var(--muted-foreground))]">
                     No se pudo cargar el grupo.
                 </p>
                 <button
                     onClick={() => setReloadKey(key => key + 1)}
-                    className="rounded-md border border-[hsl(var(--border))] px-3 py-1.5 text-xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] transition-colors hover:bg-[hsl(var(--surface-1))] dark:border-white/10 dark:hover:bg-white/5"
+                    className="rounded-md border border-[hsl(var(--border))] px-3 py-1.5 text-xs font-bold uppercase tracking-wide text-[hsl(var(--muted-foreground))] transition-colors hover:bg-[hsl(var(--surface-2))]"
                 >
                     Reintentar
                 </button>
@@ -115,10 +115,10 @@ export default function GroupDetailPage() {
                 <header className="flex flex-col md:flex-row md:items-end justify-between gap-4">
                     <div className="space-y-4">
                         <DSBadge tone="blue" label={group.status || "GRUPO ACTIVO"} />
-                        <h1 className="text-lg font-bold text-[hsl(var(--text-primary))] dark:text-white tracking-tight uppercase leading-none">
+                        <h1 className="text-lg font-bold text-[hsl(var(--foreground))] tracking-tight uppercase leading-none">
                             {group.name}
                         </h1>
-                        <div className="flex items-center gap-4 text-sm font-bold text-[hsl(var(--text-secondary))]">
+                        <div className="flex items-center gap-4 text-sm font-bold text-[hsl(var(--muted-foreground))]">
                             <span className="flex items-center gap-2">
                                 <Calendar size={18} className="text-[hsl(var(--primary))]" />
                                 {group.zone || "Zona no definida"}
@@ -134,42 +134,42 @@ export default function GroupDetailPage() {
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
                     <div className="lg:col-span-2 space-y-3">
                         <DSCard>
-                            <h3 className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-3">Liderazgo</h3>
+                            <h3 className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--muted-foreground))] mb-3">Liderazgo</h3>
                             <div className="flex items-center gap-4">
                                 <div className="size-9 rounded-lg bg-[hsl(var(--info))]/10 flex items-center justify-center text-[hsl(var(--primary))]">
                                     <Shield size={24} />
                                 </div>
                                 <div>
-                                    <p className="text-xs font-bold text-[hsl(var(--text-primary))] dark:text-white uppercase">{group.leader_name || "Sin lider asignado"}</p>
-                                    <p className="text-2xs text-[hsl(var(--text-secondary))] font-bold uppercase tracking-wide">Lider de Casa</p>
+                                    <p className="text-xs font-bold text-[hsl(var(--foreground))] uppercase">{group.leader_name || "Sin lider asignado"}</p>
+                                    <p className="text-2xs text-[hsl(var(--muted-foreground))] font-bold uppercase tracking-wide">Lider de Casa</p>
                                 </div>
                             </div>
                         </DSCard>
 
                         <DSCard>
-                            <h3 className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-3">Estadisticas del Grupo</h3>
+                            <h3 className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--muted-foreground))] mb-3">Estadisticas del Grupo</h3>
                             <div className="grid grid-cols-2 gap-4">
-                                <div className="p-4 rounded-md bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/5">
+                                <div className="p-4 rounded-md bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))]">
                                     <Users size={20} className="text-[hsl(var(--primary))] mb-2" />
                                     <p className="text-lg font-bold">{group.personas_count ?? 0}</p>
-                                    <p className="text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase">Personas Frecuentes</p>
+                                    <p className="text-2xs font-bold text-[hsl(var(--muted-foreground))] uppercase">Personas Frecuentes</p>
                                 </div>
-                                <div className="p-4 rounded-md bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/5">
+                                <div className="p-4 rounded-md bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))]">
                                     <History size={20} className="text-[hsl(var(--success))] mb-2" />
                                     <p className="text-lg font-bold">{group.capacity ?? 0}</p>
-                                    <p className="text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase">Capacidad</p>
+                                    <p className="text-2xs font-bold text-[hsl(var(--muted-foreground))] uppercase">Capacidad</p>
                                 </div>
                             </div>
                         </DSCard>
                     </div>
 
                     <aside className="space-y-3">
-                        <div className="p-4 bg-[hsl(var(--surface-1))] rounded-md text-[hsl(var(--text-primary))] space-y-4">
+                        <div className="p-4 bg-[hsl(var(--surface-1))] rounded-md text-[hsl(var(--foreground))] space-y-4">
                             <div className="flex items-center gap-2 text-2xs font-bold uppercase tracking-wide text-[hsl(var(--primary))]">
                                 <History size={14} /> Linea de Tiempo
                             </div>
                             <div className="space-y-3">
-                                <div className="p-3 rounded-md bg-white/5 border border-white/10 text-2xs">
+                                <div className="p-3 rounded-md bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] text-2xs">
                                     <p className="font-bold">Grupo cargado desde backend</p>
                                     <p className="opacity-50">{group.created_at ? new Date(group.created_at).toLocaleDateString("es-CO") : "Sin fecha"}</p>
                                 </div>

@@ -84,16 +84,16 @@ export default function EmailBuilderPage() {
     setShowPreview(true);
   }, [getBlocksJson]);
 
-  if (authLoading) return <div className="flex items-center justify-center h-screen"><p className="text-sm text-[hsl(var(--text-secondary))]">Verificando sesión...</p></div>;
+  if (authLoading) return <div className="flex items-center justify-center h-screen"><p className="text-sm text-[hsl(var(--muted-foreground))]">Verificando sesión...</p></div>;
 
   if (error) {
     return (
       <div className="flex h-screen items-center justify-center p-4">
-        <div className="max-w-md rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-4 text-center dark:border-white/10 dark:bg-white/5">
-          <p className="text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-white">{error}</p>
+        <div className="max-w-md rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-4 text-center">
+          <p className="text-sm font-semibold text-[hsl(var(--foreground))]">{error}</p>
           <button
             onClick={() => setReloadKey((key) => key + 1)}
-            className="mt-4 rounded-md border border-[hsl(var(--border))] px-3 py-1.5 text-xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] transition-colors hover:bg-[hsl(var(--surface-1))] dark:border-white/10 dark:hover:bg-white/5"
+            className="mt-4 rounded-md border border-[hsl(var(--border))] px-3 py-1.5 text-xs font-bold uppercase tracking-wide text-[hsl(var(--muted-foreground))] transition-colors hover:bg-[hsl(var(--surface-2))]"
           >
             Reintentar
           </button>
@@ -102,19 +102,19 @@ export default function EmailBuilderPage() {
     );
   }
 
-  if (loading) return <div className="flex items-center justify-center h-screen"><p className="text-sm text-[hsl(var(--text-secondary))]">Cargando editor...</p></div>;
+  if (loading) return <div className="flex items-center justify-center h-screen"><p className="text-sm text-[hsl(var(--muted-foreground))]">Cargando editor...</p></div>;
 
   return (
     <div className="flex flex-col h-screen">
       <BuilderToolbar builder={builder} templateName={templateName} onNameChange={setTemplateName} onPreview={handlePreview} onSave={handleSave} onBack={() => router.push('/plataforma/crm/resources')} saving={saving} />
       <div className="flex flex-1 overflow-hidden">
-        <div className="w-[260px] border-r border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--bg-muted))] overflow-y-auto p-4">
-          <h2 className="text-xs font-semibold text-[hsl(var(--text-primary))] dark:text-white mb-3">Bloques</h2>
+        <div className="w-[260px] border-r border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] overflow-y-auto p-4">
+          <h2 className="text-xs font-semibold text-[hsl(var(--foreground))] mb-3">Bloques</h2>
           <BlockPalette />
         </div>
         <EmailCanvas builder={builder} />
-        <div className="w-[300px] border-l border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--bg-muted))] overflow-y-auto p-4">
-          <h2 className="text-xs font-semibold text-[hsl(var(--text-primary))] dark:text-white mb-3">Propiedades</h2>
+        <div className="w-[300px] border-l border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] overflow-y-auto p-4">
+          <h2 className="text-xs font-semibold text-[hsl(var(--foreground))] mb-3">Propiedades</h2>
           <PropertiesPanel block={selectedBlock} onUpdate={(props) => { if (selectedId) updateBlockProps(selectedId, props); }} />
         </div>
       </div>

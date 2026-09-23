@@ -135,10 +135,10 @@ export default function CrmAnalyticsPage() {
             onViewChange={setViewType}
             rightActions={
                 <div className="flex items-center gap-2">
-                    <button className="flex items-center gap-2 px-3 py-2 bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-md text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] transition-all">
+                    <button className="flex items-center gap-2 px-3 py-2 bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] rounded-md text-2xs font-bold uppercase tracking-wide text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--surface-2))] transition-all">
                         <Download size={13} /> Exportar PDF
                     </button>
-                    <button className="flex items-center gap-2 px-3 py-2 bg-[hsl(var(--primary))] text-white rounded-md text-2xs font-bold uppercase tracking-wide shadow-xl shadow-[hsl(var(--info)/20%)] active:scale-95 transition-all">
+                    <button className="flex items-center gap-2 px-3 py-2 bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] rounded-md text-2xs font-bold uppercase tracking-wide shadow-sm active:scale-95 transition-all">
                         <Share2 size={13} /> Compartir
                     </button>
                 </div>
@@ -152,10 +152,10 @@ export default function CrmAnalyticsPage() {
                         </StatusBanner>
                         <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
                             {[...Array(4)].map((_, i) => (
-                                <div key={i} className="h-24 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] dark:border-white/10 dark:bg-white/5 animate-pulse p-4 space-y-2">
-                                    <div className="h-3 w-1/2 rounded bg-[hsl(var(--surface-2))] dark:bg-white/10" />
-                                    <div className="h-6 w-1/3 rounded bg-[hsl(var(--surface-2))] dark:bg-white/10" />
-                                    <div className="h-2 w-2/3 rounded bg-[hsl(var(--surface-2))] dark:bg-white/10" />
+                                <div key={i} className="h-24 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] animate-pulse p-4 space-y-2">
+                                    <div className="h-3 w-1/2 rounded bg-[hsl(var(--surface-2))]" />
+                                    <div className="h-6 w-1/3 rounded bg-[hsl(var(--surface-2))]" />
+                                    <div className="h-2 w-2/3 rounded bg-[hsl(var(--surface-2))]" />
                                 </div>
                             ))}
                         </div>
@@ -192,17 +192,17 @@ export default function CrmAnalyticsPage() {
                         </motion.section>
 
                         <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1.45fr)_minmax(320px,0.75fr)]">
-                            <motion.section variants={itemVariants} className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-[#15171c] p-3 shadow-sm">
+                            <motion.section variants={itemVariants} className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-3 shadow-sm">
                                 <div className="mb-4 flex items-center justify-between gap-4">
                                     <div>
-                                        <h1 className="text-sm font-bold tracking-tight text-[hsl(var(--text-primary))] dark:text-white">
+                                        <h1 className="text-sm font-bold tracking-tight text-[hsl(var(--foreground))]">
                                             Resumen operativo
                                         </h1>
-                                        <p className="text-xs font-medium text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">
+                                        <p className="text-xs font-medium text-[hsl(var(--muted-foreground))]">
                                             Datos agregados reales del modulo de consolidacion.
                                         </p>
                                     </div>
-                                    <span className="rounded-full bg-[hsl(var(--surface-2))] px-3 py-1 text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] dark:bg-white/5 dark:text-[hsl(var(--text-secondary))]">
+                                    <span className="rounded-full bg-[hsl(var(--surface-2))] px-3 py-1 text-2xs font-bold uppercase tracking-wide text-[hsl(var(--muted-foreground))]">
                                         Actual
                                     </span>
                                 </div>
@@ -225,12 +225,12 @@ export default function CrmAnalyticsPage() {
                                     />
                                 </div>
 
-                                <div className="mt-4 rounded-lg bg-[hsl(var(--surface-1))] p-4 dark:bg-white/[0.03]">
-                                    <div className="mb-2 flex items-center justify-between text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
+                                <div className="mt-4 rounded-lg bg-[hsl(var(--surface-1))] p-4">
+                                    <div className="mb-2 flex items-center justify-between text-2xs font-bold uppercase tracking-wide text-[hsl(var(--muted-foreground))]">
                                         <span>Activacion de personas</span>
                                         <span>{activeRate}%</span>
                                     </div>
-                                    <div className="h-2 overflow-hidden rounded-full bg-[hsl(var(--surface-3))]/70 dark:bg-white/10">
+                                    <div className="h-2 overflow-hidden rounded-full bg-[hsl(var(--surface-2))]">
                                         <div
                                             className="h-full rounded-full bg-[hsl(var(--primary))] transition-all"
                                             style={{ width: `${Math.min(activeRate, 100)}%` }}
@@ -239,16 +239,16 @@ export default function CrmAnalyticsPage() {
                                 </div>
                             </motion.section>
 
-                            <motion.aside variants={itemVariants} className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-[#15171c] p-3 shadow-sm">
+                            <motion.aside variants={itemVariants} className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-3 shadow-sm">
                                 <div className="mb-4 flex items-center gap-2">
                                     <Activity size={15} className="text-[hsl(var(--primary))]" />
-                                    <h2 className="text-xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
+                                    <h2 className="text-xs font-bold uppercase tracking-wide text-[hsl(var(--muted-foreground))]">
                                         Pipeline
                                     </h2>
                                 </div>
 
                                 {funnelRows.length === 0 ? (
-                                    <p className="rounded-md bg-[hsl(var(--surface-1))] px-3 py-2 text-sm font-medium text-[hsl(var(--text-secondary))] dark:bg-white/[0.03]">
+                                    <p className="rounded-md bg-[hsl(var(--surface-1))] px-3 py-2 text-sm font-medium text-[hsl(var(--muted-foreground))]">
                                         No hay leads registrados.
                                     </p>
                                 ) : (
@@ -271,10 +271,10 @@ function ListView({ rows }: { rows: KpiRow[] }) {
     return (
         <div className="space-y-2">
             {rows.map((row) => (
-                <div key={row.label} className="flex items-center justify-between rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-4 dark:border-white/10 dark:bg-white/5">
+                <div key={row.label} className="flex items-center justify-between rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-4">
                     <div>
-                        <p className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{row.label}</p>
-                        <p className="text-base font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">{row.value}</p>
+                        <p className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--muted-foreground))]">{row.label}</p>
+                        <p className="text-base font-bold text-[hsl(var(--foreground))]">{row.value}</p>
                     </div>
                     <Badge tone={row.tone}>{row.context}</Badge>
                 </div>
@@ -285,20 +285,20 @@ function ListView({ rows }: { rows: KpiRow[] }) {
 
 function TableView({ rows }: { rows: KpiRow[] }) {
     return (
-        <div className="overflow-x-auto rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] dark:border-white/10 dark:bg-white/5">
+        <div className="overflow-x-auto rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))]">
             <table className="w-full min-w-[480px] text-left">
-                <thead className="bg-[hsl(var(--surface-1))] dark:bg-white/5">
+                <thead className="bg-[hsl(var(--surface-1))]">
                     <tr>
-                        <th className="px-4 py-1.5 text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Metrica</th>
-                        <th className="px-4 py-1.5 text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Valor</th>
-                        <th className="px-4 py-1.5 text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Contexto</th>
+                        <th className="px-4 py-1.5 text-2xs font-bold uppercase tracking-wide text-[hsl(var(--muted-foreground))]">Metrica</th>
+                        <th className="px-4 py-1.5 text-2xs font-bold uppercase tracking-wide text-[hsl(var(--muted-foreground))]">Valor</th>
+                        <th className="px-4 py-1.5 text-2xs font-bold uppercase tracking-wide text-[hsl(var(--muted-foreground))]">Contexto</th>
                     </tr>
                 </thead>
                 <tbody>
                     {rows.map((row) => (
-                        <tr key={row.label} className="border-t border-[hsl(var(--border))] dark:border-white/5">
-                            <td className="px-4 py-1.5 text-sm font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">{row.label}</td>
-                            <td className="px-4 py-1.5 text-xs text-[hsl(var(--text-secondary))]">{row.value}</td>
+                        <tr key={row.label} className="border-t border-[hsl(var(--border))]">
+                            <td className="px-4 py-1.5 text-sm font-bold text-[hsl(var(--foreground))]">{row.label}</td>
+                            <td className="px-4 py-1.5 text-xs text-[hsl(var(--muted-foreground))]">{row.value}</td>
                             <td className="px-4 py-1.5"><Badge tone={row.tone}>{row.context}</Badge></td>
                         </tr>
                     ))}
@@ -318,13 +318,13 @@ function BoardView({ rows }: { rows: KpiRow[] }) {
     return (
         <div className="grid grid-cols-1 gap-3 lg:grid-cols-3">
             {columns.map((column) => (
-                <div key={column.title} className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-3 dark:border-white/10 dark:bg-white/[0.03]">
-                    <p className="mb-3 text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{column.title}</p>
+                <div key={column.title} className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-3">
+                    <p className="mb-3 text-2xs font-bold uppercase tracking-wide text-[hsl(var(--muted-foreground))]">{column.title}</p>
                     <div className="space-y-2">
                         {column.items.map((item) => (
-                            <div key={item.label} className="rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-3 dark:border-white/10 dark:bg-white/5">
-                                <p className="text-xs font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">{item.label}</p>
-                                <p className="mt-1 text-2xs text-[hsl(var(--text-secondary))]">{item.value}</p>
+                            <div key={item.label} className="rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-3">
+                                <p className="text-xs font-bold text-[hsl(var(--foreground))]">{item.label}</p>
+                                <p className="mt-1 text-2xs text-[hsl(var(--muted-foreground))]">{item.value}</p>
                                 <div className="mt-2"><Badge tone={item.tone}>{item.context}</Badge></div>
                             </div>
                         ))}
@@ -354,17 +354,17 @@ function CalendarView({ analytics }: { analytics: CrmAnalyticsSummary | null }) 
 
 function GanttView({ rows }: { rows: FunnelRow[] }) {
     return (
-        <div className="space-y-3 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-4 dark:border-white/10 dark:bg-white/5">
-            <p className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Distribucion del pipeline</p>
+        <div className="space-y-3 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-4">
+            <p className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--muted-foreground))]">Distribucion del pipeline</p>
             {rows.length === 0 ? (
-                <p className="text-sm font-medium text-[hsl(var(--text-secondary))]">No hay datos disponibles.</p>
+                <p className="text-sm font-medium text-[hsl(var(--muted-foreground))]">No hay datos disponibles.</p>
             ) : rows.map((row) => (
                 <div key={row.stage} className="space-y-1">
                     <div className="flex items-center justify-between text-xs">
-                        <span className="font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">{row.label}</span>
-                        <span className="font-bold text-[hsl(var(--text-secondary))]">{row.value}</span>
+                        <span className="font-bold text-[hsl(var(--foreground))]">{row.label}</span>
+                        <span className="font-bold text-[hsl(var(--muted-foreground))]">{row.value}</span>
                     </div>
-                    <div className="h-2 overflow-hidden rounded-full bg-[hsl(var(--surface-2))] dark:bg-white/10">
+                    <div className="h-2 overflow-hidden rounded-full bg-[hsl(var(--surface-2))]">
                         <div className="h-full rounded-full bg-[hsl(var(--primary))]" style={{ width: `${row.percent}%` }} />
                     </div>
                 </div>
@@ -381,13 +381,13 @@ function WikiView({
     onChange: (value: string) => void;
 }) {
     return (
-        <div className="space-y-3 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-4 dark:border-white/10 dark:bg-white/5">
-            <p className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Wiki analitica CRM</p>
+        <div className="space-y-3 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-4">
+            <p className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--muted-foreground))]">Wiki analitica CRM</p>
             <textarea
                 value={wikiNotes}
                 onChange={(event) => onChange(event.target.value)}
                 placeholder="Documenta definiciones de metricas, fuentes de datos, supuestos y acuerdos de interpretacion para liderazgo pastoral..."
-                className="min-h-[320px] w-full rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-4 text-sm font-medium text-[hsl(var(--text-primary))] outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.2] dark:border-white/10 dark:bg-black/20 dark:text-[hsl(var(--text-secondary))]"
+                className="min-h-[320px] w-full rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-4 text-sm font-medium text-[hsl(var(--foreground))] outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.2]"
             />
         </div>
     );
@@ -397,13 +397,13 @@ function AnalyticsKpi({ row }: { row: KpiRow }) {
     return (
         <motion.div
             variants={{ hidden: { opacity: 0, scale: 0.98 }, show: { opacity: 1, scale: 1 } }}
-            className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-4 shadow-sm dark:border-white/10 dark:bg-[#15171c]"
+            className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-4 shadow-sm"
         >
             <div className="mb-3 flex items-center justify-between gap-3">
-                <p className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{row.label}</p>
+                <p className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--muted-foreground))]">{row.label}</p>
                 <Badge tone={row.tone}>{row.context}</Badge>
             </div>
-            <p className="text-xl font-bold tracking-tight text-[hsl(var(--text-primary))] dark:text-white">{row.value}</p>
+            <p className="text-xl font-bold tracking-tight text-[hsl(var(--foreground))]">{row.value}</p>
         </motion.div>
     );
 }
@@ -418,12 +418,12 @@ function SummaryTile({
     value: string;
 }) {
     return (
-        <div className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-4 dark:border-white/10 dark:bg-white/5">
-            <div className="mb-3 flex size-9 items-center justify-center rounded-md bg-info-soft text-[hsl(var(--primary))] dark:bg-[hsl(var(--info))]/10">
+        <div className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-4">
+            <div className="mb-3 flex size-9 items-center justify-center rounded-md bg-[hsl(var(--primary)/0.1)] text-[hsl(var(--primary))]">
                 <Icon size={16} />
             </div>
-            <p className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{label}</p>
-            <p className="text-lg font-bold text-[hsl(var(--text-primary))] dark:text-white">{value}</p>
+            <p className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--muted-foreground))]">{label}</p>
+            <p className="text-lg font-bold text-[hsl(var(--foreground))]">{value}</p>
         </div>
     );
 }
@@ -431,11 +431,11 @@ function SummaryTile({
 function FunnelStep({ row }: { row: FunnelRow }) {
     return (
         <div className="space-y-1.5">
-            <div className="flex items-center justify-between text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
+            <div className="flex items-center justify-between text-2xs font-bold uppercase tracking-wide text-[hsl(var(--muted-foreground))]">
                 <span>{row.label}</span>
                 <span>{row.value}</span>
             </div>
-            <div className="h-2 overflow-hidden rounded-full bg-[hsl(var(--surface-2))] dark:bg-white/10">
+            <div className="h-2 overflow-hidden rounded-full bg-[hsl(var(--surface-2))]">
                 <div className="h-full rounded-full bg-[hsl(var(--primary))]" style={{ width: `${row.percent}%` }} />
             </div>
         </div>
@@ -453,9 +453,9 @@ function Badge({
         <span
             className={clsx(
                 'inline-flex rounded-full px-2.5 py-1 text-2xs font-bold uppercase tracking-wide',
-                tone === 'positive' && 'bg-success-soft text-success-text dark:bg-[hsl(var(--success))]/10 dark:text-success-text',
-                tone === 'warning' && 'bg-warning-soft text-warning-text dark:bg-[hsl(var(--warning))]/10 dark:text-warning-text',
-                tone === 'neutral' && 'bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))] dark:bg-white/5 dark:text-[hsl(var(--text-secondary))]',
+                tone === 'positive' && 'bg-[hsl(var(--success)/0.1)] text-[hsl(var(--success))]',
+                tone === 'warning' && 'bg-[hsl(var(--warning)/0.1)] text-[hsl(var(--warning))]',
+                tone === 'neutral' && 'bg-[hsl(var(--surface-2))] text-[hsl(var(--muted-foreground))]',
             )}
         >
             {children}
@@ -474,8 +474,8 @@ function StatusBanner({
         <div
             className={clsx(
                 'rounded-lg border px-4 py-1.5 text-sm font-medium',
-                tone === 'neutral' && 'border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-[hsl(var(--text-secondary))] dark:border-white/10 dark:bg-white/5 dark:text-[hsl(var(--text-secondary))]',
-                tone === 'warning' && 'border-[hsl(var(--warning)/25%)] bg-warning-soft text-warning-text dark:border-[hsl(var(--warning)/100%)]/20 dark:bg-[hsl(var(--warning))]/10 dark:text-[hsl(var(--warning))]',
+                tone === 'neutral' && 'border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-[hsl(var(--muted-foreground))]',
+                tone === 'warning' && 'border-[hsl(var(--warning)/0.3)] bg-[hsl(var(--warning)/0.1)] text-[hsl(var(--warning))]',
             )}
         >
             {children}

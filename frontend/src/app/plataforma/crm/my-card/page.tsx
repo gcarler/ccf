@@ -61,9 +61,9 @@ export default function MyCardPage() {
                 <div className="p-4 bg-[hsl(var(--danger))]/10 rounded-full text-[hsl(var(--danger))]">
                     <ShieldCheck size={48} />
                 </div>
-                <h1 className="text-lg font-bold text-white">Perfil no Encontrado</h1>
-                <p className="text-[hsl(var(--text-secondary))] max-w-sm">No hemos podido encontrar tu perfil de persona vinculado a este usuario. Contacta con administración.</p>
-                <button onClick={() => router.back()} className="px-3 py-1.5 bg-white/5 hover:bg-white/10 text-white rounded-lg font-bold uppercase tracking-wide text-2xs transition-all">
+                <h1 className="text-lg font-bold text-[hsl(var(--foreground))]">Perfil no Encontrado</h1>
+                <p className="text-[hsl(var(--muted-foreground))] max-w-sm">No hemos podido encontrar tu perfil de persona vinculado a este usuario. Contacta con administración.</p>
+                <button onClick={() => router.back()} className="px-3 py-1.5 bg-[hsl(var(--surface-2))] hover:bg-[hsl(var(--surface-3))] text-[hsl(var(--foreground))] rounded-lg font-bold uppercase tracking-wide text-2xs transition-all">
                     Volver
                 </button>
             </div>
@@ -84,7 +84,7 @@ export default function MyCardPage() {
             case 'ministro':
                 return {
                     name: 'MINISTERIO UNGIDO',
-                    primary: 'from-[hsl(var(--warning))] to-orange-900',
+                    primary: 'from-[hsl(var(--warning))] to-[hsl(var(--warning))]',
                     border: 'border-[hsl(var(--warning)/100%)]/50',
                     badge: 'bg-[hsl(var(--warning))]',
                     glow: 'shadow-[hsl(var(--warning)/20%)]',
@@ -114,8 +114,8 @@ export default function MyCardPage() {
                     primary: 'from-[hsl(var(--surface-2))] to-[hsl(var(--bg-muted))]',
                     border: 'border-[hsl(var(--border))]/50',
                     badge: 'bg-[hsl(var(--surface-2))]',
-                    glow: 'shadow-black/20',
-                    accent: 'text-[hsl(var(--text-secondary))]'
+                    glow: 'shadow-md',
+                    accent: 'text-[hsl(var(--muted-foreground))]'
                 };
         }
     };
@@ -148,26 +148,26 @@ export default function MyCardPage() {
 
                 {/* Textures/Overlays */}
                 <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-10 mix-blend-overlay"></div>
-                <div className="absolute -top-24 -right-24 size-10 bg-white/10 rounded-full blur-3xl"></div>
+                <div className="absolute -top-24 -right-24 size-10 bg-[hsl(var(--primary)/0.1)] rounded-full blur-3xl"></div>
 
                 {/* Card Header */}
                 <div className="flex justify-between items-start relative z-10 mb-3">
-                    <Church className="text-white/80" size={32} />
-                    <div className={`${theme.badge} px-3 py-1 rounded-full text-2xs font-bold text-white uppercase tracking-wide`}>
+                    <Church className="text-[hsl(var(--primary-foreground)/0.8)]" size={32} />
+                    <div className={`${theme.badge} px-3 py-1 rounded-full text-2xs font-bold text-[hsl(var(--primary-foreground))] uppercase tracking-wide`}>
                         {theme.name}
                     </div>
                 </div>
 
                 {/* Profile Picture Placeholder */}
                 <div className="flex flex-col items-center text-center space-y-4 mb-3 mt-2 relative z-10">
-                    <div className="size-10 rounded-lg bg-white/10 backdrop-blur-xl border border-white/20 flex items-center justify-center text-white relative group-hover:scale-105 transition-transform duration-500">
-                        <User size={48} className="text-white/50" />
+                    <div className="size-10 rounded-lg bg-[hsl(var(--surface-1)/0.2)] backdrop-blur-xl border border-[hsl(var(--border)/0.3)] flex items-center justify-center text-[hsl(var(--primary-foreground))] relative group-hover:scale-105 transition-transform duration-500">
+                        <User size={48} className="text-[hsl(var(--primary-foreground)/0.5)]" />
                         <div className="absolute -bottom-1 -right-1 size-6 bg-[hsl(var(--success))] rounded-lg flex items-center justify-center border-4 border-[hsl(var(--border))] translate-x-1 translate-y-1">
-                            <ShieldCheck size={12} className="text-white" />
+                            <ShieldCheck size={12} className="text-[hsl(var(--primary-foreground))]" />
                         </div>
                     </div>
                     <div>
-                        <h1 className="text-lg font-bold text-white tracking-tight leading-tight">
+                        <h1 className="text-lg font-bold text-[hsl(var(--primary-foreground))] tracking-tight leading-tight">
                             {persona.nombre_completo || `${persona.first_name ?? ''} ${persona.last_name ?? ''}`.trim()}
                         </h1>
                         <p className={`text-2xs font-bold uppercase tracking-wide mt-2 ${theme.accent}`}>
@@ -194,40 +194,40 @@ export default function MyCardPage() {
                             }}
                         />
                     </div>
-                    <p className="text-2xs font-bold text-white/40 uppercase tracking-wide mt-3">
+                    <p className="text-2xs font-bold text-[hsl(var(--primary-foreground)/0.6)] uppercase tracking-wide mt-3">
                         Escanea para validar asistencia
                     </p>
                 </div>
 
                 {/* Bottom Bar */}
-                <div className="mt-3 pt-6 border-t border-white/10 relative z-10 flex justify-between items-end">
+                <div className="mt-3 pt-6 border-t border-[hsl(var(--border)/0.3)] relative z-10 flex justify-between items-end">
                     <div className="space-y-1">
-                        <p className="text-2xs font-bold text-white/50 uppercase tracking-wide">Persona Desde</p>
-                        <p className="text-2xs font-bold text-white">{new Date(persona.join_date).toLocaleDateString()}</p>
+                        <p className="text-2xs font-bold text-[hsl(var(--primary-foreground)/0.7)] uppercase tracking-wide">Persona Desde</p>
+                        <p className="text-2xs font-bold text-[hsl(var(--primary-foreground))]">{new Date(persona.join_date).toLocaleDateString()}</p>
                     </div>
                     <div className="text-right">
-                        <p className="text-2xs font-bold text-white/50 uppercase tracking-wide">Vigencia</p>
-                        <p className="text-2xs font-bold text-white">2026-2027</p>
+                        <p className="text-2xs font-bold text-[hsl(var(--primary-foreground)/0.7)] uppercase tracking-wide">Vigencia</p>
+                        <p className="text-2xs font-bold text-[hsl(var(--primary-foreground))]">2026-2027</p>
                     </div>
                 </div>
             </div>
 
             <div className="grid grid-cols-2 gap-4 w-full max-w-sm relative z-10">
-                <button className="flex items-center justify-center gap-2 bg-white/5 hover:bg-white/10 border border-white/10 text-white p-4 rounded-md transition-all active:scale-95 group">
-                    <Share2 size={18} className="text-[hsl(var(--text-secondary))] group-hover:text-primary transition-colors" />
+                <button className="flex items-center justify-center gap-2 bg-[hsl(var(--surface-1))] hover:bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] text-[hsl(var(--foreground))] p-4 rounded-md transition-all active:scale-95 group">
+                    <Share2 size={18} className="text-[hsl(var(--muted-foreground))] group-hover:text-[hsl(var(--primary))] transition-colors" />
                     <span className="text-2xs font-bold uppercase tracking-wide">Compartir</span>
                 </button>
-                <button className="flex items-center justify-center gap-2 bg-white/5 hover:bg-white/10 border border-white/10 text-white p-4 rounded-md transition-all active:scale-95 group">
-                    <Download size={18} className="text-[hsl(var(--text-secondary))] group-hover:text-[hsl(var(--success))] transition-colors" />
+                <button className="flex items-center justify-center gap-2 bg-[hsl(var(--surface-1))] hover:bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] text-[hsl(var(--foreground))] p-4 rounded-md transition-all active:scale-95 group">
+                    <Download size={18} className="text-[hsl(var(--muted-foreground))] group-hover:text-[hsl(var(--success))] transition-colors" />
                     <span className="text-2xs font-bold uppercase tracking-wide">Descargar</span>
                 </button>
-                <button className="col-span-2 flex items-center justify-center gap-3 bg-[hsl(var(--surface-1))] text-[hsl(var(--text-primary))] p-3 rounded-md font-bold uppercase tracking-wide text-xs shadow-2xl hover:scale-105 transition-all active:scale-95">
+                <button className="col-span-2 flex items-center justify-center gap-3 bg-[hsl(var(--surface-1))] text-[hsl(var(--foreground))] p-3 rounded-md font-bold uppercase tracking-wide text-xs shadow-2xl hover:scale-105 transition-all active:scale-95">
                     <Sparkles size={20} className="text-[hsl(var(--warning))]" /> Añadir a Google Wallet
                 </button>
             </div>
 
             <div className="w-full max-w-[340px] text-center px-3 relative z-10">
-                <p className="text-2xs text-[hsl(var(--text-secondary))] font-bold uppercase tracking-wide leading-relaxed">
+                <p className="text-2xs text-[hsl(var(--muted-foreground))] font-bold uppercase tracking-wide leading-relaxed">
                     Esta credencial es personal e intransferible. El uso indebido será reportado a la administración del ministerio.
                 </p>
             </div>
