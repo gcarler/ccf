@@ -206,26 +206,26 @@ export default function CmsPopupsManagement() {
     switch (type) {
       case "time_delay":
         return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-950/60 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
+          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-[hsl(var(--primary)/0.1)] text-[hsl(var(--primary))] border border-[hsl(var(--primary)/0.2)]">
             <Clock className="w-3.5 h-3.5" /> Tiempo ({val ?? 5}s)
           </span>
         );
       case "scroll_percent":
         return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-sky-100 text-sky-800 dark:bg-sky-950/60 dark:text-sky-300 border border-sky-200 dark:border-sky-800">
+          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-[hsl(var(--surface-2))] text-[hsl(var(--text-primary))] border border-[hsl(var(--border))]">
             <ScrollText className="w-3.5 h-3.5" /> Scroll ({val ?? 50}%)
           </span>
         );
       case "exit_intent":
         return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300 border border-amber-200 dark:border-amber-800">
+          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))] border border-[hsl(var(--border))]">
             <LogOut className="w-3.5 h-3.5" /> Exit Intent
           </span>
         );
       case "on_load":
       default:
         return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
+          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-[hsl(var(--primary)/0.1)] text-[hsl(var(--primary))] border border-[hsl(var(--primary)/0.2)]">
             <Zap className="w-3.5 h-3.5" /> Al Cargar
           </span>
         );
@@ -237,11 +237,11 @@ export default function CmsPopupsManagement() {
       {/* Header Bar */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
-            <Layers className="w-7 h-7 text-blue-600 dark:text-blue-400" />
+          <h1 className="text-2xl font-bold tracking-tight text-[hsl(var(--text-primary))] flex items-center gap-2">
+            <Layers className="w-7 h-7 text-[hsl(var(--primary))]" />
             Gestión de Popups Nativos
           </h1>
-          <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1">
+          <p className="text-sm text-[hsl(var(--text-secondary))] mt-1">
             Configura ventanas emergentes disparadas por tiempo, scroll, exit intent o al cargar.
           </p>
         </div>
@@ -249,7 +249,7 @@ export default function CmsPopupsManagement() {
         {canEdit && (
           <button
             onClick={handleOpenCreate}
-            className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg shadow-sm transition-colors"
+            className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-[hsl(var(--primary))] hover:opacity-90 text-white font-medium rounded-lg shadow-sm transition-colors"
           >
             <Plus className="w-4 h-4" /> Nuevo Popup
           </button>
@@ -258,31 +258,31 @@ export default function CmsPopupsManagement() {
 
       {/* Error state */}
       {error && (
-        <div className="p-4 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800 rounded-xl text-sm text-red-600 dark:text-red-400">
+        <div className="p-4 bg-[hsl(var(--destructive)/0.1)] border border-[hsl(var(--destructive)/0.2)] rounded-xl text-sm text-[hsl(var(--destructive))]">
           {error}
         </div>
       )}
 
       {/* Filters and Site Selector */}
-      <div className="flex flex-col sm:flex-row items-center gap-3 bg-white dark:bg-zinc-900 p-4 rounded-xl border border-zinc-200 dark:border-zinc-800 shadow-sm">
+      <div className="flex flex-col sm:flex-row items-center gap-3 bg-[hsl(var(--surface-1))] p-4 rounded-xl border border-[hsl(var(--border))] shadow-sm">
         <div className="relative flex-1 w-full">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[hsl(var(--text-secondary))]" />
           <input
             type="text"
             placeholder="Buscar por nombre o disparador..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-9 pr-4 py-2 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full pl-9 pr-4 py-2 bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] text-[hsl(var(--text-primary))] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]"
           />
         </div>
 
         {sites.length > 1 && (
           <div className="flex items-center gap-2 shrink-0">
-            <Globe className="w-4 h-4 text-zinc-400" />
+            <Globe className="w-4 h-4 text-[hsl(var(--text-secondary))]" />
             <select
               value={siteKey}
               onChange={(e) => setSiteKey(e.target.value)}
-              className="bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] text-[hsl(var(--text-primary))] rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]"
             >
               {sites.map((s) => (
                 <option key={s.site_key} value={s.site_key}>
@@ -298,28 +298,28 @@ export default function CmsPopupsManagement() {
       {loading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="h-44 bg-zinc-100 dark:bg-zinc-800 animate-pulse rounded-xl border border-zinc-200 dark:border-zinc-700 p-5 space-y-3">
-              <div className="h-5 bg-zinc-200 dark:bg-zinc-700 rounded w-1/2" />
-              <div className="h-4 bg-zinc-200 dark:bg-zinc-700 rounded w-1/3" />
-              <div className="h-10 bg-zinc-200 dark:bg-zinc-700 rounded w-full mt-4" />
+            <div key={i} className="h-44 bg-[hsl(var(--surface-1))] animate-pulse rounded-xl border border-[hsl(var(--border))] p-5 space-y-3">
+              <div className="h-5 bg-[hsl(var(--surface-2))] rounded w-1/2" />
+              <div className="h-4 bg-[hsl(var(--surface-2))] rounded w-1/3" />
+              <div className="h-10 bg-[hsl(var(--surface-2))] rounded w-full mt-4" />
             </div>
           ))}
         </div>
       ) : visiblePopups.length === 0 ? (
-        <div className="bg-white dark:bg-zinc-900 border-2 border-dashed border-zinc-200 dark:border-zinc-800 rounded-2xl p-12 text-center flex flex-col items-center justify-center space-y-4">
-          <div className="w-16 h-16 rounded-full bg-blue-50 dark:bg-blue-950/50 flex items-center justify-center text-blue-600 dark:text-blue-400">
+        <div className="bg-[hsl(var(--surface-1))] border-2 border-dashed border-[hsl(var(--border))] rounded-2xl p-12 text-center flex flex-col items-center justify-center space-y-4">
+          <div className="w-16 h-16 rounded-full bg-[hsl(var(--primary)/0.1)] flex items-center justify-center text-[hsl(var(--primary))]">
             <Sparkles className="w-8 h-8" />
           </div>
           <div className="max-w-md">
-            <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">No hay popups configurados</h3>
-            <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1">
+            <h3 className="text-lg font-semibold text-[hsl(var(--text-primary))]">No hay popups configurados</h3>
+            <p className="text-sm text-[hsl(var(--text-secondary))] mt-1">
               Crea tu primer popup emergente para promociones, avisos o captación de prospectos.
             </p>
           </div>
           {canEdit && (
             <button
               onClick={handleOpenCreate}
-              className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white font-medium rounded-lg shadow hover:bg-blue-700 transition-colors"
+              className="inline-flex items-center gap-2 px-4 py-2 bg-[hsl(var(--primary))] text-white font-medium rounded-lg shadow hover:opacity-90 transition-colors"
             >
               <Plus className="w-4 h-4" /> Crear Primer Popup
             </button>
@@ -335,11 +335,11 @@ export default function CmsPopupsManagement() {
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.95 }}
-                className="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 p-5 shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between"
+                className="bg-[hsl(var(--surface-1))] rounded-xl border border-[hsl(var(--border))] p-5 shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between"
               >
                 <div>
                   <div className="flex items-start justify-between gap-2">
-                    <h3 className="font-semibold text-zinc-900 dark:text-zinc-100 text-base truncate">
+                    <h3 className="font-semibold text-[hsl(var(--text-primary))] text-base truncate">
                       {popup.name}
                     </h3>
                     <button
@@ -347,7 +347,7 @@ export default function CmsPopupsManagement() {
                       title={popup.is_active ? "Desactivar" : "Activar"}
                       className={clsx(
                         "relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none",
-                        popup.is_active ? "bg-blue-600" : "bg-zinc-300 dark:bg-zinc-700"
+                        popup.is_active ? "bg-[hsl(var(--primary))]" : "bg-[hsl(var(--border))]"
                       )}
                     >
                       <span
@@ -363,24 +363,24 @@ export default function CmsPopupsManagement() {
                     {renderBadge(popup.trigger_type, popup.trigger_value)}
                   </div>
 
-                  <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-3 line-clamp-2">
-                    Scope: <code className="bg-zinc-100 dark:bg-zinc-800 px-1 py-0.5 rounded text-zinc-700 dark:text-zinc-300">{popup.show_on_pages?.join(", ") || "*"}</code>
+                  <p className="text-xs text-[hsl(var(--text-secondary))] mt-3 line-clamp-2">
+                    Scope: <code className="bg-[hsl(var(--surface-2))] px-1 py-0.5 rounded text-[hsl(var(--text-secondary))]">{popup.show_on_pages?.join(", ") || "*"}</code>
                   </p>
                 </div>
 
-                <div className="mt-5 pt-3 border-t border-zinc-100 dark:border-zinc-800 flex items-center justify-end gap-2">
+                <div className="mt-5 pt-3 border-t border-[hsl(var(--border))] flex items-center justify-end gap-2">
                   {canEdit && (
                     <>
                       <button
                         onClick={() => handleOpenEdit(popup)}
-                        className="p-1.5 text-zinc-600 dark:text-zinc-400 hover:text-blue-600 dark:hover:text-blue-400 rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+                        className="p-1.5 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] rounded-md hover:bg-[hsl(var(--surface-2))] transition-colors"
                         title="Editar"
                       >
                         <Edit2 className="w-4 h-4" />
                       </button>
                       <button
                         onClick={() => setPendingDelete(popup)}
-                        className="p-1.5 text-zinc-600 dark:text-zinc-400 hover:text-red-600 dark:hover:text-red-400 rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+                        className="p-1.5 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--destructive))] rounded-md hover:bg-[hsl(var(--destructive)/0.1)] transition-colors"
                         title="Eliminar"
                       >
                         <Trash2 className="w-4 h-4" />
@@ -405,7 +405,7 @@ export default function CmsPopupsManagement() {
         <form onSubmit={handleSave} className="p-6 space-y-6">
           {/* Name */}
           <div className="space-y-1.5">
-            <label className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+            <label className="text-sm font-medium text-[hsl(var(--text-primary))]">
               Nombre Interno del Popup *
             </label>
             <input
@@ -414,13 +414,13 @@ export default function CmsPopupsManagement() {
               placeholder="ej. Promo Verano 2026"
               value={formName}
               onChange={(e) => setFormName(e.target.value)}
-              className="w-full px-3 py-2 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
+              className="w-full px-3 py-2 bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] text-[hsl(var(--text-primary))] rounded-lg text-sm focus:ring-2 focus:ring-[hsl(var(--primary))] focus:outline-none"
             />
           </div>
 
           {/* Trigger Type Selector Cards */}
           <div className="space-y-2">
-            <label className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+            <label className="text-sm font-medium text-[hsl(var(--text-primary))]">
               Tipo de Disparador (Trigger) *
             </label>
             <div className="grid grid-cols-2 gap-2">
@@ -435,15 +435,15 @@ export default function CmsPopupsManagement() {
                     className={clsx(
                       "p-3 text-left rounded-xl border transition-all flex flex-col justify-between space-y-1.5",
                       isSelected
-                        ? "border-blue-600 bg-blue-50/50 dark:bg-blue-950/30 text-blue-900 dark:text-blue-200 ring-1 ring-blue-600"
-                        : "border-zinc-200 dark:border-zinc-700 hover:border-zinc-300 dark:hover:border-zinc-600 text-zinc-700 dark:text-zinc-300"
+                        ? "border-[hsl(var(--primary))] bg-[hsl(var(--primary)/0.1)] text-[hsl(var(--primary))] ring-1 ring-[hsl(var(--primary))]"
+                        : "border-[hsl(var(--border))] hover:border-[hsl(var(--primary))] text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))]"
                     )}
                   >
                     <div className="flex items-center gap-2 font-medium text-sm">
-                      <Icon className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                      <Icon className="w-4 h-4 text-[hsl(var(--primary))]" />
                       {t.label}
                     </div>
-                    <p className="text-xs text-zinc-500 dark:text-zinc-400 leading-tight">
+                    <p className="text-xs text-[hsl(var(--text-secondary))] leading-tight">
                       {t.description}
                     </p>
                   </button>
@@ -455,7 +455,7 @@ export default function CmsPopupsManagement() {
           {/* Trigger Value Input (Conditional) */}
           {(formTriggerType === "time_delay" || formTriggerType === "scroll_percent") && (
             <div className="space-y-1.5">
-              <label className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+              <label className="text-sm font-medium text-[hsl(var(--text-primary))]">
                 {formTriggerType === "time_delay" ? "Tiempo de espera (segundos)" : "Porcentaje de scroll (%)"} *
               </label>
               <input
@@ -465,14 +465,14 @@ export default function CmsPopupsManagement() {
                 required
                 value={formTriggerValue}
                 onChange={(e) => setFormTriggerValue(e.target.value === "" ? "" : Number(e.target.value))}
-                className="w-full px-3 py-2 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                className="w-full px-3 py-2 bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] text-[hsl(var(--text-primary))] rounded-lg text-sm focus:ring-2 focus:ring-[hsl(var(--primary))] focus:outline-none"
               />
             </div>
           )}
 
           {/* Target Pages */}
           <div className="space-y-1.5">
-            <label className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+            <label className="text-sm font-medium text-[hsl(var(--text-primary))]">
               Páginas Objetivo (separadas por coma, use * para todas)
             </label>
             <input
@@ -480,27 +480,27 @@ export default function CmsPopupsManagement() {
               placeholder="*, /cursos, /eventos"
               value={formPagesInput}
               onChange={(e) => setFormPagesInput(e.target.value)}
-              className="w-full px-3 py-2 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
+              className="w-full px-3 py-2 bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] text-[hsl(var(--text-primary))] rounded-lg text-sm focus:ring-2 focus:ring-[hsl(var(--primary))] focus:outline-none"
             />
           </div>
 
           {/* Active Switch */}
-          <div className="flex items-center justify-between p-3 bg-zinc-50 dark:bg-zinc-800/50 rounded-xl border border-zinc-200 dark:border-zinc-700">
+          <div className="flex items-center justify-between p-3 bg-[hsl(var(--surface-2))] rounded-xl border border-[hsl(var(--border))]">
             <div>
-              <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">Popup Activo</p>
-              <p className="text-xs text-zinc-500 dark:text-zinc-400">Si está desactivado no se mostrará a los visitantes.</p>
+              <p className="text-sm font-medium text-[hsl(var(--text-primary))]">Popup Activo</p>
+              <p className="text-xs text-[hsl(var(--text-secondary))]">Si está desactivado no se mostrará a los visitantes.</p>
             </div>
             <input
               type="checkbox"
               checked={formIsActive}
               onChange={(e) => setFormIsActive(e.target.checked)}
-              className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+              className="w-4 h-4 text-[hsl(var(--primary))] rounded focus:ring-[hsl(var(--primary))]"
             />
           </div>
 
           {/* RichEditor for HTML content */}
           <div className="space-y-1.5">
-            <label className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+            <label className="text-sm font-medium text-[hsl(var(--text-primary))]">
               Contenido del Popup (HTML / Rich Text) *
             </label>
             <RichEditor
@@ -512,18 +512,18 @@ export default function CmsPopupsManagement() {
           </div>
 
           {/* Actions */}
-          <div className="flex items-center justify-end gap-3 pt-4 border-t border-zinc-200 dark:border-zinc-800">
+          <div className="flex items-center justify-end gap-3 pt-4 border-t border-[hsl(var(--border))]">
             <button
               type="button"
               onClick={() => setIsDrawerOpen(false)}
-              className="px-4 py-2 text-sm font-medium text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg transition-colors"
+              className="px-4 py-2 text-sm font-medium text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] rounded-lg transition-colors"
             >
               Cancelar
             </button>
             <button
               type="submit"
               disabled={saving}
-              className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow transition-colors disabled:opacity-50"
+              className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium bg-[hsl(var(--primary))] hover:opacity-90 text-white rounded-lg shadow transition-colors disabled:opacity-50"
             >
               {saving && <Loader2 className="w-4 h-4 animate-spin" />}
               {editingPopup ? "Guardar Cambios" : "Crear Popup"}
@@ -532,33 +532,41 @@ export default function CmsPopupsManagement() {
         </form>
       </SidePanel>
 
-      {/* Delete Confirmation Modal */}
-      {pendingDelete && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl p-6 max-w-md w-full shadow-2xl space-y-4">
-            <h3 className="text-lg font-bold text-zinc-900 dark:text-zinc-100">Eliminar Popup</h3>
-            <p className="text-sm text-zinc-600 dark:text-zinc-400">
-              ¿Estás seguro de eliminar el popup <strong className="text-zinc-900 dark:text-zinc-100">&quot;{pendingDelete.name}&quot;</strong>? Esta acción no se puede deshacer.
-            </p>
-            <div className="flex items-center justify-end gap-3 pt-2">
+      {/* Delete Confirmation Drawer */}
+      <SidePanel
+        isOpen={!!pendingDelete}
+        onClose={() => setPendingDelete(null)}
+        title="Eliminar Popup"
+        subtitle={pendingDelete?.name}
+      >
+        {pendingDelete && (
+          <div className="p-6 space-y-5">
+            <div className="rounded-xl border border-[hsl(var(--destructive)/0.2)] bg-[hsl(var(--destructive)/0.1)] p-4">
+              <p className="text-sm text-[hsl(var(--destructive))]">
+                ¿Estás seguro de eliminar el popup <strong>&quot;{pendingDelete.name}&quot;</strong>? Esta acción no se puede deshacer.
+              </p>
+            </div>
+            <div className="flex items-center justify-end gap-3 pt-4 border-t border-[hsl(var(--border))]">
               <button
+                type="button"
                 onClick={() => setPendingDelete(null)}
-                className="px-4 py-2 text-sm font-medium text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg transition-colors"
+                className="px-4 py-2 text-sm font-medium text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] rounded-lg transition-colors"
               >
                 Cancelar
               </button>
               <button
+                type="button"
                 onClick={confirmDelete}
                 disabled={deleting}
-                className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors disabled:opacity-50"
+                className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium bg-[hsl(var(--destructive))] hover:opacity-90 text-white rounded-lg transition-colors disabled:opacity-50"
               >
                 {deleting && <Loader2 className="w-4 h-4 animate-spin" />}
                 Eliminar
               </button>
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </SidePanel>
     </div>
   );
 }
