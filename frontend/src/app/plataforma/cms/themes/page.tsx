@@ -40,6 +40,7 @@ import {
   TOKEN_CATEGORIES,
 } from "@/components/cms/themes/themeTokens";
 import ThemePreview from "@/components/cms/themes/ThemePreview";
+import SidePanel from "@/components/ui/SidePanel";
 import { toast } from "sonner";
 
 /* ── Types ── */
@@ -307,18 +308,18 @@ export default function CmsThemesPage() {
   return (
     <div className="space-y-4 p-4 max-w-[1600px] mx-auto">
       {/* ── Header ── */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 rounded-xl border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-tertiary))] p-4">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-4">
         <div>
           <div className="flex items-center gap-2 mb-1">
             <span className="text-2xs font-bold uppercase tracking-widest text-[hsl(var(--text-secondary))]">
               CMS V2
             </span>
-            <span className="text-2xs font-bold uppercase tracking-widest px-2 py-0.5 rounded-full bg-primary/10 text-primary">
+            <span className="text-2xs font-bold uppercase tracking-widest px-2 py-0.5 rounded-full bg-[hsl(var(--primary)/10%)] text-[hsl(var(--primary))]">
               {usedTokensCount} tokens
             </span>
           </div>
           <h1 className="text-lg font-bold tracking-tight flex items-center gap-2">
-            <Palette size={20} className="text-primary" />
+            <Palette size={20} className="text-[hsl(var(--primary))]" />
             Editor de Temas
           </h1>
         </div>
@@ -327,8 +328,8 @@ export default function CmsThemesPage() {
             onClick={() => setShowPreview((p) => !p)}
             className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-2 text-xs font-bold uppercase tracking-wider transition-all ${
               showPreview
-                ? "border-primary/30 bg-primary/10 text-primary"
-                : "border-[hsl(var(--border))] dark:border-white/10"
+                ? "border-[hsl(var(--primary)/30%)] bg-[hsl(var(--primary)/10%)] text-[hsl(var(--primary))]"
+                : "border-[hsl(var(--border))]"
             }`}
           >
             <Eye size={13} />
@@ -336,14 +337,14 @@ export default function CmsThemesPage() {
           </button>
           <button
             onClick={exportJson}
-            className="inline-flex items-center gap-1.5 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 px-3 py-2 text-xs font-bold uppercase tracking-wider hover:bg-[hsl(var(--bg-secondary))] transition-colors"
+            className="inline-flex items-center gap-1.5 rounded-lg border border-[hsl(var(--border))] px-3 py-2 text-xs font-bold uppercase tracking-wider hover:bg-[hsl(var(--surface-2))] transition-colors"
           >
             <Download size={13} />
             Exportar
           </button>
           <button
             onClick={() => fileRef.current?.click()}
-            className="inline-flex items-center gap-1.5 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 px-3 py-2 text-xs font-bold uppercase tracking-wider hover:bg-[hsl(var(--bg-secondary))] transition-colors"
+            className="inline-flex items-center gap-1.5 rounded-lg border border-[hsl(var(--border))] px-3 py-2 text-xs font-bold uppercase tracking-wider hover:bg-[hsl(var(--surface-2))] transition-colors"
           >
             <Upload size={13} />
             Importar
@@ -351,7 +352,7 @@ export default function CmsThemesPage() {
           <input ref={fileRef} type="file" accept=".json" className="hidden" onChange={handleFileUpload} />
           <button
             onClick={copyToClipboard}
-            className="inline-flex items-center gap-1.5 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 px-3 py-2 text-xs font-bold uppercase tracking-wider hover:bg-[hsl(var(--bg-secondary))] transition-colors"
+            className="inline-flex items-center gap-1.5 rounded-lg border border-[hsl(var(--border))] px-3 py-2 text-xs font-bold uppercase tracking-wider hover:bg-[hsl(var(--surface-2))] transition-colors"
           >
             <Copy size={13} />
             Copiar
@@ -383,7 +384,7 @@ export default function CmsThemesPage() {
       {/* ── Presets ── */}
       <div className="space-y-3">
         <div className="flex items-center gap-2">
-          <Wand2 size={14} className="text-primary" />
+          <Wand2 size={14} className="text-[hsl(var(--primary))]" />
           <h2 className="text-xs font-bold uppercase tracking-widest text-[hsl(var(--text-secondary))]">
             Presets rápidos
           </h2>
@@ -393,7 +394,7 @@ export default function CmsThemesPage() {
             <button
               key={preset.key}
               onClick={() => applyPresetToEditor(preset.key)}
-              className="group relative rounded-xl border border-[hsl(var(--border))] dark:border-white/10 p-3 text-left transition-all hover:scale-[1.02] hover:border-primary/30 hover:shadow-lg"
+              className="group relative rounded-xl border border-[hsl(var(--border))] p-3 text-left transition-all hover:scale-[1.02] hover:border-[hsl(var(--primary)/30%)] hover:shadow-lg"
               style={{ background: "hsl(var(--bg-primary))" }}
             >
               <div className="flex items-center gap-2 mb-2">
@@ -415,7 +416,7 @@ export default function CmsThemesPage() {
               <p className="text-xs font-bold">{preset.name}</p>
               <p className="text-2xs opacity-60 mt-0.5 line-clamp-2">{preset.description}</p>
               <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                <Sparkles size={12} className="text-primary" />
+                <Sparkles size={12} className="text-[hsl(var(--primary))]" />
               </div>
             </button>
           ))}
@@ -427,7 +428,7 @@ export default function CmsThemesPage() {
         {/* ── Left: Editor ── */}
         <div className="xl:col-span-5 space-y-4">
           {/* Site & Name */}
-          <div className="rounded-xl border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-tertiary))] p-4 space-y-3">
+          <div className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-4 space-y-3">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="space-y-1.5">
                 <label className="text-2xs font-bold uppercase tracking-widest text-[hsl(var(--text-secondary))]">
@@ -436,7 +437,7 @@ export default function CmsThemesPage() {
                 <select
                   value={siteKey}
                   onChange={(e) => setSiteKey(e.target.value)}
-                  className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-3 py-2 text-xs outline-none focus:ring-1 focus:ring-primary/50"
+                  className="w-full rounded-lg border border-[hsl(var(--border))] bg-transparent px-3 py-2 text-xs outline-none focus:ring-1 focus:ring-[hsl(var(--primary)/50%)]"
                 >
                   {sites.length === 0 && <option value={SITE_KEY}>{SITE_KEY}</option>}
                   {sites.map((site) => (
@@ -454,7 +455,7 @@ export default function CmsThemesPage() {
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   disabled={!canEdit}
-                  className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-3 py-2 text-xs outline-none focus:ring-1 focus:ring-primary/50 disabled:opacity-50"
+                  className="w-full rounded-lg border border-[hsl(var(--border))] bg-transparent px-3 py-2 text-xs outline-none focus:ring-1 focus:ring-[hsl(var(--primary)/50%)] disabled:opacity-50"
                 />
               </div>
             </div>
@@ -467,14 +468,14 @@ export default function CmsThemesPage() {
                   setMessage({ text: "Nuevo tema iniciado.", type: "info" });
                 }}
                 disabled={!canEdit}
-                className="inline-flex items-center gap-1.5 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 px-3 py-1.5 text-2xs font-bold uppercase tracking-wider hover:bg-[hsl(var(--bg-secondary))] transition-colors disabled:opacity-50"
+                className="inline-flex items-center gap-1.5 rounded-lg border border-[hsl(var(--border))] px-3 py-1.5 text-2xs font-bold uppercase tracking-wider hover:bg-[hsl(var(--surface-2))] transition-colors disabled:opacity-50"
               >
                 <Layers size={11} />
                 Nuevo
               </button>
               <button
                 onClick={() => setImportOpen((p) => !p)}
-                className="inline-flex items-center gap-1.5 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 px-3 py-1.5 text-2xs font-bold uppercase tracking-wider hover:bg-[hsl(var(--bg-secondary))] transition-colors"
+                className="inline-flex items-center gap-1.5 rounded-lg border border-[hsl(var(--border))] px-3 py-1.5 text-2xs font-bold uppercase tracking-wider hover:bg-[hsl(var(--surface-2))] transition-colors"
               >
                 <FileJson size={11} />
                 {importOpen ? "Cerrar" : "Importar JSON"}
@@ -489,11 +490,11 @@ export default function CmsThemesPage() {
                   onChange={(e) => setImportText(e.target.value)}
                   placeholder='{"name": "Mi tema", "tokens_json": {"--site-primary": "#ff0000", ...}}'
                   rows={4}
-                  className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-secondary))] px-3 py-2 text-xs font-mono outline-none focus:ring-1 focus:ring-primary/50 resize-none"
+                  className="w-full rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] px-3 py-2 text-xs font-mono outline-none focus:ring-1 focus:ring-[hsl(var(--primary)/50%)] resize-none"
                 />
                 <button
                   onClick={importJson}
-                  className="w-full inline-flex items-center justify-center gap-1.5 rounded-lg bg-primary px-3 py-2 text-xs font-bold uppercase tracking-wider text-white hover:bg-primary/90 transition-colors"
+                  className="w-full inline-flex items-center justify-center gap-1.5 rounded-lg bg-[hsl(var(--primary))] px-3 py-2 text-xs font-bold uppercase tracking-wider text-[hsl(var(--primary-foreground))] hover:opacity-90 transition-colors"
                 >
                   <Upload size={12} />
                   Aplicar JSON
@@ -503,8 +504,8 @@ export default function CmsThemesPage() {
           </div>
 
           {/* Token Editor */}
-          <div className="rounded-xl border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-tertiary))] overflow-hidden">
-            <div className="px-4 py-3 border-b border-[hsl(var(--border))] dark:border-white/10 flex items-center justify-between">
+          <div className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] overflow-hidden">
+            <div className="px-4 py-3 border-b border-[hsl(var(--border))] flex items-center justify-between">
               <h2 className="text-xs font-bold uppercase tracking-widest text-[hsl(var(--text-secondary))]">
                 Tokens de diseño
               </h2>
@@ -515,7 +516,7 @@ export default function CmsThemesPage() {
                 {usedTokensCount} / {ALL_TOKEN_KEYS.length} personalizados
               </span>
             </div>
-            <div className="divide-y divide-[hsl(var(--border))] dark:divide-white/5">
+            <div className="divide-y divide-[hsl(var(--border))]">
               {TOKEN_CATEGORIES.map((cat) => {
                 const isOpen = expandedCats.has(cat.id);
                 return (
@@ -567,7 +568,7 @@ export default function CmsThemesPage() {
                                         )
                                       }
                                       disabled={!canEdit}
-                                      className="w-9 h-9 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 p-0.5 cursor-pointer disabled:opacity-50"
+                                      className="w-9 h-9 rounded-lg border border-[hsl(var(--border))] p-0.5 cursor-pointer disabled:opacity-50"
                                     />
                                   </div>
                                 )}
@@ -586,7 +587,7 @@ export default function CmsThemesPage() {
                                     setTokens((prev) => updateTokenValue(prev, tokenDef.key, e.target.value))
                                   }
                                   disabled={!canEdit}
-                                  className="flex-1 min-w-0 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-3 py-2 text-xs font-mono outline-none focus:ring-1 focus:ring-primary/50 disabled:opacity-50"
+                                  className="flex-1 min-w-0 rounded-lg border border-[hsl(var(--border))] bg-transparent px-3 py-2 text-xs font-mono outline-none focus:ring-1 focus:ring-[hsl(var(--primary)/50%)] disabled:opacity-50"
                                 />
                               </div>
                             </div>
@@ -604,10 +605,10 @@ export default function CmsThemesPage() {
         {/* ── Right: Preview ── */}
         {showPreview && (
           <div className="xl:col-span-7 space-y-4">
-            <div className="rounded-xl border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-tertiary))] p-4">
+            <div className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-4">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">
-                  <Eye size={14} className="text-primary" />
+                  <Eye size={14} className="text-[hsl(var(--primary))]" />
                   <h2 className="text-xs font-bold uppercase tracking-widest text-[hsl(var(--text-secondary))]">
                     Preview en vivo
                   </h2>
@@ -621,10 +622,10 @@ export default function CmsThemesPage() {
       </div>
 
       {/* ── Existing Themes ── */}
-      <div className="rounded-xl border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-tertiary))] p-4 space-y-3">
+      <div className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-4 space-y-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Layers size={14} className="text-primary" />
+            <Layers size={14} className="text-[hsl(var(--primary))]" />
             <h2 className="text-xs font-bold uppercase tracking-widest text-[hsl(var(--text-secondary))]">
               Temas guardados
             </h2>
@@ -641,10 +642,10 @@ export default function CmsThemesPage() {
                 key={theme.id}
                 className={`flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-lg border p-3 transition-all ${
                   isEditing
-                    ? "border-primary/30 bg-primary/5"
+                    ? "border-[hsl(var(--primary)/30%)] bg-[hsl(var(--primary)/10%)]"
                     : isArchived
-                    ? "border-[hsl(var(--border))] dark:border-white/5 bg-[hsl(var(--bg-secondary))] opacity-60"
-                    : "border-[hsl(var(--border))] dark:border-white/10 hover:border-primary/20"
+                    ? "border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] opacity-60"
+                    : "border-[hsl(var(--border))] hover:border-[hsl(var(--primary)/20%)]"
                 }`}
               >
                 <div className="flex items-center gap-3">
@@ -690,8 +691,8 @@ export default function CmsThemesPage() {
                     disabled={!canEdit || isArchived}
                     className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-2xs font-bold uppercase tracking-wider transition-colors ${
                       isEditing
-                        ? "border-primary/30 bg-primary/10 text-primary"
-                        : "border-[hsl(var(--border))] dark:border-white/10 hover:bg-[hsl(var(--bg-secondary))]"
+                        ? "border-[hsl(var(--primary)/30%)] bg-[hsl(var(--primary)/10%)] text-[hsl(var(--primary))]"
+                        : "border-[hsl(var(--border))] hover:bg-[hsl(var(--surface-2))]"
                     } disabled:opacity-40`}
                   >
                     {isEditing ? <CheckCircle2 size={11} /> : <ExternalLink size={11} />}
@@ -721,7 +722,7 @@ export default function CmsThemesPage() {
                     <button
                       onClick={() => restore(theme.id)}
                       disabled={!canEdit}
-                      className="inline-flex items-center gap-1.5 rounded-lg border border-primary/20 px-3 py-1.5 text-2xs font-bold uppercase tracking-wider text-primary hover:bg-primary/10 transition-colors disabled:opacity-40"
+                      className="inline-flex items-center gap-1.5 rounded-lg border border-[hsl(var(--primary)/20%)] px-3 py-1.5 text-2xs font-bold uppercase tracking-wider text-[hsl(var(--primary))] hover:bg-[hsl(var(--primary)/10%)] transition-colors disabled:opacity-40"
                     >
                       <RotateCcw size={11} />
                       Restaurar
@@ -741,16 +742,16 @@ export default function CmsThemesPage() {
 
       {/* ── Floating Save Bar ── */}
       <div className="sticky bottom-4 z-50 flex justify-center">
-        <div className="inline-flex items-center gap-3 rounded-xl border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-tertiary))]/95 backdrop-blur-xl px-5 py-3 shadow-xl">
+        <div className="inline-flex items-center gap-3 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))]/95 backdrop-blur-xl px-5 py-3 shadow-xl">
           <div className="text-xs">
             <p className="font-bold">{editingThemeId ? `Editando: ${name}` : name}</p>
             <p className="text-2xs opacity-50">{usedTokensCount} tokens configurados</p>
           </div>
-          <div className="w-px h-8 bg-[hsl(var(--border))] dark:bg-white/10" />
+          <div className="w-px h-8 bg-[hsl(var(--border))]" />
           <button
             onClick={saveTheme}
             disabled={saving || !canEdit}
-            className="inline-flex items-center gap-2 rounded-lg bg-primary px-5 py-2.5 text-xs font-bold uppercase tracking-wider text-white hover:bg-primary/90 transition-all disabled:opacity-50 shadow-lg shadow-primary/20"
+            className="inline-flex items-center gap-2 rounded-lg bg-[hsl(var(--primary))] px-5 py-2.5 text-xs font-bold uppercase tracking-wider text-[hsl(var(--primary-foreground))] hover:opacity-90 transition-all disabled:opacity-50 shadow-lg shadow-[hsl(var(--primary)/20%)]"
           >
             <Save size={13} />
             {saving ? "Guardando..." : editingThemeId ? "Actualizar y activar" : "Guardar y activar"}
@@ -758,37 +759,35 @@ export default function CmsThemesPage() {
         </div>
       </div>
 
-      <AnimatePresence>
-        {pendingArchive && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              className="w-full max-w-sm rounded-xl bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-secondary))] p-5 shadow-2xl border border-[hsl(var(--border))] dark:border-white/10"
+      {/* SidePanel: Confirm Archive Drawer */}
+      <SidePanel
+        isOpen={Boolean(pendingArchive)}
+        onClose={() => setPendingArchive(null)}
+        title="Archivar tema"
+        width="w-[420px]"
+      >
+        <div className="p-4 space-y-4">
+          <p className="text-sm text-[hsl(var(--text-secondary))]">
+            El tema dejará de estar disponible para uso, pero podrás restaurarlo luego.
+          </p>
+          <div className="flex gap-3 justify-end pt-4 border-t border-[hsl(var(--border))]">
+            <button
+              type="button"
+              onClick={() => setPendingArchive(null)}
+              className="px-4 py-2 rounded-lg text-sm font-semibold text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] transition-colors"
             >
-              <h3 className="text-lg font-bold text-[hsl(var(--text-primary))] dark:text-white mb-2">¿Archivar tema?</h3>
-              <p className="text-sm text-[hsl(var(--text-secondary))] mb-6">
-                El tema dejará de estar disponible para uso, pero podrás restaurarlo luego.
-              </p>
-              <div className="flex gap-3 justify-end">
-                <button
-                  onClick={() => setPendingArchive(null)}
-                  className="px-4 py-2 rounded-lg text-sm font-semibold text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5 transition-colors"
-                >
-                  Cancelar
-                </button>
-                <button
-                  onClick={confirmArchive}
-                  className="px-4 py-2 rounded-lg text-sm font-semibold bg-warning-soft text-warning-text hover:bg-[hsl(var(--warning-muted))] transition-colors"
-                >
-                  Archivar
-                </button>
-              </div>
-            </motion.div>
+              Cancelar
+            </button>
+            <button
+              type="button"
+              onClick={confirmArchive}
+              className="px-4 py-2 rounded-lg text-sm font-semibold bg-[hsl(var(--warning))] text-[hsl(var(--warning-foreground))] hover:opacity-90 transition-colors"
+            >
+              Archivar
+            </button>
           </div>
-        )}
-      </AnimatePresence>
+        </div>
+      </SidePanel>
     </div>
   );
 }
