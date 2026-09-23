@@ -66,7 +66,7 @@ export default function CustomRolesPanel({
       </div>
 
       {canManage && showRoleForm && (
-        <div className="mb-3 p-3 bg-info-soft dark:bg-[hsl(var(--info))]/20 border border-[hsl(var(--info)/25%)] dark:border-[hsl(var(--info)/100%)] rounded-lg space-y-2">
+        <div className="mb-3 p-3 bg-[hsl(var(--info-muted))] border border-[hsl(var(--info)/0.3)] rounded-lg space-y-2">
           <input value={newRoleName} onChange={e => setNewRoleName(e.target.value)}
           aria-label="Nombre del rol"
           placeholder="Nombre del rol (ej: Coordinador de zona)"
@@ -76,7 +76,7 @@ export default function CustomRolesPanel({
           placeholder="Descripción (opcional)"
           className="w-full px-2.5 py-1.5 text-sm bg-[hsl(var(--bg-primary))] border border-[hsl(var(--border-primary))] rounded-lg text-[hsl(var(--text-primary))] outline-none" />
           <button onClick={onCreateRole} disabled={!newRoleName.trim()}
-          className="px-3 py-1.5 text-xs font-bold text-white bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))] disabled:opacity-50 rounded-lg transition-colors">
+          className="px-3 py-1.5 text-xs font-bold text-[hsl(var(--primary-foreground))] bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))] disabled:opacity-50 rounded-lg transition-colors">
           Crear Rol
           </button>
         </div>
@@ -94,7 +94,7 @@ export default function CustomRolesPanel({
                 <div className="flex items-center gap-2">
                   <span className="text-sm font-semibold text-[hsl(var(--text-primary))] ">{r.nombre_rol}</span>
                   {editDefaultRoleId === r.id && (
-                  <span className="px-1.5 py-0.5 rounded bg-[hsl(var(--info-muted))] text-2xs font-bold uppercase tracking-wide text-[hsl(var(--primary))] dark:bg-[hsl(var(--info))]/30 dark:text-info-text">
+                  <span className="px-1.5 py-0.5 rounded bg-[hsl(var(--info-muted))] text-2xs font-bold uppercase tracking-wide text-[hsl(var(--info))]">
                   Defecto
                   </span>
                   )}
@@ -104,7 +104,7 @@ export default function CustomRolesPanel({
               {canManage ? (
                 <button onClick={() => onRequestDeleteRole(r)}
                   aria-label="Eliminar rol"
-                  className="p-1 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--destructive))] rounded hover:bg-[hsl(var(--destructive)/0.1)] dark:hover:bg-[hsl(var(--destructive)/0.15)] transition-colors">
+                  className="p-1 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--destructive))] rounded hover:bg-[hsl(var(--destructive)/0.1)] transition-colors">
                   <X size={12} />
                 </button>
               ) : null}

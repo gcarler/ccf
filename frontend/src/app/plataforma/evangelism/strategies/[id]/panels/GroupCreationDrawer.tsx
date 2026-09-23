@@ -66,13 +66,13 @@ export default function GroupCreationDrawer({
     <button onClick={onClose}
     className="px-4 py-1.5 text-sm font-semibold text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--bg-muted))] rounded-md transition-colors">Cancelar</button>
     <button onClick={onCreateGroup} disabled={groupSaving || !groupForm.name.trim()}
-    className="px-4 py-1.5 text-sm font-semibold text-white bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))] disabled:opacity-50 rounded-md transition-colors flex items-center gap-2">
+    className="px-4 py-1.5 text-sm font-semibold text-[hsl(var(--primary-foreground))] bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))] disabled:opacity-50 rounded-md transition-colors flex items-center gap-2">
     {groupSaving ? <><Loader2 size={14} className="animate-spin" />Creando...</> : <><Plus size={14} />Crear Grupo</>}
     </button>
     </>}>
     <div className="space-y-4">
     {strategy?.typology === 'relacional' && (
-    <div className="px-3 py-2 bg-info-soft dark:bg-[hsl(var(--info))]/20 border border-[hsl(var(--info)/25%)] dark:border-[hsl(var(--info)/100%)] rounded-lg text-xs text-[hsl(var(--primary))] dark:text-info-text">
+    <div className="px-3 py-2 bg-[hsl(var(--info-muted))] border border-[hsl(var(--info)/0.3)] rounded-lg text-xs text-[hsl(var(--info))]">
     <p className="font-semibold">Config. heredada:</p>
     <p>Recurrencia: {strategy.recurrence} · Día: {strategy.day_of_week} · Hora: {strategy.start_time}</p>
     </div>
@@ -115,7 +115,7 @@ export default function GroupCreationDrawer({
     </div>
     </div>
     {customRoles.length === 0 ? (
-    <div className="rounded-lg border border-[hsl(var(--warning)/25%)] bg-warning-soft px-3 py-2 text-sm font-medium text-warning-text dark:border-[hsl(var(--warning)/100%)]/20 dark:bg-[hsl(var(--warning))]/10 dark:text-warning-text">
+    <div className="rounded-lg border border-[hsl(var(--warning)/0.3)] bg-[hsl(var(--warning-muted))] px-3 py-2 text-sm font-medium text-[hsl(var(--warning))]">
     Esta estrategia no tiene roles definidos. El grupo se creará sin cargos de servicio por defecto.
     </div>
     ) : customRoles.map((role) => {
@@ -150,18 +150,18 @@ export default function GroupCreationDrawer({
     <button
     type="button"
     onClick={() => { setGroupRoleAssignments(f => ({ ...f, [field]: null })); setRoleDropdown(null); }}
-    className="absolute right-2 top-1/2 -translate-y-1/2 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-secondary))] dark:hover:text-[hsl(var(--text-primary))]"
+    className="absolute right-2 top-1/2 -translate-y-1/2 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))]"
     >
     <X size={13} />
     </button>
     )}
     </div>
     {roleDropdown === field && (
-    <div className="absolute z-50 mt-1 w-full bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))] border border-[hsl(var(--border-primary))] rounded-lg shadow-xl max-h-48 overflow-y-auto">
+    <div className="absolute z-50 mt-1 w-full bg-[hsl(var(--bg-primary))] border border-[hsl(var(--border-primary))] rounded-lg shadow-xl max-h-48 overflow-y-auto">
     <button
     type="button"
     onMouseDown={() => { setGroupRoleAssignments(f => ({ ...f, [field]: null })); setRoleDropdown(null); }}
-    className="w-full text-left px-3 py-2 text-sm text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--bg-muted))] dark:hover:bg-white/5 border-b border-[hsl(var(--border-primary))]"
+    className="w-full text-left px-3 py-2 text-sm text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--bg-muted))] border-b border-[hsl(var(--border-primary))]"
     >
     Sin asignar
     </button>
@@ -181,7 +181,7 @@ export default function GroupCreationDrawer({
     setRoleDropdown(null);
     setRoleSearch(s => ({ ...s, [field]: '' }));
     }}
-    className="w-full text-left px-3 py-2 text-sm text-[hsl(var(--text-primary))] hover:bg-[hsl(var(--bg-muted))] dark:hover:bg-white/5 flex items-center justify-between gap-2"
+    className="w-full text-left px-3 py-2 text-sm text-[hsl(var(--text-primary))] hover:bg-[hsl(var(--bg-muted))] flex items-center justify-between gap-2"
     >
     <span className="font-medium">{name}</span>
     {m.church_role && <span className="text-2xs text-[hsl(var(--text-secondary))] shrink-0">{m.church_role}</span>}

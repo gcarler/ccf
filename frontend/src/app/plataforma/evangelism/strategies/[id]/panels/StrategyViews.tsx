@@ -123,7 +123,7 @@ export default function StrategyViews({
                 </div>
                 <div className="space-y-2">
                   {filtered.map(s => (
-                    <div key={s.id} className="rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))] p-3">
+                    <div key={s.id} className="rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-primary))] p-3">
                       <p className="text-sm font-semibold text-[hsl(var(--text-primary))]">{s.topic || `Sesión #${s.id}`}</p>
                       <p className="text-xs text-[hsl(var(--text-secondary))] mt-1">{groupName(s.grupo_id)}</p>
                       <p className="text-xs text-[hsl(var(--text-secondary))] mt-1">{formatDate(s.session_date)}</p>
@@ -146,7 +146,7 @@ export default function StrategyViews({
               onClick={() => onTableSubTabChange('groups')}
               className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors ${
                 tableSubTab === 'groups'
-                  ? 'bg-[hsl(var(--primary))] text-white'
+                  ? 'bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))]'
                   : 'bg-[hsl(var(--bg-muted))] text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))]'
               }`}
             >
@@ -156,7 +156,7 @@ export default function StrategyViews({
               onClick={() => { onTableSubTabChange('sessions'); if (sessions.length === 0) onSessionsChanged(); }}
               className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors ${
                 tableSubTab === 'sessions'
-                  ? 'bg-[hsl(var(--primary))] text-white'
+                  ? 'bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))]'
                   : 'bg-[hsl(var(--bg-muted))] text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))]'
               }`}
             >
@@ -248,20 +248,20 @@ export default function StrategyViews({
                       <div className="flex items-center gap-1">
                         <button
                           onClick={(e) => { e.stopPropagation(); onOpenPersona(item); }}
-                          className="inline-flex items-center gap-1 px-2 h-6 rounded bg-[hsl(var(--bg-muted))] text-[hsl(var(--text-secondary))] text-2xs font-semibold hover:bg-[hsl(var(--info-muted))] hover:text-[hsl(var(--info))] dark:hover:bg-[hsl(var(--info)/0.15)] dark:hover:text-[hsl(var(--primary))] transition-colors"
+                          className="inline-flex items-center gap-1 px-2 h-6 rounded bg-[hsl(var(--bg-muted))] text-[hsl(var(--text-secondary))] text-2xs font-semibold hover:bg-[hsl(var(--info-muted))] hover:text-[hsl(var(--info))] transition-colors"
                         >
                           <Users size={10} /> Personas
                         </button>
                         <button
                           onClick={(e) => { e.stopPropagation(); onNavigateGroup(item.id); }}
-                          className="inline-flex items-center gap-1 px-2 h-6 rounded bg-[hsl(var(--bg-muted))] text-[hsl(var(--text-secondary))] text-2xs font-semibold hover:bg-[hsl(var(--info-muted))] hover:text-[hsl(var(--info))] dark:hover:bg-[hsl(var(--info)/0.15)] dark:hover:text-[hsl(var(--primary))] transition-colors"
+                          className="inline-flex items-center gap-1 px-2 h-6 rounded bg-[hsl(var(--bg-muted))] text-[hsl(var(--text-secondary))] text-2xs font-semibold hover:bg-[hsl(var(--info-muted))] hover:text-[hsl(var(--info))] transition-colors"
                         >
                           <Calendar size={10} /> Detalle
                         </button>
                         <button
                           onClick={(e) => { e.stopPropagation(); shareGroupLink(item.id, item.name, 'whatsapp'); }}
                           title="Compartir por WhatsApp"
-                          className="w-6 h-6 inline-flex items-center justify-center rounded bg-[hsl(var(--success-muted))] text-[hsl(var(--success))] hover:bg-[hsl(var(--success)/0.2)] dark:bg-[hsl(var(--success)/0.15)] dark:text-[hsl(var(--success))] transition-colors"
+                          className="w-6 h-6 inline-flex items-center justify-center rounded bg-[hsl(var(--success-muted))] text-[hsl(var(--success))] hover:bg-[hsl(var(--success)/0.2)] transition-colors"
                         >
                           <Share2 size={10} />
                         </button>
@@ -347,7 +347,7 @@ export default function StrategyViews({
                       <div className="flex items-center gap-1">
                         <button
                           onClick={(e) => { e.stopPropagation(); onOpenAttendance(item); }}
-                          className="inline-flex items-center gap-1 px-2 h-6 rounded bg-[hsl(var(--bg-muted))] text-[hsl(var(--text-secondary))] text-2xs font-semibold hover:bg-[hsl(var(--info-muted))] hover:text-[hsl(var(--info))] dark:hover:bg-[hsl(var(--info)/0.15)] dark:hover:text-[hsl(var(--primary))] transition-colors whitespace-nowrap"
+                          className="inline-flex items-center gap-1 px-2 h-6 rounded bg-[hsl(var(--bg-muted))] text-[hsl(var(--text-secondary))] text-2xs font-semibold hover:bg-[hsl(var(--info-muted))] hover:text-[hsl(var(--info))] transition-colors whitespace-nowrap"
                         >
                           <Users size={10} /> Asistencia
                         </button>
@@ -357,8 +357,8 @@ export default function StrategyViews({
                             title={item.estado_habilitacion === 'HABILITADO' ? 'Cerrar sesión' : 'Abrir sesión'}
                             className={`w-6 h-6 inline-flex items-center justify-center rounded font-bold text-xs transition-colors ${
                               item.estado_habilitacion === 'HABILITADO'
-                                ? 'bg-[hsl(var(--success)/0.2)] text-[hsl(var(--success))] hover:bg-[hsl(var(--destructive)/0.08)] hover:text-[hsl(var(--destructive))] dark:bg-[hsl(var(--success)/0.15)] dark:text-[hsl(var(--success))]'
-                                : 'bg-[hsl(var(--warning-muted))] text-[hsl(var(--warning))] hover:bg-[hsl(var(--success)/0.2)] hover:text-[hsl(var(--success))] dark:bg-[hsl(var(--warning)/0.15)] dark:text-[hsl(var(--warning))]'
+                                ? 'bg-[hsl(var(--success-muted))] text-[hsl(var(--success))] hover:bg-[hsl(var(--destructive)/0.08)] hover:text-[hsl(var(--destructive))]'
+                                : 'bg-[hsl(var(--warning-muted))] text-[hsl(var(--warning))] hover:bg-[hsl(var(--success-muted))] hover:text-[hsl(var(--success))]'
                             }`}
                           >
                             {item.estado_habilitacion === 'HABILITADO' ? '✓' : '○'}
@@ -366,7 +366,7 @@ export default function StrategyViews({
                         )}
                         <button
                           onClick={(e) => { e.stopPropagation(); onRequestDeleteSession(item.id); }}
-                          className="w-6 h-6 inline-flex items-center justify-center rounded text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--destructive)/0.08)] hover:text-[hsl(var(--destructive))] dark:hover:bg-[hsl(var(--destructive)/0.15)] transition-colors"
+                          className="w-6 h-6 inline-flex items-center justify-center rounded text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--destructive)/0.08)] hover:text-[hsl(var(--destructive))] transition-colors"
                           title="Eliminar"
                         >
                           <Trash2 size={11} />
@@ -385,18 +385,18 @@ export default function StrategyViews({
       {viewType === 'list' && (
         <div className="space-y-1">
           {(activeTab === 'groups' || activeTab === 'overview') && groups.map(g => (
-            <div key={`g-${g.id}`} className="flex items-center gap-3 p-3 rounded-lg hover:bg-[hsl(var(--bg-muted))] dark:hover:bg-white/5 transition-all">
-              <div className="w-8 h-8 rounded-full bg-[hsl(var(--info-muted))] dark:bg-[hsl(var(--info)/0.15)] flex items-center justify-center shrink-0"><Users size={14} className="text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))]" /></div>
+            <div key={`g-${g.id}`} className="flex items-center gap-3 p-3 rounded-lg hover:bg-[hsl(var(--bg-muted))] transition-all">
+              <div className="w-8 h-8 rounded-full bg-[hsl(var(--info-muted))] flex items-center justify-center shrink-0"><Users size={14} className="text-[hsl(var(--primary))]" /></div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-semibold text-[hsl(var(--text-primary))] truncate">{g.name}</p>
                 <p className="text-xs text-[hsl(var(--text-secondary))]">{g.personas_count} personas{g.zone ? ` · ${g.zone}` : ''}</p>
               </div>
-              <span className="px-2 py-0.5 rounded text-2xs font-bold bg-[hsl(var(--success-muted))] text-[hsl(var(--success))] dark:bg-[hsl(var(--success)/0.15)] dark:text-[hsl(var(--success))]">Grupo</span>
+              <span className="px-2 py-0.5 rounded text-2xs font-bold bg-[hsl(var(--success-muted))] text-[hsl(var(--success))]">Grupo</span>
             </div>
           ))}
           {(activeTab === 'sessions' || activeTab === 'overview') && sessions.map(s => (
-            <div key={`s-${s.id}`} className="flex items-center gap-3 p-3 rounded-lg hover:bg-[hsl(var(--bg-muted))] dark:hover:bg-white/5 transition-all">
-              <div className="w-8 h-8 rounded-full bg-[hsl(var(--info-muted))] dark:bg-[hsl(var(--info)/0.15)] flex items-center justify-center shrink-0"><Calendar size={14} className="text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))]" /></div>
+            <div key={`s-${s.id}`} className="flex items-center gap-3 p-3 rounded-lg hover:bg-[hsl(var(--bg-muted))] transition-all">
+              <div className="w-8 h-8 rounded-full bg-[hsl(var(--info-muted))] flex items-center justify-center shrink-0"><Calendar size={14} className="text-[hsl(var(--primary))]" /></div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-semibold text-[hsl(var(--text-primary))] truncate">{s.topic || `Sesión #${s.id}`}</p>
                 <p className="text-xs text-[hsl(var(--text-secondary))]">{groupName(s.grupo_id)} · {formatDate(s.session_date)}</p>
@@ -411,10 +411,10 @@ export default function StrategyViews({
       {viewType === 'grid' && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
           {(activeTab === 'groups' || activeTab === 'overview') && groups.map(g => (
-            <div key={`g-${g.id}`} className="rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))] p-4 hover:shadow-md transition-shadow">
+            <div key={`g-${g.id}`} className="rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-primary))] p-4 hover:shadow-md transition-shadow">
               <div className="flex items-center gap-2 mb-2">
-                <div className="w-6 h-6 rounded-full bg-[hsl(var(--info-muted))] dark:bg-[hsl(var(--info)/0.15)] flex items-center justify-center"><Users size={12} className="text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))]" /></div>
-                <span className="text-xs font-bold text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))]">GRUPO</span>
+                <div className="w-6 h-6 rounded-full bg-[hsl(var(--info-muted))] flex items-center justify-center"><Users size={12} className="text-[hsl(var(--primary))]" /></div>
+                <span className="text-xs font-bold text-[hsl(var(--primary))]">GRUPO</span>
               </div>
               <h3 className="text-sm font-bold text-[hsl(var(--text-primary))]">{g.name}</h3>
               <p className="text-xs text-[hsl(var(--text-secondary))] mt-1">{g.zone || 'Sin zona'}</p>
@@ -422,10 +422,10 @@ export default function StrategyViews({
             </div>
           ))}
           {(activeTab === 'sessions' || activeTab === 'overview') && sessions.map(s => (
-            <div key={`s-${s.id}`} className="rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))] p-4 hover:shadow-md transition-shadow">
+            <div key={`s-${s.id}`} className="rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-primary))] p-4 hover:shadow-md transition-shadow">
               <div className="flex items-center gap-2 mb-2">
-                <div className="w-6 h-6 rounded-full bg-[hsl(var(--info-muted))] dark:bg-[hsl(var(--info)/0.15)] flex items-center justify-center"><Calendar size={12} className="text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))]" /></div>
-                <span className="text-xs font-bold text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))]">SESIÓN</span>
+                <div className="w-6 h-6 rounded-full bg-[hsl(var(--info-muted))] flex items-center justify-center"><Calendar size={12} className="text-[hsl(var(--primary))]" /></div>
+                <span className="text-xs font-bold text-[hsl(var(--primary))]">SESIÓN</span>
               </div>
               <h3 className="text-sm font-bold text-[hsl(var(--text-primary))]">{s.topic || `Sesión #${s.id}`}</h3>
               <p className="text-xs text-[hsl(var(--text-secondary))] mt-1">{groupName(s.grupo_id)}</p>

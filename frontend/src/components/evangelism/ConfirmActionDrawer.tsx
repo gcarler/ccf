@@ -29,7 +29,7 @@ export default function ConfirmActionDrawer({ action, onClose }: Props) {
           <button
             type="button"
             onClick={onClose}
-            className="px-3 py-2 text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] dark:hover:text-[hsl(var(--text-secondary))]"
+            className="px-3 py-2 text-xs font-semibold uppercase tracking-wide text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))]"
           >
             Cancelar
           </button>
@@ -45,10 +45,10 @@ export default function ConfirmActionDrawer({ action, onClose }: Props) {
               }
             }}
             className={clsx(
-              'inline-flex items-center gap-2 rounded-md px-3 py-2 text-xs font-semibold uppercase tracking-wide text-white transition-colors',
+              'inline-flex items-center gap-2 rounded-md px-3 py-2 text-xs font-semibold uppercase tracking-wide transition-colors',
               action?.destructive
-                ? 'bg-[hsl(var(--danger))] hover:bg-[hsl(var(--danger))]'
-                : 'bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))]'
+                ? 'bg-[hsl(var(--destructive))] text-[hsl(var(--destructive-foreground))] hover:opacity-90'
+                : 'bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] hover:opacity-90'
             )}
           >
             <CheckCircle2 size={14} />
@@ -57,7 +57,7 @@ export default function ConfirmActionDrawer({ action, onClose }: Props) {
         </div>
       )}
     >
-      <div className="flex items-start gap-3 rounded-md border border-[hsl(var(--warning)/25%)] bg-warning-soft p-3 text-warning-text dark:border-[hsl(var(--warning)/100%)]/30 dark:bg-[hsl(var(--warning))]/10 dark:text-[hsl(var(--warning))]">
+      <div className="flex items-start gap-3 rounded-md border border-[hsl(var(--warning)/30%)] bg-[hsl(var(--warning)/10%)] p-3 text-[hsl(var(--warning))]">
         <AlertTriangle size={18} className="mt-0.5 shrink-0" />
         <p className="text-sm leading-6">{action?.description}</p>
       </div>

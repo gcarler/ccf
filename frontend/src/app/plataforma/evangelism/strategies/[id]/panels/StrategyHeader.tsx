@@ -16,7 +16,7 @@ export default function StrategyHeader({ strategy, groupCount, canManage, onDele
       <div className="flex items-start gap-3">
         <button onClick={onBack}
           aria-label="Volver"
-          className="p-1.5 rounded-lg hover:bg-[hsl(var(--bg-muted))] text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-secondary))] dark:hover:text-white transition-all mt-1">
+          className="p-1.5 rounded-lg hover:bg-[hsl(var(--bg-muted))] text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] transition-all mt-1">
           <ArrowLeft size={16} />
         </button>
         <div>
@@ -42,7 +42,7 @@ export default function StrategyHeader({ strategy, groupCount, canManage, onDele
       {canManage ? (
         <button onClick={onDelete}
           aria-label="Eliminar estrategia"
-          className="p-2 rounded-lg text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--destructive))] hover:bg-[hsl(var(--destructive)/0.1)] dark:hover:bg-[hsl(var(--destructive)/0.15)] transition-all" title="Eliminar estrategia">
+          className="p-2 rounded-lg text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--destructive))] hover:bg-[hsl(var(--destructive)/0.1)] transition-all" title="Eliminar estrategia">
           <Trash2 size={16} />
         </button>
       ) : null}

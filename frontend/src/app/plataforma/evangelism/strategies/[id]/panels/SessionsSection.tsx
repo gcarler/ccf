@@ -93,7 +93,7 @@ export default function SessionsSection({
                   toast.error('Error: ' + getErrorMessage(error, 'Verifica fechas y frecuencia'));
                 }
               }}
-                className="inline-flex items-center gap-1.5 px-3 h-8 rounded-lg border border-[hsl(var(--border-primary))] dark:border-white/20 text-[hsl(var(--text-secondary))] text-xs font-semibold hover:bg-[hsl(var(--bg-muted))] transition-colors">
+                className="inline-flex items-center gap-1.5 px-3 h-8 rounded-lg border border-[hsl(var(--border-primary))] text-[hsl(var(--text-secondary))] text-xs font-semibold hover:bg-[hsl(var(--bg-muted))] transition-colors">
                 <Sparkles size={14} />Generar sesiones
               </button>
             )}
@@ -105,19 +105,19 @@ export default function SessionsSection({
                   onSessionsChanged();
                 } catch { toast.error('Error al habilitar sesiones'); }
               }}
-                className="inline-flex items-center gap-1.5 px-3 h-8 rounded-lg border border-[hsl(var(--success)/0.4)] dark:border-[hsl(var(--success)/0.4)] text-[hsl(var(--success))] text-xs font-semibold hover:bg-[hsl(var(--success-muted))] dark:hover:bg-[hsl(var(--success)/0.15)] transition-colors">
+                className="inline-flex items-center gap-1.5 px-3 h-8 rounded-lg border border-[hsl(var(--success)/0.4)] text-[hsl(var(--success))] text-xs font-semibold hover:bg-[hsl(var(--success-muted))] transition-colors">
                 <CheckCircle2 size={14} />Habilitar sesiones
               </button>
             ) : null}
             {canManage ? (
               <button onClick={onBlockAll}
-                className="inline-flex items-center gap-1.5 px-3 h-8 rounded-lg border border-[hsl(var(--destructive)/0.3)] dark:border-[hsl(var(--destructive)/0.4)] text-[hsl(var(--destructive))] text-xs font-semibold hover:bg-[hsl(var(--destructive)/0.08)] dark:hover:bg-[hsl(var(--destructive)/0.15)] transition-colors">
+                className="inline-flex items-center gap-1.5 px-3 h-8 rounded-lg border border-[hsl(var(--destructive)/0.3)] text-[hsl(var(--destructive))] text-xs font-semibold hover:bg-[hsl(var(--destructive)/0.08)] transition-colors">
                 <AlertCircle size={14} />Bloquear sesiones
               </button>
             ) : null}
             {canManage ? (
               <button onClick={onNewSession}
-                className="inline-flex items-center gap-1.5 px-3 h-8 rounded-lg bg-[hsl(var(--primary))] text-white text-xs font-semibold hover:opacity-90 transition-colors">
+                className="inline-flex items-center gap-1.5 px-3 h-8 rounded-lg bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] text-xs font-semibold hover:opacity-90 transition-colors">
                 <Plus size={14} />Nueva sesión
               </button>
             ) : null}
@@ -189,7 +189,7 @@ export default function SessionsSection({
             {[1, 2, 3].map(i => <div key={i} className="h-14 bg-[hsl(var(--bg-muted))] rounded-lg animate-pulse" />)}
           </div>
         ) : filteredSessions.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-12 text-center bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))] border border-[hsl(var(--border-primary))] rounded-lg">
+          <div className="flex flex-col items-center justify-center py-12 text-center bg-[hsl(var(--bg-primary))] border border-[hsl(var(--border-primary))] rounded-lg">
             <ClipboardList size={32} className="text-[hsl(var(--text-secondary))] mb-2" />
             <p className="text-sm font-medium text-[hsl(var(--text-secondary))]">
               {sessions.length === 0 ? 'Sin sesiones registradas' : 'Sin sesiones con esos filtros'}
@@ -201,9 +201,9 @@ export default function SessionsSection({
         ) : (
           <div className="space-y-2">
             {filteredSessions.map(s => (
-              <div key={s.id} className={`flex items-center gap-3 bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))] border rounded-lg px-4 py-3 transition-all ${
+              <div key={s.id} className={`flex items-center gap-3 bg-[hsl(var(--bg-primary))] border rounded-lg px-4 py-3 transition-all ${
                 s.estado_habilitacion === 'HABILITADO'
-                  ? 'border-[hsl(var(--success)/0.5)] dark:border-[hsl(var(--success)/0.4)]'
+                  ? 'border-[hsl(var(--success)/0.5)]'
                   : s.estado_habilitacion === 'CERRADO'
                     ? 'border-[hsl(var(--border-primary))] opacity-60'
                     : 'border-[hsl(var(--border-primary))]'
@@ -213,18 +213,18 @@ export default function SessionsSection({
                     <span className="text-xs font-bold text-[hsl(var(--text-primary))]">
                       {new Date(s.session_date.split('T')[0] + 'T12:00:00').toLocaleDateString('es-CO', { weekday: 'long', day: 'numeric', month: 'short', year: 'numeric' })}
                     </span>
-                    <span className="px-1.5 py-0.5 rounded text-2xs font-semibold bg-[hsl(var(--success-muted))] text-[hsl(var(--success))] dark:bg-[hsl(var(--success)/0.15)] dark:text-[hsl(var(--success))]">
+                    <span className="px-1.5 py-0.5 rounded text-2xs font-semibold bg-[hsl(var(--success-muted))] text-[hsl(var(--success))]">
                       {s.status}
                     </span>
                     {/* Badge de habilitación */}
                     {s.estado_habilitacion === 'HABILITADO' && (
-                      <span className="px-1.5 py-0.5 rounded text-2xs font-bold bg-[hsl(var(--success)/0.2)] text-[hsl(var(--success))] dark:bg-[hsl(var(--success)/0.15)] dark:text-[hsl(var(--success))]">Abierta</span>
+                      <span className="px-1.5 py-0.5 rounded text-2xs font-bold bg-[hsl(var(--success-muted))] text-[hsl(var(--success))]">Abierta</span>
                     )}
                     {s.estado_habilitacion === 'CERRADO' && (
-                      <span className="px-1.5 py-0.5 rounded text-2xs font-bold bg-[hsl(var(--bg-muted))] text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">Cerrada</span>
+                      <span className="px-1.5 py-0.5 rounded text-2xs font-bold bg-[hsl(var(--bg-muted))] text-[hsl(var(--text-secondary))]">Cerrada</span>
                     )}
                     {(!s.estado_habilitacion || s.estado_habilitacion === 'DESHABILITADO') && (
-                      <span className="px-1.5 py-0.5 rounded text-2xs font-bold bg-[hsl(var(--warning-muted))] text-[hsl(var(--warning))] dark:bg-[hsl(var(--warning)/0.15)] dark:text-[hsl(var(--warning))]">Bloqueada</span>
+                      <span className="px-1.5 py-0.5 rounded text-2xs font-bold bg-[hsl(var(--warning-muted))] text-[hsl(var(--warning))]">Bloqueada</span>
                     )}
                   </div>
                   <div className="flex items-center gap-3 mt-0.5 text-xs text-[hsl(var(--text-secondary))]">
@@ -241,8 +241,8 @@ export default function SessionsSection({
                       title={s.estado_habilitacion === 'HABILITADO' ? 'Bloquear sesión' : 'Habilitar sesión'}
                       className={`w-7 h-7 flex items-center justify-center rounded-lg transition-colors text-xs font-bold ${
                         s.estado_habilitacion === 'HABILITADO'
-                          ? 'bg-[hsl(var(--success)/0.2)] text-[hsl(var(--success))] hover:bg-[hsl(var(--destructive)/0.08)] hover:text-[hsl(var(--destructive))] dark:bg-[hsl(var(--success)/0.15)] dark:text-[hsl(var(--success))]'
-                          : 'bg-[hsl(var(--warning-muted))] text-[hsl(var(--warning))] hover:bg-[hsl(var(--success)/0.2)] hover:text-[hsl(var(--success))] dark:bg-[hsl(var(--warning)/0.15)] dark:text-[hsl(var(--warning))]'
+                          ? 'bg-[hsl(var(--success-muted))] text-[hsl(var(--success))] hover:bg-[hsl(var(--destructive)/0.08)] hover:text-[hsl(var(--destructive))]'
+                          : 'bg-[hsl(var(--warning-muted))] text-[hsl(var(--warning))] hover:bg-[hsl(var(--success-muted))] hover:text-[hsl(var(--success))]'
                       }`}
                     >
                       {s.estado_habilitacion === 'HABILITADO' ? '✓' : '○'}
@@ -250,7 +250,7 @@ export default function SessionsSection({
                   ) : null}
                   {canManage ? (
                     <button onClick={() => onOpenAttendance(s)}
-                      className="inline-flex items-center gap-1.5 px-3 h-7 rounded-lg bg-[hsl(var(--bg-muted))] text-[hsl(var(--text-secondary))] text-xs font-semibold hover:bg-[hsl(var(--info-muted))] hover:text-[hsl(var(--info))] dark:hover:bg-[hsl(var(--info)/0.15)] dark:hover:text-[hsl(var(--primary))] transition-colors whitespace-nowrap">
+                      className="inline-flex items-center gap-1.5 px-3 h-7 rounded-lg bg-[hsl(var(--bg-muted))] text-[hsl(var(--text-secondary))] text-xs font-semibold hover:bg-[hsl(var(--info-muted))] hover:text-[hsl(var(--info))] transition-colors whitespace-nowrap">
                       <Users size={12} />Asistencia
                     </button>
                   ) : null}
@@ -258,14 +258,14 @@ export default function SessionsSection({
                     <div className="relative">
                       <button onClick={() => onMenuToggle(String(s.id))}
                         aria-label="Opciones de sesión"
-                        className="w-7 h-7 flex items-center justify-center rounded-lg text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--bg-muted))] dark:hover:bg-white/10 hover:text-[hsl(var(--text-secondary))] dark:hover:text-white transition-colors">
+                        className="w-7 h-7 flex items-center justify-center rounded-lg text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--bg-muted))] hover:text-[hsl(var(--text-primary))] transition-colors">
                         <span className="text-base leading-none">⋯</span>
                       </button>
                       {sessionMenuId === String(s.id) && (
-                        <div className="absolute right-0 top-8 z-20 bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))] border border-[hsl(var(--border-primary))] rounded-lg shadow-lg py-1 min-w-[130px]">
+                        <div className="absolute right-0 top-8 z-20 bg-[hsl(var(--bg-primary))] border border-[hsl(var(--border-primary))] rounded-lg shadow-lg py-1 min-w-[130px]">
                           <button
                             onClick={() => onRequestDelete(String(s.id))}
-                            className="w-full text-left px-3 py-2 text-xs text-[hsl(var(--destructive))] dark:text-[hsl(var(--destructive))] hover:bg-[hsl(var(--destructive)/0.1)] dark:hover:bg-[hsl(var(--destructive)/0.15)] flex items-center gap-2">
+                            className="w-full text-left px-3 py-2 text-xs text-[hsl(var(--destructive))] hover:bg-[hsl(var(--destructive)/0.1)] flex items-center gap-2">
                             <Trash2 size={12} />Eliminar sesión
                           </button>
                         </div>

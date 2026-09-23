@@ -68,7 +68,7 @@ export default function PersonaManagementDrawer({
         <button onClick={onClose}
           className="px-4 py-1.5 text-sm font-semibold text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--bg-muted))] rounded-md transition-colors">Cancelar</button>
         <button onClick={onSave} disabled={saving}
-          className="px-4 py-1.5 text-sm font-semibold text-white bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))] disabled:opacity-50 rounded-md transition-colors flex items-center gap-2">
+          className="px-4 py-1.5 text-sm font-semibold text-[hsl(var(--primary-foreground))] bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))] disabled:opacity-50 rounded-md transition-colors flex items-center gap-2">
           {saving ? <><Loader2 size={14} className="animate-spin" />Guardando...</> : <><UserCheck size={14} />Guardar ({personas.length})</>}
         </button>
       </>}>
@@ -95,7 +95,7 @@ export default function PersonaManagementDrawer({
                   />
                   <button onClick={() => onRemove(m.id)}
                     aria-label="Remover participante"
-                    className="p-1 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--destructive))] hover:bg-[hsl(var(--destructive)/0.08)] dark:hover:bg-[hsl(var(--destructive)/0.15)] rounded transition-colors">
+                    className="p-1 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--destructive))] hover:bg-[hsl(var(--destructive)/0.08)] rounded transition-colors">
                     <UserMinus size={13} />
                   </button>
                 </div>
@@ -111,10 +111,10 @@ export default function PersonaManagementDrawer({
           aria-label="Ajustar tamaño del panel"
           onMouseDown={onSplitDrag}
           onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') e.preventDefault(); }}
-          className="shrink-0 h-4 flex items-center justify-center cursor-row-resize group select-none border-y border-[hsl(var(--border-primary))] hover:border-[hsl(var(--info)/30%)] dark:hover:border-[hsl(var(--info)/100%)]/40 transition-colors"
+          className="shrink-0 h-4 flex items-center justify-center cursor-row-resize group select-none border-y border-[hsl(var(--border-primary))] hover:border-[hsl(var(--info)/0.3)] transition-colors"
           title="Arrastra para ajustar el espacio"
         >
-          <div className="w-12 h-1 rounded-full bg-[hsl(var(--bg-muted))] group-hover:bg-[hsl(var(--primary))] dark:group-hover:bg-[hsl(var(--primary))] transition-colors" />
+          <div className="w-12 h-1 rounded-full bg-[hsl(var(--bg-muted))] group-hover:bg-[hsl(var(--primary))] transition-colors" />
         </div>
 
         {/* Panel inferior: agregar personas */}
@@ -146,7 +146,7 @@ export default function PersonaManagementDrawer({
               );
               return available.map(m => (
                 <button key={m.id} onClick={() => onAdd(m)}
-                  className="w-full flex items-center justify-between px-2 py-1.5 hover:bg-[hsl(var(--bg-muted))] dark:hover:bg-white/5 rounded-md text-xs text-left transition-colors group/add">
+                  className="w-full flex items-center justify-between px-2 py-1.5 hover:bg-[hsl(var(--bg-muted))] rounded-md text-xs text-left transition-colors group/add">
                   <span className="font-medium text-[hsl(var(--text-primary))]">{m.nombre_completo || `${m.first_name ?? ''} ${m.last_name ?? ''}`.trim()}
                     {m.email && <span className="text-[hsl(var(--text-secondary))] ml-2">{m.email}</span>}
                   </span>

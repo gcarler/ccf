@@ -674,12 +674,12 @@ export default function StrategyAnalyticsPage() {
                         {d.label.slice(0, 3)}
                       </p>
                       <div
-                        className="aspect-square rounded-md flex items-center justify-center text-white font-black text-sm transition-all hover:scale-105 cursor-default border border-[hsl(var(--border-primary))]"
+                        className="aspect-square rounded-md flex items-center justify-center font-black text-sm transition-all hover:scale-105 cursor-default border border-[hsl(var(--border-primary))]"
                         style={{
                           backgroundColor: d.sessions === 0
                             ? 'hsl(var(--bg-muted))'
                             : `hsl(var(--primary) / ${0.15 + intensity * 0.85})`,
-                          color: intensity > 0.55 || d.sessions === 0 ? 'white' : 'hsl(var(--text-primary))',
+                          color: intensity > 0.55 || d.sessions === 0 ? 'hsl(var(--primary-foreground))' : 'hsl(var(--text-primary))',
                         }}
                         title={`${d.label}: ${d.sessions} sesiones, ${d.pct !== null ? `${d.pct.toFixed(1)}% asistencia` : 'sin datos'}`}
                       >

@@ -135,7 +135,7 @@ export default function StrategyDetailPage() {
  Esta vista requiere permisos de lectura sobre evangelismo.
  </p>
  <button onClick={() => router.push('/plataforma/evangelism')}
- className="mt-4 px-4 h-9 rounded-lg bg-[hsl(var(--primary))] text-white text-xs font-semibold hover:bg-[hsl(var(--primary))] transition-colors">
+ className="mt-4 px-4 h-9 rounded-lg bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] text-xs font-semibold hover:bg-[hsl(var(--primary))] transition-colors">
  Volver a Evangelismo
  </button>
  </div>
@@ -169,7 +169,7 @@ export default function StrategyDetailPage() {
  <h2 className="text-lg font-bold text-[hsl(var(--text-primary))]">No se pudo cargar la estrategia</h2>
  <p className="mt-2 text-sm text-[hsl(var(--text-secondary))] max-w-md">La estrategia respondió con un estado inválido o el recurso no está disponible. Vuelve a la lista para reintentar.</p>
  <button onClick={() => router.push('/plataforma/evangelism')}
- className="mt-4 px-4 h-9 rounded-lg bg-[hsl(var(--primary))] text-white text-xs font-semibold hover:bg-[hsl(var(--primary))] transition-colors">
+ className="mt-4 px-4 h-9 rounded-lg bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] text-xs font-semibold hover:bg-[hsl(var(--primary))] transition-colors">
  Volver a Estrategias
  </button>
  </div>
@@ -188,7 +188,7 @@ export default function StrategyDetailPage() {
  <AlertCircle size={48} className="text-[hsl(var(--text-secondary))] mb-4" />
  <h2 className="text-lg font-bold text-[hsl(var(--text-primary))]">Estrategia no encontrada</h2>
  <button onClick={() => router.push('/plataforma/evangelism')}
- className="mt-4 px-4 h-9 rounded-lg bg-[hsl(var(--primary))] text-white text-xs font-semibold hover:bg-[hsl(var(--primary))] transition-colors">
+ className="mt-4 px-4 h-9 rounded-lg bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] text-xs font-semibold hover:bg-[hsl(var(--primary))] transition-colors">
  Volver a Estrategias
  </button>
  </div>
@@ -244,8 +244,8 @@ export default function StrategyDetailPage() {
   onClick={() => tab.id === 'metrics' ? router.push(`/plataforma/evangelism/strategies/${id}/analytics`) : setActiveTab(tab.id)}
  className={`flex items-center gap-1.5 px-3 py-2 text-xs font-semibold border-b-2 transition-colors ${
  activeTab === tab.id
- ? 'border-[hsl(var(--primary))] text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] dark:border-[hsl(var(--primary))]'
- : 'border-transparent text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] dark:hover:text-[hsl(var(--text-secondary))]'
+ ? 'border-[hsl(var(--primary))] text-[hsl(var(--primary))]'
+ : 'border-transparent text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))]'
  }`}>
  <tab.icon size={14} />{tab.label}
  </button>

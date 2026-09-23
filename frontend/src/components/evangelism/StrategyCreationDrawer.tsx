@@ -180,7 +180,7 @@ export default function StrategyCreationDrawer({
                         type="button"
                         variant="ghost"
                         onClick={handleClose}
-                        className="px-4 py-1.5 text-sm font-semibold text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5 rounded-md transition-colors"
+                        className="px-4 py-1.5 text-sm font-semibold text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] rounded-md transition-colors"
                     >
                         Cancelar
                     </DSButton>
@@ -189,7 +189,7 @@ export default function StrategyCreationDrawer({
                         variant="primary"
                         onClick={handleSubmit(onSubmit)}
                         disabled={isSubmitting || !watch('name').trim()}
-                        className="px-4 py-1.5 text-sm font-semibold text-white bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))] disabled:opacity-50 disabled:cursor-not-allowed rounded-md transition-colors flex items-center gap-2"
+                        className="px-4 py-1.5 text-sm font-semibold text-[hsl(var(--primary-foreground))] bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))] disabled:opacity-50 disabled:cursor-not-allowed rounded-md transition-colors flex items-center gap-2"
                     >
                         {isSubmitting ? (
                             <>
@@ -225,8 +225,8 @@ export default function StrategyCreationDrawer({
                                 className={clsx(
                                     'flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-bold transition-all flex-1 justify-center',
                                     typology === t.id
-                                        ? 'bg-[hsl(var(--primary))] text-white shadow-sm'
-                                        : 'bg-[hsl(var(--surface-1))] dark:bg-white/5 text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/10 border border-[hsl(var(--border))] dark:border-white/10'
+                                        ? 'bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] shadow-sm'
+                                        : 'bg-[hsl(var(--surface-1))] text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))]'
                                 )}
                             >
                                 <t.icon size={14} />
@@ -252,8 +252,8 @@ export default function StrategyCreationDrawer({
                                     className={clsx(
                                         'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex-1 justify-center',
                                         watch('recurrence') === r
-                                            ? 'bg-[hsl(var(--info-muted))] dark:bg-[hsl(var(--info))]/30 text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] border border-[hsl(var(--info)/25%)] dark:border-[hsl(var(--info)/100%)]'
-                                            : 'bg-[hsl(var(--surface-1))] dark:bg-white/5 text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/10 border border-[hsl(var(--border))] dark:border-white/10'
+                                            ? 'bg-[hsl(var(--info-muted))] text-[hsl(var(--info))] border border-[hsl(var(--info)/0.3)]'
+                                            : 'bg-[hsl(var(--surface-1))] text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))]'
                                     )}
                                 >
                                     <Clock size={12} />
@@ -276,8 +276,8 @@ export default function StrategyCreationDrawer({
                                     className={clsx(
                                         'px-3 py-1.5 rounded-lg text-xs font-bold transition-all',
                                         watch('dayOfWeek') === d
-                                            ? 'bg-[hsl(var(--info-muted))] dark:bg-[hsl(var(--info))]/30 text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] border border-[hsl(var(--info)/25%)] dark:border-[hsl(var(--info)/100%)]'
-                                            : 'bg-[hsl(var(--surface-1))] dark:bg-white/5 text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/10 border border-[hsl(var(--border))] dark:border-white/10'
+                                            ? 'bg-[hsl(var(--info-muted))] text-[hsl(var(--info))] border border-[hsl(var(--info)/0.3)]'
+                                            : 'bg-[hsl(var(--surface-1))] text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))]'
                                     )}
                                 >
                                     {d}
@@ -294,7 +294,7 @@ export default function StrategyCreationDrawer({
                             type="time"
                             value={watch('startTime')}
                             onChange={e => setValue('startTime', e.target.value)}
-                            className="w-full px-3 py-2 text-base bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]/20 focus:border-[hsl(var(--info)/100%)]"
+                            className="w-full px-3 py-2 text-base bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] rounded-lg text-[hsl(var(--text-primary))] outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]/20 focus:border-[hsl(var(--primary))]"
                         />
                     </div>
                     </>
@@ -319,8 +319,8 @@ export default function StrategyCreationDrawer({
                                         className={clsx(
                                             'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex-1 justify-center',
                                             watch('eventFormat') === f.id
-                                                ? 'bg-[hsl(var(--warning)/0.12)] dark:bg-[hsl(var(--warning)/0.2)] text-[hsl(var(--warning))] dark:text-[hsl(var(--warning))] border border-[hsl(var(--warning)/0.3)] dark:border-[hsl(var(--warning)/0.4)]'
-                                                : 'bg-[hsl(var(--surface-1))] dark:bg-white/5 text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/10 border border-[hsl(var(--border))] dark:border-white/10'
+                                                ? 'bg-[hsl(var(--warning-muted))] text-[hsl(var(--warning))] border border-[hsl(var(--warning)/0.3)]'
+                                                : 'bg-[hsl(var(--surface-1))] text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))]'
                                         )}
                                     >
                                         <MapPin size={12} />
@@ -349,7 +349,7 @@ export default function StrategyCreationDrawer({
                                     <DSInput
                                         {...register(`phases.${i}.name`)}
                                         placeholder={`Fase ${i + 1}`}
-                                        className="flex-1 px-2.5 py-1.5 text-sm rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-white/5 text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] focus:border-[hsl(var(--info)/100%)] focus:outline-none"
+                                        className="flex-1 px-2.5 py-1.5 text-sm rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-[hsl(var(--text-primary))] focus:border-[hsl(var(--primary))] focus:outline-none"
                                     />
                                     <DSSelect
                                         {...register(`phases.${i}.type`)}
@@ -359,18 +359,18 @@ export default function StrategyCreationDrawer({
                                             { value: 'cosecha', label: 'Cosecha' },
                                             { value: 'seguimiento', label: 'Seg.' },
                                         ]}
-                                        className="px-2 py-1.5 text-xs rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-white/5 text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]"
+                                        className="px-2 py-1.5 text-xs rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-[hsl(var(--text-secondary))]"
                                     />
                                     <DSInput
                                         type="date"
                                         {...register(`phases.${i}.start_date`)}
-                                        className="px-1.5 py-1.5 text-xs rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-white/5 text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]"
+                                        className="px-1.5 py-1.5 text-xs rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-[hsl(var(--text-secondary))]"
                                     />
                                     <DSButton
                                         type="button"
                                         aria-label="Eliminar fase"
                                         onClick={() => remove(i)}
-                                        className="p-1.5 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--destructive))] rounded-md hover:bg-[hsl(var(--destructive)/0.1)] dark:hover:bg-[hsl(var(--destructive)/0.15)] transition-colors"
+                                        className="p-1.5 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--destructive))] rounded-md hover:bg-[hsl(var(--destructive)/0.1)] transition-colors"
                                     >
                                         <X size={14} />
                                     </DSButton>
@@ -389,7 +389,7 @@ export default function StrategyCreationDrawer({
                         <DSInput
                             {...register('nicheObjective')}
                             placeholder="Ej: Universidades, Cárceles, Fundaciones"
-                            className="w-full px-3 py-2 text-base bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]/20 focus:border-[hsl(var(--info)/100%)]"
+                            className="w-full px-3 py-2 text-base bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] rounded-lg text-[hsl(var(--text-primary))] outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]/20 focus:border-[hsl(var(--primary))]"
                         />
                     </div>
                 )}
@@ -408,8 +408,8 @@ export default function StrategyCreationDrawer({
                                 className={clsx(
                                     'px-3 py-2 rounded-lg text-xs font-bold transition-all text-left',
                                     watch('strategyType') === opt
-                                        ? 'bg-[hsl(var(--primary))] text-white shadow-sm'
-                                        : 'bg-[hsl(var(--surface-1))] dark:bg-white/5 text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/10 border border-[hsl(var(--border))] dark:border-white/10'
+                                        ? 'bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] shadow-sm'
+                                        : 'bg-[hsl(var(--surface-1))] text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))]'
                                 )}
                             >
                                 {opt}
@@ -426,7 +426,7 @@ export default function StrategyCreationDrawer({
                     <DSInput
                         {...register('name', { required: true })}
                         placeholder="Nombre de la estrategia..."
-                        className="w-full px-3 py-2 text-md font-medium bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]/20 focus:border-[hsl(var(--info)/100%)]"
+                        className="w-full px-3 py-2 text-md font-medium bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] rounded-lg text-[hsl(var(--text-primary))] outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]/20 focus:border-[hsl(var(--primary))]"
                     />
                 </div>
 
@@ -441,7 +441,7 @@ export default function StrategyCreationDrawer({
                             <DSInput
                                 type="date"
                                 {...register('startDate')}
-                                className="flex-1 px-2.5 py-1.5 text-sm font-semibold bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]/20 focus:border-[hsl(var(--info)/100%)] cursor-pointer"
+                                className="flex-1 px-2.5 py-1.5 text-sm font-semibold bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] rounded-lg text-[hsl(var(--text-primary))] outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]/20 focus:border-[hsl(var(--primary))] cursor-pointer"
                             />
                         </div>
                         <span className="text-[hsl(var(--text-secondary))] text-xs font-semibold">→</span>
@@ -449,7 +449,7 @@ export default function StrategyCreationDrawer({
                             <DSInput
                                 type="date"
                                 {...register('endDate')}
-                                className="flex-1 px-2.5 py-1.5 text-sm font-semibold bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]/20 focus:border-[hsl(var(--info)/100%)] cursor-pointer"
+                                className="flex-1 px-2.5 py-1.5 text-sm font-semibold bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] rounded-lg text-[hsl(var(--text-primary))] outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]/20 focus:border-[hsl(var(--primary))] cursor-pointer"
                             />
                         </div>
                     </div>
@@ -463,7 +463,7 @@ export default function StrategyCreationDrawer({
                     <textarea
                         {...register('description')}
                         placeholder="Propósito u objetivos de la estrategia..."
-                        className="w-full min-h-[80px] px-3 py-2 text-base bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]/20 focus:border-[hsl(var(--info)/100%)] resize-none"
+                        className="w-full min-h-[80px] px-3 py-2 text-base bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] rounded-lg text-[hsl(var(--text-primary))] outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]/20 focus:border-[hsl(var(--primary))] resize-none"
                     />
                 </div>
             </form>
