@@ -8,6 +8,7 @@ import {
   QrCode, RefreshCw, Send, Trash2, Users, X, Megaphone, Settings2,
 } from "lucide-react";
 import clsx from "clsx";
+import SidePanel from "@/components/ui/SidePanel";
 
 type RegistrationStatus =
   | "PENDING"
@@ -575,105 +576,100 @@ function ConfigForm({ eventId, token, config, onClose, onSaved }: {
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/50 flex items-end sm:items-center justify-center p-0 sm:p-4" onClick={onClose}>
-      <div className="w-full sm:max-w-lg bg-[hsl(var(--bg-primary))] rounded-t-xl sm:rounded-xl shadow-2xl p-4 sm:p-6 max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-sm font-bold uppercase tracking-wide text-[hsl(var(--text-primary))] flex items-center gap-2">
-            <Settings2 size={15} /> Configuración de pre-registro
-          </h3>
-          <button onClick={onClose} className="p-1.5 rounded-md hover:bg-[hsl(var(--bg-muted))] text-[hsl(var(--text-secondary))]">
-            <X size={16} />
-          </button>
-        </div>
+    <SidePanel
+      isOpen={true}
+      onClose={onClose}
+      title="Configuración de pre-registro"
+      subtitle="Parámetros de acceso, aforo y códigos QR"
+      width="w-full sm:w-[500px]"
+    >
+      <div className="space-y-4 p-4">
+        <ToggleRow
+          label="Habilitar pre-registro"
+          checked={form.requires_registration}
+          onChange={(v) => setForm({ ...form, requires_registration: v })}
+        />
+        <ToggleRow
+          label="Verificación de email"
+          hint="El inscrito debe confirmar su correo antes de recibir el QR"
+          checked={form.requires_email_verification}
+          onChange={(v) => setForm({ ...form, requires_email_verification: v })}
+        />
+        <ToggleRow
+          label="Lista de espera"
+          hint="Cuando el aforo esté lleno, los nuevos quedan en espera"
+          checked={form.waiting_list_enabled}
+          onChange={(v) => setForm({ ...form, waiting_list_enabled: v })}
+        />
 
-        <div className="space-y-4">
-          <ToggleRow
-            label="Habilitar pre-registro"
-            checked={form.requires_registration}
-            onChange={(v) => setForm({ ...form, requires_registration: v })}
-          />
-          <ToggleRow
-            label="Verificación de email"
-            hint="El inscrito debe confirmar su correo antes de recibir el QR"
-            checked={form.requires_email_verification}
-            onChange={(v) => setForm({ ...form, requires_email_verification: v })}
-          />
-          <ToggleRow
-            label="Lista de espera"
-            hint="Cuando el aforo esté lleno, los nuevos quedan en espera"
-            checked={form.waiting_list_enabled}
-            onChange={(v) => setForm({ ...form, waiting_list_enabled: v })}
-          />
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div className="space-y-2">
-              <label className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] block">Aforo máximo</label>
-              <input
-                type="number"
-                min={1}
-                value={form.capacity_max ?? ""}
-                onChange={(e) => setForm({ ...form, capacity_max: e.target.value ? Number(e.target.value) : null })}
-                className="w-full px-3 py-2 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] outline-none text-sm font-semibold text-[hsl(var(--text-primary))]"
-                placeholder="Sin límite"
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] block">Modo QR</label>
-              <select
-                value={form.qr_mode}
-                onChange={(e) => setForm({ ...form, qr_mode: e.target.value as "PER_REGISTRANT" | "PER_EVENT" })}
-                className="w-full px-3 py-2 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] outline-none text-sm font-semibold text-[hsl(var(--text-primary))]"
-              >
-                <option value="PER_REGISTRANT">QR por inscrito</option>
-                <option value="PER_EVENT">QR por evento</option>
-              </select>
-            </div>
-            <div className="space-y-2">
-              <label className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] block">Apertura de registro</label>
-              <input
-                type="datetime-local"
-                value={toLocalInput(form.registration_opens_at)}
-                onChange={(e) => setForm({ ...form, registration_opens_at: e.target.value ? new Date(e.target.value).toISOString() : null })}
-                className="w-full px-3 py-2 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] outline-none text-sm font-semibold text-[hsl(var(--text-primary))]"
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] block">Cierre de registro</label>
-              <input
-                type="datetime-local"
-                value={toLocalInput(form.registration_closes_at)}
-                onChange={(e) => setForm({ ...form, registration_closes_at: e.target.value ? new Date(e.target.value).toISOString() : null })}
-                className="w-full px-3 py-2 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] outline-none text-sm font-semibold text-[hsl(var(--text-primary))]"
-              />
-            </div>
-          </div>
-
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div className="space-y-2">
-            <label className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] block">Persona de contacto</label>
+            <label className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] block">Aforo máximo</label>
             <input
-              type="text"
-              value={form.contact_person ?? ""}
-              onChange={(e) => setForm({ ...form, contact_person: e.target.value || null })}
+              type="number"
+              min={1}
+              value={form.capacity_max ?? ""}
+              onChange={(e) => setForm({ ...form, capacity_max: e.target.value ? Number(e.target.value) : null })}
               className="w-full px-3 py-2 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] outline-none text-sm font-semibold text-[hsl(var(--text-primary))]"
-              placeholder="Nombre de quien recibe consultas"
+              placeholder="Sin límite"
             />
           </div>
-
-          <div className="flex justify-end gap-2 pt-2">
-            <button onClick={onClose} className="px-4 py-2 text-xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] transition-colors">
-              Cancelar
-            </button>
-            <button
-              onClick={handleSave}
-              disabled={saving}
-              className="px-4 py-2 rounded-md bg-[hsl(var(--primary))] text-white text-xs font-bold uppercase tracking-wide flex items-center gap-2 disabled:opacity-50"
+          <div className="space-y-2">
+            <label className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] block">Modo QR</label>
+            <select
+              value={form.qr_mode}
+              onChange={(e) => setForm({ ...form, qr_mode: e.target.value as "PER_REGISTRANT" | "PER_EVENT" })}
+              className="w-full px-3 py-2 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] outline-none text-sm font-semibold text-[hsl(var(--text-primary))]"
             >
-              {saving ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />} Guardar
-            </button>
+              <option value="PER_REGISTRANT">QR por inscrito</option>
+              <option value="PER_EVENT">QR por evento</option>
+            </select>
+          </div>
+          <div className="space-y-2">
+            <label className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] block">Apertura de registro</label>
+            <input
+              type="datetime-local"
+              value={toLocalInput(form.registration_opens_at)}
+              onChange={(e) => setForm({ ...form, registration_opens_at: e.target.value ? new Date(e.target.value).toISOString() : null })}
+              className="w-full px-3 py-2 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] outline-none text-sm font-semibold text-[hsl(var(--text-primary))]"
+            />
+          </div>
+          <div className="space-y-2">
+            <label className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] block">Cierre de registro</label>
+            <input
+              type="datetime-local"
+              value={toLocalInput(form.registration_closes_at)}
+              onChange={(e) => setForm({ ...form, registration_closes_at: e.target.value ? new Date(e.target.value).toISOString() : null })}
+              className="w-full px-3 py-2 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] outline-none text-sm font-semibold text-[hsl(var(--text-primary))]"
+            />
           </div>
         </div>
+
+        <div className="space-y-2">
+          <label className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] block">Persona de contacto</label>
+          <input
+            type="text"
+            value={form.contact_person ?? ""}
+            onChange={(e) => setForm({ ...form, contact_person: e.target.value || null })}
+            className="w-full px-3 py-2 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] outline-none text-sm font-semibold text-[hsl(var(--text-primary))]"
+            placeholder="Nombre de quien recibe consultas"
+          />
+        </div>
+
+        <div className="flex justify-end gap-2 pt-4 border-t border-[hsl(var(--border))]">
+          <button onClick={onClose} className="px-4 py-2 text-xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] transition-colors">
+            Cancelar
+          </button>
+          <button
+            onClick={handleSave}
+            disabled={saving}
+            className="px-4 py-2 rounded-md bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] text-xs font-bold uppercase tracking-wide flex items-center gap-2 disabled:opacity-50"
+          >
+            {saving ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />} Guardar
+          </button>
+        </div>
       </div>
-    </div>
+    </SidePanel>
   );
 }
 
@@ -743,122 +739,117 @@ function CampaignForm({ eventId, token, plantillas, onClose, onSaved }: {
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/50 flex items-end sm:items-center justify-center p-0 sm:p-4" onClick={onClose}>
-      <div className="w-full sm:max-w-lg bg-[hsl(var(--bg-primary))] rounded-t-xl sm:rounded-xl shadow-2xl p-4 sm:p-6 max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-sm font-bold uppercase tracking-wide text-[hsl(var(--text-primary))] flex items-center gap-2">
-            <Megaphone size={15} /> Nueva campaña
-          </h3>
-          <button onClick={onClose} className="p-1.5 rounded-md hover:bg-[hsl(var(--bg-muted))] text-[hsl(var(--text-secondary))]">
-            <X size={16} />
-          </button>
+    <SidePanel
+      isOpen={true}
+      onClose={onClose}
+      title="Nueva campaña"
+      subtitle="Programa avisos y recordatorios para los inscritos"
+      width="w-full sm:w-[500px]"
+    >
+      <div className="space-y-4 p-4">
+        <div className="space-y-2">
+          <label className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] block">Nombre *</label>
+          <input
+            value={form.name}
+            onChange={(e) => setForm({ ...form, name: e.target.value })}
+            placeholder="Ej: Recordatorio día del evento"
+            className="w-full px-3 py-2 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] outline-none text-sm font-semibold text-[hsl(var(--text-primary))] placeholder:text-[hsl(var(--text-secondary))]"
+          />
         </div>
 
-        <div className="space-y-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div className="space-y-2">
-            <label className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] block">Nombre *</label>
+            <label className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] block">Canal</label>
+            <select
+              value={form.canal}
+              onChange={(e) => setForm({ ...form, canal: e.target.value as "WHATSAPP" | "EMAIL" | "SMS" })}
+              className="w-full px-3 py-2 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] outline-none text-sm font-semibold text-[hsl(var(--text-primary))]"
+            >
+              <option value="EMAIL">Email</option>
+              <option value="WHATSAPP">WhatsApp</option>
+              <option value="SMS">SMS</option>
+            </select>
+          </div>
+          <div className="space-y-2">
+            <label className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] block">Disparo</label>
+            <select
+              value={form.trigger_type}
+              onChange={(e) => setForm({ ...form, trigger_type: e.target.value as "MANUAL" | "RELATIVE_TO_EVENT" | "RELATIVE_TO_REGISTRATION" })}
+              className="w-full px-3 py-2 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] outline-none text-sm font-semibold text-[hsl(var(--text-primary))]"
+            >
+              <option value="MANUAL">Manual</option>
+              <option value="RELATIVE_TO_EVENT">Antes del evento</option>
+              <option value="RELATIVE_TO_REGISTRATION">Tras inscribirse</option>
+            </select>
+          </div>
+        </div>
+
+        {form.trigger_type !== "MANUAL" && (
+          <div className="space-y-2">
+            <label className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] block">Offset (minutos)</label>
             <input
-              value={form.name}
-              onChange={(e) => setForm({ ...form, name: e.target.value })}
-              placeholder="Ej: Recordatorio día del evento"
+              type="number"
+              value={form.trigger_offset_minutes}
+              onChange={(e) => setForm({ ...form, trigger_offset_minutes: e.target.value })}
+              placeholder="Ej: -1440 = 1 día antes"
               className="w-full px-3 py-2 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] outline-none text-sm font-semibold text-[hsl(var(--text-primary))] placeholder:text-[hsl(var(--text-secondary))]"
             />
           </div>
+        )}
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div className="space-y-2">
-              <label className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] block">Canal</label>
-              <select
-                value={form.canal}
-                onChange={(e) => setForm({ ...form, canal: e.target.value as "WHATSAPP" | "EMAIL" | "SMS" })}
-                className="w-full px-3 py-2 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] outline-none text-sm font-semibold text-[hsl(var(--text-primary))]"
+        <div className="space-y-2">
+          <label className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] block">Plantilla de mensaje *</label>
+          <select
+            value={form.plantilla_id}
+            onChange={(e) => setForm({ ...form, plantilla_id: e.target.value })}
+            className="w-full px-3 py-2 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] outline-none text-sm font-semibold text-[hsl(var(--text-primary))]"
+          >
+            {plantillas.map((p) => (
+              <option key={p.id} value={p.id}>{p.nombre}</option>
+            ))}
+          </select>
+        </div>
+
+        <div className="space-y-2">
+          <label className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] block">Audiencia (estados)</label>
+          <div className="flex flex-wrap gap-2">
+            {(["CONFIRMED", "PENDING", "CHECKED_IN", "WAITLIST"] as const).map((s) => (
+              <button
+                key={s}
+                type="button"
+                onClick={() => {
+                  const next = form.target_status.includes(s)
+                    ? form.target_status.filter((x) => x !== s)
+                    : [...form.target_status, s];
+                  setForm({ ...form, target_status: next });
+                }}
+                className={clsx(
+                  "px-2.5 py-1.5 rounded-md text-2xs font-semibold uppercase tracking-wide border transition-all",
+                  form.target_status.includes(s)
+                    ? "bg-info-soft text-[hsl(var(--primary))] border-[hsl(var(--info)/40%)]"
+                    : "border-[hsl(var(--border))] text-[hsl(var(--text-secondary))]"
+                )}
               >
-                <option value="EMAIL">Email</option>
-                <option value="WHATSAPP">WhatsApp</option>
-                <option value="SMS">SMS</option>
-              </select>
-            </div>
-            <div className="space-y-2">
-              <label className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] block">Disparo</label>
-              <select
-                value={form.trigger_type}
-                onChange={(e) => setForm({ ...form, trigger_type: e.target.value as "MANUAL" | "RELATIVE_TO_EVENT" | "RELATIVE_TO_REGISTRATION" })}
-                className="w-full px-3 py-2 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] outline-none text-sm font-semibold text-[hsl(var(--text-primary))]"
-              >
-                <option value="MANUAL">Manual</option>
-                <option value="RELATIVE_TO_EVENT">Antes del evento</option>
-                <option value="RELATIVE_TO_REGISTRATION">Tras inscribirse</option>
-              </select>
-            </div>
-          </div>
-
-          {form.trigger_type !== "MANUAL" && (
-            <div className="space-y-2">
-              <label className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] block">Offset (minutos)</label>
-              <input
-                type="number"
-                value={form.trigger_offset_minutes}
-                onChange={(e) => setForm({ ...form, trigger_offset_minutes: e.target.value })}
-                placeholder="Ej: -1440 = 1 día antes"
-                className="w-full px-3 py-2 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] outline-none text-sm font-semibold text-[hsl(var(--text-primary))] placeholder:text-[hsl(var(--text-secondary))]"
-              />
-            </div>
-          )}
-
-          <div className="space-y-2">
-            <label className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] block">Plantilla de mensaje *</label>
-            <select
-              value={form.plantilla_id}
-              onChange={(e) => setForm({ ...form, plantilla_id: e.target.value })}
-              className="w-full px-3 py-2 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] outline-none text-sm font-semibold text-[hsl(var(--text-primary))]"
-            >
-              {plantillas.map((p) => (
-                <option key={p.id} value={p.id}>{p.nombre}</option>
-              ))}
-            </select>
-          </div>
-
-          <div className="space-y-2">
-            <label className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] block">Audiencia (estados)</label>
-            <div className="flex flex-wrap gap-2">
-              {(["CONFIRMED", "PENDING", "CHECKED_IN", "WAITLIST"] as const).map((s) => (
-                <button
-                  key={s}
-                  type="button"
-                  onClick={() => {
-                    const next = form.target_status.includes(s)
-                      ? form.target_status.filter((x) => x !== s)
-                      : [...form.target_status, s];
-                    setForm({ ...form, target_status: next });
-                  }}
-                  className={clsx(
-                    "px-2.5 py-1.5 rounded-md text-2xs font-semibold uppercase tracking-wide border transition-all",
-                    form.target_status.includes(s)
-                      ? "bg-info-soft text-[hsl(var(--primary))] border-[hsl(var(--info)/40%)]"
-                      : "border-[hsl(var(--border))] text-[hsl(var(--text-secondary))]"
-                  )}
-                >
-                  {STATUS_LABEL[s]}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className="flex justify-end gap-2 pt-2">
-            <button onClick={onClose} className="px-4 py-2 text-xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] transition-colors">
-              Cancelar
-            </button>
-            <button
-              onClick={handleSave}
-              disabled={saving}
-              className="px-4 py-2 rounded-md bg-[hsl(var(--primary))] text-white text-xs font-bold uppercase tracking-wide flex items-center gap-2 disabled:opacity-50"
-            >
-              {saving ? <Loader2 size={14} className="animate-spin" /> : <Plus size={14} />} Crear
-            </button>
+                {STATUS_LABEL[s]}
+              </button>
+            ))}
           </div>
         </div>
+
+        <div className="flex justify-end gap-2 pt-4 border-t border-[hsl(var(--border))]">
+          <button onClick={onClose} className="px-4 py-2 text-xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] transition-colors">
+            Cancelar
+          </button>
+          <button
+            onClick={handleSave}
+            disabled={saving}
+            className="px-4 py-2 rounded-md bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] text-xs font-bold uppercase tracking-wide flex items-center gap-2 disabled:opacity-50"
+          >
+            {saving ? <Loader2 size={14} className="animate-spin" /> : <Plus size={14} />} Crear
+          </button>
+        </div>
       </div>
-    </div>
+    </SidePanel>
   );
 }
 
