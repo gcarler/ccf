@@ -156,9 +156,9 @@ export function useGroupDetailPage(id: string | undefined) {
       title: 'Grupos en Casa',
       replaceAll: true,
       content: (
-        <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))]">
+        <div className="flex flex-col h-full bg-[hsl(var(--surface-1))]">
           <div className="px-3 pt-4 pb-3 border-b border-[hsl(var(--border-primary))]">
-            <button onClick={() => router.back()} className="flex items-center gap-1.5 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] dark:hover:text-[hsl(var(--text-primary))] transition-colors mb-3 text-2xs font-semibold uppercase tracking-wide">
+            <button onClick={() => router.back()} className="flex items-center gap-1.5 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] transition-colors mb-3 text-2xs font-semibold uppercase tracking-wide">
               <ArrowLeft size={14} /> Volver a Grupos
             </button>
             <p className="text-xs font-semibold text-[hsl(var(--text-primary))] truncate mb-4">{house.name}</p>
@@ -190,7 +190,7 @@ export function useGroupDetailPage(id: string | undefined) {
                   toast.error('Error al crear sesion. Puede que ya exista para hoy.');
                 }
               }}
-              className="mt-3 w-full py-2 bg-[hsl(var(--bg-muted))] hover:bg-[hsl(var(--bg-muted))] dark:hover:bg-white/10 text-[hsl(var(--text-primary))] rounded-lg text-2xs font-semibold uppercase tracking-wide transition-colors flex items-center justify-center gap-1.5"
+              className="mt-3 w-full py-2 bg-[hsl(var(--surface-2))] hover:bg-[hsl(var(--surface-3))] text-[hsl(var(--text-primary))] rounded-lg text-2xs font-semibold uppercase tracking-wide transition-colors flex items-center justify-center gap-1.5"
             >
               <Plus size={12} /> Registrar sesion de esta semana
             </button>}
@@ -208,13 +208,13 @@ export function useGroupDetailPage(id: string | undefined) {
                   key={s.id}
                   onClick={() => setActiveSession(s)}
                   className={`w-full text-left px-3 py-2.5 rounded-md border transition-all duration-200 ${isActive
-                    ? 'bg-info-soft dark:bg-[hsl(var(--info))]/20 border-[hsl(var(--info)/25%)] dark:border-[hsl(var(--info)/100%)] shadow-sm'
+                    ? 'bg-[hsl(var(--info)/0.15)] border-[hsl(var(--info)/0.3)] shadow-sm'
                     : 'bg-transparent border-transparent hover:bg-[hsl(var(--bg-muted))]'
                     }`}
                 >
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className={`text-xs font-bold ${isActive ? 'text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))]' : 'text-[hsl(var(--text-primary))]'}`}>
+                      <p className={`text-xs font-bold ${isActive ? 'text-[hsl(var(--primary))]' : 'text-[hsl(var(--text-primary))]'}`}>
                         {s.topic ? s.topic : new Date(s.session_date + 'T12:00:00').toLocaleDateString('es-CO', { weekday: 'long', day: 'numeric', month: 'short' })}
                       </p>
                       {s.topic && <p className="text-2xs font-medium text-[hsl(var(--text-secondary))] mt-0.5">{new Date(s.session_date + 'T12:00:00').toLocaleDateString('es-CO', { weekday: 'long', day: 'numeric', month: 'short' })}</p>}
@@ -222,7 +222,7 @@ export function useGroupDetailPage(id: string | undefined) {
                       {s.estado_habilitacion !== 'HABILITADO' && <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--warning))] mt-0.5">Bloqueada</p>}
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className={`px-2 py-0.5 rounded-lg font-semibold ${isActive ? 'bg-[hsl(var(--info-muted))] dark:bg-[hsl(var(--info))]/50 text-[hsl(var(--primary))] dark:text-info-text' : 'bg-[hsl(var(--bg-muted))] text-[hsl(var(--text-secondary))]'}`}>
+                      <span className={`px-2 py-0.5 rounded-lg font-semibold ${isActive ? 'bg-[hsl(var(--info)/0.2)] text-[hsl(var(--info))]' : 'bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))]'}`}>
                         {s.attendance_count}
                       </span>
                       <ChevronRight size={14} className={isActive ? 'text-[hsl(var(--primary))]' : 'text-[hsl(var(--text-secondary))]'} />

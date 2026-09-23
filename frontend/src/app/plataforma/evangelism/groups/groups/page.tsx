@@ -88,11 +88,11 @@ function GroupsContent() {
         viewOptions={['list', 'kanban', 'grid', 'table']}
         onSearch={setSearchQuery}
       >
-        <div className="flex h-full p-4 lg:p-4 bg-[hsl(var(--bg-muted))]/50 dark:bg-surface-card/50">
+        <div className="flex h-full p-4 lg:p-4 bg-[hsl(var(--surface-1))]">
           {/* Detail/Edit Panel */}
           {showPanel ? (
             <ErrorBoundary moduleName="Grupos - Detalle" compact>
-              <div className="flex-1 bg-[hsl(var(--bg-primary))] dark:bg-surface-card rounded-lg border border-[hsl(var(--border-primary))] shadow-sm flex flex-col overflow-hidden animate-in fade-in slide-in-from-right-4 duration-300">
+              <div className="flex-1 bg-[hsl(var(--surface-1))] rounded-lg border border-[hsl(var(--border-primary))] shadow-sm flex flex-col overflow-hidden animate-in fade-in slide-in-from-right-4 duration-300">
                 <div className="px-3 py-2 border-b border-[hsl(var(--border-primary))]/80 flex items-center justify-between shrink-0 bg-[hsl(var(--bg-secondary))]">
                   <h2 className="text-base font-bold text-[hsl(var(--text-primary))]">
                     {isCreating ? 'Nuevo Grupo' : MODE_CONFIG[mode].title}
@@ -101,7 +101,7 @@ function GroupsContent() {
                     {!isCreating && selectedHouse && (
                       <button
                         onClick={() => router.push(`/plataforma/evangelism/groups/sessions/${selectedHouse.id}`)}
-                        className="size-8 rounded-lg bg-success-soft flex items-center justify-center text-[hsl(var(--secondary))] dark:text-[hsl(var(--secondary))] dark:hover:bg-[hsl(var(--success)/0.15)] transition-colors"
+                        className="size-8 rounded-lg bg-[hsl(var(--success)/0.15)] flex items-center justify-center text-[hsl(var(--success))] hover:bg-[hsl(var(--success)/0.25)] transition-colors"
                         title="Reportar sesión"
                       >
                         <Calendar size={15} />
@@ -110,7 +110,7 @@ function GroupsContent() {
                     {!isCreating && selectedHouse && (
                       <button
                         onClick={() => requestDeleteHouse(selectedHouse)}
-                        className="size-8 rounded-lg bg-danger-soft flex items-center justify-center text-[hsl(var(--destructive))] dark:hover:bg-[hsl(var(--danger)/0.15)] transition-colors"
+                        className="size-8 rounded-lg bg-[hsl(var(--destructive)/0.1)] flex items-center justify-center text-[hsl(var(--destructive))] hover:bg-[hsl(var(--destructive)/0.2)] transition-colors"
                         title="Eliminar grupo"
                       >
                         <Trash2 size={15} />
@@ -123,7 +123,7 @@ function GroupsContent() {
                         setSelectedPersonaIds(new Set());
                         setFormData({ capacity: 15, status: 'Activo' });
                       }}
-                      className="size-8 rounded-lg bg-[hsl(var(--bg-muted))] flex items-center justify-center text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] dark:hover:text-white transition-colors"
+                      className="size-8 rounded-lg bg-[hsl(var(--surface-2))] flex items-center justify-center text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] transition-colors"
                     >
                       <X size={15} />
                     </button>
@@ -134,7 +134,7 @@ function GroupsContent() {
                   <>
                     <div className="flex-1 overflow-y-auto px-3 py-2 scrollbar-thin">
                       {!isCreating && (
-                        <div className="mb-5 rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-muted))] dark:bg-black/20 px-4 py-1.5 flex items-start justify-between gap-4">
+                        <div className="mb-5 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] px-4 py-1.5 flex items-start justify-between gap-4">
                           <div>
                             <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
                               {MODE_CONFIG[mode].title}
@@ -191,7 +191,7 @@ function GroupsContent() {
                         type="submit"
                         form="groups-form"
                         disabled={saving}
-                        className="px-3 py-2 bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))] text-white rounded-lg text-xs font-semibold uppercase tracking-wide transition-all shadow-lg shadow-primary active:scale-95 disabled:opacity-50 flex items-center gap-2"
+                        className="px-3 py-2 bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] rounded-lg text-xs font-semibold uppercase tracking-wide transition-all shadow-lg shadow-[hsl(var(--primary)/0.2)] active:scale-95 disabled:opacity-50 flex items-center gap-2"
                       >
                         {saving ? (
                           <Activity className="animate-spin" size={13} />
@@ -203,7 +203,7 @@ function GroupsContent() {
                     </div>
                   </>
                 ) : (
-                  <div className="flex-1 overflow-y-auto bg-[hsl(var(--bg-primary))] dark:bg-surface-card">
+                  <div className="flex-1 overflow-y-auto bg-[hsl(var(--surface-1))]">
                     {mode === 'personas' && summary ? (
                       <GroupQuickAssign
                         summary={summary}

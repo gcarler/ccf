@@ -17,7 +17,7 @@ function StatusBadge({ status }: { status: string }) {
     <span
       className={`px-1.5 py-0.5 rounded text-2xs font-semibold ${
         status === 'Activo'
-          ? 'text-success bg-success-soft dark:text-success dark:bg-[hsl(var(--success)/0.1)]'
+          ? 'text-[hsl(var(--success))] bg-[hsl(var(--success)/0.15)]'
           : 'text-[hsl(var(--text-secondary))] bg-[hsl(var(--bg-muted))]'
       }`}
     >
@@ -40,7 +40,7 @@ export function ListView({ houses, onSelectHouse, getPersonaName }: BaseViewProp
             <button
               key={h.id}
               onClick={() => onSelectHouse(h)}
-              className="w-full text-left flex items-center justify-between gap-3 px-4 py-3 rounded-lg bg-[hsl(var(--bg-primary))] border border-[hsl(var(--border-primary))] hover:border-[hsl(var(--primary)/0.3)] dark:hover:border-[hsl(var(--primary)/0.4)] transition-all group"
+              className="w-full text-left flex items-center justify-between gap-3 px-4 py-3 rounded-lg bg-[hsl(var(--bg-primary))] border border-[hsl(var(--border-primary))] hover:border-[hsl(var(--primary)/0.3)] transition-all group"
             >
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2 flex-wrap">
@@ -91,7 +91,7 @@ export function GridView({ houses, onSelectHouse, getPersonaName }: BaseViewProp
             <button
               key={h.id}
               onClick={() => onSelectHouse(h)}
-              className="text-left w-full bg-[hsl(var(--bg-primary))] rounded-lg border border-[hsl(var(--border-primary))] p-4 hover:border-[hsl(var(--primary)/0.3)] dark:hover:border-[hsl(var(--primary)/0.4)] transition-all hover:shadow-md space-y-3"
+              className="text-left w-full bg-[hsl(var(--bg-primary))] rounded-lg border border-[hsl(var(--border-primary))] p-4 hover:border-[hsl(var(--primary)/0.3)] transition-all hover:shadow-md space-y-3"
             >
               <div className="flex items-start justify-between gap-2">
                 <div className="min-w-0">
@@ -166,7 +166,7 @@ export function KanbanView({ houses, onSelectHouse, getPersonaName }: BaseViewPr
                   <button
                     key={h.id}
                     onClick={() => onSelectHouse(h)}
-                    className="text-left w-full bg-[hsl(var(--bg-primary))] rounded-lg border border-[hsl(var(--border-primary))] p-3 hover:border-[hsl(var(--primary)/0.3)] dark:hover:border-[hsl(var(--primary)/0.4)] transition-all space-y-2"
+                    className="text-left w-full bg-[hsl(var(--bg-primary))] rounded-lg border border-[hsl(var(--border-primary))] p-3 hover:border-[hsl(var(--primary)/0.3)] transition-all space-y-2"
                   >
                     <div className="flex items-start justify-between gap-1">
                       <p className="text-xs font-bold text-[hsl(var(--text-primary))] truncate">{h.name}</p>
@@ -235,7 +235,7 @@ export function TableView({ houses, onSelectHouse, getPersonaName, onDeleteHouse
                       (e.currentTarget as HTMLElement).click();
                     }
                   }}
-                  className="border-b border-[hsl(var(--border-primary))] hover:bg-info-soft/50 dark:hover:bg-[hsl(var(--info)/0.05)] transition-colors cursor-pointer"
+                  className="border-b border-[hsl(var(--border-primary))] hover:bg-[hsl(var(--info)/0.08)] transition-colors cursor-pointer"
                 >
                   <td className="px-4 py-2.5 font-medium text-[hsl(var(--text-primary))] whitespace-nowrap">{h.name}</td>
                   <td className="px-4 py-2.5 text-[hsl(var(--text-secondary))] font-mono">{h.code || '—'}</td>

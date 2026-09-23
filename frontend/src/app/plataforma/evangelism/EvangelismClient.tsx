@@ -150,7 +150,7 @@ export default function EvangelismClient() {
  canManageStrategies ? (
  <button
  onClick={handleAddItem}
- className="h-7 px-3 text-xs font-bold flex items-center gap-1.5 bg-[hsl(var(--primary))] hover:opacity-90 text-white rounded-[7px] transition-all shadow-sm"
+ className="h-7 px-3 text-xs font-bold flex items-center gap-1.5 bg-[hsl(var(--primary))] hover:opacity-90 text-[hsl(var(--primary-foreground))] rounded-[7px] transition-all shadow-sm"
  >
  <Plus size={12} />
  Crear estrategia
@@ -175,10 +175,10 @@ export default function EvangelismClient() {
  <div className="pb-16 flex-1">
  {/* ── TABLE VIEW ─────────────────────────────── */}
  {viewType === 'table' && (
- <div className="overflow-x-auto border border-[hsl(var(--border-primary))] dark:border-white/[0.06] rounded-lg bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))]">
+ <div className="overflow-x-auto border border-[hsl(var(--border-primary))] rounded-lg bg-[hsl(var(--surface-1))]">
  <table className="w-full text-left border-collapse">
  <thead>
- <tr className="border-b border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-muted))]/50 dark:bg-black/10">
+ <tr className="border-b border-[hsl(var(--border-primary))] bg-[hsl(var(--surface-2))]">
  <th className="px-3 py-1.5 text-2xs font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] w-16">ID</th>
  <th className="px-3 py-1.5 text-2xs font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))]">Estrategia</th>
  <th className="px-3 py-1.5 text-2xs font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] w-32">Estado</th>
@@ -198,7 +198,7 @@ export default function EvangelismClient() {
  onClick={() => handleSelectStrategy(strategy)}
  className="hover:bg-[hsl(var(--bg-muted))] cursor-pointer group transition-colors"
  >
- <td className="px-3 py-1.5 text-sm font-semibold text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">
+ <td className="px-3 py-1.5 text-sm font-semibold text-[hsl(var(--text-secondary))]">
  {strategy.codigo ? strategy.codigo : `#${strategy.id}`}
  </td>
  <td className="px-3 py-1.5">
@@ -232,7 +232,7 @@ export default function EvangelismClient() {
  {formatDate(strategy.end_date)}
  </td>
  <td className="px-3 py-1.5 text-right">
- <ChevronRight size={16} className="text-[hsl(var(--text-secondary))] group-hover:text-[hsl(var(--text-secondary))] dark:group-hover:text-white transition-all transform group-hover:translate-x-0.5" />
+ <ChevronRight size={16} className="text-[hsl(var(--text-secondary))] group-hover:text-[hsl(var(--primary))] transition-all transform group-hover:translate-x-0.5" />
  </td>
  </motion.tr>
  ))}
@@ -275,7 +275,7 @@ export default function EvangelismClient() {
  animate={{ opacity: 1, scale: 1 }}
  transition={{ duration: 0.2 }}
  onClick={() => handleSelectStrategy(strategy)}
- className="group relative bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))] rounded-lg border border-[hsl(var(--border-primary))]/70 p-3 shadow-sm hover:shadow-xl hover:shadow-black/10 dark:hover:shadow-black/30 transition-all duration-300 cursor-pointer overflow-hidden active:scale-[0.99] border-t-4"
+ className="group relative bg-[hsl(var(--surface-1))] rounded-lg border border-[hsl(var(--border-primary))]/70 p-3 shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer overflow-hidden active:scale-[0.99] border-t-4"
  style={{ borderTopColor: statusColors[strategy.status] }}
  >
  <div className="flex items-start justify-between gap-4">
@@ -330,7 +330,7 @@ export default function EvangelismClient() {
  animate={{ opacity: 1, y: 0 }}
  transition={{ delay: idx * 0.03 }}
  onClick={() => handleSelectStrategy(strategy)}
- className="group bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))] rounded-lg border border-[hsl(var(--border-primary))]/70 p-3 shadow-sm hover:shadow-xl hover:shadow-black/10 dark:hover:shadow-black/30 transition-all duration-300 cursor-pointer flex items-center justify-between gap-3"
+ className="group bg-[hsl(var(--surface-1))] rounded-lg border border-[hsl(var(--border-primary))]/70 p-3 shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer flex items-center justify-between gap-3"
  >
  <div className="flex items-start gap-4 flex-1 min-w-0">
  <div
@@ -373,7 +373,7 @@ export default function EvangelismClient() {
  >
  {statusLabels[strategy.status]}
  </span>
- <ChevronRight size={18} className="text-[hsl(var(--text-secondary))] group-hover:text-[hsl(var(--text-secondary))] dark:group-hover:text-white transition-all transform group-hover:translate-x-0.5" />
+ <ChevronRight size={18} className="text-[hsl(var(--text-secondary))] group-hover:text-[hsl(var(--primary))] transition-all transform group-hover:translate-x-0.5" />
  </div>
  </motion.div>
  ))}

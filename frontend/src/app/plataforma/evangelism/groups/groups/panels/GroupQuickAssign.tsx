@@ -22,7 +22,7 @@ export function GroupQuickAssign({
 }: GroupQuickAssignProps) {
   return (
     <div className="p-4 space-y-3">
-      <div className="rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-muted))] dark:bg-black/20 px-4 py-1.5">
+      <div className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] px-4 py-1.5">
         <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
           Asignación rápida
         </p>
@@ -61,7 +61,7 @@ export function GroupQuickAssign({
                       [persona.id]: e.target.value,
                     }))
                   }
-                  className="w-full md:w-72 bg-[hsl(var(--bg-muted))] dark:bg-black/20 border border-[hsl(var(--border-primary))] rounded-md px-3 py-2 text-xs font-medium outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)]"
+                  className="w-full md:w-72 bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] rounded-md px-3 py-2 text-xs font-medium text-[hsl(var(--foreground))] outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)]"
                 >
                   <option value="">Selecciona una casa</option>
                   {houses.map(h => (
@@ -73,7 +73,7 @@ export function GroupQuickAssign({
                 <button
                   onClick={() => onAssign(persona.id)}
                   disabled={saving}
-                  className="px-4 py-2.5 rounded-md bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))] text-white text-xs font-semibold uppercase tracking-wide disabled:opacity-50"
+                  className="px-4 py-2.5 rounded-md bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] text-xs font-semibold uppercase tracking-wide disabled:opacity-50"
                 >
                   Asignar
                 </button>

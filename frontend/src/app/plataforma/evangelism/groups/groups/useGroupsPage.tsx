@@ -127,7 +127,7 @@ export const MODE_CONFIG: Record<
 };
 
 export const FORM_INPUT_CLASS =
-  'w-full bg-[hsl(var(--bg-muted))] dark:bg-black/20 border border-[hsl(var(--border-primary))] rounded-md px-4 py-1.5 text-sm font-medium focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))] outline-none transition-all placeholder:text-[hsl(var(--text-secondary))]';
+  'w-full bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] rounded-md px-4 py-1.5 text-sm font-medium focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))] outline-none transition-all placeholder:text-[hsl(var(--muted-foreground))]';
 
 export function useGroupsPage() {
   const { token } = useAuth();
