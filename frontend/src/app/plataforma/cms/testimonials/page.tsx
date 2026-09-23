@@ -25,6 +25,7 @@ import { toast } from "sonner";
 import TestimonialForm from "@/components/TestimonialForm";
 import clsx from "clsx";
 import WorkspaceDrawer from "@/components/WorkspaceDrawer";
+import SidePanel from "@/components/ui/SidePanel";
 import ViewSwitcher, { ViewType } from "@/components/ViewSwitcher";
 import UniversalCalendarView from "@/components/ui/UniversalCalendarView";
 import UniversalGanttView from "@/components/ui/UniversalGanttView";
@@ -56,7 +57,7 @@ const EMOTION_CONFIG: Record<string, { color: string; bg: string; border: string
   "Restauración":  { color: "text-[hsl(var(--primary))]",    bg: "bg-info-soft dark:bg-[hsl(var(--info))]/20",    border: "border-[hsl(var(--info)/25%)] dark:border-[hsl(var(--info)/30%)]",    emoji: "✨" },
   "Fe":            { color: "text-[hsl(var(--primary))]",  bg: "bg-info-soft dark:bg-[hsl(var(--info))]/20", border: "border-[hsl(var(--info)/25%)] dark:border-[hsl(var(--info)/30%)]", emoji: "🙏" },
 };
-const defaultEmotion = { color: "text-[hsl(var(--text-secondary))]", bg: "bg-[hsl(var(--surface-1))] dark:bg-white/5", border: "border-[hsl(var(--border))] dark:border-white/10", emoji: "💬" };
+const defaultEmotion = { color: "text-[hsl(var(--text-secondary))]", bg: "bg-[hsl(var(--surface-1))]", border: "border-[hsl(var(--border))]", emoji: "💬" };
 
 const EMOTION_FILTERS = ["Todos", "Sanidad", "Provisión", "Restauración", "Fe"];
 const TESTIMONIAL_VIEWS: ViewType[] = ["grid", "list", "table", "board", "kanban", "calendar", "gantt", "wiki"];
@@ -333,14 +334,14 @@ export default function CmsTestimonialsPage() {
       {filtered.map(t => {
         const cfg = EMOTION_CONFIG[t.emotion] ?? defaultEmotion;
         return (
-          <button key={t.id} onClick={() => setSelected(t)} className={clsx("w-full text-left bg-[hsl(var(--bg-primary))] dark:bg-white/[0.02] border border-[hsl(var(--border))] dark:border-white/10 rounded-lg p-4 hover:border-[hsl(var(--danger)/30%)] transition-all flex items-center gap-4", t.status === "archived" && "opacity-70 bg-warning-soft/40 dark:bg-[hsl(var(--warning))]/5")}>
-            <div className={clsx("size-10 rounded-lg flex items-center justify-center text-white text-xs font-semibold shrink-0", getAvatarColor(identityKey(t)))}>{getInitials(identityKey(t))}</div>
+          <button key={t.id} onClick={() => setSelected(t)} className={clsx("w-full text-left bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] rounded-lg p-4 hover:border-[hsl(var(--primary)/30%)] transition-all flex items-center gap-4", t.status === "archived" && "opacity-70 bg-warning-soft/40")}>
+            <div className={clsx("size-10 rounded-lg flex items-center justify-center text-[hsl(var(--primary-foreground))] text-xs font-semibold shrink-0", getAvatarColor(identityKey(t)))}>{getInitials(identityKey(t))}</div>
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2">
                 <span className={clsx("text-2xs font-semibold uppercase tracking-wide", cfg.color)}>{cfg.emoji} {t.emotion || "Testimonio"}</span>
                 <span className={clsx("px-2 py-0.5 rounded-full text-2xs font-semibold uppercase", t.status === "archived" ? "bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))]" : t.published ? "bg-success-soft text-success-text" : "bg-warning-soft text-warning-text")}>{t.status === "archived" ? "Archivado" : t.published ? "Publicado" : "Pendiente"}</span>
               </div>
-              <p className="text-sm text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] line-clamp-1 mt-1">{t.content}</p>
+              <p className="text-sm text-[hsl(var(--text-secondary))] line-clamp-1 mt-1">{t.content}</p>
             </div>
             <span className="text-2xs font-bold text-[hsl(var(--text-secondary))]">{t.created_at ? new Date(t.created_at).toLocaleDateString("es-CO") : 'N/A'}</span>
           </button>
@@ -350,9 +351,9 @@ export default function CmsTestimonialsPage() {
   );
 
   const renderTestimonialTable = () => (
-    <div className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 overflow-x-auto">
+    <div className="rounded-lg border border-[hsl(var(--border))] overflow-x-auto">
       <table className="w-full min-w-[480px] text-left">
-        <thead className="bg-[hsl(var(--surface-1))] dark:bg-white/5">
+        <thead className="bg-[hsl(var(--surface-1))]">
           <tr>
             <th className="px-4 py-3 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Testimonio</th>
             <th className="px-4 py-3 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hidden md:table-cell">Emoción</th>
@@ -361,10 +362,10 @@ export default function CmsTestimonialsPage() {
             <th className="px-4 py-3 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Acción</th>
           </tr>
         </thead>
-        <tbody className="divide-y divide-[hsl(var(--border))] dark:divide-white/5">
+        <tbody className="divide-y divide-[hsl(var(--border))]">
           {filtered.map(t => (
-            <tr key={t.id} onClick={() => setSelected(t)} className={clsx("hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/[0.02] cursor-pointer", t.status === "archived" && "opacity-70 bg-warning-soft/40 dark:bg-[hsl(var(--warning))]/5")}>
-              <td className="px-4 py-3 text-sm text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] line-clamp-1 max-w-[420px]">{t.content}</td>
+            <tr key={t.id} onClick={() => setSelected(t)} className={clsx("hover:bg-[hsl(var(--surface-1))] cursor-pointer", t.status === "archived" && "opacity-70 bg-warning-soft/40")}>
+              <td className="px-4 py-3 text-sm text-[hsl(var(--text-primary))] line-clamp-1 max-w-[420px]">{t.content}</td>
               <td className="px-4 py-3 hidden md:table-cell text-xs font-bold text-[hsl(var(--text-secondary))]">{t.emotion || "—"}</td>
               <td className="px-4 py-3 hidden lg:table-cell"><span className={clsx("px-2 py-0.5 rounded-full text-2xs font-semibold uppercase", t.status === "archived" ? "bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))]" : t.published ? "bg-success-soft text-success-text" : "bg-warning-soft text-warning-text")}>{t.status === "archived" ? "Archivado" : t.published ? "Publicado" : "Pendiente"}</span></td>
               <td className="px-4 py-3 hidden xl:table-cell text-xs text-[hsl(var(--text-secondary))]">{t.created_at ? new Date(t.created_at).toLocaleDateString("es-CO") : 'N/A'}</td>
@@ -381,16 +382,16 @@ export default function CmsTestimonialsPage() {
   const renderTestimonialBoard = () => (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 min-h-full">
       {testimonialGroups.map(group => (
-        <section key={group.id} className="rounded-lg bg-[hsl(var(--surface-1))] dark:bg-white/[0.03] border border-[hsl(var(--border))] dark:border-white/10 p-4">
+        <section key={group.id} className="rounded-lg bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] p-4">
           <div className="flex items-center justify-between mb-4">
             <span className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{group.label}</span>
             <span className="text-2xs font-semibold text-[hsl(var(--text-secondary))]">{group.items.length}</span>
           </div>
           <div className="space-y-3">
             {group.items.map(t => (
-              <button key={t.id} onClick={() => setSelected(t)} className={clsx("w-full text-left bg-[hsl(var(--bg-primary))] dark:bg-white/[0.04] border border-[hsl(var(--border))] dark:border-white/5 rounded-lg p-4 hover:border-[hsl(var(--danger)/30%)] transition-all", t.status === "archived" && "opacity-70 bg-warning-soft/40 dark:bg-[hsl(var(--warning))]/5")}>
+              <button key={t.id} onClick={() => setSelected(t)} className={clsx("w-full text-left bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] rounded-lg p-4 hover:border-[hsl(var(--primary)/30%)] transition-all", t.status === "archived" && "opacity-70 bg-warning-soft/40")}>
                 <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-2">{authorLabel(t)} · {t.emotion || "Testimonio"}</p>
-                <p className="text-sm text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] line-clamp-3">{t.content}</p>
+                <p className="text-sm text-[hsl(var(--text-primary))] line-clamp-3">{t.content}</p>
               </button>
             ))}
           </div>
@@ -403,7 +404,7 @@ export default function CmsTestimonialsPage() {
     return (
       <div className="h-full overflow-y-auto">
         <div className="mx-auto max-w-3xl px-4 py-6">
-          <div className="rounded-2xl border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-6 shadow-sm dark:border-white/10 dark:bg-[hsl(var(--admin-bg-tertiary))]">
+          <div className="rounded-2xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-6 shadow-sm">
             <p className="text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">CMS</p>
             <h1 className="mt-2 text-2xl font-semibold text-[hsl(var(--text-primary))]">Testimonios</h1>
             <p className="mt-3 text-sm text-[hsl(var(--text-secondary))]">
@@ -423,12 +424,12 @@ export default function CmsTestimonialsPage() {
   }
 
   return (
-    <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-deep))] overflow-hidden">
+    <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] overflow-hidden">
       {/* ── Header toolbar ── */}
-      <header className="shrink-0 border-b border-[hsl(var(--border))] dark:border-white/5 px-3 py-1.5 flex items-center gap-4">
+      <header className="shrink-0 border-b border-[hsl(var(--border))] px-3 py-1.5 flex items-center gap-4">
         <div className="flex items-center gap-2 flex-1 min-w-0">
           <MessageCircle size={18} className="text-[hsl(var(--danger))] shrink-0" />
-          <h1 className="text-base font-semibold uppercase tracking-wide text-[hsl(var(--text-primary))] dark:text-white">
+          <h1 className="text-base font-semibold uppercase tracking-wide text-[hsl(var(--text-primary))]">
             Testimonios
           </h1>
         </div>
@@ -438,20 +439,20 @@ export default function CmsTestimonialsPage() {
             value={search}
             onChange={e => setSearch(e.target.value)}
             placeholder="Buscar..."
-            className="pl-8 pr-4 py-2 rounded-md border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-white/5 text-sm outline-none w-48 focus:ring-2 focus:ring-[hsl(var(--danger)/20%)]"
+            className="pl-8 pr-4 py-2 rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-sm outline-none w-48 focus:ring-2 focus:ring-[hsl(var(--danger)/20%)]"
           />
         </div>
         <ViewSwitcher viewType={viewType} setViewType={setViewType} availableViews={TESTIMONIAL_VIEWS} />
         <button
           onClick={() => setShowForm(true)}
-          className="flex items-center gap-2 px-3 py-2 bg-[hsl(var(--danger))] text-white rounded-md text-xs font-semibold uppercase tracking-wide shadow-lg shadow-[hsl(var(--danger)/20%)] hover:bg-[hsl(var(--danger))] active:scale-95 transition-all"
+          className="flex items-center gap-2 px-3 py-2 bg-[hsl(var(--danger))] text-[hsl(var(--destructive-foreground))] rounded-md text-xs font-semibold uppercase tracking-wide shadow-lg shadow-[hsl(var(--danger)/20%)] hover:opacity-90 active:scale-95 transition-all"
         >
           <Plus size={14} /> Nuevo Testimonio
         </button>
       </header>
 
       {/* ── Stats bar ── */}
-      <div className="shrink-0 border-b border-[hsl(var(--border))] dark:border-white/5 px-3 py-3 flex items-center gap-3">
+      <div className="shrink-0 border-b border-[hsl(var(--border))] px-3 py-3 flex items-center gap-3">
         <div className="flex items-center gap-3">
           {[
             { label: "Total", value: stats.total, icon: Users, color: "text-[hsl(var(--text-secondary))]" },
@@ -480,7 +481,7 @@ export default function CmsTestimonialsPage() {
       </div>
 
       {/* ── Filter pills ── */}
-      <div className="shrink-0 px-3 py-3 flex items-center gap-2 border-b border-[hsl(var(--border))] dark:border-white/5">
+      <div className="shrink-0 px-3 py-3 flex items-center gap-2 border-b border-[hsl(var(--border))]">
         {EMOTION_FILTERS.map(f => {
           const cfg = EMOTION_CONFIG[f] ?? defaultEmotion;
           const count = f === "Todos" ? stats.total : stats.byEmotion.find(e => e.label === f)?.count ?? 0;
@@ -492,7 +493,7 @@ export default function CmsTestimonialsPage() {
                 "flex items-center gap-1.5 px-3 py-1.5 rounded-md text-2xs font-semibold uppercase tracking-wide border transition-all",
                 filter === f
                   ? `${cfg.bg} ${cfg.border} ${cfg.color}`
-                  : "bg-[hsl(var(--surface-2))] dark:bg-white/5 border-transparent text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))]"
+                  : "bg-[hsl(var(--surface-2))] border-transparent text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))]"
               )}
             >
               {f !== "Todos" && <span>{cfg.emoji}</span>}
@@ -510,16 +511,16 @@ export default function CmsTestimonialsPage() {
           {loading ? (
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
               {Array.from({ length: 6 }).map((_, i) => (
-                <div key={i} className="h-48 rounded-lg bg-[hsl(var(--surface-2))] dark:bg-white/5 animate-pulse" />
+                <div key={i} className="h-48 rounded-lg bg-[hsl(var(--surface-2))] animate-pulse" />
               ))}
             </div>
           ) : filtered.length === 0 ? (
             <div className="h-full flex flex-col items-center justify-center text-center space-y-4 py-1.5">
-              <div className="size-8 rounded-lg bg-[hsl(var(--surface-1))] dark:bg-white/5 flex items-center justify-center">
+              <div className="size-8 rounded-lg bg-[hsl(var(--surface-1))] flex items-center justify-center">
                 <MessageCircle size={36} strokeWidth={1} className="text-[hsl(var(--text-secondary))]" />
               </div>
               <div className="space-y-1">
-                <p className="font-semibold text-[hsl(var(--text-primary))] dark:text-white uppercase tracking-tight">Sin testimonios</p>
+                <p className="font-semibold text-[hsl(var(--text-primary))] uppercase tracking-tight">Sin testimonios</p>
                 <p className="text-sm text-[hsl(var(--text-secondary))]">Ajusta los filtros o agrega uno nuevo</p>
               </div>
             </div>
@@ -565,7 +566,7 @@ export default function CmsTestimonialsPage() {
                       "group relative rounded-lg border p-3 flex flex-col gap-4 cursor-pointer transition-all",
                       isSelected
                         ? `${cfg.bg} ${cfg.border} ring-2 ring-current`
-                        : "bg-[hsl(var(--bg-primary))] dark:bg-white/[0.02] border-[hsl(var(--border))] dark:border-white/10 hover:border-[hsl(var(--border))] dark:hover:border-white/20 hover:shadow-lg"
+                        : "bg-[hsl(var(--surface-1))] border-[hsl(var(--border))] hover:border-[hsl(var(--primary))] hover:shadow-lg"
                     )}
                   >
                     {/* Status badge */}
@@ -582,7 +583,7 @@ export default function CmsTestimonialsPage() {
 
                     {/* Author */}
                     <div className="flex items-center gap-3 pr-20">
-                      <div className={clsx("size-10 rounded-lg flex items-center justify-center text-white text-xs font-semibold shrink-0", getAvatarColor(identityKey(t)))}>
+                      <div className={clsx("size-10 rounded-lg flex items-center justify-center text-[hsl(var(--primary-foreground))] text-xs font-semibold shrink-0", getAvatarColor(identityKey(t)))}>
                         {getInitials(identityKey(t))}
                       </div>
                       <div>
@@ -606,7 +607,7 @@ export default function CmsTestimonialsPage() {
                     </p>
 
                     {/* Footer */}
-                    <div className="flex items-center justify-between pt-1 border-t border-[hsl(var(--border))] dark:border-white/5">
+                    <div className="flex items-center justify-between pt-1 border-t border-[hsl(var(--border))]">
                       <p className="text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase">
                         {t.created_at ? new Date(t.created_at).toLocaleDateString("es-CO", { day: "numeric", month: "short", year: "numeric" }) : 'N/A'}
                       </p>
@@ -637,7 +638,7 @@ export default function CmsTestimonialsPage() {
                         </button>
                         <button
                           onClick={e => { e.stopPropagation(); setSelected(isSelected ? null : t); }}
-                          className="p-1 rounded-lg text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/10 transition-all"
+                          className="p-1 rounded-lg text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] transition-all"
                         >
                           <ChevronRight size={14} />
                         </button>
@@ -659,15 +660,15 @@ export default function CmsTestimonialsPage() {
               animate={{ x: 0, opacity: 1 }}
               exit={{ x: 380, opacity: 0 }}
               transition={{ type: "spring", damping: 28, stiffness: 280 }}
-              className="w-96 shrink-0 border-l border-[hsl(var(--border))] dark:border-white/5 bg-[hsl(var(--surface-1))] dark:bg-[hsl(var(--admin-bg-tertiary))] flex flex-col overflow-y-auto"
+              className="w-96 shrink-0 border-l border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] flex flex-col overflow-y-auto"
             >
               {/* Panel header */}
-              <div className="p-3 flex items-center justify-between border-b border-[hsl(var(--border))] dark:border-white/5 shrink-0">
+              <div className="p-3 flex items-center justify-between border-b border-[hsl(var(--border))] shrink-0">
                 <div className="flex items-center gap-2">
                   <MessageCircle size={14} className="text-[hsl(var(--danger))]" />
                   <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Testimonio #{selected.id}</p>
                 </div>
-                <button onClick={() => setSelected(null)} className="p-1.5 rounded-lg hover:bg-[hsl(var(--surface-3))] dark:hover:bg-white/10 text-[hsl(var(--text-secondary))] transition-all">
+                <button onClick={() => setSelected(null)} className="p-1.5 rounded-lg hover:bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))] transition-all">
                   <X size={14} />
                 </button>
               </div>
@@ -676,12 +677,12 @@ export default function CmsTestimonialsPage() {
               {(() => {
                 const cfg = EMOTION_CONFIG[selected.emotion] ?? defaultEmotion;
                 return (
-                  <div className={clsx("p-3 flex items-center gap-4 border-b border-[hsl(var(--border))] dark:border-white/5", cfg.bg)}>
-                    <div className={clsx("size-7 rounded-lg flex items-center justify-center text-white text-base font-semibold shrink-0", getAvatarColor(identityKey(selected)))}>
+                  <div className={clsx("p-3 flex items-center gap-4 border-b border-[hsl(var(--border))]", cfg.bg)}>
+                    <div className={clsx("size-7 rounded-lg flex items-center justify-center text-[hsl(var(--primary-foreground))] text-base font-semibold shrink-0", getAvatarColor(identityKey(selected)))}>
                       {getInitials(identityKey(selected))}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-white">{authorLabel(selected)}</p>
+                      <p className="text-sm font-semibold text-[hsl(var(--text-primary))]">{authorLabel(selected)}</p>
                       <div className={clsx("flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide mt-0.5", cfg.color)}>
                         <span>{cfg.emoji}</span>
                         <span>{selected.emotion || "Sin categoría"}</span>
@@ -724,7 +725,7 @@ export default function CmsTestimonialsPage() {
                         "flex items-center justify-center gap-1.5 rounded-md border px-3 py-2 text-2xs font-semibold uppercase tracking-wide transition-all",
                         (selected.media_type || "text") === option.id
                           ? "border-[hsl(var(--danger)/30%)] bg-danger-soft text-danger-text"
-                          : "border-[hsl(var(--border))] dark:border-white/10 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))]"
+                          : "border-[hsl(var(--border))] text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))]"
                       )}
                     >
                       <option.icon size={12} /> {option.label}
@@ -734,7 +735,7 @@ export default function CmsTestimonialsPage() {
 
                 {(selected.media_type || "text") !== "text" && (
                   <div className="space-y-2">
-                    <div className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-white/5 p-3">
+                    <div className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] p-3">
                       <div className="mb-2 flex items-center justify-between gap-3">
                         <p className="text-2xs font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Seleccionar desde media</p>
                         <Link href="/plataforma/cms/media" className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--danger))] hover:underline">
@@ -745,12 +746,12 @@ export default function CmsTestimonialsPage() {
                         value={mediaSearch}
                         onChange={event => setMediaSearch(event.target.value)}
                         placeholder="Buscar imagen, video o audio..."
-                        className="mb-3 w-full text-xs bg-[hsl(var(--surface-1))] dark:bg-black/20 border border-[hsl(var(--border))] dark:border-white/10 rounded-md px-3 py-2 outline-none focus:ring-2 focus:ring-[hsl(var(--danger)/20%)]"
+                        className="mb-3 w-full text-xs bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] rounded-md px-3 py-2 outline-none focus:ring-2 focus:ring-[hsl(var(--danger)/20%)]"
                       />
                       {mediaLoading ? (
-                        <p className="rounded-md bg-[hsl(var(--surface-1))] dark:bg-white/5 px-3 py-3 text-xs font-bold text-[hsl(var(--text-secondary))]">Cargando biblioteca...</p>
+                        <p className="rounded-md bg-[hsl(var(--surface-1))] px-3 py-3 text-xs font-bold text-[hsl(var(--text-secondary))]">Cargando biblioteca...</p>
                       ) : compatibleMedia.length === 0 ? (
-                        <p className="rounded-md bg-[hsl(var(--surface-1))] dark:bg-white/5 px-3 py-3 text-xs font-medium text-[hsl(var(--text-secondary))]">
+                        <p className="rounded-md bg-[hsl(var(--surface-1))] px-3 py-3 text-xs font-medium text-[hsl(var(--text-secondary))]">
                           No hay archivos compatibles para este tipo. Sube o restaura media desde la biblioteca.
                         </p>
                       ) : (
@@ -767,7 +768,7 @@ export default function CmsTestimonialsPage() {
                                   "flex items-center gap-2 rounded-md border px-3 py-2 text-left transition-all",
                                   active
                                     ? "border-[hsl(var(--danger)/30%)] bg-danger-soft text-danger-text"
-                                    : "border-[hsl(var(--border))] dark:border-white/10 text-[hsl(var(--text-secondary))] hover:border-[hsl(var(--danger)/30%)]"
+                                    : "border-[hsl(var(--border))] text-[hsl(var(--text-secondary))] hover:border-[hsl(var(--danger)/30%)]"
                                 )}
                               >
                                 {mediaKind === "image" ? <ImageIcon size={13} /> : mediaKind === "video" ? <PlayCircle size={13} /> : <Headphones size={13} />}
@@ -793,14 +794,14 @@ export default function CmsTestimonialsPage() {
                         });
                       }}
                       placeholder="Pega URL desde /cms/media"
-                      className="w-full text-xs bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-md px-3 py-2 outline-none focus:ring-2 focus:ring-[hsl(var(--danger)/20%)]"
+                      className="w-full text-xs bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] rounded-md px-3 py-2 outline-none focus:ring-2 focus:ring-[hsl(var(--danger)/20%)]"
                     />
                     {getTestimonialMediaUrl(selected) && (
-                      <div className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-white/5 overflow-hidden">
+                      <div className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] overflow-hidden">
                         {selected.media_type === "image" ? (
                           <OptimizedImage src={getTestimonialMediaUrl(selected)} alt="" fill sizes="400px" className="w-full max-h-48 object-cover" />
                         ) : selected.media_type === "video" ? (
-                          <video controls className="w-full max-h-48 bg-black">
+                          <video controls className="w-full max-h-48 bg-[hsl(var(--surface-3))]">
                             <source src={getTestimonialMediaUrl(selected)} />
                           </video>
                         ) : (
@@ -813,7 +814,7 @@ export default function CmsTestimonialsPage() {
                   </div>
                 )}
 
-                <label className="flex items-center justify-between rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-white/5 p-3">
+                <label className="flex items-center justify-between rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-3">
                   <span className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Mostrar en inicio</span>
                   <input
                     type="checkbox"
@@ -828,7 +829,7 @@ export default function CmsTestimonialsPage() {
                   <input
                     value={selected.emotion || ""}
                     onChange={event => setSelected(prev => prev ? { ...prev, emotion: event.target.value } : prev)}
-                    className="w-full text-xs bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-md px-3 py-2 outline-none focus:ring-2 focus:ring-[hsl(var(--danger)/20%)]"
+                    className="w-full text-xs bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] rounded-md px-3 py-2 outline-none focus:ring-2 focus:ring-[hsl(var(--danger)/20%)]"
                   />
                 </div>
 
@@ -845,11 +846,11 @@ export default function CmsTestimonialsPage() {
               </div>
 
               {/* Actions */}
-              <div className="p-3 border-t border-[hsl(var(--border))] dark:border-white/5 space-y-3 shrink-0">
+              <div className="p-3 border-t border-[hsl(var(--border))] space-y-3 shrink-0">
                 <button
                   onClick={saveSelected}
                   disabled={processing === selected.id}
-                  className="flex items-center justify-center gap-2 w-full py-1.5 rounded-md text-xs font-semibold uppercase tracking-wide bg-[hsl(var(--bg-muted))] text-white dark:bg-[hsl(var(--bg-primary))] dark:text-[hsl(var(--text-primary))] transition-all active:scale-95 disabled:opacity-60"
+                  className="flex items-center justify-center gap-2 w-full py-1.5 rounded-md text-xs font-semibold uppercase tracking-wide bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] transition-all active:scale-95 disabled:opacity-60"
                 >
                   <Save size={16} /> Guardar cambios
                 </button>
@@ -859,8 +860,8 @@ export default function CmsTestimonialsPage() {
                   className={clsx(
                     "flex items-center justify-center gap-2 w-full py-1.5 rounded-md text-xs font-semibold uppercase tracking-wide shadow-lg transition-all active:scale-95 disabled:opacity-60",
                     selected.published
-                      ? "bg-[hsl(var(--danger))] text-white shadow-[hsl(var(--danger)/20%)] hover:bg-[hsl(var(--danger))]"
-                      : "bg-[hsl(var(--success))] text-white shadow-[hsl(var(--success)/20%)] hover:bg-[hsl(var(--success))]"
+                      ? "bg-[hsl(var(--destructive))] text-[hsl(var(--destructive-foreground))] hover:opacity-90"
+                      : "bg-[hsl(var(--success))] text-[hsl(var(--primary-foreground))] hover:opacity-90"
                   )}
                 >
                   {selected.published
@@ -874,8 +875,8 @@ export default function CmsTestimonialsPage() {
                   className={clsx(
                     "flex items-center justify-center gap-2 w-full py-1.5 rounded-md text-xs font-semibold uppercase tracking-wide shadow-lg transition-all active:scale-95 disabled:opacity-60",
                     selected.status === "archived"
-                      ? "bg-[hsl(var(--success))] text-white shadow-[hsl(var(--success)/20%)] hover:bg-[hsl(var(--success))]"
-                      : "bg-[hsl(var(--warning))] text-white shadow-[hsl(var(--warning)/20%)] hover:bg-[hsl(var(--warning))]"
+                      ? "bg-[hsl(var(--success))] text-[hsl(var(--primary-foreground))] hover:opacity-90"
+                      : "bg-[hsl(var(--warning))] text-[hsl(var(--warning-foreground))] hover:opacity-90"
                   )}
                 >
                   {selected.status === "archived"
@@ -904,38 +905,33 @@ export default function CmsTestimonialsPage() {
         />
       </WorkspaceDrawer>
 
-      {/* Archive Confirmation Modal */}
-      <AnimatePresence>
-        {pendingArchive && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              className="w-full max-w-sm rounded-xl bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-secondary))] p-5 shadow-2xl border border-[hsl(var(--border))] dark:border-white/10"
+      {/* SidePanel: Archive Confirmation Drawer */}
+      <SidePanel
+        isOpen={Boolean(pendingArchive)}
+        onClose={() => setPendingArchive(null)}
+        title="Archivar testimonio"
+        width="w-[420px]"
+      >
+        <div className="p-4 space-y-4">
+          <p className="text-sm text-[hsl(var(--text-secondary))]">
+            El testimonio se marcará como archivado, pero podrás restaurarlo luego.
+          </p>
+          <div className="flex gap-3 justify-end pt-4 border-t border-[hsl(var(--border))]">
+            <button
+              onClick={() => setPendingArchive(null)}
+              className="px-4 py-2 rounded-lg text-sm font-semibold text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] transition-colors"
             >
-              <h3 className="text-lg font-bold text-[hsl(var(--text-primary))] dark:text-white mb-2">¿Archivar testimonio?</h3>
-              <p className="text-sm text-[hsl(var(--text-secondary))] mb-6">
-                El testimonio se marcará como archivado, pero podrás restaurarlo luego.
-              </p>
-              <div className="flex gap-3 justify-end">
-                <button
-                  onClick={() => setPendingArchive(null)}
-                  className="px-4 py-2 rounded-lg text-sm font-semibold text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5 transition-colors"
-                >
-                  Cancelar
-                </button>
-                <button
-                  onClick={confirmArchive}
-                  className="px-4 py-2 rounded-lg text-sm font-semibold bg-warning-soft text-warning-text hover:bg-[hsl(var(--warning-muted))] transition-colors"
-                >
-                  Archivar
-                </button>
-              </div>
-            </motion.div>
+              Cancelar
+            </button>
+            <button
+              onClick={confirmArchive}
+              className="px-4 py-2 rounded-lg text-sm font-semibold bg-[hsl(var(--warning))] text-[hsl(var(--warning-foreground))] hover:opacity-90 transition-colors"
+            >
+              Archivar
+            </button>
           </div>
-        )}
-      </AnimatePresence>
+        </div>
+      </SidePanel>
     </div>
   );
 }

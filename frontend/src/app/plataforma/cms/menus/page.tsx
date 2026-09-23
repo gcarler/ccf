@@ -374,9 +374,9 @@ export default function CmsMenusManagement() {
     };
 
     return (
-        <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-primary))]">
+        <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))]">
             {/* TOOLBAR */}
-            <header className="min-h-8 border-b border-[hsl(var(--border))] dark:border-white/5 flex flex-wrap items-center px-3 py-3 gap-3 shrink-0">
+            <header className="min-h-8 border-b border-[hsl(var(--border))] flex flex-wrap items-center px-3 py-3 gap-3 shrink-0">
                 <div className="flex items-center gap-2 flex-1">
                     <Link2 size={16} className="text-[hsl(var(--primary))]" />
                     <h2 className="text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
@@ -388,7 +388,7 @@ export default function CmsMenusManagement() {
                     <select
                         value={siteKey}
                         onChange={(event) => setSiteKey(event.target.value)}
-                        className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-secondary))] px-3 py-1.5 text-xs font-bold"
+                        className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] px-3 py-1.5 text-xs font-bold"
                     >
                         {sites.length === 0 && <option value={siteKey}>{siteKey}</option>}
                         {sites.map((site) => (
@@ -399,7 +399,7 @@ export default function CmsMenusManagement() {
                         value={menuKey}
                         onChange={(event) => setMenuKey(event.target.value)}
                         disabled={menus.length === 0 || menuLoading}
-                        className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-secondary))] px-3 py-1.5 text-xs font-bold disabled:opacity-50"
+                        className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] px-3 py-1.5 text-xs font-bold disabled:opacity-50"
                     >
                         {menus.length === 0 && <option value="">Sin menus</option>}
                         {menus.map((menu) => (
@@ -412,7 +412,7 @@ export default function CmsMenusManagement() {
                         <button
                             onClick={handleToggleMenuActive}
                             disabled={!canEdit}
-                            className="inline-flex items-center gap-2 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 px-3 py-1.5 text-2xs font-semibold uppercase tracking-wide disabled:opacity-50"
+                            className="inline-flex items-center gap-2 rounded-lg border border-[hsl(var(--border))] px-3 py-1.5 text-2xs font-semibold uppercase tracking-wide disabled:opacity-50"
                             title={selectedMenu.is_active ? "Desactivar menu publico" : "Activar menu publico"}
                         >
                             {selectedMenu.is_active ? <Archive size={14} /> : <RotateCcw size={14} />}
@@ -422,7 +422,7 @@ export default function CmsMenusManagement() {
                     <button
                         onClick={() => setIsQuickAddOpen(!isQuickAddOpen)}
                         disabled={!canEdit || !menuKey}
-                        className="bg-[hsl(var(--primary))] text-white px-4 py-1.5 rounded-lg text-xs font-semibold uppercase tracking-wide shadow-xl shadow-[hsl(var(--info)/20%)] hover:bg-[hsl(var(--primary))] active:scale-95 transition-all flex items-center gap-2 disabled:opacity-50"
+                        className="bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] px-4 py-1.5 rounded-lg text-xs font-semibold uppercase tracking-wide shadow-xl shadow-[hsl(var(--info)/20%)] hover:opacity-90 active:scale-95 transition-all flex items-center gap-2 disabled:opacity-50"
                     >
                         <Plus size={14} />
                         Añadir Enlace
@@ -432,7 +432,7 @@ export default function CmsMenusManagement() {
 
             <form
                 onSubmit={handleCreateMenu}
-                className="border-b border-[hsl(var(--border))] dark:border-white/5 px-3 py-3 flex flex-wrap items-center gap-3 bg-[hsl(var(--surface-1))]/60 dark:bg-white/[0.02]"
+                className="border-b border-[hsl(var(--border))] px-3 py-3 flex flex-wrap items-center gap-3 bg-[hsl(var(--surface-1))]"
             >
                 <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Nuevo menu</p>
                 <input
@@ -443,14 +443,14 @@ export default function CmsMenusManagement() {
                     }}
                     placeholder="Nombre del menu"
                     disabled={!canEdit}
-                    className="min-w-48 flex-1 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-secondary))] px-3 py-2 text-xs disabled:opacity-50"
+                    className="min-w-48 flex-1 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] px-3 py-2 text-xs disabled:opacity-50"
                 />
                 <input
                     value={newMenuKey}
                     onChange={(event) => setNewMenuKey(sanitizeKey(event.target.value))}
                     placeholder="menu_key"
                     disabled={!canEdit}
-                    className="w-40 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-secondary))] px-3 py-2 text-xs disabled:opacity-50"
+                    className="w-40 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] px-3 py-2 text-xs disabled:opacity-50"
                 />
                 <button
                     type="submit"
@@ -468,13 +468,13 @@ export default function CmsMenusManagement() {
                         initial={{ height: 0, opacity: 0 }}
                         animate={{ height: "auto", opacity: 1 }}
                         exit={{ height: 0, opacity: 0 }}
-                        className="bg-info-soft dark:bg-[hsl(var(--info))]/10 border-b-2 border-[hsl(var(--info)/30%)] dark:border-[hsl(var(--info)/100%)]/30 overflow-hidden shrink-0"
+                        className="bg-info-soft border-b-2 border-[hsl(var(--info)/30%)] overflow-hidden shrink-0"
                     >
                         <form
                             onSubmit={handleAddItem}
                             className="px-3 py-1.5 flex items-center gap-4"
                         >
-                            <div className="size-8 rounded-lg bg-[hsl(var(--primary))] text-white flex items-center justify-center shrink-0">
+                            <div className="size-8 rounded-lg bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] flex items-center justify-center shrink-0">
                                 <Zap size={16} />
                             </div>
                             <div className="flex-1 flex gap-3">
@@ -484,28 +484,28 @@ export default function CmsMenusManagement() {
                                     onChange={(e) => setNewItemLabel(e.target.value)}
                                     placeholder="Nombre del enlace..."
                                     disabled={!canEdit}
-                                    className="flex-1 bg-transparent border-none text-sm font-bold text-info-text dark:text-[hsl(var(--info))] placeholder:text-[hsl(var(--primary))] focus:ring-0"
+                                    className="flex-1 bg-transparent border-none text-sm font-bold text-info-text placeholder:text-[hsl(var(--primary))] focus:ring-0"
                                 />
                                 <input
                                     value={newItemHref}
                                     onChange={(e) => setNewItemHref(e.target.value)}
                                     placeholder="URL (ej: /contacto o https://...)"
                                     disabled={!canEdit}
-                                    className="flex-1 bg-transparent border-none text-sm font-medium text-[hsl(var(--primary))] dark:text-info-text placeholder:text-[hsl(var(--primary))] focus:ring-0"
+                                    className="flex-1 bg-transparent border-none text-sm font-medium text-[hsl(var(--primary))] placeholder:text-[hsl(var(--primary))] focus:ring-0"
                                 />
                             </div>
                             <div className="flex items-center gap-2">
                                 <button
                                     type="submit"
                                     disabled={!canEdit || !menuKey}
-                                    className="bg-[hsl(var(--primary))] text-white px-3 py-1 rounded-lg text-2xs font-semibold uppercase tracking-wide disabled:opacity-50"
+                                    className="bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] px-3 py-1 rounded-lg text-2xs font-semibold uppercase tracking-wide disabled:opacity-50"
                                 >
                                     GUARDAR
                                 </button>
                                 <button
                                     type="button"
                                     onClick={() => setIsQuickAddOpen(false)}
-                                    className="p-1.5 hover:bg-[hsl(var(--info-muted))] dark:hover:bg-[hsl(var(--info))]/30 rounded-lg text-[hsl(var(--primary))] transition-all"
+                                    className="p-1.5 hover:bg-[hsl(var(--info-muted))] rounded-lg text-[hsl(var(--primary))] transition-all"
                                 >
                                     <X size={14} />
                                 </button>
@@ -520,26 +520,26 @@ export default function CmsMenusManagement() {
                 {loading ? (
                     <div className="space-y-4">
                         {[1, 2, 3].map(i => (
-                            <div key={i} className="h-8 bg-[hsl(var(--surface-1))] dark:bg-white/5 rounded-lg animate-pulse" />
+                            <div key={i} className="h-8 bg-[hsl(var(--surface-1))] rounded-lg animate-pulse" />
                         ))}
                     </div>
                 ) : !menuKey ? (
                     <div className="h-full flex flex-col items-center justify-center text-center space-y-4 opacity-60">
-                        <div className="size-8 rounded-lg bg-[hsl(var(--surface-2))] dark:bg-white/5 flex items-center justify-center text-[hsl(var(--text-secondary))]">
+                        <div className="size-8 rounded-lg bg-[hsl(var(--surface-2))] flex items-center justify-center text-[hsl(var(--text-secondary))]">
                             <Link2 size={32} />
                         </div>
                         <div>
-                            <p className="font-bold text-[hsl(var(--text-primary))] dark:text-white">Sin menu seleccionado</p>
+                            <p className="font-bold text-[hsl(var(--text-primary))]">Sin menu seleccionado</p>
                             <p className="text-sm text-[hsl(var(--text-secondary))]">Crea un menu para este sitio y luego agrega enlaces.</p>
                         </div>
                     </div>
                 ) : navConfig.items.length === 0 ? (
                     <div className="h-full flex flex-col items-center justify-center text-center space-y-4 opacity-50">
-                        <div className="size-8 rounded-lg bg-[hsl(var(--surface-2))] dark:bg-white/5 flex items-center justify-center text-[hsl(var(--text-secondary))]">
+                        <div className="size-8 rounded-lg bg-[hsl(var(--surface-2))] flex items-center justify-center text-[hsl(var(--text-secondary))]">
                             <Link2 size={32} />
                         </div>
                         <div>
-                            <p className="font-bold text-[hsl(var(--text-primary))] dark:text-white">Menú vacío</p>
+                            <p className="font-bold text-[hsl(var(--text-primary))]">Menú vacío</p>
                             <p className="text-sm text-[hsl(var(--text-secondary))]">Comienza a construir la navegación de tu sitio.</p>
                         </div>
                     </div>
@@ -552,7 +552,7 @@ export default function CmsMenusManagement() {
                                 await moveToRoot(draggedId);
                                 setDraggedId(null);
                             }}
-                            className="rounded-md border border-dashed border-[hsl(var(--border))] dark:border-white/20 px-4 py-2 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]"
+                            className="rounded-md border border-dashed border-[hsl(var(--border))] px-4 py-2 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]"
                         >
                             Soltar aquí para mover a nivel raíz
                         </div>
@@ -565,7 +565,7 @@ export default function CmsMenusManagement() {
                                         await moveRelativeTo(draggedId, item.id, 'before');
                                         setDraggedId(null);
                                     }}
-                                    className="h-2 rounded-md border border-dashed border-transparent hover:border-[hsl(var(--info)/30%)] dark:hover:border-[hsl(var(--info)/100%)]/40"
+                                    className="h-2 rounded-md border border-dashed border-transparent hover:border-[hsl(var(--primary)/30%)]"
                                     style={{ marginLeft: `${depth * 16}px` }}
                                 />
                                 <motion.div
@@ -589,8 +589,8 @@ export default function CmsMenusManagement() {
                                     className={clsx(
                                         "group rounded-lg border p-4 shadow-sm hover:shadow-md transition-all cursor-pointer flex items-center gap-4",
                                         item.visibility === "hidden"
-                                            ? "bg-[hsl(var(--surface-1))] dark:bg-white/[0.03] border-dashed border-[hsl(var(--border))] dark:border-white/10 opacity-75"
-                                            : "bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-secondary))] border-[hsl(var(--border))]/70 dark:border-white/5"
+                                            ? "bg-[hsl(var(--surface-1))] border-dashed border-[hsl(var(--border))] opacity-75"
+                                            : "bg-[hsl(var(--surface-1))] border-[hsl(var(--border))]"
                                     )}
                                     style={{ marginLeft: `${depth * 16}px` }}
                                 >
@@ -599,7 +599,7 @@ export default function CmsMenusManagement() {
                                     </div>
 
                                     <div className="flex-1 min-w-0">
-                                        <h3 className="text-base font-bold text-[hsl(var(--text-primary))] dark:text-white">
+                                        <h3 className="text-base font-bold text-[hsl(var(--text-primary))]">
                                             {item.label}
                                         </h3>
                                         <p className="text-xs text-[hsl(var(--text-secondary))] font-medium">
@@ -608,12 +608,12 @@ export default function CmsMenusManagement() {
                                     </div>
 
                                     {item.is_external && (
-                                        <span className="px-2 py-0.5 rounded-full text-2xs font-semibold bg-[hsl(var(--surface-2))] dark:bg-white/5 text-[hsl(var(--text-secondary))] uppercase tracking-wide">
+                                        <span className="px-2 py-0.5 rounded-full text-2xs font-semibold bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))] uppercase tracking-wide">
                                             EXTERNO
                                         </span>
                                     )}
                                     {item.visibility === "hidden" && (
-                                        <span className="px-2 py-0.5 rounded-full text-2xs font-semibold bg-warning-soft dark:bg-[hsl(var(--warning))]/10 text-warning-text uppercase tracking-wide">
+                                        <span className="px-2 py-0.5 rounded-full text-2xs font-semibold bg-[hsl(var(--warning)/10%)] text-[hsl(var(--warning))] uppercase tracking-wide">
                                             OCULTO
                                         </span>
                                     )}
@@ -626,7 +626,7 @@ export default function CmsMenusManagement() {
                                                 moveItem(sourceIndex, 'up');
                                             }}
                                             disabled={!canEdit}
-                                            className="p-2 hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/10 rounded-md text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-secondary))] transition-all"
+                                            className="p-2 hover:bg-[hsl(var(--surface-2))] rounded-md text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] transition-all"
                                             title="Subir"
                                         >
                                             <ChevronRight size={14} className="-rotate-90" />
@@ -638,7 +638,7 @@ export default function CmsMenusManagement() {
                                                 moveItem(sourceIndex, 'down');
                                             }}
                                             disabled={!canEdit}
-                                            className="p-2 hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/10 rounded-md text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-secondary))] transition-all"
+                                            className="p-2 hover:bg-[hsl(var(--surface-2))] rounded-md text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] transition-all"
                                             title="Bajar"
                                         >
                                             <ChevronRight size={14} className="rotate-90" />
@@ -651,7 +651,7 @@ export default function CmsMenusManagement() {
                                             }}
                                             disabled={!canEdit}
                                             title={item.visibility === "hidden" ? "Restaurar enlace" : "Ocultar enlace"}
-                                            className="p-2 hover:bg-warning-soft dark:hover:bg-[hsl(var(--warning))]/10 rounded-md text-[hsl(var(--text-secondary))] hover:text-warning-text transition-all"
+                                            className="p-2 hover:bg-[hsl(var(--warning)/10%)] rounded-md text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--warning))] transition-all"
                                         >
                                             {item.visibility === "hidden" ? <RotateCcw size={16} /> : <Archive size={16} />}
                                         </button>
@@ -665,7 +665,7 @@ export default function CmsMenusManagement() {
                                         await moveRelativeTo(draggedId, item.id, 'after');
                                         setDraggedId(null);
                                     }}
-                                    className="h-2 rounded-md border border-dashed border-transparent hover:border-[hsl(var(--info)/30%)] dark:hover:border-[hsl(var(--info)/100%)]/40"
+                                    className="h-2 rounded-md border border-dashed border-transparent hover:border-[hsl(var(--primary)/30%)]"
                                     style={{ marginLeft: `${depth * 16}px` }}
                                 />
                             </React.Fragment>
@@ -696,7 +696,7 @@ export default function CmsMenusManagement() {
                                     value={selectedItem.label}
                                     onChange={(e) => handleUpdateItem(selectedIndex, { ...selectedItem, label: e.target.value })}
                                     disabled={!canEdit}
-                                    className="w-full px-3 py-2.5 text-base bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-secondary))] border border-[hsl(var(--border))] dark:border-white/10 rounded-md focus:ring-2 focus:ring-[hsl(var(--primary))]/30 transition-all font-bold"
+                                    className="w-full px-3 py-2.5 text-base bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] rounded-md focus:ring-2 focus:ring-[hsl(var(--primary))]/30 transition-all font-bold text-[hsl(var(--text-primary))]"
                                 />
                             </div>
 
@@ -709,7 +709,7 @@ export default function CmsMenusManagement() {
                                     value={selectedItem.href}
                                     onChange={(e) => handleUpdateItem(selectedIndex, { ...selectedItem, href: e.target.value })}
                                     disabled={!canEdit}
-                                    className="w-full px-3 py-2.5 text-base bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-secondary))] border border-[hsl(var(--border))] dark:border-white/10 rounded-md focus:ring-2 focus:ring-[hsl(var(--primary))]/30 transition-all"
+                                    className="w-full px-3 py-2.5 text-base bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] rounded-md focus:ring-2 focus:ring-[hsl(var(--primary))]/30 transition-all text-[hsl(var(--text-primary))]"
                                 />
                             </div>
 
@@ -724,7 +724,7 @@ export default function CmsMenusManagement() {
                                         parent_id: e.target.value || null,
                                     })}
                                     disabled={!canEdit}
-                                    className="w-full px-3 py-2.5 text-base bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-secondary))] border border-[hsl(var(--border))] dark:border-white/10 rounded-md focus:ring-2 focus:ring-[hsl(var(--primary))]/30 transition-all"
+                                    className="w-full px-3 py-2.5 text-base bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] rounded-md focus:ring-2 focus:ring-[hsl(var(--primary))]/30 transition-all text-[hsl(var(--text-primary))]"
                                 >
                                     <option value="">Sin padre (nivel raíz)</option>
                                     {navConfig.items
@@ -736,7 +736,7 @@ export default function CmsMenusManagement() {
                             </div>
                         </section>
 
-                        <section className="pt-6 border-t border-[hsl(var(--border))] dark:border-white/5 space-y-3">
+                        <section className="pt-6 border-t border-[hsl(var(--border))] space-y-3">
                             <p className="text-2xs font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))]">
                                 VISIBILIDAD
                             </p>
@@ -748,8 +748,8 @@ export default function CmsMenusManagement() {
                                     className={clsx(
                                         "rounded-md border px-3 py-2 text-2xs font-semibold uppercase tracking-wide transition-all",
                                         selectedItem.visibility !== "hidden"
-                                            ? "border-[hsl(var(--info)/25%)] bg-info-soft text-[hsl(var(--primary))] dark:border-[hsl(var(--info)/100%)]/30 dark:bg-[hsl(var(--info))]/10"
-                                            : "border-[hsl(var(--border))] text-[hsl(var(--text-secondary))] dark:border-white/10"
+                                            ? "border-[hsl(var(--primary)/25%)] bg-[hsl(var(--primary)/10%)] text-[hsl(var(--primary))]"
+                                            : "border-[hsl(var(--border))] text-[hsl(var(--text-secondary))]"
                                     )}
                                 >
                                     Publico
@@ -761,8 +761,8 @@ export default function CmsMenusManagement() {
                                     className={clsx(
                                         "rounded-md border px-3 py-2 text-2xs font-semibold uppercase tracking-wide transition-all",
                                         selectedItem.visibility === "hidden"
-                                            ? "border-[hsl(var(--warning)/25%)] bg-warning-soft text-warning-text dark:border-[hsl(var(--warning)/100%)]/30 dark:bg-[hsl(var(--warning))]/10"
-                                            : "border-[hsl(var(--border))] text-[hsl(var(--text-secondary))] dark:border-white/10"
+                                            ? "border-[hsl(var(--warning)/25%)] bg-[hsl(var(--warning)/10%)] text-[hsl(var(--warning))]"
+                                            : "border-[hsl(var(--border))] text-[hsl(var(--text-secondary))]"
                                     )}
                                 >
                                     Oculto
@@ -770,32 +770,32 @@ export default function CmsMenusManagement() {
                             </div>
                         </section>
 
-                        <section className="pt-6 border-t border-[hsl(var(--border))] dark:border-white/5">
+                        <section className="pt-6 border-t border-[hsl(var(--border))]">
                             <button
                                 onClick={() => handleUpdateItem(selectedIndex, { ...selectedItem, is_external: !selectedItem.is_external })}
                                 disabled={!canEdit}
                                 className={clsx(
                                     "w-full flex items-center justify-between p-4 rounded-lg border transition-all",
                                     selectedItem.is_external
-                                        ? "bg-info-soft dark:bg-[hsl(var(--info))]/10 border-[hsl(var(--info)/25%)] dark:border-[hsl(var(--info)/100%)]/30"
-                                        : "bg-[hsl(var(--surface-1))] dark:bg-white/5 border-transparent"
+                                        ? "bg-[hsl(var(--primary)/10%)] border-[hsl(var(--primary)/25%)]"
+                                        : "bg-[hsl(var(--surface-1))] border-transparent"
                                 )}
                             >
                                 <div className="flex items-center gap-3 text-left">
                                     <div className={clsx(
                                         "size-10 rounded-md flex items-center justify-center transition-all",
-                                        selectedItem.is_external ? "bg-[hsl(var(--primary))] text-white" : "bg-[hsl(var(--surface-3))] dark:bg-white/10 text-[hsl(var(--text-secondary))]"
+                                        selectedItem.is_external ? "bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))]" : "bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))]"
                                     )}>
                                         <ExternalLink size={18} />
                                     </div>
                                     <div>
-                                        <p className="text-base font-bold text-[hsl(var(--text-primary))] dark:text-white">Abrir en nueva pestaña</p>
+                                        <p className="text-base font-bold text-[hsl(var(--text-primary))]">Abrir en nueva pestaña</p>
                                         <p className="text-xs text-[hsl(var(--text-secondary))]">Marcar como enlace externo</p>
                                     </div>
                                 </div>
                                 <div className={clsx(
                                     "size-6 rounded-full border-2 flex items-center justify-center transition-all",
-                                    selectedItem.is_external ? "border-[hsl(var(--info)/100%)]" : "border-[hsl(var(--border))] dark:border-white/10"
+                                    selectedItem.is_external ? "border-[hsl(var(--primary))]" : "border-[hsl(var(--border))]"
                                 )}>
                                     {selectedItem.is_external && <div className="size-3 bg-[hsl(var(--primary))] rounded-full" />}
                                 </div>
@@ -808,7 +808,7 @@ export default function CmsMenusManagement() {
                                     setSelectedItem(null);
                                     setSelectedIndex(null);
                                 }}
-                                className="w-full bg-[hsl(var(--bg-muted))] dark:bg-[hsl(var(--bg-primary))] text-white dark:text-[hsl(var(--text-primary))] py-3 rounded-md text-xs font-semibold uppercase tracking-wide shadow-xl hover:opacity-90 active:scale-95 transition-all flex items-center justify-center gap-2"
+                                className="w-full bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] py-3 rounded-md text-xs font-semibold uppercase tracking-wide shadow-xl hover:opacity-90 active:scale-95 transition-all flex items-center justify-center gap-2"
                             >
                                 <Save size={14} />
                                 CERRAR Y LISTO
@@ -818,30 +818,33 @@ export default function CmsMenusManagement() {
                 )}
             </SidePanel>
 
-            {showConfirmDeactivate && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-                    <div className="w-full max-w-sm rounded-xl bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-secondary))] p-5 shadow-2xl border border-[hsl(var(--border))] dark:border-white/10">
-                        <h3 className="text-lg font-bold text-[hsl(var(--text-primary))] dark:text-white mb-2">¿Desactivar menú?</h3>
-                        <p className="text-sm text-[hsl(var(--text-secondary))] mb-6">
-                            El menú dejará de ser visible públicamente en el sitio.
-                        </p>
-                        <div className="flex gap-3 justify-end">
-                            <button
-                                onClick={() => setShowConfirmDeactivate(false)}
-                                className="px-4 py-2 rounded-lg text-sm font-semibold text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5 transition-colors"
-                            >
-                                Cancelar
-                            </button>
-                            <button
-                                onClick={handleToggleMenuActive}
-                                className="px-4 py-2 rounded-lg text-sm font-semibold bg-warning-soft text-warning-text hover:bg-[hsl(var(--warning-muted))] transition-colors"
-                            >
-                                Desactivar
-                            </button>
-                        </div>
+            {/* SidePanel: Confirm Deactivate Menu Drawer */}
+            <SidePanel
+                isOpen={showConfirmDeactivate}
+                onClose={() => setShowConfirmDeactivate(false)}
+                title="Desactivar menú"
+                width="w-[420px]"
+            >
+                <div className="p-4 space-y-4">
+                    <p className="text-sm text-[hsl(var(--text-secondary))]">
+                        El menú dejará de ser visible públicamente en el sitio.
+                    </p>
+                    <div className="flex gap-3 justify-end pt-4 border-t border-[hsl(var(--border))]">
+                        <button
+                            onClick={() => setShowConfirmDeactivate(false)}
+                            className="px-4 py-2 rounded-lg text-sm font-semibold text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] transition-colors"
+                        >
+                            Cancelar
+                        </button>
+                        <button
+                            onClick={handleToggleMenuActive}
+                            className="px-4 py-2 rounded-lg text-sm font-semibold bg-[hsl(var(--warning))] text-[hsl(var(--warning-foreground))] hover:opacity-90 transition-colors"
+                        >
+                            Desactivar
+                        </button>
                     </div>
                 </div>
-            )}
+            </SidePanel>
         </div>
     );
 }

@@ -166,14 +166,14 @@ export default function CmsCategoriesManagement() {
   }, [categories, selectedCategory]);
 
   return (
-    <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-primary))]">
-      <header className="h-8 border-b border-[hsl(var(--border))] dark:border-white/5 flex items-center px-3 gap-3 shrink-0">
+    <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))]">
+      <header className="h-8 border-b border-[hsl(var(--border))] flex items-center px-3 gap-3 shrink-0">
         <div className="flex items-center gap-2 flex-1 min-w-0">
           <FolderOpen size={16} className="text-[hsl(var(--primary))] shrink-0" />
           <h2 className="text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] truncate">
             Categorías
           </h2>
-          <span className="text-2xs font-semibold text-[hsl(var(--text-secondary))] bg-[hsl(var(--surface-2))] dark:bg-white/5 px-2 py-0.5 rounded-full shrink-0">
+          <span className="text-2xs font-semibold text-[hsl(var(--text-secondary))] bg-[hsl(var(--surface-2))] px-2 py-0.5 rounded-full shrink-0">
             {visibleCategories.length}
           </span>
         </div>
@@ -181,7 +181,7 @@ export default function CmsCategoriesManagement() {
         <select
           value={siteKey}
           onChange={(e) => setSiteKey(e.target.value)}
-          className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-3 py-1.5 text-sm shrink-0"
+          className="rounded-lg border border-[hsl(var(--border))] bg-transparent px-3 py-1.5 text-sm shrink-0"
         >
           {sites.length === 0 && <option value={SITE_KEY}>{SITE_KEY}</option>}
           {sites.map((site) => (
@@ -198,29 +198,29 @@ export default function CmsCategoriesManagement() {
             placeholder="Buscar..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="pl-9 pr-4 py-1.5 bg-[hsl(var(--surface-2))] dark:bg-white/5 border-none rounded-lg text-sm focus:ring-2 focus:ring-[hsl(var(--primary))]/20 w-52 transition-all"
+            className="pl-9 pr-4 py-1.5 bg-[hsl(var(--surface-2))] border-none rounded-lg text-sm focus:ring-2 focus:ring-[hsl(var(--primary))]/20 w-52 transition-all"
           />
         </div>
 
         <button
           onClick={() => setIsQuickAddOpen((prev) => !prev)}
           disabled={!canEdit}
-          className="bg-[hsl(var(--primary))] text-white px-4 py-1.5 rounded-lg text-xs font-semibold uppercase tracking-wide shadow-xl shadow-[hsl(var(--info)/20%)] hover:bg-[hsl(var(--primary))] active:scale-95 transition-all flex items-center gap-2 disabled:opacity-50 shrink-0"
+          className="bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] px-4 py-1.5 rounded-lg text-xs font-semibold uppercase tracking-wide shadow-xl shadow-[hsl(var(--info)/20%)] hover:opacity-90 active:scale-95 transition-all flex items-center gap-2 disabled:opacity-50 shrink-0"
         >
           <Plus size={14} /> Nueva categoría
         </button>
       </header>
 
       {error && (
-        <div className="mx-3 mt-3 rounded-md border border-[hsl(var(--warning)/25%)] bg-warning-soft p-3 text-warning-text dark:border-[hsl(var(--warning)/100%)]/20 dark:bg-[hsl(var(--warning))]/10 dark:text-[hsl(var(--warning))]">
+        <div className="mx-3 mt-3 rounded-md border border-[hsl(var(--warning)/25%)] bg-warning-soft p-3 text-warning-text">
           <p className="text-xs font-bold uppercase tracking-wide">{error}</p>
         </div>
       )}
 
       {isQuickAddOpen && (
-        <div className="bg-info-soft dark:bg-[hsl(var(--info))]/10 border-b-2 border-[hsl(var(--info)/30%)] dark:border-[hsl(var(--info)/100%)]/30 overflow-hidden shrink-0">
+        <div className="bg-info-soft border-b-2 border-[hsl(var(--info)/30%)] overflow-hidden shrink-0">
           <form onSubmit={handleCreate} className="px-3 py-1.5 flex items-center gap-4">
-            <div className="size-8 rounded-lg bg-[hsl(var(--primary))] text-white flex items-center justify-center shrink-0">
+            <div className="size-8 rounded-lg bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] flex items-center justify-center shrink-0">
               <Zap size={16} />
             </div>
             <input
@@ -230,9 +230,9 @@ export default function CmsCategoriesManagement() {
               onKeyDown={(e) => e.key === "Escape" && setIsQuickAddOpen(false)}
               placeholder="Nombre de la categoría (Enter para crear)"
               disabled={!canEdit}
-              className="flex-1 bg-transparent border-none text-sm font-bold text-info-text dark:text-[hsl(var(--info))] placeholder:text-[hsl(var(--primary))] focus:ring-0"
+              className="flex-1 bg-transparent border-none text-sm font-bold text-info-text placeholder:text-[hsl(var(--primary))] focus:ring-0"
             />
-            <button type="submit" disabled={!canEdit} className="bg-[hsl(var(--primary))] text-white px-3 py-1 rounded-lg text-2xs font-semibold uppercase tracking-wide disabled:opacity-50">
+            <button type="submit" disabled={!canEdit} className="bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] px-3 py-1 rounded-lg text-2xs font-semibold uppercase tracking-wide disabled:opacity-50">
               Guardar
             </button>
           </form>
@@ -243,16 +243,16 @@ export default function CmsCategoriesManagement() {
         {loading ? (
           <div className="space-y-4">
             {[1, 2, 3].map((i) => (
-              <div key={i} className="h-20 bg-[hsl(var(--surface-1))] dark:bg-white/5 rounded-lg animate-pulse" />
+              <div key={i} className="h-20 bg-[hsl(var(--surface-1))] rounded-lg animate-pulse" />
             ))}
           </div>
         ) : visibleCategories.length === 0 ? (
           <div className="h-full flex flex-col items-center justify-center text-center space-y-4 opacity-50 py-1.5">
-            <div className="size-8 rounded-lg bg-[hsl(var(--surface-2))] dark:bg-white/5 flex items-center justify-center text-[hsl(var(--text-secondary))]">
+            <div className="size-8 rounded-lg bg-[hsl(var(--surface-2))] flex items-center justify-center text-[hsl(var(--text-secondary))]">
               <FolderOpen size={32} />
             </div>
             <div>
-              <p className="font-bold text-[hsl(var(--text-primary))] dark:text-white">Sin categorías</p>
+              <p className="font-bold text-[hsl(var(--text-primary))]">Sin categorías</p>
               <p className="text-sm text-[hsl(var(--text-secondary))]">Crea tu primera categoría para organizar posts.</p>
             </div>
           </div>
@@ -267,26 +267,26 @@ export default function CmsCategoriesManagement() {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.04 }}
                   className={clsx(
-                    "group bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-secondary))] rounded-lg border p-4 shadow-sm hover:shadow-xl hover:border-[hsl(var(--info)/100%)]/30 transition-all duration-200 flex items-center gap-4",
+                    "group bg-[hsl(var(--surface-1))] rounded-lg border p-4 shadow-sm hover:shadow-xl hover:border-[hsl(var(--primary)/30%)] transition-all duration-200 flex items-center gap-4",
                     isArchived
-                      ? "border-dashed border-[hsl(var(--border))] dark:border-white/10 opacity-60"
-                      : "border-[hsl(var(--border))]/70 dark:border-white/5"
+                      ? "border-dashed border-[hsl(var(--border))] opacity-60"
+                      : "border-[hsl(var(--border))]"
                   )}
                 >
                   <div
                     onClick={() => setSelectedCategory(cat)}
-                    className="size-7 rounded-md bg-success-soft dark:bg-[hsl(var(--success))]/10 text-success-text flex items-center justify-center shrink-0 cursor-pointer"
+                    className="size-7 rounded-md bg-success-soft text-success-text flex items-center justify-center shrink-0 cursor-pointer"
                   >
                     <FolderOpen size={18} />
                   </div>
 
                   <div className="flex-1 min-w-0 cursor-pointer" onClick={() => setSelectedCategory(cat)}>
                     <div className="flex items-center gap-2 mb-0.5">
-                      <h3 className="text-base font-semibold text-[hsl(var(--text-primary))] dark:text-white truncate">
+                      <h3 className="text-base font-semibold text-[hsl(var(--text-primary))] truncate">
                         {cat.name}
                       </h3>
                       {isArchived && (
-                        <span className="px-2 py-0.5 rounded-full text-2xs font-semibold uppercase tracking-wide bg-[hsl(var(--warning-muted))] text-warning-text dark:bg-[hsl(var(--warning))]/20 dark:text-[hsl(var(--warning))]">
+                        <span className="px-2 py-0.5 rounded-full text-2xs font-semibold uppercase tracking-wide bg-[hsl(var(--warning-muted))] text-warning-text">
                           Archivada
                         </span>
                       )}
@@ -297,7 +297,7 @@ export default function CmsCategoriesManagement() {
                       </div>
                       {cat.description && (
                         <>
-                          <div className="size-1 bg-[hsl(var(--surface-3))] dark:bg-white/10 rounded-full" />
+                          <div className="size-1 bg-[hsl(var(--surface-3))] rounded-full" />
                           <div className="text-xs text-[hsl(var(--text-secondary))] truncate max-w-xs">
                             {cat.description}
                           </div>
@@ -311,7 +311,7 @@ export default function CmsCategoriesManagement() {
                       <button
                         onClick={() => handleRestore(cat)}
                         disabled={!canEdit}
-                        className="p-2 hover:bg-success-soft dark:hover:bg-[hsl(var(--success))]/10 rounded-md text-[hsl(var(--text-secondary))] hover:text-success-text transition-all disabled:opacity-50"
+                        className="p-2 hover:bg-success-soft rounded-md text-[hsl(var(--text-secondary))] hover:text-success-text transition-all disabled:opacity-50"
                         title="Restaurar"
                       >
                         <RotateCcw size={15} />
@@ -320,7 +320,7 @@ export default function CmsCategoriesManagement() {
                       <button
                         onClick={() => handleArchive(cat)}
                         disabled={!canEdit}
-                        className="p-2 hover:bg-warning-soft dark:hover:bg-[hsl(var(--warning))]/10 rounded-md text-[hsl(var(--text-secondary))] hover:text-warning-text transition-all disabled:opacity-50"
+                        className="p-2 hover:bg-warning-soft rounded-md text-[hsl(var(--text-secondary))] hover:text-warning-text transition-all disabled:opacity-50"
                         title="Archivar"
                       >
                         <Archive size={15} />
@@ -348,7 +348,7 @@ export default function CmsCategoriesManagement() {
               </label>
               <div className="space-y-4">
                 <div className="space-y-1.5">
-                  <span className="text-sm font-medium text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">
+                  <span className="text-sm font-medium text-[hsl(var(--text-primary))]">
                     Nombre
                   </span>
                   <input
@@ -357,12 +357,12 @@ export default function CmsCategoriesManagement() {
                     onChange={(e) =>
                       setSelectedCategory({ ...selectedCategory, name: e.target.value })
                     }
-                    className="w-full px-3 py-2 text-base bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-secondary))] border border-[hsl(var(--border))] dark:border-white/10 rounded-md"
+                    className="w-full px-3 py-2 text-base bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] rounded-md"
                     disabled={!canEdit}
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <span className="text-sm font-medium text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">
+                  <span className="text-sm font-medium text-[hsl(var(--text-primary))]">
                     Slug
                   </span>
                   <input
@@ -371,12 +371,12 @@ export default function CmsCategoriesManagement() {
                     onChange={(e) =>
                       setSelectedCategory({ ...selectedCategory, slug: e.target.value })
                     }
-                    className="w-full px-3 py-2 text-base bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-secondary))] border border-[hsl(var(--border))] dark:border-white/10 rounded-md"
+                    className="w-full px-3 py-2 text-base bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] rounded-md"
                     disabled={!canEdit}
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <span className="text-sm font-medium text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">
+                  <span className="text-sm font-medium text-[hsl(var(--text-primary))]">
                     Descripción
                   </span>
                   <textarea
@@ -385,12 +385,12 @@ export default function CmsCategoriesManagement() {
                     onChange={(e) =>
                       setSelectedCategory({ ...selectedCategory, description: e.target.value })
                     }
-                    className="w-full px-3 py-2 text-base bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-secondary))] border border-[hsl(var(--border))] dark:border-white/10 rounded-md resize-none custom-scrollbar"
+                    className="w-full px-3 py-2 text-base bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] rounded-md resize-none custom-scrollbar"
                     disabled={!canEdit}
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <span className="text-sm font-medium text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">
+                  <span className="text-sm font-medium text-[hsl(var(--text-primary))]">
                     Categoría padre
                   </span>
                   <select
@@ -401,25 +401,25 @@ export default function CmsCategoriesManagement() {
                         parent_id: e.target.value || null,
                       })
                     }
-                    className="w-full px-3 py-2 text-base bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-secondary))] border border-[hsl(var(--border))] dark:border-white/10 rounded-md"
+                    className="w-full px-3 py-2 text-base bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] rounded-md"
                     disabled={!canEdit}
                   >
                     <option value="">Sin padre (raíz)</option>
                     {parentOptions.map((c) => (
-                      <option key={c.id} value={c.id}>
-                        {c.name}
-                      </option>
-                    ))}
+                        <option key={c.id} value={c.id}>
+                          {c.name}
+                        </option>
+                      ))}
                   </select>
                 </div>
               </div>
             </section>
 
-            <div className="pt-6 border-t border-[hsl(var(--border))] dark:border-white/5">
+            <div className="pt-6 border-t border-[hsl(var(--border))]">
               <button
                 onClick={handleSave}
                 disabled={!canEdit}
-                className="w-full bg-[hsl(var(--primary))] text-white py-3 rounded-md text-xs font-semibold uppercase tracking-wide shadow-xl shadow-[hsl(var(--info)/20%)] hover:bg-[hsl(var(--primary))] active:scale-95 transition-all disabled:opacity-50"
+                className="w-full bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] py-3 rounded-md text-xs font-semibold uppercase tracking-wide shadow-xl shadow-[hsl(var(--info)/20%)] hover:opacity-90 active:scale-95 transition-all disabled:opacity-50"
               >
                 Guardar cambios
               </button>
@@ -427,7 +427,7 @@ export default function CmsCategoriesManagement() {
                 <button
                   onClick={() => handleRestore(selectedCategory)}
                   disabled={!canEdit}
-                  className="mt-3 w-full border border-[hsl(var(--success)/25%)] text-success-text dark:text-success-text py-3 rounded-md text-xs font-semibold uppercase tracking-wide hover:bg-success-soft dark:hover:bg-[hsl(var(--success))]/10 active:scale-95 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                  className="mt-3 w-full border border-[hsl(var(--success)/25%)] text-success-text py-3 rounded-md text-xs font-semibold uppercase tracking-wide hover:bg-success-soft active:scale-95 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
                 >
                   <RotateCcw size={14} /> Restaurar
                 </button>
@@ -435,7 +435,7 @@ export default function CmsCategoriesManagement() {
                 <button
                   onClick={() => handleArchive(selectedCategory)}
                   disabled={!canEdit}
-                  className="mt-3 w-full border border-[hsl(var(--warning)/25%)] text-warning-text dark:text-warning-text py-3 rounded-md text-xs font-semibold uppercase tracking-wide hover:bg-warning-soft dark:hover:bg-[hsl(var(--warning))]/10 active:scale-95 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                  className="mt-3 w-full border border-[hsl(var(--warning)/25%)] text-warning-text py-3 rounded-md text-xs font-semibold uppercase tracking-wide hover:bg-warning-soft active:scale-95 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
                 >
                   <Archive size={14} /> Archivar
                 </button>
@@ -445,37 +445,33 @@ export default function CmsCategoriesManagement() {
         )}
       </SidePanel>
 
-      <AnimatePresence>
-        {pendingArchive && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              className="w-full max-w-sm rounded-xl bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-secondary))] p-5 shadow-2xl border border-[hsl(var(--border))] dark:border-white/10"
+      {/* SidePanel: Archive Confirmation Drawer */}
+      <SidePanel
+        isOpen={Boolean(pendingArchive)}
+        onClose={() => setPendingArchive(null)}
+        title="Archivar categoría"
+        width="w-[420px]"
+      >
+        <div className="p-4 space-y-4">
+          <p className="text-sm text-[hsl(var(--text-secondary))]">
+            La categoría dejará de estar disponible, pero podrás restaurarla luego.
+          </p>
+          <div className="flex gap-3 justify-end pt-4 border-t border-[hsl(var(--border))]">
+            <button
+              onClick={() => setPendingArchive(null)}
+              className="px-4 py-2 rounded-lg text-sm font-semibold text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] transition-colors"
             >
-              <h3 className="text-lg font-bold text-[hsl(var(--text-primary))] dark:text-white mb-2">¿Archivar categoría?</h3>
-              <p className="text-sm text-[hsl(var(--text-secondary))] mb-6">
-                La categoría dejará de estar disponible, pero podrás restaurarla luego.
-              </p>
-              <div className="flex gap-3 justify-end">
-                <button
-                  onClick={() => setPendingArchive(null)}
-                  className="px-4 py-2 rounded-lg text-sm font-semibold text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5 transition-colors"
-                >
-                  Cancelar
-                </button>
-                <button
-                  onClick={confirmArchive}
-                  className="px-4 py-2 rounded-lg text-sm font-semibold bg-warning-soft text-warning-text hover:bg-[hsl(var(--warning-muted))] transition-colors"
-                >
-                  Archivar
-                </button>
-              </div>
-            </motion.div>
+              Cancelar
+            </button>
+            <button
+              onClick={confirmArchive}
+              className="px-4 py-2 rounded-lg text-sm font-semibold bg-[hsl(var(--warning))] text-[hsl(var(--warning-foreground))] hover:opacity-90 transition-colors"
+            >
+              Archivar
+            </button>
           </div>
-        )}
-      </AnimatePresence>
+        </div>
+      </SidePanel>
     </div>
   );
 }
