@@ -9,6 +9,7 @@ seeding, llamada directa al CRUD) podría crear/mutar registros sin
 pasar por el helper API `_get_scoped_*` correspondiente.
 """
 
+from datetime import datetime, timezone
 import logging
 import uuid
 
@@ -28,7 +29,10 @@ _logger = logging.getLogger(__name__)
 
 
 def list_cms_popups(db: Session, site_id: uuid.UUID, *, only_active: bool = False) -> list[models.CmsPopup]:
-    query = db.query(models.CmsPopup).filter(models.CmsPopup.site_id == site_id)
+    query = db.query(models.CmsPopup).filter(
+        models.CmsPopup.site_id == site_id,
+        models.CmsPopup.deleted_at.is_(None),
+    )
     if only_active:
         query = query.filter(models.CmsPopup.is_active.is_(True))
     return query.order_by(models.CmsPopup.created_at.desc()).all()
@@ -36,7 +40,15 @@ def list_cms_popups(db: Session, site_id: uuid.UUID, *, only_active: bool = Fals
 
 
 def get_cms_popup(db: Session, site_id: uuid.UUID, popup_id: uuid.UUID) -> models.CmsPopup | None:
-    return db.query(models.CmsPopup).filter(models.CmsPopup.site_id == site_id, models.CmsPopup.id == popup_id).first()
+    return (
+        db.query(models.CmsPopup)
+        .filter(
+            models.CmsPopup.site_id == site_id,
+            models.CmsPopup.id == popup_id,
+            models.CmsPopup.deleted_at.is_(None),
+        )
+        .first()
+    )
 
 
 
@@ -68,7 +80,8 @@ def update_cms_popup(db: Session, row: models.CmsPopup, payload: schemas.CmsPopu
 
 
 def delete_cms_popup(db: Session, row: models.CmsPopup) -> bool:
-    db.delete(row)
+    row.is_active = False
+    row.deleted_at = datetime.now(timezone.utc)
     db.commit()
     return True
 

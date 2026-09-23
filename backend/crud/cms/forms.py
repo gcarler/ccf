@@ -9,6 +9,7 @@ seeding, llamada directa al CRUD) podría crear/mutar registros sin
 pasar por el helper API `_get_scoped_*` correspondiente.
 """
 
+from datetime import datetime, timezone
 import logging
 import uuid
 
@@ -29,7 +30,10 @@ _logger = logging.getLogger(__name__)
 
 
 def list_cms_forms(db: Session, site_id: uuid.UUID, *, only_active: bool = False) -> list[models.CmsForm]:
-    query = db.query(models.CmsForm).filter(models.CmsForm.site_id == site_id)
+    query = db.query(models.CmsForm).filter(
+        models.CmsForm.site_id == site_id,
+        models.CmsForm.deleted_at.is_(None),
+    )
     if only_active:
         query = query.filter(models.CmsForm.is_active.is_(True))
     forms = query.order_by(models.CmsForm.created_at.desc()).all()
@@ -45,7 +49,15 @@ def list_cms_forms(db: Session, site_id: uuid.UUID, *, only_active: bool = False
 
 
 def get_cms_form(db: Session, site_id: uuid.UUID, form_id: uuid.UUID) -> models.CmsForm | None:
-    form = db.query(models.CmsForm).filter(models.CmsForm.site_id == site_id, models.CmsForm.id == form_id).first()
+    form = (
+        db.query(models.CmsForm)
+        .filter(
+            models.CmsForm.site_id == site_id,
+            models.CmsForm.id == form_id,
+            models.CmsForm.deleted_at.is_(None),
+        )
+        .first()
+    )
     if form:
         count = (
             db.query(func.count(models.CmsFormSubmission.id))
@@ -58,7 +70,14 @@ def get_cms_form(db: Session, site_id: uuid.UUID, form_id: uuid.UUID) -> models.
 
 
 def get_cms_form_by_id(db: Session, form_id: uuid.UUID) -> models.CmsForm | None:
-    return db.query(models.CmsForm).filter(models.CmsForm.id == form_id).first()
+    return (
+        db.query(models.CmsForm)
+        .filter(
+            models.CmsForm.id == form_id,
+            models.CmsForm.deleted_at.is_(None),
+        )
+        .first()
+    )
 
 
 
@@ -101,7 +120,8 @@ def update_cms_form(db: Session, row: models.CmsForm, payload: schemas.CmsFormUp
 
 
 def delete_cms_form(db: Session, row: models.CmsForm) -> bool:
-    db.delete(row)
+    row.is_active = False
+    row.deleted_at = datetime.now(timezone.utc)
     db.commit()
     return True
 

@@ -649,6 +649,7 @@ class CmsPopup(Base):
     show_on_pages = Column(JSON, nullable=False, default=list)
     created_at = Column(DateTime(timezone=True), nullable=False, default=_utcnow)
     updated_at = Column(DateTime(timezone=True), nullable=False, default=_utcnow, onupdate=_utcnow)
+    deleted_at = Column(DateTime(timezone=True), nullable=True, index=True)
 
     # Relationships
     site = relationship("CmsSite", back_populates="popups", lazy="joined")
@@ -678,6 +679,7 @@ class CmsForm(Base):
     honeypot_enabled = Column(Boolean, default=True)
     created_at = Column(DateTime(timezone=True), default=_utcnow)
     updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
+    deleted_at = Column(DateTime(timezone=True), nullable=True, index=True)
 
     # Relationships
     site = relationship("CmsSite", back_populates="forms", lazy="joined")
