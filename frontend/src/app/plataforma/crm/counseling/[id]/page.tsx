@@ -124,7 +124,7 @@ export default function CounselingDetailPage() {
                 <p className="font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{error}</p>
                 <button
                     onClick={() => setReloadKey(key => key + 1)}
-                    className="rounded-md border border-[hsl(var(--border))] px-3 py-1.5 text-xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] transition-colors hover:bg-[hsl(var(--surface-1))] dark:border-white/10 dark:hover:bg-white/5"
+                    className="rounded-md border border-[hsl(var(--border))] px-3 py-1.5 text-xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] transition-colors hover:bg-[hsl(var(--surface-2))]"
                 >
                     Reintentar
                 </button>
@@ -148,7 +148,7 @@ export default function CounselingDetailPage() {
                 </p>
                 <button
                     onClick={() => setReloadKey(key => key + 1)}
-                    className="rounded-md border border-[hsl(var(--border))] px-3 py-1.5 text-xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] transition-colors hover:bg-[hsl(var(--surface-1))] dark:border-white/10 dark:hover:bg-white/5"
+                    className="rounded-md border border-[hsl(var(--border))] px-3 py-1.5 text-xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] transition-colors hover:bg-[hsl(var(--surface-2))]"
                 >
                     Reintentar
                 </button>
@@ -172,14 +172,14 @@ export default function CounselingDetailPage() {
                                 <DSBadge tone={session.priority_level === "HIGH" ? "amber" : "emerald"} label={session.priority_level ?? 'NORMAL'} />
                                 <DSBadge tone={session.status === "open" ? "blue" : "slate"} label={String(session.status ?? 'open').toUpperCase()} />
                             </div>
-                            <h1 className="text-lg font-bold text-[hsl(var(--text-primary))] dark:text-white tracking-tight uppercase leading-none">
+                            <h1 className="text-lg font-bold text-[hsl(var(--text-primary))] tracking-tight uppercase leading-none">
                                 {session.topic}
                             </h1>
-                            <p className="text-sm text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">
+                            <p className="text-sm text-[hsl(var(--text-secondary))]">
                                 Persona: {session.persona_name}
                             </p>
                         </div>
-                        <button className="px-4 py-2 bg-[hsl(var(--secondary))] text-white rounded-md text-2xs font-bold uppercase tracking-wide shadow-lg shadow-[hsl(var(--secondary))/20] hover:scale-105 transition-all">
+                        <button className="px-4 py-2 bg-[hsl(var(--secondary))] text-[hsl(var(--primary-foreground))] rounded-md text-2xs font-bold uppercase tracking-wide shadow-lg shadow-[hsl(var(--secondary))/20] hover:scale-105 transition-all">
                             Cerrar sesion
                         </button>
                     </header>
@@ -207,88 +207,88 @@ export default function CounselingDetailPage() {
                                             value={editedNotes}
                                             onChange={(e) => setEditedNotes(e.target.value)}
                                             rows={6}
-                                            className="w-full p-2 text-sm bg-transparent border border-[hsl(var(--border))] dark:border-white/10 rounded-md focus:outline-none focus:ring-1 focus:ring-[hsl(var(--primary))] text-[hsl(var(--text-primary))] dark:text-white"
+                                            className="w-full p-2 text-sm bg-transparent border border-[hsl(var(--border))] rounded-md focus:outline-none focus:ring-1 focus:ring-[hsl(var(--primary))] text-[hsl(var(--text-primary))]"
                                             placeholder="Escribe el resumen de la sesión aquí..."
                                         />
                                         <div className="flex flex-wrap items-center gap-2">
                                             <button
-                                                onClick={handleCopilot}
-                                                disabled={copilotLoading}
-                                                className="px-3 py-1.5 bg-[hsl(var(--primary))] text-white text-2xs font-bold uppercase tracking-wide rounded hover:opacity-90 disabled:opacity-50 flex items-center gap-1"
-                                            >
-                                                {copilotLoading ? "Generando..." : "AI Copilot"}
-                                            </button>
-                                            <button
-                                                onClick={handleSave}
-                                                disabled={saving}
-                                                className="px-3 py-1.5 bg-[hsl(var(--success))] text-white text-2xs font-bold uppercase tracking-wide rounded hover:bg-[hsl(var(--success))] disabled:opacity-50"
-                                            >
-                                                {saving ? "Guardando..." : "Guardar"}
-                                            </button>
-                                            <button
-                                                onClick={() => setIsEditing(false)}
-                                                disabled={saving || copilotLoading}
-                                                className="px-3 py-1.5 bg-primary text-white text-2xs font-bold uppercase tracking-wide rounded hover:bg-primary/90 disabled:opacity-50"
-                                            >
-                                                Cancelar
-                                            </button>
-                                        </div>
-                                    </div>
-                                ) : (
-                                    <p className="text-sm text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] leading-relaxed font-medium whitespace-pre-wrap">
-                                        {session.notes || session.summary || "Sin resumen registrado."}
-                                    </p>
-                                )}
-                            </DSCard>
+                                                 onClick={handleCopilot}
+                                                 disabled={copilotLoading}
+                                                 className="px-3 py-1.5 bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] text-2xs font-bold uppercase tracking-wide rounded hover:opacity-90 disabled:opacity-50 flex items-center gap-1"
+                                             >
+                                                 {copilotLoading ? "Generando..." : "AI Copilot"}
+                                             </button>
+                                             <button
+                                                 onClick={handleSave}
+                                                 disabled={saving}
+                                                 className="px-3 py-1.5 bg-[hsl(var(--success))] text-[hsl(var(--primary-foreground))] text-2xs font-bold uppercase tracking-wide rounded hover:opacity-90 disabled:opacity-50"
+                                             >
+                                                 {saving ? "Guardando..." : "Guardar"}
+                                             </button>
+                                             <button
+                                                 onClick={() => setIsEditing(false)}
+                                                 disabled={saving || copilotLoading}
+                                                 className="px-3 py-1.5 bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))] text-2xs font-bold uppercase tracking-wide rounded hover:bg-[hsl(var(--surface-3))] disabled:opacity-50"
+                                             >
+                                                 Cancelar
+                                             </button>
+                                         </div>
+                                     </div>
+                                 ) : (
+                                     <p className="text-sm text-[hsl(var(--text-secondary))] leading-relaxed font-medium whitespace-pre-wrap">
+                                         {session.notes || session.summary || "Sin resumen registrado."}
+                                     </p>
+                                 )}
+                             </DSCard>
 
-                            <DSCard>
-                                <h3 className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-3">Notas confidenciales</h3>
-                                <p className="text-sm text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] leading-relaxed font-medium">
-                                    {session.confidential_notes || "Sin notas confidenciales registradas."}
-                                </p>
-                            </DSCard>
-                        </div>
+                             <DSCard>
+                                 <h3 className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-3">Notas confidenciales</h3>
+                                 <p className="text-sm text-[hsl(var(--text-secondary))] leading-relaxed font-medium">
+                                     {session.confidential_notes || "Sin notas confidenciales registradas."}
+                                 </p>
+                             </DSCard>
+                         </div>
 
-                        <aside className="space-y-3">
-                            <DSCard>
-                                <h3 className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-3">Participantes</h3>
-                                <div className="space-y-4">
-                                    <div className="flex items-center gap-3">
-                                        <div className="size-8 rounded-lg bg-[hsl(var(--primary))/10] flex items-center justify-center text-[hsl(var(--primary))]">
-                                            <User size={16} />
-                                        </div>
-                                        <div className="flex-1">
-                                            <p className="text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase">Persona</p>
-                                            <p className="text-xs font-bold">{session.persona_name}</p>
-                                        </div>
-                                    </div>
-                                    <div className="flex items-center gap-3">
-                                        <div className="size-8 rounded-lg bg-[hsl(var(--primary))/10] flex items-center justify-center text-[hsl(var(--primary))]">
-                                            <Shield size={16} />
-                                        </div>
-                                        <div className="flex-1">
-                                            <p className="text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase">Pastor ID</p>
-                                            <p className="text-xs font-bold">{session.pastor_id ?? "Sin asignar"}</p>
-                                        </div>
-                                    </div>
-                                    <div className="flex items-center gap-3">
-                                        <div className="size-8 rounded-lg bg-[hsl(var(--primary))/10] flex items-center justify-center text-[hsl(var(--secondary))]">
-                                            <MessageSquare size={16} />
-                                        </div>
-                                        <div className="flex-1">
-                                            <p className="text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase">Duracion</p>
-                                            <p className="text-xs font-bold">{session.duration_minutes} minutos</p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </DSCard>
+                         <aside className="space-y-3">
+                             <DSCard>
+                                 <h3 className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-3">Participantes</h3>
+                                 <div className="space-y-4">
+                                     <div className="flex items-center gap-3">
+                                         <div className="size-8 rounded-lg bg-[hsl(var(--primary))/10] flex items-center justify-center text-[hsl(var(--primary))]">
+                                             <User size={16} />
+                                         </div>
+                                         <div className="flex-1">
+                                             <p className="text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase">Persona</p>
+                                             <p className="text-xs font-bold">{session.persona_name}</p>
+                                         </div>
+                                     </div>
+                                     <div className="flex items-center gap-3">
+                                         <div className="size-8 rounded-lg bg-[hsl(var(--primary))/10] flex items-center justify-center text-[hsl(var(--primary))]">
+                                             <Shield size={16} />
+                                         </div>
+                                         <div className="flex-1">
+                                             <p className="text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase">Pastor ID</p>
+                                             <p className="text-xs font-bold">{session.pastor_id ?? "Sin asignar"}</p>
+                                         </div>
+                                     </div>
+                                     <div className="flex items-center gap-3">
+                                         <div className="size-8 rounded-lg bg-[hsl(var(--primary))/10] flex items-center justify-center text-[hsl(var(--secondary))]">
+                                             <MessageSquare size={16} />
+                                         </div>
+                                         <div className="flex-1">
+                                             <p className="text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase">Duracion</p>
+                                             <p className="text-xs font-bold">{session.duration_minutes} minutos</p>
+                                         </div>
+                                     </div>
+                                 </div>
+                             </DSCard>
 
-                            <DSCard>
-                                <h3 className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-3">Historial</h3>
-                                <div className="space-y-3">
-                                    {session.history.length > 0 ? session.history.map((item) => (
-                                        <div key={item.id} className="rounded-lg border border-[hsl(var(--border))] dark:border-white/5 p-3">
-                                            <p className="text-xs font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">{item.text}</p>
+                             <DSCard>
+                                 <h3 className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-3">Historial</h3>
+                                 <div className="space-y-3">
+                                     {session.history.length > 0 ? session.history.map((item) => (
+                                         <div key={item.id} className="rounded-lg border border-[hsl(var(--border))] p-3">
+                                             <p className="text-xs font-bold text-[hsl(var(--text-primary))]">{item.text}</p>
                                             <p className="text-2xs text-[hsl(var(--text-secondary))]">{item.date ? new Date(item.date).toLocaleDateString("es-CO") : "Sin fecha"}</p>
                                         </div>
                                     )) : (
