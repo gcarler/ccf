@@ -4,6 +4,7 @@ import React, { useCallback, useEffect, useState } from "react";
 import { Loader2 } from "lucide-react";
 import { apiFetch } from "@/lib/http";
 import { useToast } from "@/context/ToastContext";
+import SidePanel from "@/components/ui/SidePanel";
 
 interface Plantilla {
   id: string;
@@ -144,107 +145,114 @@ export default function TemplatesPage() {
         </div>
       )}
 
-      {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="bg-[hsl(var(--surface-1))] dark:bg-[#1E1F21] rounded-xl shadow-xl w-full max-w-md flex flex-col max-h-[90vh]">
-            <div className="px-6 py-4 border-b border-[hsl(var(--border))] dark:border-white/5">
-              <h2 className="text-xl font-bold text-[hsl(var(--text-primary))] dark:text-white">
-                {formData.id ? "Editar Plantilla" : "Nueva Plantilla"}
-              </h2>
-            </div>
-
-            <form onSubmit={handleSave} className="overflow-y-auto p-6 flex flex-col gap-4">
-              <div>
-                <label className="block text-sm font-medium text-[hsl(var(--text-primary))] dark:text-white mb-1">Categoría</label>
-                <select
-                  required
-                  value={formData.categoria_id || ""}
-                  onChange={e => setFormData({...formData, categoria_id: e.target.value})}
-                  className="w-full bg-[hsl(var(--surface-1))] dark:bg-black/20 border border-[hsl(var(--border))] dark:border-white/10 rounded-md shadow-sm text-[hsl(var(--text-primary))] dark:text-white px-3 py-2 outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]/0.3"
-                >
-                  <option value="">Selecciona una categoría</option>
-                  {categorias.map(c => (
-                    <option key={c.id} value={c.id}>{c.nombre}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-[hsl(var(--text-primary))] dark:text-white mb-1">Título Interno</label>
-                <input
-                  required
-                  type="text"
-                  value={formData.titulo || ""}
-                  onChange={e => setFormData({...formData, titulo: e.target.value})}
-                  className="w-full bg-[hsl(var(--surface-1))] dark:bg-black/20 border border-[hsl(var(--border))] dark:border-white/10 rounded-md shadow-sm text-[hsl(var(--text-primary))] dark:text-white px-3 py-2 outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]/0.3"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-[hsl(var(--text-primary))] dark:text-white mb-1">Canal</label>
-                <select
-                  required
-                  value={formData.canal || "WHATSAPP"}
-                  onChange={e => setFormData({...formData, canal: e.target.value})}
-                  className="w-full bg-[hsl(var(--surface-1))] dark:bg-black/20 border border-[hsl(var(--border))] dark:border-white/10 rounded-md shadow-sm text-[hsl(var(--text-primary))] dark:text-white px-3 py-2 outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]/0.3"
-                >
-                  <option value="WHATSAPP">WhatsApp</option>
-                  <option value="EMAIL">Email</option>
-                  <option value="SMS">SMS</option>
-                </select>
-              </div>
-
-              {formData.canal === "EMAIL" && (
-                <div>
-                  <label className="block text-sm font-medium text-[hsl(var(--text-primary))] dark:text-white mb-1">Asunto</label>
-                  <input
-                    type="text"
-                    value={formData.asunto || ""}
-                    onChange={e => setFormData({...formData, asunto: e.target.value})}
-                    className="w-full bg-[hsl(var(--surface-1))] dark:bg-black/20 border border-[hsl(var(--border))] dark:border-white/10 rounded-md shadow-sm text-[hsl(var(--text-primary))] dark:text-white px-3 py-2 outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]/0.3"
-                  />
-                </div>
-              )}
-
-              <div>
-                <label className="block text-sm font-medium text-[hsl(var(--text-primary))] dark:text-white mb-1">Contenido (Usa {'{{var}}'} para dinámicos)</label>
-                <textarea
-                  required
-                  rows={4}
-                  value={formData.contenido_texto || ""}
-                  onChange={e => setFormData({...formData, contenido_texto: e.target.value})}
-                  className="w-full bg-[hsl(var(--surface-1))] dark:bg-black/20 border border-[hsl(var(--border))] dark:border-white/10 rounded-md shadow-sm text-[hsl(var(--text-primary))] dark:text-white px-3 py-2 outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]/0.3"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-[hsl(var(--text-primary))] dark:text-white mb-1">Archivo Adjunto (SeaweedFS)</label>
-                <input
-                  type="file"
-                  onChange={e => setSelectedFile(e.target.files?.[0] || null)}
-                  className="w-full text-sm text-[hsl(var(--text-secondary))] file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-info-soft file:text-info-text hover:file:bg-[hsl(var(--info-muted))]"
-                />
-              </div>
-
-              <div className="pt-4 flex justify-end gap-3">
-                <button
-                  type="button"
-                  onClick={() => setIsModalOpen(false)}
-                  className="px-4 py-2 text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5 rounded-md font-medium"
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-2 bg-[hsl(var(--info))] hover:bg-[hsl(var(--info))] text-white rounded-md font-medium"
-                >
-                  Guardar
-                </button>
-              </div>
-            </form>
+      <SidePanel
+        isOpen={isModalOpen}
+        onClose={() => {
+          setIsModalOpen(false);
+          setSelectedFile(null);
+          setFormData({});
+        }}
+        title={formData.id ? "Editar Plantilla" : "Nueva Plantilla"}
+        subtitle="Configura el contenido y variables para este canal de comunicación"
+        width="w-[520px]"
+      >
+        <form onSubmit={handleSave} className="flex flex-col gap-4 mt-2 pb-4">
+          <div>
+            <label className="block text-sm font-medium text-[hsl(var(--text-primary))] mb-1">Categoría</label>
+            <select
+              required
+              value={formData.categoria_id || ""}
+              onChange={e => setFormData({...formData, categoria_id: e.target.value})}
+              className="w-full bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] rounded-md shadow-xs text-[hsl(var(--text-primary))] px-3 py-2 outline-hidden focus:ring-2 focus:ring-[hsl(var(--primary)/0.3)] transition-all"
+            >
+              <option value="">Selecciona una categoría</option>
+              {categorias.map(c => (
+                <option key={c.id} value={c.id}>{c.nombre}</option>
+              ))}
+            </select>
           </div>
-        </div>
-      )}
+
+          <div>
+            <label className="block text-sm font-medium text-[hsl(var(--text-primary))] mb-1">Título Interno</label>
+            <input
+              required
+              type="text"
+              value={formData.titulo || ""}
+              onChange={e => setFormData({...formData, titulo: e.target.value})}
+              className="w-full bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] rounded-md shadow-xs text-[hsl(var(--text-primary))] px-3 py-2 outline-hidden focus:ring-2 focus:ring-[hsl(var(--primary)/0.3)] transition-all"
+              placeholder="Ej: Bienvenida Nuevos Miembros"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-[hsl(var(--text-primary))] mb-1">Canal</label>
+            <select
+              required
+              value={formData.canal || "WHATSAPP"}
+              onChange={e => setFormData({...formData, canal: e.target.value})}
+              className="w-full bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] rounded-md shadow-xs text-[hsl(var(--text-primary))] px-3 py-2 outline-hidden focus:ring-2 focus:ring-[hsl(var(--primary)/0.3)] transition-all"
+            >
+              <option value="WHATSAPP">WhatsApp</option>
+              <option value="EMAIL">Email</option>
+              <option value="SMS">SMS</option>
+            </select>
+          </div>
+
+          {formData.canal === "EMAIL" && (
+            <div>
+              <label className="block text-sm font-medium text-[hsl(var(--text-primary))] mb-1">Asunto</label>
+              <input
+                type="text"
+                value={formData.asunto || ""}
+                onChange={e => setFormData({...formData, asunto: e.target.value})}
+                className="w-full bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] rounded-md shadow-xs text-[hsl(var(--text-primary))] px-3 py-2 outline-hidden focus:ring-2 focus:ring-[hsl(var(--primary)/0.3)] transition-all"
+                placeholder="Asunto del correo electrónico"
+              />
+            </div>
+          )}
+
+          <div>
+            <label className="block text-sm font-medium text-[hsl(var(--text-primary))] mb-1">Contenido (Usa {'{{var}}'} para dinámicos)</label>
+            <textarea
+              required
+              rows={4}
+              value={formData.contenido_texto || ""}
+              onChange={e => setFormData({...formData, contenido_texto: e.target.value})}
+              className="w-full bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] rounded-md shadow-xs text-[hsl(var(--text-primary))] px-3 py-2 outline-hidden focus:ring-2 focus:ring-[hsl(var(--primary)/0.3)] transition-all"
+              placeholder="Escribe el mensaje..."
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-[hsl(var(--text-primary))] mb-1">Archivo Adjunto (SeaweedFS)</label>
+            <input
+              type="file"
+              onChange={e => setSelectedFile(e.target.files?.[0] || null)}
+              className="w-full text-sm text-[hsl(var(--text-secondary))] file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-[hsl(var(--primary)/0.1)] file:text-[hsl(var(--primary))] hover:file:bg-[hsl(var(--primary)/0.2)] transition-colors cursor-pointer"
+            />
+          </div>
+
+          <div className="pt-4 border-t border-[hsl(var(--border))] flex justify-end gap-3">
+            <button
+              type="button"
+              onClick={() => {
+                setIsModalOpen(false);
+                setSelectedFile(null);
+                setFormData({});
+              }}
+              className="px-4 py-2 text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] rounded-md font-medium transition-colors"
+            >
+              Cancelar
+            </button>
+            <button
+              type="submit"
+              className="px-4 py-2 bg-[hsl(var(--primary))] hover:opacity-90 text-[hsl(var(--primary-foreground))] rounded-md font-medium transition-opacity"
+            >
+              Guardar
+            </button>
+          </div>
+        </form>
+      </SidePanel>
     </div>
   );
 }

@@ -13,6 +13,7 @@ import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import clsx from "clsx";
 import ConfirmActionDrawer, { type ConfirmActionState } from "@/components/ConfirmActionDrawer";
+import SidePanel from "@/components/ui/SidePanel";
 
 const INPUT = "w-full bg-[hsl(var(--bg-muted))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-md py-2.5 px-4 text-sm text-[hsl(var(--text-primary))] outline-none focus:ring-4 focus:ring-[hsl(var(--primary))]/10 focus:border-[hsl(var(--info)/100%)] transition-all";
 const LABEL = "block text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-1.5";
@@ -226,49 +227,42 @@ export default function VolunteerDetailPage() {
             </main>
 
             {/* Edit Drawer */}
-            <AnimatePresence>
-                {editOpen && (
-                    <>
-                        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                            className="fixed inset-x-0 bottom-0 top-10 z-[90] bg-black/30 backdrop-blur-sm"
-                            onClick={() => setEditOpen(false)} />
-                        <motion.aside
-                            initial={{ x: "100%", opacity: 0 }} animate={{ x: 0, opacity: 1 }}
-                            exit={{ x: "100%", opacity: 0 }}
-                            transition={{ type: "spring", damping: 26, stiffness: 260 }}
-                            className="fixed top-10 right-0 h-[calc(100vh-2.5rem)] z-[100] w-full max-w-md bg-[hsl(var(--surface-1))] dark:bg-[#15171c] shadow-2xl rounded-l-lg overflow-hidden flex flex-col">
-                            <div className="flex items-center justify-between p-4 border-b border-[hsl(var(--border))] dark:border-white/5">
-                                <div>
-                                    <p className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Editar Servidor</p>
-                                    <h2 className="text-xl font-bold text-[hsl(var(--text-primary))] dark:text-white mt-1">{volunteer.name}</h2>
-                                </div>
-                                <button onClick={() => setEditOpen(false)}
-                                    className="size-10 rounded-md bg-[hsl(var(--surface-2))] dark:bg-white/5 flex items-center justify-center text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-3))] dark:hover:bg-white/10 transition-all">
-                                    <X size={18} />
-                                </button>
-                            </div>
-                            <div className="flex-1 overflow-y-auto p-4 space-y-5">
-                                <div>
-                                    <label className={LABEL}>Rol / Cargo</label>
-                                    <input value={fRole} onChange={(e) => setFRole(e.target.value)}
-                                        placeholder="Ej: Ujier, Música, Tecnología..."
-                                        className={INPUT} />
-                                </div>
-                            </div>
-                            <div className="p-3 border-t border-[hsl(var(--border))] dark:border-white/5 flex gap-3">
-                                <button onClick={() => setEditOpen(false)}
-                                    className="flex-1 py-3 rounded-md border border-[hsl(var(--border))] dark:border-white/10 text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] transition-all">
-                                    Cancelar
-                                </button>
-                                <button onClick={handleSave} disabled={saving}
-                                    className="flex-1 py-3 rounded-md bg-[hsl(var(--primary))] text-white text-2xs font-bold uppercase tracking-wide shadow-lg shadow-[hsl(var(--info)/20%)] hover:bg-[hsl(var(--primary))] disabled:opacity-50 transition-all flex items-center justify-center gap-2">
-                                    <Save size={14} /> {saving ? "Guardando..." : "Guardar"}
-                                </button>
-                            </div>
-                        </motion.aside>
-                    </>
-                )}
-            </AnimatePresence>
+            <SidePanel
+                isOpen={editOpen}
+                onClose={() => setEditOpen(false)}
+                title="Editar Servidor"
+                subtitle={volunteer.name}
+                width="w-full max-w-md"
+            >
+                <div className="flex flex-col gap-4 py-2">
+                    <div>
+                        <label className={LABEL}>Rol / Cargo</label>
+                        <input
+                            value={fRole}
+                            onChange={(e) => setFRole(e.target.value)}
+                            placeholder="Ej: Ujier, Música, Tecnología..."
+                            className={INPUT}
+                        />
+                    </div>
+                    <div className="pt-4 border-t border-[hsl(var(--border))] flex gap-3">
+                        <button
+                            type="button"
+                            onClick={() => setEditOpen(false)}
+                            className="flex-1 py-2.5 rounded-md border border-[hsl(var(--border))] text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] transition-colors"
+                        >
+                            Cancelar
+                        </button>
+                        <button
+                            type="button"
+                            onClick={handleSave}
+                            disabled={saving}
+                            className="flex-1 py-2.5 rounded-md bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] text-2xs font-bold uppercase tracking-wide hover:opacity-90 disabled:opacity-50 transition-opacity flex items-center justify-center gap-2"
+                        >
+                            <Save size={14} /> {saving ? "Guardando..." : "Guardar"}
+                        </button>
+                    </div>
+                </div>
+            </SidePanel>
 
             <ConfirmActionDrawer action={confirmDelete} onClose={() => setConfirmDelete(null)} />
         </CrmShell>

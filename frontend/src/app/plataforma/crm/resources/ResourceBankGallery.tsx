@@ -13,6 +13,7 @@ import {
   X,
 } from 'lucide-react';
 import { apiFetch } from '@/lib/http';
+import SidePanel from '@/components/ui/SidePanel';
 import type {
   CanalEnvio,
   PlantillaMensaje,
@@ -116,30 +117,16 @@ export default function ResourceBankGallery({
   if (!open) return null;
 
   return (
-    <>
-      <div className="fixed inset-0 bg-black/50 z-50" onClick={onClose} />
-      <div className="fixed inset-x-4 top-[5vh] bottom-[5vh] md:inset-x-10 lg:inset-x-20 bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--bg-muted))] z-50 rounded-2xl shadow-2xl flex flex-col overflow-hidden">
-        {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-[hsl(var(--border))] dark:border-white/10">
-          <div>
-            <h2 className="text-base font-semibold text-[hsl(var(--text-primary))] dark:text-white flex items-center gap-2">
-              <BookOpen size={18} className="text-[hsl(var(--primary))]" />
-              Banco de recursos
-            </h2>
-            <p className="text-xs text-[hsl(var(--text-secondary))] mt-0.5">
-              Plantillas predefinidas para iglesia. Selecciona una para usarla en tu sede.
-            </p>
-          </div>
-          <button
-            onClick={onClose}
-            className="size-8 flex items-center justify-center rounded-lg text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/10 transition-colors"
-          >
-            <X size={16} />
-          </button>
-        </div>
-
+    <SidePanel
+      isOpen={open}
+      onClose={onClose}
+      title="Banco de recursos"
+      subtitle="Plantillas predefinidas para iglesia. Selecciona una para usarla en tu sede."
+      width="w-full max-w-3xl"
+    >
+      <div className="flex flex-col gap-4 mt-2">
         {/* Toolbar */}
-        <div className="flex flex-col sm:flex-row gap-3 px-6 py-3 border-b border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-white/[0.02]">
+        <div className="flex flex-col sm:flex-row gap-3 pb-3 border-b border-[hsl(var(--border))]">
           <div className="relative flex-1">
             <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-[hsl(var(--text-secondary))]" />
             <input
@@ -294,13 +281,13 @@ export default function ResourceBankGallery({
         </div>
 
         {/* Footer */}
-        <div className="px-6 py-3 border-t border-[hsl(var(--border))] dark:border-white/10 flex items-center justify-between">
+        <div className="pt-3 border-t border-[hsl(var(--border))] flex items-center justify-between">
           <p className="text-xs text-[hsl(var(--text-secondary))]">
             {filteredTemplates.length} plantilla{filteredTemplates.length !== 1 ? 's' : ''} disponible{filteredTemplates.length !== 1 ? 's' : ''}
           </p>
           {error && <p className="text-xs text-[hsl(var(--destructive))]">{error}</p>}
         </div>
       </div>
-    </>
+    </SidePanel>
   );
 }

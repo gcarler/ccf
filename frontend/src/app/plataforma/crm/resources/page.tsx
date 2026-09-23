@@ -13,6 +13,7 @@ import type {
     BitacoraEnvio, CampaignResult, CanalEnvio, CategoriaRecurso,
     PlantillaMensaje, RecursoAdjunto,
 } from '@/types/crm';
+import SidePanel from '@/components/ui/SidePanel';
 import ResourceBankGallery from './ResourceBankGallery';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -508,163 +509,159 @@ function PlantillaDrawer({
     if (!open) return null;
 
     return (
-        <>
-            <div className="fixed inset-0 bg-black/40 z-40" onClick={onClose} />
-            <div className="fixed right-0 top-0 bottom-0 w-[480px] bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--bg-muted))] border-l border-[hsl(var(--border))] dark:border-white/10 z-50 flex flex-col shadow-2xl">
-                <div className="flex items-center justify-between px-5 py-4 border-b border-[hsl(var(--border))] dark:border-white/10">
-                    <h2 className="text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-white">
-                        {editing ? 'Editar plantilla' : 'Nueva plantilla'}
-                    </h2>
-                    <button onClick={onClose} className="size-7 flex items-center justify-center rounded-lg text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/10 transition-colors" aria-label="Cerrar">
-                        <X size={15} />
-                    </button>
+        <SidePanel
+            isOpen={open}
+            onClose={onClose}
+            title={editing ? 'Editar plantilla' : 'Nueva plantilla'}
+            subtitle="Define canal, variables requeridas y contenido"
+            width="w-[500px]"
+        >
+            <div className="space-y-5 py-2">
+                {/* Título */}
+                <div>
+                    <label className="block text-xs font-medium text-[hsl(var(--text-secondary))] mb-1">Título *</label>
+                    <input
+                        value={form.titulo}
+                        onChange={e => setF('titulo', e.target.value)}
+                        className="w-full text-sm px-3 py-2 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-[hsl(var(--text-primary))] focus:outline-hidden focus:ring-2 focus:ring-[hsl(var(--primary)/0.3)] transition-all"
+                        placeholder="Nombre de la plantilla"
+                    />
                 </div>
 
-                <div className="flex-1 overflow-y-auto px-5 py-4 space-y-5">
-                    {/* Título */}
+                {/* Canal */}
+                <div>
+                    <label className="block text-xs font-medium text-[hsl(var(--text-secondary))] mb-1">Canal *</label>
+                    <div className="flex gap-2">
+                        {(['WHATSAPP', 'EMAIL', 'SMS'] as CanalEnvio[]).map(c => {
+                            const m = CANAL_META[c]; const Icon = m.icon;
+                            return (
+                                <button
+                                    key={c}
+                                    type="button"
+                                    onClick={() => setF('canal', c)}
+                                    className={clsx(
+                                        'flex-1 flex items-center justify-center gap-1.5 h-9 rounded-lg border text-xs font-medium transition-all',
+                                        form.canal === c
+                                            ? `${m.bg} ${m.color} border-current`
+                                            : 'border-[hsl(var(--border))] text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))]',
+                                    )}
+                                >
+                                    <Icon size={13} />{m.label}
+                                </button>
+                            );
+                        })}
+                    </div>
+                </div>
+
+                {/* Categoría */}
+                <div>
+                    <label className="block text-xs font-medium text-[hsl(var(--text-secondary))] mb-1">Categoría *</label>
+                    <select
+                        value={form.categoria_id}
+                        onChange={e => setF('categoria_id', e.target.value)}
+                        className="w-full text-sm px-3 py-2 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-[hsl(var(--text-primary))] focus:outline-hidden focus:ring-2 focus:ring-[hsl(var(--primary)/0.3)] transition-all"
+                    >
+                        <option value="">Seleccionar categoría…</option>
+                        {categorias.map(c => (
+                            <option key={c.id} value={c.id}>{c.nombre}</option>
+                        ))}
+                    </select>
+                </div>
+
+                {/* Asunto (solo email) */}
+                {form.canal === 'EMAIL' && (
                     <div>
-                        <label className="block text-xs font-medium text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] mb-1">Título *</label>
+                        <label className="block text-xs font-medium text-[hsl(var(--text-secondary))] mb-1">Asunto del email</label>
                         <input
-                            value={form.titulo}
-                            onChange={e => setF('titulo', e.target.value)}
-                            className="w-full text-sm px-3 py-2 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-white/5 text-[hsl(var(--text-primary))] dark:text-white focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.4)]"
-                            placeholder="Nombre de la plantilla"
+                            value={form.asunto}
+                            onChange={e => setF('asunto', e.target.value)}
+                            className="w-full text-sm px-3 py-2 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-[hsl(var(--text-primary))] focus:outline-hidden focus:ring-2 focus:ring-[hsl(var(--primary)/0.3)] transition-all"
+                            placeholder="Asunto del correo"
                         />
                     </div>
+                )}
 
-                    {/* Canal */}
-                    <div>
-                        <label className="block text-xs font-medium text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] mb-1">Canal *</label>
-                        <div className="flex gap-2">
-                            {(['WHATSAPP', 'EMAIL', 'SMS'] as CanalEnvio[]).map(c => {
-                                const m = CANAL_META[c]; const Icon = m.icon;
-                                return (
-                                    <button
-                                        key={c}
-                                        onClick={() => setF('canal', c)}
-                                        className={clsx(
-                                            'flex-1 flex items-center justify-center gap-1.5 h-9 rounded-lg border text-xs font-medium transition-all',
-                                            form.canal === c
-                                                ? `${m.bg} ${m.color} border-current`
-                                                : 'border-[hsl(var(--border))] dark:border-white/10 text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5',
-                                        )}
-                                    >
-                                        <Icon size={13} />{m.label}
+                {/* Variables */}
+                <div>
+                    <label className="block text-xs font-medium text-[hsl(var(--text-secondary))] mb-1">Variables requeridas</label>
+                    <div className="flex gap-2 mb-2">
+                        <input
+                            value={newVar}
+                            onChange={e => setNewVar(e.target.value)}
+                            onKeyDown={e => e.key === 'Enter' && addVar()}
+                            placeholder="nombre_variable"
+                            className="flex-1 text-xs px-2.5 py-1.5 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-[hsl(var(--text-primary))] focus:outline-hidden focus:ring-2 focus:ring-[hsl(var(--primary)/0.3)] transition-all"
+                        />
+                        <button type="button" onClick={addVar} className="px-3 h-8 rounded-lg bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))] text-xs font-medium hover:bg-[hsl(var(--surface-3))] transition-colors">
+                            + Agregar
+                        </button>
+                    </div>
+                    {form.variables_requeridas.length > 0 && (
+                        <div className="flex flex-wrap gap-1.5">
+                            {form.variables_requeridas.map(v => (
+                                <span key={v} className="inline-flex items-center gap-1 text-xs font-mono bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))] px-2 py-0.5 rounded-md border border-[hsl(var(--border))]">
+                                    {`{{${v}}}`}
+                                    <button type="button" onClick={() => removeVar(v)} className="text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--destructive))] ml-0.5" aria-label="Eliminar variable">
+                                        <X size={10} />
                                     </button>
-                                );
-                            })}
-                        </div>
-                    </div>
-
-                    {/* Categoría */}
-                    <div>
-                        <label className="block text-xs font-medium text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] mb-1">Categoría *</label>
-                        <select
-                            value={form.categoria_id}
-                            onChange={e => setF('categoria_id', e.target.value)}
-                            className="w-full text-sm px-3 py-2 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-2))] text-[hsl(var(--text-primary))] dark:text-white focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.4)]"
-                        >
-                            <option value="">Seleccionar categoría…</option>
-                            {categorias.map(c => (
-                                <option key={c.id} value={c.id}>{c.nombre}</option>
+                                </span>
                             ))}
-                        </select>
-                    </div>
-
-                    {/* Asunto (solo email) */}
-                    {form.canal === 'EMAIL' && (
-                        <div>
-                            <label className="block text-xs font-medium text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] mb-1">Asunto del email</label>
-                            <input
-                                value={form.asunto}
-                                onChange={e => setF('asunto', e.target.value)}
-                                className="w-full text-sm px-3 py-2 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-white/5 text-[hsl(var(--text-primary))] dark:text-white focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.4)]"
-                                placeholder="Asunto del correo"
-                            />
                         </div>
                     )}
+                </div>
 
-                    {/* Variables */}
-                    <div>
-                        <label className="block text-xs font-medium text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] mb-1">Variables requeridas</label>
-                        <div className="flex gap-2 mb-2">
-                            <input
-                                value={newVar}
-                                onChange={e => setNewVar(e.target.value)}
-                                onKeyDown={e => e.key === 'Enter' && addVar()}
-                                placeholder="nombre_variable"
-                                className="flex-1 text-xs px-2.5 py-1.5 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-white/5 text-[hsl(var(--text-primary))] dark:text-white focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.4)]"
-                            />
-                            <button onClick={addVar} className="px-3 h-8 rounded-lg bg-[hsl(var(--surface-2))] dark:bg-white/10 text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] text-xs font-medium hover:bg-[hsl(var(--surface-3))] dark:hover:bg-white/20 transition-colors">
-                                + Agregar
-                            </button>
-                        </div>
+                {/* Contenido */}
+                <div>
+                    <div className="flex items-center justify-between mb-1">
+                        <label className="text-xs font-medium text-[hsl(var(--text-secondary))]">Contenido *</label>
                         {form.variables_requeridas.length > 0 && (
-                            <div className="flex flex-wrap gap-1.5">
+                            <div className="flex gap-1 flex-wrap justify-end">
                                 {form.variables_requeridas.map(v => (
-                                    <span key={v} className="inline-flex items-center gap-1 text-xs font-mono bg-[hsl(var(--surface-2))] dark:bg-white/10 text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] px-2 py-0.5 rounded-md">
+                                    <button key={v} type="button" onClick={() => insertVar(v)}
+                                        className="text-2xs font-mono bg-[hsl(var(--surface-2))] hover:bg-[hsl(var(--surface-3))] text-[hsl(var(--text-secondary))] px-1.5 py-0.5 rounded transition-colors border border-[hsl(var(--border))]">
                                         {`{{${v}}}`}
-                                        <button onClick={() => removeVar(v)} className="text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--destructive))] ml-0.5" aria-label="Eliminar variable">
-                                            <X size={10} />
-                                        </button>
-                                    </span>
+                                    </button>
                                 ))}
                             </div>
                         )}
                     </div>
-
-                    {/* Contenido */}
-                    <div>
-                        <div className="flex items-center justify-between mb-1">
-                            <label className="text-xs font-medium text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">Contenido *</label>
-                            {form.variables_requeridas.length > 0 && (
-                                <div className="flex gap-1 flex-wrap justify-end">
-                                    {form.variables_requeridas.map(v => (
-                                        <button key={v} onClick={() => insertVar(v)}
-                                            className="text-2xs font-mono bg-[hsl(var(--surface-2))] dark:bg-white/10 hover:bg-[hsl(var(--surface-3))] dark:hover:bg-white/20 text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] px-1.5 py-0.5 rounded transition-colors">
-                                            {`{{${v}}}`}
-                                        </button>
-                                    ))}
-                                </div>
-                            )}
-                        </div>
-                        <textarea
-                            ref={bodyRef}
-                            value={form.contenido_texto}
-                            onChange={e => setF('contenido_texto', e.target.value)}
-                            rows={8}
-                            className="w-full text-sm px-3 py-2 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-white/5 text-[hsl(var(--text-primary))] dark:text-white placeholder:text-[hsl(var(--text-secondary))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.4)] resize-none font-mono leading-relaxed"
-                            placeholder="Hola {{nombre}}, te escribimos desde {{sede}}…"
-                        />
-                    </div>
-
-                    {/* Meta template id */}
-                    <div>
-                        <label className="block text-xs font-medium text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] mb-1">ID plantilla Meta (WhatsApp Business API)</label>
-                        <input
-                            value={form.meta_template_id}
-                            onChange={e => setF('meta_template_id', e.target.value)}
-                            className="w-full text-sm px-3 py-2 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-white/5 text-[hsl(var(--text-primary))] dark:text-white focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.4)]"
-                            placeholder="Opcional — ej: bienvenida_nuevo_v1"
-                        />
-                    </div>
+                    <textarea
+                        ref={bodyRef}
+                        value={form.contenido_texto}
+                        onChange={e => setF('contenido_texto', e.target.value)}
+                        rows={8}
+                        className="w-full text-sm px-3 py-2 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-[hsl(var(--text-primary))] placeholder:text-[hsl(var(--text-secondary))] focus:outline-hidden focus:ring-2 focus:ring-[hsl(var(--primary)/0.3)] resize-none font-mono leading-relaxed"
+                        placeholder="Hola {{nombre}}, te escribimos desde {{sede}}…"
+                    />
                 </div>
 
-                <div className="px-5 py-4 border-t border-[hsl(var(--border))] dark:border-white/10 flex gap-2">
-                    <button onClick={onClose} className="flex-1 h-9 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 text-sm text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5 transition-colors">
+                {/* Meta template id */}
+                <div>
+                    <label className="block text-xs font-medium text-[hsl(var(--text-secondary))] mb-1">ID plantilla Meta (WhatsApp Business API)</label>
+                    <input
+                        value={form.meta_template_id}
+                        onChange={e => setF('meta_template_id', e.target.value)}
+                        className="w-full text-sm px-3 py-2 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-[hsl(var(--text-primary))] focus:outline-hidden focus:ring-2 focus:ring-[hsl(var(--primary)/0.3)] transition-all"
+                        placeholder="Opcional — ej: bienvenida_nuevo_v1"
+                    />
+                </div>
+
+                <div className="pt-4 border-t border-[hsl(var(--border))] flex gap-2">
+                    <button type="button" onClick={onClose} className="flex-1 h-9 rounded-lg border border-[hsl(var(--border))] text-sm text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] transition-colors">
                         Cancelar
                     </button>
                     <button
+                        type="button"
                         onClick={submit}
                         disabled={saving || !form.titulo || !form.contenido_texto || !form.categoria_id}
-                        className="flex-1 h-9 rounded-lg bg-[hsl(var(--primary))] text-white text-sm font-medium hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center justify-center gap-1.5"
+                        className="flex-1 h-9 rounded-lg bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] text-sm font-medium hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center justify-center gap-1.5"
                     >
                         {saving && <Loader2 size={13} className="animate-spin" />}
                         {editing ? 'Guardar cambios' : 'Crear plantilla'}
                     </button>
                 </div>
             </div>
-        </>
+        </SidePanel>
     );
 }
 
@@ -705,50 +702,47 @@ function CatDrawer({
     if (!open) return null;
 
     return (
-        <>
-            <div className="fixed inset-0 bg-black/40 z-40" onClick={onClose} />
-            <div className="fixed right-0 top-0 bottom-0 w-80 bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--bg-muted))] border-l border-[hsl(var(--border))] dark:border-white/10 z-50 flex flex-col shadow-2xl">
-                <div className="flex items-center justify-between px-5 py-4 border-b border-[hsl(var(--border))] dark:border-white/10">
-                    <h2 className="text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-white">Nueva categoría</h2>
-                    <button onClick={onClose} className="size-7 flex items-center justify-center rounded-lg text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/10 transition-colors" aria-label="Cerrar">
-                        <X size={15} />
-                    </button>
+        <SidePanel
+            isOpen={open}
+            onClose={onClose}
+            title="Nueva categoría"
+            subtitle="Crea una categoría para organizar plantillas y recursos"
+            width="w-[400px]"
+        >
+            <div className="space-y-4 py-2">
+                <div>
+                    <label className="block text-xs font-medium text-[hsl(var(--text-secondary))] mb-1">Nombre *</label>
+                    <input value={nombre} onChange={e => setNombre(e.target.value)}
+                        className="w-full text-sm px-3 py-2 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-[hsl(var(--text-primary))] focus:outline-hidden focus:ring-2 focus:ring-[hsl(var(--primary)/0.3)] transition-all"
+                        placeholder="Ej: Bienvenida nuevos" />
                 </div>
-                <div className="flex-1 px-5 py-4 space-y-4">
-                    <div>
-                        <label className="block text-xs font-medium text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] mb-1">Nombre *</label>
-                        <input value={nombre} onChange={e => setNombre(e.target.value)}
-                            className="w-full text-sm px-3 py-2 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-white/5 text-[hsl(var(--text-primary))] dark:text-white focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.4)]"
-                            placeholder="Ej: Bienvenida nuevos" />
-                    </div>
-                    <div>
-                        <label className="block text-xs font-medium text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] mb-1">Descripción</label>
-                        <input value={descripcion} onChange={e => setDescripcion(e.target.value)}
-                            className="w-full text-sm px-3 py-2 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-white/5 text-[hsl(var(--text-primary))] dark:text-white focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.4)]"
-                            placeholder="Opcional" />
-                    </div>
-                    <div>
-                        <label className="block text-xs font-medium text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] mb-2">Color</label>
-                        <div className="flex flex-wrap gap-2">
-                            {DEFAULT_COLORS.map(c => (
-                                <button key={c} onClick={() => setColor(c)}
-                                    className={clsx('size-7 rounded-full border-2 transition-transform', color === c ? 'scale-110 border-[hsl(var(--border))] dark:border-white/60' : 'border-transparent')}
-                                    style={{ background: c }} />
-                            ))}
-                            <input type="color" value={color} onChange={e => setColor(e.target.value)}
-                                className="size-7 rounded-full border-2 border-transparent cursor-pointer overflow-hidden" />
-                        </div>
+                <div>
+                    <label className="block text-xs font-medium text-[hsl(var(--text-secondary))] mb-1">Descripción</label>
+                    <input value={descripcion} onChange={e => setDescripcion(e.target.value)}
+                        className="w-full text-sm px-3 py-2 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-[hsl(var(--text-primary))] focus:outline-hidden focus:ring-2 focus:ring-[hsl(var(--primary)/0.3)] transition-all"
+                        placeholder="Opcional" />
+                </div>
+                <div>
+                    <label className="block text-xs font-medium text-[hsl(var(--text-secondary))] mb-2">Color</label>
+                    <div className="flex flex-wrap gap-2 items-center">
+                        {DEFAULT_COLORS.map(c => (
+                            <button key={c} type="button" onClick={() => setColor(c)}
+                                className={clsx('size-7 rounded-full border-2 transition-transform', color === c ? 'scale-110 border-[hsl(var(--foreground))] shadow-xs' : 'border-transparent')}
+                                style={{ background: c }} />
+                        ))}
+                        <input type="color" value={color} onChange={e => setColor(e.target.value)}
+                            className="size-7 rounded-full border-2 border-transparent cursor-pointer overflow-hidden" />
                     </div>
                 </div>
-                <div className="px-5 py-4 border-t border-[hsl(var(--border))] dark:border-white/10 flex gap-2">
-                    <button onClick={onClose} className="flex-1 h-9 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 text-sm text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5 transition-colors">Cancelar</button>
-                    <button onClick={submit} disabled={saving || !nombre.trim()}
-                        className="flex-1 h-9 rounded-lg bg-[hsl(var(--primary))] text-white text-sm font-medium hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-1.5 transition-opacity">
+                <div className="pt-4 border-t border-[hsl(var(--border))] flex gap-2">
+                    <button type="button" onClick={onClose} className="flex-1 h-9 rounded-lg border border-[hsl(var(--border))] text-sm text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] transition-colors">Cancelar</button>
+                    <button type="button" onClick={submit} disabled={saving || !nombre.trim()}
+                        className="flex-1 h-9 rounded-lg bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] text-sm font-medium hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-1.5 transition-opacity">
                         {saving && <Loader2 size={13} className="animate-spin" />}Crear
                     </button>
                 </div>
             </div>
-        </>
+        </SidePanel>
     );
 }
 
@@ -859,84 +853,76 @@ function SendDrawer({
     // ── Result screen (campaign) ──────────────────────────────────────────────
     if (campResult) {
         return (
-            <>
-                <div className="fixed inset-0 bg-black/40 z-40" onClick={() => { setCampResult(null); onClose(); }} />
-                <div className="fixed right-0 top-0 bottom-0 w-[420px] bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--bg-muted))] border-l border-[hsl(var(--border))] dark:border-white/10 z-50 flex flex-col shadow-2xl">
-                    <div className="flex items-center justify-between px-5 py-4 border-b border-[hsl(var(--border))] dark:border-white/10">
-                        <h2 className="text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-white">Campaña enviada</h2>
-                        <button onClick={() => { setCampResult(null); onClose(); }} className="size-7 flex items-center justify-center rounded-lg text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/10 transition-colors" aria-label="Cerrar">
-                            <X size={15} />
-                        </button>
+            <SidePanel
+                isOpen={open}
+                onClose={() => { setCampResult(null); onClose(); }}
+                title="Campaña enviada"
+                subtitle={`ID: ${campResult.external_id}`}
+                width="w-[440px]"
+            >
+                <div className="flex flex-col items-center justify-center py-6 gap-5 text-center">
+                    <div className="size-16 rounded-full bg-[hsl(var(--success-muted))] flex items-center justify-center">
+                        <Megaphone size={28} className="text-[hsl(var(--success))]" />
                     </div>
-                    <div className="flex-1 flex flex-col items-center justify-center px-5 gap-5 text-center">
-                        <div className="size-16 rounded-full bg-[hsl(var(--success-muted))] dark:bg-[hsl(var(--success)/0.2)] flex items-center justify-center">
-                            <Megaphone size={28} className="text-[hsl(var(--success))] dark:text-[hsl(var(--success))]" />
-                        </div>
-                        <div>
-                            <p className="text-lg font-semibold text-[hsl(var(--text-primary))] dark:text-white">{campResult.campaign_name}</p>
-                            <p className="text-xs text-[hsl(var(--text-secondary))] mt-1">ID: {campResult.external_id}</p>
-                        </div>
-                        <div className="flex gap-6">
-                            <div className="text-center">
-                                <p className="text-2xl font-bold text-[hsl(var(--text-primary))] dark:text-white">{campResult.target_count}</p>
-                                <p className="text-2xs font-semibold uppercase text-[hsl(var(--text-secondary))]">Destinatarios</p>
-                            </div>
-                            <div className="text-center">
-                                <p className="text-2xl font-bold text-[hsl(var(--success))]">{campResult.delivered_count}</p>
-                                <p className="text-2xs font-semibold uppercase text-[hsl(var(--success))]">Enviados</p>
-                            </div>
-                            {campResult.failed_count > 0 && (
-                                <div className="text-center">
-                                    <p className="text-2xl font-bold text-[hsl(var(--destructive))]">{campResult.failed_count}</p>
-                                    <p className="text-2xs font-semibold uppercase text-[hsl(var(--destructive))]">Fallidos</p>
-                                </div>
-                            )}
-                        </div>
-                        <button onClick={() => { setCampResult(null); onClose(); }}
-                            className="mt-4 h-9 px-6 rounded-lg bg-[hsl(var(--primary))] text-white text-sm font-medium hover:opacity-90 transition-opacity">
-                            Cerrar
-                        </button>
+                    <div>
+                        <p className="text-lg font-semibold text-[hsl(var(--text-primary))]">{campResult.campaign_name}</p>
+                        <p className="text-xs text-[hsl(var(--text-secondary))] mt-1">ID: {campResult.external_id}</p>
                     </div>
+                    <div className="flex gap-6">
+                        <div className="text-center">
+                            <p className="text-2xl font-bold text-[hsl(var(--text-primary))]">{campResult.target_count}</p>
+                            <p className="text-2xs font-semibold uppercase text-[hsl(var(--text-secondary))]">Destinatarios</p>
+                        </div>
+                        <div className="text-center">
+                            <p className="text-2xl font-bold text-[hsl(var(--success))]">{campResult.delivered_count}</p>
+                            <p className="text-2xs font-semibold uppercase text-[hsl(var(--success))]">Enviados</p>
+                        </div>
+                        {campResult.failed_count > 0 && (
+                            <div className="text-center">
+                                <p className="text-2xl font-bold text-[hsl(var(--destructive))]">{campResult.failed_count}</p>
+                                <p className="text-2xs font-semibold uppercase text-[hsl(var(--destructive))]">Fallidos</p>
+                            </div>
+                        )}
+                    </div>
+                    <button type="button" onClick={() => { setCampResult(null); onClose(); }}
+                        className="mt-4 h-9 px-6 rounded-lg bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] text-sm font-medium hover:opacity-90 transition-opacity">
+                        Cerrar
+                    </button>
                 </div>
-            </>
+            </SidePanel>
         );
     }
 
     return (
-        <>
-            <div className="fixed inset-0 bg-black/40 z-40" onClick={onClose} />
-            <div className="fixed right-0 top-0 bottom-0 w-[460px] bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--bg-muted))] border-l border-[hsl(var(--border))] dark:border-white/10 z-50 flex flex-col shadow-2xl">
-                <div className="flex items-center justify-between px-5 py-4 border-b border-[hsl(var(--border))] dark:border-white/10">
-                    <div>
-                        <h2 className="text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-white">Registrar envío</h2>
-                        <p className="text-xs text-[hsl(var(--text-secondary))] mt-0.5">{plantilla.titulo}</p>
-                    </div>
-                    <button onClick={onClose} className="size-7 flex items-center justify-center rounded-lg text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/10 transition-colors" aria-label="Cerrar">
-                        <X size={15} />
-                    </button>
-                </div>
-
+        <SidePanel
+            isOpen={open}
+            onClose={onClose}
+            title="Registrar envío"
+            subtitle={plantilla.titulo}
+            width="w-[500px]"
+        >
+            <div className="flex flex-col gap-4 py-2">
                 {/* Mode toggle */}
-                <div className="flex border-b border-[hsl(var(--border))] dark:border-white/10">
-                    <button onClick={() => setModo('individual')}
+                <div className="flex border-b border-[hsl(var(--border))]">
+                    <button type="button" onClick={() => setModo('individual')}
                         className={clsx('flex-1 flex items-center justify-center gap-2 py-2.5 text-xs font-semibold uppercase tracking-wide transition-colors',
                             modo === 'individual'
                                 ? 'text-[hsl(var(--primary))] border-b-2 border-[hsl(var(--primary))]'
-                                : 'text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-secondary))] dark:hover:text-[hsl(var(--text-secondary))]'
+                                : 'text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))]'
                         )}>
                         <Send size={12} />Individual
                     </button>
-                    <button onClick={() => setModo('campaign')}
+                    <button type="button" onClick={() => setModo('campaign')}
                         className={clsx('flex-1 flex items-center justify-center gap-2 py-2.5 text-xs font-semibold uppercase tracking-wide transition-colors',
                             modo === 'campaign'
                                 ? 'text-[hsl(var(--primary))] border-b-2 border-[hsl(var(--primary))]'
-                                : 'text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-secondary))] dark:hover:text-[hsl(var(--text-secondary))]'
+                                : 'text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))]'
                         )}>
                         <Users size={12} />Campaña
                     </button>
                 </div>
 
-                <div className="flex-1 overflow-y-auto px-5 py-4 space-y-5">
+                <div className="space-y-4">
                     {modo === 'individual' ? (
                         <>
                             {/* Destinatario */}
@@ -1061,16 +1047,16 @@ function SendDrawer({
                     </div>
                 </div>
 
-                <div className="px-5 py-4 border-t border-[hsl(var(--border))] dark:border-white/10 flex gap-2">
-                    <button onClick={onClose} className="flex-1 h-9 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 text-sm text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5 transition-colors">Cancelar</button>
-                    <button onClick={send} disabled={sending || (modo === 'individual' ? !destinatario : selectedSegments.length === 0)}
-                        className="flex-1 h-9 rounded-lg bg-[hsl(var(--primary))] text-white text-sm font-medium hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-1.5 transition-opacity">
+                <div className="pt-4 border-t border-[hsl(var(--border))] flex gap-2">
+                    <button type="button" onClick={onClose} className="flex-1 h-9 rounded-lg border border-[hsl(var(--border))] text-sm text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] transition-colors">Cancelar</button>
+                    <button type="button" onClick={send} disabled={sending || (modo === 'individual' ? !destinatario : selectedSegments.length === 0)}
+                        className="flex-1 h-9 rounded-lg bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] text-sm font-medium hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-1.5 transition-opacity">
                         {sending && <Loader2 size={13} className="animate-spin" />}
                         {modo === 'campaign' ? <><Users size={13} />Enviar campaña</> : <><Send size={13} />Registrar envío</>}
                     </button>
                 </div>
             </div>
-        </>
+        </SidePanel>
     );
 }
 
