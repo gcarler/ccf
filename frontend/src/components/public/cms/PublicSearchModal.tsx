@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
 import { Search, X, Loader2, Star, Tag, Folder, ArrowRight } from "lucide-react";
+import { apiFetch } from "@/lib/http";
 
 export interface SearchResultItem {
   entity_type: string;
@@ -115,11 +116,7 @@ export default function PublicSearchModal({
         if (cat) params.set("category", cat);
         if (tags.length > 0) params.set("tags", tags.join(","));
 
-        const res = await fetch(`/api/cms/v2/search?${params.toString()}`);
-        if (!res.ok) {
-          throw new Error(`Search failed: ${res.statusText}`);
-        }
-        const data: SearchApiResponse = await res.json();
+        const data = await apiFetch<SearchApiResponse>(`/cms/v2/search?${params.toString()}`, { silent: true });
         setResults(data.results || []);
         setPromoted(data.promoted || []);
       } catch (err) {

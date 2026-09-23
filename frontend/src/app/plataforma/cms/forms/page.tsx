@@ -111,7 +111,7 @@ function SortableField({
         dragHandle={
           <button
             type="button"
-            className="p-1 text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 cursor-grab active:cursor-grabbing touch-none"
+            className="p-1 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] cursor-grab active:cursor-grabbing touch-none"
             title="Arrastrar para reordenar"
             {...attributes}
             {...listeners}
@@ -452,11 +452,11 @@ export default function CmsFormsManagement() {
       {/* Header Bar */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
-            <ClipboardList className="w-7 h-7 text-blue-600 dark:text-blue-400" />
+          <h1 className="text-2xl font-bold tracking-tight text-[hsl(var(--text-primary))] flex items-center gap-2">
+            <ClipboardList className="w-7 h-7 text-[hsl(var(--primary))]" />
             Módulo de Formularios de Contacto
           </h1>
-          <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1">
+          <p className="text-sm text-[hsl(var(--text-secondary))] mt-1">
             Diseña formularios de contacto dinámicos, gestiona notificaciones por email y visualiza respuestas.
           </p>
         </div>
@@ -464,7 +464,7 @@ export default function CmsFormsManagement() {
         {canEdit && (
           <button
             onClick={handleOpenCreate}
-            className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg shadow-sm transition-colors shrink-0"
+            className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-[hsl(var(--primary))] hover:opacity-90 text-white font-medium rounded-lg shadow-sm transition-opacity shrink-0"
           >
             <Plus className="w-4 h-4" /> Nuevo Formulario
           </button>
@@ -473,20 +473,20 @@ export default function CmsFormsManagement() {
 
       {/* Error banner */}
       {error && (
-        <div className="p-4 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800 rounded-xl text-sm text-red-600 dark:text-red-400">
+        <div className="p-4 bg-[hsl(var(--destructive)/0.1)] border border-[hsl(var(--destructive)/0.2)] rounded-xl text-sm text-[hsl(var(--destructive))]">
           {error}
         </div>
       )}
 
       {/* Tabs Navigation */}
-      <div className="flex items-center gap-2 border-b border-zinc-200 dark:border-zinc-800">
+      <div className="flex items-center gap-2 border-b border-[hsl(var(--border))]">
         <button
           onClick={() => setActiveTab("forms")}
           className={clsx(
             "flex items-center gap-2 px-4 py-2.5 text-sm font-semibold border-b-2 transition-colors",
             activeTab === "forms"
-              ? "border-blue-600 text-blue-600 dark:text-blue-400 dark:border-blue-400"
-              : "border-transparent text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-200"
+              ? "border-[hsl(var(--primary))] text-[hsl(var(--primary))]"
+              : "border-transparent text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))]"
           )}
         >
           <ClipboardList className="w-4 h-4" />
@@ -497,8 +497,8 @@ export default function CmsFormsManagement() {
           className={clsx(
             "flex items-center gap-2 px-4 py-2.5 text-sm font-semibold border-b-2 transition-colors",
             activeTab === "submissions"
-              ? "border-blue-600 text-blue-600 dark:text-blue-400 dark:border-blue-400"
-              : "border-transparent text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-200"
+              ? "border-[hsl(var(--primary))] text-[hsl(var(--primary))]"
+              : "border-transparent text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))]"
           )}
         >
           <Inbox className="w-4 h-4" />
@@ -510,25 +510,25 @@ export default function CmsFormsManagement() {
       {activeTab === "forms" && (
         <div className="space-y-6">
           {/* Filter and Site Selector */}
-          <div className="flex flex-col sm:flex-row items-center gap-3 bg-white dark:bg-zinc-900 p-4 rounded-xl border border-zinc-200 dark:border-zinc-800 shadow-sm">
+          <div className="flex flex-col sm:flex-row items-center gap-3 bg-[hsl(var(--surface-1))] p-4 rounded-xl border border-[hsl(var(--border))] shadow-sm">
             <div className="relative flex-1 w-full">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[hsl(var(--text-secondary))]" />
               <input
                 type="text"
                 placeholder="Buscar por nombre o descripción..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="w-full pl-9 pr-4 py-2 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full pl-9 pr-4 py-2 bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]"
               />
             </div>
 
             {sites.length > 1 && (
               <div className="flex items-center gap-2 shrink-0">
-                <Globe className="w-4 h-4 text-zinc-400" />
+                <Globe className="w-4 h-4 text-[hsl(var(--text-secondary))]" />
                 <select
                   value={siteKey}
                   onChange={(e) => setSiteKey(e.target.value)}
-                  className="bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]"
                 >
                   {sites.map((s) => (
                     <option key={s.site_key} value={s.site_key}>
@@ -544,28 +544,28 @@ export default function CmsFormsManagement() {
           {loading ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {[1, 2, 3].map((i) => (
-                <div key={i} className="h-48 bg-zinc-100 dark:bg-zinc-800 animate-pulse rounded-xl border border-zinc-200 dark:border-zinc-700 p-5 space-y-3">
-                  <div className="h-5 bg-zinc-200 dark:bg-zinc-700 rounded w-1/2" />
-                  <div className="h-4 bg-zinc-200 dark:bg-zinc-700 rounded w-3/4" />
-                  <div className="h-10 bg-zinc-200 dark:bg-zinc-700 rounded w-full mt-4" />
+                <div key={i} className="h-48 bg-[hsl(var(--surface-2))] animate-pulse rounded-xl border border-[hsl(var(--border))] p-5 space-y-3">
+                  <div className="h-5 bg-[hsl(var(--border))] rounded w-1/2" />
+                  <div className="h-4 bg-[hsl(var(--border))] rounded w-3/4" />
+                  <div className="h-10 bg-[hsl(var(--border))] rounded w-full mt-4" />
                 </div>
               ))}
             </div>
           ) : visibleForms.length === 0 ? (
-            <div className="bg-white dark:bg-zinc-900 border-2 border-dashed border-zinc-200 dark:border-zinc-800 rounded-2xl p-12 text-center flex flex-col items-center justify-center space-y-4">
-              <div className="w-16 h-16 rounded-full bg-blue-50 dark:bg-blue-950/50 flex items-center justify-center text-blue-600 dark:text-blue-400">
+            <div className="bg-[hsl(var(--surface-1))] border-2 border-dashed border-[hsl(var(--border))] rounded-2xl p-12 text-center flex flex-col items-center justify-center space-y-4">
+              <div className="w-16 h-16 rounded-full bg-[hsl(var(--primary)/0.1)] flex items-center justify-center text-[hsl(var(--primary))]">
                 <ClipboardList className="w-8 h-8" />
               </div>
               <div className="max-w-md">
-                <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">No hay formularios registrados</h3>
-                <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1">
+                <h3 className="text-lg font-semibold text-[hsl(var(--text-primary))]">No hay formularios registrados</h3>
+                <p className="text-sm text-[hsl(var(--text-secondary))] mt-1">
                   Crea un nuevo formulario de contacto para recibir consultas de los visitantes de tu sitio web.
                 </p>
               </div>
               {canEdit && (
                 <button
                   onClick={handleOpenCreate}
-                  className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white font-medium rounded-lg shadow hover:bg-blue-700 transition-colors"
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-[hsl(var(--primary))] text-white font-medium rounded-lg shadow hover:opacity-90 transition-opacity"
                 >
                   <Plus className="w-4 h-4" /> Crear Primer Formulario
                 </button>
@@ -581,11 +581,11 @@ export default function CmsFormsManagement() {
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, scale: 0.95 }}
-                    className="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 p-5 shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between"
+                    className="bg-[hsl(var(--surface-1))] rounded-xl border border-[hsl(var(--border))] p-5 shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between"
                   >
                     <div>
                       <div className="flex items-start justify-between gap-2">
-                        <h3 className="font-semibold text-zinc-900 dark:text-zinc-100 text-base truncate">
+                        <h3 className="font-semibold text-[hsl(var(--text-primary))] text-base truncate">
                           {form.name}
                         </h3>
                         <button
@@ -593,7 +593,7 @@ export default function CmsFormsManagement() {
                           title={form.is_active ? "Desactivar" : "Activar"}
                           className={clsx(
                             "relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none",
-                            form.is_active ? "bg-blue-600" : "bg-zinc-300 dark:bg-zinc-700"
+                            form.is_active ? "bg-[hsl(var(--primary))]" : "bg-[hsl(var(--border))]"
                           )}
                         >
                           <span
@@ -606,25 +606,25 @@ export default function CmsFormsManagement() {
                       </div>
 
                       {form.description && (
-                        <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1 line-clamp-2">
+                        <p className="text-xs text-[hsl(var(--text-secondary))] mt-1 line-clamp-2">
                           {form.description}
                         </p>
                       )}
 
                       <div className="mt-4 flex items-center gap-3 flex-wrap">
-                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700">
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))] border border-[hsl(var(--border))]">
                           <ListFilter className="w-3.5 h-3.5" /> {form.fields?.length || 0} campos
                         </span>
-                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-[hsl(var(--primary)/0.1)] text-[hsl(var(--primary))] border border-[hsl(var(--primary)/0.2)]">
                           <Inbox className="w-3.5 h-3.5" /> {form.submission_count ?? 0} respuestas
                         </span>
                       </div>
                     </div>
 
-                    <div className="mt-5 pt-3 border-t border-zinc-100 dark:border-zinc-800 flex items-center justify-between">
+                    <div className="mt-5 pt-3 border-t border-[hsl(var(--border))] flex items-center justify-between">
                       <button
                         onClick={() => handleViewSubmissions(form)}
-                        className="inline-flex items-center gap-1 text-xs font-medium text-blue-600 dark:text-blue-400 hover:underline"
+                        className="inline-flex items-center gap-1 text-xs font-medium text-[hsl(var(--primary))] hover:underline"
                       >
                         <Inbox className="w-3.5 h-3.5" /> Ver respuestas
                       </button>
@@ -634,14 +634,14 @@ export default function CmsFormsManagement() {
                           <>
                             <button
                               onClick={() => handleOpenEdit(form)}
-                              className="p-1.5 text-zinc-600 dark:text-zinc-400 hover:text-blue-600 dark:hover:text-blue-400 rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+                              className="p-1.5 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] rounded-md hover:bg-[hsl(var(--surface-2))] transition-colors"
                               title="Editar formulario"
                             >
                               <Edit2 className="w-4 h-4" />
                             </button>
                             <button
                               onClick={() => setPendingDelete(form)}
-                              className="p-1.5 text-zinc-600 dark:text-zinc-400 hover:text-red-600 dark:hover:text-red-400 rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+                              className="p-1.5 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--destructive))] rounded-md hover:bg-[hsl(var(--destructive)/0.1)] transition-colors"
                               title="Eliminar formulario"
                             >
                               <Trash2 className="w-4 h-4" />
@@ -662,9 +662,9 @@ export default function CmsFormsManagement() {
       {activeTab === "submissions" && (
         <div className="space-y-6">
           {/* Form Selector Header */}
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-white dark:bg-zinc-900 p-4 rounded-xl border border-zinc-200 dark:border-zinc-800 shadow-sm">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-[hsl(var(--surface-1))] p-4 rounded-xl border border-[hsl(var(--border))] shadow-sm">
             <div className="flex items-center gap-3 w-full sm:w-auto">
-              <label className="text-sm font-semibold text-zinc-700 dark:text-zinc-300 shrink-0">
+              <label className="text-sm font-semibold text-[hsl(var(--text-secondary))] shrink-0">
                 Formulario:
               </label>
               <select
@@ -673,7 +673,7 @@ export default function CmsFormsManagement() {
                   setSelectedFormId(e.target.value);
                   setSubmissionsPage(1);
                 }}
-                className="w-full sm:w-80 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg px-3 py-2 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full sm:w-80 bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] text-[hsl(var(--text-primary))] rounded-lg px-3 py-2 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]"
               >
                 {forms.map((f) => (
                   <option key={f.id} value={f.id}>
@@ -684,8 +684,8 @@ export default function CmsFormsManagement() {
             </div>
 
             {selectedForm && (
-              <div className="flex items-center gap-2 text-xs font-medium text-zinc-500 dark:text-zinc-400">
-                <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+              <div className="flex items-center gap-2 text-xs font-medium text-[hsl(var(--text-secondary))]">
+                <CheckCircle2 className="w-4 h-4 text-[hsl(var(--primary))]" />
                 <span>Estado: {selectedForm.is_active ? "Activo" : "Inactivo"}</span>
                 <span className="mx-1">•</span>
                 <span>{selectedForm.notify_emails?.length || 0} emails notificados</span>
@@ -694,23 +694,23 @@ export default function CmsFormsManagement() {
           </div>
 
           {/* Submissions Table / Skeletons / Empty State */}
-          <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl p-6 shadow-sm space-y-4">
+          <div className="bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] rounded-2xl p-6 shadow-sm space-y-4">
             {submissionsLoading ? (
               <div className="space-y-3 py-6">
                 {[1, 2, 3].map((i) => (
-                  <div key={i} className="h-12 bg-zinc-100 dark:bg-zinc-800 animate-pulse rounded-lg" />
+                  <div key={i} className="h-12 bg-[hsl(var(--surface-2))] animate-pulse rounded-lg" />
                 ))}
               </div>
             ) : !submissionsData || submissionsData.items.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-16 text-center space-y-3">
-                <div className="w-16 h-16 rounded-full bg-blue-50 dark:bg-blue-950/50 flex items-center justify-center text-blue-600 dark:text-blue-400">
+                <div className="w-16 h-16 rounded-full bg-[hsl(var(--primary)/0.1)] flex items-center justify-center text-[hsl(var(--primary))]">
                   <Inbox className="w-8 h-8" />
                 </div>
                 <div className="max-w-md">
-                  <h3 className="text-base font-semibold text-zinc-900 dark:text-zinc-100">
+                  <h3 className="text-base font-semibold text-[hsl(var(--text-primary))]">
                     Aún no hay respuestas para este formulario
                   </h3>
-                  <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
+                  <p className="text-xs text-[hsl(var(--text-secondary))] mt-1">
                     Las respuestas enviadas por los usuarios desde la página pública se registrarán aquí en tiempo real.
                   </p>
                 </div>
@@ -718,29 +718,29 @@ export default function CmsFormsManagement() {
             ) : (
               <div className="space-y-4">
                 <div className="overflow-x-auto">
-                  <table className="w-full text-left text-xs text-zinc-700 dark:text-zinc-300">
-                    <thead className="bg-zinc-50 dark:bg-zinc-800 text-zinc-500 uppercase tracking-wider font-semibold">
+                  <table className="w-full text-left text-xs text-[hsl(var(--text-secondary))]">
+                    <thead className="bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))] uppercase tracking-wider font-semibold">
                       <tr>
                         <th className="px-4 py-3 rounded-l-lg">Fecha</th>
                         <th className="px-4 py-3">Dirección IP</th>
                         <th className="px-4 py-3 rounded-r-lg">Respuestas del Usuario</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
+                    <tbody className="divide-y divide-[hsl(var(--border))]">
                       {submissionsData.items.map((sub) => (
-                        <tr key={sub.id} className="hover:bg-zinc-50/50 dark:hover:bg-zinc-800/40 transition-colors">
-                          <td className="px-4 py-3 font-medium whitespace-nowrap text-zinc-900 dark:text-zinc-100">
+                        <tr key={sub.id} className="hover:bg-[hsl(var(--surface-2)/0.5)] transition-colors">
+                          <td className="px-4 py-3 font-medium whitespace-nowrap text-[hsl(var(--text-primary))]">
                             {new Date(sub.submitted_at).toLocaleString("es-ES")}
                           </td>
-                          <td className="px-4 py-3 whitespace-nowrap text-zinc-500">
+                          <td className="px-4 py-3 whitespace-nowrap text-[hsl(var(--text-secondary))]">
                             {sub.ip_address || "N/A"}
                           </td>
                           <td className="px-4 py-3">
                             <div className="flex flex-col gap-1">
                               {Object.entries(sub.data || {}).map(([key, val]) => (
                                 <div key={key} className="text-xs">
-                                  <span className="font-semibold text-zinc-900 dark:text-zinc-200">{key}: </span>
-                                  <span className="text-zinc-600 dark:text-zinc-400">{String(val)}</span>
+                                  <span className="font-semibold text-[hsl(var(--text-primary))]">{key}: </span>
+                                  <span className="text-[hsl(var(--text-secondary))]">{String(val)}</span>
                                 </div>
                               ))}
                             </div>
@@ -753,22 +753,22 @@ export default function CmsFormsManagement() {
 
                 {/* Pagination */}
                 {submissionsData.total > 0 && (
-                  <div className="flex items-center justify-between border-t border-zinc-200 dark:border-zinc-800 pt-3 text-xs">
-                    <span className="text-zinc-500">
+                  <div className="flex items-center justify-between border-t border-[hsl(var(--border))] pt-3 text-xs">
+                    <span className="text-[hsl(var(--text-secondary))]">
                       Página {submissionsData.page} de {Math.ceil(submissionsData.total / submissionsData.page_size)} ({submissionsData.total} respuestas)
                     </span>
                     <div className="flex items-center gap-2">
                       <button
                         onClick={() => setSubmissionsPage((prev) => Math.max(prev - 1, 1))}
                         disabled={submissionsPage <= 1}
-                        className="p-1.5 border border-zinc-200 dark:border-zinc-700 rounded-lg disabled:opacity-30 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+                        className="p-1.5 border border-[hsl(var(--border))] rounded-lg disabled:opacity-30 hover:bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))] transition-colors"
                       >
                         <ChevronLeft className="w-4 h-4" />
                       </button>
                       <button
                         onClick={() => setSubmissionsPage((prev) => prev + 1)}
                         disabled={submissionsPage * submissionsData.page_size >= submissionsData.total}
-                        className="p-1.5 border border-zinc-200 dark:border-zinc-700 rounded-lg disabled:opacity-30 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+                        className="p-1.5 border border-[hsl(var(--border))] rounded-lg disabled:opacity-30 hover:bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))] transition-colors"
                       >
                         <ChevronRight className="w-4 h-4" />
                       </button>
@@ -790,15 +790,15 @@ export default function CmsFormsManagement() {
         width="w-[720px]"
       >
         <div className="px-6 pt-5">
-          <div className="flex items-center gap-1 bg-zinc-100 dark:bg-zinc-800 rounded-lg p-1 text-xs font-semibold w-fit">
+          <div className="flex items-center gap-1 bg-[hsl(var(--surface-2))] rounded-lg p-1 text-xs font-semibold w-fit">
             <button
               type="button"
               onClick={() => setDrawerView("edit")}
               className={clsx(
                 "flex items-center gap-1.5 px-3 py-1.5 rounded-md transition-colors",
                 drawerView === "edit"
-                  ? "bg-white dark:bg-zinc-700 text-zinc-900 dark:text-zinc-100 shadow-sm"
-                  : "text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200"
+                  ? "bg-[hsl(var(--surface-1))] text-[hsl(var(--text-primary))] shadow-sm"
+                  : "text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))]"
               )}
             >
               <ClipboardList className="w-3.5 h-3.5" /> Editar
@@ -809,8 +809,8 @@ export default function CmsFormsManagement() {
               className={clsx(
                 "flex items-center gap-1.5 px-3 py-1.5 rounded-md transition-colors",
                 drawerView === "preview"
-                  ? "bg-white dark:bg-zinc-700 text-zinc-900 dark:text-zinc-100 shadow-sm"
-                  : "text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200"
+                  ? "bg-[hsl(var(--surface-1))] text-[hsl(var(--text-primary))] shadow-sm"
+                  : "text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))]"
               )}
             >
               <Eye className="w-3.5 h-3.5" /> Vista previa
@@ -821,12 +821,12 @@ export default function CmsFormsManagement() {
         {drawerView === "preview" ? (
           <div className="p-6">
             {formFields.length === 0 ? (
-              <p className="text-sm text-zinc-500 dark:text-zinc-400">
+              <p className="text-sm text-[hsl(var(--text-secondary))]">
                 Aún no hay campos. Agrega campos para ver la vista previa.
               </p>
             ) : (
-              <div className="p-5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900">
-                <h3 className="text-base font-bold text-zinc-900 dark:text-zinc-100 mb-1">{previewForm.name}</h3>
+              <div className="p-5 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))]">
+                <h3 className="text-base font-bold text-[hsl(var(--text-primary))] mb-1">{previewForm.name}</h3>
                 <CmsFormRenderer form={previewForm} preview />
               </div>
             )}
@@ -835,12 +835,12 @@ export default function CmsFormsManagement() {
         <form onSubmit={handleSave} className="p-6 space-y-6">
           {/* General Config */}
           <div className="space-y-4">
-            <h3 className="text-sm font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
+            <h3 className="text-sm font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))]">
               Información General
             </h3>
 
             <div className="space-y-1.5">
-              <label className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+              <label className="text-sm font-medium text-[hsl(var(--text-primary))]">
                 Nombre del Formulario *
               </label>
               <input
@@ -849,12 +849,12 @@ export default function CmsFormsManagement() {
                 placeholder="ej. Formulario de Contacto Principal"
                 value={formName}
                 onChange={(e) => setFormName(e.target.value)}
-                className="w-full px-3 py-2 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                className="w-full px-3 py-2 bg-[hsl(var(--surface-2))] text-[hsl(var(--text-primary))] border border-[hsl(var(--border))] rounded-lg text-sm focus:ring-2 focus:ring-[hsl(var(--primary))] focus:outline-none"
               />
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+              <label className="text-sm font-medium text-[hsl(var(--text-primary))]">
                 Descripción (opcional)
               </label>
               <textarea
@@ -862,13 +862,13 @@ export default function CmsFormsManagement() {
                 placeholder="Breve explicación para uso interno o instrucciones"
                 value={formDescription}
                 onChange={(e) => setFormDescription(e.target.value)}
-                className="w-full px-3 py-2 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none resize-none"
+                className="w-full px-3 py-2 bg-[hsl(var(--surface-2))] text-[hsl(var(--text-primary))] border border-[hsl(var(--border))] rounded-lg text-sm focus:ring-2 focus:ring-[hsl(var(--primary))] focus:outline-none resize-none"
               />
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-1.5">
-                <label className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+                <label className="text-sm font-medium text-[hsl(var(--text-primary))]">
                   Texto del Botón Enviar *
                 </label>
                 <input
@@ -877,21 +877,21 @@ export default function CmsFormsManagement() {
                   placeholder="Enviar"
                   value={formSubmitButtonText}
                   onChange={(e) => setFormSubmitButtonText(e.target.value)}
-                  className="w-full px-3 py-2 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                  className="w-full px-3 py-2 bg-[hsl(var(--surface-2))] text-[hsl(var(--text-primary))] border border-[hsl(var(--border))] rounded-lg text-sm focus:ring-2 focus:ring-[hsl(var(--primary))] focus:outline-none"
                 />
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+                <label className="text-sm font-medium text-[hsl(var(--text-primary))]">
                   Estado Inicial
                 </label>
-                <div className="flex items-center h-10 px-3 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg">
-                  <label className="flex items-center gap-2 text-sm text-zinc-700 dark:text-zinc-300 cursor-pointer">
+                <div className="flex items-center h-10 px-3 bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] rounded-lg">
+                  <label className="flex items-center gap-2 text-sm text-[hsl(var(--text-secondary))] cursor-pointer">
                     <input
                       type="checkbox"
                       checked={formIsActive}
                       onChange={(e) => setFormIsActive(e.target.checked)}
-                      className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+                      className="w-4 h-4 text-[hsl(var(--primary))] rounded focus:ring-[hsl(var(--primary))]"
                     />
                     Activo y visible en API pública
                   </label>
@@ -900,7 +900,7 @@ export default function CmsFormsManagement() {
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+              <label className="text-sm font-medium text-[hsl(var(--text-primary))]">
                 Mensaje de Éxito *
               </label>
               <input
@@ -909,21 +909,21 @@ export default function CmsFormsManagement() {
                 placeholder="¡Gracias por tu mensaje!"
                 value={formSuccessMessage}
                 onChange={(e) => setFormSuccessMessage(e.target.value)}
-                className="w-full px-3 py-2 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                className="w-full px-3 py-2 bg-[hsl(var(--surface-2))] text-[hsl(var(--text-primary))] border border-[hsl(var(--border))] rounded-lg text-sm focus:ring-2 focus:ring-[hsl(var(--primary))] focus:outline-none"
               />
             </div>
           </div>
 
           {/* Anti-spam: captcha + honeypot (plan_de_form_builder) */}
-          <div className="space-y-3 pt-4 border-t border-zinc-200 dark:border-zinc-800">
-            <h3 className="text-sm font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400 flex items-center gap-1.5">
+          <div className="space-y-3 pt-4 border-t border-[hsl(var(--border))]">
+            <h3 className="text-sm font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] flex items-center gap-1.5">
               <ShieldCheck className="w-4 h-4" /> Protección Anti-Spam
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div className="flex items-center justify-between gap-3 p-3 bg-zinc-50 dark:bg-zinc-800/40 rounded-lg border border-zinc-200 dark:border-zinc-700">
+              <div className="flex items-center justify-between gap-3 p-3 bg-[hsl(var(--surface-2))] rounded-lg border border-[hsl(var(--border))]">
                 <div>
-                  <div className="text-sm font-medium text-zinc-900 dark:text-zinc-100">Captcha (hCaptcha)</div>
-                  <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
+                  <div className="text-sm font-medium text-[hsl(var(--text-primary))]">Captcha (hCaptcha)</div>
+                  <p className="text-xs text-[hsl(var(--text-secondary))] mt-0.5">
                     Requiere verificación humana antes de enviar.
                   </p>
                 </div>
@@ -932,7 +932,7 @@ export default function CmsFormsManagement() {
                   onClick={() => setFormCaptchaEnabled((v) => !v)}
                   className={clsx(
                     "relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors",
-                    formCaptchaEnabled ? "bg-blue-600" : "bg-zinc-300 dark:bg-zinc-700"
+                    formCaptchaEnabled ? "bg-[hsl(var(--primary))]" : "bg-[hsl(var(--border))]"
                   )}
                   aria-pressed={formCaptchaEnabled}
                 >
@@ -944,10 +944,10 @@ export default function CmsFormsManagement() {
                   />
                 </button>
               </div>
-              <div className="flex items-center justify-between gap-3 p-3 bg-zinc-50 dark:bg-zinc-800/40 rounded-lg border border-zinc-200 dark:border-zinc-700">
+              <div className="flex items-center justify-between gap-3 p-3 bg-[hsl(var(--surface-2))] rounded-lg border border-[hsl(var(--border))]">
                 <div>
-                  <div className="text-sm font-medium text-zinc-900 dark:text-zinc-100">Campo trampa (Honeypot)</div>
-                  <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
+                  <div className="text-sm font-medium text-[hsl(var(--text-primary))]">Campo trampa (Honeypot)</div>
+                  <p className="text-xs text-[hsl(var(--text-secondary))] mt-0.5">
                     Atrapa bots que rellenan campos ocultos.
                   </p>
                 </div>
@@ -956,7 +956,7 @@ export default function CmsFormsManagement() {
                   onClick={() => setFormHoneypotEnabled((v) => !v)}
                   className={clsx(
                     "relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors",
-                    formHoneypotEnabled ? "bg-blue-600" : "bg-zinc-300 dark:bg-zinc-700"
+                    formHoneypotEnabled ? "bg-[hsl(var(--primary))]" : "bg-[hsl(var(--border))]"
                   )}
                   aria-pressed={formHoneypotEnabled}
                 >
@@ -972,17 +972,17 @@ export default function CmsFormsManagement() {
           </div>
 
           {/* Email Notifications Chips */}
-          <div className="space-y-3 pt-4 border-t border-zinc-200 dark:border-zinc-800">
-            <h3 className="text-sm font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
+          <div className="space-y-3 pt-4 border-t border-[hsl(var(--border))]">
+            <h3 className="text-sm font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))]">
               Notificaciones por Correo
             </h3>
-            <p className="text-xs text-zinc-500 dark:text-zinc-400">
+            <p className="text-xs text-[hsl(var(--text-secondary))]">
               Agrega las direcciones que recibirán una notificación por cada nueva respuesta enviada.
             </p>
 
             <div className="flex items-center gap-2">
               <div className="relative flex-1">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[hsl(var(--text-secondary))]" />
                 <input
                   type="email"
                   placeholder="ejemplo@ccf.org"
@@ -994,13 +994,13 @@ export default function CmsFormsManagement() {
                       handleAddEmail();
                     }
                   }}
-                  className="w-full pl-9 pr-4 py-2 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                  className="w-full pl-9 pr-4 py-2 bg-[hsl(var(--surface-2))] text-[hsl(var(--text-primary))] border border-[hsl(var(--border))] rounded-lg text-sm focus:ring-2 focus:ring-[hsl(var(--primary))] focus:outline-none"
                 />
               </div>
               <button
                 type="button"
                 onClick={handleAddEmail}
-                className="px-3 py-2 bg-zinc-800 dark:bg-zinc-700 hover:bg-zinc-900 text-white rounded-lg text-sm font-medium transition-colors"
+                className="px-3 py-2 bg-[hsl(var(--surface-2))] hover:bg-[hsl(var(--surface-1))] text-[hsl(var(--text-primary))] border border-[hsl(var(--border))] rounded-lg text-sm font-medium transition-colors"
               >
                 + Agregar
               </button>
@@ -1011,13 +1011,13 @@ export default function CmsFormsManagement() {
                 {formNotifyEmails.map((email) => (
                   <span
                     key={email}
-                    className="inline-flex items-center gap-1.5 px-3 py-1 bg-blue-100 dark:bg-blue-950/60 text-blue-800 dark:text-blue-300 border border-blue-200 dark:border-blue-800 rounded-full text-xs font-medium"
+                    className="inline-flex items-center gap-1.5 px-3 py-1 bg-[hsl(var(--primary)/0.1)] text-[hsl(var(--primary))] border border-[hsl(var(--primary)/0.2)] rounded-full text-xs font-medium"
                   >
                     {email}
                     <button
                       type="button"
                       onClick={() => handleRemoveEmail(email)}
-                      className="hover:text-blue-900 dark:hover:text-white"
+                      className="hover:opacity-80"
                     >
                       <X className="w-3.5 h-3.5" />
                     </button>
@@ -1028,26 +1028,26 @@ export default function CmsFormsManagement() {
           </div>
 
           {/* Field Builder */}
-          <div className="space-y-4 pt-4 border-t border-zinc-200 dark:border-zinc-800">
+          <div className="space-y-4 pt-4 border-t border-[hsl(var(--border))]">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="text-sm font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
+                <h3 className="text-sm font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))]">
                   Constructor de Campos ({formFields.length})
                 </h3>
-                <p className="text-xs text-zinc-500 dark:text-zinc-400">Define los campos que llenará el usuario.</p>
+                <p className="text-xs text-[hsl(var(--text-secondary))]">Define los campos que llenará el usuario.</p>
               </div>
             </div>
 
             {/* Field Types Selector */}
-            <div className="p-3 bg-zinc-50 dark:bg-zinc-800/40 rounded-xl border border-zinc-200 dark:border-zinc-700 space-y-2">
-              <span className="text-xs font-medium text-zinc-700 dark:text-zinc-300">+ Agregar campo:</span>
+            <div className="p-3 bg-[hsl(var(--surface-2))] rounded-xl border border-[hsl(var(--border))] space-y-2">
+              <span className="text-xs font-medium text-[hsl(var(--text-secondary))]">+ Agregar campo:</span>
               <div className="flex flex-wrap gap-2">
                 {FIELD_TYPES.map((t) => (
                   <button
                     key={t.type}
                     type="button"
                     onClick={() => handleAddField(t.type)}
-                    className="px-2.5 py-1.5 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 hover:border-blue-500 hover:text-blue-600 rounded-lg text-xs font-medium shadow-sm transition-colors"
+                    className="px-2.5 py-1.5 bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] hover:border-[hsl(var(--primary))] hover:text-[hsl(var(--primary))] text-[hsl(var(--text-primary))] rounded-lg text-xs font-medium shadow-sm transition-colors"
                   >
                     + {t.label}
                   </button>
@@ -1078,18 +1078,18 @@ export default function CmsFormsManagement() {
           </div>
 
           {/* Form Drawer Footer Actions */}
-          <div className="flex items-center justify-end gap-3 pt-4 border-t border-zinc-200 dark:border-zinc-800">
+          <div className="flex items-center justify-end gap-3 pt-4 border-t border-[hsl(var(--border))]">
             <button
               type="button"
               onClick={() => setIsDrawerOpen(false)}
-              className="px-4 py-2 text-sm font-medium text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg transition-colors"
+              className="px-4 py-2 text-sm font-medium text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] rounded-lg transition-colors"
             >
               Cancelar
             </button>
             <button
               type="submit"
               disabled={saving}
-              className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow transition-colors disabled:opacity-50"
+              className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium bg-[hsl(var(--primary))] hover:opacity-90 text-white rounded-lg shadow transition-colors disabled:opacity-50"
             >
               {saving && <Loader2 className="w-4 h-4 animate-spin" />}
               {editingForm ? "Guardar Cambios" : "Crear Formulario"}
@@ -1099,33 +1099,41 @@ export default function CmsFormsManagement() {
         )}
       </SidePanel>
 
-      {/* Delete Confirmation Modal */}
-      {pendingDelete && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl p-6 max-w-md w-full shadow-2xl space-y-4">
-            <h3 className="text-lg font-bold text-zinc-900 dark:text-zinc-100">Eliminar Formulario</h3>
-            <p className="text-sm text-zinc-600 dark:text-zinc-400">
-              ¿Estás seguro de eliminar el formulario <strong className="text-zinc-900 dark:text-zinc-100">&quot;{pendingDelete.name}&quot;</strong>? Esta acción no se puede deshacer y borrará todas sus respuestas registradas.
-            </p>
-            <div className="flex items-center justify-end gap-3 pt-2">
+      {/* Delete Confirmation Drawer */}
+      <SidePanel
+        isOpen={!!pendingDelete}
+        onClose={() => setPendingDelete(null)}
+        title="Eliminar Formulario"
+        subtitle={pendingDelete?.name}
+      >
+        {pendingDelete && (
+          <div className="p-6 space-y-5">
+            <div className="rounded-xl border border-[hsl(var(--destructive)/0.2)] bg-[hsl(var(--destructive)/0.1)] p-4">
+              <p className="text-sm text-[hsl(var(--destructive))]">
+                ¿Estás seguro de eliminar el formulario <strong>&quot;{pendingDelete.name}&quot;</strong>? Esta acción no se puede deshacer y borrará todas sus respuestas registradas.
+              </p>
+            </div>
+            <div className="flex items-center justify-end gap-3 pt-4 border-t border-[hsl(var(--border))]">
               <button
+                type="button"
                 onClick={() => setPendingDelete(null)}
-                className="px-4 py-2 text-sm font-medium text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg transition-colors"
+                className="px-4 py-2 text-sm font-medium text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] rounded-lg transition-colors"
               >
                 Cancelar
               </button>
               <button
+                type="button"
                 onClick={confirmDelete}
                 disabled={deleting}
-                className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors disabled:opacity-50"
+                className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium bg-[hsl(var(--destructive))] hover:opacity-90 text-white rounded-lg transition-colors disabled:opacity-50"
               >
                 {deleting && <Loader2 className="w-4 h-4 animate-spin" />}
                 Eliminar
               </button>
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </SidePanel>
     </div>
   );
 }
