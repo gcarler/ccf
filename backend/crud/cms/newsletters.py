@@ -9,6 +9,7 @@ seeding, llamada directa al CRUD) podría crear/mutar registros sin
 pasar por el helper API `_get_scoped_*` correspondiente.
 """
 
+from datetime import datetime, timezone
 import logging
 import uuid
 
@@ -16,7 +17,6 @@ from sqlalchemy import func, or_
 from sqlalchemy.orm import Session
 
 from backend import models, schemas
-from backend.crud._utils import _utcnow
 
 _logger = logging.getLogger(__name__)
 
@@ -32,7 +32,10 @@ _logger = logging.getLogger(__name__)
 def list_cms_newsletters(db: Session, site_id: uuid.UUID) -> list[models.CmsNewsletter]:
     return (
         db.query(models.CmsNewsletter)
-        .filter(models.CmsNewsletter.site_id == site_id)
+        .filter(
+            models.CmsNewsletter.site_id == site_id,
+            models.CmsNewsletter.deleted_at.is_(None),
+        )
         .order_by(models.CmsNewsletter.created_at.desc())
         .all()
     )
@@ -42,7 +45,11 @@ def list_cms_newsletters(db: Session, site_id: uuid.UUID) -> list[models.CmsNews
 def get_cms_newsletter(db: Session, site_id: uuid.UUID, newsletter_id: uuid.UUID) -> models.CmsNewsletter | None:
     return (
         db.query(models.CmsNewsletter)
-        .filter(models.CmsNewsletter.site_id == site_id, models.CmsNewsletter.id == newsletter_id)
+        .filter(
+            models.CmsNewsletter.site_id == site_id,
+            models.CmsNewsletter.id == newsletter_id,
+            models.CmsNewsletter.deleted_at.is_(None),
+        )
         .first()
     )
 
@@ -79,7 +86,7 @@ def update_cms_newsletter(
 
 
 def delete_cms_newsletter(db: Session, row: models.CmsNewsletter) -> bool:
-    db.delete(row)
+    row.deleted_at = datetime.now(timezone.utc)
     db.commit()
     return True
 
@@ -88,11 +95,15 @@ def delete_cms_newsletter(db: Session, row: models.CmsNewsletter) -> bool:
 def send_cms_newsletter(db: Session, row: models.CmsNewsletter) -> models.CmsNewsletter:
     active_count = (
         db.query(func.count(models.CmsSubscriber.id))
-        .filter(models.CmsSubscriber.site_id == row.site_id, models.CmsSubscriber.is_active.is_(True))
+        .filter(
+            models.CmsSubscriber.site_id == row.site_id,
+            models.CmsSubscriber.is_active.is_(True),
+            models.CmsSubscriber.deleted_at.is_(None),
+        )
         .scalar()
     ) or 0
     row.status = "sent"
-    row.sent_at = _utcnow()
+    row.sent_at = datetime.now(timezone.utc)
     row.recipient_count = active_count
     db.commit()
     db.refresh(row)
@@ -100,7 +111,11 @@ def send_cms_newsletter(db: Session, row: models.CmsNewsletter) -> models.CmsNew
     # Attempt background email dispatch to subscribers
     subscribers = (
         db.query(models.CmsSubscriber)
-        .filter(models.CmsSubscriber.site_id == row.site_id, models.CmsSubscriber.is_active.is_(True))
+        .filter(
+            models.CmsSubscriber.site_id == row.site_id,
+            models.CmsSubscriber.is_active.is_(True),
+            models.CmsSubscriber.deleted_at.is_(None),
+        )
         .all()
     )
     try:
@@ -128,7 +143,10 @@ def list_cms_subscribers(
     search: str | None = None,
     is_active: bool | None = None,
 ) -> tuple[list[models.CmsSubscriber], int]:
-    query = db.query(models.CmsSubscriber).filter(models.CmsSubscriber.site_id == site_id)
+    query = db.query(models.CmsSubscriber).filter(
+        models.CmsSubscriber.site_id == site_id,
+        models.CmsSubscriber.deleted_at.is_(None),
+    )
     if is_active is not None:
         query = query.filter(models.CmsSubscriber.is_active == is_active)
     if search:
@@ -150,7 +168,11 @@ def list_cms_subscribers(
 def get_cms_subscriber(db: Session, site_id: uuid.UUID, subscriber_id: uuid.UUID) -> models.CmsSubscriber | None:
     return (
         db.query(models.CmsSubscriber)
-        .filter(models.CmsSubscriber.site_id == site_id, models.CmsSubscriber.id == subscriber_id)
+        .filter(
+            models.CmsSubscriber.site_id == site_id,
+            models.CmsSubscriber.id == subscriber_id,
+            models.CmsSubscriber.deleted_at.is_(None),
+        )
         .first()
     )
 
@@ -166,11 +188,12 @@ def create_cms_subscriber(
         .first()
     )
     if existing:
+        existing.deleted_at = None
         existing.is_active = payload.is_active
         if payload.name:
             existing.name = payload.name
         existing.source = payload.source
-        existing.unsubscribed_at = None if payload.is_active else _utcnow()
+        existing.unsubscribed_at = None if payload.is_active else datetime.now(timezone.utc)
         db.commit()
         db.refresh(existing)
         return existing
@@ -217,6 +240,7 @@ def import_cms_subscribers(db: Session, site_id: uuid.UUID, payload: schemas.Cms
             .first()
         )
         if existing:
+            existing.deleted_at = None
             existing.is_active = True
             if name:
                 existing.name = name
@@ -236,7 +260,11 @@ def import_cms_subscribers(db: Session, site_id: uuid.UUID, payload: schemas.Cms
     db.commit()
     total_active = (
         db.query(func.count(models.CmsSubscriber.id))
-        .filter(models.CmsSubscriber.site_id == site_id, models.CmsSubscriber.is_active.is_(True))
+        .filter(
+            models.CmsSubscriber.site_id == site_id,
+            models.CmsSubscriber.is_active.is_(True),
+            models.CmsSubscriber.deleted_at.is_(None),
+        )
         .scalar()
     ) or 0
     return {"imported_count": imported_count, "total_subscribers": total_active}
@@ -249,7 +277,7 @@ def update_cms_subscriber(
     data = payload.model_dump(exclude_unset=True)
     if "is_active" in data:
         if data["is_active"] is False and row.is_active:
-            row.unsubscribed_at = _utcnow()
+            row.unsubscribed_at = datetime.now(timezone.utc)
         elif data["is_active"] is True and not row.is_active:
             row.unsubscribed_at = None
     for field, val in data.items():
@@ -261,7 +289,8 @@ def update_cms_subscriber(
 
 
 def delete_cms_subscriber(db: Session, row: models.CmsSubscriber) -> bool:
-    db.delete(row)
+    row.is_active = False
+    row.deleted_at = datetime.now(timezone.utc)
     db.commit()
     return True
 
@@ -275,6 +304,7 @@ def public_subscribe(db: Session, site_id: uuid.UUID, email: str, name: str | No
         .first()
     )
     if existing:
+        existing.deleted_at = None
         existing.is_active = True
         if name:
             existing.name = name
@@ -300,13 +330,17 @@ def public_subscribe(db: Session, site_id: uuid.UUID, email: str, name: str | No
 
 def public_unsubscribe(db: Session, email: str, site_id: uuid.UUID | None = None) -> bool:
     email_clean = email.strip().lower()
-    query = db.query(models.CmsSubscriber).filter(models.CmsSubscriber.email == email_clean)
+    query = db.query(models.CmsSubscriber).filter(
+        models.CmsSubscriber.email == email_clean,
+        models.CmsSubscriber.deleted_at.is_(None),
+    )
     if site_id:
         query = query.filter(models.CmsSubscriber.site_id == site_id)
     rows = query.all()
+    now_utc = datetime.now(timezone.utc)
     for row in rows:
         row.is_active = False
-        row.unsubscribed_at = _utcnow()
+        row.unsubscribed_at = now_utc
     db.commit()
     return True
 

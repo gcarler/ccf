@@ -725,6 +725,7 @@ class CmsNewsletter(Base):
     recipient_count = Column(Integer, default=0, nullable=False)
     created_at = Column(DateTime(timezone=True), default=_utcnow, nullable=False)
     updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow, nullable=False)
+    deleted_at = Column(DateTime(timezone=True), nullable=True, index=True)
 
     site = relationship("CmsSite", back_populates="newsletters", lazy="joined")
 
@@ -746,6 +747,7 @@ class CmsSubscriber(Base):
     subscribed_at = Column(DateTime(timezone=True), default=_utcnow, nullable=False)
     unsubscribed_at = Column(DateTime(timezone=True), nullable=True)
     source = Column(String(50), default="manual", nullable=False)
+    deleted_at = Column(DateTime(timezone=True), nullable=True, index=True)
 
     site = relationship("CmsSite", back_populates="subscribers", lazy="joined")
 
