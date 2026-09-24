@@ -347,13 +347,18 @@ from backend.crud.projects import (
     create_activity_log,
     create_default_phases,
     create_project,
+    create_project_expense,
     create_project_kpi,
     create_task_dependency,
     delete_attachment,
+    delete_project_expense,
     delete_project_kpi,
     delete_supply,
     delete_task_dependency,
     get_project,  # Axiom 3 defense-in-depth: single-record scope filter
+    get_project_budget_summary,
+    get_project_expense,
+    get_project_expenses,
     get_project_kpi,
     get_project_kpis,
     get_project_milestones,
@@ -363,7 +368,9 @@ from backend.crud.projects import (
     get_projects,
     get_task_dependencies,
     get_task_supplies,
+    recalculate_project_budget,
     set_project_phases,
+    update_project_expense,
     update_project_kpi,
 )
 

@@ -240,6 +240,52 @@ class ProjectTaskDependency(BaseModel):
     model_config = orm_config
 
 
+class ProjectExpenseBase(BaseModel):
+    category: str = Field(default="general", max_length=50)
+    description: Optional[str] = None
+    amount: float = Field(default=0.0, ge=0)
+    date: Optional[datetime] = None
+    receipt_url: Optional[str] = Field(default=None, max_length=500)
+    status: Literal["planned", "committed", "paid"] = "planned"
+
+
+class ProjectExpenseCreate(ProjectExpenseBase):
+    amount: float = Field(..., ge=0)
+
+
+class ProjectExpenseUpdate(BaseModel):
+    category: Optional[str] = Field(default=None, max_length=50)
+    description: Optional[str] = None
+    amount: Optional[float] = Field(default=None, ge=0)
+    date: Optional[datetime] = None
+    receipt_url: Optional[str] = Field(default=None, max_length=500)
+    status: Optional[Literal["planned", "committed", "paid"]] = None
+
+
+class ProjectExpense(ProjectExpenseBase):
+    id: UUIDStr
+    project_id: UUIDStr
+    created_by: Optional[UUIDStr] = None
+    creator_name: Optional[str] = None
+    created_at: datetime
+    updated_at: Optional[datetime] = None
+    model_config = orm_config
+
+
+class ProjectBudgetSummary(BaseModel):
+    project_id: UUIDStr
+    budget_allocated: float = 0.0
+    budget_spent: float = 0.0
+    remaining_budget: float = 0.0
+    burn_rate_percent: float = 0.0
+    total_expenses_count: int = 0
+    planned_amount: float = 0.0
+    committed_amount: float = 0.0
+    paid_amount: float = 0.0
+    by_category: dict[str, float] = Field(default_factory=dict)
+    model_config = orm_config
+
+
 class ProjectBase(BaseModel):
     title: str = Field(..., min_length=1, max_length=500)
     description: Optional[str] = None
@@ -327,6 +373,8 @@ class Project(ProjectBase):
     activities: List[ProjectActivityLog] = Field(default_factory=list)
     kpis: List[ProjectKPI] = Field(default_factory=list)
     dependencies: List[ProjectTaskDependency] = Field(default_factory=list)
+    expenses: List[ProjectExpense] = Field(default_factory=list)
+    budget_summary: Optional[ProjectBudgetSummary] = None
     progress_percent: int = 0
     health_status: Literal["on_track", "at_risk", "off_track", "completed"] = "on_track"
     model_config = ConfigDict(from_attributes=True, populate_by_name=True)

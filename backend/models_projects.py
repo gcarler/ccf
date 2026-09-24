@@ -50,6 +50,7 @@ class Project(Base):
     )
     kpis = relationship("ProjectKPI", back_populates="project", cascade="all, delete-orphan")
     dependencies = relationship("ProjectTaskDependency", back_populates="project", cascade="all, delete-orphan")
+    expenses = relationship("ProjectExpense", back_populates="project", cascade="all, delete-orphan")
 
     # ``name`` is a thin alias over ``title`` so callers that pass or read
     # ``name`` (e.g. ``tests/test_crud_integration.py::TestProjectsCrud``)
@@ -281,4 +282,24 @@ class ProjectTaskDependency(Base):
     project = relationship("Project", back_populates="dependencies")
     predecessor = relationship("ProjectTask", foreign_keys=[predecessor_id])
     successor = relationship("ProjectTask", foreign_keys=[successor_id])
+
+
+class ProjectExpense(Base):
+    __tablename__ = "project_expenses"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    project_id = Column(UUID(as_uuid=True), ForeignKey("projects.id", ondelete="CASCADE"), nullable=False, index=True)
+    category = Column(String(50), default="general", nullable=False)
+    description = Column(Text, nullable=True)
+    amount = Column(Float, default=0.0, nullable=False)
+    date = Column(DateTime(timezone=True), default=_utcnow, nullable=False)
+    receipt_url = Column(String(500), nullable=True)
+    status = Column(String(20), default="planned", nullable=False, index=True)
+    created_by = Column(UUID(as_uuid=True), ForeignKey("personas.id", ondelete="SET NULL"), nullable=True, index=True)
+    created_at = Column(DateTime(timezone=True), default=_utcnow, index=True)
+    updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
+    deleted_at = Column(DateTime(timezone=True), nullable=True, index=True)
+
+    project = relationship("Project", back_populates="expenses")
+    creator = relationship("Persona", foreign_keys=[created_by])
 

@@ -268,6 +268,7 @@ from backend.models_projects import (
     ProjectAttachment,
     ProjectComment,
     ProjectDocument,
+    ProjectExpense,
     ProjectInboxState,
     ProjectKPI,
     ProjectMember,

@@ -7,9 +7,10 @@ import {
     Zap, Trophy, Calendar, TrendingUp, AlertCircle,
     ArrowUpRight, BarChart3, Plus, Trash2,
     Target, Sliders, Activity, AlertTriangle, AlertOctagon, Sparkles,
+    Wallet, TrendingDown,
 } from 'lucide-react';
 import clsx from 'clsx';
-import type { ProjectRecord, ProjectTaskRecord, ProjectMilestoneRecord, ProjectAnalytics, ProjectKPI } from '@/types/projects';
+import type { ProjectRecord, ProjectTaskRecord, ProjectMilestoneRecord, ProjectAnalytics, ProjectKPI, ProjectBudgetSummary } from '@/types/projects';
 import { InlineTextInput } from '@/components/ui/inline-editors/InlineTextInput';
 import { InlineTextArea } from '@/components/ui/inline-editors/InlineTextArea';
 import { InlineProjectStatusPicker } from '@/components/ui/inline-editors/InlineProjectStatusPicker';
@@ -17,6 +18,7 @@ import { InlineUserPicker } from '@/components/ui/inline-editors';
 import { InlineDatePicker } from '@/components/ui/inline-editors/InlineDatePicker';
 import { ProjectKpiDrawer } from '@/components/projects/ProjectKpiDrawer';
 import { ProgressSettingsDrawer } from '@/components/projects/ProgressSettingsDrawer';
+import { ProjectBudgetDrawer } from '@/components/projects/ProjectBudgetDrawer';
 import { useProjectUpdate } from '@/context/ProjectUpdateContext';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
@@ -56,6 +58,10 @@ export function ProjectMasterView({ project, tasks, onOpenTask }: ProjectMasterV
     const [showKpiDrawer, setShowKpiDrawer] = useState(false);
     const [showProgressDrawer, setShowProgressDrawer] = useState(false);
 
+    // Control Presupuestario (Super-PRO)
+    const [budgetSummary, setBudgetSummary] = useState<ProjectBudgetSummary | null>(project.budget_summary || null);
+    const [showBudgetDrawer, setShowBudgetDrawer] = useState(false);
+
     const loadKpis = useCallback(async () => {
         if (!project.id || !token) return;
         try {
@@ -66,9 +72,20 @@ export function ProjectMasterView({ project, tasks, onOpenTask }: ProjectMasterV
         }
     }, [project.id, project.kpis, token]);
 
+    const loadBudgetSummary = useCallback(async () => {
+        if (!project.id || !token) return;
+        try {
+            const data = await apiFetch<ProjectBudgetSummary>(`/projects/${project.id}/budget-summary`, { token });
+            if (data) setBudgetSummary(data);
+        } catch {
+            // fallback silencioso
+        }
+    }, [project.id, token]);
+
     useEffect(() => {
         loadKpis();
-    }, [loadKpis]);
+        loadBudgetSummary();
+    }, [loadKpis, loadBudgetSummary]);
 
     const handleKpisUpdated = async () => {
         await loadKpis();
@@ -448,6 +465,102 @@ export function ProjectMasterView({ project, tasks, onOpenTask }: ProjectMasterV
                 )}
             </section>
 
+            {/* 3b. Control Presupuestario y Desglose Financiero (Super-PRO) */}
+            <section className="space-y-3">
+                <div className="flex items-center justify-between px-2">
+                    <h2 className="text-lg font-bold text-[hsl(var(--foreground))] uppercase tracking-tighter flex items-center gap-2">
+                        <Wallet className="text-[hsl(var(--primary))]" size={16} /> Control Presupuestario
+                    </h2>
+                    <button
+                        onClick={() => setShowBudgetDrawer(true)}
+                        className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-bold uppercase tracking-wider bg-[hsl(var(--primary))]/10 text-[hsl(var(--primary))] border border-[hsl(var(--primary))]/30 hover:bg-[hsl(var(--primary))]/20 transition-all cursor-pointer"
+                    >
+                        <Plus size={12} /> Gestionar Presupuesto
+                    </button>
+                </div>
+
+                <div className="bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] rounded-xl p-4 shadow-xs space-y-4">
+                    {/* Grid de Métricas Financieras */}
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                        <div className="p-3 rounded-lg bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))]">
+                            <span className="text-3xs font-bold uppercase tracking-wider text-[hsl(var(--muted-foreground))]">Asignado</span>
+                            <div className="text-base md:text-lg font-black text-[hsl(var(--foreground))] mt-0.5">
+                                ${(budgetSummary?.budget_allocated ?? project.budget_allocated ?? 0).toLocaleString("es-CO")}
+                            </div>
+                            <span className="text-3xs text-[hsl(var(--muted-foreground))]">Límite Aprobado</span>
+                        </div>
+
+                        <div className="p-3 rounded-lg bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))]">
+                            <span className="text-3xs font-bold uppercase tracking-wider text-[hsl(var(--muted-foreground))]">Desembolsado</span>
+                            <div className="text-base md:text-lg font-black text-[hsl(var(--success))] mt-0.5">
+                                ${(budgetSummary?.paid_amount ?? project.budget_spent ?? 0).toLocaleString("es-CO")}
+                            </div>
+                            <span className="text-3xs text-[hsl(var(--muted-foreground))]">Pagos Efectivos</span>
+                        </div>
+
+                        <div className="p-3 rounded-lg bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))]">
+                            <span className="text-3xs font-bold uppercase tracking-wider text-[hsl(var(--muted-foreground))]">Comprometido</span>
+                            <div className="text-base md:text-lg font-black text-[hsl(var(--warning))] mt-0.5">
+                                ${(budgetSummary?.committed_amount ?? 0).toLocaleString("es-CO")}
+                            </div>
+                            <span className="text-3xs text-[hsl(var(--muted-foreground))]">Órdenes / Contratos</span>
+                        </div>
+
+                        <div className="p-3 rounded-lg bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))]">
+                            <span className="text-3xs font-bold uppercase tracking-wider text-[hsl(var(--muted-foreground))]">Fondos Restantes</span>
+                            <div className="text-base md:text-lg font-black text-[hsl(var(--primary))] mt-0.5">
+                                ${(budgetSummary?.remaining_budget ?? (project.budget_allocated ? project.budget_allocated - (project.budget_spent || 0) : 0)).toLocaleString("es-CO")}
+                            </div>
+                            <span className="text-3xs text-[hsl(var(--muted-foreground))]">Saldo Disponible</span>
+                        </div>
+                    </div>
+
+                    {/* Barra de Quema Presupuestaria */}
+                    <div className="space-y-1.5 pt-1">
+                        <div className="flex items-center justify-between text-2xs">
+                            <span className="font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider flex items-center gap-1.5">
+                                <TrendingDown size={13} className="text-[hsl(var(--primary))]" />
+                                Tasa de Quema Presupuestaria (Burn Rate)
+                            </span>
+                            <span className={clsx(
+                                "font-black tracking-tight text-xs",
+                                (budgetSummary?.burn_rate_percent ?? 0) > 90 ? "text-[hsl(var(--destructive))]" :
+                                (budgetSummary?.burn_rate_percent ?? 0) > 70 ? "text-[hsl(var(--warning))]" :
+                                "text-[hsl(var(--success))]"
+                            )}>
+                                {(budgetSummary?.burn_rate_percent ?? 0).toFixed(1)}%
+                            </span>
+                        </div>
+                        <div className="h-2 w-full rounded-full bg-[hsl(var(--surface-2))] overflow-hidden">
+                            <div
+                                className={clsx(
+                                    "h-full rounded-full transition-all duration-500",
+                                    (budgetSummary?.burn_rate_percent ?? 0) > 90 ? "bg-[hsl(var(--destructive))]" :
+                                    (budgetSummary?.burn_rate_percent ?? 0) > 70 ? "bg-[hsl(var(--warning))]" :
+                                    "bg-[hsl(var(--success))]"
+                                )}
+                                style={{ width: `${Math.min(100, Math.max(0, budgetSummary?.burn_rate_percent ?? 0))}%` }}
+                            />
+                        </div>
+                    </div>
+
+                    {/* Desglose Semántico por Categorías */}
+                    {budgetSummary && Object.keys(budgetSummary.by_category || {}).length > 0 && (
+                        <div className="pt-2 border-t border-[hsl(var(--border))] flex items-center gap-2 flex-wrap text-2xs">
+                            <span className="font-semibold text-[hsl(var(--muted-foreground))]">Partidas por Categoría:</span>
+                            {Object.entries(budgetSummary.by_category).map(([cat, amt]) => (
+                                <span
+                                    key={cat}
+                                    className="px-2 py-0.5 rounded-full bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] font-medium text-[hsl(var(--foreground))]"
+                                >
+                                    {cat}: <strong className="font-bold">${amt.toLocaleString("es-CO")}</strong>
+                                </span>
+                            ))}
+                        </div>
+                    )}
+                </div>
+            </section>
+
             {/* 4. Línea de Tiempo de Hitos — auto-gestionada */}
             <section className="space-y-3">
                 <div className="flex items-center justify-between px-2">
@@ -577,6 +690,17 @@ export function ProjectMasterView({ project, tasks, onOpenTask }: ProjectMasterV
                 manualProgress={project.manual_progress}
                 currentHealthOverride={project.health_override}
                 onSaved={handleProgressSaved}
+            />
+
+            <ProjectBudgetDrawer
+                projectId={project.id}
+                isOpen={showBudgetDrawer}
+                onClose={() => setShowBudgetDrawer(false)}
+                budgetAllocated={project.budget_allocated}
+                onBudgetUpdated={() => {
+                    loadBudgetSummary();
+                    reloadProject();
+                }}
             />
         </div>
     );

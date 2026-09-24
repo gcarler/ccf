@@ -642,6 +642,118 @@ else:
     fail(f"Login GESTOR de prueba → HTTP {login_resp.status_code}: {login_resp.text[:100]}")
 
 # ──────────────────────────────────────────────────────────────
+section("10. PRUEBAS DE CONTROL PRESUPUESTARIO Y GASTOS (SUPER-PRO)")
+# ──────────────────────────────────────────────────────────────
+
+from backend.crud import projects as crud_projects
+from backend.schemas import projects as schemas_projects
+
+# Fijar presupuesto asignado de prueba
+project.budget_allocated = 12000.0
+db.commit()
+ok("Presupuesto asignado al proyecto: $12,000.00")
+
+# 1. Crear gasto planificado
+exp_plan = crud_projects.create_project_expense(
+    db,
+    project.id,
+    schemas_projects.ProjectExpenseCreate(
+        category="materials",
+        description="Madera y pintura",
+        amount=2000.0,
+        status="planned"
+    ),
+    created_by=admin_persona.id if 'admin_persona' in locals() and admin_persona else None
+)
+if exp_plan and exp_plan.id:
+    ok(f"Gasto planificado creado exitosamente (id={exp_plan.id}, monto=${exp_plan.amount})")
+else:
+    fail("Error creando gasto planificado")
+
+# 2. Crear gasto pagado / desembolsado
+exp_paid = crud_projects.create_project_expense(
+    db,
+    project.id,
+    schemas_projects.ProjectExpenseCreate(
+        category="services",
+        description="Instalación de redes eléctricas",
+        amount=3500.0,
+        status="paid"
+    ),
+    created_by=admin_persona.id if 'admin_persona' in locals() and admin_persona else None
+)
+if exp_paid and exp_paid.id:
+    ok(f"Gasto pagado creado exitosamente (id={exp_paid.id}, monto=${exp_paid.amount})")
+else:
+    fail("Error creando gasto pagado")
+
+# 3. Crear gasto comprometido
+exp_comm = crud_projects.create_project_expense(
+    db,
+    project.id,
+    schemas_projects.ProjectExpenseCreate(
+        category="logistics",
+        description="Flete de equipos",
+        amount=1200.0,
+        status="committed"
+    ),
+    created_by=admin_persona.id if 'admin_persona' in locals() and admin_persona else None
+)
+if exp_comm and exp_comm.id:
+    ok(f"Gasto comprometido creado exitosamente (id={exp_comm.id}, monto=${exp_comm.amount})")
+else:
+    fail("Error creando gasto comprometido")
+
+# 4. Verificar resumen presupuestario y recálculo automático de budget_spent
+summary = crud_projects.get_project_budget_summary(db, project.id)
+if summary:
+    if summary["budget_allocated"] == 12000.0 and summary["budget_spent"] == 3500.0:
+        ok(f"Recálculo de budget_spent verificado: ${summary['budget_spent']} (Pagado) de ${summary['budget_allocated']}")
+    else:
+        fail(f"budget_spent incorrecto: esperado 3500.0, obtenido {summary.get('budget_spent')}")
+
+    if summary["remaining_budget"] == 8500.0:
+        ok(f"Fondos restantes correctos: ${summary['remaining_budget']}")
+    else:
+        fail(f"Fondos restantes incorrectos: {summary.get('remaining_budget')}")
+
+    if summary["total_expenses_count"] == 3:
+        ok("Conteo total de partidas: 3")
+    else:
+        fail(f"Conteo de partidas incorrecto: {summary.get('total_expenses_count')}")
+
+    if "materials" in summary["by_category"] and "services" in summary["by_category"]:
+        ok("Desglose semántico by_category generado correctamente")
+    else:
+        fail("Faltan categorías en desglose by_category")
+else:
+    fail("No se pudo obtener el budget_summary")
+
+# 5. Actualización de gasto (comprometido -> pagado) y recálculo
+upd_comm = crud_projects.update_project_expense(
+    db,
+    project.id,
+    exp_comm.id,
+    schemas_projects.ProjectExpenseUpdate(status="paid")
+)
+summary_upd = crud_projects.get_project_budget_summary(db, project.id)
+if summary_upd and summary_upd["budget_spent"] == 4700.0: # 3500 + 1200
+    ok(f"Recálculo automático tras actualizar estado a 'paid': ${summary_upd['budget_spent']}")
+else:
+    fail(f"Falla en recálculo tras actualizar estado: {summary_upd.get('budget_spent') if summary_upd else 'None'}")
+
+# 6. Soft-delete de gasto y recálculo
+del_ok = crud_projects.delete_project_expense(db, project.id, exp_plan.id)
+if del_ok:
+    summary_del = crud_projects.get_project_budget_summary(db, project.id)
+    if summary_del and summary_del["total_expenses_count"] == 2:
+        ok("Soft delete de gasto verificado: partida excluida de gastos activos")
+    else:
+        fail("Partida no excluida tras soft delete")
+else:
+    fail("Error en soft delete de gasto")
+
+# ──────────────────────────────────────────────────────────────
 section(f"RESUMEN: {PASS} passed, {FAIL} failed")
 # ──────────────────────────────────────────────────────────────
 

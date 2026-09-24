@@ -3221,3 +3221,164 @@ def delete_task_dependency(
         raise HTTPException(status_code=404, detail="Dependencia no encontrada")
     return {"ok": True, "deleted": dependency_id}
 
+
+# ── EXPENSES & BUDGET (SUPER-PRO FASE 1) ───────────────────────────────────────
+
+
+@router.get(
+    "/{project_id}/expenses",
+    response_model=List[schemas.ProjectExpense],
+    tags=["Projects Super-PRO"],
+)
+def list_project_expenses(
+    project_id: str,
+    status: Optional[str] = None,
+    category: Optional[str] = None,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("projects", "read")),
+):
+    """Lista las partidas de gastos de un proyecto con filtros opcionales."""
+    user_sede = get_user_sede_id(db, current_user.id)
+    _ensure_project(db, project_id, user_sede=user_sede)
+    expenses = crud.get_project_expenses(db, _to_uuid(project_id), status=status, category=category)
+    for exp in expenses:
+        _normalize_dates(exp)
+    return expenses
+
+
+@router.post(
+    "/{project_id}/expenses",
+    response_model=schemas.ProjectExpense,
+    status_code=status.HTTP_201_CREATED,
+    tags=["Projects Super-PRO"],
+)
+def create_project_expense(
+    project_id: str,
+    payload: schemas.ProjectExpenseCreate,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("projects", "edit")),
+):
+    """Crea una partida de gasto y recalcula el presupuesto gastado."""
+    user_sede = get_user_sede_id(db, current_user.id)
+    _ensure_project(db, project_id, user_sede=user_sede)
+    persona_id = get_user_persona_id(db, current_user.id)
+    expense = crud.create_project_expense(
+        db,
+        project_id=_to_uuid(project_id),
+        expense_in=payload,
+        created_by=_to_uuid(persona_id) if persona_id else None,
+    )
+    _log_project_activity(
+        db,
+        project_id,
+        current_user.id,
+        "expense_created",
+        f"Gasto registrado: ${payload.amount:.2f} en '{payload.category}' ({payload.description or 'Sin descripción'})",
+    )
+    db.commit()
+    _normalize_dates(expense)
+    return expense
+
+
+@router.get(
+    "/{project_id}/expenses/{expense_id}",
+    response_model=schemas.ProjectExpense,
+    tags=["Projects Super-PRO"],
+)
+def get_project_expense(
+    project_id: str,
+    expense_id: str,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("projects", "read")),
+):
+    """Obtiene el detalle de un gasto específico."""
+    user_sede = get_user_sede_id(db, current_user.id)
+    _ensure_project(db, project_id, user_sede=user_sede)
+    expense = crud.get_project_expense(db, _to_uuid(project_id), _to_uuid(expense_id))
+    if not expense:
+        raise HTTPException(status_code=404, detail="Gasto no encontrado")
+    _normalize_dates(expense)
+    return expense
+
+
+@router.patch(
+    "/{project_id}/expenses/{expense_id}",
+    response_model=schemas.ProjectExpense,
+    tags=["Projects Super-PRO"],
+)
+def update_project_expense(
+    project_id: str,
+    expense_id: str,
+    payload: schemas.ProjectExpenseUpdate,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("projects", "edit")),
+):
+    """Actualiza una partida de gasto y recalcula el presupuesto del proyecto."""
+    user_sede = get_user_sede_id(db, current_user.id)
+    _ensure_project(db, project_id, user_sede=user_sede)
+    expense = crud.update_project_expense(
+        db,
+        project_id=_to_uuid(project_id),
+        expense_id=_to_uuid(expense_id),
+        expense_in=payload,
+    )
+    if not expense:
+        raise HTTPException(status_code=404, detail="Gasto no encontrado")
+    _log_project_activity(
+        db,
+        project_id,
+        current_user.id,
+        "expense_updated",
+        f"Gasto '{expense.id}' actualizado",
+    )
+    db.commit()
+    _normalize_dates(expense)
+    return expense
+
+
+@router.delete(
+    "/{project_id}/expenses/{expense_id}",
+    response_model=dict,
+    tags=["Projects Super-PRO"],
+)
+def delete_project_expense(
+    project_id: str,
+    expense_id: str,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("projects", "edit")),
+):
+    """Elimina (soft-delete) una partida de gasto y recalcula el presupuesto."""
+    user_sede = get_user_sede_id(db, current_user.id)
+    _ensure_project(db, project_id, user_sede=user_sede)
+    ok = crud.delete_project_expense(db, _to_uuid(project_id), _to_uuid(expense_id))
+    if not ok:
+        raise HTTPException(status_code=404, detail="Gasto no encontrado")
+    _log_project_activity(
+        db,
+        project_id,
+        current_user.id,
+        "expense_deleted",
+        f"Gasto '{expense_id}' eliminado",
+    )
+    db.commit()
+    return {"ok": True, "deleted": expense_id}
+
+
+@router.get(
+    "/{project_id}/budget-summary",
+    response_model=schemas.ProjectBudgetSummary,
+    tags=["Projects Super-PRO"],
+)
+def get_project_budget_summary(
+    project_id: str,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("projects", "read")),
+):
+    """Obtiene el resumen financiero y de quema presupuestaria del proyecto."""
+    user_sede = get_user_sede_id(db, current_user.id)
+    _ensure_project(db, project_id, user_sede=user_sede)
+    summary = crud.get_project_budget_summary(db, _to_uuid(project_id))
+    if not summary:
+        raise HTTPException(status_code=404, detail="Proyecto no encontrado")
+    return summary
+

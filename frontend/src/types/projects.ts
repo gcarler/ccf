@@ -24,6 +24,34 @@ export interface ProjectTaskDependency {
   created_at?: string;
 }
 
+export interface ProjectExpense {
+  id: string;
+  project_id: string;
+  category: string;
+  description?: string | null;
+  amount: number;
+  date: string;
+  receipt_url?: string | null;
+  status: 'planned' | 'committed' | 'paid';
+  created_by?: string | null;
+  creator_name?: string | null;
+  created_at: string;
+  updated_at?: string | null;
+}
+
+export interface ProjectBudgetSummary {
+  project_id: string;
+  budget_allocated: number;
+  budget_spent: number;
+  remaining_budget: number;
+  burn_rate_percent: number;
+  total_expenses_count: number;
+  planned_amount: number;
+  committed_amount: number;
+  paid_amount: number;
+  by_category: Record<string, number>;
+}
+
 export interface ProjectRecord {
   id: string;
   title: string;
@@ -40,10 +68,14 @@ export interface ProjectRecord {
   comments_count?: number;
   progress_mode?: 'auto_tasks' | 'milestones' | 'manual';
   manual_progress?: number;
+  budget_allocated?: number | null;
+  budget_spent?: number | null;
   health_status?: 'on_track' | 'at_risk' | 'off_track' | 'completed';
   health_override?: string | null;
   kpis?: ProjectKPI[];
   dependencies?: ProjectTaskDependency[];
+  expenses?: ProjectExpense[];
+  budget_summary?: ProjectBudgetSummary;
 }
 
 export interface ProjectMilestoneRecord {

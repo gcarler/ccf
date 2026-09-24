@@ -662,3 +662,168 @@ def delete_task_dependency(db: Session, project_id: UUID | str, dep_id: UUID | s
     db.commit()
     return True
 
+
+# ── Expenses & Budget (Super-PRO) ──────────────────────
+
+
+def recalculate_project_budget(db: Session, project_id: UUID | str) -> Optional[models.Project]:
+    project = get_project(db, project_id)
+    if not project:
+        return None
+    expenses = (
+        db.query(models.ProjectExpense)
+        .filter(
+            models.ProjectExpense.project_id == project_id,
+            models.ProjectExpense.deleted_at.is_(None),
+        )
+        .all()
+    )
+    paid_sum = sum(e.amount for e in expenses if e.status == "paid")
+    project.budget_spent = round(float(paid_sum), 2)
+    db.commit()
+    db.refresh(project)
+    return project
+
+
+def get_project_expenses(
+    db: Session,
+    project_id: UUID | str,
+    status: Optional[str] = None,
+    category: Optional[str] = None,
+) -> list[models.ProjectExpense]:
+    q = db.query(models.ProjectExpense).filter(
+        models.ProjectExpense.project_id == project_id,
+        models.ProjectExpense.deleted_at.is_(None),
+    )
+    if status:
+        q = q.filter(models.ProjectExpense.status == status)
+    if category:
+        q = q.filter(models.ProjectExpense.category == category)
+    rows = q.order_by(models.ProjectExpense.date.desc(), models.ProjectExpense.created_at.desc()).all()
+    for r in rows:
+        if r.creator:
+            r.creator_name = r.creator.nombre_completo
+    return rows
+
+
+def get_project_expense(
+    db: Session, project_id: UUID | str, expense_id: UUID | str
+) -> Optional[models.ProjectExpense]:
+    row = (
+        db.query(models.ProjectExpense)
+        .filter(
+            models.ProjectExpense.id == expense_id,
+            models.ProjectExpense.project_id == project_id,
+            models.ProjectExpense.deleted_at.is_(None),
+        )
+        .first()
+    )
+    if row and row.creator:
+        row.creator_name = row.creator.nombre_completo
+    return row
+
+
+def create_project_expense(
+    db: Session,
+    project_id: UUID | str,
+    expense_in: schemas.ProjectExpenseCreate,
+    created_by: Optional[UUID | str] = None,
+) -> models.ProjectExpense:
+    exp_date = expense_in.date or datetime.now(timezone.utc)
+    row = models.ProjectExpense(
+        project_id=project_id,
+        category=expense_in.category or "general",
+        description=expense_in.description,
+        amount=round(float(expense_in.amount), 2),
+        date=exp_date,
+        receipt_url=expense_in.receipt_url,
+        status=expense_in.status or "planned",
+        created_by=created_by,
+    )
+    db.add(row)
+    db.commit()
+    db.refresh(row)
+    recalculate_project_budget(db, project_id)
+    if row.creator:
+        row.creator_name = row.creator.nombre_completo
+    return row
+
+
+def update_project_expense(
+    db: Session,
+    project_id: UUID | str,
+    expense_id: UUID | str,
+    expense_in: schemas.ProjectExpenseUpdate,
+) -> Optional[models.ProjectExpense]:
+    row = get_project_expense(db, project_id, expense_id)
+    if not row:
+        return None
+    for k, v in expense_in.model_dump(exclude_unset=True).items():
+        if v is not None:
+            if k == "amount":
+                setattr(row, k, round(float(v), 2))
+            else:
+                setattr(row, k, v)
+    row.updated_at = datetime.now(timezone.utc)
+    db.commit()
+    db.refresh(row)
+    recalculate_project_budget(db, project_id)
+    if row.creator:
+        row.creator_name = row.creator.nombre_completo
+    return row
+
+
+def delete_project_expense(db: Session, project_id: UUID | str, expense_id: UUID | str) -> bool:
+    row = get_project_expense(db, project_id, expense_id)
+    if not row:
+        return False
+    row.deleted_at = datetime.now(timezone.utc)
+    db.commit()
+    recalculate_project_budget(db, project_id)
+    return True
+
+
+def get_project_budget_summary(db: Session, project_id: UUID | str) -> Optional[dict]:
+    project = get_project(db, project_id)
+    if not project:
+        return None
+    expenses = (
+        db.query(models.ProjectExpense)
+        .filter(
+            models.ProjectExpense.project_id == project_id,
+            models.ProjectExpense.deleted_at.is_(None),
+        )
+        .all()
+    )
+    allocated = float(project.budget_allocated or 0.0)
+    planned = sum(e.amount for e in expenses if e.status == "planned")
+    committed = sum(e.amount for e in expenses if e.status == "committed")
+    paid = sum(e.amount for e in expenses if e.status == "paid")
+
+    # Actualizar budget_spent si difiere
+    if project.budget_spent != round(paid, 2):
+        project.budget_spent = round(paid, 2)
+        db.commit()
+        db.refresh(project)
+
+    remaining = max(0.0, allocated - paid)
+    burn_rate = round((paid / allocated * 100), 2) if allocated > 0 else 0.0
+
+    by_category: dict[str, float] = {}
+    for e in expenses:
+        cat = e.category or "general"
+        by_category[cat] = round(by_category.get(cat, 0.0) + float(e.amount), 2)
+
+    return {
+        "project_id": str(project.id),
+        "budget_allocated": allocated,
+        "budget_spent": round(paid, 2),
+        "remaining_budget": round(remaining, 2),
+        "burn_rate_percent": burn_rate,
+        "total_expenses_count": len(expenses),
+        "planned_amount": round(planned, 2),
+        "committed_amount": round(committed, 2),
+        "paid_amount": round(paid, 2),
+        "by_category": by_category,
+    }
+

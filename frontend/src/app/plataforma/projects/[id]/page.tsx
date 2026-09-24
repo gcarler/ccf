@@ -14,6 +14,7 @@ import {
     PencilRuler,
     Target,
     Sliders,
+    Wallet,
 } from 'lucide-react';
 import WorkspaceToolbar from '@/components/WorkspaceToolbar';
 
@@ -25,6 +26,7 @@ import { PhaseManagerDrawer } from '@/components/projects/PhaseManagerDrawer';
 import ProjectSettingsDrawer from '@/components/projects/ProjectSettingsDrawer';
 import { ProjectKpiDrawer } from '@/components/projects/ProjectKpiDrawer';
 import { ProgressSettingsDrawer } from '@/components/projects/ProgressSettingsDrawer';
+import { ProjectBudgetDrawer } from '@/components/projects/ProjectBudgetDrawer';
 import { ProjectUpdateProvider } from '@/context/ProjectUpdateContext';
 import { ProjectViewsContent } from '@/components/projects/ProjectViewsContent';
 import ProjectContextPanel from '@/components/projects/ProjectContextPanel';
@@ -116,6 +118,7 @@ export default function ProjectDetailPage() {
     const [showPhaseManager, setShowPhaseManager] = useState(false);
     const [showKpiDrawer, setShowKpiDrawer] = useState(false);
     const [showProgressDrawer, setShowProgressDrawer] = useState(false);
+    const [showBudgetDrawer, setShowBudgetDrawer] = useState(false);
     const [confirmAction, setConfirmAction] = useState<ConfirmActionState>(null);
 
     const handleDeleteProject = async () => {
@@ -215,6 +218,9 @@ export default function ProjectDetailPage() {
                             <button onClick={() => setShowProgressDrawer(true)} className="px-3 py-1.5 bg-[hsl(var(--surface-2))] text-[hsl(var(--foreground))] rounded-lg text-2xs font-bold uppercase tracking-wide hover:bg-[hsl(var(--surface-3))] active:scale-95 transition-all flex items-center gap-1.5 border border-[hsl(var(--border))]">
                                 <Sliders size={14} className="text-[hsl(var(--primary))]" /> Avance
                             </button>
+                            <button onClick={() => setShowBudgetDrawer(true)} className="px-3 py-1.5 bg-[hsl(var(--surface-2))] text-[hsl(var(--foreground))] rounded-lg text-2xs font-bold uppercase tracking-wide hover:bg-[hsl(var(--surface-3))] active:scale-95 transition-all flex items-center gap-1.5 border border-[hsl(var(--border))]">
+                                <Wallet size={14} className="text-[hsl(var(--primary))]" /> Presupuesto
+                            </button>
                             <button onClick={() => setShowProjectSettings(true)} className="px-3 py-1.5 bg-[hsl(var(--warning))] text-[hsl(var(--primary-foreground))] rounded-lg text-2xs font-bold uppercase tracking-wide hover:opacity-90 active:scale-95 transition-all flex items-center gap-2">
                                 <Edit3 size={14} /> Editar
                             </button>
@@ -299,6 +305,14 @@ export default function ProjectDetailPage() {
                     manualProgress={project?.manual_progress}
                     currentHealthOverride={project?.health_override}
                     onSaved={() => reloadProject()}
+                />
+
+                <ProjectBudgetDrawer
+                    projectId={project?.id || id}
+                    isOpen={showBudgetDrawer}
+                    onClose={() => setShowBudgetDrawer(false)}
+                    budgetAllocated={project?.budget_allocated}
+                    onBudgetUpdated={() => reloadProject()}
                 />
             </div>
         </ProjectUpdateProvider>
