@@ -48,6 +48,7 @@ from backend.models_projects import (
     ProjectMilestone,
     ProjectPhase,
     ProjectTask,
+    ProjectAutomationRule,
 )
 
 db = SessionLocal()
@@ -112,6 +113,7 @@ test_projs = db.query(Project).filter(
     | (Project.title.ilike("%Proyecto Vía Endpoint%"))
 ).all()
 for proj in test_projs:
+    db.query(ProjectAutomationRule).filter(ProjectAutomationRule.project_id == proj.id).delete(synchronize_session=False)
     db.query(ProjectActivityLog).filter(ProjectActivityLog.project_id == proj.id).delete(synchronize_session=False)
     db.query(ProjectDocument).filter(ProjectDocument.project_id == proj.id).delete(synchronize_session=False)
     db.query(ProjectComment).filter(ProjectComment.project_id == proj.id).delete(synchronize_session=False)
@@ -146,6 +148,9 @@ created_users = []
 for ud in users_data:
     existing = db.query(User).filter(User.email == ud["email"]).first()
     if existing:
+        if admin_user and getattr(admin_user, "sede_id", None):
+            existing.sede_id = admin_user.sede_id
+            db.commit()
         ok(f"Usuario '{ud['name']}' ya existe (id={existing.id})")
         created_users.append(existing)
     else:
@@ -670,8 +675,9 @@ from backend.crud import projects as crud_projects
 from backend.schemas import projects as schemas_projects
 
 # Fijar presupuesto asignado de prueba
+project_id_val = str(project.id)
 db.expire_all()
-project = db.query(Project).filter(Project.id == project.id).first()
+project = db.query(Project).filter(Project.id == project_id_val).first()
 project.budget_allocated = 12000.0
 db.commit()
 db.refresh(project)
@@ -1370,6 +1376,169 @@ if del_tpl_ok:
         fail("La plantilla eliminada sigue apareciendo en el catálogo activo")
 else:
     fail("Error ejecutando delete_project_template")
+
+# ──────────────────────────────────────────────────────────────
+section("16. MOTOR DE AUTOMATIZACIONES Y DISPARADORES (SUPER-PRO FASE 7)")
+# ──────────────────────────────────────────────────────────────
+
+# 1. Crear Regla 1: Trigger task_completed -> Acción create_followup_task
+rule1_in = schemas_projects.ProjectAutomationRuleCreate(
+    name="Auto-crear seguimiento al completar tarea",
+    trigger_event="task_completed",
+    condition_data={"status": "completed"},
+    action_type="create_followup_task",
+    action_data={
+        "title": "Verificación y Cierre Post-Completado",
+        "priority": "high",
+        "duration_days": 3
+    },
+    is_active=True
+)
+
+rule1 = crud_projects.create_project_automation_rule(
+    db,
+    project.id,
+    rule1_in,
+    created_by=admin_user.id,
+    sede_id=project.sede_id
+)
+
+if rule1 and rule1.id and rule1.name == "Auto-crear seguimiento al completar tarea":
+    ok(f"Regla de automatización 1 creada (id={rule1.id}): {rule1.trigger_event} -> {rule1.action_type} (is_active={rule1.is_active})")
+else:
+    fail("Error creando regla de automatización 1")
+
+# 2. Crear Regla 2: Trigger status_changed -> Condición status == in_progress -> Acción set_priority urgent
+rule2_in = schemas_projects.ProjectAutomationRuleCreate(
+    name="Elevar prioridad si entra en progreso",
+    trigger_event="status_changed",
+    condition_data={"status": "in_progress"},
+    action_type="set_priority",
+    action_data={"priority": "urgent"},
+    is_active=True
+)
+
+rule2 = crud_projects.create_project_automation_rule(
+    db,
+    project.id,
+    rule2_in,
+    created_by=admin_user.id,
+    sede_id=project.sede_id
+)
+
+if rule2 and rule2.id and rule2.name == "Elevar prioridad si entra en progreso":
+    ok(f"Regla de automatización 2 creada (id={rule2.id}): {rule2.trigger_event} -> {rule2.action_type}")
+else:
+    fail("Error creando regla de automatización 2")
+
+# 3. Listar reglas y verificar filtros
+all_rules = crud_projects.get_project_automation_rules(db, project.id)
+if len(all_rules) >= 2:
+    ok(f"Listado de reglas verificado: {len(all_rules)} regla(s) registradas")
+else:
+    fail(f"Esperadas al menos 2 reglas, obtenidas: {len(all_rules)}")
+
+tc_rules = crud_projects.get_project_automation_rules(db, project.id, trigger_event="task_completed")
+if len(tc_rules) >= 1 and any(str(r.id) == str(rule1.id) for r in tc_rules):
+    ok(f"Filtro por trigger_event='task_completed' verificado: {len(tc_rules)} regla(s)")
+else:
+    fail("Filtro por trigger_event falló")
+
+active_rules = crud_projects.get_project_automation_rules(db, project.id, is_active=True)
+if len(active_rules) >= 2:
+    ok(f"Filtro por is_active=True verificado: {len(active_rules)} regla(s) activas")
+else:
+    fail("Filtro por is_active falló")
+
+# 4. Consulta individual de regla
+rule_fetched = crud_projects.get_project_automation_rule(db, project.id, rule1.id)
+if rule_fetched and str(rule_fetched.id) == str(rule1.id):
+    ok(f"Consulta individual get_project_automation_rule verificada: '{rule_fetched.name}'")
+else:
+    fail("Error en get_project_automation_rule")
+
+# 5. Evaluar Motor de Automatizaciones - Caso A: Ejecución Exitosa de create_followup_task
+eval_payload_match = schemas_projects.EvaluateAutomationPayload(
+    trigger_event="task_completed",
+    task_id=tA.id,
+    context={"status": "completed", "task_id": str(tA.id)}
+)
+
+exec_results = crud_projects.evaluate_project_automations(
+    db,
+    project.id,
+    eval_payload_match,
+    actor_persona_id=admin_user.id,
+    user_sede_id=project.sede_id
+)
+
+r1_res = next((r for r in exec_results if r["rule_id"] == str(rule1.id)), None)
+if r1_res and r1_res["status"] == "executed":
+    ok(f"Motor ejecutó acción para regla 1 exitosamente: status='{r1_res['status']}' | Detalle: {r1_res['details']}")
+    # Verificar recálculo de execution_count y last_triggered_at
+    db.expire_all()
+    r1_db = crud_projects.get_project_automation_rule(db, project.id, rule1.id)
+    if r1_db.execution_count >= 1 and r1_db.last_triggered_at is not None:
+        ok(f"Contador de ejecuciones incrementado: count={r1_db.execution_count}, timestamp UTC={r1_db.last_triggered_at.isoformat()}")
+    else:
+        fail(f"execution_count o last_triggered_at no actualizados: count={r1_db.execution_count}")
+
+    # Verificar que la tarea de seguimiento fue creada en la BD
+    followup_task = db.query(ProjectTask).filter(
+        ProjectTask.project_id == project.id,
+        ProjectTask.title == "Verificación y Cierre Post-Completado",
+        ProjectTask.deleted_at.is_(None)
+    ).first()
+    if followup_task:
+        ok(f"Tarea de seguimiento persistida en BD: '{followup_task.title}' (Prioridad={followup_task.priority})")
+    else:
+        fail("No se encontró la tarea de seguimiento generada por la automatización")
+else:
+    fail(f"Motor de reglas no ejecutó regla 1: {exec_results}")
+
+# 6. Evaluar Motor de Automatizaciones - Caso B: Condición no satisfecha (skipped_condition)
+eval_payload_nomatch = schemas_projects.EvaluateAutomationPayload(
+    trigger_event="status_changed",
+    task_id=tA.id,
+    context={"status": "blocked", "task_id": str(tA.id)}
+)
+
+skip_results = crud_projects.evaluate_project_automations(
+    db,
+    project.id,
+    eval_payload_nomatch,
+    actor_persona_id=admin_user.id,
+    user_sede_id=project.sede_id
+)
+
+r2_res = next((r for r in skip_results if r["rule_id"] == str(rule2.id)), None)
+if r2_res and r2_res["status"] == "skipped_condition":
+    ok(f"Condición no satisfecha evaluada correctamente: status='{r2_res['status']}' (Se omitió sin fallos)")
+else:
+    fail(f"Esperado skipped_condition para regla 2, obtenido: {skip_results}")
+
+# 7. Actualización de Regla (update_project_automation_rule)
+upd_rule_in = schemas_projects.ProjectAutomationRuleUpdate(
+    name="Auto-crear seguimiento (Modificado)",
+    is_active=False
+)
+rule_updated = crud_projects.update_project_automation_rule(db, project.id, rule1.id, upd_rule_in)
+if rule_updated and rule_updated.name == "Auto-crear seguimiento (Modificado)" and rule_updated.is_active is False:
+    ok(f"Regla actualizada exitosamente: is_active={rule_updated.is_active}, name='{rule_updated.name}'")
+else:
+    fail("Error en update_project_automation_rule")
+
+# 8. Soft Delete de Regla (delete_project_automation_rule)
+del_rule_ok = crud_projects.delete_project_automation_rule(db, project.id, rule1.id)
+if del_rule_ok:
+    ok(f"Regla '{rule1.id}' soft-deleted exitosamente")
+    rules_after_del = crud_projects.get_project_automation_rules(db, project.id)
+    if not any(str(r.id) == str(rule1.id) for r in rules_after_del):
+        ok("La regla eliminada no aparece en las consultas activas (Aislamiento Soft-Delete)")
+    else:
+        fail("La regla eliminada sigue apareciendo en get_project_automation_rules")
+else:
+    fail("Error ejecutando delete_project_automation_rule")
 
 # ──────────────────────────────────────────────────────────────
 section(f"RESUMEN: {PASS} passed, {FAIL} failed")

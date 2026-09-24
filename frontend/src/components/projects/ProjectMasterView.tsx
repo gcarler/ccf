@@ -23,6 +23,7 @@ import { ProjectRiskMatrixDrawer } from '@/components/projects/ProjectRiskMatrix
 import { ProjectWorkloadDrawer } from '@/components/projects/ProjectWorkloadDrawer';
 import { ProjectTimeTrackingDrawer } from '@/components/projects/ProjectTimeTrackingDrawer';
 import { ProjectTemplateCatalogDrawer } from '@/components/projects/ProjectTemplateCatalogDrawer';
+import { ProjectAutomationsDrawer } from '@/components/projects/ProjectAutomationsDrawer';
 import { useProjectUpdate } from '@/context/ProjectUpdateContext';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
@@ -80,6 +81,9 @@ export function ProjectMasterView({ project, tasks, onOpenTask }: ProjectMasterV
 
     // Catálogo de Plantillas (Super-PRO Fase 6)
     const [showTemplateDrawer, setShowTemplateDrawer] = useState(false);
+
+    // Motor de Automatizaciones (Super-PRO Fase 7)
+    const [showAutomationsDrawer, setShowAutomationsDrawer] = useState(false);
 
     const loadKpis = useCallback(async () => {
         if (!project.id || !token) return;
@@ -364,6 +368,15 @@ export function ProjectMasterView({ project, tasks, onOpenTask }: ProjectMasterV
                         >
                             <BookTemplate size={14} />
                             <span className="text-3xs font-bold uppercase">Plantilla</span>
+                        </button>
+
+                        <button
+                            onClick={() => setShowAutomationsDrawer(true)}
+                            className="p-2 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] hover:bg-[hsl(var(--surface-3))] text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] transition-all active:scale-95 flex flex-col items-center gap-0.5 shrink-0"
+                            title="Reglas y disparadores reactivos de automatización"
+                        >
+                            <Zap size={14} className="text-[hsl(var(--primary))]" />
+                            <span className="text-3xs font-bold uppercase">Auto</span>
                         </button>
                     </div>
                 </div>
@@ -1121,6 +1134,16 @@ export function ProjectMasterView({ project, tasks, onOpenTask }: ProjectMasterV
                 activeProjectId={project.id}
                 activeProjectTitle={project.title}
                 onProjectCreated={() => {
+                    reloadProject();
+                }}
+            />
+
+            <ProjectAutomationsDrawer
+                projectId={project.id}
+                isOpen={showAutomationsDrawer}
+                onClose={() => setShowAutomationsDrawer(false)}
+                tasks={tasks}
+                onAutomationTriggered={() => {
                     reloadProject();
                 }}
             />

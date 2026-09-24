@@ -280,6 +280,7 @@ from backend.models_projects import (
     ProjectTaskDependency,
     ProjectTemplate,
     ProjectTimeLog,
+    ProjectAutomationRule,
     ProjectWhiteboard,
     TaskSupply,
 )

@@ -472,3 +472,69 @@ export interface SaveProjectAsTemplate {
   is_public?: boolean;
 }
 
+// ── Project Automations & Triggers (Super-PRO Fase 7) ───────────────────────
+
+export type TriggerEventType =
+  | "task_completed"
+  | "task_created"
+  | "status_changed"
+  | "priority_changed"
+  | "due_date_approaching";
+
+export type ActionTypeValue =
+  | "notify_assignee"
+  | "reassign_task"
+  | "create_followup_task"
+  | "change_phase"
+  | "set_priority";
+
+export interface ProjectAutomationRule {
+  id: string;
+  project_id?: string | null;
+  name: string;
+  description?: string | null;
+  trigger_event: string;
+  condition_data: Record<string, any>;
+  action_type: string;
+  action_data: Record<string, any>;
+  is_active: boolean;
+  execution_count: number;
+  last_triggered_at?: string | null;
+  created_by?: string | null;
+  creator_name?: string | null;
+  sede_id?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ProjectAutomationRuleCreate {
+  project_id?: string | null;
+  name: string;
+  description?: string | null;
+  trigger_event: string;
+  condition_data?: Record<string, any>;
+  action_type: string;
+  action_data?: Record<string, any>;
+  is_active?: boolean;
+  sede_id?: string | null;
+}
+
+export interface ProjectAutomationRuleUpdate {
+  name?: string;
+  description?: string | null;
+  trigger_event?: string;
+  condition_data?: Record<string, any>;
+  action_type?: string;
+  action_data?: Record<string, any>;
+  is_active?: boolean;
+}
+
+export interface AutomationExecutionResult {
+  rule_id: string;
+  rule_name: string;
+  action_type: string;
+  status: string;
+  details?: string | null;
+}
+
+

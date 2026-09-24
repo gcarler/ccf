@@ -983,3 +983,63 @@ class SaveProjectAsTemplate(BaseModel):
     description: Optional[str] = None
     category: str = "general"
     is_public: bool = True
+
+
+# ── Project Automations & Triggers (Super-PRO Fase 7) ───────────────────────
+
+class ProjectAutomationRuleBase(BaseModel):
+    name: str = Field(..., min_length=1, max_length=255)
+    description: Optional[str] = None
+    trigger_event: str = Field(default="task_completed", max_length=50)
+    condition_data: dict = Field(default_factory=dict)
+    action_type: str = Field(default="notify_assignee", max_length=50)
+    action_data: dict = Field(default_factory=dict)
+    is_active: bool = True
+
+
+class ProjectAutomationRuleCreate(ProjectAutomationRuleBase):
+    project_id: Optional[UUIDStr] = None
+    sede_id: Optional[UUIDStr] = None
+
+
+class ProjectAutomationRuleUpdate(BaseModel):
+    name: Optional[str] = Field(default=None, min_length=1, max_length=255)
+    description: Optional[str] = None
+    trigger_event: Optional[str] = None
+    condition_data: Optional[dict] = None
+    action_type: Optional[str] = None
+    action_data: Optional[dict] = None
+    is_active: Optional[bool] = None
+
+
+class ProjectAutomationRule(ProjectAutomationRuleBase):
+    id: UUIDStr
+    project_id: Optional[UUIDStr] = None
+    execution_count: int = 0
+    last_triggered_at: Optional[datetime] = None
+    created_by: Optional[UUIDStr] = None
+    creator_name: Optional[str] = None
+    sede_id: Optional[UUIDStr] = None
+    created_at: datetime
+    updated_at: datetime
+    model_config = orm_config
+
+
+class EvaluateAutomationPayload(BaseModel):
+    trigger_event: str
+    task_id: Optional[UUIDStr] = None
+    context_data: Optional[dict] = Field(default_factory=dict)
+
+    def __init__(self, **data):
+        if "context" in data and "context_data" not in data:
+            data["context_data"] = data.pop("context")
+        super().__init__(**data)
+
+
+class AutomationExecutionResult(BaseModel):
+    rule_id: UUIDStr
+    rule_name: str
+    action_type: str
+    status: str
+    details: Optional[str] = None
+

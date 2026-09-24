@@ -1,7 +1,7 @@
 """Projects CRUD — corregido para cumplir los 3 axiomas del Kernel CCF."""
 
 from datetime import datetime, timezone, timedelta
-from typing import Optional
+from typing import Any, Dict, List, Optional
 from uuid import UUID
 
 from sqlalchemy.orm import Session, selectinload
@@ -17,6 +17,18 @@ def get_user_persona_id(db: Session, user_id: UUID | str | None) -> Optional[UUI
     """Obtiene persona.id desde el identificador canónico del usuario."""
     persona_id = resolve_persona_id_for_user(db, user_id)
     return UUID(str(persona_id)) if persona_id else None
+
+
+def _to_uuid(val: Any) -> Optional[UUID]:
+    """Convierte de forma segura un valor a UUID o devuelve None."""
+    if val is None:
+        return None
+    if isinstance(val, UUID):
+        return val
+    try:
+        return UUID(str(val))
+    except (ValueError, TypeError, AttributeError):
+        return None
 
 
 # ── Projects ────────────────────────────────────────────
@@ -2218,6 +2230,394 @@ def save_project_as_template(
         ).filter(models.ProjectTemplate.id == template.id).first()
 
     return _prepare_template_response(template)
+
+
+# ── Project Automations & Triggers (Super-PRO Fase 7) ───────────────────────
+
+def _prepare_automation_response(rule: models.ProjectAutomationRule) -> models.ProjectAutomationRule:
+    if getattr(rule, "creator", None):
+        c = rule.creator
+        rule.creator_name = (
+            getattr(c, "nombre_completo", None)
+            or f"{getattr(c, 'first_name', '')} {getattr(c, 'last_name', '')}".strip()
+            or getattr(c, "email", "Usuario")
+        )
+    else:
+        rule.creator_name = "Sistema"
+    return rule
+
+
+def get_project_automation_rules(
+    db: Session,
+    project_id: Optional[UUID | str] = None,
+    *,
+    user_sede_id: Optional[UUID | str] = None,
+    sede_id: Optional[UUID | str] = None,
+    is_active: Optional[bool] = None,
+    trigger_event: Optional[str] = None,
+) -> list[models.ProjectAutomationRule]:
+    effective_sede = sede_id if sede_id is not None else user_sede_id
+    q = (
+        db.query(models.ProjectAutomationRule)
+        .options(selectinload(models.ProjectAutomationRule.creator))
+        .filter(models.ProjectAutomationRule.deleted_at.is_(None))
+    )
+
+    if project_id is not None:
+        q = q.filter(
+            (models.ProjectAutomationRule.project_id == _to_uuid(project_id))
+            | (models.ProjectAutomationRule.project_id.is_(None))
+        )
+
+    if effective_sede is not None:
+        q = q.filter(
+            (models.ProjectAutomationRule.sede_id.is_(None))
+            | (models.ProjectAutomationRule.sede_id == _to_uuid(effective_sede))
+        )
+
+    if is_active is not None:
+        q = q.filter(models.ProjectAutomationRule.is_active.is_(is_active))
+
+    if trigger_event:
+        q = q.filter(models.ProjectAutomationRule.trigger_event == trigger_event)
+
+    rules = q.order_by(models.ProjectAutomationRule.created_at.desc()).all()
+    for r in rules:
+        _prepare_automation_response(r)
+    return rules
+
+
+def get_project_automation_rule(
+    db: Session,
+    project_id_or_rule_id: Any,
+    rule_id: Optional[Any] = None,
+    *,
+    user_sede_id: Optional[UUID | str] = None,
+    sede_id: Optional[UUID | str] = None,
+) -> Optional[models.ProjectAutomationRule]:
+    actual_rule_id = rule_id if rule_id is not None else project_id_or_rule_id
+    effective_sede = sede_id if sede_id is not None else user_sede_id
+    q = (
+        db.query(models.ProjectAutomationRule)
+        .options(selectinload(models.ProjectAutomationRule.creator))
+        .filter(
+            models.ProjectAutomationRule.id == _to_uuid(actual_rule_id),
+            models.ProjectAutomationRule.deleted_at.is_(None),
+        )
+    )
+    if effective_sede is not None:
+        q = q.filter(
+            (models.ProjectAutomationRule.sede_id.is_(None))
+            | (models.ProjectAutomationRule.sede_id == _to_uuid(effective_sede))
+        )
+    rule = q.first()
+    if rule:
+        _prepare_automation_response(rule)
+    return rule
+
+
+def create_project_automation_rule(
+    db: Session,
+    project_id_or_rule_in: Any,
+    rule_in: Optional[schemas.ProjectAutomationRuleCreate] = None,
+    *,
+    creator_persona_id: Optional[UUID | str] = None,
+    created_by: Optional[UUID | str] = None,
+    sede_id: Optional[UUID | str] = None,
+    user_sede_id: Optional[UUID | str] = None,
+) -> models.ProjectAutomationRule:
+    if rule_in is None and hasattr(project_id_or_rule_in, "trigger_event"):
+        actual_rule_in = project_id_or_rule_in
+    else:
+        actual_rule_in = rule_in
+        if actual_rule_in and not getattr(actual_rule_in, "project_id", None):
+            actual_rule_in.project_id = _to_uuid(project_id_or_rule_in)
+
+    effective_creator = creator_persona_id or created_by
+    effective_sede = getattr(actual_rule_in, "sede_id", None) or sede_id or user_sede_id
+
+    # Validar que si tiene project_id, pertenezca a la misma sede
+    if actual_rule_in.project_id:
+        proj = (
+            db.query(models.Project)
+            .filter(models.Project.id == _to_uuid(actual_rule_in.project_id), models.Project.deleted_at.is_(None))
+            .first()
+        )
+        if not proj:
+            raise ValueError("Proyecto no encontrado")
+        if effective_sede is not None and proj.sede_id is not None and str(proj.sede_id) != str(effective_sede):
+            raise ValueError("Proyecto no pertenece a la sede especificada (Axioma 3)")
+
+    rule = models.ProjectAutomationRule(
+        project_id=_to_uuid(actual_rule_in.project_id) if actual_rule_in.project_id else None,
+        name=actual_rule_in.name,
+        description=actual_rule_in.description,
+        trigger_event=actual_rule_in.trigger_event,
+        condition_data=actual_rule_in.condition_data or {},
+        action_type=actual_rule_in.action_type,
+        action_data=actual_rule_in.action_data or {},
+        is_active=actual_rule_in.is_active,
+        execution_count=0,
+        last_triggered_at=None,
+        created_by=_to_uuid(effective_creator) if effective_creator else None,
+        sede_id=_to_uuid(effective_sede) if effective_sede else None,
+        created_at=datetime.now(timezone.utc),
+        updated_at=datetime.now(timezone.utc),
+    )
+    db.add(rule)
+    db.commit()
+    db.refresh(rule)
+
+    if rule.created_by:
+        db.query(models.ProjectAutomationRule).options(
+            selectinload(models.ProjectAutomationRule.creator)
+        ).filter(models.ProjectAutomationRule.id == rule.id).first()
+
+    return _prepare_automation_response(rule)
+
+
+def update_project_automation_rule(
+    db: Session,
+    project_id_or_rule_id: Any,
+    rule_id_or_update: Any = None,
+    rule_in: Optional[schemas.ProjectAutomationRuleUpdate] = None,
+    *,
+    user_sede_id: Optional[UUID | str] = None,
+    sede_id: Optional[UUID | str] = None,
+) -> Optional[models.ProjectAutomationRule]:
+    if rule_in is not None:
+        actual_rule_id = rule_id_or_update
+        actual_rule_in = rule_in
+    else:
+        actual_rule_id = project_id_or_rule_id
+        actual_rule_in = rule_id_or_update
+
+    rule = get_project_automation_rule(db, actual_rule_id, user_sede_id=user_sede_id, sede_id=sede_id)
+    if not rule:
+        return None
+
+    if actual_rule_in.name is not None:
+        rule.name = actual_rule_in.name
+    if actual_rule_in.description is not None:
+        rule.description = actual_rule_in.description
+    if actual_rule_in.trigger_event is not None:
+        rule.trigger_event = actual_rule_in.trigger_event
+    if actual_rule_in.condition_data is not None:
+        rule.condition_data = actual_rule_in.condition_data
+    if actual_rule_in.action_type is not None:
+        rule.action_type = actual_rule_in.action_type
+    if actual_rule_in.action_data is not None:
+        rule.action_data = actual_rule_in.action_data
+    if actual_rule_in.is_active is not None:
+        rule.is_active = actual_rule_in.is_active
+
+    rule.updated_at = datetime.now(timezone.utc)
+    db.commit()
+    db.refresh(rule)
+    return _prepare_automation_response(rule)
+
+
+def delete_project_automation_rule(
+    db: Session,
+    project_id_or_rule_id: Any,
+    rule_id: Optional[Any] = None,
+    *,
+    user_sede_id: Optional[UUID | str] = None,
+    sede_id: Optional[UUID | str] = None,
+) -> bool:
+    actual_rule_id = rule_id if rule_id is not None else project_id_or_rule_id
+    rule = get_project_automation_rule(db, actual_rule_id, user_sede_id=user_sede_id, sede_id=sede_id)
+    if not rule:
+        return False
+
+    rule.deleted_at = datetime.now(timezone.utc)
+    db.commit()
+    return True
+
+
+def evaluate_project_automations(
+    db: Session,
+    project_id: UUID | str,
+    trigger_event_or_payload: Any = None,
+    context: Optional[dict] = None,
+    *,
+    trigger_event: Optional[str] = None,
+    actor_persona_id: Optional[UUID | str] = None,
+    user_sede_id: Optional[UUID | str] = None,
+) -> list[dict]:
+    """Evalúa y ejecuta las reglas activas de automatización para un proyecto y evento dado."""
+    if hasattr(trigger_event_or_payload, "trigger_event"):
+        effective_trigger = trigger_event_or_payload.trigger_event
+        effective_context = dict(getattr(trigger_event_or_payload, "context_data", None) or getattr(trigger_event_or_payload, "context", None) or {})
+        if getattr(trigger_event_or_payload, "task_id", None):
+            effective_context["task_id"] = str(trigger_event_or_payload.task_id)
+    elif isinstance(trigger_event_or_payload, str):
+        effective_trigger = trigger_event_or_payload
+        effective_context = context or {}
+    else:
+        effective_trigger = trigger_event or ""
+        effective_context = context or {}
+
+    rules = get_project_automation_rules(
+        db,
+        project_id=project_id,
+        user_sede_id=user_sede_id,
+        is_active=True,
+        trigger_event=effective_trigger,
+    )
+
+    results = []
+    task_id = effective_context.get("task_id")
+    task = None
+    if task_id:
+        task = (
+            db.query(models.ProjectTask)
+            .filter(models.ProjectTask.id == _to_uuid(task_id), models.ProjectTask.deleted_at.is_(None))
+            .first()
+        )
+
+    for rule in rules:
+        cond = rule.condition_data or {}
+        # 1. Comprobar condiciones
+        matches = True
+        if "priority" in cond and cond["priority"]:
+            task_priority = effective_context.get("priority") or getattr(task, "priority", None)
+            if task_priority != cond["priority"]:
+                matches = False
+
+        if matches and "status" in cond and cond["status"]:
+            task_status = effective_context.get("status") or getattr(task, "status", None)
+            if task_status != cond["status"]:
+                matches = False
+
+        if matches and ("phase_name" in cond or "node" in cond):
+            required_node = cond.get("phase_name") or cond.get("node")
+            task_node = effective_context.get("phase_name") or effective_context.get("node") or getattr(task, "node", None)
+            if task_node != required_node:
+                matches = False
+
+        if not matches:
+            results.append({
+                "rule_id": str(rule.id),
+                "rule_name": rule.name,
+                "action_type": rule.action_type,
+                "status": "skipped_condition",
+                "details": "Condición no satisfecha por el contexto actual",
+            })
+            continue
+
+        # 2. Ejecutar acción
+        action_details = ""
+        action = rule.action_type
+        act_data = rule.action_data or {}
+
+        try:
+            if action == "notify_assignee":
+                recipient = getattr(task, "assignee_id", None) or effective_context.get("assignee_id") or actor_persona_id
+                activity = models.ProjectActivityLog(
+                    project_id=_to_uuid(project_id),
+                    persona_id=_to_uuid(recipient) if recipient else None,
+                    action_type="automation_triggered",
+                    description=f"[Automatización] {rule.name}: Notificación emitida para '{getattr(task, 'title', effective_context.get('task_title', 'tarea'))}'",
+                    created_at=datetime.now(timezone.utc),
+                )
+                db.add(activity)
+                action_details = f"Notificación generada para responsable {recipient}"
+
+            elif action == "reassign_task" and task:
+                new_assignee = act_data.get("assignee_id")
+                if new_assignee:
+                    task.assignee_id = _to_uuid(new_assignee)
+                    task.updated_at = datetime.now(timezone.utc)
+                    activity = models.ProjectActivityLog(
+                        project_id=_to_uuid(project_id),
+                        persona_id=_to_uuid(actor_persona_id) if actor_persona_id else None,
+                        action_type="automation_task_reassigned",
+                        description=f"[Automatización] Tarea '{task.title}' reasignada a {new_assignee}",
+                        created_at=datetime.now(timezone.utc),
+                    )
+                    db.add(activity)
+                    action_details = f"Tarea reasignada a {new_assignee}"
+
+            elif action == "change_phase" and task:
+                target_node = act_data.get("phase_name") or act_data.get("node")
+                if target_node:
+                    old_node = task.node
+                    task.node = target_node
+                    task.updated_at = datetime.now(timezone.utc)
+                    activity = models.ProjectActivityLog(
+                        project_id=_to_uuid(project_id),
+                        persona_id=_to_uuid(actor_persona_id) if actor_persona_id else None,
+                        action_type="automation_phase_changed",
+                        description=f"[Automatización] Tarea '{task.title}' movida de '{old_node}' a '{target_node}'",
+                        created_at=datetime.now(timezone.utc),
+                    )
+                    db.add(activity)
+                    action_details = f"Tarea movida a fase '{target_node}'"
+
+            elif action == "create_followup_task":
+                title = act_data.get("title") or f"Seguimiento: {rule.name}"
+                priority = act_data.get("priority", "medium")
+                offset_days = int(act_data.get("duration_days", 3))
+                start_d = datetime.now(timezone.utc)
+                due_d = start_d + timedelta(days=offset_days)
+                new_task = models.ProjectTask(
+                    project_id=_to_uuid(project_id),
+                    title=title,
+                    description=act_data.get("description", f"Generada automáticamente por regla '{rule.name}'"),
+                    status="todo",
+                    priority=priority,
+                    start_date=start_d,
+                    due_date=due_d,
+                    node=act_data.get("phase_name") or act_data.get("node"),
+                    assignee_id=_to_uuid(act_data.get("assignee_id")) if act_data.get("assignee_id") else None,
+                    created_at=datetime.now(timezone.utc),
+                    updated_at=datetime.now(timezone.utc),
+                )
+                db.add(new_task)
+                db.flush()
+                activity = models.ProjectActivityLog(
+                    project_id=_to_uuid(project_id),
+                    persona_id=_to_uuid(actor_persona_id) if actor_persona_id else None,
+                    action_type="automation_followup_created",
+                    description=f"[Automatización] Tarea de seguimiento creada: '{new_task.title}' (id={new_task.id})",
+                    created_at=datetime.now(timezone.utc),
+                )
+                db.add(activity)
+                action_details = f"Tarea de seguimiento '{new_task.title}' creada con éxito"
+
+            elif action == "set_priority" and task:
+                new_prio = act_data.get("priority", "high")
+                task.priority = new_prio
+                task.updated_at = datetime.now(timezone.utc)
+                action_details = f"Prioridad de tarea cambiada a {new_prio}"
+
+            else:
+                action_details = f"Acción '{action}' completada sin efectos secundarios"
+
+            # 3. Registrar ejecución exitosa
+            rule.execution_count = (rule.execution_count or 0) + 1
+            rule.last_triggered_at = datetime.now(timezone.utc)
+
+            results.append({
+                "rule_id": str(rule.id),
+                "rule_name": rule.name,
+                "action_type": rule.action_type,
+                "status": "executed",
+                "details": action_details,
+            })
+        except Exception as e:
+            results.append({
+                "rule_id": str(rule.id),
+                "rule_name": rule.name,
+                "action_type": rule.action_type,
+                "status": "failed",
+                "details": str(e),
+            })
+
+    db.commit()
+    return results
+
 
 
 

@@ -4099,6 +4099,183 @@ def get_project_time_tracking_summary(
     return summary
 
 
+# ---------------------------------------------------------------------------
+# PROJECT AUTOMATIONS & TRIGGERS (Super-PRO Fase 7)
+# ---------------------------------------------------------------------------
+
+@router.get(
+    "/{project_id}/automations",
+    response_model=List[schemas.ProjectAutomationRule],
+    tags=["Projects Automations Super-PRO"],
+)
+def list_project_automations(
+    project_id: str,
+    is_active: Optional[bool] = None,
+    trigger_event: Optional[str] = None,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("projects", "read")),
+):
+    """Obtiene las reglas de automatización asociadas a un proyecto y las de alcance general."""
+    user_sede = get_user_sede_id(db, current_user.id)
+    _ensure_project(db, project_id, user_sede=user_sede)
+    rules = crud.get_project_automation_rules(
+        db,
+        project_id=_to_uuid(project_id),
+        user_sede_id=user_sede,
+        is_active=is_active,
+        trigger_event=trigger_event,
+    )
+    for r in rules:
+        _normalize_dates(r)
+    return rules
+
+
+@router.post(
+    "/{project_id}/automations",
+    response_model=schemas.ProjectAutomationRule,
+    status_code=status.HTTP_201_CREATED,
+    tags=["Projects Automations Super-PRO"],
+)
+def create_project_automation(
+    project_id: str,
+    payload: schemas.ProjectAutomationRuleCreate,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("projects", "edit")),
+):
+    """Crea una nueva regla de automatización reactiva para el proyecto."""
+    user_sede = get_user_sede_id(db, current_user.id)
+    _ensure_project(db, project_id, user_sede=user_sede)
+
+    # Forzar project_id y sede_id de forma canónica
+    payload.project_id = str(_to_uuid(project_id))
+    rule = crud.create_project_automation_rule(
+        db,
+        payload,
+        creator_persona_id=current_user.id,
+        user_sede_id=user_sede,
+    )
+    _log_project_activity(
+        db,
+        project_id,
+        current_user.id,
+        "automation_rule_created",
+        f"Regla de automatización '{rule.name}' creada (Disparador: {rule.trigger_event})",
+    )
+    _normalize_dates(rule)
+    return rule
+
+
+@router.get(
+    "/{project_id}/automations/{rule_id}",
+    response_model=schemas.ProjectAutomationRule,
+    tags=["Projects Automations Super-PRO"],
+)
+def get_project_automation(
+    project_id: str,
+    rule_id: str,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("projects", "read")),
+):
+    """Obtiene el detalle de una regla de automatización específica."""
+    user_sede = get_user_sede_id(db, current_user.id)
+    _ensure_project(db, project_id, user_sede=user_sede)
+    rule = crud.get_project_automation_rule(db, _to_uuid(rule_id), user_sede_id=user_sede)
+    if not rule or (rule.project_id and str(rule.project_id) != str(_to_uuid(project_id))):
+        raise HTTPException(status_code=404, detail="Regla de automatización no encontrada")
+    _normalize_dates(rule)
+    return rule
+
+
+@router.patch(
+    "/{project_id}/automations/{rule_id}",
+    response_model=schemas.ProjectAutomationRule,
+    tags=["Projects Automations Super-PRO"],
+)
+def update_project_automation(
+    project_id: str,
+    rule_id: str,
+    payload: schemas.ProjectAutomationRuleUpdate,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("projects", "edit")),
+):
+    """Actualiza una regla de automatización (cambiar disparador, acción, estado activo/inactivo)."""
+    user_sede = get_user_sede_id(db, current_user.id)
+    _ensure_project(db, project_id, user_sede=user_sede)
+    rule = crud.get_project_automation_rule(db, _to_uuid(rule_id), user_sede_id=user_sede)
+    if not rule or (rule.project_id and str(rule.project_id) != str(_to_uuid(project_id))):
+        raise HTTPException(status_code=404, detail="Regla de automatización no encontrada")
+
+    updated = crud.update_project_automation_rule(db, _to_uuid(rule_id), payload, user_sede_id=user_sede)
+    _log_project_activity(
+        db,
+        project_id,
+        current_user.id,
+        "automation_rule_updated",
+        f"Regla de automatización '{updated.name}' actualizada",
+    )
+    _normalize_dates(updated)
+    return updated
+
+
+@router.delete(
+    "/{project_id}/automations/{rule_id}",
+    tags=["Projects Automations Super-PRO"],
+)
+def delete_project_automation(
+    project_id: str,
+    rule_id: str,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("projects", "edit")),
+):
+    """Elimina (soft-delete) una regla de automatización."""
+    user_sede = get_user_sede_id(db, current_user.id)
+    _ensure_project(db, project_id, user_sede=user_sede)
+    rule = crud.get_project_automation_rule(db, _to_uuid(rule_id), user_sede_id=user_sede)
+    if not rule or (rule.project_id and str(rule.project_id) != str(_to_uuid(project_id))):
+        raise HTTPException(status_code=404, detail="Regla de automatización no encontrada")
+
+    crud.delete_project_automation_rule(db, _to_uuid(rule_id), user_sede_id=user_sede)
+    _log_project_activity(
+        db,
+        project_id,
+        current_user.id,
+        "automation_rule_deleted",
+        f"Regla de automatización '{rule.name}' eliminada",
+    )
+    return {"ok": True, "message": "Regla de automatización eliminada correctamente"}
+
+
+@router.post(
+    "/{project_id}/automations/evaluate",
+    response_model=List[schemas.AutomationExecutionResult],
+    tags=["Projects Automations Super-PRO"],
+)
+def evaluate_project_automations_endpoint(
+    project_id: str,
+    payload: schemas.EvaluateAutomationPayload,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("projects", "edit")),
+):
+    """Evalúa manualmente o prueba los disparadores de automatización para un proyecto."""
+    user_sede = get_user_sede_id(db, current_user.id)
+    _ensure_project(db, project_id, user_sede=user_sede)
+
+    context = payload.context_data or {}
+    if payload.task_id:
+        context["task_id"] = str(payload.task_id)
+
+    results = crud.evaluate_project_automations(
+        db,
+        _to_uuid(project_id),
+        trigger_event=payload.trigger_event,
+        context=context,
+        actor_persona_id=current_user.id,
+        user_sede_id=user_sede,
+    )
+    return results
+
+
+
 
 
 

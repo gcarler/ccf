@@ -54,6 +54,7 @@ class Project(Base):
     risks = relationship("ProjectRisk", back_populates="project", cascade="all, delete-orphan")
     baselines = relationship("ProjectBaseline", back_populates="project", cascade="all, delete-orphan")
     time_logs = relationship("ProjectTimeLog", back_populates="project", cascade="all, delete-orphan")
+    automations = relationship("ProjectAutomationRule", back_populates="project", cascade="all, delete-orphan")
 
     # ``name`` is a thin alias over ``title`` so callers that pass or read
     # ``name`` (e.g. ``tests/test_crud_integration.py::TestProjectsCrud``)
@@ -383,5 +384,30 @@ class ProjectTemplate(Base):
     deleted_at = Column(DateTime(timezone=True), nullable=True, index=True)
 
     creator = relationship("Persona", foreign_keys=[created_by])
+
+
+class ProjectAutomationRule(Base):
+    __tablename__ = "project_automation_rules"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    project_id = Column(UUID(as_uuid=True), ForeignKey("projects.id", ondelete="CASCADE"), nullable=True, index=True)
+    name = Column(String(255), nullable=False)
+    description = Column(Text, nullable=True)
+    trigger_event = Column(String(50), nullable=False, index=True)
+    condition_data = Column(JSON, nullable=False, default=dict)
+    action_type = Column(String(50), nullable=False)
+    action_data = Column(JSON, nullable=False, default=dict)
+    is_active = Column(Boolean, default=True, nullable=False, index=True)
+    execution_count = Column(Integer, default=0, nullable=False)
+    last_triggered_at = Column(DateTime(timezone=True), nullable=True)
+    created_by = Column(UUID(as_uuid=True), ForeignKey("personas.id", ondelete="SET NULL"), nullable=True, index=True)
+    sede_id = Column(UUID(as_uuid=True), ForeignKey("sedes.id", ondelete="SET NULL"), nullable=True, index=True)
+    created_at = Column(DateTime(timezone=True), default=_utcnow, nullable=False)
+    updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow, nullable=False)
+    deleted_at = Column(DateTime(timezone=True), nullable=True, index=True)
+
+    project = relationship("Project", back_populates="automations")
+    creator = relationship("Persona", foreign_keys=[created_by])
+
 
 
