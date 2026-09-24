@@ -51,6 +51,7 @@ class Project(Base):
     kpis = relationship("ProjectKPI", back_populates="project", cascade="all, delete-orphan")
     dependencies = relationship("ProjectTaskDependency", back_populates="project", cascade="all, delete-orphan")
     expenses = relationship("ProjectExpense", back_populates="project", cascade="all, delete-orphan")
+    risks = relationship("ProjectRisk", back_populates="project", cascade="all, delete-orphan")
 
     # ``name`` is a thin alias over ``title`` so callers that pass or read
     # ``name`` (e.g. ``tests/test_crud_integration.py::TestProjectsCrud``)
@@ -302,4 +303,26 @@ class ProjectExpense(Base):
 
     project = relationship("Project", back_populates="expenses")
     creator = relationship("Persona", foreign_keys=[created_by])
+
+
+class ProjectRisk(Base):
+    __tablename__ = "project_risks"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    project_id = Column(UUID(as_uuid=True), ForeignKey("projects.id", ondelete="CASCADE"), nullable=False, index=True)
+    title = Column(String(200), nullable=False)
+    category = Column(String(50), default="tecnico", nullable=False)
+    probability = Column(Integer, default=3, nullable=False)
+    impact = Column(Integer, default=3, nullable=False)
+    severity_score = Column(Integer, default=9, nullable=False)
+    mitigation_plan = Column(Text, nullable=True)
+    contingency_plan = Column(Text, nullable=True)
+    owner_id = Column(UUID(as_uuid=True), ForeignKey("personas.id", ondelete="SET NULL"), nullable=True, index=True)
+    status = Column(String(20), default="active", nullable=False, index=True)
+    created_at = Column(DateTime(timezone=True), default=_utcnow, index=True)
+    updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
+    deleted_at = Column(DateTime(timezone=True), nullable=True, index=True)
+
+    project = relationship("Project", back_populates="risks")
+    owner = relationship("Persona", foreign_keys=[owner_id])
 

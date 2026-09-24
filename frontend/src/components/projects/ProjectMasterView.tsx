@@ -7,10 +7,10 @@ import {
     Zap, Trophy, Calendar, TrendingUp, AlertCircle,
     ArrowUpRight, BarChart3, Plus, Trash2,
     Target, Sliders, Activity, AlertTriangle, AlertOctagon, Sparkles,
-    Wallet, TrendingDown,
+    Wallet, TrendingDown, ShieldAlert,
 } from 'lucide-react';
 import clsx from 'clsx';
-import type { ProjectRecord, ProjectTaskRecord, ProjectMilestoneRecord, ProjectAnalytics, ProjectKPI, ProjectBudgetSummary } from '@/types/projects';
+import type { ProjectRecord, ProjectTaskRecord, ProjectMilestoneRecord, ProjectAnalytics, ProjectKPI, ProjectBudgetSummary, ProjectRiskSummary } from '@/types/projects';
 import { InlineTextInput } from '@/components/ui/inline-editors/InlineTextInput';
 import { InlineTextArea } from '@/components/ui/inline-editors/InlineTextArea';
 import { InlineProjectStatusPicker } from '@/components/ui/inline-editors/InlineProjectStatusPicker';
@@ -19,6 +19,7 @@ import { InlineDatePicker } from '@/components/ui/inline-editors/InlineDatePicke
 import { ProjectKpiDrawer } from '@/components/projects/ProjectKpiDrawer';
 import { ProgressSettingsDrawer } from '@/components/projects/ProgressSettingsDrawer';
 import { ProjectBudgetDrawer } from '@/components/projects/ProjectBudgetDrawer';
+import { ProjectRiskMatrixDrawer } from '@/components/projects/ProjectRiskMatrixDrawer';
 import { useProjectUpdate } from '@/context/ProjectUpdateContext';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
@@ -62,6 +63,10 @@ export function ProjectMasterView({ project, tasks, onOpenTask }: ProjectMasterV
     const [budgetSummary, setBudgetSummary] = useState<ProjectBudgetSummary | null>(project.budget_summary || null);
     const [showBudgetDrawer, setShowBudgetDrawer] = useState(false);
 
+    // Matriz RAID de Riesgos (Super-PRO Fase 2)
+    const [risksSummary, setRisksSummary] = useState<ProjectRiskSummary | null>(project.risks_summary || null);
+    const [showRiskDrawer, setShowRiskDrawer] = useState(false);
+
     const loadKpis = useCallback(async () => {
         if (!project.id || !token) return;
         try {
@@ -82,10 +87,21 @@ export function ProjectMasterView({ project, tasks, onOpenTask }: ProjectMasterV
         }
     }, [project.id, token]);
 
+    const loadRisksSummary = useCallback(async () => {
+        if (!project.id || !token) return;
+        try {
+            const data = await apiFetch<ProjectRiskSummary>(`/projects/${project.id}/risks-summary`, { token });
+            if (data) setRisksSummary(data);
+        } catch {
+            // fallback silencioso
+        }
+    }, [project.id, token]);
+
     useEffect(() => {
         loadKpis();
         loadBudgetSummary();
-    }, [loadKpis, loadBudgetSummary]);
+        loadRisksSummary();
+    }, [loadKpis, loadBudgetSummary, loadRisksSummary]);
 
     const handleKpisUpdated = async () => {
         await loadKpis();
@@ -561,6 +577,91 @@ export function ProjectMasterView({ project, tasks, onOpenTask }: ProjectMasterV
                 </div>
             </section>
 
+            {/* 3.1 Matriz RAID de Riesgos y Supuestos (Super-PRO Fase 2) */}
+            <section className="space-y-3">
+                <div className="flex items-center justify-between px-2">
+                    <h2 className="text-lg font-bold text-[hsl(var(--foreground))] uppercase tracking-tighter flex items-center gap-2">
+                        <ShieldAlert className="text-[hsl(var(--destructive))]" size={16} /> Matriz RAID de Riesgos y Supuestos
+                    </h2>
+                    <button
+                        onClick={() => setShowRiskDrawer(true)}
+                        className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-bold uppercase tracking-wider bg-[hsl(var(--destructive))]/10 text-[hsl(var(--destructive))] border border-[hsl(var(--destructive))]/30 hover:bg-[hsl(var(--destructive))]/20 transition-all cursor-pointer"
+                    >
+                        <Plus size={12} /> Gestionar Riesgos (RAID)
+                    </button>
+                </div>
+
+                <div className="bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] rounded-xl p-4 shadow-xs space-y-4">
+                    {/* Alerta semántica si hay riesgos críticos activos */}
+                    {(risksSummary?.critical_count ?? 0) > 0 && (
+                        <div className="p-3 rounded-lg bg-[hsl(var(--destructive))]/10 border border-[hsl(var(--destructive))]/30 flex items-center justify-between gap-3">
+                            <div className="flex items-center gap-2">
+                                <AlertOctagon size={16} className="text-[hsl(var(--destructive))] shrink-0" />
+                                <span className="text-xs font-bold text-[hsl(var(--destructive))]">
+                                    Atención: {risksSummary?.critical_count} riesgo(s) de severidad crítica requieren plan de contingencia inmediata.
+                                </span>
+                            </div>
+                            <button
+                                onClick={() => setShowRiskDrawer(true)}
+                                className="text-3xs font-black uppercase tracking-wider px-2 py-1 rounded bg-[hsl(var(--destructive))] text-[hsl(var(--surface-1))] hover:opacity-90 shrink-0 cursor-pointer"
+                            >
+                                Ver Matriz
+                            </button>
+                        </div>
+                    )}
+
+                    {/* Grid de Severidad RAID */}
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                        <div className="p-3 rounded-lg bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))]">
+                            <span className="text-3xs font-bold uppercase tracking-wider text-[hsl(var(--muted-foreground))]">Riesgos Totales</span>
+                            <div className="text-base md:text-lg font-black text-[hsl(var(--foreground))] mt-0.5">
+                                {risksSummary?.total_risks ?? 0}
+                            </div>
+                            <span className="text-3xs text-[hsl(var(--muted-foreground))]">{risksSummary?.active_risks ?? 0} activos / latentes</span>
+                        </div>
+
+                        <div className="p-3 rounded-lg bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))]">
+                            <span className="text-3xs font-bold uppercase tracking-wider text-[hsl(var(--destructive))]">Críticos (15-25)</span>
+                            <div className="text-base md:text-lg font-black text-[hsl(var(--destructive))] mt-0.5">
+                                {risksSummary?.critical_count ?? 0}
+                            </div>
+                            <span className="text-3xs text-[hsl(var(--destructive))]/80 font-medium">Severidad Extrema</span>
+                        </div>
+
+                        <div className="p-3 rounded-lg bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))]">
+                            <span className="text-3xs font-bold uppercase tracking-wider text-[hsl(28_90%_55%)]">Altos (10-14)</span>
+                            <div className="text-base md:text-lg font-black text-[hsl(28_90%_55%)] mt-0.5">
+                                {risksSummary?.high_count ?? 0}
+                            </div>
+                            <span className="text-3xs text-[hsl(28_90%_55%)]/80 font-medium">Mitigación Activa</span>
+                        </div>
+
+                        <div className="p-3 rounded-lg bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))]">
+                            <span className="text-3xs font-bold uppercase tracking-wider text-[hsl(var(--success))]">Mitigados</span>
+                            <div className="text-base md:text-lg font-black text-[hsl(var(--success))] mt-0.5">
+                                {risksSummary?.mitigated_risks ?? 0}
+                            </div>
+                            <span className="text-3xs text-[hsl(var(--success))]/80 font-medium">Bajo Control</span>
+                        </div>
+                    </div>
+
+                    {/* Distribución de Riesgos por Categoría */}
+                    {risksSummary && Object.keys(risksSummary.by_category || {}).length > 0 && (
+                        <div className="pt-2 border-t border-[hsl(var(--border))] flex items-center gap-2 flex-wrap text-2xs">
+                            <span className="font-semibold text-[hsl(var(--muted-foreground))]">Riesgos por Categoría:</span>
+                            {Object.entries(risksSummary.by_category).map(([cat, count]) => (
+                                <span
+                                    key={cat}
+                                    className="px-2 py-0.5 rounded-full bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] font-medium text-[hsl(var(--foreground))]"
+                                >
+                                    {cat}: <strong className="font-bold">{count}</strong>
+                                </span>
+                            ))}
+                        </div>
+                    )}
+                </div>
+            </section>
+
             {/* 4. Línea de Tiempo de Hitos — auto-gestionada */}
             <section className="space-y-3">
                 <div className="flex items-center justify-between px-2">
@@ -699,6 +800,16 @@ export function ProjectMasterView({ project, tasks, onOpenTask }: ProjectMasterV
                 budgetAllocated={project.budget_allocated}
                 onBudgetUpdated={() => {
                     loadBudgetSummary();
+                    reloadProject();
+                }}
+            />
+
+            <ProjectRiskMatrixDrawer
+                projectId={project.id}
+                isOpen={showRiskDrawer}
+                onClose={() => setShowRiskDrawer(false)}
+                onRiskUpdated={() => {
+                    loadRisksSummary();
                     reloadProject();
                 }}
             />

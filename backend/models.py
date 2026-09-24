@@ -274,6 +274,7 @@ from backend.models_projects import (
     ProjectMember,
     ProjectMilestone,
     ProjectPhase,
+    ProjectRisk,
     ProjectTask,
     ProjectTaskDependency,
     ProjectWhiteboard,

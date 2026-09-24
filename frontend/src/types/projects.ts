@@ -76,6 +76,49 @@ export interface ProjectRecord {
   dependencies?: ProjectTaskDependency[];
   expenses?: ProjectExpense[];
   budget_summary?: ProjectBudgetSummary;
+  risks?: ProjectRisk[];
+  risks_summary?: ProjectRiskSummary;
+}
+
+export interface ProjectRisk {
+  id: string;
+  project_id: string;
+  title: string;
+  category: 'tecnico' | 'logistico' | 'financiero' | 'reputacional' | 'operativo' | 'legal' | string;
+  probability: number;
+  impact: number;
+  severity_score: number;
+  severity_level: 'low' | 'medium' | 'high' | 'critical';
+  mitigation_plan?: string | null;
+  contingency_plan?: string | null;
+  owner_id?: string | null;
+  owner_name?: string | null;
+  status: 'active' | 'mitigated' | 'occurred';
+  created_at: string;
+  updated_at?: string | null;
+}
+
+export interface ProjectRiskMatrixCell {
+  probability: number;
+  impact: number;
+  severity_score: number;
+  count: number;
+  risk_ids: string[];
+  active_count: number;
+}
+
+export interface ProjectRiskSummary {
+  project_id: string;
+  total_risks: number;
+  active_risks: number;
+  mitigated_risks: number;
+  occurred_risks: number;
+  critical_count: number;
+  high_count: number;
+  medium_count: number;
+  low_count: number;
+  matrix_5x5: ProjectRiskMatrixCell[];
+  by_category: Record<string, number>;
 }
 
 export interface ProjectMilestoneRecord {

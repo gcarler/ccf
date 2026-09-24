@@ -15,6 +15,7 @@ import {
     Target,
     Sliders,
     Wallet,
+    ShieldAlert,
 } from 'lucide-react';
 import WorkspaceToolbar from '@/components/WorkspaceToolbar';
 
@@ -27,6 +28,7 @@ import ProjectSettingsDrawer from '@/components/projects/ProjectSettingsDrawer';
 import { ProjectKpiDrawer } from '@/components/projects/ProjectKpiDrawer';
 import { ProgressSettingsDrawer } from '@/components/projects/ProgressSettingsDrawer';
 import { ProjectBudgetDrawer } from '@/components/projects/ProjectBudgetDrawer';
+import { ProjectRiskMatrixDrawer } from '@/components/projects/ProjectRiskMatrixDrawer';
 import { ProjectUpdateProvider } from '@/context/ProjectUpdateContext';
 import { ProjectViewsContent } from '@/components/projects/ProjectViewsContent';
 import ProjectContextPanel from '@/components/projects/ProjectContextPanel';
@@ -119,6 +121,7 @@ export default function ProjectDetailPage() {
     const [showKpiDrawer, setShowKpiDrawer] = useState(false);
     const [showProgressDrawer, setShowProgressDrawer] = useState(false);
     const [showBudgetDrawer, setShowBudgetDrawer] = useState(false);
+    const [showRiskDrawer, setShowRiskDrawer] = useState(false);
     const [confirmAction, setConfirmAction] = useState<ConfirmActionState>(null);
 
     const handleDeleteProject = async () => {
@@ -221,6 +224,9 @@ export default function ProjectDetailPage() {
                             <button onClick={() => setShowBudgetDrawer(true)} className="px-3 py-1.5 bg-[hsl(var(--surface-2))] text-[hsl(var(--foreground))] rounded-lg text-2xs font-bold uppercase tracking-wide hover:bg-[hsl(var(--surface-3))] active:scale-95 transition-all flex items-center gap-1.5 border border-[hsl(var(--border))]">
                                 <Wallet size={14} className="text-[hsl(var(--primary))]" /> Presupuesto
                             </button>
+                            <button onClick={() => setShowRiskDrawer(true)} className="px-3 py-1.5 bg-[hsl(var(--surface-2))] text-[hsl(var(--foreground))] rounded-lg text-2xs font-bold uppercase tracking-wide hover:bg-[hsl(var(--surface-3))] active:scale-95 transition-all flex items-center gap-1.5 border border-[hsl(var(--border))]">
+                                <ShieldAlert size={14} className="text-[hsl(var(--destructive))]" /> Riesgos
+                            </button>
                             <button onClick={() => setShowProjectSettings(true)} className="px-3 py-1.5 bg-[hsl(var(--warning))] text-[hsl(var(--primary-foreground))] rounded-lg text-2xs font-bold uppercase tracking-wide hover:opacity-90 active:scale-95 transition-all flex items-center gap-2">
                                 <Edit3 size={14} /> Editar
                             </button>
@@ -313,6 +319,13 @@ export default function ProjectDetailPage() {
                     onClose={() => setShowBudgetDrawer(false)}
                     budgetAllocated={project?.budget_allocated}
                     onBudgetUpdated={() => reloadProject()}
+                />
+
+                <ProjectRiskMatrixDrawer
+                    projectId={project?.id || id}
+                    isOpen={showRiskDrawer}
+                    onClose={() => setShowRiskDrawer(false)}
+                    onRiskUpdated={() => reloadProject()}
                 />
             </div>
         </ProjectUpdateProvider>

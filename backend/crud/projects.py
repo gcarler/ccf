@@ -827,3 +827,218 @@ def get_project_budget_summary(db: Session, project_id: UUID | str) -> Optional[
         "by_category": by_category,
     }
 
+
+# ── Risks (RAID Matrix) ──────────────────────────────────
+
+
+def get_project_risks(
+    db: Session,
+    project_id: UUID | str,
+    status: Optional[str] = None,
+    category: Optional[str] = None,
+) -> list[models.ProjectRisk]:
+    q = (
+        db.query(models.ProjectRisk)
+        .options(selectinload(models.ProjectRisk.owner))
+        .filter(
+            models.ProjectRisk.project_id == project_id,
+            models.ProjectRisk.deleted_at.is_(None),
+        )
+    )
+    if status:
+        q = q.filter(models.ProjectRisk.status == status)
+    if category:
+        q = q.filter(models.ProjectRisk.category == category)
+    rows = q.order_by(models.ProjectRisk.severity_score.desc(), models.ProjectRisk.created_at.desc()).all()
+    return rows
+
+
+def get_project_risk(
+    db: Session, project_id: UUID | str, risk_id: UUID | str
+) -> Optional[models.ProjectRisk]:
+    return (
+        db.query(models.ProjectRisk)
+        .options(selectinload(models.ProjectRisk.owner))
+        .filter(
+            models.ProjectRisk.id == risk_id,
+            models.ProjectRisk.project_id == project_id,
+            models.ProjectRisk.deleted_at.is_(None),
+        )
+        .first()
+    )
+
+
+def create_project_risk(
+    db: Session,
+    project_id: UUID | str,
+    risk_in: schemas.ProjectRiskCreate,
+) -> models.ProjectRisk:
+    prob = risk_in.probability or 3
+    imp = risk_in.impact or 3
+    sev = prob * imp
+    row = models.ProjectRisk(
+        project_id=project_id,
+        title=risk_in.title,
+        category=risk_in.category or "tecnico",
+        probability=prob,
+        impact=imp,
+        severity_score=sev,
+        mitigation_plan=risk_in.mitigation_plan,
+        contingency_plan=risk_in.contingency_plan,
+        owner_id=risk_in.owner_id,
+        status=risk_in.status or "active",
+    )
+    db.add(row)
+    db.commit()
+    db.refresh(row)
+    if row.owner_id:
+        row = get_project_risk(db, project_id, row.id)
+    return row
+
+
+def update_project_risk(
+    db: Session,
+    project_id: UUID | str,
+    risk_id: UUID | str,
+    risk_in: schemas.ProjectRiskUpdate,
+) -> Optional[models.ProjectRisk]:
+    row = get_project_risk(db, project_id, risk_id)
+    if not row:
+        return None
+    data = risk_in.model_dump(exclude_unset=True)
+    for k, v in data.items():
+        if v is not None:
+            setattr(row, k, v)
+
+    # Recalcular severity_score
+    prob = row.probability or 1
+    imp = row.impact or 1
+    row.severity_score = prob * imp
+    row.updated_at = datetime.now(timezone.utc)
+
+    db.commit()
+    db.refresh(row)
+    return row
+
+
+def delete_project_risk(db: Session, project_id: UUID | str, risk_id: UUID | str) -> bool:
+    row = get_project_risk(db, project_id, risk_id)
+    if not row:
+        return False
+    row.deleted_at = datetime.now(timezone.utc)
+    db.commit()
+    return True
+
+
+def convert_risk_to_task(
+    db: Session,
+    project_id: UUID | str,
+    risk_id: UUID | str,
+    actor_id: Optional[UUID | str] = None,
+) -> Optional[models.ProjectTask]:
+    risk = get_project_risk(db, project_id, risk_id)
+    if not risk:
+        return None
+
+    # Marcar el riesgo como ocurrido
+    risk.status = "occurred"
+    risk.updated_at = datetime.now(timezone.utc)
+
+    sev = (risk.probability or 1) * (risk.impact or 1)
+    priority = "urgent" if sev >= 15 else ("high" if sev >= 10 else "medium")
+
+    desc_lines = [
+        f"**[INCIDENCIA RAID MATERIALIZADA]**",
+        f"- **Categoría:** {risk.category}",
+        f"- **Probabilidad:** {risk.probability}/5 | **Impacto:** {risk.impact}/5 (Severidad: {sev}/25)",
+        "",
+        "**Plan de Contingencia Activado:**",
+        f"{risk.contingency_plan or 'No especificado'}",
+        "",
+        "**Plan de Mitigación Previsto:**",
+        f"{risk.mitigation_plan or 'No especificado'}",
+    ]
+
+    task = models.ProjectTask(
+        project_id=project_id,
+        title=f"[RAID] {risk.title}",
+        description="\n".join(desc_lines),
+        status="todo",
+        priority=priority,
+        assignee_id=risk.owner_id,
+        start_date=datetime.now(timezone.utc),
+    )
+    db.add(task)
+
+    # Registrar en el log de actividades
+    activity = models.ProjectActivityLog(
+        project_id=project_id,
+        persona_id=actor_id or risk.owner_id,
+        action_type="risk_converted",
+        description=f"Riesgo '{risk.title}' convertido en tarea con severidad {sev}/25 ({priority}).",
+    )
+    db.add(activity)
+
+    db.commit()
+    db.refresh(task)
+    return task
+
+
+def get_project_risks_summary(db: Session, project_id: UUID | str) -> Optional[dict]:
+    project = get_project(db, project_id)
+    if not project:
+        return None
+
+    risks = (
+        db.query(models.ProjectRisk)
+        .filter(
+            models.ProjectRisk.project_id == project_id,
+            models.ProjectRisk.deleted_at.is_(None),
+        )
+        .all()
+    )
+
+    total = len(risks)
+    active = sum(1 for r in risks if r.status == "active")
+    mitigated = sum(1 for r in risks if r.status == "mitigated")
+    occurred = sum(1 for r in risks if r.status == "occurred")
+
+    critical = sum(1 for r in risks if (r.probability or 1) * (r.impact or 1) >= 15)
+    high = sum(1 for r in risks if 10 <= (r.probability or 1) * (r.impact or 1) < 15)
+    medium = sum(1 for r in risks if 5 <= (r.probability or 1) * (r.impact or 1) < 10)
+    low = sum(1 for r in risks if (r.probability or 1) * (r.impact or 1) < 5)
+
+    by_category: dict[str, int] = {}
+    for r in risks:
+        cat = r.category or "tecnico"
+        by_category[cat] = by_category.get(cat, 0) + 1
+
+    # Construcción de la matriz 5x5
+    matrix_5x5 = []
+    for p in range(1, 6):
+        for i in range(1, 6):
+            cell_risks = [r for r in risks if r.probability == p and r.impact == i]
+            matrix_5x5.append({
+                "probability": p,
+                "impact": i,
+                "severity_score": p * i,
+                "count": len(cell_risks),
+                "risk_ids": [str(r.id) for r in cell_risks],
+                "active_count": sum(1 for r in cell_risks if r.status == "active"),
+            })
+
+    return {
+        "project_id": str(project.id),
+        "total_risks": total,
+        "active_risks": active,
+        "mitigated_risks": mitigated,
+        "occurred_risks": occurred,
+        "critical_count": critical,
+        "high_count": high,
+        "medium_count": medium,
+        "low_count": low,
+        "matrix_5x5": matrix_5x5,
+        "by_category": by_category,
+    }
+
+

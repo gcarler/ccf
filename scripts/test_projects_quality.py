@@ -754,6 +754,139 @@ else:
     fail("Error en soft delete de gasto")
 
 # ──────────────────────────────────────────────────────────────
+section("11. PRUEBAS DE MATRIZ RAID DE RIESGOS (SUPER-PRO FASE 2)")
+# ──────────────────────────────────────────────────────────────
+
+# 1. Crear riesgo técnico crítico (Probabilidad 5, Impacto 4 -> Severidad 20)
+risk_crit = crud_projects.create_project_risk(
+    db,
+    project.id,
+    schemas_projects.ProjectRiskCreate(
+        title="Fallo en suministro de energía principal",
+        category="tecnico",
+        probability=5,
+        impact=4,
+        mitigation_plan="Instalar sistema SAI/UPS de respaldo",
+        contingency_plan="Activar generador diésel auxiliar de emergencia",
+        owner_id=admin_persona.id if 'admin_persona' in locals() and admin_persona else None,
+        status="active",
+    )
+)
+if risk_crit and risk_crit.id and risk_crit.severity_score == 20:
+    ok(f"Riesgo crítico creado exitosamente: '{risk_crit.title}' (Severidad={risk_crit.severity_score}/25)")
+else:
+    fail(f"Error creando riesgo crítico o severidad incorrecta: {getattr(risk_crit, 'severity_score', 'N/A')}")
+
+# 2. Crear riesgo logístico medio (Probabilidad 3, Impacto 2 -> Severidad 6)
+risk_med = crud_projects.create_project_risk(
+    db,
+    project.id,
+    schemas_projects.ProjectRiskCreate(
+        title="Retraso en entrega de proveedores",
+        category="logistico",
+        probability=3,
+        impact=2,
+        mitigation_plan="Contratar proveedores locales con entrega inmediata",
+        contingency_plan="Uso de inventario de contingencia sede central",
+        owner_id=admin_persona.id if 'admin_persona' in locals() and admin_persona else None,
+        status="active",
+    )
+)
+if risk_med and risk_med.id and risk_med.severity_score == 6:
+    ok(f"Riesgo medio creado exitosamente: '{risk_med.title}' (Severidad={risk_med.severity_score}/25)")
+else:
+    fail("Error creando riesgo medio")
+
+# 3. Crear riesgo financiero bajo (Probabilidad 1, Impacto 3 -> Severidad 3)
+risk_low = crud_projects.create_project_risk(
+    db,
+    project.id,
+    schemas_projects.ProjectRiskCreate(
+        title="Fluctuación menor de divisas",
+        category="financiero",
+        probability=1,
+        impact=3,
+        mitigation_plan="Compras anticipadas con tipo de cambio fijo",
+        contingency_plan="Ajuste presupuestario compensatorio",
+        status="mitigated",
+    )
+)
+if risk_low and risk_low.id and risk_low.severity_score == 3:
+    ok(f"Riesgo bajo creado exitosamente: '{risk_low.title}' (Severidad={risk_low.severity_score}/25)")
+else:
+    fail("Error creando riesgo bajo")
+
+# 4. Verificar resumen de riesgos RAID y matriz 5x5
+r_summary = crud_projects.get_project_risks_summary(db, project.id)
+if r_summary:
+    if r_summary["total_risks"] == 3:
+        ok(f"Conteo total de riesgos verificado: {r_summary['total_risks']}")
+    else:
+        fail(f"Conteo de riesgos incorrecto: {r_summary.get('total_risks')}")
+
+    if r_summary["critical_count"] == 1 and r_summary["medium_count"] == 1 and r_summary["low_count"] == 1:
+        ok(f"Conteo por severidad verificado: Críticos={r_summary['critical_count']}, Medios={r_summary['medium_count']}, Bajos={r_summary['low_count']}")
+    else:
+        fail(f"Falla en conteo por severidad: {r_summary}")
+
+    if len(r_summary["matrix_5x5"]) == 25:
+        ok("Matriz 5x5 generada con sus 25 celdas completas")
+    else:
+        fail(f"Matriz 5x5 incompleta: {len(r_summary.get('matrix_5x5', []))} celdas")
+
+    if "tecnico" in r_summary["by_category"] and "logistico" in r_summary["by_category"]:
+        ok("Desglose de riesgos por categoría verificado")
+    else:
+        fail("Categorías de riesgo faltantes")
+else:
+    fail("No se pudo obtener el risks_summary")
+
+# 5. Probar actualización de riesgo (cambio de probabilidad e impacto)
+upd_risk = crud_projects.update_project_risk(
+    db,
+    project.id,
+    risk_med.id,
+    schemas_projects.ProjectRiskUpdate(probability=4, impact=3) # 4 * 3 = 12 (Alto)
+)
+if upd_risk and upd_risk.severity_score == 12:
+    ok(f"Actualización de riesgo recalculó severidad correctamente a {upd_risk.severity_score}/25")
+else:
+    fail(f"Falla en recálculo de severidad tras update: {getattr(upd_risk, 'severity_score', 'N/A')}")
+
+# 6. Probar conversión de riesgo materializado a tarea de contingencia
+converted_task = crud_projects.convert_risk_to_task(
+    db,
+    project.id,
+    risk_crit.id,
+    actor_id=admin_persona.id if 'admin_persona' in locals() and admin_persona else None
+)
+if converted_task and converted_task.id:
+    if "[RAID]" in converted_task.title and converted_task.priority == "urgent":
+        ok(f"Conversión a tarea exitosa: '{converted_task.title}' con prioridad '{converted_task.priority}'")
+    else:
+        fail(f"Tarea creada pero atributos incorrectos: {converted_task.title}, {converted_task.priority}")
+
+    # Verificar que el riesgo pasó a estado 'occurred'
+    refreshed_risk = crud_projects.get_project_risk(db, project.id, risk_crit.id)
+    if refreshed_risk and refreshed_risk.status == "occurred":
+        ok("Estado del riesgo actualizado a 'occurred' tras conversión a tarea")
+    else:
+        fail(f"Estado del riesgo incorrecto: {getattr(refreshed_risk, 'status', 'N/A')}")
+else:
+    fail("Error convirtiendo riesgo a tarea de contingencia")
+
+# 7. Probar soft delete de riesgo
+del_risk_ok = crud_projects.delete_project_risk(db, project.id, risk_low.id)
+if del_risk_ok:
+    r_summary_after_del = crud_projects.get_project_risks_summary(db, project.id)
+    if r_summary_after_del and r_summary_after_del["total_risks"] == 2:
+        ok("Soft delete de riesgo verificado: riesgo excluido de la matriz activa")
+    else:
+        fail(f"Riesgo no excluido tras soft delete: {r_summary_after_del.get('total_risks') if r_summary_after_del else 'None'}")
+else:
+    fail("Error en soft delete de riesgo")
+
+# ──────────────────────────────────────────────────────────────
 section(f"RESUMEN: {PASS} passed, {FAIL} failed")
 # ──────────────────────────────────────────────────────────────
 

@@ -770,6 +770,10 @@ def _prepare_project_for_response(project: models.Project) -> models.Project:
         _normalize_dates(kpi)
     for dep in getattr(project, "dependencies", []) or []:
         _normalize_dates(dep)
+    for exp in getattr(project, "expenses", []) or []:
+        _normalize_dates(exp)
+    for risk in getattr(project, "risks", []) or []:
+        _normalize_dates(risk)
     return project
 
 
@@ -1728,6 +1732,8 @@ def get_project(
     for log in p.activity_logs:
         _normalize_dates(log)
         log.user_name = log.persona.nombre_completo if log.persona else "Sistema"
+    p.budget_summary = crud.get_project_budget_summary(db, p.id)
+    p.risks_summary = crud.get_project_risks_summary(db, p.id)
     return p
 
 
@@ -3381,4 +3387,194 @@ def get_project_budget_summary(
     if not summary:
         raise HTTPException(status_code=404, detail="Proyecto no encontrado")
     return summary
+
+
+# ── RISKS / RAID MATRIX (Super-PRO Fase 2) ───────────────────────────────────
+
+
+@router.get(
+    "/{project_id}/risks",
+    response_model=List[schemas.ProjectRisk],
+    tags=["Projects Super-PRO"],
+)
+def list_project_risks(
+    project_id: str,
+    status: Optional[str] = None,
+    category: Optional[str] = None,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("projects", "read")),
+):
+    """Lista todos los riesgos registrados de la matriz RAID del proyecto."""
+    user_sede = get_user_sede_id(db, current_user.id)
+    _ensure_project(db, project_id, user_sede=user_sede)
+    risks = crud.get_project_risks(
+        db, _to_uuid(project_id), status=status, category=category
+    )
+    for r in risks:
+        _normalize_dates(r)
+    return risks
+
+
+@router.post(
+    "/{project_id}/risks",
+    response_model=schemas.ProjectRisk,
+    status_code=status.HTTP_201_CREATED,
+    tags=["Projects Super-PRO"],
+)
+def create_project_risk(
+    project_id: str,
+    payload: schemas.ProjectRiskCreate,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("projects", "edit")),
+):
+    """Registra un nuevo riesgo en la matriz RAID del proyecto."""
+    user_sede = get_user_sede_id(db, current_user.id)
+    _ensure_project(db, project_id, user_sede=user_sede)
+    risk = crud.create_project_risk(
+        db,
+        project_id=_to_uuid(project_id),
+        risk_in=payload,
+    )
+    _log_project_activity(
+        db,
+        project_id,
+        current_user.id,
+        "risk_created",
+        f"Riesgo registrado: '{payload.title}' (Severidad: {payload.probability * payload.impact}/25, Categoría: {payload.category})",
+    )
+    db.commit()
+    _normalize_dates(risk)
+    return risk
+
+
+@router.get(
+    "/{project_id}/risks/{risk_id}",
+    response_model=schemas.ProjectRisk,
+    tags=["Projects Super-PRO"],
+)
+def get_project_risk(
+    project_id: str,
+    risk_id: str,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("projects", "read")),
+):
+    """Obtiene el detalle de un riesgo específico."""
+    user_sede = get_user_sede_id(db, current_user.id)
+    _ensure_project(db, project_id, user_sede=user_sede)
+    risk = crud.get_project_risk(db, _to_uuid(project_id), _to_uuid(risk_id))
+    if not risk:
+        raise HTTPException(status_code=404, detail="Riesgo no encontrado")
+    _normalize_dates(risk)
+    return risk
+
+
+@router.patch(
+    "/{project_id}/risks/{risk_id}",
+    response_model=schemas.ProjectRisk,
+    tags=["Projects Super-PRO"],
+)
+def update_project_risk(
+    project_id: str,
+    risk_id: str,
+    payload: schemas.ProjectRiskUpdate,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("projects", "edit")),
+):
+    """Actualiza la probabilidad, impacto, estado o planes de mitigación de un riesgo."""
+    user_sede = get_user_sede_id(db, current_user.id)
+    _ensure_project(db, project_id, user_sede=user_sede)
+    risk = crud.update_project_risk(
+        db,
+        project_id=_to_uuid(project_id),
+        risk_id=_to_uuid(risk_id),
+        risk_in=payload,
+    )
+    if not risk:
+        raise HTTPException(status_code=404, detail="Riesgo no encontrado")
+    _log_project_activity(
+        db,
+        project_id,
+        current_user.id,
+        "risk_updated",
+        f"Riesgo '{risk.title}' actualizado (Severidad: {risk.severity_score}/25, Estado: {risk.status})",
+    )
+    db.commit()
+    _normalize_dates(risk)
+    return risk
+
+
+@router.delete(
+    "/{project_id}/risks/{risk_id}",
+    response_model=dict,
+    tags=["Projects Super-PRO"],
+)
+def delete_project_risk(
+    project_id: str,
+    risk_id: str,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("projects", "edit")),
+):
+    """Elimina (soft-delete) un riesgo de la matriz RAID."""
+    user_sede = get_user_sede_id(db, current_user.id)
+    _ensure_project(db, project_id, user_sede=user_sede)
+    ok = crud.delete_project_risk(db, _to_uuid(project_id), _to_uuid(risk_id))
+    if not ok:
+        raise HTTPException(status_code=404, detail="Riesgo no encontrado")
+    _log_project_activity(
+        db,
+        project_id,
+        current_user.id,
+        "risk_deleted",
+        f"Riesgo '{risk_id}' eliminado de la matriz",
+    )
+    db.commit()
+    return {"ok": True, "deleted": risk_id}
+
+
+@router.post(
+    "/{project_id}/risks/{risk_id}/convert-to-task",
+    response_model=schemas.ProjectTask,
+    status_code=status.HTTP_201_CREATED,
+    tags=["Projects Super-PRO"],
+)
+def convert_risk_to_task(
+    project_id: str,
+    risk_id: str,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("projects", "edit")),
+):
+    """Convierte un riesgo ocurrido/materializado en una tarea de contingencia inmediata."""
+    user_sede = get_user_sede_id(db, current_user.id)
+    _ensure_project(db, project_id, user_sede=user_sede)
+    persona_id = get_user_persona_id(db, current_user.id)
+    task = crud.convert_risk_to_task(
+        db,
+        project_id=_to_uuid(project_id),
+        risk_id=_to_uuid(risk_id),
+        actor_id=_to_uuid(persona_id) if persona_id else None,
+    )
+    if not task:
+        raise HTTPException(status_code=404, detail="Riesgo no encontrado")
+    _normalize_dates(task)
+    return task
+
+
+@router.get(
+    "/{project_id}/risks-summary",
+    response_model=schemas.ProjectRiskSummary,
+    tags=["Projects Super-PRO"],
+)
+def get_project_risks_summary(
+    project_id: str,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("projects", "read")),
+):
+    """Obtiene la matriz 5x5 agregada y métricas de severidad para el proyecto."""
+    user_sede = get_user_sede_id(db, current_user.id)
+    _ensure_project(db, project_id, user_sede=user_sede)
+    summary = crud.get_project_risks_summary(db, _to_uuid(project_id))
+    if not summary:
+        raise HTTPException(status_code=404, detail="Proyecto no encontrado")
+    return summary
+
 

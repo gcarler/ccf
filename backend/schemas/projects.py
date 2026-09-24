@@ -286,6 +286,94 @@ class ProjectBudgetSummary(BaseModel):
     model_config = orm_config
 
 
+class ProjectRiskBase(BaseModel):
+    title: str = Field(..., min_length=1, max_length=255)
+    category: str = Field(default="tecnico", max_length=50)
+    probability: int = Field(default=3, ge=1, le=5)
+    impact: int = Field(default=3, ge=1, le=5)
+    mitigation_plan: Optional[str] = None
+    contingency_plan: Optional[str] = None
+    owner_id: Optional[UUIDStr] = None
+    status: Literal["active", "mitigated", "occurred"] = "active"
+
+    @field_validator("title", mode="before")
+    @classmethod
+    def _title_no_blank(cls, v: Any) -> Any:
+        return _strip_str_or_passthrough(v)
+
+
+class ProjectRiskCreate(ProjectRiskBase):
+    pass
+
+
+class ProjectRiskUpdate(BaseModel):
+    title: Optional[str] = Field(default=None, min_length=1, max_length=255)
+    category: Optional[str] = Field(default=None, max_length=50)
+    probability: Optional[int] = Field(default=None, ge=1, le=5)
+    impact: Optional[int] = Field(default=None, ge=1, le=5)
+    mitigation_plan: Optional[str] = None
+    contingency_plan: Optional[str] = None
+    owner_id: Optional[UUIDStr] = None
+    status: Optional[Literal["active", "mitigated", "occurred"]] = None
+
+    @field_validator("title", mode="before")
+    @classmethod
+    def _title_no_blank(cls, v: Any) -> Any:
+        return _strip_str_or_passthrough(v)
+
+
+class ProjectRisk(ProjectRiskBase):
+    id: UUIDStr
+    project_id: UUIDStr
+    severity_score: int = 9
+    severity_level: Literal["low", "medium", "high", "critical"] = "medium"
+    owner_name: Optional[str] = None
+    created_at: datetime
+    updated_at: Optional[datetime] = None
+    model_config = orm_config
+
+    @classmethod
+    def model_validate(cls, obj, **kwargs):
+        # Resolve owner full name if owner relation is present
+        if hasattr(obj, "owner") and getattr(obj, "owner", None) is not None:
+            owner_obj = getattr(obj, "owner")
+            name = getattr(owner_obj, "full_name", None) or f"{getattr(owner_obj, 'nombres', '')} {getattr(owner_obj, 'apellidos', '')}".strip()
+            if name:
+                if isinstance(obj, dict):
+                    obj["owner_name"] = name
+                else:
+                    setattr(obj, "owner_name", name)
+        instance = super().model_validate(obj, **kwargs)
+        prob = instance.probability or 1
+        imp = instance.impact or 1
+        instance.severity_score = prob * imp
+        if instance.severity_score >= 15:
+            instance.severity_level = "critical"
+        elif instance.severity_score >= 10:
+            instance.severity_level = "high"
+        elif instance.severity_score >= 5:
+            instance.severity_level = "medium"
+        else:
+            instance.severity_level = "low"
+        return instance
+
+
+class ProjectRiskSummary(BaseModel):
+    project_id: UUIDStr
+    total_risks: int = 0
+    active_risks: int = 0
+    mitigated_risks: int = 0
+    occurred_risks: int = 0
+    critical_count: int = 0
+    high_count: int = 0
+    medium_count: int = 0
+    low_count: int = 0
+    matrix_5x5: List[dict] = Field(default_factory=list)
+    by_category: dict[str, int] = Field(default_factory=dict)
+    model_config = orm_config
+
+
+
 class ProjectBase(BaseModel):
     title: str = Field(..., min_length=1, max_length=500)
     description: Optional[str] = None
@@ -375,6 +463,8 @@ class Project(ProjectBase):
     dependencies: List[ProjectTaskDependency] = Field(default_factory=list)
     expenses: List[ProjectExpense] = Field(default_factory=list)
     budget_summary: Optional[ProjectBudgetSummary] = None
+    risks: List[ProjectRisk] = Field(default_factory=list)
+    risks_summary: Optional[ProjectRiskSummary] = None
     progress_percent: int = 0
     health_status: Literal["on_track", "at_risk", "off_track", "completed"] = "on_track"
     model_config = ConfigDict(from_attributes=True, populate_by_name=True)
