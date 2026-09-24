@@ -402,6 +402,10 @@ from backend.crud.projects import (
     update_project_kpi,
     update_project_risk,
     update_project_template,
+    get_project_executive_report_data,
+    generate_project_summary_pdf,
+    generate_project_tasks_csv,
+    generate_project_expenses_csv,
 )
 
 # ── Wiki ───────────────────────────────────────────────────────────────────

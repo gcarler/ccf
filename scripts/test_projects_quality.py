@@ -1541,6 +1541,103 @@ else:
     fail("Error ejecutando delete_project_automation_rule")
 
 # ──────────────────────────────────────────────────────────────
+section("17. GENERADOR DE REPORTES EJECUTIVOS Y EXPORTACIÓN CSV (SUPER-PRO FASE 8 - FINAL)")
+# ──────────────────────────────────────────────────────────────
+
+# 1. Obtener Conjunto Consolidado de Datos para Reporte Ejecutivo
+report_data = crud_projects.get_project_executive_report_data(
+    db,
+    project.id,
+    user_sede_id=project.sede_id
+)
+
+if report_data and report_data.get("project", {}).get("id") == str(project.id):
+    ok(f"Datos de reporte ejecutivo consolidados exitosamente para proyecto '{report_data['project']['title']}'")
+    
+    # Validar métricas de tareas
+    t_metrics = report_data.get("tasks_metrics", {})
+    if t_metrics.get("total", 0) >= 5 and "completion_rate" in t_metrics:
+        ok(f"Métricas de tareas verificadas: Total={t_metrics['total']} tareas, Completadas={t_metrics['completed']}, Tasa={t_metrics['completion_rate']}%")
+    else:
+        fail(f"Métricas de tareas inválidas en report_data: {t_metrics}")
+
+    # Validar KPIs financieros
+    f_kpis = report_data.get("financial_kpis", {})
+    if f_kpis.get("budget_allocated", 0.0) == 12000.0 and f_kpis.get("budget_spent", 0.0) > 0:
+        ok(f"KPIs financieros consolidados: Asignado=${f_kpis['budget_allocated']:,.2f} | Gastado=${f_kpis['budget_spent']:,.2f} (Quema: {f_kpis.get('burn_rate_percent')}%)")
+    else:
+        fail(f"KPIs financieros erróneos: {f_kpis}")
+
+    # Validar KPIs de riesgos RAID
+    r_kpis = report_data.get("raid_kpis", {})
+    if r_kpis.get("total_risks", 0) >= 1:
+        ok(f"Métricas RAID verificadas: {r_kpis['total_risks']} riesgo(s) analizado(s), Críticos={r_kpis.get('critical_count', 0)}")
+    else:
+        fail("KPIs de riesgos vacíos en report_data")
+
+    # Validar Ruta Crítica CPM
+    cpm_kpis = report_data.get("cpm_metrics", {})
+    if cpm_kpis.get("total_duration_days", 0) > 0:
+        ok(f"Ruta Crítica CPM consolidada: Duración estimada={cpm_kpis['total_duration_days']} días, Tareas críticas={cpm_kpis.get('critical_tasks_count', 0)}")
+    else:
+        fail("Métricas de ruta crítica vacías en report_data")
+
+    # Validar Tiempos y Hojas de Horas
+    time_kpis = report_data.get("time_metrics", {})
+    if time_kpis.get("total_hours", 0.0) > 0:
+        ok(f"Métricas de hojas de horas verificadas: Total={time_kpis['total_hours']}h ({time_kpis.get('billable_hours')}h facturables)")
+    else:
+        fail("Métricas de tiempo vacías en report_data")
+
+    # Validar Metadatos Institucionales
+    if report_data.get("organization") == "Comunidad Cristiana El Faro - Dirección de Proyectos":
+        ok(f"Metadatos de membrete institucional CCF validados: '{report_data['organization']}'")
+    else:
+        fail(f"Organización inválida: {report_data.get('organization')}")
+else:
+    fail("Error obteniendo get_project_executive_report_data")
+
+# 2. Generar Reporte Ejecutivo PDF Binario con Membrete CCF (ReportLab)
+pdf_bytes = crud_projects.generate_project_summary_pdf(report_data)
+if isinstance(pdf_bytes, bytes) and len(pdf_bytes) > 2000 and pdf_bytes.startswith(b"%PDF-"):
+    ok(f"Reporte ejecutivo PDF generado exitosamente: {len(pdf_bytes)} bytes binarios (Encabezado estándar '%PDF-')")
+else:
+    fail(f"Error generando reporte PDF: retorno inválido o corrupto (len={len(pdf_bytes) if isinstance(pdf_bytes, bytes) else 'N/A'})")
+
+# 3. Generar Exportación CSV de Tareas y Cronograma (BOM UTF-8 para Excel)
+csv_tasks = crud_projects.generate_project_tasks_csv(db, project.id, user_sede_id=project.sede_id)
+if isinstance(csv_tasks, str) and csv_tasks.startswith("\ufeff") and "Título" in csv_tasks and "Responsable" in csv_tasks:
+    lines = csv_tasks.strip().split("\r\n") if "\r\n" in csv_tasks else csv_tasks.strip().split("\n")
+    ok(f"Exportación CSV de tareas verificada: {len(lines) - 1} tareas exportadas con BOM UTF-8 compatible con Excel")
+    if any("Diseñar logo" in line for line in lines):
+        ok("Contenido de tareas verificado en el archivo CSV")
+    else:
+        fail("Tarea de prueba no encontrada en CSV exportado")
+else:
+    fail("Error generando CSV de tareas")
+
+# 4. Generar Exportación CSV del Libro Mayor de Gastos
+csv_expenses = crud_projects.generate_project_expenses_csv(db, project.id, user_sede_id=project.sede_id)
+if isinstance(csv_expenses, str) and csv_expenses.startswith("\ufeff") and "Monto" in csv_expenses and "Categoría" in csv_expenses:
+    exp_lines = csv_expenses.strip().split("\r\n") if "\r\n" in csv_expenses else csv_expenses.strip().split("\n")
+    ok(f"Exportación CSV de gastos verificada: {len(exp_lines) - 1} partidas exportadas con BOM UTF-8")
+    if any("Madera y pintura" in l or "Instalación" in l for l in exp_lines):
+        ok("Partidas presupuestarias verificadas en el archivo CSV de gastos")
+    else:
+        fail("Partidas de prueba no encontradas en CSV de gastos")
+else:
+    fail("Error generando CSV de gastos")
+
+# 5. Validación de Aislamiento Multi-Tenant (Axioma 3)
+import uuid as _uuid
+foreign_sede_id = _uuid.uuid4()
+foreign_report = crud_projects.get_project_executive_report_data(db, project.id, user_sede_id=foreign_sede_id)
+if foreign_report is None:
+    ok("Aislamiento Multi-Tenant (Axioma 3) verificado: reporte rechazado para sede no autorizada")
+else:
+    fail("Falla de seguridad multi-tenant: el reporte se entregó a una sede distinta")
+
+# ──────────────────────────────────────────────────────────────
 section(f"RESUMEN: {PASS} passed, {FAIL} failed")
 # ──────────────────────────────────────────────────────────────
 

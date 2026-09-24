@@ -537,4 +537,90 @@ export interface AutomationExecutionResult {
   details?: string | null;
 }
 
+export interface ProjectExecutiveReportData {
+  project: {
+    id: string;
+    title: string;
+    description: string;
+    status: string;
+    priority: string;
+    health_override?: string | null;
+    progress_mode?: string;
+    progress_percentage: number;
+    budget_allocated: number;
+    budget_spent: number;
+    start_date?: string | null;
+    target_date?: string | null;
+    owner_name: string;
+    sede_id?: string | null;
+    created_at?: string | null;
+  };
+  tasks_metrics: {
+    total: number;
+    completed: number;
+    in_progress: number;
+    todo: number;
+    blocked: number;
+    completion_rate: number;
+  };
+  financial_kpis: {
+    project_id: string;
+    budget_allocated: number;
+    budget_spent: number;
+    remaining_budget: number;
+    burn_rate_percent: number;
+    total_expenses_count: number;
+    by_category: Record<string, number>;
+  };
+  raid_kpis: {
+    total_risks: number;
+    critical_count: number;
+    high_count: number;
+    medium_count: number;
+    low_count: number;
+    risks: Array<{
+      id: string;
+      title: string;
+      category: string;
+      probability: number;
+      impact: number;
+      severity: number;
+      status: string;
+      mitigation_plan?: string | null;
+    }>;
+  };
+  cpm_metrics: {
+    project_id: string;
+    total_duration_days: number;
+    critical_tasks_count: number;
+    critical_path_task_ids: string[];
+    tasks: Array<{
+      task_id: string;
+      title: string;
+      duration_days: number;
+      is_critical: boolean;
+      slack_days: number;
+    }>;
+  };
+  time_metrics: {
+    total_hours: number;
+    billable_hours: number;
+    non_billable_hours: number;
+    total_logs: number;
+    by_task: Array<{ task_title: string; total_hours: number }>;
+    by_member: Array<{ persona_name: string; total_hours: number; billable_hours: number }>;
+  };
+  phases: Array<{
+    id: string;
+    name: string;
+    order_index: number;
+    total_tasks: number;
+    completed_tasks: number;
+    progress_percent: number;
+  }>;
+  generated_at: string;
+  organization: string;
+}
+
+
 

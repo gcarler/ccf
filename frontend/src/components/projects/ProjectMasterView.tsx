@@ -7,7 +7,7 @@ import {
     Zap, Trophy, Calendar, TrendingUp, AlertCircle,
     ArrowUpRight, BarChart3, Plus, Trash2,
     Target, Sliders, Activity, AlertTriangle, AlertOctagon, Sparkles,
-    Wallet, TrendingDown, ShieldAlert, Users, Scale, BookTemplate,
+    Wallet, TrendingDown, ShieldAlert, Users, Scale, BookTemplate, FileText,
 } from 'lucide-react';
 import clsx from 'clsx';
 import type { ProjectRecord, ProjectTaskRecord, ProjectMilestoneRecord, ProjectAnalytics, ProjectKPI, ProjectBudgetSummary, ProjectRiskSummary, ProjectWorkloadSummary, ProjectTimeTrackingSummary } from '@/types/projects';
@@ -24,6 +24,7 @@ import { ProjectWorkloadDrawer } from '@/components/projects/ProjectWorkloadDraw
 import { ProjectTimeTrackingDrawer } from '@/components/projects/ProjectTimeTrackingDrawer';
 import { ProjectTemplateCatalogDrawer } from '@/components/projects/ProjectTemplateCatalogDrawer';
 import { ProjectAutomationsDrawer } from '@/components/projects/ProjectAutomationsDrawer';
+import { ProjectReportDrawer } from '@/components/projects/ProjectReportDrawer';
 import { useProjectUpdate } from '@/context/ProjectUpdateContext';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
@@ -84,6 +85,9 @@ export function ProjectMasterView({ project, tasks, onOpenTask }: ProjectMasterV
 
     // Motor de Automatizaciones (Super-PRO Fase 7)
     const [showAutomationsDrawer, setShowAutomationsDrawer] = useState(false);
+
+    // Reportes Ejecutivos y Exportación (Super-PRO Fase 8 - FINAL)
+    const [showReportDrawer, setShowReportDrawer] = useState(false);
 
     const loadKpis = useCallback(async () => {
         if (!project.id || !token) return;
@@ -377,6 +381,15 @@ export function ProjectMasterView({ project, tasks, onOpenTask }: ProjectMasterV
                         >
                             <Zap size={14} className="text-[hsl(var(--primary))]" />
                             <span className="text-3xs font-bold uppercase">Auto</span>
+                        </button>
+
+                        <button
+                            onClick={() => setShowReportDrawer(true)}
+                            className="p-2 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] hover:bg-[hsl(var(--surface-3))] text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] transition-all active:scale-95 flex flex-col items-center gap-0.5 shrink-0"
+                            title="Informes ejecutivos en PDF y exportación Excel/CSV"
+                        >
+                            <FileText size={14} className="text-[hsl(var(--primary))]" />
+                            <span className="text-3xs font-bold uppercase">Reporte</span>
                         </button>
                     </div>
                 </div>
@@ -1146,6 +1159,13 @@ export function ProjectMasterView({ project, tasks, onOpenTask }: ProjectMasterV
                 onAutomationTriggered={() => {
                     reloadProject();
                 }}
+            />
+
+            <ProjectReportDrawer
+                projectId={project.id}
+                isOpen={showReportDrawer}
+                onClose={() => setShowReportDrawer(false)}
+                projectTitle={project.title}
             />
         </div>
     );

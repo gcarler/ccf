@@ -20,6 +20,7 @@ import {
     Clock,
     BookTemplate,
     Zap,
+    FileText,
 } from 'lucide-react';
 import WorkspaceToolbar from '@/components/WorkspaceToolbar';
 
@@ -37,6 +38,7 @@ import { ProjectWorkloadDrawer } from '@/components/projects/ProjectWorkloadDraw
 import { ProjectTimeTrackingDrawer } from '@/components/projects/ProjectTimeTrackingDrawer';
 import { ProjectTemplateCatalogDrawer } from '@/components/projects/ProjectTemplateCatalogDrawer';
 import { ProjectAutomationsDrawer } from '@/components/projects/ProjectAutomationsDrawer';
+import { ProjectReportDrawer } from '@/components/projects/ProjectReportDrawer';
 import { ProjectUpdateProvider } from '@/context/ProjectUpdateContext';
 import { ProjectViewsContent } from '@/components/projects/ProjectViewsContent';
 import ProjectContextPanel from '@/components/projects/ProjectContextPanel';
@@ -134,6 +136,7 @@ export default function ProjectDetailPage() {
     const [showTimeTrackingDrawer, setShowTimeTrackingDrawer] = useState(false);
     const [showTemplateDrawer, setShowTemplateDrawer] = useState(false);
     const [showAutomationsDrawer, setShowAutomationsDrawer] = useState(false);
+    const [showReportDrawer, setShowReportDrawer] = useState(false);
     const [confirmAction, setConfirmAction] = useState<ConfirmActionState>(null);
 
     const handleDeleteProject = async () => {
@@ -250,6 +253,9 @@ export default function ProjectDetailPage() {
                             </button>
                             <button onClick={() => setShowAutomationsDrawer(true)} className="px-3 py-1.5 bg-[hsl(var(--surface-2))] text-[hsl(var(--foreground))] rounded-lg text-2xs font-bold uppercase tracking-wide hover:bg-[hsl(var(--surface-3))] active:scale-95 transition-all flex items-center gap-1.5 border border-[hsl(var(--border))]">
                                 <Zap size={14} className="text-[hsl(var(--primary))]" /> Auto
+                            </button>
+                            <button onClick={() => setShowReportDrawer(true)} className="px-3 py-1.5 bg-[hsl(var(--surface-2))] text-[hsl(var(--foreground))] rounded-lg text-2xs font-bold uppercase tracking-wide hover:bg-[hsl(var(--surface-3))] active:scale-95 transition-all flex items-center gap-1.5 border border-[hsl(var(--border))]">
+                                <FileText size={14} className="text-[hsl(var(--primary))]" /> Reportes
                             </button>
                             <button onClick={() => setShowProjectSettings(true)} className="px-3 py-1.5 bg-[hsl(var(--warning))] text-[hsl(var(--primary-foreground))] rounded-lg text-2xs font-bold uppercase tracking-wide hover:opacity-90 active:scale-95 transition-all flex items-center gap-2">
                                 <Edit3 size={14} /> Editar
@@ -381,6 +387,13 @@ export default function ProjectDetailPage() {
                     onClose={() => setShowAutomationsDrawer(false)}
                     tasks={tasks}
                     onAutomationTriggered={() => reloadProject()}
+                />
+
+                <ProjectReportDrawer
+                    projectId={project?.id || id}
+                    isOpen={showReportDrawer}
+                    onClose={() => setShowReportDrawer(false)}
+                    projectTitle={project?.title}
                 />
             </div>
         </ProjectUpdateProvider>

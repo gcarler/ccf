@@ -1,5 +1,7 @@
 """Projects CRUD — corregido para cumplir los 3 axiomas del Kernel CCF."""
 
+import csv
+import io
 from datetime import datetime, timezone, timedelta
 from typing import Any, Dict, List, Optional
 from uuid import UUID
@@ -2623,6 +2625,522 @@ def evaluate_project_automations(
 
     db.commit()
     return results
+
+
+# ---------------------------------------------------------------------------
+# EXECUTIVE REPORTS & CSV/EXCEL EXPORTS (Super-PRO Fase 8 - FINAL)
+# ---------------------------------------------------------------------------
+
+def get_project_executive_report_data(
+    db: Session,
+    project_id: UUID | str,
+    *,
+    user_sede_id: Optional[UUID | str] = None,
+) -> Optional[dict]:
+    """Recopila de manera coherente y centralizada todos los datos para el reporte ejecutivo."""
+    project = get_project(db, project_id, sede_id=user_sede_id)
+    if not project:
+        return None
+
+    # Tareas
+    tasks = (
+        db.query(models.ProjectTask)
+        .options(selectinload(models.ProjectTask.assignee))
+        .filter(
+            models.ProjectTask.project_id == project.id,
+            models.ProjectTask.deleted_at.is_(None),
+        )
+        .order_by(models.ProjectTask.created_at.asc())
+        .all()
+    )
+
+    total_tasks = len(tasks)
+    completed_tasks = sum(1 for t in tasks if t.status == "completed")
+    in_progress_tasks = sum(1 for t in tasks if t.status == "in_progress")
+    todo_tasks = sum(1 for t in tasks if t.status == "todo")
+    blocked_tasks = sum(1 for t in tasks if t.status in ("blocked", "review"))
+    completion_rate = round((completed_tasks / total_tasks * 100), 1) if total_tasks > 0 else 0.0
+
+    # Resumen financiero
+    budget_summary = get_project_budget_summary(db, project.id) or {
+        "budget_allocated": float(project.budget_allocated or 0.0),
+        "budget_spent": float(project.budget_spent or 0.0),
+        "remaining_budget": float(project.budget_allocated or 0.0) - float(project.budget_spent or 0.0),
+        "burn_rate_percent": 0.0,
+        "total_expenses_count": 0,
+        "by_category": {},
+    }
+
+    # Resumen RAID
+    risks_summary = get_project_risks_summary(db, project.id) or {
+        "total_risks": 0,
+        "critical_count": 0,
+        "high_count": 0,
+        "medium_count": 0,
+        "low_count": 0,
+        "risks": [],
+    }
+
+    # Ruta Crítica CPM
+    cpm_summary = calculate_critical_path(db, project.id) or {
+        "total_duration_days": 0,
+        "critical_tasks_count": 0,
+        "critical_path_task_ids": [],
+        "tasks": [],
+    }
+
+    # Tiempos
+    time_summary = get_project_time_tracking_summary(db, project.id) or {
+        "total_hours": 0.0,
+        "billable_hours": 0.0,
+        "non_billable_hours": 0.0,
+        "total_logs": 0,
+        "by_task": [],
+        "by_member": [],
+    }
+
+    # Fases
+    phases = (
+        db.query(models.ProjectPhase)
+        .filter(
+            models.ProjectPhase.project_id == project.id,
+            models.ProjectPhase.deleted_at.is_(None),
+        )
+        .order_by(models.ProjectPhase.order_index.asc())
+        .all()
+    )
+    phase_data = []
+    for ph in phases:
+        ph_tasks = [t for t in tasks if t.node == ph.name or t.node == str(ph.id)]
+        ph_comp = sum(1 for t in ph_tasks if t.status == "completed")
+        phase_data.append({
+            "id": str(ph.id),
+            "name": ph.name,
+            "order_index": ph.order_index,
+            "total_tasks": len(ph_tasks),
+            "completed_tasks": ph_comp,
+            "progress_percent": round((ph_comp / len(ph_tasks) * 100), 1) if ph_tasks else 0.0,
+        })
+
+    # Creador / Propietario
+    owner_name = "Sin asignar"
+    if project.owner:
+        p = project.owner
+        owner_name = getattr(p, "nombre_completo", None) or f"{getattr(p, 'nombres', '')} {getattr(p, 'apellidos', '')}".strip() or "Líder"
+
+    return {
+        "project": {
+            "id": str(project.id),
+            "title": project.title,
+            "description": project.description or "Sin descripción detallada",
+            "status": project.status,
+            "priority": getattr(project, "priority", None) or "medium",
+            "health_override": project.health_override,
+            "progress_mode": project.progress_mode,
+            "progress_percentage": float(getattr(project, "manual_progress", 0.0) if project.progress_mode == "manual" else completion_rate),
+            "budget_allocated": float(project.budget_allocated or 0.0),
+            "budget_spent": float(project.budget_spent or 0.0),
+            "start_date": project.start_date.isoformat() if project.start_date else None,
+            "target_date": project.target_date.isoformat() if project.target_date else None,
+            "owner_name": owner_name,
+            "sede_id": str(project.sede_id) if project.sede_id else None,
+            "created_at": project.created_at.isoformat() if project.created_at else None,
+        },
+        "tasks_metrics": {
+            "total": total_tasks,
+            "completed": completed_tasks,
+            "in_progress": in_progress_tasks,
+            "todo": todo_tasks,
+            "blocked": blocked_tasks,
+            "completion_rate": completion_rate,
+        },
+        "financial_kpis": budget_summary,
+        "raid_kpis": risks_summary,
+        "cpm_metrics": cpm_summary,
+        "time_metrics": time_summary,
+        "phases": phase_data,
+        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "organization": "Comunidad Cristiana El Faro - Dirección de Proyectos",
+    }
+
+
+def generate_project_summary_pdf(report_data: dict) -> bytes:
+    """Genera un informe ejecutivo PDF profesional con membrete CCF y ReportLab."""
+    from reportlab.lib.pagesizes import letter
+    from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, HRFlowable
+    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+    from reportlab.lib import colors
+
+    buf = io.BytesIO()
+    doc = SimpleDocTemplate(
+        buf,
+        pagesize=letter,
+        leftMargin=36,
+        rightMargin=36,
+        topMargin=36,
+        bottomMargin=36,
+    )
+
+    styles = getSampleStyleSheet()
+
+    header_style = ParagraphStyle(
+        'CCFHeader',
+        parent=styles['Normal'],
+        fontSize=15,
+        leading=19,
+        textColor=colors.HexColor('#1E3A8A'),
+        fontName='Helvetica-Bold',
+        alignment=1,
+    )
+    sub_header_style = ParagraphStyle(
+        'CCFSubHeader',
+        parent=styles['Normal'],
+        fontSize=9,
+        leading=13,
+        textColor=colors.HexColor('#4B5563'),
+        fontName='Helvetica',
+        alignment=1,
+    )
+    section_title_style = ParagraphStyle(
+        'CCFSectionTitle',
+        parent=styles['Normal'],
+        fontSize=11,
+        leading=15,
+        textColor=colors.HexColor('#1E3A8A'),
+        fontName='Helvetica-Bold',
+        spaceBefore=7,
+        spaceAfter=3,
+    )
+    body_style = ParagraphStyle(
+        'CCFBody',
+        parent=styles['Normal'],
+        fontSize=8.5,
+        leading=11.5,
+        textColor=colors.HexColor('#1F2937'),
+        fontName='Helvetica',
+    )
+    body_bold = ParagraphStyle(
+        'CCFBodyBold',
+        parent=body_style,
+        fontName='Helvetica-Bold',
+    )
+    cell_style = ParagraphStyle(
+        'CCFCell',
+        parent=styles['Normal'],
+        fontSize=8,
+        leading=10,
+        textColor=colors.HexColor('#1F2937'),
+    )
+    cell_header = ParagraphStyle(
+        'CCFCellHeader',
+        parent=styles['Normal'],
+        fontSize=8,
+        leading=10,
+        textColor=colors.white,
+        fontName='Helvetica-Bold',
+        alignment=1,
+    )
+
+    story = []
+
+    # 1. Membrete
+    story.append(Paragraph("COMUNIDAD CRISTIANA EL FARO", header_style))
+    story.append(Paragraph("DIRECCIÓN DE PROYECTOS Y GESTIÓN MINISTERIAL • INFORME EJECUTIVO", sub_header_style))
+    story.append(Spacer(1, 6))
+    story.append(HRFlowable(width="100%", thickness=1.5, color=colors.HexColor('#1E3A8A'), spaceBefore=2, spaceAfter=8))
+
+    proj = report_data.get("project", {})
+    t_met = report_data.get("tasks_metrics", {})
+    f_kpi = report_data.get("financial_kpis", {})
+    r_kpi = report_data.get("raid_kpis", {})
+    cpm = report_data.get("cpm_metrics", {})
+    time_met = report_data.get("time_metrics", {})
+
+    # 2. Ficha Técnica del Proyecto
+    meta_table_data = [
+        [
+            Paragraph("<b>Proyecto:</b>", body_bold),
+            Paragraph(f"<b>{proj.get('title', 'Sin Título')}</b>", body_bold),
+            Paragraph("<b>Estado:</b>", body_bold),
+            Paragraph(str(proj.get('status', 'N/A')).upper(), body_style),
+        ],
+        [
+            Paragraph("<b>Líder / Propietario:</b>", body_style),
+            Paragraph(str(proj.get('owner_name', 'No asignado')), body_style),
+            Paragraph("<b>Salud:</b>", body_style),
+            Paragraph(str(proj.get('health_override', 'Normal')).capitalize(), body_style),
+        ],
+        [
+            Paragraph("<b>Fecha Inicio:</b>", body_style),
+            Paragraph(str(proj.get('start_date') or 'No definida')[:10], body_style),
+            Paragraph("<b>Fecha Objetivo:</b>", body_style),
+            Paragraph(str(proj.get('target_date') or 'No definida')[:10], body_style),
+        ],
+        [
+            Paragraph("<b>Avance General:</b>", body_style),
+            Paragraph(f"<b>{proj.get('progress_percentage', 0.0)}%</b>", body_bold),
+            Paragraph("<b>Fecha Emisión:</b>", body_style),
+            Paragraph(str(report_data.get('generated_at', ''))[:19].replace('T', ' ') + " UTC", body_style),
+        ],
+    ]
+    meta_table = Table(meta_table_data, colWidths=[100, 170, 90, 180])
+    meta_table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, -1), colors.HexColor('#F8FAFC')),
+        ('BOX', (0, 0), (-1, -1), 0.5, colors.HexColor('#CBD5E1')),
+        ('INNERGRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#E2E8F0')),
+        ('TOPPADDING', (0, 0), (-1, -1), 3),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 3),
+    ]))
+    story.append(meta_table)
+    story.append(Spacer(1, 8))
+
+    # 3. Tarjetas KPI de Resumen Ejecutivo
+    story.append(Paragraph("RESUMEN DE INDICADORES CLAVE (KPIS)", section_title_style))
+    kpi_table_data = [
+        [
+            Paragraph("<b>AVANCE TAREAS</b>", cell_header),
+            Paragraph("<b>PRESUPUESTO EJECUTADO</b>", cell_header),
+            Paragraph("<b>RIESGOS CRÍTICOS</b>", cell_header),
+            Paragraph("<b>DURACIÓN CRÍTICA</b>", cell_header),
+            Paragraph("<b>HORAS TOTALES</b>", cell_header),
+        ],
+        [
+            Paragraph(f"<font size=11><b>{t_met.get('completion_rate', 0.0)}%</b></font><br/>{t_met.get('completed', 0)}/{t_met.get('total', 0)} Tareas", cell_style),
+            Paragraph(f"<font size=11><b>${f_kpi.get('budget_spent', 0.0):,.2f}</b></font><br/>de ${f_kpi.get('budget_allocated', 0.0):,.2f}", cell_style),
+            Paragraph(f"<font size=11 color='#DC2626'><b>{r_kpi.get('critical_count', 0)}</b></font><br/>de {r_kpi.get('total_risks', 0)} Riesgos", cell_style),
+            Paragraph(f"<font size=11><b>{cpm.get('total_duration_days', 0)}d</b></font><br/>{cpm.get('critical_tasks_count', 0)} Tareas Ruta", cell_style),
+            Paragraph(f"<font size=11><b>{time_met.get('total_hours', 0.0)}h</b></font><br/>{time_met.get('billable_hours', 0.0)}h Facturable", cell_style),
+        ]
+    ]
+    kpi_table = Table(kpi_table_data, colWidths=[108, 108, 108, 108, 108])
+    kpi_table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#1E3A8A')),
+        ('BACKGROUND', (0, 1), (-1, 1), colors.HexColor('#F1F5F9')),
+        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+        ('BOX', (0, 0), (-1, -1), 0.5, colors.HexColor('#94A3B8')),
+        ('INNERGRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#CBD5E1')),
+        ('TOPPADDING', (0, 0), (-1, -1), 4),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 4),
+    ]))
+    story.append(kpi_table)
+    story.append(Spacer(1, 8))
+
+    # 4. Control Presupuestario
+    story.append(Paragraph("CONTROL PRESUPUESTARIO Y DESEMBOLSOS", section_title_style))
+    by_cat = f_kpi.get("by_category", {})
+    cat_text = ", ".join([f"{k.capitalize()}: ${v:,.2f}" for k, v in by_cat.items()]) or "Sin partidas registradas"
+    rem_budget = f_kpi.get('remaining_budget', 0.0)
+    burn_pct = f_kpi.get('burn_rate_percent', 0.0)
+    fin_text = (
+        f"<b>Asignado:</b> ${f_kpi.get('budget_allocated', 0.0):,.2f} | "
+        f"<b>Gastado:</b> ${f_kpi.get('budget_spent', 0.0):,.2f} ({burn_pct}%) | "
+        f"<b>Disponible:</b> ${rem_budget:,.2f}<br/>"
+        f"<b>Desglose por Categoría:</b> {cat_text}"
+    )
+    story.append(Paragraph(fin_text, body_style))
+    story.append(Spacer(1, 6))
+
+    # 5. Matriz RAID (Riesgos y Supuestos)
+    story.append(Paragraph("MATRIZ RAID — RIESGOS E INCIDENCIAS CLAVE", section_title_style))
+    risks = r_kpi.get("risks", [])
+    if risks:
+        top_risks = sorted(risks, key=lambda r: (r.get("probability", 1) * r.get("impact", 1)), reverse=True)[:4]
+        risk_table_data = [
+            [
+                Paragraph("<b>Riesgo / Título</b>", cell_header),
+                Paragraph("<b>Cat.</b>", cell_header),
+                Paragraph("<b>Severidad</b>", cell_header),
+                Paragraph("<b>Plan de Mitigación</b>", cell_header),
+            ]
+        ]
+        for r in top_risks:
+            sev = (r.get("probability") or 1) * (r.get("impact") or 1)
+            sev_color = "#DC2626" if sev >= 15 else ("#D97706" if sev >= 10 else "#16A34A")
+            risk_table_data.append([
+                Paragraph(r.get("title", ""), cell_style),
+                Paragraph(r.get("category", "tech"), cell_style),
+                Paragraph(f"<font color='{sev_color}'><b>{sev}/25</b></font>", cell_style),
+                Paragraph(r.get("mitigation_plan") or "En evaluación", cell_style),
+            ])
+        risk_table = Table(risk_table_data, colWidths=[180, 60, 60, 240])
+        risk_table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#334155')),
+            ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#F8FAFC')]),
+            ('BOX', (0, 0), (-1, -1), 0.5, colors.HexColor('#CBD5E1')),
+            ('INNERGRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#E2E8F0')),
+            ('TOPPADDING', (0, 0), (-1, -1), 3),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 3),
+        ]))
+        story.append(risk_table)
+    else:
+        story.append(Paragraph("<i>No se han registrado riesgos para este proyecto.</i>", body_style))
+    story.append(Spacer(1, 6))
+
+    # 6. Cronograma y Ruta Crítica CPM
+    story.append(Paragraph("CRONOGRAMA Y RUTA CRÍTICA (CPM)", section_title_style))
+    cpm_tasks = cpm.get("tasks", [])
+    crit_tasks = [t for t in cpm_tasks if t.get("is_critical")]
+    crit_names = ", ".join([t.get("title", "") for t in crit_tasks]) or "Ninguna tarea crítica calculada"
+    cpm_text = (
+        f"<b>Duración Total Estimada:</b> {cpm.get('total_duration_days', 0)} días calendario.<br/>"
+        f"<b>Tareas en Ruta Crítica (Holgura Cero):</b> {crit_names}"
+    )
+    story.append(Paragraph(cpm_text, body_style))
+    story.append(Spacer(1, 6))
+
+    # 7. Tiempos y Hojas de Horas
+    story.append(Paragraph("REGISTRO DE HORAS Y ESFUERZO", section_title_style))
+    by_mem = time_met.get("by_member", [])
+    if by_mem:
+        mem_str = ", ".join([f"{m.get('persona_name')}: {m.get('total_hours')}h ({m.get('billable_hours')}h fact.)" for m in by_mem[:5]])
+    else:
+        mem_str = "Sin horas registradas en hoja de tiempos"
+    time_text = (
+        f"<b>Total Horas Invertidas:</b> {time_met.get('total_hours', 0.0)} horas "
+        f"({time_met.get('billable_hours', 0.0)}h facturables, {time_met.get('non_billable_hours', 0.0)}h internas).<br/>"
+        f"<b>Participación de Equipo:</b> {mem_str}"
+    )
+    story.append(Paragraph(time_text, body_style))
+    story.append(Spacer(1, 10))
+
+    # 8. Pie de página
+    story.append(HRFlowable(width="100%", thickness=0.5, color=colors.HexColor('#94A3B8'), spaceBefore=2, spaceAfter=4))
+    footer_text = (
+        f"<b>Comunidad Cristiana El Faro</b> • Plataforma CCF Super-PRO Proyectos • "
+        f"Documento emitido el {datetime.now(timezone.utc).strftime('%d/%m/%Y %H:%M:%S')} UTC • Confidencialidad Ministerial."
+    )
+    story.append(Paragraph(footer_text, ParagraphStyle('CCFFooter', parent=styles['Normal'], fontSize=7, leading=9, textColor=colors.HexColor('#64748B'), alignment=1)))
+
+    doc.build(story)
+    return buf.getvalue()
+
+
+def generate_project_tasks_csv(
+    db: Session,
+    project_id: UUID | str,
+    *,
+    user_sede_id: Optional[UUID | str] = None,
+) -> str:
+    """Genera CSV con BOM UTF-8 de tareas y cronograma del proyecto."""
+    project = get_project(db, project_id, sede_id=user_sede_id)
+    if not project:
+        raise ValueError("Proyecto no encontrado o no pertenece a la sede (Axioma 3)")
+
+    tasks = (
+        db.query(models.ProjectTask)
+        .options(selectinload(models.ProjectTask.assignee))
+        .filter(
+            models.ProjectTask.project_id == project.id,
+            models.ProjectTask.deleted_at.is_(None),
+        )
+        .order_by(models.ProjectTask.created_at.asc())
+        .all()
+    )
+
+    output = io.StringIO()
+    output.write("\ufeff")
+    writer = csv.writer(output, quoting=csv.QUOTE_MINIMAL)
+
+    writer.writerow([
+        "ID",
+        "Título",
+        "Descripción",
+        "Estado",
+        "Prioridad",
+        "Fase/Nodo",
+        "Responsable",
+        "Fecha Inicio",
+        "Fecha Fin",
+        "Fecha Creación",
+    ])
+
+    for t in tasks:
+        assignee_name = ""
+        if t.assignee:
+            p = t.assignee
+            assignee_name = getattr(p, "nombre_completo", None) or f"{getattr(p, 'nombres', '')} {getattr(p, 'apellidos', '')}".strip() or "Miembro"
+
+        start_str = t.start_date.isoformat()[:10] if t.start_date else ""
+        due_str = t.due_date.isoformat()[:10] if t.due_date else ""
+        created_str = t.created_at.isoformat()[:19].replace("T", " ") if t.created_at else ""
+
+        writer.writerow([
+            str(t.id),
+            t.title or "",
+            (t.description or "").replace("\n", " ").strip(),
+            t.status or "todo",
+            t.priority or "medium",
+            t.node or "",
+            assignee_name,
+            start_str,
+            due_str,
+            created_str,
+        ])
+
+    return output.getvalue()
+
+
+def generate_project_expenses_csv(
+    db: Session,
+    project_id: UUID | str,
+    *,
+    user_sede_id: Optional[UUID | str] = None,
+) -> str:
+    """Genera CSV con BOM UTF-8 del libro mayor de gastos del proyecto."""
+    project = get_project(db, project_id, sede_id=user_sede_id)
+    if not project:
+        raise ValueError("Proyecto no encontrado o no pertenece a la sede (Axioma 3)")
+
+    expenses = (
+        db.query(models.ProjectExpense)
+        .options(selectinload(models.ProjectExpense.creator))
+        .filter(
+            models.ProjectExpense.project_id == project.id,
+            models.ProjectExpense.deleted_at.is_(None),
+        )
+        .order_by(models.ProjectExpense.date.asc(), models.ProjectExpense.created_at.asc())
+        .all()
+    )
+
+    output = io.StringIO()
+    output.write("\ufeff")
+    writer = csv.writer(output, quoting=csv.QUOTE_MINIMAL)
+
+    writer.writerow([
+        "ID",
+        "Fecha",
+        "Categoría",
+        "Descripción",
+        "Monto",
+        "Estado",
+        "Comprobante URL",
+        "Registrado Por",
+        "Fecha Registro",
+    ])
+
+    for e in expenses:
+        creator_name = ""
+        if e.creator:
+            p = e.creator
+            creator_name = getattr(p, "nombre_completo", None) or f"{getattr(p, 'nombres', '')} {getattr(p, 'apellidos', '')}".strip() or "Usuario"
+
+        date_str = e.date.isoformat()[:10] if e.date else ""
+        created_str = e.created_at.isoformat()[:19].replace("T", " ") if e.created_at else ""
+
+        writer.writerow([
+            str(e.id),
+            date_str,
+            e.category or "general",
+            (e.description or "").replace("\n", " ").strip(),
+            f"{float(e.amount or 0.0):.2f}",
+            e.status or "planned",
+            e.receipt_url or "",
+            creator_name,
+            created_str,
+        ])
+
+    return output.getvalue()
+
 
 
 

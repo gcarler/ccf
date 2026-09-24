@@ -15,6 +15,7 @@ from fastapi import (
     HTTPException,
     Query,
     Request,
+    Response,
     UploadFile,
     WebSocket,
     WebSocketDisconnect,
@@ -4273,6 +4274,152 @@ def evaluate_project_automations_endpoint(
         user_sede_id=user_sede,
     )
     return results
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 16. EXPORTACIONES Y REPORTES EJECUTIVOS (Super-PRO Fase 8 - FINAL)
+# ─────────────────────────────────────────────────────────────────────────────
+
+@router.get(
+    "/{project_id}/export/executive-data",
+    tags=["Projects Reports & Exports Super-PRO"],
+)
+def get_project_executive_data_endpoint(
+    project_id: str,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("projects", "read")),
+):
+    """Obtiene el conjunto de datos estructurado y métricas consolidadas para el informe ejecutivo."""
+    user_sede = get_user_sede_id(db, current_user.id)
+    _ensure_project(db, project_id, user_sede=user_sede)
+
+    data = crud.get_project_executive_report_data(
+        db,
+        _to_uuid(project_id),
+        user_sede_id=user_sede,
+    )
+    if not data:
+        raise HTTPException(status_code=404, detail="Datos del proyecto no encontrados")
+    return data
+
+
+@router.get(
+    "/{project_id}/export/summary-pdf",
+    tags=["Projects Reports & Exports Super-PRO"],
+)
+def export_project_summary_pdf_endpoint(
+    project_id: str,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("projects", "read")),
+):
+    """Genera y descarga el informe ejecutivo del proyecto en formato PDF con membrete CCF."""
+    user_sede = get_user_sede_id(db, current_user.id)
+    _ensure_project(db, project_id, user_sede=user_sede)
+
+    data = crud.get_project_executive_report_data(
+        db,
+        _to_uuid(project_id),
+        user_sede_id=user_sede,
+    )
+    if not data:
+        raise HTTPException(status_code=404, detail="Datos del proyecto no encontrados")
+
+    pdf_bytes = crud.generate_project_summary_pdf(data)
+    filename = f"reporte_ejecutivo_{project_id}.pdf"
+
+    _log_project_activity(
+        db,
+        project_id,
+        current_user.id,
+        "report_pdf_exported",
+        f"Informe ejecutivo PDF generado y descargado para proyecto '{data.get('project', {}).get('title', project_id)}'",
+    )
+
+    return Response(
+        content=pdf_bytes,
+        media_type="application/pdf",
+        headers={
+            "Content-Disposition": f'inline; filename="{filename}"',
+            "Cache-Control": "no-cache",
+        },
+    )
+
+
+@router.get(
+    "/{project_id}/export/tasks-csv",
+    tags=["Projects Reports & Exports Super-PRO"],
+)
+def export_project_tasks_csv_endpoint(
+    project_id: str,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("projects", "read")),
+):
+    """Descarga el cronograma de tareas del proyecto en formato CSV (BOM UTF-8 para Excel)."""
+    user_sede = get_user_sede_id(db, current_user.id)
+    _ensure_project(db, project_id, user_sede=user_sede)
+
+    csv_text = crud.generate_project_tasks_csv(
+        db,
+        _to_uuid(project_id),
+        user_sede_id=user_sede,
+    )
+    filename = f"tareas_proyecto_{project_id}.csv"
+
+    _log_project_activity(
+        db,
+        project_id,
+        current_user.id,
+        "tasks_csv_exported",
+        f"Exportación de tareas CSV completada",
+    )
+
+    return Response(
+        content=csv_text.encode("utf-8"),
+        media_type="text/csv; charset=utf-8",
+        headers={
+            "Content-Disposition": f'attachment; filename="{filename}"',
+            "Cache-Control": "no-cache",
+        },
+    )
+
+
+@router.get(
+    "/{project_id}/export/expenses-csv",
+    tags=["Projects Reports & Exports Super-PRO"],
+)
+def export_project_expenses_csv_endpoint(
+    project_id: str,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("projects", "read")),
+):
+    """Descarga el libro mayor de gastos y desembolsos del proyecto en formato CSV."""
+    user_sede = get_user_sede_id(db, current_user.id)
+    _ensure_project(db, project_id, user_sede=user_sede)
+
+    csv_text = crud.generate_project_expenses_csv(
+        db,
+        _to_uuid(project_id),
+        user_sede_id=user_sede,
+    )
+    filename = f"gastos_proyecto_{project_id}.csv"
+
+    _log_project_activity(
+        db,
+        project_id,
+        current_user.id,
+        "expenses_csv_exported",
+        f"Exportación de libro mayor de gastos CSV completada",
+    )
+
+    return Response(
+        content=csv_text.encode("utf-8"),
+        media_type="text/csv; charset=utf-8",
+        headers={
+            "Content-Disposition": f'attachment; filename="{filename}"',
+            "Cache-Control": "no-cache",
+        },
+    )
+
 
 
 
