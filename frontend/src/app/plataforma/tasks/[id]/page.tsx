@@ -68,7 +68,7 @@ export default function TaskDetailPage() {
 
     return (
         <WorkspaceLayout sidebarTitle="Tareas" sidebarSections={sidebarSections}>
-            <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--bg-primary))] overflow-hidden">
+            <div className="flex flex-col h-full bg-[hsl(var(--background))] overflow-hidden">
             <WorkspaceToolbar
                 breadcrumbs={[
                     { label: 'Proyectos', icon: LayoutDashboard, href: PROJECTS_LIST_ROUTE },
@@ -80,7 +80,7 @@ export default function TaskDetailPage() {
                         <button className="p-2 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] transition-all">
                             <MoreVertical size={20} />
                         </button>
-                        <button className="px-3 py-2 bg-[hsl(var(--primary))] text-white rounded-md text-2xs font-semibold uppercase tracking-wide shadow-lg shadow-[hsl(var(--info)/20%)] hover:scale-105 transition-all">
+                        <button className="px-3 py-2 bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] rounded-md text-2xs font-semibold uppercase tracking-wide shadow-lg shadow-[hsl(var(--primary)/20%)] hover:scale-105 transition-all">
                             Finalizar Tarea
                         </button>
                     </div>
@@ -95,21 +95,21 @@ export default function TaskDetailPage() {
                                 <DSBadge tone={task.priority === 'high' ? 'blue' : 'amber'} label={task.priority.toUpperCase()} />
                                 <DSBadge tone="blue" label={task.status.toUpperCase()} />
                             </div>
-                            <h1 className="text-lg font-bold text-[hsl(var(--text-primary))] dark:text-white tracking-tight leading-tight uppercase">
+                            <h1 className="text-lg font-bold text-[hsl(var(--text-primary))] tracking-tight leading-tight uppercase">
                                 {task.title}
                             </h1>
                         </header>
 
                         <DSCard>
                             <h3 className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-4">Descripción</h3>
-                            <p className="text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] text-sm leading-relaxed">
+                            <p className="text-[hsl(var(--text-secondary))] text-sm leading-relaxed">
                                 {task.description}
                             </p>
                         </DSCard>
 
                         <section className="space-y-4">
                             <h3 className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Actividad y Comentarios</h3>
-                            <div className="bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg p-3 text-center py-1.5">
+                            <div className="bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] rounded-lg p-3 text-center py-1.5">
                                 <MessageSquare size={32} className="mx-auto text-[hsl(var(--text-secondary))] mb-4" />
                                 <p className="text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">No hay comentarios aún</p>
                             </div>
@@ -122,10 +122,10 @@ export default function TaskDetailPage() {
                                 <div className="flex items-center justify-between">
                                     <span className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Responsable</span>
                                     <div className="flex items-center gap-2">
-                                        <div className="size-6 rounded-full bg-[hsl(var(--primary))] flex items-center justify-center font-semibold text-white">
+                                        <div className="size-6 rounded-full bg-[hsl(var(--primary))] flex items-center justify-center font-semibold text-[hsl(var(--primary-foreground))]">
                                             {task.assignee?.charAt(0)}
                                         </div>
-                                        <span className="text-xs font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">{task.assignee}</span>
+                                        <span className="text-xs font-bold text-[hsl(var(--text-primary))]">{task.assignee}</span>
                                     </div>
                                 </div>
                                 <div className="flex items-center justify-between">
@@ -134,16 +134,16 @@ export default function TaskDetailPage() {
                                         <Calendar size={14} /> {new Date(task.due_date).toLocaleDateString()}
                                     </div>
                                 </div>
-                                <div className="h-px bg-[hsl(var(--surface-2))] dark:bg-white/5" />
+                                <div className="h-px bg-[hsl(var(--surface-2))]" />
                                 <div className="space-y-4">
                                     <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Seguimiento de Tiempo</p>
                                     <div className="flex items-center justify-between">
-                                        <span className="text-lg font-bold text-[hsl(var(--text-primary))] dark:text-white font-mono">00:45:12</span>
+                                        <span className="text-lg font-bold text-[hsl(var(--text-primary))] font-mono">00:45:12</span>
                                         <button
                                             onClick={() => setIsTimerRunning(!isTimerRunning)}
                                             className={clsx(
                                                 'size-10 rounded-full flex items-center justify-center transition-all',
-                                                isTimerRunning ? 'bg-[hsl(var(--destructive))] text-white animate-pulse' : 'bg-[hsl(var(--success))] text-white'
+                                                isTimerRunning ? 'bg-[hsl(var(--destructive))] text-[hsl(var(--destructive-foreground))] animate-pulse' : 'bg-[hsl(var(--success))] text-[hsl(var(--success-foreground))]'
                                             )}
                                         >
                                             {isTimerRunning ? <Pause size={18} /> : <Play size={18} className="ml-1" />}
@@ -153,7 +153,7 @@ export default function TaskDetailPage() {
                             </div>
                         </DSCard>
 
-                        <div className="p-3 bg-[hsl(var(--primary))] rounded-lg text-white space-y-4">
+                        <div className="p-3 bg-[hsl(var(--primary))] rounded-lg text-[hsl(var(--primary-foreground))] space-y-4">
                             <div className="flex items-center gap-2 text-2xs font-semibold uppercase tracking-wide">
                                 <Sparkles size={14} /> AI Context
                             </div>
