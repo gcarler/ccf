@@ -167,23 +167,23 @@ export default function AgentsPage() {
     );
 
     return (
-        <div className="min-h-screen bg-[hsl(var(--bg-muted))] dark:bg-[hsl(var(--bg-primary))] p-6">
+        <div className="min-h-screen bg-[hsl(var(--surface-1))] p-6">
             <div className="max-w-7xl mx-auto">
                 {/* Header */}
                 <div className="mb-8">
                     <div className="flex items-center gap-3 mb-2">
                         <BrainCircuit className="w-8 h-8 text-[hsl(var(--primary))]" />
-                        <h1 className="text-3xl font-bold text-[hsl(var(--text-primary))] dark:text-white">
+                        <h1 className="text-3xl font-bold text-[hsl(var(--text-primary))]">
                             Sistema Multiagente CCF
                         </h1>
                     </div>
-                    <p className="text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">
+                    <p className="text-[hsl(var(--text-secondary))]">
                         Optimus Neural MESH — Agentes inteligentes para gestión ministerial
                     </p>
                 </div>
 
                 {/* Tabs */}
-                <div className="flex gap-2 mb-6 border-b border-[hsl(var(--border-primary))] dark:border-[hsl(var(--border))]">
+                <div className="flex gap-2 mb-6 border-b border-[hsl(var(--border))]">
                     {[
                         { id: 'agents', label: 'Agentes', icon: Bot },
                         { id: 'tools', label: 'Herramientas', icon: Zap },
@@ -195,8 +195,8 @@ export default function AgentsPage() {
                             onClick={() => setActiveTab(tab.id as any)}
                             className={`flex items-center gap-2 px-4 py-2 rounded-t-lg transition-colors ${
                                 activeTab === tab.id
-                                    ? 'bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--bg-primary))] border-b-2 border-[hsl(var(--info)/100%)] text-[hsl(var(--primary))] font-medium'
-                                    : 'text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] dark:hover:text-white'
+                                    ? 'bg-[hsl(var(--surface-2))] border-b-2 border-[hsl(var(--primary))] text-[hsl(var(--primary))] font-semibold'
+                                    : 'text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))]'
                             }`}
                         >
                             <tab.icon className="w-4 h-4" />
@@ -216,12 +216,12 @@ export default function AgentsPage() {
                                     placeholder="Buscar agentes..."
                                     value={searchTerm}
                                     onChange={e => setSearchTerm(e.target.value)}
-                                    className="w-full pl-10 pr-4 py-2 border rounded-lg dark:bg-[hsl(var(--bg-primary))] dark:border-[hsl(var(--border))] dark:text-white"
+                                    className="w-full pl-10 pr-4 py-2 border border-[hsl(var(--border))] rounded-lg bg-[hsl(var(--surface-2))] text-[hsl(var(--text-primary))] placeholder:text-[hsl(var(--text-secondary))] focus:border-[hsl(var(--primary))] outline-none"
                                 />
                             </div>
                             <button
                                 onClick={fetchData}
-                                className="flex items-center gap-2 px-4 py-2 bg-[hsl(var(--bg-muted))] dark:bg-[hsl(var(--bg-primary))] rounded-lg hover:bg-[hsl(var(--bg-muted))] dark:hover:bg-[hsl(var(--bg-muted))]"
+                                className="flex items-center gap-2 px-4 py-2 bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] text-[hsl(var(--text-primary))] rounded-lg hover:bg-[hsl(var(--surface-3))] transition-colors"
                             >
                                 <RefreshCw className="w-4 h-4" />
                                 Actualizar
@@ -229,40 +229,40 @@ export default function AgentsPage() {
                         </div>
 
                         {loading ? (
-                            <div className="text-center py-12 text-[hsl(var(--text-primary))]">Cargando agentes...</div>
+                            <div className="text-center py-12 text-[hsl(var(--text-secondary))]">Cargando agentes...</div>
                         ) : (
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                                 {filteredAgents.map(agent => (
                                     <div
                                         key={agent.id}
-                                        className="bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--bg-primary))] rounded-lg p-4 shadow-sm border border-[hsl(var(--border-primary))] dark:border-[hsl(var(--border))]"
+                                        className="bg-[hsl(var(--surface-2))] rounded-lg p-4 shadow-sm border border-[hsl(var(--border))]"
                                     >
                                         <div className="flex items-center gap-3 mb-3">
                                             <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                                                agent.is_active ? 'bg-green-100 text-[hsl(var(--secondary))]' : 'bg-[hsl(var(--bg-muted))] text-[hsl(var(--text-secondary))]'
+                                                agent.is_active ? 'bg-[hsl(var(--success-muted))] text-[hsl(var(--success))]' : 'bg-[hsl(var(--surface-3))] text-[hsl(var(--text-secondary))]'
                                             }`}>
                                                 <Bot className="w-5 h-5" />
                                             </div>
                                             <div>
-                                                <h3 className="font-medium text-[hsl(var(--text-primary))] dark:text-white">
+                                                <h3 className="font-medium text-[hsl(var(--text-primary))]">
                                                     {agent.nombre_completo || `${agent.first_name ?? ''} ${agent.last_name ?? ''}`.trim()}
                                                 </h3>
-                                                <p className="text-sm text-[hsl(var(--text-primary))]">{agent.code}</p>
+                                                <p className="text-sm text-[hsl(var(--text-secondary))]">{agent.code}</p>
                                             </div>
                                         </div>
                                         <div className="space-y-1 text-sm">
                                             {agent.email && (
-                                                <p className="text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">{agent.email}</p>
+                                                <p className="text-[hsl(var(--text-secondary))]">{agent.email}</p>
                                             )}
                                             <div className="flex items-center gap-2">
                                                 <Shield className="w-4 h-4 text-[hsl(var(--primary))]" />
-                                                <span className="text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">
+                                                <span className="text-[hsl(var(--text-secondary))]">
                                                     {STAGE_LABELS[agent.spiritual_stage] || agent.spiritual_stage}
                                                 </span>
                                             </div>
                                             <div className="flex items-center gap-2">
-                                                <Activity className={`w-4 h-4 ${agent.is_active ? 'text-[hsl(var(--secondary))]' : 'text-[hsl(var(--text-secondary))]'}`} />
-                                                <span className={agent.is_active ? 'text-[hsl(var(--secondary))]' : 'text-[hsl(var(--text-secondary))]'}>
+                                                <Activity className={`w-4 h-4 ${agent.is_active ? 'text-[hsl(var(--success))]' : 'text-[hsl(var(--text-secondary))]'}`} />
+                                                <span className={agent.is_active ? 'text-[hsl(var(--success))]' : 'text-[hsl(var(--text-secondary))]'}>
                                                     {agent.is_active ? 'Activo' : 'Inactivo'}
                                                 </span>
                                             </div>
@@ -278,12 +278,12 @@ export default function AgentsPage() {
                 {activeTab === 'tools' && (
                     <div>
                         <div className="flex justify-between items-center mb-4">
-                            <h2 className="text-xl font-semibold text-[hsl(var(--text-primary))] dark:text-white">
+                            <h2 className="text-xl font-semibold text-[hsl(var(--text-primary))]">
                                 Herramientas Registradas
                             </h2>
                             <button
                                 onClick={rebuildKB}
-                                className="flex items-center gap-2 px-4 py-2 bg-[hsl(var(--primary))] text-white rounded-lg hover:bg-[hsl(var(--primary))]"
+                                className="flex items-center gap-2 px-4 py-2 bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] rounded-lg hover:bg-[hsl(var(--primary))] shadow-md shadow-[hsl(var(--primary)/0.2)] active:scale-95 transition-all"
                             >
                                 <Database className="w-4 h-4" />
                                 Reconstruir KB
@@ -291,7 +291,7 @@ export default function AgentsPage() {
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                             {tools.length === 0 ? (
-                                <div className="col-span-full text-center py-12 text-[hsl(var(--text-primary))]">
+                                <div className="col-span-full text-center py-12 text-[hsl(var(--text-secondary))]">
                                     Las herramientas se registran automáticamente al iniciar el backend.
                                     <br />
                                     <span className="text-sm">8 herramientas disponibles: CRM, Academy, Projects, Analytics</span>
@@ -300,14 +300,14 @@ export default function AgentsPage() {
                                 tools.map((tool, i) => (
                                     <div
                                         key={i}
-                                        className="bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--bg-primary))] rounded-lg p-4 shadow-sm border border-[hsl(var(--border-primary))] dark:border-[hsl(var(--border))]"
+                                        className="bg-[hsl(var(--surface-2))] rounded-lg p-4 shadow-sm border border-[hsl(var(--border))]"
                                     >
                                         <div className="flex items-center gap-2 mb-2">
-                                            <Zap className="w-5 h-5 text-yellow-500" />
-                                            <h3 className="font-medium text-[hsl(var(--text-primary))] dark:text-white">{tool.name}</h3>
+                                            <Zap className="w-5 h-5 text-[hsl(var(--warning))]" />
+                                            <h3 className="font-medium text-[hsl(var(--text-primary))]">{tool.name}</h3>
                                         </div>
-                                        <p className="text-sm text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] mb-2">{tool.description}</p>
-                                        <span className="inline-block px-2 py-1 bg-[hsl(var(--info-muted))] dark:bg-[hsl(var(--info))] text-[hsl(var(--primary))] dark:text-info-text text-xs rounded">
+                                        <p className="text-sm text-[hsl(var(--text-secondary))] mb-2">{tool.description}</p>
+                                        <span className="inline-block px-2 py-1 bg-[hsl(var(--info-muted))] text-[hsl(var(--info))] text-xs font-semibold rounded">
                                             {tool.module}
                                         </span>
                                     </div>
@@ -321,19 +321,19 @@ export default function AgentsPage() {
                 {activeTab === 'conversations' && (
                     <div>
                         <div className="flex justify-between items-center mb-4">
-                            <h2 className="text-xl font-semibold text-[hsl(var(--text-primary))] dark:text-white">
+                            <h2 className="text-xl font-semibold text-[hsl(var(--text-primary))]">
                                 Conversaciones
                             </h2>
                             <button
                                 onClick={createConversation}
-                                className="flex items-center gap-2 px-4 py-2 bg-[hsl(var(--primary))] text-white rounded-lg hover:bg-[hsl(var(--primary))]"
+                                className="flex items-center gap-2 px-4 py-2 bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] rounded-lg hover:bg-[hsl(var(--primary))] shadow-md shadow-[hsl(var(--primary)/0.2)] active:scale-95 transition-all"
                             >
                                 <Plus className="w-4 h-4" />
                                 Nueva Conversación
                             </button>
                         </div>
                         {conversations.length === 0 ? (
-                            <div className="text-center py-12 text-[hsl(var(--text-primary))]">
+                            <div className="text-center py-12 text-[hsl(var(--text-secondary))]">
                                 No hay conversaciones aún. Crea una nueva para empezar.
                             </div>
                         ) : (
@@ -346,21 +346,21 @@ export default function AgentsPage() {
                                             setActiveTab('chat');
                                             setChatMessages([]);
                                         }}
-                                        className="w-full bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--bg-primary))] rounded-lg p-4 shadow-sm border border-[hsl(var(--border-primary))] dark:border-[hsl(var(--border))] text-left hover:border-[hsl(var(--info)/30%)] dark:hover:border-[hsl(var(--info)/100%)] transition-colors"
+                                        className="w-full bg-[hsl(var(--surface-2))] rounded-lg p-4 shadow-sm border border-[hsl(var(--border))] text-left hover:border-[hsl(var(--primary))] transition-colors"
                                     >
                                         <div className="flex items-center justify-between">
                                             <div className="flex items-center gap-3">
                                                 <MessageCircle className="w-5 h-5 text-[hsl(var(--primary))]" />
                                                 <div>
-                                                    <h3 className="font-medium text-[hsl(var(--text-primary))] dark:text-white">
+                                                    <h3 className="font-medium text-[hsl(var(--text-primary))]">
                                                         {conv.title || 'Sin título'}
                                                     </h3>
-                                                    <p className="text-sm text-[hsl(var(--text-primary))]">
+                                                    <p className="text-sm text-[hsl(var(--text-secondary))]">
                                                         {conv.message_count} mensajes · {conv.agent_name}
                                                     </p>
                                                 </div>
                                             </div>
-                                            <div className="flex items-center gap-2 text-sm text-[hsl(var(--text-primary))]">
+                                            <div className="flex items-center gap-2 text-sm text-[hsl(var(--text-secondary))]">
                                                 <Clock className="w-4 h-4" />
                                                 {new Date(conv.updated_at).toLocaleDateString('es-ES')}
                                             </div>
@@ -374,20 +374,20 @@ export default function AgentsPage() {
 
                 {/* Chat Tab */}
                 {activeTab === 'chat' && (
-                    <div className="bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--bg-primary))] rounded-lg shadow-sm border border-[hsl(var(--border-primary))] dark:border-[hsl(var(--border))]">
-                        <div className="p-4 border-b border-[hsl(var(--border-primary))] dark:border-[hsl(var(--border))] flex items-center justify-between">
+                    <div className="bg-[hsl(var(--surface-2))] rounded-lg shadow-sm border border-[hsl(var(--border))]">
+                        <div className="p-4 border-b border-[hsl(var(--border))] flex items-center justify-between">
                             <div className="flex items-center gap-3">
                                 <Bot className="w-6 h-6 text-[hsl(var(--primary))]" />
                                 <div>
-                                    <h3 className="font-medium text-[hsl(var(--text-primary))] dark:text-white">Chat con Optimus</h3>
-                                    <p className="text-sm text-[hsl(var(--secondary))] flex items-center gap-1">
-                                        <span className="w-2 h-2 bg-[hsl(var(--secondary))] rounded-full inline-block"></span>
+                                    <h3 className="font-medium text-[hsl(var(--text-primary))]">Chat con Optimus</h3>
+                                    <p className="text-sm text-[hsl(var(--success))] flex items-center gap-1">
+                                        <span className="w-2 h-2 bg-[hsl(var(--success))] rounded-full inline-block"></span>
                                         En línea
                                     </p>
                                 </div>
                             </div>
                             {activeConversation && (
-                                <span className="text-sm text-[hsl(var(--text-primary))]">
+                                <span className="text-sm text-[hsl(var(--text-secondary))]">
                                     Conversación #{activeConversation}
                                 </span>
                             )}
@@ -396,18 +396,18 @@ export default function AgentsPage() {
                         {/* Messages */}
                         <div className="h-96 overflow-y-auto p-4 space-y-4">
                             {chatMessages.length === 0 ? (
-                                <div className="text-center py-12 text-[hsl(var(--text-primary))]">
+                                <div className="text-center py-12 text-[hsl(var(--text-secondary))]">
                                     <BrainCircuit className="w-12 h-12 mx-auto mb-3 text-[hsl(var(--text-secondary))]" />
-                                    <p>Haz una pregunta a Optimus</p>
-                                    <p className="text-sm">Puede buscar personas, cursos, proyectos y más</p>
+                                    <p className="text-[hsl(var(--text-primary))] font-medium">Haz una pregunta a Optimus</p>
+                                    <p className="text-sm text-[hsl(var(--text-secondary))]">Puede buscar personas, cursos, proyectos y más</p>
                                 </div>
                             ) : (
                                 chatMessages.map((msg, i) => (
                                     <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                                         <div className={`max-w-[80%] rounded-lg p-3 ${
                                             msg.role === 'user'
-                                                ? 'bg-[hsl(var(--primary))] text-white'
-                                                : 'bg-[hsl(var(--bg-muted))] dark:bg-[hsl(var(--bg-muted))] text-[hsl(var(--text-primary))] dark:text-white'
+                                                ? 'bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))]'
+                                                : 'bg-[hsl(var(--surface-3))] text-[hsl(var(--text-primary))]'
                                         }`}>
                                             {msg.role === 'assistant' && <Bot className="w-4 h-4 mb-1 text-[hsl(var(--primary))]" />}
                                             <p className="whitespace-pre-wrap">{msg.content}</p>
@@ -417,7 +417,7 @@ export default function AgentsPage() {
                             )}
                             {chatLoading && (
                                 <div className="flex justify-start">
-                                    <div className="bg-[hsl(var(--bg-muted))] dark:bg-[hsl(var(--bg-muted))] rounded-lg p-3">
+                                    <div className="bg-[hsl(var(--surface-3))] rounded-lg p-3">
                                         <div className="flex gap-1">
                                             <span className="w-2 h-2 bg-[hsl(var(--text-secondary))] rounded-full animate-bounce"></span>
                                             <span className="w-2 h-2 bg-[hsl(var(--text-secondary))] rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></span>
@@ -429,7 +429,7 @@ export default function AgentsPage() {
                         </div>
 
                         {/* Input */}
-                        <div className="p-4 border-t border-[hsl(var(--border-primary))] dark:border-[hsl(var(--border))]">
+                        <div className="p-4 border-t border-[hsl(var(--border))]">
                             <div className="flex gap-2">
                                 <input
                                     type="text"
@@ -437,12 +437,12 @@ export default function AgentsPage() {
                                     onChange={e => setChatInput(e.target.value)}
                                     onKeyDown={e => e.key === 'Enter' && sendChat()}
                                     placeholder="Pregunta algo a Optimus..."
-                                    className="flex-1 px-4 py-2 border rounded-lg dark:bg-[hsl(var(--bg-muted))] dark:border-[hsl(var(--border))] dark:text-white"
+                                    className="flex-1 px-4 py-2 border border-[hsl(var(--border))] rounded-lg bg-[hsl(var(--surface-1))] text-[hsl(var(--text-primary))] placeholder:text-[hsl(var(--text-secondary))] focus:border-[hsl(var(--primary))] outline-none"
                                 />
                                 <button
                                     onClick={sendChat}
                                     disabled={chatLoading || !chatInput.trim()}
-                                    className="px-4 py-2 bg-[hsl(var(--primary))] text-white rounded-lg hover:bg-[hsl(var(--primary))] disabled:opacity-50"
+                                    className="px-4 py-2 bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] rounded-lg hover:bg-[hsl(var(--primary))] disabled:opacity-50 transition-colors"
                                 >
                                     <Send className="w-4 h-4" />
                                 </button>
