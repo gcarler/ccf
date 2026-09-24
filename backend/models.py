@@ -266,6 +266,7 @@ from backend.models_projects import (
     Project,
     ProjectActivityLog,
     ProjectAttachment,
+    ProjectBaseline,
     ProjectComment,
     ProjectDocument,
     ProjectExpense,

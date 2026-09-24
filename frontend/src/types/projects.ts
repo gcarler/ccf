@@ -291,3 +291,67 @@ export interface ProjectAnalytics {
   health_score: number;
   health_label: 'óptima' | 'buena' | 'en riesgo' | 'crítica';
 }
+
+// ── Critical Path Method (CPM) (Super-PRO Fase 4) ───────────────────────────
+export interface TaskCriticalPathItem {
+  task_id: string;
+  title: string;
+  duration_days: number;
+  early_start: number;
+  early_finish: number;
+  late_start: number;
+  late_finish: number;
+  slack_days: number;
+  is_critical: boolean;
+  early_start_date?: string | null;
+  early_finish_date?: string | null;
+  late_start_date?: string | null;
+  late_finish_date?: string | null;
+}
+
+export interface ProjectCriticalPathSummary {
+  project_id: string;
+  total_duration_days: number;
+  critical_tasks_count: number;
+  critical_path_task_ids: string[];
+  tasks: TaskCriticalPathItem[];
+  has_cycles: boolean;
+}
+
+// ── Project Baseline (Super-PRO Fase 4) ─────────────────────────────────────
+export interface TaskBaselineComparisonItem {
+  task_id: string;
+  title: string;
+  baseline_start?: string | null;
+  baseline_due?: string | null;
+  baseline_duration: number;
+  current_start?: string | null;
+  current_due?: string | null;
+  current_duration: number;
+  variance_days: number;
+  status: string;
+}
+
+export interface ProjectBaseline {
+  id: string;
+  project_id: string;
+  name: string;
+  description?: string | null;
+  created_by?: string | null;
+  created_at: string;
+  snapshot_data?: {
+    total_tasks?: number;
+    project_title?: string;
+    tasks?: Array<{
+      id: string;
+      title: string;
+      status: string;
+      priority: string;
+      start_date?: string | null;
+      due_date?: string | null;
+    }>;
+  };
+  comparisons?: TaskBaselineComparisonItem[];
+  total_variance_days?: number;
+}
+

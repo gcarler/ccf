@@ -1,6 +1,6 @@
 """Projects CRUD — corregido para cumplir los 3 axiomas del Kernel CCF."""
 
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from typing import Optional
 from uuid import UUID
 
@@ -1272,6 +1272,318 @@ def reassign_project_task(
     db.commit()
     db.refresh(task)
     return task
+
+
+# ── Critical Path Method (CPM) & Project Baselines (Super-PRO Fase 4) ──
+
+
+def calculate_critical_path(db: Session, project_id: UUID | str) -> Optional[dict]:
+    project = get_project(db, project_id)
+    if not project:
+        return None
+
+    tasks = (
+        db.query(models.ProjectTask)
+        .filter(
+            models.ProjectTask.project_id == project_id,
+            models.ProjectTask.deleted_at.is_(None),
+        )
+        .order_by(models.ProjectTask.order_index.asc())
+        .all()
+    )
+
+    if not tasks:
+        return {
+            "project_id": str(project.id),
+            "total_duration_days": 0,
+            "critical_tasks_count": 0,
+            "critical_path_task_ids": [],
+            "tasks": [],
+            "has_cycles": False,
+        }
+
+    task_map = {str(t.id): t for t in tasks}
+    task_ids = list(task_map.keys())
+
+    # Duración de cada tarea (mínimo 1 día)
+    durations = {}
+    for t_id, t in task_map.items():
+        if t.start_date and t.due_date:
+            try:
+                s_dt = t.start_date.date() if hasattr(t.start_date, "date") else t.start_date
+                d_dt = t.due_date.date() if hasattr(t.due_date, "date") else t.due_date
+                dur = max(1, (d_dt - s_dt).days + 1)
+            except Exception:
+                dur = 1
+        else:
+            dur = 1
+        durations[t_id] = dur
+
+    # Obtener dependencias activas del proyecto
+    deps = (
+        db.query(models.ProjectTaskDependency)
+        .filter(
+            models.ProjectTaskDependency.project_id == project_id,
+            models.ProjectTaskDependency.deleted_at.is_(None),
+        )
+        .all()
+    )
+
+    # Grafo
+    succs = {t_id: [] for t_id in task_ids}
+    preds = {t_id: [] for t_id in task_ids}
+    in_degree = {t_id: 0 for t_id in task_ids}
+
+    for dep in deps:
+        p_id = str(dep.predecessor_id)
+        s_id = str(dep.successor_id)
+        if p_id in task_map and s_id in task_map and p_id != s_id:
+            lag = dep.lag_days or 0
+            succs[p_id].append((s_id, lag))
+            preds[s_id].append((p_id, lag))
+            in_degree[s_id] += 1
+
+    # Orden topológico (Algoritmo de Kahn)
+    queue = [t_id for t_id in task_ids if in_degree[t_id] == 0]
+    topo_order = []
+    temp_in_degree = in_degree.copy()
+
+    while queue:
+        curr = queue.pop(0)
+        topo_order.append(curr)
+        for s_id, _ in succs[curr]:
+            temp_in_degree[s_id] -= 1
+            if temp_in_degree[s_id] == 0:
+                queue.append(s_id)
+
+    has_cycles = len(topo_order) < len(task_ids)
+    if has_cycles:
+        for t_id in task_ids:
+            if t_id not in topo_order:
+                topo_order.append(t_id)
+
+    # 1. Forward Pass (Early Start y Early Finish)
+    ES = {t_id: 0 for t_id in task_ids}
+    EF = {t_id: durations[t_id] for t_id in task_ids}
+
+    for u in topo_order:
+        for v, lag in succs[u]:
+            new_es = EF[u] + lag
+            if new_es > ES[v]:
+                ES[v] = new_es
+                EF[v] = ES[v] + durations[v]
+
+    total_project_duration = max(EF.values()) if EF else 0
+
+    # 2. Backward Pass (Late Start y Late Finish)
+    LF = {t_id: total_project_duration for t_id in task_ids}
+    LS = {t_id: total_project_duration - durations[t_id] for t_id in task_ids}
+
+    for u in reversed(topo_order):
+        if succs[u]:
+            min_lf = min(LS[v] - lag for v, lag in succs[u])
+            LF[u] = min_lf
+            LS[u] = LF[u] - durations[u]
+        else:
+            LF[u] = total_project_duration
+            LS[u] = LF[u] - durations[u]
+
+    # 3. Slack y Tareas Críticas
+    slack = {t_id: max(0, LS[t_id] - ES[t_id]) for t_id in task_ids}
+    is_crit = {t_id: (slack[t_id] == 0) for t_id in task_ids}
+
+    critical_path_ids = [t_id for t_id in topo_order if is_crit[t_id]]
+
+    now_utc = datetime.now(timezone.utc)
+    base_date = project.start_date or now_utc
+    if not hasattr(base_date, "tzinfo") or not base_date.tzinfo:
+        base_date = base_date.replace(tzinfo=timezone.utc)
+
+    task_items = []
+    for t_id in task_ids:
+        t = task_map[t_id]
+        dur = durations[t_id]
+        es = ES[t_id]
+        ef = EF[t_id]
+        ls = LS[t_id]
+        lf = LF[t_id]
+        sl = slack[t_id]
+        crit = is_crit[t_id]
+
+        es_date = base_date + timedelta(days=es)
+        ef_date = base_date + timedelta(days=ef)
+        ls_date = base_date + timedelta(days=ls)
+        lf_date = base_date + timedelta(days=lf)
+
+        task_items.append({
+            "task_id": t_id,
+            "title": t.title,
+            "duration_days": dur,
+            "early_start": es,
+            "early_finish": ef,
+            "late_start": ls,
+            "late_finish": lf,
+            "slack_days": sl,
+            "is_critical": crit,
+            "early_start_date": es_date,
+            "early_finish_date": ef_date,
+            "late_start_date": ls_date,
+            "late_finish_date": lf_date,
+        })
+
+    return {
+        "project_id": str(project.id),
+        "total_duration_days": total_project_duration,
+        "critical_tasks_count": len(critical_path_ids),
+        "critical_path_task_ids": critical_path_ids,
+        "tasks": task_items,
+        "has_cycles": has_cycles,
+    }
+
+
+def create_project_baseline(
+    db: Session,
+    project_id: UUID | str,
+    baseline_in: schemas.ProjectBaselineCreate,
+    user_id: Optional[UUID | str] = None,
+) -> models.ProjectBaseline:
+    project = get_project(db, project_id)
+    if not project:
+        raise ValueError("Proyecto no encontrado")
+
+    tasks = (
+        db.query(models.ProjectTask)
+        .filter(
+            models.ProjectTask.project_id == project_id,
+            models.ProjectTask.deleted_at.is_(None),
+        )
+        .order_by(models.ProjectTask.order_index.asc())
+        .all()
+    )
+
+    snapshot_data = {
+        "project_id": str(project.id),
+        "project_title": project.title,
+        "start_date": project.start_date.isoformat() if project.start_date else None,
+        "target_date": project.target_date.isoformat() if project.target_date else None,
+        "frozen_at": datetime.now(timezone.utc).isoformat(),
+        "total_tasks": len(tasks),
+        "tasks": [
+            {
+                "id": str(t.id),
+                "title": t.title,
+                "status": t.status,
+                "priority": t.priority,
+                "start_date": t.start_date.isoformat() if t.start_date else None,
+                "due_date": t.due_date.isoformat() if t.due_date else None,
+                "order_index": t.order_index,
+            }
+            for t in tasks
+        ],
+    }
+
+    baseline = models.ProjectBaseline(
+        project_id=project.id,
+        name=baseline_in.name,
+        description=baseline_in.description,
+        snapshot_data=snapshot_data,
+        created_by=user_id,
+        created_at=datetime.now(timezone.utc),
+    )
+    db.add(baseline)
+    db.commit()
+    db.refresh(baseline)
+    return baseline
+
+
+def get_project_latest_baseline(db: Session, project_id: UUID | str) -> Optional[dict]:
+    baseline = (
+        db.query(models.ProjectBaseline)
+        .filter(
+            models.ProjectBaseline.project_id == project_id,
+            models.ProjectBaseline.deleted_at.is_(None),
+        )
+        .order_by(models.ProjectBaseline.created_at.desc())
+        .first()
+    )
+    if not baseline:
+        return None
+
+    current_tasks = (
+        db.query(models.ProjectTask)
+        .filter(
+            models.ProjectTask.project_id == project_id,
+            models.ProjectTask.deleted_at.is_(None),
+        )
+        .all()
+    )
+    current_map = {str(t.id): t for t in current_tasks}
+
+    snapshot = baseline.snapshot_data or {}
+    snap_tasks = snapshot.get("tasks", [])
+
+    comparisons = []
+    total_pos_variance = 0
+
+    for st in snap_tasks:
+        t_id = st.get("id")
+        cur_t = current_map.get(t_id)
+
+        b_start = datetime.fromisoformat(st["start_date"]) if st.get("start_date") else None
+        b_due = datetime.fromisoformat(st["due_date"]) if st.get("due_date") else None
+        b_dur = max(1, (b_due.date() - b_start.date()).days + 1) if (b_start and b_due) else 1
+
+        c_start = cur_t.start_date if cur_t else None
+        c_due = cur_t.due_date if cur_t else None
+        c_dur = max(1, (c_due.date() - c_start.date()).days + 1) if (c_start and c_due) else 1
+
+        if b_due and c_due:
+            b_d = b_due.date() if hasattr(b_due, "date") else b_due
+            c_d = c_due.date() if hasattr(c_due, "date") else c_due
+            var_days = (c_d - b_d).days
+        else:
+            var_days = 0
+
+        if var_days > 0:
+            total_pos_variance += var_days
+
+        comparisons.append({
+            "task_id": t_id,
+            "title": cur_t.title if cur_t else st.get("title", ""),
+            "baseline_start": b_start,
+            "baseline_due": b_due,
+            "baseline_duration": b_dur,
+            "current_start": c_start,
+            "current_due": c_due,
+            "current_duration": c_dur,
+            "variance_days": var_days,
+            "status": cur_t.status if cur_t else st.get("status", "todo"),
+        })
+
+    return {
+        "id": str(baseline.id),
+        "project_id": str(baseline.project_id),
+        "name": baseline.name,
+        "description": baseline.description,
+        "created_by": str(baseline.created_by) if baseline.created_by else None,
+        "created_at": baseline.created_at,
+        "snapshot_data": snapshot,
+        "comparisons": comparisons,
+        "total_variance_days": total_pos_variance,
+    }
+
+
+def list_project_baselines(db: Session, project_id: UUID | str) -> list[models.ProjectBaseline]:
+    return (
+        db.query(models.ProjectBaseline)
+        .filter(
+            models.ProjectBaseline.project_id == project_id,
+            models.ProjectBaseline.deleted_at.is_(None),
+        )
+        .order_by(models.ProjectBaseline.created_at.desc())
+        .all()
+    )
+
 
 
 

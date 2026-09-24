@@ -3662,4 +3662,95 @@ def reassign_project_task(
     return updated_task
 
 
+# ── CRITICAL PATH METHOD (CPM) & BASELINE TRACKING (Super-PRO Fase 4) ────────
+
+
+@router.get(
+    "/{project_id}/critical-path",
+    response_model=schemas.ProjectCriticalPathSummary,
+    tags=["Projects Super-PRO"],
+)
+def get_project_critical_path(
+    project_id: str,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("projects", "read")),
+):
+    """Calcula el Método de la Ruta Crítica (CPM): Early/Late Start/Finish, Holgura y Tareas Críticas."""
+    user_sede = get_user_sede_id(db, current_user.id)
+    _ensure_project(db, project_id, user_sede=user_sede)
+    cpm = crud.calculate_critical_path(db, _to_uuid(project_id))
+    if not cpm:
+        raise HTTPException(status_code=404, detail="Proyecto no encontrado")
+    return cpm
+
+
+@router.post(
+    "/{project_id}/baseline",
+    response_model=schemas.ProjectBaseline,
+    tags=["Projects Super-PRO"],
+)
+def create_project_baseline_endpoint(
+    project_id: str,
+    payload: schemas.ProjectBaselineCreate,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_project_access("edit")),
+):
+    """Congela el cronograma planificado del proyecto en una nueva instantánea de línea base."""
+    user_sede = get_user_sede_id(db, current_user.id)
+    project = _ensure_project(db, project_id, user_sede=user_sede)
+    try:
+        baseline = crud.create_project_baseline(
+            db,
+            project_id=_to_uuid(project_id),
+            baseline_in=payload,
+            user_id=current_user.id,
+        )
+        _log_project_activity(
+            db,
+            project_id,
+            current_user.id,
+            "baseline_created",
+            f"Línea base '{baseline.name}' congelada con éxito",
+        )
+        baseline_summary = crud.get_project_latest_baseline(db, _to_uuid(project_id))
+        return baseline_summary or baseline
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Error creando línea base: {str(e)}")
+
+
+@router.get(
+    "/{project_id}/baseline",
+    response_model=Optional[schemas.ProjectBaseline],
+    tags=["Projects Super-PRO"],
+)
+def get_project_latest_baseline_endpoint(
+    project_id: str,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("projects", "read")),
+):
+    """Obtiene la última línea base y la comparación de varianza contra el cronograma real."""
+    user_sede = get_user_sede_id(db, current_user.id)
+    _ensure_project(db, project_id, user_sede=user_sede)
+    baseline_summary = crud.get_project_latest_baseline(db, _to_uuid(project_id))
+    return baseline_summary
+
+
+@router.get(
+    "/{project_id}/baselines",
+    response_model=List[schemas.ProjectBaseline],
+    tags=["Projects Super-PRO"],
+)
+def list_project_baselines_endpoint(
+    project_id: str,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("projects", "read")),
+):
+    """Lista el historial de líneas base congeladas del proyecto."""
+    user_sede = get_user_sede_id(db, current_user.id)
+    _ensure_project(db, project_id, user_sede=user_sede)
+    baselines = crud.list_project_baselines(db, _to_uuid(project_id))
+    return baselines
+
+
+
 

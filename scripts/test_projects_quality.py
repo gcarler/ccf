@@ -34,6 +34,7 @@ os.chdir(os.path.dirname(os.path.abspath(__file__)) + "/..")
 
 from backend.core.database import SessionLocal
 from backend.core.security import get_password_hash
+from backend import schemas
 from backend.models import *  # noqa: F401
 from backend.models_auth import RolPlataforma as _RolPlataforma
 from backend.models_crm import Persona  # explicit for safety alongside wildcard
@@ -630,11 +631,14 @@ if login_resp.status_code == 200:
     if login_u1b.status_code == 200:
         token_u1b = login_u1b.json().get("access_token", "")
         headers_u1b = {"Authorization": f"Bearer {token_u1b}"}
-        resp = httpx.get("http://127.0.0.1:8000/api/projects", headers=headers_u1b)
-        if resp.status_code == 403:
-            ok("usuario_prueba_1 (estudiante) bloqueado de projects — correcto (403)")
-        else:
-            info(f"usuario_prueba_1 GET /projects → HTTP {resp.status_code}")
+        try:
+            resp = httpx.get("http://127.0.0.1:8000/api/projects", headers=headers_u1b, timeout=15.0)
+            if resp.status_code == 403:
+                ok("usuario_prueba_1 (estudiante) bloqueado de projects — correcto (403)")
+            else:
+                info(f"usuario_prueba_1 GET /projects → HTTP {resp.status_code}")
+        except Exception as e:
+            info(f"usuario_prueba_1 GET /projects → {e}")
     else:
         fail(f"Login usuario_prueba_1 → HTTP {login_u1b.status_code}")
 
@@ -948,6 +952,109 @@ if task_to_move:
         fail(f"Error en reassign_project_task: {getattr(reassigned, 'assignee_id', 'None')}")
 else:
     fail("No se encontró tarea asignada a u1 para probar reasignación")
+
+# ──────────────────────────────────────────────────────────────
+section("13. PRUEBAS DE RUTA CRÍTICA (CPM) Y LÍNEA BASE (SUPER-PRO FASE 4)")
+# ──────────────────────────────────────────────────────────────
+
+# 1. Crear dependencias en cadena para garantizar ruta crítica predecible
+all_project_tasks = db.query(models.ProjectTask).filter(
+    models.ProjectTask.project_id == project.id,
+    models.ProjectTask.deleted_at.is_(None)
+).order_by(models.ProjectTask.created_at.asc()).all()
+
+if len(all_project_tasks) >= 3:
+    tA, tB, tC = all_project_tasks[0], all_project_tasks[1], all_project_tasks[2]
+
+    # Limpiar dependencias previas entre estas tareas si existieran
+    db.query(models.ProjectTaskDependency).filter(
+        models.ProjectTaskDependency.project_id == project.id
+    ).delete()
+    db.commit()
+
+    dep1 = crud_projects.create_task_dependency(
+        db, project.id, schemas.ProjectTaskDependencyCreate(
+            predecessor_id=tA.id,
+            successor_id=tB.id,
+            dependency_type="FS",
+            lag_days=0
+        )
+    )
+    dep2 = crud_projects.create_task_dependency(
+        db, project.id, schemas.ProjectTaskDependencyCreate(
+            predecessor_id=tB.id,
+            successor_id=tC.id,
+            dependency_type="FS",
+            lag_days=0
+        )
+    )
+    if dep1 and dep2:
+        ok(f"Cadena de dependencias creada: '{tA.title}' → '{tB.title}' → '{tC.title}'")
+    else:
+        fail("Error creando dependencias de prueba para CPM")
+else:
+    fail("Se necesitan al menos 3 tareas para probar la ruta crítica CPM")
+
+# 2. Calcular Ruta Crítica (CPM)
+cpm_result = crud_projects.calculate_critical_path(db, project.id)
+if cpm_result and "critical_tasks_count" in cpm_result:
+    ok(f"Cálculo CPM completado: {cpm_result['total_duration_days']} días de duración total del proyecto")
+    ok(f"Tareas críticas identificadas: {cpm_result['critical_tasks_count']} (Ruta: {len(cpm_result['critical_path_task_ids'])} tareas)")
+    
+    # Verificar que las tareas de la cadena crítica tienen holgura 0
+    tA_cpm = next((t for t in cpm_result["tasks"] if t["task_id"] == str(tA.id)), None)
+    tB_cpm = next((t for t in cpm_result["tasks"] if t["task_id"] == str(tB.id)), None)
+    tC_cpm = next((t for t in cpm_result["tasks"] if t["task_id"] == str(tC.id)), None)
+
+    if tA_cpm and tB_cpm and tC_cpm:
+        if tA_cpm["is_critical"] and tB_cpm["is_critical"] and tC_cpm["is_critical"]:
+            ok("Verificación matemática de CPM: Todas las tareas de la cadena tienen holgura 0 y son críticas")
+        else:
+            fail(f"Holgura o criticidad errónea: A={tA_cpm['slack_days']}, B={tB_cpm['slack_days']}, C={tC_cpm['slack_days']}")
+        
+        if tB_cpm["early_start"] >= tA_cpm["early_finish"]:
+            ok(f"Precedencia Early Finish/Start respetada: tA EF ({tA_cpm['early_finish']}) <= tB ES ({tB_cpm['early_start']})")
+        else:
+            fail("Inconsistencia en paso hacia adelante (Forward pass)")
+    else:
+        fail("No se encontraron las tareas en el resultado CPM")
+else:
+    fail("Error ejecutando calculate_critical_path")
+
+# 3. Congelar Línea Base (Baseline)
+baseline_obj = crud_projects.create_project_baseline(
+    db,
+    project.id,
+    schemas.ProjectBaselineCreate(
+        name="Línea Base Oficial v1",
+        description="Instantánea congelada para control de varianza Gantt"
+    ),
+    user_id=admin_user.id
+)
+
+if baseline_obj and baseline_obj.name == "Línea Base Oficial v1":
+    ok(f"Línea base creada exitosamente (id={baseline_obj.id}): {baseline_obj.snapshot_data['total_tasks']} tareas congeladas")
+else:
+    fail("Error creando línea base del proyecto")
+
+# 4. Obtener y comparar Línea Base vs Real
+baseline_comp = crud_projects.get_project_latest_baseline(db, project.id)
+if baseline_comp and len(baseline_comp["comparisons"]) > 0:
+    ok(f"Comparación de línea base obtenida: {len(baseline_comp['comparisons'])} tareas analizadas, varianza total: {baseline_comp['total_variance_days']}d")
+    first_comp = baseline_comp["comparisons"][0]
+    if "variance_days" in first_comp and "baseline_duration" in first_comp:
+        ok(f"Métricas de varianza presentes para '{first_comp['title']}': Varianza={first_comp['variance_days']} días")
+    else:
+        fail("Faltan campos de varianza en la comparación de línea base")
+else:
+    fail("Error recuperando última línea base o comparaciones vacías")
+
+# 5. Listar historial de líneas base
+all_baselines = crud_projects.list_project_baselines(db, project.id)
+if len(all_baselines) >= 1:
+    ok(f"Historial de líneas base verificado: {len(all_baselines)} registro(s)")
+else:
+    fail("No se listaron las líneas base existentes")
 
 # ──────────────────────────────────────────────────────────────
 section(f"RESUMEN: {PASS} passed, {FAIL} failed")

@@ -5,8 +5,15 @@ import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/context/ToastContext";
 import { useProjectUpdate } from "@/context/ProjectUpdateContext";
 import { apiFetch } from "@/lib/http";
-import type { ProjectTaskRecord, ProjectTaskDependency, ProjectMilestoneRecord } from "@/types/projects";
+import type {
+  ProjectTaskRecord,
+  ProjectTaskDependency,
+  ProjectMilestoneRecord,
+  ProjectCriticalPathSummary,
+  ProjectBaseline,
+} from "@/types/projects";
 import { RightPanel } from "@/components/ui/RightPanel";
+import { ProjectBaselineDrawer } from "@/components/projects/ProjectBaselineDrawer";
 import {
   Calendar,
   ChevronLeft,
@@ -24,6 +31,8 @@ import {
   MoveHorizontal,
   X,
   Sparkles,
+  Zap,
+  Sliders,
 } from "lucide-react";
 import clsx from "clsx";
 
@@ -98,6 +107,13 @@ export default function ProjectGanttView({
   const [savingDep, setSavingDep] = useState(false);
   const [hoveredDepId, setHoveredDepId] = useState<string | null>(null);
 
+  // Critical Path & Baseline (Super-PRO Fase 4)
+  const [showCriticalPath, setShowCriticalPath] = useState(false);
+  const [criticalPathData, setCriticalPathData] = useState<ProjectCriticalPathSummary | null>(null);
+  const [showBaseline, setShowBaseline] = useState(false);
+  const [latestBaseline, setLatestBaseline] = useState<ProjectBaseline | null>(null);
+  const [showBaselineDrawer, setShowBaselineDrawer] = useState(false);
+
   // Time window state (base view date)
   const [viewStartDate, setViewStartDate] = useState<Date>(() => {
     const today = new Date();
@@ -115,16 +131,55 @@ export default function ProjectGanttView({
       const data = await apiFetch<ProjectTaskDependency[]>(`/projects/${projectId}/dependencies`, { token });
       setDependencies(Array.isArray(data) ? data : []);
     } catch {
-      // Non-fatal if no dependencies
       setDependencies([]);
     } finally {
       setLoadingDeps(false);
     }
   }, [projectId, token]);
 
+  const fetchCriticalPath = useCallback(async () => {
+    if (!projectId || !token) return;
+    try {
+      const data = await apiFetch<ProjectCriticalPathSummary>(`/projects/${projectId}/critical-path`, { token });
+      setCriticalPathData(data);
+    } catch {
+      // fallback silencioso
+    }
+  }, [projectId, token]);
+
+  const fetchBaselineData = useCallback(async () => {
+    if (!projectId || !token) return;
+    try {
+      const data = await apiFetch<ProjectBaseline>(`/projects/${projectId}/baseline`, { token });
+      setLatestBaseline(data);
+    } catch {
+      // fallback silencioso
+    }
+  }, [projectId, token]);
+
   useEffect(() => {
     fetchDependencies();
-  }, [fetchDependencies]);
+    fetchCriticalPath();
+    fetchBaselineData();
+  }, [fetchDependencies, fetchCriticalPath, fetchBaselineData]);
+
+  const criticalPathTaskIds = useMemo(() => {
+    return new Set(criticalPathData?.critical_path_task_ids || []);
+  }, [criticalPathData]);
+
+  const baselineMap = useMemo(() => {
+    const map = new Map<string, { baseline_start?: string | null; baseline_due?: string | null; variance_days?: number }>();
+    if (latestBaseline?.comparisons) {
+      latestBaseline.comparisons.forEach((c) => {
+        map.set(c.task_id, {
+          baseline_start: c.baseline_start,
+          baseline_due: c.baseline_due,
+          variance_days: c.variance_days,
+        });
+      });
+    }
+    return map;
+  }, [latestBaseline]);
 
   // Compute overall timeline bounds
   const totalColumns = zoom === "day" ? 45 : zoom === "week" ? 24 : 12;
@@ -398,10 +453,49 @@ export default function ProjectGanttView({
             </button>
           </div>
 
+          {/* Critical Path Toggle (Super-PRO Fase 4) */}
+          <button
+            onClick={() => setShowCriticalPath(!showCriticalPath)}
+            className={clsx(
+              "px-2.5 py-1.5 rounded-lg border text-2xs font-bold uppercase tracking-wide flex items-center gap-1.5 transition-all cursor-pointer",
+              showCriticalPath
+                ? "bg-[hsl(var(--destructive))]/15 border-[hsl(var(--destructive))]/40 text-[hsl(var(--destructive))]"
+                : "border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))]"
+            )}
+            title="Resaltar método de la ruta crítica (CPM)"
+          >
+            <Zap size={13} className={showCriticalPath ? "text-[hsl(var(--destructive))]" : ""} />
+            Ruta Crítica {criticalPathData?.critical_tasks_count ? `(${criticalPathData.critical_tasks_count})` : ""}
+          </button>
+
+          {/* Baseline Toggle (Super-PRO Fase 4) */}
+          <button
+            onClick={() => setShowBaseline(!showBaseline)}
+            className={clsx(
+              "px-2.5 py-1.5 rounded-lg border text-2xs font-bold uppercase tracking-wide flex items-center gap-1.5 transition-all cursor-pointer",
+              showBaseline
+                ? "bg-[hsl(var(--primary))]/15 border-[hsl(var(--primary))]/40 text-[hsl(var(--primary))]"
+                : "border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))]"
+            )}
+            title="Superponer cronograma planificado de la línea base"
+          >
+            <Sliders size={13} className={showBaseline ? "text-[hsl(var(--primary))]" : ""} />
+            Línea Base
+          </button>
+
+          {/* Manage Baseline Drawer Button */}
+          <button
+            onClick={() => setShowBaselineDrawer(true)}
+            className="px-2.5 py-1.5 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] hover:bg-[hsl(var(--surface-3))] text-2xs font-bold uppercase tracking-wide flex items-center gap-1.5 text-[hsl(var(--foreground))] transition-all cursor-pointer"
+            title="Fijar y auditar varianza de línea base"
+          >
+            <Layers size={13} /> Fijar Base
+          </button>
+
           {/* Add Dependency Button */}
           <button
             onClick={() => setShowDepDrawer(true)}
-            className="px-3 py-1.5 rounded-lg bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] text-2xs font-bold uppercase tracking-wide hover:opacity-90 active:scale-95 transition-all flex items-center gap-1.5 shadow-xs"
+            className="px-3 py-1.5 rounded-lg bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] text-2xs font-bold uppercase tracking-wide hover:opacity-90 active:scale-95 transition-all flex items-center gap-1.5 shadow-xs cursor-pointer"
           >
             <Link2 size={13} /> Conectar FS
           </button>
@@ -452,32 +546,45 @@ export default function ProjectGanttView({
 
                   {/* Tasks in Phase */}
                   {!isCollapsed &&
-                    group.tasks.map((task) => (
-                      <div
-                        key={task.id}
-                        onClick={() => onOpenTask(task)}
-                        className="h-11 px-3 flex items-center justify-between hover:bg-[hsl(var(--surface-2))]/80 cursor-pointer transition-colors group"
-                      >
-                        <div className="flex items-center gap-2 min-w-0 pr-2">
-                          <span
-                            className={clsx(
-                              "size-2 rounded-full shrink-0",
-                              task.status === "completed"
-                                ? "bg-[hsl(var(--success))]"
-                                : task.priority === "urgent"
-                                ? "bg-[hsl(var(--destructive))]"
-                                : "bg-[hsl(var(--primary))]"
+                    group.tasks.map((task) => {
+                      const isTaskCrit = showCriticalPath && criticalPathTaskIds.has(task.id);
+                      return (
+                        <div
+                          key={task.id}
+                          onClick={() => onOpenTask(task)}
+                          className={clsx(
+                            "h-11 px-3 flex items-center justify-between hover:bg-[hsl(var(--surface-2))]/80 cursor-pointer transition-colors group",
+                            isTaskCrit && "bg-[hsl(var(--destructive))]/5"
+                          )}
+                        >
+                          <div className="flex items-center gap-2 min-w-0 pr-2">
+                            <span
+                              className={clsx(
+                                "size-2 rounded-full shrink-0",
+                                isTaskCrit
+                                  ? "bg-[hsl(var(--destructive))]"
+                                  : task.status === "completed"
+                                  ? "bg-[hsl(var(--success))]"
+                                  : task.priority === "urgent"
+                                  ? "bg-[hsl(var(--destructive))]"
+                                  : "bg-[hsl(var(--primary))]"
+                              )}
+                            />
+                            <span className="text-xs text-[hsl(var(--foreground))] truncate group-hover:text-[hsl(var(--primary))] transition-colors">
+                              {task.title}
+                            </span>
+                            {isTaskCrit && (
+                              <span className="px-1 py-0.2 rounded text-3xs font-black bg-[hsl(var(--destructive))]/15 text-[hsl(var(--destructive))] shrink-0 uppercase tracking-tight">
+                                CPM
+                              </span>
                             )}
-                          />
-                          <span className="text-xs text-[hsl(var(--foreground))] truncate group-hover:text-[hsl(var(--primary))] transition-colors">
-                            {task.title}
+                          </div>
+                          <span className="text-3xs uppercase font-bold text-[hsl(var(--muted-foreground))] shrink-0">
+                            {task.status}
                           </span>
                         </div>
-                        <span className="text-3xs uppercase font-bold text-[hsl(var(--muted-foreground))] shrink-0">
-                          {task.status}
-                        </span>
-                      </div>
-                    ))}
+                      );
+                    })}
                 </div>
               );
             })}
@@ -597,6 +704,11 @@ export default function ProjectGanttView({
                 if (predX === null || succX === null) return null;
 
                 const isHovered = hoveredDepId === dep.id;
+                const isCriticalDep =
+                  showCriticalPath &&
+                  criticalPathTaskIds.has(dep.predecessor_id) &&
+                  criticalPathTaskIds.has(dep.successor_id);
+
                 // Calculate stepped path
                 const startX = predX;
                 const startY = predY;
@@ -612,11 +724,7 @@ export default function ProjectGanttView({
                     className="pointer-events-auto cursor-pointer"
                     onMouseEnter={() => setHoveredDepId(dep.id)}
                     onMouseLeave={() => setHoveredDepId(null)}
-                    onClick={() => {
-                      if (window.confirm("¿Deseas eliminar esta dependencia Finish-to-Start?")) {
-                        handleDeleteDependency(dep.id);
-                      }
-                    }}
+                    onClick={() => handleDeleteDependency(dep.id)}
                   >
                     <path
                       d={pathData}
@@ -627,10 +735,10 @@ export default function ProjectGanttView({
                     <path
                       d={pathData}
                       fill="none"
-                      stroke={isHovered ? "hsl(var(--destructive))" : "hsl(var(--primary))"}
-                      strokeWidth={isHovered ? 2.5 : 1.75}
+                      stroke={isHovered || isCriticalDep ? "hsl(var(--destructive))" : "hsl(var(--primary))"}
+                      strokeWidth={isHovered ? 2.5 : isCriticalDep ? 2.75 : 1.75}
                       strokeDasharray={dep.dependency_type === "SS" ? "4,4" : undefined}
-                      markerEnd={isHovered ? "url(#gantt-arrow-active)" : "url(#gantt-arrow)"}
+                      markerEnd={isHovered || isCriticalDep ? "url(#gantt-arrow-active)" : "url(#gantt-arrow)"}
                       className="transition-colors duration-150"
                     />
                   </g>
@@ -671,12 +779,33 @@ export default function ProjectGanttView({
                           !isCompleted &&
                           task.due_date &&
                           new Date(task.due_date).getTime() < new Date().getTime();
+                        const isCritical = showCriticalPath && criticalPathTaskIds.has(task.id);
+                        const baselineData = showBaseline ? baselineMap.get(task.id) : null;
 
                         return (
                           <div
                             key={task.id}
                             className="h-11 relative flex items-center hover:bg-[hsl(var(--surface-2))]/30 transition-colors"
                           >
+                            {/* Baseline Ghost Bar (Underlay) */}
+                            {showBaseline && baselineData && baselineData.baseline_due && (() => {
+                              const bStart = baselineData.baseline_start ? baselineData.baseline_start.slice(0, 10) : startKey;
+                              const bDue = baselineData.baseline_due.slice(0, 10);
+                              const bX = getXForDate(bStart) ?? startX;
+                              const bEndX = getXForDate(bDue) ?? (bX + 44);
+                              const bW = Math.max(30, bEndX - bX + config.colWidth * 0.8);
+                              return (
+                                <div
+                                  style={{
+                                    left: `${Math.max(0, bX)}px`,
+                                    width: `${bW}px`,
+                                  }}
+                                  className="absolute -bottom-1 h-1.5 rounded-xs bg-[hsl(var(--primary))]/30 border border-dashed border-[hsl(var(--primary))]/70 pointer-events-none z-0"
+                                  title={`Línea Base: ${bStart} → ${bDue} (Varianza: ${baselineData.variance_days ?? 0}d)`}
+                                />
+                              );
+                            })()}
+
                             {/* Gantt Bar */}
                             <div
                               onClick={() => onOpenTask(task)}
@@ -685,8 +814,10 @@ export default function ProjectGanttView({
                                 width: `${width}px`,
                               }}
                               className={clsx(
-                                "absolute h-7 rounded-lg border shadow-xs flex items-center px-2.5 cursor-pointer transition-all duration-200 select-none group/bar",
-                                isCompleted
+                                "absolute h-7 rounded-lg border shadow-xs flex items-center px-2.5 cursor-pointer transition-all duration-200 select-none group/bar z-10",
+                                isCritical
+                                  ? "bg-[hsl(var(--destructive))]/25 border-[hsl(var(--destructive))] text-[hsl(var(--destructive))] ring-1 ring-[hsl(var(--destructive))] shadow-sm"
+                                  : isCompleted
                                   ? "bg-[hsl(var(--success))]/20 border-[hsl(var(--success))]/50 text-[hsl(var(--success))]"
                                   : isOverdue
                                   ? "bg-[hsl(var(--destructive))]/20 border-[hsl(var(--destructive))]/50 text-[hsl(var(--destructive))]"
@@ -697,12 +828,18 @@ export default function ProjectGanttView({
                               <div
                                 className={clsx(
                                   "absolute inset-0 rounded-md opacity-25",
-                                  isCompleted
+                                  isCritical
+                                    ? "bg-[hsl(var(--destructive))]"
+                                    : isCompleted
                                     ? "bg-[hsl(var(--success))]"
                                     : "bg-[hsl(var(--primary))]"
                                 )}
                                 style={{ width: isCompleted ? "100%" : "40%" }}
                               />
+
+                              {isCritical && (
+                                <Zap size={10} className="fill-[hsl(var(--destructive))] text-[hsl(var(--destructive))] shrink-0 mr-1" />
+                              )}
 
                               <span className="relative z-10 text-2xs font-bold truncate">
                                 {task.title}
@@ -712,6 +849,7 @@ export default function ProjectGanttView({
                               <div className="hidden group-hover/bar:flex absolute -top-7 left-0 px-2 py-0.5 rounded bg-[hsl(var(--surface-3))] border border-[hsl(var(--border))] text-3xs font-bold text-[hsl(var(--foreground))] shadow-md whitespace-nowrap z-30 items-center gap-1.5">
                                 <Clock size={10} />
                                 {startKey} → {dueKey}
+                                {isCritical && <span className="text-[hsl(var(--destructive))] font-black ml-1">[Ruta Crítica]</span>}
                               </div>
                             </div>
                           </div>
@@ -834,6 +972,17 @@ export default function ProjectGanttView({
           </div>
         </form>
       </RightPanel>
+
+      {/* 4. Project Baseline Drawer (SidePanel) */}
+      <ProjectBaselineDrawer
+        projectId={projectId}
+        isOpen={showBaselineDrawer}
+        onClose={() => setShowBaselineDrawer(false)}
+        onBaselineUpdated={() => {
+          fetchBaselineData();
+          fetchCriticalPath();
+        }}
+      />
     </div>
   );
 }

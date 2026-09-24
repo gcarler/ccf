@@ -344,9 +344,11 @@ from backend.crud.identity import (
 
 # ── Projects ───────────────────────────────────────────────────────────────
 from backend.crud.projects import (
+    calculate_critical_path,
     create_activity_log,
     create_default_phases,
     create_project,
+    create_project_baseline,
     create_project_expense,
     create_project_kpi,
     create_project_risk,
@@ -364,6 +366,7 @@ from backend.crud.projects import (
     get_project_expenses,
     get_project_kpi,
     get_project_kpis,
+    get_project_latest_baseline,
     get_project_milestones,
     get_project_phases,
     get_project_risk,
@@ -375,6 +378,7 @@ from backend.crud.projects import (
     get_projects,
     get_task_dependencies,
     get_task_supplies,
+    list_project_baselines,
     reassign_project_task,
     recalculate_project_budget,
     set_project_phases,

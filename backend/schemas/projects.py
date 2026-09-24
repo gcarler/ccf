@@ -420,6 +420,81 @@ class ProjectWorkloadSummary(BaseModel):
     model_config = orm_config
 
 
+# ============================================================================
+# Critical Path Method (CPM) Schemas (Super-PRO Fase 4)
+# ============================================================================
+
+class TaskCriticalPathItem(BaseModel):
+    task_id: UUIDStr
+    title: str
+    duration_days: int
+    early_start: int
+    early_finish: int
+    late_start: int
+    late_finish: int
+    slack_days: int
+    is_critical: bool
+    early_start_date: Optional[datetime] = None
+    early_finish_date: Optional[datetime] = None
+    late_start_date: Optional[datetime] = None
+    late_finish_date: Optional[datetime] = None
+    model_config = orm_config
+
+
+class ProjectCriticalPathSummary(BaseModel):
+    project_id: UUIDStr
+    total_duration_days: int
+    critical_tasks_count: int
+    critical_path_task_ids: List[UUIDStr] = Field(default_factory=list)
+    tasks: List[TaskCriticalPathItem] = Field(default_factory=list)
+    has_cycles: bool = False
+    model_config = orm_config
+
+
+# ============================================================================
+# Project Baseline Schemas (Super-PRO Fase 4)
+# ============================================================================
+
+class ProjectBaselineCreate(BaseModel):
+    name: str = Field(default="Línea Base", min_length=1, max_length=100)
+    description: Optional[str] = None
+
+
+class TaskBaselineComparisonItem(BaseModel):
+    task_id: UUIDStr
+    title: str
+    baseline_start: Optional[datetime] = None
+    baseline_due: Optional[datetime] = None
+    baseline_duration: int = 1
+    current_start: Optional[datetime] = None
+    current_due: Optional[datetime] = None
+    current_duration: int = 1
+    variance_days: int = 0
+    status: str = "todo"
+    model_config = orm_config
+
+
+class ProjectBaseline(BaseModel):
+    id: UUIDStr
+    project_id: UUIDStr
+    name: str
+    description: Optional[str] = None
+    created_by: Optional[UUIDStr] = None
+    created_at: datetime
+    snapshot_data: dict = Field(default_factory=dict)
+    comparisons: List[TaskBaselineComparisonItem] = Field(default_factory=list)
+    total_variance_days: int = 0
+    model_config = orm_config
+
+
+class ProjectBaselineSummary(BaseModel):
+    has_baseline: bool = False
+    latest_baseline: Optional[ProjectBaseline] = None
+    total_baselines: int = 0
+    model_config = orm_config
+
+
+
 
 
 class ProjectBase(BaseModel):

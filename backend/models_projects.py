@@ -52,6 +52,7 @@ class Project(Base):
     dependencies = relationship("ProjectTaskDependency", back_populates="project", cascade="all, delete-orphan")
     expenses = relationship("ProjectExpense", back_populates="project", cascade="all, delete-orphan")
     risks = relationship("ProjectRisk", back_populates="project", cascade="all, delete-orphan")
+    baselines = relationship("ProjectBaseline", back_populates="project", cascade="all, delete-orphan")
 
     # ``name`` is a thin alias over ``title`` so callers that pass or read
     # ``name`` (e.g. ``tests/test_crud_integration.py::TestProjectsCrud``)
@@ -325,4 +326,20 @@ class ProjectRisk(Base):
 
     project = relationship("Project", back_populates="risks")
     owner = relationship("Persona", foreign_keys=[owner_id])
+
+
+class ProjectBaseline(Base):
+    __tablename__ = "project_baselines"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    project_id = Column(UUID(as_uuid=True), ForeignKey("projects.id", ondelete="CASCADE"), nullable=False, index=True)
+    name = Column(String(100), default="Línea Base Inicial", nullable=False)
+    description = Column(Text, nullable=True)
+    snapshot_data = Column(JSON, nullable=False, default=dict)
+    created_by = Column(UUID(as_uuid=True), ForeignKey("personas.id", ondelete="SET NULL"), nullable=True, index=True)
+    created_at = Column(DateTime(timezone=True), default=_utcnow, index=True)
+    deleted_at = Column(DateTime(timezone=True), nullable=True, index=True)
+
+    project = relationship("Project", back_populates="baselines")
+    creator = relationship("Persona", foreign_keys=[created_by])
 
