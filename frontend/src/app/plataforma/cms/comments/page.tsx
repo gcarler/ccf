@@ -85,13 +85,13 @@ export default function CmsCommentsManagementPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[hsl(var(--bg-primary))] p-6 text-[hsl(var(--text-primary))]">
+    <div className="min-h-screen bg-[hsl(var(--surface-1))] p-6 text-[hsl(var(--text-primary))]">
       <div className="mx-auto max-w-6xl space-y-6">
         {/* Header */}
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h1 className="flex items-center gap-2 text-2xl font-bold tracking-tight">
-              <MessageCircle className="h-6 w-6 text-primary" />
+              <MessageCircle className="h-6 w-6 text-[hsl(var(--primary))]" />
               Moderación de Comentarios
             </h1>
             <p className="text-sm text-[hsl(var(--text-secondary))]">
@@ -118,13 +118,13 @@ export default function CmsCommentsManagementPage() {
                 onClick={() => setActiveTab(tab.id)}
                 className={`relative flex items-center gap-2 border-b-2 px-4 py-2.5 text-sm font-medium transition-colors ${
                   isActive
-                    ? "border-primary text-primary"
+                    ? "border-[hsl(var(--primary))] text-[hsl(var(--primary))]"
                     : "border-transparent text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))]"
                 }`}
               >
                 {tab.label}
                 {tab.id === "pending" && pendingCount > 0 && (
-                  <span className="rounded-full bg-amber-500 px-2 py-0.5 text-2xs font-bold text-white">
+                  <span className="rounded-full bg-[hsl(var(--warning))] px-2 py-0.5 text-2xs font-bold text-[hsl(var(--primary-foreground))]">
                     {pendingCount}
                   </span>
                 )}
@@ -180,7 +180,7 @@ export default function CmsCommentsManagementPage() {
                       {comment.author_email}
                     </span>
                     {comment.post_title && (
-                      <span className="flex items-center gap-1 rounded-md bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-700 dark:bg-blue-950/50 dark:text-blue-300">
+                      <span className="flex items-center gap-1 rounded-md bg-[hsl(var(--primary))]/10 px-2 py-0.5 text-xs font-medium text-[hsl(var(--primary))]">
                         <FileText className="h-3 w-3" />
                         {comment.post_title}
                       </span>
@@ -210,7 +210,7 @@ export default function CmsCommentsManagementPage() {
                       disabled={actionLoading[comment.id]}
                       aria-label="Aprobar comentario"
                       title="Aprobar"
-                      className="flex items-center gap-1 rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-emerald-700 disabled:opacity-50"
+                      className="flex items-center gap-1 rounded-lg bg-[hsl(var(--success))] px-3 py-1.5 text-xs font-medium text-[hsl(var(--primary-foreground))] hover:bg-[hsl(var(--success))]/90 disabled:opacity-50"
                     >
                       {actionLoading[comment.id] ? (
                         <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -227,7 +227,7 @@ export default function CmsCommentsManagementPage() {
                       disabled={actionLoading[comment.id]}
                       aria-label="Marcar como spam"
                       title="Marcar Spam"
-                      className="flex items-center gap-1 rounded-lg bg-amber-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-amber-700 disabled:opacity-50"
+                      className="flex items-center gap-1 rounded-lg bg-[hsl(var(--warning))] px-3 py-1.5 text-xs font-medium text-[hsl(var(--primary-foreground))] hover:bg-[hsl(var(--warning))]/90 disabled:opacity-50"
                     >
                       {actionLoading[comment.id] ? (
                         <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -244,7 +244,7 @@ export default function CmsCommentsManagementPage() {
                       disabled={actionLoading[comment.id]}
                       aria-label="Eliminar comentario"
                       title="Eliminar"
-                      className="flex items-center gap-1 rounded-lg bg-rose-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-rose-700 disabled:opacity-50"
+                      className="flex items-center gap-1 rounded-lg bg-[hsl(var(--destructive))] px-3 py-1.5 text-xs font-medium text-[hsl(var(--primary-foreground))] hover:bg-[hsl(var(--destructive))]/90 disabled:opacity-50"
                     >
                       {actionLoading[comment.id] ? (
                         <Loader2 className="h-3.5 w-3.5 animate-spin" />
