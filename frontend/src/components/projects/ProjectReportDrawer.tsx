@@ -4,7 +4,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import { RightPanel } from "@/components/ui/RightPanel";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/context/ToastContext";
-import { apiFetch } from "@/lib/http";
+import { apiFetch, apiFetchBlob } from "@/lib/http";
 import type { ProjectExecutiveReportData } from "@/types/projects";
 import {
   FileText,
@@ -96,17 +96,9 @@ export function ProjectReportDrawer({
     if (!token) return;
     setExporting(actionKey);
     try {
-      const response = await fetch(`/api/projects/${projectId}/export/${endpoint}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+      const blob = await apiFetchBlob(`/projects/${projectId}/export/${endpoint}`, {
+        token,
       });
-
-      if (!response.ok) {
-        throw new Error(`Error en el servidor: HTTP ${response.status}`);
-      }
-
-      const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
@@ -292,7 +284,7 @@ export function ProjectReportDrawer({
               borderColor: "hsl(var(--border))",
             }}
           >
-            <AlertTriangle className="w-8 h-8 text-amber-500" />
+            <AlertTriangle className="w-8 h-8 text-[hsl(var(--warning))]" />
             <h4 className="font-semibold text-sm" style={{ color: "hsl(var(--foreground))" }}>
               No se pudieron cargar los datos del informe
             </h4>
@@ -339,7 +331,7 @@ export function ProjectReportDrawer({
                       Estado / Salud
                     </div>
                     <div className="text-xs font-bold capitalize flex items-center sm:justify-end gap-1.5" style={{ color: "hsl(var(--primary))" }}>
-                      <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block" />
+                      <span className="w-2 h-2 rounded-full bg-[hsl(var(--success))] inline-block" />
                       {proj?.status} • {proj?.health_override || "Normal"}
                     </div>
                     <div className="text-[10px]" style={{ color: "hsl(var(--muted-foreground))" }}>
@@ -382,7 +374,7 @@ export function ProjectReportDrawer({
                   >
                     <div className="flex items-center justify-between text-xs" style={{ color: "hsl(var(--muted-foreground))" }}>
                       <span>Gastado</span>
-                      <DollarSign className="w-3.5 h-3.5 text-emerald-500" />
+                      <DollarSign className="w-3.5 h-3.5 text-[hsl(var(--success))]" />
                     </div>
                     <div className="mt-1">
                       <div className="text-lg font-bold" style={{ color: "hsl(var(--foreground))" }}>
@@ -404,10 +396,10 @@ export function ProjectReportDrawer({
                   >
                     <div className="flex items-center justify-between text-xs" style={{ color: "hsl(var(--muted-foreground))" }}>
                       <span>Riesgos</span>
-                      <ShieldAlert className="w-3.5 h-3.5 text-rose-500" />
+                      <ShieldAlert className="w-3.5 h-3.5 text-[hsl(var(--destructive))]" />
                     </div>
                     <div className="mt-1">
-                      <div className="text-lg font-bold text-rose-500">
+                      <div className="text-lg font-bold text-[hsl(var(--destructive))]">
                         {raidKpi?.critical_count}
                       </div>
                       <div className="text-[10px]" style={{ color: "hsl(var(--muted-foreground))" }}>
@@ -426,10 +418,10 @@ export function ProjectReportDrawer({
                   >
                     <div className="flex items-center justify-between text-xs" style={{ color: "hsl(var(--muted-foreground))" }}>
                       <span>Ruta CPM</span>
-                      <Activity className="w-3.5 h-3.5 text-purple-500" />
+                      <Activity className="w-3.5 h-3.5 text-[hsl(var(--domain-purple))]" />
                     </div>
                     <div className="mt-1">
-                      <div className="text-lg font-bold text-purple-500">
+                      <div className="text-lg font-bold text-[hsl(var(--domain-purple))]">
                         {cpmMet?.total_duration_days}d
                       </div>
                       <div className="text-[10px]" style={{ color: "hsl(var(--muted-foreground))" }}>
@@ -448,7 +440,7 @@ export function ProjectReportDrawer({
                   >
                     <div className="flex items-center justify-between text-xs" style={{ color: "hsl(var(--muted-foreground))" }}>
                       <span>Horas</span>
-                      <Clock className="w-3.5 h-3.5 text-amber-500" />
+                      <Clock className="w-3.5 h-3.5 text-[hsl(var(--warning))]" />
                     </div>
                     <div className="mt-1">
                       <div className="text-lg font-bold" style={{ color: "hsl(var(--foreground))" }}>
@@ -472,12 +464,12 @@ export function ProjectReportDrawer({
                   >
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        <DollarSign className="w-4 h-4 text-emerald-500" />
+                        <DollarSign className="w-4 h-4 text-[hsl(var(--success))]" />
                         <h3 className="text-sm font-semibold" style={{ color: "hsl(var(--foreground))" }}>
                           Control Presupuestario y Quema de Fondos
                         </h3>
                       </div>
-                      <span className="text-xs font-semibold text-emerald-600">
+                      <span className="text-xs font-semibold text-[hsl(var(--success))]">
                         Remanente: ${finKpi?.remaining_budget.toLocaleString()}
                       </span>
                     </div>
@@ -485,7 +477,7 @@ export function ProjectReportDrawer({
                     <div className="space-y-1.5">
                       <div className="w-full h-2.5 rounded-full overflow-hidden flex bg-[hsl(var(--surface-2))]">
                         <div
-                          className="h-full bg-emerald-500 transition-all duration-300"
+                          className="h-full bg-[hsl(var(--success))] transition-all duration-300"
                           style={{
                             width: `${Math.min(100, finKpi?.burn_rate_percent || 0)}%`,
                           }}
@@ -528,7 +520,7 @@ export function ProjectReportDrawer({
                   >
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        <ShieldAlert className="w-4 h-4 text-rose-500" />
+                        <ShieldAlert className="w-4 h-4 text-[hsl(var(--destructive))]" />
                         <h3 className="text-sm font-semibold" style={{ color: "hsl(var(--foreground))" }}>
                           Matriz RAID — Riesgos Principales
                         </h3>
@@ -556,10 +548,10 @@ export function ProjectReportDrawer({
                                 className={clsx(
                                   "px-2 py-0.5 rounded text-[10px] font-bold shrink-0",
                                   sev >= 15
-                                    ? "bg-rose-500/10 text-rose-600 border border-rose-500/20"
+                                    ? "bg-[hsl(var(--destructive))]/10 text-[hsl(var(--destructive))] border border-[hsl(var(--destructive))]/20"
                                     : sev >= 10
-                                    ? "bg-amber-500/10 text-amber-600 border border-amber-500/20"
-                                    : "bg-emerald-500/10 text-emerald-600 border border-emerald-500/20"
+                                    ? "bg-[hsl(var(--warning))]/10 text-[hsl(var(--warning))] border border-[hsl(var(--warning))]/20"
+                                    : "bg-[hsl(var(--success))]/10 text-[hsl(var(--success))] border border-[hsl(var(--success))]/20"
                                 )}
                               >
                                 Severidad {sev}/25
@@ -587,12 +579,12 @@ export function ProjectReportDrawer({
                   >
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        <Activity className="w-4 h-4 text-purple-500" />
+                        <Activity className="w-4 h-4 text-[hsl(var(--domain-purple))]" />
                         <h3 className="text-sm font-semibold" style={{ color: "hsl(var(--foreground))" }}>
                           Ruta Crítica (CPM) y Cronograma
                         </h3>
                       </div>
-                      <span className="text-xs font-semibold text-purple-600">
+                      <span className="text-xs font-semibold text-[hsl(var(--domain-purple))]">
                         {cpmMet?.total_duration_days} días de duración total
                       </span>
                     </div>
@@ -617,7 +609,7 @@ export function ProjectReportDrawer({
                               <span className="font-medium" style={{ color: "hsl(var(--foreground))" }}>
                                 {t.title}
                               </span>
-                              <span className="text-[11px] text-purple-600 font-semibold">
+                              <span className="text-[11px] text-[hsl(var(--domain-purple))] font-semibold">
                                 {t.duration_days} días • Holgura {t.slack_days}d
                               </span>
                             </div>
@@ -642,12 +634,12 @@ export function ProjectReportDrawer({
                   >
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        <Clock className="w-4 h-4 text-amber-500" />
+                        <Clock className="w-4 h-4 text-[hsl(var(--warning))]" />
                         <h3 className="text-sm font-semibold" style={{ color: "hsl(var(--foreground))" }}>
                           Distribución de Horas y Esfuerzo
                         </h3>
                       </div>
-                      <span className="text-xs font-semibold text-amber-600">
+                      <span className="text-xs font-semibold text-[hsl(var(--warning))]">
                         {timeMet?.total_hours}h invertidas
                       </span>
                     </div>
@@ -758,7 +750,7 @@ export function ProjectReportDrawer({
 
                   {/* Tarjeta 2: Tareas y Cronograma CSV */}
                   <div
-                    className="p-4 rounded-xl border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 transition-all hover:border-emerald-500"
+                    className="p-4 rounded-xl border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 transition-all hover:border-[hsl(var(--success))]"
                     style={{
                       backgroundColor: "hsl(var(--surface-1))",
                       borderColor: "hsl(var(--border))",
@@ -766,7 +758,7 @@ export function ProjectReportDrawer({
                   >
                     <div className="flex items-start gap-3">
                       <div
-                        className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 border bg-emerald-500/10 border-emerald-500/30 text-emerald-500"
+                        className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 border bg-[hsl(var(--success))]/10 border-[hsl(var(--success))]/30 text-[hsl(var(--success))]"
                       >
                         <FileSpreadsheet className="w-5 h-5" />
                       </div>
@@ -789,7 +781,7 @@ export function ProjectReportDrawer({
                         )
                       }
                       disabled={exporting === "tasks-csv"}
-                      className="w-full sm:w-auto px-4 py-2 rounded-lg text-xs font-semibold text-emerald-600 border border-emerald-500/40 bg-emerald-500/10 hover:bg-emerald-500/20 shadow-sm flex items-center justify-center gap-2 transition-all"
+                      className="w-full sm:w-auto px-4 py-2 rounded-lg text-xs font-semibold text-[hsl(var(--success))] border border-[hsl(var(--success))]/40 bg-[hsl(var(--success))]/10 hover:bg-[hsl(var(--success))]/20 shadow-sm flex items-center justify-center gap-2 transition-all"
                     >
                       {exporting === "tasks-csv" ? (
                         <>
@@ -807,7 +799,7 @@ export function ProjectReportDrawer({
 
                   {/* Tarjeta 3: Libro Mayor de Gastos CSV */}
                   <div
-                    className="p-4 rounded-xl border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 transition-all hover:border-blue-500"
+                    className="p-4 rounded-xl border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 transition-all hover:border-[hsl(var(--primary))]"
                     style={{
                       backgroundColor: "hsl(var(--surface-1))",
                       borderColor: "hsl(var(--border))",
@@ -815,7 +807,7 @@ export function ProjectReportDrawer({
                   >
                     <div className="flex items-start gap-3">
                       <div
-                        className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 border bg-blue-500/10 border-blue-500/30 text-blue-500"
+                        className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 border bg-[hsl(var(--primary))]/10 border-[hsl(var(--primary))]/30 text-[hsl(var(--primary))]"
                       >
                         <DollarSign className="w-5 h-5" />
                       </div>
@@ -838,7 +830,7 @@ export function ProjectReportDrawer({
                         )
                       }
                       disabled={exporting === "expenses-csv"}
-                      className="w-full sm:w-auto px-4 py-2 rounded-lg text-xs font-semibold text-blue-600 border border-blue-500/40 bg-blue-500/10 hover:bg-blue-500/20 shadow-sm flex items-center justify-center gap-2 transition-all"
+                      className="w-full sm:w-auto px-4 py-2 rounded-lg text-xs font-semibold text-[hsl(var(--primary))] border border-[hsl(var(--primary))]/40 bg-[hsl(var(--primary))]/10 hover:bg-[hsl(var(--primary))]/20 shadow-sm flex items-center justify-center gap-2 transition-all"
                     >
                       {exporting === "expenses-csv" ? (
                         <>
