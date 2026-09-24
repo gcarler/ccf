@@ -85,13 +85,13 @@ export default function NewWhiteboardPage() {
       ]}
     >
       <div className="mx-auto flex h-full max-w-5xl items-center px-4 py-1.5">
-        <section className="grid w-full grid-cols-1 overflow-hidden rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] shadow-2xl dark:border-white/10 dark:bg-white/5 lg:grid-cols-[1fr_0.9fr]">
+        <section className="grid w-full grid-cols-1 overflow-hidden rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] shadow-2xl lg:grid-cols-[1fr_0.9fr]">
           <div className="space-y-3 p-4 lg:p-4">
             <div>
               <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--primary))]">
                 Lienzo colaborativo
               </p>
-              <h1 className="mt-2 text-lg font-bold tracking-tight text-[hsl(var(--text-primary))] dark:text-white">
+              <h1 className="mt-2 text-lg font-bold tracking-tight text-[hsl(var(--text-primary))]">
                 Crear pizarra
               </h1>
               <p className="mt-3 max-w-xl text-sm font-medium leading-6 text-[hsl(var(--text-secondary))]">
@@ -108,7 +108,7 @@ export default function NewWhiteboardPage() {
                 value={title}
                 onChange={(event) => setTitle(event.target.value)}
                 placeholder="Ej: Planeacion CCF Q2"
-                className="w-full rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] px-4 py-3 text-sm font-bold outline-none focus:border-[hsl(var(--info)/40%)] dark:border-white/10 dark:bg-black/20"
+                className="w-full rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] px-4 py-3 text-sm font-bold outline-none focus:border-[hsl(var(--primary))/0.4] text-[hsl(var(--text-primary))] placeholder:text-[hsl(var(--text-secondary))]"
               />
             </label>
 
@@ -130,7 +130,7 @@ export default function NewWhiteboardPage() {
                   No tienes proyectos disponibles. Crea un proyecto primero.
                 </p>
               ) : (
-                <div className="max-h-60 overflow-y-auto space-y-2 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-2 dark:border-white/10 dark:bg-black/20">
+                <div className="max-h-60 overflow-y-auto space-y-2 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] p-2">
                   {projects.map((project) => {
                     const selected = selectedProjectId === project.id;
                     return (
@@ -140,12 +140,12 @@ export default function NewWhiteboardPage() {
                         onClick={() => setSelectedProjectId(project.id)}
                         className={`w-full flex items-center justify-between rounded-md px-3 py-2 text-left transition-colors ${
                           selected
-                            ? "bg-info-soft dark:bg-[hsl(var(--info))]/20 border border-[hsl(var(--info)/25%)] dark:border-[hsl(var(--info)/100%)]/30"
-                            : "hover:bg-white/5"
+                            ? "bg-[hsl(var(--primary))]/10 border border-[hsl(var(--primary))/0.3]"
+                            : "hover:bg-[hsl(var(--surface-1))]"
                         }`}
                       >
                         <div>
-                          <p className="text-sm font-bold text-[hsl(var(--text-primary))] dark:text-white">
+                          <p className="text-sm font-bold text-[hsl(var(--text-primary))]">
                             {project.title}
                           </p>
                           {project.description && (
@@ -171,7 +171,7 @@ export default function NewWhiteboardPage() {
               <button
                 onClick={handleCreate}
                 disabled={!canCreate}
-                className="rounded-lg bg-[hsl(var(--primary))] px-3 py-3 text-xs font-semibold uppercase tracking-wide text-white shadow-xl shadow-[hsl(var(--info)/20%)] disabled:opacity-50"
+                className="rounded-lg bg-[hsl(var(--primary))] px-3 py-3 text-xs font-semibold uppercase tracking-wide text-[hsl(var(--primary-foreground))] shadow-xl shadow-[hsl(var(--primary))/0.2] disabled:opacity-50"
               >
                 {creating ? (
                   <span className="flex items-center gap-2">
@@ -183,17 +183,17 @@ export default function NewWhiteboardPage() {
               </button>
               <button
                 onClick={() => router.push("/plataforma/whiteboard")}
-                className="rounded-lg border border-[hsl(var(--border))] px-3 py-3 text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] dark:border-white/10"
+                className="rounded-lg border border-[hsl(var(--border))] px-3 py-3 text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]"
               >
                 Cancelar
               </button>
             </div>
           </div>
 
-          <div className="relative min-h-[420px] overflow-hidden bg-[hsl(var(--bg-muted))] p-4 text-[hsl(var(--text-primary))] dark:text-white">
+          <div className="relative min-h-[420px] overflow-hidden bg-[hsl(var(--surface-2))] p-4 text-[hsl(var(--text-primary))]">
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(59,130,246,0.35),transparent_35%),radial-gradient(circle_at_80%_70%,rgba(14,165,233,0.2),transparent_30%)]" />
-            <div className="relative flex h-full flex-col justify-between rounded-lg border border-white/10 bg-white/10 p-3 backdrop-blur">
-              <Sparkles className="text-info-text" size={36} />
+            <div className="relative flex h-full flex-col justify-between rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))]/80 p-3 backdrop-blur">
+              <Sparkles className="text-[hsl(var(--info))]" size={36} />
               <div>
                 <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--info))]">
                   Preview

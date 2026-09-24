@@ -101,7 +101,7 @@ export default function WhiteboardPage() {
               value={query}
               onChange={(event) => setQuery(event.target.value)}
               placeholder="Buscar en tus lienzos..."
-              className="w-full bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg py-3 pl-12 pr-4 text-sm outline-none focus:ring-4 focus:ring-[hsl(var(--primary))]/10 transition-all"
+              className="w-full bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] rounded-lg py-3 pl-12 pr-4 text-sm outline-none focus:ring-4 focus:ring-[hsl(var(--primary))]/10 transition-all text-[hsl(var(--text-primary))] placeholder:text-[hsl(var(--text-secondary))]"
             />
           </div>
 
@@ -115,7 +115,7 @@ export default function WhiteboardPage() {
               {filtered.map((board) => (
                 <article
                   key={board.project_id}
-                  className="group rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-3 shadow-sm transition-all hover:border-[hsl(var(--info)/30%)] hover:shadow-xl dark:border-white/10 dark:bg-white/5"
+                  className="group rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-3 shadow-sm transition-all hover:border-[hsl(var(--primary))/0.3] hover:shadow-xl"
                 >
                   <button
                     onClick={() =>
@@ -123,7 +123,7 @@ export default function WhiteboardPage() {
                     }
                     className="block w-full text-left"
                   >
-                    <div className="relative mb-5 flex h-36 items-center justify-center overflow-hidden rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] bg-[radial-gradient(#cbd5e1_1px,transparent_1px)] [background-size:20px_20px] dark:border-white/10 dark:bg-black/20 dark:bg-[radial-gradient(#334155_1px,transparent_1px)]">
+                    <div className="relative mb-5 flex h-36 items-center justify-center overflow-hidden rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] [background-size:20px_20px]">
                       {board.thumbnail_url ? (
                         // eslint-disable-next-line @next/next/no-img-element
                         <img
@@ -138,7 +138,7 @@ export default function WhiteboardPage() {
                         />
                       )}
                     </div>
-                    <h3 className="text-lg font-bold tracking-tight text-[hsl(var(--text-primary))] dark:text-white">
+                    <h3 className="text-lg font-bold tracking-tight text-[hsl(var(--text-primary))]">
                       {board.title}
                     </h3>
                     <p className="mt-1 line-clamp-2 text-sm font-medium text-[hsl(var(--text-secondary))]">
@@ -149,18 +149,18 @@ export default function WhiteboardPage() {
                       {formatBoardDate(board.updated_at || board.created_at)}
                     </div>
                   </button>
-                  <div className="mt-5 flex items-center justify-between border-t border-[hsl(var(--border))] pt-4 dark:border-white/10">
+                  <div className="mt-5 flex items-center justify-between border-t border-[hsl(var(--border))] pt-4">
                     <button
                       onClick={() =>
                         router.push(`/plataforma/whiteboard/${board.project_id}`)
                       }
-                      className="rounded-md bg-[hsl(var(--primary))] px-4 py-2 text-2xs font-semibold uppercase tracking-wide text-white shadow-lg shadow-[hsl(var(--info)/20%)]"
+                      className="rounded-md bg-[hsl(var(--primary))] px-4 py-2 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--primary-foreground))] shadow-lg shadow-[hsl(var(--primary))/0.2]"
                     >
                       Abrir
                     </button>
                     <button
                       onClick={() => deleteBoard(board.project_id)}
-                      className="rounded-md p-2 text-[hsl(var(--text-secondary))] transition-all hover:bg-danger-soft hover:text-[hsl(var(--danger))] dark:hover:bg-[hsl(var(--danger))]/10"
+                      className="rounded-md p-2 text-[hsl(var(--text-secondary))] transition-all hover:bg-[hsl(var(--danger))]/10 hover:text-[hsl(var(--danger))]"
                       title="Eliminar pizarra"
                     >
                       <Trash2 size={16} />
@@ -170,7 +170,7 @@ export default function WhiteboardPage() {
               ))}
             </div>
           ) : (
-            <div className="border-2 border-dashed border-[hsl(var(--border))] dark:border-white/10 rounded-lg p-4 text-center bg-white/60 dark:bg-white/[0.03]">
+            <div className="border-2 border-dashed border-[hsl(var(--border))] rounded-lg p-4 text-center bg-[hsl(var(--surface-1))]/60">
               <Sparkles
                 size={40}
                 className="mx-auto text-[hsl(var(--text-secondary))] mb-3"

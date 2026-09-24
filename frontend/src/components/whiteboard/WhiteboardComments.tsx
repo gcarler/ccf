@@ -31,46 +31,46 @@ export function WhiteboardComments({ object, onClose, onAddComment }: Whiteboard
     };
 
     return (
-        <div className="absolute right-4 top-28 z-50 w-80 rounded-xl border border-slate-200 bg-white shadow-2xl flex flex-col max-h-[60vh]">
-            <div className="flex items-center justify-between p-4 border-b border-slate-100">
+        <div className="absolute right-4 top-28 z-50 w-80 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] shadow-2xl flex flex-col max-h-[60vh]">
+            <div className="flex items-center justify-between p-4 border-b border-[hsl(var(--border))]">
                 <div className="flex items-center space-x-2">
-                    <MessageSquare className="w-5 h-5 text-slate-500" />
-                    <h3 className="font-semibold text-slate-800">Comentarios</h3>
+                    <MessageSquare className="w-5 h-5 text-[hsl(var(--text-secondary))]" />
+                    <h3 className="font-semibold text-[hsl(var(--text-primary))]">Comentarios</h3>
                 </div>
-                <button onClick={onClose} className="text-slate-400 hover:text-slate-600">
+                <button onClick={onClose} className="text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))]">
                     <X className="w-5 h-5" />
                 </button>
             </div>
             
             <div className="flex-1 overflow-y-auto p-4 space-y-4">
                 {comments.length === 0 ? (
-                    <div className="text-center text-slate-500 text-sm">No hay comentarios aún.</div>
+                    <div className="text-center text-[hsl(var(--text-secondary))] text-sm">No hay comentarios aún.</div>
                 ) : (
                     comments.map(c => (
-                        <div key={c.id} className="bg-slate-50 rounded-lg p-3">
+                        <div key={c.id} className="bg-[hsl(var(--surface-2))] rounded-lg p-3">
                             <div className="flex justify-between items-baseline mb-1">
-                                <span className="font-semibold text-sm">{c.author}</span>
-                                <span className="text-xs text-slate-400">{new Date(c.timestamp).toLocaleTimeString()}</span>
+                                <span className="font-semibold text-sm text-[hsl(var(--text-primary))]">{c.author}</span>
+                                <span className="text-xs text-[hsl(var(--text-secondary))]">{new Date(c.timestamp).toLocaleTimeString()}</span>
                             </div>
-                            <p className="text-sm text-slate-700">{c.text}</p>
+                            <p className="text-sm text-[hsl(var(--text-secondary))]">{c.text}</p>
                         </div>
                     ))
                 )}
             </div>
             
-            <form onSubmit={handleSubmit} className="p-4 border-t border-slate-100">
+            <form onSubmit={handleSubmit} className="p-4 border-t border-[hsl(var(--border))]">
                 <div className="flex space-x-2">
                     <input 
                         type="text" 
                         value={text}
                         onChange={e => setText(e.target.value)}
                         placeholder="Escribe un comentario..."
-                        className="flex-1 rounded-lg border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="flex-1 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] px-3 py-2 text-sm text-[hsl(var(--text-primary))] placeholder:text-[hsl(var(--text-secondary))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.2]"
                     />
                     <button 
                         type="submit"
                         disabled={!text.trim()}
-                        className="bg-blue-600 text-white rounded-lg p-2 hover:bg-blue-700 disabled:opacity-50"
+                        className="bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] rounded-lg p-2 hover:bg-[hsl(var(--primary))/0.9] disabled:opacity-50"
                     >
                         <Send className="w-4 h-4" />
                     </button>
