@@ -1717,7 +1717,7 @@ export default function WhiteboardEditor({
 
     return (
         <div 
-            className={clsx("flex h-full flex-col overflow-hidden bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--bg-primary))]", className)}
+            className={clsx("flex h-full flex-col overflow-hidden bg-[hsl(var(--bg-primary))]", className)}
             onDragOver={(e) => e.preventDefault()}
             onDrop={(e) => {
                 if (fabricCanvas.current) {
@@ -1727,8 +1727,8 @@ export default function WhiteboardEditor({
         >
             {/* Template Modal */}
             {showTemplateModal && (
-                <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50">
-                    <div className="rounded-xl bg-[hsl(var(--bg-primary))] p-6 shadow-2xl max-w-3xl w-full max-h-[80vh] overflow-y-auto dark:bg-[hsl(var(--bg-muted))]">
+                <div className="fixed inset-0 z-[60] flex items-center justify-center bg-[hsl(var(--background)/0.6)] backdrop-blur-sm">
+                    <div className="rounded-xl bg-[hsl(var(--bg-primary))] p-6 shadow-2xl max-w-3xl w-full max-h-[80vh] overflow-y-auto">
                         <div className="flex justify-between items-center mb-6">
                             <h2 className="text-2xl font-bold text-[hsl(var(--text-primary))]">Selecciona una plantilla</h2>
                             <button
@@ -1784,8 +1784,8 @@ export default function WhiteboardEditor({
 
             {/* PZ-19: Sticker gallery modal */}
             {showGallery && (
-                <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50" onClick={() => setShowGallery(false)}>
-                    <div className="max-w-2xl w-full max-h-[80vh] overflow-y-auto rounded-xl bg-[hsl(var(--bg-primary))] p-6 shadow-2xl dark:bg-[hsl(var(--bg-muted))]" onClick={(e) => e.stopPropagation()}>
+                <div className="fixed inset-0 z-[60] flex items-center justify-center bg-[hsl(var(--background)/0.6)] backdrop-blur-sm" onClick={() => setShowGallery(false)}>
+                    <div className="max-w-2xl w-full max-h-[80vh] overflow-y-auto rounded-xl bg-[hsl(var(--bg-primary))] p-6 shadow-2xl" onClick={(e) => e.stopPropagation()}>
                         <div className="flex items-center justify-between mb-5">
                             <h2 className="text-xl font-bold text-[hsl(var(--text-primary))]">Galería de stickers</h2>
                             <button onClick={() => setShowGallery(false)} className="text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))]" aria-label="Cerrar">
@@ -1797,7 +1797,7 @@ export default function WhiteboardEditor({
                                 <button
                                     key={s.emoji}
                                     onClick={() => { addSticker(s.emoji); setShowGallery(false); }}
-                                    className="flex flex-col items-center gap-1 rounded-xl border border-[hsl(var(--border))] p-3 transition-all hover:scale-105 hover:border-[hsl(var(--primary))] dark:border-white/10"
+                                    className="flex flex-col items-center gap-1 rounded-xl border border-[hsl(var(--border))] p-3 transition-all hover:scale-105 hover:border-[hsl(var(--primary))]"
                                     title={s.label}
                                 >
                                     <span className="text-3xl">{s.emoji}</span>
@@ -1857,14 +1857,14 @@ export default function WhiteboardEditor({
                         style={{ left: screenX, top: screenY }}
                         aria-hidden="true"
                     >
-                        <div className="text-red-500 font-bold" style={{textShadow: "1px 1px 2px white"}}>
+                        <div className="text-[hsl(var(--destructive))] font-bold" style={{textShadow: "1px 1px 2px hsl(var(--background))"}}>
                             {cursor.userName}
                         </div>
                     </div>
                 );
             })}
                 {/* ── Export / share floating bar ── */}
-                <div className="absolute right-[336px] top-4 z-20 flex items-center gap-1.5 rounded-xl border border-[hsl(var(--border))] bg-white/90 p-1.5 shadow-2xl backdrop-blur-xl dark:border-white/10 dark:bg-[hsl(var(--bg-muted))]/90">
+                <div className="absolute right-[336px] top-4 z-20 flex items-center gap-1.5 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-1)/0.9)] p-1.5 shadow-2xl backdrop-blur-xl">
                     <ExportButton
                         icon={ImageIcon}
                         label="PNG"
@@ -1897,7 +1897,7 @@ export default function WhiteboardEditor({
                         onClick={() => exportToPdf(fabricCanvas.current!, title)}
                         data-testid="whiteboard-export-pdf"
                     />
-                    <div className="h-4 w-px bg-[hsl(var(--surface-2))] dark:bg-white/10" />
+                    <div className="h-4 w-px bg-[hsl(var(--border))]" />
                     <ExportButton
                         icon={Share2}
                         label="Enlace"
@@ -1915,19 +1915,19 @@ export default function WhiteboardEditor({
                 </div>
 
                 {/* ── Connection status (below export bar, avoids overlap) ── */}
-                <div className="pointer-events-none absolute top-16 right-[336px] z-30 flex items-center gap-1.5 rounded-full border border-[hsl(var(--border))] bg-white/90 px-3 py-1 text-[11px] font-semibold text-[hsl(var(--text-secondary))] shadow-sm backdrop-blur dark:border-white/10 dark:bg-[hsl(var(--bg-muted))]/90">
-                    <span className={clsx("h-2 w-2 rounded-full", connected ? "bg-emerald-500" : "bg-amber-400 animate-pulse")} />
+                <div className="pointer-events-none absolute top-16 right-[336px] z-30 flex items-center gap-1.5 rounded-full border border-[hsl(var(--border))] bg-[hsl(var(--surface-1)/0.9)] px-3 py-1 text-[11px] font-semibold text-[hsl(var(--text-secondary))] shadow-sm backdrop-blur">
+                    <span className={clsx("h-2 w-2 rounded-full", connected ? "bg-[hsl(var(--success))]" : "bg-[hsl(var(--warning))] animate-pulse")} />
                     {connected ? "Conectado" : "Reconectando…"}
                 </div>
 
                 {/* ── Left toolbar ── */}
-                <div className="absolute left-6 top-1/2 z-10 flex max-h-[calc(100%-2rem)] -translate-y-1/2 flex-col gap-2 overflow-y-auto overscroll-contain rounded-xl border border-[hsl(var(--border))] bg-white/90 p-2 shadow-2xl backdrop-blur-xl dark:border-white/10 dark:bg-[hsl(var(--bg-muted))]/90">
+                <div className="absolute left-6 top-1/2 z-10 flex max-h-[calc(100%-2rem)] -translate-y-1/2 flex-col gap-2 overflow-y-auto overscroll-contain rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-1)/0.9)] p-2 shadow-2xl backdrop-blur-xl">
                     <ToolbarButton icon={MousePointer2} active={tool === "select"} onClick={() => activateTool("select")} label="Seleccionar (V)" />
                     <ToolbarButton icon={Pencil} active={tool === "draw"} onClick={() => activateTool("draw")} label="Dibujo libre (P)" />
                     <ToolbarButton icon={ArrowUpRight} active={tool === "connector"} onClick={() => activateTool("connector")} label="Conector (A)" />
                     <ToolbarButton icon={Hand} active={tool === "pan"} onClick={() => activateTool("pan")} label="Mover lienzo (H)" />
                     <ToolbarButton icon={MonitorPlay} active={false} onClick={startPresentation} label="Presentación (F5)" data-testid="whiteboard-presentation" />
-                    <div className="mx-2 my-1 h-px bg-[hsl(var(--surface-2))] dark:bg-white/5" />
+                    <div className="mx-2 my-1 h-px bg-[hsl(var(--border))]" />
                     <div className="relative">
                         <ToolbarButton
                             icon={LayoutGrid}
@@ -1937,7 +1937,7 @@ export default function WhiteboardEditor({
                             data-testid="whiteboard-open-shapes"
                         />
                         {showShapePicker && (
-                            <div className="absolute left-full ml-3 top-0 z-30 grid max-h-[60vh] grid-cols-3 gap-1.5 overflow-y-auto overscroll-contain rounded-xl border border-[hsl(var(--border))] bg-white/95 p-3 shadow-2xl backdrop-blur-xl dark:border-white/10 dark:bg-[hsl(var(--bg-muted))]/95" style={{ minWidth: '220px' }}>
+                            <div className="absolute left-full ml-3 top-0 z-30 grid max-h-[60vh] grid-cols-3 gap-1.5 overflow-y-auto overscroll-contain rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-1)/0.95)] p-3 shadow-2xl backdrop-blur-xl" style={{ minWidth: '220px' }}>
                                 <ShapePickerItem icon={Square} label="Rect" shortcut="R" onClick={() => { addRect(); setShowShapePicker(false); }} data-testid="whiteboard-add-rect" />
                                 <ShapePickerItem icon={Circle} label="Círculo" shortcut="C" onClick={() => { addCircle(); setShowShapePicker(false); }} data-testid="whiteboard-add-circle" />
                                 <ShapePickerItem icon={Diamond} label="Decisión" shortcut="D" onClick={() => { addDiamondShape(); setShowShapePicker(false); }} />
@@ -1954,7 +1954,7 @@ export default function WhiteboardEditor({
                     <div className="relative">
                         <ToolbarButton icon={StickyNote} active={showStickyMenu} onClick={() => toggleMenu("sticky")} label="Post-it (N)" data-testid="whiteboard-add-sticky" />
                         {showStickyMenu && (
-                            <div className="absolute left-full ml-3 top-1/2 -translate-y-1/2 z-50 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-2 shadow-2xl dark:border-white/10 dark:bg-[hsl(var(--bg-muted))] min-w-[120px]">
+                            <div className="absolute left-full ml-3 top-1/2 -translate-y-1/2 z-50 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-2 shadow-2xl min-w-[120px]">
                                 <p className="px-2 pb-1 text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Color</p>
                                 <div className="grid grid-cols-2 gap-1.5">
                                     {STICKY_PRESETS.map((preset) => (
@@ -1967,10 +1967,10 @@ export default function WhiteboardEditor({
                                                 addStickyNote(preset.fill);
                                                 setShowStickyMenu(false);
                                             }}
-                                            className="flex items-center gap-1.5 rounded-lg border border-[hsl(var(--border))] px-2 py-1.5 text-xs font-semibold transition-all hover:scale-105 dark:border-white/10"
+                                            className="flex items-center gap-1.5 rounded-lg border border-[hsl(var(--border))] px-2 py-1.5 text-xs font-semibold transition-all hover:scale-105"
                                             style={{ background: preset.fill, color: "#374151" }}
                                         >
-                                            <span className="h-3 w-3 shrink-0 rounded-full ring-1 ring-black/10" style={{ background: preset.fill }} />
+                                            <span className="h-3 w-3 shrink-0 rounded-full ring-1 ring-[hsl(var(--border))]" style={{ background: preset.fill }} />
                                             <span className="truncate">{preset.name}</span>
                                         </button>
                                     ))}
@@ -1983,25 +1983,25 @@ export default function WhiteboardEditor({
                     <div className="relative">
                         <ToolbarButton icon={Smile} active={showWidgetsMenu} onClick={() => toggleMenu("widgets")} label="Widgets de taller" data-testid="whiteboard-widgets" />
                         {showWidgetsMenu && (
-                            <div className="absolute left-full ml-3 top-1/2 -translate-y-1/2 z-50 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-2 shadow-2xl dark:border-white/10 dark:bg-[hsl(var(--bg-muted))] min-w-[180px]">
+                            <div className="absolute left-full ml-3 top-1/2 -translate-y-1/2 z-50 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-2 shadow-2xl min-w-[180px]">
                                 <p className="px-2 pb-1 text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Widgets</p>
                                 <button
                                     onClick={() => { addVoteWidget(); setShowWidgetsMenu(false); }}
-                                    className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-xs font-semibold text-[hsl(var(--text-secondary))] transition-all hover:bg-[hsl(var(--surface-1))] dark:text-[hsl(var(--text-secondary))] dark:hover:bg-white/5"
+                                    className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-xs font-semibold text-[hsl(var(--text-secondary))] transition-all hover:bg-[hsl(var(--surface-1))]"
                                 >
-                                    <Heart size={14} className="text-rose-500" /> Votación
+                                    <Heart size={14} className="text-[hsl(var(--destructive))]" /> Votación
                                 </button>
                                 <button
                                     onClick={() => { addTimerWidget(); setShowWidgetsMenu(false); }}
-                                    className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-xs font-semibold text-[hsl(var(--text-secondary))] transition-all hover:bg-[hsl(var(--surface-1))] dark:text-[hsl(var(--text-secondary))] dark:hover:bg-white/5"
+                                    className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-xs font-semibold text-[hsl(var(--text-secondary))] transition-all hover:bg-[hsl(var(--surface-1))]"
                                 >
-                                    <Clock size={14} className="text-blue-500" /> Temporizador
+                                    <Clock size={14} className="text-[hsl(var(--primary))]" /> Temporizador
                                 </button>
                                 <button
                                     onClick={() => { addReactionWidget(); setShowWidgetsMenu(false); }}
-                                    className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-xs font-semibold text-[hsl(var(--text-secondary))] transition-all hover:bg-[hsl(var(--surface-1))] dark:text-[hsl(var(--text-secondary))] dark:hover:bg-white/5"
+                                    className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-xs font-semibold text-[hsl(var(--text-secondary))] transition-all hover:bg-[hsl(var(--surface-1))]"
                                 >
-                                    <Smile size={14} className="text-emerald-500" /> Reacción
+                                    <Smile size={14} className="text-[hsl(var(--success))]" /> Reacción
                                 </button>
                             </div>
                         )}
@@ -2019,17 +2019,17 @@ export default function WhiteboardEditor({
                         };
                         input.click();
                     }} label="Insertar Imagen" />
-                    <div className="mx-2 my-1 h-px bg-[hsl(var(--surface-2))] dark:bg-white/5" />
+                    <div className="mx-2 my-1 h-px bg-[hsl(var(--border))]" />
                     <ToolbarButton
                         icon={AlignCenter}
                         active={snapEnabled}
                         onClick={() => { setSnapEnabled(p => !p); snapEnabledRef.current = !snapEnabledRef.current; }}
                         label={snapEnabled ? 'Snap activado' : 'Snap desactivado'}
                     />
-                    <div className="mx-2 my-1 h-px bg-[hsl(var(--surface-2))] dark:bg-white/5" />
+                    <div className="mx-2 my-1 h-px bg-[hsl(var(--border))]" />
                     <ToolbarButton icon={Eraser} active={false} onClick={removeSelection} label="Borrar selección" />
                     <ToolbarButton icon={Trash2} active={false} onClick={clearCanvas} label="Limpiar lienzo" tone="danger" />
-                    <div className="mx-2 my-1 h-px bg-[hsl(var(--surface-2))] dark:bg-white/5" />
+                    <div className="mx-2 my-1 h-px bg-[hsl(var(--border))]" />
                     <ToolbarButton
                         icon={RotateCcw}
                         active={false}
@@ -2046,7 +2046,7 @@ export default function WhiteboardEditor({
                         disabled={!history.canRedo}
                         data-testid="whiteboard-redo"
                     />
-                    <div className="mx-2 my-1 h-px bg-[hsl(var(--surface-2))] dark:bg-white/5" />
+                    <div className="mx-2 my-1 h-px bg-[hsl(var(--border))]" />
                     <div className="relative">
                         <ToolbarButton
                             icon={gridStyle === "none" ? EyeOff : Grid3x3}
@@ -2055,7 +2055,7 @@ export default function WhiteboardEditor({
                             label={`Grilla: ${GRID_OPTIONS.find((g) => g.value === gridStyle)?.label}`}
                         />
                         {showGridMenu && (
-                            <div className="absolute left-full ml-3 top-1/2 -translate-y-1/2 z-50 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-2 shadow-2xl dark:border-white/10 dark:bg-[hsl(var(--bg-muted))] min-w-[140px]">
+                            <div className="absolute left-full ml-3 top-1/2 -translate-y-1/2 z-50 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-2 shadow-2xl min-w-[140px]">
                                 <p className="px-2 pb-1 text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Estilo</p>
                                 {GRID_OPTIONS.map((opt) => (
                                     <button
@@ -2064,15 +2064,15 @@ export default function WhiteboardEditor({
                                         className={clsx(
                                             "flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-xs font-semibold transition-all",
                                             gridStyle === opt.value
-                                                ? "bg-[hsl(var(--info-muted))] text-[hsl(var(--primary))] dark:bg-[hsl(var(--primary)/0.1)]"
-                                                : "text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] dark:text-[hsl(var(--text-secondary))] dark:hover:bg-white/5"
+                                                ? "bg-[hsl(var(--primary)/0.1)] text-[hsl(var(--primary))]"
+                                                : "text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))]"
                                         )}
                                     >
                                         <opt.icon size={14} />
                                         {opt.label}
                                     </button>
                                 ))}
-                                <div className="my-1 h-px bg-[hsl(var(--surface-2))] dark:bg-white/5" />
+                                <div className="my-1 h-px bg-[hsl(var(--border))]" />
                                 <p className="px-2 pb-1 text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Tamaño</p>
                                 {GRID_SIZES.map((opt) => (
                                     <button
@@ -2081,8 +2081,8 @@ export default function WhiteboardEditor({
                                         className={clsx(
                                             "flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-xs font-semibold transition-all",
                                             gridSize === opt.value
-                                                ? "bg-[hsl(var(--info-muted))] text-[hsl(var(--primary))] dark:bg-[hsl(var(--primary)/0.1)]"
-                                                : "text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] dark:text-[hsl(var(--text-secondary))] dark:hover:bg-white/5"
+                                                ? "bg-[hsl(var(--primary)/0.1)] text-[hsl(var(--primary))]"
+                                                : "text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))]"
                                         )}
                                     >
                                         {opt.label}
@@ -2094,7 +2094,7 @@ export default function WhiteboardEditor({
                 </div>
 
                 {/* ── Zoom controls (bottom-right) ── */}
-                <div className="absolute right-[336px] bottom-6 z-20 flex items-center gap-1 rounded-lg border border-[hsl(var(--border))] bg-white/90 p-1 shadow-lg backdrop-blur-xl dark:border-white/10 dark:bg-[hsl(var(--bg-muted))]/90">
+                <div className="absolute right-[336px] bottom-6 z-20 flex items-center gap-1 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1)/0.9)] p-1 shadow-lg backdrop-blur-xl">
                     {/* Fit to screen */}
                     <button
                         className="rounded-md px-2 py-1 text-xs font-medium hover:bg-[hsl(var(--surface-1))] transition-colors"
@@ -2128,7 +2128,7 @@ export default function WhiteboardEditor({
                         className="absolute z-50 pointer-events-none"
                         style={{ left: connectorLabelState.x + 80, top: connectorLabelState.y + 96 }}
                     >
-                        <div className="pointer-events-auto flex items-center gap-1 rounded-xl border border-[hsl(var(--border))] bg-white/95 p-1.5 shadow-2xl backdrop-blur-xl dark:border-white/10 dark:bg-[hsl(var(--bg-muted))]/95">
+                        <div className="pointer-events-auto flex items-center gap-1 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-1)/0.95)] p-1.5 shadow-2xl backdrop-blur-xl">
                             <input
                                 autoFocus
                                 type="text"
@@ -2167,7 +2167,7 @@ export default function WhiteboardEditor({
                                     }
                                     setConnectorLabelState(null);
                                 }}
-                                className="h-7 w-40 rounded-lg border border-[hsl(var(--border))] bg-transparent px-2 text-xs font-medium text-[hsl(var(--text-primary))] outline-none focus:ring-1 focus:ring-[hsl(var(--primary))] dark:border-white/10 dark:text-white"
+                                className="h-7 w-40 rounded-lg border border-[hsl(var(--border))] bg-transparent px-2 text-xs font-medium text-[hsl(var(--text-primary))] outline-none focus:ring-1 focus:ring-[hsl(var(--primary))]"
                                 placeholder="Etiqueta del conector…"
                             />
                             <span className="text-2xs text-[hsl(var(--text-secondary))]">↵</span>
@@ -2184,7 +2184,7 @@ export default function WhiteboardEditor({
                     }}
                 >
                     <div
-                        className="inline-block overflow-hidden rounded-xl border border-[hsl(var(--border))] shadow-sm dark:border-white/10"
+                        className="inline-block overflow-hidden rounded-xl border border-[hsl(var(--border))] shadow-sm"
                         style={{
                             background: gridStyle === "none"
                                 ? (isDark ? WHITEBOARD_COLORS.gridDark : "#ffffff")
@@ -2200,17 +2200,17 @@ export default function WhiteboardEditor({
                 </main>
 
                 {/* ── Right property panel ── */}
-                <aside className="w-80 shrink-0 overflow-y-auto border-l border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-3 dark:border-white/10 dark:bg-[hsl(var(--surface-2))]">
+                <aside className="w-80 shrink-0 overflow-y-auto border-l border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-3">
                     {/* Info section */}
                     <section className="space-y-2">
                         <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Objetivo</p>
-                        <h1 className="text-lg font-bold text-[hsl(var(--text-primary))] dark:text-white">{title}</h1>
+                        <h1 className="text-lg font-bold text-[hsl(var(--text-primary))]">{title}</h1>
                         <p className="text-xs font-medium leading-5 text-[hsl(var(--text-secondary))]">Sin objetivo documentado.</p>
                     </section>
 
                     {/* ── Object properties ── */}
                     {isObjectSelected && (
-                        <section className="mt-5 space-y-4 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))]/50 p-3 dark:border-white/5 dark:bg-white/[0.03]">
+                        <section className="mt-5 space-y-4 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1)/0.5)] p-3">
                             <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
                                 Propiedades — {String(selectedObjectProps?.type || "objeto")}
                             </p>
@@ -2219,11 +2219,11 @@ export default function WhiteboardEditor({
                             {isConnectorSelected && (
                                 <button
                                     onClick={toggleConnectorDash}
-                                    className="flex w-full items-center justify-between rounded-lg border border-[hsl(var(--border))] px-3 py-2 text-xs font-semibold text-[hsl(var(--text-secondary))] transition-all hover:bg-[hsl(var(--surface-2))] dark:border-white/10 dark:hover:bg-white/5"
+                                    className="flex w-full items-center justify-between rounded-lg border border-[hsl(var(--border))] px-3 py-2 text-xs font-semibold text-[hsl(var(--text-secondary))] transition-all hover:bg-[hsl(var(--surface-2))]"
                                 >
                                     <span>Línea discontinua</span>
-                                    <span className={clsx("relative h-5 w-9 rounded-full transition-colors", ((fabricCanvas.current?.getActiveObject()?.data?.dash) as boolean) ? "bg-[hsl(var(--primary))]" : "bg-[hsl(var(--surface-3))] dark:bg-white/10")}>
-                                        <span className={clsx("absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition-all", ((fabricCanvas.current?.getActiveObject()?.data?.dash) as boolean) ? "left-4" : "left-0.5")} />
+                                    <span className={clsx("relative h-5 w-9 rounded-full transition-colors", ((fabricCanvas.current?.getActiveObject()?.data?.dash) as boolean) ? "bg-[hsl(var(--primary))]" : "bg-[hsl(var(--surface-3))]")}>
+                                        <span className={clsx("absolute top-0.5 h-4 w-4 rounded-full bg-[hsl(var(--primary-foreground))] shadow transition-all", ((fabricCanvas.current?.getActiveObject()?.data?.dash) as boolean) ? "left-4" : "left-0.5")} />
                                     </span>
                                 </button>
                             )}
@@ -2236,7 +2236,7 @@ export default function WhiteboardEditor({
                                         type="color"
                                         value={fillColor}
                                         onChange={(e) => { setFillColor(e.target.value); applyProperty("fill", e.target.value); }}
-                                        className="size-8 cursor-pointer rounded-lg border border-[hsl(var(--border))] bg-transparent p-0 dark:border-white/10"
+                                        className="size-8 cursor-pointer rounded-lg border border-[hsl(var(--border))] bg-transparent p-0"
                                     />
                                     <div className="flex gap-1">
                                         {COLOR_PRESETS.map((c) => (
@@ -2245,7 +2245,7 @@ export default function WhiteboardEditor({
                                                 onClick={() => { setFillColor(c); applyProperty("fill", c); }}
                                                 className={clsx(
                                                     "size-5 rounded-full border transition-all hover:scale-125",
-                                                    fillColor === c ? "scale-125 ring-2 ring-[hsl(var(--primary))] ring-offset-1 ring-offset-[hsl(var(--border))]" : "border-[hsl(var(--border))] dark:border-white/10"
+                                                    fillColor === c ? "scale-125 ring-2 ring-[hsl(var(--primary))] ring-offset-1 ring-offset-[hsl(var(--border))]" : "border-[hsl(var(--border))]"
                                                 )}
                                                 style={{ backgroundColor: c }}
                                             />
@@ -2262,7 +2262,7 @@ export default function WhiteboardEditor({
                                         type="color"
                                         value={strokeColor}
                                         onChange={(e) => { setStrokeColor(e.target.value); applyProperty("stroke", e.target.value); }}
-                                        className="size-8 cursor-pointer rounded-lg border border-[hsl(var(--border))] bg-transparent p-0 dark:border-white/10"
+                                        className="size-8 cursor-pointer rounded-lg border border-[hsl(var(--border))] bg-transparent p-0"
                                     />
                                     <div className="flex gap-1">
                                         {COLOR_PRESETS.map((c) => (
@@ -2271,7 +2271,7 @@ export default function WhiteboardEditor({
                                                 onClick={() => { setStrokeColor(c); applyProperty("stroke", c); }}
                                                 className={clsx(
                                                     "size-5 rounded-full border transition-all hover:scale-125",
-                                                    strokeColor === c ? "scale-125 ring-2 ring-[hsl(var(--primary))] ring-offset-1 ring-offset-[hsl(var(--border))]" : "border-[hsl(var(--border))] dark:border-white/10"
+                                                    strokeColor === c ? "scale-125 ring-2 ring-[hsl(var(--primary))] ring-offset-1 ring-offset-[hsl(var(--border))]" : "border-[hsl(var(--border))]"
                                                 )}
                                                 style={{ backgroundColor: c }}
                                             />
@@ -2321,7 +2321,7 @@ export default function WhiteboardEditor({
                                         <select
                                             value={textFontFamily}
                                             onChange={(e) => { setTextFontFamily(e.target.value); applyProperty("fontFamily", e.target.value); }}
-                                            className="w-full rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] px-2 py-1.5 text-sm font-semibold outline-none dark:border-white/10 dark:bg-black/20"
+                                            className="w-full rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] px-2 py-1.5 text-sm font-semibold outline-none"
                                         >
                                             {FONT_FAMILIES.map((f) => (
                                                 <option key={f.value} value={f.value} style={{ fontFamily: f.value }}>
@@ -2353,8 +2353,8 @@ export default function WhiteboardEditor({
                                                     className={clsx(
                                                         "rounded-md px-2 py-0.5 text-2xs font-bold transition-all",
                                                         textFontSize === s
-                                                            ? "bg-[hsl(var(--primary))] text-white"
-                                                            : "bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-3))] dark:bg-white/5 dark:hover:bg-white/10"
+                                                            ? "bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))]"
+                                                            : "bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-3))]"
                                                     )}
                                                 >
                                                     {s}
@@ -2370,7 +2370,7 @@ export default function WhiteboardEditor({
                                             type="color"
                                             value={textColor}
                                             onChange={(e) => { setTextColor(e.target.value); applyProperty("fill", e.target.value); }}
-                                            className="size-8 cursor-pointer rounded-lg border border-[hsl(var(--border))] bg-transparent p-0 dark:border-white/10"
+                                            className="size-8 cursor-pointer rounded-lg border border-[hsl(var(--border))] bg-transparent p-0"
                                         />
                                     </div>
 
@@ -2380,7 +2380,7 @@ export default function WhiteboardEditor({
                                             onClick={() => { const v = textBold ? "normal" : "bold"; setTextBold(!textBold); applyProperty("fontWeight", v); }}
                                             className={clsx(
                                                 "flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold transition-all",
-                                                textBold ? "bg-[hsl(var(--primary))] text-white" : "bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))] dark:bg-white/5"
+                                                textBold ? "bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))]" : "bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))]"
                                             )}
                                         >
                                             <Bold size={14} /> Negrita
@@ -2389,7 +2389,7 @@ export default function WhiteboardEditor({
                                             onClick={() => { const v = textItalic ? "" : "italic"; setTextItalic(!textItalic); applyProperty("fontStyle", v); }}
                                             className={clsx(
                                                 "flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold transition-all",
-                                                textItalic ? "bg-[hsl(var(--primary))] text-white" : "bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))] dark:bg-white/5"
+                                                textItalic ? "bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))]" : "bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))]"
                                             )}
                                         >
                                             <Italic size={14} /> Cursiva
@@ -2398,7 +2398,7 @@ export default function WhiteboardEditor({
                                             onClick={() => { setTextUnderline(!textUnderline); applyProperty("underline", !textUnderline); }}
                                             className={clsx(
                                                 "flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold transition-all",
-                                                textUnderline ? "bg-[hsl(var(--primary))] text-white" : "bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))] dark:bg-white/5"
+                                                textUnderline ? "bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))]" : "bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))]"
                                             )}
                                         >
                                             Subrayado
@@ -2409,13 +2409,23 @@ export default function WhiteboardEditor({
                                     <div className="flex gap-2">
                                         <button
                                             onClick={() => { toggleTextList("•"); setTextBulletList(!textBulletList); setTextNumberList(false); }}
-                                            className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold transition-all ${textBulletList ? "bg-[hsl(var(--primary))] text-white" : "bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-3))] dark:bg-white/5 dark:hover:bg-white/10"}`}
+                                            className={clsx(
+                                                "flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold transition-all",
+                                                textBulletList
+                                                    ? "bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))]"
+                                                    : "bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-3))]"
+                                            )}
                                         >
                                             • Lista
                                         </button>
                                         <button
                                             onClick={() => { toggleTextList("1."); setTextNumberList(!textNumberList); setTextBulletList(false); }}
-                                            className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold transition-all ${textNumberList ? "bg-[hsl(var(--primary))] text-white" : "bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-3))] dark:bg-white/5 dark:hover:bg-white/10"}`}
+                                            className={clsx(
+                                                "flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold transition-all",
+                                                textNumberList
+                                                    ? "bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))]"
+                                                    : "bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-3))]"
+                                            )}
                                         >
                                             1. Números
                                         </button>
@@ -2431,7 +2441,7 @@ export default function WhiteboardEditor({
                                         type="number"
                                         value={objLeft}
                                         onChange={(e) => { const v = Number(e.target.value); setObjLeft(v); applyProperty("left", v); }}
-                                        className="w-full rounded-md border border-[hsl(var(--border))] px-2 py-1 text-xs font-semibold outline-none dark:border-white/10 dark:bg-black/20"
+                                        className="w-full rounded-md border border-[hsl(var(--border))] bg-transparent px-2 py-1 text-xs font-semibold outline-none"
                                     />
                                 </div>
                                 <div>
@@ -2440,7 +2450,7 @@ export default function WhiteboardEditor({
                                         type="number"
                                         value={objTop}
                                         onChange={(e) => { const v = Number(e.target.value); setObjTop(v); applyProperty("top", v); }}
-                                        className="w-full rounded-md border border-[hsl(var(--border))] px-2 py-1 text-xs font-semibold outline-none dark:border-white/10 dark:bg-black/20"
+                                        className="w-full rounded-md border border-[hsl(var(--border))] bg-transparent px-2 py-1 text-xs font-semibold outline-none"
                                     />
                                 </div>
                                 <div>
@@ -2449,7 +2459,7 @@ export default function WhiteboardEditor({
                                         type="number"
                                         value={objWidth}
                                         onChange={(e) => { const v = Number(e.target.value); setObjWidth(v); applyProperty("width", v); }}
-                                        className="w-full rounded-md border border-[hsl(var(--border))] px-2 py-1 text-xs font-semibold outline-none dark:border-white/10 dark:bg-black/20"
+                                        className="w-full rounded-md border border-[hsl(var(--border))] bg-transparent px-2 py-1 text-xs font-semibold outline-none"
                                     />
                                 </div>
                                 <div>
@@ -2458,20 +2468,20 @@ export default function WhiteboardEditor({
                                         type="number"
                                         value={objHeight}
                                         onChange={(e) => { const v = Number(e.target.value); setObjHeight(v); applyProperty("height", v); }}
-                                        className="w-full rounded-md border border-[hsl(var(--border))] px-2 py-1 text-xs font-semibold outline-none dark:border-white/10 dark:bg-black/20"
+                                        className="w-full rounded-md border border-[hsl(var(--border))] bg-transparent px-2 py-1 text-xs font-semibold outline-none"
                                     />
                                 </div>
                             </div>
 
                             {/* Order actions */}
                             <div className="flex gap-2">
-                                <button onClick={bringForward} className="flex items-center gap-1 rounded-lg bg-[hsl(var(--surface-2))] px-2 py-1.5 text-2xs font-bold text-[hsl(var(--text-secondary))] transition-all hover:bg-[hsl(var(--surface-3))] dark:bg-white/5 dark:hover:bg-white/10">
+                                <button onClick={bringForward} className="flex items-center gap-1 rounded-lg bg-[hsl(var(--surface-2))] px-2 py-1.5 text-2xs font-bold text-[hsl(var(--text-secondary))] transition-all hover:bg-[hsl(var(--surface-3))]">
                                     <BringToFront size={12} /> Al frente
                                 </button>
-                                <button onClick={sendBackward} className="flex items-center gap-1 rounded-lg bg-[hsl(var(--surface-2))] px-2 py-1.5 text-2xs font-bold text-[hsl(var(--text-secondary))] transition-all hover:bg-[hsl(var(--surface-3))] dark:bg-white/5 dark:hover:bg-white/10">
+                                <button onClick={sendBackward} className="flex items-center gap-1 rounded-lg bg-[hsl(var(--surface-2))] px-2 py-1.5 text-2xs font-bold text-[hsl(var(--text-secondary))] transition-all hover:bg-[hsl(var(--surface-3))]">
                                     <SendToBack size={12} /> Atrás
                                 </button>
-                                <button onClick={duplicateSelection} className="flex items-center gap-1 rounded-lg bg-[hsl(var(--surface-2))] px-2 py-1.5 text-2xs font-bold text-[hsl(var(--text-secondary))] transition-all hover:bg-[hsl(var(--surface-3))] dark:bg-white/5 dark:hover:bg-white/10">
+                                <button onClick={duplicateSelection} className="flex items-center gap-1 rounded-lg bg-[hsl(var(--surface-2))] px-2 py-1.5 text-2xs font-bold text-[hsl(var(--text-secondary))] transition-all hover:bg-[hsl(var(--surface-3))]">
                                     <Copy size={12} /> Duplicar
                                 </button>
                             </div>
@@ -2479,14 +2489,14 @@ export default function WhiteboardEditor({
                             {/* Delete button */}
                             <button
                                 onClick={removeSelection}
-                                className="flex w-full items-center justify-center gap-2 rounded-lg bg-[hsl(var(--destructive)/0.08)] py-2 text-2xs font-bold uppercase tracking-wide text-[hsl(var(--destructive))] transition-all hover:bg-[hsl(var(--destructive)/0.15)] dark:bg-[hsl(var(--destructive)/0.1)]"
+                                className="flex w-full items-center justify-center gap-2 rounded-lg bg-[hsl(var(--destructive)/0.08)] py-2 text-2xs font-bold uppercase tracking-wide text-[hsl(var(--destructive))] transition-all hover:bg-[hsl(var(--destructive)/0.15)]"
                             >
                                 <Trash2 size={14} /> Eliminar objeto
                             </button>
                             {/* Comments button */}
                             <button
                                 onClick={() => setShowCommentsPanel(true)}
-                                className="mt-2 flex w-full items-center justify-center gap-2 rounded-lg bg-[hsl(var(--primary)/0.08)] py-2 text-2xs font-bold uppercase tracking-wide text-[hsl(var(--primary))] transition-all hover:bg-[hsl(var(--primary)/0.15)] dark:bg-[hsl(var(--primary)/0.1)]"
+                                className="mt-2 flex w-full items-center justify-center gap-2 rounded-lg bg-[hsl(var(--primary)/0.08)] py-2 text-2xs font-bold uppercase tracking-wide text-[hsl(var(--primary))] transition-all hover:bg-[hsl(var(--primary)/0.15)]"
                             >
                                 <MessageSquare size={14} /> Hilo de Comentarios
                             </button>
@@ -2503,7 +2513,7 @@ export default function WhiteboardEditor({
                                 <button
                                     key={`${layer.type}-${layer.index}`}
                                     onClick={() => focusLayer(layer.index)}
-                                    className="flex w-full items-center justify-between rounded-lg border border-[hsl(var(--border))] p-2.5 text-left text-xs font-medium text-[hsl(var(--text-secondary))] transition-all hover:border-[hsl(var(--primary)/0.2)] hover:bg-[hsl(var(--info-muted))] dark:border-white/5 dark:hover:bg-[hsl(var(--primary)/0.1)]"
+                                    className="flex w-full items-center justify-between rounded-lg border border-[hsl(var(--border))] p-2.5 text-left text-xs font-medium text-[hsl(var(--text-secondary))] transition-all hover:border-[hsl(var(--primary)/0.2)] hover:bg-[hsl(var(--primary)/0.08)]"
                                 >
                                     <span className="flex items-center gap-2">
                                         <History size={12} /> {layer.label}
@@ -2512,7 +2522,7 @@ export default function WhiteboardEditor({
                                 </button>
                             ))}
                             {layers.length === 0 && (
-                                <div className="rounded-lg border border-dashed border-[hsl(var(--border))] p-4 text-center text-xs font-semibold text-[hsl(var(--text-secondary))] dark:border-white/10">
+                                <div className="rounded-lg border border-dashed border-[hsl(var(--border))] p-4 text-center text-xs font-semibold text-[hsl(var(--text-secondary))]">
                                     No hay objetos en el lienzo.
                                 </div>
                             )}
@@ -2522,25 +2532,25 @@ export default function WhiteboardEditor({
             </div>
 
             {presentMode && (
-                <div className="fixed inset-0 z-[70] flex flex-col items-center justify-center bg-black/95" data-testid="whiteboard-presentation-overlay" onClick={presentNext}>
+                <div className="fixed inset-0 z-[70] flex flex-col items-center justify-center bg-[hsl(var(--bg-primary)/0.95)]" data-testid="whiteboard-presentation-overlay" onClick={presentNext}>
                     <div className="mb-4 flex items-center gap-3">
-                        <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-bold text-white/70">
+                        <span className="rounded-full bg-[hsl(var(--surface-2))] px-3 py-1 text-xs font-bold text-[hsl(var(--text-secondary))]">
                             {presentFrames.length > 0 ? `Marco ${presentIndex + 1} / ${presentFrames.length}` : "Vista general"}
                         </span>
                     </div>
                     <div className="pointer-events-none absolute left-6 top-1/2 -translate-y-1/2">
-                        <button onClick={(e) => { e.stopPropagation(); presentPrev(); }} className="pointer-events-auto rounded-full bg-white/10 p-3 text-white transition-all hover:bg-white/20" aria-label="Anterior">
+                        <button onClick={(e) => { e.stopPropagation(); presentPrev(); }} className="pointer-events-auto rounded-full bg-[hsl(var(--surface-2))] p-3 text-[hsl(var(--text-primary))] transition-all hover:bg-[hsl(var(--surface-3))]" aria-label="Anterior">
                             <ChevronLeft size={24} />
                         </button>
                     </div>
                     <div className="pointer-events-none absolute right-6 top-1/2 -translate-y-1/2">
-                        <button onClick={(e) => { e.stopPropagation(); presentNext(); }} className="pointer-events-auto rounded-full bg-white/10 p-3 text-white transition-all hover:bg-white/20" aria-label="Siguiente">
+                        <button onClick={(e) => { e.stopPropagation(); presentNext(); }} className="pointer-events-auto rounded-full bg-[hsl(var(--surface-2))] p-3 text-[hsl(var(--text-primary))] transition-all hover:bg-[hsl(var(--surface-3))]" aria-label="Siguiente">
                             <ChevronRight size={24} />
                         </button>
                     </div>
                     <div className="absolute bottom-6 left-1/2 flex -translate-x-1/2 flex-col items-center gap-3">
-                        <span className="text-xs text-white/50">Usa ← → para navegar · Esc para salir</span>
-                        <button onClick={(e) => { e.stopPropagation(); exitPresentation(); }} className="rounded-lg bg-white/10 px-4 py-2 text-xs font-bold text-white transition-all hover:bg-white/20" data-testid="whiteboard-presentation-exit">
+                        <span className="text-xs text-[hsl(var(--text-secondary))]">Usa ← → para navegar · Esc para salir</span>
+                        <button onClick={(e) => { e.stopPropagation(); exitPresentation(); }} className="rounded-lg bg-[hsl(var(--surface-2))] px-4 py-2 text-xs font-bold text-[hsl(var(--text-primary))] transition-all hover:bg-[hsl(var(--surface-3))]" data-testid="whiteboard-presentation-exit">
                             <Presentation size={14} className="mr-2 inline" /> Salir de presentación
                         </button>
                     </div>
@@ -2621,13 +2631,13 @@ function Minimap({
     };
 
     return (
-        <div className="pointer-events-auto absolute left-20 bottom-4 z-30 hidden overflow-hidden rounded-xl border border-[hsl(var(--border))] bg-white/95 p-1.5 shadow-2xl backdrop-blur-xl dark:border-white/10 dark:bg-[hsl(var(--bg-muted))]/95 lg:block"
+        <div className="pointer-events-auto absolute left-20 bottom-4 z-30 hidden overflow-hidden rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-1)/0.95)] p-1.5 shadow-2xl backdrop-blur-xl lg:block"
             onMouseEnter={() => setHovering(true)}
             onMouseLeave={() => setHovering(false)}
             onClick={handleClick}
             data-testid="whiteboard-minimap"
         >
-            <div className="relative h-[120px] w-[200px] overflow-hidden rounded-lg bg-[#f8fafc] dark:bg-black/30">
+            <div className="relative h-[120px] w-[200px] overflow-hidden rounded-lg bg-[hsl(var(--surface-2))]">
                 {objects.map((o, i) => {
                     const br = o.getBoundingRect();
                     const l = ox + br.left * scale;
@@ -2644,7 +2654,7 @@ function Minimap({
                 })}
                 {/* Viewport indicator */}
                 <div
-                    className="absolute border-2 border-blue-600 bg-blue-500/10"
+                    className="absolute border-2 border-[hsl(var(--primary))] bg-[hsl(var(--primary)/0.1)]"
                     style={{
                         left: ox + vx * scale,
                         top: oy + vy * scale,
@@ -2741,10 +2751,10 @@ function ExportButton({
             tabIndex={0}
             data-testid={dataTestid}
             className={clsx(
-                "flex items-center gap-2 rounded-lg border border-[hsl(var(--border))] px-3 py-1.5 text-xs font-semibold transition-all focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))] dark:border-white/10",
+                "flex items-center gap-2 rounded-lg border border-[hsl(var(--border))] px-3 py-1.5 text-xs font-semibold transition-all focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]",
                 disabled
                     ? "cursor-not-allowed opacity-50"
-                    : "hover:bg-[hsl(var(--surface-2))] hover:text-[hsl(var(--primary))] dark:hover:bg-white/5"
+                    : "hover:bg-[hsl(var(--surface-2))] hover:text-[hsl(var(--primary))]"
             )}
         >
             <Icon size={14} />
@@ -2782,15 +2792,15 @@ function ToolbarButton({
             className={clsx(
                 "group relative flex size-10 items-center justify-center rounded-lg transition-all focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]",
                 active
-                    ? "bg-[hsl(var(--primary))] text-white shadow-lg shadow-[hsl(var(--primary)/0.2)]"
+                    ? "bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] shadow-lg shadow-[hsl(var(--primary)/0.2)]"
                     : tone === "danger"
-                        ? "text-[hsl(var(--destructive))] hover:bg-[hsl(var(--destructive)/0.08)] hover:text-[hsl(var(--destructive))] dark:hover:bg-[hsl(var(--destructive)/0.1)]"
-                        : "text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5",
+                        ? "text-[hsl(var(--destructive))] hover:bg-[hsl(var(--destructive)/0.08)] hover:text-[hsl(var(--destructive))]"
+                        : "text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))]",
                 disabled && "opacity-30 cursor-not-allowed"
             )}
         >
             <Icon size={20} />
-            <span className="pointer-events-none absolute left-full z-50 ml-4 whitespace-nowrap rounded-lg bg-[hsl(var(--bg-muted))] px-2 py-1 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-primary))] dark:text-white opacity-0 transition-opacity group-hover:opacity-100">
+            <span className="pointer-events-none absolute left-full z-50 ml-4 whitespace-nowrap rounded-lg bg-[hsl(var(--bg-muted))] px-2 py-1 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-primary))] opacity-0 transition-opacity group-hover:opacity-100">
                 {label}
             </span>
         </button>
@@ -2805,7 +2815,7 @@ function ShapePickerItem({ icon: Icon, label, shortcut, onClick, "data-testid": 
             data-testid={dataTestId}
             aria-label={label}
             tabIndex={0}
-            className="flex flex-col items-center gap-1 rounded-lg p-2 text-xs transition-colors hover:bg-[hsl(var(--surface-1))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))] dark:hover:bg-white/10"
+            className="flex flex-col items-center gap-1 rounded-lg p-2 text-xs transition-colors hover:bg-[hsl(var(--surface-1))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]"
             title={shortcut ? `${label} (${shortcut})` : label}
         >
             <Icon size={20} />
