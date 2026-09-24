@@ -290,10 +290,10 @@ export default function AccessManagementPage() {
         header: 'Nombre del Rol',
         cell: (info) => (
           <div className="flex items-center gap-3">
-            <div className="size-8 rounded-lg bg-info-soft dark:bg-[hsl(var(--info))]/20 flex items-center justify-center text-[hsl(var(--primary))] shadow-sm">
+            <div className="size-8 rounded-lg bg-[hsl(var(--info-muted))] flex items-center justify-center text-[hsl(var(--primary))] shadow-sm">
               <Shield size={16} />
             </div>
-            <span className="font-semibold text-[hsl(var(--text-primary))] dark:text-white uppercase tracking-tight">
+            <span className="font-semibold text-[hsl(var(--text-primary))] uppercase tracking-tight">
               {String(info.getValue())}
             </span>
           </div>
@@ -310,7 +310,7 @@ export default function AccessManagementPage() {
                 .map((i) => (
                   <div
                     key={i}
-                    className="size-6 rounded-full border-2 border-white dark:border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] flex items-center justify-center text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase"
+                    className="size-6 rounded-full border-2 border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] flex items-center justify-center text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase"
                   >
                     U
                   </div>
@@ -326,7 +326,7 @@ export default function AccessManagementPage() {
         id: 'actions',
         header: '',
         cell: () => (
-          <button className="p-2 hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5 rounded-md text-[hsl(var(--text-secondary))] opacity-0 group-hover:opacity-100 transition-all">
+          <button className="p-2 hover:bg-[hsl(var(--surface-2))] rounded-md text-[hsl(var(--text-secondary))] opacity-0 group-hover:opacity-100 transition-all">
             <ChevronRight size={18} />
           </button>
         ),
@@ -342,11 +342,11 @@ export default function AccessManagementPage() {
         header: 'Usuario',
         cell: (info) => (
           <div className="flex items-center gap-3">
-            <div className="size-8 rounded-full bg-[hsl(var(--surface-2))] dark:bg-white/5 flex items-center justify-center text-[hsl(var(--text-secondary))] border border-[hsl(var(--border))] dark:border-white/10 shadow-inner">
+            <div className="size-8 rounded-full bg-[hsl(var(--surface-2))] flex items-center justify-center text-[hsl(var(--text-secondary))] border border-[hsl(var(--border))] shadow-inner">
               <UserCircle size={18} />
             </div>
             <div className="flex flex-col">
-              <span className="text-base font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">
+              <span className="text-base font-bold text-[hsl(var(--text-primary))]">
                 {String(info.getValue())}
               </span>
               <span className="text-2xs text-[hsl(var(--text-secondary))] font-medium">
@@ -367,7 +367,7 @@ export default function AccessManagementPage() {
         accessorKey: 'role',
         header: 'Rol Asignado',
         cell: (info) => (
-          <span className="px-3 py-1 bg-info-soft dark:bg-[hsl(var(--info))]/20 text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] rounded-lg text-2xs font-semibold uppercase tracking-wide border border-[hsl(var(--info)/20%)] dark:border-[hsl(var(--info)/100%)]">
+          <span className="px-3 py-1 bg-[hsl(var(--info-muted))] text-[hsl(var(--primary))] rounded-lg text-2xs font-semibold uppercase tracking-wide border border-[hsl(var(--info)/0.2)]">
             {String(info.getValue())}
           </span>
         ),
@@ -538,16 +538,16 @@ export default function AccessManagementPage() {
             key={row.id || title}
             onClick={() => handleOpenEntity(row)}
             className={clsx(
-              'text-left bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/5 rounded-lg p-3 hover:border-[hsl(var(--info)/30%)] hover:shadow-xl transition-all',
+              'text-left bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] rounded-lg p-3 hover:border-[hsl(var(--info)/0.3)] hover:shadow-xl transition-all',
               mode === 'list' && 'flex items-center justify-between gap-4'
             )}
           >
             <div className="flex items-center gap-4">
-              <div className="size-7 rounded-lg bg-info-soft dark:bg-[hsl(var(--info))]/20 text-[hsl(var(--primary))] flex items-center justify-center">
+              <div className="size-7 rounded-lg bg-[hsl(var(--info-muted))] text-[hsl(var(--primary))] flex items-center justify-center">
                 {activeTab === 'roles' ? <Shield size={22} /> : <UserCircle size={22} />}
               </div>
               <div>
-                <h3 className="text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-white uppercase tracking-tight leading-none mb-1">
+                <h3 className="text-sm font-semibold text-[hsl(var(--text-primary))] uppercase tracking-tight leading-none mb-1">
                   {title}
                 </h3>
                 <p className="mt-1 text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">
@@ -567,7 +567,7 @@ export default function AccessManagementPage() {
       {groupedRows.map((group) => (
         <section
           key={group.id}
-          className="rounded-lg bg-[hsl(var(--surface-1))] dark:bg-white/[0.03] border border-[hsl(var(--border))] dark:border-white/10 p-3"
+          className="rounded-lg bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] p-3"
         >
           <div className="flex items-center justify-between mb-5">
             <span className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
@@ -580,9 +580,9 @@ export default function AccessManagementPage() {
               <button
                 key={row.id || row.name || row.username}
                 onClick={() => handleOpenEntity(row)}
-                className="w-full text-left bg-[hsl(var(--bg-primary))] dark:bg-white/[0.05] border border-[hsl(var(--border))] dark:border-white/5 rounded-lg p-4 hover:border-[hsl(var(--info)/30%)] transition-all"
+                className="w-full text-left bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] rounded-lg p-4 hover:border-[hsl(var(--info)/0.3)] transition-all"
               >
-                <p className="text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-white uppercase tracking-tight">
+                <p className="text-sm font-semibold text-[hsl(var(--text-primary))] uppercase tracking-tight">
                   {activeTab === 'roles' ? row.name : row.username || row.email}
                 </p>
                 <p className="mt-2 text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">
@@ -620,7 +620,7 @@ export default function AccessManagementPage() {
   }, [taxonomy]);
 
   return (
-    <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))] overflow-hidden animate-fade-in font-display">
+    <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] overflow-hidden animate-fade-in font-display">
       <style jsx global>{`
         .permission-card {
           transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
@@ -643,7 +643,7 @@ export default function AccessManagementPage() {
         rightActions={
           <button
             onClick={handleCreateEntity}
-            className="flex items-center gap-2 px-3 py-2 bg-[hsl(var(--primary))] text-white rounded-md text-xs font-semibold uppercase tracking-wide shadow-xl shadow-[hsl(var(--info)/20%)] active:scale-95 transition-all hover:bg-[hsl(var(--primary))]"
+            className="flex items-center gap-2 px-3 py-2 bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] rounded-md text-xs font-semibold uppercase tracking-wide shadow-xl shadow-[hsl(var(--info)/0.2)] active:scale-95 transition-all hover:bg-[hsl(var(--primary))]"
           >
             <Plus size={14} /> Crear Nuevo
           </button>
@@ -651,7 +651,7 @@ export default function AccessManagementPage() {
       />
 
       {/* Cinematic Tab Navigation */}
-      <div className="flex px-4 border-b border-[hsl(var(--border))] dark:border-white/5 bg-[hsl(var(--surface-1))]/50 dark:bg-white/5 shrink-0 relative overflow-hidden">
+      <div className="flex px-4 border-b border-[hsl(var(--border))] bg-[hsl(var(--surface-1))]/50 shrink-0 relative overflow-hidden">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_hsl(var(--primary)/0.05)_0%,_transparent_50%)] pointer-events-none" />
         <button
           onClick={() => setActiveTab('roles')}
@@ -659,7 +659,7 @@ export default function AccessManagementPage() {
             'px-4 py-2 text-xs font-semibold uppercase tracking-wide transition-all border-b-2 relative z-10',
             activeTab === 'roles'
               ? 'text-[hsl(var(--primary))] border-[hsl(var(--info)/100%)]'
-              : 'text-[hsl(var(--text-secondary))] border-transparent hover:text-[hsl(var(--text-secondary))] hover:bg-white/50'
+              : 'text-[hsl(var(--text-secondary))] border-transparent hover:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))]'
           )}
         >
           Roles Ministeriales
@@ -670,7 +670,7 @@ export default function AccessManagementPage() {
             'px-4 py-2 text-xs font-semibold uppercase tracking-wide transition-all border-b-2 relative z-10',
             activeTab === 'users'
               ? 'text-[hsl(var(--primary))] border-[hsl(var(--info)/100%)]'
-              : 'text-[hsl(var(--text-secondary))] border-transparent hover:text-[hsl(var(--text-secondary))] hover:bg-white/50'
+              : 'text-[hsl(var(--text-secondary))] border-transparent hover:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))]'
           )}
         >
           Auditoría de Usuarios
@@ -687,7 +687,7 @@ export default function AccessManagementPage() {
             </div>
           ) : currentRows.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-1.5 text-center">
-              <div className="size-8 rounded-lg bg-[hsl(var(--surface-1))] dark:bg-white/5 flex items-center justify-center mb-3 border border-[hsl(var(--border))] dark:border-white/10">
+              <div className="size-8 rounded-lg bg-[hsl(var(--surface-1))] flex items-center justify-center mb-3 border border-[hsl(var(--border))]">
                 <Shield size={32} className="text-[hsl(var(--text-secondary))]" />
               </div>
               <h3 className="text-lg font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide mb-2">
@@ -729,7 +729,7 @@ export default function AccessManagementPage() {
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="bg-[hsl(var(--bg-primary))] dark:bg-white/5 rounded-lg border border-[hsl(var(--border))] dark:border-white/5 overflow-hidden shadow-sm"
+              className="bg-[hsl(var(--surface-1))] rounded-lg border border-[hsl(var(--border))] overflow-hidden shadow-sm"
             >
               <DataTable
                 data={currentRows}
@@ -753,14 +753,14 @@ export default function AccessManagementPage() {
         actions={
           <div className="flex gap-3">
             <button
-              className="px-3 py-2.5 bg-[hsl(var(--surface-2))] dark:bg-white/5 text-[hsl(var(--text-secondary))] rounded-md text-xs font-semibold uppercase tracking-wide hover:bg-[hsl(var(--surface-3))] transition-all"
+              className="px-3 py-2.5 bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))] rounded-md text-xs font-semibold uppercase tracking-wide hover:bg-[hsl(var(--surface-3))] transition-all"
               onClick={() => setIsDrawerOpen(false)}
             >
               Cerrar
             </button>
             <button
               disabled={isSaving}
-              className="px-4 py-2.5 bg-[hsl(var(--primary))] text-white rounded-md text-xs font-semibold uppercase tracking-wide shadow-xl shadow-[hsl(var(--info)/20%)] flex items-center gap-2 hover:bg-[hsl(var(--primary))] active:scale-95 transition-all"
+              className="px-4 py-2.5 bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] rounded-md text-xs font-semibold uppercase tracking-wide shadow-xl shadow-[hsl(var(--info)/0.2)] flex items-center gap-2 hover:bg-[hsl(var(--primary))] active:scale-95 transition-all"
               onClick={handleSavePermissions}
             >
               {isSaving ? (
@@ -780,9 +780,9 @@ export default function AccessManagementPage() {
               <h4 className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide flex items-center gap-3">
                 <Layout size={16} className="text-[hsl(var(--primary))]" /> Matriz de Operaciones
               </h4>
-              <div className="flex items-center gap-2 px-3 py-1 bg-warning-soft dark:bg-[hsl(var(--warning))]/20 rounded-lg border border-[hsl(var(--warning)/20%)] dark:border-[hsl(var(--warning)/100%)]">
-                <Shield size={10} className="text-warning-text" />
-                <span className="font-semibold text-warning-text uppercase">Seguridad v3.9</span>
+              <div className="flex items-center gap-2 px-3 py-1 bg-[hsl(var(--warning)/0.15)] rounded-lg border border-[hsl(var(--warning)/0.2)]">
+                <Shield size={10} className="text-[hsl(var(--warning))]" />
+                <span className="font-semibold text-[hsl(var(--warning))] uppercase">Seguridad v3.9</span>
               </div>
             </div>
 
@@ -818,7 +818,7 @@ export default function AccessManagementPage() {
           {/* Industrial Disclaimer */}
           {/* Modular roles read-only section for users */}
           {activeTab === 'users' && userModuleRoles.length > 0 && (
-            <section className="p-4 bg-[hsl(var(--surface-1))] dark:bg-white/5 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 space-y-3">
+            <section className="p-4 bg-[hsl(var(--surface-1))] rounded-lg border border-[hsl(var(--border))] space-y-3">
               <div className="flex items-center gap-2 text-[hsl(var(--text-secondary))] font-semibold uppercase tracking-wide text-2xs">
                 <Shield size={14} className="text-[hsl(var(--primary))]" /> Roles Modulares Asignados
               </div>
@@ -828,7 +828,7 @@ export default function AccessManagementPage() {
                   return (
                     <li
                       key={mr.module}
-                      className="flex items-center justify-between text-xs text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] bg-[hsl(var(--bg-primary))] dark:bg-black/20 rounded-md px-3 py-2"
+                      className="flex items-center justify-between text-xs text-[hsl(var(--text-primary))] bg-[hsl(var(--surface-2))] rounded-md px-3 py-2"
                     >
                       <span className="font-semibold uppercase tracking-wide">{mr.module}</span>
                       <span className="text-2xs text-[hsl(var(--text-secondary))]">
@@ -841,7 +841,7 @@ export default function AccessManagementPage() {
             </section>
           )}
 
-          <section className="p-4 bg-[hsl(var(--bg-muted))] rounded-lg text-white relative overflow-hidden group shadow-2xl">
+          <section className="p-4 bg-[hsl(var(--surface-2))] rounded-lg text-[hsl(var(--text-primary))] relative overflow-hidden group shadow-sm border border-[hsl(var(--border))]">
             <div className="absolute top-0 right-0 p-3 opacity-10 group-hover:rotate-12 transition-transform duration-1000">
               <Lock size={80} />
             </div>
@@ -902,18 +902,18 @@ function PermissionRow({
   };
 
   return (
-    <div className="permission-card p-3 bg-[hsl(var(--surface-1))] dark:bg-white/5 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 flex items-center justify-between group">
+    <div className="permission-card p-3 bg-[hsl(var(--surface-1))] rounded-lg border border-[hsl(var(--border))] flex items-center justify-between group">
       <div className="flex items-center gap-3">
         <div
           className={clsx(
-            'size-7 rounded-[1.25rem] flex items-center justify-center bg-[hsl(var(--bg-primary))] dark:bg-black/40 shadow-sm border border-[hsl(var(--border))] dark:border-white/5 transition-all group-hover:scale-110 group-hover:rotate-3',
+            'size-7 rounded-[1.25rem] flex items-center justify-center bg-[hsl(var(--surface-2))] shadow-sm border border-[hsl(var(--border))] transition-all group-hover:scale-110 group-hover:rotate-3',
             color
           )}
         >
           <Icon size={24} strokeWidth={1.5} />
         </div>
         <div>
-          <p className="text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] uppercase tracking-tight leading-none mb-1">
+          <p className="text-sm font-semibold text-[hsl(var(--text-primary))] uppercase tracking-tight leading-none mb-1">
             {label}
           </p>
           <p className="text-2xs text-[hsl(var(--text-secondary))] font-bold uppercase tracking-wide">
@@ -940,7 +940,7 @@ function PermissionRow({
             <Undo2 size={16} />
           </button>
         )}
-        <div className="flex bg-[hsl(var(--bg-primary))] dark:bg-black/40 p-1.5 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 shadow-inner">
+        <div className="flex bg-[hsl(var(--surface-2))] p-1.5 rounded-lg border border-[hsl(var(--border))] shadow-inner">
           {levelBtn('none', XCircle, 'Sin Acceso')}
           {levelBtn('read', Eye, 'Solo Lectura')}
           {moduleId === 'academy' && levelBtn('study', BookOpen, 'Estudiante')}
@@ -967,8 +967,8 @@ function LevelBtn({ active, icon: Icon, tooltip, onClick }: LevelBtnProps) {
       className={clsx(
         'p-2 rounded-md transition-all duration-300 relative group/btn',
         active
-          ? 'bg-[hsl(var(--bg-muted))] dark:bg-[hsl(var(--bg-primary))] text-white dark:text-[hsl(var(--text-primary))] shadow-xl scale-110'
-          : 'text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-secondary))] dark:hover:text-[hsl(var(--text-secondary))]'
+          ? 'bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] shadow-xl scale-110'
+          : 'text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))]'
       )}
     >
       <Icon size={16} />
