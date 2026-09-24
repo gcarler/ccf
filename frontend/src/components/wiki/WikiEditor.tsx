@@ -36,7 +36,7 @@ export default function WikiEditor({
         content: initialContent,
         editorProps: {
             attributes: {
-                class: 'prose prose-slate dark:prose-invert max-w-none focus:outline-none min-h-48 text-sm leading-relaxed',
+                class: 'prose max-w-none focus:outline-none min-h-48 text-sm leading-relaxed text-[hsl(var(--text-primary))]',
             },
         },
         onUpdate: () => {
@@ -114,7 +114,7 @@ export default function WikiEditor({
                             initial={{ y: 20, opacity: 0 }}
                             animate={{ y: 0, opacity: 1 }}
                             exit={{ y: 20, opacity: 0 }}
-                            className="bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] dark:border-white/10 px-4 py-2 rounded-full shadow-2xl flex items-center gap-3"
+                            className="bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] px-4 py-2 rounded-full shadow-2xl flex items-center gap-3"
                         >
                             {status === 'saving' && (
                                 <>
@@ -143,7 +143,7 @@ export default function WikiEditor({
             <EditorContent editor={editor} />
 
             {/* Footer Metadata */}
-            <div className="mt-3 pt-8 border-t border-[hsl(var(--border))] dark:border-white/5 flex items-center justify-between text-[hsl(var(--text-secondary))]">
+            <div className="mt-3 pt-8 border-t border-[hsl(var(--border))] flex items-center justify-between text-[hsl(var(--text-secondary))]">
                 <div className="flex items-center gap-2">
                     <div className="size-2 rounded-full bg-[hsl(var(--success))]" />
                     <span className="text-2xs font-semibold uppercase tracking-wide">Editor Activo</span>
