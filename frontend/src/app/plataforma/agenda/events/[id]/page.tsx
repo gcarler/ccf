@@ -90,9 +90,9 @@ export default function AgendaEventDetailPage() {
                 { label: event?.title || "Detalle", icon: Clock },
             ]}
         >
-            <div className="h-full overflow-y-auto bg-[hsl(var(--surface-1))] dark:bg-[#141517]">
+            <div className="h-full overflow-y-auto bg-[hsl(var(--surface-1))]">
                 <div className="mx-auto max-w-4xl space-y-3 p-3 p-4">
-                    <section className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-3 shadow-sm dark:border-white/10 dark:bg-[hsl(var(--surface-1))]">
+                    <section className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-3 shadow-sm">
                         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                             <div>
                                 <button
@@ -102,7 +102,7 @@ export default function AgendaEventDetailPage() {
                                     <ArrowLeft size={16} />
                                     Volver a agenda
                                 </button>
-                                <h1 className="text-xl font-bold tracking-tight text-[hsl(var(--text-primary))] dark:text-white">
+                                <h1 className="text-xl font-bold tracking-tight text-[hsl(var(--text-primary))]">
                                     {loading ? "Cargando..." : event?.title || "Evento de agenda"}
                                 </h1>
                                 <p className="mt-2 text-sm font-medium text-[hsl(var(--text-secondary))]">
@@ -110,16 +110,16 @@ export default function AgendaEventDetailPage() {
                                 </p>
                             </div>
                             <div className="flex flex-wrap items-center gap-2">
-                                <span className="rounded-full border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] px-3 py-1 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] dark:border-white/10 dark:bg-white/5 dark:text-[hsl(var(--text-secondary))]">
+                                <span className="rounded-full border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] px-3 py-1 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
                                     {saving ? "Guardando" : "Edición activa"}
                                 </span>
                                 <span
                                     className={`rounded-full px-3 py-1 text-2xs font-semibold uppercase tracking-wide ${
                                         saving
-                                            ? "bg-info-soft text-[hsl(var(--primary))] dark:bg-[hsl(var(--info))]/10 dark:text-info-text"
+                                            ? "bg-[hsl(var(--info-soft))] text-[hsl(var(--info-text))]"
                                             : hasUnsavedChanges
-                                                ? "bg-warning-soft text-warning-text dark:bg-[hsl(var(--warning))]/10 dark:text-warning-text"
-                                                : "bg-success-soft text-success-text dark:bg-[hsl(var(--success))]/10 dark:text-success-text"
+                                                ? "bg-[hsl(var(--warning-soft))] text-[hsl(var(--warning-text))]"
+                                                : "bg-[hsl(var(--success-soft))] text-[hsl(var(--success-text))]"
                                     }`}
                                 >
                                     {saving
@@ -133,7 +133,7 @@ export default function AgendaEventDetailPage() {
                                 <button
                                     onClick={handleDelete}
                                     disabled={!event || deleting}
-                                    className="inline-flex items-center gap-2 rounded-lg border border-destructive/20 px-4 py-3 text-xs font-semibold uppercase tracking-wide text-destructive transition-all hover:bg-destructive/10 disabled:opacity-50"
+                                    className="inline-flex items-center gap-2 rounded-lg border border-[hsl(var(--destructive)/30%)] px-4 py-3 text-xs font-semibold uppercase tracking-wide text-[hsl(var(--destructive))] transition-all hover:bg-[hsl(var(--destructive)/10%)] disabled:opacity-50"
                                 >
                                     <Trash2 size={14} />
                                     {deleting ? "Eliminando..." : "Eliminar"}
@@ -141,7 +141,7 @@ export default function AgendaEventDetailPage() {
                                 <button
                                     onClick={handleSave}
                                     disabled={!event || saving}
-                                    className="inline-flex items-center gap-2 rounded-lg bg-[hsl(var(--primary))] px-4 py-3 text-xs font-semibold uppercase tracking-wide text-white transition-all hover:bg-[hsl(var(--primary))] disabled:opacity-50"
+                                    className="inline-flex items-center gap-2 rounded-lg bg-[hsl(var(--primary))] px-4 py-3 text-xs font-semibold uppercase tracking-wide text-[hsl(var(--primary-foreground))] transition-all hover:opacity-90 disabled:opacity-50"
                                 >
                                     <Save size={14} />
                                     {saving ? "Guardando..." : "Guardar cambios"}
@@ -150,9 +150,9 @@ export default function AgendaEventDetailPage() {
                         </div>
                     </section>
 
-                    <section className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-3 shadow-sm dark:border-white/10 dark:bg-[hsl(var(--surface-1))]">
+                    <section className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-3 shadow-sm">
                         {loading || !event ? (
-                            <div className="h-48 animate-pulse rounded-lg bg-[hsl(var(--surface-2))] dark:bg-white/5" />
+                            <div className="h-48 animate-pulse rounded-lg bg-[hsl(var(--surface-2))]" />
                         ) : (
                             <div className="space-y-5">
                                 <div className="space-y-1.5">
@@ -160,7 +160,7 @@ export default function AgendaEventDetailPage() {
                                     <input
                                         value={event.title}
                                         onChange={(e) => setEvent({ ...event, title: e.target.value })}
-                                        className="w-full rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] px-4 py-3 text-sm font-bold text-[hsl(var(--text-primary))] outline-none focus:border-[hsl(var(--info)/100%)] dark:border-white/10 dark:bg-black/20 dark:text-white"
+                                        className="w-full rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] px-4 py-3 text-sm font-bold text-[hsl(var(--text-primary))] outline-none focus:border-[hsl(var(--primary))]"
                                     />
                                 </div>
 
@@ -171,7 +171,7 @@ export default function AgendaEventDetailPage() {
                                             type="datetime-local"
                                             value={event.start_at.slice(0, 16)}
                                             onChange={(e) => setEvent({ ...event, start_at: new Date(e.target.value).toISOString() })}
-                                            className="w-full rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] px-4 py-3 text-sm font-bold text-[hsl(var(--text-primary))] outline-none focus:border-[hsl(var(--info)/100%)] dark:border-white/10 dark:bg-black/20 dark:text-white"
+                                            className="w-full rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] px-4 py-3 text-sm font-bold text-[hsl(var(--text-primary))] outline-none focus:border-[hsl(var(--primary))]"
                                         />
                                     </div>
                                     <div className="space-y-1.5">
@@ -180,7 +180,7 @@ export default function AgendaEventDetailPage() {
                                             type="datetime-local"
                                             value={(event.end_at || event.start_at).slice(0, 16)}
                                             onChange={(e) => setEvent({ ...event, end_at: new Date(e.target.value).toISOString() })}
-                                            className="w-full rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] px-4 py-3 text-sm font-bold text-[hsl(var(--text-primary))] outline-none focus:border-[hsl(var(--info)/100%)] dark:border-white/10 dark:bg-black/20 dark:text-white"
+                                            className="w-full rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] px-4 py-3 text-sm font-bold text-[hsl(var(--text-primary))] outline-none focus:border-[hsl(var(--primary))]"
                                         />
                                     </div>
                                 </div>
@@ -192,7 +192,7 @@ export default function AgendaEventDetailPage() {
                                         <input
                                             value={event.location || ""}
                                             onChange={(e) => setEvent({ ...event, location: e.target.value })}
-                                            className="w-full rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] py-3 pl-10 pr-4 text-sm font-bold text-[hsl(var(--text-primary))] outline-none focus:border-[hsl(var(--info)/100%)] dark:border-white/10 dark:bg-black/20 dark:text-white"
+                                            className="w-full rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] py-3 pl-10 pr-4 text-sm font-bold text-[hsl(var(--text-primary))] outline-none focus:border-[hsl(var(--primary))]"
                                         />
                                     </div>
                                 </div>
@@ -203,7 +203,7 @@ export default function AgendaEventDetailPage() {
                                         rows={5}
                                         value={event.description || ""}
                                         onChange={(e) => setEvent({ ...event, description: e.target.value })}
-                                        className="w-full resize-none rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] px-4 py-3 text-sm font-medium text-[hsl(var(--text-primary))] outline-none focus:border-[hsl(var(--info)/100%)] dark:border-white/10 dark:bg-black/20 dark:text-white"
+                                        className="w-full resize-none rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] px-4 py-3 text-sm font-medium text-[hsl(var(--text-primary))] outline-none focus:border-[hsl(var(--primary))]"
                                     />
                                 </div>
                             </div>
