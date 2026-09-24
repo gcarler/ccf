@@ -58,7 +58,7 @@ export default function AcademyTeachersPage() {
     }, [query, teachers]);
 
     return (
-        <div className="flex h-full flex-col overflow-hidden bg-[hsl(var(--bg-primary))]">
+        <div className="flex h-full flex-col overflow-hidden bg-[hsl(var(--surface-1))]">
             <WorkspaceToolbar
                 breadcrumbs={[
                     { label: "Academia", icon: GraduationCap, href: "/plataforma/academy" },
@@ -67,7 +67,7 @@ export default function AcademyTeachersPage() {
                 rightActions={
                     <button
                         onClick={() => router.push("/plataforma/academy/teacher")}
-                        className="rounded-lg bg-[hsl(var(--primary))] px-3 py-1.5 text-2xs font-semibold uppercase tracking-wide text-white shadow-lg shadow-[hsl(var(--info)/20%)]"
+                        className="rounded-lg bg-[hsl(var(--primary))] px-3 py-1.5 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--primary-foreground))] shadow-lg shadow-[hsl(var(--info)/20%)]"
                     >
                         Panel docente
                     </button>
@@ -81,11 +81,11 @@ export default function AcademyTeachersPage() {
                     <Metric icon={Users} label="Estudiantes activos" value={teachers.reduce((sum, row) => sum + (row.active_students ?? 0), 0)} />
                 </section>
 
-                <section className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] shadow-sm dark:border-white/10 dark:bg-white/5">
-                    <header className="flex flex-col gap-4 border-b border-[hsl(var(--border))] p-3 dark:border-white/10 md:flex-row md:items-center md:justify-between">
+                <section className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] shadow-sm">
+                    <header className="flex flex-col gap-4 border-b border-[hsl(var(--border))] p-3 md:flex-row md:items-center md:justify-between">
                         <div>
                             <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--primary))]">Equipo academico</p>
-                            <h1 className="text-lg font-bold text-[hsl(var(--text-primary))] dark:text-white">Facilitadores</h1>
+                            <h1 className="text-lg font-bold text-[hsl(var(--foreground))]">Facilitadores</h1>
                         </div>
                         <div className="relative w-full md:max-w-sm">
                             <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-[hsl(var(--text-secondary))]" size={17} />
@@ -93,7 +93,7 @@ export default function AcademyTeachersPage() {
                                 value={query}
                                 onChange={(event) => setQuery(event.target.value)}
                                 placeholder="Buscar facilitador..."
-                                className="w-full rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] py-1.5 pl-11 pr-4 text-sm font-semibold outline-none focus:border-[hsl(var(--info)/40%)] dark:border-white/10 dark:bg-black/20"
+                                className="w-full rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] py-1.5 pl-11 pr-4 text-sm font-semibold text-[hsl(var(--foreground))] outline-none focus:border-[hsl(var(--primary))]"
                             />
                         </div>
                     </header>
@@ -102,22 +102,22 @@ export default function AcademyTeachersPage() {
                         {filtered.map((teacher) => (
                             <article
                                 key={teacher.id}
-                                className="cursor-pointer rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-3 transition-all hover:-translate-y-0.5 hover:border-[hsl(var(--info)/30%)] hover:bg-[hsl(var(--bg-primary))] dark:border-white/10 dark:bg-white/[0.03] dark:hover:bg-white/[0.06]"
+                                className="cursor-pointer rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] p-3 transition-all hover:-translate-y-0.5 hover:border-[hsl(var(--primary)/0.3)] hover:bg-[hsl(var(--surface-3))]"
                                 onClick={() => router.push(`/plataforma/academy/teacher?teacher=${teacher.id}`)}
                             >
                                 <div className="mb-3 flex items-center gap-3">
-                                    <div className="flex size-8 items-center justify-center rounded-lg bg-[hsl(var(--primary))] text-sm font-semibold text-white">
+                                    <div className="flex size-8 items-center justify-center rounded-lg bg-[hsl(var(--primary))] text-sm font-semibold text-[hsl(var(--primary-foreground))]">
                                         {(teacher.full_name || teacher.name || teacher.username || "F").slice(0, 2).toUpperCase()}
                                     </div>
                                     <div>
-                                        <h2 className="font-bold text-[hsl(var(--text-primary))] dark:text-white">{teacher.full_name || teacher.name || teacher.username || "Facilitador"}</h2>
+                                        <h2 className="font-bold text-[hsl(var(--foreground))]">{teacher.full_name || teacher.name || teacher.username || "Facilitador"}</h2>
                                         <p className="text-xs font-semibold text-[hsl(var(--text-secondary))]">{teacher.email || "Sin correo"}</p>
                                     </div>
                                 </div>
-                                <p className="text-sm font-semibold text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">{teacher.specialty || "Formacion ministerial"}</p>
+                                <p className="text-sm font-semibold text-[hsl(var(--text-secondary))]">{teacher.specialty || "Formacion ministerial"}</p>
                                 <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
-                                    <span className="font-semibold text-[hsl(var(--text-secondary))] dark:bg-black/20">{teacher.course_count ?? 0} cursos</span>
-                                    <span className="font-semibold text-[hsl(var(--text-secondary))] dark:bg-black/20">{teacher.active_students ?? 0} participantes</span>
+                                    <span className="font-semibold text-[hsl(var(--text-secondary))]">{teacher.course_count ?? 0} cursos</span>
+                                    <span className="font-semibold text-[hsl(var(--text-secondary))]">{teacher.active_students ?? 0} participantes</span>
                                 </div>
                             </article>
                         ))}
@@ -140,12 +140,12 @@ export default function AcademyTeachersPage() {
 
 function Metric({ icon: Icon, label, value }: { icon: LucideIcon; label: string; value: number | string }) {
     return (
-        <div className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-3 shadow-sm dark:border-white/10 dark:bg-white/5">
-            <div className="mb-3 flex size-8 items-center justify-center rounded-lg bg-info-soft text-[hsl(var(--primary))] dark:bg-[hsl(var(--info))]/10">
+        <div className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-3 shadow-sm">
+            <div className="mb-3 flex size-8 items-center justify-center rounded-lg bg-[hsl(var(--primary)/0.1)] text-[hsl(var(--primary))]">
                 <Icon size={20} />
             </div>
             <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{label}</p>
-            <p className="text-lg font-bold text-[hsl(var(--text-primary))] dark:text-white">{value}</p>
+            <p className="text-lg font-bold text-[hsl(var(--foreground))]">{value}</p>
         </div>
     );
 }

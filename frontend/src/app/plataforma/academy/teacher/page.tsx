@@ -58,7 +58,6 @@ export default function TeacherWorkspace() {
             setSubmissions(Array.isArray(subRes) ? subRes : []);
             setCourses(Array.isArray(courseRes) ? courseRes : []);
         } catch (err: unknown) {
-            // H-11 (cierre 2026-07-24): AbortError filtrado tipo-safe.
             if (err instanceof DOMException && err.name === 'AbortError') return;
             console.error(err);
             toast.error('No pudimos cargar los datos del panel');
@@ -121,7 +120,7 @@ export default function TeacherWorkspace() {
     }
 
     return (
-        <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))]">
+        <div className="flex flex-col h-full bg-[hsl(var(--surface-1))]">
                 <WorkspaceToolbar
                     breadcrumbs={[
                         { label: 'Academia', icon: GraduationCap },
@@ -135,10 +134,10 @@ export default function TeacherWorkspace() {
                             <span className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
                                 {pending.length} revisiones pendientes
                             </span>
-                            <div className="h-4 w-px bg-[hsl(var(--surface-3))] dark:bg-white/10 mx-1" />
+                            <div className="h-4 w-px bg-[hsl(var(--border))] mx-1" />
                             <button
                                 onClick={() => loadData()}
-                                className="p-2 hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5 rounded-lg transition-colors text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))]"
+                                className="p-2 hover:bg-[hsl(var(--surface-2))] rounded-lg transition-colors text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))]"
                             >
                                 <Loader2 size={16} className={clsx(loading && 'animate-spin')} />
                             </button>
@@ -165,29 +164,29 @@ export default function TeacherWorkspace() {
                     )}
 
                     {viewType === 'wiki' && (
-                        <section className="bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/5 rounded-lg p-4 shadow-[var(--shadow-floating)] space-y-3">
+                        <section className="bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] rounded-lg p-4 shadow-[var(--shadow-floating)] space-y-3">
                             <div className="flex items-center justify-between">
-                                <h3 className="text-lg font-bold text-[hsl(var(--text-primary))] dark:text-white uppercase tracking-tight">Guía de Evaluación y Rúbricas</h3>
+                                <h3 className="text-lg font-bold text-[hsl(var(--foreground))] uppercase tracking-tight">Guía de Evaluación y Rúbricas</h3>
                                 <DSBadge tone="blue" label="Privado Docentes" />
                             </div>
                             <textarea
                                 value={wikiNotes}
                                 onChange={(e) => setWikiNotes(e.target.value)}
                                 placeholder="Documenta rúbricas, criterios de aprobación, política de feedback y tiempos de respuesta..."
-                                className="w-full min-h-[400px] bg-[hsl(var(--surface-1))]/50 dark:bg-black/20 rounded-lg border border-[hsl(var(--border))] dark:border-white/5 p-3 text-sm font-medium text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] outline-none focus:ring-4 focus:ring-[hsl(var(--primary))]/5 transition-all"
+                                className="w-full min-h-[400px] bg-[hsl(var(--surface-1))] rounded-lg border border-[hsl(var(--border))] p-3 text-sm font-medium text-[hsl(var(--foreground))] outline-none focus:ring-4 focus:ring-[hsl(var(--primary))]/5 transition-all"
                             />
                         </section>
                     )}
 
                     {(viewType === 'grid' || viewType === 'table' || viewType === 'list') && (
                         <DSCard tone="light" className="shadow-2xl overflow-hidden rounded-lg">
-                            <header className="p-4 border-b border-[hsl(var(--border))] dark:border-white/5 space-y-3">
+                            <header className="p-4 border-b border-[hsl(var(--border))] space-y-3">
                                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                                     <div>
                                         <DSBadge tone="blue" label="Workspace Académico" />
-                                        <h3 className="text-lg font-bold text-[hsl(var(--text-primary))] dark:text-white tracking-tight mt-2">Control de Entregas</h3>
+                                        <h3 className="text-lg font-bold text-[hsl(var(--foreground))] tracking-tight mt-2">Control de Entregas</h3>
                                     </div>
-                                    <div className="flex bg-[hsl(var(--surface-2))] dark:bg-white/5 p-1 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 self-start md:self-center">
+                                    <div className="flex bg-[hsl(var(--surface-2))] p-1 rounded-lg border border-[hsl(var(--border))] self-start md:self-center">
                                         {(['courses', 'pending', 'history'] as const).map((m) => (
                                             <button
                                                 key={m}
@@ -195,7 +194,7 @@ export default function TeacherWorkspace() {
                                                 className={clsx(
                                                     "px-4 py-2 rounded-md text-2xs font-semibold uppercase tracking-wide transition-all",
                                                     viewMode === m
-                                                        ? "bg-[hsl(var(--bg-primary))] dark:bg-white/10 text-[hsl(var(--primary))] shadow-lg shadow-[hsl(var(--info)/5%)]"
+                                                        ? "bg-[hsl(var(--surface-1))] text-[hsl(var(--primary))] shadow-lg shadow-[hsl(var(--info)/5%)]"
                                                         : "text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-secondary))]"
                                                 )}
                                             >
@@ -219,18 +218,13 @@ export default function TeacherWorkspace() {
                                             </div>
                                         )}
                                         {courses.map(course => (
-                                            <div key={course.id} className="p-3 rounded-lg border-2 border-[hsl(var(--border))] dark:border-white/5 bg-[hsl(var(--bg-primary))] dark:bg-white/5 group hover:border-[hsl(var(--info)/100%)]/30 transition-all hover:shadow-xl hover:shadow-[hsl(var(--info)/5%)]">
+                                            <div key={course.id} className="p-3 rounded-lg border-2 border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] group hover:border-[hsl(var(--primary)/0.3)] transition-all hover:shadow-xl hover:shadow-[hsl(var(--info)/5%)]">
                                                 <div className="flex justify-between items-start mb-3">
-                                                    <span className="px-3 py-1 bg-info-soft dark:bg-[hsl(var(--info))]/30 rounded-lg text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--primary))]">{course.code}</span>
+                                                    <span className="px-3 py-1 bg-[hsl(var(--primary)/0.15)] rounded-lg text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--primary))]">{course.code}</span>
                                                     <DSBadge tone="emerald" label={course.modality} />
                                                 </div>
-                                                <h4 className="text-xl font-bold text-[hsl(var(--text-primary))] dark:text-white mb-4 tracking-tight leading-none">{course.title}</h4>
+                                                <h4 className="text-xl font-bold text-[hsl(var(--foreground))] mb-4 tracking-tight leading-none">{course.title}</h4>
                                                 <div className="flex items-center gap-4 mb-3">
-                                                    {/* F-02bis (2026-08-02): el serializador del backend ahora emite
-                                                        students_count real (count bulk Axioma-3, sin N+1) y lesson_count
-                                                        (singular). Para un curso global (sede_id NULL) un Manager con
-                                                        sede ve 0 — scope admin estricto, no es un 0 silencioso: es la
-                                                        semántica F-02 (el curso global es legible, su UGC no). */}
                                                     <div className="flex items-center gap-2 text-[hsl(var(--text-secondary))] text-2xs font-bold uppercase tracking-wide">
                                                         <Users size={14} className="text-[hsl(var(--primary))]" /> {course.students_count ?? 0} Alumnos
                                                     </div>
@@ -238,23 +232,23 @@ export default function TeacherWorkspace() {
                                                         <BookOpen size={14} className="text-[hsl(var(--primary))]" /> {course.lesson_count || 0} Lecciones
                                                     </div>
                                                 </div>
-                                                <div className="flex flex-col gap-2 pt-2 border-t border-[hsl(var(--border))] dark:border-white/5">
+                                                <div className="flex flex-col gap-2 pt-2 border-t border-[hsl(var(--border))]">
                                                     <button
                                                         onClick={() => router.push(`/plataforma/academy/courses/${course.id}/lessons`)}
-                                                        className="w-full py-2.5 px-3 bg-[hsl(var(--primary))] text-white rounded-lg text-xs font-bold uppercase tracking-wider hover:opacity-90 active:scale-95 transition-all shadow-md flex items-center justify-center gap-1.5"
+                                                        className="w-full py-2.5 px-3 bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] rounded-lg text-xs font-bold uppercase tracking-wider hover:opacity-90 active:scale-95 transition-all shadow-md flex items-center justify-center gap-1.5"
                                                     >
                                                         <BookOpen size={14} /> Gestionar Clases y Lecciones
                                                     </button>
                                                     <div className="flex gap-2">
                                                         <button
                                                             onClick={() => router.push(`/plataforma/academy/course/${course.id}`)}
-                                                            className="flex-1 py-2 px-2.5 bg-[hsl(var(--surface-2))] dark:bg-white/10 text-[hsl(var(--text-primary))] dark:text-white rounded-lg text-2xs font-bold uppercase tracking-wider hover:bg-[hsl(var(--surface-3))] transition-all flex items-center justify-center gap-1"
+                                                            className="flex-1 py-2 px-2.5 bg-[hsl(var(--surface-2))] text-[hsl(var(--foreground))] rounded-lg text-2xs font-bold uppercase tracking-wider hover:bg-[hsl(var(--surface-3))] transition-all flex items-center justify-center gap-1"
                                                         >
                                                             Ver Aula Virtual
                                                         </button>
                                                         <button
                                                             onClick={() => router.push(`/plataforma/academy/courses/${course.id}/manage`)}
-                                                            className="flex-1 py-2 px-2.5 bg-[hsl(var(--surface-2))] dark:bg-white/10 text-[hsl(var(--text-primary))] dark:text-white rounded-lg text-2xs font-bold uppercase tracking-wider hover:bg-[hsl(var(--surface-3))] transition-all flex items-center justify-center gap-1"
+                                                            className="flex-1 py-2 px-2.5 bg-[hsl(var(--surface-2))] text-[hsl(var(--foreground))] rounded-lg text-2xs font-bold uppercase tracking-wider hover:bg-[hsl(var(--surface-3))] transition-all flex items-center justify-center gap-1"
                                                         >
                                                             Administrar Cohorte
                                                         </button>
@@ -266,7 +260,7 @@ export default function TeacherWorkspace() {
                                 )}
 
                                 {viewMode === 'pending' && (
-                                    <div className="divide-y divide-[hsl(var(--border))] dark:divide-white/5">
+                                    <div className="divide-y divide-[hsl(var(--border))]">
                                         {pending.length === 0 && (
                                             <div className="py-1.5">
                                                 <EmptyState
@@ -277,16 +271,16 @@ export default function TeacherWorkspace() {
                                             </div>
                                         )}
                                         {pending.map((submission) => (
-                                            <article key={submission.id} className="p-4 flex flex-col lg:flex-row lg:items-center gap-3 group hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/[0.01] transition-colors">
+                                            <article key={submission.id} className="p-4 flex flex-col lg:flex-row lg:items-center gap-3 group hover:bg-[hsl(var(--surface-1))] transition-colors">
                                                 <div className="flex-1 min-w-0 space-y-3">
                                                     <div className="flex items-center gap-2">
                                                         <DSBadge tone="blue" label={submission.lesson_title} />
                                                         <span className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Entrega #{submission.id}</span>
                                                     </div>
-                                                    <h3 className="text-xl font-bold text-[hsl(var(--text-primary))] dark:text-white tracking-tight leading-none">
+                                                    <h3 className="text-xl font-bold text-[hsl(var(--foreground))] tracking-tight leading-none">
                                                         {submission.student_name}
                                                     </h3>
-                                                    <p className="text-sm text-[hsl(var(--text-secondary))] line-clamp-2 font-medium bg-[hsl(var(--surface-2))]/50 dark:bg-black/20 p-4 rounded-md italic">&quot;{submission.comment || 'Sin comentarios adicionales'}&quot;</p>
+                                                    <p className="text-sm text-[hsl(var(--text-secondary))] line-clamp-2 font-medium bg-[hsl(var(--surface-2))] p-4 rounded-md italic">&quot;{submission.comment || 'Sin comentarios adicionales'}&quot;</p>
                                                     <div className="flex items-center gap-4 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
                                                         <div className="flex items-center gap-2"><Loader2 size={12} className="text-[hsl(var(--warning))]" /> Pendiente</div>
                                                         <div className="size-1 rounded-full bg-[hsl(var(--surface-3))]" />
@@ -297,7 +291,7 @@ export default function TeacherWorkspace() {
                                                     <a
                                                         href={submission.file_url}
                                                         target="_blank"
-                                                        className="inline-flex items-center gap-2 px-3 py-2.5 rounded-md border-2 border-[hsl(var(--border))] dark:border-white/5 text-2xs font-semibold uppercase tracking-wide hover:bg-[hsl(var(--bg-primary))] dark:hover:bg-white/5 transition-all active:scale-95"
+                                                        className="inline-flex items-center gap-2 px-3 py-2.5 rounded-md border-2 border-[hsl(var(--border))] text-2xs font-semibold uppercase tracking-wide hover:bg-[hsl(var(--surface-2))] transition-all active:scale-95"
                                                         rel="noopener noreferrer"
                                                     >
                                                         <FileText size={14} /> Abrir
@@ -306,7 +300,7 @@ export default function TeacherWorkspace() {
                                                         disabled={gradingId === submission.id}
                                                         onClick={() => handleQuickGrade(submission, 'approve')}
                                                         className={clsx(
-                                                            'inline-flex items-center gap-2 px-3 py-2.5 rounded-md text-2xs font-semibold uppercase tracking-wide bg-[hsl(var(--success))] text-white shadow-xl shadow-[hsl(var(--success))/0.2] hover:scale-105 active:scale-95 transition-all',
+                                                            'inline-flex items-center gap-2 px-3 py-2.5 rounded-md text-2xs font-semibold uppercase tracking-wide bg-[hsl(var(--success))] text-[hsl(var(--primary-foreground))] shadow-xl shadow-[hsl(var(--success))/0.2] hover:scale-105 active:scale-95 transition-all',
                                                             gradingId === submission.id && 'opacity-50 cursor-wait'
                                                         )}
                                                     >
@@ -316,7 +310,7 @@ export default function TeacherWorkspace() {
                                                         disabled={gradingId === submission.id}
                                                         onClick={() => handleQuickGrade(submission, 'review')}
                                                         className={clsx(
-                                                            'inline-flex items-center gap-2 px-3 py-2.5 rounded-md text-2xs font-semibold uppercase tracking-wide bg-[hsl(var(--destructive))] text-white shadow-xl shadow-[hsl(var(--destructive))/0.2] hover:scale-105 active:scale-95 transition-all',
+                                                            'inline-flex items-center gap-2 px-3 py-2.5 rounded-md text-2xs font-semibold uppercase tracking-wide bg-[hsl(var(--destructive))] text-[hsl(var(--primary-foreground))] shadow-xl shadow-[hsl(var(--destructive))/0.2] hover:scale-105 active:scale-95 transition-all',
                                                             gradingId === submission.id && 'opacity-50 cursor-wait'
                                                         )}
                                                     >
@@ -331,7 +325,7 @@ export default function TeacherWorkspace() {
                                 {viewMode === 'history' && (
                                     <div className="overflow-x-auto">
                                         <table className="w-full text-left">
-                                            <thead className="bg-[hsl(var(--surface-1))]/50 dark:bg-white/[0.02] text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
+                                            <thead className="bg-[hsl(var(--surface-1))] text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
                                                 <tr>
                                                     <th className="px-4 py-1.5">Lección / Estudiante</th>
                                                     <th className="px-4 py-1.5">Nota Final</th>
@@ -339,7 +333,7 @@ export default function TeacherWorkspace() {
                                                     <th className="px-4 py-1.5 text-right">Estado</th>
                                                 </tr>
                                             </thead>
-                                            <tbody className="divide-y divide-[hsl(var(--border))] dark:divide-white/5">
+                                            <tbody className="divide-y divide-[hsl(var(--border))]">
                                                 {graded.length === 0 && (
                                                     <tr>
                                                         <td colSpan={4} className="py-1.5 text-center">
@@ -348,14 +342,14 @@ export default function TeacherWorkspace() {
                                                     </tr>
                                                 )}
                                                 {graded.map((submission) => (
-                                                    <tr key={submission.id} className="hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/[0.01] transition-colors">
+                                                    <tr key={submission.id} className="hover:bg-[hsl(var(--surface-1))] transition-colors">
                                                         <td className="px-4 py-2">
-                                                            <div className="font-bold text-[hsl(var(--text-primary))] dark:text-white uppercase tracking-tight">{submission.student_name}</div>
-                                                            <div className="text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide mt-1">{submission.lesson_title}</div>
-                                                        </td>
-                                                        <td className="px-4 py-2">
-                                                            <span className="text-lg font-bold text-[hsl(var(--text-primary))] dark:text-white">{submission.grade?.toFixed(1) ?? 'N/A'}</span>
-                                                        </td>
+                                                             <div className="font-bold text-[hsl(var(--foreground))] uppercase tracking-tight">{submission.student_name}</div>
+                                                             <div className="text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide mt-1">{submission.lesson_title}</div>
+                                                         </td>
+                                                         <td className="px-4 py-2">
+                                                             <span className="text-lg font-bold text-[hsl(var(--foreground))]">{submission.grade?.toFixed(1) ?? 'N/A'}</span>
+                                                         </td>
                                                         <td className="px-4 py-2 text-xs text-[hsl(var(--text-secondary))] font-medium">{new Date(submission.submitted_at).toLocaleDateString()}</td>
                                                         <td className="px-4 py-2 text-right">
                                                             <DSBadge tone="emerald" label="REVISADO" />

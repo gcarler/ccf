@@ -3,11 +3,11 @@
 import ViewSwitcher from "@/components/ViewSwitcher";
 import WorkspaceToolbar from "@/components/WorkspaceToolbar";
 import { useAuth } from "@/context/AuthContext";
-import { MINIMAL_VIEWS,useViewType } from "@/hooks/useViewType";
+import { MINIMAL_VIEWS, useViewType } from "@/hooks/useViewType";
 import { apiFetch } from "@/lib/http";
-import { BarChart3,BookOpen,GraduationCap,Search,UserRound, LucideIcon } from "lucide-react";
+import { BarChart3, BookOpen, GraduationCap, Search, UserRound, LucideIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect,useMemo,useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 type StudentRow = {
     id: string;
@@ -62,7 +62,7 @@ export default function AcademyStudentsPage() {
     }, [query, students]);
 
     return (
-        <div className="flex h-full flex-col overflow-hidden bg-[hsl(var(--bg-primary))]">
+        <div className="flex h-full flex-col overflow-hidden bg-[hsl(var(--surface-1))]">
             <WorkspaceToolbar
                 breadcrumbs={[
                     { label: "Academia", icon: GraduationCap, href: "/plataforma/academy" },
@@ -85,11 +85,11 @@ export default function AcademyStudentsPage() {
                     <Metric icon={BarChart3} label="Progreso prom." value={`${Math.round(students.reduce((sum, row) => sum + (row.progress ?? 0), 0) / Math.max(students.length, 1))}%`} />
                 </section>
 
-                <section className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] shadow-sm dark:border-white/10 dark:bg-white/5">
-                    <header className="flex flex-col gap-4 border-b border-[hsl(var(--border))] p-3 dark:border-white/10 md:flex-row md:items-center md:justify-between">
+                <section className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] shadow-sm">
+                    <header className="flex flex-col gap-4 border-b border-[hsl(var(--border))] p-3 md:flex-row md:items-center md:justify-between">
                         <div>
                             <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--primary))]">Directorio academico</p>
-                            <h1 className="text-lg font-bold text-[hsl(var(--text-primary))] dark:text-white">Estudiantes</h1>
+                            <h1 className="text-lg font-bold text-[hsl(var(--foreground))]">Estudiantes</h1>
                         </div>
                         <div className="relative w-full md:max-w-sm">
                             <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-[hsl(var(--text-secondary))]" size={17} />
@@ -97,7 +97,7 @@ export default function AcademyStudentsPage() {
                                 value={query}
                                 onChange={(event) => setQuery(event.target.value)}
                                 placeholder="Buscar participante..."
-                                className="w-full rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] py-1.5 pl-11 pr-4 text-sm font-semibold outline-none focus:border-[hsl(var(--info)/40%)] dark:border-white/10 dark:bg-black/20"
+                                className="w-full rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] py-1.5 pl-11 pr-4 text-sm font-semibold text-[hsl(var(--foreground))] outline-none focus:border-[hsl(var(--primary))]"
                             />
                         </div>
                     </header>
@@ -106,12 +106,12 @@ export default function AcademyStudentsPage() {
                         {viewType === 'list' ? (
                             <div className="space-y-1">
                                 {filtered.map(s => (
-                                    <div key={s.id} onClick={() => router.push(`/plataforma/academy/profile?student=${s.id}`)} className="flex items-center gap-3 p-3 rounded-lg hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5 cursor-pointer transition-all">
-                                        <div className="w-8 h-8 rounded-full bg-[hsl(var(--info-muted))] dark:bg-[hsl(var(--info))]/30 flex items-center justify-center shrink-0 text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] font-bold text-xs">
+                                    <div key={s.id} onClick={() => router.push(`/plataforma/academy/profile?student=${s.id}`)} className="flex items-center gap-3 p-3 rounded-lg hover:bg-[hsl(var(--surface-2))] cursor-pointer transition-all">
+                                        <div className="w-8 h-8 rounded-full bg-[hsl(var(--primary)/0.15)] flex items-center justify-center shrink-0 text-[hsl(var(--primary))] font-bold text-xs">
                                             {(s.full_name || s.name || s.username || 'E')[0]}
                                         </div>
                                         <div className="flex-1 min-w-0">
-                                            <p className="text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-white truncate">{s.full_name || s.name || s.username || "Participante"}</p>
+                                            <p className="text-sm font-semibold text-[hsl(var(--foreground))] truncate">{s.full_name || s.name || s.username || "Participante"}</p>
                                             <p className="text-xs text-[hsl(var(--text-secondary))]">{s.email || 'Sin correo'}</p>
                                         </div>
                                         <span className="text-xs text-[hsl(var(--text-secondary))]">{s.course_count ?? 0} cursos</span>
@@ -125,8 +125,8 @@ export default function AcademyStudentsPage() {
                         ) : viewType === 'grid' ? (
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 p-3">
                                 {filtered.map(s => (
-                                    <div key={s.id} onClick={() => router.push(`/plataforma/academy/profile?student=${s.id}`)} className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-[#1a1b1e] p-4 hover:shadow-md cursor-pointer transition-all">
-                                        <h3 className="text-sm font-bold text-[hsl(var(--text-primary))] dark:text-white">{s.full_name || s.name || s.username || "Estudiante"}</h3>
+                                    <div key={s.id} onClick={() => router.push(`/plataforma/academy/profile?student=${s.id}`)} className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] p-4 hover:shadow-md cursor-pointer transition-all">
+                                        <h3 className="text-sm font-bold text-[hsl(var(--foreground))]">{s.full_name || s.name || s.username || "Estudiante"}</h3>
                                         <p className="text-xs text-[hsl(var(--text-secondary))] mt-1">{s.email || 'Sin correo'}</p>
                                         <div className="flex items-center justify-between mt-3">
                                             <span className="text-xs text-[hsl(var(--text-secondary))]">{s.course_count ?? 0} cursos</span>
@@ -141,7 +141,7 @@ export default function AcademyStudentsPage() {
                         ) : (
                         <table className="min-w-full text-sm">
                             <thead>
-                                <tr className="border-b border-[hsl(var(--border))] text-left text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] dark:border-white/10">
+                                <tr className="border-b border-[hsl(var(--border))] text-left text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
                                     <th className="px-4 py-1.5">Nombre</th>
                                     <th className="px-4 py-1.5">Correo</th>
                                     <th className="px-4 py-1.5">Cursos</th>
@@ -153,15 +153,15 @@ export default function AcademyStudentsPage() {
                                 {filtered.map((student) => (
                                     <tr
                                         key={student.id}
-                                        className="cursor-pointer border-b border-[hsl(var(--border))] transition-colors hover:bg-[hsl(var(--surface-1))] dark:border-white/5 dark:hover:bg-white/[0.03]"
+                                        className="cursor-pointer border-b border-[hsl(var(--border))] transition-colors hover:bg-[hsl(var(--surface-2))]"
                                         onClick={() => router.push(`/plataforma/academy/profile?student=${student.id}`)}
                                     >
-                                        <td className="px-4 py-1.5 font-bold text-[hsl(var(--text-primary))] dark:text-white">{student.full_name || student.name || "Estudiante"}</td>
+                                        <td className="px-4 py-1.5 font-bold text-[hsl(var(--foreground))]">{student.full_name || student.name || "Estudiante"}</td>
                                         <td className="px-4 py-1.5 text-[hsl(var(--text-secondary))]">{student.email || "Sin correo"}</td>
                                         <td className="px-4 py-1.5 text-[hsl(var(--text-secondary))]">{student.course_count ?? 0}</td>
                                         <td className="px-4 py-1.5 text-[hsl(var(--text-secondary))]">{student.progress ?? 0}%</td>
                                         <td className="px-4 py-1.5">
-                                            <span className="rounded-full bg-[hsl(var(--success-muted))] px-3 py-1 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--success))]">
+                                            <span className="rounded-full bg-[hsl(var(--success)/0.15)] px-3 py-1 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--success))]">
                                                 {student.status || "Activo"}
                                             </span>
                                         </td>
@@ -193,12 +193,12 @@ export default function AcademyStudentsPage() {
 
 function Metric({ icon: Icon, label, value }: { icon: LucideIcon; label: string; value: number | string }) {
     return (
-        <div className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-3 shadow-sm dark:border-white/10 dark:bg-white/5">
-            <div className="mb-3 flex size-8 items-center justify-center rounded-lg bg-info-soft text-[hsl(var(--primary))] dark:bg-[hsl(var(--info))]/10">
+        <div className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-3 shadow-sm">
+            <div className="mb-3 flex size-8 items-center justify-center rounded-lg bg-[hsl(var(--primary)/0.1)] text-[hsl(var(--primary))]">
                 <Icon size={20} />
             </div>
             <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{label}</p>
-            <p className="text-lg font-bold text-[hsl(var(--text-primary))] dark:text-white">{value}</p>
+            <p className="text-lg font-bold text-[hsl(var(--foreground))]">{value}</p>
         </div>
     );
 }

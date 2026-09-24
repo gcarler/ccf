@@ -29,46 +29,46 @@ export default function AcademyAccountPage() {
     const enrollments = profile?.active_courses ?? [];
     const averageGrade = enrollments.filter((item) => item.final_grade != null);
     const stats = [
-        { icon: BookOpen, label: 'Cursos Activos', value: profile?.enrollments_count ?? 0, color: 'text-[hsl(var(--primary))]', bg: 'bg-info-soft dark:bg-[hsl(var(--info))]/10' },
-        { icon: Award, label: 'Certificados', value: profile?.certificates_count ?? 0, color: 'text-warning-text', bg: 'bg-warning-soft dark:bg-[hsl(var(--warning))]/10' },
-        { icon: Star, label: 'Progreso', value: `${Math.round(profile?.total_progress ?? 0)}%`, color: 'text-info-text', bg: 'bg-info-soft dark:bg-[hsl(var(--info))]/10' },
-        { icon: Calendar, label: 'Promedio', value: averageGrade.length ? `${Math.round(averageGrade.reduce((sum, item) => sum + (item.final_grade ?? 0), 0) / averageGrade.length)}%` : '—', color: 'text-success-text', bg: 'bg-success-soft dark:bg-[hsl(var(--success))]/10' },
+        { icon: BookOpen, label: 'Cursos Activos', value: profile?.enrollments_count ?? 0, color: 'text-[hsl(var(--primary))]', bg: 'bg-[hsl(var(--primary)/0.1)]' },
+        { icon: Award, label: 'Certificados', value: profile?.certificates_count ?? 0, color: 'text-[hsl(var(--warning))]', bg: 'bg-[hsl(var(--warning)/0.1)]' },
+        { icon: Star, label: 'Progreso', value: `${Math.round(profile?.total_progress ?? 0)}%`, color: 'text-[hsl(var(--primary))]', bg: 'bg-[hsl(var(--primary)/0.1)]' },
+        { icon: Calendar, label: 'Promedio', value: averageGrade.length ? `${Math.round(averageGrade.reduce((sum, item) => sum + (item.final_grade ?? 0), 0) / averageGrade.length)}%` : '—', color: 'text-[hsl(var(--success))]', bg: 'bg-[hsl(var(--success)/0.1)]' },
     ];
 
     return (
-        <div className="min-h-full bg-[hsl(var(--surface-1))] dark:bg-[#1E1F21]">
+        <div className="min-h-full bg-[hsl(var(--surface-1))]">
             {/* Hero Header */}
-            <div className="bg-gradient-to-br from-[hsl(var(--info))] to-[hsl(var(--info))] relative overflow-hidden">
+            <div className="bg-[hsl(var(--primary))] relative overflow-hidden">
                 <div className="absolute inset-0 opacity-10"
-                    style={{ backgroundImage: "radial-gradient(circle at 70% 50%, white 0%, transparent 60%)" }} />
+                    style={{ backgroundImage: "radial-gradient(circle at 70% 50%, hsl(var(--primary-foreground)) 0%, transparent 60%)" }} />
                 <div className="max-w-4xl mx-auto px-3 py-1.5 relative">
                     <div className="flex items-end gap-4">
                         <div className="relative">
-                            <div className="size-10 rounded-lg bg-white/20 backdrop-blur border-2 border-white/30 flex items-center justify-center text-white text-xl font-bold shadow-2xl">
+                            <div className="size-10 rounded-lg bg-[hsl(var(--primary-foreground)/0.2)] backdrop-blur border-2 border-[hsl(var(--primary-foreground)/0.3)] flex items-center justify-center text-[hsl(var(--primary-foreground))] text-xl font-bold shadow-2xl">
                                 {(profile?.username ?? user?.username ?? 'E')[0]?.toUpperCase()}
                             </div>
-                            <button className="absolute -bottom-2 -right-2 size-8 rounded-lg bg-[hsl(var(--bg-primary))] text-[hsl(var(--primary))] flex items-center justify-center shadow-lg hover:scale-110 transition-all">
+                            <button className="absolute -bottom-2 -right-2 size-8 rounded-lg bg-[hsl(var(--surface-1))] text-[hsl(var(--primary))] flex items-center justify-center shadow-lg hover:scale-110 transition-all">
                                 <Camera size={14} />
                             </button>
                         </div>
                         <div className="pb-1">
                             <div className="flex items-center gap-2 mb-1">
-                                <span className="px-2 py-0.5 rounded-full bg-white/20 text-white text-2xs font-semibold uppercase tracking-wide">
+                                <span className="px-2 py-0.5 rounded-full bg-[hsl(var(--primary-foreground)/0.2)] text-[hsl(var(--primary-foreground))] text-2xs font-semibold uppercase tracking-wide">
                                     Estudiante
                                 </span>
-                                <span className="px-2 py-0.5 rounded-full bg-[hsl(var(--warning))]/30 text-[hsl(var(--warning))] text-2xs font-semibold uppercase tracking-wide">
+                                <span className="px-2 py-0.5 rounded-full bg-[hsl(var(--warning)/0.3)] text-[hsl(var(--warning))] text-2xs font-semibold uppercase tracking-wide">
                                     Destacado
                                 </span>
                             </div>
-                            <h1 className="text-lg font-bold text-white tracking-tight">
+                            <h1 className="text-lg font-bold text-[hsl(var(--primary-foreground))] tracking-tight">
                                 {profile?.username ?? user?.username ?? 'Estudiante CCF'}
                             </h1>
-                            <p className="text-[hsl(var(--info))] text-sm font-medium">
+                            <p className="text-[hsl(var(--primary-foreground)/0.8)] text-sm font-medium">
                                 {user?.email ?? '—'}
                             </p>
                         </div>
                         <div className="ml-auto pb-1">
-                            <button className="flex items-center gap-2 px-3 py-1.5 bg-white/20 hover:bg-white/30 backdrop-blur border border-white/20 text-white rounded-lg text-xs font-semibold uppercase tracking-wide transition-all">
+                            <button className="flex items-center gap-2 px-3 py-1.5 bg-[hsl(var(--primary-foreground)/0.2)] hover:bg-[hsl(var(--primary-foreground)/0.3)] backdrop-blur border border-[hsl(var(--primary-foreground)/0.2)] text-[hsl(var(--primary-foreground))] rounded-lg text-xs font-semibold uppercase tracking-wide transition-all">
                                 <Edit2 size={14} /> Editar Perfil
                             </button>
                         </div>
@@ -76,7 +76,7 @@ export default function AcademyAccountPage() {
                 </div>
             </div>
 
- <div className="w-full px-3 py-1.5 space-y-3">
+            <div className="w-full px-3 py-1.5 space-y-3">
                 {/* Stats */}
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                     {stats.map((s, i) => (
@@ -85,7 +85,7 @@ export default function AcademyAccountPage() {
                             initial={{ opacity: 0, y: 12 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: i * 0.05 }}
-                            className="bg-[hsl(var(--bg-primary))] dark:bg-[#1a1d27] rounded-lg border border-[hsl(var(--border))]/60 dark:border-white/5 p-3 shadow-sm"
+                            className="bg-[hsl(var(--surface-2))] rounded-lg border border-[hsl(var(--border))] p-3 shadow-sm"
                         >
                             <div className={`size-8 rounded-lg ${s.bg} flex items-center justify-center mb-3`}>
                                 <s.icon size={18} className={s.color} />
@@ -102,7 +102,7 @@ export default function AcademyAccountPage() {
                         initial={{ opacity: 0, y: 12 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: 0.2 }}
-                        className="col-span-1 bg-[hsl(var(--bg-primary))] dark:bg-[#1a1d27] rounded-lg border border-[hsl(var(--border))]/60 dark:border-white/5 p-3 shadow-sm space-y-4"
+                        className="col-span-1 bg-[hsl(var(--surface-2))] rounded-lg border border-[hsl(var(--border))] p-3 shadow-sm space-y-4"
                     >
                         <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Informacion Personal</p>
                         {[
@@ -110,12 +110,12 @@ export default function AcademyAccountPage() {
                             { icon: ShieldCheck, label: 'Rol de plataforma', value: user?.role ?? '—' },
                         ].map(row => (
                             <div key={row.label} className="flex items-start gap-3">
-                                <div className="size-8 rounded-lg bg-[hsl(var(--surface-1))] dark:bg-white/5 flex items-center justify-center text-[hsl(var(--text-secondary))] shrink-0">
+                                <div className="size-8 rounded-lg bg-[hsl(var(--surface-1))] flex items-center justify-center text-[hsl(var(--text-secondary))] shrink-0">
                                     <row.icon size={14} />
                                 </div>
                                 <div>
                                     <p className="text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">{row.label}</p>
-                                    <p className="text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] truncate">{row.value}</p>
+                                    <p className="text-sm font-semibold text-[hsl(var(--foreground))] truncate">{row.value}</p>
                                 </div>
                             </div>
                         ))}
@@ -126,7 +126,7 @@ export default function AcademyAccountPage() {
                         initial={{ opacity: 0, y: 12 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: 0.25 }}
-                        className="col-span-2 bg-[hsl(var(--bg-primary))] dark:bg-[#1a1d27] rounded-lg border border-[hsl(var(--border))]/60 dark:border-white/5 p-3 shadow-sm"
+                        className="col-span-2 bg-[hsl(var(--surface-2))] rounded-lg border border-[hsl(var(--border))] p-3 shadow-sm"
                     >
                         <div className="flex items-center justify-between mb-4">
                             <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Mis Cursos</p>
@@ -135,7 +135,7 @@ export default function AcademyAccountPage() {
                         {loading ? (
                             <div className="space-y-3">
                                 {[1, 2, 3].map(i => (
-                                    <div key={`skel-${i}`} className="h-8 bg-[hsl(var(--surface-1))] dark:bg-white/5 rounded-lg animate-pulse" />
+                                    <div key={`skel-${i}`} className="h-8 bg-[hsl(var(--surface-1))] rounded-lg animate-pulse" />
                                 ))}
                             </div>
                         ) : enrollments.length === 0 ? (
@@ -147,13 +147,13 @@ export default function AcademyAccountPage() {
                         ) : (
                             <div className="space-y-2">
                                 {enrollments.map((course: EnrollmentRecord) => (
-                                    <div key={course.id} className="flex items-center gap-3 p-3 rounded-lg hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5 transition-all">
-                                        <div className="size-8 rounded-lg bg-gradient-to-br from-[hsl(var(--info))] to-[hsl(var(--info))] flex items-center justify-center text-white text-sm font-semibold shrink-0">
+                                    <div key={course.id} className="flex items-center gap-3 p-3 rounded-lg hover:bg-[hsl(var(--surface-1))] transition-all">
+                                        <div className="size-8 rounded-lg bg-[hsl(var(--primary))] flex items-center justify-center text-[hsl(var(--primary-foreground))] text-sm font-semibold shrink-0">
                                             {course.course.title?.[0] ?? 'C'}
                                         </div>
                                         <div className="flex-1 min-w-0">
-                                            <p className="text-sm font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] truncate">{course.course.title}</p>
-                                            <div className="w-full bg-[hsl(var(--surface-2))] dark:bg-white/10 rounded-full h-1.5 mt-1.5">
+                                            <p className="text-sm font-bold text-[hsl(var(--foreground))] truncate">{course.course.title}</p>
+                                            <div className="w-full bg-[hsl(var(--surface-3))] rounded-full h-1.5 mt-1.5">
                                                 <div className="bg-[hsl(var(--primary))] h-1.5 rounded-full" style={{ width: `${course.progress_percent}%` }} />
                                             </div>
                                         </div>

@@ -108,26 +108,26 @@ export default function StudentSchedule() {
                 watchers={['Equipo Horarios', 'Optimus Brain']}
                 primaryAction={{ label: icsGenerating ? 'Generando...' : 'Exportar .ics', icon: Download, onClick: exportCalendar }}
             />
-            <div className="rounded-md border border-[hsl(var(--border))] dark:border-white/5 bg-[hsl(var(--bg-primary))] dark:bg-[#111418] shadow-xl overflow-hidden">
-            <div className="flex gap-4 pb-4 overflow-x-auto hide-scrollbar p-4 border-b border-[hsl(var(--border))] dark:border-white/5">
+            <div className="rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] shadow-xl overflow-hidden">
+            <div className="flex gap-4 pb-4 overflow-x-auto hide-scrollbar p-4 border-b border-[hsl(var(--border))]">
                 {DAYS.map((day, index) => (
                     <button
                         key={day}
                             onClick={() => setActiveDay(index)}
                             className={`flex flex-col items-center gap-3 cursor-pointer group shrink-0 transition-all ${
-                                activeDay === index ? 'text-white' : 'text-[hsl(var(--text-secondary))] opacity-60'
+                                activeDay === index ? 'text-[hsl(var(--foreground))]' : 'text-[hsl(var(--text-secondary))] opacity-60'
                             }`}
                         >
                             <div
                                 className={`flex h-8 w-14 items-center justify-center rounded-lg border text-sm font-bold uppercase tracking-wide ${
                                     activeDay === index
-                                        ? 'bg-primary border-primary/50 shadow-xl shadow-primary/30'
-                                        : 'bg-[hsl(var(--bg-muted))] border-white/10 hover:border-primary/30'
+                                        ? 'bg-[hsl(var(--primary))] border-[hsl(var(--primary)/0.5)] shadow-xl text-[hsl(var(--primary-foreground))]'
+                                        : 'bg-[hsl(var(--surface-2))] border-[hsl(var(--border))] hover:border-[hsl(var(--primary)/0.3)]'
                                 }`}
                             >
                                 {day.substring(0, 3)}
                             </div>
-                            {activeDay === index && <div className="w-1.5 h-1.5 rounded-full bg-primary shadow-[0_0_8px_rgba(66,66,240,0.8)]"></div>}
+                            {activeDay === index && <div className="w-1.5 h-1.5 rounded-full bg-[hsl(var(--primary))] shadow-[0_0_8px_hsl(var(--primary)/0.8)]"></div>}
                         </button>
                     ))}
                 </div>
@@ -149,50 +149,50 @@ export default function StudentSchedule() {
 
                     {filteredSessions.length > 0 && (
                         <div className="flex items-center justify-between mb-3">
-                            <h3 className="text-primary text-xs font-semibold uppercase tracking-wide">{DAYS[activeDay]}</h3>
-                            <span className="text-2xs text-[hsl(var(--text-secondary))] font-bold uppercase tracking-wide border border-white/10 px-2 py-1 rounded">
+                            <h3 className="text-[hsl(var(--primary))] text-xs font-semibold uppercase tracking-wide">{DAYS[activeDay]}</h3>
+                            <span className="text-2xs text-[hsl(var(--text-secondary))] font-bold uppercase tracking-wide border border-[hsl(var(--border))] px-2 py-1 rounded">
                                 {filteredSessions.length} sesiones
                             </span>
                         </div>
                     )}
 
                     <div className="relative">
-                        <div className="absolute left-[11px] top-4 bottom-4 w-[2px] bg-white/5 rounded-full" />
+                        <div className="absolute left-[11px] top-4 bottom-4 w-[2px] bg-[hsl(var(--border))] rounded-full" />
                         {filteredSessions.map((session) => (
                             <div key={session.id} className="relative z-10 grid grid-cols-[24px_1fr] gap-x-6 mb-3">
                                 <div className="flex justify-center pt-3">
                                     <div
                                         className={`w-3 h-3 rounded-full ${
-                                            session.isVirtual ? 'bg-[hsl(var(--success))] ring-4 ring-[hsl(var(--success)/20%)]' : 'bg-primary ring-4 ring-primary/20'
+                                            session.isVirtual ? 'bg-[hsl(var(--success))] ring-4 ring-[hsl(var(--success)/20%)]' : 'bg-[hsl(var(--primary))] ring-4 ring-[hsl(var(--primary)/0.2)]'
                                         }`}
                                     ></div>
                                 </div>
-                                <div className="bg-[hsl(var(--bg-muted))]/50 backdrop-blur-xl p-4 rounded-md shadow-xl border border-white/5 hover:border-primary/30 transition-all">
+                                <div className="bg-[hsl(var(--surface-2))] backdrop-blur-xl p-4 rounded-md shadow-xl border border-[hsl(var(--border))] hover:border-[hsl(var(--primary)/0.3)] transition-all">
                                     <div className="flex justify-between items-start mb-4">
-                                        <span className="text-[hsl(var(--text-secondary))] text-xs font-semibold uppercase tracking-wide px-3 py-1.5 bg-[hsl(var(--surface-2))] rounded-md border border-white/5">
+                                        <span className="text-[hsl(var(--text-secondary))] text-xs font-semibold uppercase tracking-wide px-3 py-1.5 bg-[hsl(var(--surface-1))] rounded-md border border-[hsl(var(--border))]">
                                             {session.time} - {nextSlot(session.time)}
                                         </span>
-                                        <button className="text-[hsl(var(--text-secondary))] hover:text-white p-1">
+                                        <button className="text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--foreground))] p-1">
                                             <MoreHorizontal size={20} />
                                         </button>
                                     </div>
-                                    <h4 className="text-white text-base font-bold mb-3 tracking-tight">{session.title}</h4>
+                                    <h4 className="text-[hsl(var(--foreground))] text-base font-bold mb-3 tracking-tight">{session.title}</h4>
                                     <p className="text-[hsl(var(--text-secondary))] text-sm mb-4">{session.course}</p>
                                     <div className="flex flex-col gap-2">
                                         <div className="flex items-center gap-3 text-[hsl(var(--text-secondary))] text-sm">
-                                            <div className="p-1.5 rounded-lg bg-white/5">
-                                                <Users size={14} className="text-primary-300" />
+                                            <div className="p-1.5 rounded-lg bg-[hsl(var(--surface-1))]">
+                                                <Users size={14} className="text-[hsl(var(--primary))]" />
                                             </div>
                                             <span className="font-medium">{session.instructor}</span>
                                         </div>
                                         <div className="flex items-center gap-3 text-[hsl(var(--text-secondary))] text-sm">
-                                            <div className="p-1.5 rounded-lg bg-white/5">
+                                            <div className="p-1.5 rounded-lg bg-[hsl(var(--surface-1))]">
                                                 <MapPin size={14} className="text-[hsl(var(--danger))]" />
                                             </div>
                                             <span className="font-medium">{session.location}</span>
                                         </div>
                                         {session.isVirtual && (
-                                            <button className="flex items-center gap-3 text-[hsl(var(--success))] text-sm font-bold mt-2 bg-[hsl(var(--success))]/10 p-3 rounded-md border border-[hsl(var(--success)/100%)]/20 hover:bg-[hsl(var(--success))]/20 transition-colors w-fit">
+                                            <button className="flex items-center gap-3 text-[hsl(var(--success))] text-sm font-bold mt-2 bg-[hsl(var(--success)/0.1)] p-3 rounded-md border border-[hsl(var(--success)/0.3)] hover:bg-[hsl(var(--success)/0.2)] transition-colors w-fit">
                                                 <Video size={16} className="fill-current" />
                                                 <span className="uppercase tracking-wide text-2xs">Unirse a sesión</span>
                                             </button>

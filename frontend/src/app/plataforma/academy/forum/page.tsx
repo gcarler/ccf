@@ -90,7 +90,7 @@ export default function AcademyForumPage() {
     };
 
     return (
-        <div className="flex h-full flex-col overflow-hidden bg-[hsl(var(--surface-1))]/50 font-display dark:bg-[hsl(var(--surface-1))]">
+        <div className="flex h-full flex-col overflow-hidden bg-[hsl(var(--surface-1))] font-display">
             <WorkspaceToolbar
                 breadcrumbs={[
                     { label: "Academia", icon: BookOpen },
@@ -101,7 +101,7 @@ export default function AcademyForumPage() {
                 rightActions={
                     <button
                         onClick={() => setIsCreateOpen(true)}
-                        className="flex items-center gap-2 rounded-md bg-[hsl(var(--primary))] px-4 py-2 text-xs font-semibold uppercase tracking-wide text-white shadow-xl shadow-[hsl(var(--info)/20%)] transition-all active:scale-95"
+                        className="flex items-center gap-2 rounded-md bg-[hsl(var(--primary))] px-4 py-2 text-xs font-semibold uppercase tracking-wide text-[hsl(var(--primary-foreground))] shadow-xl shadow-[hsl(var(--info)/20%)] transition-all active:scale-95"
                     >
                         <Plus size={14} /> Iniciar Debate
                     </button>
@@ -111,7 +111,7 @@ export default function AcademyForumPage() {
             <main className="flex-1 overflow-y-auto p-4 scrollbar-thin lg:p-4">
                 <div className="mx-auto grid max-w-7xl grid-cols-1 gap-3 lg:grid-cols-12">
                     <aside className="space-y-3 lg:col-span-3">
-                        <section className="space-y-3 rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-4 shadow-xl dark:border-white/10 dark:bg-white/5">
+                        <section className="space-y-3 rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-4 shadow-xl">
                             <h3 className="px-2 text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Categorias</h3>
                             <div className="space-y-1">
                                 {categories.map((category) => (
@@ -121,25 +121,25 @@ export default function AcademyForumPage() {
                                         className={clsx(
                                             "flex w-full items-center justify-between rounded-lg p-4 text-sm font-bold transition-all",
                                             activeCategory === category
-                                                ? "bg-info-soft text-[hsl(var(--primary))] dark:bg-[hsl(var(--info))]/10"
-                                                : "text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5"
+                                                ? "bg-[hsl(var(--primary)/0.1)] text-[hsl(var(--primary))]"
+                                                : "text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))]"
                                         )}
                                     >
                                         {category}
-                                        {activeCategory === category && <div className="size-1.5 rounded-full bg-[hsl(var(--primary))] shadow-[0_0_8px_#2563eb]" />}
+                                        {activeCategory === category && <div className="size-1.5 rounded-full bg-[hsl(var(--primary))] shadow-[0_0_8px_hsl(var(--primary))]" />}
                                     </button>
                                 ))}
                             </div>
                         </section>
 
-                        <section className="relative overflow-hidden rounded-lg bg-[hsl(var(--primary))] p-4 text-white shadow-2xl">
-                            <div className="absolute -right-10 -top-5 size-10 rounded-full bg-white/10 blur-3xl" />
+                        <section className="relative overflow-hidden rounded-lg bg-[hsl(var(--primary))] p-4 text-[hsl(var(--primary-foreground))] shadow-2xl">
+                            <div className="absolute -right-10 -top-5 size-10 rounded-full bg-[hsl(var(--primary-foreground)/0.1)] blur-3xl" />
                             <div className="relative z-10 space-y-4">
                                 <div className="flex items-center gap-3">
                                     <Bot size={20} fill="currentColor" />
                                     <h4 className="text-xs font-semibold uppercase tracking-wide">IA Moderator</h4>
                                 </div>
-                                <p className="text-xs font-medium italic leading-relaxed text-[hsl(var(--info))]">
+                                <p className="text-xs font-medium italic leading-relaxed text-[hsl(var(--primary-foreground)/0.8)]">
                                     Optimus sugiere revisar los debates recientes antes de abrir uno nuevo para evitar duplicados.
                                 </p>
                             </div>
@@ -148,13 +148,13 @@ export default function AcademyForumPage() {
 
                     <div className="space-y-3 pb-4 lg:col-span-9">
                         <div className="flex flex-col justify-between gap-4 px-4 md:flex-row md:items-center">
-                            <h2 className="text-lg font-semibold uppercase tracking-tight text-[hsl(var(--text-primary))] dark:text-white">Debates Populares</h2>
+                            <h2 className="text-lg font-semibold uppercase tracking-tight text-[hsl(var(--foreground))]">Debates Populares</h2>
                             <div className="relative w-full md:w-80">
                                 <input
                                     value={search}
                                     onChange={(event) => setSearch(event.target.value)}
                                     placeholder="Buscar temas..."
-                                    className="w-full rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] px-4 py-1.5 text-sm font-bold outline-none transition-all focus:ring-4 focus:ring-[hsl(var(--primary))]/10 dark:border-white/10 dark:bg-white/5"
+                                    className="w-full rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] px-4 py-1.5 text-sm font-bold text-[hsl(var(--foreground))] outline-none transition-all focus:ring-4 focus:ring-[hsl(var(--primary))]/10"
                                 />
                                 <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-[hsl(var(--text-secondary))]" />
                             </div>
@@ -162,9 +162,9 @@ export default function AcademyForumPage() {
 
                         <div className={clsx("gap-4", viewMode === "grid" ? "grid md:grid-cols-2" : "space-y-4")}>
                             {!loading && visibleThreads.length === 0 && (
-                                <div className="rounded-md border border-[hsl(var(--border))] bg-white/50 py-1.5 text-center dark:border-white/10 dark:bg-white/5">
-                                    <MessageSquare className="mx-auto h-8 w-16 text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]" />
-                                    <h3 className="mt-4 text-base font-bold text-[hsl(var(--text-primary))] dark:text-white">Aun no hay debates</h3>
+                                <div className="rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] py-1.5 text-center">
+                                    <MessageSquare className="mx-auto h-8 w-16 text-[hsl(var(--text-secondary))]" />
+                                    <h3 className="mt-4 text-base font-bold text-[hsl(var(--foreground))]">Aun no hay debates</h3>
                                     <p className="text-[hsl(var(--text-secondary))]">Inicia una conversacion en esta categoria.</p>
                                 </div>
                             )}
@@ -173,28 +173,28 @@ export default function AcademyForumPage() {
                                     key={thread.id}
                                     initial={{ opacity: 0, y: 10 }}
                                     animate={{ opacity: 1, y: 0 }}
-                                    className="group cursor-pointer rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-4 shadow-sm transition-all hover:border-[hsl(var(--info)/100%)]/20 hover:shadow-xl dark:border-white/10 dark:bg-white/5"
+                                    className="group cursor-pointer rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] p-4 shadow-sm transition-all hover:border-[hsl(var(--primary)/0.3)] hover:shadow-xl"
                                 >
                                     <div className="flex flex-col items-start gap-4 md:flex-row md:items-center">
-                                        <div className="flex shrink-0 flex-col items-center gap-1 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-3 dark:border-white/5 dark:bg-white/5">
+                                        <div className="flex shrink-0 flex-col items-center gap-1 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-3">
                                             <ThumbsUp size={18} className="text-[hsl(var(--text-secondary))] transition-colors group-hover:text-[hsl(var(--primary))]" />
-                                            <span className="font-semibold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">{thread.upvotes}</span>
+                                            <span className="font-semibold text-[hsl(var(--foreground))]">{thread.upvotes}</span>
                                         </div>
                                         <div className="flex-1 space-y-3">
                                             <div className="flex items-center gap-3">
-                                                <span className="rounded-full bg-info-soft px-3 py-1 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--primary))] dark:bg-[hsl(var(--info))]/20 dark:text-[hsl(var(--primary))]">{thread.category}</span>
-                                                {thread.is_resolved && <span className="flex items-center gap-1.5 rounded-full bg-success-soft px-3 py-1 text-2xs font-semibold uppercase tracking-wide text-success-text dark:bg-[hsl(var(--success))]/20"><CheckCircle2 size={12} /> Resuelto</span>}
+                                                <span className="rounded-full bg-[hsl(var(--primary)/0.15)] px-3 py-1 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--primary))]">{thread.category}</span>
+                                                {thread.is_resolved && <span className="flex items-center gap-1.5 rounded-full bg-[hsl(var(--success)/0.15)] px-3 py-1 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--success))]"><CheckCircle2 size={12} /> Resuelto</span>}
                                             </div>
-                                            <h4 className="text-base font-bold tracking-tight text-[hsl(var(--text-primary))] transition-colors group-hover:text-[hsl(var(--primary))] dark:text-white">{thread.title}</h4>
+                                            <h4 className="text-base font-bold tracking-tight text-[hsl(var(--foreground))] transition-colors group-hover:text-[hsl(var(--primary))]">{thread.title}</h4>
                                             <div className="flex items-center gap-4 text-[hsl(var(--text-secondary))]">
                                                 <div className="flex items-center gap-1.5"><User size={14} /><span className="text-xs font-bold">{thread.author}</span></div>
                                                 <div className="size-1 rounded-full bg-[hsl(var(--surface-2))]" />
                                                 <div className="flex items-center gap-1.5"><Clock size={14} /><span className="text-xs font-bold">{thread.last_activity}</span></div>
                                             </div>
                                         </div>
-                                        <div className="flex shrink-0 items-center gap-4 md:border-l md:border-[hsl(var(--border))] md:pl-8 dark:md:border-white/5">
+                                        <div className="flex shrink-0 items-center gap-4 md:border-l md:border-[hsl(var(--border))] md:pl-8">
                                             <div className="text-center">
-                                                <p className="text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-white">{thread.replies}</p>
+                                                <p className="text-sm font-semibold text-[hsl(var(--foreground))]">{thread.replies}</p>
                                                 <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Respuestas</p>
                                             </div>
                                             <ChevronRight size={24} className="text-[hsl(var(--text-secondary))] transition-all group-hover:translate-x-1 group-hover:text-[hsl(var(--primary))]" />
@@ -221,7 +221,7 @@ export default function AcademyForumPage() {
                             value={newThread.title}
                             onChange={(event) => setNewThread((prev) => ({ ...prev, title: event.target.value }))}
                             placeholder="Tema del debate"
-                            className="w-full rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] px-4 py-1.5 text-sm font-bold outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.2] dark:border-white/10 dark:bg-white/5 dark:text-white"
+                            className="w-full rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] px-4 py-1.5 text-sm font-bold text-[hsl(var(--foreground))] outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.2]"
                         />
                     </div>
                     <div className="space-y-2">
@@ -229,12 +229,12 @@ export default function AcademyForumPage() {
                         <select
                             value={newThread.category}
                             onChange={(event) => setNewThread((prev) => ({ ...prev, category: event.target.value }))}
-                            className="w-full rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] px-4 py-1.5 text-sm font-bold outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.2] dark:border-white/10 dark:bg-white/5 dark:text-white"
+                            className="w-full rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] px-4 py-1.5 text-sm font-bold text-[hsl(var(--foreground))] outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.2]"
                         >
                             {categories.filter((category) => category !== "Todos").map((category) => <option key={category} value={category}>{category}</option>)}
                         </select>
                     </div>
-                    <button disabled={saving} className="w-full rounded-lg bg-[hsl(var(--primary))] px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-white disabled:opacity-60">
+                    <button disabled={saving} className="w-full rounded-lg bg-[hsl(var(--primary))] px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-[hsl(var(--primary-foreground))] disabled:opacity-60">
                         {saving ? "Publicando..." : "Publicar debate"}
                     </button>
                 </form>

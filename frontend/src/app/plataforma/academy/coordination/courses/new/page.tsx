@@ -82,7 +82,7 @@ export default function NewCoursePage() {
                 setViewType={setViewType}
                 availableViews={['grid', 'list', 'table']}
                 leftActions={
-                    <button onClick={() => router.back()} className="p-2.5 hover:bg-[hsl(var(--bg-primary))] dark:hover:bg-white/5 rounded-md transition-all border border-transparent hover:border-[hsl(var(--border))] dark:hover:border-white/10 shadow-sm">
+                    <button onClick={() => router.back()} className="p-2.5 hover:bg-[hsl(var(--surface-2))] rounded-md transition-all border border-transparent hover:border-[hsl(var(--border))] shadow-sm">
                         <ArrowLeft size={18} className="text-[hsl(var(--text-secondary))]" />
                     </button>
                 }
@@ -98,18 +98,18 @@ export default function NewCoursePage() {
                             ['Duración', `${formData.duration_hours} horas`],
                             ['Certificación', formData.certificate_type],
                         ].map(([label, value]) => (
-                            <article key={label} className="rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-4 dark:border-white/10 dark:bg-white/5">
+                            <article key={label} className="rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-4">
                                 <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{label}</p>
-                                <h3 className="mt-2 text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-white">{value}</h3>
+                                <h3 className="mt-2 text-sm font-semibold text-[hsl(var(--text-primary))]">{value}</h3>
                             </article>
                         ))}
                     </div>
                 )}
 
                 {viewType === 'table' && (
- <div className="w-full overflow-x-auto rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] dark:border-white/10 dark:bg-white/5">
+ <div className="w-full overflow-x-auto rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))]">
                         <table className="w-full min-w-[480px] text-left">
-                            <thead className="bg-[hsl(var(--surface-1))] dark:bg-white/5 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
+                            <thead className="bg-[hsl(var(--surface-1))] text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
                                 <tr><th className="px-4 py-2">Campo</th><th className="px-4 py-2">Valor actual</th></tr>
                             </thead>
                             <tbody>
@@ -121,8 +121,8 @@ export default function NewCoursePage() {
                                     ['Duración', `${formData.duration_hours} horas`],
                                     ['Certificación', formData.certificate_type],
                                 ].map(([label, value]) => (
-                                    <tr key={label} className="border-t border-[hsl(var(--border))] dark:border-white/5">
-                                        <td className="px-4 py-2 font-bold text-[hsl(var(--text-primary))] dark:text-white">{label}</td>
+                                    <tr key={label} className="border-t border-[hsl(var(--border))]">
+                                        <td className="px-4 py-2 font-bold text-[hsl(var(--text-primary))]">{label}</td>
                                         <td className="px-4 py-2 text-[hsl(var(--text-secondary))]">{value}</td>
                                     </tr>
                                 ))}
@@ -140,15 +140,15 @@ export default function NewCoursePage() {
                         <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-[hsl(var(--info))]/10 rounded-full text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--primary))]">
                             <Plus size={14} strokeWidth={3} /> Laboratorio de Contenido
                         </div>
-                        <h1 className="text-xl lg:text-xl font-bold text-[hsl(var(--text-primary))] dark:text-white tracking-tighter leading-none">Diseña un <br /><span className="text-transparent bg-clip-text bg-gradient-to-r from-[hsl(var(--info))] to-[hsl(var(--info))]">Nuevo Futuro.</span></h1>
+                        <h1 className="text-xl lg:text-xl font-bold text-[hsl(var(--text-primary))] tracking-tighter leading-none">Diseña un <br /><span className="text-transparent bg-clip-text bg-gradient-to-r from-[hsl(var(--info))] to-[hsl(var(--info))]">Nuevo Futuro.</span></h1>
                         <p className="text-[hsl(var(--text-secondary))] text-sm font-medium max-w-2xl leading-relaxed">Configura los cimientos de una nueva experiencia educativa para la comunidad CCF.</p>
                     </header>
 
                     <form onSubmit={handleSubmit} className="space-y-4">
                         {/* Basic Info */}
-                        <motion.div variants={{hidden: {opacity:0}, show: {opacity:1}}} className="bg-[hsl(var(--bg-primary))] rounded-lg border border-[hsl(var(--border))] dark:border-white/5 p-3 lg:p-4 shadow-2xl shadow-black/10/20 dark:shadow-none space-y-4 group transition-all hover:border-[hsl(var(--info)/100%)]/20">
+                        <motion.div variants={{hidden: {opacity:0}, show: {opacity:1}}} className="bg-[hsl(var(--bg-primary))] rounded-lg border border-[hsl(var(--border))] p-3 lg:p-4 shadow-lg space-y-4 group transition-all hover:border-[hsl(var(--info)/100%)]/20">
                             <div className="flex items-center gap-4 text-[hsl(var(--primary))]">
-                                <div className="size-9 rounded-lg bg-info-soft dark:bg-[hsl(var(--info))]/10 flex items-center justify-center shadow-inner">
+                                <div className="size-9 rounded-lg bg-[hsl(var(--primary)/0.1)] text-[hsl(var(--primary))] flex items-center justify-center shadow-inner">
                                     <FileText size={24} strokeWidth={2.5} />
                                 </div>
                                 <h2 className="text-base font-semibold uppercase tracking-wide">Identidad del Programa</h2>
@@ -160,7 +160,7 @@ export default function NewCoursePage() {
                                     <input
                                         required type="text" placeholder="Ej: CCF-01" value={formData.code}
                                         onChange={(e) => setFormData({...formData, code: e.target.value})}
-                                        className="w-full bg-[hsl(var(--surface-1))] dark:bg-black/20 border-2 border-transparent dark:border-white/5 rounded-lg px-4 py-2 text-sm font-bold outline-none focus:border-[hsl(var(--info)/100%)]/50 focus:ring-4 focus:ring-[hsl(var(--primary))]/5 transition-all"
+                                        className="w-full bg-[hsl(var(--surface-1))] border-2 border-transparent rounded-lg px-4 py-2 text-sm font-bold outline-none focus:border-[hsl(var(--info)/100%)]/50 focus:ring-4 focus:ring-[hsl(var(--primary))]/5 transition-all"
                                     />
                                 </div>
                                 <div className="space-y-3">
@@ -168,7 +168,7 @@ export default function NewCoursePage() {
                                     <input
                                         required type="text" placeholder="Ej: Fundamentos de la Fe" value={formData.title}
                                         onChange={(e) => setFormData({...formData, title: e.target.value})}
-                                        className="w-full bg-[hsl(var(--surface-1))] dark:bg-black/20 border-2 border-transparent dark:border-white/5 rounded-lg px-4 py-2 text-sm font-bold outline-none focus:border-[hsl(var(--info)/100%)]/50 focus:ring-4 focus:ring-[hsl(var(--primary))]/5 transition-all"
+                                        className="w-full bg-[hsl(var(--surface-1))] border-2 border-transparent rounded-lg px-4 py-2 text-sm font-bold outline-none focus:border-[hsl(var(--info)/100%)]/50 focus:ring-4 focus:ring-[hsl(var(--primary))]/5 transition-all"
                                     />
                                 </div>
                                 <div className="md:col-span-2 space-y-3">
@@ -176,7 +176,7 @@ export default function NewCoursePage() {
                                     <textarea
                                         rows={4} placeholder="Describe el impacto y los objetivos de este programa..." value={formData.description}
                                         onChange={(e) => setFormData({...formData, description: e.target.value})}
-                                        className="w-full bg-[hsl(var(--surface-1))] dark:bg-black/20 border-2 border-transparent dark:border-white/5 rounded-md px-4 py-2 text-sm font-medium outline-none focus:border-[hsl(var(--info)/100%)]/50 focus:ring-4 focus:ring-[hsl(var(--primary))]/5 transition-all resize-none leading-relaxed"
+                                        className="w-full bg-[hsl(var(--surface-1))] border-2 border-transparent rounded-md px-4 py-2 text-sm font-medium outline-none focus:border-[hsl(var(--info)/100%)]/50 focus:ring-4 focus:ring-[hsl(var(--primary))]/5 transition-all resize-none leading-relaxed"
                                     />
                                 </div>
                                 <div className="md:col-span-2">
@@ -191,9 +191,9 @@ export default function NewCoursePage() {
                         </motion.div>
 
                         {/* Configuration */}
-                        <motion.div variants={{hidden: {opacity:0}, show: {opacity:1}}} className="bg-[hsl(var(--bg-primary))] rounded-lg border border-[hsl(var(--border))] dark:border-white/5 p-3 lg:p-4 shadow-2xl shadow-black/10/20 dark:shadow-none space-y-4 group transition-all hover:border-[hsl(var(--info)/100%)]/20">
-                            <div className="flex items-center gap-4 text-info-text">
-                                <div className="size-9 rounded-lg bg-info-soft dark:bg-[hsl(var(--info))]/10 flex items-center justify-center shadow-inner">
+                        <motion.div variants={{hidden: {opacity:0}, show: {opacity:1}}} className="bg-[hsl(var(--bg-primary))] rounded-lg border border-[hsl(var(--border))] p-3 lg:p-4 shadow-lg space-y-4 group transition-all hover:border-[hsl(var(--info)/100%)]/20">
+                            <div className="flex items-center gap-4 text-[hsl(var(--primary))]">
+                                <div className="size-9 rounded-lg bg-[hsl(var(--primary)/0.1)] text-[hsl(var(--primary))] flex items-center justify-center shadow-inner">
                                     <Clock size={24} strokeWidth={2.5} />
                                 </div>
                                 <h2 className="text-base font-semibold uppercase tracking-wide">Reglas de Negocio</h2>
@@ -205,7 +205,7 @@ export default function NewCoursePage() {
                                     <select
                                         value={formData.modality}
                                         onChange={(e) => setFormData({...formData, modality: e.target.value})}
-                                        className="w-full bg-[hsl(var(--surface-1))] dark:bg-black/20 border-2 border-transparent dark:border-white/5 rounded-lg px-4 py-2 text-sm font-bold outline-none appearance-none cursor-pointer focus:border-[hsl(var(--info)/100%)]/50 transition-all"
+                                        className="w-full bg-[hsl(var(--surface-1))] border-2 border-transparent rounded-lg px-4 py-2 text-sm font-bold outline-none appearance-none cursor-pointer focus:border-[hsl(var(--info)/100%)]/50 transition-all"
                                     >
                                         <option value="online">Online / Virtual</option>
                                         <option value="presential">Presencial</option>
@@ -219,7 +219,7 @@ export default function NewCoursePage() {
                                     <input
                                         type="number" value={formData.duration_hours}
                                         onChange={(e) => setFormData({...formData, duration_hours: parseInt(e.target.value)})}
-                                        className="w-full bg-[hsl(var(--surface-1))] dark:bg-black/20 border-2 border-transparent dark:border-white/5 rounded-lg px-4 py-2 text-sm font-bold outline-none focus:border-[hsl(var(--info)/100%)]/50 transition-all"
+                                        className="w-full bg-[hsl(var(--surface-1))] border-2 border-transparent rounded-lg px-4 py-2 text-sm font-bold outline-none focus:border-[hsl(var(--info)/100%)]/50 transition-all"
                                     />
                                 </div>
                                 <div className="space-y-3">
@@ -227,32 +227,32 @@ export default function NewCoursePage() {
                                     <input
                                         type="text" placeholder="Ej: Diplomado" value={formData.certificate_type}
                                         onChange={(e) => setFormData({...formData, certificate_type: e.target.value})}
-                                        className="w-full bg-[hsl(var(--surface-1))] dark:bg-black/20 border-2 border-transparent dark:border-white/5 rounded-lg px-4 py-2 text-sm font-bold outline-none focus:border-[hsl(var(--info)/100%)]/50 transition-all"
+                                        className="w-full bg-[hsl(var(--surface-1))] border-2 border-transparent rounded-lg px-4 py-2 text-sm font-bold outline-none focus:border-[hsl(var(--info)/100%)]/50 transition-all"
                                     />
                                 </div>
                             </div>
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4">
-                                <label className="flex items-center justify-between p-4 rounded-md bg-[hsl(var(--surface-1))] dark:bg-black/20 border-2 border-transparent cursor-pointer hover:border-[hsl(var(--info)/100%)]/20 transition-all group/toggle">
+                                <label className="flex items-center justify-between p-4 rounded-md bg-[hsl(var(--surface-1))] border-2 border-transparent cursor-pointer hover:border-[hsl(var(--info)/100%)]/20 transition-all group/toggle">
                                     <div className="space-y-1">
-                                        <p className="text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-white leading-none">Publicar ahora</p>
+                                        <p className="text-sm font-semibold text-[hsl(var(--text-primary))] leading-none">Publicar ahora</p>
                                         <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Hacer visible en el catálogo global</p>
                                     </div>
                                     <input
                                         type="checkbox" checked={formData.is_published}
                                         onChange={(e) => setFormData({...formData, is_published: e.target.checked})}
-                                        className="size-8 rounded-md accent-blue-600 transition-transform active:scale-90"
+                                        className="size-8 rounded-md accent-[hsl(var(--primary))] transition-transform active:scale-90"
                                     />
                                 </label>
-                                <label className="flex items-center justify-between p-4 rounded-md bg-[hsl(var(--surface-1))] dark:bg-black/20 border-2 border-transparent cursor-pointer hover:border-[hsl(var(--info)/100%)]/20 transition-all group/toggle">
+                                <label className="flex items-center justify-between p-4 rounded-md bg-[hsl(var(--surface-1))] border-2 border-transparent cursor-pointer hover:border-[hsl(var(--info)/100%)]/20 transition-all group/toggle">
                                     <div className="space-y-1">
-                                        <p className="text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-white leading-none">Autogestionado</p>
+                                        <p className="text-sm font-semibold text-[hsl(var(--text-primary))] leading-none">Autogestionado</p>
                                         <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Sin restricciones de fecha o cohorte</p>
                                     </div>
                                     <input
                                         type="checkbox" checked={formData.is_self_paced}
                                         onChange={(e) => setFormData({...formData, is_self_paced: e.target.checked})}
-                                        className="size-8 rounded-md accent-sky-600 transition-transform active:scale-90"
+                                        className="size-8 rounded-md accent-[hsl(var(--primary))] transition-transform active:scale-90"
                                     />
                                 </label>
                             </div>
@@ -261,13 +261,13 @@ export default function NewCoursePage() {
                         <div className="flex flex-col sm:flex-row items-center justify-end gap-4 pt-6">
                             <button
                                 type="button" onClick={() => router.back()}
-                                className="w-full sm:w-auto px-3 py-2 text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] dark:hover:text-white transition-all"
+                                className="w-full sm:w-auto px-3 py-2 text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] transition-all"
                             >
                                 Descartar Cambios
                             </button>
                             <button
                                 type="submit" disabled={loading}
-                                className="w-full sm:w-auto px-4 py-2 bg-[hsl(var(--bg-muted))] dark:bg-[hsl(var(--bg-primary))] text-white dark:text-[hsl(var(--text-primary))] rounded-md font-black text-xs uppercase tracking-wide shadow-2xl hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-4 disabled:opacity-50 disabled:cursor-wait group"
+                                className="w-full sm:w-auto px-4 py-2 bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] rounded-md font-black text-xs uppercase tracking-wide shadow-2xl hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-4 disabled:opacity-50 disabled:cursor-wait group"
                             >
                                 {loading ? 'Sincronizando...' : 'Lanzar Programa'}
                                 <Save size={20} className={clsx(!loading && "group-hover:translate-y-[-2px] transition-transform")} />
