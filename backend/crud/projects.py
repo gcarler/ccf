@@ -1784,6 +1784,442 @@ def get_project_time_tracking_summary(db: Session, project_id: UUID | str) -> di
     }
 
 
+# ---------------------------------------------------------------------------
+# PROJECT TEMPLATES & INSTANTIATION (Super-PRO Fase 6)
+# ---------------------------------------------------------------------------
+
+def _prepare_template_response(template: models.ProjectTemplate) -> models.ProjectTemplate:
+    if not template:
+        return template
+    if hasattr(template, "creator") and template.creator:
+        p = template.creator
+        template.creator_name = (
+            getattr(p, "nombre_completo", None)
+            or f"{getattr(p, 'nombres', '')} {getattr(p, 'apellidos', '')}".strip()
+            or "Creador"
+        )
+    else:
+        template.creator_name = "Sistema"
+    return template
+
+
+def get_project_templates(
+    db: Session,
+    *,
+    sede_id: Optional[UUID | str] = None,
+    user_sede_id: Optional[UUID | str] = None,
+    category: Optional[str] = None,
+    search: Optional[str] = None,
+    is_public: Optional[bool] = None,
+) -> list[models.ProjectTemplate]:
+    effective_sede = sede_id if sede_id is not None else user_sede_id
+    q = (
+        db.query(models.ProjectTemplate)
+        .options(selectinload(models.ProjectTemplate.creator))
+        .filter(models.ProjectTemplate.deleted_at.is_(None))
+    )
+
+    # Axioma 3: Scope multi-tenant para plantillas
+    if effective_sede is not None:
+        q = q.filter(
+            (models.ProjectTemplate.sede_id.is_(None))
+            | (models.ProjectTemplate.sede_id == effective_sede)
+        )
+
+    if category and category != "all":
+        q = q.filter(models.ProjectTemplate.category == category)
+
+    if is_public is not None:
+        q = q.filter(models.ProjectTemplate.is_public == is_public)
+
+    if search:
+        search_term = f"%{search}%"
+        q = q.filter(
+            models.ProjectTemplate.name.ilike(search_term)
+            | models.ProjectTemplate.description.ilike(search_term)
+        )
+
+    templates = q.order_by(models.ProjectTemplate.created_at.desc()).all()
+    for t in templates:
+        _prepare_template_response(t)
+    return templates
+
+
+def get_project_template(
+    db: Session,
+    template_id: UUID | str,
+    *,
+    sede_id: Optional[UUID | str] = None,
+    user_sede_id: Optional[UUID | str] = None,
+) -> Optional[models.ProjectTemplate]:
+    effective_sede = sede_id if sede_id is not None else user_sede_id
+    q = (
+        db.query(models.ProjectTemplate)
+        .options(selectinload(models.ProjectTemplate.creator))
+        .filter(
+            models.ProjectTemplate.id == template_id,
+            models.ProjectTemplate.deleted_at.is_(None),
+        )
+    )
+    if effective_sede is not None:
+        q = q.filter(
+            (models.ProjectTemplate.sede_id.is_(None))
+            | (models.ProjectTemplate.sede_id == effective_sede)
+            | (models.ProjectTemplate.is_public.is_(True))
+        )
+    template = q.first()
+    if template:
+        _prepare_template_response(template)
+    return template
+
+
+def create_project_template(
+    db: Session,
+    template_in: schemas.ProjectTemplateCreate,
+    creator_persona_id: Optional[UUID | str] = None,
+    sede_id: Optional[UUID | str] = None,
+    *,
+    created_by: Optional[UUID | str] = None,
+) -> models.ProjectTemplate:
+    effective_creator = creator_persona_id or created_by
+    structure_dict = (
+        template_in.structure.model_dump()
+        if hasattr(template_in.structure, "model_dump")
+        else (template_in.structure or {})
+    )
+
+    template = models.ProjectTemplate(
+        name=template_in.name,
+        description=template_in.description,
+        category=template_in.category or "general",
+        default_budget=float(template_in.default_budget or 0.0),
+        structure=structure_dict,
+        created_by=effective_creator,
+        is_public=template_in.is_public if template_in.is_public is not None else True,
+        sede_id=template_in.sede_id or sede_id,
+        created_at=datetime.now(timezone.utc),
+        updated_at=datetime.now(timezone.utc),
+    )
+    db.add(template)
+    db.commit()
+    db.refresh(template)
+
+    if template.created_by:
+        db.query(models.ProjectTemplate).options(
+            selectinload(models.ProjectTemplate.creator)
+        ).filter(models.ProjectTemplate.id == template.id).first()
+
+    return _prepare_template_response(template)
+
+
+def update_project_template(
+    db: Session,
+    template_id: UUID | str,
+    template_in: schemas.ProjectTemplateUpdate,
+    sede_id: Optional[UUID | str] = None,
+) -> Optional[models.ProjectTemplate]:
+    template = get_project_template(db, template_id, sede_id=sede_id)
+    if not template:
+        return None
+
+    if template_in.name is not None:
+        template.name = template_in.name
+    if template_in.description is not None:
+        template.description = template_in.description
+    if template_in.category is not None:
+        template.category = template_in.category
+    if template_in.default_budget is not None:
+        template.default_budget = float(template_in.default_budget)
+    if template_in.structure is not None:
+        template.structure = (
+            template_in.structure.model_dump()
+            if hasattr(template_in.structure, "model_dump")
+            else template_in.structure
+        )
+    if template_in.is_public is not None:
+        template.is_public = template_in.is_public
+
+    template.updated_at = datetime.now(timezone.utc)
+    db.commit()
+    db.refresh(template)
+    return _prepare_template_response(template)
+
+
+def delete_project_template(
+    db: Session,
+    template_id: UUID | str,
+    sede_id: Optional[UUID | str] = None,
+    user_sede_id: Optional[UUID | str] = None,
+) -> bool:
+    effective_sede = sede_id if sede_id is not None else user_sede_id
+    template = get_project_template(db, template_id, sede_id=effective_sede)
+    if not template:
+        return False
+
+    template.deleted_at = datetime.now(timezone.utc)
+    db.commit()
+    return True
+
+
+def create_project_from_template(
+    db: Session,
+    template_id: UUID | str,
+    payload: schemas.InstantiateProjectFromTemplate,
+    *,
+    creator_persona_id: Optional[UUID | str] = None,
+    created_by: Optional[UUID | str] = None,
+    sede_id: Optional[UUID | str] = None,
+    user_sede_id: Optional[UUID | str] = None,
+) -> models.Project:
+    effective_creator = creator_persona_id or created_by
+    effective_sede = sede_id or user_sede_id
+    template = get_project_template(db, template_id, sede_id=effective_sede)
+    if not template:
+        raise ValueError("Plantilla no encontrada o sin permisos de acceso")
+
+    if not effective_sede:
+        raise ValueError("sede_id es obligatorio para instanciar proyectos (Axioma 3)")
+
+    structure = template.structure or {}
+    tasks_data = structure.get("tasks", [])
+    phases_data = structure.get("phases", [])
+
+    start_date = payload.start_date or datetime.now(timezone.utc)
+    if not hasattr(start_date, "tzinfo") or not start_date.tzinfo:
+        start_date = start_date.replace(tzinfo=timezone.utc)
+
+    # Calcular target_date basado en duración máxima de tareas o 30 días
+    max_offset = 30
+    if tasks_data:
+        task_ends = [
+            int(t.get("day_offset", 0)) + int(t.get("duration_days", 1))
+            for t in tasks_data
+        ]
+        if task_ends:
+            max_offset = max(max_offset, max(task_ends))
+
+    target_date = start_date + timedelta(days=max_offset)
+
+    budget = (
+        float(payload.budget_allocated)
+        if payload.budget_allocated is not None
+        else float(template.default_budget or 0.0)
+    )
+
+    project = models.Project(
+        title=payload.title,
+        description=payload.description or template.description,
+        status="planning",
+        owner_id=payload.owner_id or effective_creator,
+        sede_id=effective_sede,
+        budget_allocated=budget,
+        budget_spent=0.0,
+        start_date=start_date,
+        target_date=target_date,
+        created_at=datetime.now(timezone.utc),
+        updated_at=datetime.now(timezone.utc),
+    )
+    db.add(project)
+    db.flush()
+
+    # 1. Crear fases
+    phase_order_map: dict[int, models.ProjectPhase] = {}
+    phase_name_map: dict[str, models.ProjectPhase] = {}
+
+    if phases_data:
+        for idx, p_info in enumerate(phases_data):
+            p_order = p_info.get("order_index", p_info.get("order", idx))
+            p_title = p_info.get("title") or p_info.get("name") or f"Fase {idx + 1}"
+            p_color = p_info.get("color") or "#94a3b8"
+            import re
+            p_slug = p_info.get("slug") or re.sub(r"[^a-zA-Z0-9_]", "_", p_title.lower())[:20]
+            phase = models.ProjectPhase(
+                project_id=project.id,
+                name=p_title[:50],
+                slug=p_slug,
+                color=p_color[:20],
+                order_index=p_order,
+            )
+            db.add(phase)
+            db.flush()
+            phase_order_map[idx] = phase
+            phase_name_map[p_title.lower().strip()] = phase
+    else:
+        # Fases estándar por defecto
+        created_phases = create_default_phases(db, project.id)
+        for idx, ph in enumerate(created_phases):
+            phase_order_map[idx] = ph
+            phase_name_map[ph.name.lower().strip()] = ph
+
+    # 2. Crear tareas con cálculo relativo de fechas
+    for t_idx, t_info in enumerate(tasks_data):
+        offset = int(t_info.get("day_offset", 0))
+        duration = max(1, int(t_info.get("duration_days", 1)))
+        task_start = start_date + timedelta(days=offset)
+        task_due = task_start + timedelta(days=duration)
+
+        # Resolver fase / nodo
+        target_phase_name = None
+        if t_info.get("phase_name"):
+            match = phase_name_map.get(t_info["phase_name"].lower().strip())
+            if match:
+                target_phase_name = match.name
+        elif t_info.get("phase_index") is not None:
+            match = phase_order_map.get(t_info["phase_index"])
+            if match:
+                target_phase_name = match.name
+        elif phase_order_map:
+            target_phase_name = phase_order_map[0].name
+
+        task = models.ProjectTask(
+            project_id=project.id,
+            node=target_phase_name,
+            title=t_info.get("title") or "Tarea de Plantilla",
+            description=t_info.get("description"),
+            priority=t_info.get("priority", "medium"),
+            status="todo",
+            order_index=t_idx,
+            start_date=task_start,
+            due_date=task_due,
+            created_at=datetime.now(timezone.utc),
+            updated_at=datetime.now(timezone.utc),
+        )
+        db.add(task)
+        db.flush()
+
+        if bool(t_info.get("is_milestone", False)):
+            milestone = models.ProjectMilestone(
+                project_id=project.id,
+                title=task.title,
+                target_date=task_due.date(),
+                created_at=datetime.now(timezone.utc),
+            )
+            db.add(milestone)
+
+    # 3. Registrar actividad en bitácora
+    activity = models.ProjectActivityLog(
+        project_id=project.id,
+        persona_id=creator_persona_id,
+        action_type="project_created_from_template",
+        description=f"Proyecto instanciado desde la plantilla '{template.name}' con {len(tasks_data)} tareas",
+        created_at=datetime.now(timezone.utc),
+    )
+    db.add(activity)
+
+    db.commit()
+    db.refresh(project)
+    return project
+
+
+def save_project_as_template(
+    db: Session,
+    project_id: UUID | str,
+    payload: schemas.SaveProjectAsTemplate,
+    *,
+    creator_persona_id: Optional[UUID | str] = None,
+    created_by: Optional[UUID | str] = None,
+    sede_id: Optional[UUID | str] = None,
+    user_sede_id: Optional[UUID | str] = None,
+) -> models.ProjectTemplate:
+    effective_creator = creator_persona_id or created_by
+    effective_sede = sede_id or user_sede_id
+    project = (
+        db.query(models.Project)
+        .options(
+            selectinload(models.Project.tasks),
+        )
+        .filter(models.Project.id == project_id, models.Project.deleted_at.is_(None))
+        .first()
+    )
+    if not project:
+        raise ValueError("Proyecto no encontrado")
+
+    # Axioma 3: Scope check si sede_id proporcionada
+    if effective_sede is not None and project.sede_id is not None and str(project.sede_id) != str(effective_sede):
+        raise ValueError("Proyecto no encontrado o en sede distinta")
+
+    # Extraer fases
+    db_phases = db.query(models.ProjectPhase).filter(
+        models.ProjectPhase.project_id == project_id,
+        models.ProjectPhase.deleted_at.is_(None)
+    ).order_by(models.ProjectPhase.order_index.asc()).all()
+
+    phases_data = [
+        {
+            "title": p.name,
+            "name": p.name,
+            "slug": p.slug,
+            "color": p.color,
+            "order": p.order_index,
+            "order_index": p.order_index
+        }
+        for p in db_phases
+    ]
+
+    # Extraer tareas
+    active_tasks = [t for t in (project.tasks or []) if not t.deleted_at]
+    proj_start = project.start_date or (
+        min([t.start_date for t in active_tasks if t.start_date] or [datetime.now(timezone.utc)])
+    )
+    if not hasattr(proj_start, "tzinfo") or not proj_start.tzinfo:
+        proj_start = proj_start.replace(tzinfo=timezone.utc)
+
+    tasks_data = []
+    for t in active_tasks:
+        day_offset = 0
+        if t.start_date:
+            t_st = t.start_date if getattr(t.start_date, "tzinfo", None) else t.start_date.replace(tzinfo=timezone.utc)
+            day_offset = max(0, (t_st - proj_start).days)
+
+        duration_days = 1
+        if t.due_date:
+            t_due = t.due_date if getattr(t.due_date, "tzinfo", None) else t.due_date.replace(tzinfo=timezone.utc)
+            t_st = (t.start_date if getattr(t.start_date, "tzinfo", None) else t.start_date.replace(tzinfo=timezone.utc)) if t.start_date else proj_start
+            duration_days = max(1, (t_due - t_st).days)
+
+        phase_name = t.node
+
+        tasks_data.append({
+            "title": t.title,
+            "description": t.description,
+            "priority": t.priority or "medium",
+            "phase_name": phase_name,
+            "day_offset": day_offset,
+            "duration_days": duration_days,
+            "is_milestone": False,
+        })
+
+    structure = {
+        "phases": phases_data,
+        "tasks": tasks_data,
+        "default_view": "kanban",
+        "tags": [],
+    }
+
+    template = models.ProjectTemplate(
+        name=payload.name,
+        description=payload.description or project.description,
+        category=payload.category or "general",
+        default_budget=float(project.budget_allocated or 0.0),
+        structure=structure,
+        created_by=effective_creator,
+        is_public=payload.is_public if payload.is_public is not None else True,
+        sede_id=project.sede_id,
+        created_at=datetime.now(timezone.utc),
+        updated_at=datetime.now(timezone.utc),
+    )
+    db.add(template)
+    db.commit()
+    db.refresh(template)
+
+    if template.created_by:
+        db.query(models.ProjectTemplate).options(
+            selectinload(models.ProjectTemplate.creator)
+        ).filter(models.ProjectTemplate.id == template.id).first()
+
+    return _prepare_template_response(template)
+
+
 
 
 

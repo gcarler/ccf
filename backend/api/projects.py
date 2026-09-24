@@ -1720,6 +1720,212 @@ def list_whiteboards(
     return [_normalize_dates(b) for b in boards]
 
 
+# ---------------------------------------------------------------------------
+# PROJECT TEMPLATES & CATALOG (Super-PRO Fase 6)
+# NOTA: /templates y /from-template deben ir ANTES de /{project_id}
+# ---------------------------------------------------------------------------
+
+@router.get(
+    "/templates",
+    response_model=List[schemas.ProjectTemplate],
+    tags=["Projects Templates Super-PRO"],
+)
+def list_project_templates(
+    category: Optional[str] = None,
+    search: Optional[str] = None,
+    is_public: Optional[bool] = None,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("projects", "read")),
+):
+    """Lista las plantillas disponibles de proyectos aplicando alcance multi-tenant (Axioma 3)."""
+    user_sede = get_user_sede_id(db, current_user.id)
+    templates = crud.get_project_templates(
+        db,
+        sede_id=user_sede,
+        category=category,
+        search=search,
+        is_public=is_public,
+    )
+    for t in templates:
+        _normalize_dates(t)
+    return templates
+
+
+@router.post(
+    "/templates",
+    response_model=schemas.ProjectTemplate,
+    status_code=status.HTTP_201_CREATED,
+    tags=["Projects Templates Super-PRO"],
+)
+def create_project_template_endpoint(
+    payload: schemas.ProjectTemplateCreate,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("projects", "edit")),
+):
+    """Crea una nueva plantilla reutilizable de proyecto."""
+    user_sede = get_user_sede_id(db, current_user.id)
+    creator_persona_id = get_user_persona_id(db, current_user.id)
+    try:
+        template = crud.create_project_template(
+            db,
+            template_in=payload,
+            creator_persona_id=creator_persona_id,
+            sede_id=user_sede,
+        )
+        _normalize_dates(template)
+        return template
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Error creando plantilla: {str(e)}")
+
+
+@router.get(
+    "/templates/{template_id}",
+    response_model=schemas.ProjectTemplate,
+    tags=["Projects Templates Super-PRO"],
+)
+def get_project_template_endpoint(
+    template_id: str,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("projects", "read")),
+):
+    """Obtiene el detalle y estructura de una plantilla de proyecto."""
+    user_sede = get_user_sede_id(db, current_user.id)
+    template = crud.get_project_template(db, _to_uuid(template_id), sede_id=user_sede)
+    if not template:
+        raise HTTPException(status_code=404, detail="Plantilla no encontrada")
+    _normalize_dates(template)
+    return template
+
+
+@router.patch(
+    "/templates/{template_id}",
+    response_model=schemas.ProjectTemplate,
+    tags=["Projects Templates Super-PRO"],
+)
+def update_project_template_endpoint(
+    template_id: str,
+    payload: schemas.ProjectTemplateUpdate,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("projects", "edit")),
+):
+    """Actualiza los metadatos o estructura de una plantilla."""
+    user_sede = get_user_sede_id(db, current_user.id)
+    template = crud.update_project_template(
+        db,
+        template_id=_to_uuid(template_id),
+        template_in=payload,
+        sede_id=user_sede,
+    )
+    if not template:
+        raise HTTPException(status_code=404, detail="Plantilla no encontrada")
+    _normalize_dates(template)
+    return template
+
+
+@router.delete(
+    "/templates/{template_id}",
+    tags=["Projects Templates Super-PRO"],
+)
+def delete_project_template_endpoint(
+    template_id: str,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("projects", "edit")),
+):
+    """Elimina (soft-delete) una plantilla de proyecto."""
+    user_sede = get_user_sede_id(db, current_user.id)
+    deleted = crud.delete_project_template(db, _to_uuid(template_id), sede_id=user_sede)
+    if not deleted:
+        raise HTTPException(status_code=404, detail="Plantilla no encontrada")
+    return {"ok": True, "message": "Plantilla eliminada correctamente"}
+
+
+@router.post(
+    "/from-template/{template_id}",
+    response_model=schemas.Project,
+    status_code=status.HTTP_201_CREATED,
+    tags=["Projects Templates Super-PRO"],
+)
+@router.post(
+    "/templates/{template_id}/instantiate",
+    response_model=schemas.Project,
+    status_code=status.HTTP_201_CREATED,
+    tags=["Projects Templates Super-PRO"],
+)
+def instantiate_project_from_template_endpoint(
+    template_id: str,
+    payload: schemas.InstantiateProjectFromTemplate,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("projects", "edit")),
+):
+    """Instancia atómicamente un nuevo proyecto a partir de una plantilla."""
+    user_sede = get_user_sede_id(db, current_user.id)
+    if not user_sede:
+        first_sede = db.query(models.ChurchLocation).filter(models.ChurchLocation.deleted_at.is_(None)).first()
+        user_sede = first_sede.id if first_sede else None
+        if not user_sede:
+            raise HTTPException(status_code=409, detail="No se pudo determinar sede para instanciar el proyecto")
+
+    creator_persona_id = get_user_persona_id(db, current_user.id)
+    if not creator_persona_id:
+        raise HTTPException(status_code=401, detail="No se pudo determinar la persona autenticada")
+
+    try:
+        project = crud.create_project_from_template(
+            db,
+            template_id=_to_uuid(template_id),
+            payload=payload,
+            creator_persona_id=creator_persona_id,
+            sede_id=user_sede,
+        )
+        _normalize_dates(project)
+        return project
+    except ValueError as ve:
+        raise HTTPException(status_code=400, detail=str(ve))
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Error al instanciar proyecto: {str(e)}")
+
+
+@router.post(
+    "/{project_id}/save-as-template",
+    response_model=schemas.ProjectTemplate,
+    status_code=status.HTTP_201_CREATED,
+    tags=["Projects Templates Super-PRO"],
+)
+def save_project_as_template_endpoint(
+    project_id: str,
+    payload: schemas.SaveProjectAsTemplate,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("projects", "edit")),
+):
+    """Captura las fases y tareas del proyecto activo para guardarlo como plantilla reutilizable."""
+    user_sede = get_user_sede_id(db, current_user.id)
+    _ensure_project(db, project_id, user_sede=user_sede)
+    creator_persona_id = get_user_persona_id(db, current_user.id)
+    if not creator_persona_id:
+        raise HTTPException(status_code=401, detail="No se pudo determinar la persona autenticada")
+    try:
+        template = crud.save_project_as_template(
+            db,
+            project_id=_to_uuid(project_id),
+            payload=payload,
+            creator_persona_id=creator_persona_id,
+            sede_id=user_sede,
+        )
+        _log_project_activity(
+            db,
+            project_id,
+            current_user.id,
+            "saved_as_template",
+            f"Proyecto guardado como plantilla '{template.name}'",
+        )
+        _normalize_dates(template)
+        return template
+    except ValueError as ve:
+        raise HTTPException(status_code=400, detail=str(ve))
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Error al guardar plantilla: {str(e)}")
+
+
 @router.get("/{project_id}", response_model=schemas.Project)
 def get_project(
     project_id: str,

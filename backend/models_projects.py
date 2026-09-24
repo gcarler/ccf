@@ -366,3 +366,22 @@ class ProjectTimeLog(Base):
     persona = relationship("Persona", foreign_keys=[persona_id])
 
 
+class ProjectTemplate(Base):
+    __tablename__ = "project_templates"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    name = Column(String(255), nullable=False)
+    description = Column(Text, nullable=True)
+    category = Column(String(100), default="general", nullable=False, index=True)
+    default_budget = Column(Float, default=0.0, nullable=False)
+    structure = Column(JSON, nullable=False, default=dict)
+    created_by = Column(UUID(as_uuid=True), ForeignKey("personas.id", ondelete="SET NULL"), nullable=True, index=True)
+    is_public = Column(Boolean, default=True, nullable=False, index=True)
+    sede_id = Column(UUID(as_uuid=True), ForeignKey("sedes.id", ondelete="SET NULL"), nullable=True, index=True)
+    created_at = Column(DateTime(timezone=True), default=_utcnow, nullable=False)
+    updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow, nullable=False)
+    deleted_at = Column(DateTime(timezone=True), nullable=True, index=True)
+
+    creator = relationship("Persona", foreign_keys=[created_by])
+
+

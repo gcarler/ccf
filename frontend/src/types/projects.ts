@@ -407,3 +407,68 @@ export interface ProjectTimeTrackingSummary {
   by_member: MemberTimeSummaryItem[];
 }
 
+// ── Project Templates (Super-PRO Fase 6) ───────────────────────────────────
+export interface TemplatePhaseItem {
+  title: string;
+  description?: string | null;
+  order?: number;
+}
+
+export interface TemplateTaskItem {
+  title: string;
+  description?: string | null;
+  priority?: string;
+  phase_index?: number | null;
+  phase_name?: string | null;
+  duration_days: number;
+  day_offset: number;
+  is_milestone?: boolean;
+}
+
+export interface TemplateStructure {
+  phases: TemplatePhaseItem[];
+  tasks: TemplateTaskItem[];
+  default_view?: string;
+  tags?: string[];
+}
+
+export interface ProjectTemplate {
+  id: string;
+  name: string;
+  description?: string | null;
+  category: string;
+  default_budget: number;
+  structure: TemplateStructure;
+  created_by?: string | null;
+  creator_name?: string | null;
+  is_public: boolean;
+  sede_id?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ProjectTemplateCreate {
+  name: string;
+  description?: string | null;
+  category?: string;
+  default_budget?: number;
+  structure: TemplateStructure;
+  is_public?: boolean;
+  sede_id?: string | null;
+}
+
+export interface InstantiateProjectFromTemplate {
+  title: string;
+  description?: string | null;
+  start_date?: string | null;
+  budget_allocated?: number | null;
+  owner_id?: string | null;
+}
+
+export interface SaveProjectAsTemplate {
+  name: string;
+  description?: string | null;
+  category?: string;
+  is_public?: boolean;
+}
+

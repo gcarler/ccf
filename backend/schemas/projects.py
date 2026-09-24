@@ -5,7 +5,7 @@ from datetime import datetime, timezone
 from typing import Annotated, Any, List, Literal, Optional
 from uuid import UUID
 
-from pydantic import BaseModel, BeforeValidator, ConfigDict, Field, field_validator
+from pydantic import BaseModel, BeforeValidator, ConfigDict, Field, field_validator, model_validator
 
 from backend.schemas._common import orm_config
 
@@ -890,3 +890,96 @@ class ProjectMember(BaseModel):
     invited_at: Optional[datetime] = None
     persona_name: Optional[str] = None
     model_config = orm_config
+
+
+# ── Project Templates (Super-PRO Fase 6) ───────────────────────────────────
+
+class TemplatePhaseItem(BaseModel):
+    title: Optional[str] = None
+    name: Optional[str] = None
+    description: Optional[str] = None
+    order: int = 0
+    order_index: int = 0
+    slug: Optional[str] = None
+    color: Optional[str] = "#94a3b8"
+
+    @model_validator(mode="before")
+    @classmethod
+    def _normalize(cls, data: Any) -> Any:
+        if isinstance(data, dict):
+            val = data.get("title") or data.get("name") or "Fase"
+            data["title"] = val
+            data["name"] = val
+            ord_val = data.get("order") if data.get("order") is not None else data.get("order_index", 0)
+            data["order"] = ord_val
+            data["order_index"] = ord_val
+            if not data.get("slug"):
+                import re
+                clean = re.sub(r"[^a-zA-Z0-9_]", "_", val.lower())[:20]
+                data["slug"] = clean or "phase"
+        return data
+
+
+class TemplateTaskItem(BaseModel):
+    title: str = Field(..., min_length=1, max_length=500)
+    description: Optional[str] = None
+    priority: str = "medium"
+    phase_index: Optional[int] = None
+    phase_name: Optional[str] = None
+    duration_days: int = 1
+    day_offset: int = 0
+    is_milestone: bool = False
+
+
+class TemplateStructure(BaseModel):
+    phases: List[TemplatePhaseItem] = Field(default_factory=list)
+    tasks: List[TemplateTaskItem] = Field(default_factory=list)
+    default_view: Optional[str] = "kanban"
+    tags: List[str] = Field(default_factory=list)
+
+
+class ProjectTemplateBase(BaseModel):
+    name: str = Field(..., min_length=1, max_length=255)
+    description: Optional[str] = None
+    category: str = "general"
+    default_budget: float = 0.0
+    structure: TemplateStructure = Field(default_factory=TemplateStructure)
+    is_public: bool = True
+
+
+class ProjectTemplateCreate(ProjectTemplateBase):
+    sede_id: Optional[UUIDStr] = None
+
+
+class ProjectTemplateUpdate(BaseModel):
+    name: Optional[str] = Field(default=None, min_length=1, max_length=255)
+    description: Optional[str] = None
+    category: Optional[str] = None
+    default_budget: Optional[float] = None
+    structure: Optional[TemplateStructure] = None
+    is_public: Optional[bool] = None
+
+
+class ProjectTemplate(ProjectTemplateBase):
+    id: UUIDStr
+    created_by: Optional[UUIDStr] = None
+    creator_name: Optional[str] = None
+    sede_id: Optional[UUIDStr] = None
+    created_at: datetime
+    updated_at: datetime
+    model_config = orm_config
+
+
+class InstantiateProjectFromTemplate(BaseModel):
+    title: str = Field(..., min_length=1, max_length=500)
+    description: Optional[str] = None
+    start_date: Optional[datetime] = None
+    budget_allocated: Optional[float] = None
+    owner_id: Optional[UUIDStr] = None
+
+
+class SaveProjectAsTemplate(BaseModel):
+    name: str = Field(..., min_length=1, max_length=255)
+    description: Optional[str] = None
+    category: str = "general"
+    is_public: bool = True

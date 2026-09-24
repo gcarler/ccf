@@ -18,6 +18,7 @@ import {
     ShieldAlert,
     Users,
     Clock,
+    BookTemplate,
 } from 'lucide-react';
 import WorkspaceToolbar from '@/components/WorkspaceToolbar';
 
@@ -33,6 +34,7 @@ import { ProjectBudgetDrawer } from '@/components/projects/ProjectBudgetDrawer';
 import { ProjectRiskMatrixDrawer } from '@/components/projects/ProjectRiskMatrixDrawer';
 import { ProjectWorkloadDrawer } from '@/components/projects/ProjectWorkloadDrawer';
 import { ProjectTimeTrackingDrawer } from '@/components/projects/ProjectTimeTrackingDrawer';
+import { ProjectTemplateCatalogDrawer } from '@/components/projects/ProjectTemplateCatalogDrawer';
 import { ProjectUpdateProvider } from '@/context/ProjectUpdateContext';
 import { ProjectViewsContent } from '@/components/projects/ProjectViewsContent';
 import ProjectContextPanel from '@/components/projects/ProjectContextPanel';
@@ -128,6 +130,7 @@ export default function ProjectDetailPage() {
     const [showRiskDrawer, setShowRiskDrawer] = useState(false);
     const [showWorkloadDrawer, setShowWorkloadDrawer] = useState(false);
     const [showTimeTrackingDrawer, setShowTimeTrackingDrawer] = useState(false);
+    const [showTemplateDrawer, setShowTemplateDrawer] = useState(false);
     const [confirmAction, setConfirmAction] = useState<ConfirmActionState>(null);
 
     const handleDeleteProject = async () => {
@@ -238,6 +241,9 @@ export default function ProjectDetailPage() {
                             </button>
                             <button onClick={() => setShowTimeTrackingDrawer(true)} className="px-3 py-1.5 bg-[hsl(var(--surface-2))] text-[hsl(var(--foreground))] rounded-lg text-2xs font-bold uppercase tracking-wide hover:bg-[hsl(var(--surface-3))] active:scale-95 transition-all flex items-center gap-1.5 border border-[hsl(var(--border))]">
                                 <Clock size={14} className="text-[hsl(var(--primary))]" /> Horas
+                            </button>
+                            <button onClick={() => setShowTemplateDrawer(true)} className="px-3 py-1.5 bg-[hsl(var(--surface-2))] text-[hsl(var(--foreground))] rounded-lg text-2xs font-bold uppercase tracking-wide hover:bg-[hsl(var(--surface-3))] active:scale-95 transition-all flex items-center gap-1.5 border border-[hsl(var(--border))]">
+                                <BookTemplate size={14} className="text-[hsl(var(--primary))]" /> Plantillas
                             </button>
                             <button onClick={() => setShowProjectSettings(true)} className="px-3 py-1.5 bg-[hsl(var(--warning))] text-[hsl(var(--primary-foreground))] rounded-lg text-2xs font-bold uppercase tracking-wide hover:opacity-90 active:scale-95 transition-all flex items-center gap-2">
                                 <Edit3 size={14} /> Editar
@@ -353,6 +359,14 @@ export default function ProjectDetailPage() {
                     onClose={() => setShowTimeTrackingDrawer(false)}
                     tasks={tasks}
                     onTimeLogged={() => reloadProject()}
+                />
+
+                <ProjectTemplateCatalogDrawer
+                    isOpen={showTemplateDrawer}
+                    onClose={() => setShowTemplateDrawer(false)}
+                    activeProjectId={project?.id || id}
+                    activeProjectTitle={project?.title}
+                    onProjectCreated={() => reloadProject()}
                 />
             </div>
         </ProjectUpdateProvider>

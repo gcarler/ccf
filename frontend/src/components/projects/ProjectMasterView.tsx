@@ -7,7 +7,7 @@ import {
     Zap, Trophy, Calendar, TrendingUp, AlertCircle,
     ArrowUpRight, BarChart3, Plus, Trash2,
     Target, Sliders, Activity, AlertTriangle, AlertOctagon, Sparkles,
-    Wallet, TrendingDown, ShieldAlert, Users, Scale,
+    Wallet, TrendingDown, ShieldAlert, Users, Scale, BookTemplate,
 } from 'lucide-react';
 import clsx from 'clsx';
 import type { ProjectRecord, ProjectTaskRecord, ProjectMilestoneRecord, ProjectAnalytics, ProjectKPI, ProjectBudgetSummary, ProjectRiskSummary, ProjectWorkloadSummary, ProjectTimeTrackingSummary } from '@/types/projects';
@@ -22,6 +22,7 @@ import { ProjectBudgetDrawer } from '@/components/projects/ProjectBudgetDrawer';
 import { ProjectRiskMatrixDrawer } from '@/components/projects/ProjectRiskMatrixDrawer';
 import { ProjectWorkloadDrawer } from '@/components/projects/ProjectWorkloadDrawer';
 import { ProjectTimeTrackingDrawer } from '@/components/projects/ProjectTimeTrackingDrawer';
+import { ProjectTemplateCatalogDrawer } from '@/components/projects/ProjectTemplateCatalogDrawer';
 import { useProjectUpdate } from '@/context/ProjectUpdateContext';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
@@ -76,6 +77,9 @@ export function ProjectMasterView({ project, tasks, onOpenTask }: ProjectMasterV
     // Registro de Tiempo y Hojas de Horas (Super-PRO Fase 5)
     const [timeTrackingSummary, setTimeTrackingSummary] = useState<ProjectTimeTrackingSummary | null>(null);
     const [showTimeTrackingDrawer, setShowTimeTrackingDrawer] = useState(false);
+
+    // Catálogo de Plantillas (Super-PRO Fase 6)
+    const [showTemplateDrawer, setShowTemplateDrawer] = useState(false);
 
     const loadKpis = useCallback(async () => {
         if (!project.id || !token) return;
@@ -351,6 +355,15 @@ export function ProjectMasterView({ project, tasks, onOpenTask }: ProjectMasterV
                         >
                             <Sliders size={14} />
                             <span className="text-3xs font-bold uppercase">Motor</span>
+                        </button>
+
+                        <button
+                            onClick={() => setShowTemplateDrawer(true)}
+                            className="p-2 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] hover:bg-[hsl(var(--surface-3))] text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] transition-all active:scale-95 flex flex-col items-center gap-0.5 shrink-0"
+                            title="Catálogo de plantillas y guardar proyecto como plantilla"
+                        >
+                            <BookTemplate size={14} />
+                            <span className="text-3xs font-bold uppercase">Plantilla</span>
                         </button>
                     </div>
                 </div>
@@ -1098,6 +1111,16 @@ export function ProjectMasterView({ project, tasks, onOpenTask }: ProjectMasterV
                 tasks={tasks}
                 onTimeLogged={() => {
                     loadTimeTrackingSummary();
+                    reloadProject();
+                }}
+            />
+
+            <ProjectTemplateCatalogDrawer
+                isOpen={showTemplateDrawer}
+                onClose={() => setShowTemplateDrawer(false)}
+                activeProjectId={project.id}
+                activeProjectTitle={project.title}
+                onProjectCreated={() => {
                     reloadProject();
                 }}
             />
