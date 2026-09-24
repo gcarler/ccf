@@ -68,25 +68,25 @@ export default function WebVitalsAnalyticsPage() {
           <VitalCard metric="LCP" unit="ms" summary={summary.LCP} />
         </section>
 
-        <section className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-3 shadow-sm dark:border-white/10 dark:bg-white/5">
+        <section className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-3 shadow-sm">
           <header className="mb-4 flex items-center justify-between">
-            <h2 className="text-sm font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Eventos recientes</h2>
-            <span className="text-xs font-bold text-[hsl(var(--text-secondary))]">{records.length} muestras</span>
+            <h2 className="text-sm font-semibold uppercase tracking-wide text-[hsl(var(--muted-foreground))]">Eventos recientes</h2>
+            <span className="text-xs font-bold text-[hsl(var(--muted-foreground))]">{records.length} muestras</span>
           </header>
 
           {configLoading ? (
-            <p className="py-8 text-sm text-[hsl(var(--text-secondary))]">Cargando feature flags...</p>
+            <p className="py-8 text-sm text-[hsl(var(--muted-foreground))]">Cargando feature flags...</p>
           ) : !isFeatureEnabled("web_vitals_dashboard") ? (
-            <p className="py-8 text-sm text-[hsl(var(--text-secondary))]">Este módulo está desactivado por feature flag.</p>
+            <p className="py-8 text-sm text-[hsl(var(--muted-foreground))]">Este módulo está desactivado por feature flag.</p>
           ) : loading ? (
-            <p className="py-8 text-sm text-[hsl(var(--text-secondary))]">Cargando telemetria...</p>
+            <p className="py-8 text-sm text-[hsl(var(--muted-foreground))]">Cargando telemetria...</p>
           ) : recent.length === 0 ? (
-            <p className="py-8 text-sm text-[hsl(var(--text-secondary))]">Aun no hay muestras registradas.</p>
+            <p className="py-8 text-sm text-[hsl(var(--muted-foreground))]">Aun no hay muestras registradas.</p>
           ) : (
             <div className="max-h-[520px] overflow-y-auto overflow-x-auto">
               <table className="w-full text-left text-sm min-w-[520px]">
-                <thead className="sticky top-0 bg-[hsl(var(--bg-primary))] dark:bg-[var(--admin-bg-surface)]">
-                  <tr className="text-2xs uppercase tracking-wide text-[hsl(var(--text-secondary))]">
+                <thead className="sticky top-0 bg-[hsl(var(--surface-1))]">
+                  <tr className="text-2xs uppercase tracking-wide text-[hsl(var(--muted-foreground))]">
                     <th className="py-2">Metrica</th>
                     <th className="py-2">Valor</th>
                     <th className="py-2">Ruta</th>
@@ -96,12 +96,12 @@ export default function WebVitalsAnalyticsPage() {
                 </thead>
                 <tbody>
                   {recent.map((item) => (
-                    <tr key={`${item.id}-${item.timestamp}`} className="border-t border-[hsl(var(--border))] dark:border-white/10">
-                      <td className="py-2 font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">{item.name}</td>
-                      <td className="py-2 text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">{Math.round(item.value)} ms</td>
-                      <td className="py-2 text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">{item.path}</td>
-                      <td className="max-w-[240px] truncate py-2 text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">{item.page}</td>
-                      <td className="py-2 text-[hsl(var(--text-secondary))]">{new Date(item.timestamp).toLocaleString()}</td>
+                    <tr key={`${item.id}-${item.timestamp}`} className="border-t border-[hsl(var(--border))]">
+                      <td className="py-2 font-bold text-[hsl(var(--foreground))]">{item.name}</td>
+                      <td className="py-2 text-[hsl(var(--muted-foreground))]">{Math.round(item.value)} ms</td>
+                      <td className="py-2 text-[hsl(var(--muted-foreground))]">{item.path}</td>
+                      <td className="max-w-[240px] truncate py-2 text-[hsl(var(--muted-foreground))]">{item.page}</td>
+                      <td className="py-2 text-[hsl(var(--muted-foreground))]">{new Date(item.timestamp).toLocaleString()}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -116,23 +116,23 @@ export default function WebVitalsAnalyticsPage() {
 
 function VitalCard({ metric, unit, summary }: { metric: string; unit: string; summary?: Summary[string] }) {
   return (
-    <article className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-3 shadow-sm dark:border-white/10 dark:bg-white/5">
+    <article className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-3 shadow-sm">
       <div className="mb-3 flex items-center justify-between">
-        <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{metric}</p>
+        <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--muted-foreground))]">{metric}</p>
         <Activity size={14} className="text-[hsl(var(--primary))]" />
       </div>
       <dl className="space-y-1">
         <div className="flex items-center justify-between text-sm">
-          <dt className="text-[hsl(var(--text-secondary))]">p50</dt>
-          <dd className="font-bold text-[hsl(var(--text-primary))] dark:text-white">{summary?.p50 ?? "-"} {summary?.p50 != null ? unit : ""}</dd>
+          <dt className="text-[hsl(var(--muted-foreground))]">p50</dt>
+          <dd className="font-bold text-[hsl(var(--foreground))]">{summary?.p50 ?? "-"} {summary?.p50 != null ? unit : ""}</dd>
         </div>
         <div className="flex items-center justify-between text-sm">
-          <dt className="text-[hsl(var(--text-secondary))]">p75</dt>
-          <dd className="font-bold text-[hsl(var(--text-primary))] dark:text-white">{summary?.p75 ?? "-"} {summary?.p75 != null ? unit : ""}</dd>
+          <dt className="text-[hsl(var(--muted-foreground))]">p75</dt>
+          <dd className="font-bold text-[hsl(var(--foreground))]">{summary?.p75 ?? "-"} {summary?.p75 != null ? unit : ""}</dd>
         </div>
         <div className="flex items-center justify-between text-sm">
-          <dt className="text-[hsl(var(--text-secondary))]">ultimo</dt>
-          <dd className="font-bold text-[hsl(var(--text-primary))] dark:text-white">{summary?.latest ?? "-"} {summary?.latest != null ? unit : ""}</dd>
+          <dt className="text-[hsl(var(--muted-foreground))]">ultimo</dt>
+          <dd className="font-bold text-[hsl(var(--foreground))]">{summary?.latest ?? "-"} {summary?.latest != null ? unit : ""}</dd>
         </div>
       </dl>
     </article>

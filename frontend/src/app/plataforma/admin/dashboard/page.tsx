@@ -130,15 +130,15 @@ export default function AdminDashboard() {
                     </section>
 
                     {/* Interactive Chart Section */}
-                    <section className="bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg p-4 shadow-xl space-y-3 group">
+                    <section className="bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] rounded-lg p-4 shadow-xl space-y-3 group">
                         <div className="flex justify-between items-center">
                             <div>
-                                <h3 className="text-xl font-bold tracking-tight mb-1">Tendencia de Crecimiento</h3>
-                                <p className="text-xs font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Participación Semanal</p>
+                                <h3 className="text-xl font-bold tracking-tight mb-1 text-[hsl(var(--foreground))]">Tendencia de Crecimiento</h3>
+                                <p className="text-xs font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wide">Participación Semanal</p>
                             </div>
-                            <div className="flex items-center gap-2 bg-[hsl(var(--surface-2))] dark:bg-white/5 p-1 rounded-md border border-[hsl(var(--border))] dark:border-white/10">
+                            <div className="flex items-center gap-2 bg-[hsl(var(--surface-2))] p-1 rounded-md border border-[hsl(var(--border))]">
                                 {['7D', '30D', '90D'].map(p => (
-                                    <button key={p} className={clsx("px-4 py-1.5 rounded-lg font-semibold transition-all", p === '7D' ? "bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--primary))] text-[hsl(var(--primary))] dark:text-white shadow-sm" : "text-[hsl(var(--text-secondary))]")}>{p}</button>
+                                    <button key={p} className={clsx("px-4 py-1.5 rounded-lg font-semibold transition-all", p === '7D' ? "bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] shadow-sm" : "text-[hsl(var(--muted-foreground))]")}>{p}</button>
                                 ))}
                             </div>
                         </div>
@@ -149,14 +149,14 @@ export default function AdminDashboard() {
                                         initial={{ height: 0 }} animate={{ height: `${h}%` }}
                                         className={clsx(
                                             "w-full rounded-t-2xl transition-all duration-700 relative",
-                                            i === 6 ? "bg-[hsl(var(--primary))] shadow-[0_0_20px_hsl(var(--primary)/0.4)]" : "bg-[hsl(var(--surface-3))] dark:bg-white/10 opacity-60 group-hover/bar:opacity-100"
+                                            i === 6 ? "bg-[hsl(var(--primary))] shadow-[0_0_20px_hsl(var(--primary)/0.4)]" : "bg-[hsl(var(--surface-3))] opacity-60 group-hover/bar:opacity-100"
                                         )}
                                     >
-                                        <div className="absolute -top-8 left-1/2 -translate-x-1/2 opacity-0 group-hover/bar:opacity-100 transition-opacity bg-[hsl(var(--bg-muted))] text-white px-2 py-1 rounded font-semibold">
+                                        <div className="absolute -top-8 left-1/2 -translate-x-1/2 opacity-0 group-hover/bar:opacity-100 transition-opacity bg-[hsl(var(--foreground))] text-[hsl(var(--background))] px-2 py-1 rounded font-semibold">
                                             {h}%
                                         </div>
                                     </motion.div>
-                                    <span className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">{['L','M','M','J','V','S','D'][i]}</span>
+                                    <span className="font-semibold text-[hsl(var(--muted-foreground))] uppercase tracking-wide">{['L','M','M','J','V','S','D'][i]}</span>
                                 </div>
                             ))}
                         </div>
@@ -165,26 +165,26 @@ export default function AdminDashboard() {
                     {/* Recent Activity List */}
                     <section className="space-y-3">
                         <div className="flex justify-between items-center px-4">
-                            <h3 className="text-lg font-bold tracking-tight uppercase tracking-wide">Actividad Reciente</h3>
+                            <h3 className="text-lg font-bold tracking-tight uppercase tracking-wide text-[hsl(var(--foreground))]">Actividad Reciente</h3>
                             <button className="font-semibold text-[hsl(var(--primary))] uppercase tracking-wide hover:underline">Ver Todo</button>
                         </div>
                         <div className="space-y-4">
                             {[
-                                { title: 'Nueva Inscripción', desc: 'Ricardo Mendez se unió a "Fundamentos de la Fe"', time: 'Hace 5 min', icon: UserPlus, color: 'text-[hsl(var(--primary))]', bg: 'bg-[hsl(var(--info-muted))]' },
-                                { title: 'Donación Recibida', desc: 'Ofrenda especial pro-construcción confirmada', time: 'Hace 12 min', icon: Heart, color: 'text-[hsl(var(--destructive))]', bg: 'bg-[hsl(var(--destructive)/0.08)]' },
-                                { title: 'Examen Completado', desc: 'Elena Rodriguez aprobó "Historia de la Iglesia"', time: 'Hace 45 min', icon: Target, color: 'text-[hsl(var(--success))]', bg: 'bg-[hsl(var(--success-muted))]' },
+                                { title: 'Nueva Inscripción', desc: 'Ricardo Mendez se unió a "Fundamentos de la Fe"', time: 'Hace 5 min', icon: UserPlus, color: 'text-[hsl(var(--primary))]', bg: 'bg-[hsl(var(--primary)/0.1)]' },
+                                { title: 'Donación Recibida', desc: 'Ofrenda especial pro-construcción confirmada', time: 'Hace 12 min', icon: Heart, color: 'text-[hsl(var(--destructive))]', bg: 'bg-[hsl(var(--destructive)/0.1)]' },
+                                { title: 'Examen Completado', desc: 'Elena Rodriguez aprobó "Historia de la Iglesia"', time: 'Hace 45 min', icon: Target, color: 'text-[hsl(var(--success))]', bg: 'bg-[hsl(var(--success)/0.15)]' },
                             ].map((item, idx) => (
-                                <div key={idx} className="flex items-center gap-3 p-3 bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/5 rounded-lg hover:border-[hsl(var(--primary))/0.2] transition-all group cursor-pointer shadow-sm hover:shadow-md">
-                                    <div className={clsx("size-7 rounded-lg flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform", item.bg, "dark:bg-white/10", item.color)}>
+                                <div key={idx} className="flex items-center gap-3 p-3 bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] rounded-lg hover:border-[hsl(var(--primary)/0.4)] transition-all group cursor-pointer shadow-sm hover:shadow-md">
+                                    <div className={clsx("size-7 rounded-lg flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform", item.bg, item.color)}>
                                         <item.icon size={28} />
                                     </div>
                                     <div className="flex-1 min-w-0">
-                                        <h4 className="text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-white truncate">{item.title}</h4>
-                                        <p className="text-xs font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide mt-1 truncate">{item.desc}</p>
+                                        <h4 className="text-sm font-semibold text-[hsl(var(--foreground))] truncate">{item.title}</h4>
+                                        <p className="text-xs font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wide mt-1 truncate">{item.desc}</p>
                                     </div>
                                     <div className="text-right shrink-0">
-                                        <p className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide mb-1">{item.time}</p>
-                                        <ChevronRight size={18} className="text-[hsl(var(--text-secondary))] group-hover:text-[hsl(var(--primary))] transition-colors inline-block" />
+                                        <p className="font-semibold text-[hsl(var(--muted-foreground))] uppercase tracking-wide mb-1">{item.time}</p>
+                                        <ChevronRight size={18} className="text-[hsl(var(--muted-foreground))] group-hover:text-[hsl(var(--primary))] transition-colors inline-block" />
                                     </div>
                                 </div>
                             ))}
@@ -194,12 +194,12 @@ export default function AdminDashboard() {
                     {/* ACADEMY PERFORMANCE SECTION - MVP-006 */}
                     <section className="pt-10 space-y-3">
                          <div className="flex items-center gap-4 px-4">
-                            <div className="size-10 rounded-md bg-[hsl(var(--primary))] flex items-center justify-center text-white shadow-lg shadow-[hsl(var(--primary))/0.2]">
+                            <div className="size-10 rounded-md bg-[hsl(var(--primary))] flex items-center justify-center text-[hsl(var(--primary-foreground))] shadow-lg shadow-[hsl(var(--primary)/0.2)]">
                                 <Target size={20} />
                             </div>
                             <div>
-                                <h3 className="text-lg font-bold tracking-tight uppercase tracking-wide">Rendimiento Académico</h3>
-                                <p className="text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Desglose por Modalidad</p>
+                                <h3 className="text-lg font-bold tracking-tight uppercase tracking-wide text-[hsl(var(--foreground))]">Rendimiento Académico</h3>
+                                <p className="text-2xs font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wide">Desglose por Modalidad</p>
                             </div>
                         </div>
 
@@ -219,18 +219,18 @@ export default function AdminDashboard() {
                         </div>
 
                         {/* Top Courses List */}
-                        <div className="bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg p-4">
-                             <h4 className="text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-3 px-2">Cursos más Populares</h4>
+                        <div className="bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] rounded-lg p-4">
+                             <h4 className="text-xs font-semibold uppercase tracking-wide text-[hsl(var(--muted-foreground))] mb-3 px-2">Cursos más Populares</h4>
                              <div className="space-y-4">
                                 {academy?.top_courses.map((course, i) => (
-                                    <div key={i} className="flex items-center justify-between p-4 bg-[hsl(var(--bg-primary))] dark:bg-white/5 rounded-lg border border-[hsl(var(--border))] dark:border-white/5 group hover:border-[hsl(var(--primary))/0.2] transition-all">
+                                    <div key={i} className="flex items-center justify-between p-4 bg-[hsl(var(--surface-2)/0.5)] rounded-lg border border-[hsl(var(--border))] group hover:border-[hsl(var(--primary)/0.4)] transition-all">
                                         <div className="flex items-center gap-4">
-                                            <span className="font-semibold text-[hsl(var(--text-secondary))]">0{i+1}</span>
-                                            <span className="text-sm font-semibold group-hover:text-[hsl(var(--primary))] transition-colors">{course.title}</span>
+                                            <span className="font-semibold text-[hsl(var(--muted-foreground))]">0{i+1}</span>
+                                            <span className="text-sm font-semibold group-hover:text-[hsl(var(--primary))] transition-colors text-[hsl(var(--foreground))]">{course.title}</span>
                                         </div>
                                         <div className="flex items-center gap-2">
-                                            <span className="text-xs font-semibold">{course.count}</span>
-                                            <span className="text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Estudiantes</span>
+                                            <span className="text-xs font-semibold text-[hsl(var(--foreground))]">{course.count}</span>
+                                            <span className="text-2xs font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wide">Estudiantes</span>
                                         </div>
                                     </div>
                                 ))}
@@ -241,8 +241,8 @@ export default function AdminDashboard() {
 
                 {/* Sidebar Contextual BI */}
                 <aside className="lg:col-span-4 space-y-3">
-                    <div className="bg-[hsl(var(--bg-muted))] rounded-lg p-4 text-white shadow-2xl space-y-3 relative overflow-hidden group">
-                        <div className="absolute top-0 right-0 -mr-20 -mt-20 size-10 bg-[hsl(var(--primary))/0.2] rounded-full blur-[80px] group-hover:bg-[hsl(var(--primary))/0.3] transition-all duration-1000" />
+                    <div className="bg-[hsl(var(--surface-2))] rounded-lg p-4 text-[hsl(var(--foreground))] shadow-2xl space-y-3 relative overflow-hidden group border border-[hsl(var(--border))]">
+                        <div className="absolute top-0 right-0 -mr-20 -mt-20 size-10 bg-[hsl(var(--primary)/0.2)] rounded-full blur-[80px] group-hover:bg-[hsl(var(--primary)/0.3)] transition-all duration-1000" />
 
                         <div className="relative z-10">
                             <div className="flex items-center gap-3 mb-3">
@@ -251,42 +251,42 @@ export default function AdminDashboard() {
                             </div>
                             <div className="relative size-56 mx-auto mb-3">
                                 <svg className="size-full -rotate-90 drop-shadow-2xl" viewBox="0 0 36 36">
-                                    <circle cx="18" cy="18" r="15.9" fill="transparent" stroke="rgba(255,255,255,0.05)" strokeWidth="4" />
+                                    <circle cx="18" cy="18" r="15.9" fill="transparent" stroke="hsl(var(--border))" strokeWidth="4" />
                                     <circle cx="18" cy="18" r="15.9" fill="transparent" stroke="hsl(var(--primary))" strokeWidth="4.5" strokeDasharray="75 100" />
-                                    <circle cx="18" cy="18" r="15.9" fill="transparent" stroke="hsl(var(--surface-2))" strokeWidth="4.5" strokeDasharray="25 100" strokeDashoffset="-75" />
+                                    <circle cx="18" cy="18" r="15.9" fill="transparent" stroke="hsl(var(--surface-3))" strokeWidth="4.5" strokeDasharray="25 100" strokeDashoffset="-75" />
                                 </svg>
                                 <div className="absolute inset-0 flex flex-col items-center justify-center">
-                                    <span className="text-lg font-bold tracking-tighter">75%</span>
-                                    <span className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Crecimiento</span>
+                                    <span className="text-lg font-bold tracking-tighter text-[hsl(var(--foreground))]">75%</span>
+                                    <span className="font-semibold text-[hsl(var(--muted-foreground))] uppercase tracking-wide">Crecimiento</span>
                                 </div>
                             </div>
                             <div className="space-y-4">
                                 <ProgressItem label="Inscripciones" value="75%" color="bg-[hsl(var(--primary))]" />
-                                <ProgressItem label="Graduaciones" value="25%" color="bg-[hsl(var(--surface-2))]" />
+                                <ProgressItem label="Graduaciones" value="25%" color="bg-[hsl(var(--surface-3))]" />
                             </div>
                         </div>
 
-                        <div className="relative z-10 pt-10 border-t border-white/5">
-                            <div className="p-3 bg-white/5 rounded-lg border border-white/10 space-y-4">
+                        <div className="relative z-10 pt-10 border-t border-[hsl(var(--border))]">
+                            <div className="p-3 bg-[hsl(var(--surface-1))] rounded-lg border border-[hsl(var(--border))] space-y-4">
                                 <div className="flex items-center gap-3">
                                     <Sparkles size={18} className="text-[hsl(var(--primary))]" />
-                                    <h5 className="text-2xs font-semibold uppercase tracking-wide">IA Insights</h5>
+                                    <h5 className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--foreground))]">IA Insights</h5>
                                 </div>
-                                <p className="text-xs font-bold text-[hsl(var(--text-secondary))] leading-relaxed uppercase tracking-wider">
+                                <p className="text-xs font-bold text-[hsl(var(--muted-foreground))] leading-relaxed uppercase tracking-wider">
                                     &quot;La participación ha subido un 15% en los cursos no formales. Se recomienda potenciar la ruta formal para el próximo trimestre.&quot;
                                 </p>
                             </div>
                         </div>
 
-                        <button className="relative z-10 w-full py-2 bg-[hsl(var(--bg-primary))] text-[hsl(var(--text-primary))] rounded-lg text-xs font-semibold uppercase tracking-wide shadow-xl hover:scale-[1.02] transition-all active:scale-95">
+                        <button className="relative z-10 w-full py-2 bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] rounded-lg text-xs font-semibold uppercase tracking-wide shadow-xl hover:bg-[hsl(var(--primary)/0.9)] transition-all active:scale-95">
                             Generar Auditoría
                         </button>
                     </div>
 
-                    <div className="bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg p-4 shadow-xl space-y-3">
+                    <div className="bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] rounded-lg p-4 shadow-xl space-y-3">
                         <div className="flex items-center justify-between">
-                            <h4 className="text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Próximos Eventos</h4>
-                            <Calendar size={18} className="text-[hsl(var(--text-secondary))]" />
+                            <h4 className="text-xs font-semibold uppercase tracking-wide text-[hsl(var(--muted-foreground))]">Próximos Eventos</h4>
+                            <Calendar size={18} className="text-[hsl(var(--muted-foreground))]" />
                         </div>
                         <div className="space-y-3">
                             {[
@@ -294,13 +294,13 @@ export default function AdminDashboard() {
                                 { day: '22', month: 'MAR', title: 'Asamblea de Líderes', time: '06:30 PM' },
                             ].map((event, i) => (
                                 <div key={i} className="flex gap-3 items-center group cursor-pointer">
-                                    <div className="flex flex-col items-center justify-center size-7 rounded-lg bg-[hsl(var(--surface-2))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 group-hover:bg-[hsl(var(--primary))] group-hover:text-white transition-all">
+                                    <div className="flex flex-col items-center justify-center size-7 rounded-lg bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] group-hover:bg-[hsl(var(--primary))] group-hover:text-[hsl(var(--primary-foreground))] transition-all">
                                         <span className="text-lg font-bold leading-none">{event.day}</span>
                                         <span className="text-2xs font-semibold uppercase">{event.month}</span>
                                     </div>
                                     <div>
-                                        <h5 className="font-semibold text-[hsl(var(--text-primary))] dark:text-white group-hover:text-[hsl(var(--primary))] transition-colors">{event.title}</h5>
-                                        <p className="text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide mt-0.5">{event.time}</p>
+                                        <h5 className="font-semibold text-[hsl(var(--foreground))] group-hover:text-[hsl(var(--primary))] transition-colors">{event.title}</h5>
+                                        <p className="text-2xs font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wide mt-0.5">{event.time}</p>
                                     </div>
                                 </div>
                             ))}
@@ -313,46 +313,46 @@ export default function AdminDashboard() {
 }
 
 function ModalityCard({ title, stats, icon: Icon, color = 'blue' }: ModalityCardProps) {
-    if (!stats) return <div className="h-48 bg-[hsl(var(--surface-1))] dark:bg-white/5 rounded-lg animate-pulse" />;
+    if (!stats) return <div className="h-48 bg-[hsl(var(--surface-1))] rounded-lg animate-pulse" />;
 
     const colorMap: Record<string, { text: string; bg: string; bar: string; border: string }> = {
-        blue: { text: 'text-[hsl(var(--primary))]', bg: 'bg-[hsl(var(--info-muted))]', bar: 'bg-[hsl(var(--primary))]', border: 'border-[hsl(var(--primary))/0.2]' },
-        amber: { text: 'text-[hsl(var(--warning))]', bg: 'bg-[hsl(var(--warning-muted))]', bar: 'bg-[hsl(var(--warning))]', border: 'border-[hsl(var(--warning))/0.2]' }
+        blue: { text: 'text-[hsl(var(--primary))]', bg: 'bg-[hsl(var(--primary)/0.1)]', bar: 'bg-[hsl(var(--primary))]', border: 'border-[hsl(var(--primary)/0.2)]' },
+        amber: { text: 'text-[hsl(var(--warning))]', bg: 'bg-[hsl(var(--warning)/0.15)]', bar: 'bg-[hsl(var(--warning))]', border: 'border-[hsl(var(--warning)/0.2)]' }
     };
     const c = colorMap[color];
 
     return (
-        <div className="bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg p-4 space-y-3 shadow-sm group hover:shadow-xl transition-all">
+        <div className="bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] rounded-lg p-4 space-y-3 shadow-sm group hover:shadow-xl transition-all">
             <div className="flex justify-between items-start">
-                <div className={clsx("size-7 rounded-lg flex items-center justify-center transition-transform group-hover:scale-110", c.bg, "dark:bg-white/10", c.text)}>
+                <div className={clsx("size-7 rounded-lg flex items-center justify-center transition-transform group-hover:scale-110", c.bg, c.text)}>
                     {Icon && <Icon size={24} />}
                 </div>
                 <div className="text-right">
-                    <span className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Éxito</span>
+                    <span className="font-semibold text-[hsl(var(--muted-foreground))] uppercase tracking-wide">Éxito</span>
                     <h5 className={clsx("text-xl font-bold tracking-tight", c.text)}>{stats.rate}%</h5>
                 </div>
             </div>
 
             <div>
-                <h4 className="text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-white uppercase tracking-wider">{title}</h4>
+                <h4 className="text-sm font-semibold text-[hsl(var(--foreground))] uppercase tracking-wider">{title}</h4>
                 <div className="flex items-center gap-2 mt-1">
                     <div className="size-1.5 rounded-full bg-[hsl(var(--success))]" />
-                    <p className="text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">{stats.completed} de {stats.total} finalizados</p>
+                    <p className="text-2xs font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wide">{stats.completed} de {stats.total} finalizados</p>
                 </div>
             </div>
 
-            <div className="pt-4 border-t border-[hsl(var(--border))] dark:border-white/5 grid grid-cols-2 gap-4">
+            <div className="pt-4 border-t border-[hsl(var(--border))] grid grid-cols-2 gap-4">
                 <div>
-                    <span className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide block mb-1">Promedio</span>
-                    <p className="text-lg font-bold tracking-tighter">{stats.avg_grade}</p>
+                    <span className="font-semibold text-[hsl(var(--muted-foreground))] uppercase tracking-wide block mb-1">Promedio</span>
+                    <p className="text-lg font-bold tracking-tighter text-[hsl(var(--foreground))]">{stats.avg_grade}</p>
                 </div>
                 <div className="text-right">
-                    <span className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide block mb-1">Inscritos</span>
-                    <p className="text-lg font-bold tracking-tighter">{stats.total}</p>
+                    <span className="font-semibold text-[hsl(var(--muted-foreground))] uppercase tracking-wide block mb-1">Inscritos</span>
+                    <p className="text-lg font-bold tracking-tighter text-[hsl(var(--foreground))]">{stats.total}</p>
                 </div>
             </div>
 
-            <div className="h-1.5 w-full bg-[hsl(var(--surface-2))] dark:bg-white/5 rounded-full overflow-hidden">
+            <div className="h-1.5 w-full bg-[hsl(var(--surface-2))] rounded-full overflow-hidden">
                 <motion.div
                     initial={{ width: 0 }}
                     animate={{ width: `${stats.rate}%` }}
@@ -365,27 +365,27 @@ function ModalityCard({ title, stats, icon: Icon, color = 'blue' }: ModalityCard
 
 function StatCard({ label, value, icon: Icon, trend, color = 'blue' }: StatCardProps) {
     const colors: Record<string, string> = {
-        blue: 'text-[hsl(var(--primary))] bg-[hsl(var(--info-muted))] dark:bg-[hsl(var(--info)/0.15)]',
-        rose: 'text-[hsl(var(--destructive))] bg-[hsl(var(--destructive)/0.08)] dark:bg-[hsl(var(--destructive)/0.15)]',
-        emerald: 'text-[hsl(var(--success))] bg-[hsl(var(--success-muted))] dark:bg-[hsl(var(--success)/0.15)]'
+        blue: 'text-[hsl(var(--primary))] bg-[hsl(var(--primary)/0.1)]',
+        rose: 'text-[hsl(var(--destructive))] bg-[hsl(var(--destructive)/0.1)]',
+        emerald: 'text-[hsl(var(--success))] bg-[hsl(var(--success)/0.15)]'
     };
     return (
-        <div className="bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg p-4 shadow-sm hover:shadow-xl transition-all group overflow-hidden relative">
-            <div className="absolute top-0 right-0 -mr-6 -mt-3 size-10 bg-[hsl(var(--surface-1))] dark:bg-white/5 rounded-full scale-0 group-hover:scale-100 transition-transform duration-700" />
+        <div className="bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] rounded-lg p-4 shadow-sm hover:shadow-xl transition-all group overflow-hidden relative">
+            <div className="absolute top-0 right-0 -mr-6 -mt-3 size-10 bg-[hsl(var(--surface-2))] rounded-full scale-0 group-hover:scale-100 transition-transform duration-700" />
             <div className="relative z-10 space-y-3">
                 <div className="flex justify-between items-center">
                     <div className={clsx("size-7 rounded-lg flex items-center justify-center transition-transform group-hover:rotate-12", colors[color])}>
                         {Icon && <Icon size={28} />}
                     </div>
                     <div className={clsx("font-semibold px-2 py-0.5 rounded-lg border",
-                        trend?.startsWith('+') ? "text-[hsl(var(--success))] bg-[hsl(var(--success-muted))] border-[hsl(var(--success))/0.2] dark:bg-[hsl(var(--success)/0.15)] dark:border-[hsl(var(--success))/0.2]" : "text-[hsl(var(--destructive))] bg-[hsl(var(--destructive)/0.08)] border-[hsl(var(--destructive)/0.2)] dark:bg-[hsl(var(--destructive)/0.15)] dark:border-[hsl(var(--destructive)/0.2)]"
+                        trend?.startsWith('+') ? "text-[hsl(var(--success))] bg-[hsl(var(--success)/0.15)] border-[hsl(var(--success)/0.3)]" : "text-[hsl(var(--destructive))] bg-[hsl(var(--destructive)/0.1)] border-[hsl(var(--destructive)/0.3)]"
                     )}>
                         {trend}
                     </div>
                 </div>
                 <div>
-                    <p className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide mb-1">{label}</p>
-                    <h4 className="text-xl font-bold text-[hsl(var(--text-primary))] dark:text-white tracking-tighter leading-none">{value}</h4>
+                    <p className="font-semibold text-[hsl(var(--muted-foreground))] uppercase tracking-wide mb-1">{label}</p>
+                    <h4 className="text-xl font-bold text-[hsl(var(--foreground))] tracking-tighter leading-none">{value}</h4>
                 </div>
             </div>
         </div>
@@ -395,11 +395,11 @@ function StatCard({ label, value, icon: Icon, trend, color = 'blue' }: StatCardP
 function ProgressItem({ label, value, color }: ProgressItemProps) {
     return (
         <div className="space-y-2">
-            <div className="flex justify-between text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
+            <div className="flex justify-between text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--muted-foreground))]">
                 <span>{label}</span>
-                <span className="text-white">{value}</span>
+                <span className="text-[hsl(var(--foreground))]">{value}</span>
             </div>
-            <div className="h-1.5 w-full bg-white/10 rounded-full overflow-hidden">
+            <div className="h-1.5 w-full bg-[hsl(var(--surface-3))] rounded-full overflow-hidden">
                 <motion.div initial={{ width: 0 }} animate={{ width: value }} className={clsx("h-full", color)} />
             </div>
         </div>

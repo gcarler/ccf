@@ -47,21 +47,21 @@ export default function TalentSearchPage() {
                 <div className="inline-flex items-center gap-2 px-3 py-1 bg-[hsl(var(--warning)/0.1)] text-[hsl(var(--warning))] rounded-full text-2xs font-semibold uppercase tracking-wide w-fit">
                     <Award size={12} /> Gestion de Talento Humano
                 </div>
-                <h1 className="text-lg font-bold tracking-tighter text-white uppercase italic">
+                <h1 className="text-lg font-bold tracking-tighter text-[hsl(var(--foreground))] uppercase italic">
                     Buscador de <span className="text-[hsl(var(--warning))]">Talentos</span>
                 </h1>
-                <p className="text-muted-foreground text-sm max-w-2xl">
+                <p className="text-[hsl(var(--muted-foreground))] text-sm max-w-2xl">
                     Identifica a los personas segun sus dones y habilidades tecnicas directamente desde la base de datos ministerial.
                 </p>
             </div>
 
             <div className="flex flex-wrap gap-4 items-center">
                 <div className="flex-1 min-w-[300px] relative group">
-                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground group-focus-within:text-[hsl(var(--warning))] transition-colors" size={20} />
+                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-[hsl(var(--muted-foreground))] group-focus-within:text-[hsl(var(--warning))] transition-colors" size={20} />
                     <input
                         type="text"
                         placeholder="Buscar por nombre o habilidad..."
-                        className="w-full bg-[hsl(var(--bg-primary))] border border-white/5 rounded-lg py-1.5 pl-12 pr-4 text-white focus:outline-none focus:border-[hsl(var(--warning))/0.5] transition-all shadow-2xl"
+                        className="w-full bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] rounded-lg py-1.5 pl-12 pr-4 text-[hsl(var(--foreground))] focus:outline-none focus:border-[hsl(var(--warning)/0.5)] transition-all shadow-2xl"
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
                     />
@@ -69,36 +69,36 @@ export default function TalentSearchPage() {
             </div>
 
             <div className="space-y-4">
-                <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-2">
+                <h3 className="text-xs font-semibold text-[hsl(var(--muted-foreground))] uppercase tracking-wide flex items-center gap-2">
                     <Zap size={14} className="text-[hsl(var(--warning))]" /> {loading ? 'Buscando...' : 'Resultados Reales'}
                 </h3>
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                     {talents.map((talent, i) => (
-                        <div key={i} className="bg-[hsl(var(--bg-primary))] border border-white/5 p-3 rounded-lg group hover:border-[hsl(var(--warning))/0.3] transition-all flex items-center justify-between">
+                        <div key={i} className="bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] p-3 rounded-lg group hover:border-[hsl(var(--warning)/0.3)] transition-all flex items-center justify-between">
                             <div className="flex items-center gap-4">
                                 <div className="w-14 h-8 bg-[hsl(var(--warning)/0.1)] rounded-lg flex items-center justify-center text-[hsl(var(--warning))] font-black text-xl">
                                     {(talent.nombre_completo?.charAt(0) ?? talent.first_name?.charAt(0) ?? '')}
                                 </div>
                                 <div className="space-y-1">
-                                    <h4 className="font-bold text-white uppercase">{talent.nombre_completo || `${talent.first_name ?? ''} ${talent.last_name ?? ''}`.trim()}</h4>
-                                    <div className="text-2xs text-muted-foreground font-bold uppercase tracking-wide">{talent.email}</div>
+                                    <h4 className="font-bold text-[hsl(var(--foreground))] uppercase">{talent.nombre_completo || `${talent.first_name ?? ''} ${talent.last_name ?? ''}`.trim()}</h4>
+                                    <div className="text-2xs text-[hsl(var(--muted-foreground))] font-bold uppercase tracking-wide">{talent.email}</div>
                                     <div className="flex flex-wrap gap-1 mt-2">
                                         {talent.skills?.map((s: { name: string }, idx: number) => (
-                                            <span key={idx} className="text-2xs bg-white/5 text-white/60 px-2 py-0.5 rounded-full border border-white/5 uppercase">
+                                            <span key={idx} className="text-2xs bg-[hsl(var(--surface-2))] text-[hsl(var(--muted-foreground))] px-2 py-0.5 rounded-full border border-[hsl(var(--border))] uppercase">
                                                 {s.name}
                                             </span>
                                         ))}
                                     </div>
                                 </div>
                             </div>
-                            <button className="p-3 bg-white/5 group-hover:bg-[hsl(var(--warning))] group-hover:text-[hsl(var(--text-primary))] rounded-lg transition-all">
+                            <button className="p-3 bg-[hsl(var(--surface-2))] text-[hsl(var(--muted-foreground))] group-hover:bg-[hsl(var(--warning))] group-hover:text-[hsl(var(--primary-foreground))] rounded-lg transition-all">
                                 <ChevronRight size={20} />
                             </button>
                         </div>
                     ))}
                     {!loading && talents.length === 0 && (
-                        <div className="col-span-full py-1.5 text-center text-muted-foreground border border-dashed border-white/10 rounded-lg uppercase font-semibold tracking-wide">
+                        <div className="col-span-full py-1.5 text-center text-[hsl(var(--muted-foreground))] border border-dashed border-[hsl(var(--border))] rounded-lg uppercase font-semibold tracking-wide">
                             No se encontraron talentos con los criterios de busqueda
                         </div>
                     )}

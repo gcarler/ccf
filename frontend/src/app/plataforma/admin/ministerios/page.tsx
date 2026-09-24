@@ -14,8 +14,8 @@ import { toast } from 'sonner';
 import clsx from 'clsx';
 import { motion, AnimatePresence } from 'framer-motion';
 
-const INPUT = "w-full bg-[hsl(var(--surface-1))] dark:bg-black/20 border-2 border-transparent dark:border-white/5 rounded-lg px-4 py-1.5 text-sm font-bold outline-none focus:border-[hsl(var(--info)/100%)]/50 focus:ring-4 focus:ring-[hsl(var(--primary))]/5 transition-all text-[hsl(var(--text-primary))] dark:text-white placeholder:text-[hsl(var(--text-secondary))] dark:placeholder:text-white/20";
-const LABEL = "text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]";
+const INPUT = "w-full bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] rounded-lg px-4 py-1.5 text-sm font-bold outline-none focus:border-[hsl(var(--primary))] focus:ring-4 focus:ring-[hsl(var(--primary)/0.1)] transition-all text-[hsl(var(--foreground))] placeholder:text-[hsl(var(--muted-foreground))]";
+const LABEL = "text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--muted-foreground))]";
 
 interface Ministry {
     id: number;
@@ -119,7 +119,7 @@ export default function MinisteriosPage() {
         setForm(f => ({ ...f, [field]: e.target.value }));
 
     return (
-        <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] dark:bg-[var(--admin-bg-elevated)] overflow-hidden">
+        <div className="flex flex-col h-full bg-[hsl(var(--background))] overflow-hidden">
             <WorkspaceToolbar
                 breadcrumbs={[
                     { label: 'Administración', icon: LayoutDashboard, href: '/plataforma/admin' },
@@ -131,7 +131,7 @@ export default function MinisteriosPage() {
                 onSearch={setSearch}
                 rightActions={
                     <button onClick={openCreate}
-                        className="flex items-center gap-2 px-3 py-2 bg-[hsl(var(--primary))] text-white rounded-md text-xs font-semibold uppercase tracking-wide shadow-lg shadow-[hsl(var(--info)/20%)] hover:bg-[hsl(var(--primary))] active:scale-95 transition-all">
+                        className="flex items-center gap-2 px-3 py-2 bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] rounded-md text-xs font-semibold uppercase tracking-wide shadow-lg shadow-[hsl(var(--primary)/0.2)] hover:bg-[hsl(var(--primary)/0.9)] active:scale-95 transition-all">
                         <Plus size={16} strokeWidth={3} /> Nuevo Ministerio
                     </button>
                 }
@@ -142,20 +142,20 @@ export default function MinisteriosPage() {
                 {/* Stats */}
                 <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 mb-3">
                     {[
-                        { label: 'Total Ministerios', value: ministries.length, icon: Church, color: 'text-[hsl(var(--primary))]', bg: 'bg-info-soft dark:bg-[hsl(var(--info))]/10' },
-                        { label: 'Con Líder Asignado', value: ministries.filter(m => m.leader_id).length, icon: Target, color: 'text-success-text', bg: 'bg-success-soft dark:bg-[hsl(var(--success))]/10' },
-                        { label: 'Total Personas', value: ministries.reduce((acc, m) => acc + (m.personas_count ?? 0), 0), icon: Users, color: 'text-[hsl(var(--primary))]', bg: 'bg-info-soft dark:bg-[hsl(var(--info))]/10' },
+                        { label: 'Total Ministerios', value: ministries.length, icon: Church, color: 'text-[hsl(var(--primary))]', bg: 'bg-[hsl(var(--primary)/0.1)]' },
+                        { label: 'Con Líder Asignado', value: ministries.filter(m => m.leader_id).length, icon: Target, color: 'text-[hsl(var(--success))]', bg: 'bg-[hsl(var(--success)/0.15)]' },
+                        { label: 'Total Personas', value: ministries.reduce((acc, m) => acc + (m.personas_count ?? 0), 0), icon: Users, color: 'text-[hsl(var(--primary))]', bg: 'bg-[hsl(var(--primary)/0.1)]' },
                     ].map(stat => {
                         const Icon = stat.icon;
                         return (
                             <motion.div key={stat.label} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
-                                className="bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))] rounded-lg border border-[hsl(var(--border))] dark:border-white/5 p-3 shadow-sm flex items-center gap-4">
+                                className="bg-[hsl(var(--surface-1))] rounded-lg border border-[hsl(var(--border))] p-3 shadow-sm flex items-center gap-4">
                                 <div className={clsx("size-6 rounded-md flex items-center justify-center flex-shrink-0", stat.bg, stat.color)}>
                                     <Icon size={20} />
                                 </div>
                                 <div>
-                                    <p className="text-lg font-bold text-[hsl(var(--text-primary))] dark:text-white tracking-tighter">{stat.value}</p>
-                                    <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{stat.label}</p>
+                                    <p className="text-lg font-bold text-[hsl(var(--foreground))] tracking-tighter">{stat.value}</p>
+                                    <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--muted-foreground))]">{stat.label}</p>
                                 </div>
                             </motion.div>
                         );
@@ -169,32 +169,32 @@ export default function MinisteriosPage() {
                 ) : filtered.length === 0 ? (
                     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}
                         className="flex flex-col items-center justify-center h-48 gap-4 text-center">
-                        <div className="size-8 rounded-lg bg-[hsl(var(--surface-2))] dark:bg-white/5 flex items-center justify-center text-[hsl(var(--text-secondary))]">
+                        <div className="size-8 rounded-lg bg-[hsl(var(--surface-2))] flex items-center justify-center text-[hsl(var(--muted-foreground))]">
                             <Church size={36} />
                         </div>
                         <div>
-                            <h3 className="text-base font-bold text-[hsl(var(--text-primary))] dark:text-white">
+                            <h3 className="text-base font-bold text-[hsl(var(--foreground))]">
                                 {search ? 'Sin resultados' : 'Sin ministerios registrados'}
                             </h3>
-                            <p className="text-sm text-[hsl(var(--text-secondary))] mt-1">
+                            <p className="text-sm text-[hsl(var(--muted-foreground))] mt-1">
                                 {search ? `No se encontró "${search}"` : 'Registra el primer ministerio de la iglesia.'}
                             </p>
                         </div>
                         {!search && (
                             <button onClick={openCreate}
-                                className="flex items-center gap-2 px-3 py-3 bg-[hsl(var(--primary))] text-white rounded-md text-xs font-semibold uppercase tracking-wide shadow-lg hover:bg-[hsl(var(--primary))] active:scale-95 transition-all">
+                                className="flex items-center gap-2 px-3 py-3 bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] rounded-md text-xs font-semibold uppercase tracking-wide shadow-lg hover:bg-[hsl(var(--primary)/0.9)] active:scale-95 transition-all">
                                 <Plus size={16} strokeWidth={3} /> Nuevo Ministerio
                             </button>
                         )}
                     </motion.div>
                 ) : viewType === 'table' ? (
-                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))] rounded-lg border border-[hsl(var(--border))] dark:border-white/5 shadow-sm overflow-hidden">
+                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="bg-[hsl(var(--surface-1))] rounded-lg border border-[hsl(var(--border))] shadow-sm overflow-hidden">
                         <div className="overflow-x-auto">
                             <table className="w-full text-left min-w-[600px]">
-                                <thead className="bg-[hsl(var(--surface-1))] dark:bg-black/20">
+                                <thead className="bg-[hsl(var(--surface-2))]">
                                     <tr>
                                         {['Ministerio', 'Descripción', 'Líder', 'Personas', 'Acciones'].map(h => (
-                                            <th key={h} className="py-2.5 px-4 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] border-b border-[hsl(var(--border))] dark:border-white/5">
+                                            <th key={h} className="py-2.5 px-4 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--muted-foreground))] border-b border-[hsl(var(--border))]">
                                                 {h}
                                             </th>
                                         ))}
@@ -205,50 +205,50 @@ export default function MinisteriosPage() {
                                         <motion.tr key={m.id}
                                             initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }}
                                             transition={{ delay: idx * 0.04 }}
-                                            className="hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/[0.03] transition-colors border-b border-[hsl(var(--border))] dark:border-white/5 last:border-0 group">
+                                            className="hover:bg-[hsl(var(--surface-2)/0.5)] transition-colors border-b border-[hsl(var(--border))] last:border-0 group">
                                             <td className="py-3 px-4">
                                                 <div className="flex items-center gap-3">
-                                                    <div className="size-8 rounded-md bg-info-soft dark:bg-[hsl(var(--info))]/10 flex items-center justify-center text-[hsl(var(--primary))] flex-shrink-0">
+                                                    <div className="size-8 rounded-md bg-[hsl(var(--primary)/0.1)] flex items-center justify-center text-[hsl(var(--primary))] flex-shrink-0">
                                                         <Church size={14} />
                                                     </div>
-                                                    <p className="text-xs font-semibold text-[hsl(var(--text-primary))] dark:text-white">{m.name}</p>
+                                                    <p className="text-xs font-semibold text-[hsl(var(--foreground))]">{m.name}</p>
                                                 </div>
                                             </td>
                                             <td className="py-3 px-4">
-                                                <p className="text-xs text-[hsl(var(--text-secondary))] max-w-xs truncate">{m.description || '—'}</p>
+                                                <p className="text-xs text-[hsl(var(--muted-foreground))] max-w-xs truncate">{m.description || '—'}</p>
                                             </td>
                                             <td className="py-3 px-4">
                                                 {m.leader_name ? (
-                                                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 font-semibold text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">
-                                                        <div className="size-4 rounded-full bg-[hsl(var(--primary))] text-white flex items-center justify-center font-semibold">
+                                                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] font-semibold text-[hsl(var(--foreground))]">
+                                                        <div className="size-4 rounded-full bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] flex items-center justify-center font-semibold">
                                                             {m.leader_name.charAt(0)}
                                                         </div>
                                                         {m.leader_name}
                                                     </span>
                                                 ) : (
-                                                    <span className="text-2xs text-[hsl(var(--text-secondary))] dark:text-white/20 font-bold">Sin asignar</span>
+                                                    <span className="text-2xs text-[hsl(var(--muted-foreground))] font-bold">Sin asignar</span>
                                                 )}
                                             </td>
                                             <td className="py-3 px-4">
-                                                <span className="text-xs font-semibold text-[hsl(var(--text-secondary))]">{m.personas_count ?? 0}</span>
+                                                <span className="text-xs font-semibold text-[hsl(var(--muted-foreground))]">{m.personas_count ?? 0}</span>
                                             </td>
                                             <td className="py-3 px-4">
                                                 <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                                                     <button onClick={() => openEdit(m)}
-                                                        className="p-2 hover:bg-info-soft dark:hover:bg-[hsl(var(--info))]/10 rounded-md text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] transition-all">
+                                                        className="p-2 hover:bg-[hsl(var(--primary)/0.1)] rounded-md text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--primary))] transition-all">
                                                         <Pencil size={14} />
                                                     </button>
                                                     {deleteId === m.id ? (
                                                         <div className="flex items-center gap-1">
                                                             <button onClick={() => handleDelete(m.id)}
-                                                                className="px-2 py-1 rounded-lg font-semibold bg-[hsl(var(--danger-muted))] dark:bg-[hsl(var(--danger))]/10 text-danger-text hover:bg-[hsl(var(--danger))] hover:text-white transition-all">
+                                                                className="px-2 py-1 rounded-lg font-semibold bg-[hsl(var(--destructive)/0.15)] text-[hsl(var(--destructive))] hover:bg-[hsl(var(--destructive))] hover:text-[hsl(var(--destructive-foreground))] transition-all">
                                                                 Confirmar
                                                             </button>
-                                                            <button onClick={() => setDeleteId(null)} className="p-1.5 hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5 rounded-lg text-[hsl(var(--text-secondary))]"><X size={12} /></button>
+                                                            <button onClick={() => setDeleteId(null)} className="p-1.5 hover:bg-[hsl(var(--surface-2))] rounded-lg text-[hsl(var(--muted-foreground))]"><X size={12} /></button>
                                                         </div>
                                                     ) : (
                                                         <button onClick={() => setDeleteId(m.id)}
-                                                            className="p-2 hover:bg-danger-soft dark:hover:bg-[hsl(var(--danger))]/10 rounded-md text-[hsl(var(--text-secondary))] hover:text-danger-text transition-all">
+                                                            className="p-2 hover:bg-[hsl(var(--destructive)/0.15)] rounded-md text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--destructive))] transition-all">
                                                             <Trash2 size={14} />
                                                         </button>
                                                     )}
@@ -266,25 +266,25 @@ export default function MinisteriosPage() {
                             <motion.div key={m.id}
                                 initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
                                 transition={{ delay: idx * 0.06 }}
-                                className="bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))] rounded-lg border border-[hsl(var(--border))] dark:border-white/5 p-3 shadow-sm hover:border-[hsl(var(--info)/100%)]/20 transition-all group">
+                                className="bg-[hsl(var(--surface-1))] rounded-lg border border-[hsl(var(--border))] p-3 shadow-sm hover:border-[hsl(var(--primary)/0.5)] transition-all group">
                                 <div className="flex items-start justify-between mb-4">
-                                    <div className="size-6 rounded-md bg-info-soft dark:bg-[hsl(var(--info))]/10 flex items-center justify-center text-[hsl(var(--primary))]">
+                                    <div className="size-6 rounded-md bg-[hsl(var(--primary)/0.1)] flex items-center justify-center text-[hsl(var(--primary))]">
                                         <Church size={20} />
                                     </div>
                                     <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                        <button onClick={() => openEdit(m)} className="p-2 hover:bg-info-soft dark:hover:bg-[hsl(var(--info))]/10 rounded-md text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] transition-all"><Pencil size={14} /></button>
-                                        <button onClick={() => setDeleteId(m.id)} className="p-2 hover:bg-danger-soft dark:hover:bg-[hsl(var(--danger))]/10 rounded-md text-[hsl(var(--text-secondary))] hover:text-danger-text transition-all"><Trash2 size={14} /></button>
+                                        <button onClick={() => openEdit(m)} className="p-2 hover:bg-[hsl(var(--primary)/0.1)] rounded-md text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--primary))] transition-all"><Pencil size={14} /></button>
+                                        <button onClick={() => setDeleteId(m.id)} className="p-2 hover:bg-[hsl(var(--destructive)/0.15)] rounded-md text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--destructive))] transition-all"><Trash2 size={14} /></button>
                                     </div>
                                 </div>
-                                <h3 className="text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-white mb-1">{m.name}</h3>
-                                <p className="text-xs text-[hsl(var(--text-secondary))] leading-relaxed line-clamp-2">{m.description || 'Sin descripción registrada.'}</p>
-                                <div className="flex items-center gap-3 mt-4 pt-4 border-t border-[hsl(var(--border))] dark:border-white/5">
-                                    <div className="flex items-center gap-1.5 font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wider">
+                                <h3 className="text-sm font-semibold text-[hsl(var(--foreground))] mb-1">{m.name}</h3>
+                                <p className="text-xs text-[hsl(var(--muted-foreground))] leading-relaxed line-clamp-2">{m.description || 'Sin descripción registrada.'}</p>
+                                <div className="flex items-center gap-3 mt-4 pt-4 border-t border-[hsl(var(--border))]">
+                                    <div className="flex items-center gap-1.5 font-semibold text-[hsl(var(--muted-foreground))] uppercase tracking-wider">
                                         <Users size={12} /> {m.personas_count ?? 0} personas
                                     </div>
                                     {m.leader_name && (
                                         <div className="flex items-center gap-1.5 font-semibold text-[hsl(var(--primary))] uppercase tracking-wider">
-                                            <div className="size-4 rounded-full bg-[hsl(var(--primary))] text-white flex items-center justify-center text-2xs">{m.leader_name.charAt(0)}</div>
+                                            <div className="size-4 rounded-full bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] flex items-center justify-center text-2xs">{m.leader_name.charAt(0)}</div>
                                             {m.leader_name}
                                         </div>
                                     )}
@@ -298,15 +298,15 @@ export default function MinisteriosPage() {
                             <motion.div key={m.id}
                                 initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }}
                                 transition={{ delay: idx * 0.04 }}
-                                className="bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))] rounded-md border border-[hsl(var(--border))] dark:border-white/5 p-4 flex items-center gap-4 group hover:border-[hsl(var(--info)/100%)]/20 transition-all">
-                                <div className="size-10 rounded-md bg-info-soft dark:bg-[hsl(var(--info))]/10 flex items-center justify-center text-[hsl(var(--primary))] flex-shrink-0"><Church size={18} /></div>
+                                className="bg-[hsl(var(--surface-1))] rounded-md border border-[hsl(var(--border))] p-4 flex items-center gap-4 group hover:border-[hsl(var(--primary)/0.5)] transition-all">
+                                <div className="size-10 rounded-md bg-[hsl(var(--primary)/0.1)] flex items-center justify-center text-[hsl(var(--primary))] flex-shrink-0"><Church size={18} /></div>
                                 <div className="flex-1 min-w-0">
-                                    <p className="text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-white">{m.name}</p>
-                                    <p className="text-2xs text-[hsl(var(--text-secondary))] mt-0.5 truncate">{m.description || 'Sin descripción'}</p>
+                                    <p className="text-sm font-semibold text-[hsl(var(--foreground))]">{m.name}</p>
+                                    <p className="text-2xs text-[hsl(var(--muted-foreground))] mt-0.5 truncate">{m.description || 'Sin descripción'}</p>
                                 </div>
                                 <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                    <button onClick={() => openEdit(m)} className="p-2 hover:bg-info-soft dark:hover:bg-[hsl(var(--info))]/10 rounded-md text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] transition-all"><Pencil size={14} /></button>
-                                    <button onClick={() => setDeleteId(m.id)} className="p-2 hover:bg-danger-soft dark:hover:bg-[hsl(var(--danger))]/10 rounded-md text-[hsl(var(--text-secondary))] hover:text-danger-text transition-all"><Trash2 size={14} /></button>
+                                    <button onClick={() => openEdit(m)} className="p-2 hover:bg-[hsl(var(--primary)/0.1)] rounded-md text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--primary))] transition-all"><Pencil size={14} /></button>
+                                    <button onClick={() => setDeleteId(m.id)} className="p-2 hover:bg-[hsl(var(--destructive)/0.15)] rounded-md text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--destructive))] transition-all"><Trash2 size={14} /></button>
                                 </div>
                             </motion.div>
                         ))}
@@ -319,25 +319,25 @@ export default function MinisteriosPage() {
                 {drawerOpen && (
                     <>
                         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                            className="fixed inset-x-0 bottom-0 top-10 z-[90] bg-black/30 backdrop-blur-sm"
+                            className="fixed inset-x-0 bottom-0 top-10 z-[90] bg-[hsl(var(--background)/0.7)] backdrop-blur-sm"
                             onClick={() => setDrawerOpen(false)} />
                         <motion.aside
                             initial={{ x: '100%', opacity: 0 }} animate={{ x: 0, opacity: 1 }}
                             exit={{ x: '100%', opacity: 0 }}
                             transition={{ type: 'spring', damping: 28, stiffness: 280 }}
-                            className="fixed top-10 right-0 h-[calc(100vh-2.5rem)] z-[100] w-full max-w-md bg-[hsl(var(--bg-primary))] dark:bg-[var(--admin-bg-elevated)] shadow-2xl border-l border-[hsl(var(--border))] dark:border-white/10 flex flex-col">
+                            className="fixed top-10 right-0 h-[calc(100vh-2.5rem)] z-[100] w-full max-w-md bg-[hsl(var(--surface-1))] shadow-2xl border-l border-[hsl(var(--border))] flex flex-col">
 
-                            <div className="flex items-center justify-between px-3 py-1.5 border-b border-[hsl(var(--border))] dark:border-white/5 flex-shrink-0">
+                            <div className="flex items-center justify-between px-3 py-1.5 border-b border-[hsl(var(--border))] flex-shrink-0">
                                 <div className="flex items-center gap-3">
-                                    <div className="size-8 rounded-md bg-info-soft dark:bg-[hsl(var(--info))]/10 flex items-center justify-center text-[hsl(var(--primary))]">
+                                    <div className="size-8 rounded-md bg-[hsl(var(--primary)/0.1)] flex items-center justify-center text-[hsl(var(--primary))]">
                                         <Church size={16} />
                                     </div>
                                     <div>
-                                        <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{editing ? 'Editar' : 'Nuevo'} Ministerio</p>
-                                        <h3 className="text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-white">{editing ? editing.name : 'Sin nombre'}</h3>
+                                        <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--muted-foreground))]">{editing ? 'Editar' : 'Nuevo'} Ministerio</p>
+                                        <h3 className="text-sm font-semibold text-[hsl(var(--foreground))]">{editing ? editing.name : 'Sin nombre'}</h3>
                                     </div>
                                 </div>
-                                <button onClick={() => setDrawerOpen(false)} className="p-2 hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5 rounded-md text-[hsl(var(--text-secondary))] transition-all">
+                                <button onClick={() => setDrawerOpen(false)} className="p-2 hover:bg-[hsl(var(--surface-2))] rounded-md text-[hsl(var(--muted-foreground))] transition-all">
                                     <X size={18} />
                                 </button>
                             </div>
@@ -355,17 +355,17 @@ export default function MinisteriosPage() {
                                 <div className="space-y-2">
                                     <label className={LABEL}>ID del Líder (Persona)</label>
                                     <input type="number" min={1} placeholder="ID del persona líder" value={form.leader_id} onChange={set('leader_id')} className={INPUT} />
-                                    <p className="text-2xs text-[hsl(var(--text-secondary))] ml-4">Ingresa el ID del persona que liderará este ministerio.</p>
+                                    <p className="text-2xs text-[hsl(var(--muted-foreground))] ml-4">Ingresa el ID del persona que liderará este ministerio.</p>
                                 </div>
                             </form>
 
-                            <div className="flex items-center gap-3 px-3 py-1.5 border-t border-[hsl(var(--border))] dark:border-white/5 flex-shrink-0">
+                            <div className="flex items-center gap-3 px-3 py-1.5 border-t border-[hsl(var(--border))] flex-shrink-0">
                                 <button type="button" onClick={() => setDrawerOpen(false)}
-                                    className="flex-1 py-3 text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] dark:hover:text-white transition-all">
+                                    className="flex-1 py-3 text-xs font-semibold uppercase tracking-wide text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] transition-all">
                                     Cancelar
                                 </button>
                                 <button onClick={handleSave} disabled={saving}
-                                    className="flex-1 flex items-center justify-center gap-2 py-3 bg-[hsl(var(--primary))] text-white rounded-md text-xs font-semibold uppercase tracking-wide shadow-lg shadow-[hsl(var(--info)/20%)] hover:bg-[hsl(var(--primary))] active:scale-95 transition-all disabled:opacity-50">
+                                    className="flex-1 flex items-center justify-center gap-2 py-3 bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] rounded-md text-xs font-semibold uppercase tracking-wide shadow-lg shadow-[hsl(var(--primary)/0.2)] hover:bg-[hsl(var(--primary)/0.9)] active:scale-95 transition-all disabled:opacity-50">
                                     {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
                                     {saving ? 'Guardando...' : (editing ? 'Actualizar' : 'Crear')}
                                 </button>

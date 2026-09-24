@@ -105,10 +105,10 @@ export default function CandidatesDashboard() {
             header: 'Estudiante',
             cell: ({ row }) => (
                 <div className="flex items-center gap-3">
-                    <div className="size-8 rounded-md bg-[hsl(var(--bg-muted))] dark:bg-white/10 flex items-center justify-center text-white text-2xs font-semibold uppercase border border-white/10">{row.original.username.charAt(0)}</div>
+                    <div className="size-8 rounded-md bg-[hsl(var(--surface-2))] flex items-center justify-center text-[hsl(var(--foreground))] text-2xs font-semibold uppercase border border-[hsl(var(--border))]">{row.original.username.charAt(0)}</div>
                     <div className="flex flex-col">
-                        <span className="font-semibold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] uppercase leading-none">{row.original.username}</span>
-                        <span className="text-2xs text-[hsl(var(--text-secondary))] font-bold tracking-wide mt-1">{row.original.email}</span>
+                        <span className="font-semibold text-[hsl(var(--foreground))] uppercase leading-none">{row.original.username}</span>
+                        <span className="text-2xs text-[hsl(var(--muted-foreground))] font-bold tracking-wide mt-1">{row.original.email}</span>
                     </div>
                 </div>
             )
@@ -118,17 +118,17 @@ export default function CandidatesDashboard() {
             header: 'Avance Formativo',
             cell: ({ row }) => (
                 <div className="flex items-center gap-3">
-                    <div className="flex-1 h-1.5 w-32 bg-[hsl(var(--surface-2))] dark:bg-white/5 rounded-full overflow-hidden">
+                    <div className="flex-1 h-1.5 w-32 bg-[hsl(var(--surface-2))] rounded-full overflow-hidden">
                         <motion.div initial={{ width: 0 }} animate={{ width: `${row.original.progress}%` }} className={clsx("h-full", row.original.progress >= 100 ? "bg-[hsl(var(--success))]" : "bg-[hsl(var(--primary))]")} />
                     </div>
-                    <span className="font-semibold text-[hsl(var(--text-secondary))]">{Math.round(row.original.progress)}%</span>
+                    <span className="font-semibold text-[hsl(var(--muted-foreground))]">{Math.round(row.original.progress)}%</span>
                 </div>
             )
         },
         {
             accessorKey: 'target_level',
             header: 'Nivel Objetivo',
-            cell: info => <span className="font-semibold text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] uppercase tracking-wide">{info.getValue() as string}</span>
+            cell: info => <span className="font-semibold text-[hsl(var(--primary))] uppercase tracking-wide">{info.getValue() as string}</span>
         },
         {
             accessorKey: 'status',
@@ -136,7 +136,7 @@ export default function CandidatesDashboard() {
             cell: ({ row }) => (
                 <span className={clsx(
                     "px-4 py-1.5 rounded-md text-2xs font-semibold uppercase tracking-wide border",
-                    row.original.status === 'ready' ? "bg-success-soft text-success-text border-[hsl(var(--success)/20%)] dark:bg-[hsl(var(--success))]/20 dark:border-[hsl(var(--success)/100%)]" : "bg-info-soft text-[hsl(var(--primary))] border-[hsl(var(--info)/20%)] dark:bg-[hsl(var(--info))]/20 dark:border-[hsl(var(--info)/100%)]"
+                    row.original.status === 'ready' ? "bg-[hsl(var(--success)/0.15)] text-[hsl(var(--success))] border-[hsl(var(--success)/0.3)]" : "bg-[hsl(var(--primary)/0.15)] text-[hsl(var(--primary))] border-[hsl(var(--primary)/0.3)]"
                 )}>
                     {row.original.status === 'ready' ? 'Óptimo para Hito' : 'En Discipulado'}
                 </span>
@@ -147,7 +147,7 @@ export default function CandidatesDashboard() {
             header: '',
             cell: ({ row }) => <button
                 onClick={() => addToast(`Detalle de ${row.original.username} próximamente`, 'info')}
-                className="p-2 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] transition-all hover:bg-info-soft dark:hover:bg-white/5 rounded-md"
+                className="p-2 text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--primary))] transition-all hover:bg-[hsl(var(--surface-2))] rounded-md"
                 aria-label={`Ver detalle de ${row.original.username}`}
             ><ChevronRight size={18} /></button>
         }
@@ -175,40 +175,40 @@ export default function CandidatesDashboard() {
             <div className="space-y-3 pb-4">
                 {/* Stats Grid Cinematic */}
                 <section className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                    <CandidateStat label="Listos para Hito" value={stats.ready} icon={Award} color="emerald" auraColor="rgba(16, 185, 129, 0.15)" />
-                    <CandidateStat label="En Evaluación" value={stats.evaluating} icon={Target} color="blue" auraColor="rgba(37, 99, 235, 0.15)" />
-                    <CandidateStat label="Fidelidad Alta (XP)" value={stats.highXp} icon={Zap} color="amber" auraColor="rgba(245, 158, 11, 0.15)" />
+                    <CandidateStat label="Listos para Hito" value={stats.ready} icon={Award} color="emerald" auraColor="hsl(var(--success)/0.15)" />
+                    <CandidateStat label="En Evaluación" value={stats.evaluating} icon={Target} color="blue" auraColor="hsl(var(--primary)/0.15)" />
+                    <CandidateStat label="Fidelidad Alta (XP)" value={stats.highXp} icon={Zap} color="amber" auraColor="hsl(var(--warning)/0.15)" />
                 </section>
 
                 {/* Main Table Area Cinematic */}
-                <section className="bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] dark:border-white/5 rounded-lg p-4 shadow-xl space-y-3">
+                <section className="bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] rounded-lg p-4 shadow-xl space-y-3">
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 px-4">
                         <div>
-                            <h3 className="text-xl font-bold tracking-tighter uppercase leading-none dark:text-white">Nómina de Candidatos</h3>
-                            <p className="text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide mt-2">Basado en el rendimiento de los últimos 30 días</p>
+                            <h3 className="text-xl font-bold tracking-tighter uppercase leading-none text-[hsl(var(--foreground))]">Nómina de Candidatos</h3>
+                            <p className="text-2xs font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wide mt-2">Basado en el rendimiento de los últimos 30 días</p>
                         </div>
                         <div className="relative w-full md:w-96 group">
-                            <Search size={20} className="absolute left-5 top-1/2 -translate-y-1/2 text-[hsl(var(--text-secondary))] group-focus-within:text-[hsl(var(--primary))] transition-colors" />
+                            <Search size={20} className="absolute left-5 top-1/2 -translate-y-1/2 text-[hsl(var(--muted-foreground))] group-focus-within:text-[hsl(var(--primary))] transition-colors" />
                             <input
                                 value={search} onChange={e => setSearch(e.target.value)}
                                 placeholder="Filtrar por nombre de participante..."
                                 aria-label="Filtrar por nombre de participante"
-                                className="w-full bg-[hsl(var(--surface-1))] dark:bg-black/20 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg py-2 px-4 text-sm font-bold outline-none focus:ring-8 focus:ring-[hsl(var(--primary))]/5 focus:border-[hsl(var(--info)/100%)] transition-all shadow-sm"
+                                className="w-full bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] rounded-lg py-2 px-4 text-sm font-bold text-[hsl(var(--foreground))] outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))] transition-all shadow-sm"
                             />
                         </div>
                     </div>
 
                     <AnimatePresence mode="wait">
                         {loading ? (
-                            <div className="py-1.5 flex flex-col items-center justify-center gap-4 text-[hsl(var(--text-secondary))] font-semibold uppercase tracking-wide animate-pulse">
+                            <div className="py-1.5 flex flex-col items-center justify-center gap-4 text-[hsl(var(--muted-foreground))] font-semibold uppercase tracking-wide animate-pulse">
                                 <Loader2 className="animate-spin text-[hsl(var(--primary))]" size={48} /> Procesando Big Data...
                             </div>
                         ) : error ? (
                             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="py-8 flex flex-col items-center gap-3">
-                                <p className="text-sm font-semibold text-[hsl(var(--text-secondary))]">No se pudieron cargar los candidatos.</p>
+                                <p className="text-sm font-semibold text-[hsl(var(--muted-foreground))]">No se pudieron cargar los candidatos.</p>
                                 <button
                                     onClick={() => fetchCandidates()}
-                                    className="rounded-md bg-[hsl(var(--primary))] px-4 py-2 text-xs font-semibold uppercase tracking-wide text-white transition-all active:scale-95"
+                                    className="rounded-md bg-[hsl(var(--primary))] px-4 py-2 text-xs font-semibold uppercase tracking-wide text-[hsl(var(--primary-foreground))] transition-all active:scale-95"
                                 >
                                     Reintentar
                                 </button>
@@ -227,13 +227,13 @@ export default function CandidatesDashboard() {
 
 function CandidateStat({ label, value, icon: Icon, color = 'emerald', auraColor }: CandidateStatProps) {
     const colors: Record<string, string> = {
-        emerald: 'text-success-text bg-success-soft dark:bg-[hsl(var(--success))]/20 border-[hsl(var(--success)/20%)] dark:border-[hsl(var(--success)/100%)]',
-        blue: 'text-[hsl(var(--primary))] bg-info-soft dark:bg-[hsl(var(--info))]/20 border-[hsl(var(--info)/20%)] dark:border-[hsl(var(--info)/100%)]',
-        amber: 'text-warning-text bg-warning-soft dark:bg-[hsl(var(--warning))]/20 border-[hsl(var(--warning)/20%)] dark:border-[hsl(var(--warning)/100%)]'
+        emerald: 'text-[hsl(var(--success))] bg-[hsl(var(--success)/0.15)] border-[hsl(var(--success)/0.3)]',
+        blue: 'text-[hsl(var(--primary))] bg-[hsl(var(--primary)/0.15)] border-[hsl(var(--primary)/0.3)]',
+        amber: 'text-[hsl(var(--warning))] bg-[hsl(var(--warning)/0.15)] border-[hsl(var(--warning)/0.3)]'
     };
     return (
         <div
-            className="p-4 bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] dark:border-white/5 rounded-lg shadow-sm flex items-center gap-3 group hover:shadow-2xl transition-all duration-500 relative overflow-hidden"
+            className="p-4 bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] rounded-lg shadow-sm flex items-center gap-3 group hover:shadow-2xl transition-all duration-500 relative overflow-hidden"
             style={{ '--aura-color': auraColor } as CSSAuraProperties}
         >
             <style jsx>{`
@@ -247,8 +247,8 @@ function CandidateStat({ label, value, icon: Icon, color = 'emerald', auraColor 
                 {Icon && <Icon size={32} strokeWidth={1.5} />}
             </div>
             <div>
-                <p className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide mb-1 leading-none">{label}</p>
-                <h4 className="text-lg font-bold text-[hsl(var(--text-primary))] dark:text-white tracking-tighter leading-none">{value}</h4>
+                <p className="font-semibold text-[hsl(var(--muted-foreground))] uppercase tracking-wide mb-1 leading-none">{label}</p>
+                <h4 className="text-lg font-bold text-[hsl(var(--foreground))] tracking-tighter leading-none">{value}</h4>
             </div>
         </div>
     );
