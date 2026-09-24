@@ -26,12 +26,12 @@ export default function PaletteSelector() {
         <div className="space-y-4">
             <div className="flex items-center justify-between">
                 <div>
-                    <h2 className="text-lg font-semibold text-[hsl(var(--text-primary))] dark:text-white">Temas Día / Noche</h2>
-                    <p className="text-sm text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">Personaliza el ambiente visual de la plataforma.</p>
+                    <h2 className="text-lg font-semibold text-[hsl(var(--text-primary))]">Temas Día / Noche</h2>
+                    <p className="text-sm text-[hsl(var(--text-secondary))]">Personaliza el ambiente visual de la plataforma.</p>
                 </div>
                 <button
                     onClick={toggleTheme}
-                    className="text-xs font-semibold uppercase tracking-wide px-3 py-1.5 rounded-full border border-[hsl(var(--border))] dark:border-white/10 text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/10 transition"
+                    className="text-xs font-semibold uppercase tracking-wide px-3 py-1.5 rounded-full border border-[hsl(var(--border))] text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] transition"
                 >
                     Alternar
                 </button>
@@ -46,20 +46,20 @@ export default function PaletteSelector() {
                             onClick={() => setTheme(id)}
                             className={`text-left p-4 rounded-lg border transition-all duration-300 ${
                                 isActive
-                                    ? 'border-[hsl(var(--primary))] shadow-lg shadow-[hsl(var(--primary)/0.1)] bg-white/90 dark:bg-[hsl(var(--bg-muted))]'
-                                    : 'border-[hsl(var(--border))] dark:border-white/10 bg-white/60 dark:bg-white/5 hover:border-[hsl(var(--border))] dark:hover:border-white/20'
+                                    ? 'border-[hsl(var(--primary))] shadow-lg shadow-[hsl(var(--primary)/0.1)] bg-[hsl(var(--surface-2))]'
+                                    : 'border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] hover:border-[hsl(var(--primary))]/50 hover:bg-[hsl(var(--surface-2))]'
                             }`}
                         >
                             <div className="flex items-center justify-between">
                                 <div>
-                                    <p className="text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-white">{label}</p>
-                                    <p className="text-xs text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">{description}</p>
+                                    <p className="text-sm font-semibold text-[hsl(var(--text-primary))]">{label}</p>
+                                    <p className="text-xs text-[hsl(var(--text-secondary))]">{description}</p>
                                 </div>
                                 <div className="flex -space-x-1">
                                     {swatches.map((hex) => (
                                         <span
                                             key={hex}
-                                            className="w-6 h-6 rounded-full border border-white/40"
+                                            className="w-6 h-6 rounded-full border border-[hsl(var(--border))]"
                                             style={{ backgroundColor: hex }}
                                         />
                                     ))}
