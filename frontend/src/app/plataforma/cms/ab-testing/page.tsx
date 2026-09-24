@@ -3,7 +3,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { SITE_KEY } from "@/lib/site-config";
 import { toast } from "sonner";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import {
   FlaskConical,
   Plus,
@@ -276,7 +276,7 @@ export default function CmsAbTestingManagement() {
         {/* Top Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[hsl(var(--border))] pb-4">
           <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-xl bg-cyan-500/10 text-cyan-600 dark:text-cyan-400">
+            <div className="p-2.5 rounded-xl bg-[hsl(var(--primary)/0.1)] text-[hsl(var(--primary))]">
               <FlaskConical size={24} />
             </div>
             <div>
@@ -371,7 +371,7 @@ export default function CmsAbTestingManagement() {
 
         {/* Error state */}
         {!loading && error && (
-          <div className="p-4 rounded-xl bg-red-500/10 text-red-600 dark:text-red-400 text-xs flex items-center gap-2">
+          <div className="p-4 rounded-xl bg-[hsl(var(--destructive)/0.1)] text-[hsl(var(--destructive))] text-xs flex items-center gap-2">
             <AlertCircle size={16} />
             <span>{error}</span>
           </div>
@@ -411,7 +411,7 @@ export default function CmsAbTestingManagement() {
                   layout
                   initial={{ opacity: 0, scale: 0.98 }}
                   animate={{ opacity: 1, scale: 1 }}
-                  className="p-5 rounded-2xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] flex flex-col justify-between space-y-4 hover:border-cyan-500/30 transition-all shadow-xs"
+                  className="p-5 rounded-2xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] flex flex-col justify-between space-y-4 hover:border-[hsl(var(--primary)/0.3)] transition-all shadow-xs"
                 >
                   <div className="space-y-2">
                     <div className="flex items-start justify-between gap-2">
@@ -419,9 +419,9 @@ export default function CmsAbTestingManagement() {
                       <span
                         className={clsx(
                           "px-2.5 py-0.5 text-[10px] font-semibold rounded-full capitalize shrink-0",
-                          isActive && "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20",
-                          isPaused && "bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20",
-                          isCompleted && "bg-slate-500/10 text-slate-600 dark:text-slate-400 border border-slate-500/20"
+                          isActive && "bg-[hsl(var(--primary)/0.1)] text-[hsl(var(--primary))] border border-[hsl(var(--primary)/0.2)]",
+                          isPaused && "bg-[hsl(var(--destructive)/0.1)] text-[hsl(var(--destructive))] border border-[hsl(var(--destructive)/0.2)]",
+                          isCompleted && "bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))] border border-[hsl(var(--border))]"
                         )}
                       >
                         {test.status === "active" ? "Activo" : test.status === "paused" ? "Pausado" : "Completado"}
@@ -443,7 +443,7 @@ export default function CmsAbTestingManagement() {
                   <div className="pt-3 border-t border-[hsl(var(--border))] flex items-center justify-between gap-2">
                     <button
                       onClick={() => handleOpenResults(test)}
-                      className="px-3 py-1.5 text-xs font-medium rounded-lg bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 hover:bg-cyan-500/20 transition-colors flex items-center gap-1.5"
+                      className="px-3 py-1.5 text-xs font-medium rounded-lg bg-[hsl(var(--primary)/0.1)] text-[hsl(var(--primary))] hover:bg-[hsl(var(--primary)/0.2)] transition-colors flex items-center gap-1.5"
                     >
                       <BarChart2 size={14} />
                       Resultados
@@ -464,7 +464,7 @@ export default function CmsAbTestingManagement() {
                         <button
                           onClick={() => setPendingDelete(test)}
                           title="Eliminar"
-                          className="p-1.5 rounded-lg text-red-500 hover:bg-red-500/10 transition-colors"
+                          className="p-1.5 rounded-lg text-[hsl(var(--destructive))] hover:bg-[hsl(var(--destructive)/0.1)] transition-colors"
                         >
                           <Trash2 size={14} />
                         </button>
@@ -573,7 +573,7 @@ export default function CmsAbTestingManagement() {
           <div>
             <div className="flex justify-between items-center mb-1.5">
               <label className="text-xs font-medium">Distribución de Tráfico</label>
-              <span className="text-xs font-bold text-cyan-600 dark:text-cyan-400">
+              <span className="text-xs font-bold text-[hsl(var(--primary))]">
                 {Math.round(formTrafficSplit * 100)}% A / {Math.round((1 - formTrafficSplit) * 100)}% B
               </span>
             </div>
@@ -584,7 +584,7 @@ export default function CmsAbTestingManagement() {
               step="0.05"
               value={formTrafficSplit}
               onChange={(e) => setFormTrafficSplit(parseFloat(e.target.value))}
-              className="w-full accent-cyan-600"
+              className="w-full accent-[hsl(var(--primary))]"
             />
           </div>
 
@@ -625,8 +625,8 @@ export default function CmsAbTestingManagement() {
 
             {/* Winner Badge */}
             {selectedTestResults.results.is_significant ? (
-              <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-700 dark:text-emerald-300 flex items-start gap-3">
-                <Trophy size={20} className="shrink-0 mt-0.5 text-amber-500" />
+              <div className="p-4 rounded-xl bg-[hsl(var(--primary)/0.1)] border border-[hsl(var(--primary)/0.2)] text-[hsl(var(--primary))] flex items-start gap-3">
+                <Trophy size={20} className="shrink-0 mt-0.5 text-[hsl(var(--primary))]" />
                 <div className="space-y-1 text-xs">
                   <h4 className="font-bold text-sm">
                     🏆 Ganador Recomendado: Variante {selectedTestResults.results.recommended_winner?.toUpperCase()}
@@ -647,7 +647,7 @@ export default function CmsAbTestingManagement() {
                         )
                       }
                       disabled={applyingWinner}
-                      className="mt-2 px-3 py-1.5 rounded-lg bg-emerald-600 text-white font-medium hover:bg-emerald-700 transition-colors flex items-center gap-1.5"
+                      className="mt-2 px-3 py-1.5 rounded-lg bg-[hsl(var(--primary))] text-white font-medium hover:opacity-90 transition-opacity flex items-center gap-1.5"
                     >
                       {applyingWinner && <Loader2 size={12} className="animate-spin" />}
                       Aplicar Ganador
@@ -656,7 +656,7 @@ export default function CmsAbTestingManagement() {
                 </div>
               </div>
             ) : (
-              <div className="p-4 rounded-xl bg-slate-500/10 border border-slate-500/20 text-slate-600 dark:text-slate-400 text-xs flex items-center gap-2">
+              <div className="p-4 rounded-xl bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] text-[hsl(var(--text-secondary))] text-xs flex items-center gap-2">
                 <Sparkles size={16} />
                 <span>
                   Acumulando datos. Confianza actual:{" "}
@@ -691,7 +691,7 @@ export default function CmsAbTestingManagement() {
                           : 50
                       }%`,
                     }}
-                    className="bg-blue-500 h-full"
+                    className="bg-[hsl(var(--primary))] h-full"
                     title="Variante A"
                   />
                   <div
@@ -704,7 +704,7 @@ export default function CmsAbTestingManagement() {
                           : 50
                       }%`,
                     }}
-                    className="bg-cyan-500 h-full"
+                    className="bg-[hsl(var(--primary)/0.4)] h-full"
                     title="Variante B"
                   />
                 </div>
@@ -727,7 +727,7 @@ export default function CmsAbTestingManagement() {
                           : 50
                       }%`,
                     }}
-                    className="bg-blue-500 h-full"
+                    className="bg-[hsl(var(--primary))] h-full"
                   />
                   <div
                     style={{
@@ -739,23 +739,23 @@ export default function CmsAbTestingManagement() {
                           : 50
                       }%`,
                     }}
-                    className="bg-cyan-500 h-full"
+                    className="bg-[hsl(var(--primary)/0.4)] h-full"
                   />
                 </div>
               </div>
 
               {/* Conversion Rates */}
               <div className="grid grid-cols-2 gap-3 pt-2 text-center text-xs">
-                <div className="p-3 rounded-xl border border-blue-500/20 bg-blue-500/5">
-                  <div className="text-[10px] text-blue-600 dark:text-blue-400 font-semibold uppercase">Variante A</div>
+                <div className="p-3 rounded-xl border border-[hsl(var(--primary)/0.2)] bg-[hsl(var(--primary)/0.05)]">
+                  <div className="text-[10px] text-[hsl(var(--primary))] font-semibold uppercase">Variante A</div>
                   <div className="text-lg font-bold">
                     {(selectedTestResults.results.conversion_rate_a * 100).toFixed(2)}%
                   </div>
                   <div className="text-[10px] text-[hsl(var(--text-secondary))]">Tasa de Conversión</div>
                 </div>
 
-                <div className="p-3 rounded-xl border border-cyan-500/20 bg-cyan-500/5">
-                  <div className="text-[10px] text-cyan-600 dark:text-cyan-400 font-semibold uppercase">Variante B</div>
+                <div className="p-3 rounded-xl border border-[hsl(var(--primary)/0.2)] bg-[hsl(var(--primary)/0.05)]">
+                  <div className="text-[10px] text-[hsl(var(--primary))] font-semibold uppercase">Variante B</div>
                   <div className="text-lg font-bold">
                     {(selectedTestResults.results.conversion_rate_b * 100).toFixed(2)}%
                   </div>
@@ -772,14 +772,14 @@ export default function CmsAbTestingManagement() {
                   <button
                     onClick={() => handleApplyWinner(selectedTestResults.test.id, "a")}
                     disabled={applyingWinner}
-                    className="flex-1 py-2 text-xs font-medium rounded-xl border border-blue-500/30 text-blue-600 dark:text-blue-400 hover:bg-blue-500/10"
+                    className="flex-1 py-2 text-xs font-medium rounded-xl border border-[hsl(var(--primary)/0.3)] text-[hsl(var(--primary))] hover:bg-[hsl(var(--primary)/0.1)]"
                   >
                     Aplicar Variante A
                   </button>
                   <button
                     onClick={() => handleApplyWinner(selectedTestResults.test.id, "b")}
                     disabled={applyingWinner}
-                    className="flex-1 py-2 text-xs font-medium rounded-xl border border-cyan-500/30 text-cyan-600 dark:text-cyan-400 hover:bg-cyan-500/10"
+                    className="flex-1 py-2 text-xs font-medium rounded-xl border border-[hsl(var(--primary)/0.3)] text-[hsl(var(--primary))] hover:bg-[hsl(var(--primary)/0.1)]"
                   >
                     Aplicar Variante B
                   </button>
@@ -790,40 +790,41 @@ export default function CmsAbTestingManagement() {
         )}
       </SidePanel>
 
-      {/* Delete Confirmation Modal */}
-      <AnimatePresence>
+      {/* Delete Confirmation Drawer */}
+      <SidePanel
+        isOpen={!!pendingDelete}
+        onClose={() => setPendingDelete(null)}
+        title="Eliminar Experimento"
+        subtitle={pendingDelete?.name}
+      >
         {pendingDelete && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              className="w-full max-w-md p-6 rounded-2xl bg-[hsl(var(--bg-primary))] border border-[hsl(var(--border))] space-y-4 shadow-xl"
-            >
-              <h3 className="text-base font-bold">¿Eliminar Experimento?</h3>
-              <p className="text-xs text-[hsl(var(--text-secondary))]">
+          <div className="p-4 space-y-4">
+            <div className="rounded-xl border border-[hsl(var(--destructive)/0.2)] bg-[hsl(var(--destructive)/0.1)] p-4">
+              <p className="text-xs text-[hsl(var(--destructive))]">
                 Esta acción eliminará el experimento <strong>{pendingDelete.name}</strong> y sus eventos registrados de forma permanente.
               </p>
-              <div className="flex justify-end gap-2 pt-2">
-                <button
-                  onClick={() => setPendingDelete(null)}
-                  className="px-4 py-2 text-xs font-medium rounded-xl border border-[hsl(var(--border))]"
-                >
-                  Cancelar
-                </button>
-                <button
-                  onClick={handleDelete}
-                  disabled={deleting}
-                  className="px-4 py-2 text-xs font-medium rounded-xl bg-red-600 text-white hover:bg-red-700 disabled:opacity-50 flex items-center gap-1.5"
-                >
-                  {deleting && <Loader2 size={14} className="animate-spin" />}
-                  Eliminar
-                </button>
-              </div>
-            </motion.div>
+            </div>
+            <div className="flex gap-2 pt-2">
+              <button
+                type="button"
+                onClick={() => setPendingDelete(null)}
+                className="flex-1 px-4 py-2 text-xs font-medium rounded-xl border border-[hsl(var(--border))] hover:bg-[hsl(var(--surface-1))]"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={handleDelete}
+                disabled={deleting}
+                className="flex-1 px-4 py-2 text-xs font-medium rounded-xl bg-[hsl(var(--destructive))] text-[hsl(var(--destructive-foreground))] hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-1.5"
+              >
+                {deleting && <Loader2 size={14} className="animate-spin" />}
+                Eliminar
+              </button>
+            </div>
           </div>
         )}
-      </AnimatePresence>
+      </SidePanel>
     </div>
   );
 }
