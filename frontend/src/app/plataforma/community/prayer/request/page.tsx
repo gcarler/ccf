@@ -77,7 +77,7 @@ export default function PrayerRequestForm() {
             <header className="flex items-center gap-4">
                 <button
                     onClick={() => router.back()}
-                    className="size-9 rounded-lg bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] flex items-center justify-center text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] hover:border-[hsl(var(--primary)/0.3)] transition-all active:scale-90"
+                    className="size-9 rounded-lg bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] flex items-center justify-center text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--primary))] hover:border-[hsl(var(--primary)/0.3)] transition-all active:scale-90"
                 >
                     <ArrowLeft size={20} />
                 </button>
@@ -86,15 +86,15 @@ export default function PrayerRequestForm() {
                         <div className="size-1.5 rounded-full bg-current shadow-[0_0_8px_currentColor]"></div>
                         Interacción
                     </div>
-                    <h1 className="text-xl font-bold text-[hsl(var(--text-primary))] tracking-tighter">Pedir Oración</h1>
+                    <h1 className="text-xl font-bold text-[hsl(var(--foreground))] tracking-tighter">Pedir Oración</h1>
                 </div>
             </header>
 
             <form onSubmit={handleSubmit} className="space-y-4">
                 {/* Hero / Instruction */}
                 <div className="bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] rounded-md p-4 md:p-3 shadow-sm">
-                    <h2 className="text-lg font-bold text-[hsl(var(--text-primary))] tracking-tight mb-2">¿En qué podemos orar por ti?</h2>
-                    <p className="text-[hsl(var(--text-secondary))] text-sm font-medium">Tu congregación está aquí para apoyarte en intercesión.</p>
+                    <h2 className="text-lg font-bold text-[hsl(var(--foreground))] tracking-tight mb-2">¿En qué podemos orar por ti?</h2>
+                    <p className="text-[hsl(var(--muted-foreground))] text-sm font-medium">Tu congregación está aquí para apoyarte en intercesión.</p>
                 </div>
 
                 {/* Category Selector */}
@@ -110,8 +110,8 @@ export default function PrayerRequestForm() {
                                 type="button"
                                 onClick={() => setSelectedCategory(category)}
                                 className={`h-8 px-4 rounded-lg text-xs font-semibold uppercase tracking-wide transition-all border ${selectedCategory === category
-                                    ? 'bg-[hsl(var(--primary))] text-white shadow-lg shadow-primary/30 border-transparent scale-105'
-                                    : 'bg-[hsl(var(--surface-1))] text-[hsl(var(--text-secondary))] border-[hsl(var(--border))] hover:border-[hsl(var(--primary)/0.4)]'
+                                    ? 'bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] shadow-lg shadow-[hsl(var(--primary)/0.2)] border-transparent scale-105'
+                                    : 'bg-[hsl(var(--surface-1))] text-[hsl(var(--muted-foreground))] border-[hsl(var(--border))] hover:border-[hsl(var(--primary)/0.4)]'
                                     }`}
                             >
                                 {category}
@@ -132,7 +132,7 @@ export default function PrayerRequestForm() {
                             <textarea
                                 value={requestText}
                                 onChange={(e) => setRequestText(e.target.value)}
-                                className="w-full bg-transparent border-none focus:ring-0 text-[hsl(var(--text-primary))] placeholder-[hsl(var(--text-secondary)/0.5)] resize-none h-40 text-base leading-relaxed font-medium"
+                                className="w-full bg-transparent border-none focus:ring-0 text-[hsl(var(--foreground))] placeholder-[hsl(var(--muted-foreground)/0.5)] resize-none h-40 text-base leading-relaxed font-medium"
                                 placeholder="Escribe tu petición aquí..."
                                 required
                             />
@@ -149,33 +149,33 @@ export default function PrayerRequestForm() {
 
                     <div className={`flex items-center justify-between p-4 rounded-md transition-all border ${isAnonymous ? 'bg-[hsl(var(--primary)/0.05)] border-[hsl(var(--primary)/0.3)] shadow-lg' : 'bg-[hsl(var(--surface-2))] border-[hsl(var(--border))]'}`}>
                         <div className="flex items-start gap-4">
-                            <div className={`p-3 rounded-lg shrink-0 transition-colors ${isAnonymous ? 'bg-[hsl(var(--primary))] text-white shadow-lg' : 'bg-[hsl(var(--surface-3))] text-[hsl(var(--text-secondary))]'}`}>
+                            <div className={`p-3 rounded-lg shrink-0 transition-colors ${isAnonymous ? 'bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] shadow-lg' : 'bg-[hsl(var(--surface-3))] text-[hsl(var(--muted-foreground))]'}`}>
                                 <Globe size={20} strokeWidth={2.5} />
                             </div>
                             <div className="flex flex-col pt-1">
-                                <span className={`font-black text-sm uppercase tracking-tight transition-colors ${isAnonymous ? 'text-[hsl(var(--primary))]' : 'text-[hsl(var(--text-primary))]'}`}>Publicar como Anónimo</span>
-                                <span className="text-[hsl(var(--text-secondary))] text-xs font-medium mt-1">Tu identidad no será visible en el muro público.</span>
+                                <span className={`font-black text-sm uppercase tracking-tight transition-colors ${isAnonymous ? 'text-[hsl(var(--primary))]' : 'text-[hsl(var(--foreground))]'}`}>Publicar como Anónimo</span>
+                                <span className="text-[hsl(var(--muted-foreground))] text-xs font-medium mt-1">Tu identidad no será visible en el muro público.</span>
                             </div>
                         </div>
                         <label className="relative inline-flex items-center cursor-pointer shrink-0">
                             <input type="checkbox" className="sr-only peer" checked={isAnonymous} onChange={() => setIsAnonymous(!isAnonymous)} />
-                            <div className="w-12 h-6 bg-[hsl(var(--surface-3))] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[4px] after:left-[4px] after:bg-[hsl(var(--bg-primary))] after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[hsl(var(--primary))] border border-[hsl(var(--border))]"></div>
+                            <div className="w-12 h-6 bg-[hsl(var(--surface-3))] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-[hsl(var(--background))] after:content-[''] after:absolute after:top-[4px] after:left-[4px] after:bg-[hsl(var(--background))] after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[hsl(var(--primary))] border border-[hsl(var(--border))]"></div>
                         </label>
                     </div>
 
-                    <div className={`flex items-center justify-between p-4 rounded-md transition-all border ${isConfidential ? 'bg-[hsl(var(--danger))]/5 border-[hsl(var(--danger)/100%)]/20 shadow-lg' : 'bg-[hsl(var(--surface-2))] border-[hsl(var(--border))]'}`}>
+                    <div className={`flex items-center justify-between p-4 rounded-md transition-all border ${isConfidential ? 'bg-[hsl(var(--destructive)/0.05)] border-[hsl(var(--destructive)/0.2)] shadow-lg' : 'bg-[hsl(var(--surface-2))] border-[hsl(var(--border))]'}`}>
                         <div className="flex items-start gap-4">
-                            <div className={`p-3 rounded-lg shrink-0 transition-colors ${isConfidential ? 'bg-[hsl(var(--danger))] text-white shadow-lg' : 'bg-[hsl(var(--surface-3))] text-[hsl(var(--text-secondary))]'}`}>
+                            <div className={`p-3 rounded-lg shrink-0 transition-colors ${isConfidential ? 'bg-[hsl(var(--destructive))] text-[hsl(var(--destructive-foreground))] shadow-lg' : 'bg-[hsl(var(--surface-3))] text-[hsl(var(--muted-foreground))]'}`}>
                                 <Lock size={20} strokeWidth={2.5} />
                             </div>
                             <div className="flex flex-col pt-1">
-                                <span className={`font-black text-sm uppercase tracking-tight transition-colors ${isConfidential ? 'text-[hsl(var(--danger))]' : 'text-[hsl(var(--text-primary))]'}`}>Confidencial</span>
-                                <span className="text-[hsl(var(--text-secondary))] text-xs font-medium mt-1">Solo los pastores podrán ver esta petición.</span>
+                                <span className={`font-black text-sm uppercase tracking-tight transition-colors ${isConfidential ? 'text-[hsl(var(--destructive))]' : 'text-[hsl(var(--foreground))]'}`}>Confidencial</span>
+                                <span className="text-[hsl(var(--muted-foreground))] text-xs font-medium mt-1">Solo los pastores podrán ver esta petición.</span>
                             </div>
                         </div>
                         <label className="relative inline-flex items-center cursor-pointer shrink-0">
                             <input type="checkbox" className="sr-only peer" checked={isConfidential} onChange={() => setIsConfidential(!isConfidential)} />
-                            <div className="w-12 h-6 bg-[hsl(var(--surface-3))] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[4px] after:left-[4px] after:bg-[hsl(var(--bg-primary))] after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[hsl(var(--danger))] border border-[hsl(var(--border))]"></div>
+                            <div className="w-12 h-6 bg-[hsl(var(--surface-3))] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-[hsl(var(--background))] after:content-[''] after:absolute after:top-[4px] after:left-[4px] after:bg-[hsl(var(--background))] after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[hsl(var(--destructive))] border border-[hsl(var(--border))]"></div>
                         </label>
                     </div>
                 </section>
@@ -186,7 +186,7 @@ export default function PrayerRequestForm() {
                     whileTap={{ scale: 0.98 }}
                     type="submit"
                     disabled={isSubmitting || !requestText.trim()}
-                    className="w-full h-8 bg-[hsl(var(--text-primary))] text-[hsl(var(--bg-primary))] rounded-md font-semibold uppercase tracking-wide text-xs shadow-2xl hover:opacity-90 disabled:opacity-50 transition-all flex items-center justify-center gap-3"
+                    className="w-full h-8 bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] rounded-md font-semibold uppercase tracking-wide text-xs shadow-2xl hover:opacity-90 disabled:opacity-50 transition-all flex items-center justify-center gap-3"
                 >
                     {isSubmitting ? (
                         <div className="flex items-center gap-2">

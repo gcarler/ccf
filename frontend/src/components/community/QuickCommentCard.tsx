@@ -19,24 +19,24 @@ export default function QuickCommentCard({
     actionLabel = 'Registrar'
 }: QuickCommentCardProps) {
     return (
-        <div className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] shadow-sm p-4 space-y-3">
+        <div className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] shadow-sm p-4 space-y-3">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                 <div className="flex items-center gap-3 flex-1">
                     <button className="size-10 rounded-full border border-[hsl(var(--border))] flex items-center justify-center text-[hsl(var(--primary))] bg-[hsl(var(--surface-2))]">
                         <Plus size={16} />
                     </button>
                     <div>
-                        <p className="text-sm font-semibold text-[hsl(var(--text-primary))]">{title}</p>
-                        <p className="text-xs text-[hsl(var(--text-secondary))]">{description}</p>
+                        <p className="text-sm font-semibold text-[hsl(var(--foreground))]">{title}</p>
+                        <p className="text-xs text-[hsl(var(--muted-foreground))]">{description}</p>
                     </div>
                 </div>
-                <select className="h-9 rounded-full border border-[hsl(var(--border))] px-4 text-sm text-[hsl(var(--text-secondary))] bg-[hsl(var(--surface-1))]">
+                <select className="h-9 rounded-full border border-[hsl(var(--border))] px-4 text-sm text-[hsl(var(--muted-foreground))] bg-[hsl(var(--surface-1))]">
                     <option>Comentario</option>
                     <option>Nota</option>
                     <option>Checklist</option>
                 </select>
             </div>
-            <div className="flex items-center justify-between text-sm text-[hsl(var(--text-secondary))]">
+            <div className="flex items-center justify-between text-sm text-[hsl(var(--muted-foreground))]">
                 <div className="flex items-center gap-2">
                     {attachments.map((Icon, index) => (
                         <button key={index} className="p-2 rounded-full border border-[hsl(var(--border))] hover:text-[hsl(var(--primary))]">
@@ -44,7 +44,7 @@ export default function QuickCommentCard({
                         </button>
                     ))}
                 </div>
-                <button className="px-4 h-9 rounded-full bg-[hsl(var(--primary))] text-white text-xs font-semibold uppercase tracking-wide">
+                <button className="px-4 h-9 rounded-full bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] text-xs font-semibold uppercase tracking-wide">
                     {actionLabel}
                 </button>
             </div>

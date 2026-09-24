@@ -55,7 +55,7 @@ export default function PrayerWall() {
                     content: '';
                     position: absolute;
                     inset: -1px;
-                    background: linear-gradient(45deg, hsla(var(--primary), 0.15), transparent 60%);
+                    background: linear-gradient(45deg, hsl(var(--primary) / 0.15), transparent 60%);
                     z-index: -1;
                     border-radius: inherit;
                     opacity: 0;
@@ -68,7 +68,7 @@ export default function PrayerWall() {
                     background: linear-gradient(
                         90deg,
                         transparent,
-                        rgba(255, 255, 255, 0.05),
+                        hsl(var(--primary) / 0.08),
                         transparent
                     );
                     background-size: 200% 100%;
@@ -79,31 +79,27 @@ export default function PrayerWall() {
                     100% { background-position: 200% 0; }
                 }
                 .stacked-glass-prayer {
-                    background: rgba(255, 255, 255, 0.6);
-                    backdrop-filter: blur(16px) saturate(150%);
-                    border: 1px solid rgba(255, 255, 255, 0.2);
-                }
-                .dark .stacked-glass-prayer {
-                    background: rgba(30, 31, 33, 0.7);
-                    border: 1px solid rgba(255, 255, 255, 0.05);
+                    background: hsl(var(--surface-1) / 0.85);
+                    backdrop-filter: blur(16px);
+                    border: 1px solid hsl(var(--border));
                 }
             `}</style>
 
             {/* Header Section Cinematic */}
             <header className="flex flex-col md:flex-row md:items-center justify-between gap-3 relative">
-                <div className="absolute -top-20 -left-20 size-10 bg-primary/5 blur-[100px] rounded-full pointer-events-none" />
+                <div className="absolute -top-20 -left-20 size-10 bg-[hsl(var(--primary)/0.05)] blur-[100px] rounded-full pointer-events-none" />
 
                 <motion.div
                     initial={{ opacity: 0, x: -30 }}
                     animate={{ opacity: 1, x: 0 }}
                     className="relative z-10 space-y-2"
                 >
-                    <div className="flex items-center gap-3 text-primary font-semibold uppercase tracking-wide text-2xs mb-2 bg-primary/5 w-fit px-4 py-1.5 rounded-full border border-primary/10">
+                    <div className="flex items-center gap-3 text-[hsl(var(--primary))] font-semibold uppercase tracking-wide text-2xs mb-2 bg-[hsl(var(--primary)/0.08)] w-fit px-4 py-1.5 rounded-full border border-[hsl(var(--primary)/0.15)]">
                         <Sparkles size={14} className="animate-pulse" />
                         Interacción Celestial
                     </div>
-                    <h1 className="text-xl lg:text-xl font-bold text-[hsl(var(--text-primary))] dark:text-white tracking-tighter leading-none">Muro de <span className="italic text-primary">Oración</span></h1>
-                    <p className="text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] text-sm font-medium max-w-lg">Comparte tus cargas y apóyanos en intercesión. Tu fe activa el movimiento de Dios.</p>
+                    <h1 className="text-xl lg:text-xl font-bold text-[hsl(var(--foreground))] tracking-tighter leading-none">Muro de <span className="italic text-[hsl(var(--primary))]">Oración</span></h1>
+                    <p className="text-[hsl(var(--muted-foreground))] text-sm font-medium max-w-lg">Comparte tus cargas y apóyanos en intercesión. Tu fe activa el movimiento de Dios.</p>
                 </motion.div>
 
                 <motion.div
@@ -112,7 +108,7 @@ export default function PrayerWall() {
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                 >
-                    <Link href="/plataforma/community/prayer/request" className="h-8 px-3 bg-primary text-white rounded-md text-xs font-semibold uppercase tracking-wide shadow-2xl shadow-primary/40 hover:shadow-primary/50 transition-all flex items-center gap-4 group">
+                    <Link href="/plataforma/community/prayer/request" className="h-8 px-3 bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] rounded-md text-xs font-semibold uppercase tracking-wide shadow-2xl shadow-[hsl(var(--primary)/0.3)] hover:shadow-[hsl(var(--primary)/0.4)] transition-all flex items-center gap-4 group">
                         <PlusCircle size={24} strokeWidth={2.5} className="group-hover:rotate-90 transition-transform duration-500" />
                         Levantar Petición
                     </Link>
@@ -122,21 +118,21 @@ export default function PrayerWall() {
             {/* Content Area */}
             <div className="space-y-4 relative z-10">
                 {/* Tabs Cinematic */}
-                <div className="flex gap-3 border-b border-[hsl(var(--border))] dark:border-white/5 px-4 overflow-x-auto no-scrollbar">
+                <div className="flex gap-3 border-b border-[hsl(var(--border))] px-4 overflow-x-auto no-scrollbar">
                     {tabs.map((tab) => (
                         <button
                             key={tab}
                             onClick={() => setActiveTab(tab)}
                             className={clsx(
                                 "pb-6 text-xs font-semibold uppercase tracking-wide transition-all relative shrink-0",
-                                activeTab === tab ? "text-primary" : "text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-secondary))] dark:hover:text-[hsl(var(--text-secondary))]"
+                                activeTab === tab ? "text-[hsl(var(--primary))]" : "text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))]"
                             )}
                         >
                             {tab}
                             {activeTab === tab && (
                                 <motion.div
                                     layoutId="prayer-tab-cinematic"
-                                    className="absolute bottom-[-1px] left-0 right-0 h-1 bg-primary rounded-t-full shadow-[0_0_20px_hsla(var(--primary),0.6)]"
+                                    className="absolute bottom-[-1px] left-0 right-0 h-1 bg-[hsl(var(--primary))] rounded-t-full shadow-[0_0_20px_hsla(var(--primary),0.6)]"
                                 />
                             )}
                         </button>
@@ -146,23 +142,23 @@ export default function PrayerWall() {
                 {loading ? (
                     <div className="flex flex-col items-center justify-center py-12 gap-4">
                         <div className="relative">
-                            <div className="absolute inset-0 bg-primary/20 blur-2xl rounded-full animate-pulse" />
-                            <Loader2 className="animate-spin text-primary relative z-10" size={64} strokeWidth={1.5} />
+                            <div className="absolute inset-0 bg-[hsl(var(--primary)/0.2)] blur-2xl rounded-full animate-pulse" />
+                            <Loader2 className="animate-spin text-[hsl(var(--primary))] relative z-10" size={64} strokeWidth={1.5} />
                         </div>
-                        <p className="text-[hsl(var(--text-secondary))] font-semibold uppercase tracking-wide text-2xs animate-pulse">Abriendo conexión espiritual...</p>
+                        <p className="text-[hsl(var(--muted-foreground))] font-semibold uppercase tracking-wide text-2xs animate-pulse">Abriendo conexión espiritual...</p>
                     </div>
                 ) : requests.length === 0 ? (
                     <motion.div
                         initial={{ opacity: 0, scale: 0.95 }}
                         animate={{ opacity: 1, scale: 1 }}
-                        className="flex flex-col items-center justify-center py-1.5 text-center space-y-3 bg-[hsl(var(--surface-1))]/50 dark:bg-white/5 rounded-lg border-2 border-dashed border-[hsl(var(--border))] dark:border-white/10"
+                        className="flex flex-col items-center justify-center py-1.5 text-center space-y-3 bg-[hsl(var(--surface-1))] rounded-lg border-2 border-dashed border-[hsl(var(--border))]"
                     >
-                        <div className="size-10 rounded-lg bg-[hsl(var(--bg-primary))] dark:bg-white/5 flex items-center justify-center text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] border border-[hsl(var(--border))] dark:border-white/5 shadow-xl">
+                        <div className="size-10 rounded-lg bg-[hsl(var(--surface-2))] flex items-center justify-center text-[hsl(var(--muted-foreground))] border border-[hsl(var(--border))] shadow-xl">
                             <HandHeart size={48} strokeWidth={1} />
                         </div>
                         <div className="space-y-2">
-                            <h3 className="text-base font-bold text-[hsl(var(--text-primary))] dark:text-white uppercase tracking-tight">El muro está en silencio</h3>
-                            <p className="text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] text-sm font-medium max-w-xs mx-auto leading-relaxed">Este es un espacio sagrado. Sé el primero en compartir tu necesidad.</p>
+                            <h3 className="text-base font-bold text-[hsl(var(--foreground))] uppercase tracking-tight">El muro está en silencio</h3>
+                            <p className="text-[hsl(var(--muted-foreground))] text-sm font-medium max-w-xs mx-auto leading-relaxed">Este es un espacio sagrado. Sé el primero en compartir tu necesidad.</p>
                         </div>
                     </motion.div>
                 ) : (
@@ -186,35 +182,35 @@ export default function PrayerWall() {
 
                                     <div className="flex justify-between items-start relative z-10">
                                         <div className="flex items-center gap-3">
-                                            <div className="size-7 rounded-lg bg-gradient-to-tr from-[hsl(var(--surface-2))] to-white dark:from-white/10 dark:to-white/5 flex items-center justify-center text-primary border border-white dark:border-white/10 shadow-lg transform group-hover:rotate-6 transition-transform duration-500">
+                                            <div className="size-7 rounded-lg bg-[hsl(var(--surface-2))] flex items-center justify-center text-[hsl(var(--primary))] border border-[hsl(var(--border))] shadow-lg transform group-hover:rotate-6 transition-transform duration-500">
                                                 <UserCircle size={28} strokeWidth={1.5} />
                                             </div>
                                             <div>
-                                                <p className="text-[hsl(var(--text-primary))] dark:text-white text-base font-bold tracking-tight leading-none">{request.is_anonymous ? 'Anónimo' : request.name}</p>
-                                                <p className="text-[hsl(var(--text-secondary))] font-semibold uppercase tracking-wide text-2xs mt-2 flex items-center gap-2">
+                                                <p className="text-[hsl(var(--foreground))] text-base font-bold tracking-tight leading-none">{request.is_anonymous ? 'Anónimo' : request.name}</p>
+                                                <p className="text-[hsl(var(--muted-foreground))] font-semibold uppercase tracking-wide text-2xs mt-2 flex items-center gap-2">
                                                     <CalendarDays size={10} />
                                                     {new Date(request.created_at).toLocaleDateString('es-ES', { month: 'long', day: 'numeric' })}
                                                 </p>
                                             </div>
                                         </div>
-                                        <span className="font-semibold px-4 py-1.5 rounded-lg tracking-wide shadow-sm">
+                                        <span className="font-semibold px-4 py-1.5 rounded-lg tracking-wide shadow-sm text-xs bg-[hsl(var(--surface-2))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))]">
                                             {request.category}
                                         </span>
                                     </div>
 
                                     <div className="flex-1 relative z-10 px-2">
-                                        <p className="text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] text-base leading-relaxed font-medium line-clamp-5 italic">
+                                        <p className="text-[hsl(var(--muted-foreground))] text-base leading-relaxed font-medium line-clamp-5 italic">
                                             &ldquo;{request.request}&rdquo;
                                         </p>
                                     </div>
 
-                                    <div className="flex items-center justify-between pt-8 border-t border-[hsl(var(--border))] dark:border-white/5 relative z-10">
-                                        <div className="flex items-center gap-3 text-primary/60 group-hover:text-primary transition-colors duration-500">
+                                    <div className="flex items-center justify-between pt-8 border-t border-[hsl(var(--border))] relative z-10">
+                                        <div className="flex items-center gap-3 text-[hsl(var(--primary)/0.6)] group-hover:text-[hsl(var(--primary))] transition-colors duration-500">
                                             <div className="size-2.5 rounded-full bg-current animate-pulse shadow-[0_0_12px_currentColor]"></div>
                                             <span className="text-2xs font-semibold uppercase tracking-wide">En intercesión</span>
                                         </div>
-                                        <button className="h-8 px-3 bg-[hsl(var(--bg-muted))] dark:bg-[hsl(var(--bg-primary))] text-white dark:text-[hsl(var(--text-primary))] rounded-lg text-2xs font-semibold uppercase tracking-wide transition-all hover:scale-105 active:scale-95 shadow-xl flex items-center gap-3 group/btn hover:shadow-primary/20">
-                                            <Heart size={16} className="group-hover/btn:fill-[hsl(var(--danger))] group-hover/btn:text-[hsl(var(--danger))] transition-all duration-500" />
+                                        <button className="h-8 px-3 bg-[hsl(var(--surface-2))] text-[hsl(var(--foreground))] hover:bg-[hsl(var(--primary))] hover:text-[hsl(var(--primary-foreground))] rounded-lg text-2xs font-semibold uppercase tracking-wide transition-all hover:scale-105 active:scale-95 shadow-sm flex items-center gap-3 group/btn">
+                                            <Heart size={16} className="group-hover/btn:fill-[hsl(var(--destructive))] group-hover/btn:text-[hsl(var(--destructive))] transition-all duration-500" />
                                             Me uno
                                         </button>
                                     </div>
@@ -231,8 +227,8 @@ export default function PrayerWall() {
                 whileInView={{ opacity: 1 }}
                 className="pt-20 text-center relative"
             >
-                <div className="size-1 rounded-full bg-primary/20 mx-auto mb-3 shadow-[0_0_40px_20px_rgba(var(--primary),0.1)]" />
-                <p className="text-[hsl(var(--text-secondary))] text-2xs font-semibold uppercase tracking-wide">La oración es la llave que abre los cielos</p>
+                <div className="size-1 rounded-full bg-[hsl(var(--primary)/0.2)] mx-auto mb-3 shadow-[0_0_40px_20px_hsl(var(--primary)/0.1)]" />
+                <p className="text-[hsl(var(--muted-foreground))] text-2xs font-semibold uppercase tracking-wide">La oración es la llave que abre los cielos</p>
             </motion.footer>
         </div>
     );
