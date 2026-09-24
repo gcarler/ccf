@@ -44,8 +44,8 @@ export default function SpiritualCertificatesPanel() {
     return (
         <div className="space-y-3 p-3">
             {certificates.length === 0 ? (
-                <div className="text-center py-1.5 bg-[hsl(var(--surface-1))] dark:bg-white/[0.02] rounded-lg border border-dashed border-[hsl(var(--border))] dark:border-white/10">
-                    <Award className="mx-auto text-[hsl(var(--text-secondary))] dark:text-white/10 mb-4 animate-pulse" size={48} />
+                <div className="text-center py-1.5 bg-[hsl(var(--surface-1))] rounded-lg border border-dashed border-[hsl(var(--border))]">
+                    <Award className="mx-auto text-[hsl(var(--text-secondary))] mb-4 animate-pulse" size={48} />
                     <p className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Sembrando esfuerzo para cosechar victoria</p>
                 </div>
             ) : (
@@ -58,7 +58,7 @@ export default function SpiritualCertificatesPanel() {
                                 initial={{ opacity: 0, y: 15 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ delay: i * 0.1, type: 'spring', damping: 20 }}
-                                className="group relative bg-[hsl(var(--bg-primary))] dark:bg-white/[0.03] border border-[hsl(var(--border))] dark:border-white/[0.05] rounded-lg p-3 shadow-sm hover:shadow-2xl hover:shadow-[hsl(var(--info)/5%)] transition-all hover:border-[hsl(var(--info)/100%)]/20"
+                                className="group relative bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] rounded-lg p-3 shadow-sm hover:shadow-2xl hover:shadow-[hsl(var(--primary)/5%)] transition-all hover:border-[hsl(var(--primary)/30%)]"
                             >
                                 <div className="absolute top-0 right-0 p-4 opacity-[0.05] group-hover:opacity-10 transition-opacity">
                                     <Award size={80} strokeWidth={1} />
@@ -67,20 +67,20 @@ export default function SpiritualCertificatesPanel() {
                                 <div className="flex items-start justify-between mb-3 relative z-10">
                                     <div className={clsx(
                                         "size-7 rounded-lg flex items-center justify-center border-2 shadow-lg transition-transform group-hover:scale-110",
-                                        isSacramento ? "bg-[hsl(var(--domain-cyan)/10%)] border-[hsl(var(--domain-cyan)/20%)] text-[hsl(var(--domain-cyan)/90%)]" : "bg-[hsl(var(--info))]/10 border-[hsl(var(--info)/100%)]/20 text-[hsl(var(--primary))]"
+                                        isSacramento ? "bg-[hsl(var(--domain-cyan)/10%)] border-[hsl(var(--domain-cyan)/25%)] text-[hsl(var(--domain-cyan)/90%)]" : "bg-[hsl(var(--primary)/10%)] border-[hsl(var(--primary)/25%)] text-[hsl(var(--primary))]"
                                     )}>
                                         {isSacramento ? <Waves size={24} /> : <FileCheck size={24} />}
                                     </div>
                                     <span className={clsx(
                                         "text-2xs font-semibold uppercase tracking-wider px-3 py-1.5 rounded-md border-2",
-                                        isSacramento ? "bg-[hsl(var(--domain-cyan)/10%)] text-[hsl(var(--domain-cyan)/90%)] border-[hsl(var(--domain-cyan)/30%)] dark:bg-[hsl(var(--domain-cyan)/40%)] dark:border-[hsl(var(--domain-cyan)/30%)]" : "bg-info-soft text-[hsl(var(--primary))] border-[hsl(var(--info)/20%)] dark:bg-[hsl(var(--info))]/40 dark:border-[hsl(var(--info)/100%)]/30"
+                                        isSacramento ? "bg-[hsl(var(--domain-cyan)/10%)] text-[hsl(var(--domain-cyan)/90%)] border-[hsl(var(--domain-cyan)/25%)]" : "bg-[hsl(var(--primary)/10%)] text-[hsl(var(--primary))] border-[hsl(var(--primary)/25%)]"
                                     )}>
                                         {cert.certificate_type || 'ACADEMIA'}
                                     </span>
                                 </div>
 
                                 <div className="space-y-2 mb-3 relative z-10">
-                                    <h3 className="text-lg font-bold text-[hsl(var(--text-primary))] dark:text-white leading-tight uppercase tracking-tight">
+                                    <h3 className="text-lg font-bold text-[hsl(var(--text-primary))] leading-tight uppercase tracking-tight">
                                         {cert.course_title || cert.certificate_type}
                                     </h3>
                                     <p className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide flex items-center gap-2">
@@ -88,16 +88,16 @@ export default function SpiritualCertificatesPanel() {
                                     </p>
                                 </div>
 
-                                <div className="pt-5 border-t border-[hsl(var(--border))] dark:border-white/[0.04] flex items-center justify-between relative z-10">
+                                <div className="pt-5 border-t border-[hsl(var(--border))] flex items-center justify-between relative z-10">
                                     <div className="space-y-0.5">
                                         <p className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide opacity-60">ID DE VALIDACIÓN</p>
-                                        <code className="text-2xs font-mono text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] font-bold tracking-tight">{cert.certificate_code}</code>
+                                        <code className="text-2xs font-mono text-[hsl(var(--text-secondary))] font-bold tracking-tight">{cert.certificate_code}</code>
                                     </div>
                                     <div className="flex gap-2">
-                                        <button className="px-3 py-2.5 bg-[hsl(var(--bg-muted))] dark:bg-[hsl(var(--primary))] text-[hsl(var(--text-primary))] dark:text-white text-2xs font-semibold uppercase tracking-wider rounded-lg shadow-lg active:scale-95 transition-all flex items-center gap-2">
+                                        <button className="px-3 py-2.5 bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] text-2xs font-semibold uppercase tracking-wider rounded-lg shadow-lg active:scale-95 transition-all flex items-center gap-2">
                                             <Download size={14} /> PDF
                                         </button>
-                                        <button className="p-2.5 bg-[hsl(var(--surface-2))] dark:bg-white/5 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] rounded-lg transition-all active:scale-90">
+                                        <button className="p-2.5 bg-[hsl(var(--surface-2))] hover:bg-[hsl(var(--surface-3))] text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] rounded-lg transition-all active:scale-90">
                                             <ExternalLink size={16} />
                                         </button>
                                     </div>
