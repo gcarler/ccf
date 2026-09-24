@@ -19,7 +19,7 @@ const SETTINGS_GROUPS = [
         title: "Cuenta",
         color: "blue",
         items: [
-            { icon: User, label: "Perfil Personal", desc: "Nombre, foto y datos personales", href: "/account" },
+            { icon: User, label: "Perfil Personal", desc: "Nombre, foto y datos personales", href: "/plataforma/account" },
             { icon: Bell, label: "Notificaciones", desc: "Alertas, recordatorios y emails", href: "#notificaciones" },
             { icon: Lock, label: "Seguridad", desc: "Contraseña y autenticación", href: "#seguridad" },
             { icon: MonitorIcon, label: "Sesiones Activas", desc: "Dispositivos conectados a tu cuenta", href: "/plataforma/admin/settings/sessions" },
@@ -29,7 +29,7 @@ const SETTINGS_GROUPS = [
         title: "Apariencia",
         color: "blue",
         items: [
-            { icon: Palette, label: "Tema Visual", desc: "Modo claro, oscuro o sistema", href: "/theme" },
+            { icon: Palette, label: "Tema Visual", desc: "Modo claro, oscuro o sistema", href: "/plataforma/theme" },
             { icon: Languages, label: "Idioma y Región", desc: "Español (Colombia)", href: "#idioma" },
             { icon: Monitor, label: "Densidad de UI", desc: "Compacto, normal o cómodo", href: "#densidad" },
         ]
@@ -46,9 +46,9 @@ const SETTINGS_GROUPS = [
 ];
 
 const COLOR_MAP: Record<string, string> = {
-    blue: "bg-info-soft dark:bg-[hsl(var(--info))]/10 text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))]",
-    sky: "bg-info-soft dark:bg-[hsl(var(--info))]/10 text-info-text dark:text-[hsl(var(--info))]",
-    emerald: "bg-success-soft dark:bg-[hsl(var(--success))]/10 text-success-text dark:text-[hsl(var(--success))]",
+    blue: "bg-[hsl(var(--info-muted))] text-[hsl(var(--primary))]",
+    sky: "bg-[hsl(var(--info-muted))] text-[hsl(var(--info))]",
+    emerald: "bg-[hsl(var(--success-muted))] text-[hsl(var(--success))]",
 };
 
 export default function SettingsPage() {
@@ -72,12 +72,12 @@ export default function SettingsPage() {
 
     return (
         <WorkspaceLayout sidebarTitle="Configuración" sidebarSections={sidebarSections}>
-            <div className="min-h-full bg-[hsl(var(--surface-1))] dark:bg-[#0f1117]">
+            <div className="min-h-full bg-[hsl(var(--surface-1))]">
             {/* Header */}
-            <div className="sticky top-0 z-30 bg-white/80 dark:bg-[#0f1117]/80 backdrop-blur-xl border-b border-[hsl(var(--border))]/60 dark:border-white/5">
+            <div className="sticky top-0 z-30 bg-[hsl(var(--surface-1)/0.8)] backdrop-blur-xl border-b border-[hsl(var(--border))]">
                 <div className="max-w-3xl mx-auto px-3 py-1.5 flex items-center gap-3">
                     <Settings size={18} className="text-[hsl(var(--text-secondary))]" />
-                    <h1 className="text-base font-semibold uppercase tracking-wide text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">
+                    <h1 className="text-base font-semibold uppercase tracking-wide text-[hsl(var(--text-primary))]">
                         Configuración
                     </h1>
                 </div>
@@ -88,25 +88,25 @@ export default function SettingsPage() {
                 <motion.div
                     initial={{ opacity: 0, y: 12 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="bg-[hsl(var(--bg-primary))] dark:bg-[#1a1d27] rounded-lg border border-[hsl(var(--border))]/60 dark:border-white/5 p-3 flex items-center gap-3 shadow-sm"
+                    className="bg-[hsl(var(--surface-1))] rounded-lg border border-[hsl(var(--border))] p-3 flex items-center gap-3 shadow-sm"
                 >
-                    <div className="size-8 rounded-lg bg-gradient-to-br from-[hsl(var(--info))] to-[hsl(var(--info))] flex items-center justify-center text-white text-xl font-bold shadow-lg shadow-[hsl(var(--info)/20%)] shrink-0">
+                    <div className="size-8 rounded-lg bg-gradient-to-br from-[hsl(var(--info))] to-[hsl(var(--info))] flex items-center justify-center text-[hsl(var(--primary-foreground))] text-xl font-bold shadow-sm shadow-[hsl(var(--info)/20%)] shrink-0">
                         {(user as any)?.name?.[0] ?? 'A'}
                     </div>
                     <div className="flex-1 min-w-0">
-                        <p className="text-base font-bold text-[hsl(var(--text-primary))] dark:text-white truncate">
+                        <p className="text-base font-bold text-[hsl(var(--text-primary))] truncate">
                             {(user as any)?.name ?? 'Usuario CCF'}
                         </p>
                         <p className="text-xs text-[hsl(var(--text-secondary))] font-medium truncate">
                             {(user as any)?.email ?? 'usuario@ccf.com'}
                         </p>
-                        <span className="mt-1 inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-info-soft dark:bg-[hsl(var(--info))]/10 text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] text-2xs font-semibold uppercase tracking-wide">
+                        <span className="mt-1 inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[hsl(var(--info-muted))] text-[hsl(var(--primary))] text-2xs font-semibold uppercase tracking-wide">
                             <Shield size={9} /> Admin
                         </span>
                     </div>
                     <button
                         onClick={() => router.push('/plataforma/account')}
-                        className="px-4 py-2 text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] border border-[hsl(var(--border))] dark:border-white/10 rounded-md hover:border-[hsl(var(--info)/100%)]/50 transition-all"
+                        className="px-4 py-2 text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] border border-[hsl(var(--border))] rounded-md hover:border-[hsl(var(--primary))] transition-all"
                     >
                         Editar
                     </button>
@@ -117,7 +117,7 @@ export default function SettingsPage() {
                     initial={{ opacity: 0, y: 12 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.05 }}
-                    className="bg-[hsl(var(--bg-primary))] dark:bg-[#1a1d27] rounded-lg border border-[hsl(var(--border))]/60 dark:border-white/5 p-3 shadow-sm"
+                    className="bg-[hsl(var(--surface-1))] rounded-lg border border-[hsl(var(--border))] p-3 shadow-sm"
                 >
                     <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-4">Tema Visual</p>
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -132,8 +132,8 @@ export default function SettingsPage() {
                                 className={clsx(
                                     "flex flex-col items-center gap-2 py-1.5 rounded-md border-2 transition-all text-xs font-semibold uppercase tracking-wide",
                                     theme === t.id
-                                        ? "border-[hsl(var(--info)/100%)] bg-info-soft dark:bg-[hsl(var(--info))]/10 text-[hsl(var(--primary))]"
-                                        : "border-[hsl(var(--border))] dark:border-white/5 text-[hsl(var(--text-secondary))] hover:border-[hsl(var(--border))] dark:hover:border-white/10"
+                                        ? "border-[hsl(var(--primary))] bg-[hsl(var(--info-muted))] text-[hsl(var(--primary))]"
+                                        : "border-[hsl(var(--border))] text-[hsl(var(--text-secondary))] hover:border-[hsl(var(--border))]"
                                 )}
                             >
                                 <t.icon size={18} />
@@ -155,21 +155,21 @@ export default function SettingsPage() {
                         <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-3 ml-1">
                             {group.title}
                         </p>
-                        <div className="bg-[hsl(var(--bg-primary))] dark:bg-[#1a1d27] rounded-lg border border-[hsl(var(--border))]/60 dark:border-white/5 shadow-sm divide-y divide-[hsl(var(--border))] dark:divide-white/5 overflow-hidden">
+                        <div className="bg-[hsl(var(--surface-1))] rounded-lg border border-[hsl(var(--border))] shadow-sm divide-y divide-[hsl(var(--border))] overflow-hidden">
                             {group.items.map((item, ii) => (
                                 <button
                                     key={ii}
                                     onClick={() => item.href.startsWith('/') ? router.push(item.href) : null}
-                                    className="w-full flex items-center gap-4 px-3 py-1.5 hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/[0.02] transition-all group text-left"
+                                    className="w-full flex items-center gap-4 px-3 py-1.5 hover:bg-[hsl(var(--surface-2))] transition-all group text-left"
                                 >
                                     <div className={clsx("size-9 rounded-md flex items-center justify-center shrink-0", COLOR_MAP[group.color])}>
                                         <item.icon size={16} />
                                     </div>
                                     <div className="flex-1 min-w-0">
-                                        <p className="text-base font-semibold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">{item.label}</p>
+                                        <p className="text-base font-semibold text-[hsl(var(--text-primary))]">{item.label}</p>
                                         <p className="text-xs text-[hsl(var(--text-secondary))] truncate">{item.desc}</p>
                                     </div>
-                                    <ChevronRight size={14} className="text-[hsl(var(--text-secondary))] group-hover:text-[hsl(var(--text-secondary))] transition-colors shrink-0" />
+                                    <ChevronRight size={14} className="text-[hsl(var(--text-secondary))] group-hover:text-[hsl(var(--primary))] transition-colors shrink-0" />
                                 </button>
                             ))}
                         </div>
@@ -181,21 +181,21 @@ export default function SettingsPage() {
                     initial={{ opacity: 0, y: 12 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.25 }}
-                    className="bg-[hsl(var(--bg-primary))] dark:bg-[#1a1d27] rounded-lg border border-[hsl(var(--danger)/20%)] dark:border-[hsl(var(--danger)/100%)]/10 p-3 shadow-sm space-y-3"
+                    className="bg-[hsl(var(--surface-1))] rounded-lg border border-[hsl(var(--destructive)/0.2)] p-3 shadow-sm space-y-3"
                 >
-                    <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--danger))] mb-4">Zona de Peligro</p>
+                    <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--destructive))] mb-4">Zona de Peligro</p>
                     <button
                         onClick={() => { logout(); router.push('/login'); }}
-                        className="w-full flex items-center gap-3 px-4 py-3 rounded-md text-[hsl(var(--danger))] hover:bg-danger-soft dark:hover:bg-[hsl(var(--danger))]/10 transition-all text-sm font-bold"
+                        className="w-full flex items-center gap-3 px-4 py-3 rounded-md text-[hsl(var(--destructive))] hover:bg-[hsl(var(--destructive)/0.08)] transition-all text-sm font-bold"
                     >
                         <LogOut size={16} /> Cerrar Sesión
                     </button>
-                    <button className="w-full flex items-center gap-3 px-4 py-3 rounded-md text-[hsl(var(--danger))] hover:bg-danger-soft dark:hover:bg-[hsl(var(--danger))]/10 transition-all text-sm font-bold">
+                    <button className="w-full flex items-center gap-3 px-4 py-3 rounded-md text-[hsl(var(--destructive))] hover:bg-[hsl(var(--destructive)/0.08)] transition-all text-sm font-bold">
                         <Trash2 size={16} /> Eliminar mi cuenta
                     </button>
                 </motion.div>
 
-                <p className="text-center text-2xs text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-primary))] font-bold uppercase tracking-wide pb-8">
+                <p className="text-center text-2xs text-[hsl(var(--text-secondary))] font-bold uppercase tracking-wide pb-8">
                     {SITE_NAME} · Powered by Antigravity
                 </p>
             </div>
