@@ -76,24 +76,24 @@ export default function ProjectsWelcomePage() {
                 {viewType === 'list' && (
                     <div className="max-w-3xl space-y-3">
                         {quickStarts.map((item) => (
-                            <article key={item.title} className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-3 dark:border-white/10 dark:bg-white/5">
-                                <h3 className="font-bold text-[hsl(var(--text-primary))] dark:text-white">{item.title}</h3>
-                                <p className="mt-1 text-sm text-[hsl(var(--text-secondary))]">{item.description}</p>
+                            <article key={item.title} className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-3">
+                                <h3 className="font-bold text-[hsl(var(--foreground))]">{item.title}</h3>
+                                <p className="mt-1 text-sm text-[hsl(var(--muted-foreground))]">{item.description}</p>
                             </article>
                         ))}
                     </div>
                 )}
                 {viewType === 'table' && (
-                    <div className="max-w-4xl overflow-hidden rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] dark:border-white/10 dark:bg-white/5">
+                    <div className="max-w-4xl overflow-hidden rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))]">
                         <table className="w-full text-left">
-                            <thead className="bg-[hsl(var(--surface-1))] dark:bg-white/5 text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
+                            <thead className="bg-[hsl(var(--surface-2))] text-2xs font-bold uppercase tracking-wide text-[hsl(var(--muted-foreground))]">
                                 <tr><th className="px-3 py-2">Recurso</th><th className="px-3 py-2">Descripción</th></tr>
                             </thead>
                             <tbody>
                                 {quickStarts.map((item) => (
-                                    <tr key={item.title} className="border-t border-[hsl(var(--border))] dark:border-white/5">
-                                        <td className="px-3 py-2 font-medium text-[hsl(var(--text-primary))] dark:text-white">{item.title}</td>
-                                        <td className="px-3 py-2 text-[hsl(var(--text-secondary))]">{item.description}</td>
+                                    <tr key={item.title} className="border-t border-[hsl(var(--border))]">
+                                        <td className="px-3 py-2 font-medium text-[hsl(var(--foreground))]">{item.title}</td>
+                                        <td className="px-3 py-2 text-[hsl(var(--muted-foreground))]">{item.description}</td>
                                     </tr>
                                 ))}
                             </tbody>
@@ -101,14 +101,14 @@ export default function ProjectsWelcomePage() {
                     </div>
                 )}
                 {viewType === 'grid' && (
-                <section className="max-w-3xl rounded-lg border border-[hsl(var(--border))] dark:border-white/10 p-3 bg-gradient-to-br from-[hsl(var(--info))] to-white dark:from-[hsl(var(--info)/20%)] dark:to-transparent">
+                <section className="max-w-3xl rounded-lg border border-[hsl(var(--border))] p-3 bg-[hsl(var(--surface-1))]">
                     <p className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--primary))]">Workspace de proyectos</p>
-                    <h1 className="text-lg font-bold text-[hsl(var(--text-primary))] dark:text-white mt-2 tracking-tight">Bienvenido al espacio de coordinacion</h1>
-                    <p className="text-[hsl(var(--text-secondary))] mt-2">Desde aqui puedes crear proyectos, mover tareas en Kanban y monitorear respuestas del equipo en un solo flujo.</p>
+                    <h1 className="text-lg font-bold text-[hsl(var(--foreground))] mt-2 tracking-tight">Bienvenido al espacio de coordinacion</h1>
+                    <p className="text-[hsl(var(--muted-foreground))] mt-2">Desde aqui puedes crear proyectos, mover tareas en Kanban y monitorear respuestas del equipo en un solo flujo.</p>
                     <button
                         onClick={handleCreate}
                         disabled={creating}
-                        className="mt-3 inline-flex items-center gap-2 px-3 py-1.5 rounded-md bg-[hsl(var(--primary))] text-white text-xs font-bold uppercase tracking-wide disabled:opacity-60"
+                        className="mt-3 inline-flex items-center gap-2 px-3 py-1.5 rounded-md bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] text-xs font-bold uppercase tracking-wide disabled:opacity-60"
                     >
                         <Plus size={16} /> {creating ? 'Creando...' : 'Crear primer proyecto'}
                     </button>
