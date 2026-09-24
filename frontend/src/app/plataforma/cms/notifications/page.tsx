@@ -53,8 +53,8 @@ export default function NotificationsPage() {
   const typeColors: Record<string, string> = {
     mention: "bg-[hsl(var(--info-muted))] text-[hsl(var(--primary))]",
     approval_requested: "bg-[hsl(var(--warning-muted))] text-warning-text",
-    approval_granted: "bg-green-100 text-[hsl(var(--secondary))]",
-    approval_rejected: "bg-red-100 text-[hsl(var(--destructive))]",
+    approval_granted: "bg-[hsl(var(--success)/0.15)] text-[hsl(var(--success))]",
+    approval_rejected: "bg-[hsl(var(--destructive)/0.15)] text-[hsl(var(--destructive))]",
     page_published: "bg-[hsl(var(--info-muted))] text-[hsl(var(--primary))]",
     page_archived: "bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))]",
     comment_added: "bg-[hsl(var(--domain-cyan)/20%)] text-[hsl(var(--domain-cyan)/90%)]",
@@ -79,8 +79,8 @@ export default function NotificationsPage() {
       </div>
 
       <div className="flex gap-2">
-        <button onClick={() => setFilter("all")} className={`px-4 py-2 text-sm font-medium rounded-lg ${filter === "all" ? "bg-[hsl(var(--primary))] text-white" : "border hover:bg-[hsl(var(--surface-1))]"}`}>Todas</button>
-        <button onClick={() => setFilter("unread")} className={`px-4 py-2 text-sm font-medium rounded-lg ${filter === "unread" ? "bg-[hsl(var(--primary))] text-white" : "border hover:bg-[hsl(var(--surface-1))]"}`}>Sin leer ({totalUnread})</button>
+        <button onClick={() => setFilter("all")} className={`px-4 py-2 text-sm font-medium rounded-lg ${filter === "all" ? "bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))]" : "border hover:bg-[hsl(var(--surface-1))]"}`}>Todas</button>
+        <button onClick={() => setFilter("unread")} className={`px-4 py-2 text-sm font-medium rounded-lg ${filter === "unread" ? "bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))]" : "border hover:bg-[hsl(var(--surface-1))]"}`}>Sin leer ({totalUnread})</button>
       </div>
 
       <div className="space-y-2">

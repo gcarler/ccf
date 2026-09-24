@@ -109,20 +109,20 @@ export default function WebhooksPage() {
   };
 
   return (
-    <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-primary))]">
-      <header className="h-14 border-b border-[hsl(var(--border))] dark:border-white/5 flex items-center px-4 gap-4 shrink-0 justify-between">
+    <div className="flex flex-col h-full bg-[hsl(var(--surface-1))]">
+      <header className="h-14 border-b border-[hsl(var(--border))] flex items-center px-4 gap-4 shrink-0 justify-between">
         <div className="flex items-center gap-3 min-w-0">
           <Webhook size={18} className="text-[hsl(var(--primary))] shrink-0" />
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-[hsl(var(--text-primary))] dark:text-white truncate">
+          <h2 className="text-sm font-semibold uppercase tracking-wide text-[hsl(var(--text-primary))] truncate">
             Webhooks
           </h2>
-          <span className="text-2xs font-semibold text-[hsl(var(--text-secondary))] bg-[hsl(var(--surface-2))] dark:bg-white/5 px-2 py-0.5 rounded-full shrink-0">
+          <span className="text-2xs font-semibold text-[hsl(var(--text-secondary))] bg-[hsl(var(--surface-2))] px-2 py-0.5 rounded-full shrink-0">
             {webhooks.length}
           </span>
         </div>
         <button
           onClick={() => setShowForm(!showForm)}
-          className="bg-[hsl(var(--primary))] text-white px-4 py-1.5 rounded-lg text-xs font-semibold uppercase tracking-wide shadow-xl shadow-[hsl(var(--primary))/20%] hover:bg-[hsl(var(--primary))] active:scale-95 transition-all flex items-center gap-2 shrink-0"
+          className="bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] px-4 py-1.5 rounded-lg text-xs font-semibold uppercase tracking-wide shadow-xl shadow-[hsl(var(--primary))/20%] hover:bg-[hsl(var(--primary))] active:scale-95 transition-all flex items-center gap-2 shrink-0"
         >
           <Plus size={14} /> Nuevo Webhook
         </button>
@@ -130,8 +130,8 @@ export default function WebhooksPage() {
 
       <div className="flex-1 overflow-y-auto p-4 custom-scrollbar">
         {showForm && (
-          <div className="mb-6 p-5 border border-[hsl(var(--border))] dark:border-white/10 rounded-xl bg-[hsl(var(--surface-1))] dark:bg-[hsl(var(--admin-bg-secondary))] shadow-lg space-y-4">
-            <h3 className="text-sm font-bold uppercase tracking-wide text-[hsl(var(--text-primary))] dark:text-white border-b border-[hsl(var(--border))] dark:border-white/10 pb-2">Configurar Webhook</h3>
+          <div className="mb-6 p-5 border border-[hsl(var(--border))] rounded-xl bg-[hsl(var(--surface-1))] shadow-lg space-y-4">
+            <h3 className="text-sm font-bold uppercase tracking-wide text-[hsl(var(--text-primary))] border-b border-[hsl(var(--border))] pb-2">Configurar Webhook</h3>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-1.5">
@@ -140,7 +140,7 @@ export default function WebhooksPage() {
                   placeholder="Ej: Notificar a Slack"
                   value={form.name}
                   onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
-                  className="w-full px-3 py-2 text-sm border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-white/5 rounded-lg outline-none focus:border-[hsl(var(--primary))]"
+                  className="w-full px-3 py-2 text-sm border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] rounded-lg outline-none focus:border-[hsl(var(--primary))]"
                 />
               </div>
               <div className="space-y-1.5">
@@ -151,7 +151,7 @@ export default function WebhooksPage() {
                     placeholder="https://..."
                     value={form.url}
                     onChange={e => setForm(f => ({ ...f, url: e.target.value }))}
-                    className="w-full pl-9 pr-3 py-2 text-sm font-mono border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-white/5 rounded-lg outline-none focus:border-[hsl(var(--primary))]"
+                    className="w-full pl-9 pr-3 py-2 text-sm font-mono border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] rounded-lg outline-none focus:border-[hsl(var(--primary))]"
                   />
                 </div>
               </div>
@@ -163,7 +163,7 @@ export default function WebhooksPage() {
                     placeholder="Dejar vacío para no usar firma"
                     value={form.secret_key}
                     onChange={e => setForm(f => ({ ...f, secret_key: e.target.value }))}
-                    className="w-full pl-9 pr-3 py-2 text-sm font-mono border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-white/5 rounded-lg outline-none focus:border-[hsl(var(--primary))]"
+                    className="w-full pl-9 pr-3 py-2 text-sm font-mono border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] rounded-lg outline-none focus:border-[hsl(var(--primary))]"
                   />
                 </div>
               </div>
@@ -179,11 +179,11 @@ export default function WebhooksPage() {
                     className={clsx(
                       "flex items-center gap-1.5 px-3 py-2 text-2xs font-semibold rounded-lg border transition-all text-left",
                       form.events.includes(ev)
-                        ? "bg-[hsl(var(--primary))] text-white border-[hsl(var(--primary))]"
-                        : "border-[hsl(var(--border))] dark:border-white/10 text-[hsl(var(--text-secondary))] hover:border-[hsl(var(--primary))/50%] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5"
+                        ? "bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] border-[hsl(var(--primary))]"
+                        : "border-[hsl(var(--border))] text-[hsl(var(--text-secondary))] hover:border-[hsl(var(--primary))/50%] hover:bg-[hsl(var(--surface-2))]
                     )}
                   >
-                    <div className={clsx("size-3.5 rounded-sm border flex items-center justify-center shrink-0", form.events.includes(ev) ? "border-white bg-white/20" : "border-[hsl(var(--text-secondary))/30%]")}>
+                    <div className={clsx("size-3.5 rounded-sm border flex items-center justify-center shrink-0", form.events.includes(ev) ? "border-[hsl(var(--primary-foreground))] bg-[hsl(var(--primary-foreground))/0.2]" : "border-[hsl(var(--text-secondary))/30%]")}>
                       {form.events.includes(ev) && <Check size={10} />}
                     </div>
                     <span className="truncate">{ev}</span>
@@ -192,9 +192,9 @@ export default function WebhooksPage() {
               </div>
             </div>
 
-            <div className="flex justify-end gap-2 pt-4 border-t border-[hsl(var(--border))] dark:border-white/10">
-              <button onClick={() => setShowForm(false)} className="px-4 py-2 text-xs font-semibold uppercase tracking-wide rounded-lg border border-[hsl(var(--border))] dark:border-white/10 hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/10 transition-colors">Cancelar</button>
-              <button onClick={create} className="px-6 py-2 text-xs font-semibold uppercase tracking-wide rounded-lg bg-[hsl(var(--primary))] text-white hover:opacity-90 transition-opacity shadow-lg shadow-[hsl(var(--primary))/20%]">Crear Webhook</button>
+            <div className="flex justify-end gap-2 pt-4 border-t border-[hsl(var(--border))]">
+              <button onClick={() => setShowForm(false)} className="px-4 py-2 text-xs font-semibold uppercase tracking-wide rounded-lg border border-[hsl(var(--border))] hover:bg-[hsl(var(--surface-2))] transition-colors">Cancelar</button>
+              <button onClick={create} className="px-6 py-2 text-xs font-semibold uppercase tracking-wide rounded-lg bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] hover:opacity-90 transition-opacity shadow-lg shadow-[hsl(var(--primary))/20%]">Crear Webhook</button>
             </div>
           </div>
         )}
@@ -202,7 +202,7 @@ export default function WebhooksPage() {
         {loading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
             {[1, 2, 3].map(i => (
-              <div key={i} className="h-40 rounded-xl bg-[hsl(var(--surface-1))] dark:bg-white/5 animate-pulse" />
+              <div key={i} className="h-40 rounded-xl bg-[hsl(var(--surface-1))] animate-pulse" />
             ))}
           </div>
         ) : webhooks.length === 0 && !showForm ? (
@@ -211,75 +211,75 @@ export default function WebhooksPage() {
               <Webhook size={32} />
             </div>
             <div>
-              <p className="text-lg font-bold text-[hsl(var(--text-primary))] dark:text-white">Sin webhooks</p>
+              <p className="text-lg font-bold text-[hsl(var(--text-primary))]">Sin webhooks</p>
               <p className="text-sm text-[hsl(var(--text-secondary))] mt-1 max-w-sm">Conecta tu CMS con servicios externos en tiempo real añadiendo tu primer webhook.</p>
             </div>
-            <button onClick={() => setShowForm(true)} className="px-4 py-2 mt-2 bg-[hsl(var(--primary))] text-white text-xs font-semibold uppercase tracking-wide rounded-lg shadow-lg hover:bg-[hsl(var(--primary))] transition-all active:scale-95">
+            <button onClick={() => setShowForm(true)} className="px-4 py-2 mt-2 bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] text-xs font-semibold uppercase tracking-wide rounded-lg shadow-lg hover:bg-[hsl(var(--primary))] transition-all active:scale-95">
               Crear Webhook
             </button>
           </div>
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
             {webhooks.map(wh => (
-              <div key={wh.id} className="border border-[hsl(var(--border))] dark:border-white/10 rounded-xl overflow-hidden bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-secondary))] flex flex-col shadow-sm hover:shadow-md transition-shadow">
+              <div key={wh.id} className="border border-[hsl(var(--border))] rounded-xl overflow-hidden bg-[hsl(var(--surface-1))] flex flex-col shadow-sm hover:shadow-md transition-shadow">
                 <div className="p-4 flex-1">
                   <div className="flex items-start justify-between mb-3">
                     <div className="flex items-center gap-2">
                       <span className={clsx("size-2.5 rounded-full shrink-0", wh.is_active ? "bg-[hsl(var(--success))]" : "bg-[hsl(var(--text-secondary))]")} />
-                      <h3 className="font-bold text-[hsl(var(--text-primary))] dark:text-white truncate" title={wh.name}>{wh.name}</h3>
+                      <h3 className="font-bold text-[hsl(var(--text-primary))] truncate" title={wh.name}>{wh.name}</h3>
                     </div>
                     <div className="flex gap-1">
-                      <button onClick={() => toggle(wh.id, wh.is_active)} className="p-1.5 rounded-lg hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5 transition-colors" title={wh.is_active ? "Desactivar" : "Activar"}>
+                      <button onClick={() => toggle(wh.id, wh.is_active)} className="p-1.5 rounded-lg hover:bg-[hsl(var(--surface-2))] transition-colors" title={wh.is_active ? "Desactivar" : "Activar"}>
                         {wh.is_active ? <PowerOff size={14} className="text-[hsl(var(--text-secondary))]" /> : <Power size={14} className="text-[hsl(var(--success))]" />}
                       </button>
-                      <button onClick={() => setPendingDelete(wh)} className="p-1.5 rounded-lg hover:bg-danger-soft dark:hover:bg-[hsl(var(--danger))]/10 text-[hsl(var(--text-secondary))] hover:text-danger-text dark:hover:text-[hsl(var(--danger))] transition-colors" title="Eliminar">
+                      <button onClick={() => setPendingDelete(wh)} className="p-1.5 rounded-lg hover:bg-[hsl(var(--destructive)/10%)] text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--destructive))] transition-colors" title="Eliminar">
                         <Trash2 size={14} />
                       </button>
                     </div>
                   </div>
 
-                  <div className="mb-4 bg-[hsl(var(--surface-1))] dark:bg-black/20 p-2.5 rounded-lg border border-[hsl(var(--border))] dark:border-white/5 flex items-center gap-2">
+                  <div className="mb-4 bg-[hsl(var(--surface-2))] p-2.5 rounded-lg border border-[hsl(var(--border))] flex items-center gap-2">
                     <LinkIcon size={12} className="text-[hsl(var(--text-secondary))] shrink-0" />
                     <p className="text-xs text-[hsl(var(--text-secondary))] truncate font-mono select-all" title={wh.url}>{wh.url}</p>
                   </div>
 
                   <div className="flex flex-wrap gap-1.5">
                     {wh.events.map(ev => (
-                      <span key={ev} className="text-2xs font-semibold bg-info-soft text-info-text dark:bg-[hsl(var(--info))]/10 dark:text-[hsl(var(--info))] border border-[hsl(var(--info))/20%] px-2 py-0.5 rounded-full">
+                      <span key={ev} className="text-2xs font-semibold bg-[hsl(var(--info)/15%)] text-[hsl(var(--info))] border border-[hsl(var(--info))/20%] px-2 py-0.5 rounded-full">
                         {ev}
                       </span>
                     ))}
                   </div>
                 </div>
 
-                <div className="border-t border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-white/5">
+                <div className="border-t border-[hsl(var(--border))] bg-[hsl(var(--surface-1))]">
                   <button
                     onClick={() => loadDeliveries(wh.id)}
-                    className="w-full p-3 flex items-center justify-between text-xs font-semibold text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] dark:hover:text-white transition-colors"
+                    className="w-full p-3 flex items-center justify-between text-xs font-semibold text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] transition-colors"
                   >
                     <span>Últimas entregas ({expandedId === wh.id && deliveries.length > 0 ? deliveries.length : '?'})</span>
                     {expandedId === wh.id ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
                   </button>
 
                   {expandedId === wh.id && (
-                    <div className="p-3 pt-0 max-h-48 overflow-y-auto custom-scrollbar border-t border-[hsl(var(--border))] dark:border-white/5 mt-2">
+                    <div className="p-3 pt-0 max-h-48 overflow-y-auto custom-scrollbar border-t border-[hsl(var(--border))] mt-2">
                       {deliveries.length === 0 ? (
                          <p className="text-xs text-[hsl(var(--text-secondary))] text-center py-2">No hay entregas registradas</p>
                       ) : (
                         <div className="space-y-2 pt-2">
                           {deliveries.map(d => (
-                            <div key={d.id} className="flex flex-col gap-1 text-xs bg-[hsl(var(--bg-primary))] dark:bg-black/20 p-2 rounded border border-[hsl(var(--border))] dark:border-white/5">
+                            <div key={d.id} className="flex flex-col gap-1 text-xs bg-[hsl(var(--surface-2))] p-2 rounded border border-[hsl(var(--border))]">
                               <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-2">
                                   <span className={clsx("size-1.5 rounded-full shrink-0", d.success ? "bg-[hsl(var(--success))]" : "bg-[hsl(var(--danger))]")} />
-                                  <span className="font-mono font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">{d.event}</span>
+                                  <span className="font-mono font-bold text-[hsl(var(--text-primary))]">{d.event}</span>
                                 </div>
                                 <span className="text-2xs text-[hsl(var(--text-secondary))]">{new Date(d.created_at).toLocaleString("es-CO")}</span>
                               </div>
                               <div className="flex items-center gap-3 ml-3.5 text-2xs">
                                 <span className={clsx("font-bold px-1.5 py-0.5 rounded-sm",
-                                  d.success ? "bg-success-soft text-success-text dark:bg-[hsl(var(--success))]/20 dark:text-[hsl(var(--success))]" :
-                                  "bg-danger-soft text-danger-text dark:bg-[hsl(var(--danger))]/20 dark:text-[hsl(var(--danger))]"
+                                  d.success ? "bg-[hsl(var(--success)/15%)] text-[hsl(var(--success))]" :
+                                  "bg-[hsl(var(--destructive)/15%)] text-[hsl(var(--destructive))]"
                                 )}>
                                   {d.response_status ? `HTTP ${d.response_status}` : "Error"}
                                 </span>
@@ -305,16 +305,16 @@ export default function WebhooksPage() {
         subtitle={pendingDelete?.name}
       >
         <div className="space-y-4">
-          <div className="rounded-lg border border-[hsl(var(--danger)/25%)] bg-danger-soft dark:bg-[hsl(var(--danger))]/10 p-4">
-            <p className="text-sm text-danger-text dark:text-[hsl(var(--danger))]">
+          <div className="rounded-lg border border-[hsl(var(--destructive)/30%)] bg-[hsl(var(--destructive)/10%)] p-4">
+            <p className="text-sm text-[hsl(var(--destructive))]">
               ¿Estás seguro de eliminar este webhook? Las aplicaciones externas dejarán de recibir eventos inmediatamente.
             </p>
           </div>
           <div className="flex gap-2">
-            <button onClick={() => setPendingDelete(null)} className="flex-1 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 px-3 py-2 text-xs font-semibold uppercase tracking-wide transition-colors hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5">
+            <button onClick={() => setPendingDelete(null)} className="flex-1 rounded-lg border border-[hsl(var(--border))] px-3 py-2 text-xs font-semibold uppercase tracking-wide transition-colors hover:bg-[hsl(var(--surface-1))]
               Cancelar
             </button>
-            <button onClick={remove} className="flex-1 rounded-lg bg-[hsl(var(--danger))] px-3 py-2 text-xs font-semibold uppercase tracking-wide text-white transition-opacity hover:opacity-90">
+            <button onClick={remove} className="flex-1 rounded-lg bg-[hsl(var(--destructive))] px-3 py-2 text-xs font-semibold uppercase tracking-wide text-[hsl(var(--primary-foreground))] transition-opacity hover:opacity-90">
               Eliminar
             </button>
           </div>

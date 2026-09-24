@@ -23,7 +23,7 @@ interface AuditLogEntry {
 const SEVERITY_COLORS: Record<string, string> = {
   info: "bg-[hsl(var(--info-muted))] text-[hsl(var(--primary))]",
   warning: "bg-[hsl(var(--warning-muted))] text-warning-text",
-  critical: "bg-red-100 text-[hsl(var(--destructive))]",
+  critical: "bg-[hsl(var(--destructive)/0.15)] text-[hsl(var(--destructive))]",
 };
 
 export default function AuditPage() {
