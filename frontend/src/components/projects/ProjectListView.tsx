@@ -41,11 +41,11 @@ interface Props {
 function CommentPopover({ onClose }: { onClose: () => void }) {
     const [text, setText] = useState('');
     return (
-        <div className="absolute right-0 top-full mt-1 w-80 bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-secondary))] rounded-lg shadow-2xl border border-[hsl(var(--border))]/80 dark:border-white/10 z-[500] overflow-hidden">
+        <div className="absolute right-0 top-full mt-1 w-80 bg-[hsl(var(--surface-1))] rounded-lg shadow-xl border border-[hsl(var(--border))] z-[500] overflow-hidden">
             {/* Header */}
-            <div className="flex items-center justify-between px-3 py-2 border-b border-[hsl(var(--border))] dark:border-white/5">
-                <span className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Comentario rápido</span>
-                <button onClick={onClose} aria-label="Cerrar comentario rápido" className="p-0.5 rounded text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-secondary))] dark:hover:text-[hsl(var(--text-secondary))] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--primary))] focus-visible:ring-offset-2 dark:focus-visible:ring-offset-[hsl(var(--bg-primary))]">
+            <div className="flex items-center justify-between px-3 py-2 border-b border-[hsl(var(--border))]">
+                <span className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--muted-foreground))]">Comentario rápido</span>
+                <button onClick={onClose} aria-label="Cerrar comentario rápido" className="p-0.5 rounded text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--primary))] focus-visible:ring-offset-2">
                     <X size={13}/>
                 </button>
             </div>
@@ -56,7 +56,7 @@ function CommentPopover({ onClose }: { onClose: () => void }) {
                     value={text}
                     onChange={e => setText(e.target.value)}
                     placeholder="Escribe un comentario... @Brain para IA"
-                    className="w-full resize-none text-sm text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] placeholder:text-[hsl(var(--text-secondary))] px-3 pt-3 pb-2 bg-transparent outline-none min-h-[68px] leading-relaxed"
+                    className="w-full resize-none text-sm text-[hsl(var(--foreground))] placeholder:text-[hsl(var(--muted-foreground))] px-3 pt-3 pb-2 bg-transparent outline-none min-h-[68px] leading-relaxed"
                     onKeyDown={e => {
                         if (e.key === 'Enter' && (e.metaKey || e.ctrlKey) && text.trim()) onClose();
                         if (e.key === 'Escape') onClose();
@@ -65,24 +65,24 @@ function CommentPopover({ onClose }: { onClose: () => void }) {
             </div>
             {/* Toolbar */}
             <div className="flex items-center gap-1 px-3 pb-3">
-                <button aria-label="Adjuntar archivo" className="p-1.5 rounded-lg text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] hover:bg-info-soft dark:hover:bg-[hsl(var(--info))]/10 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--primary))] focus-visible:ring-offset-2 dark:focus-visible:ring-offset-[hsl(var(--bg-primary))]" title="Adjuntar">
+                <button aria-label="Adjuntar archivo" className="p-1.5 rounded-lg text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--primary))] hover:bg-[hsl(var(--primary)/0.1)] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--primary))] focus-visible:ring-offset-2" title="Adjuntar">
                     <Paperclip size={13} />
                 </button>
-                <button aria-label="Mencionar usuario" className="p-1.5 rounded-lg text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] hover:bg-info-soft dark:hover:bg-[hsl(var(--info))]/10 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--primary))] focus-visible:ring-offset-2 dark:focus-visible:ring-offset-[hsl(var(--bg-primary))]" title="Mencionar">
+                <button aria-label="Mencionar usuario" className="p-1.5 rounded-lg text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--primary))] hover:bg-[hsl(var(--primary)/0.1)] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--primary))] focus-visible:ring-offset-2" title="Mencionar">
                     <AtSign size={13} />
                 </button>
-                <button aria-label="Añadir emoji" className="p-1.5 rounded-lg text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] hover:bg-info-soft dark:hover:bg-[hsl(var(--info))]/10 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--primary))] focus-visible:ring-offset-2 dark:focus-visible:ring-offset-[hsl(var(--bg-primary))]" title="Emoji">
+                <button aria-label="Añadir emoji" className="p-1.5 rounded-lg text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--primary))] hover:bg-[hsl(var(--primary)/0.1)] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--primary))] focus-visible:ring-offset-2" title="Emoji">
                     <Smile size={13} />
                 </button>
                 <div className="flex-1" />
-                <span className="text-2xs text-[hsl(var(--text-secondary))] mr-2 hidden sm:block">⌘↵ enviar</span>
+                <span className="text-2xs text-[hsl(var(--muted-foreground))] mr-2 hidden sm:block">⌘↵ enviar</span>
                 <button
                     onClick={onClose}
                     className={clsx(
                         'flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-bold transition-all',
                         text.trim()
-                            ? 'bg-[hsl(var(--primary))] text-white hover:bg-[hsl(var(--primary))] shadow-md shadow-[hsl(var(--info)/20%)] active:scale-95'
-                            : 'bg-[hsl(var(--surface-2))] dark:bg-white/5 text-[hsl(var(--text-secondary))] cursor-not-allowed'
+                            ? 'bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] hover:bg-[hsl(var(--primary))]/90 shadow-sm active:scale-95'
+                            : 'bg-[hsl(var(--surface-2))] text-[hsl(var(--muted-foreground))] cursor-not-allowed'
                     )}
                     disabled={!text.trim()}
                 >
@@ -140,16 +140,16 @@ function TaskRow({
         <motion.div
             initial={{ opacity: 0, y: 4 }}
             animate={{ opacity: 1, y: 0 }}
-            className="flex items-center group border-b border-[hsl(var(--border))] dark:border-white/[0.04] hover:bg-[hsl(var(--surface-1))]/70 dark:hover:bg-white/[0.02] transition-colors relative min-h-[40px]"
+            className="flex items-center group border-b border-[hsl(var(--border))] hover:bg-[hsl(var(--surface-1))] transition-colors relative min-h-[40px]"
         >
             {/* Checkbox */}
             <div className="w-8 flex-shrink-0 flex items-center justify-center pl-2">                    <button
                     onClick={() => onChange({ status: status === 'completed' ? 'todo' : 'completed' })}
                     className={clsx(
-                        'size-4 rounded-full border-2 flex items-center justify-center text-2xs transition-all active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--success))] focus-visible:ring-offset-2 dark:focus-visible:ring-offset-[hsl(var(--bg-primary))]',
+                        'size-4 rounded-full border-2 flex items-center justify-center text-2xs transition-all active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--success))] focus-visible:ring-offset-2',
                         status === 'completed'
-                            ? 'bg-[hsl(var(--success))] border-[hsl(var(--success)/100%)] text-white'
-                            : 'border-[hsl(var(--border))] dark:border-white/20 text-transparent hover:border-[hsl(var(--success)/40%)] hover:bg-success-soft dark:hover:bg-[hsl(var(--success))]/10'
+                            ? 'bg-[hsl(var(--success))] border-[hsl(var(--success))] text-[hsl(var(--primary-foreground))]'
+                            : 'border-[hsl(var(--border))] text-transparent hover:border-[hsl(var(--success)/0.4)] hover:bg-[hsl(var(--success)/0.1)]'
                     )}
                     aria-label={status === 'completed' ? 'Desmarcar tarea' : 'Completar tarea'}
                 >
@@ -165,8 +165,8 @@ function TaskRow({
                 <span className={clsx(
                     'text-base font-medium truncate transition-colors',
                     status === 'completed'
-                        ? 'line-through text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]'
-                        : 'text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] group-hover:text-[hsl(var(--primary))] dark:group-hover:text-[hsl(var(--primary))]'
+                        ? 'line-through text-[hsl(var(--muted-foreground))]'
+                        : 'text-[hsl(var(--foreground))] group-hover:text-[hsl(var(--primary))]'
                 )}>
                     {task.title}
                 </span>
@@ -212,8 +212,8 @@ function TaskRow({
                     className={clsx(
                         'flex items-center justify-center size-8 rounded-lg border transition-all min-h-[40px] min-w-[32px]',
                         commentOpen
-                            ? 'border-[hsl(var(--info)/30%)] dark:border-[hsl(var(--info)/100%)]/40 bg-info-soft dark:bg-[hsl(var(--info))]/10 text-[hsl(var(--primary))]'
-                            : 'border-[hsl(var(--border))] dark:border-white/10 text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] hover:border-[hsl(var(--info)/25%)] dark:hover:border-[hsl(var(--info)/100%)]/30 hover:text-[hsl(var(--primary))] hover:bg-info-soft dark:hover:bg-[hsl(var(--info))]/10'
+                            ? 'border-[hsl(var(--primary)/0.3)] bg-[hsl(var(--primary)/0.1)] text-[hsl(var(--primary))]'
+                            : 'border-[hsl(var(--border))] text-[hsl(var(--muted-foreground))] hover:border-[hsl(var(--primary)/0.3)] hover:text-[hsl(var(--primary))] hover:bg-[hsl(var(--primary)/0.1)]'
                     )}
                     aria-label="Ver comentarios y actividad"
                 >
@@ -236,7 +236,7 @@ function TaskRow({
 
             {/* More */}
             <div className="w-8 flex-shrink-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                <span className="size-6 rounded flex items-center justify-center text-[hsl(var(--text-secondary))]">
+                <span className="size-6 rounded flex items-center justify-center text-[hsl(var(--muted-foreground))]">
                     <MoreHorizontal size={13} />
                 </span>
             </div>
@@ -289,7 +289,7 @@ function StatusGroup({
 
     const cfg = getStatusOption(status);
     const pillCls = STATUS_GROUP_PILL[status as TaskStatus]
-        ?? 'bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))] dark:bg-white/10 dark:text-[hsl(var(--text-secondary))]';
+        ?? 'bg-[hsl(var(--surface-2))] text-[hsl(var(--muted-foreground))]';
 
     return (
         <div className="mb-0">
@@ -298,7 +298,7 @@ function StatusGroup({
                 <button
                     onClick={() => setCollapsed(v => !v)}
                     aria-label={collapsed ? 'Expandir grupo' : 'Contraer grupo'}
-                    className="text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-secondary))] dark:hover:text-[hsl(var(--text-secondary))] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--primary))] focus-visible:ring-offset-2 dark:focus-visible:ring-offset-[hsl(var(--bg-primary))]"
+                    className="text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--primary))] focus-visible:ring-offset-2"
                     aria-expanded={!collapsed}
                 >
                     {collapsed ? <ChevronRight size={14} /> : <ChevronDown size={14} />}
@@ -306,7 +306,7 @@ function StatusGroup({
                 <span className={clsx('px-3 py-1 rounded-md text-xs font-semibold uppercase tracking-wide', pillCls)}>
                     {statusLabel ?? cfg.label}
                 </span>
-                <span className="text-sm font-bold text-[hsl(var(--text-secondary))]">{tasks.length}</span>
+                <span className="text-sm font-bold text-[hsl(var(--muted-foreground))]">{tasks.length}</span>
             </div>
 
             <AnimatePresence initial={false}>
@@ -319,14 +319,14 @@ function StatusGroup({
                         className="overflow-hidden"
                     >
                         {/* Column Headers */}
-                        <div className="flex items-center border-b border-[hsl(var(--border))] dark:border-white/[0.04] bg-[hsl(var(--surface-1))]/50 dark:bg-white/[0.01]">
+                        <div className="flex items-center border-b border-[hsl(var(--border))] bg-[hsl(var(--surface-1))]">
                             <div className="w-8 flex-shrink-0" />
-                            <div className="flex-1 px-3 py-2 text-2xs font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))]">Nombre</div>
-                            <div className="w-28 flex-shrink-0 px-1 py-2 text-2xs font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] text-center whitespace-nowrap">Asignado</div>
-                            <div className="w-32 flex-shrink-0 px-1 py-2 text-2xs font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] whitespace-nowrap">Fecha L&iacute;mite</div>
-                            <div className="w-20 flex-shrink-0 px-1 py-2 text-2xs font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] text-center whitespace-nowrap">Prior.</div>
-                            <div className="w-36 flex-shrink-0 px-2 py-2 text-2xs font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] whitespace-nowrap">Estado</div>
-                            <div className="w-24 flex-shrink-0 px-1 py-2 text-2xs font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] text-center whitespace-nowrap">Coment.</div>
+                            <div className="flex-1 px-3 py-2 text-2xs font-semibold uppercase tracking-wider text-[hsl(var(--muted-foreground))]">Nombre</div>
+                            <div className="w-28 flex-shrink-0 px-1 py-2 text-2xs font-semibold uppercase tracking-wider text-[hsl(var(--muted-foreground))] text-center whitespace-nowrap">Asignado</div>
+                            <div className="w-32 flex-shrink-0 px-1 py-2 text-2xs font-semibold uppercase tracking-wider text-[hsl(var(--muted-foreground))] whitespace-nowrap">Fecha L&iacute;mite</div>
+                            <div className="w-20 flex-shrink-0 px-1 py-2 text-2xs font-semibold uppercase tracking-wider text-[hsl(var(--muted-foreground))] text-center whitespace-nowrap">Prior.</div>
+                            <div className="w-36 flex-shrink-0 px-2 py-2 text-2xs font-semibold uppercase tracking-wider text-[hsl(var(--muted-foreground))] whitespace-nowrap">Estado</div>
+                            <div className="w-24 flex-shrink-0 px-1 py-2 text-2xs font-semibold uppercase tracking-wider text-[hsl(var(--muted-foreground))] text-center whitespace-nowrap">Coment.</div>
                             <div className="w-8 flex-shrink-0" />
                         </div>
 
@@ -343,9 +343,9 @@ function StatusGroup({
 
                         {/* Quick-add row */}
                         {isAddingHere ? (
-                            <div className="flex items-center gap-2 px-4 py-2 border-b border-[hsl(var(--border))] dark:border-white/[0.04] bg-info-soft/30 dark:bg-[hsl(var(--info))]/5 min-h-[40px]">
+                            <div className="flex items-center gap-2 px-4 py-2 border-b border-[hsl(var(--border))] bg-[hsl(var(--primary)/0.05)] min-h-[40px]">
                                 <div className="w-8 flex-shrink-0 flex items-center justify-center">
-                                    <div className="size-4 rounded-full border-2 border-[hsl(var(--info)/40%)] dark:border-[hsl(var(--info)/100%)]" />
+                                    <div className="size-4 rounded-full border-2 border-[hsl(var(--primary)/0.4)]" />
                                 </div>
                                 <input
                                     ref={inputRef}
@@ -358,17 +358,17 @@ function StatusGroup({
                                         if (e.key === 'Escape') onQuickAddCancel?.();
                                     }}
                                     placeholder="Nombre de la tarea..."
-                                    className="flex-1 text-base font-medium bg-transparent outline-none text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] placeholder:text-[hsl(var(--text-secondary))]"
+                                    className="flex-1 text-base font-medium bg-transparent outline-none text-[hsl(var(--foreground))] placeholder:text-[hsl(var(--muted-foreground))]"
                                 />
                                 <button
                                     onClick={onQuickAddConfirm}
-                                    className="px-3 py-1.5 bg-[hsl(var(--primary))] text-white text-xs font-bold rounded-lg hover:bg-[hsl(var(--primary))] active:scale-95 transition-all"
+                                    className="px-3 py-1.5 bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] text-xs font-bold rounded-lg hover:bg-[hsl(var(--primary))]/90 active:scale-95 transition-all"
                                 >
                                     Guardar
                                 </button>
                                 <button
                                     onClick={onQuickAddCancel}
-                                    className="p-1.5 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-secondary))] dark:hover:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5 rounded-lg transition-colors"
+                                    className="p-1.5 text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] hover:bg-[hsl(var(--surface-2))] rounded-lg transition-colors"
                                 >
                                     <X size={14} />
                                 </button>
@@ -376,7 +376,7 @@ function StatusGroup({
                         ) : (
                             <button
                                 onClick={() => onAddTask(status)}
-                                className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] dark:hover:text-[hsl(var(--primary))] hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/[0.02] w-full transition-colors border-b border-[hsl(var(--border))] dark:border-white/[0.04] min-h-[40px]"
+                                className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--primary))] hover:bg-[hsl(var(--surface-1))] w-full transition-colors border-b border-[hsl(var(--border))] min-h-[40px]"
                             >
                                 <Plus size={13} />
                                 Nuevo
@@ -425,7 +425,7 @@ export default function ProjectListView({
     });
 
     return (
-        <div className="h-full overflow-y-auto bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-secondary))] scrollbar-thin">
+        <div className="h-full overflow-y-auto bg-[hsl(var(--surface-1))] scrollbar-thin">
 
             {/* ── STICKY QUICK-ADD BAR ── */}
             <AnimatePresence>
@@ -435,7 +435,7 @@ export default function ProjectListView({
                         animate={{ height: 'auto', opacity: 1 }}
                         exit={{ height: 0, opacity: 0 }}
                         transition={{ duration: 0.15 }}
-                        className="overflow-hidden sticky top-0 z-30 border-b-2 border-[hsl(var(--info)/30%)] dark:border-[hsl(var(--info)/100%)]/40 bg-info-soft dark:bg-[hsl(var(--info))]/10"
+                        className="overflow-hidden sticky top-0 z-30 border-b-2 border-[hsl(var(--primary)/0.3)] bg-[hsl(var(--primary)/0.05)]"
                     >
                         <QuickAddBar
                             quickAddTitle={quickAddTitle || ''}
@@ -480,12 +480,12 @@ export default function ProjectListView({
 
             {tasks.length === 0 && (
                 <div className="flex flex-col items-center justify-center py-1.5 gap-4">
-                    <div className="size-8 rounded-lg bg-[hsl(var(--surface-2))] dark:bg-white/5 flex items-center justify-center">
-                        <CheckCircle2 size={28} className="text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]" />
+                    <div className="size-8 rounded-lg bg-[hsl(var(--surface-2))] flex items-center justify-center">
+                        <CheckCircle2 size={28} className="text-[hsl(var(--muted-foreground))]" />
                     </div>
                     <div className="text-center">
-                        <p className="text-sm font-bold text-[hsl(var(--text-secondary))]">Sin tareas en este proyecto</p>
-                        <p className="text-xs text-[hsl(var(--text-secondary))] mt-1">Haz clic en &quot;+ Nuevo&quot; para empezar</p>
+                        <p className="text-sm font-bold text-[hsl(var(--muted-foreground))]">Sin tareas en este proyecto</p>
+                        <p className="text-xs text-[hsl(var(--muted-foreground))] mt-1">Haz clic en &quot;+ Nuevo&quot; para empezar</p>
                     </div>
                 </div>
             )}
@@ -510,7 +510,7 @@ function QuickAddBar({
 
     return (
         <div className="flex items-center gap-3 px-4 py-3 min-h-[40px]">
-            <div className="size-5 rounded-full border-2 border-[hsl(var(--info)/40%)] dark:border-[hsl(var(--info)/100%)] shrink-0" />
+            <div className="size-5 rounded-full border-2 border-[hsl(var(--primary)/0.4)] shrink-0" />
             <input
                 ref={inputRef}
                 type="text"
@@ -521,18 +521,18 @@ function QuickAddBar({
                     if (e.key === 'Escape') onQuickAddCancel?.();
                 }}
                 placeholder="Nombre de la tarea... (Enter para guardar, Esc para cancelar)"
-                className="flex-1 text-base font-medium bg-transparent outline-none text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] placeholder:text-[hsl(var(--text-secondary))]"
+                className="flex-1 text-base font-medium bg-transparent outline-none text-[hsl(var(--foreground))] placeholder:text-[hsl(var(--muted-foreground))]"
             />
             <button
                 onClick={onQuickAddConfirm}
-                className="px-4 py-1.5 bg-[hsl(var(--primary))] text-white text-xs font-bold rounded-lg hover:bg-[hsl(var(--primary))] active:scale-95 transition-all shrink-0"
+                className="px-4 py-1.5 bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] text-xs font-bold rounded-lg hover:bg-[hsl(var(--primary))]/90 active:scale-95 transition-all shrink-0"
             >
                 Guardar
             </button>
             <button
                 onClick={onQuickAddCancel}
                 aria-label="Cancelar tarea rápida"
-                className="p-1.5 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-secondary))] dark:hover:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--primary))] focus-visible:ring-offset-2 dark:focus-visible:ring-offset-[hsl(var(--bg-primary))]"
+                className="p-1.5 text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] hover:bg-[hsl(var(--surface-2))] rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--primary))] focus-visible:ring-offset-2"
             >
                 <X size={14} />
             </button>

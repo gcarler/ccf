@@ -7,17 +7,17 @@ import type { ProjectTaskRecord } from '@/types/projects';
 import { getStatusOption, getPriorityOption } from '@/lib/projects/constants';
 
 const STATUS_CLS: Record<string, string> = {
-    completed:   'bg-success-soft border-[hsl(var(--success)/20%)] text-success-text',
-    in_progress: 'bg-info-soft border-[hsl(var(--info)/20%)] text-[hsl(var(--primary))]',
-    review:      'bg-warning-soft border-[hsl(var(--warning)/20%)] text-warning-text',
-    todo:        'bg-slate-50 border-slate-100 text-slate-600',
+    completed:   'bg-[hsl(var(--success)/0.1)] border-[hsl(var(--success)/0.2)] text-[hsl(var(--success))]',
+    in_progress: 'bg-[hsl(var(--info)/0.1)] border-[hsl(var(--info)/0.2)] text-[hsl(var(--info))]',
+    review:      'bg-[hsl(var(--warning)/0.1)] border-[hsl(var(--warning)/0.2)] text-[hsl(var(--warning))]',
+    todo:        'bg-[hsl(var(--surface-2))] border-[hsl(var(--border))] text-[hsl(var(--muted-foreground))]',
 };
 
 const PRIORITY_CLS: Record<string, string> = {
-    urgent: 'text-danger-text',
-    high:   'text-orange-500',
+    urgent: 'text-[hsl(var(--destructive))]',
+    high:   'text-[hsl(var(--warning))]',
     medium: 'text-[hsl(var(--primary))]',
-    low:    'text-[hsl(var(--text-secondary))]',
+    low:    'text-[hsl(var(--muted-foreground))]',
 };
 
 function TitleRenderer({ value, data }: { value: string; data: { id?: string; status?: string } }) {
@@ -25,10 +25,10 @@ function TitleRenderer({ value, data }: { value: string; data: { id?: string; st
     return (
         <div className="flex items-center gap-2.5">
             <div className={clsx('size-4 rounded-full border-2 flex items-center justify-center flex-shrink-0',
-                st ? 'bg-[hsl(var(--success))] border-[hsl(var(--success)/100%)] text-white' : 'border-[hsl(var(--border))] dark:border-white/20')}>
+                st ? 'bg-[hsl(var(--success))] border-[hsl(var(--success))] text-[hsl(var(--primary-foreground))]' : 'border-[hsl(var(--border))]')}>
                 {st && <span className="text-2xs font-bold">✓</span>}
             </div>
-            <span className="text-base font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] truncate">{value}</span>
+            <span className="text-base font-bold text-[hsl(var(--foreground))] truncate">{value}</span>
         </div>
     );
 }
@@ -44,10 +44,10 @@ function PriorityRenderer({ value }: { value: string }) {
 }
 
 function AssigneeRenderer({ value }: { value: string | null | undefined }) {
-    if (!value) return <span className="text-xs text-[hsl(var(--text-secondary))]">—</span>;
+    if (!value) return <span className="text-xs text-[hsl(var(--muted-foreground))]">—</span>;
     return (
         <span
-            className="text-xs font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]"
+            className="text-xs font-bold text-[hsl(var(--foreground))]"
             title={value}
         >
             {String(value).replace(/-/g, '').slice(0, 8)}
@@ -56,8 +56,8 @@ function AssigneeRenderer({ value }: { value: string | null | undefined }) {
 }
 
 function DateRenderer({ value }: { value: string }) {
-    if (!value) return <span className="text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] text-xs">—</span>;
-    return <span className="text-xs font-bold text-[hsl(var(--text-secondary))]">{new Date(value).toLocaleDateString('es-CO', { day: '2-digit', month: 'short', year: '2-digit' })}</span>;
+    if (!value) return <span className="text-[hsl(var(--muted-foreground))] text-xs">—</span>;
+    return <span className="text-xs font-bold text-[hsl(var(--muted-foreground))]">{new Date(value).toLocaleDateString('es-CO', { day: '2-digit', month: 'short', year: '2-digit' })}</span>;
 }
 
 export default function ProjectTableView({ tasks }: { tasks: ProjectTaskRecord[] }) {
@@ -76,7 +76,7 @@ export default function ProjectTableView({ tasks }: { tasks: ProjectTaskRecord[]
     const height = Math.min(Math.max(tasks.length * 36 + 40, 200), 600);
 
     return (
-        <div className="min-w-0 rounded-lg overflow-hidden border border-[hsl(var(--border))] dark:border-white/10 shadow-sm" style={{ height }}>
+        <div className="min-w-0 rounded-lg overflow-hidden border border-[hsl(var(--border))] shadow-sm" style={{ height }}>
             <AgGridTable
                 ref={gridRef}
                 density="compact"

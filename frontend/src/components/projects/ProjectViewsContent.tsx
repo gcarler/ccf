@@ -58,7 +58,7 @@ export function ProjectViewsContent({
         if (!project?.id) {
             return (
                 <div className="h-full flex items-center justify-center p-6">
-                    <p className="text-sm text-[hsl(var(--text-secondary))]">
+                    <p className="text-sm text-[hsl(var(--muted-foreground))]">
                         No se pudo cargar el proyecto.
                     </p>
                 </div>
@@ -91,14 +91,14 @@ export function ProjectViewsContent({
                             onOpenTask={onOpenTask}
                         />
                     )}
-                    <div className="min-h-[420px] overflow-hidden rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] dark:border-white/10 dark:bg-white/5">
+                    <div className="min-h-[420px] overflow-hidden rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))]">
                         <ProjectActivityFeed activities={activities} />
                     </div>
                 </div>
             )}
 
             {viewType === 'table' && (
-                <div className="h-[calc(100vh-8rem)] border border-[hsl(var(--border))] dark:border-white/5 rounded-lg overflow-hidden bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-2))] shadow-sm">
+                <div className="h-[calc(100vh-8rem)] border border-[hsl(var(--border))] rounded-lg overflow-hidden bg-[hsl(var(--surface-1))] shadow-sm">
                     <TaskTableView
                         projectId={project?.id}
                         tasks={tasks}

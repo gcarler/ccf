@@ -34,7 +34,7 @@ import ProjectsBoardView from './views/ProjectsBoardView';
 
 // Heavy views loaded on demand (client-only to avoid SSR issues with DOM libraries)
 function ViewSkeleton() {
-    return <div className="h-[360px] animate-pulse rounded-lg bg-[hsl(var(--surface-1))] dark:bg-white/5" />;
+    return <div className="h-[360px] animate-pulse rounded-lg bg-[hsl(var(--surface-2))]" />;
 }
 
 const ProjectsCalendarView = dynamic(() => import('./views/ProjectsCalendarView'), { ssr: false, loading: ViewSkeleton });
@@ -290,7 +290,7 @@ export default function ProjectsClient({ initialProjects, initialViewType = 'gri
             rightActions={
                 <button
                     onClick={() => setShowCreateForm(true)}
-                    className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wide transition-all bg-[hsl(var(--primary))] text-white shadow-lg shadow-[hsl(var(--primary))]/20 hover:bg-[hsl(var(--primary))]/90 active:scale-95"
+                    className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wide transition-all bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] shadow-lg shadow-[hsl(var(--primary))]/20 hover:bg-[hsl(var(--primary))]/90 active:scale-95"
                 >
                     <Plus size={14} />
                     Nuevo Proyecto
@@ -335,8 +335,8 @@ export default function ProjectsClient({ initialProjects, initialViewType = 'gri
                         className={clsx(
                             'px-3 py-1 rounded-full text-2xs font-bold uppercase tracking-wide border transition-colors',
                             statusFilter === status
-                                ? 'bg-[hsl(var(--primary))] text-white border-[hsl(var(--primary))]'
-                                : 'border-[hsl(var(--border))] dark:border-white/10 text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5'
+                                ? 'bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] border-[hsl(var(--primary))]'
+                                : 'border-[hsl(var(--border))] text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--surface-2))]'
                         )}
                     >
                         {status === 'all' ? 'Todos' :
@@ -377,13 +377,13 @@ export default function ProjectsClient({ initialProjects, initialViewType = 'gri
                             </h2>
                             <div className="space-y-4 pt-4">
                                 <div className="flex items-center justify-between">
-                                    <span className="text-xs font-bold text-[hsl(var(--text-secondary))]">Tareas Atrasadas</span>
-                                    <span className="text-sm font-semibold text-[hsl(var(--danger))]">{dashboard?.delayed_tasks_count || 0}</span>
+                                    <span className="text-xs font-bold text-[hsl(var(--muted-foreground))]">Tareas Atrasadas</span>
+                                    <span className="text-sm font-semibold text-[hsl(var(--destructive))]">{dashboard?.delayed_tasks_count || 0}</span>
                                 </div>
-                                <div className="h-2 w-full bg-white/5 rounded-full overflow-hidden">
-                                    <div className="h-full w-[15%] bg-[hsl(var(--danger))]" />
+                                <div className="h-2 w-full bg-[hsl(var(--surface-2))] rounded-full overflow-hidden">
+                                    <div className="h-full w-[15%] bg-[hsl(var(--destructive))]" />
                                 </div>
-                                <p className="text-2xs text-[hsl(var(--text-secondary))] italic">
+                                <p className="text-2xs text-[hsl(var(--muted-foreground))] italic">
                                     Se recomienda revisar los hitos críticos para evitar cuellos de botella.
                                 </p>
                             </div>
@@ -392,7 +392,7 @@ export default function ProjectsClient({ initialProjects, initialViewType = 'gri
                 </div>
             </div>
 
-            <div className="h-px bg-white/5 my-8" />
+            <div className="h-px bg-[hsl(var(--border))] my-8" />
 
             <div className="relative">
                 <AnimatePresence mode="wait">
@@ -415,15 +415,15 @@ export default function ProjectsClient({ initialProjects, initialViewType = 'gri
 function EmptyProjectsState({ search, onShowCreate }: { search: string; onShowCreate: () => void }) {
     return (
         <div className="flex flex-col items-center justify-center py-16 text-center">
-            <Folder size={48} className="text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] mb-4" />
-            <h3 className="text-lg font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">No hay proyectos</h3>
-            <p className="text-sm text-[hsl(var(--text-secondary))] mt-1 mb-4 max-w-md">
+            <Folder size={48} className="text-[hsl(var(--muted-foreground))] mb-4" />
+            <h3 className="text-lg font-bold text-[hsl(var(--foreground))]">No hay proyectos</h3>
+            <p className="text-sm text-[hsl(var(--muted-foreground))] mt-1 mb-4 max-w-md">
                 {search ? 'Ningún proyecto coincide con tu búsqueda.' : 'Crea tu primer proyecto para empezar.'}
             </p>
             {!search && (
                 <button
                     onClick={onShowCreate}
-                    className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-[hsl(var(--primary))] text-white text-xs font-bold uppercase tracking-wide shadow-lg shadow-[hsl(var(--primary))]/20 hover:bg-[hsl(var(--primary))]/90 active:scale-95"
+                    className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] text-xs font-bold uppercase tracking-wide shadow-lg shadow-[hsl(var(--primary))]/20 hover:bg-[hsl(var(--primary))]/90 active:scale-95"
                 >
                     <Plus size={16} /> Crear proyecto
                 </button>
