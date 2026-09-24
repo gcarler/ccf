@@ -22,14 +22,14 @@ export default function CmsUiKitPage() {
   const [activeTab, setActiveTab] = useState("tab1");
 
   return (
-    <div className="flex flex-col h-full bg-[#f8f9fc] dark:bg-[hsl(var(--admin-bg-deep))] overflow-y-auto custom-scrollbar">
+    <div className="flex flex-col h-full bg-[hsl(var(--surface-1))] overflow-y-auto custom-scrollbar">
       <div className="p-4 space-y-4 w-full max-w-6xl mx-auto">
         {/* Header */}
         <div>
-          <h1 className="text-xl font-semibold text-[hsl(var(--text-primary))] dark:text-white tracking-tight">
+          <h1 className="text-xl font-semibold text-[hsl(var(--text-primary))] tracking-tight">
             UI Kit & Design System
           </h1>
-          <p className="text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] mt-2 font-medium">
+          <p className="text-[hsl(var(--text-secondary))] mt-2 font-medium">
             Catálogo de componentes base (&quot;Clean Productivity&quot;) utilizados en la plataforma administrativa.
           </p>
         </div>
@@ -74,15 +74,15 @@ export default function CmsUiKitPage() {
           <DSSectionHeader title="Tarjetas" description="Contenedores estructurados con hover effects opcionales." />
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             <DSCard className="p-3">
-              <h3 className="text-lg font-bold text-[hsl(var(--text-primary))] dark:text-white">Básica</h3>
+              <h3 className="text-lg font-bold text-[hsl(var(--text-primary))]">Básica</h3>
               <p className="text-sm text-[hsl(var(--text-secondary))] mt-2">Contenedor simple con padding y bordes adaptativos.</p>
             </DSCard>
             <DSCard tone="dark" className="p-3">
-              <h3 className="text-lg font-bold text-[hsl(var(--text-primary))] dark:text-white">Dark</h3>
+              <h3 className="text-lg font-bold text-[hsl(var(--text-primary))]">Dark</h3>
               <p className="text-sm text-[hsl(var(--text-secondary))] mt-2">Tema oscuro para paneles laterales.</p>
             </DSCard>
             <DSCard tone="glass" className="p-3">
-              <h3 className="text-lg font-bold text-[hsl(var(--text-primary))] dark:text-white">Glass</h3>
+              <h3 className="text-lg font-bold text-[hsl(var(--text-primary))]">Glass</h3>
               <p className="text-sm text-[hsl(var(--text-secondary))] mt-2">Efecto vidrio esmerilado con blur.</p>
             </DSCard>
           </div>

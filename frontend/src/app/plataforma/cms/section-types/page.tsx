@@ -38,8 +38,8 @@ const EMPTY_FORM: FormState = { name: "", description: "", is_active: true };
 
 function statusBadge(isActive: boolean) {
   return isActive
-    ? "bg-success-soft dark:bg-[hsl(var(--success))]/10 text-success-text dark:text-success-text"
-    : "bg-[hsl(var(--surface-2))] dark:bg-white/5 text-[hsl(var(--text-secondary))]";
+    ? "bg-[hsl(var(--success)/0.15)] text-[hsl(var(--success))]"
+    : "bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))]";
 }
 
 export default function SectionTypesPage() {
@@ -242,7 +242,7 @@ export default function SectionTypesPage() {
 
   if (!canView) {
     return (
-      <div className="h-full overflow-y-auto bg-[hsl(var(--surface-1))]/60 dark:bg-[hsl(var(--admin-bg-primary))]">
+      <div className="h-full overflow-y-auto bg-[hsl(var(--surface-1))]">
         <div className="mx-auto max-w-3xl px-4 py-1.5 text-center">
           <h1 className="text-xl font-semibold">Acceso restringido</h1>
           <p className="mt-3 text-[hsl(var(--text-secondary))]">
@@ -254,7 +254,7 @@ export default function SectionTypesPage() {
   }
 
   return (
-    <div className="h-full overflow-y-auto bg-[hsl(var(--surface-1))]/60 dark:bg-[hsl(var(--admin-bg-primary))]">
+    <div className="h-full overflow-y-auto bg-[hsl(var(--surface-1))]">
       <div className="space-y-4 px-4 py-2 lg:px-6">
         <AdminHero
           eyebrow="CMS"
@@ -282,7 +282,7 @@ export default function SectionTypesPage() {
         />
 
         {/* ── Filter Bar ── */}
-        <div className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-tertiary))] px-4 py-3 shadow-sm flex flex-wrap items-center gap-3">
+        <div className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] px-4 py-3 shadow-sm flex flex-wrap items-center gap-3">
           <div className="relative flex-1 min-w-56">
             <Search
               size={14}
@@ -293,7 +293,7 @@ export default function SectionTypesPage() {
               value={search}
               onChange={(event) => setSearch(event.target.value)}
               placeholder="Buscar por nombre o descripcion..."
-              className="w-full pl-9 pr-4 py-2 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-white/5 text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.3]"
+              className="w-full pl-9 pr-4 py-2 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.3]"
             />
           </div>
 
@@ -302,7 +302,7 @@ export default function SectionTypesPage() {
               type="checkbox"
               checked={onlyActive}
               onChange={(event) => setOnlyActive(event.target.checked)}
-              className="w-4 h-4 rounded border-[hsl(var(--border))] dark:border-white/20 text-[hsl(var(--primary))] focus:ring-[hsl(var(--primary))/0.3]"
+              className="w-4 h-4 rounded border-[hsl(var(--border))] text-[hsl(var(--primary))] focus:ring-[hsl(var(--primary))/0.3]"
             />
             <span className="text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
               Solo activos
@@ -320,12 +320,12 @@ export default function SectionTypesPage() {
             <div className="w-7 h-7 rounded-full border-2 border-[hsl(var(--primary))] border-t-transparent animate-spin" />
           </div>
         ) : filtered.length === 0 ? (
-          <div className="rounded-lg border border-dashed border-[hsl(var(--border))] dark:border-white/10 p-10 text-center bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-tertiary))]">
+          <div className="rounded-lg border border-dashed border-[hsl(var(--border))] p-10 text-center bg-[hsl(var(--surface-1))]">
             <Layers3
               size={32}
               className="mx-auto text-[hsl(var(--text-secondary))]"
             />
-            <p className="mt-3 text-sm font-bold text-[hsl(var(--text-primary))] dark:text-white">
+            <p className="mt-3 text-sm font-bold text-[hsl(var(--text-primary))]">
               {search || onlyActive
                 ? "Sin resultados para los filtros activos."
                 : "Aun no hay tipos de seccion catalogados."}
@@ -337,9 +337,9 @@ export default function SectionTypesPage() {
             </p>
           </div>
         ) : (
-          <div className="overflow-x-auto rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-tertiary))] shadow-sm">
+          <div className="overflow-x-auto rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] shadow-sm">
             <table className="w-full text-sm">
-              <thead className="bg-[hsl(var(--surface-1))] dark:bg-white/[0.02] border-b border-[hsl(var(--border))] dark:border-white/10">
+              <thead className="bg-[hsl(var(--surface-2))] border-b border-[hsl(var(--border))]">
                 <tr>
                   <th className="px-4 py-3 text-left font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide text-2xs">
                     Nombre
@@ -358,18 +358,18 @@ export default function SectionTypesPage() {
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[hsl(var(--border))] dark:divide-white/10">
+              <tbody className="divide-y divide-[hsl(var(--border))]">
                 {filtered.map((row) => (
                   <tr
                     key={row.id}
-                    className="hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/[0.02] transition-colors"
+                    className="hover:bg-[hsl(var(--surface-2))]/60 transition-colors"
                   >
                     <td className="px-4 py-3 align-top">
                       <button
                         type="button"
                         onClick={() => openEditDrawer(row)}
                         disabled={!canPublish}
-                        className="font-mono text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-white hover:text-[hsl(var(--primary))] disabled:cursor-not-allowed disabled:hover:text-[hsl(var(--text-primary))] transition-colors"
+                        className="font-mono text-sm font-semibold text-[hsl(var(--text-primary))] hover:text-[hsl(var(--primary))] disabled:cursor-not-allowed disabled:hover:text-[hsl(var(--text-primary))] transition-colors"
                       >
                         {row.name}
                       </button>
@@ -408,7 +408,7 @@ export default function SectionTypesPage() {
                           onClick={() => openEditDrawer(row)}
                           disabled={!canPublish}
                           title={canPublish ? "Editar" : "Sin permisos"}
-                          className="p-2 rounded-lg hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-[hsl(var(--text-secondary))] transition-all"
+                          className="p-2 rounded-lg hover:bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-[hsl(var(--text-secondary))] transition-all"
                         >
                           <Pencil size={14} />
                         </button>
@@ -418,7 +418,7 @@ export default function SectionTypesPage() {
                             onClick={() => openDeleteDrawer(row)}
                             disabled={!canPublish}
                             title={canPublish ? "Desactivar (soft-delete)" : "Sin permisos"}
-                            className="p-2 rounded-lg hover:bg-warning-soft dark:hover:bg-[hsl(var(--warning))]/10 text-[hsl(var(--text-secondary))] hover:text-warning-text disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-[hsl(var(--text-secondary))] transition-all"
+                            className="p-2 rounded-lg hover:bg-[hsl(var(--warning)/0.15)] text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--warning))] disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-[hsl(var(--text-secondary))] transition-all"
                           >
                             <Archive size={14} />
                           </button>
@@ -428,7 +428,7 @@ export default function SectionTypesPage() {
                             onClick={() => handleReactivate(row)}
                             disabled={!canPublish}
                             title={canPublish ? "Reactivar" : "Sin permisos"}
-                            className="p-2 rounded-lg hover:bg-success-soft dark:hover:bg-[hsl(var(--success))]/10 text-[hsl(var(--text-secondary))] hover:text-success-text disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-[hsl(var(--text-secondary))] transition-all"
+                            className="p-2 rounded-lg hover:bg-[hsl(var(--success)/0.15)] text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--success))] disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-[hsl(var(--text-secondary))] transition-all"
                           >
                             <RotateCcw size={14} />
                           </button>
@@ -443,7 +443,7 @@ export default function SectionTypesPage() {
         )}
 
         {!canPublish && (
-          <div className="rounded-lg border border-[hsl(var(--warning)/25%)] dark:border-[hsl(var(--warning)/100%)]/30 bg-warning-soft dark:bg-[hsl(var(--warning))]/10 px-4 py-3 text-xs text-warning-text dark:text-[hsl(var(--warning))] flex items-start gap-2">
+          <div className="rounded-lg border border-[hsl(var(--warning)/30%)] bg-[hsl(var(--warning)/10%)] px-4 py-3 text-xs text-[hsl(var(--warning))] flex items-start gap-2">
             <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
             <span>
               Tu rol&nbsp;
@@ -473,7 +473,7 @@ export default function SectionTypesPage() {
       >
         <form onSubmit={handleSubmit} className="space-y-4">
           {formError && (
-            <div className="rounded-lg border border-red-200 dark:border-red-500/30 bg-red-50 dark:bg-red-500/10 px-3 py-2.5 text-xs text-red-700 dark:text-red-300 flex items-start gap-2">
+            <div className="rounded-lg border border-[hsl(var(--destructive)/30%)] bg-[hsl(var(--destructive)/10%)] px-3 py-2.5 text-xs text-[hsl(var(--destructive))] flex items-start gap-2">
               <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
               <span>{formError}</span>
             </div>
@@ -495,10 +495,10 @@ export default function SectionTypesPage() {
               maxLength={80}
               disabled={drawerMode === "edit" || saving}
               placeholder="hero, cta_banner, custom_widget..."
-              className="w-full px-3 py-2 text-base font-mono bg-[hsl(var(--bg-primary))] dark:bg-[#1a1c20] border border-[hsl(var(--border))] dark:border-white/10 rounded-lg focus:ring-2 focus:ring-[hsl(var(--primary))/0.3] transition-all disabled:opacity-60 disabled:cursor-not-allowed"
+              className="w-full px-3 py-2 text-base font-mono bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] rounded-lg focus:ring-2 focus:ring-[hsl(var(--primary))/0.3] transition-all disabled:opacity-60 disabled:cursor-not-allowed"
             />
             {drawerMode === "edit" && (
-              <p className="text-2xs text-warning-text dark:text-warning-text">
+              <p className="text-2xs text-[hsl(var(--warning))]">
                 El nombre es inmutable. Para cambiarlo: desactivar este + crear uno nuevo.
               </p>
             )}
@@ -520,11 +520,11 @@ export default function SectionTypesPage() {
               rows={4}
               disabled={saving}
               placeholder="Proposito y notas internas sobre este tipo de seccion..."
-              className="w-full px-3 py-2 text-base bg-[hsl(var(--bg-primary))] dark:bg-[#1a1c20] border border-[hsl(var(--border))] dark:border-white/10 rounded-lg focus:ring-2 focus:ring-[hsl(var(--primary))/0.3] transition-all resize-none disabled:opacity-60 disabled:cursor-not-allowed"
+              className="w-full px-3 py-2 text-base bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] rounded-lg focus:ring-2 focus:ring-[hsl(var(--primary))/0.3] transition-all resize-none disabled:opacity-60 disabled:cursor-not-allowed"
             />
           </div>
 
-          <label className="flex items-start gap-3 p-3 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 cursor-pointer hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/[0.02] transition-colors">
+          <label className="flex items-start gap-3 p-3 rounded-lg border border-[hsl(var(--border))] cursor-pointer hover:bg-[hsl(var(--surface-2))] transition-colors">
             <input
               type="checkbox"
               checked={form.is_active}
@@ -535,10 +535,10 @@ export default function SectionTypesPage() {
                 }))
               }
               disabled={saving}
-              className="mt-1 w-4 h-4 rounded border-[hsl(var(--border))] dark:border-white/20 text-[hsl(var(--primary))] focus:ring-[hsl(var(--primary))/0.3] disabled:opacity-60"
+              className="mt-1 w-4 h-4 rounded border-[hsl(var(--border))] text-[hsl(var(--primary))] focus:ring-[hsl(var(--primary))/0.3] disabled:opacity-60"
             />
             <div className="flex-1">
-              <span className="text-base font-bold text-[hsl(var(--text-primary))] dark:text-white">
+              <span className="text-base font-bold text-[hsl(var(--text-primary))]">
                 Activo en el validador del builder
               </span>
               <p className="text-2xs text-[hsl(var(--text-secondary))] mt-0.5 leading-relaxed">
@@ -548,18 +548,18 @@ export default function SectionTypesPage() {
             </div>
           </label>
 
-          <div className="flex items-center gap-3 pt-3 border-t border-[hsl(var(--border))] dark:border-white/10">
+          <div className="flex items-center gap-3 pt-3 border-t border-[hsl(var(--border))]">
             <button
               type="button"
               onClick={closeDrawer}
-              className="flex-1 py-2.5 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-white/5 text-sm font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/10 transition-all"
+              className="flex-1 py-2.5 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-sm font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] transition-all"
             >
               Cancelar
             </button>
             <button
               type="submit"
               disabled={saving}
-              className="flex-1 py-2.5 rounded-lg bg-[hsl(var(--primary))] text-white text-sm font-bold uppercase tracking-wide hover:opacity-90 disabled:opacity-50 transition-all"
+              className="flex-1 py-2.5 rounded-lg bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] text-sm font-bold uppercase tracking-wide hover:opacity-90 disabled:opacity-50 transition-all"
             >
               {saving ? "Guardando..." : drawerMode === "create" ? "Crear" : "Guardar"}
             </button>
@@ -577,11 +577,11 @@ export default function SectionTypesPage() {
       >
         {target && (
           <div className="space-y-4">
-            <div className="rounded-lg border border-[hsl(var(--warning)/25%)] dark:border-[hsl(var(--warning)/100%)]/30 bg-warning-soft dark:bg-[hsl(var(--warning))]/10 px-3 py-2.5 text-xs text-warning-text dark:text-[hsl(var(--warning))] flex items-start gap-2">
+            <div className="rounded-lg border border-[hsl(var(--warning)/30%)] bg-[hsl(var(--warning)/10%)] px-3 py-2.5 text-xs text-[hsl(var(--warning))] flex items-start gap-2">
               <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
               <span>
                 Soft-delete: el registro queda para auditoria pero
-                <code className="mx-1 px-1 bg-[hsl(var(--warning-muted))] dark:bg-[hsl(var(--warning))]/20 rounded">
+                <code className="mx-1 px-1 bg-[hsl(var(--warning-muted))] rounded">
                   get_allowed_section_types()
                 </code>
                 lo filtra y los editores no podran anadir secciones nuevas de este tipo.
@@ -589,8 +589,8 @@ export default function SectionTypesPage() {
               </span>
             </div>
 
-            <div className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 p-3 text-xs space-y-1.5 bg-[hsl(var(--surface-1))]/40 dark:bg-white/[0.02]">
-              <p className="font-bold text-[hsl(var(--text-primary))] dark:text-white">
+            <div className="rounded-lg border border-[hsl(var(--border))] p-3 text-xs space-y-1.5 bg-[hsl(var(--surface-2))]">
+              <p className="font-bold text-[hsl(var(--text-primary))]">
                 {target.name}
               </p>
               <p className="text-[hsl(var(--text-secondary))]">
@@ -600,11 +600,11 @@ export default function SectionTypesPage() {
               </p>
             </div>
 
-            <div className="flex items-center gap-3 pt-3 border-t border-[hsl(var(--border))] dark:border-white/10">
+            <div className="flex items-center gap-3 pt-3 border-t border-[hsl(var(--border))]">
               <button
                 type="button"
                 onClick={closeDrawer}
-                className="flex-1 py-2.5 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-white/5 text-sm font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/10 transition-all"
+                className="flex-1 py-2.5 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-sm font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] transition-all"
               >
                 Cancelar
               </button>
@@ -612,7 +612,7 @@ export default function SectionTypesPage() {
                 type="button"
                 onClick={() => handleSoftDelete(target)}
                 disabled={saving}
-                className="flex-1 py-2.5 rounded-lg bg-[hsl(var(--warning))] hover:bg-[hsl(var(--warning))] disabled:opacity-50 text-white text-sm font-bold uppercase tracking-wide transition-all"
+                className="flex-1 py-2.5 rounded-lg bg-[hsl(var(--warning))] hover:bg-[hsl(var(--warning))] disabled:opacity-50 text-[hsl(var(--primary-foreground))] text-sm font-bold uppercase tracking-wide transition-all"
               >
                 {saving ? "Procesando..." : "Desactivar"}
               </button>

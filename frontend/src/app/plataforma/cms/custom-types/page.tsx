@@ -75,8 +75,8 @@ export default function CustomTypesPage() {
 
   const statusColors: Record<string, string> = {
     draft: "bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))]", in_review: "bg-[hsl(var(--warning-muted))] text-warning-text",
-    approved: "bg-[hsl(var(--info-muted))] text-[hsl(var(--primary))]", published: "bg-green-100 text-[hsl(var(--secondary))]",
-    archived: "bg-red-100 text-[hsl(var(--destructive))]", obsolete: "bg-[hsl(var(--surface-3))] text-[hsl(var(--text-secondary))]",
+    approved: "bg-[hsl(var(--info-muted))] text-[hsl(var(--primary))]", published: "bg-[hsl(var(--success)/0.15)] text-[hsl(var(--success))]",
+    archived: "bg-[hsl(var(--destructive)/0.15)] text-[hsl(var(--destructive))]", obsolete: "bg-[hsl(var(--surface-3))] text-[hsl(var(--text-secondary))]",
   };
 
   return (
@@ -89,7 +89,7 @@ export default function CustomTypesPage() {
             <p className="text-sm text-[hsl(var(--text-secondary))]">Politicas, Wiki, Glosario, Noticias, Activos y mas</p>
           </div>
         </div>
-        <button onClick={() => setShowTypeForm(!showTypeForm)} className="flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg bg-[hsl(var(--primary))] text-white">
+        <button onClick={() => setShowTypeForm(!showTypeForm)} className="flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))]">
           <Plus size={14} /> Nuevo Tipo
         </button>
       </div>
@@ -102,7 +102,7 @@ export default function CustomTypesPage() {
             <input placeholder="Label plural (ej: Politicas)" value={typeForm.label_plural} onChange={e => setTypeForm(f => ({ ...f, label_plural: e.target.value }))} className="px-3 py-2 text-sm border rounded-lg" />
           </div>
           <div className="flex gap-2">
-            <button onClick={createType} className="px-4 py-2 text-sm font-medium rounded-lg bg-[hsl(var(--primary))] text-white">Crear</button>
+            <button onClick={createType} className="px-4 py-2 text-sm font-medium rounded-lg bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))]">Crear</button>
             <button onClick={() => setShowTypeForm(false)} className="px-4 py-2 text-sm font-medium rounded-lg border">Cancelar</button>
           </div>
         </div>
@@ -124,7 +124,7 @@ export default function CustomTypesPage() {
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <h2 className="font-medium">{types.find(t => t.type_key === selectedType)?.label || selectedType}</h2>
-                <button onClick={() => setShowEntryForm(!showEntryForm)} className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium rounded-lg bg-[hsl(var(--primary))] text-white">
+                <button onClick={() => setShowEntryForm(!showEntryForm)} className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium rounded-lg bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))]">
                   <Plus size={12} /> Nueva Entrada
                 </button>
               </div>
@@ -135,7 +135,7 @@ export default function CustomTypesPage() {
                   <input placeholder="Titulo" value={entryForm.title} onChange={e => setEntryForm(f => ({ ...f, title: e.target.value }))} className="w-full px-3 py-2 text-sm border rounded-lg" />
                   <textarea placeholder="Contenido HTML..." value={entryForm.content_html} onChange={e => setEntryForm(f => ({ ...f, content_html: e.target.value }))} className="w-full px-3 py-2 text-sm border rounded-lg h-32" />
                   <div className="flex gap-2">
-                    <button onClick={createEntry} className="px-4 py-2 text-sm font-medium rounded-lg bg-[hsl(var(--primary))] text-white">Crear</button>
+                    <button onClick={createEntry} className="px-4 py-2 text-sm font-medium rounded-lg bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))]">Crear</button>
                     <button onClick={() => setShowEntryForm(false)} className="px-4 py-2 text-sm font-medium rounded-lg border">Cancelar</button>
                   </div>
                 </div>
@@ -164,7 +164,7 @@ export default function CustomTypesPage() {
                         <td className="px-4 py-3 text-xs text-[hsl(var(--text-secondary))]">v{e.version}</td>
                         <td className="px-4 py-3 text-xs text-[hsl(var(--text-secondary))]">{e.view_count}</td>
                         <td className="px-4 py-3">
-                          <button onClick={() => setPendingArchiveEntry(e)} className="p-1 rounded hover:bg-red-50"><Trash2 size={12} className="text-[hsl(var(--destructive))]" /></button>
+                          <button onClick={() => setPendingArchiveEntry(e)} className="p-1 rounded hover:bg-[hsl(var(--destructive)/0.1)]"><Trash2 size={12} className="text-[hsl(var(--destructive))]" /></button>
                         </td>
                       </tr>
                     ))}
@@ -187,7 +187,7 @@ export default function CustomTypesPage() {
           <p className="text-sm text-[hsl(var(--text-secondary))]">La entrada quedara archivada dentro del tipo seleccionado.</p>
           <div className="flex gap-2">
             <button onClick={() => setPendingArchiveEntry(null)} className="flex-1 rounded-lg border px-3 py-2 text-sm font-medium">Cancelar</button>
-            <button onClick={deleteEntry} className="flex-1 rounded-lg bg-[hsl(var(--warning))] px-3 py-2 text-sm font-medium text-white hover:bg-[hsl(var(--warning))]">Archivar</button>
+            <button onClick={deleteEntry} className="flex-1 rounded-lg bg-[hsl(var(--warning))] px-3 py-2 text-sm font-medium text-[hsl(var(--primary-foreground))] hover:bg-[hsl(var(--warning))]">Archivar</button>
           </div>
         </div>
       </SidePanel>
