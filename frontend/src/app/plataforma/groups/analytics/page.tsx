@@ -70,7 +70,7 @@ export default function GroupsAnalyticsPage() {
     }, [groups]);
 
     return (
-        <div className="flex h-full flex-col overflow-hidden bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))]">
+        <div className="flex h-full flex-col overflow-hidden bg-[hsl(var(--surface-1))]">
             <WorkspaceToolbar
                 breadcrumbs={[
                     { label: "Grupos", icon: Home },
@@ -88,7 +88,7 @@ export default function GroupsAnalyticsPage() {
                 </section>
 
                 {loading && (
-                    <div className="rounded-md border border-dashed border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-4 text-center text-sm font-bold text-[hsl(var(--text-secondary))] dark:border-white/10 dark:bg-white/[0.02] dark:text-[hsl(var(--text-secondary))]">
+                    <div className="rounded-md border border-dashed border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] p-4 text-center text-sm font-bold text-[hsl(var(--text-secondary))]">
                         Cargando metricas de grupos...
                     </div>
                 )}
@@ -107,7 +107,7 @@ export default function GroupsAnalyticsPage() {
                 )}
 
                 {!loading && !error && groups.length === 0 && (
-                    <div className="rounded-md border-2 border-dashed border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-4 text-center dark:border-white/10 dark:bg-white/[0.02]">
+                    <div className="rounded-md border-2 border-dashed border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] p-4 text-center">
                         <Users size={40} className="mx-auto text-[hsl(var(--text-secondary))]" />
                         <p className="mt-4 text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">No hay datos de grupos para analizar</p>
                     </div>
@@ -115,7 +115,7 @@ export default function GroupsAnalyticsPage() {
 
                 {!loading && !error && groups.length > 0 && (
                     <section className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-                        <article className="rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-4 dark:border-white/10 dark:bg-white/[0.03]">
+                        <article className="rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] p-4">
                             <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Top grupos por personas</p>
                             <div className="mt-5 space-y-3">
                                 {metrics.topGroups.map((group) => {
@@ -124,12 +124,12 @@ export default function GroupsAnalyticsPage() {
                                     const pct = Math.min(100, Math.round((personas / cap) * 100));
 
                                     return (
-                                        <div key={group.id} className="rounded-lg border border-[hsl(var(--border))] p-4 dark:border-white/10">
+                                        <div key={group.id} className="rounded-lg border border-[hsl(var(--border))] p-4">
                                             <div className="flex items-center justify-between gap-3">
-                                                <p className="text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">{group.name}</p>
+                                                <p className="text-sm font-semibold text-[hsl(var(--text-primary))]">{group.name}</p>
                                                 <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{personas}/{cap}</p>
                                             </div>
-                                            <div className="mt-2 h-2 overflow-hidden rounded-full bg-[hsl(var(--surface-2))] dark:bg-white/10">
+                                            <div className="mt-2 h-2 overflow-hidden rounded-full bg-[hsl(var(--surface-3))]">
                                                 <div className="h-full rounded-full bg-[hsl(var(--primary))]" style={{ width: `${pct}%` }} />
                                             </div>
                                         </div>
@@ -138,7 +138,7 @@ export default function GroupsAnalyticsPage() {
                             </div>
                         </article>
 
-                        <article className="rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-4 dark:border-white/10 dark:bg-white/[0.03]">
+                        <article className="rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] p-4">
                             <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Riesgos operativos</p>
                             <div className="mt-5 space-y-4">
                                 <RiskRow
@@ -175,7 +175,7 @@ function MetricCard({ label, value, tone }: { label: string; value: string; tone
     };
 
     return (
-        <article className="rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-3 dark:border-white/10 dark:bg-white/[0.03]">
+        <article className="rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] p-3">
             <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{label}</p>
             <p className={`mt-2 text-xl font-bold ${toneClass[tone]}`}>{value}</p>
         </article>
@@ -184,12 +184,12 @@ function MetricCard({ label, value, tone }: { label: string; value: string; tone
 
 function RiskRow({ label, value, description }: { label: string; value: number; description: string }) {
     return (
-        <div className="rounded-lg border border-[hsl(var(--border))] p-4 dark:border-white/10">
+        <div className="rounded-lg border border-[hsl(var(--border))] p-4">
             <div className="flex items-center justify-between gap-4">
-                <p className="text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">{label}</p>
-                <p className="text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">{value}</p>
+                <p className="text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-primary))]">{label}</p>
+                <p className="text-sm font-semibold text-[hsl(var(--text-primary))]">{value}</p>
             </div>
-            <p className="mt-2 text-xs text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">{description}</p>
+            <p className="mt-2 text-xs text-[hsl(var(--text-secondary))]">{description}</p>
         </div>
     );
 }
