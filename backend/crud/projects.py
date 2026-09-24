@@ -2445,18 +2445,24 @@ def evaluate_project_automations(
     actor_persona_id: Optional[UUID | str] = None,
     user_sede_id: Optional[UUID | str] = None,
 ) -> list[dict]:
-    """Evalúa y ejecuta las reglas activas de automatización para un proyecto y evento dado."""
+    effective_context = {}
     if hasattr(trigger_event_or_payload, "trigger_event"):
         effective_trigger = trigger_event_or_payload.trigger_event
-        effective_context = dict(getattr(trigger_event_or_payload, "context_data", None) or getattr(trigger_event_or_payload, "context", None) or {})
+        if hasattr(trigger_event_or_payload, "context_data") and getattr(trigger_event_or_payload, "context_data", None):
+            effective_context.update(trigger_event_or_payload.context_data)
+        if hasattr(trigger_event_or_payload, "context") and getattr(trigger_event_or_payload, "context", None):
+            effective_context.update(trigger_event_or_payload.context)
         if getattr(trigger_event_or_payload, "task_id", None):
             effective_context["task_id"] = str(trigger_event_or_payload.task_id)
     elif isinstance(trigger_event_or_payload, str):
         effective_trigger = trigger_event_or_payload
-        effective_context = context or {}
+        effective_context = dict(context or {})
     else:
         effective_trigger = trigger_event or ""
-        effective_context = context or {}
+        effective_context = dict(context or {})
+
+    if effective_trigger == "task_completed":
+        effective_context.setdefault("status", "completed")
 
     rules = get_project_automation_rules(
         db,
