@@ -21,10 +21,10 @@ interface PageData {
 }
 
 const STATUS_STYLES: Record<string, { label: string; color: string }> = {
-  published:  { label: "Publicado",   color: "text-success-text bg-success-soft dark:bg-[hsl(var(--success))]/20 border-[hsl(var(--success)/25%)]" },
-  draft:      { label: "Borrador",    color: "text-[hsl(var(--text-secondary))] bg-[hsl(var(--surface-2))] dark:bg-white/5 border-[hsl(var(--border))]" },
-  in_review:  { label: "En Revisión", color: "text-warning-text bg-warning-soft dark:bg-[hsl(var(--warning))]/20 border-[hsl(var(--warning)/25%)]" },
-  archived:   { label: "Archivado",   color: "text-[hsl(var(--danger))] bg-danger-soft dark:bg-[hsl(var(--danger))]/10 border-[hsl(var(--danger)/25%)]" },
+  published:  { label: "Publicado",   color: "text-[hsl(var(--success))] bg-[hsl(var(--success-muted))] border-[hsl(var(--success)/0.25)]" },
+  draft:      { label: "Borrador",    color: "text-[hsl(var(--text-secondary))] bg-[hsl(var(--surface-2))] border-[hsl(var(--border))]" },
+  in_review:  { label: "En Revisión", color: "text-[hsl(var(--warning))] bg-[hsl(var(--warning-muted))] border-[hsl(var(--warning)/0.25)]" },
+  archived:   { label: "Archivado",   color: "text-[hsl(var(--destructive))] bg-[hsl(var(--destructive)/0.1)] border-[hsl(var(--destructive)/0.25)]" },
 };
 
 export default function CmsPageDetailPage() {
@@ -80,13 +80,13 @@ export default function CmsPageDetailPage() {
 
   if (loading) {
     return (
-      <div className="flex flex-col h-full items-center justify-center gap-3 bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-deep))]">
-        <div className="size-8 rounded-lg bg-[hsl(var(--surface-2))] dark:bg-white/5 flex items-center justify-center animate-pulse">
+      <div className="flex flex-col h-full items-center justify-center gap-3 bg-[hsl(var(--bg-primary))] ">
+        <div className="size-8 rounded-lg bg-[hsl(var(--surface-2))]  flex items-center justify-center animate-pulse">
           <Layout size={28} strokeWidth={1} className="text-[hsl(var(--text-secondary))]" />
         </div>
         <div className="space-y-2 text-center">
-          <div className="h-5 w-48 bg-[hsl(var(--surface-2))] dark:bg-white/5 rounded-md animate-pulse mx-auto" />
-          <div className="h-3 w-32 bg-[hsl(var(--surface-2))] dark:bg-white/5 rounded-md animate-pulse mx-auto" />
+          <div className="h-5 w-48 bg-[hsl(var(--surface-2))]  rounded-md animate-pulse mx-auto" />
+          <div className="h-3 w-32 bg-[hsl(var(--surface-2))]  rounded-md animate-pulse mx-auto" />
         </div>
       </div>
     );
@@ -95,7 +95,7 @@ export default function CmsPageDetailPage() {
   const status = STATUS_STYLES[page?.status ?? "draft"] ?? STATUS_STYLES["draft"];
 
   return (
-    <div className="flex flex-col h-full items-center justify-center bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-deep))] p-4">
+    <div className="flex flex-col h-full items-center justify-center bg-[hsl(var(--bg-primary))]  p-4">
       <motion.div
         initial={{ opacity: 0, scale: 0.96 }}
         animate={{ opacity: 1, scale: 1 }}
@@ -104,7 +104,7 @@ export default function CmsPageDetailPage() {
         {/* Icon */}
         <div className="flex justify-center">
           <div className="size-8 rounded-lg bg-gradient-to-br from-[hsl(var(--info))] to-[hsl(var(--info))] flex items-center justify-center shadow-2xl shadow-[hsl(var(--info)/30%)]">
-            <PenTool size={32} className="text-white" strokeWidth={1.5} />
+            <PenTool size={32} className="text-[hsl(var(--primary-foreground))]" strokeWidth={1.5} />
           </div>
         </div>
 
@@ -115,7 +115,7 @@ export default function CmsPageDetailPage() {
               {status.label}
             </span>
           </div>
-          <h1 className="text-xl font-semibold text-[hsl(var(--text-primary))] dark:text-white tracking-tight">
+          <h1 className="text-xl font-semibold text-[hsl(var(--text-primary))] tracking-tight">
             {page?.title}
           </h1>
           <div className="flex items-center justify-center gap-4 text-xs font-bold text-[hsl(var(--text-secondary))]">
@@ -145,7 +145,7 @@ export default function CmsPageDetailPage() {
             <p className="text-xs font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">
               Redirigiendo al Builder
             </p>
-            <p className="text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] text-sm font-medium">
+            <p className="text-[hsl(var(--text-secondary))]  text-sm font-medium">
               Serás redirigido automáticamente al constructor visual donde podrás editar el contenido de esta página.
             </p>
           </div>
@@ -154,7 +154,7 @@ export default function CmsPageDetailPage() {
           <div className="flex items-center justify-center">
             <div className="relative size-8">
               <svg className="size-8 -rotate-90" viewBox="0 0 56 56">
-                <circle cx="28" cy="28" r="24" fill="none" stroke="currentColor" strokeWidth="4" className="text-[hsl(var(--text-secondary))] dark:text-white/10" />
+                <circle cx="28" cy="28" r="24" fill="none" stroke="currentColor" strokeWidth="4" className="text-[hsl(var(--border))]" />
                 <circle
                   cx="28" cy="28" r="24" fill="none" stroke="currentColor" strokeWidth="4"
                   strokeDasharray={`${2 * Math.PI * 24}`}
@@ -163,7 +163,7 @@ export default function CmsPageDetailPage() {
                   strokeLinecap="round"
                 />
               </svg>
-              <span className="absolute inset-0 flex items-center justify-center text-xl font-semibold text-[hsl(var(--text-primary))] dark:text-white">
+              <span className="absolute inset-0 flex items-center justify-center text-xl font-semibold text-[hsl(var(--text-primary))]">
                 {countdown}
               </span>
             </div>
@@ -172,7 +172,7 @@ export default function CmsPageDetailPage() {
           {/* CTA button */}
           <button
             onClick={handleGoNow}
-            className="w-full flex items-center justify-center gap-3 py-1.5 bg-[hsl(var(--primary))] text-white rounded-lg text-xs font-semibold uppercase tracking-wide shadow-xl shadow-[hsl(var(--info)/20%)] hover:bg-[hsl(var(--primary))] active:scale-95 transition-all"
+            className="w-full flex items-center justify-center gap-3 py-1.5 bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] rounded-lg text-xs font-semibold uppercase tracking-wide shadow-xl shadow-[hsl(var(--info)/20%)] hover:bg-[hsl(var(--primary))] active:scale-95 transition-all"
           >
             <PenTool size={16} />
             Abrir en el Builder ahora

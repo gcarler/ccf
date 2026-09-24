@@ -7,18 +7,18 @@ import { useAuth } from "@/context/AuthContext";
 import { apiFetch } from "@/lib/http";
 import { SITE_KEY } from "@/lib/site-config";
 import {
-  listCmsPostsByCategory,
-  patchCmsPostByCategory,
-  deleteCmsPostByCategory,
-  saveTestimonial as saveTestimonialV2,
-  postToTestimonial,
-  type V1TestimonialShape,
+ listCmsPostsByCategory,
+ patchCmsPostByCategory,
+ deleteCmsPostByCategory,
+ saveTestimonial as saveTestimonialV2,
+ postToTestimonial,
+ type V1TestimonialShape,
 } from "@/lib/cms/v2";
 import OptimizedImage from "@/components/ui/OptimizedImage";
 import {
-  Archive,
-  Heart, MessageCircle, CheckCircle2, XCircle, Clock,
-  Search, Plus, Users, ChevronRight, X, ImageIcon, PlayCircle, Headphones, Save, RotateCcw
+ Archive,
+ Heart, MessageCircle, CheckCircle2, XCircle, Clock,
+ Search, Plus, Users, ChevronRight, X, ImageIcon, PlayCircle, Headphones, Save, RotateCcw
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
@@ -32,10 +32,10 @@ import UniversalGanttView from "@/components/ui/UniversalGanttView";
 import UniversalWikiView from "@/components/ui/UniversalWikiView";
 import { canEditCms } from "@/lib/cms/permissions";
 import {
-  activeTestimonialMediaAssets,
-  inferTestimonialMediaType,
-  normalizeTestimonialMediaType,
-  TestimonialMediaType,
+ activeTestimonialMediaAssets,
+ inferTestimonialMediaType,
+ normalizeTestimonialMediaType,
+ TestimonialMediaType,
 } from "@/lib/cms/testimonialMedia";
 
 const RichEditor = dynamic(() => import("@/components/cms/RichEditor"), { ssr: false });
@@ -43,19 +43,19 @@ const RichEditor = dynamic(() => import("@/components/cms/RichEditor"), { ssr: f
 type Testimonial = V1TestimonialShape;
 
 interface MediaItem {
-  id: number;
-  url: string;
-  filename?: string;
-  mime_type?: string;
-  alt_text?: string;
-  status?: string;
+ id: number;
+ url: string;
+ filename?: string;
+ mime_type?: string;
+ alt_text?: string;
+ status?: string;
 }
 
 const EMOTION_CONFIG: Record<string, { color: string; bg: string; border: string; emoji: string }> = {
-  "Sanidad":       { color: "text-danger-text",    bg: "bg-danger-soft dark:bg-[hsl(var(--danger))]/20",    border: "border-[hsl(var(--danger)/25%)] dark:border-[hsl(var(--danger)/30%)]",    emoji: "💊" },
-  "Provisión":     { color: "text-success-text", bg: "bg-success-soft dark:bg-[hsl(var(--success))]/20", border: "border-[hsl(var(--success)/25%)] dark:border-[hsl(var(--success)/30%)]", emoji: "🙌" },
-  "Restauración":  { color: "text-[hsl(var(--primary))]",    bg: "bg-info-soft dark:bg-[hsl(var(--info))]/20",    border: "border-[hsl(var(--info)/25%)] dark:border-[hsl(var(--info)/30%)]",    emoji: "✨" },
-  "Fe":            { color: "text-[hsl(var(--primary))]",  bg: "bg-info-soft dark:bg-[hsl(var(--info))]/20", border: "border-[hsl(var(--info)/25%)] dark:border-[hsl(var(--info)/30%)]", emoji: "🙏" },
+ "Sanidad": { color: "text-danger-text", bg: "bg-danger-soft ", border: "border-[hsl(var(--danger)/25%)] ", emoji: "💊" },
+ "Provisión": { color: "text-[hsl(var(--success))]", bg: "bg-[hsl(var(--success-muted))]", border: "border-[hsl(var(--success)/0.25)]", emoji: "🙌" },
+ "Restauración": { color: "text-[hsl(var(--primary))]", bg: "bg-info-soft ", border: "border-[hsl(var(--info)/25%)] ", emoji: "✨" },
+ "Fe": { color: "text-[hsl(var(--primary))]", bg: "bg-info-soft ", border: "border-[hsl(var(--info)/25%)] ", emoji: "🙏" },
 };
 const defaultEmotion = { color: "text-[hsl(var(--text-secondary))]", bg: "bg-[hsl(var(--surface-1))]", border: "border-[hsl(var(--border))]", emoji: "💬" };
 
@@ -63,875 +63,875 @@ const EMOTION_FILTERS = ["Todos", "Sanidad", "Provisión", "Restauración", "Fe"
 const TESTIMONIAL_VIEWS: ViewType[] = ["grid", "list", "table", "board", "kanban", "calendar", "gantt", "wiki"];
 
 function getTestimonialMediaUrl(testimonial: Pick<Testimonial, "media_type" | "media_url" | "image_url" | "video_url" | "podcast_url">): string {
-  if (testimonial.media_type === "image") return testimonial.image_url || testimonial.media_url || "";
-  if (testimonial.media_type === "video") return testimonial.video_url || testimonial.media_url || "";
-  if (testimonial.media_type === "podcast") return testimonial.podcast_url || testimonial.media_url || "";
-  return testimonial.media_url || testimonial.image_url || testimonial.video_url || testimonial.podcast_url || "";
+ if (testimonial.media_type === "image") return testimonial.image_url || testimonial.media_url || "";
+ if (testimonial.media_type === "video") return testimonial.video_url || testimonial.media_url || "";
+ if (testimonial.media_type === "podcast") return testimonial.podcast_url || testimonial.media_url || "";
+ return testimonial.media_url || testimonial.image_url || testimonial.video_url || testimonial.podcast_url || "";
 }
 
 function getMediaLabel(testimonial: Pick<Testimonial, "media_type" | "media_url" | "image_url" | "video_url" | "podcast_url">): string {
-  const url = getTestimonialMediaUrl(testimonial);
-  if (!url) return "Sin medio";
-  if (testimonial.media_type === "image") return "Imagen";
-  if (testimonial.media_type === "video") return "Video";
-  if (testimonial.media_type === "podcast") return "Podcast";
-  return "Medio";
+ const url = getTestimonialMediaUrl(testimonial);
+ if (!url) return "Sin medio";
+ if (testimonial.media_type === "image") return "Imagen";
+ if (testimonial.media_type === "video") return "Video";
+ if (testimonial.media_type === "podcast") return "Podcast";
+ return "Medio";
 }
 
 function identityKey(testimonial: Pick<Testimonial, "author_persona_id">): string {
-  return testimonial.author_persona_id || "anon";
+ return testimonial.author_persona_id || "anon";
 }
 
 function authorLabel(testimonial: Pick<Testimonial, "author_persona_id">): string {
-  if (testimonial.author_persona_id) return `Persona ${testimonial.author_persona_id.slice(0, 8)}`;
-  return "Anonimo";
+ if (testimonial.author_persona_id) return `Persona ${testimonial.author_persona_id.slice(0, 8)}`;
+ return "Anonimo";
 }
 
 function hashIdentity(value: string): number {
-  return value.split("").reduce((acc, char) => acc + char.charCodeAt(0), 0);
+ return value.split("").reduce((acc, char) => acc + char.charCodeAt(0), 0);
 }
 
 function getInitials(key: string): string {
-  const names = ["AL", "MR", "JC", "PS", "LG", "DA", "CR", "FM", "BT", "NK"];
-  return names[hashIdentity(key) % names.length];
+ const names = ["AL", "MR", "JC", "PS", "LG", "DA", "CR", "FM", "BT", "NK"];
+ return names[hashIdentity(key) % names.length];
 }
 
 function getAvatarColor(key: string): string {
-  const colors = [
-    "bg-[hsl(var(--primary))]", "bg-[hsl(var(--primary))]", "bg-[hsl(var(--success))]", "bg-[hsl(var(--danger))]",
-    "bg-[hsl(var(--warning))]", "bg-[hsl(var(--domain-cyan))]", "bg-[hsl(var(--domain-pink))]", "bg-[hsl(var(--domain-teal))]"
-  ];
-  return colors[hashIdentity(key) % colors.length];
+ const colors = [
+ "bg-[hsl(var(--primary))]", "bg-[hsl(var(--primary))]", "bg-[hsl(var(--success))]", "bg-[hsl(var(--danger))]",
+ "bg-[hsl(var(--warning))]", "bg-[hsl(var(--domain-cyan))]", "bg-[hsl(var(--domain-pink))]", "bg-[hsl(var(--domain-teal))]"
+ ];
+ return colors[hashIdentity(key) % colors.length];
 }
 
 export default function CmsTestimonialsPage() {
-  const { token, user } = useAuth();
-  const canEdit = canEditCms(user?.role);
-  const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
-  const [filter, setFilter] = useState("Todos");
-  const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState<"all" | "approved" | "pending" | "archived">("all");
-  const [loading, setLoading] = useState(true);
-  const [showForm, setShowForm] = useState(false);
-  const [selected, setSelected] = useState<Testimonial | null>(null);
-  const [pendingArchive, setPendingArchive] = useState<Testimonial | null>(null);
-  const [processing, setProcessing] = useState<string | null>(null);
-  const [viewType, setViewType] = useState<ViewType>("grid");
-  const [mediaItems, setMediaItems] = useState<MediaItem[]>([]);
-  const [mediaLoading, setMediaLoading] = useState(true);
-  const [mediaSearch, setMediaSearch] = useState("");
+ const { token, user } = useAuth();
+ const canEdit = canEditCms(user?.role);
+ const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
+ const [filter, setFilter] = useState("Todos");
+ const [search, setSearch] = useState("");
+ const [statusFilter, setStatusFilter] = useState<"all" | "approved" | "pending" | "archived">("all");
+ const [loading, setLoading] = useState(true);
+ const [showForm, setShowForm] = useState(false);
+ const [selected, setSelected] = useState<Testimonial | null>(null);
+ const [pendingArchive, setPendingArchive] = useState<Testimonial | null>(null);
+ const [processing, setProcessing] = useState<string | null>(null);
+ const [viewType, setViewType] = useState<ViewType>("grid");
+ const [mediaItems, setMediaItems] = useState<MediaItem[]>([]);
+ const [mediaLoading, setMediaLoading] = useState(true);
+ const [mediaSearch, setMediaSearch] = useState("");
 
-  const fetchTestimonials = useCallback(async () => {
-    if (!token || !canEdit) { setLoading(false); return; }
-    setLoading(true);
-    try {
-      const data = (await listCmsPostsByCategory(SITE_KEY, "testimonials", { include_archived: true }, token)).map(postToTestimonial);
-      setTestimonials(
-        Array.isArray(data)
-          ? data.map(row => ({
-              ...row,
-              status: row.status || (row.is_approved ? "approved" : "pending"),
-              published: row.published ?? row.is_approved ?? false,
-            }))
-          : []
-      );
-    } catch {
-      setTestimonials([]);
-    } finally {
-      setLoading(false);
-    }
-  }, [canEdit, token]);
+ const fetchTestimonials = useCallback(async () => {
+ if (!token || !canEdit) { setLoading(false); return; }
+ setLoading(true);
+ try {
+ const data = (await listCmsPostsByCategory(SITE_KEY, "testimonials", { include_archived: true }, token)).map(postToTestimonial);
+ setTestimonials(
+ Array.isArray(data)
+ ? data.map(row => ({
+ ...row,
+ status: row.status || (row.is_approved ? "approved" : "pending"),
+ published: row.published ?? row.is_approved ?? false,
+ }))
+ : []
+ );
+ } catch {
+ setTestimonials([]);
+ } finally {
+ setLoading(false);
+ }
+ }, [canEdit, token]);
 
-  useEffect(() => { fetchTestimonials(); }, [fetchTestimonials]);
+ useEffect(() => { fetchTestimonials(); }, [fetchTestimonials]);
 
-  const fetchMedia = useCallback(async () => {
-    if (!token || !canEdit) {
-      setMediaItems([]);
-      setMediaLoading(false);
-      return;
-    }
+ const fetchMedia = useCallback(async () => {
+ if (!token || !canEdit) {
+ setMediaItems([]);
+ setMediaLoading(false);
+ return;
+ }
 
-    setMediaLoading(true);
-    try {
-      const data = await apiFetch<{ items: MediaItem[]; total: number }>("/cms/media", { token, cache: "no-store" });
-      setMediaItems(data?.items || []);
-    } catch {
-      setMediaItems([]);
-    } finally {
-      setMediaLoading(false);
-    }
-  }, [canEdit, token]);
+ setMediaLoading(true);
+ try {
+ const data = await apiFetch<{ items: MediaItem[]; total: number }>("/cms/media", { token, cache: "no-store" });
+ setMediaItems(data?.items || []);
+ } catch {
+ setMediaItems([]);
+ } finally {
+ setMediaLoading(false);
+ }
+ }, [canEdit, token]);
 
-  useEffect(() => { fetchMedia(); }, [fetchMedia]);
+ useEffect(() => { fetchMedia(); }, [fetchMedia]);
 
-  const handleToggle = async (t: Testimonial) => {
-    if (!token) return;
-    const next = !t.published;
-    setTestimonials(prev => prev.map(i => i.id === t.id ? { ...i, published: next, status: next ? "approved" : "pending" } : i));
-    setProcessing(t.id);
-    try {
-      const updated = postToTestimonial(await patchCmsPostByCategory(SITE_KEY, t.slug, "testimonials", { status: next ? "published" : "draft" }, token));
-      const normalized = { ...updated, status: updated.status || (updated.is_approved ? "approved" : "pending"), published: updated.is_approved ?? next ?? false };
-      setTestimonials(prev => prev.map(i => i.id === t.id ? { ...i, ...normalized } : i));
-      if (selected?.id === t.id) setSelected(prev => prev ? { ...prev, ...normalized } : null);
-      toast.success(`Testimonio ${next ? "aprobado" : "rechazado"}`);
-    } catch {
-      setTestimonials(prev => prev.map(i => i.id === t.id ? { ...i, published: t.published } : i));
-      toast.error("Error al cambiar estado");
-    } finally {
-      setProcessing(null);
-    }
-  };
+ const handleToggle = async (t: Testimonial) => {
+ if (!token) return;
+ const next = !t.published;
+ setTestimonials(prev => prev.map(i => i.id === t.id ? { ...i, published: next, status: next ? "approved" : "pending" } : i));
+ setProcessing(t.id);
+ try {
+ const updated = postToTestimonial(await patchCmsPostByCategory(SITE_KEY, t.slug, "testimonials", { status: next ? "published" : "draft" }, token));
+ const normalized = { ...updated, status: updated.status || (updated.is_approved ? "approved" : "pending"), published: updated.is_approved ?? next ?? false };
+ setTestimonials(prev => prev.map(i => i.id === t.id ? { ...i, ...normalized } : i));
+ if (selected?.id === t.id) setSelected(prev => prev ? { ...prev, ...normalized } : null);
+ toast.success(`Testimonio ${next ? "aprobado" : "rechazado"}`);
+ } catch {
+ setTestimonials(prev => prev.map(i => i.id === t.id ? { ...i, published: t.published } : i));
+ toast.error("Error al cambiar estado");
+ } finally {
+ setProcessing(null);
+ }
+ };
 
-  const toggleArchive = async (t: Testimonial) => {
-    if (!token) return;
-    const restore = t.status === "archived";
-    if (!restore) {
-      setPendingArchive(t);
-      return;
-    }
-    setProcessing(t.id);
-    try {
-      const updated = postToTestimonial(await patchCmsPostByCategory(SITE_KEY, t.slug, "testimonials", { status: "draft" }, token));
-      const normalized = { ...updated, published: false, status: "pending" };
-      setTestimonials(prev => prev.map(item => item.id === t.id ? { ...item, ...normalized } : item));
-      if (selected?.id === t.id) setSelected(prev => prev ? { ...prev, ...normalized } : null);
-      toast.success("Testimonio restaurado");
-    } catch {
-      toast.error("Error al restaurar");
-    } finally {
-      setProcessing(null);
-    }
-  };
+ const toggleArchive = async (t: Testimonial) => {
+ if (!token) return;
+ const restore = t.status === "archived";
+ if (!restore) {
+ setPendingArchive(t);
+ return;
+ }
+ setProcessing(t.id);
+ try {
+ const updated = postToTestimonial(await patchCmsPostByCategory(SITE_KEY, t.slug, "testimonials", { status: "draft" }, token));
+ const normalized = { ...updated, published: false, status: "pending" };
+ setTestimonials(prev => prev.map(item => item.id === t.id ? { ...item, ...normalized } : item));
+ if (selected?.id === t.id) setSelected(prev => prev ? { ...prev, ...normalized } : null);
+ toast.success("Testimonio restaurado");
+ } catch {
+ toast.error("Error al restaurar");
+ } finally {
+ setProcessing(null);
+ }
+ };
 
-  const confirmArchive = async () => {
-    const t = pendingArchive;
-    if (!token || !t) return;
-    setProcessing(t.id);
-    setPendingArchive(null);
-    try {
-      await deleteCmsPostByCategory(SITE_KEY, t.slug, "testimonials", token);
-      const archived = { ...t, published: false, is_approved: false, show_on_home: false, status: "archived" };
-      setTestimonials(prev => prev.map(item => item.id === t.id ? { ...item, ...archived } : item));
-      if (selected?.id === t.id) setSelected(prev => prev ? { ...prev, ...archived } : null);
-      toast.success("Testimonio archivado");
-    } catch {
-      toast.error("Error al archivar");
-    } finally {
-      setProcessing(null);
-    }
-  };
+ const confirmArchive = async () => {
+ const t = pendingArchive;
+ if (!token || !t) return;
+ setProcessing(t.id);
+ setPendingArchive(null);
+ try {
+ await deleteCmsPostByCategory(SITE_KEY, t.slug, "testimonials", token);
+ const archived = { ...t, published: false, is_approved: false, show_on_home: false, status: "archived" };
+ setTestimonials(prev => prev.map(item => item.id === t.id ? { ...item, ...archived } : item));
+ if (selected?.id === t.id) setSelected(prev => prev ? { ...prev, ...archived } : null);
+ toast.success("Testimonio archivado");
+ } catch {
+ toast.error("Error al archivar");
+ } finally {
+ setProcessing(null);
+ }
+ };
 
-  const saveSelected = async () => {
-    if (!token || !selected) return;
-    setProcessing(selected.id);
-    const mediaType = normalizeTestimonialMediaType(selected.media_type);
-    const mediaUrl = mediaType === "text" ? "" : getTestimonialMediaUrl(selected);
-    try {
-      const updated = await saveTestimonialV2(
-        SITE_KEY,
-        selected.slug,
-        {
-          content: selected.content,
-          emotion: selected.emotion,
-          media_type: mediaType,
-          media_url: mediaType === "text" ? null : (mediaUrl || null),
-          image_url: mediaType === "image" ? (mediaUrl || null) : null,
-          video_url: mediaType === "video" ? (mediaUrl || null) : null,
-          podcast_url: mediaType === "podcast" ? (mediaUrl || null) : null,
-          show_on_home: selected.show_on_home ?? false,
-          status: selected.status === "archived" ? "archived" : selected.published ? "approved" : "pending",
-        },
-        token,
-      );
-      const normalized = { ...updated, status: updated.status || (updated.is_approved ? "approved" : "pending"), published: updated.is_approved ?? selected.published ?? false };
-      setSelected(prev => prev ? { ...prev, ...normalized } : prev);
-      setTestimonials(prev => prev.map(item => item.id === selected.id ? { ...item, ...normalized } : item));
-      toast.success("Testimonio guardado");
-    } catch {
-      toast.error("Error al guardar");
-    } finally {
-      setProcessing(null);
-    }
-  };
+ const saveSelected = async () => {
+ if (!token || !selected) return;
+ setProcessing(selected.id);
+ const mediaType = normalizeTestimonialMediaType(selected.media_type);
+ const mediaUrl = mediaType === "text" ? "" : getTestimonialMediaUrl(selected);
+ try {
+ const updated = await saveTestimonialV2(
+ SITE_KEY,
+ selected.slug,
+ {
+ content: selected.content,
+ emotion: selected.emotion,
+ media_type: mediaType,
+ media_url: mediaType === "text" ? null : (mediaUrl || null),
+ image_url: mediaType === "image" ? (mediaUrl || null) : null,
+ video_url: mediaType === "video" ? (mediaUrl || null) : null,
+ podcast_url: mediaType === "podcast" ? (mediaUrl || null) : null,
+ show_on_home: selected.show_on_home ?? false,
+ status: selected.status === "archived" ? "archived" : selected.published ? "approved" : "pending",
+ },
+ token,
+ );
+ const normalized = { ...updated, status: updated.status || (updated.is_approved ? "approved" : "pending"), published: updated.is_approved ?? selected.published ?? false };
+ setSelected(prev => prev ? { ...prev, ...normalized } : prev);
+ setTestimonials(prev => prev.map(item => item.id === selected.id ? { ...item, ...normalized } : item));
+ toast.success("Testimonio guardado");
+ } catch {
+ toast.error("Error al guardar");
+ } finally {
+ setProcessing(null);
+ }
+ };
 
-  const compatibleMedia = useMemo(
-    () => selected ? activeTestimonialMediaAssets(mediaItems, selected.media_type, mediaSearch, 8) : [],
-    [mediaItems, mediaSearch, selected],
-  );
+ const compatibleMedia = useMemo(
+ () => selected ? activeTestimonialMediaAssets(mediaItems, selected.media_type, mediaSearch, 8) : [],
+ [mediaItems, mediaSearch, selected],
+ );
 
-  const changeSelectedMediaType = (nextType: TestimonialMediaType) => {
-    setMediaSearch("");
-    setSelected(prev => {
-      if (!prev) return prev;
-      if (nextType === "text") {
-        return { ...prev, media_type: "text", media_url: null, image_url: null, video_url: null, podcast_url: null };
-      }
-      if (normalizeTestimonialMediaType(prev.media_type) === nextType) return prev;
-      return { ...prev, media_type: nextType, media_url: null, image_url: null, video_url: null, podcast_url: null };
-    });
-  };
+ const changeSelectedMediaType = (nextType: TestimonialMediaType) => {
+ setMediaSearch("");
+ setSelected(prev => {
+ if (!prev) return prev;
+ if (nextType === "text") {
+ return { ...prev, media_type: "text", media_url: null, image_url: null, video_url: null, podcast_url: null };
+ }
+ if (normalizeTestimonialMediaType(prev.media_type) === nextType) return prev;
+ return { ...prev, media_type: nextType, media_url: null, image_url: null, video_url: null, podcast_url: null };
+ });
+ };
 
-  const assignMediaToSelected = (item: MediaItem) => {
-    const mediaType = inferTestimonialMediaType(item.mime_type);
-    if (!mediaType) return;
-    setSelected(prev => prev ? {
-      ...prev,
-      media_type: mediaType,
-      media_url: item.url,
-      image_url: mediaType === "image" ? item.url : null,
-      video_url: mediaType === "video" ? item.url : null,
-      podcast_url: mediaType === "podcast" ? item.url : null,
-    } : prev);
-  };
+ const assignMediaToSelected = (item: MediaItem) => {
+ const mediaType = inferTestimonialMediaType(item.mime_type);
+ if (!mediaType) return;
+ setSelected(prev => prev ? {
+ ...prev,
+ media_type: mediaType,
+ media_url: item.url,
+ image_url: mediaType === "image" ? item.url : null,
+ video_url: mediaType === "video" ? item.url : null,
+ podcast_url: mediaType === "podcast" ? item.url : null,
+ } : prev);
+ };
 
-  const stats = useMemo(() => ({
-    total: testimonials.length,
-    approved: testimonials.filter(t => t.status !== "archived" && t.published).length,
-    pending: testimonials.filter(t => t.status !== "archived" && !t.published).length,
-    byEmotion: EMOTION_FILTERS.slice(1).map(e => ({
-      label: e,
-      count: testimonials.filter(t => t.emotion?.toLowerCase() === e.toLowerCase()).length,
-    })),
-  }), [testimonials]);
+ const stats = useMemo(() => ({
+ total: testimonials.length,
+ approved: testimonials.filter(t => t.status !== "archived" && t.published).length,
+ pending: testimonials.filter(t => t.status !== "archived" && !t.published).length,
+ byEmotion: EMOTION_FILTERS.slice(1).map(e => ({
+ label: e,
+ count: testimonials.filter(t => t.emotion?.toLowerCase() === e.toLowerCase()).length,
+ })),
+ }), [testimonials]);
 
-  const filtered = useMemo(() => {
-    return testimonials.filter(t => {
-      const matchEmotion = filter === "Todos" || t.emotion?.toLowerCase() === filter.toLowerCase();
-      const matchStatus = statusFilter === "all"
-        || (statusFilter === "approved" ? t.status !== "archived" && t.published : statusFilter === "pending" ? t.status !== "archived" && !t.published : t.status === "archived");
-      const matchSearch = !search || t.content.toLowerCase().includes(search.toLowerCase());
-      return matchEmotion && matchStatus && matchSearch;
-    });
-  }, [testimonials, filter, statusFilter, search]);
+ const filtered = useMemo(() => {
+ return testimonials.filter(t => {
+ const matchEmotion = filter === "Todos" || t.emotion?.toLowerCase() === filter.toLowerCase();
+ const matchStatus = statusFilter === "all"
+ || (statusFilter === "approved" ? t.status !== "archived" && t.published : statusFilter === "pending" ? t.status !== "archived" && !t.published : t.status === "archived");
+ const matchSearch = !search || t.content.toLowerCase().includes(search.toLowerCase());
+ return matchEmotion && matchStatus && matchSearch;
+ });
+ }, [testimonials, filter, statusFilter, search]);
 
-  const testimonialGroups = useMemo(() => ([
-    { id: "approved", label: "Aprobados", items: filtered.filter(t => t.status !== "archived" && t.published) },
-    { id: "pending", label: "Pendientes", items: filtered.filter(t => t.status !== "archived" && !t.published) },
-    { id: "archived", label: "Archivados", items: filtered.filter(t => t.status === "archived") },
-  ]), [filtered]);
+ const testimonialGroups = useMemo(() => ([
+ { id: "approved", label: "Aprobados", items: filtered.filter(t => t.status !== "archived" && t.published) },
+ { id: "pending", label: "Pendientes", items: filtered.filter(t => t.status !== "archived" && !t.published) },
+ { id: "archived", label: "Archivados", items: filtered.filter(t => t.status === "archived") },
+ ]), [filtered]);
 
-  const calendarEvents = useMemo(() => filtered.map(t => ({
-    id: t.id,
-    title: `${t.emotion || "Testimonio"} #${t.id}`,
-    date: (t.created_at || new Date().toISOString()).split("T")[0],
-    color: t.published ? "emerald" as const : "amber" as const,
-    location: authorLabel(t),
-  })), [filtered]);
+ const calendarEvents = useMemo(() => filtered.map(t => ({
+ id: t.id,
+ title: `${t.emotion || "Testimonio"} #${t.id}`,
+ date: (t.created_at || new Date().toISOString()).split("T")[0],
+ color: t.published ? "emerald" as const : "amber" as const,
+ location: authorLabel(t),
+ })), [filtered]);
 
-  const ganttItems = useMemo(() => filtered.map(t => ({
-    id: t.id,
-    title: `${t.emotion || "Testimonio"} #${t.id}`,
-    subtitle: t.published ? "Publicado" : "Pendiente",
-    start_date: t.created_at || new Date().toISOString(),
-    end_date: t.created_at || new Date().toISOString(),
-    color: t.published ? "emerald" as const : "amber" as const,
-    progress: t.published ? 100 : 35,
-  })), [filtered]);
+ const ganttItems = useMemo(() => filtered.map(t => ({
+ id: t.id,
+ title: `${t.emotion || "Testimonio"} #${t.id}`,
+ subtitle: t.published ? "Publicado" : "Pendiente",
+ start_date: t.created_at || new Date().toISOString(),
+ end_date: t.created_at || new Date().toISOString(),
+ color: t.published ? "emerald" as const : "amber" as const,
+ progress: t.published ? 100 : 35,
+ })), [filtered]);
 
-  const renderTestimonialList = () => (
+ const renderTestimonialList = () => (
  <div className="space-y-3 w-full">
-      {filtered.map(t => {
-        const cfg = EMOTION_CONFIG[t.emotion] ?? defaultEmotion;
-        return (
-          <button key={t.id} onClick={() => setSelected(t)} className={clsx("w-full text-left bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] rounded-lg p-4 hover:border-[hsl(var(--primary)/30%)] transition-all flex items-center gap-4", t.status === "archived" && "opacity-70 bg-warning-soft/40")}>
-            <div className={clsx("size-10 rounded-lg flex items-center justify-center text-[hsl(var(--primary-foreground))] text-xs font-semibold shrink-0", getAvatarColor(identityKey(t)))}>{getInitials(identityKey(t))}</div>
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2">
-                <span className={clsx("text-2xs font-semibold uppercase tracking-wide", cfg.color)}>{cfg.emoji} {t.emotion || "Testimonio"}</span>
-                <span className={clsx("px-2 py-0.5 rounded-full text-2xs font-semibold uppercase", t.status === "archived" ? "bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))]" : t.published ? "bg-success-soft text-success-text" : "bg-warning-soft text-warning-text")}>{t.status === "archived" ? "Archivado" : t.published ? "Publicado" : "Pendiente"}</span>
-              </div>
-              <p className="text-sm text-[hsl(var(--text-secondary))] line-clamp-1 mt-1">{t.content}</p>
-            </div>
-            <span className="text-2xs font-bold text-[hsl(var(--text-secondary))]">{t.created_at ? new Date(t.created_at).toLocaleDateString("es-CO") : 'N/A'}</span>
-          </button>
-        );
-      })}
-    </div>
-  );
+ {filtered.map(t => {
+ const cfg = EMOTION_CONFIG[t.emotion] ?? defaultEmotion;
+ return (
+ <button key={t.id} onClick={() => setSelected(t)} className={clsx("w-full text-left bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] rounded-lg p-4 hover:border-[hsl(var(--primary)/30%)] transition-all flex items-center gap-4", t.status === "archived" && "opacity-70 bg-warning-soft/40")}>
+ <div className={clsx("size-10 rounded-lg flex items-center justify-center text-[hsl(var(--primary-foreground))] text-xs font-semibold shrink-0", getAvatarColor(identityKey(t)))}>{getInitials(identityKey(t))}</div>
+ <div className="flex-1 min-w-0">
+ <div className="flex items-center gap-2">
+ <span className={clsx("text-2xs font-semibold uppercase tracking-wide", cfg.color)}>{cfg.emoji} {t.emotion || "Testimonio"}</span>
+ <span className={clsx("px-2 py-0.5 rounded-full text-2xs font-semibold uppercase", t.status === "archived" ? "bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))]" : t.published ? "bg-success-soft text-success-text" : "bg-warning-soft text-warning-text")}>{t.status === "archived" ? "Archivado" : t.published ? "Publicado" : "Pendiente"}</span>
+ </div>
+ <p className="text-sm text-[hsl(var(--text-secondary))] line-clamp-1 mt-1">{t.content}</p>
+ </div>
+ <span className="text-2xs font-bold text-[hsl(var(--text-secondary))]">{t.created_at ? new Date(t.created_at).toLocaleDateString("es-CO") : 'N/A'}</span>
+ </button>
+ );
+ })}
+ </div>
+ );
 
-  const renderTestimonialTable = () => (
-    <div className="rounded-lg border border-[hsl(var(--border))] overflow-x-auto">
-      <table className="w-full min-w-[480px] text-left">
-        <thead className="bg-[hsl(var(--surface-1))]">
-          <tr>
-            <th className="px-4 py-3 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Testimonio</th>
-            <th className="px-4 py-3 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hidden md:table-cell">Emoción</th>
-            <th className="px-4 py-3 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hidden lg:table-cell">Estado</th>
-            <th className="px-4 py-3 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hidden xl:table-cell">Fecha</th>
-            <th className="px-4 py-3 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Acción</th>
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-[hsl(var(--border))]">
-          {filtered.map(t => (
-            <tr key={t.id} onClick={() => setSelected(t)} className={clsx("hover:bg-[hsl(var(--surface-1))] cursor-pointer", t.status === "archived" && "opacity-70 bg-warning-soft/40")}>
-              <td className="px-4 py-3 text-sm text-[hsl(var(--text-primary))] line-clamp-1 max-w-[420px]">{t.content}</td>
-              <td className="px-4 py-3 hidden md:table-cell text-xs font-bold text-[hsl(var(--text-secondary))]">{t.emotion || "—"}</td>
-              <td className="px-4 py-3 hidden lg:table-cell"><span className={clsx("px-2 py-0.5 rounded-full text-2xs font-semibold uppercase", t.status === "archived" ? "bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))]" : t.published ? "bg-success-soft text-success-text" : "bg-warning-soft text-warning-text")}>{t.status === "archived" ? "Archivado" : t.published ? "Publicado" : "Pendiente"}</span></td>
-              <td className="px-4 py-3 hidden xl:table-cell text-xs text-[hsl(var(--text-secondary))]">{t.created_at ? new Date(t.created_at).toLocaleDateString("es-CO") : 'N/A'}</td>
-              <td className="px-4 py-3">
-                <button onClick={e => { e.stopPropagation(); toggleArchive(t); }} disabled={processing === t.id} className="text-2xs font-semibold uppercase tracking-wide text-warning-text disabled:opacity-50">{t.status === "archived" ? "Restaurar" : "Archivar"}</button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  );
+ const renderTestimonialTable = () => (
+ <div className="rounded-lg border border-[hsl(var(--border))] overflow-x-auto">
+ <table className="w-full min-w-[480px] text-left">
+ <thead className="bg-[hsl(var(--surface-1))]">
+ <tr>
+ <th className="px-4 py-3 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Testimonio</th>
+ <th className="px-4 py-3 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hidden md:table-cell">Emoción</th>
+ <th className="px-4 py-3 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hidden lg:table-cell">Estado</th>
+ <th className="px-4 py-3 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hidden xl:table-cell">Fecha</th>
+ <th className="px-4 py-3 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Acción</th>
+ </tr>
+ </thead>
+ <tbody className="divide-y divide-[hsl(var(--border))]">
+ {filtered.map(t => (
+ <tr key={t.id} onClick={() => setSelected(t)} className={clsx("hover:bg-[hsl(var(--surface-1))] cursor-pointer", t.status === "archived" && "opacity-70 bg-warning-soft/40")}>
+ <td className="px-4 py-3 text-sm text-[hsl(var(--text-primary))] line-clamp-1 max-w-[420px]">{t.content}</td>
+ <td className="px-4 py-3 hidden md:table-cell text-xs font-bold text-[hsl(var(--text-secondary))]">{t.emotion || "—"}</td>
+ <td className="px-4 py-3 hidden lg:table-cell"><span className={clsx("px-2 py-0.5 rounded-full text-2xs font-semibold uppercase", t.status === "archived" ? "bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))]" : t.published ? "bg-success-soft text-success-text" : "bg-warning-soft text-warning-text")}>{t.status === "archived" ? "Archivado" : t.published ? "Publicado" : "Pendiente"}</span></td>
+ <td className="px-4 py-3 hidden xl:table-cell text-xs text-[hsl(var(--text-secondary))]">{t.created_at ? new Date(t.created_at).toLocaleDateString("es-CO") : 'N/A'}</td>
+ <td className="px-4 py-3">
+ <button onClick={e => { e.stopPropagation(); toggleArchive(t); }} disabled={processing === t.id} className="text-2xs font-semibold uppercase tracking-wide text-warning-text disabled:opacity-50">{t.status === "archived" ? "Restaurar" : "Archivar"}</button>
+ </td>
+ </tr>
+ ))}
+ </tbody>
+ </table>
+ </div>
+ );
 
-  const renderTestimonialBoard = () => (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 min-h-full">
-      {testimonialGroups.map(group => (
-        <section key={group.id} className="rounded-lg bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] p-4">
-          <div className="flex items-center justify-between mb-4">
-            <span className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{group.label}</span>
-            <span className="text-2xs font-semibold text-[hsl(var(--text-secondary))]">{group.items.length}</span>
-          </div>
-          <div className="space-y-3">
-            {group.items.map(t => (
-              <button key={t.id} onClick={() => setSelected(t)} className={clsx("w-full text-left bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] rounded-lg p-4 hover:border-[hsl(var(--primary)/30%)] transition-all", t.status === "archived" && "opacity-70 bg-warning-soft/40")}>
-                <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-2">{authorLabel(t)} · {t.emotion || "Testimonio"}</p>
-                <p className="text-sm text-[hsl(var(--text-primary))] line-clamp-3">{t.content}</p>
-              </button>
-            ))}
-          </div>
-        </section>
-      ))}
-    </div>
-  );
+ const renderTestimonialBoard = () => (
+ <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 min-h-full">
+ {testimonialGroups.map(group => (
+ <section key={group.id} className="rounded-lg bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] p-4">
+ <div className="flex items-center justify-between mb-4">
+ <span className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{group.label}</span>
+ <span className="text-2xs font-semibold text-[hsl(var(--text-secondary))]">{group.items.length}</span>
+ </div>
+ <div className="space-y-3">
+ {group.items.map(t => (
+ <button key={t.id} onClick={() => setSelected(t)} className={clsx("w-full text-left bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] rounded-lg p-4 hover:border-[hsl(var(--primary)/30%)] transition-all", t.status === "archived" && "opacity-70 bg-warning-soft/40")}>
+ <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-2">{authorLabel(t)} · {t.emotion || "Testimonio"}</p>
+ <p className="text-sm text-[hsl(var(--text-primary))] line-clamp-3">{t.content}</p>
+ </button>
+ ))}
+ </div>
+ </section>
+ ))}
+ </div>
+ );
 
-  if (!canEdit) {
-    return (
-      <div className="h-full overflow-y-auto">
-        <div className="mx-auto max-w-3xl px-4 py-6">
-          <div className="rounded-2xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-6 shadow-sm">
-            <p className="text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">CMS</p>
-            <h1 className="mt-2 text-2xl font-semibold text-[hsl(var(--text-primary))]">Testimonios</h1>
-            <p className="mt-3 text-sm text-[hsl(var(--text-secondary))]">
-              Este panel requiere permisos de edición de CMS. Tu sesión actual puede ver el módulo, pero no administrar testimonios.
-            </p>
-            <Link
-              href="/plataforma/cms"
-              className="mt-5 inline-flex items-center gap-2 rounded-lg border border-[hsl(var(--border))] px-3 py-2 text-sm font-medium text-[hsl(var(--text-primary))] hover:border-[hsl(var(--primary))]"
-            >
-              Volver al resumen
-              <ChevronRight size={14} />
-            </Link>
-          </div>
-        </div>
-      </div>
-    );
-  }
+ if (!canEdit) {
+ return (
+ <div className="h-full overflow-y-auto">
+ <div className="mx-auto max-w-3xl px-4 py-6">
+ <div className="rounded-2xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-6 shadow-sm">
+ <p className="text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">CMS</p>
+ <h1 className="mt-2 text-2xl font-semibold text-[hsl(var(--text-primary))]">Testimonios</h1>
+ <p className="mt-3 text-sm text-[hsl(var(--text-secondary))]">
+ Este panel requiere permisos de edición de CMS. Tu sesión actual puede ver el módulo, pero no administrar testimonios.
+ </p>
+ <Link
+ href="/plataforma/cms"
+ className="mt-5 inline-flex items-center gap-2 rounded-lg border border-[hsl(var(--border))] px-3 py-2 text-sm font-medium text-[hsl(var(--text-primary))] hover:border-[hsl(var(--primary))]"
+ >
+ Volver al resumen
+ <ChevronRight size={14} />
+ </Link>
+ </div>
+ </div>
+ </div>
+ );
+ }
 
-  return (
-    <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] overflow-hidden">
-      {/* ── Header toolbar ── */}
-      <header className="shrink-0 border-b border-[hsl(var(--border))] px-3 py-1.5 flex items-center gap-4">
-        <div className="flex items-center gap-2 flex-1 min-w-0">
-          <MessageCircle size={18} className="text-[hsl(var(--danger))] shrink-0" />
-          <h1 className="text-base font-semibold uppercase tracking-wide text-[hsl(var(--text-primary))]">
-            Testimonios
-          </h1>
-        </div>
-        <div className="relative">
-          <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-[hsl(var(--text-secondary))]" />
-          <input
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            placeholder="Buscar..."
-            className="pl-8 pr-4 py-2 rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-sm outline-none w-48 focus:ring-2 focus:ring-[hsl(var(--danger)/20%)]"
-          />
-        </div>
-        <ViewSwitcher viewType={viewType} setViewType={setViewType} availableViews={TESTIMONIAL_VIEWS} />
-        <button
-          onClick={() => setShowForm(true)}
-          className="flex items-center gap-2 px-3 py-2 bg-[hsl(var(--danger))] text-[hsl(var(--destructive-foreground))] rounded-md text-xs font-semibold uppercase tracking-wide shadow-lg shadow-[hsl(var(--danger)/20%)] hover:opacity-90 active:scale-95 transition-all"
-        >
-          <Plus size={14} /> Nuevo Testimonio
-        </button>
-      </header>
+ return (
+ <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] overflow-hidden">
+ {/* ── Header toolbar ── */}
+ <header className="shrink-0 border-b border-[hsl(var(--border))] px-3 py-1.5 flex items-center gap-4">
+ <div className="flex items-center gap-2 flex-1 min-w-0">
+ <MessageCircle size={18} className="text-[hsl(var(--danger))] shrink-0" />
+ <h1 className="text-base font-semibold uppercase tracking-wide text-[hsl(var(--text-primary))]">
+ Testimonios
+ </h1>
+ </div>
+ <div className="relative">
+ <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-[hsl(var(--text-secondary))]" />
+ <input
+ value={search}
+ onChange={e => setSearch(e.target.value)}
+ placeholder="Buscar..."
+ className="pl-8 pr-4 py-2 rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-sm outline-none w-48 focus:ring-2 focus:ring-[hsl(var(--danger)/20%)]"
+ />
+ </div>
+ <ViewSwitcher viewType={viewType} setViewType={setViewType} availableViews={TESTIMONIAL_VIEWS} />
+ <button
+ onClick={() => setShowForm(true)}
+ className="flex items-center gap-2 px-3 py-2 bg-[hsl(var(--danger))] text-[hsl(var(--destructive-foreground))] rounded-md text-xs font-semibold uppercase tracking-wide shadow-lg shadow-[hsl(var(--danger)/20%)] hover:opacity-90 active:scale-95 transition-all"
+ >
+ <Plus size={14} /> Nuevo Testimonio
+ </button>
+ </header>
 
-      {/* ── Stats bar ── */}
-      <div className="shrink-0 border-b border-[hsl(var(--border))] px-3 py-3 flex items-center gap-3">
-        <div className="flex items-center gap-3">
-          {[
-            { label: "Total", value: stats.total, icon: Users, color: "text-[hsl(var(--text-secondary))]" },
-            { label: "Aprobados", value: stats.approved, icon: CheckCircle2, color: "text-success-text" },
-            { label: "Pendientes", value: stats.pending, icon: Clock, color: "text-[hsl(var(--warning))]" },
-            { label: "Archivados", value: testimonials.filter(t => t.status === "archived").length, icon: Archive, color: "text-[hsl(var(--text-secondary))]" },
-          ].map(s => (
-            <button
-              key={s.label}
-              onClick={() => setStatusFilter(
-                s.label === "Total" ? "all" : s.label === "Aprobados" ? "approved" : s.label === "Pendientes" ? "pending" : "archived"
-              )}
-              className={clsx(
-                "flex items-center gap-2 transition-all",
-                statusFilter === (s.label === "Total" ? "all" : s.label === "Aprobados" ? "approved" : s.label === "Pendientes" ? "pending" : "archived")
-                  ? "opacity-100"
-                  : "opacity-50 hover:opacity-75"
-              )}
-            >
-              <s.icon size={14} className={s.color} />
-              <span className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{s.label}</span>
-              <span className={clsx("text-xl font-semibold tabular-nums leading-none", s.color)}>{s.value}</span>
-            </button>
-          ))}
-        </div>
-      </div>
+ {/* ── Stats bar ── */}
+ <div className="shrink-0 border-b border-[hsl(var(--border))] px-3 py-3 flex items-center gap-3">
+ <div className="flex items-center gap-3">
+ {[
+ { label: "Total", value: stats.total, icon: Users, color: "text-[hsl(var(--text-secondary))]" },
+ { label: "Aprobados", value: stats.approved, icon: CheckCircle2, color: "text-success-text" },
+ { label: "Pendientes", value: stats.pending, icon: Clock, color: "text-[hsl(var(--warning))]" },
+ { label: "Archivados", value: testimonials.filter(t => t.status === "archived").length, icon: Archive, color: "text-[hsl(var(--text-secondary))]" },
+ ].map(s => (
+ <button
+ key={s.label}
+ onClick={() => setStatusFilter(
+ s.label === "Total" ? "all" : s.label === "Aprobados" ? "approved" : s.label === "Pendientes" ? "pending" : "archived"
+ )}
+ className={clsx(
+ "flex items-center gap-2 transition-all",
+ statusFilter === (s.label === "Total" ? "all" : s.label === "Aprobados" ? "approved" : s.label === "Pendientes" ? "pending" : "archived")
+ ? "opacity-100"
+ : "opacity-50 hover:opacity-75"
+ )}
+ >
+ <s.icon size={14} className={s.color} />
+ <span className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{s.label}</span>
+ <span className={clsx("text-xl font-semibold tabular-nums leading-none", s.color)}>{s.value}</span>
+ </button>
+ ))}
+ </div>
+ </div>
 
-      {/* ── Filter pills ── */}
-      <div className="shrink-0 px-3 py-3 flex items-center gap-2 border-b border-[hsl(var(--border))]">
-        {EMOTION_FILTERS.map(f => {
-          const cfg = EMOTION_CONFIG[f] ?? defaultEmotion;
-          const count = f === "Todos" ? stats.total : stats.byEmotion.find(e => e.label === f)?.count ?? 0;
-          return (
-            <button
-              key={f}
-              onClick={() => setFilter(f)}
-              className={clsx(
-                "flex items-center gap-1.5 px-3 py-1.5 rounded-md text-2xs font-semibold uppercase tracking-wide border transition-all",
-                filter === f
-                  ? `${cfg.bg} ${cfg.border} ${cfg.color}`
-                  : "bg-[hsl(var(--surface-2))] border-transparent text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))]"
-              )}
-            >
-              {f !== "Todos" && <span>{cfg.emoji}</span>}
-              {f}
-              <span className={clsx("ml-0.5 font-semibold", filter === f ? cfg.color : "text-[hsl(var(--text-secondary))]")}>{count}</span>
-            </button>
-          );
-        })}
-      </div>
+ {/* ── Filter pills ── */}
+ <div className="shrink-0 px-3 py-3 flex items-center gap-2 border-b border-[hsl(var(--border))]">
+ {EMOTION_FILTERS.map(f => {
+ const cfg = EMOTION_CONFIG[f] ?? defaultEmotion;
+ const count = f === "Todos" ? stats.total : stats.byEmotion.find(e => e.label === f)?.count ?? 0;
+ return (
+ <button
+ key={f}
+ onClick={() => setFilter(f)}
+ className={clsx(
+ "flex items-center gap-1.5 px-3 py-1.5 rounded-md text-2xs font-semibold uppercase tracking-wide border transition-all",
+ filter === f
+ ? `${cfg.bg} ${cfg.border} ${cfg.color}`
+ : "bg-[hsl(var(--surface-2))] border-transparent text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))]"
+ )}
+ >
+ {f !== "Todos" && <span>{cfg.emoji}</span>}
+ {f}
+ <span className={clsx("ml-0.5 font-semibold", filter === f ? cfg.color : "text-[hsl(var(--text-secondary))]")}>{count}</span>
+ </button>
+ );
+ })}
+ </div>
 
-      {/* ── Content area ── */}
-      <div className="flex flex-1 overflow-hidden">
-        {/* Grid */}
-        <div className="flex-1 overflow-y-auto p-3">
-          {loading ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-              {Array.from({ length: 6 }).map((_, i) => (
-                <div key={i} className="h-48 rounded-lg bg-[hsl(var(--surface-2))] animate-pulse" />
-              ))}
-            </div>
-          ) : filtered.length === 0 ? (
-            <div className="h-full flex flex-col items-center justify-center text-center space-y-4 py-1.5">
-              <div className="size-8 rounded-lg bg-[hsl(var(--surface-1))] flex items-center justify-center">
-                <MessageCircle size={36} strokeWidth={1} className="text-[hsl(var(--text-secondary))]" />
-              </div>
-              <div className="space-y-1">
-                <p className="font-semibold text-[hsl(var(--text-primary))] uppercase tracking-tight">Sin testimonios</p>
-                <p className="text-sm text-[hsl(var(--text-secondary))]">Ajusta los filtros o agrega uno nuevo</p>
-              </div>
-            </div>
-          ) : viewType === "list" ? (
-            renderTestimonialList()
-          ) : viewType === "table" ? (
-            renderTestimonialTable()
-          ) : viewType === "board" || viewType === "kanban" ? (
-            renderTestimonialBoard()
-          ) : viewType === "calendar" ? (
-            <UniversalCalendarView
-              title="Calendario de testimonios"
-              events={calendarEvents}
-              onEventClick={(event) => {
-                const testimonial = filtered.find(item => item.id === event.id);
-                if (testimonial) setSelected(testimonial);
-              }}
-            />
-          ) : viewType === "gantt" ? (
-            <UniversalGanttView
-              moduleName="Testimonios CMS"
-              items={ganttItems}
-              onItemClick={(item) => {
-                const testimonial = filtered.find(entry => entry.id === item.id);
-                if (testimonial) setSelected(testimonial);
-              }}
-            />
-          ) : viewType === "wiki" ? (
-            <UniversalWikiView moduleName="Testimonios CMS" storageKey="cms-testimonials-wiki" />
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-              {filtered.map(t => {
-                const cfg = EMOTION_CONFIG[t.emotion] ?? defaultEmotion;
-                const isSelected = selected?.id === t.id;
-                return (
-                  <motion.div
-                    key={t.id}
-                    layout
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    onClick={() => setSelected(isSelected ? null : t)}
-                    className={clsx(
-                      "group relative rounded-lg border p-3 flex flex-col gap-4 cursor-pointer transition-all",
-                      isSelected
-                        ? `${cfg.bg} ${cfg.border} ring-2 ring-current`
-                        : "bg-[hsl(var(--surface-1))] border-[hsl(var(--border))] hover:border-[hsl(var(--primary))] hover:shadow-lg"
-                    )}
-                  >
-                    {/* Status badge */}
-                    <div className="absolute top-4 right-4">
-                      <span className={clsx(
-                        "px-2 py-0.5 rounded-full text-2xs font-semibold uppercase tracking-wide border",
-                        t.published
-                          ? "bg-success-soft text-success-text border-[hsl(var(--success)/25%)]"
-                          : "bg-warning-soft text-warning-text border-[hsl(var(--warning)/25%)]"
-                      )}>
-                        {t.published ? "Publicado" : "Pendiente"}
-                      </span>
-                    </div>
+ {/* ── Content area ── */}
+ <div className="flex flex-1 overflow-hidden">
+ {/* Grid */}
+ <div className="flex-1 overflow-y-auto p-3">
+ {loading ? (
+ <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+ {Array.from({ length: 6 }).map((_, i) => (
+ <div key={i} className="h-48 rounded-lg bg-[hsl(var(--surface-2))] animate-pulse" />
+ ))}
+ </div>
+ ) : filtered.length === 0 ? (
+ <div className="h-full flex flex-col items-center justify-center text-center space-y-4 py-1.5">
+ <div className="size-8 rounded-lg bg-[hsl(var(--surface-1))] flex items-center justify-center">
+ <MessageCircle size={36} strokeWidth={1} className="text-[hsl(var(--text-secondary))]" />
+ </div>
+ <div className="space-y-1">
+ <p className="font-semibold text-[hsl(var(--text-primary))] uppercase tracking-tight">Sin testimonios</p>
+ <p className="text-sm text-[hsl(var(--text-secondary))]">Ajusta los filtros o agrega uno nuevo</p>
+ </div>
+ </div>
+ ) : viewType === "list" ? (
+ renderTestimonialList()
+ ) : viewType === "table" ? (
+ renderTestimonialTable()
+ ) : viewType === "board" || viewType === "kanban" ? (
+ renderTestimonialBoard()
+ ) : viewType === "calendar" ? (
+ <UniversalCalendarView
+ title="Calendario de testimonios"
+ events={calendarEvents}
+ onEventClick={(event) => {
+ const testimonial = filtered.find(item => item.id === event.id);
+ if (testimonial) setSelected(testimonial);
+ }}
+ />
+ ) : viewType === "gantt" ? (
+ <UniversalGanttView
+ moduleName="Testimonios CMS"
+ items={ganttItems}
+ onItemClick={(item) => {
+ const testimonial = filtered.find(entry => entry.id === item.id);
+ if (testimonial) setSelected(testimonial);
+ }}
+ />
+ ) : viewType === "wiki" ? (
+ <UniversalWikiView moduleName="Testimonios CMS" storageKey="cms-testimonials-wiki" />
+ ) : (
+ <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+ {filtered.map(t => {
+ const cfg = EMOTION_CONFIG[t.emotion] ?? defaultEmotion;
+ const isSelected = selected?.id === t.id;
+ return (
+ <motion.div
+ key={t.id}
+ layout
+ initial={{ opacity: 0, y: 10 }}
+ animate={{ opacity: 1, y: 0 }}
+ onClick={() => setSelected(isSelected ? null : t)}
+ className={clsx(
+ "group relative rounded-lg border p-3 flex flex-col gap-4 cursor-pointer transition-all",
+ isSelected
+ ? `${cfg.bg} ${cfg.border} ring-2 ring-current`
+ : "bg-[hsl(var(--surface-1))] border-[hsl(var(--border))] hover:border-[hsl(var(--primary))] hover:shadow-lg"
+ )}
+ >
+ {/* Status badge */}
+ <div className="absolute top-4 right-4">
+ <span className={clsx(
+ "px-2 py-0.5 rounded-full text-2xs font-semibold uppercase tracking-wide border",
+ t.published
+ ? "bg-success-soft text-success-text border-[hsl(var(--success)/25%)]"
+ : "bg-warning-soft text-warning-text border-[hsl(var(--warning)/25%)]"
+ )}>
+ {t.published ? "Publicado" : "Pendiente"}
+ </span>
+ </div>
 
-                    {/* Author */}
-                    <div className="flex items-center gap-3 pr-20">
-                      <div className={clsx("size-10 rounded-lg flex items-center justify-center text-[hsl(var(--primary-foreground))] text-xs font-semibold shrink-0", getAvatarColor(identityKey(t)))}>
-                        {getInitials(identityKey(t))}
-                      </div>
-                      <div>
-                        <p className="text-xs font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">{authorLabel(t)}</p>
-                        <div className={clsx("flex items-center gap-1 text-2xs font-semibold uppercase tracking-wide", cfg.color)}>
-                          <span>{cfg.emoji}</span>
-                          <span>{t.emotion || "Testimonio"}</span>
-                        </div>
-                        {getTestimonialMediaUrl(t) && (
-                          <div className="mt-1 flex items-center gap-1 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
-                            {t.media_type === "video" ? <PlayCircle size={10} /> : t.media_type === "podcast" ? <Headphones size={10} /> : <ImageIcon size={10} />}
-                            {getMediaLabel(t)}
-                          </div>
-                        )}
-                      </div>
-                    </div>
+ {/* Author */}
+ <div className="flex items-center gap-3 pr-20">
+ <div className={clsx("size-10 rounded-lg flex items-center justify-center text-[hsl(var(--primary-foreground))] text-xs font-semibold shrink-0", getAvatarColor(identityKey(t)))}>
+ {getInitials(identityKey(t))}
+ </div>
+ <div>
+ <p className="text-xs font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">{authorLabel(t)}</p>
+ <div className={clsx("flex items-center gap-1 text-2xs font-semibold uppercase tracking-wide", cfg.color)}>
+ <span>{cfg.emoji}</span>
+ <span>{t.emotion || "Testimonio"}</span>
+ </div>
+ {getTestimonialMediaUrl(t) && (
+ <div className="mt-1 flex items-center gap-1 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
+ {t.media_type === "video" ? <PlayCircle size={10} /> : t.media_type === "podcast" ? <Headphones size={10} /> : <ImageIcon size={10} />}
+ {getMediaLabel(t)}
+ </div>
+ )}
+ </div>
+ </div>
 
-                    {/* Content */}
-                    <p className="text-sm text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] leading-relaxed line-clamp-3 flex-1">
-                      &ldquo;{t.content}&rdquo;
-                    </p>
+ {/* Content */}
+ <p className="text-sm text-[hsl(var(--text-secondary))] leading-relaxed line-clamp-3 flex-1">
+ &ldquo;{t.content}&rdquo;
+ </p>
 
-                    {/* Footer */}
-                    <div className="flex items-center justify-between pt-1 border-t border-[hsl(var(--border))]">
-                      <p className="text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase">
-                        {t.created_at ? new Date(t.created_at).toLocaleDateString("es-CO", { day: "numeric", month: "short", year: "numeric" }) : 'N/A'}
-                      </p>
-                      <div className="flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button
-                          onClick={e => { e.stopPropagation(); handleToggle(t); }}
-                          disabled={processing === t.id || t.status === "archived"}
-                          className={clsx(
-                            "flex items-center gap-1 px-2.5 py-1 rounded-lg text-2xs font-semibold uppercase tracking-wide transition-all border",
-                            t.published
-                              ? "bg-danger-soft text-danger-text border-[hsl(var(--danger)/25%)] hover:bg-[hsl(var(--danger-muted))]"
-                              : "bg-success-soft text-success-text border-[hsl(var(--success)/25%)] hover:bg-[hsl(var(--success-muted))]"
-                          )}
-                        >
-                          {t.published ? <><XCircle size={10} /> Rechazar</> : <><CheckCircle2 size={10} /> Aprobar</>}
-                        </button>
-                        <button
-                          onClick={e => { e.stopPropagation(); toggleArchive(t); }}
-                          disabled={processing === t.id}
-                          className={clsx(
-                            "flex items-center gap-1 px-2.5 py-1 rounded-lg text-2xs font-semibold uppercase tracking-wide transition-all border",
-                            t.status === "archived"
-                              ? "bg-success-soft text-success-text border-[hsl(var(--success)/25%)] hover:bg-[hsl(var(--success-muted))]"
-                              : "bg-warning-soft text-warning-text border-[hsl(var(--warning)/25%)] hover:bg-[hsl(var(--warning-muted))]"
-                          )}
-                        >
-                          {t.status === "archived" ? <><RotateCcw size={10} /> Restaurar</> : <><Archive size={10} /> Archivar</>}
-                        </button>
-                        <button
-                          onClick={e => { e.stopPropagation(); setSelected(isSelected ? null : t); }}
-                          className="p-1 rounded-lg text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] transition-all"
-                        >
-                          <ChevronRight size={14} />
-                        </button>
-                      </div>
-                    </div>
-                  </motion.div>
-                );
-              })}
-            </div>
-          )}
-        </div>
+ {/* Footer */}
+ <div className="flex items-center justify-between pt-1 border-t border-[hsl(var(--border))]">
+ <p className="text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase">
+ {t.created_at ? new Date(t.created_at).toLocaleDateString("es-CO", { day: "numeric", month: "short", year: "numeric" }) : 'N/A'}
+ </p>
+ <div className="flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
+ <button
+ onClick={e => { e.stopPropagation(); handleToggle(t); }}
+ disabled={processing === t.id || t.status === "archived"}
+ className={clsx(
+ "flex items-center gap-1 px-2.5 py-1 rounded-lg text-2xs font-semibold uppercase tracking-wide transition-all border",
+ t.published
+ ? "bg-danger-soft text-danger-text border-[hsl(var(--danger)/25%)] hover:bg-[hsl(var(--danger-muted))]"
+ : "bg-success-soft text-success-text border-[hsl(var(--success)/25%)] hover:bg-[hsl(var(--success-muted))]"
+ )}
+ >
+ {t.published ? <><XCircle size={10} /> Rechazar</> : <><CheckCircle2 size={10} /> Aprobar</>}
+ </button>
+ <button
+ onClick={e => { e.stopPropagation(); toggleArchive(t); }}
+ disabled={processing === t.id}
+ className={clsx(
+ "flex items-center gap-1 px-2.5 py-1 rounded-lg text-2xs font-semibold uppercase tracking-wide transition-all border",
+ t.status === "archived"
+ ? "bg-success-soft text-success-text border-[hsl(var(--success)/25%)] hover:bg-[hsl(var(--success-muted))]"
+ : "bg-warning-soft text-warning-text border-[hsl(var(--warning)/25%)] hover:bg-[hsl(var(--warning-muted))]"
+ )}
+ >
+ {t.status === "archived" ? <><RotateCcw size={10} /> Restaurar</> : <><Archive size={10} /> Archivar</>}
+ </button>
+ <button
+ onClick={e => { e.stopPropagation(); setSelected(isSelected ? null : t); }}
+ className="p-1 rounded-lg text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] transition-all"
+ >
+ <ChevronRight size={14} />
+ </button>
+ </div>
+ </div>
+ </motion.div>
+ );
+ })}
+ </div>
+ )}
+ </div>
 
-        {/* ── Detail panel ── */}
-        <AnimatePresence>
-          {selected && (
-            <motion.aside
-              key="detail"
-              initial={{ x: 380, opacity: 0 }}
-              animate={{ x: 0, opacity: 1 }}
-              exit={{ x: 380, opacity: 0 }}
-              transition={{ type: "spring", damping: 28, stiffness: 280 }}
-              className="w-96 shrink-0 border-l border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] flex flex-col overflow-y-auto"
-            >
-              {/* Panel header */}
-              <div className="p-3 flex items-center justify-between border-b border-[hsl(var(--border))] shrink-0">
-                <div className="flex items-center gap-2">
-                  <MessageCircle size={14} className="text-[hsl(var(--danger))]" />
-                  <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Testimonio #{selected.id}</p>
-                </div>
-                <button onClick={() => setSelected(null)} className="p-1.5 rounded-lg hover:bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))] transition-all">
-                  <X size={14} />
-                </button>
-              </div>
+ {/* ── Detail panel ── */}
+ <AnimatePresence>
+ {selected && (
+ <motion.aside
+ key="detail"
+ initial={{ x: 380, opacity: 0 }}
+ animate={{ x: 0, opacity: 1 }}
+ exit={{ x: 380, opacity: 0 }}
+ transition={{ type: "spring", damping: 28, stiffness: 280 }}
+ className="w-96 shrink-0 border-l border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] flex flex-col overflow-y-auto"
+ >
+ {/* Panel header */}
+ <div className="p-3 flex items-center justify-between border-b border-[hsl(var(--border))] shrink-0">
+ <div className="flex items-center gap-2">
+ <MessageCircle size={14} className="text-[hsl(var(--danger))]" />
+ <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Testimonio #{selected.id}</p>
+ </div>
+ <button onClick={() => setSelected(null)} className="p-1.5 rounded-lg hover:bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))] transition-all">
+ <X size={14} />
+ </button>
+ </div>
 
-              {/* Author header */}
-              {(() => {
-                const cfg = EMOTION_CONFIG[selected.emotion] ?? defaultEmotion;
-                return (
-                  <div className={clsx("p-3 flex items-center gap-4 border-b border-[hsl(var(--border))]", cfg.bg)}>
-                    <div className={clsx("size-7 rounded-lg flex items-center justify-center text-[hsl(var(--primary-foreground))] text-base font-semibold shrink-0", getAvatarColor(identityKey(selected)))}>
-                      {getInitials(identityKey(selected))}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold text-[hsl(var(--text-primary))]">{authorLabel(selected)}</p>
-                      <div className={clsx("flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide mt-0.5", cfg.color)}>
-                        <span>{cfg.emoji}</span>
-                        <span>{selected.emotion || "Sin categoría"}</span>
-                      </div>
-                    </div>
-                    <span className={clsx(
-                      "px-2 py-1 rounded-md text-2xs font-semibold uppercase tracking-wide border",
-                      selected.status === "archived" ? "bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))] border-[hsl(var(--border))]" : selected.published ? "bg-success-soft text-success-text border-[hsl(var(--success)/25%)]" : "bg-warning-soft text-warning-text border-[hsl(var(--warning)/25%)]"
-                    )}>
-                      {selected.status === "archived" ? "Archivado" : selected.published ? "✓ Publicado" : "⏳ Pendiente"}
-                    </span>
-                  </div>
-                );
-              })()}
+ {/* Author header */}
+ {(() => {
+ const cfg = EMOTION_CONFIG[selected.emotion] ?? defaultEmotion;
+ return (
+ <div className={clsx("p-3 flex items-center gap-4 border-b border-[hsl(var(--border))]", cfg.bg)}>
+ <div className={clsx("size-7 rounded-lg flex items-center justify-center text-[hsl(var(--primary-foreground))] text-base font-semibold shrink-0", getAvatarColor(identityKey(selected)))}>
+ {getInitials(identityKey(selected))}
+ </div>
+ <div className="flex-1 min-w-0">
+ <p className="text-sm font-semibold text-[hsl(var(--text-primary))]">{authorLabel(selected)}</p>
+ <div className={clsx("flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide mt-0.5", cfg.color)}>
+ <span>{cfg.emoji}</span>
+ <span>{selected.emotion || "Sin categoría"}</span>
+ </div>
+ </div>
+ <span className={clsx(
+ "px-2 py-1 rounded-md text-2xs font-semibold uppercase tracking-wide border",
+ selected.status === "archived" ? "bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))] border-[hsl(var(--border))]" : selected.published ? "bg-success-soft text-success-text border-[hsl(var(--success)/25%)]" : "bg-warning-soft text-warning-text border-[hsl(var(--warning)/25%)]"
+ )}>
+ {selected.status === "archived" ? "Archivado" : selected.published ? "✓ Publicado" : "⏳ Pendiente"}
+ </span>
+ </div>
+ );
+ })()}
 
-              {/* Full content */}
-              <div className="p-3 flex-1 space-y-4">
-                <div className="space-y-2">
-                  <p className="text-2xs font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Contenido completo</p>
-                  <RichEditor
-                    content={selected.content}
-                    onChange={(html) => setSelected(prev => prev ? { ...prev, content: html } : prev)}
-                    readOnly={!canEdit}
-                    placeholder="Contenido del testimonio..."
-                    minHeight="150px"
-                  />
-                </div>
+ {/* Full content */}
+ <div className="p-3 flex-1 space-y-4">
+ <div className="space-y-2">
+ <p className="text-2xs font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Contenido completo</p>
+ <RichEditor
+ content={selected.content}
+ onChange={(html) => setSelected(prev => prev ? { ...prev, content: html } : prev)}
+ readOnly={!canEdit}
+ placeholder="Contenido del testimonio..."
+ minHeight="150px"
+ />
+ </div>
 
-                <div className="grid grid-cols-2 gap-2">
-                  {[
-                    { id: "text", label: "Texto", icon: MessageCircle },
-                    { id: "image", label: "Imagen", icon: ImageIcon },
-                    { id: "video", label: "Video", icon: PlayCircle },
-                    { id: "podcast", label: "Podcast", icon: Headphones },
-                  ].map(option => (
-                    <button
-                      key={option.id}
-                      onClick={() => changeSelectedMediaType(option.id as TestimonialMediaType)}
-                      className={clsx(
-                        "flex items-center justify-center gap-1.5 rounded-md border px-3 py-2 text-2xs font-semibold uppercase tracking-wide transition-all",
-                        (selected.media_type || "text") === option.id
-                          ? "border-[hsl(var(--danger)/30%)] bg-danger-soft text-danger-text"
-                          : "border-[hsl(var(--border))] text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))]"
-                      )}
-                    >
-                      <option.icon size={12} /> {option.label}
-                    </button>
-                  ))}
-                </div>
+ <div className="grid grid-cols-2 gap-2">
+ {[
+ { id: "text", label: "Texto", icon: MessageCircle },
+ { id: "image", label: "Imagen", icon: ImageIcon },
+ { id: "video", label: "Video", icon: PlayCircle },
+ { id: "podcast", label: "Podcast", icon: Headphones },
+ ].map(option => (
+ <button
+ key={option.id}
+ onClick={() => changeSelectedMediaType(option.id as TestimonialMediaType)}
+ className={clsx(
+ "flex items-center justify-center gap-1.5 rounded-md border px-3 py-2 text-2xs font-semibold uppercase tracking-wide transition-all",
+ (selected.media_type || "text") === option.id
+ ? "border-[hsl(var(--danger)/30%)] bg-danger-soft text-danger-text"
+ : "border-[hsl(var(--border))] text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))]"
+ )}
+ >
+ <option.icon size={12} /> {option.label}
+ </button>
+ ))}
+ </div>
 
-                {(selected.media_type || "text") !== "text" && (
-                  <div className="space-y-2">
-                    <div className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] p-3">
-                      <div className="mb-2 flex items-center justify-between gap-3">
-                        <p className="text-2xs font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Seleccionar desde media</p>
-                        <Link href="/plataforma/cms/media" className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--danger))] hover:underline">
-                          Subir archivo
-                        </Link>
-                      </div>
-                      <input
-                        value={mediaSearch}
-                        onChange={event => setMediaSearch(event.target.value)}
-                        placeholder="Buscar imagen, video o audio..."
-                        className="mb-3 w-full text-xs bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] rounded-md px-3 py-2 outline-none focus:ring-2 focus:ring-[hsl(var(--danger)/20%)]"
-                      />
-                      {mediaLoading ? (
-                        <p className="rounded-md bg-[hsl(var(--surface-1))] px-3 py-3 text-xs font-bold text-[hsl(var(--text-secondary))]">Cargando biblioteca...</p>
-                      ) : compatibleMedia.length === 0 ? (
-                        <p className="rounded-md bg-[hsl(var(--surface-1))] px-3 py-3 text-xs font-medium text-[hsl(var(--text-secondary))]">
-                          No hay archivos compatibles para este tipo. Sube o restaura media desde la biblioteca.
-                        </p>
-                      ) : (
-                        <div className="grid grid-cols-2 gap-2 max-h-44 overflow-y-auto pr-1">
-                          {compatibleMedia.map(item => {
-                            const active = getTestimonialMediaUrl(selected) === item.url;
-                            const mediaKind = inferTestimonialMediaType(item.mime_type);
-                            return (
-                              <button
-                                key={item.id}
-                                type="button"
-                                onClick={() => assignMediaToSelected(item)}
-                                className={clsx(
-                                  "flex items-center gap-2 rounded-md border px-3 py-2 text-left transition-all",
-                                  active
-                                    ? "border-[hsl(var(--danger)/30%)] bg-danger-soft text-danger-text"
-                                    : "border-[hsl(var(--border))] text-[hsl(var(--text-secondary))] hover:border-[hsl(var(--danger)/30%)]"
-                                )}
-                              >
-                                {mediaKind === "image" ? <ImageIcon size={13} /> : mediaKind === "video" ? <PlayCircle size={13} /> : <Headphones size={13} />}
-                                <span className="min-w-0 truncate text-2xs font-bold">{item.filename || item.url}</span>
-                              </button>
-                            );
-                          })}
-                        </div>
-                      )}
-                    </div>
+ {(selected.media_type || "text") !== "text" && (
+ <div className="space-y-2">
+ <div className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] p-3">
+ <div className="mb-2 flex items-center justify-between gap-3">
+ <p className="text-2xs font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Seleccionar desde media</p>
+ <Link href="/plataforma/cms/media" className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--danger))] hover:underline">
+ Subir archivo
+ </Link>
+ </div>
+ <input
+ value={mediaSearch}
+ onChange={event => setMediaSearch(event.target.value)}
+ placeholder="Buscar imagen, video o audio..."
+ className="mb-3 w-full text-xs bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] rounded-md px-3 py-2 outline-none focus:ring-2 focus:ring-[hsl(var(--danger)/20%)]"
+ />
+ {mediaLoading ? (
+ <p className="rounded-md bg-[hsl(var(--surface-1))] px-3 py-3 text-xs font-bold text-[hsl(var(--text-secondary))]">Cargando biblioteca...</p>
+ ) : compatibleMedia.length === 0 ? (
+ <p className="rounded-md bg-[hsl(var(--surface-1))] px-3 py-3 text-xs font-medium text-[hsl(var(--text-secondary))]">
+ No hay archivos compatibles para este tipo. Sube o restaura media desde la biblioteca.
+ </p>
+ ) : (
+ <div className="grid grid-cols-2 gap-2 max-h-44 overflow-y-auto pr-1">
+ {compatibleMedia.map(item => {
+ const active = getTestimonialMediaUrl(selected) === item.url;
+ const mediaKind = inferTestimonialMediaType(item.mime_type);
+ return (
+ <button
+ key={item.id}
+ type="button"
+ onClick={() => assignMediaToSelected(item)}
+ className={clsx(
+ "flex items-center gap-2 rounded-md border px-3 py-2 text-left transition-all",
+ active
+ ? "border-[hsl(var(--danger)/30%)] bg-danger-soft text-danger-text"
+ : "border-[hsl(var(--border))] text-[hsl(var(--text-secondary))] hover:border-[hsl(var(--danger)/30%)]"
+ )}
+ >
+ {mediaKind === "image" ? <ImageIcon size={13} /> : mediaKind === "video" ? <PlayCircle size={13} /> : <Headphones size={13} />}
+ <span className="min-w-0 truncate text-2xs font-bold">{item.filename || item.url}</span>
+ </button>
+ );
+ })}
+ </div>
+ )}
+ </div>
 
-                    <p className="text-2xs font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">URL multimedia</p>
-                    <input
-                      value={getTestimonialMediaUrl(selected)}
-                      onChange={event => {
-                        const value = event.target.value;
-                        setSelected(prev => {
-                          if (!prev) return prev;
-                          if (prev.media_type === "image") return { ...prev, image_url: value, media_url: value };
-                          if (prev.media_type === "video") return { ...prev, video_url: value, media_url: value };
-                          if (prev.media_type === "podcast") return { ...prev, podcast_url: value, media_url: value };
-                          return { ...prev, media_url: value };
-                        });
-                      }}
-                      placeholder="Pega URL desde /cms/media"
-                      className="w-full text-xs bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] rounded-md px-3 py-2 outline-none focus:ring-2 focus:ring-[hsl(var(--danger)/20%)]"
-                    />
-                    {getTestimonialMediaUrl(selected) && (
-                      <div className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] overflow-hidden">
-                        {selected.media_type === "image" ? (
-                          <OptimizedImage src={getTestimonialMediaUrl(selected)} alt="" fill sizes="400px" className="w-full max-h-48 object-cover" />
-                        ) : selected.media_type === "video" ? (
-                          <video controls className="w-full max-h-48 bg-[hsl(var(--surface-3))]">
-                            <source src={getTestimonialMediaUrl(selected)} />
-                          </video>
-                        ) : (
-                          <div className="p-4">
-                            <audio controls src={getTestimonialMediaUrl(selected)} className="w-full" />
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                )}
+ <p className="text-2xs font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">URL multimedia</p>
+ <input
+ value={getTestimonialMediaUrl(selected)}
+ onChange={event => {
+ const value = event.target.value;
+ setSelected(prev => {
+ if (!prev) return prev;
+ if (prev.media_type === "image") return { ...prev, image_url: value, media_url: value };
+ if (prev.media_type === "video") return { ...prev, video_url: value, media_url: value };
+ if (prev.media_type === "podcast") return { ...prev, podcast_url: value, media_url: value };
+ return { ...prev, media_url: value };
+ });
+ }}
+ placeholder="Pega URL desde /cms/media"
+ className="w-full text-xs bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] rounded-md px-3 py-2 outline-none focus:ring-2 focus:ring-[hsl(var(--danger)/20%)]"
+ />
+ {getTestimonialMediaUrl(selected) && (
+ <div className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] overflow-hidden">
+ {selected.media_type === "image" ? (
+ <OptimizedImage src={getTestimonialMediaUrl(selected)} alt="" fill sizes="400px" className="w-full max-h-48 object-cover" />
+ ) : selected.media_type === "video" ? (
+ <video controls className="w-full max-h-48 bg-[hsl(var(--surface-3))]">
+ <source src={getTestimonialMediaUrl(selected)} />
+ </video>
+ ) : (
+ <div className="p-4">
+ <audio controls src={getTestimonialMediaUrl(selected)} className="w-full" />
+ </div>
+ )}
+ </div>
+ )}
+ </div>
+ )}
 
-                <label className="flex items-center justify-between rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-3">
-                  <span className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Mostrar en inicio</span>
-                  <input
-                    type="checkbox"
-                    checked={!!selected.show_on_home}
-                    onChange={event => setSelected(prev => prev ? { ...prev, show_on_home: event.target.checked } : prev)}
-                    className="size-4"
-                  />
-                </label>
+ <label className="flex items-center justify-between rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-3">
+ <span className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Mostrar en inicio</span>
+ <input
+ type="checkbox"
+ checked={!!selected.show_on_home}
+ onChange={event => setSelected(prev => prev ? { ...prev, show_on_home: event.target.checked } : prev)}
+ className="size-4"
+ />
+ </label>
 
-                <div className="space-y-2">
-                  <p className="text-2xs font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Categoria / emocion</p>
-                  <input
-                    value={selected.emotion || ""}
-                    onChange={event => setSelected(prev => prev ? { ...prev, emotion: event.target.value } : prev)}
-                    className="w-full text-xs bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] rounded-md px-3 py-2 outline-none focus:ring-2 focus:ring-[hsl(var(--danger)/20%)]"
-                  />
-                </div>
+ <div className="space-y-2">
+ <p className="text-2xs font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Categoria / emocion</p>
+ <input
+ value={selected.emotion || ""}
+ onChange={event => setSelected(prev => prev ? { ...prev, emotion: event.target.value } : prev)}
+ className="w-full text-xs bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] rounded-md px-3 py-2 outline-none focus:ring-2 focus:ring-[hsl(var(--danger)/20%)]"
+ />
+ </div>
 
-                <div className="flex items-center justify-between text-2xs font-bold text-[hsl(var(--text-secondary))]">
-                  <span className="flex items-center gap-1">
-                    <Clock size={11} />
-                    {selected.created_at ? new Date(selected.created_at).toLocaleString("es-CO", { dateStyle: "long", timeStyle: "short" }) : 'N/A'}
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <Heart size={11} />
-                    {selected.emotion}
-                  </span>
-                </div>
-              </div>
+ <div className="flex items-center justify-between text-2xs font-bold text-[hsl(var(--text-secondary))]">
+ <span className="flex items-center gap-1">
+ <Clock size={11} />
+ {selected.created_at ? new Date(selected.created_at).toLocaleString("es-CO", { dateStyle: "long", timeStyle: "short" }) : 'N/A'}
+ </span>
+ <span className="flex items-center gap-1">
+ <Heart size={11} />
+ {selected.emotion}
+ </span>
+ </div>
+ </div>
 
-              {/* Actions */}
-              <div className="p-3 border-t border-[hsl(var(--border))] space-y-3 shrink-0">
-                <button
-                  onClick={saveSelected}
-                  disabled={processing === selected.id}
-                  className="flex items-center justify-center gap-2 w-full py-1.5 rounded-md text-xs font-semibold uppercase tracking-wide bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] transition-all active:scale-95 disabled:opacity-60"
-                >
-                  <Save size={16} /> Guardar cambios
-                </button>
-                <button
-                  onClick={() => handleToggle(selected)}
-                  disabled={processing === selected.id || selected.status === "archived"}
-                  className={clsx(
-                    "flex items-center justify-center gap-2 w-full py-1.5 rounded-md text-xs font-semibold uppercase tracking-wide shadow-lg transition-all active:scale-95 disabled:opacity-60",
-                    selected.published
-                      ? "bg-[hsl(var(--destructive))] text-[hsl(var(--destructive-foreground))] hover:opacity-90"
-                      : "bg-[hsl(var(--success))] text-[hsl(var(--primary-foreground))] hover:opacity-90"
-                  )}
-                >
-                  {selected.published
-                    ? <><XCircle size={16} /> Retirar del Sitio Web</>
-                    : <><CheckCircle2 size={16} /> Aprobar y Publicar</>
-                  }
-                </button>
-                <button
-                  onClick={() => toggleArchive(selected)}
-                  disabled={processing === selected.id}
-                  className={clsx(
-                    "flex items-center justify-center gap-2 w-full py-1.5 rounded-md text-xs font-semibold uppercase tracking-wide shadow-lg transition-all active:scale-95 disabled:opacity-60",
-                    selected.status === "archived"
-                      ? "bg-[hsl(var(--success))] text-[hsl(var(--primary-foreground))] hover:opacity-90"
-                      : "bg-[hsl(var(--warning))] text-[hsl(var(--warning-foreground))] hover:opacity-90"
-                  )}
-                >
-                  {selected.status === "archived"
-                    ? <><RotateCcw size={16} /> Restaurar a pendientes</>
-                    : <><Archive size={16} /> Archivar testimonio</>
-                  }
-                </button>
-              </div>
-            </motion.aside>
-          )}
-        </AnimatePresence>
-      </div>
+ {/* Actions */}
+ <div className="p-3 border-t border-[hsl(var(--border))] space-y-3 shrink-0">
+ <button
+ onClick={saveSelected}
+ disabled={processing === selected.id}
+ className="flex items-center justify-center gap-2 w-full py-1.5 rounded-md text-xs font-semibold uppercase tracking-wide bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] transition-all active:scale-95 disabled:opacity-60"
+ >
+ <Save size={16} /> Guardar cambios
+ </button>
+ <button
+ onClick={() => handleToggle(selected)}
+ disabled={processing === selected.id || selected.status === "archived"}
+ className={clsx(
+ "flex items-center justify-center gap-2 w-full py-1.5 rounded-md text-xs font-semibold uppercase tracking-wide shadow-lg transition-all active:scale-95 disabled:opacity-60",
+ selected.published
+ ? "bg-[hsl(var(--destructive))] text-[hsl(var(--destructive-foreground))] hover:opacity-90"
+ : "bg-[hsl(var(--success))] text-[hsl(var(--primary-foreground))] hover:opacity-90"
+ )}
+ >
+ {selected.published
+ ? <><XCircle size={16} /> Retirar del Sitio Web</>
+ : <><CheckCircle2 size={16} /> Aprobar y Publicar</>
+ }
+ </button>
+ <button
+ onClick={() => toggleArchive(selected)}
+ disabled={processing === selected.id}
+ className={clsx(
+ "flex items-center justify-center gap-2 w-full py-1.5 rounded-md text-xs font-semibold uppercase tracking-wide shadow-lg transition-all active:scale-95 disabled:opacity-60",
+ selected.status === "archived"
+ ? "bg-[hsl(var(--success))] text-[hsl(var(--primary-foreground))] hover:opacity-90"
+ : "bg-[hsl(var(--warning))] text-[hsl(var(--warning-foreground))] hover:opacity-90"
+ )}
+ >
+ {selected.status === "archived"
+ ? <><RotateCcw size={16} /> Restaurar a pendientes</>
+ : <><Archive size={16} /> Archivar testimonio</>
+ }
+ </button>
+ </div>
+ </motion.aside>
+ )}
+ </AnimatePresence>
+ </div>
 
-      {/* Form Drawer */}
-      <WorkspaceDrawer
-        isOpen={showForm}
-        onClose={() => setShowForm(false)}
-        title="Crear Testimonio"
-      >
-        <TestimonialForm
-          token={token!}
-          onSubmitted={() => {
-            setShowForm(false);
-            if (SITE_KEY) fetchTestimonials();
-          }}
-        />
-      </WorkspaceDrawer>
+ {/* Form Drawer */}
+ <WorkspaceDrawer
+ isOpen={showForm}
+ onClose={() => setShowForm(false)}
+ title="Crear Testimonio"
+ >
+ <TestimonialForm
+ token={token!}
+ onSubmitted={() => {
+ setShowForm(false);
+ if (SITE_KEY) fetchTestimonials();
+ }}
+ />
+ </WorkspaceDrawer>
 
-      {/* SidePanel: Archive Confirmation Drawer */}
-      <SidePanel
-        isOpen={Boolean(pendingArchive)}
-        onClose={() => setPendingArchive(null)}
-        title="Archivar testimonio"
-        width="w-[420px]"
-      >
-        <div className="p-4 space-y-4">
-          <p className="text-sm text-[hsl(var(--text-secondary))]">
-            El testimonio se marcará como archivado, pero podrás restaurarlo luego.
-          </p>
-          <div className="flex gap-3 justify-end pt-4 border-t border-[hsl(var(--border))]">
-            <button
-              onClick={() => setPendingArchive(null)}
-              className="px-4 py-2 rounded-lg text-sm font-semibold text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] transition-colors"
-            >
-              Cancelar
-            </button>
-            <button
-              onClick={confirmArchive}
-              className="px-4 py-2 rounded-lg text-sm font-semibold bg-[hsl(var(--warning))] text-[hsl(var(--warning-foreground))] hover:opacity-90 transition-colors"
-            >
-              Archivar
-            </button>
-          </div>
-        </div>
-      </SidePanel>
-    </div>
-  );
+ {/* SidePanel: Archive Confirmation Drawer */}
+ <SidePanel
+ isOpen={Boolean(pendingArchive)}
+ onClose={() => setPendingArchive(null)}
+ title="Archivar testimonio"
+ width="w-[420px]"
+ >
+ <div className="p-4 space-y-4">
+ <p className="text-sm text-[hsl(var(--text-secondary))]">
+ El testimonio se marcará como archivado, pero podrás restaurarlo luego.
+ </p>
+ <div className="flex gap-3 justify-end pt-4 border-t border-[hsl(var(--border))]">
+ <button
+ onClick={() => setPendingArchive(null)}
+ className="px-4 py-2 rounded-lg text-sm font-semibold text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] transition-colors"
+ >
+ Cancelar
+ </button>
+ <button
+ onClick={confirmArchive}
+ className="px-4 py-2 rounded-lg text-sm font-semibold bg-[hsl(var(--warning))] text-[hsl(var(--warning-foreground))] hover:opacity-90 transition-colors"
+ >
+ Archivar
+ </button>
+ </div>
+ </div>
+ </SidePanel>
+ </div>
+ );
 }

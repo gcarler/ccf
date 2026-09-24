@@ -185,7 +185,7 @@ export default function PageVersionsDiffPage() {
 
   // ── Render ───────────────────────────────────────────────────────
   return (
-    <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-primary))]">
+    <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] ">
       <Header
         siteKey={siteKey}
         sites={sites}
@@ -211,7 +211,7 @@ export default function PageVersionsDiffPage() {
           </div>
         )}
         {error && !loading && (
-          <div className="rounded-lg border border-[hsl(var(--danger)/25%)] dark:border-[hsl(var(--danger)/100%)]/30 bg-danger-soft dark:bg-[hsl(var(--danger))]/10 p-4 text-danger-text dark:text-[hsl(var(--danger))] text-sm">
+          <div className="rounded-lg border border-[hsl(var(--destructive)/0.25)] bg-[hsl(var(--destructive)/0.1)] p-4 text-[hsl(var(--destructive))] text-sm">
             <p className="font-semibold mb-1">No se pudieron cargar las versiones</p>
             <p className="opacity-80">{error}</p>
           </div>

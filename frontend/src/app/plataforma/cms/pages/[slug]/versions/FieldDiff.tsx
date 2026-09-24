@@ -47,7 +47,7 @@ export function FieldDiffRow({
             role="note"
             aria-label="Valor añadido en la versión B"
             className={clsx(
-              "block text-sm text-success-text dark:text-success-text bg-success-soft dark:bg-[hsl(var(--success))]/10 border border-[hsl(var(--success)/25%)] dark:border-[hsl(var(--success)/100%)]/30 rounded-md px-2.5 py-1.5",
+              "block text-sm text-[hsl(var(--success))] bg-[hsl(var(--success-muted))] border border-[hsl(var(--success)/0.25)] rounded-md px-2.5 py-1.5",
               multiline && "whitespace-pre-wrap break-words",
             )}
           >
@@ -60,7 +60,7 @@ export function FieldDiffRow({
             role="note"
             aria-label="Valor eliminado en la versión B"
             className={clsx(
-              "block text-sm text-danger-text dark:text-danger-text bg-danger-soft dark:bg-[hsl(var(--danger))]/10 border border-[hsl(var(--danger)/25%)] dark:border-[hsl(var(--danger)/100%)]/30 rounded-md px-2.5 py-1.5 line-through",
+              "block text-sm text-[hsl(var(--destructive))] bg-[hsl(var(--destructive)/0.1)] border border-[hsl(var(--destructive)/0.25)] rounded-md px-2.5 py-1.5 line-through",
               multiline && "whitespace-pre-wrap break-words",
             )}
           >
@@ -72,7 +72,7 @@ export function FieldDiffRow({
           layout === "inline" ? (
             <span
               className={clsx(
-                "block text-sm text-[hsl(var(--text-primary))] dark:text-white",
+                "block text-sm text-[hsl(var(--text-primary))]",
                 multiline && "whitespace-pre-wrap break-words",
               )}
             >
@@ -118,7 +118,7 @@ export function TokenStream({ tokens, className }: { tokens: DiffToken[]; classN
       {tokens.map((token, i) => {
         if (token.type === "unchanged") {
           return (
-            <span key={i} className="text-[hsl(var(--text-primary))] dark:text-white">
+            <span key={i} className="text-[hsl(var(--text-primary))]">
               {token.value}
             </span>
           );
@@ -129,7 +129,7 @@ export function TokenStream({ tokens, className }: { tokens: DiffToken[]; classN
               key={i}
               role="note"
               aria-label="texto añadido"
-              className="bg-[hsl(var(--success-muted))] dark:bg-[hsl(var(--success))]/25 text-success-text dark:text-[hsl(var(--success))] rounded-sm px-0.5"
+              className="bg-[hsl(var(--success-muted))] text-[hsl(var(--success))] rounded-sm px-0.5"
             >
               {token.value}
             </span>
@@ -140,7 +140,7 @@ export function TokenStream({ tokens, className }: { tokens: DiffToken[]; classN
             key={i}
             role="note"
             aria-label="texto eliminado"
-            className="bg-[hsl(var(--danger-muted))] dark:bg-[hsl(var(--danger))]/25 text-danger-text dark:text-[hsl(var(--danger))] line-through rounded-sm px-0.5"
+            className="bg-[hsl(var(--destructive)/0.15)] text-[hsl(var(--destructive))] line-through rounded-sm px-0.5"
           >
             {token.value}
           </span>
@@ -177,19 +177,19 @@ function DiffColumn({
       className={clsx(
         "rounded-md border px-2.5 py-1.5 text-sm",
         isBefore
-          ? "bg-danger-soft/60 dark:bg-[hsl(var(--danger))]/5 border-[hsl(var(--danger)/25%)]/70 dark:border-[hsl(var(--danger)/100%)]/20"
-          : "bg-success-soft/60 dark:bg-[hsl(var(--success))]/5 border-[hsl(var(--success)/25%)]/70 dark:border-[hsl(var(--success)/100%)]/20",
+          ? "bg-[hsl(var(--destructive)/0.08)] border-[hsl(var(--destructive)/0.2)]"
+          : "bg-[hsl(var(--success-muted)/0.5)] border-[hsl(var(--success)/0.2)]",
         multiline && "whitespace-pre-wrap break-words",
       )}
     >
       {columnTokens.length > 0 ? (
         <TokenStream tokens={columnTokens} />
       ) : fallbackText !== undefined ? (
-        <span className={clsx(isBefore && "line-through text-danger-text/80 dark:text-[hsl(var(--danger)/80%)]")}>
+        <span className={clsx(isBefore && "line-through text-[hsl(var(--destructive)/0.8)]")}>
           {fallbackText || <span className="text-[hsl(var(--text-secondary))]">{emptyText}</span>}
         </span>
       ) : (
-        <span className={clsx(isBefore && "line-through", "text-[hsl(var(--text-primary))] dark:text-white")}>
+        <span className={clsx(isBefore && "line-through", "text-[hsl(var(--text-primary))]")}>
           {renderValue(rawFallback, emptyText)}
         </span>
       )}

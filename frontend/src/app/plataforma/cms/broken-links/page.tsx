@@ -42,8 +42,8 @@ export default function BrokenLinksPage() {
       </div>
 
       <div className="flex gap-2">
-        <button onClick={() => setFilter("broken")} className={`px-4 py-2 text-sm font-medium rounded-lg ${filter === "broken" ? "bg-red-100 text-[hsl(var(--destructive))]" : "border hover:bg-[hsl(var(--surface-1))]"}`}>Rotos ({links.filter(l => l.is_broken && !l.resolved_at).length})</button>
-        <button onClick={() => setFilter("resolved")} className={`px-4 py-2 text-sm font-medium rounded-lg ${filter === "resolved" ? "bg-green-100 text-[hsl(var(--secondary))]" : "border hover:bg-[hsl(var(--surface-1))]"}`}>Resueltos</button>
+        <button onClick={() => setFilter("broken")} className={`px-4 py-2 text-sm font-medium rounded-lg ${filter === "broken" ? "bg-[hsl(var(--destructive)/0.1)] text-[hsl(var(--destructive))]" : "border hover:bg-[hsl(var(--surface-1))]"}`}>Rotos ({links.filter(l => l.is_broken && !l.resolved_at).length})</button>
+        <button onClick={() => setFilter("resolved")} className={`px-4 py-2 text-sm font-medium rounded-lg ${filter === "resolved" ? "bg-[hsl(var(--success-muted))] text-[hsl(var(--success))]" : "border hover:bg-[hsl(var(--surface-1))]"}`}>Resueltos</button>
         <button onClick={() => setFilter("all")} className={`px-4 py-2 text-sm font-medium rounded-lg ${filter === "all" ? "bg-[hsl(var(--surface-2))]" : "border hover:bg-[hsl(var(--surface-1))]"}`}>Todos</button>
       </div>
 
@@ -51,7 +51,7 @@ export default function BrokenLinksPage() {
         {loading ? <div className="py-12 text-center text-[hsl(var(--text-secondary))]">Cargando...</div> : links.length === 0 ? (
           <div className="py-12 text-center text-[hsl(var(--text-secondary))]">Sin enlaces {filter === "broken" ? "rotos" : ""}</div>
         ) : links.map(l => (
-          <div key={l.id} className={`flex items-center gap-4 p-4 border rounded-xl ${l.resolved_at ? "bg-green-50/50 border-green-200" : "bg-[hsl(var(--bg-primary))]"}`}>
+          <div key={l.id} className={`flex items-center gap-4 p-4 border rounded-xl ${l.resolved_at ? "bg-[hsl(var(--success-muted)/0.3)] border-[hsl(var(--success)/0.2)]" : "bg-[hsl(var(--bg-primary))]"}`}>
             <div className="shrink-0">
               {l.resolved_at ? <CheckCircle size={18} className="text-[hsl(var(--secondary))]" /> : <AlertTriangle size={18} className="text-[hsl(var(--destructive))]" />}
             </div>
@@ -63,7 +63,7 @@ export default function BrokenLinksPage() {
             <div className="flex items-center gap-2 shrink-0">
               {l.status_code && <span className="text-2xs font-bold bg-[hsl(var(--surface-2))] px-2 py-0.5 rounded">{l.status_code}</span>}
               {!l.resolved_at && (
-                <button onClick={() => resolve(l.id)} className="px-3 py-1.5 text-xs font-medium rounded-lg bg-green-100 text-[hsl(var(--secondary))] hover:bg-green-200">Marcar resuelto</button>
+                <button onClick={() => resolve(l.id)} className="px-3 py-1.5 text-xs font-medium rounded-lg bg-[hsl(var(--success-muted))] text-[hsl(var(--success))] hover:bg-[hsl(var(--surface-3))]">Marcar resuelto</button>
               )}
               <a href={l.target_url} target="_blank" rel="noopener noreferrer" className="p-1.5 rounded-lg hover:bg-[hsl(var(--surface-2))]"><ExternalLink size={12} className="text-[hsl(var(--text-secondary))]" /></a>
             </div>
