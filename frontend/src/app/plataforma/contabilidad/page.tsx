@@ -10,7 +10,7 @@ import {
   Receipt,
   PenTool,
   Wallet,
-}from "lucide-react";
+} from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { apiFetch } from "@/lib/http";
 import WorkspaceLayout from "@/components/WorkspaceLayout";
@@ -129,12 +129,12 @@ export default function ContabilidadPage() {
 
   return (
     <WorkspaceLayout sidebarTitle="Finanzas Pro" sidebarSections={SECTIONS}>
-      <div className="h-full overflow-y-auto bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))] font-display scrollbar-thin">
+      <div className="h-full overflow-y-auto bg-[hsl(var(--bg-primary))] font-display scrollbar-thin">
         <div className="w-full px-4 py-3 space-y-3">
           {/* Header */}
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-lg font-bold text-[hsl(var(--text-primary))] dark:text-white tracking-tight uppercase">
+              <h1 className="text-lg font-bold text-[hsl(var(--text-primary))] tracking-tight uppercase">
                 Suite Financiera
               </h1>
               <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--primary))] mt-0.5">
@@ -153,7 +153,7 @@ export default function ContabilidadPage() {
                   initial={{ opacity: 0, y: 12 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: idx * 0.05 }}
-                  className="bg-[hsl(var(--bg-primary))] dark:bg-[#111418] rounded-lg border border-[hsl(var(--border))] dark:border-white/10 p-4 shadow-sm"
+                  className="bg-[hsl(var(--surface-1))] rounded-lg border border-[hsl(var(--border))] p-4 shadow-sm"
                 >
                   <div className="flex items-center justify-between mb-2">
                     <p className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{m.label}</p>
@@ -161,7 +161,7 @@ export default function ContabilidadPage() {
                       <Icon size={16} />
                     </div>
                   </div>
-                  <p className="text-xl font-bold text-[hsl(var(--text-primary))] dark:text-white">{loading ? "..." : m.value}</p>
+                  <p className="text-xl font-bold text-[hsl(var(--text-primary))]">{loading ? "..." : m.value}</p>
                 </motion.div>
               );
             })}
@@ -178,17 +178,17 @@ export default function ContabilidadPage() {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.1 + idx * 0.06 }}
                   onClick={() => router.push(mod.href)}
-                  className="group text-left bg-[hsl(var(--bg-primary))] dark:bg-[#111418] rounded-lg border border-[hsl(var(--border))] dark:border-white/10 p-4 shadow-sm hover:shadow-xl hover:border-[hsl(var(--info)/100%)]/30 transition-all duration-200"
+                  className="group text-left bg-[hsl(var(--surface-1))] rounded-lg border border-[hsl(var(--border))] p-4 shadow-sm hover:shadow-xl hover:border-[hsl(var(--info))]/30 transition-all duration-200"
                 >
                   <div className="flex items-start justify-between mb-3">
-                    <div className={clsx("size-10 rounded-xl bg-gradient-to-br flex items-center justify-center text-white shadow-lg", mod.color)}>
+                    <div className={clsx("size-10 rounded-xl bg-gradient-to-br flex items-center justify-center text-[hsl(var(--text-inverse))] shadow-lg", mod.color)}>
                       <Icon size={20} />
                     </div>
-                    <span className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] bg-[hsl(var(--surface-2))] dark:bg-white/5 px-2 py-1 rounded-full">
+                    <span className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] bg-[hsl(var(--surface-2))] px-2 py-1 rounded-full">
                       {mod.stats}
                     </span>
                   </div>
-                  <h3 className="text-sm font-bold text-[hsl(var(--text-primary))] dark:text-white mb-1">{mod.title}</h3>
+                  <h3 className="text-sm font-bold text-[hsl(var(--text-primary))] mb-1">{mod.title}</h3>
                   <p className="text-xs text-[hsl(var(--text-secondary))] leading-relaxed">{mod.description}</p>
                 </motion.button>
               );
@@ -197,7 +197,7 @@ export default function ContabilidadPage() {
 
           {/* Recent Activity */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-            <div className="bg-[hsl(var(--bg-primary))] dark:bg-[#111418] rounded-lg border border-[hsl(var(--border))] dark:border-white/10 p-3 shadow-sm">
+            <div className="bg-[hsl(var(--surface-1))] rounded-lg border border-[hsl(var(--border))] p-3 shadow-sm">
               <h3 className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-3">Transacciones Recientes</h3>
               <div className="space-y-2">
                 {loading ? (
@@ -206,9 +206,9 @@ export default function ContabilidadPage() {
                   <p className="text-sm text-[hsl(var(--text-secondary))]">Sin transacciones.</p>
                 ) : (
                   transactions.map((tx) => (
-                    <div key={tx.id} className="flex items-center justify-between py-2 border-b border-[hsl(var(--border))] dark:border-white/5 last:border-0">
+                    <div key={tx.id} className="flex items-center justify-between py-2 border-b border-[hsl(var(--border))] last:border-0">
                       <div>
-                        <p className="text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-white">{tx.description}</p>
+                        <p className="text-sm font-semibold text-[hsl(var(--text-primary))]">{tx.description}</p>
                         <p className="text-2xs text-[hsl(var(--text-secondary))]">{tx.reference || "Sin referencia"}</p>
                       </div>
                       <span className={clsx("text-sm font-bold", tx.transaction_type === "credit" ? "text-[hsl(var(--success))]" : "text-[hsl(var(--destructive))]")}>
@@ -220,7 +220,7 @@ export default function ContabilidadPage() {
               </div>
             </div>
 
-            <div className="bg-[hsl(var(--bg-primary))] dark:bg-[#111418] rounded-lg border border-[hsl(var(--border))] dark:border-white/10 p-3 shadow-sm">
+            <div className="bg-[hsl(var(--surface-1))] rounded-lg border border-[hsl(var(--border))] p-3 shadow-sm">
               <h3 className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-3">Facturas Recientes</h3>
               <div className="space-y-2">
                 {loading ? (
@@ -229,13 +229,13 @@ export default function ContabilidadPage() {
                   <p className="text-sm text-[hsl(var(--text-secondary))]">Sin facturas.</p>
                 ) : (
                   invoices.map((inv) => (
-                    <div key={inv.id} className="flex items-center justify-between py-2 border-b border-[hsl(var(--border))] dark:border-white/5 last:border-0">
+                    <div key={inv.id} className="flex items-center justify-between py-2 border-b border-[hsl(var(--border))] last:border-0">
                       <div>
-                        <p className="text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-white">{inv.invoice_number}</p>
+                        <p className="text-sm font-semibold text-[hsl(var(--text-primary))]">{inv.invoice_number}</p>
                         <p className="text-2xs text-[hsl(var(--text-secondary))]">{inv.customer_name}</p>
                       </div>
                       <div className="text-right">
-                        <p className="text-sm font-bold text-[hsl(var(--text-primary))] dark:text-white">{fmtCOP(Number(inv.total))}</p>
+                        <p className="text-sm font-bold text-[hsl(var(--text-primary))]">{fmtCOP(Number(inv.total))}</p>
                         <span className={clsx(
                           "text-2xs font-bold uppercase tracking-wide px-1.5 py-0.5 rounded-full",
                           inv.status === "paid" ? "bg-[hsl(var(--success-muted))] text-[hsl(var(--success))]" :
