@@ -84,7 +84,7 @@ export default function SecurityAuditPage() {
 
             <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] rounded-lg overflow-hidden border border-[hsl(var(--success)/30%)] shadow-2xl relative font-mono">
                 {/* Cyberpunk Header */}
-                <div className="p-4 border-b border-[hsl(var(--success)/50%)] bg-black/40 flex justify-between items-center relative z-10 shrink-0">
+                <div className="p-4 border-b border-[hsl(var(--success)/50%)] bg-[hsl(var(--surface-2))]/40 flex justify-between items-center relative z-10 shrink-0">
                     <div className="flex items-center gap-3">
                         <div className="size-8 rounded-lg bg-[hsl(var(--success))]/50 flex items-center justify-center text-[hsl(var(--success))] border border-[hsl(var(--success)/100%)]/20 shadow-[0_0_15px_rgba(16,185,129,0.2)]">
                             <Lock size={32} />
@@ -114,7 +114,7 @@ export default function SecurityAuditPage() {
                     <div className="scanline" />
                     <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[hsl(var(--bg-primary))]/50 to-[hsl(var(--bg-primary))] pointer-events-none z-10" />
 
-                    <div className="h-full overflow-y-auto p-4 relative z-20 scrollbar-thin scrollbar-thumb-emerald-900/50 scrollbar-track-transparent">
+                    <div className="h-full overflow-y-auto p-4 relative z-20 scrollbar-thin scrollbar-thumb-[hsl(var(--success)/0.3)] scrollbar-track-transparent">
                         {loading ? (
                             <div className="flex flex-col items-center justify-center py-1.5 gap-4">
                                 <Activity className="text-[hsl(var(--success))] animate-pulse" size={48} />
@@ -130,7 +130,7 @@ export default function SecurityAuditPage() {
                                             transition={{ delay: idx * 0.05 }}
                                             key={getWorkspaceAuditEventKey(log)}
                                             onClick={() => router.push(`/plataforma/admin/audit/${encodeURIComponent(getWorkspaceAuditEventKey(log))}`)}
-                                            className="group flex flex-col md:flex-row md:items-center gap-4 p-4 rounded-md bg-black/40 border border-[hsl(var(--success)/20%)] hover:border-[hsl(var(--success)/100%)]/50 hover:bg-[hsl(var(--success))]/20 transition-all cursor-crosshair"
+                                            className="group flex flex-col md:flex-row md:items-center gap-4 p-4 rounded-md bg-[hsl(var(--surface-1))] border border-[hsl(var(--success)/20%)] hover:border-[hsl(var(--success)/100%)]/50 hover:bg-[hsl(var(--success))]/20 transition-all cursor-crosshair"
                                         >
                                             <div className="flex items-center gap-4 w-full md:w-auto md:min-w-[200px] shrink-0">
                                                 <span className="text-success-text text-2xs">[{new Date(log.timestamp).toLocaleTimeString('en-US', { hour12: false })}]</span>
@@ -171,7 +171,7 @@ export default function SecurityAuditPage() {
                 </div>
 
                 {/* Status Bar */}
-                <div className="p-2 border-t border-[hsl(var(--success)/50%)] bg-black text-success-text text-2xs uppercase tracking-wide flex justify-between shrink-0 relative z-10">
+                <div className="p-2 border-t border-[hsl(var(--success)/50%)] bg-[hsl(var(--surface-3))] text-success-text text-2xs uppercase tracking-wide flex justify-between shrink-0 relative z-10">
                     <span>SYS_STATUS: ONLINE</span>
                     <span>CONNECTION: SECURE_SOCKET</span>
                     <span>DB_SYNC: OK</span>

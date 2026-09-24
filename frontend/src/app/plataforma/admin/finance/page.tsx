@@ -96,12 +96,12 @@ export default function FinanceAdminPage() {
                 <div className="flex items-center gap-3 truncate">
                     <div className={clsx(
                         "size-8 rounded-lg flex items-center justify-center shrink-0 shadow-sm",
-                        row.original.type === 'income' ? "bg-[hsl(var(--success-muted))] dark:bg-[hsl(var(--success)/0.15)] text-[hsl(var(--success))]" : "bg-[hsl(var(--destructive)/0.08)] dark:bg-[hsl(var(--destructive)/0.15)] text-[hsl(var(--destructive))]"
+                        row.original.type === 'income' ? "bg-[hsl(var(--success-muted))] text-[hsl(var(--success))]" : "bg-[hsl(var(--destructive)/0.08)] text-[hsl(var(--destructive))]"
                     )}>
                         {row.original.type === 'income' ? <ArrowUpRight size={14} /> : <ArrowDownLeft size={14} />}
                     </div>
                     <div className="flex flex-col truncate">
-                        <span className="text-base font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] truncate">{String(row.original.description ?? '')}</span>
+                        <span className="text-base font-bold text-[hsl(var(--text-primary))] truncate">{String(row.original.description ?? '')}</span>
                         <span className="text-2xs text-[hsl(var(--text-secondary))] font-semibold uppercase tracking-wide leading-none mt-0.5">{String(row.original.category ?? '')}</span>
                     </div>
                 </div>
@@ -117,7 +117,7 @@ export default function FinanceAdminPage() {
                 </div>
             )
         },
-        { id: 'actions', header: '', size: 50, cell: () => <button className="p-1.5 hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5 rounded-lg text-[hsl(var(--text-secondary))] opacity-0 group-hover:opacity-100 transition-all"><MoreHorizontal size={16} /></button> }
+        { id: 'actions', header: '', size: 50, cell: () => <button className="p-1.5 hover:bg-[hsl(var(--surface-2))] rounded-lg text-[hsl(var(--text-secondary))] opacity-0 group-hover:opacity-100 transition-all"><MoreHorizontal size={16} /></button> }
     ], []);
     const filteredTransactions = useMemo(() => transactions.filter(tx =>
         String(tx.description || '').toLowerCase().includes(search.toLowerCase()) ||
@@ -145,7 +145,7 @@ export default function FinanceAdminPage() {
     })), [filteredTransactions]);
 
     return (
-        <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))] overflow-hidden animate-fade-in font-display">
+        <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] overflow-hidden animate-fade-in font-display">
             <style jsx global>{`
                 .aura-effect {
                     position: relative;
@@ -187,14 +187,10 @@ export default function FinanceAdminPage() {
                     100% { left: 200%; }
                 }
                 .stacked-glass {
-                    background: rgba(255, 255, 255, 0.7);
+                    background: hsl(var(--surface-1));
                     backdrop-filter: blur(20px) saturate(180%);
                     -webkit-backdrop-filter: blur(20px) saturate(180%);
-                    border: 1px solid rgba(255, 255, 255, 0.3);
-                }
-                .dark .stacked-glass {
-                    background: rgba(30, 31, 33, 0.8);
-                    border: 1px solid rgba(255, 255, 255, 0.05);
+                    border: 1px solid hsl(var(--border));
                 }
             `}</style>
 
@@ -203,13 +199,13 @@ export default function FinanceAdminPage() {
                 viewType={viewType} setViewType={setViewType} availableViews={FINANCE_VIEWS} onSearch={setSearch}
                 rightActions={
                     <div className="flex items-center gap-2">
-                        <button className="flex items-center gap-2 px-4 py-1.5 bg-[hsl(var(--surface-2))] dark:bg-white/5 hover:bg-[hsl(var(--surface-3))] rounded-md text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] transition-all active:scale-95"><Download size={14} /> Exportar</button>
-                        <button className="flex items-center gap-2 px-4 py-1.5 bg-[hsl(var(--primary))] text-white rounded-md text-xs font-semibold uppercase tracking-wide shadow-xl shadow-[hsl(var(--info)/20%)] active:scale-95 transition-all"><Plus size={14} /> Registrar Transacción</button>
+                        <button className="flex items-center gap-2 px-4 py-1.5 bg-[hsl(var(--surface-2))] hover:bg-[hsl(var(--surface-3))] rounded-md text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] transition-all active:scale-95"><Download size={14} /> Exportar</button>
+                        <button className="flex items-center gap-2 px-4 py-1.5 bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] rounded-md text-xs font-semibold uppercase tracking-wide shadow-xl shadow-[hsl(var(--info)/20%)] active:scale-95 transition-all"><Plus size={14} /> Registrar Transacción</button>
                     </div>
                 }
             />
 
-            <div className="flex px-3 border-b border-[hsl(var(--border))] dark:border-white/5 bg-[hsl(var(--surface-1))]/50 dark:bg-white/5 shrink-0 overflow-x-auto no-scrollbar">
+            <div className="flex px-3 border-b border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] shrink-0 overflow-x-auto no-scrollbar">
                 <FinanceTab label="Resumen General" active={activeTab === 'summary'} onClick={() => setActiveTab('summary')} />
                 <FinanceTab label="Libro Mayor" active={activeTab === 'transactions'} onClick={() => setActiveTab('transactions')} />
                 <FinanceTab label="Auditoría IA" active={activeTab === 'audit'} onClick={() => setActiveTab('audit')} />
@@ -228,9 +224,9 @@ export default function FinanceAdminPage() {
                         ) : viewType === 'list' ? (
                             <motion.div key="list" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-2">
                                 {filteredTransactions.map((tx) => (
-                                    <button key={tx.id} onClick={() => handleOpenTx(tx)} className="flex w-full items-center justify-between gap-4 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-4 text-left dark:border-white/10 dark:bg-white/5">
+                                    <button key={tx.id} onClick={() => handleOpenTx(tx)} className="flex w-full items-center justify-between gap-4 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-4 text-left">
                                         <div>
-                                            <p className="text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-white">{tx.description}</p>
+                                            <p className="text-sm font-semibold text-[hsl(var(--text-primary))]">{tx.description}</p>
                                             <p className="text-xs font-semibold text-[hsl(var(--text-secondary))]">{tx.category}</p>
                                         </div>
                                         <span className={clsx("font-black", tx.type === 'income' ? "text-[hsl(var(--success))]" : "text-[hsl(var(--destructive))]")}>${Number(tx.amount || 0).toLocaleString()}</span>
@@ -240,15 +236,15 @@ export default function FinanceAdminPage() {
                         ) : viewType === 'board' || viewType === 'kanban' ? (
                             <motion.div key="board" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex gap-4 overflow-x-auto">
                                 {groupedTransactions.map((column) => (
-                                    <section key={column.type} className="w-96 shrink-0 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-3 dark:border-white/10 dark:bg-white/[0.03]">
+                                    <section key={column.type} className="w-96 shrink-0 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-3">
                                         <div className="mb-3 flex items-center justify-between px-1">
                                             <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{column.type}</p>
                                             <span className="font-semibold text-[hsl(var(--text-secondary))]">{column.items.length}</span>
                                         </div>
                                         <div className="space-y-2">
                                             {column.items.map((tx) => (
-                                                <button key={tx.id} onClick={() => handleOpenTx(tx)} className="w-full rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-3 text-left dark:border-white/10 dark:bg-white/5">
-                                                    <p className="text-xs font-semibold text-[hsl(var(--text-primary))] dark:text-white">{tx.description}</p>
+                                                <button key={tx.id} onClick={() => handleOpenTx(tx)} className="w-full rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-3 text-left">
+                                                    <p className="text-xs font-semibold text-[hsl(var(--text-primary))]">{tx.description}</p>
                                                     <p className="mt-1 text-2xs font-semibold text-[hsl(var(--text-secondary))]">${Number(tx.amount || 0).toLocaleString()} · {tx.category}</p>
                                                 </button>
                                             ))}
@@ -279,7 +275,7 @@ export default function FinanceAdminPage() {
                                 key="table-view"
                                 initial={{ opacity: 0 }}
                                 animate={{ opacity: 1 }}
-                                className="h-full bg-[hsl(var(--bg-primary))] dark:bg-black/20 rounded-lg border border-[hsl(var(--border))] dark:border-white/5 overflow-hidden shadow-sm"
+                                className="h-full bg-[hsl(var(--bg-primary))] rounded-lg border border-[hsl(var(--border))] overflow-hidden shadow-sm"
                             >
                                 <DataTable data={filteredTransactions} columns={columns} onRowClick={handleOpenTx} />
                             </motion.div>
@@ -300,7 +296,7 @@ export default function FinanceAdminPage() {
 
                                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-3">
                                     {/* Financial Performance Chart */}
-                                    <div className="lg:col-span-8 p-4 bg-[hsl(var(--bg-muted))] rounded-lg text-white shadow-2xl relative overflow-hidden group border border-white/5 animate-in fade-in slide-in-from-bottom-4 duration-700">
+                                    <div className="lg:col-span-8 p-4 bg-[hsl(var(--surface-2))] rounded-lg text-[hsl(var(--text-primary))] shadow-sm relative overflow-hidden group border border-[hsl(var(--border))] animate-in fade-in slide-in-from-bottom-4 duration-700">
                                         <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 group-hover:rotate-12 transition-all duration-700"><BarChart3 size={140} /></div>
                                         <div className="space-y-3 relative z-10">
                                             <div className="flex items-center justify-between px-2">
@@ -336,7 +332,7 @@ export default function FinanceAdminPage() {
                                     </div>
 
                                     {/* Budget Allocation */}
-                                    <div className="lg:col-span-4 p-4 bg-[hsl(var(--bg-primary))] dark:bg-white/5 rounded-lg border border-[hsl(var(--border))] dark:border-white/5 shadow-sm space-y-3 animate-in fade-in slide-in-from-right-4 duration-700">
+                                    <div className="lg:col-span-4 p-4 bg-[hsl(var(--bg-primary))] rounded-lg border border-[hsl(var(--border))] shadow-sm space-y-3 animate-in fade-in slide-in-from-right-4 duration-700">
                                         <h3 className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide px-2 flex items-center gap-2"><PieChart size={16} className="text-[hsl(var(--primary))]" /> Distribución de Gasto</h3>
                                         <div className="space-y-3 px-2">
                                             <BudgetItem label="Mantenimiento Sede" percent={45} color="bg-[hsl(var(--primary))]" />
@@ -344,7 +340,7 @@ export default function FinanceAdminPage() {
                                             <BudgetItem label="Personal y Staff" percent={15} color="bg-[hsl(var(--warning))]" />
                                             <BudgetItem label="Otros Gastos" percent={10} color="bg-[hsl(var(--surface-2))]" />
                                         </div>
-                                        <button className="w-full py-2 mt-4 bg-[hsl(var(--surface-1))] dark:bg-white/5 rounded-lg text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] hover:bg-[hsl(var(--info-muted))] transition-all transform active:scale-95 shadow-sm">Ver Presupuestos 2026</button>
+                                        <button className="w-full py-2 mt-4 bg-[hsl(var(--surface-1))] hover:bg-[hsl(var(--surface-2))] rounded-lg text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] transition-all transform active:scale-95 shadow-sm">Ver Presupuestos 2026</button>
                                     </div>
                                 </div>
                             </motion.div>
@@ -356,12 +352,12 @@ export default function FinanceAdminPage() {
                                 exit={{ opacity: 0, scale: 0.95 }}
                                 className="space-y-3"
                             >
-                                <section className="p-4 lg:p-4 bg-gradient-to-br from-[hsl(var(--bg-muted))] via-[hsl(var(--info))] to-[hsl(var(--info))] rounded-lg text-white shadow-2xl relative overflow-hidden group">
+                                <section className="p-4 lg:p-4 bg-gradient-to-br from-[hsl(var(--surface-2))] via-[hsl(var(--surface-3))] to-[hsl(var(--surface-2))] rounded-lg text-[hsl(var(--text-primary))] shadow-sm relative overflow-hidden group border border-[hsl(var(--border))]">
                                     <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:scale-110 group-hover:rotate-12 transition-all duration-1000"><Sparkles size={240} /></div>
                                     <div className="absolute -bottom-20 -left-20 size-96 bg-[hsl(var(--primary))/0.1] blur-[100px] rounded-full" />
 
                                     <div className="relative z-10 max-w-3xl space-y-3">
-                                        <div className="inline-flex items-center gap-3 px-3 py-2 bg-white/5 backdrop-blur-2xl border border-white/10 rounded-full text-xs font-semibold uppercase tracking-wide shadow-2xl">
+                                        <div className="inline-flex items-center gap-3 px-3 py-2 bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] rounded-full text-xs font-semibold uppercase tracking-wide shadow-sm">
                                             <Zap size={16} className="text-[hsl(var(--warning))]" fill="currentColor" /> Optimus Finance Intelligence
                                         </div>
                                         <h2 className="text-xl lg:text-xl font-bold tracking-tighter leading-none">
@@ -373,7 +369,7 @@ export default function FinanceAdminPage() {
                                         </p>
                                         <div className="flex flex-wrap gap-4 pt-4">
                                             <button className="px-4 py-2 bg-[hsl(var(--bg-primary))] text-[hsl(var(--text-primary))] rounded-lg font-black text-xs uppercase tracking-wide shadow-2xl shadow-white/10 hover:translate-y-[-4px] active:scale-95 transition-all">Generar Auditoría Completa</button>
-                                            <button className="px-4 py-2 bg-white/10 backdrop-blur-md border border-white/10 text-white rounded-lg font-black text-xs uppercase tracking-wide hover:bg-white/20 transition-all">Reporte de Misiones</button>
+                                            <button className="px-4 py-2 bg-[hsl(var(--surface-1))] hover:bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] text-[hsl(var(--text-primary))] rounded-lg font-black text-xs uppercase tracking-wide transition-all">Reporte de Misiones</button>
                                         </div>
                                     </div>
                                 </section>
@@ -383,7 +379,7 @@ export default function FinanceAdminPage() {
                                 key="table"
                                 initial={{ opacity: 0 }}
                                 animate={{ opacity: 1 }}
-                                className="h-full bg-[hsl(var(--bg-primary))] dark:bg-black/20 rounded-lg border border-[hsl(var(--border))] dark:border-white/5 overflow-hidden shadow-sm"
+                                className="h-full bg-[hsl(var(--bg-primary))] rounded-lg border border-[hsl(var(--border))] overflow-hidden shadow-sm"
                             >
                                 <DataTable
                                     data={filteredTransactions}
@@ -400,7 +396,7 @@ export default function FinanceAdminPage() {
                 isOpen={isDrawerOpen} onClose={() => setIsDrawerOpen(false)}
                 title={selectedTx?.description || 'Detalle de Operación'}
                 subtitle={`${selectedTx?.type?.toUpperCase()} • REF-${selectedTx?.id}`}
-                actions={<><button className="px-4 py-2 text-xs font-bold text-[hsl(var(--destructive))] hover:bg-[hsl(var(--destructive)/0.08)] rounded-md transition-all">Anular</button><button className="px-3 py-2 bg-[hsl(var(--bg-muted))] dark:bg-[hsl(var(--bg-primary))] text-white dark:text-[hsl(var(--text-primary))] rounded-md text-xs font-semibold uppercase tracking-wide shadow-xl">Descargar Recibo</button></>}
+                actions={<><button className="px-4 py-2 text-xs font-bold text-[hsl(var(--destructive))] hover:bg-[hsl(var(--destructive)/0.08)] rounded-md transition-all">Anular</button><button className="px-3 py-2 bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] rounded-md text-xs font-semibold uppercase tracking-wide shadow-sm">Descargar Recibo</button></>}
             >
                 <div className="space-y-3 animate-in fade-in slide-in-from-right-4 duration-500">
                     <section className="grid grid-cols-2 gap-4">
@@ -410,19 +406,19 @@ export default function FinanceAdminPage() {
                         <DrawerStat label="Fecha" value={selectedTx ? new Date(selectedTx.date || selectedTx.created_at || Date.now()).toLocaleDateString() : ''} icon={Calendar} />
                     </section>
 
-                    <section className="space-y-4 pt-6 border-t border-[hsl(var(--border))] dark:border-white/5">
+                    <section className="space-y-4 pt-6 border-t border-[hsl(var(--border))]">
                         <h4 className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide flex items-center gap-2"><Receipt size={14} /> Comprobante Digital</h4>
-                        <div className="aspect-[3/4] w-full max-w-[320px] mx-auto rounded-lg bg-[hsl(var(--surface-1))] dark:bg-black/40 border-2 border-dashed border-[hsl(var(--border))] dark:border-white/5 flex flex-col items-center justify-center text-[hsl(var(--text-secondary))] space-y-4 group cursor-pointer hover:border-[hsl(var(--info)/100%)]/50 hover:bg-[hsl(var(--bg-primary))] transition-all duration-500">
-                            <div className="p-3 bg-[hsl(var(--bg-primary))] dark:bg-white/5 rounded-lg shadow-sm group-hover:scale-110 group-hover:rotate-3 transition-all duration-500">
+                        <div className="aspect-[3/4] w-full max-w-[320px] mx-auto rounded-lg bg-[hsl(var(--surface-1))] border-2 border-dashed border-[hsl(var(--border))] flex flex-col items-center justify-center text-[hsl(var(--text-secondary))] space-y-4 group cursor-pointer hover:border-[hsl(var(--info)/100%)]/50 hover:bg-[hsl(var(--bg-primary))] transition-all duration-500">
+                            <div className="p-3 bg-[hsl(var(--bg-primary))] rounded-lg shadow-sm group-hover:scale-110 group-hover:rotate-3 transition-all duration-500">
                                 <FileText size={56} strokeWidth={1} className="text-[hsl(var(--text-secondary))] group-hover:text-[hsl(var(--primary))]" />
                             </div>
                             <p className="text-2xs font-semibold uppercase tracking-wide group-hover:text-[hsl(var(--primary))] transition-colors">Ver Documento Escaneado</p>
                         </div>
                     </section>
 
-                    <section className="p-4 bg-[hsl(var(--success-muted))] dark:bg-[hsl(var(--success)/0.1)] rounded-lg border border-[hsl(var(--success))/0.2] dark:border-[hsl(var(--success))/0.15] flex items-center gap-3 shadow-sm relative overflow-hidden">
+                    <section className="p-4 bg-[hsl(var(--success-muted))] rounded-lg border border-[hsl(var(--success)/0.2)] flex items-center gap-3 shadow-sm relative overflow-hidden">
                         <div className="absolute top-0 right-0 p-4 opacity-10 rotate-12"><ShieldCheck size={80} /></div>
-                        <div className="size-7 rounded-lg bg-[hsl(var(--bg-primary))] dark:bg-white/10 flex items-center justify-center text-[hsl(var(--success))] shadow-sm relative z-10"><ShieldCheck size={28} /></div>
+                        <div className="size-7 rounded-lg bg-[hsl(var(--bg-primary))] flex items-center justify-center text-[hsl(var(--success))] shadow-sm relative z-10"><ShieldCheck size={28} /></div>
                         <div className="relative z-10">
                             <h4 className="text-xs font-semibold uppercase tracking-wide text-[hsl(var(--success))]">Transacción Verificada</h4>
                             <p className="text-xs text-[hsl(var(--success))/0.7] font-bold">Conciliación bancaria completada automáticamente.</p>
@@ -436,7 +432,7 @@ export default function FinanceAdminPage() {
 
 function FinanceTab({ label, active, onClick }: TabButtonProps) {
     return (
-        <button onClick={onClick} className={clsx("px-4 py-2 text-xs font-semibold uppercase tracking-wide transition-all border-b-2 relative overflow-hidden shrink-0", active ? "text-[hsl(var(--primary))] border-[hsl(var(--primary))]" : "text-[hsl(var(--text-secondary))] border-transparent hover:text-[hsl(var(--text-secondary))] hover:bg-white/50")}>
+        <button onClick={onClick} className={clsx("px-4 py-2 text-xs font-semibold uppercase tracking-wide transition-all border-b-2 relative overflow-hidden shrink-0", active ? "text-[hsl(var(--primary))] border-[hsl(var(--primary))]" : "text-[hsl(var(--text-secondary))] border-transparent hover:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))]")}>
             {active && <motion.div layoutId="finance-tab" className="absolute bottom-0 left-0 w-full h-[2.5px] bg-[hsl(var(--primary))]" />}
             {label}
         </button>
@@ -446,14 +442,14 @@ function FinanceTab({ label, active, onClick }: TabButtonProps) {
 function SummaryCard({ title, value, trend, icon: Icon, color, auraColor }: SummaryCardProps) {
     return (
         <div
-            className="aura-effect p-4 rounded-lg bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/5 shadow-sm group hover:shadow-2xl transition-all duration-500 relative overflow-hidden"
+            className="aura-effect p-4 rounded-lg bg-[hsl(var(--bg-primary))] border border-[hsl(var(--border))] shadow-sm group hover:shadow-2xl transition-all duration-500 relative overflow-hidden"
             style={{ '--aura-color': auraColor } as CSSAuraProperties}
         >
             <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 group-hover:scale-125 group-hover:rotate-12 transition-all duration-700">{Icon && <Icon size={64} />}</div>
             <div className="space-y-5 relative z-10">
                 <p className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">{title}</p>
-                <h3 className="text-lg font-bold text-[hsl(var(--text-primary))] dark:text-white tracking-tighter leading-none">{value}</h3>
-                <div className={clsx("inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full font-semibold shadow-sm border border-black/5", color === 'rose' ? "bg-[hsl(var(--destructive)/0.08)] text-[hsl(var(--destructive))]" : "bg-[hsl(var(--success-muted))] text-[hsl(var(--success))]")}>
+                <h3 className="text-lg font-bold text-[hsl(var(--text-primary))] tracking-tighter leading-none">{value}</h3>
+                <div className={clsx("inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full font-semibold shadow-sm border border-[hsl(var(--border))]", color === 'rose' ? "bg-[hsl(var(--destructive)/0.08)] text-[hsl(var(--destructive))]" : "bg-[hsl(var(--success-muted))] text-[hsl(var(--success))]")}>
                     {color === 'rose' ? <TrendingDown size={14} /> : <TrendingUp size={14} />} {trend}
                 </div>
             </div>
@@ -465,10 +461,10 @@ function BudgetItem({ label, percent, color }: BudgetItemProps) {
     return (
         <div className="space-y-3 group/item">
             <div className="flex justify-between items-center text-xs font-semibold uppercase tracking-tight">
-                <span className="text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] group-hover/item:text-[hsl(var(--text-primary))] transition-colors">{label}</span>
+                <span className="text-[hsl(var(--text-secondary))] group-hover/item:text-[hsl(var(--text-primary))] transition-colors">{label}</span>
                 <span className="text-[hsl(var(--text-secondary))] group-hover/item:text-[hsl(var(--primary))] transition-colors">{percent}%</span>
             </div>
-            <div className="h-2 w-full bg-[hsl(var(--surface-2))] dark:bg-white/5 rounded-full overflow-hidden shadow-inner">
+            <div className="h-2 w-full bg-[hsl(var(--surface-2))] rounded-full overflow-hidden shadow-inner">
                 <motion.div
                     initial={{ width: 0 }}
                     animate={{ width: `${percent}%` }}
@@ -482,9 +478,9 @@ function BudgetItem({ label, percent, color }: BudgetItemProps) {
 
 function DrawerStat({ label, value, icon: Icon }: DrawerStatProps) {
     return (
-        <div className="p-3 bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/5 rounded-lg transition-all hover:bg-[hsl(var(--bg-primary))] hover:shadow-sm">
+        <div className="p-3 bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] rounded-lg transition-all hover:bg-[hsl(var(--bg-primary))] hover:shadow-sm">
             <div className="flex items-center gap-2 mb-1.5">{Icon && <Icon size={14} className="text-[hsl(var(--text-secondary))]" />}<span className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">{label}</span></div>
-            <p className="text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-white capitalize tracking-tight">{value}</p>
+            <p className="text-sm font-semibold text-[hsl(var(--text-primary))] capitalize tracking-tight">{value}</p>
         </div>
     );
 }

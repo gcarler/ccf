@@ -132,14 +132,14 @@ export default function CommentModeration() {
                 breadcrumbs={[{ label: 'Admin', icon: Layout }, { label: 'Moderación de Comunidad', icon: MessageSquare }]}
                 viewType={viewType} setViewType={setViewType} availableViews={COMMENT_VIEWS}
                 rightActions={
-                    <button className="p-3 bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-md text-[hsl(var(--primary))] relative active:scale-95 transition-all">
+                    <button className="p-3 bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] rounded-md text-[hsl(var(--primary))] relative active:scale-95 transition-all">
                         <Bell size={20} />
-                        <span className="absolute top-2 right-2 size-2 bg-[hsl(var(--danger))] rounded-full ring-2 ring-white dark:ring-[hsl(var(--bg-primary))]"></span>
+                        <span className="absolute top-2 right-2 size-2 bg-[hsl(var(--danger))] rounded-full ring-2 ring-[hsl(var(--surface-1))]"></span>
                     </button>
                 }
             />
 
-            <div className="flex px-4 border-b border-[hsl(var(--border))] dark:border-white/5 bg-[hsl(var(--surface-1))]/50 dark:bg-white/5 shrink-0 overflow-x-auto no-scrollbar">
+            <div className="flex px-4 border-b border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] shrink-0 overflow-x-auto no-scrollbar">
                 {['Todos', 'Foro', 'Prédicas', 'Cursos'].map((f) => (
                     <button
                         key={f} onClick={() => setActiveFilter(f)}
@@ -166,7 +166,7 @@ export default function CommentModeration() {
                             >
                                 <Zap size={12} className="animate-pulse" /> Protocolo de Moderación Activo
                             </motion.div>
-                            <h1 className="text-xl lg:text-xl font-bold text-[hsl(var(--text-primary))] dark:text-white tracking-tighter leading-none">
+                            <h1 className="text-xl lg:text-xl font-bold text-[hsl(var(--text-primary))] tracking-tighter leading-none">
                                 Centro de <span className="text-[hsl(var(--primary))] italic">Interacción.</span>
                             </h1>
                         </div>
@@ -175,7 +175,7 @@ export default function CommentModeration() {
                             <input
                                 value={searchQuery}
                                 onChange={e => setSearchQuery(e.target.value)}
-                                className="w-full pl-12 pr-4 py-1.5 bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg text-xs font-bold outline-none focus:ring-4 focus:ring-[hsl(var(--primary))]/10 transition-all shadow-sm"
+                                className="w-full pl-12 pr-4 py-1.5 bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] rounded-lg text-xs font-bold outline-none focus:ring-4 focus:ring-[hsl(var(--primary))]/10 transition-all shadow-sm"
                                 placeholder="Filtrar por autor o contenido..."
                             />
                         </div>
@@ -187,15 +187,15 @@ export default function CommentModeration() {
                                 <Loader2 className="animate-spin text-[hsl(var(--primary))]" size={48} strokeWidth={1.5} /> Sincronizando Comentarios...
                             </div>
                         ) : viewType === 'table' ? (
-                            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="overflow-hidden rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] dark:border-white/10 dark:bg-white/5">
+                            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="overflow-hidden rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))]">
                                 <table className="w-full text-left text-sm">
-                                    <thead className="border-b border-[hsl(var(--border))] text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] dark:border-white/10">
+                                    <thead className="border-b border-[hsl(var(--border))] text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
                                         <tr><th className="px-3 py-3">Autor</th><th className="px-3 py-3">Contexto</th><th className="px-3 py-3">Tipo</th><th className="px-3 py-3">Fecha</th><th className="px-3 py-3" /></tr>
                                     </thead>
                                     <tbody>
                                         {filteredComments.map((comment) => (
-                                            <tr key={comment.id} className="border-b border-[hsl(var(--border))] dark:border-white/5">
-                                                <td className="px-3 py-1.5 font-bold text-[hsl(var(--text-primary))] dark:text-white">{comment.author}</td>
+                                            <tr key={comment.id} className="border-b border-[hsl(var(--border))]">
+                                                <td className="px-3 py-1.5 font-bold text-[hsl(var(--text-primary))]">{comment.author}</td>
                                                 <td className="px-3 py-1.5 text-[hsl(var(--text-secondary))]">{comment.context}</td>
                                                 <td className="px-3 py-1.5 text-[hsl(var(--text-secondary))]">{comment.type}</td>
                                                 <td className="px-3 py-1.5 text-[hsl(var(--text-secondary))]">{new Date(comment.created_at).toLocaleDateString()}</td>
@@ -208,8 +208,8 @@ export default function CommentModeration() {
                         ) : viewType === 'grid' ? (
                             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="grid grid-cols-1 gap-4 md:grid-cols-2">
                                 {filteredComments.map((comment) => (
-                                    <article key={comment.id} className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-3 dark:border-white/10 dark:bg-white/5">
-                                        <p className="text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-white">{comment.author}</p>
+                                    <article key={comment.id} className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-3">
+                                        <p className="text-sm font-semibold text-[hsl(var(--text-primary))]">{comment.author}</p>
                                         <p className="mt-2 line-clamp-3 text-sm font-medium text-[hsl(var(--text-secondary))]">{comment.text}</p>
                                         <p className="mt-4 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--primary))]">{comment.type}</p>
                                     </article>
@@ -218,15 +218,15 @@ export default function CommentModeration() {
                         ) : viewType === 'board' || viewType === 'kanban' ? (
                             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex gap-4 overflow-x-auto">
                                 {groupedComments.map((column) => (
-                                    <section key={column.type} className="w-80 shrink-0 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-3 dark:border-white/10 dark:bg-white/[0.03]">
+                                    <section key={column.type} className="w-80 shrink-0 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-3">
                                         <div className="mb-3 flex items-center justify-between px-1">
                                             <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{column.type}</p>
                                             <span className="font-semibold text-[hsl(var(--text-secondary))]">{column.items.length}</span>
                                         </div>
                                         <div className="space-y-2">
                                             {column.items.map((comment) => (
-                                                <article key={comment.id} className="rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-3 dark:border-white/10 dark:bg-white/5">
-                                                    <p className="text-xs font-semibold text-[hsl(var(--text-primary))] dark:text-white">{comment.author}</p>
+                                                <article key={comment.id} className="rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] p-3">
+                                                    <p className="text-xs font-semibold text-[hsl(var(--text-primary))]">{comment.author}</p>
                                                     <p className="mt-2 line-clamp-2 text-xs font-medium text-[hsl(var(--text-secondary))]">{comment.text}</p>
                                                 </article>
                                             ))}
@@ -257,43 +257,43 @@ export default function CommentModeration() {
                                         initial={{ opacity: 0, x: -20 }}
                                         animate={{ opacity: 1, x: 0 }}
                                         transition={{ delay: i * 0.05 }}
-                                        className="comment-aura group bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/5 p-4 rounded-lg shadow-sm hover:shadow-2xl transition-all duration-500 flex flex-col space-y-3"
+                                        className="comment-aura group bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] p-4 rounded-lg shadow-sm hover:shadow-xl transition-all duration-500 flex flex-col space-y-3"
                                     >
                                         <div className="flex items-start gap-3">
                                             <div className="relative shrink-0">
-                                                <div className="size-8 rounded-full bg-gradient-to-tr from-[hsl(var(--surface-2))] to-white dark:from-white/10 dark:to-white/5 flex items-center justify-center text-[hsl(var(--primary))] font-black text-xl border-4 border-white dark:border-[hsl(var(--bg-primary))] shadow-xl group-hover:rotate-6 transition-transform duration-500">
+                                                <div className="size-8 rounded-full bg-[hsl(var(--surface-2))] flex items-center justify-center text-[hsl(var(--primary))] font-black text-xl border-2 border-[hsl(var(--border))] shadow-md group-hover:rotate-6 transition-transform duration-500">
                                                     {comment.author.charAt(0)}
                                                 </div>
-                                                <div className="absolute -bottom-1 -right-1 size-7 rounded-full bg-[hsl(var(--primary))] text-white flex items-center justify-center shadow-lg border-2 border-white dark:border-[hsl(var(--bg-primary))]">
+                                                <div className="absolute -bottom-1 -right-1 size-7 rounded-full bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] flex items-center justify-center shadow-sm border-2 border-[hsl(var(--surface-1))]">
                                                     <MessageSquare size={14} fill="currentColor" />
                                                 </div>
                                             </div>
                                             <div className="flex-1 space-y-4">
                                                 <div className="flex justify-between items-center">
                                                     <div>
-                                                        <h4 className="text-xl font-bold text-[hsl(var(--text-primary))] dark:text-white uppercase tracking-tight leading-none group-hover:text-[hsl(var(--primary))] transition-colors">{comment.author}</h4>
+                                                        <h4 className="text-xl font-bold text-[hsl(var(--text-primary))] uppercase tracking-tight leading-none group-hover:text-[hsl(var(--primary))] transition-colors">{comment.author}</h4>
                                                         <p className="font-semibold text-[hsl(var(--primary))] uppercase tracking-wide mt-2 flex items-center gap-2">
                                                             <Globe size={10} /> En: <span className="text-[hsl(var(--text-secondary))] italic">&quot;{comment.context}&quot;</span>
                                                         </p>
                                                     </div>
                                                     <span className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">{new Date(comment.created_at).toLocaleDateString('es-ES', { month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
                                                 </div>
-                                                <p className="text-base text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] font-medium leading-relaxed italic">
+                                                <p className="text-base text-[hsl(var(--text-secondary))] font-medium leading-relaxed italic">
                                                     &ldquo;{comment.text}&rdquo;
                                                 </p>
                                             </div>
                                         </div>
 
-                                        <div className="flex gap-4 pt-8 border-t border-[hsl(var(--border))] dark:border-white/5">
-                                            <button className="flex-1 py-1.5 bg-[hsl(var(--primary))] text-white text-2xs font-semibold uppercase tracking-wide rounded-lg shadow-xl shadow-[hsl(var(--info)/20%)] hover:bg-[hsl(var(--primary))] transition-all active:scale-95 flex items-center justify-center gap-3">
+                                        <div className="flex gap-4 pt-8 border-t border-[hsl(var(--border))]">
+                                            <button className="flex-1 py-1.5 bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] text-2xs font-semibold uppercase tracking-wide rounded-lg shadow-sm hover:bg-[hsl(var(--primary)/0.9)] transition-all active:scale-95 flex items-center justify-center gap-3">
                                                 <CheckCircle2 size={16} /> Aprobar Registro
                                             </button>
-                                            <button className="px-4 py-1.5 bg-[hsl(var(--surface-2))] dark:bg-white/5 text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] text-2xs font-semibold uppercase tracking-wide rounded-lg hover:bg-[hsl(var(--surface-3))] transition-all active:scale-95">
+                                            <button className="px-4 py-1.5 bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))] text-2xs font-semibold uppercase tracking-wide rounded-lg hover:bg-[hsl(var(--surface-3))] transition-all active:scale-95">
                                                 Responder
                                             </button>
                                             <button
                                                 onClick={() => handleDelete(comment.id)}
-                                                className="size-7 bg-[hsl(var(--destructive)/0.08)] text-[hsl(var(--destructive))] rounded-lg border border-[hsl(var(--destructive)/0.15)] flex items-center justify-center hover:bg-[hsl(var(--destructive))] hover:text-white transition-all duration-500 shadow-sm hover:shadow-[hsl(var(--destructive))/0.2] active:scale-90"
+                                                className="size-7 bg-[hsl(var(--destructive)/0.08)] text-[hsl(var(--destructive))] rounded-lg border border-[hsl(var(--destructive)/0.15)] flex items-center justify-center hover:bg-[hsl(var(--destructive))] hover:text-[hsl(var(--destructive-foreground))] transition-all duration-500 shadow-sm active:scale-90"
                                             >
                                                 <Trash2 size={20} />
                                             </button>
@@ -303,11 +303,11 @@ export default function CommentModeration() {
                             </motion.div>
                         ) : (
                             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="py-1.5 text-center space-y-3">
-                                <div className="size-10 rounded-lg bg-[hsl(var(--surface-1))] dark:bg-white/5 border-2 border-dashed border-[hsl(var(--border))] dark:border-white/10 flex items-center justify-center mx-auto text-[hsl(var(--text-secondary))]">
+                                <div className="size-10 rounded-lg bg-[hsl(var(--surface-1))] border-2 border-dashed border-[hsl(var(--border))] flex items-center justify-center mx-auto text-[hsl(var(--text-secondary))]">
                                     <Sparkles size={48} strokeWidth={1} />
                                 </div>
                                 <div className="space-y-2">
-                                    <p className="text-xl font-bold text-[hsl(var(--text-primary))] dark:text-white uppercase tracking-tight">Comunidad Limpia</p>
+                                    <p className="text-xl font-bold text-[hsl(var(--text-primary))] uppercase tracking-tight">Comunidad Limpia</p>
                                     <p className="text-2xs text-[hsl(var(--text-secondary))] font-bold uppercase tracking-wide">No hay interacciones pendientes de moderación.</p>
                                 </div>
                             </motion.div>

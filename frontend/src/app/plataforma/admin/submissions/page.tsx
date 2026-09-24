@@ -73,14 +73,14 @@ export default function SubmissionsPage() {
         }
     };
 
-    if (loading) return <div className="flex justify-center py-1.5"><Loader2 className="animate-spin text-primary w-8 h-8" /></div>;
+    if (loading) return <div className="flex justify-center py-1.5"><Loader2 className="animate-spin text-[hsl(var(--primary))] w-8 h-8" /></div>;
 
     return (
  <div className="space-y-3 animate-in fade-in duration-500 w-full">
             <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-3">
                 <div>
-                    <h1 className="flex items-center gap-3 text-xl font-bold text-[hsl(var(--text-primary))] dark:text-white tracking-tight">
-                        <FileText className="text-primary" size={32} /> Calificar Trabajos
+                    <h1 className="flex items-center gap-3 text-xl font-bold text-[hsl(var(--text-primary))] tracking-tight">
+                        <FileText className="text-[hsl(var(--primary))]" size={32} /> Calificar Trabajos
                     </h1>
                     <p className="text-[hsl(var(--text-secondary))] font-medium mt-1">Revisa y califica las evidencias enviadas por los participantes.</p>
                 </div>
@@ -89,15 +89,15 @@ export default function SubmissionsPage() {
             <div className="grid grid-cols-1 gap-3">
                 {submissions.length > 0 ? (
                     submissions.map(sub => (
-                        <div key={sub.id} className="glass dark:bg-[hsl(var(--surface-2))]/40 rounded-lg p-3 shadow-sm flex flex-col md:flex-row justify-between gap-3 border border-[hsl(var(--border))] dark:border-white/5 transition-transform hover:shadow-md">
+                        <div key={sub.id} className="rounded-lg p-3 shadow-sm flex flex-col md:flex-row justify-between gap-3 border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] transition-transform hover:shadow-md">
                             <div className="flex flex-col md:flex-row justify-between gap-3 w-full">
                                 <div className="flex-1 space-y-4">
                                     <div className="flex items-center gap-4">
-                                        <div className="size-7 rounded-lg bg-primary/10 flex items-center justify-center text-primary border border-primary/20">
+                                        <div className="size-7 rounded-lg bg-[hsl(var(--primary)/0.1)] flex items-center justify-center text-[hsl(var(--primary))] border border-[hsl(var(--primary)/0.2)]">
                                             <User size={24} />
                                         </div>
                                         <div>
-                                            <p className="font-semibold text-[hsl(var(--text-primary))] dark:text-white text-base leading-none mb-1">{sub.student_name}</p>
+                                            <p className="font-semibold text-[hsl(var(--text-primary))] text-base leading-none mb-1">{sub.student_name}</p>
                                             <p className="text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide flex items-center gap-1">
                                                 <Clock size={10} /> {new Date(sub.submitted_at).toLocaleString()}
                                             </p>
@@ -105,11 +105,11 @@ export default function SubmissionsPage() {
                                     </div>
 
                                     <div className="space-y-2">
-                                        <p className="text-xs font-semibold uppercase tracking-wide text-primary flex items-center gap-1">
+                                        <p className="text-xs font-semibold uppercase tracking-wide text-[hsl(var(--primary))] flex items-center gap-1">
                                             <BookOpen size={14} /> {sub.lesson_title}
                                         </p>
                                         {sub.comment && (
-                                            <p className="text-sm text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] bg-[hsl(var(--surface-1))] dark:bg-[hsl(var(--bg-muted))]/50 p-4 rounded-lg italic font-medium border border-[hsl(var(--border))] dark:border-white/5">
+                                            <p className="text-sm text-[hsl(var(--text-secondary))] bg-[hsl(var(--surface-2))] p-4 rounded-lg italic font-medium border border-[hsl(var(--border))]">
                                                 &quot;{sub.comment}&quot;
                                             </p>
                                         )}
@@ -119,13 +119,13 @@ export default function SubmissionsPage() {
                                         href={`${apiUrl('')}${sub.file_url}`}
                                         target="_blank"
                                         rel="noopener noreferrer"
-                                        className="inline-flex items-center gap-2 px-3 py-3 bg-[hsl(var(--success))]/10 text-success-text dark:text-[hsl(var(--success))] rounded-md text-xs font-bold hover:bg-[hsl(var(--success))]/20 transition-colors border border-[hsl(var(--success)/100%)]/20"
+                                        className="inline-flex items-center gap-2 px-3 py-3 bg-[hsl(var(--success))]/10 text-success-text rounded-md text-xs font-bold hover:bg-[hsl(var(--success))]/20 transition-colors border border-[hsl(var(--success)/100%)]/20"
                                     >
                                         <Download size={16} /> Descargar Documento <ExternalLink size={14} />
                                     </a>
                                 </div>
 
-                                <div className="w-full md:w-80 bg-[hsl(var(--surface-1))] dark:bg-[hsl(var(--bg-muted))]/50 rounded-lg p-3 border border-[hsl(var(--border))] dark:border-white/5 flex flex-col justify-center">
+                                <div className="w-full md:w-80 bg-[hsl(var(--surface-1))] rounded-lg p-3 border border-[hsl(var(--border))] flex flex-col justify-center">
                                     {gradingId === sub.id ? (
                                         <div className="space-y-4 animate-in zoom-in-95 duration-200">
                                             <div>
@@ -134,7 +134,7 @@ export default function SubmissionsPage() {
                                                     type="number"
                                                     value={grade}
                                                     onChange={(e) => setGrade(Number(e.target.value))}
-                                                    className="w-full px-4 py-3 bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] dark:border-white/10 rounded-md focus:ring-2 focus:ring-primary/50 outline-none font-bold text-[hsl(var(--text-primary))] dark:text-white transition-all shadow-sm"
+                                                    className="w-full px-4 py-3 bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] rounded-md focus:ring-2 focus:ring-[hsl(var(--primary)/0.5)] outline-none font-bold text-[hsl(var(--text-primary))] transition-all shadow-sm"
                                                 />
                                             </div>
                                             <div>
@@ -143,19 +143,19 @@ export default function SubmissionsPage() {
                                                     value={feedback}
                                                     onChange={(e) => setFeedback(e.target.value)}
                                                     placeholder="Buen trabajo..."
-                                                    className="w-full px-4 py-3 bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] dark:border-white/10 rounded-md focus:ring-2 focus:ring-primary/50 outline-none text-sm h-24 resize-none text-[hsl(var(--text-primary))] dark:text-white transition-all shadow-sm"
+                                                    className="w-full px-4 py-3 bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] rounded-md focus:ring-2 focus:ring-[hsl(var(--primary)/0.5)] outline-none text-sm h-24 resize-none text-[hsl(var(--text-primary))] transition-all shadow-sm"
                                                 />
                                             </div>
                                             <div className="flex gap-2 pt-2">
                                                 <button
                                                     onClick={() => handleGrade(sub.id)}
-                                                    className="flex-1 py-3 bg-primary text-white rounded-md text-xs font-bold uppercase tracking-wide hover:bg-primary/90 transition-all shadow-lg shadow-primary/20 active:scale-95"
+                                                    className="flex-1 py-3 bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] rounded-md text-xs font-bold uppercase tracking-wide hover:bg-[hsl(var(--primary)/0.9)] transition-all shadow-sm active:scale-95"
                                                 >
                                                     Guardar
                                                 </button>
                                                 <button
                                                     onClick={() => setGradingId(null)}
-                                                    className="px-4 py-3 bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] dark:border-white/10 text-[hsl(var(--text-secondary))] rounded-md text-xs font-bold hover:text-[hsl(var(--text-primary))] dark:hover:text-white transition-all active:scale-95 shadow-sm"
+                                                    className="px-4 py-3 bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] text-[hsl(var(--text-secondary))] rounded-md text-xs font-bold hover:text-[hsl(var(--text-primary))] transition-all active:scale-95 shadow-sm"
                                                 >
                                                     <X size={16} />
                                                 </button>
@@ -165,12 +165,12 @@ export default function SubmissionsPage() {
                                         <div className="text-center space-y-4">
                                             {sub.grade !== null ? (
                                                 <div className="flex flex-col items-center gap-3">
-                                                    <div className="p-4 bg-[hsl(var(--success))]/10 text-[hsl(var(--success))] dark:text-[hsl(var(--success))] rounded-lg border border-[hsl(var(--success)/100%)]/20 shadow-sm">
+                                                    <div className="p-4 bg-[hsl(var(--success))]/10 text-[hsl(var(--success))] rounded-lg border border-[hsl(var(--success)/100%)]/20 shadow-sm">
                                                         <p className="text-2xs font-semibold uppercase tracking-wide mb-1">Calificación</p>
                                                         <p className="text-lg font-bold leading-none">{sub.grade}</p>
                                                     </div>
                                                     {sub.teacher_feedback && (
-                                                        <p className="text-xs text-[hsl(var(--text-secondary))] font-medium italic px-2 bg-white/50 dark:bg-white/5 p-3 rounded-md border border-[hsl(var(--border))] dark:border-white/5 w-full">&ldquo;{sub.teacher_feedback}&rdquo;</p>
+                                                         <p className="text-xs text-[hsl(var(--text-secondary))] font-medium italic px-2 bg-[hsl(var(--surface-2))] p-3 rounded-md border border-[hsl(var(--border))] w-full">&ldquo;{sub.teacher_feedback}&rdquo;</p>
                                                     )}
                                                     <button
                                                         onClick={() => {
@@ -178,7 +178,7 @@ export default function SubmissionsPage() {
                                                             setGrade(sub.grade || 0);
                                                             setFeedback(sub.teacher_feedback || '');
                                                         }}
-                                                        className="w-full py-3 text-2xs font-bold text-primary uppercase tracking-wide hover:bg-primary/5 rounded-md transition-all border border-transparent hover:border-primary/10"
+                                                        className="w-full py-3 text-2xs font-bold text-[hsl(var(--primary))] uppercase tracking-wide hover:bg-[hsl(var(--primary)/0.05)] rounded-md transition-all border border-transparent hover:border-[hsl(var(--primary)/0.2)]"
                                                     >
                                                         Modificar Nota
                                                     </button>
@@ -195,7 +195,7 @@ export default function SubmissionsPage() {
                                                             setGrade(0);
                                                             setFeedback('');
                                                         }}
-                                                        className="w-full py-1.5 mt-2 bg-primary text-white rounded-lg text-xs font-bold uppercase tracking-wide shadow-lg shadow-primary/30 hover:bg-primary/90 transition-all active:scale-95"
+                                                        className="w-full py-1.5 mt-2 bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] rounded-lg text-xs font-bold uppercase tracking-wide shadow-sm hover:bg-[hsl(var(--primary)/0.9)] transition-all active:scale-95"
                                                     >
                                                         Calificar
                                                     </button>
@@ -208,11 +208,11 @@ export default function SubmissionsPage() {
                         </div>
                     ))
                 ) : (
-                    <div className="bg-[hsl(var(--surface-1))] dark:bg-[hsl(var(--bg-muted))]/30 border border-dashed border-[hsl(var(--border))] dark:border-white/10 rounded-lg py-1.5 text-center flex flex-col items-center">
-                        <div className="size-8 bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-2))] rounded-full shadow-sm flex items-center justify-center text-[hsl(var(--text-secondary))] mb-3 border border-[hsl(var(--border))] dark:border-white/5">
+                    <div className="bg-[hsl(var(--surface-1))] border border-dashed border-[hsl(var(--border))] rounded-lg py-1.5 text-center flex flex-col items-center">
+                        <div className="size-8 bg-[hsl(var(--surface-2))] rounded-full shadow-sm flex items-center justify-center text-[hsl(var(--text-secondary))] mb-3 border border-[hsl(var(--border))]">
                             <FileText size={40} />
                         </div>
-                        <h3 className="text-xl font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] mb-2">Todo al día</h3>
+                        <h3 className="text-xl font-bold text-[hsl(var(--text-primary))] mb-2">Todo al día</h3>
                         <p className="text-sm text-[hsl(var(--text-secondary))] font-medium">No hay entregas pendientes por revisar en este momento.</p>
                     </div>
                 )}
