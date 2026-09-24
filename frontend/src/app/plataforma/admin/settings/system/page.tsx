@@ -816,20 +816,20 @@ export default function SystemSettings() {
 
     const settingsSidebar = (
         <div className="flex flex-col h-full overflow-hidden">
-            <div className="p-4 border-b border-[hsl(var(--border))] dark:border-white/5 space-y-4">
-                <div className="size-8 rounded-lg bg-[hsl(var(--bg-muted))] dark:bg-[hsl(var(--bg-primary))] flex items-center justify-center text-white dark:text-[hsl(var(--text-primary))] shadow-xl">
+            <div className="p-4 border-b border-[hsl(var(--border))] space-y-4">
+                <div className="size-8 rounded-lg bg-[hsl(var(--surface-2))] flex items-center justify-center text-[hsl(var(--text-primary))] shadow-xl">
                     <Zap size={32} />
                 </div>
                 <div>
-                    <h3 className="text-xl font-bold tracking-tight text-[hsl(var(--text-primary))] dark:text-white">Motor Core</h3>
+                    <h3 className="text-xl font-bold tracking-tight text-[hsl(var(--text-primary))]">Motor Core</h3>
                     <p className="text-2xs font-bold text-[hsl(var(--primary))] uppercase tracking-wide">Configuración Global</p>
                 </div>
             </div>
             <div className="flex-1 overflow-y-auto p-4 space-y-2">
-                <button className="w-full flex items-center justify-between px-4 py-3 bg-[hsl(var(--bg-primary))] dark:bg-white/5 shadow-md border border-[hsl(var(--primary)/0.2)] rounded-lg text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] font-bold text-xs"><div className="flex items-center gap-3"><Settings size={16} /> Sistema Base</div> <ChevronRight size={14} /></button>
-                <button className="w-full flex items-center justify-between px-4 py-3 hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5 rounded-lg text-[hsl(var(--text-secondary))] font-bold text-xs transition-colors"><div className="flex items-center gap-3"><Shield size={16} /> Permisos y Roles</div></button>
-                <button className="w-full flex items-center justify-between px-4 py-3 hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5 rounded-lg text-[hsl(var(--text-secondary))] font-bold text-xs transition-colors"><div className="flex items-center gap-3"><Database size={16} /> Respaldos</div></button>
-                <button className="w-full flex items-center justify-between px-4 py-3 hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5 rounded-lg text-[hsl(var(--text-secondary))] font-bold text-xs transition-colors"><div className="flex items-center gap-3"><Activity size={16} /> Monitor de Salud</div></button>
+                <button className="w-full flex items-center justify-between px-4 py-3 bg-[hsl(var(--surface-2))] shadow-md border border-[hsl(var(--primary)/0.2)] rounded-lg text-[hsl(var(--primary))] font-bold text-xs"><div className="flex items-center gap-3"><Settings size={16} /> Sistema Base</div> <ChevronRight size={14} /></button>
+                <button className="w-full flex items-center justify-between px-4 py-3 hover:bg-[hsl(var(--surface-2))] rounded-lg text-[hsl(var(--text-secondary))] font-bold text-xs transition-colors"><div className="flex items-center gap-3"><Shield size={16} /> Permisos y Roles</div></button>
+                <button className="w-full flex items-center justify-between px-4 py-3 hover:bg-[hsl(var(--surface-2))] rounded-lg text-[hsl(var(--text-secondary))] font-bold text-xs transition-colors"><div className="flex items-center gap-3"><Database size={16} /> Respaldos</div></button>
+                <button className="w-full flex items-center justify-between px-4 py-3 hover:bg-[hsl(var(--surface-2))] rounded-lg text-[hsl(var(--text-secondary))] font-bold text-xs transition-colors"><div className="flex items-center gap-3"><Activity size={16} /> Monitor de Salud</div></button>
             </div>
         </div>
     );
@@ -889,7 +889,7 @@ export default function SystemSettings() {
                     </section>
 
                     {/* Feature Flags Grid */}
-                    <section className="bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg p-4 shadow-xl space-y-3 relative overflow-hidden">
+                    <section className="bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] rounded-lg p-4 shadow-xl space-y-3 relative overflow-hidden">
                         <div className="absolute top-0 right-0 -mr-16 -mt-16 size-10 bg-[hsl(var(--primary)/0.05)] rounded-full blur-[100px]" />
                         <div className="relative z-10">
                             <div className="flex items-center gap-3 mb-3">
@@ -937,7 +937,7 @@ export default function SystemSettings() {
                     </section>
 
                     {/* Integrated Providers */}
-                    <section className="bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg p-4 shadow-xl space-y-3">
+                    <section className="bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] rounded-lg p-4 shadow-xl space-y-3">
                         <div className="flex items-center gap-3">
                             <Globe size={20} className="text-[hsl(var(--primary))]" />
                             <h3 className="text-lg font-bold tracking-tight uppercase tracking-wide">Pasarelas & Comunicaciones</h3>
@@ -950,7 +950,7 @@ export default function SystemSettings() {
                         </div>
                     </section>
 
-                    <section className="bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg p-4 shadow-xl space-y-3">
+                    <section className="bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] rounded-lg p-4 shadow-xl space-y-3">
                         <div className="flex items-center justify-between gap-3">
                             <h3 className="text-lg font-bold tracking-tight uppercase tracking-wide">Rollout Segmentado</h3>
                             <span className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Roles y porcentaje</span>
@@ -985,7 +985,7 @@ export default function SystemSettings() {
                         />
                     </section>
 
-                    <section className="bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg p-4 shadow-xl space-y-5">
+                    <section className="bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] rounded-lg p-4 shadow-xl space-y-5">
                         <div className="flex items-center justify-between gap-3">
                             <div className="flex items-center gap-3">
                                 <h3 className="text-lg font-bold tracking-tight uppercase tracking-wide">Auditoría de Flags</h3>
@@ -1000,18 +1000,18 @@ export default function SystemSettings() {
                                 )}
                             </div>
                             <div className="flex items-center gap-2">
-                                <button onClick={scanIncidents} className="h-9 rounded-md border border-[hsl(var(--border))] dark:border-white/10 px-3 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--primary))] hover:bg-[hsl(var(--info-muted))] dark:hover:bg-white/10">
+                                <button onClick={scanIncidents} className="h-9 rounded-md border border-[hsl(var(--border))] px-3 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))]/10">
                                     {actionLoading === 'scan-incidents' ? 'Escaneando...' : 'Scan Incidents'}
                                 </button>
-                                <button onClick={() => downloadAudit('json')} className="h-9 rounded-md border border-[hsl(var(--border))] dark:border-white/10 px-3 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/10">Export JSON</button>
-                                <button onClick={() => downloadAudit('csv')} className="h-9 rounded-md border border-[hsl(var(--border))] dark:border-white/10 px-3 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/10">Export CSV</button>
+                                <button onClick={() => downloadAudit('json')} className="h-9 rounded-md border border-[hsl(var(--border))] px-3 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))]">Export JSON</button>
+                                <button onClick={() => downloadAudit('csv')} className="h-9 rounded-md border border-[hsl(var(--border))] px-3 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))]">Export CSV</button>
                             </div>
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                             <select
                                 value={auditFilters.action}
                                 onChange={(event) => setAuditFilters((prev) => ({ ...prev, action: event.target.value }))}
-                                className="h-10 rounded-md border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-black/20 px-3 text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]"
+                                className="h-10 rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] px-3 text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]"
                             >
                                 <option value="">Todas las acciones</option>
                                 <option value="update_flags">update_flags</option>
@@ -1020,7 +1020,7 @@ export default function SystemSettings() {
                             <select
                                 value={auditFilters.feature}
                                 onChange={(event) => setAuditFilters((prev) => ({ ...prev, feature: event.target.value }))}
-                                className="h-10 rounded-md border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-black/20 px-3 text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]"
+                                className="h-10 rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] px-3 text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]"
                             >
                                 <option value="">Todas las features</option>
                                 {Object.keys(config?.features_enabled || {}).map((feature) => (
@@ -1031,7 +1031,7 @@ export default function SystemSettings() {
                                 value={auditFilters.actor}
                                 onChange={(event) => setAuditFilters((prev) => ({ ...prev, actor: event.target.value }))}
                                 placeholder="Filtrar actor (id usuario)"
-                                className="h-10 rounded-md border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-black/20 px-3 text-xs font-bold text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]"
+                                className="h-10 rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] px-3 text-xs font-bold text-[hsl(var(--text-primary))] placeholder:text-[hsl(var(--text-secondary))]"
                             />
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
@@ -1041,12 +1041,12 @@ export default function SystemSettings() {
                             <AuditMetric label="Actores únicos" value={String((auditSummary?.top_actors || []).length)} />
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                            <div className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-black/20 p-4">
+                            <div className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] p-4">
                                 <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-3">Top Actores</p>
                                 <div className="space-y-2">
                                     {(auditSummary?.top_actors || []).slice(0, 4).map((item: { actor: string; count: number }) => (
                                         <div key={`${item.actor}-${item.count}`} className="flex items-center justify-between text-xs">
-                                            <span className="font-semibold text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">{item.actor}</span>
+                                            <span className="font-semibold text-[hsl(var(--text-secondary))]">{item.actor}</span>
                                             <span className="font-semibold text-[hsl(var(--text-secondary))]">{item.count}</span>
                                         </div>
                                     ))}
@@ -1055,12 +1055,12 @@ export default function SystemSettings() {
                                     ) : null}
                                 </div>
                             </div>
-                            <div className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-black/20 p-4">
+                            <div className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] p-4">
                                 <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-3">Top Features</p>
                                 <div className="space-y-2">
                                     {(auditSummary?.top_features || []).slice(0, 4).map((item: { feature: string; count: number }) => (
                                         <div key={`${item.feature}-${item.count}`} className="flex items-center justify-between text-xs">
-                                            <span className="font-semibold text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">{item.feature}</span>
+                                            <span className="font-semibold text-[hsl(var(--text-secondary))]">{item.feature}</span>
                                             <span className="font-semibold text-[hsl(var(--text-secondary))]">{item.count}</span>
                                         </div>
                                     ))}
@@ -1071,13 +1071,13 @@ export default function SystemSettings() {
                             </div>
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                            <div className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-black/20 p-4">
+                            <div className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] p-4">
                                 <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-3">Picos por Actor (24h)</p>
                                 {(auditAnomalies?.actor_spikes || []).length > 0 ? (
                                     <div className="space-y-2">
                                         {auditAnomalies?.actor_spikes?.map((item: { actor: string; count: number; threshold?: number }) => (
                                             <div key={`${item.actor}-${item.count}`} className="flex items-center justify-between text-xs">
-                                                <span className="font-semibold text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">{item.actor}</span>
+                                                <span className="font-semibold text-[hsl(var(--text-secondary))]">{item.actor}</span>
                                                 <span className="font-semibold text-[hsl(var(--destructive))]">{item.count}</span>
                                             </div>
                                         ))}
@@ -1086,13 +1086,13 @@ export default function SystemSettings() {
                                     <p className="text-xs font-semibold text-[hsl(var(--text-secondary))]">Sin picos detectados.</p>
                                 )}
                             </div>
-                            <div className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-black/20 p-4">
+                            <div className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] p-4">
                                 <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-3">Picos por Acción (24h)</p>
                                 {(auditAnomalies?.action_spikes || []).length > 0 ? (
                                     <div className="space-y-2">
                                         {auditAnomalies?.action_spikes?.map((item: { action: string; count: number; threshold?: number }) => (
                                             <div key={`${item.action}-${item.count}`} className="flex items-center justify-between text-xs">
-                                                <span className="font-semibold text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">{item.action}</span>
+                                                <span className="font-semibold text-[hsl(var(--text-secondary))]">{item.action}</span>
                                                 <span className="font-semibold text-[hsl(var(--destructive))]">{item.count}</span>
                                             </div>
                                         ))}
@@ -1107,17 +1107,17 @@ export default function SystemSettings() {
                         ) : (
                             <div className="space-y-3">
                                 {auditEvents.slice().reverse().map((event, idx) => (
-                                    <div key={`${event.timestamp || idx}-${event.action || 'event'}`} className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-black/20 p-4">
+                                    <div key={`${event.timestamp || idx}-${event.action || 'event'}`} className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] p-4">
                                         <div className="flex items-center justify-between gap-3 mb-2">
                                             <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{event.action || 'update'}</p>
                                             <p className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{event.timestamp ? new Date(event.timestamp).toLocaleString() : 'n/a'}</p>
                                         </div>
-                                        <p className="text-xs font-semibold text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">actor: {event.updated_by || 'unknown'} {event.feature_id ? `| feature: ${event.feature_id}` : ''}</p>
+                                        <p className="text-xs font-semibold text-[hsl(var(--text-secondary))]">actor: {event.updated_by || 'unknown'} {event.feature_id ? `| feature: ${event.feature_id}` : ''}</p>
                                         {event?.diff?.count ? (
                                             <div className="mt-2 space-y-1">
                                                 <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{event.diff.summary}</p>
                                                 {event.diff.changes?.slice(0, 3).map((change: { key: string; before: unknown; after: unknown }) => (
-                                                    <p key={`${change.key}-${String(change.before)}-${String(change.after)}`} className="text-xs text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">
+                                                    <p key={`${change.key}-${String(change.before)}-${String(change.after)}`} className="text-xs text-[hsl(var(--text-secondary))]">
                                                         {change.key}: {String(change.before)} {'->'} {String(change.after)}
                                                     </p>
                                                 ))}
@@ -1129,18 +1129,18 @@ export default function SystemSettings() {
                         )}
                     </section>
 
-                    <section className="bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg p-4 shadow-xl space-y-5">
+                    <section className="bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] rounded-lg p-4 shadow-xl space-y-5">
                         <div className="flex items-center justify-between gap-3">
                             <h3 className="text-lg font-bold tracking-tight uppercase tracking-wide">Incidentes de Flags</h3>
                             <div className="flex items-center gap-2">
-                                <select value={incidentStatsWindow} onChange={(event) => setIncidentStatsWindow(event.target.value as 'weekly' | 'monthly')} className="h-9 rounded-md border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-black/20 px-2 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">
+                                <select value={incidentStatsWindow} onChange={(event) => setIncidentStatsWindow(event.target.value as 'weekly' | 'monthly')} className="h-9 rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] px-2 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
                                     <option value="weekly">weekly</option>
                                     <option value="monthly">monthly</option>
                                 </select>
-                                <button onClick={downloadComplianceSnapshot} className="h-9 rounded-md border border-[hsl(var(--border))] dark:border-white/10 px-3 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--primary))] hover:bg-[hsl(var(--info-muted))] dark:hover:bg-white/10">Compliance Snapshot</button>
-                                <button onClick={() => downloadIncidents('json')} className="h-9 rounded-md border border-[hsl(var(--border))] dark:border-white/10 px-3 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/10">Export Incidents JSON</button>
-                                <button onClick={() => downloadIncidents('csv')} className="h-9 rounded-md border border-[hsl(var(--border))] dark:border-white/10 px-3 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/10">Export Incidents CSV</button>
-                                <button onClick={cleanupIncidents} className="h-9 rounded-md border border-[hsl(var(--border))] dark:border-white/10 px-3 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/10">
+                                <button onClick={downloadComplianceSnapshot} className="h-9 rounded-md border border-[hsl(var(--border))] px-3 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))]/10">Compliance Snapshot</button>
+                                <button onClick={() => downloadIncidents('json')} className="h-9 rounded-md border border-[hsl(var(--border))] px-3 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))]">Export Incidents JSON</button>
+                                <button onClick={() => downloadIncidents('csv')} className="h-9 rounded-md border border-[hsl(var(--border))] px-3 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))]">Export Incidents CSV</button>
+                                <button onClick={cleanupIncidents} className="h-9 rounded-md border border-[hsl(var(--border))] px-3 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))]">
                                     {actionLoading === 'cleanup-incidents' ? 'Cleaning...' : 'Cleanup'}
                                 </button>
                                 <span className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{incidents.length} items</span>
@@ -1186,17 +1186,17 @@ export default function SystemSettings() {
                             </div>
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                            <div className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-black/20 p-4 space-y-2">
+                            <div className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] p-4 space-y-2">
                                 <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Target MTTA (min)</p>
-                                <input type="number" min={1} max={10080} value={slaTargets.mtta} onChange={(event) => setSlaTargets((prev) => ({ ...prev, mtta: Number(event.target.value) || 1 }))} className="h-10 w-full rounded-md border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-black/30 px-3 text-xs font-bold" />
+                                <input type="number" min={1} max={10080} value={slaTargets.mtta} onChange={(event) => setSlaTargets((prev) => ({ ...prev, mtta: Number(event.target.value) || 1 }))} className="h-10 w-full rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] px-3 text-xs font-bold text-[hsl(var(--text-primary))]" />
                             </div>
-                            <div className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-black/20 p-4 space-y-2">
+                            <div className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] p-4 space-y-2">
                                 <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Target MTTR (min)</p>
-                                <input type="number" min={1} max={10080} value={slaTargets.mttr} onChange={(event) => setSlaTargets((prev) => ({ ...prev, mttr: Number(event.target.value) || 1 }))} className="h-10 w-full rounded-md border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-black/30 px-3 text-xs font-bold" />
+                                <input type="number" min={1} max={10080} value={slaTargets.mttr} onChange={(event) => setSlaTargets((prev) => ({ ...prev, mttr: Number(event.target.value) || 1 }))} className="h-10 w-full rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] px-3 text-xs font-bold text-[hsl(var(--text-primary))]" />
                             </div>
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                            <div className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-black/20 p-4">
+                            <div className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] p-4">
                                 <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-3">Tendencia (14 dias)</p>
                                 {incidentTrends.length === 0 ? (
                                     <p className="text-xs font-semibold text-[hsl(var(--text-secondary))]">Sin datos de tendencia.</p>
@@ -1213,23 +1213,23 @@ export default function SystemSettings() {
                                     </div>
                                 )}
                             </div>
-                            <div className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-black/20 p-4">
+                            <div className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] p-4">
                                 <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-3">Notificaciones internas</p>
                                 {incidentNotifications.length === 0 ? (
                                     <p className="text-xs font-semibold text-[hsl(var(--text-secondary))]">Sin notificaciones.</p>
                                 ) : (
                                     <div className="max-h-52 overflow-y-auto space-y-2">
                                         {incidentNotifications.slice().reverse().slice(0, 8).map((item, idx) => (
-                                            <div key={`${item.timestamp || idx}-${item.type || 'notif'}`} className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-white/70 dark:bg-black/30 p-2">
+                                            <div key={`${item.timestamp || idx}-${item.type || 'notif'}`} className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-2">
                                                 <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{item.type || 'notification'}</p>
-                                                <p className="text-xs font-semibold text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">
+                                                <p className="text-xs font-semibold text-[hsl(var(--text-secondary))]">
                                                     incident: {item.incident_id || 'n/a'} | sev: {item.severity || 'n/a'}
                                                 </p>
                                                 {item.risk_score != null ? (
-                                                    <p className="text-2xs text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">risk score: {item.risk_score}</p>
+                                                    <p className="text-2xs text-[hsl(var(--text-secondary))]">risk score: {item.risk_score}</p>
                                                 ) : null}
                                                 {(item.from_snapshot_id || item.to_snapshot_id) ? (
-                                                    <p className="text-2xs text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">from: {item.from_snapshot_id || '-'} to: {item.to_snapshot_id || '-'}</p>
+                                                    <p className="text-2xs text-[hsl(var(--text-secondary))]">from: {item.from_snapshot_id || '-'} to: {item.to_snapshot_id || '-'}</p>
                                                 ) : null}
                                                 <p className="text-2xs text-[hsl(var(--text-secondary))]">{item.timestamp ? new Date(item.timestamp).toLocaleString() : 'n/a'}</p>
                                             </div>
@@ -1238,60 +1238,60 @@ export default function SystemSettings() {
                                 )}
                             </div>
                         </div>
-                        <div className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-black/20 p-4">
+                        <div className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] p-4">
                             <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-3">Compliance Snapshot History</p>
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-2 mb-3">
-                                <select value={compareSnapshotIds.from} onChange={(event) => setCompareSnapshotIds((prev) => ({ ...prev, from: event.target.value }))} className="h-9 rounded-md border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-black/20 px-2 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">
+                                <select value={compareSnapshotIds.from} onChange={(event) => setCompareSnapshotIds((prev) => ({ ...prev, from: event.target.value }))} className="h-9 rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] px-2 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
                                     <option value="">from snapshot</option>
                                     {complianceHistory.map((item) => (
                                         <option key={`from-${item.snapshot_id}`} value={item.snapshot_id}>{item.snapshot_id}</option>
                                     ))}
                                 </select>
-                                <select value={compareSnapshotIds.to} onChange={(event) => setCompareSnapshotIds((prev) => ({ ...prev, to: event.target.value }))} className="h-9 rounded-md border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-black/20 px-2 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">
+                                <select value={compareSnapshotIds.to} onChange={(event) => setCompareSnapshotIds((prev) => ({ ...prev, to: event.target.value }))} className="h-9 rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] px-2 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
                                     <option value="">to snapshot</option>
                                     {complianceHistory.map((item) => (
                                         <option key={`to-${item.snapshot_id}`} value={item.snapshot_id}>{item.snapshot_id}</option>
                                     ))}
                                 </select>
-                                <button onClick={runComplianceCompare} className="h-9 rounded-md border border-[hsl(var(--border))] dark:border-white/10 px-3 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--primary))] hover:bg-[hsl(var(--info-muted))] dark:hover:bg-white/10">
+                                <button onClick={runComplianceCompare} className="h-9 rounded-md border border-[hsl(var(--border))] px-3 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))]/10">
                                     {actionLoading === 'compare-compliance' ? 'Comparando...' : 'Compare'}
                                 </button>
                             </div>
                             <div className="grid grid-cols-1 md:grid-cols-[1fr_auto] gap-2 mb-3">
-                                <input type="number" min={1} max={3650} value={historyRetentionDays} onChange={(event) => setHistoryRetentionDays(Number(event.target.value) || 90)} className="h-9 rounded-md border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-black/20 px-2 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]" />
-                                <button onClick={cleanupComplianceHistory} className="h-9 rounded-md border border-[hsl(var(--border))] dark:border-white/10 px-3 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/10">
+                                <input type="number" min={1} max={3650} value={historyRetentionDays} onChange={(event) => setHistoryRetentionDays(Number(event.target.value) || 90)} className="h-9 rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] px-2 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]" />
+                                <button onClick={cleanupComplianceHistory} className="h-9 rounded-md border border-[hsl(var(--border))] px-3 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))]">
                                     {actionLoading === 'cleanup-history' ? 'Cleaning...' : 'Cleanup History'}
                                 </button>
                             </div>
                             {compareResult?.diff ? (
-                                <div className="rounded-md border border-[hsl(var(--border))] dark:border-white/10 bg-white/70 dark:bg-black/30 p-3 mb-3 space-y-1">
+                                <div className="rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] p-3 mb-3 space-y-1">
                                     <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Comparison Result</p>
-                                    <p className="text-xs text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">feature changes: {compareResult.diff.feature_changes_count ?? 0}</p>
-                                    <p className="text-xs text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">drift severity: <span className={clsx(
+                                    <p className="text-xs text-[hsl(var(--text-secondary))]">feature changes: {compareResult.diff.feature_changes_count ?? 0}</p>
+                                    <p className="text-xs text-[hsl(var(--text-secondary))]">drift severity: <span className={clsx(
                                         'font-semibold uppercase',
                                         compareResult.diff?.drift?.severity === 'critical' && 'text-[hsl(var(--destructive))]',
                                         compareResult.diff?.drift?.severity === 'high' && 'text-[hsl(var(--warning))]',
                                         compareResult.diff?.drift?.severity === 'medium' && 'text-[hsl(var(--warning))]',
                                         (!compareResult.diff?.drift?.severity || compareResult.diff?.drift?.severity === 'low') && 'text-[hsl(var(--success))]',
                                     )}>{compareResult.diff?.drift?.severity || 'low'}</span></p>
-                                    <p className="text-xs text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">risk score: {compareResult.diff?.drift?.risk_score ?? 0}</p>
-                                    <p className="text-xs text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">critical flags changed: {compareResult.diff?.drift?.critical_feature_changes?.length ?? 0}</p>
-                                    <p className="text-xs text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">critical flags disabled: {compareResult.diff?.drift?.critical_disabled?.length ?? 0}</p>
-                                    <p className="text-xs text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">incident count delta: {compareResult.diff.metrics?.incident_count?.delta ?? '-'}</p>
-                                    <p className="text-xs text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">critical delta: {compareResult.diff.metrics?.critical_incidents?.delta ?? '-'}</p>
-                                    <p className="text-xs text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">mtta delta: {compareResult.diff.metrics?.mtta_minutes?.delta ?? '-'}</p>
-                                    <p className="text-xs text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">mttr delta: {compareResult.diff.metrics?.mttr_minutes?.delta ?? '-'}</p>
+                                    <p className="text-xs text-[hsl(var(--text-secondary))]">risk score: {compareResult.diff?.drift?.risk_score ?? 0}</p>
+                                    <p className="text-xs text-[hsl(var(--text-secondary))]">critical flags changed: {compareResult.diff?.drift?.critical_feature_changes?.length ?? 0}</p>
+                                    <p className="text-xs text-[hsl(var(--text-secondary))]">critical flags disabled: {compareResult.diff?.drift?.critical_disabled?.length ?? 0}</p>
+                                    <p className="text-xs text-[hsl(var(--text-secondary))]">incident count delta: {compareResult.diff.metrics?.incident_count?.delta ?? '-'}</p>
+                                    <p className="text-xs text-[hsl(var(--text-secondary))]">critical delta: {compareResult.diff.metrics?.critical_incidents?.delta ?? '-'}</p>
+                                    <p className="text-xs text-[hsl(var(--text-secondary))]">mtta delta: {compareResult.diff.metrics?.mtta_minutes?.delta ?? '-'}</p>
+                                    <p className="text-xs text-[hsl(var(--text-secondary))]">mttr delta: {compareResult.diff.metrics?.mttr_minutes?.delta ?? '-'}</p>
                                     {Array.isArray(compareResult.diff?.drift?.reasons) && compareResult.diff.drift.reasons.length > 0 ? (
                                         <div className="pt-1 space-y-1">
                                             {compareResult.diff.drift.reasons.slice(0, 3).map((reason: string, idx: number) => (
-                                                <p key={`${reason}-${idx}`} className="text-xs text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">- {reason}</p>
+                                                <p key={`${reason}-${idx}`} className="text-xs text-[hsl(var(--text-secondary))]">- {reason}</p>
                                             ))}
                                         </div>
                                     ) : null}
                                     {Array.isArray(compareResult.diff?.drift?.mitigations) && compareResult.diff.drift.mitigations.length > 0 ? (
                                         <div className="pt-1 space-y-1">
                                             {compareResult.diff.drift.mitigations.slice(0, 3).map((item: string, idx: number) => (
-                                                <p key={`${item}-${idx}`} className="text-xs text-[hsl(var(--primary))] dark:text-[hsl(var(--info-muted))]">* {item}</p>
+                                                <p key={`${item}-${idx}`} className="text-xs text-[hsl(var(--primary))]">* {item}</p>
                                             ))}
                                         </div>
                                     ) : null}
@@ -1302,12 +1302,12 @@ export default function SystemSettings() {
                             ) : (
                                 <div className="space-y-2 max-h-56 overflow-y-auto">
                                     {complianceHistory.slice().reverse().map((item) => (
-                                        <div key={`${item.snapshot_id}-${item.recorded_at}`} className="rounded-md border border-[hsl(var(--border))] dark:border-white/10 bg-white/70 dark:bg-black/30 p-3">
+                                        <div key={`${item.snapshot_id}-${item.recorded_at}`} className="rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] p-3">
                                             <div className="flex flex-wrap items-center justify-between gap-2">
                                                 <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{item.snapshot_id}</p>
-                                                <button onClick={() => downloadComplianceHistoryItem(String(item.snapshot_id || ''))} className="h-7 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 px-2 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--primary))]">Download</button>
+                                                <button onClick={() => downloadComplianceHistoryItem(String(item.snapshot_id || ''))} className="h-7 rounded-lg border border-[hsl(var(--border))] px-2 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--primary))]">Download</button>
                                             </div>
-                                            <p className="text-xs text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">{item.recorded_at ? new Date(item.recorded_at).toLocaleString() : 'n/a'}</p>
+                                            <p className="text-xs text-[hsl(var(--text-secondary))]">{item.recorded_at ? new Date(item.recorded_at).toLocaleString() : 'n/a'}</p>
                                             <p className="text-2xs text-[hsl(var(--text-secondary))]">events: {item.summary?.audit_events ?? '-'} | incidents: {item.summary?.incidents ?? '-'}</p>
                                             <p className="text-2xs text-[hsl(var(--text-secondary))]">critical: {item.summary?.critical_incidents ?? 0} | anomaly: {item.summary?.has_anomaly ? 'yes' : 'no'}</p>
                                             <p className="text-2xs text-[hsl(var(--text-secondary))]">drift: {item.drift_from_previous?.severity || 'n/a'} | risk: {item.drift_from_previous?.risk_score ?? 0}</p>
@@ -1317,7 +1317,7 @@ export default function SystemSettings() {
                                 </div>
                             )}
                         </div>
-                        <div className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-black/20 p-4">
+                        <div className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] p-4">
                             <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-3">Weekly Compliance Summary</p>
                             {complianceWeeklySummary.length === 0 ? (
                                 <p className="text-xs font-semibold text-[hsl(var(--text-secondary))]">Sin resumen semanal.</p>
@@ -1335,7 +1335,7 @@ export default function SystemSettings() {
                                 </div>
                             )}
                         </div>
-                        <div className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-black/20 p-4 space-y-3">
+                        <div className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] p-4 space-y-3">
                             <div className="flex items-center justify-between gap-2">
                                 <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Drift Policy Engine</p>
                                 <span className="text-2xs font-bold text-[hsl(var(--text-secondary))]">env: {compliancePolicy?.resolved?.environment || 'production'}</span>
@@ -1344,7 +1344,7 @@ export default function SystemSettings() {
                                 <select
                                     value={compliancePolicy?.policy?.active_environment || 'production'}
                                     onChange={(event) => updateCompliancePolicy({ active_environment: event.target.value })}
-                                    className="h-9 rounded-md border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-black/20 px-2 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]"
+                                    className="h-9 rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] px-2 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]"
                                 >
                                     <option value="development">development</option>
                                     <option value="staging">staging</option>
@@ -1362,32 +1362,32 @@ export default function SystemSettings() {
                                             },
                                         },
                                     })}
-                                    className="h-9 rounded-md border border-[hsl(var(--border))] dark:border-white/10 px-2 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--primary))]"
+                                    className="h-9 rounded-md border border-[hsl(var(--border))] px-2 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--primary))]"
                                 >
                                     {actionLoading === 'update-policy' ? 'Saving...' : 'Save Policy'}
                                 </button>
-                                <div className="rounded-md border border-[hsl(var(--border))] dark:border-white/10 bg-white/70 dark:bg-black/30 px-2 py-1 text-2xs font-bold text-[hsl(var(--text-secondary))]">
+                                <div className="rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] px-2 py-1 text-2xs font-bold text-[hsl(var(--text-secondary))]">
                                     spike {compliancePolicy?.resolved?.incident_spike_delta ?? '-'} | mtta {compliancePolicy?.resolved?.mtta_regression_pct ?? '-'}
                                 </div>
                             </div>
-                            <div className="rounded-md border border-[hsl(var(--border))] dark:border-white/10 bg-white/70 dark:bg-black/30 p-3 space-y-2">
+                            <div className="rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-3 space-y-2">
                                 <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Suppressions</p>
                                 <div className="grid grid-cols-1 md:grid-cols-4 gap-2">
-                                    <select value={suppressionDraft.kind} onChange={(event) => setSuppressionDraft((prev) => ({ ...prev, kind: event.target.value }))} className="h-8 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-black/20 px-2 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">
+                                    <select value={suppressionDraft.kind} onChange={(event) => setSuppressionDraft((prev) => ({ ...prev, kind: event.target.value }))} className="h-8 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] px-2 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
                                         <option value="severity">severity</option>
                                         <option value="feature">feature</option>
                                         <option value="metric_alert">metric_alert</option>
                                         <option value="all">all</option>
                                     </select>
-                                    <input value={suppressionDraft.value} onChange={(event) => setSuppressionDraft((prev) => ({ ...prev, value: event.target.value }))} placeholder="value" className="h-8 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-black/20 px-2 text-2xs font-bold" />
-                                    <input type="number" min={1} max={720} value={suppressionDraft.hours} onChange={(event) => setSuppressionDraft((prev) => ({ ...prev, hours: Number(event.target.value) || 24 }))} className="h-8 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-black/20 px-2 text-2xs font-bold" />
-                                    <button onClick={createSuppression} className="h-8 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 px-2 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--primary))]">{actionLoading === 'create-suppression' ? 'Creating...' : 'Add'}</button>
+                                    <input value={suppressionDraft.value} onChange={(event) => setSuppressionDraft((prev) => ({ ...prev, value: event.target.value }))} placeholder="value" className="h-8 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] px-2 text-2xs font-bold text-[hsl(var(--text-primary))]" />
+                                    <input type="number" min={1} max={720} value={suppressionDraft.hours} onChange={(event) => setSuppressionDraft((prev) => ({ ...prev, hours: Number(event.target.value) || 24 }))} className="h-8 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] px-2 text-2xs font-bold text-[hsl(var(--text-primary))]" />
+                                    <button onClick={createSuppression} className="h-8 rounded-lg border border-[hsl(var(--border))] px-2 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--primary))]">{actionLoading === 'create-suppression' ? 'Creating...' : 'Add'}</button>
                                 </div>
                                 {Array.isArray(compliancePolicy?.resolved?.suppressions) && compliancePolicy.resolved.suppressions.length > 0 ? (
                                     <div className="space-y-1 max-h-36 overflow-y-auto">
                                         {compliancePolicy.resolved.suppressions.map((item: { id: string; kind: string; value: string; expires_at?: string }) => (
-                                            <div key={item.id} className="flex items-center justify-between gap-2 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-white/70 dark:bg-black/30 px-2 py-1 text-2xs">
-                                                <span className="font-bold text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">{item.kind}:{item.value || '*'} (exp {item.expires_at ? new Date(item.expires_at).toLocaleString() : 'n/a'})</span>
+                                            <div key={item.id} className="flex items-center justify-between gap-2 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] px-2 py-1 text-2xs">
+                                                <span className="font-bold text-[hsl(var(--text-secondary))]">{item.kind}:{item.value || '*'} (exp {item.expires_at ? new Date(item.expires_at).toLocaleString() : 'n/a'})</span>
                                                 <button onClick={() => deleteSuppression(String(item.id || ''))} className="font-semibold uppercase tracking-wide text-[hsl(var(--destructive))]">del</button>
                                             </div>
                                         ))}
@@ -1402,7 +1402,7 @@ export default function SystemSettings() {
                         ) : (
                             <div className="space-y-3">
                                 {incidents.slice().reverse().map((incident) => (
-                                    <div key={incident.id} className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-black/20 p-4">
+                                    <div key={incident.id} className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-4">
                                         <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
                                             <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{incident.kind} | {incident.key}</p>
                                             <div className="flex items-center gap-2">
@@ -1422,24 +1422,24 @@ export default function SystemSettings() {
                                                 )}>{incident.status}</span>
                                             </div>
                                         </div>
-                                        <p className="text-xs font-semibold text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">count: {incident.count} | threshold: {incident.threshold}</p>
+                                        <p className="text-xs font-semibold text-[hsl(var(--text-secondary))]">count: {incident.count} | threshold: {incident.threshold}</p>
                                         <p className="text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide mt-1">updated: {incident.updated_at ? new Date(incident.updated_at).toLocaleString() : 'n/a'}</p>
                                         <div className="mt-3 flex flex-wrap gap-2">
-                                            <button onClick={() => updateIncident(incident.id, 'acknowledge')} className="h-8 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 px-3 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Acknowledge</button>
-                                            <button onClick={() => updateIncident(incident.id, 'silence')} className="h-8 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 px-3 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--primary))]">Silence 3h</button>
-                                            <button onClick={() => updateIncident(incident.id, 'reopen')} className="h-8 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 px-3 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--warning))]">Reopen</button>
-                                            <button onClick={() => updateIncident(incident.id, 'close')} className="h-8 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 px-3 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--success))]">Close</button>
-                                            <button onClick={() => addIncidentNote(incident.id)} className="h-8 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 px-3 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--primary))]">Add note</button>
+                                            <button onClick={() => updateIncident(incident.id, 'acknowledge')} className="h-8 rounded-lg border border-[hsl(var(--border))] px-3 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Acknowledge</button>
+                                            <button onClick={() => updateIncident(incident.id, 'silence')} className="h-8 rounded-lg border border-[hsl(var(--border))] px-3 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--primary))]">Silence 3h</button>
+                                            <button onClick={() => updateIncident(incident.id, 'reopen')} className="h-8 rounded-lg border border-[hsl(var(--border))] px-3 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--warning))]">Reopen</button>
+                                            <button onClick={() => updateIncident(incident.id, 'close')} className="h-8 rounded-lg border border-[hsl(var(--border))] px-3 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--success))]">Close</button>
+                                            <button onClick={() => addIncidentNote(incident.id)} className="h-8 rounded-lg border border-[hsl(var(--border))] px-3 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--primary))]">Add note</button>
                                         </div>
                                         {Array.isArray(incident.history) && incident.history.length > 0 ? (
-                                            <div className="mt-3 rounded-md border border-[hsl(var(--border))] dark:border-white/10 bg-white/60 dark:bg-black/30 p-3">
+                                            <div className="mt-3 rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] p-3">
                                                 <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-2">Timeline</p>
                                                 <div className="space-y-2">
                                                     {incident.history.slice(-4).reverse().map((entry, idx: number) => (
                                                         <div key={`${entry.at || idx}-${entry.event || 'event'}`} className="text-xs">
-                                                            <p className="font-semibold text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] uppercase tracking-wider">{entry.event} <span className="font-bold text-[hsl(var(--text-secondary))]">by {entry.by || 'system'}</span></p>
-                                                            <p className="text-xs text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">{entry.at ? new Date(entry.at).toLocaleString() : 'n/a'}</p>
-                                                            {entry.note ? <p className="text-xs text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">{entry.note}</p> : null}
+                                                            <p className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wider">{entry.event} <span className="font-bold text-[hsl(var(--text-secondary))]">by {entry.by || 'system'}</span></p>
+                                                            <p className="text-xs text-[hsl(var(--text-secondary))]">{entry.at ? new Date(entry.at).toLocaleString() : 'n/a'}</p>
+                                                            {entry.note ? <p className="text-xs text-[hsl(var(--text-secondary))]">{entry.note}</p> : null}
                                                         </div>
                                                     ))}
                                                 </div>
@@ -1454,7 +1454,7 @@ export default function SystemSettings() {
 
                 {/* Cyber Security Sidebar */}
                 <aside className="lg:col-span-4 space-y-3">
-                    <section className="p-4 bg-[hsl(var(--bg-muted))] rounded-lg text-white shadow-2xl space-y-3 relative overflow-hidden group">
+                    <section className="p-4 bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] rounded-lg text-[hsl(var(--text-primary))] shadow-sm space-y-3 relative overflow-hidden group">
                         <div className="absolute top-0 right-0 -mr-10 -mt-3 size-10 bg-[hsl(var(--primary)/0.2)] rounded-full blur-3xl" />
                         <div className="relative z-10">
                             <div className="flex items-center gap-3 mb-3">
@@ -1467,13 +1467,13 @@ export default function SystemSettings() {
                                 <SecurityCheck label="RBAC Policy v3.0" active />
                                 <SecurityCheck label="Data Encryption at Rest" active />
                             </div>
-                            <button className="w-full mt-3 py-2 bg-[hsl(var(--bg-primary))] text-[hsl(var(--text-primary))] rounded-lg text-xs font-semibold uppercase tracking-wide shadow-xl hover:bg-[hsl(var(--surface-2))] transition-all active:scale-95">
+                            <button className="w-full mt-3 py-2 bg-[hsl(var(--surface-1))] text-[hsl(var(--text-primary))] border border-[hsl(var(--border))] rounded-lg text-xs font-semibold uppercase tracking-wide shadow-sm hover:bg-[hsl(var(--surface-2))] transition-all active:scale-95">
                                 Ver Registro de Amenazas
                             </button>
                         </div>
                     </section>
 
-                    <section className="bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg p-4 shadow-xl space-y-3">
+                    <section className="bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] rounded-lg p-4 shadow-sm space-y-3">
                         <div className="flex items-center justify-between">
                             <h4 className="text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Estado del Cluster</h4>
                             <RefreshCw size={18} className="text-[hsl(var(--text-secondary))]" />
@@ -1495,19 +1495,19 @@ export default function SystemSettings() {
 
 function HealthCard({ label, value, status, icon: Icon }: HealthCardProps) {
     return (
-        <div className="p-4 bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg shadow-sm flex flex-col gap-3 group hover:shadow-xl transition-all">
+        <div className="p-4 bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] rounded-lg shadow-sm flex flex-col gap-3 group hover:shadow-xl transition-all">
             <div className="flex justify-between items-start">
-                <div className="size-7 rounded-lg bg-[hsl(var(--info-muted))] dark:bg-[hsl(var(--primary)/0.3)] text-[hsl(var(--primary))] flex items-center justify-center group-hover:scale-110 transition-transform">
+                <div className="size-7 rounded-lg bg-[hsl(var(--info-muted))] text-[hsl(var(--primary))] flex items-center justify-center group-hover:scale-110 transition-transform">
                     {Icon && <Icon size={24} />}
                 </div>
-                <div className="flex items-center gap-1.5 px-2 py-1 bg-[hsl(var(--success-muted))] dark:bg-[hsl(var(--success)/0.2)] text-[hsl(var(--success))] rounded-lg">
+                <div className="flex items-center gap-1.5 px-2 py-1 bg-[hsl(var(--success-muted))] text-[hsl(var(--success))] rounded-lg">
                     <div className="size-1.5 rounded-full bg-[hsl(var(--success))] animate-pulse" />
                     <span className="text-2xs font-semibold uppercase">{status}</span>
                 </div>
             </div>
             <div>
                 <p className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide mb-1">{label}</p>
-                <h4 className="text-xl font-bold text-[hsl(var(--text-primary))] dark:text-white tracking-tighter">{value}</h4>
+                <h4 className="text-xl font-bold text-[hsl(var(--text-primary))] tracking-tighter">{value}</h4>
             </div>
         </div>
     );
@@ -1515,9 +1515,9 @@ function HealthCard({ label, value, status, icon: Icon }: HealthCardProps) {
 
 function FeatureToggle({ label, desc, active, onToggle, loading }: FeatureToggleProps) {
     return (
-        <div className="p-3 bg-[hsl(var(--surface-1))] dark:bg-white/5 rounded-lg border border-[hsl(var(--border))] dark:border-white/5 flex items-center justify-between group hover:border-[hsl(var(--primary)/0.2)] transition-all">
+        <div className="p-3 bg-[hsl(var(--surface-1))] rounded-lg border border-[hsl(var(--border))] flex items-center justify-between group hover:border-[hsl(var(--primary)/0.2)] transition-all">
             <div className="flex-1 pr-4">
-                <h5 className="font-semibold text-[hsl(var(--text-primary))] dark:text-white uppercase mb-1">{label}</h5>
+                <h5 className="font-semibold text-[hsl(var(--text-primary))] uppercase mb-1">{label}</h5>
                 <p className="text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide leading-tight">{desc}</p>
             </div>
             <button onClick={onToggle} disabled={loading} className="transition-all active:scale-90 disabled:opacity-60">
@@ -1535,9 +1535,9 @@ function FeatureToggle({ label, desc, active, onToggle, loading }: FeatureToggle
 
 function AuditMetric({ label, value }: { label: string; value: string }) {
     return (
-        <div className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-black/20 p-4">
+        <div className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-4">
             <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{label}</p>
-            <p className="text-lg font-bold text-[hsl(var(--text-primary))] dark:text-white mt-1">{value}</p>
+            <p className="text-lg font-bold text-[hsl(var(--text-primary))] mt-1">{value}</p>
         </div>
     );
 }
@@ -1557,18 +1557,18 @@ function DeltaMetric({ label, value, inverse }: { label: string; value: number |
 
 function ProviderRow({ icon: Icon, name, status, color = 'blue', detail }: ProviderRowProps) {
     const colors: Record<string, string> = {
-        emerald: 'text-[hsl(var(--success))] bg-[hsl(var(--success-muted))] dark:bg-[hsl(var(--success)/0.2)]',
-        amber: 'text-[hsl(var(--warning))] bg-[hsl(var(--warning-muted))] dark:bg-[hsl(var(--warning)/0.2)]',
-        blue: 'text-[hsl(var(--primary))] bg-[hsl(var(--info-muted))] dark:bg-[hsl(var(--primary)/0.2)]'
+        emerald: 'text-[hsl(var(--success))] bg-[hsl(var(--success-muted))]',
+        amber: 'text-[hsl(var(--warning))] bg-[hsl(var(--warning-muted))]',
+        blue: 'text-[hsl(var(--primary))] bg-[hsl(var(--info-muted))]'
     };
     return (
-        <div className="flex items-center justify-between p-3 bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/5 rounded-lg group hover:border-[hsl(var(--primary)/0.2)] transition-all shadow-sm">
+        <div className="flex items-center justify-between p-3 bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] rounded-lg group hover:border-[hsl(var(--primary)/0.2)] transition-all shadow-sm">
             <div className="flex items-center gap-3">
                 <div className={clsx("size-7 rounded-lg flex items-center justify-center transition-transform group-hover:scale-110", colors[color])}>
                     {Icon && <Icon size={24} />}
                 </div>
                 <div>
-                    <span className="text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-white uppercase leading-none block mb-1">{name}</span>
+                    <span className="text-sm font-semibold text-[hsl(var(--text-primary))] uppercase leading-none block mb-1">{name}</span>
                     <span className="text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">{detail}</span>
                 </div>
             </div>
@@ -1592,8 +1592,8 @@ function ClusterNode({ label, status, load }: ClusterNodeProps) {
     return (
         <div className="flex items-center justify-between p-2">
             <div className="flex items-center gap-3">
-                <div className={clsx("size-2 rounded-full", status === 'running' ? 'bg-[hsl(var(--success-muted))]0' : 'bg-[hsl(var(--surface-2))]')} />
-                <span className="font-semibold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] uppercase">{label}</span>
+                <div className={clsx("size-2 rounded-full", status === 'running' ? 'bg-[hsl(var(--success))]' : 'bg-[hsl(var(--surface-2))]')} />
+                <span className="font-semibold text-[hsl(var(--text-primary))] uppercase">{label}</span>
             </div>
             <span className="font-semibold text-[hsl(var(--primary))] uppercase">{load}</span>
         </div>
@@ -1613,10 +1613,10 @@ interface RolloutControlProps {
 function RolloutControl({ featureId, label, rule, selectedRole, onRoleChange, onSave, loading }: RolloutControlProps) {
     const [percent, setPercent] = React.useState(rule?.rollout_percent ?? 100);
     return (
-        <div className="p-3 bg-[hsl(var(--surface-1))] dark:bg-white/5 rounded-lg border border-[hsl(var(--border))] dark:border-white/5 space-y-4">
+        <div className="p-3 bg-[hsl(var(--surface-1))] rounded-lg border border-[hsl(var(--border))] space-y-4">
             <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">{label}</span>
-                <span className="font-semibold bg-[hsl(var(--info-muted))] dark:bg-[hsl(var(--primary)/0.3)] text-[hsl(var(--primary))] px-2 py-0.5 rounded-full uppercase">{featureId}</span>
+                <span className="text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-primary))]">{label}</span>
+                <span className="font-semibold bg-[hsl(var(--info-muted))] text-[hsl(var(--primary))] px-2 py-0.5 rounded-full uppercase">{featureId}</span>
             </div>
             <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1">
@@ -1624,7 +1624,7 @@ function RolloutControl({ featureId, label, rule, selectedRole, onRoleChange, on
                     <select
                         value={selectedRole}
                         onChange={(e) => onRoleChange(e.target.value)}
-                        className="w-full text-xs font-bold bg-[hsl(var(--bg-primary))] dark:bg-black/20 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg px-3 py-2 outline-none"
+                        className="w-full text-xs font-bold bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] text-[hsl(var(--text-primary))] rounded-lg px-3 py-2 outline-none"
                     >
                         <option value="">Todos</option>
                         <option value="admin">Admin</option>
@@ -1644,7 +1644,7 @@ function RolloutControl({ featureId, label, rule, selectedRole, onRoleChange, on
             <button
                 onClick={() => onSave({ role: selectedRole, percent, usersAllow: rule?.users_allow || [], usersDeny: rule?.users_deny || [] })}
                 disabled={loading}
-                className="w-full py-3 bg-[hsl(var(--primary))] text-white rounded-md text-2xs font-semibold uppercase tracking-wide hover:bg-[hsl(var(--primary))] transition-all disabled:opacity-50"
+                className="w-full py-3 bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] rounded-md text-2xs font-semibold uppercase tracking-wide hover:bg-[hsl(var(--primary))] transition-all disabled:opacity-50"
             >
                 {loading ? 'Guardando...' : 'Aplicar Regla'}
             </button>

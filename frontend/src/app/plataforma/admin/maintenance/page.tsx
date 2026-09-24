@@ -100,13 +100,13 @@ export default function AdminMaintenancePage() {
     const renderList = () => (
         <div className="space-y-4">
             {visibleTasks.map((row, index) => (
-                <div key={row.id || index} className="bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/5 rounded-lg p-3 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                <div key={row.id || index} className="bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] rounded-lg p-3 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                     <div className="flex items-center gap-3">
                         <div className={clsx("size-7 rounded-lg flex items-center justify-center", row.priority === 'Alta' ? "bg-[hsl(var(--destructive)/0.08)] text-[hsl(var(--destructive))]" : "bg-[hsl(var(--warning-muted))] text-[hsl(var(--warning))]")}>
                             <AlertCircle size={24} />
                         </div>
                         <div>
-                            <h3 className="text-lg font-bold text-[hsl(var(--text-primary))] dark:text-white uppercase tracking-tight">{row.item}</h3>
+                            <h3 className="text-lg font-bold text-[hsl(var(--text-primary))] uppercase tracking-tight">{row.item}</h3>
                             <p className="text-2xs text-[hsl(var(--text-secondary))] font-bold uppercase tracking-wide">{row.task}</p>
                         </div>
                     </div>
@@ -117,9 +117,9 @@ export default function AdminMaintenancePage() {
     );
 
     const renderTable = () => (
-        <div className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 overflow-x-auto bg-[hsl(var(--bg-primary))] dark:bg-white/5">
+        <div className="rounded-lg border border-[hsl(var(--border))] overflow-x-auto bg-[hsl(var(--surface-1))]">
             <table className="w-full min-w-[480px] text-left">
-                <thead className="bg-[hsl(var(--surface-1))] dark:bg-white/5">
+                <thead className="bg-[hsl(var(--surface-2))]">
                     <tr>
                         <th className="px-3 py-1.5 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Activo</th>
                         <th className="px-3 py-1.5 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hidden md:table-cell">Tarea</th>
@@ -127,10 +127,10 @@ export default function AdminMaintenancePage() {
                         <th className="px-3 py-1.5 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Prioridad</th>
                     </tr>
                 </thead>
-                <tbody className="divide-y divide-[hsl(var(--border))] dark:divide-white/5">
+                <tbody className="divide-y divide-[hsl(var(--border))]">
                     {visibleTasks.map((row, index) => (
-                        <tr key={row.id || index} className="hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/[0.03]">
-                            <td className="px-3 py-1.5 text-sm font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">{row.item}</td>
+                        <tr key={row.id || index} className="hover:bg-[hsl(var(--surface-2))]">
+                            <td className="px-3 py-1.5 text-sm font-bold text-[hsl(var(--text-primary))]">{row.item}</td>
                             <td className="px-3 py-1.5 hidden md:table-cell text-xs text-[hsl(var(--text-secondary))]">{row.task}</td>
                             <td className="px-3 py-1.5 hidden lg:table-cell text-xs text-[hsl(var(--text-secondary))]">{new Date(row.date || Date.now()).toLocaleDateString('es-ES')}</td>
                             <td className="px-3 py-1.5"><span className={clsx("px-2 py-0.5 rounded-full text-2xs font-semibold uppercase", row.priority === 'Alta' ? "bg-[hsl(var(--destructive)/0.08)] text-[hsl(var(--destructive))]" : "bg-[hsl(var(--warning-muted))] text-[hsl(var(--warning))]")}>{row.priority}</span></td>
@@ -144,15 +144,15 @@ export default function AdminMaintenancePage() {
     const renderBoard = () => (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
             {groupedTasks.map((group) => (
-                <section key={group.id} className="rounded-lg bg-[hsl(var(--surface-1))] dark:bg-white/[0.03] border border-[hsl(var(--border))] dark:border-white/10 p-3">
+                <section key={group.id} className="rounded-lg bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] p-3">
                     <div className="flex items-center justify-between mb-5">
                         <span className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Prioridad {group.label}</span>
                         <span className="font-semibold text-[hsl(var(--text-secondary))]">{group.items.length}</span>
                     </div>
                     <div className="space-y-4">
                         {group.items.map((row, index) => (
-                            <div key={row.id || index} className="bg-[hsl(var(--bg-primary))] dark:bg-white/[0.05] border border-[hsl(var(--border))] dark:border-white/5 rounded-lg p-3">
-                                <p className="text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-white uppercase tracking-tight">{row.item}</p>
+                            <div key={row.id || index} className="bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] rounded-lg p-3">
+                                <p className="text-sm font-semibold text-[hsl(var(--text-primary))] uppercase tracking-tight">{row.item}</p>
                                 <p className="mt-2 text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">{row.task}</p>
                             </div>
                         ))}
@@ -163,7 +163,7 @@ export default function AdminMaintenancePage() {
     );
 
     return (
-        <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))] overflow-hidden animate-fade-in font-display">
+        <div className="flex flex-col h-full bg-[hsl(var(--surface-1))] overflow-hidden animate-fade-in font-display">
             <style jsx global>{`
                 .aura-tech {
                     position: relative;
@@ -208,21 +208,21 @@ export default function AdminMaintenancePage() {
                         <div className="space-y-4">
                             <motion.div
                                 initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}
-                                className="inline-flex items-center gap-2 px-4 py-1.5 bg-[hsl(var(--warning))]/10 text-warning-text dark:text-[hsl(var(--warning))] rounded-full text-2xs font-semibold uppercase tracking-wide border border-[hsl(var(--warning)/100%)]/20"
+                                className="inline-flex items-center gap-2 px-4 py-1.5 bg-[hsl(var(--warning))]/10 text-[hsl(var(--warning))] rounded-full text-2xs font-semibold uppercase tracking-wide border border-[hsl(var(--warning))]/20"
                             >
                                 <Zap size={12} className="animate-pulse" /> Protocolo de Salud Activa
                             </motion.div>
-                            <h1 className="text-xl lg:text-xl font-bold tracking-tighter text-[hsl(var(--text-primary))] dark:text-white uppercase leading-none italic">
+                            <h1 className="text-xl lg:text-xl font-bold tracking-tighter text-[hsl(var(--text-primary))] uppercase leading-none italic">
                                 Agenda de <span className="text-[hsl(var(--warning))]">Mantenimiento</span>
                             </h1>
-                            <p className="text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] text-lg font-medium max-w-xl leading-relaxed">
+                            <p className="text-[hsl(var(--text-secondary))] text-lg font-medium max-w-xl leading-relaxed">
                                 Supervisión técnica en tiempo real. Asegura la disponibilidad del 100% de la infraestructura ministerial.
                             </p>
                         </div>
 
                         <motion.button
                             whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
-                            className="px-4 py-1.5 bg-[hsl(var(--warning))] hover:bg-[hsl(var(--warning))] text-[hsl(var(--text-primary))] text-xs font-semibold uppercase tracking-wide rounded-lg transition-all shadow-2xl shadow-[hsl(var(--warning)/20%)] flex items-center gap-3 group"
+                            className="px-4 py-1.5 bg-[hsl(var(--warning))] hover:bg-[hsl(var(--warning))]/90 text-[hsl(var(--primary-foreground))] text-xs font-semibold uppercase tracking-wide rounded-lg transition-all shadow-2xl shadow-[hsl(var(--warning)/20%)] flex items-center gap-3 group"
                         >
                             <Plus size={18} className="group-hover:rotate-90 transition-transform duration-500" /> Programar Revisión
                         </motion.button>
@@ -244,14 +244,14 @@ export default function AdminMaintenancePage() {
                     <div className="grid grid-cols-1 lg:grid-cols-12 gap-3">
                         {/* Task List Cinematic */}
                         <div className="lg:col-span-8 space-y-3">
-                            <div className="bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/5 rounded-lg overflow-hidden shadow-sm shadow-black/10/50">
-                                <div className="p-4 border-b border-[hsl(var(--border))] dark:border-white/5 bg-[hsl(var(--surface-1))]/50 dark:bg-white/5 flex items-center justify-between">
+                            <div className="bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] rounded-lg overflow-hidden shadow-sm">
+                                <div className="p-4 border-b border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] flex items-center justify-between">
                                     <h3 className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide flex items-center gap-3">
                                         <History size={16} className="text-[hsl(var(--warning))]" /> Tareas de Seguimiento Técnico
                                     </h3>
-                                    <span className="px-4 py-1 bg-danger-soft dark:bg-[hsl(var(--danger))]/20 text-danger-text font-semibold rounded-full border border-[hsl(var(--danger)/20%)] dark:border-[hsl(var(--danger)/100%)] uppercase tracking-wide">Estado Crítico: {stats. review}</span>
+                                    <span className="px-4 py-1 bg-[hsl(var(--destructive))]/10 text-[hsl(var(--destructive))] font-semibold rounded-full border border-[hsl(var(--destructive))]/20 uppercase tracking-wide">Estado Crítico: {stats.review}</span>
                                 </div>
-                                <div className="divide-y divide-[hsl(var(--border))] dark:divide-white/5">
+                                <div className="divide-y divide-[hsl(var(--border))]">
                                     {loading ? (
                                         <div className="p-4 flex flex-col items-center gap-4">
                                             <Loader2 className="animate-spin text-[hsl(var(--warning))]" size={32} />
@@ -263,7 +263,7 @@ export default function AdminMaintenancePage() {
                                             animate={{ opacity: 1, y: 0 }}
                                             transition={{ delay: i * 0.05 }}
                                             key={i}
-                                            className="p-4 hover:bg-[hsl(var(--surface-1))]/50 dark:hover:bg-white/5 transition-all flex items-center justify-between group cursor-pointer"
+                                            className="p-4 hover:bg-[hsl(var(--surface-2))] transition-all flex items-center justify-between group cursor-pointer"
                                         >
                                             <div className="flex items-center gap-3">
                                                 <div className={clsx(
@@ -273,25 +273,25 @@ export default function AdminMaintenancePage() {
                                                     <AlertCircle size={28} />
                                                 </div>
                                                 <div>
-                                                    <div className="text-lg font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] uppercase tracking-tight group-hover:text-[hsl(var(--warning))] transition-colors leading-none mb-2">{row.item}</div>
+                                                    <div className="text-lg font-bold text-[hsl(var(--text-primary))] uppercase tracking-tight group-hover:text-[hsl(var(--warning))] transition-colors leading-none mb-2">{row.item}</div>
                                                     <div className="text-2xs text-[hsl(var(--text-secondary))] font-bold uppercase tracking-wide">{row.task}</div>
                                                 </div>
                                             </div>
                                             <div className="flex items-center gap-3">
                                                 <div className="text-right">
-                                                    <div className="font-semibold text-[hsl(var(--text-primary))] dark:text-white uppercase tracking-wide flex items-center gap-2 justify-end mb-1">
+                                                    <div className="font-semibold text-[hsl(var(--text-primary))] uppercase tracking-wide flex items-center gap-2 justify-end mb-1">
                                                         <Clock size={12} className="text-[hsl(var(--text-secondary))]" /> {new Date(row.date || Date.now()).toLocaleDateString('es-ES', { month: 'short', day: 'numeric' })}
                                                     </div>
                                                     <div className={clsx("text-2xs font-semibold uppercase tracking-wide", row.priority === 'Alta' ? 'text-[hsl(var(--destructive))]' : 'text-[hsl(var(--text-secondary))]')}>Prioridad {row.priority}</div>
                                                 </div>
-                                                <button className="size-7 bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg flex items-center justify-center text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--success))] hover:text-white hover:border-[hsl(var(--success))] hover:shadow-xl hover:shadow-[hsl(var(--success))/0.2] transition-all duration-500">
+                                                <button className="size-7 bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] rounded-lg flex items-center justify-center text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--success))] hover:text-[hsl(var(--primary-foreground))] hover:border-[hsl(var(--success))] hover:shadow-xl transition-all duration-500">
                                                     <CheckCircle2 size={20} />
                                                 </button>
                                             </div>
                                         </motion.div>
                                     )) : (
                                         <div className="p-4 text-center space-y-4">
-                                            <div className="size-8 bg-[hsl(var(--surface-1))] dark:bg-white/5 rounded-lg flex items-center justify-center mx-auto text-[hsl(var(--text-secondary))]"><Wrench size={40} strokeWidth={1} /></div>
+                                            <div className="size-8 bg-[hsl(var(--surface-2))] rounded-lg flex items-center justify-center mx-auto text-[hsl(var(--text-secondary))]"><Wrench size={40} strokeWidth={1} /></div>
                                             <p className="text-xs font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">No hay revisiones programadas</p>
                                         </div>
                                     )}
@@ -303,16 +303,16 @@ export default function AdminMaintenancePage() {
                         <div className="lg:col-span-4 space-y-3">
                             <motion.div
                                 initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }}
-                                className="bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/5 p-4 rounded-lg shadow-sm space-y-3 aura-tech"
+                                className="bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] p-4 rounded-lg shadow-sm space-y-3 aura-tech"
                             >
                                 <h3 className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide flex items-center gap-3">
                                     <ShieldCheck size={16} className="text-[hsl(var(--warning))]" /> Salud de Activos
                                 </h3>
                                 <div className="flex flex-col items-center justify-center py-2 gap-3">
-                                    <div className="relative size-10 p-4 rounded-full border-2 border-[hsl(var(--border))] dark:border-white/5 flex items-center justify-center shadow-inner">
+                                    <div className="relative size-10 p-4 rounded-full border-2 border-[hsl(var(--border))] flex items-center justify-center shadow-inner">
                                         <div className="size-full rounded-full bg-gradient-to-tr to-[hsl(var(--warning)/5%)] to-[hsl(var(--warning)/20%)] animate-pulse" />
                                         <div className="absolute inset-0 flex flex-col items-center justify-center">
-                                            <span className="text-xl font-bold text-[hsl(var(--text-primary))] dark:text-white italic tracking-tighter">{stats.operative}%</span>
+                                            <span className="text-xl font-bold text-[hsl(var(--text-primary))] italic tracking-tighter">{stats.operative}%</span>
                                             <span className="font-semibold text-[hsl(var(--success))] uppercase tracking-wide mt-1">Óptimo</span>
                                         </div>
                                         {/* Circular Progress Simulated */}
@@ -329,13 +329,13 @@ export default function AdminMaintenancePage() {
                                 </div>
                             </motion.div>
 
-                            <div className="bg-[hsl(var(--bg-muted))] p-4 rounded-lg text-[hsl(var(--text-primary))] dark:text-white space-y-3 relative overflow-hidden group shadow-2xl">
+                            <div className="bg-[hsl(var(--surface-2))] p-4 rounded-lg text-[hsl(var(--text-primary))] space-y-3 relative overflow-hidden group shadow-2xl border border-[hsl(var(--border))]">
                                 <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:rotate-12 transition-transform duration-1000"><Database size={80} /></div>
                                 <h3 className="text-xs font-semibold uppercase tracking-wide relative z-10">Data Integrity</h3>
                                 <p className="text-base text-[hsl(var(--text-secondary))] font-medium leading-relaxed relative z-10 italic">
                                     &quot;El mantenimiento preventivo ahorra un 40% en costos de reposición anual.&quot;
                                 </p>
-                                <button className="w-full py-1.5 bg-white/5 hover:bg-white/10 text-white text-2xs font-semibold uppercase tracking-wide rounded-lg transition-all border border-white/10 relative z-10">
+                                <button className="w-full py-1.5 bg-[hsl(var(--surface-1))] hover:bg-[hsl(var(--surface-3))] text-[hsl(var(--text-primary))] text-2xs font-semibold uppercase tracking-wide rounded-lg transition-all border border-[hsl(var(--border))] relative z-10">
                                     Descargar Reporte Anual
                                 </button>
                             </div>
@@ -355,8 +355,8 @@ function HealthRow({ label, value, color }: { label: string, value: number, colo
         rose: 'text-[hsl(var(--destructive))] bg-[hsl(var(--destructive)/0.08)]'
     };
     return (
-        <div className="flex justify-between items-center p-4 bg-[hsl(var(--surface-1))] dark:bg-white/5 rounded-lg border border-[hsl(var(--border))] dark:border-white/5">
-            <span className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">{label}</span>
+        <div className="flex justify-between items-center p-4 bg-[hsl(var(--surface-2))] rounded-lg border border-[hsl(var(--border))]">
+            <span className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{label}</span>
             <span className={clsx("px-3 py-1 rounded-lg text-xs font-semibold", tones[color])}>{value}</span>
         </div>
     );

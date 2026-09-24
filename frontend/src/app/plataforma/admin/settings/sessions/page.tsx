@@ -130,21 +130,21 @@ export default function AdminSettingsSessionsPage() {
     return (
         <div className="min-h-full bg-[hsl(var(--bg-muted))]/20 font-display">
             {/* Header */}
-            <div className="bg-[hsl(var(--bg-muted))]/40 backdrop-blur-xl border-b border-white/5 sticky top-0 z-20">
+            <div className="bg-[hsl(var(--surface-1))] backdrop-blur-xl border-b border-[hsl(var(--border))] sticky top-0 z-20">
                 <div className="px-4 py-2 flex items-center justify-between">
                     <div className="flex items-center gap-3">
                         <div className="p-2 rounded-lg bg-[hsl(var(--info))]/10 text-[hsl(var(--primary))]">
                             <Monitor size={18} />
                         </div>
                         <div>
-                            <h1 className="text-sm font-bold text-white">Sesiones Activas</h1>
+                            <h1 className="text-sm font-bold text-[hsl(var(--text-primary))]">Sesiones Activas</h1>
                             <p className="text-xs text-[hsl(var(--text-secondary))]">Dispositivos conectados a tu cuenta</p>
                         </div>
                     </div>
                     <div className="flex items-center gap-2">
                         <button
                             onClick={() => fetchSessions()}
-                            className="p-2 rounded-lg bg-white/5 border border-white/10 text-[hsl(var(--text-secondary))] hover:text-white hover:bg-white/10 transition-colors"
+                            className="p-2 rounded-lg bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] hover:bg-[hsl(var(--surface-3))] transition-colors"
                             title="Actualizar"
                         >
                             <RefreshCw size={14} />
@@ -169,7 +169,7 @@ export default function AdminSettingsSessionsPage() {
                         <RefreshCw size={24} className="animate-spin text-[hsl(var(--text-secondary))]" />
                     </div>
                 ) : sessions.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center py-12 text-center bg-white/5 border border-white/10 rounded-lg">
+                    <div className="flex flex-col items-center justify-center py-12 text-center bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] rounded-lg">
                         <AlertCircle size={32} className="text-[hsl(var(--text-secondary))] mb-2" />
                         <p className="text-sm font-medium text-[hsl(var(--text-secondary))]">Sin sesiones activas</p>
                         <p className="text-xs text-[hsl(var(--text-secondary))]">Inicia sesión para ver tus dispositivos</p>
@@ -187,24 +187,24 @@ export default function AdminSettingsSessionsPage() {
                                 initial={{ opacity: 0, y: 10 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ delay: i * 0.05 }}
-                                className={`bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))] border rounded-lg p-4 transition-all ${
+                                className={`bg-[hsl(var(--surface-1))] border rounded-lg p-4 transition-all ${
                                     session.is_current
-                                        ? 'border-[hsl(var(--info)/100%)]/30 shadow-lg shadow-[hsl(var(--info)/5%)]'
-                                        : 'border-white/10 hover:border-white/20'
+                                        ? 'border-[hsl(var(--primary)/0.3)] shadow-lg shadow-[hsl(var(--primary)/0.05)]'
+                                        : 'border-[hsl(var(--border))] hover:border-[hsl(var(--primary)/0.2)]'
                                 }`}
                             >
                                 <div className="flex items-start justify-between">
                                     <div className="flex items-start gap-3 flex-1">
                                         <div className={`p-2 rounded-lg ${
                                             session.is_current
-                                                ? 'bg-[hsl(var(--info))]/10 text-[hsl(var(--primary))]'
-                                                : 'bg-[hsl(var(--surface-2))] dark:bg-white/5 text-[hsl(var(--text-secondary))]'
+                                                ? 'bg-[hsl(var(--info-muted))] text-[hsl(var(--primary))]'
+                                                : 'bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))]'
                                         }`}>
                                             <DeviceIcon size={18} />
                                         </div>
                                         <div className="flex-1 min-w-0">
                                             <div className="flex items-center gap-2">
-                                                <span className="text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-white">
+                                                <span className="text-sm font-semibold text-[hsl(var(--text-primary))]">
                                                     {browser}
                                                 </span>
                                                 {session.is_current && (
@@ -235,7 +235,7 @@ export default function AdminSettingsSessionsPage() {
                                         <button
                                             onClick={() => handleRevoke(session.id)}
                                             disabled={revoking === session.id}
-                                            className="p-2 rounded-lg text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--danger))] hover:bg-danger-soft dark:hover:bg-[hsl(var(--danger))]/20 transition-colors disabled:opacity-50"
+                                            className="p-2 rounded-lg text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--destructive))] hover:bg-[hsl(var(--destructive)/0.1)] transition-colors disabled:opacity-50"
                                             title="Revocar sesión"
                                         >
                                             {revoking === session.id ? (
