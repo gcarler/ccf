@@ -211,6 +211,8 @@ def _ensure_project(db: Session, project_id: str, user_sede=None) -> models.Proj
             selectinload(models.Project.tasks).selectinload(models.ProjectTask.subtasks),
             selectinload(models.Project.milestones),
             selectinload(models.Project.activity_logs),
+            selectinload(models.Project.kpis),
+            selectinload(models.Project.dependencies),
         )
         .filter(models.Project.id == _to_uuid(project_id), models.Project.deleted_at.is_(None))
         .first()
@@ -760,10 +762,14 @@ def _prepare_task_for_response(task: models.ProjectTask) -> models.ProjectTask:
 
 def _prepare_project_for_response(project: models.Project) -> models.Project:
     _normalize_dates(project)
-    for milestone in project.milestones:
+    for milestone in getattr(project, "milestones", []) or []:
         _normalize_dates(milestone)
-    for task in project.tasks:
+    for task in getattr(project, "tasks", []) or []:
         _prepare_task_for_response(task)
+    for kpi in getattr(project, "kpis", []) or []:
+        _normalize_dates(kpi)
+    for dep in getattr(project, "dependencies", []) or []:
+        _normalize_dates(dep)
     return project
 
 
@@ -3038,3 +3044,180 @@ def update_project_milestone(
     db.refresh(milestone)
     _normalize_dates(milestone)
     return milestone
+
+
+# ── KPIS (PROYECTOS PRO) ───────────────────────────────────────────────────────
+
+
+@router.get(
+    "/{project_id}/kpis",
+    response_model=List[schemas.ProjectKPI],
+    tags=["Projects PRO"],
+)
+def list_project_kpis(
+    project_id: str,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("projects", "read")),
+):
+    """Lista los indicadores clave de desempeño (KPIs) del proyecto."""
+    user_sede = get_user_sede_id(db, current_user.id)
+    _ensure_project(db, project_id, user_sede=user_sede)
+    kpis = crud.get_project_kpis(db, _to_uuid(project_id))
+    for k in kpis:
+        _normalize_dates(k)
+    return kpis
+
+
+@router.post(
+    "/{project_id}/kpis",
+    response_model=schemas.ProjectKPI,
+    status_code=status.HTTP_201_CREATED,
+    tags=["Projects PRO"],
+)
+def create_project_kpi(
+    project_id: str,
+    payload: schemas.ProjectKPICreate,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("projects", "edit")),
+):
+    """Crea un nuevo indicador o meta personalizada para el proyecto."""
+    user_sede = get_user_sede_id(db, current_user.id)
+    _ensure_project(db, project_id, user_sede=user_sede)
+    kpi = crud.create_project_kpi(db, _to_uuid(project_id), payload)
+    _log_project_activity(
+        db,
+        project_id,
+        current_user.id,
+        "kpi_created",
+        f"Indicador '{kpi.title}' creado (Meta: {kpi.target_value} {kpi.unit})",
+    )
+    db.commit()
+    _normalize_dates(kpi)
+    return kpi
+
+
+@router.patch(
+    "/{project_id}/kpis/{kpi_id}",
+    response_model=schemas.ProjectKPI,
+    tags=["Projects PRO"],
+)
+def update_project_kpi(
+    project_id: str,
+    kpi_id: str,
+    payload: schemas.ProjectKPIUpdate,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("projects", "edit")),
+):
+    """Actualiza el avance o metadatos de un indicador."""
+    user_sede = get_user_sede_id(db, current_user.id)
+    _ensure_project(db, project_id, user_sede=user_sede)
+    kpi = crud.get_project_kpi(db, _to_uuid(project_id), _to_uuid(kpi_id))
+    if not kpi:
+        raise HTTPException(status_code=404, detail="Indicador no encontrado")
+    prev_val = kpi.current_value
+    updated_kpi = crud.update_project_kpi(db, _to_uuid(project_id), _to_uuid(kpi_id), payload)
+    if payload.current_value is not None and payload.current_value != prev_val:
+        _log_project_activity(
+            db,
+            project_id,
+            current_user.id,
+            "kpi_progress",
+            f"Indicador '{kpi.title}' actualizado a {payload.current_value} / {kpi.target_value} {kpi.unit}",
+        )
+        db.commit()
+    _normalize_dates(updated_kpi)
+    return updated_kpi
+
+
+@router.delete(
+    "/{project_id}/kpis/{kpi_id}",
+    response_model=dict,
+    tags=["Projects PRO"],
+)
+def delete_project_kpi(
+    project_id: str,
+    kpi_id: str,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("projects", "edit")),
+):
+    """Elimina un indicador mediante soft delete."""
+    user_sede = get_user_sede_id(db, current_user.id)
+    _ensure_project(db, project_id, user_sede=user_sede)
+    kpi = crud.get_project_kpi(db, _to_uuid(project_id), _to_uuid(kpi_id))
+    if not kpi:
+        raise HTTPException(status_code=404, detail="Indicador no encontrado")
+    crud.delete_project_kpi(db, _to_uuid(project_id), _to_uuid(kpi_id))
+    _log_project_activity(
+        db,
+        project_id,
+        current_user.id,
+        "kpi_deleted",
+        f"Indicador '{kpi.title}' eliminado",
+    )
+    db.commit()
+    return {"ok": True, "deleted": kpi_id}
+
+
+# ── DEPENDENCIES (GANTT PRO) ───────────────────────────────────────────────────
+
+
+@router.get(
+    "/{project_id}/dependencies",
+    response_model=List[schemas.ProjectTaskDependency],
+    tags=["Projects PRO"],
+)
+def list_task_dependencies(
+    project_id: str,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("projects", "read")),
+):
+    """Lista las dependencias entre tareas para la vista Gantt PRO."""
+    user_sede = get_user_sede_id(db, current_user.id)
+    _ensure_project(db, project_id, user_sede=user_sede)
+    deps = crud.get_task_dependencies(db, _to_uuid(project_id))
+    for d in deps:
+        _normalize_dates(d)
+    return deps
+
+
+@router.post(
+    "/{project_id}/dependencies",
+    response_model=schemas.ProjectTaskDependency,
+    status_code=status.HTTP_201_CREATED,
+    tags=["Projects PRO"],
+)
+def create_task_dependency(
+    project_id: str,
+    payload: schemas.ProjectTaskDependencyCreate,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("projects", "edit")),
+):
+    """Crea una dependencia (FS, SS, FF) entre dos tareas."""
+    user_sede = get_user_sede_id(db, current_user.id)
+    _ensure_project(db, project_id, user_sede=user_sede)
+    if str(payload.predecessor_id) == str(payload.successor_id):
+        raise HTTPException(status_code=400, detail="Una tarea no puede depender de sí misma (ciclo detectado)")
+    dep = crud.create_task_dependency(db, _to_uuid(project_id), payload)
+    _normalize_dates(dep)
+    return dep
+
+
+@router.delete(
+    "/{project_id}/dependencies/{dependency_id}",
+    response_model=dict,
+    tags=["Projects PRO"],
+)
+def delete_task_dependency(
+    project_id: str,
+    dependency_id: str,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("projects", "edit")),
+):
+    """Elimina una dependencia entre tareas."""
+    user_sede = get_user_sede_id(db, current_user.id)
+    _ensure_project(db, project_id, user_sede=user_sede)
+    ok = crud.delete_task_dependency(db, _to_uuid(project_id), _to_uuid(dependency_id))
+    if not ok:
+        raise HTTPException(status_code=404, detail="Dependencia no encontrada")
+    return {"ok": True, "deleted": dependency_id}
+

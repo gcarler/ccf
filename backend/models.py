@@ -269,10 +269,12 @@ from backend.models_projects import (
     ProjectComment,
     ProjectDocument,
     ProjectInboxState,
+    ProjectKPI,
     ProjectMember,
     ProjectMilestone,
     ProjectPhase,
     ProjectTask,
+    ProjectTaskDependency,
     ProjectWhiteboard,
     TaskSupply,
 )

@@ -1,5 +1,29 @@
 import type { ProjectStatus } from '@/lib/projects/constants';
 
+export interface ProjectKPI {
+  id: string;
+  project_id: string;
+  title: string;
+  description?: string | null;
+  target_value: number;
+  current_value: number;
+  unit: string;
+  category: string;
+  due_date?: string | null;
+  created_at?: string;
+  updated_at?: string | null;
+}
+
+export interface ProjectTaskDependency {
+  id: string;
+  project_id: string;
+  predecessor_id: string;
+  successor_id: string;
+  dependency_type: 'FS' | 'SS' | 'FF' | 'SF';
+  lag_days: number;
+  created_at?: string;
+}
+
 export interface ProjectRecord {
   id: string;
   title: string;
@@ -14,6 +38,12 @@ export interface ProjectRecord {
   milestones?: ProjectMilestoneRecord[];
   progress_percent?: number;
   comments_count?: number;
+  progress_mode?: 'auto_tasks' | 'milestones' | 'manual';
+  manual_progress?: number;
+  health_status?: 'on_track' | 'at_risk' | 'off_track' | 'completed';
+  health_override?: string | null;
+  kpis?: ProjectKPI[];
+  dependencies?: ProjectTaskDependency[];
 }
 
 export interface ProjectMilestoneRecord {

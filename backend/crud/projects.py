@@ -544,3 +544,121 @@ def get_workload_summary(db: Session, sede_id=None):
         .group_by(models.ProjectTask.assignee_id)
     )
     return q.all()
+
+
+# ── KPIs ──────────────────────────────────────────────
+
+
+def get_project_kpis(db: Session, project_id: UUID | str) -> list[models.ProjectKPI]:
+    return (
+        db.query(models.ProjectKPI)
+        .filter(models.ProjectKPI.project_id == project_id, models.ProjectKPI.deleted_at.is_(None))
+        .order_by(models.ProjectKPI.created_at.asc())
+        .all()
+    )
+
+
+def get_project_kpi(db: Session, project_id: UUID | str, kpi_id: UUID | str) -> Optional[models.ProjectKPI]:
+    return (
+        db.query(models.ProjectKPI)
+        .filter(
+            models.ProjectKPI.id == kpi_id,
+            models.ProjectKPI.project_id == project_id,
+            models.ProjectKPI.deleted_at.is_(None),
+        )
+        .first()
+    )
+
+
+def create_project_kpi(
+    db: Session, project_id: UUID | str, kpi_in: schemas.ProjectKPICreate
+) -> models.ProjectKPI:
+    data = kpi_in.model_dump()
+    row = models.ProjectKPI(project_id=project_id, **data)
+    db.add(row)
+    db.commit()
+    db.refresh(row)
+    return row
+
+
+def update_project_kpi(
+    db: Session, project_id: UUID | str, kpi_id: UUID | str, kpi_in: schemas.ProjectKPIUpdate
+) -> Optional[models.ProjectKPI]:
+    row = get_project_kpi(db, project_id, kpi_id)
+    if not row:
+        return None
+    for k, v in kpi_in.model_dump(exclude_unset=True).items():
+        if v is not None:
+            setattr(row, k, v)
+    row.updated_at = datetime.now(timezone.utc)
+    db.commit()
+    db.refresh(row)
+    return row
+
+
+def delete_project_kpi(db: Session, project_id: UUID | str, kpi_id: UUID | str) -> bool:
+    row = get_project_kpi(db, project_id, kpi_id)
+    if not row:
+        return False
+    row.deleted_at = datetime.now(timezone.utc)
+    db.commit()
+    return True
+
+
+# ── Dependencies (Gantt) ──────────────────────────────
+
+
+def get_task_dependencies(db: Session, project_id: UUID | str) -> list[models.ProjectTaskDependency]:
+    return (
+        db.query(models.ProjectTaskDependency)
+        .filter(
+            models.ProjectTaskDependency.project_id == project_id,
+            models.ProjectTaskDependency.deleted_at.is_(None),
+        )
+        .all()
+    )
+
+
+def create_task_dependency(
+    db: Session, project_id: UUID | str, dep_in: schemas.ProjectTaskDependencyCreate
+) -> models.ProjectTaskDependency:
+    existing = (
+        db.query(models.ProjectTaskDependency)
+        .filter(
+            models.ProjectTaskDependency.predecessor_id == dep_in.predecessor_id,
+            models.ProjectTaskDependency.successor_id == dep_in.successor_id,
+            models.ProjectTaskDependency.deleted_at.is_(None),
+        )
+        .first()
+    )
+    if existing:
+        return existing
+    row = models.ProjectTaskDependency(
+        project_id=project_id,
+        predecessor_id=dep_in.predecessor_id,
+        successor_id=dep_in.successor_id,
+        dependency_type=dep_in.dependency_type,
+        lag_days=dep_in.lag_days,
+    )
+    db.add(row)
+    db.commit()
+    db.refresh(row)
+    return row
+
+
+def delete_task_dependency(db: Session, project_id: UUID | str, dep_id: UUID | str) -> bool:
+    row = (
+        db.query(models.ProjectTaskDependency)
+        .filter(
+            models.ProjectTaskDependency.id == dep_id,
+            models.ProjectTaskDependency.project_id == project_id,
+            models.ProjectTaskDependency.deleted_at.is_(None),
+        )
+        .first()
+    )
+    if not row:
+        return False
+    row.deleted_at = datetime.now(timezone.utc)
+    db.commit()
+    return True
+

@@ -12,6 +12,8 @@ import {
     Trash2,
     Edit3,
     PencilRuler,
+    Target,
+    Sliders,
 } from 'lucide-react';
 import WorkspaceToolbar from '@/components/WorkspaceToolbar';
 
@@ -21,6 +23,8 @@ import ConfirmActionDrawer, { type ConfirmActionState } from '@/components/Confi
 import ProjectWhiteboard from '@/components/projects/ProjectWhiteboard';
 import { PhaseManagerDrawer } from '@/components/projects/PhaseManagerDrawer';
 import ProjectSettingsDrawer from '@/components/projects/ProjectSettingsDrawer';
+import { ProjectKpiDrawer } from '@/components/projects/ProjectKpiDrawer';
+import { ProgressSettingsDrawer } from '@/components/projects/ProgressSettingsDrawer';
 import { ProjectUpdateProvider } from '@/context/ProjectUpdateContext';
 import { ProjectViewsContent } from '@/components/projects/ProjectViewsContent';
 import ProjectContextPanel from '@/components/projects/ProjectContextPanel';
@@ -110,6 +114,8 @@ export default function ProjectDetailPage() {
     const [showProjectSettings, setShowProjectSettings] = useState(false);
     const [whiteboardOpen, setWhiteboardOpen] = useState(false);
     const [showPhaseManager, setShowPhaseManager] = useState(false);
+    const [showKpiDrawer, setShowKpiDrawer] = useState(false);
+    const [showProgressDrawer, setShowProgressDrawer] = useState(false);
     const [confirmAction, setConfirmAction] = useState<ConfirmActionState>(null);
 
     const handleDeleteProject = async () => {
@@ -200,8 +206,14 @@ export default function ProjectDetailPage() {
                             <button onClick={() => setWhiteboardOpen(true)} className="px-3 py-1.5 bg-[hsl(var(--surface-2))] text-[hsl(var(--foreground))] rounded-lg text-2xs font-bold uppercase tracking-wide hover:bg-[hsl(var(--surface-3))] active:scale-95 transition-all flex items-center gap-2 border border-[hsl(var(--border))]">
                                 <PencilRuler size={14} /> Pizarra
                             </button>
-                            <button onClick={() => setShowPhaseManager(true)} className="px-3 py-1.5 bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] rounded-lg text-2xs font-bold uppercase tracking-wide hover:bg-[hsl(var(--primary))]/90 active:scale-95 transition-all flex items-center gap-2">
+                            <button onClick={() => setShowPhaseManager(true)} className="px-3 py-1.5 bg-[hsl(var(--surface-2))] text-[hsl(var(--foreground))] rounded-lg text-2xs font-bold uppercase tracking-wide hover:bg-[hsl(var(--surface-3))] active:scale-95 transition-all flex items-center gap-1.5 border border-[hsl(var(--border))]">
                                 <Edit3 size={14} /> Fases
+                            </button>
+                            <button onClick={() => setShowKpiDrawer(true)} className="px-3 py-1.5 bg-[hsl(var(--surface-2))] text-[hsl(var(--foreground))] rounded-lg text-2xs font-bold uppercase tracking-wide hover:bg-[hsl(var(--surface-3))] active:scale-95 transition-all flex items-center gap-1.5 border border-[hsl(var(--border))]">
+                                <Target size={14} className="text-[hsl(var(--primary))]" /> KPIs
+                            </button>
+                            <button onClick={() => setShowProgressDrawer(true)} className="px-3 py-1.5 bg-[hsl(var(--surface-2))] text-[hsl(var(--foreground))] rounded-lg text-2xs font-bold uppercase tracking-wide hover:bg-[hsl(var(--surface-3))] active:scale-95 transition-all flex items-center gap-1.5 border border-[hsl(var(--border))]">
+                                <Sliders size={14} className="text-[hsl(var(--primary))]" /> Avance
                             </button>
                             <button onClick={() => setShowProjectSettings(true)} className="px-3 py-1.5 bg-[hsl(var(--warning))] text-[hsl(var(--primary-foreground))] rounded-lg text-2xs font-bold uppercase tracking-wide hover:opacity-90 active:scale-95 transition-all flex items-center gap-2">
                                 <Edit3 size={14} /> Editar
@@ -270,6 +282,23 @@ export default function ProjectDetailPage() {
                     isOpen={showProjectSettings}
                     onClose={() => setShowProjectSettings(false)}
                     onSave={updateProject}
+                />
+
+                <ProjectKpiDrawer
+                    projectId={project?.id || id}
+                    isOpen={showKpiDrawer}
+                    onClose={() => setShowKpiDrawer(false)}
+                    onKpisUpdated={() => reloadProject()}
+                />
+
+                <ProgressSettingsDrawer
+                    projectId={project?.id || id}
+                    isOpen={showProgressDrawer}
+                    onClose={() => setShowProgressDrawer(false)}
+                    currentMode={project?.progress_mode}
+                    manualProgress={project?.manual_progress}
+                    currentHealthOverride={project?.health_override}
+                    onSaved={() => reloadProject()}
                 />
             </div>
         </ProjectUpdateProvider>

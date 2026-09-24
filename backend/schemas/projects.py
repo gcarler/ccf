@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Annotated, Any, List, Literal, Optional
 from uuid import UUID
 
@@ -181,18 +181,79 @@ class ProjectTask(ProjectTaskBase):
     model_config = orm_config
 
 
+class ProjectKPIBase(BaseModel):
+    title: str = Field(..., min_length=1, max_length=150)
+    description: Optional[str] = None
+    target_value: float = Field(..., gt=0)
+    current_value: float = Field(default=0.0)
+    unit: str = Field(default="unidades", max_length=30)
+    category: str = Field(default="impact", max_length=50)
+    due_date: Optional[datetime] = None
+
+
+class ProjectKPICreate(ProjectKPIBase):
+    pass
+
+
+class ProjectKPIUpdate(BaseModel):
+    title: Optional[str] = Field(default=None, min_length=1, max_length=150)
+    description: Optional[str] = None
+    target_value: Optional[float] = Field(default=None, gt=0)
+    current_value: Optional[float] = None
+    unit: Optional[str] = Field(default=None, max_length=30)
+    category: Optional[str] = Field(default=None, max_length=50)
+    due_date: Optional[datetime] = None
+
+
+class ProjectKPI(ProjectKPIBase):
+    id: UUIDStr
+    project_id: UUIDStr
+    created_at: datetime
+    updated_at: Optional[datetime] = None
+    progress_percent: int = 0
+    model_config = orm_config
+
+    @classmethod
+    def model_validate(cls, obj, **kwargs):
+        instance = super().model_validate(obj, **kwargs)
+        if instance.target_value and instance.target_value > 0:
+            pct = round((instance.current_value / instance.target_value) * 100)
+            instance.progress_percent = max(0, min(100, pct))
+        return instance
+
+
+class ProjectTaskDependencyCreate(BaseModel):
+    predecessor_id: UUIDStr
+    successor_id: UUIDStr
+    dependency_type: Literal["FS", "SS", "FF", "SF"] = "FS"
+    lag_days: int = Field(default=0, ge=0)
+
+
+class ProjectTaskDependency(BaseModel):
+    id: UUIDStr
+    project_id: UUIDStr
+    predecessor_id: UUIDStr
+    successor_id: UUIDStr
+    dependency_type: str = "FS"
+    lag_days: int = 0
+    created_at: datetime
+    model_config = orm_config
+
+
 class ProjectBase(BaseModel):
-    # Cierre ``PEND-QUALITY-PROJECT-TITLE-NORM-001`` (anotación diferida
-    # del code review del ``2026-07-16``): endurecemos ``title`` con la
-    # misma regla que ``ProjectTaskBase.title`` (``min_length=1`` +
-    # ``field_validator(mode='before')`` con strip) para coherencia del
-    # módulo de proyectos.
     title: str = Field(..., min_length=1, max_length=500)
     description: Optional[str] = None
     status: ProjectStatus = "planning"
     owner_id: Optional[UUIDStr] = None
     color: Optional[str] = None
     icon: Optional[str] = None
+    start_date: Optional[datetime] = None
+    target_date: Optional[datetime] = None
+    progress_mode: Literal["auto_tasks", "milestones", "manual"] = "auto_tasks"
+    manual_progress: float = 0.0
+    budget_allocated: Optional[float] = None
+    budget_spent: Optional[float] = None
+    health_override: Optional[Literal["on_track", "at_risk", "off_track"]] = None
 
     @field_validator("title", mode="before")
     @classmethod
@@ -217,6 +278,13 @@ class ProjectUpdate(BaseModel):
     owner_id: Optional[UUIDStr] = None
     color: Optional[str] = None
     icon: Optional[str] = None
+    start_date: Optional[datetime] = None
+    target_date: Optional[datetime] = None
+    progress_mode: Optional[Literal["auto_tasks", "milestones", "manual"]] = None
+    manual_progress: Optional[float] = None
+    budget_allocated: Optional[float] = None
+    budget_spent: Optional[float] = None
+    health_override: Optional[Literal["on_track", "at_risk", "off_track"]] = None
 
 
 class ProjectMilestoneBase(BaseModel):
@@ -257,7 +325,10 @@ class Project(ProjectBase):
     tasks: List[ProjectTask] = Field(default_factory=list)
     milestones: List[ProjectMilestone] = Field(default_factory=list)
     activities: List[ProjectActivityLog] = Field(default_factory=list)
+    kpis: List[ProjectKPI] = Field(default_factory=list)
+    dependencies: List[ProjectTaskDependency] = Field(default_factory=list)
     progress_percent: int = 0
+    health_status: Literal["on_track", "at_risk", "off_track", "completed"] = "on_track"
     model_config = ConfigDict(from_attributes=True, populate_by_name=True)
 
     @classmethod
@@ -266,10 +337,46 @@ class Project(ProjectBase):
         if hasattr(obj, "activity_logs") and not isinstance(obj, dict):
             obj.__dict__.setdefault("activities", list(obj.activity_logs or []))
         instance = super().model_validate(obj, **kwargs)
-        # Calculate progress from tasks if not set on model
-        if hasattr(obj, "tasks") and obj.tasks:
+
+        # Calculate progress depending on progress_mode
+        if instance.progress_mode == "manual":
+            instance.progress_percent = max(0, min(100, round(instance.manual_progress or 0.0)))
+        elif instance.progress_mode == "milestones" and hasattr(obj, "milestones") and obj.milestones:
+            total_m = len(obj.milestones)
+            done_m = sum(1 for m in obj.milestones if getattr(m, "is_completed", False))
+            instance.progress_percent = round((done_m / total_m) * 100) if total_m else 0
+        elif hasattr(obj, "tasks") and obj.tasks:
             done = sum(1 for t in obj.tasks if getattr(t, "status", "") == "completed")
             instance.progress_percent = round((done / len(obj.tasks)) * 100)
+        else:
+            instance.progress_percent = 0
+
+        # Calculate health_status
+        if instance.status == "completed":
+            instance.health_status = "completed"
+        elif instance.health_override:
+            instance.health_status = instance.health_override
+        else:
+            # Automatic health derived from overdue tasks or status
+            now_dt = datetime.now(timezone.utc)
+            tasks_list = getattr(obj, "tasks", []) or []
+            overdue_count = 0
+            for t in tasks_list:
+                d_date = getattr(t, "due_date", None)
+                t_status = getattr(t, "status", "")
+                if t_status != "completed" and d_date:
+                    # Compare timezone-aware
+                    d_dt = d_date if hasattr(d_date, "tzinfo") and d_date.tzinfo else d_date.replace(tzinfo=timezone.utc)
+                    if d_dt < now_dt:
+                        overdue_count += 1
+
+            if overdue_count >= 2:
+                instance.health_status = "off_track"
+            elif overdue_count == 1:
+                instance.health_status = "at_risk"
+            else:
+                instance.health_status = "on_track"
+
         return instance
 
 

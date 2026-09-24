@@ -1,19 +1,22 @@
 "use client";
 
-import { useState, useEffect, ElementType } from 'react';
+import { useState, useEffect, useCallback, ElementType } from 'react';
 import { motion } from 'framer-motion';
 import {
     Radio, Share2, Globe, CheckCircle2, Clock,
     Zap, Trophy, Calendar, TrendingUp, AlertCircle,
     ArrowUpRight, BarChart3, Plus, Trash2,
+    Target, Sliders, Activity, AlertTriangle, AlertOctagon, Sparkles,
 } from 'lucide-react';
 import clsx from 'clsx';
-import type { ProjectRecord, ProjectTaskRecord, ProjectMilestoneRecord, ProjectAnalytics } from '@/types/projects';
+import type { ProjectRecord, ProjectTaskRecord, ProjectMilestoneRecord, ProjectAnalytics, ProjectKPI } from '@/types/projects';
 import { InlineTextInput } from '@/components/ui/inline-editors/InlineTextInput';
 import { InlineTextArea } from '@/components/ui/inline-editors/InlineTextArea';
 import { InlineProjectStatusPicker } from '@/components/ui/inline-editors/InlineProjectStatusPicker';
 import { InlineUserPicker } from '@/components/ui/inline-editors';
 import { InlineDatePicker } from '@/components/ui/inline-editors/InlineDatePicker';
+import { ProjectKpiDrawer } from '@/components/projects/ProjectKpiDrawer';
+import { ProgressSettingsDrawer } from '@/components/projects/ProgressSettingsDrawer';
 import { useProjectUpdate } from '@/context/ProjectUpdateContext';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
@@ -47,6 +50,34 @@ export function ProjectMasterView({ project, tasks, onOpenTask }: ProjectMasterV
     const [newMilestone, setNewMilestone] = useState<{ title: string; date: string | null }>({ title: '', date: null });
     const [addingMilestone, setAddingMilestone] = useState(false);
     const [analytics, setAnalytics] = useState<ProjectAnalytics | null>(null);
+
+    // Indicadores (KPIs) & Avance Inteligente (PRO)
+    const [kpis, setKpis] = useState<ProjectKPI[]>(project.kpis || []);
+    const [showKpiDrawer, setShowKpiDrawer] = useState(false);
+    const [showProgressDrawer, setShowProgressDrawer] = useState(false);
+
+    const loadKpis = useCallback(async () => {
+        if (!project.id || !token) return;
+        try {
+            const data = await apiFetch<ProjectKPI[]>(`/projects/${project.id}/kpis`, { token });
+            if (Array.isArray(data)) setKpis(data);
+        } catch {
+            if (project.kpis) setKpis(project.kpis);
+        }
+    }, [project.id, project.kpis, token]);
+
+    useEffect(() => {
+        loadKpis();
+    }, [loadKpis]);
+
+    const handleKpisUpdated = async () => {
+        await loadKpis();
+        await reloadProject();
+    };
+
+    const handleProgressSaved = async () => {
+        await reloadProject();
+    };
 
     useEffect(() => {
         let cancelled = false;
@@ -192,39 +223,70 @@ export function ProjectMasterView({ project, tasks, onOpenTask }: ProjectMasterV
                         </div>
                     </div>
 
-                    {/* Widget Bento de Salud Persistida */}
-                    <div className="bg-[hsl(var(--surface-2))] rounded-lg p-3 border border-[hsl(var(--border))] flex items-center gap-4 shadow-md">
-                        <div className="relative size-8">
-                            <svg className="size-full -rotate-90" viewBox="0 0 36 36">
-                                <circle cx="18" cy="18" r="16" fill="none" className="stroke-[hsl(var(--border))]" strokeWidth="3"></circle>
-                                <motion.circle
-                                    cx="18" cy="18" r="16" fill="none" className="stroke-[hsl(var(--info))]" strokeWidth="3"
-                                    initial={{ strokeDasharray: "0, 100" }}
-                                    animate={{ strokeDasharray: `${dbProgress}, 100` }}
-                                    transition={{ duration: 1.5, ease: "easeOut" }}
-                                    strokeLinecap="round"
-                                ></motion.circle>
-                            </svg>
-                            <div className="absolute inset-0 flex items-center justify-center">
-                                <Zap className={clsx("size-8", dbProgress > 50 ? "text-[hsl(var(--warning))]" : "text-[hsl(var(--primary))]")} fill="currentColor" />
+                    {/* Widget Bento de Salud y Avance Inteligente */}
+                    <div className="bg-[hsl(var(--surface-2))] rounded-xl p-3 border border-[hsl(var(--border))] flex items-center justify-between gap-3 shadow-md shrink-0">
+                        <div className="flex items-center gap-3">
+                            <div className="relative size-12">
+                                <svg className="size-full -rotate-90" viewBox="0 0 36 36">
+                                    <circle cx="18" cy="18" r="16" fill="none" className="stroke-[hsl(var(--border))]" strokeWidth="3"></circle>
+                                    <motion.circle
+                                        cx="18" cy="18" r="16" fill="none" className="stroke-[hsl(var(--primary))]" strokeWidth="3"
+                                        initial={{ strokeDasharray: "0, 100" }}
+                                        animate={{ strokeDasharray: `${dbProgress}, 100` }}
+                                        transition={{ duration: 1.5, ease: "easeOut" }}
+                                        strokeLinecap="round"
+                                    ></motion.circle>
+                                </svg>
+                                <div className="absolute inset-0 flex items-center justify-center">
+                                    <Zap className={clsx("size-5", dbProgress > 50 ? "text-[hsl(var(--warning))]" : "text-[hsl(var(--primary))]")} fill="currentColor" />
+                                </div>
                             </div>
-                        </div>
-                        <div>
-                            <span className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--muted-foreground))] block mb-0.5">Avance Real</span>
-                            <div className="text-xl font-bold tracking-tighter">{dbProgress}%</div>
-                            <div className="flex items-center gap-2 mt-2">
-                                <div className={clsx(
-                                    "px-2 py-0.5 rounded text-2xs font-semibold uppercase",
-                                    analytics?.health_label === 'óptima' && "bg-[hsl(var(--success))]/10 text-[hsl(var(--success))]",
-                                    analytics?.health_label === 'buena' && "bg-[hsl(var(--success))]/10 text-[hsl(var(--success))]",
-                                    analytics?.health_label === 'en riesgo' && "bg-[hsl(var(--warning))]/10 text-[hsl(var(--warning))]",
-                                    analytics?.health_label === 'crítica' && "bg-[hsl(var(--destructive))]/10 text-[hsl(var(--destructive))]",
-                                    !analytics && "bg-[hsl(var(--surface-1))] text-[hsl(var(--muted-foreground))]",
-                                )}>
-                                    Salud: {analytics ? analytics.health_label : '…'}
+                            <div>
+                                <div className="flex items-center gap-1.5 mb-0.5">
+                                    <span className="text-2xs font-bold uppercase tracking-wider text-[hsl(var(--muted-foreground))]">
+                                        Avance Inteligente
+                                    </span>
+                                    <span className="px-1.5 py-0.2 rounded text-3xs font-black uppercase tracking-wider bg-[hsl(var(--surface-3))] text-[hsl(var(--primary))]">
+                                        {project.progress_mode === 'manual' ? 'Manual' : project.progress_mode === 'milestones' ? 'Hitos' : 'Tareas'}
+                                    </span>
+                                </div>
+                                <div className="text-xl font-black tracking-tight">{dbProgress}%</div>
+                                <div className="flex items-center gap-2 mt-1">
+                                    <div className={clsx(
+                                        "px-2 py-0.5 rounded text-3xs font-bold uppercase tracking-wider border flex items-center gap-1",
+                                        project.health_status === 'on_track' && "bg-[hsl(var(--success))]/10 border-[hsl(var(--success))]/30 text-[hsl(var(--success))]",
+                                        project.health_status === 'at_risk' && "bg-[hsl(var(--warning))]/10 border-[hsl(var(--warning))]/30 text-[hsl(var(--warning))]",
+                                        project.health_status === 'off_track' && "bg-[hsl(var(--destructive))]/10 border-[hsl(var(--destructive))]/30 text-[hsl(var(--destructive))]",
+                                        project.health_status === 'completed' && "bg-[hsl(var(--success))]/10 border-[hsl(var(--success))]/30 text-[hsl(var(--success))]",
+                                        !project.health_status && (
+                                            analytics?.health_label === 'óptima' || analytics?.health_label === 'buena'
+                                                ? "bg-[hsl(var(--success))]/10 border-[hsl(var(--success))]/30 text-[hsl(var(--success))]"
+                                                : analytics?.health_label === 'en riesgo'
+                                                ? "bg-[hsl(var(--warning))]/10 border-[hsl(var(--warning))]/30 text-[hsl(var(--warning))]"
+                                                : analytics?.health_label === 'crítica'
+                                                ? "bg-[hsl(var(--destructive))]/10 border-[hsl(var(--destructive))]/30 text-[hsl(var(--destructive))]"
+                                                : "bg-[hsl(var(--surface-1))] border-[hsl(var(--border))] text-[hsl(var(--muted-foreground))]"
+                                        )
+                                    )}>
+                                        <Activity size={10} />
+                                        Salud: {project.health_status ? (
+                                            project.health_status === 'on_track' ? 'En Camino' :
+                                            project.health_status === 'at_risk' ? 'En Riesgo' :
+                                            project.health_status === 'off_track' ? 'Retrasado' : 'Completado'
+                                        ) : (analytics ? analytics.health_label : '…')}
+                                    </div>
                                 </div>
                             </div>
                         </div>
+
+                        <button
+                            onClick={() => setShowProgressDrawer(true)}
+                            className="p-2 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] hover:bg-[hsl(var(--surface-3))] text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] transition-all active:scale-95 flex flex-col items-center gap-0.5 shrink-0"
+                            title="Configurar motor de avance y salud"
+                        >
+                            <Sliders size={14} />
+                            <span className="text-3xs font-bold uppercase">Motor</span>
+                        </button>
                     </div>
                 </div>
             </header>
@@ -249,7 +311,144 @@ export function ProjectMasterView({ project, tasks, onOpenTask }: ProjectMasterV
                 />
             </section>
 
-            {/* 3. Línea de Tiempo de Hitos — auto-gestionada */}
+            {/* 3. Indicadores Clave y KPIs (PRO) */}
+            <section className="space-y-3">
+                <div className="flex items-center justify-between px-2">
+                    <div className="flex items-center gap-2">
+                        <Target className="text-[hsl(var(--primary))]" size={16} />
+                        <h2 className="text-base font-bold text-[hsl(var(--foreground))] uppercase tracking-tight">
+                            Indicadores Clave y KPIs
+                        </h2>
+                        <span className="text-3xs font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-[hsl(var(--surface-3))] text-[hsl(var(--muted-foreground))]">
+                            {kpis.length} {kpis.length === 1 ? 'meta' : 'metas'}
+                        </span>
+                    </div>
+                    <button
+                        onClick={() => setShowKpiDrawer(true)}
+                        className="px-2.5 py-1 rounded-lg bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] text-2xs font-bold uppercase tracking-wide hover:opacity-90 active:scale-95 transition-all flex items-center gap-1.5 shadow-xs"
+                    >
+                        <Plus size={12} /> Gestionar KPIs
+                    </button>
+                </div>
+
+                {kpis.length === 0 ? (
+                    <div
+                        onClick={() => setShowKpiDrawer(true)}
+                        className="p-4 rounded-xl border border-dashed border-[hsl(var(--border))] bg-[hsl(var(--surface-1))]/50 hover:bg-[hsl(var(--surface-2))] transition-colors cursor-pointer flex flex-col items-center justify-center text-center group"
+                    >
+                        <Target size={24} className="text-[hsl(var(--muted-foreground))]/40 group-hover:text-[hsl(var(--primary))] transition-colors mb-1.5" />
+                        <p className="text-xs font-bold uppercase tracking-wider text-[hsl(var(--foreground))]">
+                            Sin indicadores configurados
+                        </p>
+                        <p className="text-3xs text-[hsl(var(--muted-foreground))] mt-0.5">
+                            Haz clic para establecer metas de impacto, cobertura y finanzas con semáforo y progreso.
+                        </p>
+                    </div>
+                ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+                        {kpis.map((kpi) => {
+                            const pct = kpi.target_value > 0
+                                ? Math.min(100, Math.round((kpi.current_value / kpi.target_value) * 100))
+                                : 0;
+                            const isCompleted = pct >= 100;
+                            const isGood = pct >= 70;
+                            const isAtRisk = pct >= 40 && pct < 70;
+
+                            const statusColor = isCompleted
+                                ? "text-[hsl(var(--success))]"
+                                : isGood
+                                ? "text-[hsl(var(--primary))]"
+                                : isAtRisk
+                                ? "text-[hsl(var(--warning))]"
+                                : "text-[hsl(var(--destructive))]";
+
+                            const statusBg = isCompleted
+                                ? "bg-[hsl(var(--success))]/10 border-[hsl(var(--success))]/30 text-[hsl(var(--success))]"
+                                : isGood
+                                ? "bg-[hsl(var(--primary))]/10 border-[hsl(var(--primary))]/30 text-[hsl(var(--primary))]"
+                                : isAtRisk
+                                ? "bg-[hsl(var(--warning))]/10 border-[hsl(var(--warning))]/30 text-[hsl(var(--warning))]"
+                                : "bg-[hsl(var(--destructive))]/10 border-[hsl(var(--destructive))]/30 text-[hsl(var(--destructive))]";
+
+                            const barBg = isCompleted
+                                ? "bg-[hsl(var(--success))]"
+                                : isGood
+                                ? "bg-[hsl(var(--primary))]"
+                                : isAtRisk
+                                ? "bg-[hsl(var(--warning))]"
+                                : "bg-[hsl(var(--destructive))]";
+
+                            const statusLabel = isCompleted
+                                ? "Completado"
+                                : isGood
+                                ? "En Camino"
+                                : isAtRisk
+                                ? "En Riesgo"
+                                : "Crítico";
+
+                            const StatusIcon = isCompleted
+                                ? CheckCircle2
+                                : isGood
+                                ? TrendingUp
+                                : isAtRisk
+                                ? AlertTriangle
+                                : AlertOctagon;
+
+                            return (
+                                <div
+                                    key={kpi.id}
+                                    onClick={() => setShowKpiDrawer(true)}
+                                    className="p-3.5 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] hover:border-[hsl(var(--primary))]/50 transition-all cursor-pointer shadow-xs space-y-2 group"
+                                >
+                                    <div className="flex items-start justify-between gap-1.5">
+                                        <span className="text-3xs font-black uppercase tracking-wider px-1.5 py-0.5 rounded bg-[hsl(var(--surface-2))] text-[hsl(var(--muted-foreground))]">
+                                            {kpi.category}
+                                        </span>
+                                        <span className={clsx("px-2 py-0.5 rounded-full text-3xs font-bold uppercase tracking-wider border flex items-center gap-1", statusBg)}>
+                                            <StatusIcon size={10} />
+                                            {statusLabel}
+                                        </span>
+                                    </div>
+
+                                    <div>
+                                        <h4 className="text-xs font-bold text-[hsl(var(--foreground))] group-hover:text-[hsl(var(--primary))] transition-colors truncate">
+                                            {kpi.title}
+                                        </h4>
+                                        {kpi.description && (
+                                            <p className="text-3xs text-[hsl(var(--muted-foreground))] truncate mt-0.5">
+                                                {kpi.description}
+                                            </p>
+                                        )}
+                                    </div>
+
+                                    <div className="space-y-1 pt-1">
+                                        <div className="flex items-baseline justify-between text-2xs">
+                                            <span className="font-bold text-[hsl(var(--foreground))]">
+                                                {kpi.current_value.toLocaleString()} / {kpi.target_value.toLocaleString()}{' '}
+                                                <span className="text-3xs text-[hsl(var(--muted-foreground))] font-normal">
+                                                    {kpi.unit}
+                                                </span>
+                                            </span>
+                                            <span className={clsx("font-black tracking-tight", statusColor)}>
+                                                {pct}%
+                                            </span>
+                                        </div>
+
+                                        <div className="h-1.5 w-full rounded-full bg-[hsl(var(--surface-2))] overflow-hidden">
+                                            <div
+                                                className={clsx("h-full rounded-full transition-all duration-500", barBg)}
+                                                style={{ width: `${pct}%` }}
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
+                )}
+            </section>
+
+            {/* 4. Línea de Tiempo de Hitos — auto-gestionada */}
             <section className="space-y-3">
                 <div className="flex items-center justify-between px-2">
                     <h2 className="text-lg font-bold text-[hsl(var(--foreground))] uppercase tracking-tighter flex items-center gap-2">
@@ -361,6 +560,24 @@ export function ProjectMasterView({ project, tasks, onOpenTask }: ProjectMasterV
                     onTitleSave={taskSaveTitle}
                 />
             </div>
+
+            {/* Drawers Pro (SidePanel) */}
+            <ProjectKpiDrawer
+                projectId={project.id}
+                isOpen={showKpiDrawer}
+                onClose={() => setShowKpiDrawer(false)}
+                onKpisUpdated={handleKpisUpdated}
+            />
+
+            <ProgressSettingsDrawer
+                projectId={project.id}
+                isOpen={showProgressDrawer}
+                onClose={() => setShowProgressDrawer(false)}
+                currentMode={project.progress_mode}
+                manualProgress={project.manual_progress}
+                currentHealthOverride={project.health_override}
+                onSaved={handleProgressSaved}
+            />
         </div>
     );
 }

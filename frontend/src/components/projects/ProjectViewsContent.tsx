@@ -147,6 +147,7 @@ export function ProjectViewsContent({
             {viewType === 'gantt' && (
                 <div className="h-[720px]">
                     <ProjectGanttView
+                        projectId={project?.id}
                         projectTitle={project?.title}
                         tasks={tasks}
                         phases={phases}

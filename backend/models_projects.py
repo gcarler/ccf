@@ -6,6 +6,7 @@ from sqlalchemy import (
     Boolean,
     Column,
     DateTime,
+    Float,
     ForeignKey,
     Integer,
     String,
@@ -28,6 +29,13 @@ class Project(Base):
     owner_id = Column(UUID(as_uuid=True), ForeignKey("personas.id", ondelete="SET NULL"), nullable=True, index=True)
     color = Column(String(20), nullable=True)
     icon = Column(String(50), nullable=True)
+    start_date = Column(DateTime(timezone=True), nullable=True)
+    target_date = Column(DateTime(timezone=True), nullable=True)
+    progress_mode = Column(String(20), default="auto_tasks", nullable=False)
+    manual_progress = Column(Float, default=0.0, nullable=False)
+    budget_allocated = Column(Float, nullable=True)
+    budget_spent = Column(Float, nullable=True)
+    health_override = Column(String(20), nullable=True)
     deleted_at = Column(DateTime(timezone=True), nullable=True)
     created_at = Column(DateTime(timezone=True), default=_utcnow, index=True)
     updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
@@ -40,6 +48,8 @@ class Project(Base):
     whiteboard = relationship(
         "ProjectWhiteboard", back_populates="project", uselist=False, cascade="all, delete-orphan"
     )
+    kpis = relationship("ProjectKPI", back_populates="project", cascade="all, delete-orphan")
+    dependencies = relationship("ProjectTaskDependency", back_populates="project", cascade="all, delete-orphan")
 
     # ``name`` is a thin alias over ``title`` so callers that pass or read
     # ``name`` (e.g. ``tests/test_crud_integration.py::TestProjectsCrud``)
@@ -234,3 +244,41 @@ class ProjectDocument(Base):
 
     project = relationship("Project")
     author = relationship("Persona", foreign_keys=[author_id])
+
+
+class ProjectKPI(Base):
+    __tablename__ = "project_kpis"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    project_id = Column(UUID(as_uuid=True), ForeignKey("projects.id", ondelete="CASCADE"), nullable=False, index=True)
+    title = Column(String(150), nullable=False)
+    description = Column(Text, nullable=True)
+    target_value = Column(Float, nullable=False)
+    current_value = Column(Float, default=0.0, nullable=False)
+    unit = Column(String(30), default="unidades", nullable=False)
+    category = Column(String(50), default="impact", nullable=False)
+    due_date = Column(DateTime(timezone=True), nullable=True)
+    created_at = Column(DateTime(timezone=True), default=_utcnow, index=True)
+    updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
+    deleted_at = Column(DateTime(timezone=True), nullable=True, index=True)
+
+    project = relationship("Project", back_populates="kpis")
+
+
+class ProjectTaskDependency(Base):
+    __tablename__ = "project_task_dependencies"
+    __table_args__ = (UniqueConstraint("predecessor_id", "successor_id", name="uq_project_task_dependency_pair"),)
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    project_id = Column(UUID(as_uuid=True), ForeignKey("projects.id", ondelete="CASCADE"), nullable=False, index=True)
+    predecessor_id = Column(UUID(as_uuid=True), ForeignKey("project_tasks.id", ondelete="CASCADE"), nullable=False, index=True)
+    successor_id = Column(UUID(as_uuid=True), ForeignKey("project_tasks.id", ondelete="CASCADE"), nullable=False, index=True)
+    dependency_type = Column(String(10), default="FS", nullable=False)
+    lag_days = Column(Integer, default=0, nullable=False)
+    created_at = Column(DateTime(timezone=True), default=_utcnow, index=True)
+    deleted_at = Column(DateTime(timezone=True), nullable=True)
+
+    project = relationship("Project", back_populates="dependencies")
+    predecessor = relationship("ProjectTask", foreign_keys=[predecessor_id])
+    successor = relationship("ProjectTask", foreign_keys=[successor_id])
+
