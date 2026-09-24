@@ -19,10 +19,10 @@ interface Props {
 }
 
 const PRIORITY_CONFIG: Record<string, { label: string; color: string; bg: string }> = {
-    urgent: { label: PRIORITY_LABELS.urgent, color: 'text-[hsl(var(--destructive))]',    bg: 'bg-[hsl(var(--destructive)/0.12)]'    },
-    high:   { label: PRIORITY_LABELS.high,   color: 'text-[hsl(var(--warning))]', bg: 'bg-[hsl(var(--warning)/0.12)]' },
-    medium: { label: PRIORITY_LABELS.medium, color: 'text-[hsl(var(--primary))]',   bg: 'bg-info-soft dark:bg-[hsl(var(--info))]/20'  },
-    low:    { label: PRIORITY_LABELS.low,    color: 'text-[hsl(var(--text-secondary))]',  bg: 'bg-[hsl(var(--surface-1))] dark:bg-white/5'     },
+    urgent: { label: PRIORITY_LABELS.urgent, color: 'text-[hsl(var(--destructive))]', bg: 'bg-[hsl(var(--destructive)/0.12)]' },
+    high:   { label: PRIORITY_LABELS.high,   color: 'text-[hsl(var(--warning))]',     bg: 'bg-[hsl(var(--warning)/0.12)]' },
+    medium: { label: PRIORITY_LABELS.medium, color: 'text-[hsl(var(--primary))]',     bg: 'bg-[hsl(var(--primary)/0.15)]' },
+    low:    { label: PRIORITY_LABELS.low,    color: 'text-[hsl(var(--muted-foreground))]', bg: 'bg-[hsl(var(--surface-2))]' },
 };
 
 export function SortableTaskCard({ task, onOpen, onUpdate, onDelete }: Props) {
@@ -71,12 +71,12 @@ export function SortableTaskCard({ task, onOpen, onUpdate, onDelete }: Props) {
             style={style}
             onClick={() => onOpen(task)}
             className={clsx(
-                'bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-primary))] rounded-md shadow-sm border cursor-pointer',
-                'hover:shadow-md hover:border-[hsl(var(--info)/40%)]/50 dark:hover:border-[hsl(var(--info)/100%)]/40',
+                'bg-[hsl(var(--surface-1))] rounded-md shadow-sm border cursor-pointer',
+                'hover:shadow-md hover:border-[hsl(var(--primary))]',
                 'transition-all duration-150 group/card relative overflow-hidden',
                 isDragging
-                    ? 'shadow-2xl border-[hsl(var(--info)/100%)]'
-                    : 'border-[hsl(var(--border))] dark:border-white/8'
+                    ? 'shadow-2xl border-[hsl(var(--primary))]'
+                    : 'border-[hsl(var(--border))]'
             )}
         >
             {/* Priority accent line */}
@@ -90,10 +90,10 @@ export function SortableTaskCard({ task, onOpen, onUpdate, onDelete }: Props) {
                         {...attributes}
                         {...listeners}
                         aria-label="Arrastrar tarea"
-                        className="mt-0.5 opacity-0 group-hover/card:opacity-40 hover:opacity-100 cursor-grab active:cursor-grabbing transition-opacity shrink-0 p-0.5 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--primary))] focus-visible:ring-offset-2 dark:focus-visible:ring-offset-[hsl(var(--bg-primary))]"
+                        className="mt-0.5 opacity-0 group-hover/card:opacity-40 hover:opacity-100 cursor-grab active:cursor-grabbing transition-opacity shrink-0 p-0.5 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--primary))] focus-visible:ring-offset-2"
                         onClick={e => e.stopPropagation()}
                     >
-                        <GripVertical size={14} className="text-[hsl(var(--text-secondary))]" />
+                        <GripVertical size={14} className="text-[hsl(var(--muted-foreground))]" />
                     </button>
                     <div
                         className="flex-1 min-w-0"
@@ -103,7 +103,7 @@ export function SortableTaskCard({ task, onOpen, onUpdate, onDelete }: Props) {
                             value={task.title}
                             onChange={(v) => onUpdate?.(String(task.id), { title: v })}
                             placeholder="Título de la tarea"
-                            className="text-base font-semibold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] leading-snug line-clamp-2"
+                            className="text-base font-semibold text-[hsl(var(--foreground))] leading-snug line-clamp-2"
                             inputClassName="text-base"
                         />
                     </div>
@@ -127,7 +127,7 @@ export function SortableTaskCard({ task, onOpen, onUpdate, onDelete }: Props) {
                     {/* Right: comments + assignee avatar */}
                     <div className="flex items-center gap-2 shrink-0">
                         {commentCount > 0 && (
-                            <span className="flex items-center gap-1 text-2xs font-bold text-[hsl(var(--text-secondary))]">
+                            <span className="flex items-center gap-1 text-2xs font-bold text-[hsl(var(--muted-foreground))]">
                                 <MessageSquare size={11} />
                                 {commentCount}
                             </span>
@@ -140,7 +140,7 @@ export function SortableTaskCard({ task, onOpen, onUpdate, onDelete }: Props) {
                             <DropdownMenu.Trigger asChild>
                                 <button
                                     onClick={(e) => e.stopPropagation()}
-                                    className="size-7 rounded-lg flex items-center justify-center text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] hover:bg-info-soft dark:hover:bg-[hsl(var(--info))]/10 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--primary))] focus-visible:ring-offset-2 dark:focus-visible:ring-offset-[hsl(var(--bg-primary))]"
+                                    className="size-7 rounded-lg flex items-center justify-center text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--primary))] hover:bg-[hsl(var(--surface-2))] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--primary))] focus-visible:ring-offset-2"
                                     aria-label="Opciones de tarea"
                                 >
                                     <MoreHorizontal size={14} />
@@ -150,20 +150,20 @@ export function SortableTaskCard({ task, onOpen, onUpdate, onDelete }: Props) {
                                 <DropdownMenu.Content
                                     align="end"
                                     sideOffset={4}
-                                    className="z-[500] min-w-[160px] bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-secondary))] rounded-md shadow-2xl border border-[hsl(var(--border))]/80 dark:border-white/10 p-1"
+                                    className="z-[500] min-w-[160px] bg-[hsl(var(--surface-1))] rounded-md shadow-2xl border border-[hsl(var(--border))] p-1"
                                 >
                                     <DropdownMenu.Item
                                         onClick={(e) => { e.stopPropagation(); onOpen(task); setMenuOpen(false); }}
-                                        className="flex items-center gap-2 px-2.5 py-2 text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5 rounded-lg cursor-pointer outline-none"
+                                        className="flex items-center gap-2 px-2.5 py-2 text-sm font-semibold text-[hsl(var(--foreground))] hover:bg-[hsl(var(--surface-2))] rounded-lg cursor-pointer outline-none"
                                     >
                                         <Eye size={13} /> Ver detalle
                                     </DropdownMenu.Item>
                                     {onDelete && (
                                         <>
-                                            <DropdownMenu.Separator className="h-px bg-[hsl(var(--border))] dark:bg-white/10 my-1" />
+                                            <DropdownMenu.Separator className="h-px bg-[hsl(var(--border))] my-1" />
                                             <DropdownMenu.Item
                                                 onClick={handleDelete}
-                                                className="flex items-center gap-2 px-2.5 py-2 text-sm font-semibold text-[hsl(var(--danger))] hover:bg-danger-soft dark:hover:bg-[hsl(var(--danger))]/10 rounded-lg cursor-pointer outline-none"
+                                                className="flex items-center gap-2 px-2.5 py-2 text-sm font-semibold text-[hsl(var(--destructive))] hover:bg-[hsl(var(--destructive)/0.1)] rounded-lg cursor-pointer outline-none"
                                             >
                                                 <Trash2 size={13} /> Eliminar
                                             </DropdownMenu.Item>

@@ -79,22 +79,23 @@ export default function ProjectContextPanel({ className, defaultTab = "chat", on
     <aside
       aria-label="Contexto del proyecto"
       className={clsx(
-        "flex min-h-0 max-h-[48dvh] w-full shrink-0 flex-col overflow-hidden border-t border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] dark:border-white/10 dark:bg-[hsl(var(--admin-bg-secondary))] lg:max-h-none lg:w-[360px] lg:border-l lg:border-t-0",
+        "flex min-h-0 max-h-[48dvh] w-full shrink-0 flex-col overflow-hidden border-t border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] lg:max-h-none lg:w-[360px] lg:border-l lg:border-t-0",
         className,
       )}
     >
-      <div className="flex items-center justify-between border-b border-[hsl(var(--border))] px-3 py-2.5 dark:border-white/10">
+      <div className="flex items-center justify-between border-b border-[hsl(var(--border))] px-3 py-2.5">
         <div className="min-w-0">
-          <p className="text-2xs font-bold uppercase tracking-[0.16em] text-[hsl(var(--text-secondary))]">Contexto</p>
-          <p className="truncate text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-white">
+          <p className="text-2xs font-bold uppercase tracking-[0.16em] text-[hsl(var(--muted-foreground))]">Contexto</p>
+          <p className="truncate text-sm font-semibold text-[hsl(var(--foreground))]">
             {project?.title || "Proyecto"}
           </p>
         </div>
-        <span className="rounded-full bg-info-soft px-2 py-1 text-2xs font-bold text-[hsl(var(--primary))] dark:bg-[hsl(var(--info))]/10">            {openTasks} abiertas
+        <span className="rounded-full bg-[hsl(var(--primary)/0.1)] px-2 py-1 text-2xs font-bold text-[hsl(var(--primary))]">
+          {openTasks} abiertas
         </span>
         <Link
           href="/plataforma/inbox"
-          className="inline-flex items-center gap-1 rounded-md border border-[hsl(var(--border))] px-2 py-1 text-2xs font-bold text-[hsl(var(--text-secondary))] transition-colors hover:border-[hsl(var(--primary))] hover:text-[hsl(var(--primary))] dark:border-white/10"
+          className="inline-flex items-center gap-1 rounded-md border border-[hsl(var(--border))] px-2 py-1 text-2xs font-bold text-[hsl(var(--muted-foreground))] transition-colors hover:border-[hsl(var(--primary))] hover:text-[hsl(var(--primary))]"
           aria-label={globalUnread > 0 ? `Abrir notificaciones, ${globalUnread} sin leer` : "Abrir notificaciones"}
         >
           <Bell size={12} />
@@ -103,7 +104,7 @@ export default function ProjectContextPanel({ className, defaultTab = "chat", on
         </Link>
       </div>
 
-      <div className="flex min-w-0 overflow-x-auto border-b border-[hsl(var(--border))] px-2 pt-2 dark:border-white/10" role="tablist" aria-label="Contexto del proyecto">
+      <div className="flex min-w-0 overflow-x-auto border-b border-[hsl(var(--border))] px-2 pt-2" role="tablist" aria-label="Contexto del proyecto">
         {TABS.map(({ id, label, icon: Icon }) => (
           <button
             key={id}
@@ -120,13 +121,13 @@ export default function ProjectContextPanel({ className, defaultTab = "chat", on
               "flex min-w-[5.5rem] flex-1 items-center justify-center gap-1.5 border-b-2 px-2 py-2 text-2xs font-bold transition-colors",
               activeTab === id
                 ? "border-[hsl(var(--primary))] text-[hsl(var(--primary))]"
-                : "border-transparent text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] dark:hover:text-white",
+                : "border-transparent text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))]",
             )}
           >
             <Icon size={13} />
             <span>{label}</span>
             {id === "inbox" && projectInboxUnread > 0 ? (
-              <span className="inline-flex min-w-4 items-center justify-center rounded-full bg-[hsl(var(--danger))] px-1 text-[10px] leading-4 text-white">
+              <span className="inline-flex min-w-4 items-center justify-center rounded-full bg-[hsl(var(--destructive))] px-1 text-[10px] leading-4 text-[hsl(var(--primary-foreground))]">
                 {projectInboxUnread}
               </span>
             ) : null}
@@ -178,20 +179,20 @@ export default function ProjectContextPanel({ className, defaultTab = "chat", on
             </section>
 
             {project?.description ? (
-              <section className="mt-5 rounded-lg border border-[hsl(var(--border))] p-3 dark:border-white/10">
-                <p className="mb-1 text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Descripción</p>
-                <p className="whitespace-pre-wrap text-sm leading-relaxed text-[hsl(var(--text-secondary))]">
+              <section className="mt-5 rounded-lg border border-[hsl(var(--border))] p-3">
+                <p className="mb-1 text-2xs font-bold uppercase tracking-wide text-[hsl(var(--muted-foreground))]">Descripción</p>
+                <p className="whitespace-pre-wrap text-sm leading-relaxed text-[hsl(var(--muted-foreground))]">
                   {project.description}
                 </p>
               </section>
             ) : (
-              <div className="mt-5 flex items-center gap-2 rounded-lg border border-dashed border-[hsl(var(--border))] p-3 text-xs text-[hsl(var(--text-secondary))] dark:border-white/10">
+              <div className="mt-5 flex items-center gap-2 rounded-lg border border-dashed border-[hsl(var(--border))] p-3 text-xs text-[hsl(var(--muted-foreground))]">
                 <X size={14} />
                 Este proyecto aún no tiene descripción.
               </div>
             )}
 
-            <div className="mt-5 flex items-center gap-2 text-xs text-[hsl(var(--text-secondary))]">
+            <div className="mt-5 flex items-center gap-2 text-xs text-[hsl(var(--muted-foreground))]">
               <CheckCircle2 size={14} className="text-[hsl(var(--success))]" />
               Los cambios se sincronizan con List y Kanban.
             </div>
@@ -199,7 +200,7 @@ export default function ProjectContextPanel({ className, defaultTab = "chat", on
         ) : null}
 
         {!project?.id && activeTab === "chat" ? (
-          <div className="flex h-full items-center justify-center p-6 text-center text-sm text-[hsl(var(--text-secondary))]">
+          <div className="flex h-full items-center justify-center p-6 text-center text-sm text-[hsl(var(--muted-foreground))]">
             Selecciona un proyecto para abrir su contexto.
           </div>
         ) : null}
@@ -245,16 +246,16 @@ function ProjectInboxContent({
   onOpenTask: (taskId: string) => void;
 }) {
   if (loading) {
-    return <div className="p-4 text-sm text-[hsl(var(--text-secondary))]">Cargando inbox del proyecto…</div>;
+    return <div className="p-4 text-sm text-[hsl(var(--muted-foreground))]">Cargando inbox del proyecto…</div>;
   }
 
   if (error) {
-    return <div className="p-4 text-sm text-[hsl(var(--danger))]">{error}</div>;
+    return <div className="p-4 text-sm text-[hsl(var(--destructive))]">{error}</div>;
   }
 
   if (items.length === 0) {
     return (
-      <div className="flex h-full flex-col items-center justify-center gap-2 p-6 text-center text-[hsl(var(--text-secondary))]">
+      <div className="flex h-full flex-col items-center justify-center gap-2 p-6 text-center text-[hsl(var(--muted-foreground))]">
         <CheckCircle2 size={24} />
         <p className="text-sm font-semibold">Inbox al día</p>
         <p className="text-xs">No hay comentarios ni tareas pendientes en este proyecto.</p>
@@ -263,19 +264,19 @@ function ProjectInboxContent({
   }
 
   return (
-    <div className="h-full overflow-y-auto divide-y divide-[hsl(var(--border))] dark:divide-white/5">
+    <div className="h-full overflow-y-auto divide-y divide-[hsl(var(--border))]">
       {items.map((item) => (
-        <article key={item.id} className={`p-3 transition-colors ${item.is_read ? "" : "bg-info-soft/40 dark:bg-[hsl(var(--info))]/5"}`}>
+        <article key={item.id} className={`p-3 transition-colors ${item.is_read ? "" : "bg-[hsl(var(--primary)/0.05)]"}`}>
           <div className="flex items-start gap-2">
-            <div className="mt-0.5 rounded-md bg-[hsl(var(--surface-2))] p-1.5 text-[hsl(var(--primary))] dark:bg-white/10">
+            <div className="mt-0.5 rounded-md bg-[hsl(var(--surface-2))] p-1.5 text-[hsl(var(--primary))]">
               {item.type === "task_assigned" ? <CheckCircle2 size={14} /> : <MessageSquare size={14} />}
             </div>
             <div className="min-w-0 flex-1">
               <div className="flex items-start justify-between gap-2">
-                <p className="truncate text-xs font-bold text-[hsl(var(--text-primary))] dark:text-white">{item.user}</p>
+                <p className="truncate text-xs font-bold text-[hsl(var(--foreground))]">{item.user}</p>
                 {!item.is_read ? <span className="mt-1 size-1.5 shrink-0 rounded-full bg-[hsl(var(--primary))]" aria-label="Sin leer" /> : null}
               </div>
-              <p className="mt-1 text-xs leading-relaxed text-[hsl(var(--text-secondary))]">{item.content}</p>
+              <p className="mt-1 text-xs leading-relaxed text-[hsl(var(--muted-foreground))]">{item.content}</p>
               {item.task_title ? <p className="mt-1 text-2xs font-semibold text-[hsl(var(--primary))]">{item.task_title}</p> : null}
               <div className="mt-2 flex items-center gap-2">
                 {item.task_id ? (
@@ -285,7 +286,7 @@ function ProjectInboxContent({
                       void onRead(item.id);
                       onOpenTask(item.task_id as string);
                     }}
-                    className="rounded-md bg-[hsl(var(--primary))] px-2 py-1 text-2xs font-bold text-white"
+                    className="rounded-md bg-[hsl(var(--primary))] px-2 py-1 text-2xs font-bold text-[hsl(var(--primary-foreground))]"
                   >
                     Abrir tarea
                   </button>
@@ -294,7 +295,7 @@ function ProjectInboxContent({
                   <button
                     type="button"
                     onClick={() => void onRead(item.id)}
-                    className="rounded-md border border-[hsl(var(--border))] px-2 py-1 text-2xs font-bold text-[hsl(var(--text-secondary))] dark:border-white/10"
+                    className="rounded-md border border-[hsl(var(--border))] px-2 py-1 text-2xs font-bold text-[hsl(var(--muted-foreground))]"
                   >
                     Marcar leído
                   </button>
@@ -310,18 +311,18 @@ function ProjectInboxContent({
 
 function Metric({ label, value }: { label: string; value: number }) {
   return (
-    <div className="rounded-lg border border-[hsl(var(--border))] p-3 dark:border-white/10">
-      <p className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{label}</p>
-      <p className="mt-1 text-xl font-bold text-[hsl(var(--text-primary))] dark:text-white">{value}</p>
+    <div className="rounded-lg border border-[hsl(var(--border))] p-3">
+      <p className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--muted-foreground))]">{label}</p>
+      <p className="mt-1 text-xl font-bold text-[hsl(var(--foreground))]">{value}</p>
     </div>
   );
 }
 
 function DetailRow({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex items-center justify-between gap-3 border-b border-[hsl(var(--border))] pb-2 dark:border-white/10">
-      <span className="text-xs font-medium text-[hsl(var(--text-secondary))]">{label}</span>
-      <span className="truncate text-right text-xs font-semibold text-[hsl(var(--text-primary))] dark:text-white">{value}</span>
+    <div className="flex items-center justify-between gap-3 border-b border-[hsl(var(--border))] pb-2">
+      <span className="text-xs font-medium text-[hsl(var(--muted-foreground))]">{label}</span>
+      <span className="truncate text-right text-xs font-semibold text-[hsl(var(--foreground))]">{value}</span>
     </div>
   );
 }

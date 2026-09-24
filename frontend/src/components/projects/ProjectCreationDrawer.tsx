@@ -87,7 +87,7 @@ export default function ProjectCreationDrawer({ isOpen, onClose, onSubmit, defau
                     <button
                         type="button"
                         onClick={onClose}
-                        className="px-3 py-1.5 text-xs font-medium text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] dark:hover:text-white transition-colors"
+                        className="px-3 py-1.5 text-xs font-medium text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] transition-colors"
                     >
                         Cancelar
                     </button>
@@ -95,7 +95,7 @@ export default function ProjectCreationDrawer({ isOpen, onClose, onSubmit, defau
                         type="button"
                         onClick={handleSubmit(handleFormSubmit)}
                         disabled={isSubmitting}
-                        className="flex items-center gap-2 px-3 py-1.5 bg-[hsl(var(--primary))] text-white rounded-md text-xs font-bold uppercase tracking-wide shadow-lg shadow-[hsl(var(--primary))]/20 hover:bg-[hsl(var(--primary))]/90 active:scale-95 transition-all disabled:opacity-50"
+                        className="flex items-center gap-2 px-3 py-1.5 bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] rounded-md text-xs font-bold uppercase tracking-wide shadow-lg shadow-[hsl(var(--primary)/0.2)] hover:bg-[hsl(var(--primary)/0.9)] active:scale-95 transition-all disabled:opacity-50"
                     >
                         {isSubmitting ? (
                             <Loader2 className="animate-spin" size={12} />
@@ -110,33 +110,33 @@ export default function ProjectCreationDrawer({ isOpen, onClose, onSubmit, defau
             <form onSubmit={handleSubmit(handleFormSubmit)} className="mt-3 space-y-4">
                 {/* Título */}
                 <div className="space-y-1.5">
-                    <label className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] flex items-center gap-2">
+                    <label className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--muted-foreground))] flex items-center gap-2">
                         <Type size={12} /> Título del proyecto
                     </label>
                     <input
                         autoFocus
                         {...register('title', { required: true })}
                         placeholder="Ej: Escuela de Liderazgo 2026"
-                        className="w-full bg-[hsl(var(--surface-1))] dark:bg-[hsl(var(--bg-primary))] border border-[hsl(var(--border))] dark:border-white/5 rounded-md px-3 py-2 text-sm font-medium outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]/30 focus:border-[hsl(var(--primary))] transition-all text-[hsl(var(--text-primary))] dark:text-white"
+                        className="w-full bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] rounded-md px-3 py-2 text-sm font-medium outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))] transition-all text-[hsl(var(--foreground))] placeholder:text-[hsl(var(--muted-foreground))]"
                     />
                 </div>
 
                 {/* Descripción */}
                 <div className="space-y-1.5">
-                    <label className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] flex items-center gap-2">
+                    <label className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--muted-foreground))] flex items-center gap-2">
                         <AlignLeft size={12} /> Descripción (opcional)
                     </label>
                     <textarea
                         {...register('description')}
                         placeholder="Objetivo, alcance o notas iniciales…"
                         rows={4}
-                        className="w-full bg-[hsl(var(--surface-1))] dark:bg-[hsl(var(--bg-primary))] border border-[hsl(var(--border))] dark:border-white/5 rounded-md px-3 py-2 text-sm font-medium outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]/30 focus:border-[hsl(var(--primary))] transition-all resize-none text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]"
+                        className="w-full bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] rounded-md px-3 py-2 text-sm font-medium outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))] transition-all resize-none text-[hsl(var(--foreground))] placeholder:text-[hsl(var(--muted-foreground))]"
                     />
                 </div>
 
                 {/* Estado inicial */}
                 <div className="space-y-2">
-                    <label className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] flex items-center gap-2">
+                    <label className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--muted-foreground))] flex items-center gap-2">
                         <Sparkles size={12} /> Estado inicial
                     </label>
                     <div className="grid grid-cols-2 gap-2">
@@ -148,8 +148,8 @@ export default function ProjectCreationDrawer({ isOpen, onClose, onSubmit, defau
                                 className={clsx(
                                     'py-2 px-3 rounded-md flex items-center justify-center gap-2 border text-xs font-bold uppercase tracking-wide transition-all',
                                     status === option.value
-                                        ? 'bg-[hsl(var(--primary))] border-transparent text-white shadow-md'
-                                        : 'bg-transparent border-[hsl(var(--border))] dark:border-white/10 text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5'
+                                        ? 'bg-[hsl(var(--primary))] border-transparent text-[hsl(var(--primary-foreground))] shadow-md'
+                                        : 'bg-transparent border-[hsl(var(--border))] text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--surface-2))]'
                                 )}
                             >
                                 {status !== option.value && (
@@ -163,7 +163,7 @@ export default function ProjectCreationDrawer({ isOpen, onClose, onSubmit, defau
 
                 {/* Color semilla */}
                 <div className="space-y-2">
-                    <label className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] flex items-center gap-2">
+                    <label className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--muted-foreground))] flex items-center gap-2">
                         <Palette size={12} /> Color del proyecto
                     </label>
                     <div className="grid grid-cols-5 gap-2">
@@ -177,12 +177,12 @@ export default function ProjectCreationDrawer({ isOpen, onClose, onSubmit, defau
                                     'h-10 rounded-md border-2 transition-all flex items-center justify-center',
                                     option.preview,
                                     color === option.value
-                                        ? 'border-[hsl(var(--text-primary))] dark:border-white scale-105 shadow-md'
+                                        ? 'border-[hsl(var(--foreground))] scale-105 shadow-md'
                                         : 'border-transparent hover:scale-105 hover:shadow-md'
                                 )}
                             >
                                 {color === option.value && (
-                                    <CheckSquare size={14} className="text-white drop-shadow" />
+                                    <CheckSquare size={14} className="text-[hsl(var(--primary-foreground))] drop-shadow" />
                                 )}
                             </button>
                         ))}
@@ -191,7 +191,7 @@ export default function ProjectCreationDrawer({ isOpen, onClose, onSubmit, defau
 
                 {/* Responsable */}
                 <div className="space-y-1.5">
-                    <label className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] flex items-center gap-2">
+                    <label className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--muted-foreground))] flex items-center gap-2">
                         <User size={12} /> Asignar responsable
                     </label>
                     <PersonaSelect

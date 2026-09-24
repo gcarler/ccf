@@ -34,7 +34,7 @@ export default function ProjectWhiteboard({
 
     const whiteboard = (
         <div
-            className="fixed inset-0 z-[9999] flex flex-col bg-[hsl(var(--bg-secondary))] dark:bg-[hsl(var(--bg-primary))]"
+            className="fixed inset-0 z-[9999] flex flex-col bg-[hsl(var(--surface-1))]"
             role="application"
             aria-label="Pizarra del proyecto"
         >
@@ -42,12 +42,12 @@ export default function ProjectWhiteboard({
                 projectId={project_id}
                 token={token}
                 header={({ title, saveStatus, saveNow, isDirty }) => (
-                    <header className="h-11 px-4 shrink-0 border-b border-[hsl(var(--border))] dark:border-white/5 flex items-center justify-between bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-2))] shadow-sm">
+                    <header className="h-11 px-4 shrink-0 border-b border-[hsl(var(--border))] flex items-center justify-between bg-[hsl(var(--surface-1))] shadow-sm">
                         <div className="flex items-center gap-3">
-                            <div className="size-7 rounded-md bg-orange-500 flex items-center justify-center text-white">
+                            <div className="size-7 rounded-md bg-[hsl(var(--primary))] flex items-center justify-center text-[hsl(var(--primary-foreground))]">
                                 <PencilRuler size={14} />
                             </div>
-                            <span className="text-xs font-bold text-[hsl(var(--text-primary))] dark:text-white uppercase tracking-wide">
+                            <span className="text-xs font-bold text-[hsl(var(--foreground))] uppercase tracking-wide">
                                 {title || "Pizarra del Proyecto"}
                             </span>
                             <div className="flex items-center gap-1.5 ml-2">
@@ -58,8 +58,8 @@ export default function ProjectWhiteboard({
                                     </>
                                 ) : saveStatus === "error" ? (
                                     <>
-                                        <Cloud size={10} className="text-[hsl(var(--danger))]" />
-                                        <span className="text-2xs font-semibold uppercase text-[hsl(var(--danger))]">Error</span>
+                                        <Cloud size={10} className="text-[hsl(var(--destructive))]" />
+                                        <span className="text-2xs font-semibold uppercase text-[hsl(var(--destructive))]">Error</span>
                                     </>
                                 ) : saveStatus === "saved" ? (
                                     <>
@@ -82,13 +82,13 @@ export default function ProjectWhiteboard({
                         <div className="flex items-center gap-2">
                             <button
                                 onClick={saveNow}
-                                className="flex items-center gap-1.5 px-3 py-1.5 bg-[hsl(var(--primary))] text-white rounded-md text-2xs font-bold uppercase tracking-wide hover:opacity-90 transition-opacity shadow-md"
+                                className="flex items-center gap-1.5 px-3 py-1.5 bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] rounded-md text-2xs font-bold uppercase tracking-wide hover:opacity-90 transition-opacity shadow-md"
                             >
                                 <Sparkles size={11} /> Guardar
                             </button>
                             <button
                                 onClick={onClose}
-                                className="p-1.5 rounded-md bg-[hsl(var(--surface-2))] dark:bg-white/5 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--danger))] hover:bg-danger-soft dark:hover:bg-[hsl(var(--danger))]/10 transition-all"
+                                className="p-1.5 rounded-md bg-[hsl(var(--surface-2))] text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--destructive))] hover:bg-[hsl(var(--destructive)/0.1)] transition-all"
                                 title="Cerrar (Esc)"
                             >
                                 <X size={16} />

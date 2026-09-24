@@ -71,10 +71,10 @@ export function ProjectKanbanBoard({ project, tasks, phases, onOpenTask, onAddTa
     if (phases.length === 0) {
         return (
             <div className="h-full flex flex-col items-center justify-center gap-2 p-6 text-center">
-                <p className="text-sm font-semibold text-[hsl(var(--text-secondary))]">
+                <p className="text-sm font-semibold text-[hsl(var(--muted-foreground))]">
                     No hay columnas para mostrar
                 </p>
-                <p className="text-xs text-[hsl(var(--text-secondary))]">
+                <p className="text-xs text-[hsl(var(--muted-foreground))]">
                     Este proyecto aún no tiene fases. Crea fases desde el gestor de fases para ver el tablero.
                 </p>
             </div>
@@ -88,7 +88,7 @@ export function ProjectKanbanBoard({ project, tasks, phases, onOpenTask, onAddTa
             onDragStart={handleDragStart}
             onDragEnd={handleDragEnd}
         >
-            <div className="flex h-full overflow-x-auto gap-3 p-3 pb-4 scrollbar-thin bg-[hsl(var(--surface-1))]/50 dark:bg-[hsl(var(--admin-bg-secondary))]">
+            <div className="flex h-full overflow-x-auto gap-3 p-3 pb-4 scrollbar-thin bg-[hsl(var(--surface-1))]">
                 <SortableContext
                     items={phases.map(s => s.slug)}
                     strategy={horizontalListSortingStrategy}
@@ -122,13 +122,13 @@ export function ProjectKanbanBoard({ project, tasks, phases, onOpenTask, onAddTa
                 {activeTask && (
                     <div
                         role="presentation"
-                        className="rotate-1 opacity-90 cursor-grabbing bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-primary))] rounded-md shadow-2xl border border-[hsl(var(--info)/100%)] p-3 w-[260px]"
+                        className="rotate-1 opacity-90 cursor-grabbing bg-[hsl(var(--surface-1))] rounded-md shadow-2xl border border-[hsl(var(--primary))] p-3 w-[260px]"
                     >
                         <div className="h-[3px] w-full mb-2 bg-[hsl(var(--primary))] rounded-full" />
-                        <p className="text-base font-semibold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] line-clamp-2">
+                        <p className="text-base font-semibold text-[hsl(var(--foreground))] line-clamp-2">
                             {activeTask.title || 'Tarea'}
                         </p>
-                        <div className="flex items-center gap-3 mt-2 text-2xs text-[hsl(var(--text-secondary))]">
+                        <div className="flex items-center gap-3 mt-2 text-2xs text-[hsl(var(--muted-foreground))]">
                             {activeTask.priority && (
                                 <span className="font-bold uppercase tracking-wide">{activeTask.priority}</span>
                             )}
