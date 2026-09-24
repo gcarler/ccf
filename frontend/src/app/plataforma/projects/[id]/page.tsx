@@ -17,6 +17,7 @@ import {
     Wallet,
     ShieldAlert,
     Users,
+    Clock,
 } from 'lucide-react';
 import WorkspaceToolbar from '@/components/WorkspaceToolbar';
 
@@ -31,6 +32,7 @@ import { ProgressSettingsDrawer } from '@/components/projects/ProgressSettingsDr
 import { ProjectBudgetDrawer } from '@/components/projects/ProjectBudgetDrawer';
 import { ProjectRiskMatrixDrawer } from '@/components/projects/ProjectRiskMatrixDrawer';
 import { ProjectWorkloadDrawer } from '@/components/projects/ProjectWorkloadDrawer';
+import { ProjectTimeTrackingDrawer } from '@/components/projects/ProjectTimeTrackingDrawer';
 import { ProjectUpdateProvider } from '@/context/ProjectUpdateContext';
 import { ProjectViewsContent } from '@/components/projects/ProjectViewsContent';
 import ProjectContextPanel from '@/components/projects/ProjectContextPanel';
@@ -125,6 +127,7 @@ export default function ProjectDetailPage() {
     const [showBudgetDrawer, setShowBudgetDrawer] = useState(false);
     const [showRiskDrawer, setShowRiskDrawer] = useState(false);
     const [showWorkloadDrawer, setShowWorkloadDrawer] = useState(false);
+    const [showTimeTrackingDrawer, setShowTimeTrackingDrawer] = useState(false);
     const [confirmAction, setConfirmAction] = useState<ConfirmActionState>(null);
 
     const handleDeleteProject = async () => {
@@ -233,6 +236,9 @@ export default function ProjectDetailPage() {
                             <button onClick={() => setShowWorkloadDrawer(true)} className="px-3 py-1.5 bg-[hsl(var(--surface-2))] text-[hsl(var(--foreground))] rounded-lg text-2xs font-bold uppercase tracking-wide hover:bg-[hsl(var(--surface-3))] active:scale-95 transition-all flex items-center gap-1.5 border border-[hsl(var(--border))]">
                                 <Users size={14} className="text-[hsl(var(--primary))]" /> Carga
                             </button>
+                            <button onClick={() => setShowTimeTrackingDrawer(true)} className="px-3 py-1.5 bg-[hsl(var(--surface-2))] text-[hsl(var(--foreground))] rounded-lg text-2xs font-bold uppercase tracking-wide hover:bg-[hsl(var(--surface-3))] active:scale-95 transition-all flex items-center gap-1.5 border border-[hsl(var(--border))]">
+                                <Clock size={14} className="text-[hsl(var(--primary))]" /> Horas
+                            </button>
                             <button onClick={() => setShowProjectSettings(true)} className="px-3 py-1.5 bg-[hsl(var(--warning))] text-[hsl(var(--primary-foreground))] rounded-lg text-2xs font-bold uppercase tracking-wide hover:opacity-90 active:scale-95 transition-all flex items-center gap-2">
                                 <Edit3 size={14} /> Editar
                             </button>
@@ -339,6 +345,14 @@ export default function ProjectDetailPage() {
                     isOpen={showWorkloadDrawer}
                     onClose={() => setShowWorkloadDrawer(false)}
                     onWorkloadUpdated={() => reloadProject()}
+                />
+
+                <ProjectTimeTrackingDrawer
+                    projectId={project?.id || id}
+                    isOpen={showTimeTrackingDrawer}
+                    onClose={() => setShowTimeTrackingDrawer(false)}
+                    tasks={tasks}
+                    onTimeLogged={() => reloadProject()}
                 />
             </div>
         </ProjectUpdateProvider>

@@ -1585,5 +1585,205 @@ def list_project_baselines(db: Session, project_id: UUID | str) -> list[models.P
     )
 
 
+# ── Time Tracking & Sheets (Super-PRO Fase 5) ───────────────────────────────
+
+
+def _prepare_time_log_response(log: models.ProjectTimeLog) -> models.ProjectTimeLog:
+    if log and hasattr(log, "persona") and log.persona:
+        p = log.persona
+        log.persona_name = getattr(p, "nombre_completo", None) or f"{getattr(p, 'nombres', '')} {getattr(p, 'apellidos', '')}".strip() or "Miembro"
+    elif log:
+        log.persona_name = "Miembro"
+
+    if log and hasattr(log, "task") and log.task:
+        log.task_title = log.task.title
+    elif log:
+        log.task_title = "General del Proyecto"
+
+    return log
+
+
+def create_project_time_log(
+    db: Session,
+    project_id: UUID | str,
+    log_in: schemas.ProjectTimeLogCreate,
+    persona_id: UUID | str,
+    created_by: Optional[UUID | str] = None,
+) -> models.ProjectTimeLog:
+    project = get_project(db, project_id)
+    if not project:
+        raise ValueError("Proyecto no encontrado")
+
+    if log_in.task_id:
+        task = (
+            db.query(models.ProjectTask)
+            .filter(
+                models.ProjectTask.id == log_in.task_id,
+                models.ProjectTask.project_id == project_id,
+                models.ProjectTask.deleted_at.is_(None),
+            )
+            .first()
+        )
+        if not task:
+            raise ValueError("Tarea no encontrada en este proyecto")
+
+    log_date = log_in.date or datetime.now(timezone.utc)
+    if not hasattr(log_date, "tzinfo") or not log_date.tzinfo:
+        log_date = log_date.replace(tzinfo=timezone.utc)
+
+    time_log = models.ProjectTimeLog(
+        project_id=project.id,
+        task_id=log_in.task_id,
+        persona_id=persona_id,
+        hours=round(float(log_in.hours), 2),
+        date=log_date,
+        description=log_in.description,
+        is_billable=log_in.is_billable,
+        created_at=datetime.now(timezone.utc),
+        updated_at=datetime.now(timezone.utc),
+    )
+    db.add(time_log)
+    db.commit()
+    db.refresh(time_log)
+
+    # Cargar relaciones
+    db.query(models.ProjectTimeLog).options(
+        selectinload(models.ProjectTimeLog.persona),
+        selectinload(models.ProjectTimeLog.task),
+    ).filter(models.ProjectTimeLog.id == time_log.id).first()
+
+    return _prepare_time_log_response(time_log)
+
+
+def get_project_time_logs(
+    db: Session,
+    project_id: UUID | str,
+    task_id: Optional[UUID | str] = None,
+    persona_id: Optional[UUID | str] = None,
+) -> list[models.ProjectTimeLog]:
+    q = (
+        db.query(models.ProjectTimeLog)
+        .options(
+            selectinload(models.ProjectTimeLog.persona),
+            selectinload(models.ProjectTimeLog.task),
+        )
+        .filter(
+            models.ProjectTimeLog.project_id == project_id,
+            models.ProjectTimeLog.deleted_at.is_(None),
+        )
+    )
+    if task_id:
+        q = q.filter(models.ProjectTimeLog.task_id == task_id)
+    if persona_id:
+        q = q.filter(models.ProjectTimeLog.persona_id == persona_id)
+
+    logs = q.order_by(models.ProjectTimeLog.date.desc(), models.ProjectTimeLog.created_at.desc()).all()
+    for l in logs:
+        _prepare_time_log_response(l)
+    return logs
+
+
+def delete_project_time_log(
+    db: Session,
+    project_id: UUID | str,
+    log_id: UUID | str,
+) -> bool:
+    log = (
+        db.query(models.ProjectTimeLog)
+        .filter(
+            models.ProjectTimeLog.id == log_id,
+            models.ProjectTimeLog.project_id == project_id,
+            models.ProjectTimeLog.deleted_at.is_(None),
+        )
+        .first()
+    )
+    if not log:
+        return False
+
+    log.deleted_at = datetime.now(timezone.utc)
+    db.commit()
+    return True
+
+
+def get_project_time_tracking_summary(db: Session, project_id: UUID | str) -> dict:
+    logs = (
+        db.query(models.ProjectTimeLog)
+        .options(
+            selectinload(models.ProjectTimeLog.persona),
+            selectinload(models.ProjectTimeLog.task),
+        )
+        .filter(
+            models.ProjectTimeLog.project_id == project_id,
+            models.ProjectTimeLog.deleted_at.is_(None),
+        )
+        .all()
+    )
+
+    total_hours = 0.0
+    billable_hours = 0.0
+
+    task_map: dict[str, dict] = {}
+    member_map: dict[str, dict] = {}
+
+    for l in logs:
+        h = float(l.hours or 0.0)
+        total_hours += h
+        if l.is_billable:
+            billable_hours += h
+
+        # Tarea
+        t_id = str(l.task_id) if l.task_id else "general"
+        t_title = l.task.title if l.task else "General del Proyecto"
+        if t_id not in task_map:
+            task_map[t_id] = {
+                "task_id": t_id,
+                "task_title": t_title,
+                "total_hours": 0.0,
+                "billable_hours": 0.0,
+                "logs_count": 0,
+            }
+        task_map[t_id]["total_hours"] = round(task_map[t_id]["total_hours"] + h, 2)
+        if l.is_billable:
+            task_map[t_id]["billable_hours"] = round(task_map[t_id]["billable_hours"] + h, 2)
+        task_map[t_id]["logs_count"] += 1
+
+        # Miembro
+        p_id = str(l.persona_id)
+        p_name = "Miembro"
+        p_avatar = None
+        if l.persona:
+            p = l.persona
+            p_name = getattr(p, "nombre_completo", None) or f"{getattr(p, 'nombres', '')} {getattr(p, 'apellidos', '')}".strip() or "Miembro"
+            p_avatar = getattr(p, "foto_url", None)
+
+        if p_id not in member_map:
+            member_map[p_id] = {
+                "persona_id": p_id,
+                "persona_name": p_name,
+                "avatar_url": p_avatar,
+                "total_hours": 0.0,
+                "billable_hours": 0.0,
+                "logs_count": 0,
+            }
+        member_map[p_id]["total_hours"] = round(member_map[p_id]["total_hours"] + h, 2)
+        if l.is_billable:
+            member_map[p_id]["billable_hours"] = round(member_map[p_id]["billable_hours"] + h, 2)
+        member_map[p_id]["logs_count"] += 1
+
+    by_task = sorted(task_map.values(), key=lambda t: t["total_hours"], reverse=True)
+    by_member = sorted(member_map.values(), key=lambda m: m["total_hours"], reverse=True)
+
+    return {
+        "project_id": str(project_id),
+        "total_hours": round(total_hours, 2),
+        "billable_hours": round(billable_hours, 2),
+        "non_billable_hours": round(total_hours - billable_hours, 2),
+        "total_logs": len(logs),
+        "by_task": by_task,
+        "by_member": by_member,
+    }
+
+
+
 
 

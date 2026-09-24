@@ -3752,5 +3752,147 @@ def list_project_baselines_endpoint(
     return baselines
 
 
+# ---------------------------------------------------------------------------
+# TIME TRACKING & WORKLOGS (Super-PRO Fase 5)
+# ---------------------------------------------------------------------------
+
+@router.get(
+    "/{project_id}/time-logs",
+    response_model=List[schemas.ProjectTimeLog],
+    tags=["Projects Super-PRO"],
+)
+def list_project_time_logs(
+    project_id: str,
+    task_id: Optional[str] = None,
+    persona_id: Optional[str] = None,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("projects", "read")),
+):
+    """Lista los registros de tiempo de un proyecto con filtros opcionales."""
+    user_sede = get_user_sede_id(db, current_user.id)
+    _ensure_project(db, project_id, user_sede=user_sede)
+    logs = crud.get_project_time_logs(
+        db,
+        project_id=_to_uuid(project_id),
+        task_id=_to_uuid(task_id) if task_id else None,
+        persona_id=_to_uuid(persona_id) if persona_id else None,
+    )
+    for l in logs:
+        _normalize_dates(l)
+    return logs
+
+
+@router.post(
+    "/{project_id}/time-logs",
+    response_model=schemas.ProjectTimeLog,
+    status_code=status.HTTP_201_CREATED,
+    tags=["Projects Super-PRO"],
+)
+def create_project_time_log(
+    project_id: str,
+    payload: schemas.ProjectTimeLogCreate,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("projects", "edit")),
+):
+    """Registra una entrada de tiempo manual o desde el cronómetro interactivo."""
+    user_sede = get_user_sede_id(db, current_user.id)
+    _ensure_project(db, project_id, user_sede=user_sede)
+    if payload.task_id:
+        _ensure_task_in_project(db, project_id, str(payload.task_id))
+
+    actor_persona_id = get_user_persona_id(db, current_user.id)
+    persona_id = payload.persona_id or actor_persona_id
+    if not persona_id:
+        raise HTTPException(status_code=400, detail="No se pudo determinar la persona asociada al registro")
+
+    try:
+        time_log = crud.create_project_time_log(
+            db,
+            project_id=_to_uuid(project_id),
+            log_in=payload,
+            persona_id=_to_uuid(persona_id),
+            created_by=current_user.id,
+        )
+        task_info = f" en la tarea {payload.task_id}" if payload.task_id else ""
+        _log_project_activity(
+            db,
+            project_id,
+            current_user.id,
+            "time_logged",
+            f"Registro de tiempo: {payload.hours:.2f}h{task_info} ({payload.description or 'Sin descripción'})",
+        )
+        _normalize_dates(time_log)
+        return time_log
+    except ValueError as ve:
+        raise HTTPException(status_code=400, detail=str(ve))
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Error al registrar tiempo: {str(e)}")
+
+
+@router.delete(
+    "/{project_id}/time-logs/{log_id}",
+    tags=["Projects Super-PRO"],
+)
+def delete_project_time_log(
+    project_id: str,
+    log_id: str,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("projects", "edit")),
+):
+    """Elimina (soft-delete) un registro de tiempo."""
+    user_sede = get_user_sede_id(db, current_user.id)
+    _ensure_project(db, project_id, user_sede=user_sede)
+    deleted = crud.delete_project_time_log(db, _to_uuid(project_id), _to_uuid(log_id))
+    if not deleted:
+        raise HTTPException(status_code=404, detail="Registro de tiempo no encontrado")
+    _log_project_activity(
+        db,
+        project_id,
+        current_user.id,
+        "time_log_deleted",
+        f"Registro de tiempo {log_id} eliminado",
+    )
+    return {"ok": True, "message": "Registro de tiempo eliminado correctamente"}
+
+
+@router.get(
+    "/{project_id}/tasks/{task_id}/time-logs",
+    response_model=List[schemas.ProjectTimeLog],
+    tags=["Projects Super-PRO"],
+)
+def list_task_time_logs(
+    project_id: str,
+    task_id: str,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("projects", "read")),
+):
+    """Obtiene los registros de tiempo específicos de una tarea de un proyecto."""
+    user_sede = get_user_sede_id(db, current_user.id)
+    _ensure_project(db, project_id, user_sede=user_sede)
+    _ensure_task_in_project(db, project_id, task_id)
+    logs = crud.get_project_time_logs(db, _to_uuid(project_id), task_id=_to_uuid(task_id))
+    for l in logs:
+        _normalize_dates(l)
+    return logs
+
+
+@router.get(
+    "/{project_id}/time-tracking-summary",
+    response_model=schemas.ProjectTimeTrackingSummary,
+    tags=["Projects Super-PRO"],
+)
+def get_project_time_tracking_summary(
+    project_id: str,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("projects", "read")),
+):
+    """Devuelve el resumen consolidado de horas registradas, facturables vs no facturables y desglose por tarea y miembro."""
+    user_sede = get_user_sede_id(db, current_user.id)
+    _ensure_project(db, project_id, user_sede=user_sede)
+    summary = crud.get_project_time_tracking_summary(db, _to_uuid(project_id))
+    return summary
+
+
+
 
 

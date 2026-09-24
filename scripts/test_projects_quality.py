@@ -1057,8 +1057,122 @@ else:
     fail("No se listaron las líneas base existentes")
 
 # ──────────────────────────────────────────────────────────────
+section("14. REGISTRO DE TIEMPO Y HOJAS DE HORAS (TIME TRACKING - SUPER-PRO FASE 5)")
+# ──────────────────────────────────────────────────────────────
+
+# 1. Crear registros de tiempo en el proyecto
+log1 = crud_projects.create_project_time_log(
+    db,
+    project.id,
+    schemas_projects.ProjectTimeLogCreate(
+        task_id=tA.id,
+        hours=2.5,
+        description="Desarrollo de módulos e interfaz de usuario",
+        is_billable=True,
+    ),
+    persona_id=u1.id,
+    created_by=admin_user.id,
+)
+if log1 and log1.id and log1.hours == 2.5 and log1.is_billable:
+    ok(f"Registro de tiempo 1 creado (id={log1.id}): {log1.hours}h en '{tA.title}' (Facturable: {log1.is_billable})")
+else:
+    fail("Error creando registro de tiempo 1")
+
+log2 = crud_projects.create_project_time_log(
+    db,
+    project.id,
+    schemas_projects.ProjectTimeLogCreate(
+        task_id=tB.id,
+        hours=1.5,
+        description="Reunión técnica interna de alineación",
+        is_billable=False,
+    ),
+    persona_id=u2.id,
+    created_by=admin_user.id,
+)
+if log2 and log2.id and log2.hours == 1.5 and not log2.is_billable:
+    ok(f"Registro de tiempo 2 creado (id={log2.id}): {log2.hours}h en '{tB.title}' (No facturable)")
+else:
+    fail("Error creando registro de tiempo 2")
+
+log3 = crud_projects.create_project_time_log(
+    db,
+    project.id,
+    schemas_projects.ProjectTimeLogCreate(
+        task_id=None,
+        hours=3.0,
+        description="Arquitectura global y revisión ministerial",
+        is_billable=True,
+    ),
+    persona_id=u1.id,
+    created_by=admin_user.id,
+)
+if log3 and log3.id and log3.hours == 3.0 and log3.is_billable:
+    ok(f"Registro de tiempo 3 (General) creado (id={log3.id}): {log3.hours}h en alcance general del proyecto")
+else:
+    fail("Error creando registro de tiempo 3")
+
+# 2. Consultar registros con filtros
+all_logs = crud_projects.get_project_time_logs(db, project.id)
+if len(all_logs) >= 3:
+    ok(f"Listado global de registros de tiempo verificado: {len(all_logs)} entradas activas")
+else:
+    fail(f"Esperados al menos 3 registros, obtenidos: {len(all_logs)}")
+
+tA_logs = crud_projects.get_project_time_logs(db, project.id, task_id=tA.id)
+if len(tA_logs) == 1 and str(tA_logs[0].id) == str(log1.id):
+    ok(f"Filtro por tarea verificado: 1 registro encontrado para tarea '{tA.title}'")
+else:
+    fail(f"Error en filtro por tarea, obtenidos {len(tA_logs)} registros")
+
+u1_logs = crud_projects.get_project_time_logs(db, project.id, persona_id=u1.id)
+if len(u1_logs) >= 2:
+    ok(f"Filtro por persona verificado: {len(u1_logs)} registros encontrados para persona '{u1.username}'")
+else:
+    fail(f"Error en filtro por persona, obtenidos {len(u1_logs)} registros")
+
+# 3. Resumen consolidado de horas y métricas
+time_summary = crud_projects.get_project_time_tracking_summary(db, project.id)
+if time_summary:
+    tot_h = time_summary["total_hours"]
+    bill_h = time_summary["billable_hours"]
+    non_bill_h = time_summary["non_billable_hours"]
+    total_entries = time_summary["total_logs"]
+
+    if tot_h == 7.0 and bill_h == 5.5 and non_bill_h == 1.5:
+        ok(f"Métricas de tiempo consolidadas con precisión: Total={tot_h}h | Facturable={bill_h}h | No Facturable={non_bill_h}h")
+    else:
+        fail(f"Métricas de tiempo erróneas: total={tot_h}, billable={bill_h}, non_billable={non_bill_h}")
+
+    if len(time_summary["by_task"]) >= 2 and len(time_summary["by_member"]) >= 2:
+        ok(f"Desglose multidimensional verificado: {len(time_summary['by_task'])} grupos por tarea, {len(time_summary['by_member'])} miembros")
+    else:
+        fail("Desglose por tarea o miembro incompleto en time_summary")
+else:
+    fail("Error obteniendo get_project_time_tracking_summary")
+
+# 4. Soft-delete de registro de tiempo
+deleted_ok = crud_projects.delete_project_time_log(db, project.id, log2.id)
+if deleted_ok:
+    ok(f"Registro de tiempo '{log2.id}' soft-deleted exitosamente")
+    time_summary_after_del = crud_projects.get_project_time_tracking_summary(db, project.id)
+    if time_summary_after_del["total_hours"] == 5.5 and time_summary_after_del["non_billable_hours"] == 0.0:
+        ok("Recálculo automático de hojas de horas tras eliminación: 5.5h restantes (100% facturable)")
+    else:
+        fail(f"Recálculo fallido tras eliminación: {time_summary_after_del}")
+
+    logs_after_del = crud_projects.get_project_time_logs(db, project.id)
+    if not any(str(l.id) == str(log2.id) for l in logs_after_del):
+        ok("El registro eliminado no aparece en las consultas activas (Aislamiento Soft-Delete)")
+    else:
+        fail("El registro eliminado sigue apareciendo en get_project_time_logs")
+else:
+    fail("Error ejecutando delete_project_time_log")
+
+# ──────────────────────────────────────────────────────────────
 section(f"RESUMEN: {PASS} passed, {FAIL} failed")
 # ──────────────────────────────────────────────────────────────
+
 
 info(f"Proyecto ID: {project.id}")
 info(f"Usuarios: {u1.username} (id={u1.id}), {u2.username} (id={u2.id}), {u3.username} (id={u3.id})")

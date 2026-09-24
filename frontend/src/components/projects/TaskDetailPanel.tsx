@@ -24,6 +24,7 @@ import TaskActivitySection from './TaskActivitySection';
 import type { Activity } from './TaskActivitySection';
 import { toggleActivity, addChild, updateTitle } from './TaskActivitySection';
 import TaskCommentSection from './TaskCommentSection';
+import TaskTimeTrackingSection from './TaskTimeTrackingSection';
 
 const MIN_WIDTH = 400;
 const DEFAULT_WIDTH = 520;
@@ -388,6 +389,12 @@ export default function TaskDetailPanel({
                         task={task}
                         supplies={supplies}
                         onSuppliesChange={(next) => { setSupplies(next); onUpdate?.({ ...task, supplies: next }); }}
+                        token={token}
+                        onActivityCreated={onActivityCreated}
+                    />
+
+                    <TaskTimeTrackingSection
+                        task={task}
                         token={token}
                         onActivityCreated={onActivityCreated}
                     />

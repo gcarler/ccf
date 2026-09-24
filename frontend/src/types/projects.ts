@@ -355,3 +355,55 @@ export interface ProjectBaseline {
   total_variance_days?: number;
 }
 
+// ── Time Tracking (Super-PRO Fase 5) ───────────────────────────────────────
+export interface ProjectTimeLog {
+  id: string;
+  project_id: string;
+  task_id?: string | null;
+  persona_id: string;
+  persona_name?: string | null;
+  task_title?: string | null;
+  hours: number;
+  date: string;
+  description?: string | null;
+  is_billable: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ProjectTimeLogCreate {
+  task_id?: string | null;
+  persona_id?: string | null;
+  hours: number;
+  date?: string;
+  description?: string | null;
+  is_billable?: boolean;
+}
+
+export interface TaskTimeSummaryItem {
+  task_id: string;
+  task_title: string;
+  total_hours: number;
+  billable_hours: number;
+  logs_count: number;
+}
+
+export interface MemberTimeSummaryItem {
+  persona_id: string;
+  persona_name: string;
+  avatar_url?: string | null;
+  total_hours: number;
+  billable_hours: number;
+  logs_count: number;
+}
+
+export interface ProjectTimeTrackingSummary {
+  project_id: string;
+  total_hours: number;
+  billable_hours: number;
+  non_billable_hours: number;
+  total_logs: number;
+  by_task: TaskTimeSummaryItem[];
+  by_member: MemberTimeSummaryItem[];
+}
+

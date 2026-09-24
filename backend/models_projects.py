@@ -53,6 +53,7 @@ class Project(Base):
     expenses = relationship("ProjectExpense", back_populates="project", cascade="all, delete-orphan")
     risks = relationship("ProjectRisk", back_populates="project", cascade="all, delete-orphan")
     baselines = relationship("ProjectBaseline", back_populates="project", cascade="all, delete-orphan")
+    time_logs = relationship("ProjectTimeLog", back_populates="project", cascade="all, delete-orphan")
 
     # ``name`` is a thin alias over ``title`` so callers that pass or read
     # ``name`` (e.g. ``tests/test_crud_integration.py::TestProjectsCrud``)
@@ -135,6 +136,7 @@ class ProjectTask(Base):
     assignee = relationship("Persona", foreign_keys=[assignee_id])
     supplies = relationship("TaskSupply", back_populates="task", cascade="all, delete-orphan")
     attachments = relationship("ProjectAttachment", back_populates="task", cascade="all, delete-orphan")
+    time_logs = relationship("ProjectTimeLog", back_populates="task", cascade="all, delete-orphan")
     subtasks = relationship(
         "ProjectTask",
         backref=backref("parent", remote_side="ProjectTask.id"),
@@ -342,4 +344,25 @@ class ProjectBaseline(Base):
 
     project = relationship("Project", back_populates="baselines")
     creator = relationship("Persona", foreign_keys=[created_by])
+
+
+class ProjectTimeLog(Base):
+    __tablename__ = "project_time_logs"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    project_id = Column(UUID(as_uuid=True), ForeignKey("projects.id", ondelete="CASCADE"), nullable=False, index=True)
+    task_id = Column(UUID(as_uuid=True), ForeignKey("project_tasks.id", ondelete="CASCADE"), nullable=True, index=True)
+    persona_id = Column(UUID(as_uuid=True), ForeignKey("personas.id", ondelete="SET NULL"), nullable=False, index=True)
+    hours = Column(Float, nullable=False)
+    date = Column(DateTime(timezone=True), default=_utcnow, nullable=False)
+    description = Column(Text, nullable=True)
+    is_billable = Column(Boolean, default=True, nullable=False)
+    created_at = Column(DateTime(timezone=True), default=_utcnow, index=True)
+    updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
+    deleted_at = Column(DateTime(timezone=True), nullable=True, index=True)
+
+    project = relationship("Project", back_populates="time_logs")
+    task = relationship("ProjectTask", back_populates="time_logs")
+    persona = relationship("Persona", foreign_keys=[persona_id])
+
 

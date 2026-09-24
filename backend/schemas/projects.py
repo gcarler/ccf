@@ -494,6 +494,65 @@ class ProjectBaselineSummary(BaseModel):
     model_config = orm_config
 
 
+# ============================================================================
+# Time Tracking Schemas (Super-PRO Fase 5)
+# ============================================================================
+
+class ProjectTimeLogBase(BaseModel):
+    task_id: Optional[UUIDStr] = None
+    hours: float = Field(..., gt=0, le=24, description="Horas dedicadas (0-24)")
+    date: Optional[datetime] = None
+    description: Optional[str] = None
+    is_billable: bool = True
+
+
+class ProjectTimeLogCreate(ProjectTimeLogBase):
+    pass
+
+
+class ProjectTimeLog(ProjectTimeLogBase):
+    id: UUIDStr
+    project_id: UUIDStr
+    persona_id: UUIDStr
+    persona_name: Optional[str] = None
+    task_title: Optional[str] = None
+    created_at: datetime
+    updated_at: Optional[datetime] = None
+    deleted_at: Optional[datetime] = None
+    model_config = orm_config
+
+
+class TaskTimeSummaryItem(BaseModel):
+    task_id: UUIDStr
+    task_title: str
+    total_hours: float
+    billable_hours: float
+    logs_count: int
+    model_config = orm_config
+
+
+class MemberTimeSummaryItem(BaseModel):
+    persona_id: UUIDStr
+    persona_name: str
+    avatar_url: Optional[str] = None
+    total_hours: float
+    billable_hours: float
+    logs_count: int
+    model_config = orm_config
+
+
+class ProjectTimeTrackingSummary(BaseModel):
+    project_id: UUIDStr
+    total_hours: float = 0.0
+    billable_hours: float = 0.0
+    non_billable_hours: float = 0.0
+    total_logs: int = 0
+    by_task: List[TaskTimeSummaryItem] = Field(default_factory=list)
+    by_member: List[MemberTimeSummaryItem] = Field(default_factory=list)
+    model_config = orm_config
+
+
+
 
 
 

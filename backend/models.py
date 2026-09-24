@@ -278,6 +278,7 @@ from backend.models_projects import (
     ProjectRisk,
     ProjectTask,
     ProjectTaskDependency,
+    ProjectTimeLog,
     ProjectWhiteboard,
     TaskSupply,
 )

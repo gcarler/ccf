@@ -10,7 +10,7 @@ import {
     Wallet, TrendingDown, ShieldAlert, Users, Scale,
 } from 'lucide-react';
 import clsx from 'clsx';
-import type { ProjectRecord, ProjectTaskRecord, ProjectMilestoneRecord, ProjectAnalytics, ProjectKPI, ProjectBudgetSummary, ProjectRiskSummary, ProjectWorkloadSummary } from '@/types/projects';
+import type { ProjectRecord, ProjectTaskRecord, ProjectMilestoneRecord, ProjectAnalytics, ProjectKPI, ProjectBudgetSummary, ProjectRiskSummary, ProjectWorkloadSummary, ProjectTimeTrackingSummary } from '@/types/projects';
 import { InlineTextInput } from '@/components/ui/inline-editors/InlineTextInput';
 import { InlineTextArea } from '@/components/ui/inline-editors/InlineTextArea';
 import { InlineProjectStatusPicker } from '@/components/ui/inline-editors/InlineProjectStatusPicker';
@@ -21,6 +21,7 @@ import { ProgressSettingsDrawer } from '@/components/projects/ProgressSettingsDr
 import { ProjectBudgetDrawer } from '@/components/projects/ProjectBudgetDrawer';
 import { ProjectRiskMatrixDrawer } from '@/components/projects/ProjectRiskMatrixDrawer';
 import { ProjectWorkloadDrawer } from '@/components/projects/ProjectWorkloadDrawer';
+import { ProjectTimeTrackingDrawer } from '@/components/projects/ProjectTimeTrackingDrawer';
 import { useProjectUpdate } from '@/context/ProjectUpdateContext';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
@@ -72,6 +73,10 @@ export function ProjectMasterView({ project, tasks, onOpenTask }: ProjectMasterV
     const [workloadSummary, setWorkloadSummary] = useState<ProjectWorkloadSummary | null>(project.workload_summary || null);
     const [showWorkloadDrawer, setShowWorkloadDrawer] = useState(false);
 
+    // Registro de Tiempo y Hojas de Horas (Super-PRO Fase 5)
+    const [timeTrackingSummary, setTimeTrackingSummary] = useState<ProjectTimeTrackingSummary | null>(null);
+    const [showTimeTrackingDrawer, setShowTimeTrackingDrawer] = useState(false);
+
     const loadKpis = useCallback(async () => {
         if (!project.id || !token) return;
         try {
@@ -112,12 +117,23 @@ export function ProjectMasterView({ project, tasks, onOpenTask }: ProjectMasterV
         }
     }, [project.id, token]);
 
+    const loadTimeTrackingSummary = useCallback(async () => {
+        if (!project.id || !token) return;
+        try {
+            const data = await apiFetch<ProjectTimeTrackingSummary>(`/projects/${project.id}/time-tracking-summary`, { token });
+            if (data) setTimeTrackingSummary(data);
+        } catch {
+            // fallback silencioso
+        }
+    }, [project.id, token]);
+
     useEffect(() => {
         loadKpis();
         loadBudgetSummary();
         loadRisksSummary();
         loadWorkloadSummary();
-    }, [loadKpis, loadBudgetSummary, loadRisksSummary, loadWorkloadSummary]);
+        loadTimeTrackingSummary();
+    }, [loadKpis, loadBudgetSummary, loadRisksSummary, loadWorkloadSummary, loadTimeTrackingSummary]);
 
     const handleKpisUpdated = async () => {
         await loadKpis();
@@ -804,6 +820,115 @@ export function ProjectMasterView({ project, tasks, onOpenTask }: ProjectMasterV
                 </div>
             </section>
 
+            {/* 3.5 Registro de Tiempo y Hojas de Horas (Super-PRO Fase 5) */}
+            <section className="space-y-3">
+                <div className="flex items-center justify-between px-2">
+                    <div className="flex items-center gap-2">
+                        <h2 className="text-lg font-bold text-[hsl(var(--foreground))] uppercase tracking-tighter flex items-center gap-2">
+                            <Clock className="text-[hsl(var(--primary))]" size={16} /> Registro de Tiempo y Hojas de Horas
+                        </h2>
+                        {timeTrackingSummary && timeTrackingSummary.total_hours > 0 && (
+                            <span className="px-2 py-0.5 rounded-full text-2xs font-bold uppercase tracking-wider bg-[hsl(var(--primary))]/10 text-[hsl(var(--primary))] border border-[hsl(var(--primary))]/20">
+                                {timeTrackingSummary.total_hours.toFixed(2)}h Registradas
+                            </span>
+                        )}
+                    </div>
+                    <button
+                        onClick={() => setShowTimeTrackingDrawer(true)}
+                        className="px-3 py-1 bg-[hsl(var(--surface-2))] hover:bg-[hsl(var(--surface-3))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))] rounded-md text-2xs font-bold uppercase tracking-wider transition-all flex items-center gap-1.5"
+                    >
+                        <Clock size={12} className="text-[hsl(var(--primary))]" /> Hojas de Horas →
+                    </button>
+                </div>
+
+                <div className="bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] rounded-xl p-4 shadow-sm space-y-4">
+                    {/* Tarjetas KPI de tiempo */}
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                        <div className="p-3 rounded-lg bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] space-y-1">
+                            <span className="text-3xs uppercase tracking-wider font-semibold text-[hsl(var(--muted-foreground))]">Total Horas</span>
+                            <div className="text-xl font-black text-[hsl(var(--primary))] font-mono">
+                                {(timeTrackingSummary?.total_hours ?? 0).toFixed(2)}h
+                            </div>
+                        </div>
+                        <div className="p-3 rounded-lg bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] space-y-1">
+                            <span className="text-3xs uppercase tracking-wider font-semibold text-[hsl(var(--muted-foreground))]">Facturables</span>
+                            <div className="text-xl font-black text-[hsl(var(--success))] font-mono">
+                                {(timeTrackingSummary?.billable_hours ?? 0).toFixed(2)}h
+                            </div>
+                        </div>
+                        <div className="p-3 rounded-lg bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] space-y-1">
+                            <span className="text-3xs uppercase tracking-wider font-semibold text-[hsl(var(--muted-foreground))]">No Facturables</span>
+                            <div className="text-xl font-black text-[hsl(var(--warning))] font-mono">
+                                {(timeTrackingSummary?.non_billable_hours ?? 0).toFixed(2)}h
+                            </div>
+                        </div>
+                        <div className="p-3 rounded-lg bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] space-y-1">
+                            <span className="text-3xs uppercase tracking-wider font-semibold text-[hsl(var(--muted-foreground))]">Entradas Totales</span>
+                            <div className="text-xl font-black text-[hsl(var(--foreground))] font-mono">
+                                {timeTrackingSummary?.total_logs ?? 0}
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Barra de progreso de horas facturables */}
+                    {timeTrackingSummary && timeTrackingSummary.total_hours > 0 && (
+                        <div className="space-y-1.5 pt-1">
+                            <div className="flex justify-between text-2xs">
+                                <span className="text-[hsl(var(--muted-foreground))] font-semibold">Proporción Facturable</span>
+                                <span className="font-bold text-[hsl(var(--success))]">
+                                    {Math.round((timeTrackingSummary.billable_hours / timeTrackingSummary.total_hours) * 100)}%
+                                </span>
+                            </div>
+                            <div className="h-2 w-full rounded-full bg-[hsl(var(--surface-2))] overflow-hidden">
+                                <div
+                                    className="h-full rounded-full bg-[hsl(var(--success))] transition-all duration-500"
+                                    style={{
+                                        width: `${Math.min(100, (timeTrackingSummary.billable_hours / timeTrackingSummary.total_hours) * 100)}%`
+                                    }}
+                                />
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Desglose rápido por tareas */}
+                    {timeTrackingSummary && timeTrackingSummary.by_task.length > 0 && (
+                        <div className="pt-2 space-y-2">
+                            <div className="flex items-center justify-between">
+                                <span className="text-2xs font-bold uppercase tracking-wider text-[hsl(var(--muted-foreground))]">
+                                    Horas por Tarea Principal
+                                </span>
+                                <button
+                                    onClick={() => setShowTimeTrackingDrawer(true)}
+                                    className="text-3xs text-[hsl(var(--primary))] hover:underline font-semibold"
+                                >
+                                    Ver desglose completo →
+                                </button>
+                            </div>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
+                                {timeTrackingSummary.by_task.slice(0, 4).map((t) => (
+                                    <div key={t.task_id} className="p-2.5 rounded-lg bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] space-y-1.5">
+                                        <div className="flex items-center justify-between text-2xs">
+                                            <span className="font-bold text-[hsl(var(--foreground))] truncate max-w-[180px]">
+                                                {t.task_title}
+                                            </span>
+                                            <span className="font-black text-[hsl(var(--primary))] font-mono">
+                                                {t.total_hours.toFixed(2)}h
+                                            </span>
+                                        </div>
+                                        <div className="h-1.5 w-full rounded-full bg-[hsl(var(--surface-1))] overflow-hidden">
+                                            <div
+                                                className="h-full rounded-full bg-[hsl(var(--primary))] transition-all duration-500"
+                                                style={{ width: `${Math.min(100, (t.total_hours / (timeTrackingSummary.total_hours || 1)) * 100)}%` }}
+                                            />
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+                </div>
+            </section>
+
             {/* 4. Línea de Tiempo de Hitos — auto-gestionada */}
             <section className="space-y-3">
                 <div className="flex items-center justify-between px-2">
@@ -962,6 +1087,17 @@ export function ProjectMasterView({ project, tasks, onOpenTask }: ProjectMasterV
                 onClose={() => setShowWorkloadDrawer(false)}
                 onWorkloadUpdated={() => {
                     loadWorkloadSummary();
+                    reloadProject();
+                }}
+            />
+
+            <ProjectTimeTrackingDrawer
+                projectId={project.id}
+                isOpen={showTimeTrackingDrawer}
+                onClose={() => setShowTimeTrackingDrawer(false)}
+                tasks={tasks}
+                onTimeLogged={() => {
+                    loadTimeTrackingSummary();
                     reloadProject();
                 }}
             />
