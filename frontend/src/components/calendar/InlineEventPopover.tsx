@@ -54,7 +54,7 @@ export default function InlineEventPopover({ open, onOpenChange, day, children, 
                     align="start"
                     sideOffset={8}
                     collisionPadding={16}
-                    className="z-[100] w-[340px] bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-2))] rounded-lg shadow-2xl shadow-black/10 dark:shadow-black/40 border border-[hsl(var(--border))] dark:border-white/10 p-3 font-display flex flex-col gap-4 animate-in fade-in zoom-in-95 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=bottom]:slide-in-from-top-2 data-[side=top]:slide-in-from-bottom-2"
+                    className="z-[100] w-[340px] bg-[hsl(var(--surface-2))] rounded-lg shadow-2xl border border-[hsl(var(--border))] p-3 font-display flex flex-col gap-4 animate-in fade-in zoom-in-95 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=bottom]:slide-in-from-top-2 data-[side=top]:slide-in-from-bottom-2"
                     onClick={(e) => e.stopPropagation()}
                 >
                     <div className="flex flex-col gap-1">
@@ -65,18 +65,18 @@ export default function InlineEventPopover({ open, onOpenChange, day, children, 
                             value={title}
                             onChange={(e) => setTitle(e.target.value)}
                             onKeyDown={(e) => e.key === 'Enter' && handleSave()}
-                            className="w-full text-base font-medium bg-transparent border-none outline-none placeholder:text-[hsl(var(--text-secondary))] text-[hsl(var(--text-primary))] dark:text-white mb-2"
+                            className="w-full text-base font-medium bg-transparent border-none outline-none placeholder:text-[hsl(var(--text-secondary))] text-[hsl(var(--text-primary))] mb-2"
                         />
                         <div className="flex gap-2 text-xs font-semibold uppercase tracking-wide">
                             <button
                                 onClick={() => setType('event')}
-                                className={`flex-1 py-1.5 rounded-lg border transition-colors ${type === 'event' ? 'bg-info-soft text-[hsl(var(--primary))] dark:bg-[hsl(var(--info))]/10 dark:text-[hsl(var(--primary))] border-[hsl(var(--info)/20%)] dark:border-[hsl(var(--info)/100%)]/20' : 'text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5 border-transparent'}`}
+                                className={`flex-1 py-1.5 rounded-lg border transition-colors ${type === 'event' ? 'bg-[hsl(var(--info-soft))] text-[hsl(var(--primary))] border-[hsl(var(--primary)/20%)]' : 'text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] border-transparent'}`}
                             >
                                 Evento
                             </button>
                             <button
                                 onClick={() => setType('task')}
-                                className={`flex-1 py-1.5 rounded-lg border transition-colors ${type === 'task' ? 'bg-info-soft text-[hsl(var(--primary))] dark:bg-[hsl(var(--info))]/10 dark:text-[hsl(var(--primary))] border-[hsl(var(--info)/20%)] dark:border-[hsl(var(--info)/100%)]/20' : 'text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5 border-transparent'}`}
+                                className={`flex-1 py-1.5 rounded-lg border transition-colors ${type === 'task' ? 'bg-[hsl(var(--info-soft))] text-[hsl(var(--primary))] border-[hsl(var(--primary)/20%)]' : 'text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] border-transparent'}`}
                             >
                                 Tarea
                             </button>
@@ -84,8 +84,8 @@ export default function InlineEventPopover({ open, onOpenChange, day, children, 
                     </div>
 
                     <div className="flex flex-col gap-3">
-                        <div className="flex items-center gap-3 text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">
-                            <div className="size-8 rounded-full bg-[hsl(var(--surface-1))] dark:bg-white/5 flex items-center justify-center shrink-0">
+                        <div className="flex items-center gap-3 text-[hsl(var(--text-secondary))]">
+                            <div className="size-8 rounded-full bg-[hsl(var(--surface-1))] flex items-center justify-center shrink-0">
                                 <Clock size={14} className="text-[hsl(var(--text-secondary))]" />
                             </div>
                             <div className="flex flex-col text-sm">
@@ -94,8 +94,8 @@ export default function InlineEventPopover({ open, onOpenChange, day, children, 
                             </div>
                         </div>
 
-                        <div className="flex items-center gap-3 text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">
-                            <div className="size-8 rounded-full bg-[hsl(var(--surface-1))] dark:bg-white/5 flex items-center justify-center shrink-0">
+                        <div className="flex items-center gap-3 text-[hsl(var(--text-secondary))]">
+                            <div className="size-8 rounded-full bg-[hsl(var(--surface-1))] flex items-center justify-center shrink-0">
                                 <Users size={14} className="text-[hsl(var(--text-secondary))]" />
                             </div>
                             <input
@@ -107,8 +107,8 @@ export default function InlineEventPopover({ open, onOpenChange, day, children, 
                             />
                         </div>
 
-                        <div className="flex items-start gap-3 text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">
-                            <div className="size-8 rounded-full bg-[hsl(var(--surface-1))] dark:bg-white/5 flex items-center justify-center shrink-0 mt-1">
+                        <div className="flex items-start gap-3 text-[hsl(var(--text-secondary))]">
+                            <div className="size-8 rounded-full bg-[hsl(var(--surface-1))] flex items-center justify-center shrink-0 mt-1">
                                 <AlignLeft size={14} className="text-[hsl(var(--text-secondary))]" />
                             </div>
                             <textarea
@@ -121,10 +121,10 @@ export default function InlineEventPopover({ open, onOpenChange, day, children, 
                         </div>
                     </div>
 
-                    <div className="flex items-center justify-end gap-2 pt-2 border-t border-[hsl(var(--border))] dark:border-white/10">
+                    <div className="flex items-center justify-end gap-2 pt-2 border-t border-[hsl(var(--border))]">
                         <button
                             onClick={() => onOpenChange(false)}
-                            className="px-4 py-2 text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5 rounded-md transition-colors disabled:opacity-50"
+                            className="px-4 py-2 text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] rounded-md transition-colors disabled:opacity-50"
                             disabled={isSaving}
                         >
                             Cerrar
@@ -132,7 +132,7 @@ export default function InlineEventPopover({ open, onOpenChange, day, children, 
                         <button
                             onClick={handleSave}
                             disabled={!title.trim() || isSaving}
-                            className="flex items-center gap-2 px-4 py-2 text-xs font-semibold uppercase tracking-wide bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))] text-white shadow-md shadow-[hsl(var(--info)/20%)] rounded-md transition-all active:scale-95 disabled:opacity-50 disabled:active:scale-100"
+                            className="flex items-center gap-2 px-4 py-2 text-xs font-semibold uppercase tracking-wide bg-[hsl(var(--primary))] hover:opacity-90 text-[hsl(var(--primary-foreground))] shadow-md rounded-md transition-all active:scale-95 disabled:opacity-50 disabled:active:scale-100"
                         >
                             {isSaving && <Loader2 size={12} className="animate-spin" />}
                             Guardar

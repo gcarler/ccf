@@ -39,18 +39,18 @@ export default function WeekView({
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
       {/* Day headers */}
-      <div className="flex shrink-0 border-b border-[hsl(var(--border))] dark:border-white/5">
+      <div className="flex shrink-0 border-b border-[hsl(var(--border))]">
         <div className="w-16 shrink-0" />
         {weekDays.map((day, i) => (
-          <div key={i} className="flex-1 min-w-0 flex flex-col items-center py-2 border-l border-[hsl(var(--border))] dark:border-white/5 first:border-l-0">
+          <div key={i} className="flex-1 min-w-0 flex flex-col items-center py-2 border-l border-[hsl(var(--border))] first:border-l-0">
             <span className="text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">
               {format(day, 'EEE', { locale: es })}
             </span>
             <span className={clsx(
               'size-8 flex items-center justify-center rounded-full text-sm font-bold mt-0.5',
               isToday(day)
-                ? 'text-white shadow-lg'
-                : 'text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5',
+                ? 'text-[hsl(var(--primary-foreground))] shadow-lg'
+                : 'text-[hsl(var(--text-primary))] hover:bg-[hsl(var(--surface-2))]',
             )}
               style={isToday(day) ? { backgroundColor: viewColor } : {}}
             >
@@ -61,19 +61,19 @@ export default function WeekView({
       </div>
 
       {/* All-day row */}
-      <div className="flex shrink-0 border-b border-[hsl(var(--border))] dark:border-white/5 min-h-[28px]">
+      <div className="flex shrink-0 border-b border-[hsl(var(--border))] min-h-[28px]">
         <div className="w-16 shrink-0 flex items-center justify-end pr-2">
-          <span className="text-2xs text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] font-bold">Todo el día</span>
+          <span className="text-2xs text-[hsl(var(--text-secondary))] font-bold">Todo el día</span>
         </div>
         {weekDays.map((day, i) => {
           const dayAllDay = getAllDayForDay(day);
           return (
-            <div key={i} className="flex-1 border-l border-[hsl(var(--border))] dark:border-white/5 px-1 py-0.5 first:border-l-0">
+            <div key={i} className="flex-1 border-l border-[hsl(var(--border))] px-1 py-0.5 first:border-l-0">
               {dayAllDay.map(e => (
                 <div
                   key={e.id}
                   onClick={() => onEventClick(e)}
-                  className="truncate cursor-pointer rounded px-1.5 py-0.5 text-white mb-0.5"
+                  className="truncate cursor-pointer rounded px-1.5 py-0.5 text-[hsl(var(--primary-foreground))] mb-0.5"
                   style={{ backgroundColor: e.color }}
                 >
                   <div className="flex items-center gap-1">
@@ -101,9 +101,9 @@ export default function WeekView({
             ))}
           </div>
           {weekDays.map((day, i) => (
-            <div key={i} className="flex-1 border-l border-[hsl(var(--border))] dark:border-white/5 relative cursor-pointer first:border-l-0">
+            <div key={i} className="flex-1 border-l border-[hsl(var(--border))] relative cursor-pointer first:border-l-0">
               {HOURS.map(h => (
-                <div key={h} className="absolute left-0 right-0 border-t border-[hsl(var(--border))] dark:border-white/[0.04]"
+                <div key={h} className="absolute left-0 right-0 border-t border-[hsl(var(--border)/40%)]"
                   style={{ top: h * HOUR_HEIGHT }} />
               ))}
               {isToday(day) && (
