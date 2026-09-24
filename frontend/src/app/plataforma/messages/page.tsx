@@ -143,7 +143,7 @@ function MessagesPage() {
 
     return (
         <WorkspaceLayout sidebarTitle="Mensajes" customSidebar={conversationSidebar} sidebarSections={[]}>
-            <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--bg-primary))]">
+            <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))]">
                 {!activeConv ? (
                     <EmptyState onNewConversation={handleNewConversation} />
                 ) : (
@@ -223,9 +223,9 @@ function ThreadHeader({
             : { color: "fill-[hsl(var(--warning))] text-[hsl(var(--warning))]", label: "Conectando..." };
 
     return (
-        <div className="h-10 px-3 md:px-4 flex items-center gap-3 shrink-0 border-b border-[hsl(var(--border))] dark:border-white/[0.05] bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--bg-primary))]">
+        <div className="h-10 px-3 md:px-4 flex items-center gap-3 shrink-0 border-b border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))]">
             <button
-                className="p-1 hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5 rounded-md text-[hsl(var(--text-secondary))] transition-all"
+                className="p-1 hover:bg-[hsl(var(--surface-2))] rounded-md text-[hsl(var(--text-secondary))] transition-all"
                 aria-label="Volver a conversaciones"
                 title="Volver a conversaciones"
                 onClick={onBack}
@@ -234,7 +234,7 @@ function ThreadHeader({
             </button>
             <AvatarInitial name={other?.username || "U"} />
             <div className="flex-1 min-w-0">
-                <p className="text-sm font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] truncate">
+                <p className="text-sm font-bold text-[hsl(var(--text-primary))] truncate">
                     {other?.username || "Usuario"}
                 </p>
                 <div className="flex items-center gap-1 text-2xs text-[hsl(var(--text-secondary))]">
@@ -249,17 +249,17 @@ function ThreadHeader({
 function EmptyState({ onNewConversation }: { onNewConversation: () => void }) {
     return (
         <div className="flex-1 flex flex-col items-center justify-center gap-4 text-center p-6">
-            <div className="size-14 rounded-2xl bg-[hsl(var(--surface-2))] dark:bg-white/5 flex items-center justify-center">
-                <MessageCircle size={26} className="text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]" />
+            <div className="size-14 rounded-2xl bg-[hsl(var(--surface-2))] flex items-center justify-center">
+                <MessageCircle size={26} className="text-[hsl(var(--text-secondary))]" />
             </div>
             <div>
-                <p className="text-sm font-bold text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">Selecciona una conversación</p>
+                <p className="text-sm font-bold text-[hsl(var(--text-primary))]">Selecciona una conversación</p>
                 <p className="text-sm text-[hsl(var(--text-secondary))] mt-1">o empieza una nueva desde el panel izquierdo</p>
             </div>
             <button
                 onClick={onNewConversation}
                 aria-label="Crear nueva conversación"
-                className="flex items-center gap-2 px-4 py-2 text-xs font-bold uppercase tracking-wide bg-[hsl(var(--primary))] text-white rounded-lg hover:bg-[hsl(var(--primary))] active:scale-95 transition-all shadow-sm shadow-[hsl(var(--info)/20%)] mt-1"
+                className="flex items-center gap-2 px-4 py-2 text-xs font-bold uppercase tracking-wide bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] rounded-lg hover:opacity-90 active:scale-95 transition-all shadow-sm shadow-[hsl(var(--primary)/20%)] mt-1"
             >
                 <Plus size={13} /> Nueva conversación
             </button>

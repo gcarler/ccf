@@ -227,9 +227,9 @@ export function MessageInput({
     const type = attachment ? getAttachmentType(attachment) : null;
 
     return (
-        <div ref={containerRef} className="border-t border-[hsl(var(--border))] dark:border-white/[0.05] p-2 md:p-3 bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--bg-primary))] relative">
+        <div ref={containerRef} className="border-t border-[hsl(var(--border))] p-2 md:p-3 bg-[hsl(var(--bg-primary))] relative">
             {replyTo && (
-                <div className="mx-2 mb-1 flex items-center gap-2 px-3 py-1.5 bg-[hsl(var(--surface-2))] dark:bg-white/5 rounded-lg border-l-2 border-[hsl(var(--primary))]">
+                <div className="mx-2 mb-1 flex items-center gap-2 px-3 py-1.5 bg-[hsl(var(--surface-2))] rounded-lg border-l-2 border-[hsl(var(--primary))]">
                     <div className="flex-1 min-w-0">
                         <p className="text-2xs font-bold text-[hsl(var(--primary))]">Respondiendo a {replyTo.sender_name}</p>
                         <p className="text-xs text-[hsl(var(--text-secondary))] truncate">{replyTo.content || '📎 Adjunto'}</p>
@@ -241,7 +241,7 @@ export function MessageInput({
             )}
 
             {attachment && attachmentPreviewUrl && (
-                <div className="mx-2 mb-1 flex items-center gap-2 px-3 py-2 bg-[hsl(var(--surface-2))] dark:bg-white/5 rounded-lg">
+                <div className="mx-2 mb-1 flex items-center gap-2 px-3 py-2 bg-[hsl(var(--surface-2))] rounded-lg">
                     {type === 'image' ? (
                         <img src={attachmentPreviewUrl} alt="Preview" className="h-12 w-12 rounded-md object-cover" />
                     ) : (
@@ -270,7 +270,7 @@ export function MessageInput({
 
             {mentionResults.length > 0 && mentionState && mentionDropdownPos && createPortal(
                 <div
-                    className="fixed rounded-xl border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--bg-primary))] shadow-2xl overflow-hidden z-[9999] max-h-[240px] overflow-y-auto"
+                    className="fixed rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] shadow-2xl overflow-hidden z-[9999] max-h-[240px] overflow-y-auto"
                     style={{
                         top: mentionDropdownPos.top,
                         left: mentionDropdownPos.left,
@@ -284,7 +284,7 @@ export function MessageInput({
                             key={u.id}
                             onClick={() => selectMention(u)}
                             onMouseEnter={() => setActiveIndex(i)}
-                            className={`w-full flex items-center gap-2.5 px-3 py-2 transition-colors ${i === activeIndex ? 'bg-[hsl(var(--surface-1))] dark:bg-white/10' : 'hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5'}`}
+                            className={clsx('w-full flex items-center gap-2.5 px-3 py-2 transition-colors', i === activeIndex ? 'bg-[hsl(var(--surface-2))]' : 'hover:bg-[hsl(var(--surface-2))]')}
                         >
                             <AvatarInitial name={u.name || u.username} size="sm" />
                             <div className="text-left flex-1 min-w-0">
@@ -306,7 +306,7 @@ export function MessageInput({
                     disabled={disabled || sending}
                     aria-label="Adjuntar archivo"
                     title="Adjuntar archivo"
-                    className="size-9 rounded-xl flex items-center justify-center text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5 transition-all shrink-0"
+                    className="size-9 rounded-xl flex items-center justify-center text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] hover:bg-[hsl(var(--surface-2))] transition-all shrink-0"
                 >
                     <Paperclip size={18} />
                 </button>
@@ -320,7 +320,7 @@ export function MessageInput({
                     onChange={handleFileSelect}
                     accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.txt,.csv,video/mp4,video/webm,audio/mpeg,audio/ogg,audio/wav"
                 />
-                <div className="flex-1 flex items-center gap-2 px-3 py-2 bg-[hsl(var(--surface-1))] dark:bg-white/[0.05] border border-[hsl(var(--border))] dark:border-white/10 rounded-xl focus-within:ring-2 focus-within:ring-[hsl(var(--primary))]/20 transition-all">
+                <div className="flex-1 flex items-center gap-2 px-3 py-2 bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] rounded-xl focus-within:ring-2 focus-within:ring-[hsl(var(--primary)/20%)] transition-all">
                     <textarea
                         ref={inputRef}
                         rows={1}
@@ -361,14 +361,14 @@ export function MessageInput({
                         disabled={disabled || sending}
                         placeholder={replyTo ? `Responder a ${replyTo.sender_name}...` : 'Escribe un mensaje... (@ para mencionar)'}
                         aria-label="Escribe un mensaje"
-                        className="flex-1 text-sm bg-transparent outline-none text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] placeholder:text-[hsl(var(--text-secondary))] min-w-0 resize-none max-h-40 disabled:opacity-50"
+                        className="flex-1 text-sm bg-transparent outline-none text-[hsl(var(--text-primary))] placeholder:text-[hsl(var(--text-secondary))] min-w-0 resize-none max-h-40 disabled:opacity-50"
                     />
                 </div>
                 <button
                     onClick={handleSend}
                     disabled={(!input.trim() && !attachment) || disabled || sending}
                     aria-label="Enviar mensaje"
-                    className="size-9 rounded-xl bg-[hsl(var(--primary))] text-white flex items-center justify-center hover:bg-[hsl(var(--primary))] disabled:opacity-30 disabled:cursor-not-allowed active:scale-95 transition-all shadow-sm shrink-0"
+                    className="size-9 rounded-xl bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] flex items-center justify-center hover:opacity-90 disabled:opacity-30 disabled:cursor-not-allowed active:scale-95 transition-all shadow-sm shrink-0"
                 >
                     {sending ? <Loader2 size={15} className="animate-spin" /> : <Send size={15} />}
                 </button>
