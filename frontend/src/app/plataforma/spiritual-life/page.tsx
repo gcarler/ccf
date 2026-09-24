@@ -21,11 +21,11 @@ interface AcademyProgress {
 
 // ── Milestone definitions
 const MILESTONE_DEFS = [
-    { key: 'Decision_Fe',      label: 'Decisión de Fe',         icon: Zap,    color: 'text-[hsl(var(--warning))]',  bg: 'bg-warning-soft dark:bg-[hsl(var(--warning))]/20',  border: 'border-[hsl(var(--warning)/25%)] dark:border-[hsl(var(--warning)/100%)]/20' },
-    { key: 'Bautismo_Aguas',   label: 'Bautismo en Aguas',      icon: Waves,  color: 'text-[hsl(var(--domain-cyan)/90%)]',   bg: 'bg-[hsl(var(--domain-cyan)/10%)] dark:bg-[hsl(var(--domain-cyan)/20%)]',    border: 'border-[hsl(var(--domain-cyan)/30%)] dark:border-[hsl(var(--domain-cyan)/20%)]' },
-    { key: 'Bautismo_Espiritu',label: 'Bautismo del Espíritu',  icon: Star,   color: 'text-[hsl(var(--primary))]', bg: 'bg-info-soft dark:bg-[hsl(var(--info))]/20',border: 'border-[hsl(var(--info)/25%)] dark:border-[hsl(var(--info)/100%)]/20' },
-    { key: 'Persona_Oficial',  label: 'Participación Oficial',      icon: Shield, color: 'text-success-text',bg: 'bg-success-soft dark:bg-[hsl(var(--success))]/20',border: 'border-[hsl(var(--success)/25%)] dark:border-[hsl(var(--success)/100%)]/20' },
-    { key: 'Liderazgo',        label: 'Llamado al Liderazgo',   icon: Users,  color: 'text-[hsl(var(--primary))]',   bg: 'bg-info-soft dark:bg-[hsl(var(--info))]/20',    border: 'border-[hsl(var(--info)/25%)] dark:border-[hsl(var(--info)/100%)]/20' },
+    { key: 'Decision_Fe',      label: 'Decisión de Fe',         icon: Zap,    color: 'text-[hsl(var(--warning))]',  bg: 'bg-[hsl(var(--warning)/10%)]',  border: 'border-[hsl(var(--warning)/25%)]' },
+    { key: 'Bautismo_Aguas',   label: 'Bautismo en Aguas',      icon: Waves,  color: 'text-[hsl(var(--domain-cyan)/90%)]',   bg: 'bg-[hsl(var(--domain-cyan)/10%)]',    border: 'border-[hsl(var(--domain-cyan)/25%)]' },
+    { key: 'Bautismo_Espiritu',label: 'Bautismo del Espíritu',  icon: Star,   color: 'text-[hsl(var(--primary))]', bg: 'bg-[hsl(var(--primary)/10%)]', border: 'border-[hsl(var(--primary)/25%)]' },
+    { key: 'Persona_Oficial',  label: 'Participación Oficial',      icon: Shield, color: 'text-[hsl(var(--success))]', bg: 'bg-[hsl(var(--success)/10%)]', border: 'border-[hsl(var(--success)/25%)]' },
+    { key: 'Liderazgo',        label: 'Llamado al Liderazgo',   icon: Users,  color: 'text-[hsl(var(--primary))]',   bg: 'bg-[hsl(var(--primary)/10%)]', border: 'border-[hsl(var(--primary)/25%)]' },
 ];
 
 // ── Discipleship steps mapped to canonical spiritual milestones
@@ -84,22 +84,22 @@ export default function SpiritualLifePage() {
     const discipuladoDone = activeDiscipuladoSteps.filter(s => s.done).length;
 
     return (
-        <div className="flex flex-col h-full bg-[hsl(var(--surface-1))] dark:bg-[#111213] overflow-y-auto font-display">
+        <div className="flex flex-col h-full bg-[hsl(var(--surface-1))] overflow-y-auto font-display">
                 <div className="w-full p-4 md:p-6 space-y-4">
 
                     {/* ── HERO HEADER ─────────────────────────────────────────────── */}
                     <div className="flex items-start justify-between">
                         <div>
                             <div className="flex items-center gap-2 mb-2">
-                                <div className="size-8 rounded-md bg-[hsl(var(--danger-muted))] dark:bg-[hsl(var(--danger))]/30 flex items-center justify-center">
-                                    <Heart size={16} className="text-danger-text" fill="currentColor" />
+                                <div className="size-8 rounded-md bg-[hsl(var(--destructive)/10%)] flex items-center justify-center">
+                                    <Heart size={16} className="text-[hsl(var(--destructive))]" fill="currentColor" />
                                 </div>
-                                <span className="text-2xs font-semibold uppercase tracking-wide text-danger-text">Vida Espiritual</span>
+                                <span className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--destructive))]">Vida Espiritual</span>
                             </div>
-                            <h1 className="text-xl font-bold tracking-tight text-[hsl(var(--text-primary))] dark:text-white leading-none">
+                            <h1 className="text-xl font-bold tracking-tight text-[hsl(var(--text-primary))] leading-none">
                                 Tu Caminar con Cristo
                             </h1>
-                            <p className="text-sm text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] mt-1 font-medium">
+                            <p className="text-sm text-[hsl(var(--text-secondary))] mt-1 font-medium">
                                 Registra y celebra cada hito de tu vida espiritual en CCF.
                             </p>
                         </div>
@@ -107,7 +107,7 @@ export default function SpiritualLifePage() {
                         <Link href="/plataforma/spiritual-life/timeline">
                             <motion.button
                                 whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
-                                className="flex items-center gap-2 px-3 py-2.5 bg-[hsl(var(--primary))] text-white rounded-md text-xs font-semibold uppercase tracking-wide shadow-lg shadow-[hsl(var(--info)/25%)]"
+                                className="flex items-center gap-2 px-3 py-2.5 bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] rounded-md text-xs font-semibold uppercase tracking-wide shadow-lg shadow-[hsl(var(--primary)/25%)]"
                             >
                                 <Calendar size={14} /> Ver Línea de Tiempo
                             </motion.button>
@@ -117,19 +117,19 @@ export default function SpiritualLifePage() {
                     {/* ── KPI CARDS ──────────────────────────────────────────────── */}
                     <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                         {[
-                            { label: 'Hitos Espirituales', value: `${milestones.length}/${MILESTONE_DEFS.length}`, icon: Zap, color: 'text-warning-text', bg: 'bg-warning-soft dark:bg-[hsl(var(--warning))]/20' },
-                            { label: 'Progreso Espiritual', value: `${progressPct}%`, icon: TrendingUp, color: 'text-[hsl(var(--primary))]', bg: 'bg-info-soft dark:bg-[hsl(var(--info))]/20' },
-                            { label: 'Cursos en Academia', value: `${academyProgress?.completed_courses ?? '–'}/${academyProgress?.total_courses ?? '–'}`, icon: BookOpen, color: 'text-success-text', bg: 'bg-success-soft dark:bg-[hsl(var(--success))]/20' },
-                            { label: 'Nivel de Discipulado', value: `${discipuladoDone}/5`, icon: Star, color: 'text-[hsl(var(--primary))]', bg: 'bg-info-soft dark:bg-[hsl(var(--info))]/20' },
+                            { label: 'Hitos Espirituales', value: `${milestones.length}/${MILESTONE_DEFS.length}`, icon: Zap, color: 'text-[hsl(var(--warning))]', bg: 'bg-[hsl(var(--warning)/10%)]' },
+                            { label: 'Progreso Espiritual', value: `${progressPct}%`, icon: TrendingUp, color: 'text-[hsl(var(--primary))]', bg: 'bg-[hsl(var(--primary)/10%)]' },
+                            { label: 'Cursos en Academia', value: `${academyProgress?.completed_courses ?? '–'}/${academyProgress?.total_courses ?? '–'}`, icon: BookOpen, color: 'text-[hsl(var(--success))]', bg: 'bg-[hsl(var(--success)/10%)]' },
+                            { label: 'Nivel de Discipulado', value: `${discipuladoDone}/5`, icon: Star, color: 'text-[hsl(var(--primary))]', bg: 'bg-[hsl(var(--primary)/10%)]' },
                         ].map((kpi, i) => (
                             <motion.div key={i}
                                 initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.07 }}
-                                className="bg-[hsl(var(--bg-primary))] dark:bg-[#1a1b1e] border border-[hsl(var(--border))] dark:border-white/7 rounded-lg p-3 shadow-sm hover:shadow-md transition-all"
+                                className="bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] rounded-lg p-3 shadow-sm hover:shadow-md transition-all"
                             >
                                 <div className={clsx("size-9 rounded-md flex items-center justify-center mb-3", kpi.bg)}>
                                     <kpi.icon size={17} className={kpi.color} />
                                 </div>
-                                <div className="text-lg font-bold text-[hsl(var(--text-primary))] dark:text-white tracking-tight">{kpi.value}</div>
+                                <div className="text-lg font-bold text-[hsl(var(--text-primary))] tracking-tight">{kpi.value}</div>
                                 <div className="text-2xs font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] mt-0.5">{kpi.label}</div>
                             </motion.div>
                         ))}
@@ -142,12 +142,12 @@ export default function SpiritualLifePage() {
                         <div className="lg:col-span-2 space-y-4">
                             <div className="flex items-center justify-between mb-1">
                                 <h2 className="text-xs font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))]">Hitos Espirituales</h2>
-                                <span className="text-2xs font-bold text-[hsl(var(--primary))] bg-info-soft dark:bg-[hsl(var(--info))]/20 px-2 py-0.5 rounded-full">
+                                <span className="text-2xs font-bold text-[hsl(var(--primary))] bg-[hsl(var(--primary)/10%)] px-2 py-0.5 rounded-full">
                                     {milestones.length} alcanzados
                                 </span>
                             </div>
 
-                            <div className="bg-[hsl(var(--bg-primary))] dark:bg-[#1a1b1e] border border-[hsl(var(--border))] dark:border-white/7 rounded-lg overflow-hidden shadow-sm">
+                            <div className="bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] rounded-lg overflow-hidden shadow-sm">
                                 {MILESTONE_DEFS.map((m, i) => {
                                     const reached = milestones.includes(m.key);
                                     const isNext = !reached && m.key === nextMilestone?.key;
@@ -155,7 +155,7 @@ export default function SpiritualLifePage() {
                                         <motion.div key={m.key}
                                             initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.06 }}
                                             className={clsx(
-                                                "flex items-center gap-4 px-3 py-1.5 border-b border-[hsl(var(--border))] dark:border-white/5 last:border-0 transition-all",
+                                                "flex items-center gap-4 px-3 py-1.5 border-b border-[hsl(var(--border))] last:border-0 transition-all",
                                                 reached ? "opacity-100" : isNext ? "opacity-90" : "opacity-40"
                                             )}
                                         >
@@ -167,9 +167,9 @@ export default function SpiritualLifePage() {
                                             {/* Text */}
                                             <div className="flex-1 min-w-0">
                                                 <div className="flex items-center gap-2">
-                                                    <p className="text-base font-bold text-[hsl(var(--text-primary))] dark:text-white truncate">{m.label}</p>
+                                                    <p className="text-base font-bold text-[hsl(var(--text-primary))] truncate">{m.label}</p>
                                                     {isNext && (
-                                                        <span className="px-2 py-0.5 bg-info-soft dark:bg-[hsl(var(--info))]/30 text-[hsl(var(--primary))] text-2xs font-semibold uppercase tracking-wide rounded-full">
+                                                        <span className="px-2 py-0.5 bg-[hsl(var(--primary)/10%)] text-[hsl(var(--primary))] text-2xs font-semibold uppercase tracking-wide rounded-full">
                                                             Siguiente
                                                         </span>
                                                     )}
@@ -182,7 +182,7 @@ export default function SpiritualLifePage() {
                                             ) : isNext ? (
                                                 <Circle size={18} className="text-[hsl(var(--primary))] shrink-0 animate-pulse" />
                                             ) : (
-                                                <Lock size={15} className="text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] shrink-0" />
+                                                <Lock size={15} className="text-[hsl(var(--text-secondary))] shrink-0" />
                                             )}
                                         </motion.div>
                                     );
@@ -190,14 +190,14 @@ export default function SpiritualLifePage() {
                             </div>
 
                             {/* Spiritual progress bar */}
-                            <div className="bg-[hsl(var(--bg-primary))] dark:bg-[#1a1b1e] border border-[hsl(var(--border))] dark:border-white/7 rounded-lg p-3 shadow-sm">
+                            <div className="bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] rounded-lg p-3 shadow-sm">
                                 <div className="flex items-center justify-between mb-3">
                                     <span className="text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Progreso espiritual</span>
                                     <span className="font-semibold text-[hsl(var(--primary))]">{progressPct}%</span>
                                 </div>
-                                <div className="h-2.5 bg-[hsl(var(--surface-2))] dark:bg-white/5 rounded-full overflow-hidden">
+                                <div className="h-2.5 bg-[hsl(var(--surface-2))] rounded-full overflow-hidden">
                                     <motion.div
-                                        className="h-full bg-gradient-to-r from-[hsl(var(--info))] to-[hsl(var(--info))] rounded-full"
+                                        className="h-full bg-[hsl(var(--primary))] rounded-full"
                                         initial={{ width: 0 }}
                                         animate={{ width: `${progressPct}%` }}
                                         transition={{ duration: 1.2, ease: 'easeOut' }}
@@ -216,12 +216,12 @@ export default function SpiritualLifePage() {
                         <div className="space-y-4">
 
                             {/* Discipleship path */}
-                            <div className="bg-[hsl(var(--bg-primary))] dark:bg-[#1a1b1e] border border-[hsl(var(--border))] dark:border-white/7 rounded-lg overflow-hidden shadow-sm">
-                                <div className="px-3 py-1.5 border-b border-[hsl(var(--border))] dark:border-white/5 flex items-center justify-between">
+                            <div className="bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] rounded-lg overflow-hidden shadow-sm">
+                                <div className="px-3 py-1.5 border-b border-[hsl(var(--border))] flex items-center justify-between">
                                     <h3 className="text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Ruta de Discipulado</h3>
                                     <span className="font-semibold text-[hsl(var(--text-secondary))]">{discipuladoDone}/5</span>
                                 </div>
-                                <div className="divide-y divide-[hsl(var(--border))] dark:divide-white/5">
+                                <div className="divide-y divide-[hsl(var(--border))]">
                                     {activeDiscipuladoSteps.map(step => (
                                         <div key={step.id} className={clsx(
                                             "flex items-start gap-3 px-3 py-3 transition-all",
@@ -230,16 +230,16 @@ export default function SpiritualLifePage() {
                                             <div className={clsx(
                                                 "size-5 rounded-full shrink-0 flex items-center justify-center mt-0.5",
                                                 step.done
-                                                    ? "bg-[hsl(var(--success-muted))] dark:bg-[hsl(var(--success))]/30"
-                                                    : "bg-[hsl(var(--surface-2))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10"
+                                                    ? "bg-[hsl(var(--success)/15%)]"
+                                                    : "bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))]"
                                             )}>
                                                 {step.done
-                                                    ? <CheckCircle2 size={12} className="text-success-text" />
+                                                    ? <CheckCircle2 size={12} className="text-[hsl(var(--success))]" />
                                                     : <span className="font-semibold text-[hsl(var(--text-secondary))]">{step.id}</span>
                                                 }
                                             </div>
                                             <div>
-                                                <p className="text-sm font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">{step.label}</p>
+                                                <p className="text-sm font-bold text-[hsl(var(--text-primary))]">{step.label}</p>
                                                 <p className="text-2xs text-[hsl(var(--text-secondary))] leading-snug">{step.desc}</p>
                                             </div>
                                         </div>
@@ -250,12 +250,12 @@ export default function SpiritualLifePage() {
                             {/* Quick links */}
                             <div className="space-y-2">
                                 <Link href="/plataforma/spiritual-life/timeline">
-                                    <div className="flex items-center gap-3 p-4 bg-[hsl(var(--bg-primary))] dark:bg-[#1a1b1e] border border-[hsl(var(--border))] dark:border-white/7 rounded-lg shadow-sm hover:shadow-md hover:border-[hsl(var(--info)/25%)] dark:hover:border-white/15 transition-all cursor-pointer group">
-                                        <div className="size-9 rounded-md bg-info-soft dark:bg-[hsl(var(--info))]/20 flex items-center justify-center">
+                                    <div className="flex items-center gap-3 p-4 bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] rounded-lg shadow-sm hover:shadow-md hover:border-[hsl(var(--primary)/30%)] transition-all cursor-pointer group">
+                                        <div className="size-9 rounded-md bg-[hsl(var(--primary)/10%)] flex items-center justify-center">
                                             <Calendar size={16} className="text-[hsl(var(--primary))]" />
                                         </div>
                                         <div className="flex-1">
-                                            <p className="text-base font-bold text-[hsl(var(--text-primary))] dark:text-white">Línea de Tiempo</p>
+                                            <p className="text-base font-bold text-[hsl(var(--text-primary))]">Línea de Tiempo</p>
                                             <p className="text-2xs text-[hsl(var(--text-secondary))]">Todos tus hitos cronológicos</p>
                                         </div>
                                         <ChevronRight size={14} className="text-[hsl(var(--text-secondary))] group-hover:translate-x-1 transition-transform" />
@@ -263,12 +263,12 @@ export default function SpiritualLifePage() {
                                 </Link>
 
                                 <Link href="/plataforma/spiritual-life/certificates">
-                                    <div className="flex items-center gap-3 p-4 bg-[hsl(var(--bg-primary))] dark:bg-[#1a1b1e] border border-[hsl(var(--border))] dark:border-white/7 rounded-lg shadow-sm hover:shadow-md hover:border-[hsl(var(--info)/25%)] dark:hover:border-white/15 transition-all cursor-pointer group">
-                                        <div className="size-9 rounded-md bg-[hsl(var(--domain-cyan)/10%)] dark:bg-[hsl(var(--domain-cyan)/20%)] flex items-center justify-center">
+                                    <div className="flex items-center gap-3 p-4 bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] rounded-lg shadow-sm hover:shadow-md hover:border-[hsl(var(--primary)/30%)] transition-all cursor-pointer group">
+                                        <div className="size-9 rounded-md bg-[hsl(var(--domain-cyan)/10%)] flex items-center justify-center">
                                             <Award size={16} className="text-[hsl(var(--domain-cyan)/90%)]" />
                                         </div>
                                         <div className="flex-1">
-                                            <p className="text-base font-bold text-[hsl(var(--text-primary))] dark:text-white">Mis Certificados</p>
+                                            <p className="text-base font-bold text-[hsl(var(--text-primary))]">Mis Certificados</p>
                                             <p className="text-2xs text-[hsl(var(--text-secondary))]">Descarga tus actas y diplomas</p>
                                         </div>
                                         <ChevronRight size={14} className="text-[hsl(var(--text-secondary))] group-hover:translate-x-1 transition-transform" />
@@ -276,15 +276,15 @@ export default function SpiritualLifePage() {
                                 </Link>
 
                                 <Link href="/plataforma/academy">
-                                    <div className="flex items-center gap-3 p-4 bg-gradient-to-r from-[hsl(var(--info))] to-[hsl(var(--info))] rounded-lg shadow-lg shadow-[hsl(var(--info)/20%)] hover:shadow-[hsl(var(--info)/30%)] transition-all cursor-pointer group">
-                                        <div className="size-9 rounded-md bg-white/20 flex items-center justify-center">
-                                            <Sparkles size={16} className="text-white" />
+                                    <div className="flex items-center gap-3 p-4 bg-gradient-to-r from-[hsl(var(--primary))] to-[hsl(var(--primary)/85%)] rounded-lg shadow-lg shadow-[hsl(var(--primary)/20%)] hover:shadow-[hsl(var(--primary)/30%)] transition-all cursor-pointer group">
+                                        <div className="size-9 rounded-md bg-[hsl(var(--primary-foreground)/20%)] flex items-center justify-center">
+                                            <Sparkles size={16} className="text-[hsl(var(--primary-foreground))]" />
                                         </div>
                                         <div className="flex-1">
-                                            <p className="text-base font-bold text-white">Academia CCF</p>
-                                            <p className="text-2xs text-white/70">Continúa tu formación ministerial</p>
+                                            <p className="text-base font-bold text-[hsl(var(--primary-foreground))]">Academia CCF</p>
+                                            <p className="text-2xs text-[hsl(var(--primary-foreground)/75%)]">Continúa tu formación ministerial</p>
                                         </div>
-                                        <ChevronRight size={14} className="text-white/60 group-hover:translate-x-1 transition-transform" />
+                                        <ChevronRight size={14} className="text-[hsl(var(--primary-foreground)/60%)] group-hover:translate-x-1 transition-transform" />
                                     </div>
                                 </Link>
                             </div>
