@@ -15,7 +15,7 @@ import clsx from 'clsx';
 import { motion } from 'framer-motion';
 import CmsMediaUrlField from '@/components/cms/CmsMediaUrlField';
 
-const INPUT = "w-full bg-[hsl(var(--surface-1))] dark:bg-black/20 border-2 border-transparent dark:border-white/5 rounded-lg px-3 py-1.5 text-sm font-bold outline-none focus:border-[hsl(var(--info)/100%)]/50 focus:ring-4 focus:ring-[hsl(var(--primary))]/5 transition-all text-[hsl(var(--text-primary))] dark:text-white";
+const INPUT = "w-full bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] rounded-lg px-3 py-1.5 text-sm font-bold outline-none focus:border-[hsl(var(--primary))] focus:ring-2 focus:ring-[hsl(var(--primary))]/20 transition-all text-[hsl(var(--foreground))]";
 const LABEL = "text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] ml-4";
 
 export default function EditCoursePage() {
@@ -93,7 +93,7 @@ export default function EditCoursePage() {
                 setViewType={setViewType}
                 availableViews={['grid', 'list', 'table']}
                 leftActions={
-                    <button onClick={() => router.back()} className="p-2.5 hover:bg-[hsl(var(--bg-primary))] dark:hover:bg-white/5 rounded-lg transition-all border border-transparent hover:border-[hsl(var(--border))] dark:hover:border-white/10">
+                    <button onClick={() => router.back()} className="p-2.5 hover:bg-[hsl(var(--surface-2))] rounded-lg transition-all border border-transparent hover:border-[hsl(var(--border))]">
                         <ArrowLeft size={18} className="text-[hsl(var(--text-secondary))]" />
                     </button>
                 }
@@ -111,16 +111,16 @@ export default function EditCoursePage() {
                             <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-[hsl(var(--warning)/0.1)] rounded-full text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--warning))]">
                                 <FileText size={13} strokeWidth={3} /> Edicion de Contenido
                             </div>
-                            <h1 className="text-lg lg:text-xl font-bold text-[hsl(var(--text-primary))] dark:text-white tracking-tighter leading-none">
+                            <h1 className="text-lg lg:text-xl font-bold text-[hsl(var(--foreground))] tracking-tighter leading-none">
                                 Actualiza el <br />
                                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-[hsl(var(--info))] to-[hsl(var(--info))]">Programa.</span>
                             </h1>
                         </motion.header>
 
                         <form onSubmit={handleSubmit} className="space-y-4">
-                            <motion.div variants={itemVariants} className="bg-[hsl(var(--bg-primary))] dark:bg-[#15171c] rounded-lg border border-[hsl(var(--border))] dark:border-white/5 p-3 lg:p-4 shadow-sm space-y-3 hover:border-[hsl(var(--info)/100%)]/20 transition-all">
+                            <motion.div variants={itemVariants} className="bg-[hsl(var(--surface-1))] rounded-lg border border-[hsl(var(--border))] p-3 lg:p-4 shadow-sm space-y-3 hover:border-[hsl(var(--primary)/0.4)] transition-all">
                                 <div className="flex items-center gap-4 text-[hsl(var(--primary))]">
-                                    <div className="size-9 rounded-lg bg-info-soft dark:bg-[hsl(var(--info))]/10 flex items-center justify-center shadow-inner">
+                                    <div className="size-9 rounded-lg bg-[hsl(var(--primary))]/10 flex items-center justify-center shadow-inner">
                                         <FileText size={22} strokeWidth={2.5} />
                                     </div>
                                     <h2 className="text-base font-semibold uppercase tracking-wide">Identidad del Programa</h2>
@@ -150,9 +150,9 @@ export default function EditCoursePage() {
                                 </div>
                             </motion.div>
 
-                            <motion.div variants={itemVariants} className="bg-[hsl(var(--bg-primary))] dark:bg-[#15171c] rounded-lg border border-[hsl(var(--border))] dark:border-white/5 p-3 lg:p-4 shadow-sm space-y-3 hover:border-[hsl(var(--info)/100%)]/20 transition-all">
+                            <motion.div variants={itemVariants} className="bg-[hsl(var(--surface-1))] rounded-lg border border-[hsl(var(--border))] p-3 lg:p-4 shadow-sm space-y-3 hover:border-[hsl(var(--primary)/0.4)] transition-all">
                                 <div className="flex items-center gap-4 text-info-text">
-                                    <div className="size-9 rounded-lg bg-info-soft dark:bg-[hsl(var(--info))]/10 flex items-center justify-center shadow-inner">
+                                    <div className="size-9 rounded-lg bg-[hsl(var(--primary))]/10 flex items-center justify-center shadow-inner text-[hsl(var(--primary))]">
                                         <Clock size={22} strokeWidth={2.5} />
                                     </div>
                                     <h2 className="text-base font-semibold uppercase tracking-wide">Configuracion Academica</h2>
@@ -183,14 +183,14 @@ export default function EditCoursePage() {
                                         { key: 'is_published' as const, title: 'Publicado', desc: 'Visible en el catalogo global' },
                                         { key: 'is_self_paced' as const, title: 'Autogestionado', desc: 'Sin restricciones de cohorte' },
                                     ]).map(({ key, title, desc }) => (
-                                        <label key={key} className="flex items-center justify-between p-3 rounded-lg bg-[hsl(var(--surface-1))] dark:bg-black/20 border-2 border-transparent cursor-pointer hover:border-[hsl(var(--info)/100%)]/20 transition-all">
+                                        <label key={key} className="flex items-center justify-between p-3 rounded-lg bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] cursor-pointer hover:border-[hsl(var(--primary)/0.4)] transition-all">
                                             <div>
-                                                <p className="text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-white">{title}</p>
+                                                <p className="text-sm font-semibold text-[hsl(var(--foreground))]">{title}</p>
                                                 <p className={LABEL}>{desc}</p>
                                             </div>
                                             <input type="checkbox" checked={form[key]}
                                                 onChange={e => setForm(f => ({ ...f, [key]: e.target.checked }))}
-                                                className="size-8 rounded-lg accent-blue-600 transition-transform active:scale-90" />
+                                                className="size-8 rounded-lg accent-[hsl(var(--primary))] transition-transform active:scale-90" />
                                         </label>
                                     ))}
                                 </div>
@@ -198,11 +198,11 @@ export default function EditCoursePage() {
 
                             <div className="flex items-center justify-end gap-4 pt-4">
                                 <button type="button" onClick={() => router.back()}
-                                    className="px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] dark:hover:text-white transition-all">
+                                    className="px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--foreground))] transition-all">
                                     Descartar
                                 </button>
                                 <button type="submit" disabled={saving}
-                                    className="px-3 py-1.5 bg-[hsl(var(--bg-muted))] dark:bg-[hsl(var(--bg-primary))] text-white dark:text-[hsl(var(--text-primary))] rounded-lg font-black text-xs uppercase tracking-wide shadow-2xl hover:scale-105 active:scale-95 transition-all flex items-center gap-3 disabled:opacity-50 disabled:cursor-wait group">
+                                    className="px-3 py-1.5 bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] rounded-lg font-black text-xs uppercase tracking-wide shadow-md hover:opacity-90 active:scale-95 transition-all flex items-center gap-3 disabled:opacity-50 disabled:cursor-wait group">
                                     {saving ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} className="group-hover:-translate-y-0.5 transition-transform" />}
                                     {saving ? 'Guardando...' : 'Guardar Cambios'}
                                 </button>
