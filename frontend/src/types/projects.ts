@@ -78,6 +78,47 @@ export interface ProjectRecord {
   budget_summary?: ProjectBudgetSummary;
   risks?: ProjectRisk[];
   risks_summary?: ProjectRiskSummary;
+  workload_summary?: ProjectWorkloadSummary;
+}
+
+export interface ProjectWorkloadTaskItem {
+  id: string;
+  title: string;
+  status: string;
+  priority: string;
+  due_date?: string | null;
+  is_overdue: boolean;
+}
+
+export interface ProjectMemberWorkload {
+  persona_id?: string | null;
+  name: string;
+  email?: string | null;
+  avatar_url?: string | null;
+  total_tasks: number;
+  active_tasks: number;
+  completed_tasks: number;
+  overdue_tasks: number;
+  urgent_tasks: number;
+  high_tasks: number;
+  medium_tasks: number;
+  low_tasks: number;
+  capacity_status: 'available' | 'balanced' | 'overloaded';
+  workload_percent: number;
+  tasks: ProjectWorkloadTaskItem[];
+}
+
+export interface ProjectWorkloadSummary {
+  project_id: string;
+  total_members: number;
+  total_active_tasks: number;
+  total_completed_tasks: number;
+  total_overdue_tasks: number;
+  overloaded_members_count: number;
+  balanced_members_count: number;
+  available_members_count: number;
+  unassigned_tasks_count: number;
+  members: ProjectMemberWorkload[];
 }
 
 export interface ProjectRisk {

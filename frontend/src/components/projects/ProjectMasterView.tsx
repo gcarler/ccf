@@ -7,10 +7,10 @@ import {
     Zap, Trophy, Calendar, TrendingUp, AlertCircle,
     ArrowUpRight, BarChart3, Plus, Trash2,
     Target, Sliders, Activity, AlertTriangle, AlertOctagon, Sparkles,
-    Wallet, TrendingDown, ShieldAlert,
+    Wallet, TrendingDown, ShieldAlert, Users, Scale,
 } from 'lucide-react';
 import clsx from 'clsx';
-import type { ProjectRecord, ProjectTaskRecord, ProjectMilestoneRecord, ProjectAnalytics, ProjectKPI, ProjectBudgetSummary, ProjectRiskSummary } from '@/types/projects';
+import type { ProjectRecord, ProjectTaskRecord, ProjectMilestoneRecord, ProjectAnalytics, ProjectKPI, ProjectBudgetSummary, ProjectRiskSummary, ProjectWorkloadSummary } from '@/types/projects';
 import { InlineTextInput } from '@/components/ui/inline-editors/InlineTextInput';
 import { InlineTextArea } from '@/components/ui/inline-editors/InlineTextArea';
 import { InlineProjectStatusPicker } from '@/components/ui/inline-editors/InlineProjectStatusPicker';
@@ -20,6 +20,7 @@ import { ProjectKpiDrawer } from '@/components/projects/ProjectKpiDrawer';
 import { ProgressSettingsDrawer } from '@/components/projects/ProgressSettingsDrawer';
 import { ProjectBudgetDrawer } from '@/components/projects/ProjectBudgetDrawer';
 import { ProjectRiskMatrixDrawer } from '@/components/projects/ProjectRiskMatrixDrawer';
+import { ProjectWorkloadDrawer } from '@/components/projects/ProjectWorkloadDrawer';
 import { useProjectUpdate } from '@/context/ProjectUpdateContext';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
@@ -67,6 +68,10 @@ export function ProjectMasterView({ project, tasks, onOpenTask }: ProjectMasterV
     const [risksSummary, setRisksSummary] = useState<ProjectRiskSummary | null>(project.risks_summary || null);
     const [showRiskDrawer, setShowRiskDrawer] = useState(false);
 
+    // Carga de Trabajo y Capacidad (Super-PRO Fase 3)
+    const [workloadSummary, setWorkloadSummary] = useState<ProjectWorkloadSummary | null>(project.workload_summary || null);
+    const [showWorkloadDrawer, setShowWorkloadDrawer] = useState(false);
+
     const loadKpis = useCallback(async () => {
         if (!project.id || !token) return;
         try {
@@ -97,11 +102,22 @@ export function ProjectMasterView({ project, tasks, onOpenTask }: ProjectMasterV
         }
     }, [project.id, token]);
 
+    const loadWorkloadSummary = useCallback(async () => {
+        if (!project.id || !token) return;
+        try {
+            const data = await apiFetch<ProjectWorkloadSummary>(`/projects/${project.id}/workload`, { token });
+            if (data) setWorkloadSummary(data);
+        } catch {
+            // fallback silencioso
+        }
+    }, [project.id, token]);
+
     useEffect(() => {
         loadKpis();
         loadBudgetSummary();
         loadRisksSummary();
-    }, [loadKpis, loadBudgetSummary, loadRisksSummary]);
+        loadWorkloadSummary();
+    }, [loadKpis, loadBudgetSummary, loadRisksSummary, loadWorkloadSummary]);
 
     const handleKpisUpdated = async () => {
         await loadKpis();
@@ -662,6 +678,132 @@ export function ProjectMasterView({ project, tasks, onOpenTask }: ProjectMasterV
                 </div>
             </section>
 
+            {/* 3.2 Capacidad de Equipo y Carga de Trabajo (Super-PRO Fase 3) */}
+            <section className="space-y-3">
+                <div className="flex items-center justify-between px-2">
+                    <h2 className="text-lg font-bold text-[hsl(var(--foreground))] uppercase tracking-tighter flex items-center gap-2">
+                        <Users className="text-[hsl(var(--primary))]" size={16} /> Capacidad de Equipo y Carga de Trabajo
+                    </h2>
+                    <button
+                        onClick={() => setShowWorkloadDrawer(true)}
+                        className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-bold uppercase tracking-wider bg-[hsl(var(--primary))]/10 text-[hsl(var(--primary))] border border-[hsl(var(--primary))]/30 hover:bg-[hsl(var(--primary))]/20 transition-all cursor-pointer"
+                    >
+                        <Plus size={12} /> Planificar Carga
+                    </button>
+                </div>
+
+                <div className="bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] rounded-xl p-4 shadow-xs space-y-4">
+                    {/* Alerta semántica si hay miembros sobrecargados */}
+                    {(workloadSummary?.overloaded_count ?? 0) > 0 && (
+                        <div className="p-3 rounded-lg bg-[hsl(var(--destructive))]/10 border border-[hsl(var(--destructive))]/30 flex items-center justify-between gap-3">
+                            <div className="flex items-center gap-2">
+                                <AlertOctagon size={16} className="text-[hsl(var(--destructive))] shrink-0" />
+                                <span className="text-xs font-bold text-[hsl(var(--destructive))]">
+                                    Atención: {workloadSummary?.overloaded_count} miembro(s) con sobrecarga de trabajo. Rebalancea las tareas para evitar cuellos de botella.
+                                </span>
+                            </div>
+                            <button
+                                onClick={() => setShowWorkloadDrawer(true)}
+                                className="text-3xs font-black uppercase tracking-wider px-2 py-1 rounded bg-[hsl(var(--destructive))] text-[hsl(var(--destructive-foreground))] hover:opacity-90 shrink-0 cursor-pointer"
+                            >
+                                Rebalancear
+                            </button>
+                        </div>
+                    )}
+
+                    {/* Grid de Capacidad del Equipo */}
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                        <div className="p-3 rounded-lg bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))]">
+                            <span className="text-3xs font-bold uppercase tracking-wider text-[hsl(var(--muted-foreground))]">Equipo Asignado</span>
+                            <div className="text-base md:text-lg font-black text-[hsl(var(--foreground))] mt-0.5">
+                                {workloadSummary?.total_members ?? 0}
+                            </div>
+                            <span className="text-3xs text-[hsl(var(--muted-foreground))]">Miembros con tareas</span>
+                        </div>
+
+                        <div className="p-3 rounded-lg bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))]">
+                            <span className="text-3xs font-bold uppercase tracking-wider text-[hsl(var(--destructive))]">Sobrecargados</span>
+                            <div className="text-base md:text-lg font-black text-[hsl(var(--destructive))] mt-0.5">
+                                {workloadSummary?.overloaded_count ?? 0}
+                            </div>
+                            <span className="text-3xs text-[hsl(var(--destructive))]/80 font-medium">≥ 5 tareas o vencidas</span>
+                        </div>
+
+                        <div className="p-3 rounded-lg bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))]">
+                            <span className="text-3xs font-bold uppercase tracking-wider text-[hsl(var(--primary))]">Balanceados</span>
+                            <div className="text-base md:text-lg font-black text-[hsl(var(--primary))] mt-0.5">
+                                {workloadSummary?.balanced_count ?? 0}
+                            </div>
+                            <span className="text-3xs text-[hsl(var(--primary))]/80 font-medium">2-4 tareas activas</span>
+                        </div>
+
+                        <div className="p-3 rounded-lg bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))]">
+                            <span className="text-3xs font-bold uppercase tracking-wider text-[hsl(var(--success))]">Disponibles</span>
+                            <div className="text-base md:text-lg font-black text-[hsl(var(--success))] mt-0.5">
+                                {workloadSummary?.available_count ?? 0}
+                            </div>
+                            <span className="text-3xs text-[hsl(var(--success))]/80 font-medium">Capacidad libre</span>
+                        </div>
+                    </div>
+
+                    {/* Preview de miembros con barras de saturación */}
+                    {workloadSummary && workloadSummary.members.length > 0 && (
+                        <div className="pt-2 border-t border-[hsl(var(--border))] space-y-2.5">
+                            <div className="flex items-center justify-between text-2xs">
+                                <span className="font-semibold text-[hsl(var(--muted-foreground))] uppercase tracking-wider">
+                                    Distribución de Carga por Responsable
+                                </span>
+                                <button
+                                    onClick={() => setShowWorkloadDrawer(true)}
+                                    className="text-3xs font-bold text-[hsl(var(--primary))] hover:underline cursor-pointer"
+                                >
+                                    Ver todos ({workloadSummary.members.length}) →
+                                </button>
+                            </div>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
+                                {workloadSummary.members.slice(0, 4).map((m) => {
+                                    const statusColor = m.capacity_status === 'overloaded'
+                                        ? 'text-[hsl(var(--destructive))]'
+                                        : m.capacity_status === 'balanced'
+                                            ? 'text-[hsl(var(--primary))]'
+                                            : 'text-[hsl(var(--success))]';
+                                    const barColor = m.capacity_status === 'overloaded'
+                                        ? 'bg-[hsl(var(--destructive))]'
+                                        : m.capacity_status === 'balanced'
+                                            ? 'bg-[hsl(var(--primary))]'
+                                            : 'bg-[hsl(var(--success))]';
+                                    return (
+                                        <div key={m.member_id} className="p-2.5 rounded-lg bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] space-y-1.5">
+                                            <div className="flex items-center justify-between text-2xs">
+                                                <div className="flex items-center gap-1.5 min-w-0">
+                                                    <span className="font-bold text-[hsl(var(--foreground))] truncate max-w-[140px]">
+                                                        {m.member_name}
+                                                    </span>
+                                                    {m.overdue_tasks > 0 && (
+                                                        <span className="px-1 py-0.2 rounded text-3xs font-black bg-[hsl(var(--destructive))]/20 text-[hsl(var(--destructive))]">
+                                                            {m.overdue_tasks} vencida(s)
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                <span className={clsx("font-black tracking-tight", statusColor)}>
+                                                    {m.active_tasks} activas ({m.capacity_percent}%)
+                                                </span>
+                                            </div>
+                                            <div className="h-1.5 w-full rounded-full bg-[hsl(var(--surface-1))] overflow-hidden">
+                                                <div
+                                                    className={clsx("h-full rounded-full transition-all duration-500", barColor)}
+                                                    style={{ width: `${Math.min(100, Math.max(0, m.capacity_percent))}%` }}
+                                                />
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    )}
+                </div>
+            </section>
+
             {/* 4. Línea de Tiempo de Hitos — auto-gestionada */}
             <section className="space-y-3">
                 <div className="flex items-center justify-between px-2">
@@ -810,6 +952,16 @@ export function ProjectMasterView({ project, tasks, onOpenTask }: ProjectMasterV
                 onClose={() => setShowRiskDrawer(false)}
                 onRiskUpdated={() => {
                     loadRisksSummary();
+                    reloadProject();
+                }}
+            />
+
+            <ProjectWorkloadDrawer
+                projectId={project.id}
+                isOpen={showWorkloadDrawer}
+                onClose={() => setShowWorkloadDrawer(false)}
+                onWorkloadUpdated={() => {
+                    loadWorkloadSummary();
                     reloadProject();
                 }}
             />

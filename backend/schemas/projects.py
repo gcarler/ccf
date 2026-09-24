@@ -373,6 +373,54 @@ class ProjectRiskSummary(BaseModel):
     model_config = orm_config
 
 
+class TaskReassignPayload(BaseModel):
+    new_assignee_id: Optional[UUIDStr] = None
+
+
+class ProjectWorkloadTaskItem(BaseModel):
+    id: UUIDStr
+    title: str
+    status: str = "todo"
+    priority: str = "medium"
+    due_date: Optional[datetime] = None
+    is_overdue: bool = False
+    model_config = orm_config
+
+
+class ProjectMemberWorkload(BaseModel):
+    persona_id: Optional[UUIDStr] = None
+    name: str = "Sin Asignar"
+    email: Optional[str] = None
+    avatar_url: Optional[str] = None
+    total_tasks: int = 0
+    active_tasks: int = 0
+    completed_tasks: int = 0
+    overdue_tasks: int = 0
+    urgent_tasks: int = 0
+    high_tasks: int = 0
+    medium_tasks: int = 0
+    low_tasks: int = 0
+    capacity_status: Literal["available", "balanced", "overloaded"] = "available"
+    workload_percent: int = 0
+    tasks: List[ProjectWorkloadTaskItem] = Field(default_factory=list)
+    model_config = orm_config
+
+
+class ProjectWorkloadSummary(BaseModel):
+    project_id: UUIDStr
+    total_members: int = 0
+    total_active_tasks: int = 0
+    total_completed_tasks: int = 0
+    total_overdue_tasks: int = 0
+    overloaded_members_count: int = 0
+    balanced_members_count: int = 0
+    available_members_count: int = 0
+    unassigned_tasks_count: int = 0
+    members: List[ProjectMemberWorkload] = Field(default_factory=list)
+    model_config = orm_config
+
+
+
 
 class ProjectBase(BaseModel):
     title: str = Field(..., min_length=1, max_length=500)
@@ -465,6 +513,7 @@ class Project(ProjectBase):
     budget_summary: Optional[ProjectBudgetSummary] = None
     risks: List[ProjectRisk] = Field(default_factory=list)
     risks_summary: Optional[ProjectRiskSummary] = None
+    workload_summary: Optional[ProjectWorkloadSummary] = None
     progress_percent: int = 0
     health_status: Literal["on_track", "at_risk", "off_track", "completed"] = "on_track"
     model_config = ConfigDict(from_attributes=True, populate_by_name=True)

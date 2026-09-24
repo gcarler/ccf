@@ -887,6 +887,69 @@ else:
     fail("Error en soft delete de riesgo")
 
 # ──────────────────────────────────────────────────────────────
+section("12. PRUEBAS DE CAPACIDAD Y CARGA DE TRABAJO (WORKLOAD PLANNING)")
+# ──────────────────────────────────────────────────────────────
+
+from backend import models
+
+# 1. Obtener matriz de carga de trabajo del proyecto
+wl_summary = crud_projects.get_project_workload(db, project.id)
+if wl_summary:
+    ok(f"Workload summary obtenido: {wl_summary['total_members']} miembros, {wl_summary['total_active_tasks']} tareas activas")
+    if wl_summary["total_active_tasks"] > 0:
+        ok(f"Tareas activas contabilizadas correctamente ({wl_summary['total_active_tasks']})")
+    else:
+        fail("No se detectaron tareas activas en el workload")
+
+    # 2. Verificar estructura de miembros
+    members = wl_summary.get("members", [])
+    if len(members) > 0:
+        ok(f"Miembros analizados en la matriz de capacidad: {len(members)}")
+        first_m = members[0]
+        if "capacity_status" in first_m and "workload_percent" in first_m and "tasks" in first_m:
+            ok(f"Estructura de miembro válida: '{first_m['name']}' (Capacidad: {first_m['capacity_status']}, Carga: {first_m['workload_percent']}%)")
+        else:
+            fail(f"Estructura de miembro incompleta: {first_m}")
+    else:
+        fail("Lista de miembros vacía en workload")
+else:
+    fail("Error obteniendo el workload summary")
+
+# 3. Probar reasignación de tarea para balanceo de carga
+# Buscar una tarea de usuario_prueba_1
+task_to_move = db.query(models.ProjectTask).filter(
+    models.ProjectTask.project_id == project.id,
+    models.ProjectTask.assignee_id == u1.id,
+    models.ProjectTask.deleted_at.is_(None)
+).first()
+
+if task_to_move:
+    target_assignee = u3.id
+    reassigned = crud_projects.reassign_project_task(
+        db,
+        project.id,
+        task_to_move.id,
+        target_assignee
+    )
+    if reassigned and str(reassigned.assignee_id) == str(target_assignee):
+        ok(f"Tarea '{reassigned.title}' reasignada exitosamente a usuario_prueba_3 ({target_assignee})")
+
+        # Verificar recálculo de workload tras balanceo
+        wl_after = crud_projects.get_project_workload(db, project.id)
+        if wl_after:
+            m3_wl = next((m for m in wl_after["members"] if m["persona_id"] == str(target_assignee)), None)
+            if m3_wl and any(t["id"] == str(reassigned.id) for t in m3_wl["tasks"]):
+                ok(f"Balanceo verificado: Tarea visible en el workload de {m3_wl['name']} ({m3_wl['active_tasks']} activas)")
+            else:
+                fail("La tarea no se refleja en el workload del nuevo asignado")
+        else:
+            fail("Error obteniendo workload posterior a reasignación")
+    else:
+        fail(f"Error en reassign_project_task: {getattr(reassigned, 'assignee_id', 'None')}")
+else:
+    fail("No se encontró tarea asignada a u1 para probar reasignación")
+
+# ──────────────────────────────────────────────────────────────
 section(f"RESUMEN: {PASS} passed, {FAIL} failed")
 # ──────────────────────────────────────────────────────────────
 

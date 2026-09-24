@@ -1042,3 +1042,236 @@ def get_project_risks_summary(db: Session, project_id: UUID | str) -> Optional[d
     }
 
 
+# ── Workload Planning (Super-PRO Fase 3) ─────────────────
+
+
+def get_project_workload(db: Session, project_id: UUID | str) -> Optional[dict]:
+    project = get_project(db, project_id)
+    if not project:
+        return None
+
+    now_utc = datetime.now(timezone.utc)
+
+    # 1. Obtener todas las tareas no eliminadas del proyecto
+    tasks = (
+        db.query(models.ProjectTask)
+        .options(selectinload(models.ProjectTask.assignee))
+        .filter(
+            models.ProjectTask.project_id == project_id,
+            models.ProjectTask.deleted_at.is_(None),
+        )
+        .order_by(models.ProjectTask.due_date.asc(), models.ProjectTask.order_index.asc())
+        .all()
+    )
+
+    # 2. Obtener miembros explícitos del proyecto
+    members_rows = (
+        db.query(models.ProjectMember)
+        .options(selectinload(models.ProjectMember.persona))
+        .filter(
+            models.ProjectMember.project_id == project_id,
+            models.ProjectMember.deleted_at.is_(None),
+        )
+        .all()
+    )
+
+    # Conjunto de personas conocidas
+    personas_map: dict[str, models.Persona] = {}
+    for m in members_rows:
+        if m.persona:
+            personas_map[str(m.persona.id)] = m.persona
+
+    # Añadir al owner si existe
+    if project.owner_id:
+        owner_p = db.query(models.Persona).filter(models.Persona.id == project.owner_id).first()
+        if owner_p:
+            personas_map[str(owner_p.id)] = owner_p
+
+    # Añadir personas asignadas a tareas que no estén en la lista de miembros
+    for t in tasks:
+        if t.assignee_id:
+            pid_str = str(t.assignee_id)
+            if pid_str not in personas_map:
+                if t.assignee:
+                    personas_map[pid_str] = t.assignee
+                else:
+                    p = db.query(models.Persona).filter(models.Persona.id == t.assignee_id).first()
+                    if p:
+                        personas_map[pid_str] = p
+
+    # 3. Agrupar tareas por responsable
+    tasks_by_assignee: dict[Optional[str], list[models.ProjectTask]] = {}
+    for t in tasks:
+        key = str(t.assignee_id) if t.assignee_id else None
+        tasks_by_assignee.setdefault(key, []).append(t)
+
+    member_workloads = []
+    total_active_tasks = 0
+    total_completed_tasks = 0
+    total_overdue_tasks = 0
+
+    overloaded_count = 0
+    balanced_count = 0
+    available_count = 0
+
+    # Procesar miembros conocidos
+    for pid_str, persona in personas_map.items():
+        assigned = tasks_by_assignee.get(pid_str, [])
+        active_t = [t for t in assigned if t.status != "completed"]
+        completed_t = [t for t in assigned if t.status == "completed"]
+
+        overdue_t = []
+        for t in active_t:
+            if t.due_date:
+                t_due = t.due_date if getattr(t.due_date, "tzinfo", None) else t.due_date.replace(tzinfo=timezone.utc)
+                if t_due < now_utc:
+                    overdue_t.append(t)
+
+        urgent_count = sum(1 for t in active_t if t.priority == "urgent")
+        high_count = sum(1 for t in active_t if t.priority == "high")
+        medium_count = sum(1 for t in active_t if t.priority in ("medium", "normal"))
+        low_count = sum(1 for t in active_t if t.priority == "low")
+
+        active_count = len(active_t)
+        total_active_tasks += active_count
+        total_completed_tasks += len(completed_t)
+        total_overdue_tasks += len(overdue_t)
+
+        # Regla de capacidad:
+        # - Overloaded: 5 o más activas, o 2 o más vencidas, o 2 o más urgentes
+        # - Balanced: 2 a 4 activas
+        # - Available: 0 a 1 activas
+        if active_count >= 5 or len(overdue_t) >= 2 or urgent_count >= 2:
+            status = "overloaded"
+            overloaded_count += 1
+        elif active_count >= 2:
+            status = "balanced"
+            balanced_count += 1
+        else:
+            status = "available"
+            available_count += 1
+
+        workload_pct = min(100, round((active_count / 5.0) * 100))
+
+        # Tareas serializadas para UI
+        task_items = []
+        for t in assigned:
+            is_od = False
+            if t.status != "completed" and t.due_date:
+                t_due = t.due_date if getattr(t.due_date, "tzinfo", None) else t.due_date.replace(tzinfo=timezone.utc)
+                is_od = bool(t_due < now_utc)
+            task_items.append({
+                "id": str(t.id),
+                "title": t.title,
+                "status": t.status,
+                "priority": t.priority,
+                "due_date": t.due_date,
+                "is_overdue": is_od,
+            })
+
+        name = getattr(persona, "nombre_completo", None) or f"{getattr(persona, 'nombres', '')} {getattr(persona, 'apellidos', '')}".strip() or "Miembro"
+        member_workloads.append({
+            "persona_id": pid_str,
+            "name": name,
+            "email": getattr(persona, "email", None),
+            "avatar_url": getattr(persona, "foto_url", None),
+            "total_tasks": len(assigned),
+            "active_tasks": active_count,
+            "completed_tasks": len(completed_t),
+            "overdue_tasks": len(overdue_t),
+            "urgent_tasks": urgent_count,
+            "high_tasks": high_count,
+            "medium_tasks": medium_count,
+            "low_tasks": low_count,
+            "capacity_status": status,
+            "workload_percent": workload_pct,
+            "tasks": task_items,
+        })
+
+    # Tareas sin asignar
+    unassigned = tasks_by_assignee.get(None, [])
+    unassigned_active = [t for t in unassigned if t.status != "completed"]
+    unassigned_count = len(unassigned_active)
+    total_active_tasks += unassigned_count
+    total_completed_tasks += sum(1 for t in unassigned if t.status == "completed")
+
+    if unassigned:
+        unassigned_task_items = []
+        for t in unassigned:
+            is_od = False
+            if t.status != "completed" and t.due_date:
+                t_due = t.due_date if getattr(t.due_date, "tzinfo", None) else t.due_date.replace(tzinfo=timezone.utc)
+                is_od = bool(t_due < now_utc)
+            unassigned_task_items.append({
+                "id": str(t.id),
+                "title": t.title,
+                "status": t.status,
+                "priority": t.priority,
+                "due_date": t.due_date,
+                "is_overdue": is_od,
+            })
+
+        member_workloads.append({
+            "persona_id": None,
+            "name": "Sin Asignar",
+            "email": None,
+            "avatar_url": None,
+            "total_tasks": len(unassigned),
+            "active_tasks": unassigned_count,
+            "completed_tasks": len(unassigned) - unassigned_count,
+            "overdue_tasks": sum(1 for t in unassigned_task_items if t["is_overdue"]),
+            "urgent_tasks": sum(1 for t in unassigned_active if t.priority == "urgent"),
+            "high_tasks": sum(1 for t in unassigned_active if t.priority == "high"),
+            "medium_tasks": sum(1 for t in unassigned_active if t.priority in ("medium", "normal")),
+            "low_tasks": sum(1 for t in unassigned_active if t.priority == "low"),
+            "capacity_status": "available",
+            "workload_percent": 0,
+            "tasks": unassigned_task_items,
+        })
+
+    # Ordenar miembros: primero overloaded, luego balanced, luego available, y Sin Asignar al final
+    status_order = {"overloaded": 0, "balanced": 1, "available": 2}
+    member_workloads.sort(
+        key=lambda m: (1 if m["persona_id"] is None else 0, status_order.get(m["capacity_status"], 3), -m["active_tasks"])
+    )
+
+    return {
+        "project_id": str(project.id),
+        "total_members": len(personas_map),
+        "total_active_tasks": total_active_tasks,
+        "total_completed_tasks": total_completed_tasks,
+        "total_overdue_tasks": total_overdue_tasks,
+        "overloaded_members_count": overloaded_count,
+        "balanced_members_count": balanced_count,
+        "available_members_count": available_count,
+        "unassigned_tasks_count": unassigned_count,
+        "members": member_workloads,
+    }
+
+
+def reassign_project_task(
+    db: Session,
+    project_id: UUID | str,
+    task_id: UUID | str,
+    new_assignee_id: Optional[UUID | str],
+) -> Optional[models.ProjectTask]:
+    task = (
+        db.query(models.ProjectTask)
+        .filter(
+            models.ProjectTask.id == task_id,
+            models.ProjectTask.project_id == project_id,
+            models.ProjectTask.deleted_at.is_(None),
+        )
+        .first()
+    )
+    if not task:
+        return None
+
+    task.assignee_id = new_assignee_id
+    task.updated_at = datetime.now(timezone.utc)
+    db.commit()
+    db.refresh(task)
+    return task
+
+
+

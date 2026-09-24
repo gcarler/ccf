@@ -1734,6 +1734,7 @@ def get_project(
         log.user_name = log.persona.nombre_completo if log.persona else "Sistema"
     p.budget_summary = crud.get_project_budget_summary(db, p.id)
     p.risks_summary = crud.get_project_risks_summary(db, p.id)
+    p.workload_summary = crud.get_project_workload(db, p.id)
     return p
 
 
@@ -3576,5 +3577,89 @@ def get_project_risks_summary(
     if not summary:
         raise HTTPException(status_code=404, detail="Proyecto no encontrado")
     return summary
+
+
+# ── WORKLOAD PLANNING & TEAM CAPACITY (Super-PRO Fase 3) ─────────────────────
+
+
+@router.get(
+    "/{project_id}/workload",
+    response_model=schemas.ProjectWorkloadSummary,
+    tags=["Projects Super-PRO"],
+)
+def get_project_workload(
+    project_id: str,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("projects", "read")),
+):
+    """Calcula la matriz de carga de trabajo, balance de equipo y saturación operativa."""
+    user_sede = get_user_sede_id(db, current_user.id)
+    _ensure_project(db, project_id, user_sede=user_sede)
+    workload = crud.get_project_workload(db, _to_uuid(project_id))
+    if not workload:
+        raise HTTPException(status_code=404, detail="Proyecto no encontrado")
+    return workload
+
+
+@router.patch(
+    "/{project_id}/tasks/{task_id}/reassign",
+    response_model=schemas.ProjectTask,
+    tags=["Projects Super-PRO"],
+)
+def reassign_project_task(
+    project_id: str,
+    task_id: str,
+    payload: schemas.TaskReassignPayload,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_project_access("edit")),
+):
+    """Reasigna rápidamente una tarea entre miembros con validación multi-tenant y auditoría."""
+    user_sede = get_user_sede_id(db, current_user.id)
+    project = _ensure_project(db, project_id, user_sede=user_sede)
+    task = _ensure_task_in_project(db, project_id, task_id)
+
+    if payload.new_assignee_id is not None:
+        _assert_assignee_in_sede(db, payload.new_assignee_id, user_sede)
+
+    previous_assignee_id = getattr(task, "assignee_id", None)
+    new_uuid = _to_uuid(payload.new_assignee_id) if payload.new_assignee_id else None
+
+    updated_task = crud.reassign_project_task(
+        db,
+        project_id=_to_uuid(project_id),
+        task_id=_to_uuid(task_id),
+        new_assignee_id=new_uuid,
+    )
+    if not updated_task:
+        raise HTTPException(status_code=404, detail="Tarea no encontrada")
+
+    # Registro de bitácora ministerial y notificación
+    if _assignment_changed(previous_assignee_id, new_uuid):
+        assignee_name = "Sin Asignar"
+        if new_uuid:
+            p = db.query(models.Persona).filter(models.Persona.id == new_uuid).first()
+            if p:
+                assignee_name = p.nombre_completo
+
+        _log_project_activity(
+            db,
+            project_id,
+            current_user.id,
+            "task_reassigned",
+            f"Tarea '{task.title}' reasignada a {assignee_name}",
+        )
+        if new_uuid:
+            notify_task_assigned(
+                db,
+                task=updated_task,
+                project=project,
+                assigned_by_user_id=current_user.id,
+                previous_assignee_id=previous_assignee_id,
+            )
+
+    db.commit()
+    _prepare_task_for_response(updated_task)
+    return updated_task
+
 
 
