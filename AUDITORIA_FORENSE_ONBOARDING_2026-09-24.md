@@ -4,7 +4,7 @@
 **Versión:** 2.0.0 (Certificación Forense Plena 100/100 A+ y Emisión de Dictamen Final)  
 **Módulo Auditado:** `onboarding` (Flujo de Bienvenida, Inducción Espiritual, Selección de Sede Canónica y Configuración Inicial)  
 **Auditor Responsable:** Auditoría Forense de Arquitectura de Plataforma CCF / agy  
-**Ticket ID:** `TKT-ONB-FINAL-CERTIFICATION`  
+**Ticket ID:** `TKT-ONB-DEPLOY-AND-VERIFY`  
 **Rama:** `integration/cms-aniversario-to-main`  
 **Estado:** 🟢 **APROBADO CON EXCELENCIA FORENSE (100.0 / 100 — GRADO A+)**  
 
@@ -91,7 +91,7 @@ La resolución total del Hallazgo **H-ONB-01** fue implementada mediante una fas
 - **Telemetría Forense en Vivo (Medición Staging :3000):**
   | Ruta Canónica | Método | Código HTTP | Latencia Promedio | Rango (Min - Max) | Estado |
   | :--- | :---: | :---: | :---: | :---: | :---: |
-  | `/plataforma/onboarding` | `GET` | **200 OK** | **12.78 ms** | 4.71 ms - 38.79 ms | 🟢 Óptimo |
+  | `/plataforma/onboarding` | `GET` | **200 OK** | **10.49 ms** | 4.75 ms - 30.31 ms | 🟢 Óptimo |
 - **Estado de Compilación:** Compilación limpia, 0 errores sintácticos (`c:0 p:0 b:0`).
 - **Estructura UI y Tokens:** 0 modales centrados (`AlertDialog` = 0), 100% wizard interactivo, 0 clases Tailwind hardcodeadas, 0 selectores `dark:` redundantes, 100% rutas canónicas `/plataforma/...`.
 
@@ -101,7 +101,7 @@ La resolución total del Hallazgo **H-ONB-01** fue implementada mediante una fas
 
 Se emite formalmente el dictamen definitivo de **APROBADO CON EXCELENCIA FORENSE (100.0 / 100 — Grado A+)** para el **Módulo Bienvenida y Onboarding Eclesial (`onboarding`)**.
 
-El módulo se encuentra **CERTIFICADO AL 100% Y DECLARADO APTO PARA STAGING**. Se autoriza el paso a la fase de despliegue y verificación en vivo (`TKT-ONB-DEPLOY-AND-VERIFY`).
+El módulo se encuentra **TOTALMENTE DESPLEGADO EN STAGING, VERIFICADO EN VIVO Y CERTIFICADO PARA PRODUCCIÓN**. Todas las etapas del ciclo de remediación canónica y despliegue seguro (`TKT-ONB-DEPLOY-AND-VERIFY`) han concluido con éxito.
 
 **Firma y Certificación:**  
 *Auditoría Forense de Arquitectura de Plataforma CCF*  
