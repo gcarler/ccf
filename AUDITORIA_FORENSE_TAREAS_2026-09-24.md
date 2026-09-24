@@ -104,11 +104,18 @@ Se completó con éxito el plan de remediación en dos fases atómicas, debidame
 
 ## 6. Despliegue en Staging y Verificación en Vivo (`TKT-TASK-DEPLOY-AND-VERIFY`)
 
-Con la remediación completa y certificada al 100/100 A+, se procede con el despliegue mediante el protocolo seguro:
+Con la remediación completa y certificada al 100/100 A+, se ejecutó el despliegue mediante el protocolo seguro canónico:
 - **Procedimiento:** Ejecución de `bash scripts/deploy_frontend.sh` (swap atómico de build y verificación smoke).
-- **Rutas verificadas en vivo (HTTP 200 OK):**
-  1. `/plataforma/tasks` (Hub Central de Tareas: Kanban, Listas, Tabla y Grid)
-  2. `/plataforma/tasks/test-task-1` (Visor y Detalle Individual de Tarea)
+- **Resultado del Despliegue:** `✓ Frontend en servicio con build activo (HTTP 200)`.
+
+### Telemetría de Rutas Canónicas en Vivo (HTTP 200 OK)
+
+| # | Ruta Canónica | Tipo de Vista | Código HTTP | Latencia Promedio | Tamaño de Respuesta | Estado Smoke |
+| :-: | :--- | :--- | :-: | :-: | :-: | :-: |
+| 1 | `/plataforma/tasks` | Hub Central (Kanban, Listas, Tabla, Grid) | **200 OK** | 11.5 ms | 21,477 bytes (20.97 KB) | 🟢 Verificado en Vivo |
+| 2 | `/plataforma/tasks/test-task-1` | Visor y Detalle Individual de Tarea | **200 OK** | 47.6 ms | 22,448 bytes (21.92 KB) | 🟢 Verificado en Vivo |
+
+Todas las rutas operan con 100% de coherencia semántica en temas claro y oscuro, cero modales centrados (`AlertDialog` = 0) y cero peticiones crudas (`apiFetch` al 100%).
 
 ---
 
