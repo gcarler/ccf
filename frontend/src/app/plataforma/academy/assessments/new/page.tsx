@@ -92,7 +92,7 @@ export default function NewAssessmentPage() {
     };
 
     return (
-        <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] overflow-hidden">
+        <div className="flex flex-col h-full bg-[hsl(var(--surface-1))] overflow-hidden">
             <WorkspaceToolbar
                 breadcrumbs={[
                     { label: 'Academia', icon: GraduationCap },
@@ -108,7 +108,7 @@ export default function NewAssessmentPage() {
                         </button>
                         <button
                             onClick={handleSave}
-                            className="px-3 py-1.5 bg-[hsl(var(--primary))] text-white rounded-lg text-2xs font-semibold uppercase tracking-wide shadow-lg shadow-[hsl(var(--info)/20%)] hover:scale-105 transition-all flex items-center gap-2"
+                            className="px-3 py-1.5 bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] rounded-lg text-2xs font-semibold uppercase tracking-wide shadow-lg shadow-[hsl(var(--info)/20%)] hover:scale-105 transition-all flex items-center gap-2"
                         >
                             <Save size={14} /> Guardar Evaluacion
                         </button>
@@ -117,7 +117,7 @@ export default function NewAssessmentPage() {
             />
 
             <main className="flex-1 overflow-y-auto p-4 lg:p-4">
- <div className="w-full space-y-3">
+                <div className="w-full space-y-3">
                     <DSCard>
                         <h3 className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-3">Configuracion General</h3>
                         <div className="space-y-3">
@@ -127,7 +127,7 @@ export default function NewAssessmentPage() {
                                     value={title}
                                     onChange={(e) => setTitle(e.target.value)}
                                     placeholder="Ej: Examen Final de Teologia Basica"
-                                    className="w-full bg-transparent border-b-2 border-[hsl(var(--border))] dark:border-white/5 py-1.5 text-lg font-bold outline-none focus:border-[hsl(var(--info)/100%)] transition-all"
+                                    className="w-full bg-transparent border-b-2 border-[hsl(var(--border))] py-1.5 text-lg font-bold text-[hsl(var(--foreground))] outline-none focus:border-[hsl(var(--primary))] transition-all"
                                 />
                             </div>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -137,7 +137,7 @@ export default function NewAssessmentPage() {
                                         type="number"
                                         value={passingScore}
                                         onChange={(e) => setPassingScore(Number(e.target.value))}
-                                        className="w-full bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg py-1.5 px-3 text-sm outline-none focus:ring-4 focus:ring-[hsl(var(--primary))]/10"
+                                        className="w-full bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] rounded-lg py-1.5 px-3 text-sm text-[hsl(var(--foreground))] outline-none focus:ring-4 focus:ring-[hsl(var(--primary))]/10"
                                     />
                                 </div>
                                 <div className="space-y-2">
@@ -147,7 +147,7 @@ export default function NewAssessmentPage() {
                                         value={courseId}
                                         onChange={(e) => setCourseId(e.target.value)}
                                         placeholder="Ej: 1"
-                                        className="w-full bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg py-1.5 px-3 text-sm outline-none focus:ring-4 focus:ring-[hsl(var(--primary))]/10"
+                                        className="w-full bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] rounded-lg py-1.5 px-3 text-sm text-[hsl(var(--foreground))] outline-none focus:ring-4 focus:ring-[hsl(var(--primary))]/10"
                                     />
                                 </div>
                             </div>
@@ -159,7 +159,7 @@ export default function NewAssessmentPage() {
                             <h3 className="text-sm font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Preguntas ({questions.length})</h3>
                             <button
                                 onClick={addQuestion}
-                                className="flex items-center gap-2 px-3 py-1.5 bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg text-2xs font-semibold uppercase tracking-wide hover:border-[hsl(var(--info)/100%)] transition-all"
+                                className="flex items-center gap-2 px-3 py-1.5 bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] rounded-lg text-2xs font-semibold uppercase tracking-wide hover:border-[hsl(var(--primary))] transition-all"
                             >
                                 <Plus size={14} /> Agregar Pregunta
                             </button>
@@ -173,7 +173,7 @@ export default function NewAssessmentPage() {
                                             <span className="font-semibold text-xs">
                                                 {index + 1}
                                             </span>
-                                            <div className="flex bg-[hsl(var(--surface-2))] dark:bg-white/5 p-1 rounded-lg border border-[hsl(var(--border))] dark:border-white/10">
+                                            <div className="flex bg-[hsl(var(--surface-2))] p-1 rounded-lg border border-[hsl(var(--border))]">
                                                 {(['multiple_choice', 'true_false', 'text'] as const).map((t) => (
                                                     <button
                                                         key={t}
@@ -192,7 +192,7 @@ export default function NewAssessmentPage() {
                                                         className={clsx(
                                                             "px-3 py-1.5 rounded-lg text-2xs font-semibold uppercase tracking-wide transition-all",
                                                             q.type === t
-                                                                ? "bg-[hsl(var(--bg-primary))] dark:bg-white/10 text-[hsl(var(--primary))] shadow-sm"
+                                                                ? "bg-[hsl(var(--surface-1))] text-[hsl(var(--primary))] shadow-sm"
                                                                 : "text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-secondary))]"
                                                         )}
                                                     >
@@ -202,7 +202,7 @@ export default function NewAssessmentPage() {
                                             </div>
                                         </div>
                                         <div className="flex items-center gap-3">
-                                            <div className="flex items-center gap-2 bg-[hsl(var(--surface-2))] dark:bg-white/5 px-3 py-1.5 rounded-lg border border-[hsl(var(--border))] dark:border-white/10">
+                                            <div className="flex items-center gap-2 bg-[hsl(var(--surface-2))] px-3 py-1.5 rounded-lg border border-[hsl(var(--border))]">
                                                 <span className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Puntos</span>
                                                 <input
                                                     type="number"
@@ -227,7 +227,7 @@ export default function NewAssessmentPage() {
                                                 value={q.text}
                                                 onChange={(e) => updateQuestion(q.id, { text: e.target.value })}
                                                 placeholder="Escribe la pregunta aqui..."
-                                                className="w-full bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg py-1.5 px-3 text-sm font-bold outline-none focus:border-[hsl(var(--info)/100%)] transition-all resize-none"
+                                                className="w-full bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] rounded-lg py-1.5 px-3 text-sm font-bold text-[hsl(var(--foreground))] outline-none focus:border-[hsl(var(--primary))] transition-all resize-none"
                                                 rows={2}
                                             />
                                         </div>
@@ -242,8 +242,8 @@ export default function NewAssessmentPage() {
                                                             className={clsx(
                                                                 'size-8 rounded-lg flex items-center justify-center border-2 transition-all shrink-0',
                                                                 q.correct_option === optIndex
-                                                                    ? 'bg-[hsl(var(--success))] border-[hsl(var(--success))] text-white shadow-lg shadow-[hsl(var(--success))/0.2]'
-                                                                    : 'border-[hsl(var(--border))] dark:border-white/10 text-transparent bg-[hsl(var(--bg-primary))] dark:bg-white/5'
+                                                                    ? 'bg-[hsl(var(--success))] border-[hsl(var(--success))] text-[hsl(var(--primary-foreground))] shadow-lg shadow-[hsl(var(--success))/0.2]'
+                                                                    : 'border-[hsl(var(--border))] text-transparent bg-[hsl(var(--surface-1))]'
                                                             )}
                                                         >
                                                             <CheckCircle2 size={16} />
@@ -258,7 +258,7 @@ export default function NewAssessmentPage() {
                                                             }}
                                                             placeholder={`Opcion ${optIndex + 1}`}
                                                             className={clsx(
-                                                                "flex-1 bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg py-1.5 px-3 text-sm outline-none focus:border-[hsl(var(--info)/100%)] transition-all font-medium",
+                                                                "flex-1 bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] rounded-lg py-1.5 px-3 text-sm text-[hsl(var(--foreground))] outline-none focus:border-[hsl(var(--primary))] transition-all font-medium",
                                                                 q.type === 'true_false' && "cursor-default"
                                                             )}
                                                         />
@@ -303,7 +303,7 @@ export default function NewAssessmentPage() {
                         ))}
 
                         {questions.length === 0 && (
-                            <div className="p-4 text-center border-2 border-dashed border-[hsl(var(--border))] dark:border-white/10 rounded-lg">
+                            <div className="p-4 text-center border-2 border-dashed border-[hsl(var(--border))] rounded-lg">
                                 <ListChecks size={48} className="mx-auto text-[hsl(var(--text-secondary))] mb-4" />
                                 <p className="text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Tu evaluacion esta vacia</p>
                                 <p className="text-xs text-[hsl(var(--text-secondary))] mt-2">Comienza agregando tu primera pregunta</p>

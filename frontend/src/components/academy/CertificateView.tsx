@@ -73,11 +73,11 @@ export default function CertificateView({ data }: CertificateProps) {
     const handleDownload = () => {
         // Genera un blob imprimible (HTML serializado) y lo descarga.
         const css = `
-        body { font-family: Georgia, serif; padding: 40px; background: hsl(var(--bg-primary)); color: hsl(var(--primary)); text-align: center; }
-        .badge { display: inline-block; padding: 6px 16px; border-radius: 999px; background: hsl(var(--primary)); color: white; font-weight: bold; letter-spacing: 0.18em; font-size: 12px; }
+        body { font-family: Georgia, serif; padding: 40px; background: hsl(var(--surface-1)); color: hsl(var(--primary)); text-align: center; }
+        .badge { display: inline-block; padding: 6px 16px; border-radius: 999px; background: hsl(var(--primary)); color: hsl(var(--primary-foreground)); font-weight: bold; letter-spacing: 0.18em; font-size: 12px; }
         h1 { font-size: 24px; letter-spacing: 0.04em; text-transform: uppercase; }
         h2 { font-size: 20px; color: hsl(var(--primary)); }
-        .code { font-family: monospace; padding: 4px 10px; border: 1px solid hsl(var(--border)); border-radius: 6px; background: white; }
+        .code { font-family: monospace; padding: 4px 10px; border: 1px solid hsl(var(--border)); border-radius: 6px; background: hsl(var(--surface-2)); }
         `;
         const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Certificado ${
             data.certificate_code
@@ -106,14 +106,14 @@ export default function CertificateView({ data }: CertificateProps) {
     return (
         <div className="max-w-4xl mx-auto space-y-3 animate-fade-in">
             {/* Professional Certificate Render */}
-            <div className="relative aspect-[1.414/1] w-full bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--bg-muted))] border-[16px] border-[hsl(var(--border))] dark:border-[hsl(var(--info)/20%)] shadow-2xl p-4 flex flex-col items-center justify-between text-center overflow-hidden group">
+            <div className="relative aspect-[1.414/1] w-full bg-[hsl(var(--surface-1))] border-[16px] border-[hsl(var(--border))] shadow-2xl p-4 flex flex-col items-center justify-between text-center overflow-hidden group">
                 {/* Background Decoration */}
-                <div className="absolute top-0 right-0 w-64 h-48 bg-[hsl(var(--surface-1))] dark:bg-[hsl(var(--info))]/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
-                <div className="absolute bottom-0 left-0 w-64 h-48 bg-[hsl(var(--surface-1))] dark:bg-[hsl(var(--info))]/5 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2" />
+                <div className="absolute top-0 right-0 w-64 h-48 bg-[hsl(var(--primary)/0.05)] rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
+                <div className="absolute bottom-0 left-0 w-64 h-48 bg-[hsl(var(--primary)/0.05)] rounded-full blur-3xl translate-y-1/2 -translate-x-1/2" />
 
                 {/* Header */}
                 <div className="relative z-10 space-y-4">
-                    <div className="size-10 bg-[hsl(var(--bg-muted))] dark:bg-[hsl(var(--primary))] rounded-lg mx-auto flex items-center justify-center text-white shadow-xl">
+                    <div className="size-10 bg-[hsl(var(--primary))] rounded-lg mx-auto flex items-center justify-center text-[hsl(var(--primary-foreground))] shadow-xl">
                         <Award size={40} />
                     </div>
                     <h1 className="text-sm font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
@@ -124,41 +124,41 @@ export default function CertificateView({ data }: CertificateProps) {
                 {/* Body */}
                 <div className="relative z-10 space-y-3 py-8">
                     <div>
-                        <p className="text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] italic font-serif text-lg">
+                        <p className="text-[hsl(var(--text-secondary))] italic font-serif text-lg">
                             Este documento certifica que
                         </p>
-                        <h2 className="text-xl lg:text-xl font-bold text-[hsl(var(--text-primary))] dark:text-white tracking-tight mt-2 uppercase">
+                        <h2 className="text-xl lg:text-xl font-bold text-[hsl(var(--foreground))] tracking-tight mt-2 uppercase">
                             {data.enrollment.student.username}
                         </h2>
                     </div>
 
                     <div className="max-w-lg mx-auto">
-                        <p className="text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] font-medium">
+                        <p className="text-[hsl(var(--text-secondary))] font-medium">
                             Ha completado satisfactoriamente los requisitos academicos para el curso de:
                         </p>
-                        <h3 className="text-xl font-bold text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] mt-2">
+                        <h3 className="text-xl font-bold text-[hsl(var(--primary))] mt-2">
                             {data.enrollment.course.title}
                         </h3>
                     </div>
                 </div>
 
                 {/* Footer */}
-                <div className="relative z-10 w-full flex justify-between items-end border-t border-[hsl(var(--border))] dark:border-white/5 pt-8">
+                <div className="relative z-10 w-full flex justify-between items-end border-t border-[hsl(var(--border))] pt-8">
                     <div className="text-left space-y-1">
                         <p className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">
                             Fecha de Emision
                         </p>
-                        <p className="text-sm font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">
+                        <p className="text-sm font-bold text-[hsl(var(--foreground))]">
                             {issueDate}
                         </p>
                     </div>
 
                     <div className="flex flex-col items-center gap-2">
-                        <div className="relative px-4 py-2 border-2 border-[hsl(var(--border))] dark:border-white/10 rounded-lg overflow-hidden bg-[hsl(var(--bg-primary))]">
+                        <div className="relative px-4 py-2 border-2 border-[hsl(var(--border))] rounded-lg overflow-hidden bg-[hsl(var(--surface-2))]">
                             <p className="text-2xs font-bold uppercase tracking-wider text-[hsl(var(--text-secondary))] mb-1">
                                 Codigo de validacion
                             </p>
-                            <code className="font-mono text-sm font-bold text-[hsl(var(--text-primary))] dark:text-white break-all">
+                            <code className="font-mono text-sm font-bold text-[hsl(var(--foreground))] break-all">
                                 {data.certificate_code}
                             </code>
                         </div>
@@ -174,7 +174,7 @@ export default function CertificateView({ data }: CertificateProps) {
                         <p className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">
                             Firma Autorizada
                         </p>
-                        <p className="text-sm font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] font-serif italic">
+                        <p className="text-sm font-bold text-[hsl(var(--foreground))] font-serif italic">
                             Direccion Academica CCF
                         </p>
                     </div>
@@ -185,19 +185,19 @@ export default function CertificateView({ data }: CertificateProps) {
             <div className="flex items-center justify-center gap-3 flex-wrap">
                 <button
                     onClick={handleDownload}
-                    className="px-3 py-2 bg-[hsl(var(--bg-muted))] dark:bg-[hsl(var(--bg-primary))] text-white dark:text-[hsl(var(--text-primary))] rounded-lg font-black text-xs uppercase tracking-wide flex items-center gap-2 shadow-xl active:scale-95 transition-all"
+                    className="px-3 py-2 bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] rounded-lg font-black text-xs uppercase tracking-wide flex items-center gap-2 shadow-xl active:scale-95 transition-all"
                 >
                     <Download size={16} /> Descargar
                 </button>
                 <button
                     onClick={handleShare}
-                    className="px-3 py-2 bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg font-black text-xs uppercase tracking-wide flex items-center gap-2 hover:bg-[hsl(var(--surface-1))] transition-all active:scale-95"
+                    className="px-3 py-2 bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] rounded-lg font-black text-xs uppercase tracking-wide flex items-center gap-2 hover:bg-[hsl(var(--surface-2))] transition-all active:scale-95"
                 >
                     <Share2 size={16} /> Compartir Logro
                 </button>
                 <button
                     onClick={handleCopy}
-                    className="px-3 py-2 bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg font-black text-xs uppercase tracking-wide flex items-center gap-2 hover:bg-[hsl(var(--surface-1))] transition-all active:scale-95"
+                    className="px-3 py-2 bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] rounded-lg font-black text-xs uppercase tracking-wide flex items-center gap-2 hover:bg-[hsl(var(--surface-2))] transition-all active:scale-95"
                 >
                     {copyState === 'copied' ? (
                         <>
