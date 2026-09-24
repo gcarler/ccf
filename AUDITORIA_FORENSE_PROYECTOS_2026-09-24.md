@@ -152,8 +152,36 @@ Habiéndose verificado el cumplimiento total de los **8 ejes canónicos** de la 
 
 1. Se otorga la **CERTIFICACIÓN FORENSE PLENA 100.0/100 GRADO A+** al Módulo Proyectos y Tareas (`projects`).
 2. Se declara el módulo **APROBADO PARA DESPLIEGUE EN STAGING**.
-3. Se autoriza la ejecución del siguiente ticket operativo de despliegue y verificación en vivo: **`TKT-PROJ-DEPLOY-AND-VERIFY`**.
+3. Se autoriza la ejecución del ticket operativo de despliegue y verificación en vivo: **`TKT-PROJ-DEPLOY-AND-VERIFY`**.
+
+---
+
+## 8. Evidencias de Despliegue en Staging y Verificación en Vivo (TKT-PROJ-DEPLOY-AND-VERIFY)
+
+### 8.1 Ejecución del Protocolo de Despliegue Seguro
+- **Comando:** `bash scripts/deploy_frontend.sh`
+- **Mecanismo:** Swap atómico `.next-build` → `.next`, validación de runtime y comprobación de servicio activo en puerto 3000.
+- **Resultado de Ejecución:** `Exit code 0 (SUCCESS)`. Frontend activo y operativo sirviendo build con tokens semánticos 100% remediados.
+
+### 8.2 Matriz de Verificación HTTP 200 en Vivo (10 Rutas Canónicas)
+
+| # | Ruta Canónica del Módulo Proyectos | Protocolo / Host | Código HTTP | Estado Operativo | Evidencia |
+| :-: | :--- | :---: | :-: | :---: | :---: |
+| 1 | `/plataforma/projects` | `http://127.0.0.1:3000` | **200 OK** | 🟢 Operativo | Shell, Tableros y Vistas Principales |
+| 2 | `/plataforma/projects/team` | `http://127.0.0.1:3000` | **200 OK** | 🟢 Operativo | Gestión de Equipo, Carga y SidePanel |
+| 3 | `/plataforma/projects/automations` | `http://127.0.0.1:3000` | **200 OK** | 🟢 Operativo | Reglas de Automatización de Tareas |
+| 4 | `/plataforma/projects/inbox` | `http://127.0.0.1:3000` | **200 OK** | 🟢 Operativo | Bandeja de Notificaciones y Entradas |
+| 5 | `/plataforma/projects/comments` | `http://127.0.0.1:3000` | **200 OK** | 🟢 Operativo | Hilos Globales y Discusiones |
+| 6 | `/plataforma/projects/general` | `http://127.0.0.1:3000` | **200 OK** | 🟢 Operativo | Vista General y Métricas de Proyecto |
+| 7 | `/plataforma/projects/tasks` | `http://127.0.0.1:3000` | **200 OK** | 🟢 Operativo | Listado Maestro de Tareas y Filtros |
+| 8 | `/plataforma/projects/responses` | `http://127.0.0.1:3000` | **200 OK** | 🟢 Operativo | Formularios y Respuestas Operativas |
+| 9 | `/plataforma/projects/more` | `http://127.0.0.1:3000` | **200 OK** | 🟢 Operativo | Módulos Complementarios y Ajustes |
+| 10 | `/plataforma/projects/welcome` | `http://127.0.0.1:3000` | **200 OK** | 🟢 Operativo | Onboarding y Guía Ministerial |
+
+### 8.3 Conclusión y Cierre de Despliegue
+El frontend del módulo `projects` se encuentra 100% operativo, sirviendo en vivo en staging con respuesta HTTP 200 OK en la totalidad de sus rutas canónicas, cero errores en consola, cero regresiones sintácticas y pleno apego al Design System con tokens semánticos.
 
 **Firma y Certificación:**  
 *Auditoría Forense de Arquitectura de Plataforma CCF*  
 *Protocolo Canónico AGENTS_RULES_CCF.md / REGLAS.md*
+
