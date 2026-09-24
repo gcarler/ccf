@@ -16,7 +16,7 @@ const STATUS_ICONS: Record<TaskStatus, ElementType> = {
 
 function getStatusMap(status: TaskStatus) {
     const opt = getStatusOption(status);
-    return { label: opt.label, color: opt.text.split(' ')[0], bg: opt.bg.split(' dark:')[0], icon: STATUS_ICONS[status] };
+    return { label: opt.label, color: opt.text.split(' ')[0], bg: opt.bg.split(' ')[0], icon: STATUS_ICONS[status] };
 }
 
 export default function TaskDetailHeader({
