@@ -64,13 +64,13 @@ function ActivityItem({
         <div>
             <div
                 className={clsx(
-                    'group flex items-center gap-1.5 py-1.5 px-2 rounded-lg transition-colors hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/[0.04] relative',
+                    'group flex items-center gap-1.5 py-1.5 px-2 rounded-lg transition-colors hover:bg-[hsl(var(--surface-1))] relative',
                 )}
                 style={{ paddingLeft: depth * 20 + 8 }}
             >
                 {depth > 0 && (
                     <div
-                        className="absolute left-0 top-0 bottom-0 w-px bg-[hsl(var(--surface-3))] dark:bg-white/[0.08]"
+                        className="absolute left-0 top-0 bottom-0 w-px bg-[hsl(var(--border))]"
                         style={{ left: depth * 20 - 4 }}
                     />
                 )}
@@ -78,7 +78,7 @@ function ActivityItem({
                 <button
                     onClick={() => setExpanded(v => !v)}
                     className={clsx(
-                        'size-4 flex items-center justify-center text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-secondary))] transition-colors shrink-0',
+                        'size-4 flex items-center justify-center text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] transition-colors shrink-0',
                         !hasChildren && 'opacity-0 pointer-events-none'
                     )}
                 >
@@ -90,8 +90,8 @@ function ActivityItem({
                     className={clsx(
                         'size-4 rounded border-2 flex items-center justify-center shrink-0 transition-all',
                         activity.completed
-                            ? 'bg-[hsl(var(--success))] border-[hsl(var(--success)/100%)] text-white'
-                            : 'border-[hsl(var(--border))] dark:border-[hsl(var(--border))] hover:border-[hsl(var(--info)/40%)]'
+                            ? 'bg-[hsl(var(--success))] border-[hsl(var(--success))] text-[hsl(var(--primary-foreground))]'
+                            : 'border-[hsl(var(--border))] hover:border-[hsl(var(--primary))]'
                     )}
                 >
                     {activity.completed && <Check size={9} strokeWidth={3} />}
@@ -107,7 +107,7 @@ function ActivityItem({
                             if (e.key === 'Enter') { onUpdateTitle(activity.id, titleVal); setEditing(false); }
                             if (e.key === 'Escape') { setTitleVal(activity.title); setEditing(false); }
                         }}
-                        className="flex-1 text-sm bg-transparent outline-none border-b border-[hsl(var(--info)/40%)] text-[hsl(var(--text-primary))] dark:text-white"
+                        className="flex-1 text-sm bg-transparent outline-none border-b border-[hsl(var(--primary))] text-[hsl(var(--foreground))]"
                     />
                 ) : (
                     <span
@@ -115,8 +115,8 @@ function ActivityItem({
                         className={clsx(
                             'flex-1 text-sm font-medium cursor-default select-none truncate',
                             activity.completed
-                                ? 'line-through text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]'
-                                : 'text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]'
+                                ? 'line-through text-[hsl(var(--muted-foreground))]'
+                                : 'text-[hsl(var(--foreground))]'
                         )}
                     >
                         {activity.title}
@@ -126,7 +126,7 @@ function ActivityItem({
                 {activity.assignee && (
                     <div
                         title={activity.assignee.name}
-                        className="size-5 rounded-full flex items-center justify-center font-semibold text-white shrink-0"
+                        className="size-5 rounded-full flex items-center justify-center font-semibold text-[hsl(var(--primary-foreground))] shrink-0"
                         style={{ backgroundColor: activity.assignee.color ?? 'hsl(var(--primary))' }}
                     >
                         {activity.assignee.name.charAt(0).toUpperCase()}
@@ -135,7 +135,7 @@ function ActivityItem({
 
                 <button
                     onClick={() => { onAddChild(activity.id); setExpanded(true); }}
-                    className="size-4 rounded flex items-center justify-center text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] hover:bg-info-soft dark:hover:bg-[hsl(var(--info))]/10 opacity-0 group-hover:opacity-100 transition-all"
+                    className="size-4 rounded flex items-center justify-center text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--primary))] hover:bg-[hsl(var(--primary)/0.1)] opacity-0 group-hover:opacity-100 transition-all"
                     title="Añadir sub-actividad"
                 >
                     <Plus size={10} strokeWidth={2.5} />
@@ -143,7 +143,7 @@ function ActivityItem({
 
                 <button
                     onClick={() => onDelete(activity.id)}
-                    className="size-4 rounded flex items-center justify-center text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--danger))] hover:bg-danger-soft dark:hover:bg-[hsl(var(--danger))]/10 opacity-0 group-hover:opacity-100 transition-all"
+                    className="size-4 rounded flex items-center justify-center text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--destructive))] hover:bg-[hsl(var(--destructive)/0.1)] opacity-0 group-hover:opacity-100 transition-all"
                     title="Eliminar actividad"
                 >
                     <X size={10} strokeWidth={2.5} />
@@ -197,11 +197,11 @@ export default function TaskActivitySection({
     onDelete: (id: string) => void;
 }) {
     return (
-        <section className="px-4 py-3 border-b border-[hsl(var(--border))] dark:border-white/[0.05]">
+        <section className="px-4 py-3 border-b border-[hsl(var(--border))]">
             <div className="flex items-center justify-between mb-3">
-                <p className="text-2xs font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] flex items-center gap-1.5">
+                <p className="text-2xs font-semibold uppercase tracking-wider text-[hsl(var(--muted-foreground))] flex items-center gap-1.5">
                     <Check size={11} /> Actividades
-                    <span className="px-1.5 py-0.5 bg-[hsl(var(--surface-2))] dark:bg-white/[0.06] rounded text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] font-bold text-2xs">
+                    <span className="px-1.5 py-0.5 bg-[hsl(var(--surface-2))] rounded text-[hsl(var(--muted-foreground))] font-bold text-2xs">
                         {activities.length}
                     </span>
                 </p>
@@ -222,19 +222,19 @@ export default function TaskActivitySection({
             </div>
 
             <div className="flex items-center gap-2 mt-2 pl-2">
-                <Plus size={13} className="text-[hsl(var(--text-secondary))] shrink-0" />
+                <Plus size={13} className="text-[hsl(var(--muted-foreground))] shrink-0" />
                 <input
                     type="text"
                     value={newActivityTitle}
                     onChange={e => onNewActivityTitleChange(e.target.value)}
                     onKeyDown={e => e.key === 'Enter' && onAddTopLevel()}
                     placeholder="Añadir actividad..."
-                    className="flex-1 text-sm bg-transparent outline-none text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] placeholder:text-[hsl(var(--text-secondary))] dark:placeholder:text-[hsl(var(--text-secondary))]"
+                    className="flex-1 text-sm bg-transparent outline-none text-[hsl(var(--foreground))] placeholder:text-[hsl(var(--muted-foreground))]"
                 />
                 {newActivityTitle.trim() && (
                     <button
                         onClick={onAddTopLevel}
-                        className="px-2 py-1 bg-[hsl(var(--primary))] text-white rounded-lg text-2xs font-bold hover:bg-[hsl(var(--primary))] transition-all"
+                        className="px-2 py-1 bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] rounded-lg text-2xs font-bold hover:bg-[hsl(var(--primary))] transition-all"
                     >
                         + Añadir
                     </button>

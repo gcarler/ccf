@@ -8,14 +8,14 @@ import { Check, Plus, X } from 'lucide-react';
 import clsx from 'clsx';
 
 const LABEL_COLORS = [
-    { bg: 'bg-[hsl(var(--danger-muted))] dark:bg-[hsl(var(--danger))]/30',   text: 'text-danger-text dark:text-danger-text',   border: 'border-[hsl(var(--danger)/30%)]/50 dark:border-[hsl(var(--danger)/100%)]/30',   dot: 'bg-[hsl(var(--danger))]' },
-    { bg: 'bg-orange-100 dark:bg-orange-900/30', text: 'text-orange-700 dark:text-orange-300', border: 'border-orange-300/50 dark:border-orange-500/30', dot: 'bg-orange-500' },
-    { bg: 'bg-[hsl(var(--warning-muted))] dark:bg-[hsl(var(--warning))]/30',  text: 'text-warning-text dark:text-warning-text',  border: 'border-[hsl(var(--warning)/30%)]/50 dark:border-[hsl(var(--warning)/100%)]/30',  dot: 'bg-[hsl(var(--warning))]' },
-    { bg: 'bg-[hsl(var(--success-muted))] dark:bg-[hsl(var(--success))]/30', text: 'text-success-text dark:text-success-text', border: 'border-[hsl(var(--success)/30%)]/50 dark:border-[hsl(var(--success)/100%)]/30', dot: 'bg-[hsl(var(--success))]' },
-    { bg: 'bg-[hsl(var(--info-muted))] dark:bg-[hsl(var(--info))]/30',   text: 'text-[hsl(var(--primary))] dark:text-info-text',   border: 'border-[hsl(var(--info)/30%)]/50 dark:border-[hsl(var(--info)/100%)]/30',   dot: 'bg-[hsl(var(--primary))]' },
-    { bg: 'bg-[hsl(var(--info-muted))] dark:bg-[hsl(var(--info))]/30', text: 'text-[hsl(var(--primary))] dark:text-info-text', border: 'border-[hsl(var(--info)/30%)]/50 dark:border-[hsl(var(--info)/100%)]/30', dot: 'bg-[hsl(var(--primary))]' },
-    { bg: 'bg-[hsl(var(--domain-pink)/20%)] dark:bg-[hsl(var(--domain-pink)/30%)]',   text: 'text-[hsl(var(--domain-pink)/90%)] dark:text-[hsl(var(--domain-pink))]',   border: 'border-[hsl(var(--domain-pink)/50%)] dark:border-[hsl(var(--domain-pink)/30%)]',   dot: 'bg-[hsl(var(--domain-pink))]' },
-    { bg: 'bg-[hsl(var(--surface-2))] dark:bg-[hsl(var(--surface-2))]/60', text: 'text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]', border: 'border-[hsl(var(--border))]/50 dark:border-[hsl(var(--border))]/30', dot: 'bg-[hsl(var(--surface-2))]' },
+    { bg: 'bg-[hsl(var(--destructive)/0.15)]', text: 'text-[hsl(var(--destructive))]', border: 'border-[hsl(var(--destructive)/0.3)]', dot: 'bg-[hsl(var(--destructive))]' },
+    { bg: 'bg-[hsl(var(--warning)/0.15)]', text: 'text-[hsl(var(--warning))]', border: 'border-[hsl(var(--warning)/0.3)]', dot: 'bg-[hsl(var(--warning))]' },
+    { bg: 'bg-[hsl(var(--warning)/0.2)]',  text: 'text-[hsl(var(--warning))]', border: 'border-[hsl(var(--warning)/0.4)]', dot: 'bg-[hsl(var(--warning))]' },
+    { bg: 'bg-[hsl(var(--success)/0.15)]', text: 'text-[hsl(var(--success))]', border: 'border-[hsl(var(--success)/0.3)]', dot: 'bg-[hsl(var(--success))]' },
+    { bg: 'bg-[hsl(var(--primary)/0.15)]', text: 'text-[hsl(var(--primary))]', border: 'border-[hsl(var(--primary)/0.3)]', dot: 'bg-[hsl(var(--primary))]' },
+    { bg: 'bg-[hsl(var(--primary)/0.2)]', text: 'text-[hsl(var(--primary))]', border: 'border-[hsl(var(--primary)/0.4)]', dot: 'bg-[hsl(var(--primary))]' },
+    { bg: 'bg-[hsl(var(--domain-pink)/0.2)]', text: 'text-[hsl(var(--domain-pink))]', border: 'border-[hsl(var(--domain-pink)/0.3)]', dot: 'bg-[hsl(var(--domain-pink))]' },
+    { bg: 'bg-[hsl(var(--surface-2))]', text: 'text-[hsl(var(--muted-foreground))]', border: 'border-[hsl(var(--border))]', dot: 'bg-[hsl(var(--muted-foreground))]' },
 ];
 
 export function getLabelColor(label: string) {
@@ -90,7 +90,7 @@ export default function TaskLabelManager({
             <div className="relative">
                 <button
                     onClick={() => { setLabelPopoverOpen(v => !v); setTimeout(() => labelInputRef.current?.focus(), 50); }}
-                    className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/[0.04] border border-dashed border-[hsl(var(--border))] dark:border-white/[0.1] transition-all"
+                    className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--surface-1))] border border-dashed border-[hsl(var(--border))] transition-all"
                 >
                     <Plus size={10} /> Añadir etiqueta
                 </button>
@@ -102,9 +102,9 @@ export default function TaskLabelManager({
                             animate={{ opacity: 1, scale: 1, y: 0 }}
                             exit={{ opacity: 0, scale: 0.95, y: -4 }}
                             transition={{ duration: 0.12 }}
-                            className="absolute top-full left-0 mt-1.5 z-50 w-56 bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-secondary))] border border-[hsl(var(--border))] dark:border-white/10 rounded-md shadow-2xl p-3 space-y-2"
+                            className="absolute top-full left-0 mt-1.5 z-50 w-56 bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] rounded-md shadow-2xl p-3 space-y-2"
                         >
-                            <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-1">Nueva etiqueta</p>
+                            <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--muted-foreground))] mb-1">Nueva etiqueta</p>
                             <div className="flex gap-1.5">
                                 <input
                                     ref={labelInputRef}
@@ -116,17 +116,17 @@ export default function TaskLabelManager({
                                         if (e.key === 'Escape') { setLabelPopoverOpen(false); setNewLabelInput(''); }
                                     }}
                                     placeholder="Ej: Alabanza, Urgente..."
-                                    className="flex-1 text-sm bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg px-2 py-1.5 outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]/20 focus:border-[hsl(var(--info)/40%)] transition-all"
+                                    className="flex-1 text-sm bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] text-[hsl(var(--foreground))] placeholder:text-[hsl(var(--muted-foreground))] rounded-lg px-2 py-1.5 outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))] transition-all"
                                 />
                                 <button
                                     onClick={handleAddLabel}
                                     disabled={!newLabelInput.trim()}
-                                    className="px-2.5 py-1.5 bg-[hsl(var(--primary))] text-white rounded-lg text-2xs font-bold hover:bg-[hsl(var(--primary))] transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                                    className="px-2.5 py-1.5 bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] rounded-lg text-2xs font-bold hover:bg-[hsl(var(--primary))] transition-all disabled:opacity-40 disabled:cursor-not-allowed"
                                 >
                                     <Check size={11} strokeWidth={3} />
                                 </button>
                             </div>
-                            <div className="flex flex-wrap gap-1 pt-1 border-t border-[hsl(var(--border))] dark:border-white/5">
+                            <div className="flex flex-wrap gap-1 pt-1 border-t border-[hsl(var(--border))]">
                                 {['Alabanza', 'Urgente', 'Reunión', 'Pastoral', 'Admin', 'Diseño'].filter(s => !labels.includes(s)).map(s => (
                                     <button
                                         key={s}

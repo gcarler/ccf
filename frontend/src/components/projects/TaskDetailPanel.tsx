@@ -314,7 +314,7 @@ export default function TaskDetailPanel({
                 style={{ width, minWidth: `min(${MIN_WIDTH}px, 100%)`, maxWidth: '100%' }}
                 role="complementary"
                 aria-label="Detalle de tarea"
-                className="relative h-full flex flex-col bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--bg-primary))] border-l border-[hsl(var(--border))] dark:border-white/[0.07] shadow-[-16px_0_48px_rgba(0,0,0,0.08)] dark:shadow-[-16px_0_48px_rgba(0,0,0,0.35)] overflow-hidden"
+                className="relative h-full flex flex-col bg-[hsl(var(--surface-1))] border-l border-[hsl(var(--border))] shadow-2xl overflow-hidden"
             >
                 {/* Resize handle */}
                 <div
@@ -322,7 +322,7 @@ export default function TaskDetailPanel({
                     className="absolute left-0 top-0 bottom-0 w-1.5 cursor-ew-resize z-10 group flex items-center justify-center"
                     title="Arrastrar para redimensionar"
                 >
-                    <div className="w-[3px] h-8 rounded-full bg-[hsl(var(--surface-3))] dark:bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity" />
+                    <div className="w-[3px] h-8 rounded-full bg-[hsl(var(--surface-3))] opacity-0 group-hover:opacity-100 transition-opacity" />
                 </div>
 
                 <TaskDetailHeader
@@ -361,8 +361,8 @@ export default function TaskDetailPanel({
                     />
 
                     {/* Description */}
-                    <section className="px-4 py-3 border-b border-[hsl(var(--border))] dark:border-white/[0.05]">
-                        <p className="text-2xs font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] mb-2 flex items-center gap-1.5">
+                    <section className="px-4 py-3 border-b border-[hsl(var(--border))]">
+                        <p className="text-2xs font-semibold uppercase tracking-wider text-[hsl(var(--muted-foreground))] mb-2 flex items-center gap-1.5">
                             <AlignLeft size={11} /> Descripción
                         </p>
                         <textarea
@@ -371,7 +371,7 @@ export default function TaskDetailPanel({
                             onBlur={handleSave}
                             rows={3}
                             placeholder="Añade una descripción..."
-                            className="w-full text-base font-medium text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] bg-transparent resize-none outline-none placeholder:text-[hsl(var(--text-secondary))] dark:placeholder:text-[hsl(var(--text-secondary))] leading-relaxed focus:ring-0"
+                            className="w-full text-base font-medium text-[hsl(var(--foreground))] bg-transparent resize-none outline-none placeholder:text-[hsl(var(--muted-foreground))] leading-relaxed focus:ring-0"
                         />
                     </section>
 

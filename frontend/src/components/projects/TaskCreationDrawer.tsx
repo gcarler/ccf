@@ -73,7 +73,7 @@ export default function TaskCreationDrawer({ isOpen, defaultStatus = 'todo', onC
                         type="button"
                         onClick={handleSubmit(onFormSubmit)}
                         disabled={isSubmitting}
-                        className="flex items-center gap-2 px-3 py-1.5 bg-[hsl(var(--primary))] text-white rounded-md text-xs font-bold uppercase tracking-wide shadow-lg shadow-[hsl(var(--info)/20%)] hover:bg-[hsl(var(--primary))] active:scale-95 transition-all disabled:opacity-50"
+                        className="flex items-center gap-2 px-3 py-1.5 bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] rounded-md text-xs font-bold uppercase tracking-wide shadow-md shadow-[hsl(var(--primary))]/20 hover:bg-[hsl(var(--primary))]/90 active:scale-95 transition-all disabled:opacity-50"
                     >
                         {isSubmitting ? <Loader2 className="animate-spin" size={12} /> : <CheckSquare size={12} />}
                         {isSubmitting ? 'Creando...' : 'Crear Tarea'}
@@ -83,31 +83,31 @@ export default function TaskCreationDrawer({ isOpen, defaultStatus = 'todo', onC
         >
             <form onSubmit={handleSubmit(onFormSubmit)} className="mt-3 space-y-4">
                 <div className="space-y-1.5">
-                    <label className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] flex items-center gap-2">
+                    <label className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--muted-foreground))] flex items-center gap-2">
                         <Type size={12} /> Título de la tarea
                     </label>
                     <input
                         autoFocus
                         {...register('title', { required: true })}
                         placeholder="Ej: Revisión de Mezcla de Audio"
-                        className="w-full bg-[hsl(var(--surface-1))] dark:bg-black/20 border border-[hsl(var(--border))] dark:border-white/5 rounded-md px-3 py-2 text-sm font-medium outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]/20 transition-all text-[hsl(var(--text-primary))] dark:text-white"
+                        className="w-full bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] rounded-md px-3 py-2 text-sm font-medium outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]/20 transition-all text-[hsl(var(--foreground))]"
                     />
                 </div>
 
                 <div className="space-y-1.5">
-                    <label className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] flex items-center gap-2">
+                    <label className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--muted-foreground))] flex items-center gap-2">
                         <AlignLeft size={12} /> Descripción (Opcional)
                     </label>
                     <textarea
                         {...register('description')}
                         placeholder="Detalles adicionales, links, etc..."
                         rows={5}
-                        className="w-full bg-[hsl(var(--surface-1))] dark:bg-black/20 border border-[hsl(var(--border))] dark:border-white/5 rounded-md px-3 py-2 text-sm font-medium outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]/20 transition-all resize-none text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]"
+                        className="w-full bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] rounded-md px-3 py-2 text-sm font-medium outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]/20 transition-all resize-none text-[hsl(var(--foreground))]"
                     />
                 </div>
 
                 <div className="space-y-2">
-                    <label className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] flex items-center gap-2">
+                    <label className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--muted-foreground))] flex items-center gap-2">
                         <Flag size={12} /> Nivel de Prioridad
                     </label>
                     <div className="grid grid-cols-2 gap-2">
@@ -119,8 +119,8 @@ export default function TaskCreationDrawer({ isOpen, defaultStatus = 'todo', onC
                                 className={clsx(
                                     "py-2 px-3 rounded-md flex items-center justify-center gap-2 border text-xs font-bold uppercase tracking-wide transition-all",
                                     priority === p.value
-                                        ? `${p.color} border-transparent text-white shadow-md`
-                                        : `bg-transparent border-[hsl(var(--border))] dark:border-white/10 text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5`
+                                        ? `${p.color} border-transparent text-[hsl(var(--primary-foreground))] shadow-sm`
+                                        : `bg-transparent border-[hsl(var(--border))] text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--surface-2))]`
                                 )}
                             >
                                 {priority !== p.value && <div className={clsx("size-1.5 rounded-full", p.color)} />}
@@ -131,7 +131,7 @@ export default function TaskCreationDrawer({ isOpen, defaultStatus = 'todo', onC
                 </div>
 
                 <div className="space-y-2">
-                    <label className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] flex items-center gap-2">
+                    <label className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--muted-foreground))] flex items-center gap-2">
                         <Boxes size={12} /> Nodo Operativo
                     </label>
                     <div className="grid grid-cols-2 gap-2">
@@ -143,10 +143,10 @@ export default function TaskCreationDrawer({ isOpen, defaultStatus = 'todo', onC
                                 className={clsx(
                                     "py-2 px-3 rounded-md flex items-center justify-center gap-2 border text-xs font-bold uppercase tracking-wide transition-all",
                                     node === n.value
-                                        ? "border-transparent text-white shadow-md"
-                                        : "bg-transparent border-[hsl(var(--border))] dark:border-white/10 text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5"
+                                        ? "border-transparent text-[hsl(var(--primary-foreground))] shadow-sm"
+                                        : "bg-transparent border-[hsl(var(--border))] text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--surface-2))]"
                                 )}
-                                style={node === n.value ? { backgroundColor: n.value === 'nutrition' ? '#f97316' : 'hsl(var(--primary))' } : undefined}
+                                style={node === n.value ? { backgroundColor: n.value === 'nutrition' ? 'hsl(var(--warning))' : 'hsl(var(--primary))' } : undefined}
                             >
                                 {node !== n.value && <div className={clsx("size-1.5 rounded-full", n.dot)} />}
                                 {n.short}
