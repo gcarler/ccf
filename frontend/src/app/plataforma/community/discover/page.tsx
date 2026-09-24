@@ -47,10 +47,10 @@ export default function DiscoverPage() {
     }, [groups, searchTerm]);
 
     return (
-        <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))]">
-            <header className="p-3 border-b border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-white/5 space-y-4">
+        <div className="flex flex-col h-full bg-[hsl(var(--surface-1))]">
+            <header className="p-3 border-b border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] space-y-4">
                 <div>
-                    <h1 className="text-xl font-bold text-[hsl(var(--text-primary))] dark:text-white uppercase tracking-tight">Descubrir Grupos</h1>
+                    <h1 className="text-xl font-bold text-[hsl(var(--text-primary))] uppercase tracking-tight">Descubrir Grupos</h1>
                     <p className="text-xs text-[hsl(var(--text-secondary))] font-medium mt-1">Encuentra un grupo cerca de ti</p>
                 </div>
                 <div className="relative max-w-xl">
@@ -59,7 +59,7 @@ export default function DiscoverPage() {
                         placeholder="Buscar por nombre, zona o líder..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        className="w-full pl-10 pr-4 py-2 bg-[hsl(var(--surface-2))] dark:bg-black/20 border border-[hsl(var(--border))] dark:border-white/10 rounded-md text-sm font-bold text-[hsl(var(--text-primary))] dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
+                        className="w-full pl-10 pr-4 py-2 bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] rounded-md text-sm font-bold text-[hsl(var(--text-primary))] focus:ring-2 focus:ring-[hsl(var(--primary))] focus:border-transparent outline-none transition-all"
                     />
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[hsl(var(--text-secondary))]" size={16} />
                 </div>
@@ -79,10 +79,10 @@ export default function DiscoverPage() {
                             </div>
                         ) : (
                             filteredGroups.map(group => (
-                                <article key={group.id} className="bg-[hsl(var(--bg-primary))] dark:bg-white/[0.02] border border-[hsl(var(--border))] dark:border-white/10 p-4 rounded-md flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:border-primary/30 transition-colors group">
+                                <article key={group.id} className="bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] p-4 rounded-md flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:border-[hsl(var(--primary)/0.3)] transition-colors group">
                                     <div className="flex-1">
                                         <div className="flex items-center gap-2 mb-1">
-                                            <h3 className="text-sm font-bold text-[hsl(var(--text-primary))] dark:text-white">{group.name}</h3>
+                                            <h3 className="text-sm font-bold text-[hsl(var(--text-primary))]">{group.name}</h3>
                                             {group.zone && (
                                                 <span className="px-2 py-0.5 bg-[hsl(var(--info-muted))] text-[hsl(var(--info))] rounded-md text-2xs font-bold uppercase tracking-wide">
                                                     {group.zone}
@@ -94,7 +94,7 @@ export default function DiscoverPage() {
                                             <span className="flex items-center gap-1"><Users size={12} /> Lider: {group.leader_name || 'N/A'}</span>
                                         </div>
                                     </div>
-                                    <button className="shrink-0 px-4 py-2 bg-[hsl(var(--surface-2))] dark:bg-white/5 hover:bg-[hsl(var(--surface-3))] dark:hover:bg-white/10 text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] rounded-lg text-2xs font-bold uppercase tracking-wide transition-colors flex items-center gap-2">
+                                    <button className="shrink-0 px-4 py-2 bg-[hsl(var(--surface-2))] hover:bg-[hsl(var(--surface-3))] text-[hsl(var(--text-primary))] rounded-lg text-2xs font-bold uppercase tracking-wide transition-colors flex items-center gap-2">
                                         <Navigation size={12} /> Contactar
                                     </button>
                                 </article>

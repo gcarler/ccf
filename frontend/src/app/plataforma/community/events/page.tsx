@@ -120,7 +120,7 @@ export default function EventsCalendar() {
                                         <Users size={14} />
                                         {event.attendees_count} Asistentes
                                     </div>
-                                    <button className="px-3 py-1.5 bg-[hsl(var(--text-primary))] text-[hsl(var(--bg-primary))] rounded-lg text-2xs font-bold uppercase tracking-wide shadow-sm hover:opacity-90 transition-all active:scale-95">
+                                    <button className="px-3 py-1.5 bg-[hsl(var(--text-primary))] text-[hsl(var(--surface-1))] rounded-lg text-2xs font-bold uppercase tracking-wide shadow-sm hover:opacity-90 transition-all active:scale-95">
                                         Reservar
                                     </button>
                                 </div>
@@ -133,7 +133,7 @@ export default function EventsCalendar() {
             <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                className="fixed bottom-6 right-6 size-7 bg-[hsl(var(--primary))] text-white rounded-md shadow-lg flex items-center justify-center z-50 border border-white/20"
+                className="fixed bottom-6 right-6 size-7 bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] rounded-md shadow-lg flex items-center justify-center z-50 border border-[hsl(var(--primary-foreground)/0.2)]"
             >
                 <Plus size={24} />
             </motion.button>

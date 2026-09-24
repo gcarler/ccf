@@ -95,7 +95,7 @@ const initialBoardColumns: { id: ColumnId; title: string; description: string; a
                 priority: 'Alta',
                 status: 'En curso',
                 comments: '12 alertas sin leer',
-                link: '/community/notifications'
+                link: '/plataforma/community/notifications'
             },
             {
                 id: 'broadcast',
@@ -106,7 +106,7 @@ const initialBoardColumns: { id: ColumnId; title: string; description: string; a
                 priority: 'Media',
                 status: 'Listo',
                 comments: 'Programado en MailerLite',
-                link: '/community/announcements'
+                link: '/plataforma/community/announcements'
             },
             {
                 id: 'dm-bandeja',
@@ -136,7 +136,7 @@ const initialBoardColumns: { id: ColumnId; title: string; description: string; a
                 priority: 'Alta',
                 status: 'En curso',
                 comments: '5 peticiones nuevas',
-                link: '/community/prayer'
+                link: '/plataforma/community/prayer'
             },
             {
                 id: 'testimonios',
@@ -147,7 +147,7 @@ const initialBoardColumns: { id: ColumnId; title: string; description: string; a
                 priority: 'Media',
                 status: 'Revisión',
                 comments: '3 historias en cola',
-                link: '/community/testimonies'
+                link: '/plataforma/community/testimonies'
             }
         ]
     },
@@ -166,7 +166,7 @@ const initialBoardColumns: { id: ColumnId; title: string; description: string; a
                 priority: 'Media',
                 status: 'En curso',
                 comments: '18 grupos confirmados',
-                link: '/community/grupos'
+                link: '/plataforma/community/grupos'
             },
             {
                 id: 'discover-labs',
@@ -177,7 +177,7 @@ const initialBoardColumns: { id: ColumnId; title: string; description: string; a
                 priority: 'Baja',
                 status: 'Planificado',
                 comments: '26 registros',
-                link: '/community/discover'
+                link: '/plataforma/community/discover'
             },
             {
                 id: 'ensayo-worship',
@@ -188,7 +188,7 @@ const initialBoardColumns: { id: ColumnId; title: string; description: string; a
                 priority: 'Alta',
                 status: 'Listo',
                 comments: 'Calendario sincronizado',
-                link: '/community/events'
+                link: '/plataforma/community/events'
             }
         ]
     },
@@ -207,7 +207,7 @@ const initialBoardColumns: { id: ColumnId; title: string; description: string; a
                 priority: 'Alta',
                 status: 'En curso',
                 comments: '$18.4M recaudados',
-                link: '/community/give'
+                link: '/plataforma/community/give'
             },
             {
                 id: 'ayuda-social',
@@ -218,7 +218,7 @@ const initialBoardColumns: { id: ColumnId; title: string; description: string; a
                 priority: 'Media',
                 status: 'Coordinando',
                 comments: '40 familias enlistadas',
-                link: '/community/give'
+                link: '/plataforma/community/give'
             }
         ]
     }
@@ -237,7 +237,7 @@ const featureCards = [
         description: 'Resumen inteligente de lo que está pasando en tus equipos y ministerios.',
         icon: Bell,
         href: '/plataforma/community/notifications',
-        tone: 'from-primary/15 to-primary/5'
+        tone: 'from-[hsl(var(--primary)/0.15)] to-[hsl(var(--primary)/0.05)]'
     },
     {
         title: 'Anuncios',
@@ -279,7 +279,7 @@ const featureCards = [
         description: 'Historias reales que inspiran y fortalecen la fe.',
         icon: Star,
         href: '/plataforma/community/testimonies',
-        tone: 'from-yellow-200/40 to-yellow-50/30'
+        tone: 'from-[hsl(var(--warning)/0.25)] to-[hsl(var(--warning)/0.1)]'
     },
     {
         title: 'Grupos pequeños',
@@ -298,8 +298,8 @@ const featureCards = [
 ];
 
 const priorityTone: Record<'Alta' | 'Media' | 'Baja', string> = {
-    Alta: 'bg-[hsl(var(--danger-muted))] text-danger-text border-[hsl(var(--danger)/25%)]',
-    Media: 'bg-[hsl(var(--warning-muted))] text-warning-text border-[hsl(var(--warning)/25%)]',
+    Alta: 'bg-[hsl(var(--destructive)/0.15)] text-[hsl(var(--destructive))] border-[hsl(var(--destructive)/0.3)]',
+    Media: 'bg-[hsl(var(--warning)/0.15)] text-[hsl(var(--warning))] border-[hsl(var(--warning)/0.3)]',
     Baja: 'bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))] border-[hsl(var(--border))]'
 };
 
@@ -314,10 +314,10 @@ const mapApiCardToBoardItem = (card: CommunityApiCard): BoardItem => ({
     priority: card.priority ?? 'Media',
     status: card.status,
     comments: card.comments || 'Sin comentarios',
-    link: card.link || `/community/${card.column_id}`
+    link: card.link || `/plataforma/community/${card.column_id}`
 });
 
-const palette = ['bg-primary/10 text-primary', 'bg-[hsl(var(--success-muted))] text-success-text', 'bg-[hsl(var(--warning-muted))] text-warning-text'];
+const palette = ['bg-[hsl(var(--primary)/0.1)] text-[hsl(var(--primary))]', 'bg-[hsl(var(--success)/0.15)] text-[hsl(var(--success))]', 'bg-[hsl(var(--warning)/0.15)] text-[hsl(var(--warning))]'];
 const columnAccentDot: Record<ColumnId, string> = {
     canales: 'bg-[hsl(var(--primary))]',
     cuidado: 'bg-[hsl(var(--danger))]',
@@ -511,7 +511,7 @@ export default function CommunityHubPage() {
             priority: newCard.priority,
             status: newCard.status.trim() || 'Pendiente',
             comments: newCard.comments.trim() || 'Sin comentarios',
-            link: `/community/${newCard.columnId}`
+            link: `/plataforma/community/${newCard.columnId}`
         };
         try {
             setIsSubmittingCard(true);
@@ -605,7 +605,7 @@ export default function CommunityHubPage() {
                         const Icon = columnIcons[column.id];
                         return (
                             <div key={column.id} className="min-w-[280px] sm:min-w-[320px] snap-start flex-1">
-                                <div className="bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--bg-muted))]/80 border border-[hsl(var(--border))] rounded-md p-4 shadow-xl flex flex-col h-full transition-transform duration-300 hover:-translate-y-1">
+                                <div className="bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] rounded-md p-4 shadow-xl flex flex-col h-full transition-transform duration-300 hover:-translate-y-1">
                                     <div className="flex items-start justify-between gap-4">
                                         <div className="flex items-center gap-3">
                                             <div className={`size-9 rounded-lg bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] flex items-center justify-center ${column.accent}`}>
@@ -673,7 +673,7 @@ export default function CommunityHubPage() {
                                                     <div className="flex items-center justify-between pt-1 border-t border-dashed border-[hsl(var(--border))] pt-3">
                                                         <div className="flex -space-x-2">
                                                             {watchers.slice(0, 3).map((person, watcherIdx) => (
-                                                                <div key={watcherIdx} className={`size-8 rounded-full border border-white shadow-sm flex items-center justify-center text-2xs font-semibold ${palette[(idx + watcherIdx) % palette.length]}`}>
+                                                                <div key={watcherIdx} className={`size-8 rounded-full border border-[hsl(var(--border))] shadow-sm flex items-center justify-center text-2xs font-semibold ${palette[(idx + watcherIdx) % palette.length]}`}>
                                                                     {getInitials(person)}
                                                                 </div>
                                                             ))}
@@ -839,7 +839,7 @@ export default function CommunityHubPage() {
                         CCF
                     </button>
                     <span>/</span>
-                    <button type="button" onClick={navigateTo('/crm')} className="font-medium text-[hsl(var(--text-primary))] hover:text-[hsl(var(--primary))]">
+                    <button type="button" onClick={navigateTo('/plataforma/crm')} className="font-medium text-[hsl(var(--text-primary))] hover:text-[hsl(var(--primary))]">
                         CRM Pastoral
                     </button>
                 </div>
@@ -848,7 +848,7 @@ export default function CommunityHubPage() {
                         <button
                             key={view}
                             onClick={() => setActiveView(view)}
-                            className={`px-3 h-8 rounded-full border text-2xs uppercase tracking-wide ${activeView === view ? 'bg-[hsl(var(--text-primary))] text-white font-semibold' : 'text-[hsl(var(--text-secondary))] font-normal'}`}
+                            className={`px-3 h-8 rounded-full border text-2xs uppercase tracking-wide ${activeView === view ? 'bg-[hsl(var(--text-primary))] text-[hsl(var(--surface-1))] font-semibold' : 'text-[hsl(var(--text-secondary))] font-normal'}`}
                         >
                             {view === 'table' ? 'Tabla' : 'Grid'}
                         </button>
@@ -863,7 +863,7 @@ export default function CommunityHubPage() {
                     <button className="p-1.5 rounded-full border border-[hsl(var(--border))] text-[hsl(var(--text-secondary))]"><Filter size={10} /></button>
                     <button className="p-1.5 rounded-full border border-[hsl(var(--border))] text-[hsl(var(--text-secondary))]"><Columns3 size={10} /></button>
                     <button className="p-1.5 rounded-full border border-[hsl(var(--text-primary))] text-[hsl(var(--text-primary))]"><SlidersHorizontal size={10} /></button>
-                    <button className="px-3 h-8 rounded-full bg-[hsl(var(--bg-muted))] text-[hsl(var(--text-primary))] dark:text-white text-2xs font-semibold uppercase tracking-wide">+ Nuevo</button>
+                    <button className="px-3 h-8 rounded-full bg-[hsl(var(--surface-2))] text-[hsl(var(--text-primary))] text-2xs font-semibold uppercase tracking-wide">+ Nuevo</button>
                 </div>
             </div>
             <header className="rounded-lg border border-[hsl(var(--border))] bg-gradient-to-br from-[hsl(var(--surface-2))] to-[hsl(var(--surface-1))] p-4 md:p-3 space-y-3">
@@ -876,11 +876,11 @@ export default function CommunityHubPage() {
                         >
                             <ArrowLeft size={16} />
                         </button>
-                        <button type="button" onClick={navigateTo('/')} className="hover:text-[hsl(var(--primary))]">
+                        <button type="button" onClick={navigateTo('/plataforma')} className="hover:text-[hsl(var(--primary))]">
                             Workspace
                         </button>
                         <span className="opacity-40">/</span>
-                        <button type="button" onClick={navigateTo('/community')} className="hover:text-[hsl(var(--primary))]">
+                        <button type="button" onClick={navigateTo('/plataforma/community')} className="hover:text-[hsl(var(--primary))]">
                             Comunidad
                         </button>
                         <span className="opacity-40">/</span>
@@ -895,7 +895,7 @@ export default function CommunityHubPage() {
                     <div className="flex flex-wrap items-center gap-2">
                         <div className="flex -space-x-2 items-center">
                             {visibleSharedTeams.map((team, idx) => (
-                                <div key={team} className={`size-8 rounded-full border border-white shadow-sm flex items-center justify-center text-2xs font-semibold ${palette[idx % palette.length]}`}>
+                                <div key={team} className={`size-8 rounded-full border border-[hsl(var(--border))] shadow-sm flex items-center justify-center text-2xs font-semibold ${palette[idx % palette.length]}`}>
                                     {team.slice(0, 2).toUpperCase()}
                                 </div>
                             ))}
@@ -915,7 +915,7 @@ export default function CommunityHubPage() {
                                 <Share2 size={14} /> Compartir acceso
                             </button>
                             {shareOpen && (
-                                <div className="absolute right-0 z-10 mt-3 w-72 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--bg-muted))]/90 shadow-xl p-4 space-y-4">
+                                <div className="absolute right-0 z-10 mt-3 w-72 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] shadow-xl p-4 space-y-4">
                                     <div className="flex items-center justify-between text-xs font-semibold text-[hsl(var(--text-primary))]">
                                         <span>Compartir tablero</span>
                                         <button type="button" onClick={() => setShareOpen(false)} className="text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))]">
@@ -928,7 +928,7 @@ export default function CommunityHubPage() {
                                             <code className="flex-1 rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] px-3 py-1.5 text-xs text-[hsl(var(--text-primary))] overflow-hidden text-ellipsis">
                                                 {shareLink}
                                             </code>
-                                            <button type="button" onClick={handleCopyShareLink} className="px-3 py-1.5 rounded-md bg-[hsl(var(--text-primary))] text-2xs font-semibold uppercase tracking-wide text-white">
+                                            <button type="button" onClick={handleCopyShareLink} className="px-3 py-1.5 rounded-md bg-[hsl(var(--text-primary))] text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--surface-1))]">
                                                 Copiar
                                             </button>
                                         </div>
@@ -1170,7 +1170,7 @@ export default function CommunityHubPage() {
                             <CommunityToolbarChip key={label} label={label} icon={icon} size="sm" />
                         ))}
                         <CommunityToolbarChip label="Personalizar" icon={SlidersHorizontal} size="sm" />
-                        <CommunityToolbarChip label="Add tarea" icon={Plus} variant="solid" className="bg-[hsl(var(--bg-muted))] text-[hsl(var(--text-primary))] dark:text-white border-[hsl(var(--border))]" />
+                        <CommunityToolbarChip label="Add tarea" icon={Plus} variant="solid" className="bg-[hsl(var(--surface-2))] text-[hsl(var(--text-primary))] border-[hsl(var(--border))]" />
                     </div>
                 </div>
                     <p className="text-xs text-[hsl(var(--text-secondary))] flex items-center gap-3">
@@ -1239,7 +1239,7 @@ export default function CommunityHubPage() {
                 <div
                     role="status"
                     aria-live="polite"
-                    className={`fixed bottom-6 right-6 z-20 rounded-lg px-3 py-1.5 text-sm font-medium text-white shadow-lg ${
+                    className={`fixed bottom-6 right-6 z-20 rounded-lg px-3 py-1.5 text-sm font-medium text-[hsl(var(--primary-foreground))] shadow-lg ${
                         toast.type === 'success' ? 'bg-[hsl(var(--success))]' : 'bg-[hsl(var(--surface-2))]'
                     }`}
                 >
