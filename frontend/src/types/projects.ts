@@ -623,4 +623,128 @@ export interface ProjectExecutiveReportData {
 }
 
 
+// ── Project Indicators MGA / CREMA & SPI (Super-PRO CREMA Fase 1 & 2) ─────────
+
+export type MgaIndicatorLevel =
+  | "RESULTADO_EFICACIA"
+  | "PRODUCTO_PRINCIPAL"
+  | "PRODUCTO_SECUNDARIO"
+  | "GESTION_PROCESO"
+  | "EFICIENCIA"
+  | "CALIDAD";
+
+export type MgaCalculationType =
+  | "ABSOLUTO_ACUMULADO"
+  | "PORCENTAJE_PROPORCION"
+  | "TASA_VARIACION"
+  | "COSTO_EFICIENCIA";
+
+export interface ProjectIndicatorRecord {
+  id: string;
+  indicator_id: string;
+  period: string;
+  target_value: number;
+  actual_value: number;
+  spi?: number | null;
+  notes?: string | null;
+  evidence_url?: string | null;
+  reported_by?: string | null;
+  reporter_name?: string | null;
+  reported_at: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ProjectIndicatorRecordCreate {
+  period: string;
+  target_value: number;
+  actual_value: number;
+  spi?: number | null;
+  notes?: string | null;
+  evidence_url?: string | null;
+  reported_at?: string | null;
+}
+
+export interface CremaCriterionDetail {
+  name?: string;
+  score: number;
+  passed: boolean;
+  recommendations: string[];
+}
+
+export interface CremaValidationResult {
+  score: number;
+  status: "EXCELENTE" | "BUENO" | "REGULAR" | "DEFICIENTE" | string;
+  criteria: Record<string, CremaCriterionDetail>;
+  summary: string;
+}
+
+export interface ValidateCremaPayload {
+  name: string;
+  description?: string;
+  level?: string;
+  calculation_type?: string;
+  unit_of_measure?: string;
+  target_value?: number;
+  frequency?: string;
+}
+
+export interface ProjectIndicator {
+  id: string;
+  project_id: string;
+  code?: string | null;
+  name: string;
+  description?: string | null;
+  level: MgaIndicatorLevel | string;
+  calculation_type: MgaCalculationType | string;
+  unit_of_measure?: string | null;
+  baseline_value: number;
+  target_value: number;
+  current_value: number;
+  frequency: string;
+  period_targets: Record<string, number>;
+  crema_score?: number | null;
+  crema_evaluation: CremaValidationResult | Record<string, any>;
+  created_by?: string | null;
+  creator_name?: string | null;
+  sede_id?: string | null;
+  records_count?: number;
+  last_spi?: number | null;
+  created_at: string;
+  updated_at: string;
+  records?: ProjectIndicatorRecord[];
+}
+
+export interface ProjectIndicatorCreate {
+  code?: string;
+  name: string;
+  description?: string;
+  level: string;
+  calculation_type: string;
+  unit_of_measure?: string;
+  baseline_value?: number;
+  target_value?: number;
+  current_value?: number;
+  frequency?: string;
+  period_targets?: Record<string, number>;
+  crema_score?: number;
+  crema_evaluation?: Record<string, any>;
+}
+
+export interface ProjectIndicatorUpdate {
+  code?: string;
+  name?: string;
+  description?: string;
+  level?: string;
+  calculation_type?: string;
+  unit_of_measure?: string;
+  baseline_value?: number;
+  target_value?: number;
+  current_value?: number;
+  frequency?: string;
+  period_targets?: Record<string, number>;
+}
+
+
+
 
