@@ -532,7 +532,7 @@ if login_resp.status_code == 200:
     ok("Login GESTOR de prueba exitoso")
 
     # GET /projects
-    resp = httpx.get("http://127.0.0.1:8000/api/projects", headers=headers)
+    resp = httpx.get("http://127.0.0.1:8000/api/projects", headers=headers, timeout=20.0)
     if resp.status_code == 200:
         projects = resp.json()
         found = [p for p in projects if str(p["id"]) == str(project.id)]
@@ -544,7 +544,7 @@ if login_resp.status_code == 200:
         fail(f"GET /projects → HTTP {resp.status_code}")
 
     # GET /projects/{id}
-    resp = httpx.get(f"http://127.0.0.1:8000/api/projects/{project.id}", headers=headers)
+    resp = httpx.get(f"http://127.0.0.1:8000/api/projects/{project.id}", headers=headers, timeout=20.0)
     if resp.status_code == 200:
         data = resp.json()
         ok(f"GET /projects/{project.id} → '{data.get('title')}' ({len(data.get('tasks', []))} tareas)")
@@ -552,7 +552,7 @@ if login_resp.status_code == 200:
         fail(f"GET /projects/{project.id} → HTTP {resp.status_code}")
 
     # GET /projects/{id}/tasks
-    resp = httpx.get(f"http://127.0.0.1:8000/api/projects/{project.id}/tasks", headers=headers)
+    resp = httpx.get(f"http://127.0.0.1:8000/api/projects/{project.id}/tasks", headers=headers, timeout=20.0)
     if resp.status_code == 200:
         tasks = resp.json()
         ok(f"GET /projects/{project.id}/tasks → {len(tasks)} tareas")
@@ -560,7 +560,7 @@ if login_resp.status_code == 200:
         fail(f"GET /projects/{project.id}/tasks → HTTP {resp.status_code}")
 
     # GET /projects/comments?project_id={id}
-    resp = httpx.get(f"http://127.0.0.1:8000/api/projects/comments?project_id={project.id}", headers=headers)
+    resp = httpx.get(f"http://127.0.0.1:8000/api/projects/comments?project_id={project.id}", headers=headers, timeout=20.0)
     if resp.status_code == 200:
         comments = resp.json()
         ok(f"GET /projects/comments?project_id={project.id} → {len(comments)} comentarios")
@@ -568,7 +568,7 @@ if login_resp.status_code == 200:
         fail(f"GET /projects/comments?project_id={project.id} → HTTP {resp.status_code}")
 
     # GET /projects/{id}/milestones
-    resp = httpx.get(f"http://127.0.0.1:8000/api/projects/{project.id}/milestones", headers=headers)
+    resp = httpx.get(f"http://127.0.0.1:8000/api/projects/{project.id}/milestones", headers=headers, timeout=20.0)
     if resp.status_code == 200:
         mss = resp.json()
         ok(f"GET /projects/{project.id}/milestones → {len(mss)} milestones")
@@ -576,7 +576,7 @@ if login_resp.status_code == 200:
         fail(f"GET /projects/{project.id}/milestones → HTTP {resp.status_code}")
 
     # GET /projects/{id}/wiki
-    resp = httpx.get(f"http://127.0.0.1:8000/api/projects/{project.id}/wiki", headers=headers)
+    resp = httpx.get(f"http://127.0.0.1:8000/api/projects/{project.id}/wiki", headers=headers, timeout=20.0)
     if resp.status_code == 200:
         wiki_data = resp.json()
         ok(f"GET /projects/{project.id}/wiki → '{wiki_data.get('title')}'")
@@ -588,6 +588,7 @@ if login_resp.status_code == 200:
         f"http://127.0.0.1:8000/api/projects/{project.id}/comments",
         headers={**headers, "Content-Type": "application/json"},
         json={"content": "Comentario creado vía API para validar el endpoint.", "task_id": None},
+        timeout=20.0,
     )
     if resp.status_code in (200, 201):
         ok("POST /projects/{id}/comments → comentario creado vía API")
@@ -602,6 +603,7 @@ if login_resp.status_code == 200:
             "password": "prueba123",
         },
         follow_redirects=False,
+        timeout=20.0,
     )
     if login_u2.status_code in (200, 429):
         if login_u2.status_code == 200:
@@ -614,7 +616,7 @@ if login_resp.status_code == 200:
         headers_u2 = {"Authorization": f"Bearer {token_u2}"}
         ok("Autenticación usuario_prueba_2 (docente) verificada")
 
-        resp = httpx.get("http://127.0.0.1:8000/api/projects", headers=headers_u2)
+        resp = httpx.get("http://127.0.0.1:8000/api/projects", headers=headers_u2, timeout=20.0)
         if resp.status_code == 200:
             projs = resp.json()
             found = [p for p in projs if str(p["id"]) == str(project.id)]
@@ -626,7 +628,7 @@ if login_resp.status_code == 200:
             fail(f"usuario_prueba_2 GET /projects → HTTP {resp.status_code}")
 
         # Ver tareas asignadas a u2
-        resp = httpx.get("http://127.0.0.1:8000/api/projects/tasks", headers=headers_u2)
+        resp = httpx.get("http://127.0.0.1:8000/api/projects/tasks", headers=headers_u2, timeout=20.0)
         if resp.status_code == 200:
             my_tasks = resp.json()
             ok(f"usuario_prueba_2 tiene {len(my_tasks)} tarea(s) asignada(s)")
