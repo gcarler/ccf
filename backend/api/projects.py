@@ -4421,6 +4421,267 @@ def export_project_expenses_csv_endpoint(
     )
 
 
+# ─────────────────────────────────────────────────────────────────────────────
+# 17. INDICADORES MGA / CREMA Y SEGUIMIENTO SPI (Super-PRO CREMA Fase 1)
+# ─────────────────────────────────────────────────────────────────────────────
+
+@router.get(
+    "/{project_id}/advanced-indicators",
+    response_model=List[schemas.ProjectIndicator],
+    tags=["Projects MGA CREMA Indicators"],
+)
+def list_project_indicators_endpoint(
+    project_id: str,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("projects", "read")),
+):
+    """Obtiene la lista de indicadores MGA/CREMA configurados en el proyecto con su último SPI."""
+    user_sede = get_user_sede_id(db, current_user.id)
+    _ensure_project(db, project_id, user_sede=user_sede)
+
+    indicators = crud.get_project_indicators(db, _to_uuid(project_id), sede_id=user_sede)
+    for ind in indicators:
+        _normalize_dates(ind)
+        for r in getattr(ind, "records", []):
+            _normalize_dates(r)
+    return indicators
+
+
+@router.post(
+    "/{project_id}/advanced-indicators",
+    response_model=schemas.ProjectIndicator,
+    status_code=status.HTTP_201_CREATED,
+    tags=["Projects MGA CREMA Indicators"],
+)
+def create_project_indicator_endpoint(
+    project_id: str,
+    payload: schemas.ProjectIndicatorCreate,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("projects", "edit")),
+):
+    """Crea un nuevo indicador MGA evaluando automáticamente sus atributos bajo criterios CREMA."""
+    user_sede = get_user_sede_id(db, current_user.id)
+    _ensure_project(db, project_id, user_sede=user_sede)
+
+    persona_id = _get_persona_id_for_user(db, current_user.id)
+    payload.project_id = str(_to_uuid(project_id))
+
+    indicator = crud.create_project_indicator(
+        db,
+        _to_uuid(project_id),
+        payload,
+        created_by=persona_id,
+        sede_id=user_sede,
+    )
+
+    _log_project_activity(
+        db,
+        project_id,
+        current_user.id,
+        "indicator_created",
+        f"Indicador '{indicator.name}' creado (Nivel: {indicator.level}, CREMA: {indicator.crema_score}/100)",
+    )
+
+    _normalize_dates(indicator)
+    return indicator
+
+
+@router.get(
+    "/{project_id}/advanced-indicators/{indicator_id}",
+    response_model=schemas.ProjectIndicator,
+    tags=["Projects MGA CREMA Indicators"],
+)
+def get_project_indicator_endpoint(
+    project_id: str,
+    indicator_id: str,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("projects", "read")),
+):
+    """Obtiene el detalle de un indicador específico con su evaluación CREMA y desglose de avance."""
+    user_sede = get_user_sede_id(db, current_user.id)
+    _ensure_project(db, project_id, user_sede=user_sede)
+
+    ind = crud.get_project_indicator(
+        db,
+        _to_uuid(indicator_id),
+        project_id=_to_uuid(project_id),
+        sede_id=user_sede,
+    )
+    if not ind:
+        raise HTTPException(status_code=404, detail="Indicador no encontrado")
+
+    _normalize_dates(ind)
+    for r in getattr(ind, "records", []):
+        _normalize_dates(r)
+    return ind
+
+
+@router.patch(
+    "/{project_id}/advanced-indicators/{indicator_id}",
+    response_model=schemas.ProjectIndicator,
+    tags=["Projects MGA CREMA Indicators"],
+)
+def update_project_indicator_endpoint(
+    project_id: str,
+    indicator_id: str,
+    payload: schemas.ProjectIndicatorUpdate,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("projects", "edit")),
+):
+    """Actualiza la definición de un indicador recalculando la calificación CREMA si aplica."""
+    user_sede = get_user_sede_id(db, current_user.id)
+    _ensure_project(db, project_id, user_sede=user_sede)
+
+    persona_id = _get_persona_id_for_user(db, current_user.id)
+    updated = crud.update_project_indicator(
+        db,
+        _to_uuid(indicator_id),
+        payload,
+        user_id=persona_id,
+        sede_id=user_sede,
+    )
+    if not updated:
+        raise HTTPException(status_code=404, detail="Indicador no encontrado")
+
+    _log_project_activity(
+        db,
+        project_id,
+        current_user.id,
+        "indicator_updated",
+        f"Indicador '{updated.name}' actualizado",
+    )
+
+    _normalize_dates(updated)
+    return updated
+
+
+@router.delete(
+    "/{project_id}/advanced-indicators/{indicator_id}",
+    tags=["Projects MGA CREMA Indicators"],
+)
+def delete_project_indicator_endpoint(
+    project_id: str,
+    indicator_id: str,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("projects", "edit")),
+):
+    """Elimina lógicamente (soft-delete) un indicador de proyecto."""
+    user_sede = get_user_sede_id(db, current_user.id)
+    _ensure_project(db, project_id, user_sede=user_sede)
+
+    persona_id = _get_persona_id_for_user(db, current_user.id)
+    success = crud.delete_project_indicator(
+        db,
+        _to_uuid(indicator_id),
+        user_id=persona_id,
+        sede_id=user_sede,
+    )
+    if not success:
+        raise HTTPException(status_code=404, detail="Indicador no encontrado")
+
+    _log_project_activity(
+        db,
+        project_id,
+        current_user.id,
+        "indicator_deleted",
+        f"Indicador eliminado",
+    )
+
+    return {"ok": True, "message": "Indicador eliminado exitosamente", "id": indicator_id}
+
+
+@router.post(
+    "/{project_id}/indicators/validate-crema",
+    response_model=schemas.CremaValidationResult,
+    tags=["Projects MGA CREMA Indicators"],
+)
+def validate_crema_indicator_endpoint(
+    project_id: str,
+    payload: schemas.ValidateCremaPayload,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("projects", "read")),
+):
+    """Microservicio validador inteligente de criterios C, R, E, M, A (Metodología MGA/BID)."""
+    user_sede = get_user_sede_id(db, current_user.id)
+    _ensure_project(db, project_id, user_sede=user_sede)
+
+    result = crud.validate_crema_indicator(payload)
+    return result
+
+
+@router.post(
+    "/{project_id}/indicators/{indicator_id}/records",
+    response_model=schemas.ProjectIndicatorRecord,
+    status_code=status.HTTP_201_CREATED,
+    tags=["Projects MGA CREMA Indicators"],
+)
+def create_project_indicator_record_endpoint(
+    project_id: str,
+    indicator_id: str,
+    payload: schemas.ProjectIndicatorRecordCreate,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("projects", "edit")),
+):
+    """Registra una medición periódica calculando automáticamente el SPI (Schedule/Performance Index)."""
+    user_sede = get_user_sede_id(db, current_user.id)
+    _ensure_project(db, project_id, user_sede=user_sede)
+
+    persona_id = _get_persona_id_for_user(db, current_user.id)
+    payload.indicator_id = str(_to_uuid(indicator_id))
+
+    try:
+        record = crud.create_project_indicator_record(
+            db,
+            _to_uuid(indicator_id),
+            payload,
+            reported_by=persona_id,
+            sede_id=user_sede,
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+    _log_project_activity(
+        db,
+        project_id,
+        current_user.id,
+        "indicator_record_created",
+        f"Medición registrada en período '{record.period}' (Meta: {record.target_value}, Real: {record.actual_value}, SPI: {record.spi})",
+    )
+
+    _normalize_dates(record)
+    return record
+
+
+@router.get(
+    "/{project_id}/indicators/{indicator_id}/records",
+    response_model=List[schemas.ProjectIndicatorRecord],
+    tags=["Projects MGA CREMA Indicators"],
+)
+def list_project_indicator_records_endpoint(
+    project_id: str,
+    indicator_id: str,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("projects", "read")),
+):
+    """Lista el historial cronológico de mediciones y cálculo de SPI de un indicador."""
+    user_sede = get_user_sede_id(db, current_user.id)
+    _ensure_project(db, project_id, user_sede=user_sede)
+
+    try:
+        records = crud.get_project_indicator_records(
+            db,
+            _to_uuid(indicator_id),
+            sede_id=user_sede,
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+    for r in records:
+        _normalize_dates(r)
+    return records
+
+
+
 
 
 

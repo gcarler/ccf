@@ -281,6 +281,8 @@ from backend.models_projects import (
     ProjectTemplate,
     ProjectTimeLog,
     ProjectAutomationRule,
+    ProjectIndicator,
+    ProjectIndicatorRecord,
     ProjectWhiteboard,
     TaskSupply,
 )

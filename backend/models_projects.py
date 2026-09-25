@@ -55,6 +55,7 @@ class Project(Base):
     baselines = relationship("ProjectBaseline", back_populates="project", cascade="all, delete-orphan")
     time_logs = relationship("ProjectTimeLog", back_populates="project", cascade="all, delete-orphan")
     automations = relationship("ProjectAutomationRule", back_populates="project", cascade="all, delete-orphan")
+    indicators = relationship("ProjectIndicator", back_populates="project", cascade="all, delete-orphan")
 
     # ``name`` is a thin alias over ``title`` so callers that pass or read
     # ``name`` (e.g. ``tests/test_crud_integration.py::TestProjectsCrud``)
@@ -408,6 +409,57 @@ class ProjectAutomationRule(Base):
 
     project = relationship("Project", back_populates="automations")
     creator = relationship("Persona", foreign_keys=[created_by])
+
+
+class ProjectIndicator(Base):
+    __tablename__ = "project_indicators"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    project_id = Column(UUID(as_uuid=True), ForeignKey("projects.id", ondelete="CASCADE"), nullable=False, index=True)
+    code = Column(String(50), nullable=True, index=True)
+    name = Column(String(255), nullable=False)
+    description = Column(Text, nullable=True)
+    level = Column(String(50), default="PRODUCTO_PRINCIPAL", nullable=False, index=True)
+    calculation_type = Column(String(50), default="ABSOLUTO_ACUMULADO", nullable=False, index=True)
+    unit_of_measure = Column(String(50), nullable=True)
+    baseline_value = Column(Float, default=0.0, nullable=False)
+    target_value = Column(Float, default=0.0, nullable=False)
+    current_value = Column(Float, default=0.0, nullable=False)
+    frequency = Column(String(50), default="mensual", nullable=False)
+    period_targets = Column(JSON, default=dict, nullable=False)
+    crema_score = Column(Float, nullable=True)
+    crema_evaluation = Column(JSON, default=dict, nullable=False)
+    created_by = Column(UUID(as_uuid=True), ForeignKey("personas.id", ondelete="SET NULL"), nullable=True, index=True)
+    sede_id = Column(UUID(as_uuid=True), ForeignKey("sedes.id", ondelete="SET NULL"), nullable=True, index=True)
+    created_at = Column(DateTime(timezone=True), default=_utcnow, nullable=False)
+    updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow, nullable=False)
+    deleted_at = Column(DateTime(timezone=True), nullable=True, index=True)
+
+    project = relationship("Project", back_populates="indicators")
+    creator = relationship("Persona", foreign_keys=[created_by])
+    records = relationship("ProjectIndicatorRecord", back_populates="indicator", cascade="all, delete-orphan")
+
+
+class ProjectIndicatorRecord(Base):
+    __tablename__ = "project_indicator_records"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    indicator_id = Column(UUID(as_uuid=True), ForeignKey("project_indicators.id", ondelete="CASCADE"), nullable=False, index=True)
+    period = Column(String(50), nullable=False, index=True)
+    target_value = Column(Float, default=0.0, nullable=False)
+    actual_value = Column(Float, default=0.0, nullable=False)
+    spi = Column(Float, nullable=True)
+    notes = Column(Text, nullable=True)
+    evidence_url = Column(String(500), nullable=True)
+    reported_by = Column(UUID(as_uuid=True), ForeignKey("personas.id", ondelete="SET NULL"), nullable=True, index=True)
+    reported_at = Column(DateTime(timezone=True), default=_utcnow, nullable=False)
+    created_at = Column(DateTime(timezone=True), default=_utcnow, nullable=False)
+    updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow, nullable=False)
+    deleted_at = Column(DateTime(timezone=True), nullable=True, index=True)
+
+    indicator = relationship("ProjectIndicator", back_populates="records")
+    reporter = relationship("Persona", foreign_keys=[reported_by])
+
 
 
 

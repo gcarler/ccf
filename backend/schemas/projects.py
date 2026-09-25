@@ -1043,3 +1043,104 @@ class AutomationExecutionResult(BaseModel):
     status: str
     details: Optional[str] = None
 
+
+# ── Project Indicators MGA / CREMA & SPI (Super-PRO CREMA Fase 1) ───────────
+
+class ProjectIndicatorRecordBase(BaseModel):
+    period: str = Field(..., min_length=1, max_length=50)
+    target_value: float = 0.0
+    actual_value: float = 0.0
+    spi: Optional[float] = None
+    notes: Optional[str] = None
+    evidence_url: Optional[str] = None
+    reported_at: Optional[datetime] = None
+
+
+class ProjectIndicatorRecordCreate(ProjectIndicatorRecordBase):
+    indicator_id: Optional[UUIDStr] = None
+
+
+class ProjectIndicatorRecord(ProjectIndicatorRecordBase):
+    id: UUIDStr
+    indicator_id: UUIDStr
+    reported_by: Optional[UUIDStr] = None
+    reporter_name: Optional[str] = None
+    created_at: datetime
+    updated_at: datetime
+    model_config = orm_config
+
+
+class ProjectIndicatorBase(BaseModel):
+    code: Optional[str] = None
+    name: str = Field(..., min_length=1, max_length=255)
+    description: Optional[str] = None
+    level: str = Field(default="PRODUCTO_PRINCIPAL", max_length=50)
+    calculation_type: str = Field(default="ABSOLUTO_ACUMULADO", max_length=50)
+    unit_of_measure: Optional[str] = None
+    baseline_value: float = 0.0
+    target_value: float = 0.0
+    current_value: float = 0.0
+    frequency: str = Field(default="mensual", max_length=50)
+    period_targets: dict = Field(default_factory=dict)
+    crema_score: Optional[float] = None
+    crema_evaluation: dict = Field(default_factory=dict)
+
+
+class ProjectIndicatorCreate(ProjectIndicatorBase):
+    project_id: Optional[UUIDStr] = None
+    sede_id: Optional[UUIDStr] = None
+
+
+class ProjectIndicatorUpdate(BaseModel):
+    code: Optional[str] = None
+    name: Optional[str] = Field(default=None, min_length=1, max_length=255)
+    description: Optional[str] = None
+    level: Optional[str] = None
+    calculation_type: Optional[str] = None
+    unit_of_measure: Optional[str] = None
+    baseline_value: Optional[float] = None
+    target_value: Optional[float] = None
+    current_value: Optional[float] = None
+    frequency: Optional[str] = None
+    period_targets: Optional[dict] = None
+    crema_score: Optional[float] = None
+    crema_evaluation: Optional[dict] = None
+
+
+class ProjectIndicator(ProjectIndicatorBase):
+    id: UUIDStr
+    project_id: UUIDStr
+    created_by: Optional[UUIDStr] = None
+    creator_name: Optional[str] = None
+    sede_id: Optional[UUIDStr] = None
+    records_count: int = 0
+    last_spi: Optional[float] = None
+    created_at: datetime
+    updated_at: datetime
+    records: List[ProjectIndicatorRecord] = Field(default_factory=list)
+    model_config = orm_config
+
+
+class ValidateCremaPayload(BaseModel):
+    name: str = Field(..., min_length=1, max_length=255)
+    description: Optional[str] = None
+    level: Optional[str] = "PRODUCTO_PRINCIPAL"
+    calculation_type: Optional[str] = "ABSOLUTO_ACUMULADO"
+    unit_of_measure: Optional[str] = None
+    target_value: Optional[float] = None
+    frequency: Optional[str] = "mensual"
+
+
+class CremaCriterionDetail(BaseModel):
+    score: float
+    passed: bool
+    recommendations: List[str] = Field(default_factory=list)
+
+
+class CremaValidationResult(BaseModel):
+    score: float
+    status: str
+    criteria: dict
+    summary: str
+
+

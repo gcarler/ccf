@@ -6,6 +6,7 @@ from datetime import datetime, timezone, timedelta
 from typing import Any, Dict, List, Optional
 from uuid import UUID
 
+from sqlalchemy import func
 from sqlalchemy.orm import Session, selectinload
 
 from backend import models, schemas
@@ -3140,6 +3141,482 @@ def generate_project_expenses_csv(
         ])
 
     return output.getvalue()
+
+
+# ── Project Indicators MGA / CREMA & SPI (Super-PRO CREMA Fase 1) ───────────
+
+def validate_crema_indicator(payload: schemas.ValidateCremaPayload | dict) -> dict:
+    """Microservicio validador inteligente de criterios C, R, E, M, A (Metodología MGA/BID)."""
+    if isinstance(payload, dict):
+        name = str(payload.get("name") or "").strip()
+        description = str(payload.get("description") or "").strip()
+        level = str(payload.get("level") or "PRODUCTO_PRINCIPAL").strip()
+        calculation_type = str(payload.get("calculation_type") or "ABSOLUTO_ACUMULADO").strip()
+        unit_of_measure = str(payload.get("unit_of_measure") or "").strip()
+        target_value = payload.get("target_value")
+        frequency = str(payload.get("frequency") or "mensual").strip()
+    else:
+        name = str(payload.name or "").strip()
+        description = str(payload.description or "").strip()
+        level = str(payload.level or "PRODUCTO_PRINCIPAL").strip()
+        calculation_type = str(payload.calculation_type or "ABSOLUTO_ACUMULADO").strip()
+        unit_of_measure = str(payload.unit_of_measure or "").strip()
+        target_value = payload.target_value
+        frequency = str(payload.frequency or "mensual").strip()
+
+    criteria = {}
+
+    # C - Claro (Clear): Precisión semántica, sin ambigüedades
+    c_score = 0.0
+    c_recs = []
+    if len(name) >= 8:
+        c_score += 12.0
+    elif len(name) >= 4:
+        c_score += 6.0
+        c_recs.append("El nombre del indicador es muy breve. Detalle con mayor precisión el objeto de medición.")
+    else:
+        c_score += 3.0
+        c_recs.append("El nombre debe tener al menos 4 caracteres representativos.")
+
+    keywords = ["tasa", "porcentaje", "número", "numero", "cantidad", "índice", "indice", "volumen", "proporción", "proporcion", "tiempo", "costo", "total", "grado", "nivel", "cobertura", "avance", "spi", "horas", "monto"]
+    has_keyword = any(k in name.lower() or k in description.lower() for k in keywords)
+    if has_keyword or len(name) >= 15:
+        c_score += 8.0
+    else:
+        c_score += 4.0
+        c_recs.append("Recomendado: Incluya un sustantivo o métrica clara (ej: Porcentaje, Número, Tasa, Índice).")
+
+    criteria["C"] = {
+        "name": "Claro (Clear)",
+        "score": round(min(20.0, c_score), 1),
+        "passed": c_score >= 14.0,
+        "recommendations": c_recs,
+    }
+
+    # R - Relevante (Relevant): Coherencia con nivel MGA
+    r_score = 0.0
+    r_recs = []
+    valid_levels = {
+        "RESULTADO_EFICACIA",
+        "PRODUCTO_PRINCIPAL",
+        "PRODUCTO_SECUNDARIO",
+        "GESTION_PROCESO",
+        "EFICIENCIA",
+        "CALIDAD",
+    }
+    if level in valid_levels:
+        r_score = 20.0
+    else:
+        r_score = 10.0
+        r_recs.append(f"Nivel '{level}' no es un nivel estándar MGA. Seleccione uno de: {', '.join(sorted(valid_levels))}.")
+
+    criteria["R"] = {
+        "name": "Relevante (Relevant)",
+        "score": round(r_score, 1),
+        "passed": r_score >= 15.0,
+        "recommendations": r_recs,
+    }
+
+    # E - Económico (Economic): Factibilidad y costo razonable de captura
+    e_score = 0.0
+    e_recs = []
+    freq_lower = frequency.lower()
+    if freq_lower in ["mensual", "trimestral", "semestral"]:
+        e_score = 20.0
+    elif freq_lower in ["semanal", "quincenal", "por_hito"]:
+        e_score = 16.0
+        e_recs.append("Frecuencias muy continuas pueden elevar el costo operativo de recolección de evidencias.")
+    elif freq_lower in ["anual"]:
+        e_score = 15.0
+        e_recs.append("Frecuencia anual reduce la oportunidad de control temprano frente a desviaciones.")
+    else:
+        e_score = 12.0
+        e_recs.append("Especifique una periodicidad estándar de medición (mensual, trimestral).")
+
+    criteria["E"] = {
+        "name": "Económico (Economic)",
+        "score": round(e_score, 1),
+        "passed": e_score >= 15.0,
+        "recommendations": e_recs,
+    }
+
+    # M - Medible (Measurable): Unidad de medida y meta cuantitativa
+    m_score = 0.0
+    m_recs = []
+    if unit_of_measure:
+        m_score += 10.0
+    else:
+        m_recs.append("Defina una unidad de medida formal (ej: %, personas, horas, unidades, USD).")
+
+    try:
+        t_val = float(target_value) if target_value is not None else None
+    except (ValueError, TypeError):
+        t_val = None
+
+    if t_val is not None and t_val > 0:
+        m_score += 10.0
+    elif t_val is not None and t_val == 0:
+        m_score += 5.0
+        m_recs.append("Meta proyectada igual a 0. Indique un objetivo cuantitativo superior.")
+    else:
+        m_recs.append("Establezca una meta cuantitativa numérica verificable.")
+
+    criteria["M"] = {
+        "name": "Medible (Measurable)",
+        "score": round(min(20.0, m_score), 1),
+        "passed": m_score >= 15.0,
+        "recommendations": m_recs,
+    }
+
+    # A - Adecuado (Adequate): Coherencia entre nivel y tipo de cálculo
+    a_score = 0.0
+    a_recs = []
+    valid_calcs = {
+        "ABSOLUTO_ACUMULADO",
+        "PORCENTAJE_PROPORCION",
+        "TASA_VARIACION",
+        "COSTO_EFICIENCIA",
+    }
+    if calculation_type in valid_calcs:
+        a_score += 15.0
+        if level in ["EFICIENCIA", "CALIDAD"] and calculation_type in ["COSTO_EFICIENCIA", "PORCENTAJE_PROPORCION"]:
+            a_score += 5.0
+        elif level in ["RESULTADO_EFICACIA"] and calculation_type in ["PORCENTAJE_PROPORCION", "TASA_VARIACION"]:
+            a_score += 5.0
+        elif level in ["PRODUCTO_PRINCIPAL", "PRODUCTO_SECUNDARIO", "GESTION_PROCESO"]:
+            a_score += 5.0
+        else:
+            a_score += 3.0
+    else:
+        a_score = 8.0
+        a_recs.append(f"Tipo de cálculo '{calculation_type}' no canónico. Use uno de: {', '.join(sorted(valid_calcs))}.")
+
+    criteria["A"] = {
+        "name": "Adecuado (Adequate)",
+        "score": round(min(20.0, a_score), 1),
+        "passed": a_score >= 15.0,
+        "recommendations": a_recs,
+    }
+
+    total_score = sum(c["score"] for c in criteria.values())
+    total_score = round(total_score, 1)
+
+    if total_score >= 85.0:
+        status = "EXCELENTE"
+        summary = "El indicador cumple con alta rigurosidad metodológica MGA/CREMA y está listo para monitoreo formal."
+    elif total_score >= 70.0:
+        status = "BUENO"
+        summary = "El indicador es metodológicamente sólido con pequeñas oportunidades de optimización en unidad o periodicidad."
+    elif total_score >= 50.0:
+        status = "REGULAR"
+        summary = "El indicador requiere calibración en sus atributos de claridad o metas antes de fijar línea base."
+    else:
+        status = "DEFICIENTE"
+        summary = "El indicador no satisface los criterios CREMA mínimos. Requiere revisión estructural."
+
+    return {
+        "score": total_score,
+        "status": status,
+        "criteria": criteria,
+        "summary": summary,
+    }
+
+
+def _prepare_indicator_response(ind: models.ProjectIndicator) -> models.ProjectIndicator:
+    if ind:
+        if hasattr(ind, "creator") and ind.creator:
+            p = ind.creator
+            ind.creator_name = getattr(p, "nombre_completo", None) or f"{getattr(p, 'nombres', '')} {getattr(p, 'apellidos', '')}".strip() or "Usuario"
+        else:
+            ind.creator_name = "Usuario"
+
+        records = [r for r in getattr(ind, "records", []) if r.deleted_at is None]
+        ind.records_count = len(records)
+        if records:
+            sorted_recs = sorted(records, key=lambda x: x.reported_at or x.created_at)
+            ind.last_spi = sorted_recs[-1].spi
+            # También preparar los nombres de reporter en cada record
+            for r in records:
+                _prepare_record_response(r)
+        else:
+            ind.last_spi = None
+    return ind
+
+
+def _prepare_record_response(rec: models.ProjectIndicatorRecord) -> models.ProjectIndicatorRecord:
+    if rec:
+        if hasattr(rec, "reporter") and rec.reporter:
+            p = rec.reporter
+            rec.reporter_name = getattr(p, "nombre_completo", None) or f"{getattr(p, 'nombres', '')} {getattr(p, 'apellidos', '')}".strip() or "Usuario"
+        else:
+            rec.reporter_name = "Usuario"
+    return rec
+
+
+def get_project_indicators(
+    db: Session,
+    project_id: UUID | str,
+    *,
+    sede_id: Optional[UUID | str] = None,
+) -> list[models.ProjectIndicator]:
+    """Lista todos los indicadores activos de un proyecto con sus métricas y registros."""
+    project = get_project(db, project_id, sede_id=sede_id)
+    if not project:
+        raise ValueError("Proyecto no encontrado o no pertenece a la sede (Axioma 3)")
+
+    indicators = (
+        db.query(models.ProjectIndicator)
+        .options(
+            selectinload(models.ProjectIndicator.creator),
+            selectinload(models.ProjectIndicator.records).selectinload(models.ProjectIndicatorRecord.reporter),
+        )
+        .filter(
+            models.ProjectIndicator.project_id == project.id,
+            models.ProjectIndicator.deleted_at.is_(None),
+        )
+        .order_by(models.ProjectIndicator.created_at.asc())
+        .all()
+    )
+
+    return [_prepare_indicator_response(ind) for ind in indicators]
+
+
+def get_project_indicator(
+    db: Session,
+    indicator_id: UUID | str,
+    *,
+    project_id: Optional[UUID | str] = None,
+    sede_id: Optional[UUID | str] = None,
+) -> Optional[models.ProjectIndicator]:
+    """Obtiene un indicador específico con control de tenant."""
+    q = (
+        db.query(models.ProjectIndicator)
+        .options(
+            selectinload(models.ProjectIndicator.creator),
+            selectinload(models.ProjectIndicator.records).selectinload(models.ProjectIndicatorRecord.reporter),
+        )
+        .filter(
+            models.ProjectIndicator.id == indicator_id,
+            models.ProjectIndicator.deleted_at.is_(None),
+        )
+    )
+    if project_id is not None:
+        q = q.filter(models.ProjectIndicator.project_id == project_id)
+
+    ind = q.first()
+    if not ind:
+        return None
+
+    if sede_id is not None:
+        project = get_project(db, ind.project_id, sede_id=sede_id)
+        if not project:
+            return None
+
+    return _prepare_indicator_response(ind)
+
+
+def create_project_indicator(
+    db: Session,
+    project_id: UUID | str,
+    indicator_in: schemas.ProjectIndicatorCreate,
+    created_by: UUID | str,
+    *,
+    sede_id: Optional[UUID | str] = None,
+) -> models.ProjectIndicator:
+    """Crea un indicador con evaluación CREMA automática y trazabilidad UTC."""
+    project = get_project(db, project_id, sede_id=sede_id)
+    if not project:
+        raise ValueError("Proyecto no encontrado o no pertenece a la sede (Axioma 3)")
+
+    effective_sede_id = sede_id or project.sede_id
+
+    # Auto-evaluación CREMA si no viene provista
+    crema_eval = indicator_in.crema_evaluation or {}
+    crema_score = indicator_in.crema_score
+    if not crema_eval or crema_score is None:
+        validation = validate_crema_indicator({
+            "name": indicator_in.name,
+            "description": indicator_in.description,
+            "level": indicator_in.level,
+            "calculation_type": indicator_in.calculation_type,
+            "unit_of_measure": indicator_in.unit_of_measure,
+            "target_value": indicator_in.target_value,
+            "frequency": indicator_in.frequency,
+        })
+        crema_eval = validation
+        crema_score = validation["score"]
+
+    # Generar código correlativo si no viene provisto
+    code = indicator_in.code
+    if not code:
+        count = (
+            db.query(func.count(models.ProjectIndicator.id))
+            .filter(models.ProjectIndicator.project_id == project.id)
+            .scalar()
+            or 0
+        )
+        code = f"IND-{count + 1:03d}"
+
+    indicator = models.ProjectIndicator(
+        project_id=project.id,
+        code=code,
+        name=indicator_in.name,
+        description=indicator_in.description,
+        level=indicator_in.level or "PRODUCTO_PRINCIPAL",
+        calculation_type=indicator_in.calculation_type or "ABSOLUTO_ACUMULADO",
+        unit_of_measure=indicator_in.unit_of_measure,
+        baseline_value=indicator_in.baseline_value or 0.0,
+        target_value=indicator_in.target_value or 0.0,
+        current_value=indicator_in.current_value or indicator_in.baseline_value or 0.0,
+        frequency=indicator_in.frequency or "mensual",
+        period_targets=indicator_in.period_targets or {},
+        crema_score=crema_score,
+        crema_evaluation=crema_eval,
+        created_by=created_by,
+        sede_id=effective_sede_id,
+        created_at=datetime.now(timezone.utc),
+        updated_at=datetime.now(timezone.utc),
+    )
+
+    db.add(indicator)
+    db.commit()
+    db.refresh(indicator)
+    return _prepare_indicator_response(indicator)
+
+
+def update_project_indicator(
+    db: Session,
+    indicator_id: UUID | str,
+    indicator_in: schemas.ProjectIndicatorUpdate,
+    user_id: UUID | str,
+    *,
+    sede_id: Optional[UUID | str] = None,
+) -> Optional[models.ProjectIndicator]:
+    """Actualiza un indicador recalculando CREMA si cambiaron atributos clave."""
+    indicator = get_project_indicator(db, indicator_id, sede_id=sede_id)
+    if not indicator:
+        return None
+
+    update_data = indicator_in.model_dump(exclude_unset=True)
+    for field, val in update_data.items():
+        setattr(indicator, field, val)
+
+    # Si se alteraron atributos clave y no se pasó crema_score explícito, recalcular CREMA
+    recalc_keys = {"name", "description", "level", "calculation_type", "unit_of_measure", "target_value", "frequency"}
+    if any(k in update_data for k in recalc_keys) and "crema_score" not in update_data:
+        val_res = validate_crema_indicator({
+            "name": indicator.name,
+            "description": indicator.description,
+            "level": indicator.level,
+            "calculation_type": indicator.calculation_type,
+            "unit_of_measure": indicator.unit_of_measure,
+            "target_value": indicator.target_value,
+            "frequency": indicator.frequency,
+        })
+        indicator.crema_evaluation = val_res
+        indicator.crema_score = val_res["score"]
+
+    indicator.updated_at = datetime.now(timezone.utc)
+    db.commit()
+    db.refresh(indicator)
+    return _prepare_indicator_response(indicator)
+
+
+def delete_project_indicator(
+    db: Session,
+    indicator_id: UUID | str,
+    user_id: UUID | str,
+    *,
+    sede_id: Optional[UUID | str] = None,
+) -> bool:
+    """Soft-delete de indicador garantizando UTC (Axioma 2)."""
+    indicator = get_project_indicator(db, indicator_id, sede_id=sede_id)
+    if not indicator:
+        return False
+
+    indicator.deleted_at = datetime.now(timezone.utc)
+    indicator.updated_at = datetime.now(timezone.utc)
+    db.commit()
+    return True
+
+
+def create_project_indicator_record(
+    db: Session,
+    indicator_id: UUID | str,
+    record_in: schemas.ProjectIndicatorRecordCreate,
+    reported_by: UUID | str,
+    *,
+    sede_id: Optional[UUID | str] = None,
+) -> models.ProjectIndicatorRecord:
+    """Registra avance periódico calculando SPI y actualizando el valor actual del indicador."""
+    indicator = get_project_indicator(db, indicator_id, sede_id=sede_id)
+    if not indicator:
+        raise ValueError("Indicador no encontrado o no pertenece a la sede (Axioma 3)")
+
+    target = float(record_in.target_value or 0.0)
+    actual = float(record_in.actual_value or 0.0)
+
+    # Cálculo automático de SPI si no se envía explícito
+    if record_in.spi is not None:
+        spi = float(record_in.spi)
+    else:
+        if target > 0:
+            spi = round(actual / target, 2)
+        else:
+            spi = 1.0 if actual >= 0 else 0.0
+
+    rep_at = record_in.reported_at or datetime.now(timezone.utc)
+    if not hasattr(rep_at, "tzinfo") or not rep_at.tzinfo:
+        rep_at = rep_at.replace(tzinfo=timezone.utc)
+
+    record = models.ProjectIndicatorRecord(
+        indicator_id=indicator.id,
+        period=record_in.period,
+        target_value=target,
+        actual_value=actual,
+        spi=spi,
+        notes=record_in.notes,
+        evidence_url=record_in.evidence_url,
+        reported_by=reported_by,
+        reported_at=rep_at,
+        created_at=datetime.now(timezone.utc),
+        updated_at=datetime.now(timezone.utc),
+    )
+
+    # Actualizar current_value del indicador con el último valor actual reportado
+    indicator.current_value = actual
+    indicator.updated_at = datetime.now(timezone.utc)
+
+    db.add(record)
+    db.commit()
+    db.refresh(record)
+    return _prepare_record_response(record)
+
+
+def get_project_indicator_records(
+    db: Session,
+    indicator_id: UUID | str,
+    *,
+    sede_id: Optional[UUID | str] = None,
+) -> list[models.ProjectIndicatorRecord]:
+    """Lista historial de mediciones de un indicador."""
+    indicator = get_project_indicator(db, indicator_id, sede_id=sede_id)
+    if not indicator:
+        raise ValueError("Indicador no encontrado o no pertenece a la sede (Axioma 3)")
+
+    records = (
+        db.query(models.ProjectIndicatorRecord)
+        .options(selectinload(models.ProjectIndicatorRecord.reporter))
+        .filter(
+            models.ProjectIndicatorRecord.indicator_id == indicator.id,
+            models.ProjectIndicatorRecord.deleted_at.is_(None),
+        )
+        .order_by(models.ProjectIndicatorRecord.reported_at.asc(), models.ProjectIndicatorRecord.created_at.asc())
+        .all()
+    )
+
+    return [_prepare_record_response(r) for r in records]
+
 
 
 

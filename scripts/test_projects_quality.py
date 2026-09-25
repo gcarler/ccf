@@ -1637,6 +1637,185 @@ if foreign_report is None:
 else:
     fail("Falla de seguridad multi-tenant: el reporte se entregó a una sede distinta")
 
+
+# ──────────────────────────────────────────────────────────────
+section("18. INDICADORES MGA / CREMA Y SEGUIMIENTO SPI (SUPER-PRO CREMA FASE 1)")
+# ──────────────────────────────────────────────────────────────
+
+# 1. Microservicio Validador Inteligente CREMA - Caso Excelente
+crema_payload_good = schemas.ValidateCremaPayload(
+    name="Porcentaje de líderes ministeriales capacitados en gestión ágil",
+    description="Mide el avance porcentual acumulado de miembros certificados en la sede",
+    level="PRODUCTO_PRINCIPAL",
+    calculation_type="PORCENTAJE_PROPORCION",
+    unit_of_measure="%",
+    target_value=100.0,
+    frequency="mensual",
+)
+res_good = crud_projects.validate_crema_indicator(crema_payload_good)
+if res_good and res_good.get("score", 0) >= 85.0 and res_good.get("status") == "EXCELENTE":
+    ok(f"Microservicio Validador CREMA evaluó indicador excelente: {res_good['score']}/100 puntos (Status: {res_good['status']})")
+    crits = res_good.get("criteria", {})
+    if all(k in crits for k in ["C", "R", "E", "M", "A"]):
+        ok("Criterios C (Claro), R (Relevante), E (Económico), M (Medible), A (Adecuado) verificados con éxito")
+    else:
+        fail(f"Criterios CREMA incompletos: {list(crits.keys())}")
+else:
+    fail(f"Validación CREMA excelente falló: {res_good}")
+
+# 2. Microservicio Validador Inteligente CREMA - Caso Deficiente con Diagnóstico
+crema_payload_bad = schemas.ValidateCremaPayload(
+    name="x",
+    description="",
+    level="NIVEL_DESCONOCIDO",
+    calculation_type="TIPO_INVALIDO",
+    unit_of_measure="",
+    target_value=0.0,
+    frequency="diaria_imposible",
+)
+res_bad = crud_projects.validate_crema_indicator(crema_payload_bad)
+if res_bad and res_bad.get("score", 0) < 50.0 and res_bad.get("status") == "DEFICIENTE":
+    ok(f"Microservicio CREMA detectó indicador deficiente: {res_bad['score']}/100 puntos (Status: {res_bad['status']})")
+    crits_bad = res_bad.get("criteria", {})
+    recs_count = sum(len(c.get("recommendations", [])) for c in crits_bad.values())
+    if recs_count >= 3:
+        ok(f"Diagnóstico metodológico generó {recs_count} recomendaciones correctivas precisas")
+    else:
+        fail(f"Recomendaciones insuficientes: {recs_count}")
+else:
+    fail(f"Falla en detección de indicador deficiente: {res_bad}")
+
+# 3. Crear Indicador MGA con Autoevaluación CREMA y Código Correlativo
+indicator_in = schemas.ProjectIndicatorCreate(
+    name="Tasa de avance en adecuación de infraestructura acústica",
+    description="Seguimiento de acondicionamiento de sonido y paneles acústicos",
+    level="PRODUCTO_PRINCIPAL",
+    calculation_type="PORCENTAJE_PROPORCION",
+    unit_of_measure="%",
+    baseline_value=0.0,
+    target_value=100.0,
+    frequency="mensual",
+    period_targets={"2026-Q1": 25.0, "2026-Q2": 50.0, "2026-Q3": 75.0, "2026-Q4": 100.0},
+)
+test_indicator = crud_projects.create_project_indicator(
+    db,
+    project.id,
+    indicator_in,
+    created_by=u1.id,
+    sede_id=project.sede_id,
+)
+if test_indicator and test_indicator.code.startswith("IND-") and test_indicator.crema_score >= 85.0:
+    ok(f"Indicador MGA creado exitosamente: Código={test_indicator.code}, Nombre='{test_indicator.name}' (Score CREMA: {test_indicator.crema_score}/100)")
+    if test_indicator.creator_name:
+        ok(f"Trazabilidad de creador verificada: {test_indicator.creator_name} (Axioma 1)")
+    else:
+        fail("Nombre de creador no poblado en ProjectIndicator")
+else:
+    fail("Error creando ProjectIndicator")
+
+# 4. Listar Indicadores del Proyecto
+indicators_list = crud_projects.get_project_indicators(db, project.id, sede_id=project.sede_id)
+if indicators_list and len(indicators_list) >= 1 and any(i.id == test_indicator.id for i in indicators_list):
+    ok(f"Listado de indicadores de proyecto verificado: {len(indicators_list)} indicador(es) obtenido(s)")
+else:
+    fail("Indicador recién creado no encontrado en get_project_indicators")
+
+# 5. Registro Periódico de Avance y Cálculo de SPI (Schedule Performance Index)
+# Período 1: En meta (25.0 vs 25.0 => SPI = 1.0)
+rec1_in = schemas.ProjectIndicatorRecordCreate(
+    period="2026-Q1",
+    target_value=25.0,
+    actual_value=25.0,
+    notes="Metas del primer trimestre cumplidas según cronograma",
+    evidence_url="https://drive.google.com/file/d/test-q1",
+)
+rec1 = crud_projects.create_project_indicator_record(
+    db,
+    test_indicator.id,
+    rec1_in,
+    reported_by=u2.id,
+    sede_id=project.sede_id,
+)
+if rec1 and rec1.spi == 1.0 and rec1.actual_value == 25.0:
+    ok(f"Registro Q1 creado: Real={rec1.actual_value} / Meta={rec1.target_value} -> SPI={rec1.spi} (Cumplimiento Óptimo)")
+else:
+    fail(f"Falla calculando SPI en Q1: {rec1.spi if rec1 else 'None'}")
+
+# Período 2: Subejecución / Retraso (40.0 vs 50.0 => SPI = 0.8)
+rec2_in = schemas.ProjectIndicatorRecordCreate(
+    period="2026-Q2",
+    target_value=50.0,
+    actual_value=40.0,
+    notes="Retraso leve en entrega de paneles acústicos importados",
+    evidence_url="https://drive.google.com/file/d/test-q2",
+)
+rec2 = crud_projects.create_project_indicator_record(
+    db,
+    test_indicator.id,
+    rec2_in,
+    reported_by=u3.id,
+    sede_id=project.sede_id,
+)
+if rec2 and rec2.spi == 0.8 and rec2.actual_value == 40.0:
+    ok(f"Registro Q2 creado: Real={rec2.actual_value} / Meta={rec2.target_value} -> SPI={rec2.spi} (Alerta de Retraso detectada)")
+else:
+    fail(f"Falla calculando SPI en Q2: {rec2.spi if rec2 else 'None'}")
+
+# 6. Consultar Indicador Enriquecido con Records y Last SPI
+reloaded_ind = crud_projects.get_project_indicator(db, test_indicator.id, project_id=project.id, sede_id=project.sede_id)
+if reloaded_ind and reloaded_ind.records_count == 2 and reloaded_ind.last_spi == 0.8 and reloaded_ind.current_value == 40.0:
+    ok(f"Indicador enriquecido verificado: {reloaded_ind.records_count} mediciones registradas, Último SPI={reloaded_ind.last_spi}, Valor actual={reloaded_ind.current_value}%")
+else:
+    fail(f"Estado de indicador enriquecido inválido: count={getattr(reloaded_ind, 'records_count', None)}, last_spi={getattr(reloaded_ind, 'last_spi', None)}, current_val={getattr(reloaded_ind, 'current_value', None)}")
+
+# 7. Actualización de Indicador
+update_in = schemas.ProjectIndicatorUpdate(
+    description="Seguimiento de acondicionamiento de sonido y acústica - Fase Refinada",
+    target_value=100.0,
+)
+updated_ind = crud_projects.update_project_indicator(
+    db,
+    test_indicator.id,
+    update_in,
+    user_id=u1.id,
+    sede_id=project.sede_id,
+)
+if updated_ind and "Fase Refinada" in updated_ind.description:
+    ok("Actualización de indicador verificada con trazabilidad UTC")
+else:
+    fail("Falla actualizando ProjectIndicator")
+
+# 8. Aislamiento Multi-Tenant (Axioma 3) en Indicadores
+try:
+    crud_projects.get_project_indicators(db, project.id, sede_id=foreign_sede_id)
+    fail("Falla de seguridad multi-tenant: get_project_indicators no rechazó sede no autorizada")
+except ValueError:
+    ok("Aislamiento Multi-Tenant (Axioma 3) verificado en get_project_indicators (ValueError arrojado)")
+
+try:
+    crud_projects.create_project_indicator_record(
+        db,
+        test_indicator.id,
+        rec1_in,
+        reported_by=u1.id,
+        sede_id=foreign_sede_id,
+    )
+    fail("Falla de seguridad multi-tenant: create_project_indicator_record no rechazó sede no autorizada")
+except ValueError:
+    ok("Aislamiento Multi-Tenant (Axioma 3) verificado en create_project_indicator_record (ValueError arrojado)")
+
+# 9. Soft-Delete de Indicador
+deleted = crud_projects.delete_project_indicator(db, test_indicator.id, user_id=u1.id, sede_id=project.sede_id)
+if deleted:
+    ind_after = crud_projects.get_project_indicator(db, test_indicator.id, sede_id=project.sede_id)
+    if ind_after is None:
+        ok("Soft-delete de indicador MGA verificado exitosamente (Axioma 2)")
+    else:
+        fail("Indicador soft-deleted todavía accesible")
+else:
+    fail("Falla ejecutando delete_project_indicator")
+
+
 # ──────────────────────────────────────────────────────────────
 section(f"RESUMEN: {PASS} passed, {FAIL} failed")
 # ──────────────────────────────────────────────────────────────

@@ -406,6 +406,14 @@ from backend.crud.projects import (
     generate_project_summary_pdf,
     generate_project_tasks_csv,
     generate_project_expenses_csv,
+    validate_crema_indicator,
+    get_project_indicators,
+    get_project_indicator,
+    create_project_indicator,
+    update_project_indicator,
+    delete_project_indicator,
+    create_project_indicator_record,
+    get_project_indicator_records,
 )
 
 # ── Wiki ───────────────────────────────────────────────────────────────────
