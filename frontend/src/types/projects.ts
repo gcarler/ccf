@@ -759,6 +759,44 @@ export interface ProjectIndicatorUpdate {
   period_targets?: Record<string, number>;
 }
 
+// ============================================================================
+// Bóveda Documental y Visor Universal Embebido (Super-PRO Files Fase 2)
+// ============================================================================
+
+export type ProjectFileSource = 'local' | 'drive' | 'dropbox' | 'onedrive';
+
+export interface ProjectFileRecord {
+  id: string;
+  project_id: string;
+  name: string;
+  description?: string | null;
+  category: string;
+  file_source: ProjectFileSource;
+  file_url: string;
+  file_type?: string | null;
+  file_size?: number | null;
+  drive_file_id?: string | null;
+  embed_url?: string | null;
+  task_id?: string | null;
+  task_title?: string | null;
+  phase_id?: string | null;
+  phase_name?: string | null;
+  uploaded_by?: string | null;
+  uploader_name?: string | null;
+  created_at: string;
+  updated_at?: string | null;
+}
+
+export interface ProjectFilesSummary {
+  project_id: string;
+  total_files: number;
+  total_size_bytes: number;
+  by_source: Record<string, number>;
+  by_category: Record<string, number>;
+  files: ProjectFileRecord[];
+}
+
+
 
 
 

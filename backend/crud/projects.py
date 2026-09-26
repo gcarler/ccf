@@ -3758,6 +3758,292 @@ def pin_project_comment(
     return comment
 
 
+# ── Bóveda Documental y Visor Universal Embebido (Super-PRO Files Fase 2) ──
+
+import re
+
+DRIVE_FILE_ID_PATTERNS = [
+    r"/file/d/([a-zA-Z0-9_-]+)",           # https://drive.google.com/file/d/ID/...
+    r"/document/d/([a-zA-Z0-9_-]+)",       # https://docs.google.com/document/d/ID/...
+    r"/spreadsheets/d/([a-zA-Z0-9_-]+)",   # https://docs.google.com/spreadsheets/d/ID/...
+    r"/presentation/d/([a-zA-Z0-9_-]+)",   # https://docs.google.com/presentation/d/ID/...
+    r"/forms/d/([a-zA-Z0-9_-]+)",          # https://docs.google.com/forms/d/ID/...
+    r"[?&]id=([a-zA-Z0-9_-]+)",            # https://drive.google.com/open?id=ID
+    r"^([a-zA-Z0-9_-]{8,})$",              # Bare ID
+]
+
+def extract_drive_file_id(url_or_id: str) -> Optional[str]:
+    """Extrae el ID de Google Drive a partir de una URL compartida o ID crudo."""
+    if not url_or_id:
+        return None
+    url_or_id = url_or_id.strip()
+    for pattern in DRIVE_FILE_ID_PATTERNS:
+        match = re.search(pattern, url_or_id)
+        if match:
+            return match.group(1)
+    return None
+
+def normalize_drive_embed_url(url_or_id: str) -> tuple[Optional[str], Optional[str], str]:
+    """Normaliza un enlace de Google Drive a formato embebido /preview.
+    
+    Retorna (drive_file_id, embed_url, inferred_type).
+    """
+    file_id = extract_drive_file_id(url_or_id)
+    if not file_id:
+        return None, None, "unknown"
+    
+    url_str = url_or_id.lower()
+    if "document/d/" in url_str:
+        embed_url = f"https://docs.google.com/document/d/{file_id}/preview"
+        inferred_type = "google_doc"
+    elif "spreadsheets/d/" in url_str:
+        embed_url = f"https://docs.google.com/spreadsheets/d/{file_id}/preview"
+        inferred_type = "google_sheet"
+    elif "presentation/d/" in url_str:
+        embed_url = f"https://docs.google.com/presentation/d/{file_id}/preview"
+        inferred_type = "google_slide"
+    elif "forms/d/" in url_str:
+        embed_url = f"https://docs.google.com/forms/d/{file_id}/viewform?embedded=true"
+        inferred_type = "google_form"
+    else:
+        embed_url = f"https://drive.google.com/file/d/{file_id}/preview"
+        inferred_type = "google_drive_file"
+        
+    return file_id, embed_url, inferred_type
+
+
+def create_project_file(
+    db: Session,
+    project_id: UUID | str,
+    *,
+    file_in: Optional[Any] = None,
+    name: Optional[str] = None,
+    file_url: Optional[str] = None,
+    file_source: str = "local",
+    category: str = "general",
+    description: Optional[str] = None,
+    file_type: Optional[str] = None,
+    file_size: Optional[int] = None,
+    drive_file_id: Optional[str] = None,
+    task_id: Optional[UUID | str] = None,
+    phase_id: Optional[UUID | str] = None,
+    uploaded_by: Optional[UUID | str] = None,
+    sede_id: Optional[UUID | str] = None,
+) -> models.ProjectFile:
+    """Crea un registro documental en la bóveda de project_files."""
+    if file_in is not None:
+        data = file_in.model_dump() if hasattr(file_in, "model_dump") else (file_in.dict() if hasattr(file_in, "dict") else dict(file_in))
+        name = data.get("name", name)
+        file_url = data.get("file_url", file_url)
+        file_source = data.get("file_source", file_source)
+        category = data.get("category", category)
+        description = data.get("description", description)
+        file_type = data.get("file_type", file_type)
+        file_size = data.get("file_size", file_size)
+        drive_file_id = data.get("drive_file_id", drive_file_id)
+        task_id = data.get("task_id", task_id)
+        phase_id = data.get("phase_id", phase_id)
+
+    if not name or not file_url:
+        raise ValueError("name y file_url son campos obligatorios")
+
+    project = get_project(db, project_id, sede_id=sede_id)
+    if not project:
+        raise ValueError("Proyecto no encontrado o no pertenece a la sede (Axioma 3)")
+
+    # Si es drive y no tiene drive_file_id, intentar extraerlo y normalizar
+    if file_source == "drive" or "drive.google.com" in file_url or "docs.google.com" in file_url:
+        d_id, _, inf_type = normalize_drive_embed_url(file_url)
+        if d_id:
+            drive_file_id = d_id
+            file_source = "drive"
+            if not file_type:
+                file_type = inf_type
+
+    now_utc = datetime.now(timezone.utc)
+    new_file = models.ProjectFile(
+        project_id=project.id,
+        name=name,
+        description=description,
+        category=category or "general",
+        file_source=file_source,
+        file_url=file_url,
+        file_type=file_type,
+        file_size=file_size,
+        drive_file_id=drive_file_id,
+        task_id=task_id,
+        phase_id=phase_id,
+        uploaded_by=uploaded_by,
+        sede_id=project.sede_id,
+        created_at=now_utc,
+        updated_at=now_utc,
+    )
+    db.add(new_file)
+    db.commit()
+    db.refresh(new_file)
+    return new_file
+
+
+def link_drive_file(
+    db: Session,
+    project_id: UUID | str,
+    *,
+    payload: Optional[Any] = None,
+    drive_url: Optional[str] = None,
+    name: Optional[str] = None,
+    description: Optional[str] = None,
+    category: str = "general",
+    task_id: Optional[UUID | str] = None,
+    phase_id: Optional[UUID | str] = None,
+    uploaded_by: Optional[UUID | str] = None,
+    sede_id: Optional[UUID | str] = None,
+) -> models.ProjectFile:
+    """Vincula un documento o carpeta de Google Drive a la bóveda del proyecto."""
+    if payload is not None:
+        data = payload.model_dump() if hasattr(payload, "model_dump") else (payload.dict() if hasattr(payload, "dict") else dict(payload))
+        drive_url = data.get("drive_url", drive_url)
+        name = data.get("name", name)
+        description = data.get("description", description)
+        category = data.get("category", category)
+        task_id = data.get("task_id", task_id)
+        phase_id = data.get("phase_id", phase_id)
+
+    if not drive_url:
+        raise ValueError("drive_url es obligatorio")
+
+    drive_file_id, embed_url, inferred_type = normalize_drive_embed_url(drive_url)
+    if not drive_file_id:
+        raise ValueError("La URL proporcionada no es un enlace válido de Google Drive o Google Docs.")
+
+    doc_name = name.strip() if name and name.strip() else f"Documento Drive ({drive_file_id[:8]})"
+
+    return create_project_file(
+        db,
+        project_id=project_id,
+        name=doc_name,
+        description=description,
+        category=category or "general",
+        file_source="drive",
+        file_url=drive_url,
+        file_type=inferred_type,
+        drive_file_id=drive_file_id,
+        task_id=task_id,
+        phase_id=phase_id,
+        uploaded_by=uploaded_by,
+        sede_id=sede_id,
+    )
+
+
+def get_project_files(
+    db: Session,
+    project_id: UUID | str,
+    *,
+    category: Optional[str] = None,
+    file_source: Optional[str] = None,
+    task_id: Optional[UUID | str] = None,
+    phase_id: Optional[UUID | str] = None,
+    search: Optional[str] = None,
+    sede_id: Optional[UUID | str] = None,
+) -> list[models.ProjectFile]:
+    """Obtiene los archivos activos de la bóveda documental del proyecto."""
+    project = get_project(db, project_id, sede_id=sede_id)
+    if not project:
+        raise ValueError("Proyecto no encontrado o no pertenece a la sede (Axioma 3)")
+
+    q = db.query(models.ProjectFile).filter(
+        models.ProjectFile.project_id == project.id,
+        models.ProjectFile.deleted_at.is_(None),
+    )
+    if category:
+        q = q.filter(models.ProjectFile.category == category)
+    if file_source:
+        q = q.filter(models.ProjectFile.file_source == file_source)
+    if task_id:
+        q = q.filter(models.ProjectFile.task_id == task_id)
+    if phase_id:
+        q = q.filter(models.ProjectFile.phase_id == phase_id)
+    if search:
+        term = f"%{search.strip()}%"
+        q = q.filter(models.ProjectFile.name.ilike(term) | models.ProjectFile.description.ilike(term))
+
+    return q.order_by(models.ProjectFile.created_at.desc()).all()
+
+
+def get_project_file(
+    db: Session,
+    file_id: UUID | str,
+    *,
+    project_id: Optional[UUID | str] = None,
+    sede_id: Optional[UUID | str] = None,
+) -> Optional[models.ProjectFile]:
+    """Obtiene un archivo individual por ID con validación de proyecto y sede."""
+    q = db.query(models.ProjectFile).filter(
+        models.ProjectFile.id == file_id,
+        models.ProjectFile.deleted_at.is_(None),
+    )
+    if project_id:
+        q = q.filter(models.ProjectFile.project_id == project_id)
+
+    f = q.first()
+    if not f:
+        return None
+
+    if sede_id is not None:
+        project = get_project(db, f.project_id, sede_id=sede_id)
+        if not project:
+            raise ValueError("Proyecto no encontrado o no pertenece a la sede (Axioma 3)")
+
+    return f
+
+
+def delete_project_file(
+    db: Session,
+    file_id: UUID | str,
+    *,
+    project_id: Optional[UUID | str] = None,
+    user_id: Optional[UUID | str] = None,
+    sede_id: Optional[UUID | str] = None,
+) -> bool:
+    """Soft-delete de archivo de la bóveda documental (Axioma 2)."""
+    f = get_project_file(db, file_id, project_id=project_id, sede_id=sede_id)
+    if not f:
+        return False
+
+    f.deleted_at = datetime.now(timezone.utc)
+    db.commit()
+    return True
+
+
+def get_project_files_summary(
+    db: Session,
+    project_id: UUID | str,
+    *,
+    sede_id: Optional[UUID | str] = None,
+) -> dict:
+    """Consolida el resumen métrico de la bóveda documental."""
+    files = get_project_files(db, project_id, sede_id=sede_id)
+    total_files = len(files)
+    total_size = sum(f.file_size or 0 for f in files)
+
+    by_source: dict[str, int] = {}
+    by_category: dict[str, int] = {}
+    for item in files:
+        src = item.file_source or "local"
+        by_source[src] = by_source.get(src, 0) + 1
+        cat = item.category or "general"
+        by_category[cat] = by_category.get(cat, 0) + 1
+
+    return {
+        "project_id": str(project_id),
+        "total_files": total_files,
+        "total_size_bytes": total_size,
+        "by_source": by_source,
+        "by_category": by_category,
+        "files": files,
+    }
+
+
+
 
 
 

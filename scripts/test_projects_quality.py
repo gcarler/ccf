@@ -35,6 +35,7 @@ os.chdir(os.path.dirname(os.path.abspath(__file__)) + "/..")
 from backend.core.database import SessionLocal
 from backend.core.security import get_password_hash
 from backend import schemas
+from backend import models
 from backend.models import *  # noqa: F401
 from backend.models_auth import RolPlataforma as _RolPlataforma
 from backend.models_crm import Persona  # explicit for safety alongside wildcard
@@ -113,6 +114,8 @@ test_projs = db.query(Project).filter(
     | (Project.title.ilike("%Proyecto Vía Endpoint%"))
 ).all()
 for proj in test_projs:
+    db.query(models.ProjectFile).filter(models.ProjectFile.project_id == proj.id).delete(synchronize_session=False)
+    db.query(models.ProjectUserFavorite).filter(models.ProjectUserFavorite.project_id == proj.id).delete(synchronize_session=False)
     db.query(ProjectAutomationRule).filter(ProjectAutomationRule.project_id == proj.id).delete(synchronize_session=False)
     db.query(ProjectActivityLog).filter(ProjectActivityLog.project_id == proj.id).delete(synchronize_session=False)
     db.query(ProjectDocument).filter(ProjectDocument.project_id == proj.id).delete(synchronize_session=False)
@@ -2022,6 +2025,195 @@ else:
 
 
 # ──────────────────────────────────────────────────────────────
+section("20. PRUEBAS DE BÓVEDA DOCUMENTAL Y VISOR GOOGLE DRIVE (SUPER-PRO FILES FASE 2)")
+# ──────────────────────────────────────────────────────────────
+
+# 1. Normalizador Inteligente de Google Drive
+test_drive_urls = [
+    ("https://drive.google.com/file/d/1Z2X3C4V5B6N7M8L9K0J/view?usp=sharing", "1Z2X3C4V5B6N7M8L9K0J"),
+    ("https://docs.google.com/document/d/doc_sample_abc_123/edit", "doc_sample_abc_123"),
+    ("https://docs.google.com/spreadsheets/d/sheet_sample_xyz_456/edit#gid=0", "sheet_sample_xyz_456"),
+    ("https://drive.google.com/open?id=open_sample_789", "open_sample_789"),
+    ("raw_id_sample_888", "raw_id_sample_888"),
+]
+
+all_ids_ok = True
+for url, expected_id in test_drive_urls:
+    extracted = crud_projects.extract_drive_file_id(url)
+    if extracted != expected_id:
+        fail(f"extract_drive_file_id falló para '{url}': esperado '{expected_id}', obtenido '{extracted}'")
+        all_ids_ok = False
+
+if all_ids_ok:
+    ok(f"extract_drive_file_id extrajo correctamente {len(test_drive_urls)} identificadores de Drive en diversos formatos")
+
+# Normalización de Embed URLs
+norm_doc_id, norm_doc_embed, norm_doc_type = crud_projects.normalize_drive_embed_url(
+    "https://docs.google.com/document/d/doc_sample_abc_123/edit?usp=sharing"
+)
+if norm_doc_id == "doc_sample_abc_123" and norm_doc_embed == "https://docs.google.com/document/d/doc_sample_abc_123/preview" and norm_doc_type == "google_doc":
+    ok("normalize_drive_embed_url transformó correctamente Google Doc a endpoint canónico /preview")
+else:
+    fail(f"Falla en normalización de Google Doc: {norm_doc_id}, {norm_doc_embed}, {norm_doc_type}")
+
+norm_sheet_id, norm_sheet_embed, norm_sheet_type = crud_projects.normalize_drive_embed_url(
+    "https://docs.google.com/spreadsheets/d/sheet_sample_xyz_456/edit#gid=0"
+)
+if norm_sheet_id == "sheet_sample_xyz_456" and norm_sheet_embed == "https://docs.google.com/spreadsheets/d/sheet_sample_xyz_456/preview" and norm_sheet_type == "google_sheet":
+    ok("normalize_drive_embed_url transformó correctamente Google Sheet a /preview")
+else:
+    fail(f"Falla en normalización de Google Sheet: {norm_sheet_id}, {norm_sheet_embed}, {norm_sheet_type}")
+
+norm_file_id, norm_file_embed, norm_file_type = crud_projects.normalize_drive_embed_url(
+    "https://drive.google.com/file/d/1Z2X3C4V5B6N7M8L9K0J/view"
+)
+if norm_file_id == "1Z2X3C4V5B6N7M8L9K0J" and norm_file_embed == "https://drive.google.com/file/d/1Z2X3C4V5B6N7M8L9K0J/preview" and norm_file_type == "google_drive_file":
+    ok("normalize_drive_embed_url transformó correctamente Google Drive File a /preview")
+else:
+    fail(f"Falla en normalización de Drive File: {norm_file_id}, {norm_file_embed}, {norm_file_type}")
+
+# 2. Creación de Archivo Local en Bóveda
+local_file_payload = schemas.ProjectFileCreate(
+    name="Plano_Estructural_Nivel_1.pdf",
+    description="Plano arquitectónico de cimentación y zapatas",
+    category="planos",
+    file_source="local",
+    file_url="/storage/projects/boveda/Plano_Estructural_Nivel_1.pdf",
+    file_type="application/pdf",
+    file_size=2540000,
+)
+created_local_file = crud_projects.create_project_file(
+    db,
+    project_id=project.id,
+    file_in=local_file_payload,
+    uploaded_by=u1.id,
+    sede_id=project.sede_id,
+)
+if created_local_file and created_local_file.id and created_local_file.uploaded_by == u1.id and created_local_file.category == "planos":
+    ok(f"Archivo local creado en Bóveda con UUID {created_local_file.id} por {u1.id} (Axioma 1 y 3)")
+else:
+    fail(f"Falla creando archivo local: {created_local_file}")
+
+# 3. Vinculación de Documento Google Drive
+drive_link_payload = schemas.ProjectFileLinkDrivePayload(
+    drive_url="https://docs.google.com/document/d/1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms/edit?usp=sharing",
+    name="Acta de Comité de Obra",
+    description="Minuta ejecutiva de acuerdos aprobados",
+    category="actas",
+)
+linked_drive_file = crud_projects.link_drive_file(
+    db,
+    project_id=project.id,
+    payload=drive_link_payload,
+    uploaded_by=u2.id,
+    sede_id=project.sede_id,
+)
+if linked_drive_file and linked_drive_file.file_source == "drive" and linked_drive_file.drive_file_id == "1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms":
+    if linked_drive_file.embed_url and linked_drive_file.embed_url.endswith("/preview"):
+        ok(f"Documento Google Drive vinculado con éxito en Bóveda: embed_url={linked_drive_file.embed_url}")
+    else:
+        fail(f"embed_url no normalizado: {linked_drive_file.embed_url}")
+else:
+    fail(f"Falla vinculando documento Google Drive: {linked_drive_file}")
+
+# 4. Consulta y Filtros de Bóveda
+all_boveda_files = crud_projects.get_project_files(db, project_id=project.id, sede_id=project.sede_id)
+if len(all_boveda_files) >= 2:
+    ok(f"get_project_files retornó {len(all_boveda_files)} archivos en la bóveda del proyecto")
+else:
+    fail(f"get_project_files retornó conteo insuficiente: {len(all_boveda_files)}")
+
+# Filtro por categoría 'planos'
+planos_files = crud_projects.get_project_files(db, project_id=project.id, category="planos", sede_id=project.sede_id)
+if len(planos_files) >= 1 and all(f.category == "planos" for f in planos_files):
+    ok("Filtro por categoría 'planos' verificado exitosamente")
+else:
+    fail(f"Falla en filtro por categoría 'planos': {len(planos_files)}")
+
+# Filtro por origen 'drive'
+drive_files = crud_projects.get_project_files(db, project_id=project.id, file_source="drive", sede_id=project.sede_id)
+if len(drive_files) >= 1 and all(f.file_source == "drive" for f in drive_files):
+    ok("Filtro por file_source 'drive' verificado exitosamente")
+else:
+    fail(f"Falla en filtro por file_source 'drive': {len(drive_files)}")
+
+# Filtro por búsqueda de texto 'Estructural'
+search_files = crud_projects.get_project_files(db, project_id=project.id, search="Estructural", sede_id=project.sede_id)
+if len(search_files) >= 1 and any("Estructural" in f.name for f in search_files):
+    ok("Filtro por término de búsqueda verificado exitosamente")
+else:
+    fail(f"Falla en búsqueda de archivos: {len(search_files)}")
+
+# 5. Resumen Métrico de Bóveda
+boveda_summary = crud_projects.get_project_files_summary(db, project_id=project.id, sede_id=project.sede_id)
+if boveda_summary and boveda_summary.get("total_files", 0) >= 2:
+    if "local" in boveda_summary.get("by_source", {}) and "drive" in boveda_summary.get("by_source", {}):
+        ok(f"Resumen de bóveda obtenido: {boveda_summary['total_files']} archivos, {boveda_summary['total_size_bytes']} bytes")
+    else:
+        fail(f"by_source incompleto en resumen: {boveda_summary.get('by_source')}")
+else:
+    fail(f"Falla en get_project_files_summary: {boveda_summary}")
+
+# 6. Soft-delete UTC
+temp_del_payload = schemas.ProjectFileCreate(
+    name="Borrador_Temporal.txt",
+    file_source="local",
+    file_url="/storage/projects/boveda/Borrador_Temporal.txt",
+)
+temp_del_file = crud_projects.create_project_file(
+    db,
+    project_id=project.id,
+    file_in=temp_del_payload,
+    uploaded_by=u1.id,
+    sede_id=project.sede_id,
+)
+del_success = crud_projects.delete_project_file(
+    db,
+    project_id=project.id,
+    file_id=temp_del_file.id,
+    sede_id=project.sede_id,
+)
+if del_success:
+    db.refresh(temp_del_file)
+    if temp_del_file.deleted_at is not None:
+        # Verificar que no aparece en listado activo
+        files_after_del = crud_projects.get_project_files(db, project_id=project.id, sede_id=project.sede_id)
+        if not any(f.id == temp_del_file.id for f in files_after_del):
+            ok(f"Soft-delete UTC verificado: archivo marcado con deleted_at={temp_del_file.deleted_at} y excluido de listas")
+        else:
+            fail("Archivo eliminado aún aparece en listado activo")
+    else:
+        fail("deleted_at no asignado en soft-delete")
+else:
+    fail("delete_project_file retornó False")
+
+# 7. Aislamiento Multi-Tenant (Axioma 3)
+try:
+    crud_projects.get_project_files(db, project_id=project.id, sede_id=foreign_sede_id)
+    fail("Falla multi-tenant: get_project_files permitió sede ajena")
+except ValueError:
+    ok("Aislamiento Multi-Tenant (Axioma 3) verificado en get_project_files (ValueError arrojado)")
+
+try:
+    crud_projects.create_project_file(db, project_id=project.id, file_in=local_file_payload, uploaded_by=u1.id, sede_id=foreign_sede_id)
+    fail("Falla multi-tenant: create_project_file permitió sede ajena")
+except ValueError:
+    ok("Aislamiento Multi-Tenant (Axioma 3) verificado en create_project_file (ValueError arrojado)")
+
+try:
+    crud_projects.link_drive_file(db, project_id=project.id, payload=drive_link_payload, uploaded_by=u1.id, sede_id=foreign_sede_id)
+    fail("Falla multi-tenant: link_drive_file permitió sede ajena")
+except ValueError:
+    ok("Aislamiento Multi-Tenant (Axioma 3) verificado en link_drive_file (ValueError arrojado)")
+
+try:
+    crud_projects.delete_project_file(db, project_id=project.id, file_id=created_local_file.id, sede_id=foreign_sede_id)
+    fail("Falla multi-tenant: delete_project_file permitió sede ajena")
+except ValueError:
+    ok("Aislamiento Multi-Tenant (Axioma 3) verificado en delete_project_file (ValueError arrojado)")
+
+
+# ──────────────────────────────────────────────────────────────
 section(f"RESUMEN: {PASS} passed, {FAIL} failed")
 # ──────────────────────────────────────────────────────────────
 
@@ -2039,3 +2231,4 @@ else:
     print(f"\n  {GREEN}✓ Todos los tests pasaron. El módulo de proyectos funciona correctamente.{NC}\n")
 
 db.close()
+

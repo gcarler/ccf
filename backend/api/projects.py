@@ -4802,6 +4802,263 @@ def pin_task_comment_endpoint(
     return _project_comment_to_schema(comment, persona)
 
 
+# ══════════════════════════════════════════════════════════════════════════════
+# 19. BÓVEDA DOCUMENTAL Y VISOR UNIVERSAL EMBEBIDO (SUPER-PRO FILES FASE 2)
+# ══════════════════════════════════════════════════════════════════════════════
+
+def _project_file_to_schema(file_obj: models.ProjectFile) -> schemas.ProjectFile:
+    embed_url = file_obj.file_url
+    if file_obj.file_source == "drive" or file_obj.drive_file_id:
+        _, emb, _ = crud.normalize_drive_embed_url(file_obj.file_url)
+        if emb:
+            embed_url = emb
+
+    uploader_name = None
+    if file_obj.uploader:
+        uploader_name = (
+            getattr(file_obj.uploader, "nombre_completo", None)
+            or f"{getattr(file_obj.uploader, 'nombre', '')} {getattr(file_obj.uploader, 'apellido', '')}".strip()
+            or "Usuario"
+        )
+
+    task_title = getattr(file_obj.task, "title", None) if file_obj.task else None
+    phase_name = getattr(file_obj.phase, "name", None) if file_obj.phase else None
+
+    return schemas.ProjectFile(
+        id=str(file_obj.id),
+        project_id=str(file_obj.project_id),
+        name=file_obj.name,
+        description=file_obj.description,
+        category=file_obj.category,
+        file_source=file_obj.file_source,
+        file_url=file_obj.file_url,
+        embed_url=embed_url,
+        file_type=file_obj.file_type,
+        file_size=file_obj.file_size,
+        drive_file_id=file_obj.drive_file_id,
+        task_id=str(file_obj.task_id) if file_obj.task_id else None,
+        task_title=task_title,
+        phase_id=str(file_obj.phase_id) if file_obj.phase_id else None,
+        phase_name=phase_name,
+        uploaded_by=str(file_obj.uploaded_by) if file_obj.uploaded_by else None,
+        uploader_name=uploader_name,
+        created_at=file_obj.created_at,
+        updated_at=file_obj.updated_at,
+    )
+
+
+@router.post(
+    "/{project_id}/files/upload",
+    response_model=schemas.ProjectFile,
+    tags=["Projects Boveda Documental Super-PRO"],
+)
+async def upload_project_file_endpoint(
+    project_id: str,
+    file: UploadFile = File(...),
+    name: Optional[str] = Form(None),
+    description: Optional[str] = Form(None),
+    category: Optional[str] = Form("general"),
+    task_id: Optional[str] = Form(None),
+    phase_id: Optional[str] = Form(None),
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("projects", "edit")),
+):
+    """Sube un archivo local a la bóveda documental del proyecto."""
+    user_sede = get_user_sede_id(db, current_user.id)
+    _ensure_project(db, project_id, user_sede=user_sede)
+
+    filename = sanitize_filename(file.filename or "archivo")
+    contents = await file.read()
+
+    if len(contents) > MAX_UPLOAD_SIZE:
+        raise HTTPException(status_code=400, detail="El archivo excede el tamaño máximo permitido")
+
+    url = storage_service.save_file(contents, filename, subfolder="projects/boveda")
+    persona_id = _get_persona_id_for_user(db, current_user.id)
+
+    doc_name = name.strip() if name and name.strip() else filename
+
+    try:
+        new_file = crud.create_project_file(
+            db,
+            _to_uuid(project_id),
+            name=doc_name,
+            file_url=url,
+            file_source="local",
+            category=category or "general",
+            description=description,
+            file_type=file.content_type,
+            file_size=len(contents),
+            task_id=_to_uuid(task_id) if task_id else None,
+            phase_id=_to_uuid(phase_id) if phase_id else None,
+            uploaded_by=persona_id,
+            sede_id=user_sede,
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+    _log_project_activity(
+        db,
+        project_id,
+        current_user.id,
+        "file_uploaded",
+        f"Archivo '{doc_name}' subido a la bóveda documental",
+    )
+    return _project_file_to_schema(new_file)
+
+
+@router.post(
+    "/{project_id}/files/link-drive",
+    response_model=schemas.ProjectFile,
+    tags=["Projects Boveda Documental Super-PRO"],
+)
+def link_project_drive_file_endpoint(
+    project_id: str,
+    payload: schemas.ProjectFileLinkDrivePayload,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("projects", "edit")),
+):
+    """Vincula un documento o recurso de Google Drive a la bóveda del proyecto."""
+    user_sede = get_user_sede_id(db, current_user.id)
+    _ensure_project(db, project_id, user_sede=user_sede)
+
+    persona_id = _get_persona_id_for_user(db, current_user.id)
+
+    try:
+        drive_file = crud.link_drive_file(
+            db,
+            _to_uuid(project_id),
+            drive_url=payload.drive_url,
+            name=payload.name,
+            description=payload.description,
+            category=payload.category or "general",
+            task_id=_to_uuid(payload.task_id) if payload.task_id else None,
+            phase_id=_to_uuid(payload.phase_id) if payload.phase_id else None,
+            uploaded_by=persona_id,
+            sede_id=user_sede,
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+    _log_project_activity(
+        db,
+        project_id,
+        current_user.id,
+        "drive_file_linked",
+        f"Documento de Google Drive '{drive_file.name}' vinculado a la bóveda",
+    )
+    return _project_file_to_schema(drive_file)
+
+
+@router.get(
+    "/{project_id}/files",
+    response_model=List[schemas.ProjectFile],
+    tags=["Projects Boveda Documental Super-PRO"],
+)
+def list_project_files_endpoint(
+    project_id: str,
+    category: Optional[str] = Query(None, description="Filtrar por categoría"),
+    file_source: Optional[str] = Query(None, description="Filtrar por origen (local, drive, etc.)"),
+    task_id: Optional[str] = Query(None, description="Filtrar por tarea"),
+    phase_id: Optional[str] = Query(None, description="Filtrar por fase"),
+    search: Optional[str] = Query(None, description="Término de búsqueda"),
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("projects", "read")),
+):
+    """Obtiene el listado de archivos de la bóveda documental del proyecto."""
+    user_sede = get_user_sede_id(db, current_user.id)
+    _ensure_project(db, project_id, user_sede=user_sede)
+
+    try:
+        files = crud.get_project_files(
+            db,
+            _to_uuid(project_id),
+            category=category,
+            file_source=file_source,
+            task_id=_to_uuid(task_id) if task_id else None,
+            phase_id=_to_uuid(phase_id) if phase_id else None,
+            search=search,
+            sede_id=user_sede,
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+    return [_project_file_to_schema(f) for f in files]
+
+
+@router.get(
+    "/{project_id}/files/summary",
+    response_model=schemas.ProjectFilesSummary,
+    tags=["Projects Boveda Documental Super-PRO"],
+)
+def get_project_files_summary_endpoint(
+    project_id: str,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("projects", "read")),
+):
+    """Obtiene el resumen consolidado de la bóveda documental del proyecto."""
+    user_sede = get_user_sede_id(db, current_user.id)
+    _ensure_project(db, project_id, user_sede=user_sede)
+
+    try:
+        summary = crud.get_project_files_summary(
+            db,
+            _to_uuid(project_id),
+            sede_id=user_sede,
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+    return schemas.ProjectFilesSummary(
+        project_id=str(project_id),
+        total_files=summary["total_files"],
+        total_size_bytes=summary["total_size_bytes"],
+        by_source=summary["by_source"],
+        by_category=summary["by_category"],
+        files=[_project_file_to_schema(f) for f in summary["files"]],
+    )
+
+
+@router.delete(
+    "/{project_id}/files/{file_id}",
+    response_model=dict,
+    tags=["Projects Boveda Documental Super-PRO"],
+)
+def delete_project_file_endpoint(
+    project_id: str,
+    file_id: str,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("projects", "edit")),
+):
+    """Elimina (soft-delete) un archivo de la bóveda documental del proyecto."""
+    user_sede = get_user_sede_id(db, current_user.id)
+    _ensure_project(db, project_id, user_sede=user_sede)
+
+    try:
+        success = crud.delete_project_file(
+            db,
+            _to_uuid(file_id),
+            project_id=_to_uuid(project_id),
+            user_id=current_user.id,
+            sede_id=user_sede,
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+    if not success:
+        raise HTTPException(status_code=404, detail="Archivo no encontrado en este proyecto")
+
+    _log_project_activity(
+        db,
+        project_id,
+        current_user.id,
+        "file_deleted",
+        f"Archivo '{file_id}' eliminado de la bóveda documental",
+    )
+    return {"deleted": True, "file_id": file_id}
+
+
+
 
 
 

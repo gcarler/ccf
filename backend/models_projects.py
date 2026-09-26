@@ -1,8 +1,10 @@
 import uuid
 import uuid as _uuid
+from typing import Optional, Any
 
 from sqlalchemy import (
     JSON,
+    BigInteger,
     Boolean,
     Column,
     DateTime,
@@ -56,6 +58,7 @@ class Project(Base):
     time_logs = relationship("ProjectTimeLog", back_populates="project", cascade="all, delete-orphan")
     automations = relationship("ProjectAutomationRule", back_populates="project", cascade="all, delete-orphan")
     indicators = relationship("ProjectIndicator", back_populates="project", cascade="all, delete-orphan")
+    files = relationship("ProjectFile", back_populates="project", cascade="all, delete-orphan")
 
     # ``name`` is a thin alias over ``title`` so callers that pass or read
     # ``name`` (e.g. ``tests/test_crud_integration.py::TestProjectsCrud``)
@@ -480,6 +483,53 @@ class ProjectUserFavorite(Base):
 
     project = relationship("Project")
     persona = relationship("Persona", foreign_keys=[persona_id])
+
+
+class ProjectFile(Base):
+    """Bóveda documental y visor universal embebido (Google Drive, PDFs, imágenes)."""
+    __tablename__ = "project_files"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    project_id = Column(UUID(as_uuid=True), ForeignKey("projects.id", ondelete="CASCADE"), nullable=False, index=True)
+    name = Column(String(255), nullable=False)
+    description = Column(Text, nullable=True)
+    category = Column(String(100), default="general", nullable=False, index=True)
+    file_source = Column(String(50), default="local", nullable=False, index=True)  # 'local', 'drive', 'dropbox', 'onedrive'
+    file_url = Column(Text, nullable=False)
+    file_type = Column(String(100), nullable=True)
+    file_size = Column(BigInteger, nullable=True)
+    drive_file_id = Column(String(255), nullable=True, index=True)
+    task_id = Column(UUID(as_uuid=True), ForeignKey("project_tasks.id", ondelete="SET NULL"), nullable=True, index=True)
+    phase_id = Column(UUID(as_uuid=True), ForeignKey("project_phases.id", ondelete="SET NULL"), nullable=True, index=True)
+    uploaded_by = Column(UUID(as_uuid=True), ForeignKey("personas.id", ondelete="RESTRICT"), nullable=True, index=True)
+    sede_id = Column(UUID(as_uuid=True), ForeignKey("sedes.id", ondelete="SET NULL"), nullable=True, index=True)
+    created_at = Column(DateTime(timezone=True), default=_utcnow, nullable=False)
+    updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow, nullable=True)
+    deleted_at = Column(DateTime(timezone=True), nullable=True, index=True)
+
+    project = relationship("Project", back_populates="files")
+    task = relationship("ProjectTask", backref="project_files")
+    phase = relationship("ProjectPhase", backref="project_files")
+    uploader = relationship("Persona", foreign_keys=[uploaded_by])
+    sede = relationship("Sede", foreign_keys=[sede_id])
+
+    @property
+    def embed_url(self) -> Optional[str]:
+        """Calcula dinámicamente la URL embebible para iframes."""
+        if self.file_source == "drive" or (self.file_url and ("drive.google.com" in self.file_url or "docs.google.com" in self.file_url)):
+            if self.drive_file_id:
+                url_str = (self.file_url or "").lower()
+                if "document/d/" in url_str:
+                    return f"https://docs.google.com/document/d/{self.drive_file_id}/preview"
+                elif "spreadsheets/d/" in url_str:
+                    return f"https://docs.google.com/spreadsheets/d/{self.drive_file_id}/preview"
+                elif "presentation/d/" in url_str:
+                    return f"https://docs.google.com/presentation/d/{self.drive_file_id}/preview"
+                elif "forms/d/" in url_str:
+                    return f"https://docs.google.com/forms/d/{self.drive_file_id}/viewform?embedded=true"
+                return f"https://drive.google.com/file/d/{self.drive_file_id}/preview"
+        return self.file_url
+
 
 
 

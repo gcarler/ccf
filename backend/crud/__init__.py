@@ -417,6 +417,14 @@ from backend.crud.projects import (
     toggle_task_favorite,
     get_project_user_favorites,
     pin_project_comment,
+    normalize_drive_embed_url,
+    extract_drive_file_id,
+    create_project_file,
+    link_drive_file,
+    get_project_files,
+    get_project_file,
+    delete_project_file,
+    get_project_files_summary,
 )
 
 # ── Wiki ───────────────────────────────────────────────────────────────────

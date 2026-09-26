@@ -22,6 +22,7 @@ import {
     Zap,
     FileText,
     BarChart3,
+    FolderArchive,
 } from 'lucide-react';
 import WorkspaceToolbar from '@/components/WorkspaceToolbar';
 
@@ -41,6 +42,7 @@ import { ProjectTemplateCatalogDrawer } from '@/components/projects/ProjectTempl
 import { ProjectAutomationsDrawer } from '@/components/projects/ProjectAutomationsDrawer';
 import { ProjectReportDrawer } from '@/components/projects/ProjectReportDrawer';
 import { ProjectIndicatorsDrawer } from '@/components/projects/ProjectIndicatorsDrawer';
+import { ProjectDriveDrawer } from '@/components/projects/ProjectDriveDrawer';
 import { ProjectUpdateProvider } from '@/context/ProjectUpdateContext';
 import { ProjectViewsContent } from '@/components/projects/ProjectViewsContent';
 import ProjectContextPanel from '@/components/projects/ProjectContextPanel';
@@ -140,6 +142,7 @@ export default function ProjectDetailPage() {
     const [showAutomationsDrawer, setShowAutomationsDrawer] = useState(false);
     const [showReportDrawer, setShowReportDrawer] = useState(false);
     const [showIndicatorsDrawer, setShowIndicatorsDrawer] = useState(false);
+    const [showDriveDrawer, setShowDriveDrawer] = useState(false);
     const [confirmAction, setConfirmAction] = useState<ConfirmActionState>(null);
 
     const handleDeleteProject = async () => {
@@ -262,6 +265,9 @@ export default function ProjectDetailPage() {
                             </button>
                             <button onClick={() => setShowIndicatorsDrawer(true)} className="px-3 py-1.5 bg-[hsl(var(--surface-2))] text-[hsl(var(--foreground))] rounded-lg text-2xs font-bold uppercase tracking-wide hover:bg-[hsl(var(--surface-3))] active:scale-95 transition-all flex items-center gap-1.5 border border-[hsl(var(--border))]">
                                 <BarChart3 size={14} className="text-[hsl(var(--primary))]" /> MGA / CREMA
+                            </button>
+                            <button onClick={() => setShowDriveDrawer(true)} className="px-3 py-1.5 bg-[hsl(var(--surface-2))] text-[hsl(var(--foreground))] rounded-lg text-2xs font-bold uppercase tracking-wide hover:bg-[hsl(var(--surface-3))] active:scale-95 transition-all flex items-center gap-1.5 border border-[hsl(var(--border))]">
+                                <FolderArchive size={14} className="text-[hsl(var(--primary))]" /> Bóveda & Drive
                             </button>
                             <button onClick={() => setShowProjectSettings(true)} className="px-3 py-1.5 bg-[hsl(var(--warning))] text-[hsl(var(--primary-foreground))] rounded-lg text-2xs font-bold uppercase tracking-wide hover:opacity-90 active:scale-95 transition-all flex items-center gap-2">
                                 <Edit3 size={14} /> Editar
@@ -407,6 +413,13 @@ export default function ProjectDetailPage() {
                     isOpen={showIndicatorsDrawer}
                     onClose={() => setShowIndicatorsDrawer(false)}
                     onIndicatorUpdated={() => reloadProject()}
+                />
+
+                <ProjectDriveDrawer
+                    projectId={project?.id || id}
+                    isOpen={showDriveDrawer}
+                    onClose={() => setShowDriveDrawer(false)}
+                    onFileUpdated={() => reloadProject()}
                 />
             </div>
         </ProjectUpdateProvider>

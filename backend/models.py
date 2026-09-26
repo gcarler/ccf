@@ -284,6 +284,7 @@ from backend.models_projects import (
     ProjectIndicator,
     ProjectIndicatorRecord,
     ProjectUserFavorite,
+    ProjectFile,
     ProjectWhiteboard,
     TaskSupply,
 )

@@ -1178,4 +1178,68 @@ class ProjectPinCommentPayload(BaseModel):
     is_pinned: Optional[bool] = None
 
 
+# ── Bóveda Documental y Visor Universal Embebido (Super-PRO Files Fase 2) ──
 
+class ProjectFileBase(BaseModel):
+    name: str = Field(..., min_length=1, max_length=255)
+    description: Optional[str] = None
+    category: str = Field(default="general", max_length=100)
+    file_source: Literal["local", "drive", "dropbox", "onedrive"] = "local"
+    file_url: str
+    file_type: Optional[str] = None
+    file_size: Optional[int] = None
+    drive_file_id: Optional[str] = None
+    task_id: Optional[UUIDStr] = None
+    phase_id: Optional[UUIDStr] = None
+
+
+class ProjectFileCreate(BaseModel):
+    name: str = Field(..., min_length=1, max_length=255)
+    description: Optional[str] = None
+    category: Optional[str] = "general"
+    file_source: Literal["local", "drive", "dropbox", "onedrive"] = "local"
+    file_url: str
+    file_type: Optional[str] = None
+    file_size: Optional[int] = None
+    drive_file_id: Optional[str] = None
+    task_id: Optional[UUIDStr] = None
+    phase_id: Optional[UUIDStr] = None
+
+
+class ProjectFileLinkDrivePayload(BaseModel):
+    drive_url: str = Field(..., min_length=5, description="URL pública o compartida de Google Drive / Docs")
+    name: Optional[str] = Field(None, max_length=255, description="Nombre descriptivo del documento")
+    description: Optional[str] = None
+    category: Optional[str] = "general"
+    task_id: Optional[UUIDStr] = None
+    phase_id: Optional[UUIDStr] = None
+
+
+class ProjectFileUpdate(BaseModel):
+    name: Optional[str] = Field(None, min_length=1, max_length=255)
+    description: Optional[str] = None
+    category: Optional[str] = None
+    task_id: Optional[UUIDStr] = None
+    phase_id: Optional[UUIDStr] = None
+
+
+class ProjectFile(ProjectFileBase):
+    id: UUIDStr
+    project_id: UUIDStr
+    embed_url: Optional[str] = None
+    task_title: Optional[str] = None
+    phase_name: Optional[str] = None
+    uploaded_by: Optional[UUIDStr] = None
+    uploader_name: Optional[str] = None
+    created_at: datetime
+    updated_at: Optional[datetime] = None
+    model_config = orm_config
+
+
+class ProjectFilesSummary(BaseModel):
+    project_id: UUIDStr
+    total_files: int = 0
+    total_size_bytes: int = 0
+    by_source: dict[str, int] = Field(default_factory=dict)
+    by_category: dict[str, int] = Field(default_factory=dict)
+    files: List[ProjectFile] = Field(default_factory=list)
