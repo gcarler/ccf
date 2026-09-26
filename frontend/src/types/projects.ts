@@ -253,6 +253,10 @@ export interface ProjectCommentItem {
   author_id: string;
   author_name: string;
   is_resolved: boolean;
+  is_pinned?: boolean;
+  pinned_at?: string | null;
+  pinned_by?: string | null;
+  pinner_name?: string | null;
   created_at: string;
   updated_at: string;
   attachments?: ProjectCommentAttachment[];
@@ -260,6 +264,16 @@ export interface ProjectCommentItem {
   module_type?: "project" | "activity" | "agenda";
   context_title?: string | null;
 }
+
+export interface ProjectUserFavorite {
+  id: string;
+  project_id: string;
+  persona_id: string;
+  entity_type: 'task' | 'project' | 'document' | string;
+  entity_id: string;
+  created_at: string;
+}
+
 
 export interface ProjectPortfolioSummaryRow {
   project_status: string;

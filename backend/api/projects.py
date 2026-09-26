@@ -89,6 +89,10 @@ def _project_comment_to_schema(
         author_id=str(comment.author_id) if comment.author_id is not None else None,
         author_name=_author_name(author),
         is_resolved=comment.is_resolved,
+        is_pinned=getattr(comment, "is_pinned", False),
+        pinned_at=getattr(comment, "pinned_at", None),
+        pinned_by=str(comment.pinned_by) if getattr(comment, "pinned_by", None) is not None else None,
+        pinner_name=_author_name(getattr(comment, "pinner", None)) if getattr(comment, "pinner", None) else None,
         created_at=comment.created_at,
         updated_at=comment.updated_at,
         attachments=comment.attachments or [],
@@ -965,13 +969,20 @@ def list_all_comments(
         q = q.filter(models.ProjectComment.is_resolved.is_(False))
     if task_id:
         q = q.filter(models.ProjectComment.task_id == _to_uuid(task_id))
-    rows = q.order_by(models.ProjectComment.created_at.desc()).offset(offset).limit(limit).all()
-    # Batch-fetch authors to avoid N+1 queries
+    rows = (
+        q.order_by(models.ProjectComment.is_pinned.desc(), models.ProjectComment.created_at.desc())
+        .offset(offset)
+        .limit(limit)
+        .all()
+    )
+    # Batch-fetch authors and pinners to avoid N+1 queries
     author_ids = {row.author_id for row in rows if row.author_id}
-    authors_map = {}
-    if author_ids:
-        authors = db.query(models.Persona).filter(models.Persona.id.in_(author_ids)).all()
-        authors_map = {p.id: _author_name(p) for p in authors}
+    pinner_ids = {row.pinned_by for row in rows if getattr(row, "pinned_by", None)}
+    all_person_ids = author_ids | pinner_ids
+    persons_map = {}
+    if all_person_ids:
+        persons = db.query(models.Persona).filter(models.Persona.id.in_(all_person_ids)).all()
+        persons_map = {p.id: _author_name(p) for p in persons}
     result = []
     for row in rows:
         result.append(
@@ -981,8 +992,12 @@ def list_all_comments(
                 task_id=str(row.task_id) if row.task_id is not None else None,
                 content=row.content,
                 author_id=str(row.author_id) if row.author_id is not None else None,
-                author_name=authors_map.get(row.author_id, "Usuario"),
+                author_name=persons_map.get(row.author_id, "Usuario"),
                 is_resolved=row.is_resolved,
+                is_pinned=getattr(row, "is_pinned", False),
+                pinned_at=getattr(row, "pinned_at", None),
+                pinned_by=str(row.pinned_by) if getattr(row, "pinned_by", None) is not None else None,
+                pinner_name=persons_map.get(row.pinned_by) if getattr(row, "pinned_by", None) else None,
                 created_at=row.created_at,
                 updated_at=row.updated_at,
                 attachments=row.attachments or [],
@@ -4679,6 +4694,113 @@ def list_project_indicator_records_endpoint(
     for r in records:
         _normalize_dates(r)
     return records
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 18. FAVORITOS DE USUARIO Y FIJACIÓN DE COMENTARIOS (Super-PRO Files Fase 1)
+# ─────────────────────────────────────────────────────────────────────────────
+
+@router.post(
+    "/{project_id}/tasks/{task_id}/toggle-favorite",
+    response_model=schemas.ProjectUserFavoriteToggleResponse,
+    tags=["Projects Favorites & Pins Super-PRO"],
+)
+def toggle_task_favorite_endpoint(
+    project_id: str,
+    task_id: str,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("projects", "read")),
+):
+    """Alterna el estado favorito de una tarea para el usuario autenticado (Axioma 3)."""
+    user_sede = get_user_sede_id(db, current_user.id)
+    _ensure_project(db, project_id, user_sede=user_sede)
+
+    persona_id = _get_persona_id_for_user(db, current_user.id)
+
+    try:
+        result = crud.toggle_task_favorite(
+            db,
+            _to_uuid(project_id),
+            _to_uuid(task_id),
+            persona_id,
+            sede_id=user_sede,
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+    return result
+
+
+@router.get(
+    "/{project_id}/favorites",
+    response_model=List[str],
+    tags=["Projects Favorites & Pins Super-PRO"],
+)
+def get_project_favorites_endpoint(
+    project_id: str,
+    entity_type: str = Query("task", description="Tipo de entidad (task, doc)"),
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("projects", "read")),
+):
+    """Obtiene la lista de identificadores favoritos del usuario en el proyecto."""
+    user_sede = get_user_sede_id(db, current_user.id)
+    _ensure_project(db, project_id, user_sede=user_sede)
+
+    persona_id = _get_persona_id_for_user(db, current_user.id)
+
+    try:
+        fav_ids = crud.get_project_user_favorites(
+            db,
+            _to_uuid(project_id),
+            persona_id,
+            entity_type=entity_type,
+            sede_id=user_sede,
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+    return fav_ids
+
+
+@router.post(
+    "/{project_id}/tasks/{task_id}/comments/{comment_id}/pin",
+    response_model=schemas.ProjectCommentItem,
+    tags=["Projects Favorites & Pins Super-PRO"],
+)
+def pin_task_comment_endpoint(
+    project_id: str,
+    task_id: str,
+    comment_id: str,
+    payload: Optional[schemas.ProjectPinCommentPayload] = None,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("projects", "edit")),
+):
+    """Fija o desfija un comentario en la cabecera del hilo de discusión."""
+    user_sede = get_user_sede_id(db, current_user.id)
+    _ensure_project(db, project_id, user_sede=user_sede)
+
+    persona_id = _get_persona_id_for_user(db, current_user.id)
+
+    try:
+        comment = crud.pin_project_comment(
+            db,
+            _to_uuid(project_id),
+            _to_uuid(comment_id),
+            persona_id,
+            task_id=_to_uuid(task_id),
+            is_pinned=payload.is_pinned if payload else None,
+            sede_id=user_sede,
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+    persona = (
+        db.query(models.Persona).filter(models.Persona.id == comment.author_id).first()
+        if comment.author_id
+        else None
+    )
+    return _project_comment_to_schema(comment, persona)
+
 
 
 

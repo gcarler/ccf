@@ -1819,8 +1819,212 @@ else:
 
 
 # ──────────────────────────────────────────────────────────────
+section("19. PRUEBAS DE FAVORITOS Y COMENTARIOS FIJADOS (SUPER-PRO FILES FASE 1)")
+# ──────────────────────────────────────────────────────────────
+
+# Obtener una tarea activa para probar favoritos
+test_task_fav = db.query(models.ProjectTask).filter(
+    models.ProjectTask.project_id == project.id,
+    models.ProjectTask.deleted_at.is_(None)
+).first()
+
+if not test_task_fav:
+    fail("No se encontró tarea activa para probar sistema de favoritos")
+else:
+    # 1. Toggle favorito ON (Marcar como favorita)
+    fav_on = crud_projects.toggle_task_favorite(
+        db,
+        project_id=project.id,
+        task_id=test_task_fav.id,
+        persona_id=u1.id,
+        sede_id=project.sede_id,
+    )
+    if fav_on.get("is_favorite") is True:
+        ok(f"Tarea '{test_task_fav.title}' marcada como favorita exitosamente para usuario 1")
+    else:
+        fail(f"Falla marcando tarea como favorita: {fav_on}")
+
+    # Verificar existencia en BD
+    fav_row = db.query(models.ProjectUserFavorite).filter(
+        models.ProjectUserFavorite.project_id == project.id,
+        models.ProjectUserFavorite.persona_id == u1.id,
+        models.ProjectUserFavorite.entity_type == "task",
+        models.ProjectUserFavorite.entity_id == test_task_fav.id,
+    ).first()
+    if fav_row:
+        ok(f"Registro en project_user_favorites persistido con UUID {fav_row.id} y UTC {fav_row.created_at}")
+    else:
+        fail("No se encontró el registro en project_user_favorites tras toggle ON")
+
+    # 2. Consultar favoritos del usuario
+    u1_favs = crud_projects.get_project_user_favorites(
+        db,
+        project_id=project.id,
+        persona_id=u1.id,
+        entity_type="task",
+        sede_id=project.sede_id,
+    )
+    if any(str(f) == str(test_task_fav.id) for f in u1_favs):
+        ok(f"get_project_user_favorites retornó {len(u1_favs)} favorito(s) conteniendo la tarea esperada")
+    else:
+        fail(f"get_project_user_favorites no retornó la tarea favorita de u1: {u1_favs}")
+
+    # Verificar aislamiento de usuario (u2 no debe tener la tarea en favoritos)
+    u2_favs = crud_projects.get_project_user_favorites(
+        db,
+        project_id=project.id,
+        persona_id=u2.id,
+        entity_type="task",
+        sede_id=project.sede_id,
+    )
+    if not any(str(f) == str(test_task_fav.id) for f in u2_favs):
+        ok("Aislamiento por persona verificado: u2 no ve los favoritos privados de u1")
+    else:
+        fail("Falla de aislamiento: u2 ve favoritos de u1")
+
+    # 3. Toggle favorito OFF (Desmarcar)
+    fav_off = crud_projects.toggle_task_favorite(
+        db,
+        project_id=project.id,
+        task_id=test_task_fav.id,
+        persona_id=u1.id,
+        sede_id=project.sede_id,
+    )
+    if fav_off.get("is_favorite") is False:
+        ok("Tarea desmarcada de favoritos exitosamente (toggle OFF)")
+    else:
+        fail(f"Falla desmarcando tarea de favoritos: {fav_off}")
+
+    # Re-marcar para pruebas de integración posteriores
+    crud_projects.toggle_task_favorite(
+        db,
+        project_id=project.id,
+        task_id=test_task_fav.id,
+        persona_id=u1.id,
+        sede_id=project.sede_id,
+    )
+
+    # 4. Aislamiento Multi-Tenant (Axioma 3) en Favoritos
+    try:
+        crud_projects.toggle_task_favorite(
+            db,
+            project_id=project.id,
+            task_id=test_task_fav.id,
+            persona_id=u1.id,
+            sede_id=foreign_sede_id,
+        )
+        fail("Falla multi-tenant: toggle_task_favorite permitió sede ajena")
+    except ValueError:
+        ok("Aislamiento Multi-Tenant (Axioma 3) verificado en toggle_task_favorite (ValueError arrojado)")
+
+    try:
+        crud_projects.get_project_user_favorites(
+            db,
+            project_id=project.id,
+            persona_id=u1.id,
+            sede_id=foreign_sede_id,
+        )
+        fail("Falla multi-tenant: get_project_user_favorites permitió sede ajena")
+    except ValueError:
+        ok("Aislamiento Multi-Tenant (Axioma 3) verificado en get_project_user_favorites (ValueError arrojado)")
+
+# 5. Pruebas de Comentarios Fijados (Pinned Comments)
+# Crear dos comentarios en la tarea de prueba
+c1 = models.ProjectComment(
+    project_id=project.id,
+    task_id=test_task_fav.id,
+    author_id=u1.id,
+    content="Comentario base cronológico",
+    is_resolved=False,
+    created_at=datetime.datetime.now(datetime.timezone.utc),
+)
+db.add(c1)
+
+c2 = models.ProjectComment(
+    project_id=project.id,
+    task_id=test_task_fav.id,
+    author_id=u2.id,
+    content="Comentario crítico e instructivo que debe ir fijado arriba",
+    is_resolved=False,
+    created_at=datetime.datetime.now(datetime.timezone.utc),
+)
+db.add(c2)
+db.commit()
+db.refresh(c1)
+db.refresh(c2)
+
+
+if c1 and c2:
+    ok("Comentarios de prueba creados exitosamente")
+
+    # Fijar c2
+    pinned_c2 = crud_projects.pin_project_comment(
+        db,
+        project_id=project.id,
+        comment_id=c2.id,
+        persona_id=u1.id,
+        task_id=test_task_fav.id,
+        is_pinned=True,
+        sede_id=project.sede_id,
+    )
+    if pinned_c2 and pinned_c2.is_pinned is True and pinned_c2.pinned_by == u1.id and pinned_c2.pinned_at is not None:
+        ok(f"Comentario {c2.id} fijado con éxito por {u1.id} en UTC {pinned_c2.pinned_at}")
+    else:
+        fail(f"Falla fijando comentario: {pinned_c2}")
+
+    # Verificar orden canónico: fijados primero
+    comments_list = crud_projects.get_project_comments(
+        db,
+        project_id=project.id,
+        task_id=test_task_fav.id,
+        sede_id=project.sede_id,
+    )
+    if comments_list and len(comments_list) >= 2:
+        first_comment = comments_list[0]
+        if first_comment.id == c2.id and first_comment.is_pinned is True:
+            ok("Ordenamiento canónico verificado: Comentario fijado aparece al inicio del hilo")
+        else:
+            fail(f"Ordenamiento incorrecto: primer comentario es {first_comment.id} (is_pinned={first_comment.is_pinned})")
+    else:
+        fail("Lista de comentarios insuficiente para verificar ordenamiento")
+
+    # Desfijar comentario
+    unpinned_c2 = crud_projects.pin_project_comment(
+        db,
+        project_id=project.id,
+        comment_id=c2.id,
+        persona_id=u1.id,
+        task_id=test_task_fav.id,
+        is_pinned=False,
+        sede_id=project.sede_id,
+    )
+    if unpinned_c2 and unpinned_c2.is_pinned is False:
+        ok("Comentario desfijado exitosamente")
+    else:
+        fail("Falla desfijando comentario")
+
+    # 6. Aislamiento Multi-Tenant (Axioma 3) en Comentarios Fijados
+    try:
+        crud_projects.pin_project_comment(
+            db,
+            project_id=project.id,
+            comment_id=c2.id,
+            persona_id=u1.id,
+            task_id=test_task_fav.id,
+            is_pinned=True,
+            sede_id=foreign_sede_id,
+        )
+        fail("Falla multi-tenant: pin_project_comment permitió sede ajena")
+    except ValueError:
+        ok("Aislamiento Multi-Tenant (Axioma 3) verificado en pin_project_comment (ValueError arrojado)")
+else:
+    fail("No se pudieron crear comentarios para probar fijación")
+
+
+# ──────────────────────────────────────────────────────────────
 section(f"RESUMEN: {PASS} passed, {FAIL} failed")
 # ──────────────────────────────────────────────────────────────
+
 
 
 info(f"Proyecto ID: {project.id}")

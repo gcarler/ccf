@@ -226,13 +226,17 @@ def create_default_phases(db: Session, project_id):
 # ── Project Comments ───────────────────────────────────
 
 
-def get_project_comments(db: Session, project_id=None, task_id=None):
+def get_project_comments(db: Session, project_id=None, task_id=None, sede_id=None):
+    if sede_id is not None and project_id is not None:
+        project = get_project(db, project_id, sede_id=sede_id)
+        if not project:
+            raise ValueError("Proyecto no encontrado o no pertenece a la sede (Axioma 3)")
     q = db.query(models.ProjectComment).filter(models.ProjectComment.deleted_at.is_(None))
     if project_id is not None:
         q = q.filter(models.ProjectComment.project_id == project_id)
     if task_id is not None:
         q = q.filter(models.ProjectComment.task_id == task_id)
-    return q.order_by(models.ProjectComment.created_at.desc()).all()
+    return q.order_by(models.ProjectComment.is_pinned.desc(), models.ProjectComment.created_at.desc()).all()
 
 
 def get_comment(db: Session, comment_id: UUID):
@@ -3616,6 +3620,143 @@ def get_project_indicator_records(
     )
 
     return [_prepare_record_response(r) for r in records]
+
+
+# ── Project User Favorites and Pinning (Super-PRO Files Fase 1) ───────────
+
+def toggle_task_favorite(
+    db: Session,
+    project_id: UUID | str,
+    task_id: UUID | str,
+    persona_id: UUID | str,
+    *,
+    sede_id: Optional[UUID | str] = None,
+) -> dict:
+    """Alterna el estado favorito de una tarea para una persona respetando el tenant scope (Axioma 3)."""
+    project = get_project(db, project_id, sede_id=sede_id)
+    if not project:
+        raise ValueError("Proyecto no encontrado o no pertenece a la sede (Axioma 3)")
+
+    task = (
+        db.query(models.ProjectTask)
+        .filter(
+            models.ProjectTask.id == task_id,
+            models.ProjectTask.project_id == project.id,
+            models.ProjectTask.deleted_at.is_(None),
+        )
+        .first()
+    )
+    if not task:
+        raise ValueError("Tarea no encontrada en este proyecto")
+
+    fav = (
+        db.query(models.ProjectUserFavorite)
+        .filter(
+            models.ProjectUserFavorite.project_id == project.id,
+            models.ProjectUserFavorite.persona_id == persona_id,
+            models.ProjectUserFavorite.entity_type == "task",
+            models.ProjectUserFavorite.entity_id == task.id,
+        )
+        .first()
+    )
+
+    if fav:
+        db.delete(fav)
+        db.commit()
+        return {
+            "is_favorite": False,
+            "entity_type": "task",
+            "entity_id": str(task.id),
+            "message": "Tarea removida de favoritos",
+        }
+    else:
+        new_fav = models.ProjectUserFavorite(
+            project_id=project.id,
+            persona_id=persona_id,
+            entity_type="task",
+            entity_id=task.id,
+            created_at=datetime.now(timezone.utc),
+        )
+        db.add(new_fav)
+        db.commit()
+        db.refresh(new_fav)
+        return {
+            "is_favorite": True,
+            "entity_type": "task",
+            "entity_id": str(task.id),
+            "message": "Tarea agregada a favoritos",
+        }
+
+
+def get_project_user_favorites(
+    db: Session,
+    project_id: UUID | str,
+    persona_id: UUID | str,
+    *,
+    entity_type: str = "task",
+    sede_id: Optional[UUID | str] = None,
+) -> list[str]:
+    """Obtiene la lista de UUIDs de entidades favoritas para el usuario en el proyecto."""
+    project = get_project(db, project_id, sede_id=sede_id)
+    if not project:
+        raise ValueError("Proyecto no encontrado o no pertenece a la sede (Axioma 3)")
+
+    favs = (
+        db.query(models.ProjectUserFavorite)
+        .filter(
+            models.ProjectUserFavorite.project_id == project.id,
+            models.ProjectUserFavorite.persona_id == persona_id,
+            models.ProjectUserFavorite.entity_type == entity_type,
+        )
+        .all()
+    )
+    return [str(f.entity_id) for f in favs]
+
+
+def pin_project_comment(
+    db: Session,
+    project_id: UUID | str,
+    comment_id: UUID | str,
+    persona_id: UUID | str,
+    *,
+    task_id: Optional[UUID | str] = None,
+    is_pinned: Optional[bool] = None,
+    sede_id: Optional[UUID | str] = None,
+) -> models.ProjectComment:
+    """Fija o desfija un comentario en la cabecera del hilo con trazabilidad UTC."""
+    project = get_project(db, project_id, sede_id=sede_id)
+    if not project:
+        raise ValueError("Proyecto no encontrado o no pertenece a la sede (Axioma 3)")
+
+    q = (
+        db.query(models.ProjectComment)
+        .filter(
+            models.ProjectComment.id == comment_id,
+            models.ProjectComment.project_id == project.id,
+            models.ProjectComment.deleted_at.is_(None),
+        )
+    )
+    if task_id:
+        q = q.filter(models.ProjectComment.task_id == task_id)
+
+    comment = q.first()
+    if not comment:
+        raise ValueError("Comentario no encontrado en este proyecto")
+
+    target_state = not comment.is_pinned if is_pinned is None else bool(is_pinned)
+    comment.is_pinned = target_state
+    if target_state:
+        comment.pinned_at = datetime.now(timezone.utc)
+        comment.pinned_by = persona_id
+    else:
+        comment.pinned_at = None
+        comment.pinned_by = None
+
+    comment.updated_at = datetime.now(timezone.utc)
+    db.commit()
+    db.refresh(comment)
+    return comment
+
 
 
 

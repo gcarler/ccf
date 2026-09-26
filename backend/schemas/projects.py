@@ -753,6 +753,7 @@ class ProjectCommentCreateWithProject(ProjectCommentBase):
 class ProjectCommentUpdate(BaseModel):
     content: Optional[str] = None
     is_resolved: Optional[bool] = None
+    is_pinned: Optional[bool] = None
     attachments: Optional[List[CommentAttachment]] = None
     mentions: Optional[List[UUIDStr]] = None
 
@@ -763,10 +764,17 @@ class ProjectCommentItem(ProjectCommentBase):
     author_id: Optional[UUIDStr] = None
     author_name: str
     is_resolved: bool = False
+    is_pinned: bool = False
+    pinned_at: Optional[datetime] = None
+    pinned_by: Optional[UUIDStr] = None
+    pinner_name: Optional[str] = None
     created_at: datetime
     updated_at: datetime
     module_type: Literal["project", "activity", "agenda"] = "project"
     context_title: Optional[str] = None
+
+
+ProjectComment = ProjectCommentItem
 
 
 class InboxReadToggle(BaseModel):
@@ -1142,5 +1150,32 @@ class CremaValidationResult(BaseModel):
     status: str
     criteria: dict
     summary: str
+
+
+# ── Project User Favorites and Pinning (Super-PRO Files Fase 1) ───────────
+
+class ProjectUserFavoriteBase(BaseModel):
+    entity_type: str = Field(default="task", max_length=50)
+    entity_id: UUIDStr
+
+
+class ProjectUserFavorite(ProjectUserFavoriteBase):
+    id: UUIDStr
+    project_id: UUIDStr
+    persona_id: UUIDStr
+    created_at: datetime
+    model_config = orm_config
+
+
+class ProjectUserFavoriteToggleResponse(BaseModel):
+    is_favorite: bool
+    entity_type: str
+    entity_id: UUIDStr
+    message: str
+
+
+class ProjectPinCommentPayload(BaseModel):
+    is_pinned: Optional[bool] = None
+
 
 

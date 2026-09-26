@@ -283,6 +283,7 @@ from backend.models_projects import (
     ProjectAutomationRule,
     ProjectIndicator,
     ProjectIndicatorRecord,
+    ProjectUserFavorite,
     ProjectWhiteboard,
     TaskSupply,
 )

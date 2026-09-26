@@ -5,7 +5,7 @@ import '@/lib/agGrid';
 import { useAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/lib/http';
 import { DEFAULT_TASK_PRIORITY, getStatusOption, getPriorityOption, STATUS_OPTIONS, PRIORITY_OPTIONS } from '@/lib/projects/constants';
-import type { ProjectTaskRecord } from '@/types/projects';
+import type { ProjectTaskRecord, ProjectUserFavorite } from '@/types/projects';
 import { InlineStatusPicker, InlinePriorityPicker, InlineDatePicker, InlineUserPicker } from '@/components/ui/inline-editors';
 import { useProjectTasks } from '@/hooks/useProjectTasks';
 import * as Popover from '@radix-ui/react-popover';
@@ -28,6 +28,7 @@ Layers,
 MessageSquare,
 Plus,
 Settings2,
+Star,
 X
 } from 'lucide-react';
 import { useCallback,useEffect,useMemo,useRef,useState } from 'react';
@@ -121,6 +122,8 @@ export default function TaskTableView({ projectId, tasks, onOpenTask, onAddTask,
     const [overrides, setOverrides] = useState<Record<string, Partial<ProjectTaskRecord>>>({});
     const [groupBy, setGroupBy]     = useState<GroupKey>('status');
     const [activeFilters, setActiveFilters] = useState<ActiveFilter[]>([]);
+    const [onlyFavorites, setOnlyFavorites] = useState(false);
+    const [favoriteTaskIds, setFavoriteTaskIds] = useState<Set<string>>(new Set());
     const [visibleCols, setVisibleCols] = useState<Set<ColumnId>>(new Set<ColumnId>(['title','status','priority','assignee','due_date']));
     const [cfgOpen, setCfgOpen]     = useState(false);
     const [filterOpen, setFilterOpen] = useState(false);
@@ -129,6 +132,20 @@ export default function TaskTableView({ projectId, tasks, onOpenTask, onAddTask,
     const [quickAddTitle, setQuickAddTitle] = useState('');
     const [isLoaded, setIsLoaded]   = useState(false);
     const [error, setError] = useState<string | null>(null);
+
+    useEffect(() => {
+        let active = true;
+        const effId = projectId || tasks[0]?.project_id;
+        if (!effId || !token) return;
+        apiFetch<(string | ProjectUserFavorite)[]>(`/projects/${effId}/favorites?entity_type=task`, { token })
+            .then(favs => {
+                if (active && Array.isArray(favs)) {
+                    setFavoriteTaskIds(new Set(favs.map(f => typeof f === 'string' ? f : f.entity_id)));
+                }
+            })
+            .catch(() => {});
+        return () => { active = false; };
+    }, [projectId, tasks, token]);
 
 
     // Preferences persistence
@@ -181,11 +198,14 @@ export default function TaskTableView({ projectId, tasks, onOpenTask, onAddTask,
     // Process: filter
     const processed = useMemo(() => {
         let list = tasks.map(resolveTask);
+        if (onlyFavorites) {
+            list = list.filter(t => favoriteTaskIds.has(t.id));
+        }
         for (const f of activeFilters) {
             list = list.filter(t => f.field === 'status' ? t.status === f.value : t.priority === f.value);
         }
         return list;
-    }, [tasks, activeFilters, resolveTask]);
+    }, [tasks, onlyFavorites, favoriteTaskIds, activeFilters, resolveTask]);
 
     // Flatten with group headers
     const rowData = useMemo(() => {
@@ -347,6 +367,32 @@ export default function TaskTableView({ projectId, tasks, onOpenTask, onAddTask,
                         </Popover.Content>
                     </Popover.Portal>
                 </Popover.Root>
+
+                {/* Solo Mis Favoritas */}
+                <button
+                    type="button"
+                    onClick={() => setOnlyFavorites(prev => !prev)}
+                    className={clsx(
+                        'flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold transition-all border',
+                        onlyFavorites
+                            ? 'bg-[hsl(var(--warning)/0.15)] text-[hsl(var(--warning))] border-[hsl(var(--warning)/0.3)] shadow-xs'
+                            : 'text-[hsl(var(--muted-foreground))] border-[hsl(var(--border))] hover:bg-[hsl(var(--surface-2))] hover:text-[hsl(var(--foreground))]'
+                    )}
+                    title="Filtrar por tareas favoritas"
+                >
+                    <Star size={12} className={clsx(onlyFavorites ? 'fill-current text-[hsl(var(--warning))]' : '')} />
+                    <span>Solo Mis Favoritas</span>
+                    {favoriteTaskIds.size > 0 && (
+                        <span className={clsx(
+                            'px-1.5 py-0.2 rounded-full text-3xs font-bold',
+                            onlyFavorites
+                                ? 'bg-[hsl(var(--warning))] text-[hsl(var(--background))]'
+                                : 'bg-[hsl(var(--surface-3))] text-[hsl(var(--muted-foreground))]'
+                        )}>
+                            {favoriteTaskIds.size}
+                        </span>
+                    )}
+                </button>
 
                 <div className="ml-0 sm:ml-auto flex min-w-0 items-center gap-1.5 overflow-x-auto">
                     {activeFilters.length > 0 && (

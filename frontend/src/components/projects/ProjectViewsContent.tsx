@@ -113,6 +113,7 @@ export function ProjectViewsContent({
                 <div className="w-full h-[calc(100vh-8rem)]">
                     <ProjectListView
                         tasks={tasks}
+                        projectId={project?.id}
                         phaseDefs={phases}
                         onOpenTask={onOpenTask}
                         onAddTask={(status) => {

@@ -11,10 +11,11 @@ import {
     getPriorityOption,
 } from '@/lib/projects/constants';
 import type { TaskPriority } from '@/lib/projects/constants';
-import type { ProjectTaskRecord, TaskSupplyRecord } from '@/types/projects';
+import type { ProjectTaskRecord, TaskSupplyRecord, ProjectUserFavorite } from '@/types/projects';
 import { AlignLeft } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useCallback, useEffect, useRef, useState, type MouseEvent as ReactMouseEvent } from 'react';
+import { toast } from 'sonner';
 
 import TaskDetailHeader from './TaskDetailHeader';
 import TaskMetaFields from './TaskMetaFields';
@@ -46,6 +47,7 @@ interface TaskDetailPanelProps {
     onDelete?: (taskId: string) => void;
     onActivityCreated?: () => void;
     onVerRutaClick?: () => void;
+    onFavoriteToggle?: (taskId: string, isFav: boolean) => void;
 }
 
 export default function TaskDetailPanel({
@@ -56,6 +58,7 @@ export default function TaskDetailPanel({
     onDelete,
     onActivityCreated,
     onVerRutaClick,
+    onFavoriteToggle,
 }: TaskDetailPanelProps) {
     const { token, loading: authLoading } = useAuth();
 
@@ -210,6 +213,44 @@ export default function TaskDetailPanel({
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [task?.id]);
 
+    // ── Favorites sync ──────────────────────────────────────────
+    useEffect(() => {
+        let active = true;
+        if (!task?.id || !task?.project_id || !token) {
+            setStarred(false);
+            return;
+        }
+        apiFetch<(string | ProjectUserFavorite)[]>(`/projects/${task.project_id}/favorites?entity_type=task`, { token })
+            .then(favs => {
+                if (active && Array.isArray(favs)) {
+                    const isFav = favs.some(f => (typeof f === 'string' ? f : f.entity_id) === task.id);
+                    setStarred(isFav);
+                }
+            })
+            .catch(() => {});
+        return () => { active = false; };
+    }, [task?.id, task?.project_id, token]);
+
+    const handleStarToggle = async () => {
+        if (!task || !requireAuth('Debes iniciar sesión para marcar favoritos.')) return;
+        const prevStarred = starred;
+        const nextStarred = !prevStarred;
+        setStarred(nextStarred);
+        try {
+            const res = await apiFetch<{ is_favorite: boolean; entity_id: string }>(
+                `/projects/${task.project_id}/tasks/${task.id}/toggle-favorite`,
+                { method: 'POST', token }
+            );
+            const actualStatus = res?.is_favorite ?? nextStarred;
+            setStarred(actualStatus);
+            onFavoriteToggle?.(task.id, actualStatus);
+            toast.success(actualStatus ? 'Tarea añadida a favoritos' : 'Tarea removida de favoritos');
+        } catch {
+            setStarred(prevStarred);
+            toast.error('No se pudo actualizar el estado de favorito.');
+        }
+    };
+
     // ── Save ────────────────────────────────────────────────────
     const handleSave = async () => {
         if (!task || !requireAuth('Debes iniciar sesión para guardar cambios de la tarea.')) return;
@@ -339,7 +380,7 @@ export default function TaskDetailPanel({
                     onSave={handleSave}
                     onStatusCycle={handleStatusCycle}
                     onFileClick={() => {}}
-                    onStarToggle={() => setStarred(v => !v)}
+                    onStarToggle={handleStarToggle}
                     onExpandToggle={() => {
                         const maxW = Math.floor(window.innerWidth * MAX_RATIO);
                         setWidth(prev => prev < maxW - 50 ? maxW : DEFAULT_WIDTH);

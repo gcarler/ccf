@@ -184,11 +184,15 @@ class ProjectComment(Base):
     attachments = Column(JSON, default=list, nullable=False)
     mentions = Column(JSON, default=list, nullable=False)
     is_resolved = Column(Boolean, default=False)
+    is_pinned = Column(Boolean, default=False, nullable=False, index=True)
+    pinned_at = Column(DateTime(timezone=True), nullable=True)
+    pinned_by = Column(UUID(as_uuid=True), ForeignKey("personas.id", ondelete="SET NULL"), nullable=True, index=True)
     deleted_at = Column(DateTime(timezone=True), nullable=True)
     created_at = Column(DateTime(timezone=True), default=_utcnow, index=True)
     updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
 
     author = relationship("Persona", foreign_keys=[author_id])
+    pinner = relationship("Persona", foreign_keys=[pinned_by])
 
 
 class ProjectPhase(Base):
@@ -459,6 +463,24 @@ class ProjectIndicatorRecord(Base):
 
     indicator = relationship("ProjectIndicator", back_populates="records")
     reporter = relationship("Persona", foreign_keys=[reported_by])
+
+
+class ProjectUserFavorite(Base):
+    __tablename__ = "project_user_favorites"
+    __table_args__ = (
+        UniqueConstraint("persona_id", "entity_type", "entity_id", name="uq_project_user_favorites_entity"),
+    )
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    project_id = Column(UUID(as_uuid=True), ForeignKey("projects.id", ondelete="CASCADE"), nullable=False, index=True)
+    persona_id = Column(UUID(as_uuid=True), ForeignKey("personas.id", ondelete="CASCADE"), nullable=False, index=True)
+    entity_type = Column(String(50), default="task", nullable=False, index=True)
+    entity_id = Column(UUID(as_uuid=True), nullable=False, index=True)
+    created_at = Column(DateTime(timezone=True), default=_utcnow, nullable=False)
+
+    project = relationship("Project")
+    persona = relationship("Persona", foreign_keys=[persona_id])
+
 
 
 

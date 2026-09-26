@@ -1,14 +1,16 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import {
     ChevronDown, ChevronRight, Plus,
     MessageSquare, MoreHorizontal, CheckCircle2, X, Send,
-    Paperclip, AtSign, Smile, Check,
+    Paperclip, AtSign, Smile, Check, Star,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import clsx from 'clsx';
-import type { ProjectTaskRecord } from '@/types/projects';
+import { useAuth } from '@/context/AuthContext';
+import { apiFetch } from '@/lib/http';
+import type { ProjectTaskRecord, ProjectUserFavorite } from '@/types/projects';
 import { useSidebarLayers } from '@/context/SidebarLayerContext';
 import { buildStatusOptions, getStatusOption, STATUS_GROUP_PILL } from '@/lib/projects/constants';
 import type { PhaseDef } from '@/context/ProjectUpdateContext';
@@ -25,6 +27,7 @@ interface Props {
     /** Project phases used as the canonical List grouping when customized. */
     phaseDefs?: readonly PhaseDef[];
     tasks: ProjectTaskRecord[];
+    projectId?: string;
     onOpenTask: (task: ProjectTaskRecord) => void;
     onAddTask: (status: string) => void;
     /** Parent-owned persistence callback; it also owns optimistic updates
@@ -393,6 +396,7 @@ function StatusGroup({
 export default function ProjectListView({
     phaseDefs,
     tasks,
+    projectId,
     onOpenTask,
     onAddTask,
     onTaskUpdate,
@@ -402,6 +406,30 @@ export default function ProjectListView({
     onQuickAddConfirm,
     onQuickAddCancel,
 }: Props) {
+    const { token } = useAuth();
+    const [onlyFavorites, setOnlyFavorites] = useState(false);
+    const [favoriteTaskIds, setFavoriteTaskIds] = useState<Set<string>>(new Set());
+
+    const effectiveProjectId = projectId || tasks[0]?.project_id;
+
+    useEffect(() => {
+        let active = true;
+        if (!effectiveProjectId || !token) return;
+        apiFetch<(string | ProjectUserFavorite)[]>(`/projects/${effectiveProjectId}/favorites?entity_type=task`, { token })
+            .then(favs => {
+                if (active && Array.isArray(favs)) {
+                    setFavoriteTaskIds(new Set(favs.map(f => typeof f === 'string' ? f : f.entity_id)));
+                }
+            })
+            .catch(() => {});
+        return () => { active = false; };
+    }, [effectiveProjectId, token]);
+
+    const displayedTasks = useMemo(() => {
+        if (!onlyFavorites) return tasks;
+        return tasks.filter(t => favoriteTaskIds.has(t.id));
+    }, [tasks, onlyFavorites, favoriteTaskIds]);
+
     const handleChangeTask = useCallback((taskId: number | string, patch: Partial<ProjectTaskRecord>) => {
         onTaskUpdate?.(String(taskId), patch);
     }, [onTaskUpdate]);
@@ -413,19 +441,49 @@ export default function ProjectListView({
     const groups = statusOrder.map(status => ({
         status,
         label: statusLabels.get(status) ?? status,
-        tasks: tasks.filter(t => (t.status ?? 'todo').toLowerCase() === status),
+        tasks: displayedTasks.filter(t => (t.status ?? 'todo').toLowerCase() === status),
     })).filter(g => {
         const isTarget = quickAddStatus === g.status;
         return g.tasks.length > 0 || isTarget;
     });
 
-    const ungrouped = tasks.filter(t => {
+    const ungrouped = displayedTasks.filter(t => {
         const s = (t.status ?? 'todo').toLowerCase();
         return !statusOrder.includes(s);
     });
 
     return (
         <div className="h-full overflow-y-auto bg-[hsl(var(--surface-1))] scrollbar-thin">
+            {/* ── TOOLBAR / FAVORITE FILTER ── */}
+            <div className="shrink-0 flex items-center justify-between px-4 py-2 border-b border-[hsl(var(--border))] bg-[hsl(var(--surface-1))]">
+                <button
+                    type="button"
+                    onClick={() => setOnlyFavorites(prev => !prev)}
+                    className={clsx(
+                        'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold transition-all border',
+                        onlyFavorites
+                            ? 'bg-[hsl(var(--warning)/0.15)] text-[hsl(var(--warning))] border-[hsl(var(--warning)/0.3)] shadow-xs'
+                            : 'text-[hsl(var(--muted-foreground))] border-[hsl(var(--border))] hover:bg-[hsl(var(--surface-2))] hover:text-[hsl(var(--foreground))]'
+                    )}
+                    title="Filtrar por tareas favoritas"
+                >
+                    <Star size={13} className={clsx(onlyFavorites ? 'fill-current text-[hsl(var(--warning))]' : '')} />
+                    <span>Solo Mis Favoritas</span>
+                    {favoriteTaskIds.size > 0 && (
+                        <span className={clsx(
+                            'px-1.5 py-0.2 rounded-full text-3xs font-bold',
+                            onlyFavorites
+                                ? 'bg-[hsl(var(--warning))] text-[hsl(var(--background))]'
+                                : 'bg-[hsl(var(--surface-3))] text-[hsl(var(--muted-foreground))]'
+                        )}>
+                            {favoriteTaskIds.size}
+                        </span>
+                    )}
+                </button>
+                <span className="text-2xs text-[hsl(var(--muted-foreground))]">
+                    {displayedTasks.length} de {tasks.length} tareas
+                </span>
+            </div>
 
             {/* ── STICKY QUICK-ADD BAR ── */}
             <AnimatePresence>
@@ -478,14 +536,18 @@ export default function ProjectListView({
                 />
             )}
 
-            {tasks.length === 0 && (
-                <div className="flex flex-col items-center justify-center py-1.5 gap-4">
+            {displayedTasks.length === 0 && (
+                <div className="flex flex-col items-center justify-center py-8 gap-4">
                     <div className="size-8 rounded-lg bg-[hsl(var(--surface-2))] flex items-center justify-center">
                         <CheckCircle2 size={28} className="text-[hsl(var(--muted-foreground))]" />
                     </div>
                     <div className="text-center">
-                        <p className="text-sm font-bold text-[hsl(var(--muted-foreground))]">Sin tareas en este proyecto</p>
-                        <p className="text-xs text-[hsl(var(--muted-foreground))] mt-1">Haz clic en &quot;+ Nuevo&quot; para empezar</p>
+                        <p className="text-sm font-bold text-[hsl(var(--muted-foreground))]">
+                            {onlyFavorites ? 'No tienes tareas favoritas en este proyecto' : 'Sin tareas en este proyecto'}
+                        </p>
+                        <p className="text-xs text-[hsl(var(--muted-foreground))] mt-1">
+                            {onlyFavorites ? 'Marca tareas con la estrella para verlas aquí' : 'Haz clic en "+ Nuevo" para empezar'}
+                        </p>
                     </div>
                 </div>
             )}
