@@ -39,6 +39,7 @@ from backend.services.event_registration_service import (
     _issue_qr,
     _utcnow,
     count_active_registrations,
+    get_next_registration_number,
     normalize_participant_role,
     resolve_participant_role,
     upsert_persona,
@@ -92,6 +93,10 @@ def _serialize(reg: models.EventRegistration, persona: Optional[models.Persona])
         # plan_clasificador_contextual: rol efectivo de la inscripción.
         participant_role_code=reg.participant_role_code,
         waiting_list_position=reg.waiting_list_position,
+        registration_number=getattr(reg, "registration_number", None),
+        registration_code=(
+            f"#CCF-EVT-{reg.registration_number:04d}" if getattr(reg, "registration_number", None) else None
+        ),
         reminder_sent_count=reg.reminder_sent_count,
         last_reminder_sent_at=reg.last_reminder_sent_at,
     )
@@ -325,6 +330,7 @@ def create_registration(
     reg = models.EventRegistration(
         event_id=event.id,
         persona_id=persona.id,
+        registration_number=get_next_registration_number(db, event.id),
         registration_status=target_status,
         source=payload.source or "admin",
         extras=payload.extras or {},
@@ -466,6 +472,33 @@ def resend_confirmation(
     return {"status": "ok", "message": "Email reenviado"}
 
 
+@router.get("/events/{event_id}/registrations/{reg_id}/pass")
+def download_registration_pass(
+    event_id: UUID,
+    reg_id: UUID,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_evangelism_read),
+):
+    """Descarga el Pase Digital oficial (PDF) de la inscripción."""
+    from backend.services.event_pass_service import generate_event_pass_pdf
+
+    event = require_event_access(db, current_user, event_id)
+    reg = _get_or_404(db, event_id, reg_id)
+    pdf_bytes = generate_event_pass_pdf(
+        event,
+        reg,
+        reg.persona,
+        base_url=_settings_public_base_url(),
+    )
+    reg_num = getattr(reg, "registration_number", None) or 1
+    filename = f"pase-CCF-EVT-{reg_num:04d}.pdf"
+    return Response(
+        content=pdf_bytes,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
+
+
 # ── Bulk import ───────────────────────────────────────────────────────────────
 
 
@@ -496,6 +529,7 @@ def bulk_import(
     slots_taken, _ = count_active_registrations(db, event.id)
     capacity_max = event.capacity_max
     waiting_list_enabled = bool(event.waiting_list_enabled)
+    next_reg_num = get_next_registration_number(db, event.id)
 
     created, skipped = 0, 0
     errors: list[dict] = []
@@ -534,12 +568,14 @@ def bulk_import(
             reg = models.EventRegistration(
                 event_id=event.id,
                 persona_id=persona.id,
+                registration_number=next_reg_num,
                 registration_status=target_status,
                 source=row.source or "admin_import",
                 extras=row.extras or {},
                 # plan_clasificador_contextual: override por fila o rol del evento.
                 participant_role_code=resolve_participant_role(event, requested=row.participant_role_code),
             )
+            next_reg_num += 1
             if target_status == "WAITLIST":
                 # Adjuntar al final de la cola: position = (slotsTaken en cola) + 1.
                 wl_count = (

@@ -7,6 +7,7 @@ import datetime
 import io
 import math
 from typing import List, Optional
+import uuid
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -249,11 +250,20 @@ def update_event(
         "day_of_week",
         "month_day",
         "fixed_date",
+        "requires_registration",
+        "requires_email_verification",
+        "registration_opens_at",
+        "registration_closes_at",
+        "capacity_max",
+        "waiting_list_enabled",
+        "qr_mode",
+        "contact_person",
+        "form_id",
     ]
     for field in editable:
         if field in payload:
             val = payload[field]
-            if field == "fixed_date" and isinstance(val, str) and val:
+            if field in {"fixed_date", "registration_opens_at", "registration_closes_at"} and isinstance(val, str) and val:
                 val = datetime.datetime.fromisoformat(val.replace("Z", "+00:00"))
             setattr(event, field, val)
     db.commit()
@@ -314,7 +324,23 @@ def get_event_detail(
         "title": event.name,
         "description": event.description,
         "event_date": event.event_date.isoformat() if event.event_date else None,
+        "start_time": event.start_time,
+        "end_time": event.end_time,
         "location": event.location,
+        "event_type": event.event_type,
+        "target_audience": event.target_audience,
+        "target_role_id": str(event.target_role_id) if event.target_role_id else None,
+        "target_role_ids": event.target_role_ids or [],
+        "target_persona_ids": event.target_persona_ids or [],
+        "requires_registration": bool(event.requires_registration),
+        "requires_email_verification": bool(event.requires_email_verification),
+        "registration_opens_at": event.registration_opens_at.isoformat() if event.registration_opens_at else None,
+        "registration_closes_at": event.registration_closes_at.isoformat() if event.registration_closes_at else None,
+        "capacity_max": event.capacity_max,
+        "waiting_list_enabled": bool(event.waiting_list_enabled),
+        "qr_mode": event.qr_mode or "PER_REGISTRANT",
+        "contact_person": event.contact_person,
+        "form_id": str(event.form_id) if event.form_id else None,
         "attendees_count": attendees_count,
         "status": event_status,
         "cancellation_reason": event.cancellation_reason,
@@ -338,6 +364,153 @@ def update_event_audience(
     event.target_persona_ids = normalized.get("target_persona_ids")
     db.commit()
     return {"success": True}
+
+
+@dynamic_router.get("/events/{event_id}/form", response_model=dict)
+def get_event_form(
+    event_id: str,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_evangelism_read),
+):
+    """Obtiene la configuración del formulario dinámico asociado al evento."""
+    event = require_event_access(db, current_user, event_id)
+    if not event.form_id:
+        return {
+            "id": None,
+            "event_id": str(event.id),
+            "name": f"Pre-registro: {event.name}",
+            "description": event.description or "Formulario de pre-registro al evento",
+            "fields": [],
+            "submit_button_text": "Confirmar Inscripción",
+            "success_message": "¡Tu pre-registro ha sido confirmado!",
+            "is_active": True,
+        }
+
+    form = db.query(models.CmsForm).filter(models.CmsForm.id == event.form_id).first()
+    if not form:
+        return {
+            "id": None,
+            "event_id": str(event.id),
+            "name": f"Pre-registro: {event.name}",
+            "description": event.description or "Formulario de pre-registro al evento",
+            "fields": [],
+            "submit_button_text": "Confirmar Inscripción",
+            "success_message": "¡Tu pre-registro ha sido confirmado!",
+            "is_active": True,
+        }
+
+    return {
+        "id": str(form.id),
+        "event_id": str(event.id),
+        "site_id": str(form.site_id) if form.site_id else None,
+        "name": form.name,
+        "description": form.description,
+        "fields": form.fields or [],
+        "submit_button_text": form.submit_button_text or "Confirmar Inscripción",
+        "success_message": form.success_message or "¡Tu pre-registro ha sido confirmado!",
+        "is_active": form.is_active,
+        "captcha_enabled": bool(form.captcha_enabled),
+    }
+
+
+@dynamic_router.put("/events/{event_id}/form", response_model=dict)
+def save_event_form(
+    event_id: str,
+    payload: dict,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_evangelism_manage),
+):
+    """Crea o actualiza el CmsForm vinculado al evento en Form Studio."""
+    from backend.services.form_validation import validate_field_spec, ValidationError
+
+    event = require_event_access(db, current_user, event_id)
+    raw_fields = payload.get("fields", [])
+    if not isinstance(raw_fields, list):
+        raise HTTPException(status_code=422, detail="El campo 'fields' debe ser una lista.")
+
+    # Validar cada especificación de campo
+    for spec in raw_fields:
+        if isinstance(spec, dict):
+            try:
+                validate_field_spec(spec)
+            except ValidationError as exc:
+                raise HTTPException(
+                    status_code=422,
+                    detail={"code": exc.code, "detail": exc.detail, "field_id": exc.field_id},
+                )
+
+    form_name = payload.get("name") or f"Pre-registro: {event.name}"
+    form_desc = payload.get("description")
+    submit_text = payload.get("submit_button_text") or "Confirmar Inscripción"
+    success_msg = payload.get("success_message") or "¡Tu pre-registro ha sido confirmado!"
+    is_active = bool(payload.get("is_active", True))
+
+    form = None
+    if event.form_id:
+        form = db.query(models.CmsForm).filter(models.CmsForm.id == event.form_id).first()
+
+    if form:
+        form.name = form_name
+        form.description = form_desc
+        form.fields = raw_fields
+        form.submit_button_text = submit_text
+        form.success_message = success_msg
+        form.is_active = is_active
+        form.updated_at = datetime.datetime.now(datetime.timezone.utc)
+    else:
+        # Resolver CmsSite para asociar el formulario
+        site = (
+            db.query(models.CmsSite).filter(models.CmsSite.sede_id == event.sede_id).first()
+            or db.query(models.CmsSite).first()
+        )
+        if not site:
+            site = models.CmsSite(
+                site_key=f"site-{event.sede_id or 'central'}",
+                name="CCF Central",
+                base_path=f"/events-site-{uuid.uuid4().hex[:6]}",
+                is_active=True,
+                sede_id=event.sede_id,
+            )
+            db.add(site)
+            db.flush()
+
+        form = models.CmsForm(
+            site_id=site.id,
+            name=form_name,
+            description=form_desc,
+            fields=raw_fields,
+            submit_button_text=submit_text,
+            success_message=success_msg,
+            is_active=is_active,
+        )
+        db.add(form)
+        db.flush()
+        event.form_id = form.id
+
+    db.commit()
+    db.refresh(form)
+    db.refresh(event)
+
+    record_admin_action(
+        db,
+        current_user,
+        action="update_event_form",
+        resource_type="cms_form",
+        resource_id=str(form.id),
+    )
+
+    return {
+        "id": str(form.id),
+        "form_id": str(form.id),
+        "event_id": str(event.id),
+        "name": form.name,
+        "description": form.description,
+        "fields": form.fields or [],
+        "fields_count": len(form.fields or []),
+        "submit_button_text": form.submit_button_text,
+        "success_message": form.success_message,
+        "is_active": form.is_active,
+    }
 
 
 @static_router.get("/events/analytics/global")

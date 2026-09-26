@@ -1019,6 +1019,47 @@ def public_event_ticket(
 
 
 @router.get(
+    "/events/{event_id}/registrations/{reg_id}/pass",
+    dependencies=[Depends(rate_limiter(limit=PUBLIC_EVENT_RATE_LIMIT, window_seconds=60))],
+)
+def public_download_pass(
+    event_id: uuid.UUID,
+    reg_id: uuid.UUID,
+    db: Session = Depends(get_db),
+):
+    """Descarga pública del Pase Digital (PDF) de una inscripción confirmada."""
+    from backend.services.event_pass_service import generate_event_pass_pdf
+
+    event = _public_event_or_404(db, event_id)
+    reg = (
+        db.query(models.EventRegistration)
+        .filter(
+            models.EventRegistration.id == reg_id,
+            models.EventRegistration.event_id == event.id,
+            models.EventRegistration.deleted_at.is_(None),
+        )
+        .first()
+    )
+    if not reg:
+        raise HTTPException(status_code=404, detail="Inscripción no encontrada")
+
+    persona = db.query(models.Persona).filter(models.Persona.id == reg.persona_id).first()
+    pdf_bytes = generate_event_pass_pdf(
+        event,
+        reg,
+        persona,
+        base_url=_settings_public_base_url(),
+    )
+    reg_num = getattr(reg, "registration_number", None) or 1
+    filename = f"pase-CCF-EVT-{reg_num:04d}.pdf"
+    return Response(
+        content=pdf_bytes,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
+
+
+@router.get(
     "/events/{event_id}/status",
     response_model=schemas.EventRegistrationRead,
     dependencies=[Depends(rate_limiter(limit=PUBLIC_STATUS_RATE_LIMIT, window_seconds=60))],
@@ -1163,6 +1204,10 @@ def _serialize_registration(
         # plan_clasificador_contextual: rol efectivo de la inscripción.
         participant_role_code=reg.participant_role_code,
         waiting_list_position=reg.waiting_list_position,
+        registration_number=getattr(reg, "registration_number", None),
+        registration_code=(
+            f"#CCF-EVT-{reg.registration_number:04d}" if getattr(reg, "registration_number", None) else None
+        ),
         reminder_sent_count=reg.reminder_sent_count,
         last_reminder_sent_at=reg.last_reminder_sent_at,
     )

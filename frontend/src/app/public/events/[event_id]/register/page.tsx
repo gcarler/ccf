@@ -2,9 +2,10 @@
 
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
-import { Calendar, MapPin, Clock, Check, X, QrCode, Mail, Loader2, ShieldCheck, ArrowRight, Users, AlertTriangle } from 'lucide-react';
+import { Calendar, MapPin, Clock, Check, X, QrCode, Mail, Loader2, ShieldCheck, ArrowRight, Users, AlertTriangle, Download, Ticket } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
-import { apiFetch, ApiError } from '@/lib/http';
+import { apiFetch, apiFetchBlob, ApiError } from '@/lib/http';
+import { toast } from 'sonner';
 import { getPublicCmsForm } from '@/lib/cms/v2';
 import CmsFormRenderer, { type CmsFormRendererApi } from '@/components/public/cms/CmsFormRenderer';
 import type { CmsFormPublicRead } from '@/types/cms-v2';
@@ -64,6 +65,8 @@ type RegistrationResult = {
     last_reminder_sent_at: string | null;
     // plan_clasificador_contextual: rol efectivo de la inscripción.
     participant_role_code: string | null;
+    registration_number?: number | null;
+    registration_code?: string | null;
 };
 
 const STATUS_LABEL: Record<RegistrationStatus, string> = {
@@ -93,33 +96,116 @@ function RegisterSuccess({ result, event, baseUrl }: { result: RegistrationResul
     const isWaitlist = result.registration_status === 'WAITLIST';
     const showQr = isConfirmed || isCheckedIn;
 
+    const [downloadingPass, setDownloadingPass] = useState(false);
+
+    // Correlativo canónico (#CCF-EVT-XXXX)
+    const passCode = result.registration_code || (result.registration_number ? `#CCF-EVT-${String(result.registration_number).padStart(4, '0')}` : '#CCF-EVT-0001');
+
+    const handleDownloadPass = async () => {
+        setDownloadingPass(true);
+        try {
+            const blob = await apiFetchBlob(`/public/events/${event.id}/registrations/${result.id}/pass`);
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `pase_${passCode.replace('#', '')}.pdf`;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            toast.success('Pase digital descargado con éxito');
+        } catch {
+            toast.error('No se pudo generar el pase digital en este momento');
+        } finally {
+            setDownloadingPass(false);
+        }
+    };
+
+    const handleDownloadIcs = () => {
+        try {
+            let dtStartStr = '';
+            let dtEndStr = '';
+            if (event.event_date) {
+                const datePart = event.event_date.split('T')[0].replace(/-/g, '');
+                const startTimePart = (event.start_time || '09:00').replace(/:/g, '').slice(0, 4) + '00';
+                const endTimePart = (event.end_time || '12:00').replace(/:/g, '').slice(0, 4) + '00';
+                dtStartStr = `${datePart}T${startTimePart}`;
+                dtEndStr = `${datePart}T${endTimePart}`;
+            } else {
+                const now = new Date();
+                dtStartStr = now.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+                dtEndStr = dtStartStr;
+            }
+
+            const uid = `ccf-event-${event.id}-${result.id}@ccf.org`;
+            const stamp = new Date().toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+
+            const icsLines = [
+                'BEGIN:VCALENDAR',
+                'VERSION:2.0',
+                'PRODID:-//Centro Cristiano Fe//Plataforma CCF//ES',
+                'CALSCALE:GREGORIAN',
+                'METHOD:PUBLISH',
+                'BEGIN:VEVENT',
+                `UID:${uid}`,
+                `DTSTAMP:${stamp}`,
+                `DTSTART:${dtStartStr}`,
+                `DTEND:${dtEndStr}`,
+                `SUMMARY:${event.name.replace(/\n/g, ' ')}`,
+                `DESCRIPTION:${(event.description || `Pase de ingreso digital CCF: ${passCode}`).replace(/\n/g, '\\n')}`,
+                `LOCATION:${(event.location || 'Centro Cristiano de Fe').replace(/\n/g, ' ')}`,
+                'STATUS:CONFIRMED',
+                'END:VEVENT',
+                'END:VCALENDAR',
+            ];
+
+            const blob = new Blob([icsLines.join('\r\n')], { type: 'text/calendar;charset=utf-8;' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `evento_${event.name.replace(/[^a-zA-Z0-9_-]/g, '_')}.ics`;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            toast.success('Evento añadido a tu calendario');
+        } catch {
+            toast.error('No se pudo generar el archivo de calendario');
+        }
+    };
+
     return (
-        <div className="flex flex-col items-center justify-center text-center space-y-4 animate-in fade-in zoom-in duration-500">
-            <div className="w-20 h-20 rounded-full flex items-center justify-center shadow-2xl"
-                style={isPending
-                    ? { background: 'hsl(var(--warning-muted))', color: 'hsl(var(--warning-text))' }
-                    : isWaitlist
-                        ? { background: 'hsl(var(--info-muted))', color: 'hsl(var(--info-text))' }
-                        : { background: 'hsl(var(--success-muted))', color: 'hsl(var(--success-text))' }}>
-                {isPending
-                    ? <Mail size={40} strokeWidth={2.5} />
-                    : isWaitlist
-                        ? <Users size={40} strokeWidth={2.5} />
-                        : <Check size={40} strokeWidth={3} />}
+        <div className="w-full max-w-lg mx-auto space-y-4 animate-in fade-in zoom-in duration-500">
+            {/* Mensaje de estado superior */}
+            <div className="flex flex-col items-center justify-center text-center space-y-2">
+                <div className="w-14 h-14 rounded-full flex items-center justify-center shadow-lg"
+                    style={isPending
+                        ? { background: 'hsl(var(--warning-muted))', color: 'hsl(var(--warning-text))' }
+                        : isWaitlist
+                            ? { background: 'hsl(var(--info-muted))', color: 'hsl(var(--info-text))' }
+                            : { background: 'hsl(var(--success-muted))', color: 'hsl(var(--success-text))' }}>
+                    {isPending
+                        ? <Mail size={28} strokeWidth={2.5} />
+                        : isWaitlist
+                            ? <Users size={28} strokeWidth={2.5} />
+                            : <Check size={28} strokeWidth={3} />}
+                </div>
+                <div>
+                    <h1 className="text-xl font-bold text-[hsl(var(--text-primary))] tracking-tight">
+                        {STATUS_LABEL[result.registration_status]}
+                    </h1>
+                    {result.persona_name && (
+                        <p className="text-sm font-medium text-[hsl(var(--text-secondary))] mt-0.5">
+                            ¡Todo listo, {result.persona_name}!
+                        </p>
+                    )}
+                </div>
             </div>
 
-            <div>
-                <h1 className="text-lg sm:text-xl font-bold text-[hsl(var(--text-primary))] tracking-tight">{STATUS_LABEL[result.registration_status]}</h1>
-                {result.persona_name && (
-                    <p className="text-sm font-medium text-[hsl(var(--text-secondary))] mt-1">¡Hola, {result.persona_name}!</p>
-                )}
-            </div>
-
+            {/* Avisos de espera o pendientes */}
             {isWaitlist && (
                 <div className="p-4 rounded-lg text-sm font-semibold w-full text-left"
                     style={{ background: 'hsl(var(--info-muted))', color: 'hsl(var(--info-text))' }}>
                     El evento está lleno. Fuiste agregado a la lista de espera
-                    {result.waiting_list_position != null ? ` en la posición ${result.waiting_list_position}` : ''}.
+                    {result.waiting_list_position != null ? ` en la posición #${result.waiting_list_position}` : ''}.
                     Te avisaremos si se libera un cupo.
                 </div>
             )}
@@ -128,58 +214,154 @@ function RegisterSuccess({ result, event, baseUrl }: { result: RegistrationResul
                 <div className="p-4 rounded-lg text-sm font-semibold w-full text-left"
                     style={{ background: 'hsl(var(--warning-muted))', color: 'hsl(var(--warning-text))' }}>
                     Te enviamos un correo para confirmar tu inscripción. Revisa tu bandeja de entrada
-                    (o spam) y haz clic en el enlace de verificación para activar tu QR.
+                    (o spam) y haz clic en el enlace de verificación para activar tu QR y pase digital.
                 </div>
             )}
 
-            {showQr && result.qr_token && (
-                <>
-                    <div className="p-4 bg-[hsl(var(--surface-1))] dark:bg-white rounded-md shadow-xl border border-[hsl(var(--border-primary))] flex items-center justify-center">
-                        <QRCodeSVG
-                            id="registration-qr-code"
-                            value={`${baseUrl}/public/events/${event.id}/qr?token=${result.qr_token}`}
-                            size={200}
-                            level="H"
-                            includeMargin
-                            className="w-full h-auto max-w-[200px] sm:max-w-[224px]"
-                        />
+            {/* TARJETA BOARDING PASS / DIGITAL PASS */}
+            <div className="rounded-2xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] overflow-hidden shadow-xl text-left">
+                {/* Cabecera del Boarding Pass */}
+                <div className="p-4 bg-[hsl(var(--surface-2))] border-b border-[hsl(var(--border))] flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-2">
+                        <span className="w-2.5 h-2.5 rounded-full bg-[hsl(var(--primary))]" />
+                        <span className="text-xs font-bold uppercase tracking-wider text-[hsl(var(--text-secondary))] flex items-center gap-1.5">
+                            <Ticket size={13} /> Pase de Acceso CCF
+                        </span>
                     </div>
-                    <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
-                        <QrCode size={14} /> Presenta este código en el ingreso
+                    <div className="inline-flex items-center px-2.5 py-1 rounded-md font-mono text-xs font-black bg-[hsl(var(--primary)/0.12)] text-[hsl(var(--primary))] border border-[hsl(var(--primary)/0.25)] tracking-wider">
+                        {passCode}
                     </div>
-                    {result.participant_role_code && (
-                        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-[hsl(var(--info))]/30 bg-[hsl(var(--info-muted))] text-[hsl(var(--info-text))] text-2xs font-bold uppercase tracking-wide">
-                            <Users size={13} /> Rol en el evento: {participantRoleLabel(result.participant_role_code)}
+                </div>
+
+                {/* Cuerpo del Boarding Pass */}
+                <div className="p-5 space-y-4">
+                    <div>
+                        <span className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] block mb-1">
+                            Evento
+                        </span>
+                        <h3 className="text-base font-extrabold text-[hsl(var(--text-primary))] leading-snug">
+                            {event.name}
+                        </h3>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3 pt-2 border-t border-[hsl(var(--border)/0.6)]">
+                        <div>
+                            <span className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] block">
+                                Titular
+                            </span>
+                            <span className="text-xs font-bold text-[hsl(var(--text-primary))] block truncate">
+                                {result.persona_name || 'Asistente'}
+                            </span>
+                            {result.participant_role_code && (
+                                <span className="inline-block mt-1 text-3xs font-bold px-1.5 py-0.5 rounded bg-[hsl(var(--info-muted))] text-[hsl(var(--info-text))] uppercase">
+                                    {participantRoleLabel(result.participant_role_code)}
+                                </span>
+                            )}
+                        </div>
+                        <div>
+                            <span className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] block">
+                                Fecha
+                            </span>
+                            <span className="text-xs font-bold text-[hsl(var(--text-primary))] block">
+                                {formatDate(event.event_date) || 'Por confirmar'}
+                            </span>
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3">
+                        <div>
+                            <span className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] block">
+                                Horario
+                            </span>
+                            <span className="text-xs font-bold text-[hsl(var(--text-primary))] block">
+                                {event.start_time ? `${event.start_time.slice(0, 5)}${event.end_time ? ` - ${event.end_time.slice(0, 5)}` : ''}` : 'Hora regular'}
+                            </span>
+                        </div>
+                        <div>
+                            <span className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] block">
+                                Lugar
+                            </span>
+                            <span className="text-xs font-bold text-[hsl(var(--text-primary))] block truncate">
+                                {event.location || 'Sede Principal CCF'}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Perforación estilo ticket */}
+                <div className="relative flex items-center justify-between px-2">
+                    <div className="w-4 h-8 rounded-r-full bg-[hsl(var(--bg-primary))] border-r border-y border-[hsl(var(--border))] -ml-2" />
+                    <div className="flex-1 border-t-2 border-dashed border-[hsl(var(--border))] mx-2" />
+                    <div className="w-4 h-8 rounded-l-full bg-[hsl(var(--bg-primary))] border-l border-y border-[hsl(var(--border))] -mr-2" />
+                </div>
+
+                {/* Talón QR del Boarding Pass */}
+                <div className="p-5 flex flex-col items-center text-center space-y-3 bg-[hsl(var(--surface-1))]">
+                    {showQr && result.qr_token ? (
+                        <>
+                            <div className="p-3 bg-white rounded-xl shadow-md border border-neutral-200">
+                                <QRCodeSVG
+                                    id="registration-qr-code"
+                                    value={`${baseUrl}/public/events/${event.id}/qr?token=${result.qr_token}`}
+                                    size={180}
+                                    level="H"
+                                    includeMargin
+                                    className="w-full h-auto max-w-[180px]"
+                                />
+                            </div>
+                            <div className="text-center">
+                                <p className="font-mono text-xs font-black tracking-widest text-[hsl(var(--text-primary))]">
+                                    {passCode}
+                                </p>
+                                <p className="text-2xs font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] mt-0.5 flex items-center justify-center gap-1">
+                                    <QrCode size={13} /> Presenta este código en portería
+                                </p>
+                            </div>
+                        </>
+                    ) : (
+                        <div className="py-6 text-center text-xs font-semibold text-[hsl(var(--text-secondary))]">
+                            {isPending ? 'El código QR se activará al verificar tu correo' : 'Pase en espera de confirmación de aforo'}
                         </div>
                     )}
-                </>
-            )}
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 w-full text-left">
-                <div className="rounded-lg border border-[hsl(var(--border))] p-3">
-                    <div className="flex items-center gap-2 text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
-                        <Calendar size={13} /> Fecha
-                    </div>
-                    <div className="text-sm font-semibold text-[hsl(var(--text-primary))] mt-1">{formatDate(event.event_date)}</div>
                 </div>
-                {event.location && (
-                    <div className="rounded-lg border border-[hsl(var(--border))] p-3">
-                        <div className="flex items-center gap-2 text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
-                            <MapPin size={13} /> Lugar
-                        </div>
-                        <div className="text-sm font-semibold text-[hsl(var(--text-primary))] mt-1">{event.location}</div>
-                    </div>
-                )}
             </div>
 
-            <a
-                href={`${baseUrl}/public/events/${event.id}/qr?token=${result.qr_token ?? ''}`}
-                target="_blank"
-                rel="noreferrer"
-                className="w-full py-2.5 bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))]/90 text-white rounded-lg text-sm font-semibold uppercase tracking-wide shadow-lg shadow-[hsl(var(--primary)/30%)] transition-all flex items-center justify-center gap-2"
-            >
-                <QrCode size={16} /> Abrir mi código QR
-            </a>
+            {/* Barra de Acciones */}
+            <div className="flex flex-col sm:flex-row gap-2.5 pt-1">
+                <button
+                    type="button"
+                    onClick={handleDownloadPass}
+                    disabled={downloadingPass || (!showQr && !isWaitlist)}
+                    className="flex-1 py-2.5 px-4 rounded-xl bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))]/90 text-[hsl(var(--primary-foreground))] text-xs font-bold uppercase tracking-wider shadow-lg shadow-[hsl(var(--primary)/20%)] transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                >
+                    {downloadingPass ? (
+                        <Loader2 size={15} className="animate-spin" />
+                    ) : (
+                        <Download size={15} />
+                    )}
+                    Descargar Pase (PDF)
+                </button>
+
+                <button
+                    type="button"
+                    onClick={handleDownloadIcs}
+                    className="flex-1 py-2.5 px-4 rounded-xl bg-[hsl(var(--surface-2))] hover:bg-[hsl(var(--surface-2))]/80 text-[hsl(var(--text-primary))] text-xs font-bold uppercase tracking-wider border border-[hsl(var(--border))] transition-all flex items-center justify-center gap-2"
+                >
+                    <Calendar size={15} />
+                    Añadir a Calendario (.ics)
+                </button>
+            </div>
+
+            {showQr && result.qr_token && (
+                <a
+                    href={`${baseUrl}/public/events/${event.id}/qr?token=${result.qr_token}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="w-full py-2 text-2xs font-bold uppercase tracking-wider text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] transition-colors flex items-center justify-center gap-1.5"
+                >
+                    <QrCode size={14} /> Abrir QR en pantalla completa
+                </a>
+            )}
         </div>
     );
 }
@@ -618,23 +800,46 @@ function RegisterForm({ event, baseUrl }: { event: PublicEventInfo; baseUrl: str
 
     const renderCheckStatus = () => {
         if (checkResult) {
+            const passCode = checkResult.registration_code || (checkResult.registration_number ? `#CCF-EVT-${String(checkResult.registration_number).padStart(4, '0')}` : null);
             return (
-                <div className="rounded-lg border border-[hsl(var(--border))] p-4 text-left">
-                    <div className="flex items-center gap-2">
-                        <span className="w-2 h-2 rounded-full"
-                            style={{ background: checkResult.registration_status === 'CONFIRMED' || checkResult.registration_status === 'CHECKED_IN' ? 'hsl(var(--success))' : 'hsl(var(--warning))' }} />
-                        <span className="text-sm font-bold text-[hsl(var(--text-primary))]">{STATUS_LABEL[checkResult.registration_status]}</span>
+                <div className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-4 text-left space-y-3">
+                    <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-2">
+                            <span className="w-2.5 h-2.5 rounded-full"
+                                style={{ background: checkResult.registration_status === 'CONFIRMED' || checkResult.registration_status === 'CHECKED_IN' ? 'hsl(var(--success))' : 'hsl(var(--warning))' }} />
+                            <span className="text-sm font-bold text-[hsl(var(--text-primary))]">{STATUS_LABEL[checkResult.registration_status]}</span>
+                        </div>
+                        {passCode && (
+                            <span className="font-mono text-2xs font-black px-2 py-0.5 rounded bg-[hsl(var(--primary)/0.12)] text-[hsl(var(--primary))] border border-[hsl(var(--primary)/0.25)]">
+                                {passCode}
+                            </span>
+                        )}
                     </div>
+                    {checkResult.persona_name && (
+                        <p className="text-xs font-semibold text-[hsl(var(--text-primary))]">
+                            Titular: {checkResult.persona_name}
+                        </p>
+                    )}
                     {checkResult.waiting_list_position != null && (
-                        <p className="text-xs font-medium text-[hsl(var(--text-secondary))] mt-1">
-                            Posición en lista de espera: {checkResult.waiting_list_position}
+                        <p className="text-xs font-medium text-[hsl(var(--text-secondary))]">
+                            Posición en lista de espera: #{checkResult.waiting_list_position}
                         </p>
                     )}
                     {checkResult.cancelled_at && (
-                        <p className="text-xs font-medium text-[hsl(var(--text-secondary))] mt-1">
+                        <p className="text-xs font-medium text-[hsl(var(--text-secondary))]">
                             Cancelada el {new Date(checkResult.cancelled_at).toLocaleString('es-CO')}
                         </p>
                     )}
+                    <button
+                        type="button"
+                        onClick={() => {
+                            setResult(checkResult);
+                            setStatus('success');
+                        }}
+                        className="w-full mt-2 py-2 px-3 rounded-lg bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))]/90 text-[hsl(var(--primary-foreground))] text-xs font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-2"
+                    >
+                        <Ticket size={14} /> Ver mi Pase Digital
+                    </button>
                 </div>
             );
         }

@@ -3,9 +3,9 @@
 import type { EventAudience, MinistryEvent, Persona, RoleDefinition } from '@/app/plataforma/evangelism/types';
 import WorkspaceDrawer from '@/components/WorkspaceDrawer';
 import ErrorBoundary from '@/components/ErrorBoundary';
-import { Pencil } from 'lucide-react';
+import { Pencil, QrCode, ExternalLink } from 'lucide-react';
 import type { AudiencePresetData } from './EventCreateDrawer';
-import { DSButton } from '@/design';
+import { DSButton, DSInput, DSSelect } from '@/design';
 
 interface EventEditDrawerProps {
   event: MinistryEvent | null;
@@ -15,6 +15,12 @@ interface EventEditDrawerProps {
     target_audience?: string;
     target_role_ids?: string[];
     target_persona_ids?: string[];
+    requires_registration?: boolean;
+    capacity_max?: number | null;
+    registration_opens_at?: string | null;
+    registration_closes_at?: string | null;
+    waiting_list_enabled?: boolean;
+    qr_mode?: string;
   }) => void;
   roles: RoleDefinition[];
   getTargetRoleIds: (event: MinistryEvent | null | undefined) => string[];
@@ -26,6 +32,7 @@ interface EventEditDrawerProps {
   onDeletePreset: (presetId: string) => void;
   onAddSuggestions: () => void;
   onSavePreset: (source: { target_audience: string; target_role_ids?: Array<string | number>; target_persona_ids?: Array<string | number> }) => void;
+  onOpenFormStudio?: (event: MinistryEvent) => void;
 }
 
 export default function EventEditDrawer({
@@ -43,6 +50,7 @@ export default function EventEditDrawer({
   onDeletePreset,
   onAddSuggestions,
   onSavePreset,
+  onOpenFormStudio,
 }: EventEditDrawerProps) {
   return (
  <ErrorBoundary moduleName="Eventos - Editar" compact>
@@ -56,7 +64,25 @@ export default function EventEditDrawer({
  <DSButton variant="ghost" disabled={!!event && updatingId === event.id} onClick={() => setEvent(null)} className="px-4 py-2 text-xs font-bold text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] transition-colors disabled:opacity-60">
  Cancelar
  </DSButton>
- <DSButton variant="primary" disabled={!event || updatingId === event.id} onClick={() => event && onSave(event.id, { name: event.name, description: event.description, location: event.location, status: event.status, cancellation_reason: event.cancellation_reason, start_time: event.start_time, end_time: event.end_time, target_audience: event.target_audience || 'ALL', target_role_id: (event.target_audience || 'ALL') === 'ROLE' ? (event.target_role_ids?.[0] || event.target_role_id) : null, target_role_ids: (event.target_audience || 'ALL') === 'ROLE' ? (event.target_role_ids || getTargetRoleIds(event)) : [], target_persona_ids: (event.target_audience || 'ALL') === 'MANUAL' ? (event.target_persona_ids || []) : [] })} className="px-3 py-2 bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] rounded-lg text-xs font-semibold uppercase tracking-wide shadow-lg hover:bg-[hsl(var(--primary))] active:scale-95 transition-all flex items-center gap-2 disabled:opacity-60">
+ <DSButton variant="primary" disabled={!event || updatingId === event.id} onClick={() => event && onSave(event.id, {
+   name: event.name,
+   description: event.description,
+   location: event.location,
+   status: event.status,
+   cancellation_reason: event.cancellation_reason,
+   start_time: event.start_time,
+   end_time: event.end_time,
+   target_audience: event.target_audience || 'ALL',
+   target_role_id: (event.target_audience || 'ALL') === 'ROLE' ? (event.target_role_ids?.[0] || event.target_role_id) : null,
+   target_role_ids: (event.target_audience || 'ALL') === 'ROLE' ? (event.target_role_ids || getTargetRoleIds(event)) : [],
+   target_persona_ids: (event.target_audience || 'ALL') === 'MANUAL' ? (event.target_persona_ids || []) : [],
+   requires_registration: event.requires_registration,
+   capacity_max: event.capacity_max,
+   registration_opens_at: event.registration_opens_at,
+   registration_closes_at: event.registration_closes_at,
+   waiting_list_enabled: event.waiting_list_enabled,
+   qr_mode: event.qr_mode,
+ })} className="px-3 py-2 bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] rounded-lg text-xs font-semibold uppercase tracking-wide shadow-lg hover:bg-[hsl(var(--primary))] active:scale-95 transition-all flex items-center gap-2 disabled:opacity-60">
  {event && updatingId === event.id ? 'Guardando...' : 'Guardar'} <Pencil size={14} />
  </DSButton>
  </>
@@ -178,6 +204,116 @@ export default function EventEditDrawer({
   <textarea id="edit-event-cancellation-reason" value={event.cancellation_reason || ''} onChange={e => setEvent({...event, cancellation_reason: e.target.value})} rows={3} placeholder="¿Por qué no se realizó este evento?" className="w-full px-4 py-1.5 rounded-lg border border-[hsl(var(--destructive))] bg-[hsl(var(--destructive)/0.08)] focus:ring-2 focus:ring-[hsl(var(--destructive))] outline-none font-bold text-sm text-[hsl(var(--destructive))] resize-none placeholder:text-[hsl(var(--destructive)/0.5)]" />
  </div>
  )}
+  {/* Pre-registro y Form Studio */}
+ <div className="space-y-3 rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--surface-2))] p-4">
+ <div className="flex items-center justify-between gap-3">
+ <div className="flex items-center gap-2">
+ <div className="w-8 h-8 rounded-lg bg-[hsl(var(--primary)/0.1)] text-[hsl(var(--primary))] flex items-center justify-center">
+ <QrCode size={18} />
+ </div>
+ <div>
+ <p className="text-xs font-bold uppercase tracking-wide text-[hsl(var(--text-primary))]">Pre-registro con Código QR</p>
+ <p className="text-2xs text-[hsl(var(--text-secondary))]">Emite pases digitales interactivos con correlativo único</p>
+ </div>
+ </div>
+ <label className="relative inline-flex items-center cursor-pointer">
+ <input
+ type="checkbox"
+ checked={Boolean(event.requires_registration)}
+ onChange={e => setEvent({ ...event, requires_registration: e.target.checked })}
+ className="sr-only peer"
+ />
+ <div className="w-11 h-6 bg-[hsl(var(--bg-muted))] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-[hsl(var(--border-primary))] after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[hsl(var(--primary))]"></div>
+ </label>
+ </div>
+
+ {event.requires_registration && (
+ <div className="mt-3 pt-3 border-t border-[hsl(var(--border-primary))] space-y-3 animate-in fade-in slide-in-from-top-2 duration-300">
+ <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+ <div className="space-y-1">
+ <label htmlFor="edit-event-capacity" className="text-2xs font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">
+ Aforo Máximo (Cupos)
+ </label>
+ <DSInput
+ id="edit-event-capacity"
+ type="number"
+ min="1"
+ placeholder="Ilimitado si está vacío"
+ value={event.capacity_max ?? ''}
+ onChange={e => setEvent({ ...event, capacity_max: e.target.value ? parseInt(e.target.value, 10) : null })}
+ className="w-full px-3 py-1.5 rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-primary))] text-sm text-[hsl(var(--text-primary))]"
+ />
+ </div>
+ <div className="space-y-1">
+ <label htmlFor="edit-event-qr-mode" className="text-2xs font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">
+ Modo de Pase QR
+ </label>
+ <DSSelect
+ id="edit-event-qr-mode"
+ value={event.qr_mode || 'PER_REGISTRANT'}
+ onChange={e => setEvent({ ...event, qr_mode: e.target.value as 'PER_REGISTRANT' | 'PER_EVENT' })}
+ className="w-full px-3 py-1.5 rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-primary))] text-sm"
+ options={[
+ { value: 'PER_REGISTRANT', label: 'Un QR por asistente (Recomendado)' },
+ { value: 'PER_EVENT', label: 'Un QR global para el evento' },
+ ]}
+ />
+ </div>
+ </div>
+
+ <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+ <div className="space-y-1">
+ <label htmlFor="edit-event-reg-open" className="text-2xs font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">
+ Apertura Pre-registro
+ </label>
+ <DSInput
+ id="edit-event-reg-open"
+ type="datetime-local"
+ value={event.registration_opens_at ? event.registration_opens_at.slice(0, 16) : ''}
+ onChange={e => setEvent({ ...event, registration_opens_at: e.target.value ? new Date(e.target.value).toISOString() : null })}
+ className="w-full px-3 py-1.5 rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-primary))] text-xs text-[hsl(var(--text-primary))]"
+ />
+ </div>
+ <div className="space-y-1">
+ <label htmlFor="edit-event-reg-close" className="text-2xs font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">
+ Cierre Pre-registro
+ </label>
+ <DSInput
+ id="edit-event-reg-close"
+ type="datetime-local"
+ value={event.registration_closes_at ? event.registration_closes_at.slice(0, 16) : ''}
+ onChange={e => setEvent({ ...event, registration_closes_at: e.target.value ? new Date(e.target.value).toISOString() : null })}
+ className="w-full px-3 py-1.5 rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-primary))] text-xs text-[hsl(var(--text-primary))]"
+ />
+ </div>
+ </div>
+
+ <div className="flex items-center justify-between p-2 rounded-lg bg-[hsl(var(--bg-primary))] border border-[hsl(var(--border-primary))]">
+ <div>
+ <p className="text-xs font-semibold text-[hsl(var(--text-primary))]">Lista de Espera Inteligente</p>
+ <p className="text-2xs text-[hsl(var(--text-secondary))]">Si el aforo se llena, permite seguir registrando en cola</p>
+ </div>
+ <input
+ type="checkbox"
+ checked={Boolean(event.waiting_list_enabled)}
+ onChange={e => setEvent({ ...event, waiting_list_enabled: e.target.checked })}
+ className="rounded border-[hsl(var(--border-primary))] text-[hsl(var(--primary))] focus:ring-[hsl(var(--primary))]"
+ />
+ </div>
+
+ {onOpenFormStudio && (
+ <button
+ type="button"
+ onClick={() => onOpenFormStudio(event)}
+ className="w-full py-2 px-3 rounded-lg border border-[hsl(var(--primary))] bg-[hsl(var(--primary)/0.08)] hover:bg-[hsl(var(--primary)/0.15)] text-[hsl(var(--primary))] text-xs font-bold uppercase tracking-wide flex items-center justify-center gap-2 transition-all"
+ >
+ <ExternalLink size={14} /> Abrir Form Studio para diseñar preguntas
+ </button>
+ )}
+ </div>
+ )}
+ </div>
+
  <div className="space-y-1.5">
  <label htmlFor="edit-event-description" className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Descripción</label>
  <textarea id="edit-event-description" value={event.description || ''} onChange={e => setEvent({...event, description: e.target.value})} rows={3} className="w-full px-4 py-1.5 rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-primary))] focus:ring-2 focus:ring-[hsl(var(--primary))] outline-none font-bold text-sm text-[hsl(var(--text-primary))] resize-none" />

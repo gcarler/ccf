@@ -3,7 +3,7 @@
 import type { Persona, RoleDefinition } from '@/app/plataforma/evangelism/types';
 import WorkspaceDrawer from '@/components/WorkspaceDrawer';
 import ErrorBoundary from '@/components/ErrorBoundary';
-import { Check } from 'lucide-react';
+import { Check, QrCode } from 'lucide-react';
 import React from 'react';
 import { DSButton, DSInput, DSSelect } from '@/design';
 
@@ -24,6 +24,12 @@ export interface EventCreateForm {
   fixed_date: string;
   start_time: string;
   end_time: string;
+  requires_registration?: boolean;
+  capacity_max?: number | string;
+  registration_opens_at?: string;
+  registration_closes_at?: string;
+  waiting_list_enabled?: boolean;
+  qr_mode?: string;
 }
 
 export interface EventSedeOption {
@@ -358,6 +364,111 @@ export default function EventCreateDrawer({
  />
  </div>
  )}
+
+  {/* Pre-registro y Pase Digital Super-PRO */}
+ <div className="space-y-3 rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--surface-2))] p-4">
+ <div className="flex items-center justify-between gap-3">
+ <div className="flex items-center gap-2">
+ <div className="w-8 h-8 rounded-lg bg-[hsl(var(--primary)/0.1)] text-[hsl(var(--primary))] flex items-center justify-center">
+ <QrCode size={18} />
+ </div>
+ <div>
+ <p className="text-xs font-bold uppercase tracking-wide text-[hsl(var(--text-primary))]">Pre-registro con Código QR</p>
+ <p className="text-2xs text-[hsl(var(--text-secondary))]">Emite pases digitales interactivos con correlativo único</p>
+ </div>
+ </div>
+ <label className="relative inline-flex items-center cursor-pointer">
+ <input
+ type="checkbox"
+ checked={Boolean(form.requires_registration)}
+ onChange={e => setForm({ ...form, requires_registration: e.target.checked })}
+ className="sr-only peer"
+ />
+ <div className="w-11 h-6 bg-[hsl(var(--bg-muted))] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-[hsl(var(--border-primary))] after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[hsl(var(--primary))]"></div>
+ </label>
+ </div>
+
+ {form.requires_registration && (
+ <div className="mt-3 pt-3 border-t border-[hsl(var(--border-primary))] space-y-3 animate-in fade-in slide-in-from-top-2 duration-300">
+ <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+ <div className="space-y-1">
+ <label htmlFor="event-capacity" className="text-2xs font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">
+ Aforo Máximo (Cupos)
+ </label>
+ <DSInput
+ id="event-capacity"
+ type="number"
+ min="1"
+ placeholder="Ilimitado si está vacío"
+ value={form.capacity_max ?? ''}
+ onChange={e => setForm({ ...form, capacity_max: e.target.value })}
+ className="w-full px-3 py-1.5 rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-primary))] text-sm text-[hsl(var(--text-primary))]"
+ />
+ </div>
+ <div className="space-y-1">
+ <label htmlFor="event-qr-mode" className="text-2xs font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">
+ Modo de Pase QR
+ </label>
+ <DSSelect
+ id="event-qr-mode"
+ value={form.qr_mode || 'PER_REGISTRANT'}
+ onChange={e => setForm({ ...form, qr_mode: e.target.value })}
+ className="w-full px-3 py-1.5 rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-primary))] text-sm"
+ options={[
+ { value: 'PER_REGISTRANT', label: 'Un QR por asistente (Recomendado)' },
+ { value: 'PER_EVENT', label: 'Un QR global para el evento' },
+ ]}
+ />
+ </div>
+ </div>
+
+ <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+ <div className="space-y-1">
+ <label htmlFor="event-reg-open" className="text-2xs font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">
+ Apertura Pre-registro
+ </label>
+ <DSInput
+ id="event-reg-open"
+ type="datetime-local"
+ value={form.registration_opens_at ?? ''}
+ onChange={e => setForm({ ...form, registration_opens_at: e.target.value })}
+ className="w-full px-3 py-1.5 rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-primary))] text-xs text-[hsl(var(--text-primary))]"
+ />
+ </div>
+ <div className="space-y-1">
+ <label htmlFor="event-reg-close" className="text-2xs font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">
+ Cierre Pre-registro
+ </label>
+ <DSInput
+ id="event-reg-close"
+ type="datetime-local"
+ value={form.registration_closes_at ?? ''}
+ onChange={e => setForm({ ...form, registration_closes_at: e.target.value })}
+ className="w-full px-3 py-1.5 rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-primary))] text-xs text-[hsl(var(--text-primary))]"
+ />
+ </div>
+ </div>
+
+ <div className="flex items-center justify-between p-2 rounded-lg bg-[hsl(var(--bg-primary))] border border-[hsl(var(--border-primary))]">
+ <div>
+ <p className="text-xs font-semibold text-[hsl(var(--text-primary))]">Lista de Espera Inteligente</p>
+ <p className="text-2xs text-[hsl(var(--text-secondary))]">Si el aforo se llena, permite seguir registrando en cola</p>
+ </div>
+ <input
+ type="checkbox"
+ checked={Boolean(form.waiting_list_enabled)}
+ onChange={e => setForm({ ...form, waiting_list_enabled: e.target.checked })}
+ className="rounded border-[hsl(var(--border-primary))] text-[hsl(var(--primary))] focus:ring-[hsl(var(--primary))]"
+ />
+ </div>
+
+ <div className="p-2.5 rounded-lg bg-[hsl(var(--primary)/0.06)] border border-[hsl(var(--primary)/0.15)] text-2xs text-[hsl(var(--text-secondary))] flex items-center gap-2">
+ <span className="font-semibold text-[hsl(var(--primary))]">💡 Tip:</span>
+ Podrás diseñar preguntas personalizadas con Form Studio en la pestaña Pre-registro del evento.
+ </div>
+ </div>
+ )}
+ </div>
 
  <div className="space-y-1.5">
  <label htmlFor="event-description" className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Descripción</label>

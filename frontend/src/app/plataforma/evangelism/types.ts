@@ -25,6 +25,15 @@ export interface MinistryEvent {
  fixed_date?: string;
  status?: string;
  cancellation_reason?: string;
+ requires_registration?: boolean;
+ requires_email_verification?: boolean;
+ capacity_max?: number | null;
+ registration_opens_at?: string | null;
+ registration_closes_at?: string | null;
+ waiting_list_enabled?: boolean;
+ qr_mode?: 'PER_REGISTRANT' | 'PER_EVENT';
+ contact_person?: string | null;
+ form_id?: string | null;
 }
 
 export interface Persona {

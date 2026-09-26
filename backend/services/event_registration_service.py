@@ -311,6 +311,17 @@ def capacity_remaining(db: Session, event: models.CrmEvent) -> Optional[int]:
     return max(0, event.capacity_max - slots_taken)
 
 
+def get_next_registration_number(db: Session, event_id: uuid.UUID) -> int:
+    """Calcula el siguiente número correlativo de registro para el evento (1-indexed)."""
+    max_num = (
+        db.query(func.coalesce(func.max(models.EventRegistration.registration_number), 0))
+        .filter(models.EventRegistration.event_id == event_id)
+        .scalar()
+        or 0
+    )
+    return int(max_num) + 1
+
+
 # ── Flujo principal de pre-registro ──────────────────────────────────────────
 
 
@@ -383,6 +394,8 @@ def register(
         existing.confirmed_at = None
         existing.check_in_at = None
         existing.check_out_at = None
+        if not existing.registration_number:
+            existing.registration_number = get_next_registration_number(db, event.id)
         existing.registration_status = (
             "WAITLIST" if capacity_full else ("PENDING" if event.requires_email_verification else "CONFIRMED")
         )
@@ -398,9 +411,11 @@ def register(
         db.flush()
         reg = existing
     else:
+        next_num = get_next_registration_number(db, event.id)
         reg = models.EventRegistration(
             event_id=event.id,
             persona_id=persona.id,
+            registration_number=next_num,
             registration_status=(
                 "WAITLIST" if capacity_full else ("PENDING" if event.requires_email_verification else "CONFIRMED")
             ),
@@ -982,6 +997,7 @@ def admit_walk_in(
     registration = models.EventRegistration(
         event_id=event.id,
         persona_id=persona.id,
+        registration_number=get_next_registration_number(db, event.id),
         registration_status="CHECKED_IN",
         source=source,
         confirmed_at=_utcnow(),

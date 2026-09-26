@@ -1,14 +1,15 @@
 "use client";
 
 import React, { useEffect, useState, useCallback } from "react";
-import { apiFetch, ApiError } from "@/lib/http";
+import { apiFetch, apiFetchBlob, ApiError } from "@/lib/http";
 import { toast } from "sonner";
 import {
   Check, Download, FolderOpen, Loader2, Mail, Plus,
-  QrCode, RefreshCw, Send, Trash2, Users, X, Megaphone, Settings2,
+  QrCode, RefreshCw, Send, Trash2, Users, X, Megaphone, Settings2, FileText,
 } from "lucide-react";
 import clsx from "clsx";
 import SidePanel from "@/components/ui/SidePanel";
+import EventFormStudioDrawer from "../panels/EventFormStudioDrawer";
 
 type RegistrationStatus =
   | "PENDING"
@@ -40,6 +41,8 @@ type EventRegistrationRow = {
   reminder_sent_count: number;
   last_reminder_sent_at: string | null;
   crm_case_id?: string | null;
+  registration_number?: number | null;
+  registration_code?: string | null;
 };
 
 type RegistrationStats = {
@@ -65,6 +68,7 @@ type PreregConfig = {
   qr_mode: "PER_REGISTRANT" | "PER_EVENT";
   contact_person: string | null;
   settings_json: Record<string, unknown>;
+  form_id?: string | null;
 };
 
 type EventCampaign = {
@@ -132,6 +136,7 @@ export default function PreregistrationTab({ eventId, token }: { eventId: string
   const [search, setSearch] = useState("");
   const [showConfigForm, setShowConfigForm] = useState(false);
   const [showCampaignForm, setShowCampaignForm] = useState(false);
+  const [showFormStudio, setShowFormStudio] = useState(false);
   const [sendingCampaignId, setSendingCampaignId] = useState<string | null>(null);
   const [exportingCsv, setExportingCsv] = useState(false);
 
@@ -199,6 +204,12 @@ export default function PreregistrationTab({ eventId, token }: { eventId: string
           <h3 className="text-sm font-bold uppercase tracking-wide text-[hsl(var(--text-primary))]">Pre-registro del evento</h3>
         </div>
         <div className="flex gap-2">
+          <button
+            onClick={() => setShowFormStudio(true)}
+            className="px-3 py-2 rounded-md bg-[hsl(var(--primary)/0.12)] hover:bg-[hsl(var(--primary))] text-[hsl(var(--primary))] hover:text-[hsl(var(--primary-foreground))] text-xs font-semibold uppercase tracking-wide transition-all flex items-center gap-2 border border-[hsl(var(--primary)/0.25)]"
+          >
+            <FileText size={14} /> Diseñar Formulario
+          </button>
           <button
             onClick={() => setShowCampaignForm(true)}
             className="px-3 py-2 rounded-md bg-[hsl(var(--bg-muted))] hover:bg-[hsl(var(--primary))] text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary-foreground))] text-xs font-semibold uppercase tracking-wide transition-all flex items-center gap-2"
@@ -375,6 +386,7 @@ export default function PreregistrationTab({ eventId, token }: { eventId: string
             <thead>
               <tr className="bg-[hsl(var(--bg-muted))]/50 text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
                 <th className="px-4 py-2 text-left">Persona</th>
+                <th className="px-4 py-2 text-left">Pase</th>
                 <th className="px-4 py-2 text-left">Estado</th>
                 <th className="px-4 py-2 text-left">Registro</th>
                 <th className="px-4 py-2 text-left">QR</th>
@@ -398,6 +410,19 @@ export default function PreregistrationTab({ eventId, token }: { eventId: string
                       <div className="text-xs font-medium text-[hsl(var(--text-secondary))]">
                         {r.persona_email || ""}{r.persona_email && r.persona_phone ? " · " : ""}{r.persona_phone || ""}
                       </div>
+                    </td>
+                    <td className="px-4 py-2.5">
+                      {r.registration_code ? (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded font-mono text-2xs font-bold bg-[hsl(var(--primary)/0.12)] text-[hsl(var(--primary))] border border-[hsl(var(--primary)/0.2)]">
+                          {r.registration_code}
+                        </span>
+                      ) : r.registration_number ? (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded font-mono text-2xs font-bold bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))]">
+                          #{String(r.registration_number).padStart(4, "0")}
+                        </span>
+                      ) : (
+                        <span className="text-2xs text-[hsl(var(--text-secondary))]">—</span>
+                      )}
                     </td>
                     <td className="px-4 py-2.5">
                       <span className={clsx("inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-2xs font-semibold uppercase tracking-wide", STATUS_BADGE[r.registration_status])}>
@@ -424,6 +449,28 @@ export default function PreregistrationTab({ eventId, token }: { eventId: string
                     </td>
                     <td className="px-4 py-2.5">
                       <div className="flex items-center gap-1.5">
+                        {r.registration_status !== "CANCELLED" && (
+                          <button
+                            onClick={async () => {
+                              try {
+                                const blob = await apiFetchBlob(`/evangelism/events/${eventId}/registrations/${r.id}/pass`, { token });
+                                const url = window.URL.createObjectURL(blob);
+                                const a = document.createElement("a");
+                                a.href = url;
+                                a.download = `pase_${(r.registration_code || r.id).replace('#', '')}.pdf`;
+                                document.body.appendChild(a);
+                                a.click();
+                                window.URL.revokeObjectURL(url);
+                              } catch {
+                                toast.error("No se pudo descargar el pase digital");
+                              }
+                            }}
+                            className="p-1.5 rounded-md text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] hover:bg-info-soft transition-all"
+                            title="Descargar Pase Digital (PDF)"
+                          >
+                            <Download size={14} />
+                          </button>
+                        )}
                         {r.registration_status === "CONFIRMED" && (
                           <button
                             onClick={async () => {
@@ -494,6 +541,7 @@ export default function PreregistrationTab({ eventId, token }: { eventId: string
           config={config}
           onClose={() => setShowConfigForm(false)}
           onSaved={() => { setShowConfigForm(false); loadAll(); }}
+          onOpenFormStudio={() => setShowFormStudio(true)}
         />
       )}
 
@@ -504,6 +552,19 @@ export default function PreregistrationTab({ eventId, token }: { eventId: string
           plantillas={plantillas}
           onClose={() => setShowCampaignForm(false)}
           onSaved={() => { setShowCampaignForm(false); loadAll(); }}
+        />
+      )}
+
+      {showFormStudio && (
+        <EventFormStudioDrawer
+          isOpen={showFormStudio}
+          onClose={() => setShowFormStudio(false)}
+          eventId={eventId}
+          eventName="Formulario de Pre-registro"
+          token={token}
+          onSaved={() => {
+            loadAll();
+          }}
         />
       )}
     </div>
@@ -532,12 +593,13 @@ function StatCard({ label, value, accent }: { label: string; value: number; acce
   );
 }
 
-function ConfigForm({ eventId, token, config, onClose, onSaved }: {
+function ConfigForm({ eventId, token, config, onClose, onSaved, onOpenFormStudio }: {
   eventId: string;
   token: string | null;
   config: PreregConfig | null;
   onClose: () => void;
   onSaved: () => void;
+  onOpenFormStudio?: () => void;
 }) {
   const [form, setForm] = useState<PreregConfig>(() => config ?? {
     requires_registration: true,
@@ -584,6 +646,24 @@ function ConfigForm({ eventId, token, config, onClose, onSaved }: {
       width="w-full sm:w-[500px]"
     >
       <div className="space-y-4 p-4">
+        {onOpenFormStudio && (
+          <div className="p-3.5 rounded-xl border border-[hsl(var(--primary)/0.3)] bg-[hsl(var(--primary)/0.05)] flex items-center justify-between gap-3">
+            <div>
+              <div className="text-xs font-bold text-[hsl(var(--text-primary))]">Preguntas del Formulario</div>
+              <div className="text-2xs text-[hsl(var(--text-secondary))]">Diseña las preguntas dinámicas en Form Studio</div>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                onClose();
+                onOpenFormStudio();
+              }}
+              className="px-3 py-1.5 rounded-md bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] text-2xs font-bold uppercase tracking-wider flex items-center gap-1.5 hover:opacity-90 transition-all shrink-0"
+            >
+              <FileText size={13} /> Form Studio
+            </button>
+          </div>
+        )}
         <ToggleRow
           label="Habilitar pre-registro"
           checked={form.requires_registration}
