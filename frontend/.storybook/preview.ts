@@ -20,11 +20,21 @@ export const globalTypes = {
 };
 
 const preview: Preview = {
+  // Genera una página de documentación automática para cada componente.
+  tags: ['autodocs'],
   parameters: {
     controls: {
       matchers: {
        color: /(background|color)$/i,
        date: /Date$/i,
+      },
+    },
+    docs: {
+      codePanel: true,
+    },
+    options: {
+      storySort: {
+        order: ['Design', ['Introduction', 'Tokens', '*'], 'Components', '*'],
       },
     },
   },

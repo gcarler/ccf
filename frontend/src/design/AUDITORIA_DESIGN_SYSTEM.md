@@ -1,9 +1,25 @@
 # Auditoría del Design System y Librería de Componentes CCF
 
 **Fecha de auditoría:** 2026-07-23
-**Fecha de actualización:** 2026-07-29
+**Fecha de actualización:** 2026-09-26
 **Alcance:** `frontend/src/design/` (Design System) y `frontend/src/components/ui/` (UI Library)
 **Objetivo:** Documentar el estado actual, fortalezas, hallazgos y recomendaciones para consolidar un sistema de diseño único, coherente y accesible.
+
+---
+
+## 0. Sesión de calidad 2026-09-26
+
+Trabajo ejecutado sobre esta auditoría:
+
+| Área | Acción | Resultado |
+|------|--------|-----------|
+| **Storybook** | `autodocs` global vía `tags` en `preview.ts`, `docs.codePanel` activado y `storySort` por categorías | Páginas de docs automáticas para los 16 componentes DS y los compuestos UI; build de Storybook verificado |
+| **RightPanel** | Soporte de `title`/`subtitle` como `ReactNode`, prop `description`, `width` acepta px o clase Tailwind, `className`/`contentClassName`, alias `isOpen` | Los 9 drawers de proyectos consumen la primitiva sin props muertas |
+| **ToastContext/toastStore** | `addToast` acepta `string` o `{ title, description?, message?, variant? }` (retrocompatible), mapea `destructive→error` y `default→info`, render de descripción y `role="status"` | Cero llamadas inconsistentes al sistema de toasts |
+| **TypeScript** | 63 errores de tipos y 3 errores de sintaxis reparados (JSX corrupto en `cms/webhooks/page.tsx` y `SpiritualTimelinePanel.tsx`) | `tsc --noEmit` = 0 errores |
+| **ESLint** | 87 `no-unused-vars` eliminados (imports y variables muertas) y 3 `react-hooks/exhaustive-deps` corregidos | `npm run lint -- --max-warnings=0` pasa limpio |
+| **BuilderCanvas** | `usePresence` invocado con las opciones reales del hook (`siteKey/slug/user`); reorder de secciones vía `moveSectionToIndex` | DnD del page builder tipado y funcional |
+| **DS audit** | Sin `indigo/violet/purple`, sin modales en `src/design/`; inline styles residuales limitados a Recharts/columnas (necesarios) | Cumple reglas 2 y 3 del manual frontend |
 
 ---
 
