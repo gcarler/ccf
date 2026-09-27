@@ -666,7 +666,7 @@ export function ProjectTimeTrackingDrawer({
                 }}
               >
                 <span className="text-xs font-bold uppercase tracking-wider block" style={{ color: "hsl(var(--text-muted))" }}>
-                  Distribución de Horas por Miembro
+                  Distribución de Horas por Colaborador
                 </span>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                   {summary.by_member.map((m) => (
@@ -780,7 +780,7 @@ export function ProjectTimeTrackingDrawer({
                     <div className="flex flex-col gap-1 min-w-0 flex-1">
                       <div className="flex items-center gap-2 flex-wrap">
                         <span className="font-bold text-xs" style={{ color: "hsl(var(--foreground))" }}>
-                          {log.persona_name || "Miembro"}
+                          {log.persona_name || "Colaborador"}
                         </span>
                         <span
                           className="px-2 py-0.5 rounded text-3xs font-semibold"

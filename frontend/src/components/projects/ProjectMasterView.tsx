@@ -754,7 +754,7 @@ export function ProjectMasterView({ project, tasks, onOpenTask }: ProjectMasterV
                             <div className="flex items-center gap-2">
                                 <AlertOctagon size={16} className="text-[hsl(var(--destructive))] shrink-0" />
                                 <span className="text-xs font-bold text-[hsl(var(--destructive))]">
-                                    Atención: {workloadSummary?.overloaded_members_count} miembro(s) con sobrecarga de trabajo. Rebalancea las tareas para evitar cuellos de botella.
+                                    Atención: {workloadSummary?.overloaded_members_count} colaborador(es) con sobrecarga de trabajo. Rebalancea las tareas para evitar cuellos de botella.
                                 </span>
                             </div>
                             <button

@@ -399,10 +399,10 @@ export function ProjectReportDrawer({
                   >
                     <div className="flex items-center justify-between text-xs" style={{ color: "hsl(var(--muted-foreground))" }}>
                       <span>Ruta CPM</span>
-                      <Activity className="w-3.5 h-3.5 text-[hsl(var(--domain-purple))]" />
+                      <Activity className="w-3.5 h-3.5 text-[hsl(var(--primary))]" />
                     </div>
                     <div className="mt-1">
-                      <div className="text-lg font-bold text-[hsl(var(--domain-purple))]">
+                      <div className="text-lg font-bold text-[hsl(var(--primary))]">
                         {cpmMet?.total_duration_days}d
                       </div>
                       <div className="text-[10px]" style={{ color: "hsl(var(--muted-foreground))" }}>
@@ -560,12 +560,12 @@ export function ProjectReportDrawer({
                   >
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        <Activity className="w-4 h-4 text-[hsl(var(--domain-purple))]" />
+                        <Activity className="w-4 h-4 text-[hsl(var(--primary))]" />
                         <h3 className="text-sm font-semibold" style={{ color: "hsl(var(--foreground))" }}>
                           Ruta Crítica (CPM) y Cronograma
                         </h3>
                       </div>
-                      <span className="text-xs font-semibold text-[hsl(var(--domain-purple))]">
+                      <span className="text-xs font-semibold text-[hsl(var(--primary))]">
                         {cpmMet?.total_duration_days} días de duración total
                       </span>
                     </div>
@@ -590,7 +590,7 @@ export function ProjectReportDrawer({
                               <span className="font-medium" style={{ color: "hsl(var(--foreground))" }}>
                                 {t.title}
                               </span>
-                              <span className="text-[11px] text-[hsl(var(--domain-purple))] font-semibold">
+                              <span className="text-[11px] text-[hsl(var(--primary))] font-semibold">
                                 {t.duration_days} días • Holgura {t.slack_days}d
                               </span>
                             </div>
@@ -853,7 +853,7 @@ export function ProjectReportDrawer({
                     { key: "financials", label: "Módulo Financiero y Desglose Presupuestario", desc: "Incluye asignaciones, gastos pagados, saldo remanente y categorías" },
                     { key: "risks", label: "Matriz RAID de Riesgos e Incidencias", desc: "Incluye matriz de severidad 5x5 y planes de mitigación de riesgos críticos" },
                     { key: "cpm", label: "Ruta Crítica CPM y Cronograma de Holgura Cero", desc: "Incluye análisis de cadena determinante y duración total en días" },
-                    { key: "timeTracking", label: "Hojas de Horas y Control de Esfuerzo", desc: "Incluye total de horas facturables y participación por miembro" },
+                    { key: "timeTracking", label: "Hojas de Horas y Control de Esfuerzo", desc: "Incluye total de horas facturables y participación por colaborador" },
                   ].map((s) => {
                     const isChecked = (includeSections as any)[s.key];
                     return (

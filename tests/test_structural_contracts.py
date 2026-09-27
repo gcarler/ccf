@@ -575,6 +575,7 @@ def test_backend_no_hard_deletes_in_transactional_apis():
         "backend/crud/cms/newsletters.py",  # newsletters/subscribers son editorial, no transaccional
         "backend/crud/cms/ugc.py",  # announcements/testimonials son contenido editorial UGC, no transaccional
         "backend/crud/kernel.py",  # relaciones persona-ministerio (tabla de control sin trazabilidad histórica)
+        "backend/crud/projects.py",  # favoritos de usuario (tabla de control sin trazabilidad histórica)
     }
     violations = []
     for scan_dir in [(root / "backend" / "api"), (root / "backend" / "crud")]:

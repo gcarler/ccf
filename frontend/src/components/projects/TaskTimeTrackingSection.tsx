@@ -245,7 +245,7 @@ export default function TaskTimeTrackingSection({
               <div className="min-w-0 flex-1 pr-2">
                 <div className="flex items-center gap-1.5">
                   <span className="font-semibold text-[hsl(var(--foreground))] truncate max-w-[120px]">
-                    {log.persona_name || "Miembro"}
+                    {log.persona_name || "Colaborador"}
                   </span>
                   <span
                     className="px-1 py-0.2 rounded text-3xs font-semibold"

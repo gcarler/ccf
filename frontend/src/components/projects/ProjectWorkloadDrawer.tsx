@@ -64,7 +64,7 @@ export function ProjectWorkloadDrawer({
     try {
       const data = await apiFetch<ProjectWorkloadSummary>(`/projects/${projectId}/workload`, { token });
       setSummary(data);
-      // Expandir por defecto el primer miembro y sin asignar
+      // Expandir por defecto el primer colaborador y sin asignar
       if (data?.members?.length) {
         setExpandedMembers((prev) => ({
           ...prev,
@@ -511,7 +511,7 @@ export function ProjectWorkloadDrawer({
                                   borderColor: "hsl(var(--border))",
                                   color: "hsl(var(--text-main))",
                                 }}
-                                title="Reasignar tarea a otro miembro"
+                                title="Reasignar tarea a otro colaborador"
                               >
                                 <option value="" disabled>
                                   Reasignar a...
