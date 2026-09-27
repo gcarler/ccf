@@ -13,6 +13,10 @@ vi.mock('@/context/SidebarLayerContext', () => ({
   }),
 }));
 
+vi.mock('@/context/AuthContext', () => ({
+  useAuth: () => ({ token: 'test-token', user: null, loading: false, isAuthenticated: true }),
+}));
+
 vi.mock('@/components/ui/inline-editors', () => ({
   InlineStatusPicker: ({
     value,

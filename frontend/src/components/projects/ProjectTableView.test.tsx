@@ -7,6 +7,10 @@ import { createMockTask } from '@/test-utils/factories';
 vi.mock('@/lib/agGrid', () => ({}));
 vi.mock('ag-grid-react', async () => import('../../__mocks__/ag-grid-react'));
 
+vi.mock('@/context/AuthContext', () => ({
+  useAuth: () => ({ token: 'test-token', user: null, loading: false, isAuthenticated: true }),
+}));
+
 const tasks = [
   createMockTask({
     id: '1',
