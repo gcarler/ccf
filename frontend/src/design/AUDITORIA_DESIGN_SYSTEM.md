@@ -21,6 +21,23 @@ Trabajo ejecutado sobre esta auditoría:
 | **BuilderCanvas** | `usePresence` invocado con las opciones reales del hook (`siteKey/slug/user`); reorder de secciones vía `moveSectionToIndex` | DnD del page builder tipado y funcional |
 | **DS audit** | Sin `indigo/violet/purple`, sin modales en `src/design/`; inline styles residuales limitados a Recharts/columnas (necesarios) | Cumple reglas 2 y 3 del manual frontend |
 
+### Estado de integración (pendiente de coordinación)
+
+- **Tests:** suite completa 2019/2019 en verde, 206 archivos (los 22 fallos pre-existentes
+  fueron corregidos: 7 de archivado CMS alineados al drawer SidePanel, 5 de MediaPicker
+  alineados a `useFocusTrap` en `document`, 4 de auto-save con `section_key`/`title_lead`,
+  y 6 de projects con mocks de AuthContext/SidebarLayers/next/navigation).
+- **Build de producción:** `npm run build` (build-safe) OK con swap atómico y
+  `pm2 restart ccf-frontend-staging` ejecutado.
+- **Pendiente:** los commits de calidad viven en la rama local
+  `integration/cms-aniversario-to-main`, cuya contraparte remota fue archivada
+  (`archive/merged/integration-cms-aniversario-to-main`, SHA `bff2d46`) y que además
+  acumula ~15 commits de otros módulos sin merge a `main`.
+- **Camino canónico al publicar:** rama nueva desde `origin/main` + cherry-pick de los
+  6 commits de calidad, re-validar gates (tsc, lint, tests, build) y publicar con
+  `scripts/push_branch.sh` → `create_integration_branch.sh`. No reutilizar la rama
+  archivada (protocolo §9.9).
+
 ---
 
 ## 1. Resumen ejecutivo
