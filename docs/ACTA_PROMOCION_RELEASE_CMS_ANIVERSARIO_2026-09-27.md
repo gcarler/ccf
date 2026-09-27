@@ -100,3 +100,13 @@ En caso de detectarse alguna anomalía no prevista en el entorno de producción 
    pm2 restart ccf-frontend
    ```
 3. **Persistencia y Datos:** Ninguna migración introducida en este ciclo es destructiva; todas agregan columnas nuleables o con default, por lo que el rollback de código no genera pérdida de datos.
+
+---
+
+## 5. Firmas y Certificación de Handoff Ejecutivo
+
+- **ID de Tarea:** `TKT-RELEASE-HANDOFF-01`
+- **Auditor Forense:** `agy` (`APPROVED_100_A_PLUS`, 100/100)
+- **Ingeniero Desarrollador:** `agy2`
+- **Fecha de Handoff:** 2026-09-27 09:40 UTC
+- **Estado de Milestone:** `RELEASE-COMPLETE` (Aprobado y listo para merge a `main`)
