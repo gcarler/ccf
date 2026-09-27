@@ -13,6 +13,7 @@ from backend.models_academy_core import (
     AcademyProgram,
     AcademyStudentPeriodGrade,
     AcademyStudentSubjectRecord,
+    AcademyStudentEnrollment,
     AcademyStudyPlan,
     AcademyStudyPlanSubject,
     Assessment,

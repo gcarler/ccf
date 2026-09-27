@@ -350,3 +350,15 @@ export interface AcademicTranscriptSummary {
   weighted_gpa: number;
   subjects: AcademicTranscriptSubject[];
 }
+
+export interface StudentEnrollment {
+  id: string;
+  offering_id: string;
+  persona_id: string;
+  student_name?: string | null;
+  enrolled_by_persona_id?: string | null;
+  enrolled_at: string;
+  status: string;
+  deleted_at?: string | null;
+}
+

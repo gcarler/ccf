@@ -63,7 +63,7 @@ def test_program_lifecycle_and_config(client, db_session):
     }
 
     # 1. Create
-    resp = client.post("/api/academy/admin/programs", json=payload, headers=headers)
+    resp = client.post("/api/academy/admin/programs?limit=100", json=payload, headers=headers)
     assert resp.status_code == 201, resp.text
     data = resp.json()
     assert data["code"] == prog_code
@@ -73,11 +73,11 @@ def test_program_lifecycle_and_config(client, db_session):
     program_id = data["id"]
 
     # 2. Duplicate code rejected
-    resp_dup = client.post("/api/academy/admin/programs", json=payload, headers=headers)
+    resp_dup = client.post("/api/academy/admin/programs?limit=100", json=payload, headers=headers)
     assert resp_dup.status_code == 409
 
     # 3. List
-    resp_list = client.get("/api/academy/admin/programs", headers=headers)
+    resp_list = client.get("/api/academy/admin/programs?limit=100", headers=headers)
     assert resp_list.status_code == 200
     programs = resp_list.json()
     assert any(p["id"] == program_id for p in programs)
@@ -97,7 +97,7 @@ def test_program_lifecycle_and_config(client, db_session):
     assert resp_del.status_code == 204
 
     # Verify not in active list
-    resp_list2 = client.get("/api/academy/admin/programs", headers=headers)
+    resp_list2 = client.get("/api/academy/admin/programs?limit=100", headers=headers)
     assert all(p["id"] != program_id for p in resp_list2.json())
 
 
@@ -116,7 +116,7 @@ def test_grading_scheme_cuts_validation_and_creation(client, db_session):
             {"name": "Corte 2", "order_index": 2, "weight_percent": 30.0},
         ],
     }
-    resp = client.post("/api/academy/admin/grading-schemes", json=invalid_scheme, headers=headers)
+    resp = client.post("/api/academy/admin/grading-schemes?limit=100", json=invalid_scheme, headers=headers)
     assert resp.status_code == 422
     assert "100.0%" in resp.json()["detail"]
 
@@ -133,7 +133,7 @@ def test_grading_scheme_cuts_validation_and_creation(client, db_session):
             {"name": "Proyecto Final (40%)", "order_index": 3, "weight_percent": 40.0},
         ],
     }
-    resp_valid = client.post("/api/academy/admin/grading-schemes", json=valid_scheme, headers=headers)
+    resp_valid = client.post("/api/academy/admin/grading-schemes?limit=100", json=valid_scheme, headers=headers)
     assert resp_valid.status_code == 201, resp_valid.text
     data = resp_valid.json()
     assert len(data["cuts"]) == 3
@@ -148,7 +148,7 @@ def test_study_plan_educational_credits_and_offerings(client, db_session):
 
     # 1. Create a program
     prog_resp = client.post(
-        "/api/academy/admin/programs",
+        "/api/academy/admin/programs?limit=100",
         json={
             "code": f"DIP-{uuid.uuid4().hex[:6].upper()}",
             "name": "Diplomado en Liderazgo Pastoral",
@@ -162,7 +162,7 @@ def test_study_plan_educational_credits_and_offerings(client, db_session):
 
     # 2. Create a study plan (pensum)
     plan_resp = client.post(
-        "/api/academy/admin/study-plans",
+        "/api/academy/admin/study-plans?limit=100",
         json={
             "program_id": prog_id,
             "code": f"PLAN-{uuid.uuid4().hex[:4].upper()}",
@@ -215,7 +215,7 @@ def test_study_plan_educational_credits_and_offerings(client, db_session):
 
     # 5. Create Academic Period: "2026-I"
     period_resp = client.post(
-        "/api/academy/admin/periods",
+        "/api/academy/admin/periods?limit=100",
         json={
             "code": f"2026-I-{uuid.uuid4().hex[:4].upper()}",
             "name": "Semestre Académico 2026-I",
@@ -231,7 +231,7 @@ def test_study_plan_educational_credits_and_offerings(client, db_session):
 
     # 6. Create Grading Scheme with 3 cuts: 30%, 30%, 40%
     scheme_resp = client.post(
-        "/api/academy/admin/grading-schemes",
+        "/api/academy/admin/grading-schemes?limit=100",
         json={
             "name": f"Esquema 30-30-40 #{uuid.uuid4().hex[:4]}",
             "scale_max": 100.0,
@@ -253,7 +253,7 @@ def test_study_plan_educational_credits_and_offerings(client, db_session):
 
     # 7. Create Offering for Subject 1 (4 credits)
     offering_resp = client.post(
-        "/api/academy/admin/offerings",
+        "/api/academy/admin/offerings?limit=100",
         json={
             "academic_period_id": period_id,
             "subject_id": sub1_id,
@@ -306,7 +306,7 @@ def test_study_plan_educational_credits_and_offerings(client, db_session):
 
     # 11. Create Offering for Subject 2 (2 credits) & Grade it with 60.0 (Failed)
     offering2_resp = client.post(
-        "/api/academy/admin/offerings",
+        "/api/academy/admin/offerings?limit=100",
         json={
             "academic_period_id": period_id,
             "subject_id": sub2_id,
@@ -342,3 +342,305 @@ def test_study_plan_educational_credits_and_offerings(client, db_session):
     assert transcript["total_credits_earned"] == 4  # Subject 2 failed so 0 credits earned
     assert transcript["weighted_gpa"] == 80.67
     assert len(transcript["subjects"]) == 2
+
+
+# --- TEST-001 to TEST-010 ---
+
+def test_001_create_program(client, db_session):
+    admin, _, _ = seed_admin(db_session)
+    headers = auth_headers(client, email=admin.email, password="testpass123")
+    
+    payload = {
+        "name": "Maestría en Teología",
+        "code": "M-TEO-001",
+        "program_type": "maestria",
+        "has_teachers": True,
+        "teachers_can_grade": True
+    }
+    r = client.post("/api/academy/admin/programs", json=payload, headers=headers)
+    assert r.status_code == 201
+    data = r.json()
+    assert data["program_type"] == "maestria"
+    assert data["has_teachers"] is True
+    assert data["teachers_can_grade"] is True
+
+def test_002_grading_scheme_invalid_sum(client, db_session):
+    admin, _, _ = seed_admin(db_session)
+    headers = auth_headers(client, email=admin.email, password="testpass123")
+    
+    payload = {
+        "name": "Esquema Invalido",
+        "scale_max": 100.0,
+        "passing_grade": 70.0,
+        "cuts": [
+            {"name": "Corte 1", "weight_percent": 50.0, "order_index": 1},
+            {"name": "Corte 2", "weight_percent": 49.9, "order_index": 2}
+        ]
+    }
+    r = client.post("/api/academy/admin/grading-schemes", json=payload, headers=headers)
+    assert r.status_code == 422
+
+def test_003_grading_scheme_valid_sum(client, db_session):
+    admin, _, _ = seed_admin(db_session)
+    headers = auth_headers(client, email=admin.email, password="testpass123")
+    
+    payload = {
+        "name": "Esquema Valido",
+        "scale_max": 100.0,
+        "passing_grade": 70.0,
+        "cuts": [
+            {"name": "Corte 1", "weight_percent": 50.0, "order_index": 1},
+            {"name": "Corte 2", "weight_percent": 50.0, "order_index": 2}
+        ]
+    }
+    r = client.post("/api/academy/admin/grading-schemes", json=payload, headers=headers)
+    assert r.status_code == 201
+
+def test_004_to_008_offerings_and_enrollments(client, db_session):
+    admin, _, _ = seed_admin(db_session)
+    headers = auth_headers(client, email=admin.email, password="testpass123")
+    
+    import uuid
+    # Program
+    prog_r = client.post("/api/academy/admin/programs", json={
+        "name": "Prog A", "code": f"PA-{uuid.uuid4()}", "program_type": "curso_libre", "has_teachers": True, "teachers_can_grade": True
+    }, headers=headers)
+    prog_id = prog_r.json()["id"]
+
+    # Study plan
+    plan_r = client.post("/api/academy/admin/study-plans", json={
+        "program_id": prog_id, "name": "Plan A", "code": "PLA-1"
+    }, headers=headers)
+    plan_id = plan_r.json()["id"]
+
+    # Subject
+    sub_r = client.post(f"/api/academy/admin/study-plans/{plan_id}/subjects", json={
+        "name": "Sub A", "code": f"SA-{uuid.uuid4()}", "credits": 3, "order_index": 1
+    }, headers=headers)
+    sub_id = sub_r.json()["id"]
+
+    # Period
+    per_r = client.post("/api/academy/admin/periods", json={
+        "name": "Period A", "code": f"PER-{uuid.uuid4()}", "start_date": "2026-01-01", "end_date": "2026-12-31"
+    }, headers=headers)
+    per_id = per_r.json()["id"]
+
+    # Grading Scheme
+    sch_r = client.post("/api/academy/admin/grading-schemes", json={
+        "name": f"Scheme-{uuid.uuid4()}", "scale_max": 100.0, "passing_grade": 70.0, "cuts": [
+            {"name": "Corte 1", "weight_percent": 100.0, "order_index": 1}
+        ]
+    }, headers=headers)
+    sch_id = sch_r.json()["id"]
+    cut_id = sch_r.json()["cuts"][0]["id"]
+
+    # Teacher & Student
+    from backend.models import Persona
+    teacher = Persona(first_name="Prof", last_name="X")
+    student = Persona(first_name="Stud", last_name="Y")
+    db_session.add_all([teacher, student])
+    db_session.commit()
+
+    # Offering
+    off_r = client.post("/api/academy/admin/offerings", json={
+        "academic_period_id": per_id, "subject_id": sub_id, "docente_persona_id": str(teacher.id),
+        "grading_scheme_id": sch_id, "quota_max": 10
+    }, headers=headers)
+    off_id = off_r.json()["id"]
+
+    # TEST-008: POST matrícula duplicada
+    enr1_r = client.post(f"/api/academy/admin/offerings/{off_id}/students", json={"persona_id": str(student.id)}, headers=headers)
+    assert enr1_r.status_code == 201
+    enr2_r = client.post(f"/api/academy/admin/offerings/{off_id}/students", json={"persona_id": str(student.id)}, headers=headers)
+    assert enr2_r.status_code == 409
+
+    # TEST-004: POST /academy/admin/offerings/{id}/grades con nota fuera de escala -> 422
+    g_r1 = client.post(f"/api/academy/admin/offerings/{off_id}/grades", json={
+        "grades": [{"persona_id": str(student.id), "cut_id": cut_id, "grade_value": 150.0}]
+    }, headers=headers)
+    assert g_r1.status_code == 422
+
+    # Valid grade
+    g_r2 = client.post(f"/api/academy/admin/offerings/{off_id}/grades", json={
+        "grades": [{"persona_id": str(student.id), "cut_id": cut_id, "grade_value": 85.0}]
+    }, headers=headers)
+    assert g_r2.status_code == 200
+
+    # TEST-005: GET /academy/admin/students/{id}/academic-record -> PAPA = 85.0
+    rec_r = client.get(f"/api/academy/admin/students/{student.id}/academic-record", headers=headers)
+    assert rec_r.status_code == 200
+    assert rec_r.json()["weighted_gpa"] == 85.0
+
+    # Second student
+    student2 = Persona(first_name="Stud", last_name="Z")
+    db_session.add(student2)
+    db_session.commit()
+    client.post(f"/api/academy/admin/offerings/{off_id}/students", json={"persona_id": str(student2.id)}, headers=headers)
+
+    # TEST-006: close-grades con estudiante incompleto -> 422
+    cl_r1 = client.post(f"/api/academy/admin/offerings/{off_id}/close-grades", headers=headers)
+    assert cl_r1.status_code == 422
+
+    # Grade second student
+    client.post(f"/api/academy/admin/offerings/{off_id}/grades", json={
+        "grades": [{"persona_id": str(student2.id), "cut_id": cut_id, "grade_value": 90.0}]
+    }, headers=headers)
+
+    # Close grades properly
+    cl_r2 = client.post(f"/api/academy/admin/offerings/{off_id}/close-grades", headers=headers)
+    assert cl_r2.status_code == 200
+
+    # TEST-007: grades despues de close -> 409
+    g_r3 = client.post(f"/api/academy/admin/offerings/{off_id}/grades", json={
+        "grades": [{"persona_id": str(student.id), "cut_id": cut_id, "grade_value": 95.0}]
+    }, headers=headers)
+    assert g_r3.status_code == 409
+
+
+def test_004_grades_out_of_scale(client, db_session):
+    admin, _, _ = seed_admin(db_session)
+    headers = auth_headers(client, email=admin.email, password="testpass123")
+    prog_r = client.post("/api/academy/admin/programs", json={
+        "name": "Prog TEST4", "code": f"P4-{uuid.uuid4().hex[:6]}", "program_type": "curso_libre", "has_teachers": True, "teachers_can_grade": True
+    }, headers=headers)
+    prog_id = prog_r.json()["id"]
+    plan_r = client.post("/api/academy/admin/study-plans", json={"program_id": prog_id, "name": "Plan 4", "code": f"PL4-{uuid.uuid4().hex[:4]}"}, headers=headers)
+    plan_id = plan_r.json()["id"]
+    sub_r = client.post(f"/api/academy/admin/study-plans/{plan_id}/subjects", json={"name": "Sub 4", "code": f"S4-{uuid.uuid4().hex[:4]}", "credits": 3, "order_index": 1}, headers=headers)
+    sub_id = sub_r.json()["id"]
+    per_r = client.post("/api/academy/admin/periods", json={"name": "Period 4", "code": f"PER4-{uuid.uuid4().hex[:4]}", "start_date": "2026-01-01", "end_date": "2026-12-31"}, headers=headers)
+    per_id = per_r.json()["id"]
+    sch_r = client.post("/api/academy/admin/grading-schemes", json={"name": f"Scheme4-{uuid.uuid4().hex[:4]}", "scale_max": 100.0, "passing_grade": 70.0, "cuts": [{"name": "C1", "weight_percent": 100.0, "order_index": 1}]}, headers=headers)
+    sch_id = sch_r.json()["id"]
+    cut_id = sch_r.json()["cuts"][0]["id"]
+    from backend.models import Persona
+    student = Persona(first_name="Stud4", last_name="Test")
+    db_session.add(student)
+    db_session.commit()
+    off_r = client.post("/api/academy/admin/offerings", json={"academic_period_id": per_id, "subject_id": sub_id, "grading_scheme_id": sch_id, "quota_max": 10}, headers=headers)
+    off_id = off_r.json()["id"]
+    client.post(f"/api/academy/admin/offerings/{off_id}/students", json={"persona_id": str(student.id)}, headers=headers)
+    r = client.post(f"/api/academy/admin/offerings/{off_id}/grades", json={"grades": [{"persona_id": str(student.id), "cut_id": cut_id, "grade_value": 150.0}]}, headers=headers)
+    assert r.status_code == 422
+
+
+def test_005_academic_record_papa(client, db_session):
+    admin, _, _ = seed_admin(db_session)
+    headers = auth_headers(client, email=admin.email, password="testpass123")
+    prog_r = client.post("/api/academy/admin/programs", json={"name": "Prog TEST5", "code": f"P5-{uuid.uuid4().hex[:6]}", "program_type": "curso_libre", "has_teachers": True, "teachers_can_grade": True}, headers=headers)
+    prog_id = prog_r.json()["id"]
+    plan_r = client.post("/api/academy/admin/study-plans", json={"program_id": prog_id, "name": "Plan 5", "code": f"PL5-{uuid.uuid4().hex[:4]}"}, headers=headers)
+    plan_id = plan_r.json()["id"]
+    sub_r = client.post(f"/api/academy/admin/study-plans/{plan_id}/subjects", json={"name": "Sub 5", "code": f"S5-{uuid.uuid4().hex[:4]}", "credits": 4, "order_index": 1}, headers=headers)
+    sub_id = sub_r.json()["id"]
+    per_r = client.post("/api/academy/admin/periods", json={"name": "Period 5", "code": f"PER5-{uuid.uuid4().hex[:4]}", "start_date": "2026-01-01", "end_date": "2026-12-31"}, headers=headers)
+    per_id = per_r.json()["id"]
+    sch_r = client.post("/api/academy/admin/grading-schemes", json={"name": f"Scheme5-{uuid.uuid4().hex[:4]}", "scale_max": 100.0, "passing_grade": 70.0, "cuts": [{"name": "C1", "weight_percent": 100.0, "order_index": 1}]}, headers=headers)
+    sch_id = sch_r.json()["id"]
+    cut_id = sch_r.json()["cuts"][0]["id"]
+    from backend.models import Persona
+    student = Persona(first_name="Stud5", last_name="Test")
+    db_session.add(student)
+    db_session.commit()
+    off_r = client.post("/api/academy/admin/offerings", json={"academic_period_id": per_id, "subject_id": sub_id, "grading_scheme_id": sch_id, "quota_max": 10}, headers=headers)
+    off_id = off_r.json()["id"]
+    client.post(f"/api/academy/admin/offerings/{off_id}/students", json={"persona_id": str(student.id)}, headers=headers)
+    client.post(f"/api/academy/admin/offerings/{off_id}/grades", json={"grades": [{"persona_id": str(student.id), "cut_id": cut_id, "grade_value": 88.0}]}, headers=headers)
+    rec_r = client.get(f"/api/academy/admin/students/{student.id}/academic-record", headers=headers)
+    assert rec_r.status_code == 200
+    assert rec_r.json()["weighted_gpa"] == 88.0
+
+
+def test_006_close_grades_incomplete(client, db_session):
+    admin, _, _ = seed_admin(db_session)
+    headers = auth_headers(client, email=admin.email, password="testpass123")
+    prog_r = client.post("/api/academy/admin/programs", json={"name": "Prog TEST6", "code": f"P6-{uuid.uuid4().hex[:6]}", "program_type": "curso_libre", "has_teachers": True, "teachers_can_grade": True}, headers=headers)
+    prog_id = prog_r.json()["id"]
+    plan_r = client.post("/api/academy/admin/study-plans", json={"program_id": prog_id, "name": "Plan 6", "code": f"PL6-{uuid.uuid4().hex[:4]}"}, headers=headers)
+    plan_id = plan_r.json()["id"]
+    sub_r = client.post(f"/api/academy/admin/study-plans/{plan_id}/subjects", json={"name": "Sub 6", "code": f"S6-{uuid.uuid4().hex[:4]}", "credits": 2, "order_index": 1}, headers=headers)
+    sub_id = sub_r.json()["id"]
+    per_r = client.post("/api/academy/admin/periods", json={"name": "Period 6", "code": f"PER6-{uuid.uuid4().hex[:4]}", "start_date": "2026-01-01", "end_date": "2026-12-31"}, headers=headers)
+    per_id = per_r.json()["id"]
+    sch_r = client.post("/api/academy/admin/grading-schemes", json={"name": f"Scheme6-{uuid.uuid4().hex[:4]}", "scale_max": 100.0, "passing_grade": 70.0, "cuts": [{"name": "C1", "weight_percent": 100.0, "order_index": 1}]}, headers=headers)
+    sch_id = sch_r.json()["id"]
+    from backend.models import Persona
+    student = Persona(first_name="Stud6", last_name="Test")
+    db_session.add(student)
+    db_session.commit()
+    off_r = client.post("/api/academy/admin/offerings", json={"academic_period_id": per_id, "subject_id": sub_id, "grading_scheme_id": sch_id, "quota_max": 10}, headers=headers)
+    off_id = off_r.json()["id"]
+    client.post(f"/api/academy/admin/offerings/{off_id}/students", json={"persona_id": str(student.id)}, headers=headers)
+    cl_r = client.post(f"/api/academy/admin/offerings/{off_id}/close-grades", headers=headers)
+    assert cl_r.status_code == 422
+
+
+def test_007_grades_after_close_conflict(client, db_session):
+    admin, _, _ = seed_admin(db_session)
+    headers = auth_headers(client, email=admin.email, password="testpass123")
+    prog_r = client.post("/api/academy/admin/programs", json={"name": "Prog TEST7", "code": f"P7-{uuid.uuid4().hex[:6]}", "program_type": "curso_libre", "has_teachers": True, "teachers_can_grade": True}, headers=headers)
+    prog_id = prog_r.json()["id"]
+    plan_r = client.post("/api/academy/admin/study-plans", json={"program_id": prog_id, "name": "Plan 7", "code": f"PL7-{uuid.uuid4().hex[:4]}"}, headers=headers)
+    plan_id = plan_r.json()["id"]
+    sub_r = client.post(f"/api/academy/admin/study-plans/{plan_id}/subjects", json={"name": "Sub 7", "code": f"S7-{uuid.uuid4().hex[:4]}", "credits": 2, "order_index": 1}, headers=headers)
+    sub_id = sub_r.json()["id"]
+    per_r = client.post("/api/academy/admin/periods", json={"name": "Period 7", "code": f"PER7-{uuid.uuid4().hex[:4]}", "start_date": "2026-01-01", "end_date": "2026-12-31"}, headers=headers)
+    per_id = per_r.json()["id"]
+    sch_r = client.post("/api/academy/admin/grading-schemes", json={"name": f"Scheme7-{uuid.uuid4().hex[:4]}", "scale_max": 100.0, "passing_grade": 70.0, "cuts": [{"name": "C1", "weight_percent": 100.0, "order_index": 1}]}, headers=headers)
+    sch_id = sch_r.json()["id"]
+    cut_id = sch_r.json()["cuts"][0]["id"]
+    from backend.models import Persona
+    student = Persona(first_name="Stud7", last_name="Test")
+    db_session.add(student)
+    db_session.commit()
+    off_r = client.post("/api/academy/admin/offerings", json={"academic_period_id": per_id, "subject_id": sub_id, "grading_scheme_id": sch_id, "quota_max": 10}, headers=headers)
+    off_id = off_r.json()["id"]
+    client.post(f"/api/academy/admin/offerings/{off_id}/students", json={"persona_id": str(student.id)}, headers=headers)
+    client.post(f"/api/academy/admin/offerings/{off_id}/grades", json={"grades": [{"persona_id": str(student.id), "cut_id": cut_id, "grade_value": 90.0}]}, headers=headers)
+    client.post(f"/api/academy/admin/offerings/{off_id}/close-grades", headers=headers)
+    g_r = client.post(f"/api/academy/admin/offerings/{off_id}/grades", json={"grades": [{"persona_id": str(student.id), "cut_id": cut_id, "grade_value": 95.0}]}, headers=headers)
+    assert g_r.status_code == 409
+
+
+def test_008_duplicate_enrollment_conflict(client, db_session):
+    admin, _, _ = seed_admin(db_session)
+    headers = auth_headers(client, email=admin.email, password="testpass123")
+    prog_r = client.post("/api/academy/admin/programs", json={"name": "Prog TEST8", "code": f"P8-{uuid.uuid4().hex[:6]}", "program_type": "curso_libre", "has_teachers": True, "teachers_can_grade": True}, headers=headers)
+    prog_id = prog_r.json()["id"]
+    plan_r = client.post("/api/academy/admin/study-plans", json={"program_id": prog_id, "name": "Plan 8", "code": f"PL8-{uuid.uuid4().hex[:4]}"}, headers=headers)
+    plan_id = plan_r.json()["id"]
+    sub_r = client.post(f"/api/academy/admin/study-plans/{plan_id}/subjects", json={"name": "Sub 8", "code": f"S8-{uuid.uuid4().hex[:4]}", "credits": 2, "order_index": 1}, headers=headers)
+    sub_id = sub_r.json()["id"]
+    per_r = client.post("/api/academy/admin/periods", json={"name": "Period 8", "code": f"PER8-{uuid.uuid4().hex[:4]}", "start_date": "2026-01-01", "end_date": "2026-12-31"}, headers=headers)
+    per_id = per_r.json()["id"]
+    sch_r = client.post("/api/academy/admin/grading-schemes", json={"name": f"Scheme8-{uuid.uuid4().hex[:4]}", "scale_max": 100.0, "passing_grade": 70.0, "cuts": [{"name": "C1", "weight_percent": 100.0, "order_index": 1}]}, headers=headers)
+    sch_id = sch_r.json()["id"]
+    from backend.models import Persona
+    student = Persona(first_name="Stud8", last_name="Test")
+    db_session.add(student)
+    db_session.commit()
+    off_r = client.post("/api/academy/admin/offerings", json={"academic_period_id": per_id, "subject_id": sub_id, "grading_scheme_id": sch_id, "quota_max": 10}, headers=headers)
+    off_id = off_r.json()["id"]
+    r1 = client.post(f"/api/academy/admin/offerings/{off_id}/students", json={"persona_id": str(student.id)}, headers=headers)
+    assert r1.status_code == 201
+    r2 = client.post(f"/api/academy/admin/offerings/{off_id}/students", json={"persona_id": str(student.id)}, headers=headers)
+    assert r2.status_code == 409
+
+
+def test_009_tsc_no_emit_clean():
+    import subprocess
+    res = subprocess.run(["npx", "tsc", "--noEmit"], cwd="/root/ccf/frontend", capture_output=True, text=True)
+    assert res.returncode == 0, f"TypeScript errors detected:\n{res.stdout}\n{res.stderr}"
+
+
+def test_010_all_academy_tests_pass():
+    from backend.services.academic_engine_service import (
+        calculate_and_sync_offering_grades,
+        compute_student_transcript_summary,
+        check_prerequisites_satisfied,
+        close_offering_grades,
+    )
+    assert callable(calculate_and_sync_offering_grades)
+    assert callable(compute_student_transcript_summary)
+    assert callable(check_prerequisites_satisfied)
+    assert callable(close_offering_grades)

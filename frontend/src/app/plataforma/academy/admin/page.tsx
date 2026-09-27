@@ -19,6 +19,8 @@ import GradingSchemeDrawer from '@/components/academy/GradingSchemeDrawer';
 import AcademicPeriodDrawer from '@/components/academy/AcademicPeriodDrawer';
 import StudyPlanSubjectDrawer from '@/components/academy/StudyPlanSubjectDrawer';
 import OfferingGradesDrawer from '@/components/academy/OfferingGradesDrawer';
+import StudentEnrollmentDrawer from '@/components/academy/StudentEnrollmentDrawer';
+import CloseGradesDrawer from '@/components/academy/CloseGradesDrawer';
 import {
   GraduationCap,
   Calendar,
@@ -35,10 +37,13 @@ import {
   Trash2,
   Search,
   Check,
+  UserCheck,
+  UserPlus,
+  Lock,
 } from 'lucide-react';
 import clsx from 'clsx';
 
-type AdminTab = 'programs' | 'periods' | 'grading' | 'curriculum' | 'offerings';
+type AdminTab = 'programs' | 'periods' | 'grading' | 'curriculum' | 'offerings' | 'enrollments';
 
 export default function AcademyAdminConsole() {
   const { token, isAuthenticated } = useAuth();
@@ -68,6 +73,10 @@ export default function AcademyAdminConsole() {
 
   const [selectedOfferingId, setSelectedOfferingId] = useState<string>('');
   const [gradesDrawerOpen, setGradesDrawerOpen] = useState(false);
+
+  const [selectedOfferingForAction, setSelectedOfferingForAction] = useState<PeriodOffering | null>(null);
+  const [enrollmentDrawerOpen, setEnrollmentDrawerOpen] = useState(false);
+  const [closeGradesDrawerOpen, setCloseGradesDrawerOpen] = useState(false);
 
   const loadAll = useCallback(async () => {
     if (!token) return;
@@ -224,6 +233,7 @@ export default function AcademyAdminConsole() {
             { id: 'grading', label: 'Esquemas de Cortes (30-30-40)', icon: Award, count: schemes.length },
             { id: 'curriculum', label: 'Malla Curricular & Créditos', icon: BookOpen, count: activePlan?.subjects.length || 0 },
             { id: 'offerings', label: 'Comisiones & Calificaciones', icon: Users, count: offerings.length },
+            { id: 'enrollments', label: 'Matrículas de Estudiantes', icon: UserCheck, count: offerings.reduce((acc, o) => acc + (o.enrolled_count || 0), 0) },
           ].map((tab) => {
             const active = activeTab === tab.id;
             const Icon = tab.icon;
@@ -655,7 +665,7 @@ export default function AcademyAdminConsole() {
                       </div>
                     </div>
 
-                    <div className="flex items-center justify-end gap-2 mt-4 pt-3 border-t border-[hsl(var(--border))]">
+                    <div className="flex flex-col gap-2 mt-4 pt-3 border-t border-[hsl(var(--border))]">
                       <button
                         type="button"
                         onClick={() => {
@@ -667,9 +677,98 @@ export default function AcademyAdminConsole() {
                         <Award className="size-3.5" />
                         <span>Ver Sábana de Notas & Calificar</span>
                       </button>
+                      <div className="flex gap-2">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setSelectedOfferingForAction(off);
+                            setEnrollmentDrawerOpen(true);
+                          }}
+                          className="flex-1 py-1.5 text-xs font-semibold rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] text-[hsl(var(--foreground))] hover:bg-[hsl(var(--surface-1))] flex items-center justify-center gap-1 transition-colors"
+                        >
+                          <UserPlus className="size-3.5 text-[hsl(var(--primary))]" />
+                          <span>Matricular</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setSelectedOfferingForAction(off);
+                            setCloseGradesDrawerOpen(true);
+                          }}
+                          className="flex-1 py-1.5 text-xs font-semibold rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] text-[hsl(var(--foreground))] hover:bg-[hsl(var(--surface-1))] flex items-center justify-center gap-1 transition-colors"
+                        >
+                          <Lock className="size-3.5 text-[hsl(var(--destructive))]" />
+                          <span>Cerrar Acta</span>
+                        </button>
+                      </div>
                     </div>
                   </div>
                 ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* 6. Tab: Matrícula de Estudiantes */}
+        {activeTab === 'enrollments' && (
+          <div className="space-y-4">
+            {filteredOfferings.length === 0 ? (
+              <EmptyState
+                icon={UserCheck}
+                title="No hay comisiones disponibles para matrícula"
+                description="Primero debes aperturar comisiones en el tab anterior para poder registrar y gestionar la matrícula de estudiantes."
+              />
+            ) : (
+              <div className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] overflow-hidden shadow-sm">
+                <table className="w-full text-xs text-left">
+                  <thead className="bg-[hsl(var(--surface-2))] border-b border-[hsl(var(--border))] text-[hsl(var(--text-secondary))] font-bold uppercase tracking-wider">
+                    <tr>
+                      <th className="p-3">Código</th>
+                      <th className="p-3">Asignatura</th>
+                      <th className="p-3">Período</th>
+                      <th className="p-3">Docente</th>
+                      <th className="p-3 text-center">Matriculados</th>
+                      <th className="p-3 text-center">Estado</th>
+                      <th className="p-3 text-right">Acciones</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-[hsl(var(--border))]">
+                    {filteredOfferings.map((off) => (
+                      <tr key={off.id} className="hover:bg-[hsl(var(--surface-2))] transition-colors">
+                        <td className="p-3 font-mono font-bold text-[hsl(var(--primary))]">{off.subject_code}</td>
+                        <td className="p-3 font-bold text-[hsl(var(--foreground))]">{off.subject_name} ({off.group_name})</td>
+                        <td className="p-3 text-[hsl(var(--text-secondary))]">{off.period_code}</td>
+                        <td className="p-3 text-[hsl(var(--foreground))]">{off.docente_name || 'Sin docente'}</td>
+                        <td className="p-3 text-center">
+                          <span className="font-bold text-[hsl(var(--primary))]">{off.enrolled_count}</span> / {off.quota_max}
+                        </td>
+                        <td className="p-3 text-center">
+                          <span className={clsx(
+                            'px-2 py-0.5 rounded-full text-[10px] font-bold uppercase',
+                            off.status === 'closed'
+                              ? 'bg-[hsl(var(--destructive)/0.1)] text-[hsl(var(--destructive))]'
+                              : 'bg-[hsl(var(--primary)/0.1)] text-[hsl(var(--primary))]'
+                          )}>
+                            {off.status}
+                          </span>
+                        </td>
+                        <td className="p-3 text-right">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setSelectedOfferingForAction(off);
+                              setEnrollmentDrawerOpen(true);
+                            }}
+                            className="px-3 py-1.5 rounded-lg bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] text-xs font-semibold hover:opacity-90 transition-opacity inline-flex items-center gap-1.5"
+                          >
+                            <UserPlus className="size-3.5" />
+                            <span>Gestionar Matrícula</span>
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
             )}
           </div>
@@ -719,6 +818,22 @@ export default function AcademyAdminConsole() {
         offeringId={selectedOfferingId}
         token={token}
         onSuccess={() => loadAll()}
+      />
+
+      <StudentEnrollmentDrawer
+        open={enrollmentDrawerOpen}
+        onClose={() => setEnrollmentDrawerOpen(false)}
+        offering={selectedOfferingForAction}
+        token={token}
+        onEnrollmentChanged={() => loadAll()}
+      />
+
+      <CloseGradesDrawer
+        open={closeGradesDrawerOpen}
+        onClose={() => setCloseGradesDrawerOpen(false)}
+        offering={selectedOfferingForAction}
+        token={token}
+        onClosedSuccess={() => loadAll()}
       />
     </div>
   );

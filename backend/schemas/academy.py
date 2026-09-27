@@ -1042,7 +1042,7 @@ class AcademyStudentPeriodGradeItem(BaseModel):
 
 class AcademyBatchGradeSubmit(BaseModel):
     model_config = ConfigDict(extra="forbid")
-    offering_id: UUID
+    offering_id: Optional[UUID] = None
     grades: List[AcademyStudentPeriodGradeItem]
 
 
@@ -1096,3 +1096,17 @@ class AcademicTranscriptSummary(BaseModel):
     total_credits_earned: int
     weighted_gpa: float  # Promedio Ponderado Acumulado por Créditos
     subjects: List[AcademicTranscriptSubject] = Field(default_factory=list)
+
+class AcademyStudentEnrollmentCreate(BaseModel):
+    persona_id: UUID
+
+class AcademyStudentEnrollmentRead(BaseModel):
+    id: UUID
+    offering_id: UUID
+    persona_id: UUID
+    enrolled_by_persona_id: UUID
+    enrolled_at: datetime
+    status: str
+    deleted_at: Optional[datetime] = None
+
+    model_config = ConfigDict(from_attributes=True)

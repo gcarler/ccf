@@ -196,3 +196,76 @@ def compute_student_transcript_summary(
         "weighted_gpa": weighted_gpa,
         "subjects": subjects_list,
     }
+
+def check_prerequisites_satisfied(db: Session, persona_id: UUID, subject: models.AcademyStudyPlanSubject) -> Tuple[bool, List[str]]:
+    """Verifica que el estudiante aprobó los prerequisite_codes de la asignatura."""
+    if not subject.prerequisite_codes:
+        return True, []
+        
+    passed_records = (
+        db.query(models.AcademyStudentSubjectRecord)
+        .join(models.AcademyPeriodOffering)
+        .join(models.AcademyStudyPlanSubject)
+        .filter(
+            models.AcademyStudentSubjectRecord.persona_id == persona_id,
+            models.AcademyStudentSubjectRecord.passed == True,
+            models.AcademyStudyPlanSubject.code.in_(subject.prerequisite_codes)
+        )
+        .all()
+    )
+    
+    passed_codes = {r.offering.subject.code for r in passed_records if r.offering and r.offering.subject}
+    missing = [req for req in subject.prerequisite_codes if req not in passed_codes]
+    
+    return len(missing) == 0, missing
+
+
+def close_offering_grades(db: Session, offering_id: UUID, actor_id: UUID) -> dict:
+    """Valida completitud, calcula finales, marca is_locked=True, cambia offering.status='closed'"""
+    offering = db.query(models.AcademyPeriodOffering).options(
+        joinedload(models.AcademyPeriodOffering.grading_scheme).joinedload(models.AcademyGradingScheme.cuts)
+    ).filter(models.AcademyPeriodOffering.id == offering_id).first()
+    
+    if not offering:
+        raise ValueError(f"Oferta {offering_id} no encontrada")
+        
+    enrollments = (
+        db.query(models.AcademyStudentEnrollment)
+        .filter(
+            models.AcademyStudentEnrollment.offering_id == offering_id,
+            models.AcademyStudentEnrollment.status == 'active',
+            models.AcademyStudentEnrollment.deleted_at.is_(None)
+        ).all()
+    )
+    
+    scheme = offering.grading_scheme
+    if not scheme or not scheme.cuts:
+        raise ValueError("La oferta no tiene esquema de calificación con cortes")
+        
+    # Check completitud
+    incomplete_students = []
+    for enr in enrollments:
+        grades = (
+            db.query(models.AcademyStudentPeriodGrade)
+            .filter(
+                models.AcademyStudentPeriodGrade.offering_id == offering_id,
+                models.AcademyStudentPeriodGrade.persona_id == enr.persona_id
+            ).all()
+        )
+        graded_cuts = {g.cut_id for g in grades if g.grade_value is not None}
+        if len(graded_cuts) < len(scheme.cuts):
+            incomplete_students.append(str(enr.persona_id))
+            
+    if incomplete_students:
+        return {"success": False, "incomplete_students": incomplete_students}
+        
+    # Calculate finals and lock
+    for enr in enrollments:
+        record = calculate_and_sync_offering_grades(db, offering_id, enr.persona_id, actor_id)
+        record.is_locked = True
+        
+    offering.status = "closed"
+    offering.updated_at = _utcnow()
+    db.flush()
+    
+    return {"success": True, "incomplete_students": []}

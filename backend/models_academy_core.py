@@ -1,3 +1,4 @@
+import sqlalchemy as sa
 """Canonical Academy models backed exclusively by ``academy_*`` tables."""
 
 import uuid as _uuid
@@ -491,6 +492,7 @@ class AcademyStudyPlanSubject(Base):
 
 class AcademyPeriodOffering(Base):
     __tablename__ = "academy_period_offerings"
+    quota_enrolled = Column(Integer, nullable=False, default=0)
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
     sede_id = Column(UUID(as_uuid=True), ForeignKey("sedes.id", ondelete="SET NULL"), nullable=True, index=True)
@@ -541,6 +543,7 @@ class AcademyStudentPeriodGrade(Base):
 
 class AcademyStudentSubjectRecord(Base):
     __tablename__ = "academy_student_subject_records"
+    is_locked = Column(Boolean, nullable=False, default=False)
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
     offering_id = Column(UUID(as_uuid=True), ForeignKey("academy_period_offerings.id", ondelete="CASCADE"), nullable=False, index=True)
@@ -565,3 +568,23 @@ class AcademyStudentSubjectRecord(Base):
     persona = relationship("Persona", foreign_keys=[persona_id])
     enrollment = relationship("Enrollment")
     closed_by_persona = relationship("Persona", foreign_keys=[closed_by_persona_id])
+
+class AcademyStudentEnrollment(Base):
+    __tablename__ = 'academy_student_enrollments'
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
+    offering_id = Column(UUID(as_uuid=True), ForeignKey('academy_period_offerings.id', ondelete='CASCADE'), nullable=False)
+    persona_id = Column(UUID(as_uuid=True), ForeignKey('personas.id'), nullable=False)
+    enrolled_by_persona_id = Column(UUID(as_uuid=True), ForeignKey('personas.id'), nullable=False)
+    enrolled_at = Column(DateTime(timezone=True), nullable=False, server_default=sa.func.now())
+    status = Column(String(50), nullable=False, default='active')
+    deleted_at = Column(DateTime(timezone=True), nullable=True)
+
+    __table_args__ = (
+        UniqueConstraint('offering_id', 'persona_id', name='uq_academy_student_enrollments_offering_persona'),
+    )
+
+    # Relationships
+    offering = relationship("AcademyPeriodOffering", backref="enrollments")
+    persona = relationship("Persona", foreign_keys=[persona_id])
+    enrolled_by = relationship("Persona", foreign_keys=[enrolled_by_persona_id])

@@ -2371,6 +2371,21 @@ def submit_batch_grades_admin(
     )
     if not offering:
         raise HTTPException(status_code=404, detail="Oferta académica no encontrada")
+    if offering.status == "closed":
+        raise HTTPException(status_code=409, detail="Offering is closed")
+        
+    scale_max = offering.grading_scheme.scale_max if offering.grading_scheme else 100.0
+    for g in payload.grades:
+        if g.grade_value < 0 or g.grade_value > scale_max:
+            raise HTTPException(status_code=422, detail=f"Grade {g.grade_value} out of scale [0, {scale_max}]")
+            
+        record = db.query(models.AcademyStudentSubjectRecord).filter(
+            models.AcademyStudentSubjectRecord.offering_id == offering_id,
+            models.AcademyStudentSubjectRecord.persona_id == g.persona_id
+        ).first()
+        if record and record.is_locked:
+            raise HTTPException(status_code=409, detail=f"Record is locked for student {g.persona_id}")
+    
 
     affected_personas = set()
     now_utc = _utcnow()
@@ -2493,3 +2508,275 @@ def get_student_academic_record_admin(
     db: Session = Depends(get_db),
 ):
     return compute_student_transcript_summary(db, persona_id)
+
+@router.post("/admin/offerings/{offering_id}/students", response_model=schemas.AcademyStudentEnrollmentRead, status_code=status.HTTP_201_CREATED)
+def enroll_student_admin(
+    offering_id: UUID,
+    payload: schemas.AcademyStudentEnrollmentCreate,
+    current_user: AcademyEditor,
+    db: Session = Depends(get_db),
+):
+    offering = db.query(models.AcademyPeriodOffering).options(joinedload(models.AcademyPeriodOffering.academic_period)).filter(models.AcademyPeriodOffering.id == offering_id).first()
+    if not offering:
+        raise HTTPException(status_code=404, detail="Offering not found")
+        
+    if offering.status == "closed" or (offering.academic_period and offering.academic_period.status == "closed"):
+        raise HTTPException(status_code=409, detail="Period or offering is closed")
+        
+    if offering.academic_period and offering.academic_period.enrollment_end_date:
+        if offering.academic_period.enrollment_end_date < _utcnow().date():
+            raise HTTPException(status_code=409, detail="Enrollment period has ended")
+            
+    if offering.quota_max > 0 and offering.quota_enrolled >= offering.quota_max:
+        raise HTTPException(status_code=409, detail="Quota exceeded")
+        
+    # Unique enrollment rule
+    existing_other = db.query(models.AcademyStudentEnrollment).join(models.AcademyPeriodOffering).filter(
+        models.AcademyStudentEnrollment.persona_id == payload.persona_id,
+        models.AcademyPeriodOffering.subject_id == offering.subject_id,
+        models.AcademyPeriodOffering.academic_period_id == offering.academic_period_id,
+        models.AcademyStudentEnrollment.deleted_at.is_(None)
+    ).first()
+    
+    if existing_other and existing_other.offering_id != offering_id:
+        raise HTTPException(status_code=409, detail="Already enrolled in another offering for this subject")
+        
+    existing = db.query(models.AcademyStudentEnrollment).filter(
+        models.AcademyStudentEnrollment.offering_id == offering_id,
+        models.AcademyStudentEnrollment.persona_id == payload.persona_id
+    ).first()
+    
+    if existing:
+        if existing.deleted_at is None:
+            raise HTTPException(status_code=409, detail="Already enrolled")
+        else:
+            existing.deleted_at = None
+            existing.status = 'active'
+            offering.quota_enrolled += 1
+            db.commit()
+            db.refresh(existing)
+            return existing
+            
+    enrollment = models.AcademyStudentEnrollment(
+        offering_id=offering_id,
+        persona_id=payload.persona_id,
+        enrolled_by_persona_id=current_user.id
+    )
+    db.add(enrollment)
+    offering.quota_enrolled += 1
+    db.commit()
+    db.refresh(enrollment)
+    return enrollment
+
+
+@router.get("/admin/offerings/{offering_id}/students", response_model=List[schemas.AcademyStudentEnrollmentRead])
+def get_offering_students_admin(
+    offering_id: UUID,
+    current_user: AcademyReader,
+    skip: int = 0,
+    limit: int = 50,
+    db: Session = Depends(get_db),
+):
+    enrollments = db.query(models.AcademyStudentEnrollment).filter(
+        models.AcademyStudentEnrollment.offering_id == offering_id,
+        models.AcademyStudentEnrollment.deleted_at.is_(None)
+    ).offset(skip).limit(limit).all()
+    return enrollments
+
+
+@router.delete("/admin/offerings/{offering_id}/students/{persona_id}", status_code=status.HTTP_204_NO_CONTENT)
+def remove_student_admin(
+    offering_id: UUID,
+    persona_id: UUID,
+    current_user: AcademyEditor,
+    db: Session = Depends(get_db),
+):
+    enrollment = db.query(models.AcademyStudentEnrollment).filter(
+        models.AcademyStudentEnrollment.offering_id == offering_id,
+        models.AcademyStudentEnrollment.persona_id == persona_id,
+        models.AcademyStudentEnrollment.deleted_at.is_(None)
+    ).first()
+    if not enrollment:
+        raise HTTPException(status_code=404, detail="Enrollment not found")
+        
+    enrollment.deleted_at = _utcnow()
+    enrollment.status = 'withdrawn'
+    
+    offering = db.query(models.AcademyPeriodOffering).filter(models.AcademyPeriodOffering.id == offering_id).first()
+    if offering.quota_enrolled > 0:
+        offering.quota_enrolled -= 1
+        
+    db.commit()
+
+
+@router.post("/admin/offerings/{offering_id}/close-grades")
+def close_grades_admin(
+    offering_id: UUID,
+    current_user: AcademyEditor,
+    db: Session = Depends(get_db),
+):
+    from backend.services.academic_engine_service import close_offering_grades
+    res = close_offering_grades(db, offering_id, current_user.id)
+    if not res.get("success"):
+        raise HTTPException(status_code=422, detail=f"Incomplete grades for students: {res.get('incomplete_students')}")
+    db.commit()
+    return {"status": "success"}
+
+
+# Docente Endpoints
+@router.get("/docente/my-offerings", response_model=List[schemas.AcademyPeriodOfferingRead])
+def get_my_offerings_docente(
+    current_user: AcademyReader,
+    skip: int = 0,
+    limit: int = 50,
+    db: Session = Depends(get_db),
+):
+    offerings = db.query(models.AcademyPeriodOffering).options(
+        joinedload(models.AcademyPeriodOffering.subject),
+        joinedload(models.AcademyPeriodOffering.academic_period),
+        joinedload(models.AcademyPeriodOffering.docente_persona),
+        joinedload(models.AcademyPeriodOffering.grading_scheme),
+    ).filter(
+        models.AcademyPeriodOffering.docente_persona_id == current_user.id,
+        models.AcademyPeriodOffering.deleted_at.is_(None)
+    ).order_by(models.AcademyPeriodOffering.created_at.desc()).offset(skip).limit(limit).all()
+    
+    result = []
+    for off in offerings:
+        item = schemas.AcademyPeriodOfferingRead.model_validate(off)
+        item.subject_name = off.subject.name if off.subject else None
+        item.subject_code = off.subject.code if off.subject else None
+        item.credits = off.subject.credits if off.subject else 0
+        item.period_code = off.academic_period.code if off.academic_period else None
+        item.docente_name = _persona_display_name(off.docente_persona) if off.docente_persona else "Sin asignar"
+        item.grading_scheme_name = off.grading_scheme.name if off.grading_scheme else None
+        item.enrolled_count = off.quota_enrolled
+        result.append(item)
+    return result
+
+
+@router.get("/docente/offerings/{offering_id}/grades")
+def get_offering_grades_docente(
+    offering_id: UUID,
+    current_user: AcademyReader,
+    db: Session = Depends(get_db),
+):
+    offering = db.query(models.AcademyPeriodOffering).options(
+        joinedload(models.AcademyPeriodOffering.grading_scheme).joinedload(models.AcademyGradingScheme.cuts),
+        joinedload(models.AcademyPeriodOffering.subject),
+        joinedload(models.AcademyPeriodOffering.academic_period),
+        joinedload(models.AcademyPeriodOffering.grades),
+    ).filter(
+        models.AcademyPeriodOffering.id == offering_id,
+        models.AcademyPeriodOffering.deleted_at.is_(None)
+    ).first()
+    
+    if not offering:
+        raise HTTPException(status_code=404, detail="Offering not found")
+        
+    if offering.docente_persona_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Not assigned to this offering")
+        
+    enrollments = db.query(models.AcademyStudentEnrollment).options(joinedload(models.AcademyStudentEnrollment.persona)).filter(
+        models.AcademyStudentEnrollment.offering_id == offering_id,
+        models.AcademyStudentEnrollment.deleted_at.is_(None)
+    ).all()
+    
+    cuts_summary = [
+        {"id": c.id, "name": c.name, "order_index": c.order_index, "weight_percent": c.weight_percent}
+        for c in (offering.grading_scheme.cuts if offering.grading_scheme else [])
+    ]
+    
+    records_summary = []
+    for enr in enrollments:
+        records_summary.append({
+            "persona_id": enr.persona_id,
+            "student_name": _persona_display_name(enr.persona),
+            "grades_by_cut": {str(g.cut_id): g.grade_value for g in offering.grades if g.persona_id == enr.persona_id}
+        })
+        
+    return {
+        "offering_id": offering.id,
+        "subject_name": offering.subject.name if offering.subject else "",
+        "cuts": cuts_summary,
+        "records": records_summary,
+        "is_locked": False, # TODO: determine lock status
+    }
+
+
+@router.post("/docente/offerings/{offering_id}/grades")
+def submit_batch_grades_docente(
+    offering_id: UUID,
+    payload: schemas.AcademyBatchGradeSubmit,
+    current_user: AcademyReader,
+    db: Session = Depends(get_db),
+):
+    offering = db.query(models.AcademyPeriodOffering).options(joinedload(models.AcademyPeriodOffering.grading_scheme)).filter(
+        models.AcademyPeriodOffering.id == offering_id,
+        models.AcademyPeriodOffering.deleted_at.is_(None)
+    ).first()
+    
+    if not offering:
+        raise HTTPException(status_code=404, detail="Offering not found")
+    if offering.docente_persona_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Not assigned to this offering")
+    if offering.status == "closed":
+        raise HTTPException(status_code=409, detail="Offering is closed")
+    if not offering.teachers_can_grade:
+        raise HTTPException(status_code=409, detail="Teachers cannot grade this offering")
+        
+    # Validate grade_value [0, scheme.scale_max]
+    scale_max = offering.grading_scheme.scale_max if offering.grading_scheme else 100.0
+    for g in payload.grades:
+        if g.grade_value < 0 or g.grade_value > scale_max:
+            raise HTTPException(status_code=422, detail=f"Grade {g.grade_value} out of scale [0, {scale_max}]")
+            
+    now_utc = _utcnow()
+    affected_personas = set()
+    for item in payload.grades:
+        # check is_locked
+        record = db.query(models.AcademyStudentSubjectRecord).filter(
+            models.AcademyStudentSubjectRecord.offering_id == offering_id,
+            models.AcademyStudentSubjectRecord.persona_id == item.persona_id
+        ).first()
+        if record and record.is_locked:
+            raise HTTPException(status_code=409, detail=f"Record is locked for student {item.persona_id}")
+            
+        affected_personas.add(item.persona_id)
+        existing = db.query(models.AcademyStudentPeriodGrade).filter(
+            models.AcademyStudentPeriodGrade.offering_id == offering_id,
+            models.AcademyStudentPeriodGrade.persona_id == item.persona_id,
+            models.AcademyStudentPeriodGrade.cut_id == item.cut_id
+        ).first()
+        if existing:
+            existing.grade_value = item.grade_value
+            existing.comments = item.comments
+            existing.graded_by_persona_id = current_user.id
+            existing.updated_at = now_utc
+        else:
+            db.add(models.AcademyStudentPeriodGrade(
+                offering_id=offering_id,
+                persona_id=item.persona_id,
+                cut_id=item.cut_id,
+                grade_value=item.grade_value,
+                comments=item.comments,
+                graded_by_persona_id=current_user.id,
+                graded_at=now_utc
+            ))
+            
+    db.flush()
+    from backend.services.academic_engine_service import calculate_and_sync_offering_grades
+    for pid in affected_personas:
+        calculate_and_sync_offering_grades(db, offering_id, pid, current_user.id)
+    db.commit()
+    return {"status": "success"}
+
+
+@router.get("/me/academic-record", response_model=schemas.AcademicTranscriptSummary)
+def get_my_academic_record(
+    current_user: AcademyStudent,
+    db: Session = Depends(get_db),
+):
+    from backend.services.academic_engine_service import compute_student_transcript_summary
+    return compute_student_transcript_summary(db, current_user.id)
+
