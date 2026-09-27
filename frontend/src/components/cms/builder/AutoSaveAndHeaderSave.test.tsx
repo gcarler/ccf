@@ -153,7 +153,7 @@ describe("M5: Auto-Save & Manual Save Header Integration", () => {
       "ccf",
       "home",
       "sec-1",
-      { sort_order: 0, props_json: { title: "Edited Title" } },
+      { sort_order: 0, section_key: "hero", props_json: { title: "Edited Title", title_lead: "Edited Title" } },
       "test-token"
     );
     expect(screen.getByText("Guardado en borrador")).toBeInTheDocument();
@@ -285,7 +285,7 @@ describe("M5: Auto-Save & Manual Save Header Integration", () => {
     expect(cmsV2.createCmsSection).toHaveBeenCalledWith(
       "ccf",
       "home",
-      { type: "rich_text", sort_order: 0, props_json: { title: "New Section Without ID" } },
+      { type: "rich_text", section_key: "rich_text", sort_order: 0, props_json: { title: "New Section Without ID", title_lead: "New Section Without ID" } },
       "test-token"
     );
 
@@ -450,7 +450,7 @@ describe("M5: Auto-Save & Manual Save Header Integration", () => {
       "ccf",
       "home",
       "sec-1",
-      { sort_order: 0, props_json: { title: "Edit 3" } },
+      { sort_order: 0, section_key: "hero", props_json: { title: "Edit 3", title_lead: "Edit 3" } },
       "test-token"
     );
   });

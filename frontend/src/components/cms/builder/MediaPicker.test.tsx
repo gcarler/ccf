@@ -139,7 +139,7 @@ describe("MediaPicker", () => {
     const onClose = vi.fn();
     render(<MediaPicker open onClose={onClose} onSelect={vi.fn()} />);
 
-    fireEvent.click(screen.getByRole("button", { name: /cerrar modal/i }));
+    fireEvent.click(screen.getByRole("button", { name: /cerrar/i }));
     expect(onClose).toHaveBeenCalled();
   });
 
@@ -147,13 +147,14 @@ describe("MediaPicker", () => {
     const onClose = vi.fn();
     render(<MediaPicker open onClose={onClose} onSelect={vi.fn()} />);
 
-    fireEvent.keyDown(window, { key: "Escape" });
+    // SidePanel usa useFocusTrap, que escucha keydown en document.
+    fireEvent.keyDown(document, { key: "Escape" });
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 
   it("removes Escape key listener on unmount", () => {
     const onClose = vi.fn();
-    const removeEventListenerSpy = vi.spyOn(window, "removeEventListener");
+    const removeEventListenerSpy = vi.spyOn(document, "removeEventListener");
     const { unmount } = render(<MediaPicker open onClose={onClose} onSelect={vi.fn()} />);
 
     unmount();
@@ -167,7 +168,7 @@ describe("MediaPicker", () => {
     render(<MediaPicker open token="token" onClose={vi.fn()} onSelect={vi.fn()} />);
 
     await waitFor(() => {
-      expect(screen.getByText(/no hay imagenes disponibles/i)).toBeInTheDocument();
+      expect(screen.getByText(/no hay imágenes disponibles/i)).toBeInTheDocument();
     });
   });
 });
