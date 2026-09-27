@@ -20,8 +20,9 @@ Valida:
 from __future__ import annotations
 
 import datetime
-from datetime import timezone
 import uuid
+from datetime import timezone
+
 import pytest
 from fastapi.testclient import TestClient
 
