@@ -212,6 +212,22 @@ def build_checks(args: argparse.Namespace) -> list[Check]:
             cwd=PROJECT_ROOT,
             reason="Valida motor de secuencias cadencia 24h-72h-7d, balanceo por carga/zona y aislamiento multi-tenant sede_id.",
         ),
+        Check(
+            label="7. Análisis de Cohortes de Retención, LTV Espiritual y Auditoría Pastoral Multi-Sede (TKT-EVT-COHORT-RETENTION-05)",
+            cmd=(
+                sys.executable,
+                "-m",
+                "pytest",
+                "-p",
+                "no:cov",
+                "-q",
+                "-o",
+                "addopts=",
+                "tests/test_evangelism_cohort_retention.py",
+            ),
+            cwd=PROJECT_ROOT,
+            reason="Valida retención temporal 30d/60d/90d en grupos/academia, cálculo SMI, rankings inter-sedes y exportación ejecutiva CSV.",
+        ),
     ]
 
     if args.backend_deep or args.expanded:

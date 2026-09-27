@@ -624,3 +624,147 @@ export interface RecordResponsePayload {
   channel?: string | null;
 }
 
+export interface CohortDayMetric {
+  count: number;
+  percentage: number;
+}
+
+export interface CohortRetentionMetrics {
+  day_30: CohortDayMetric;
+  day_60: CohortDayMetric;
+  day_90: CohortDayMetric;
+}
+
+export interface SpiritualMaturityDistribution {
+  EXPLORADOR: number;
+  CRECIENTE: number;
+  DISCIPULO: number;
+  COMPROMETIDO: number;
+  MULTIPLICADOR: number;
+}
+
+export interface SpiritualLtvSummary {
+  decision_rate_pct: number;
+  group_integration_rate_pct: number;
+  baptism_rate_pct: number;
+  academy_rate_pct: number;
+  service_leadership_rate_pct: number;
+  avg_spiritual_maturity_score: number;
+  maturity_distribution: SpiritualMaturityDistribution;
+}
+
+export interface SpiritualMilestoneItem {
+  code: string;
+  label: string;
+  points: number;
+}
+
+export interface EventCohortAttendeeItem {
+  persona_id: string;
+  full_name: string;
+  email?: string | null;
+  phone?: string | null;
+  registration_code: string;
+  check_in_at?: string | null;
+  retained_30d: boolean;
+  retained_60d: boolean;
+  retained_90d: boolean;
+  group_attendances_count: number;
+  has_academy_enrollment: boolean;
+  is_baptized: boolean;
+  is_servant_or_leader: boolean;
+  spiritual_maturity_score: number;
+  maturity_level: 'EXPLORADOR' | 'CRECIENTE' | 'DISCIPULO' | 'COMPROMETIDO' | 'MULTIPLICADOR';
+  milestones: SpiritualMilestoneItem[];
+}
+
+export interface EventCohortRetentionData {
+  event_id: string;
+  event_name: string;
+  event_date?: string | null;
+  total_cohort_size: number;
+  retention_metrics: CohortRetentionMetrics;
+  spiritual_ltv_summary: SpiritualLtvSummary;
+  attendees_cohort: EventCohortAttendeeItem[];
+}
+
+export interface SedeRetentionRankingItem {
+  sede_id: string;
+  sede_name: string;
+  city: string;
+  total_events: number;
+  total_cohort_size: number;
+  retention_30d_pct: number;
+  retention_60d_pct: number;
+  retention_90d_pct: number;
+  baptism_rate_pct: number;
+  academy_rate_pct: number;
+  avg_spiritual_maturity_score: number;
+  pastoral_efficiency_score: number;
+  rank_position: number;
+}
+
+export interface MultiSedeCohortAnalysisData {
+  calculated_at: string;
+  global_kpis: {
+    total_sedes: number;
+    total_events: number;
+    total_cohort_size: number;
+    avg_retention_30d_pct: number;
+    avg_retention_60d_pct: number;
+    avg_retention_90d_pct: number;
+    global_avg_spiritual_maturity: number;
+  };
+  sedes_ranking: SedeRetentionRankingItem[];
+}
+
+export interface TemporalCohortStep {
+  count: number;
+  percentage: number;
+  status: 'COMPLETED' | 'IN_PROGRESS';
+}
+
+export interface TemporalCohortMatrixRow {
+  cohort_key: string;
+  cohort_label: string;
+  events_count: number;
+  total_cohort_size: number;
+  m1_30d: TemporalCohortStep;
+  m2_60d: TemporalCohortStep;
+  m3_90d: TemporalCohortStep;
+}
+
+export interface TemporalCohortMatrixData {
+  sede_id: string;
+  generated_at: string;
+  cohorts: TemporalCohortMatrixRow[];
+}
+
+export interface AttendeeJourneyEvent {
+  event_id: string;
+  event_name: string;
+  attended_at?: string | null;
+}
+
+export interface AttendeeJourneyMilestone {
+  title: string;
+  date?: string | null;
+  pts: number;
+}
+
+export interface AttendeeSpiritualJourneyData {
+  persona_id: string;
+  full_name: string;
+  email?: string | null;
+  phone?: string | null;
+  church_role?: string | null;
+  spiritual_status?: string | null;
+  spiritual_maturity_score: number;
+  maturity_level: 'EXPLORADOR' | 'CRECIENTE' | 'DISCIPULO' | 'COMPROMETIDO' | 'MULTIPLICADOR';
+  events_attended_count: number;
+  group_meetings_attended_count: number;
+  academy_courses_count: number;
+  milestones: AttendeeJourneyMilestone[];
+  events: AttendeeJourneyEvent[];
+}
+
