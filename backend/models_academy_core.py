@@ -588,3 +588,44 @@ class AcademyStudentEnrollment(Base):
     offering = relationship("AcademyPeriodOffering", backref="enrollments")
     persona = relationship("Persona", foreign_keys=[persona_id])
     enrolled_by = relationship("Persona", foreign_keys=[enrolled_by_persona_id])
+
+
+class AcademySocraticSession(Base):
+    __tablename__ = "academy_socratic_sessions"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
+    offering_id = Column(UUID(as_uuid=True), ForeignKey("academy_period_offerings.id", ondelete="CASCADE"), nullable=False, index=True)
+    student_id = Column(UUID(as_uuid=True), ForeignKey("personas.id"), nullable=False, index=True)
+    question = Column(Text, nullable=False)
+    response = Column(Text, nullable=False)
+    session_type = Column(String(50), nullable=False, default="tutor")
+    created_at = Column(DateTime(timezone=True), default=_utcnow, nullable=False)
+    deleted_at = Column(DateTime(timezone=True), nullable=True)
+    sede_id = Column(UUID(as_uuid=True), ForeignKey("sedes.id", ondelete="SET NULL"), nullable=True, index=True)
+
+    offering = relationship("AcademyPeriodOffering")
+    student = relationship("Persona", foreign_keys=[student_id])
+
+
+class AcademyDefenseSession(Base):
+    __tablename__ = "academy_defense_sessions"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
+    offering_id = Column(UUID(as_uuid=True), ForeignKey("academy_period_offerings.id", ondelete="CASCADE"), nullable=True, index=True)
+    submission_id = Column(UUID(as_uuid=True), ForeignKey("academy_assignment_submissions.id", ondelete="SET NULL"), nullable=True, index=True)
+    student_id = Column(UUID(as_uuid=True), ForeignKey("personas.id"), nullable=False, index=True)
+    status = Column(String(50), nullable=False, default="pending")
+    score = Column(Float, nullable=True)
+    duration_seconds = Column(Integer, nullable=False, default=300)
+    questions = Column(JSON, nullable=True)
+    answers = Column(JSON, nullable=True)
+    started_at = Column(DateTime(timezone=True), nullable=True)
+    ended_at = Column(DateTime(timezone=True), nullable=True)
+    created_at = Column(DateTime(timezone=True), default=_utcnow, nullable=False)
+    deleted_at = Column(DateTime(timezone=True), nullable=True)
+    sede_id = Column(UUID(as_uuid=True), ForeignKey("sedes.id", ondelete="SET NULL"), nullable=True, index=True)
+
+    offering = relationship("AcademyPeriodOffering")
+    submission = relationship("AssignmentSubmission")
+    student = relationship("Persona", foreign_keys=[student_id])
+

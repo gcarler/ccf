@@ -7,10 +7,12 @@
 from backend.models_academy_core import (
     AcademyAcademicPeriod,
     AcademyActivityLog,
+    AcademyDefenseSession,
     AcademyGradingScheme,
     AcademyGradingSchemeCut,
     AcademyPeriodOffering,
     AcademyProgram,
+    AcademySocraticSession,
     AcademyStudentPeriodGrade,
     AcademyStudentSubjectRecord,
     AcademyStudentEnrollment,

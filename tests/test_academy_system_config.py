@@ -644,3 +644,179 @@ def test_010_all_academy_tests_pass():
     assert callable(compute_student_transcript_summary)
     assert callable(check_prerequisites_satisfied)
     assert callable(close_offering_grades)
+
+
+def test_011_socratic_query_generates_mayeutic_response(client, db_session):
+    admin, _, _ = seed_admin(db_session)
+    headers = auth_headers(client, email=admin.email, password="testpass123")
+    prog_r = client.post("/api/academy/admin/programs", json={
+        "name": "Prog Socratic", "code": f"PSOC-{uuid.uuid4().hex[:6]}", "program_type": "curso_libre", "has_teachers": True, "teachers_can_grade": True
+    }, headers=headers)
+    prog_id = prog_r.json()["id"]
+    plan_r = client.post("/api/academy/admin/study-plans", json={"program_id": prog_id, "name": "Plan Soc", "code": f"PLSOC-{uuid.uuid4().hex[:4]}"}, headers=headers)
+    plan_id = plan_r.json()["id"]
+    sub_r = client.post(f"/api/academy/admin/study-plans/{plan_id}/subjects", json={"name": "Sub Soc", "code": f"SSOC-{uuid.uuid4().hex[:4]}", "credits": 2, "order_index": 1}, headers=headers)
+    sub_id = sub_r.json()["id"]
+    per_r = client.post("/api/academy/admin/periods", json={"name": "Period Soc", "code": f"PERSOC-{uuid.uuid4().hex[:4]}", "start_date": "2026-01-01", "end_date": "2026-12-31"}, headers=headers)
+    per_id = per_r.json()["id"]
+    sch_r = client.post("/api/academy/admin/grading-schemes", json={"name": f"SchemeSoc-{uuid.uuid4().hex[:4]}", "scale_max": 100.0, "passing_grade": 70.0, "cuts": [{"name": "C1", "weight_percent": 100.0, "order_index": 1}]}, headers=headers)
+    sch_id = sch_r.json()["id"]
+    off_r = client.post("/api/academy/admin/offerings", json={"academic_period_id": per_id, "subject_id": sub_id, "grading_scheme_id": sch_id, "quota_max": 10}, headers=headers)
+    off_id = off_r.json()["id"]
+
+    query_r = client.post(f"/api/academy/socratic/{off_id}/query", json={
+        "question": "¿Cómo puedo demostrar la coherencia de mi tesis sobre la gracia?",
+        "context": "Teología Práctica"
+    }, headers=headers)
+    assert query_r.status_code == 200
+    data = query_r.json()
+    assert "session_id" in data
+    assert data["offering_id"] == off_id
+    assert "¿Por qué crees que" in data["socratic_response"] or "¿Qué pasaría si" in data["socratic_response"]
+    assert "¿" in data["socratic_response"]
+
+
+def test_012_defense_start_and_status(client, db_session):
+    admin, _, _ = seed_admin(db_session)
+    headers = auth_headers(client, email=admin.email, password="testpass123")
+    prog_r = client.post("/api/academy/admin/programs", json={
+        "name": "Prog Def", "code": f"PDEF-{uuid.uuid4().hex[:6]}", "program_type": "curso_libre", "has_teachers": True, "teachers_can_grade": True
+    }, headers=headers)
+    prog_id = prog_r.json()["id"]
+    plan_r = client.post("/api/academy/admin/study-plans", json={"program_id": prog_id, "name": "Plan Def", "code": f"PLDEF-{uuid.uuid4().hex[:4]}"}, headers=headers)
+    plan_id = plan_r.json()["id"]
+    sub_r = client.post(f"/api/academy/admin/study-plans/{plan_id}/subjects", json={"name": "Sub Def", "code": f"SDEF-{uuid.uuid4().hex[:4]}", "credits": 2, "order_index": 1}, headers=headers)
+    sub_id = sub_r.json()["id"]
+    per_r = client.post("/api/academy/admin/periods", json={"name": "Period Def", "code": f"PERDEF-{uuid.uuid4().hex[:4]}", "start_date": "2026-01-01", "end_date": "2026-12-31"}, headers=headers)
+    per_id = per_r.json()["id"]
+    sch_r = client.post("/api/academy/admin/grading-schemes", json={"name": f"SchemeDef-{uuid.uuid4().hex[:4]}", "scale_max": 100.0, "passing_grade": 70.0, "cuts": [{"name": "C1", "weight_percent": 100.0, "order_index": 1}]}, headers=headers)
+    sch_id = sch_r.json()["id"]
+    off_r = client.post("/api/academy/admin/offerings", json={"academic_period_id": per_id, "subject_id": sub_id, "grading_scheme_id": sch_id, "quota_max": 10}, headers=headers)
+    off_id = off_r.json()["id"]
+
+    start_r = client.post(f"/api/academy/defense/{off_id}/start", json={}, headers=headers)
+    assert start_r.status_code == 200
+    data = start_r.json()
+    assert data["status"] == "active"
+    assert data["total_questions"] == 3
+    assert data["current_question"] is not None
+    session_id = data["id"]
+
+    status_r = client.get(f"/api/academy/defense/{session_id}/status", headers=headers)
+    assert status_r.status_code == 200
+    st_data = status_r.json()
+    assert st_data["id"] == session_id
+    assert st_data["current_question"] == data["current_question"]
+
+
+def test_013_defense_answer_step_through(client, db_session):
+    admin, _, _ = seed_admin(db_session)
+    headers = auth_headers(client, email=admin.email, password="testpass123")
+    prog_r = client.post("/api/academy/admin/programs", json={
+        "name": "Prog Ans", "code": f"PANS-{uuid.uuid4().hex[:6]}", "program_type": "curso_libre", "has_teachers": True, "teachers_can_grade": True
+    }, headers=headers)
+    prog_id = prog_r.json()["id"]
+    plan_r = client.post("/api/academy/admin/study-plans", json={"program_id": prog_id, "name": "Plan Ans", "code": f"PLANS-{uuid.uuid4().hex[:4]}"}, headers=headers)
+    plan_id = plan_r.json()["id"]
+    sub_r = client.post(f"/api/academy/admin/study-plans/{plan_id}/subjects", json={"name": "Sub Ans", "code": f"SANS-{uuid.uuid4().hex[:4]}", "credits": 2, "order_index": 1}, headers=headers)
+    sub_id = sub_r.json()["id"]
+    per_r = client.post("/api/academy/admin/periods", json={"name": "Period Ans", "code": f"PERANS-{uuid.uuid4().hex[:4]}", "start_date": "2026-01-01", "end_date": "2026-12-31"}, headers=headers)
+    per_id = per_r.json()["id"]
+    sch_r = client.post("/api/academy/admin/grading-schemes", json={"name": f"SchemeAns-{uuid.uuid4().hex[:4]}", "scale_max": 100.0, "passing_grade": 70.0, "cuts": [{"name": "C1", "weight_percent": 100.0, "order_index": 1}]}, headers=headers)
+    sch_id = sch_r.json()["id"]
+    off_r = client.post("/api/academy/admin/offerings", json={"academic_period_id": per_id, "subject_id": sub_id, "grading_scheme_id": sch_id, "quota_max": 10}, headers=headers)
+    off_id = off_r.json()["id"]
+
+    start_r = client.post(f"/api/academy/defense/{off_id}/start", json={}, headers=headers)
+    session_id = start_r.json()["id"]
+
+    # Answer 1
+    ans1_r = client.post(f"/api/academy/defense/{session_id}/answer", json={
+        "answer": "Justifico mi respuesta con base en los principios hermenéuticos fundamentales establecidos en el curso."
+    }, headers=headers)
+    assert ans1_r.status_code == 200
+    assert ans1_r.json()["current_question_index"] == 1
+    assert ans1_r.json()["is_completed"] is False
+
+    # Answer 2
+    ans2_r = client.post(f"/api/academy/defense/{session_id}/answer", json={
+        "answer": "Si las condiciones cambiaran, adaptaría la solución manteniendo la consistencia de los axiomas centrales."
+    }, headers=headers)
+    assert ans2_r.status_code == 200
+    assert ans2_r.json()["current_question_index"] == 2
+    assert ans2_r.json()["is_completed"] is False
+
+    # Answer 3
+    ans3_r = client.post(f"/api/academy/defense/{session_id}/answer", json={
+        "answer": "La validez radica en la exhaustividad del análisis y la refutación previa de hipótesis antagónicas."
+    }, headers=headers)
+    assert ans3_r.status_code == 200
+    ans3_data = ans3_r.json()
+    assert ans3_data["current_question_index"] == 3
+    assert ans3_data["is_completed"] is True
+    assert ans3_data["status"] == "completed"
+    assert ans3_data["score"] is not None
+    assert ans3_data["score"] >= 80.0
+
+
+def test_014_defense_answer_conflict_when_completed(client, db_session):
+    admin, _, _ = seed_admin(db_session)
+    headers = auth_headers(client, email=admin.email, password="testpass123")
+    prog_r = client.post("/api/academy/admin/programs", json={
+        "name": "Prog Cfl", "code": f"PCFL-{uuid.uuid4().hex[:6]}", "program_type": "curso_libre", "has_teachers": True, "teachers_can_grade": True
+    }, headers=headers)
+    prog_id = prog_r.json()["id"]
+    plan_r = client.post("/api/academy/admin/study-plans", json={"program_id": prog_id, "name": "Plan Cfl", "code": f"PLCFL-{uuid.uuid4().hex[:4]}"}, headers=headers)
+    plan_id = plan_r.json()["id"]
+    sub_r = client.post(f"/api/academy/admin/study-plans/{plan_id}/subjects", json={"name": "Sub Cfl", "code": f"SCFL-{uuid.uuid4().hex[:4]}", "credits": 2, "order_index": 1}, headers=headers)
+    sub_id = sub_r.json()["id"]
+    per_r = client.post("/api/academy/admin/periods", json={"name": "Period Cfl", "code": f"PERCFL-{uuid.uuid4().hex[:4]}", "start_date": "2026-01-01", "end_date": "2026-12-31"}, headers=headers)
+    per_id = per_r.json()["id"]
+    sch_r = client.post("/api/academy/admin/grading-schemes", json={"name": f"SchemeCfl-{uuid.uuid4().hex[:4]}", "scale_max": 100.0, "passing_grade": 70.0, "cuts": [{"name": "C1", "weight_percent": 100.0, "order_index": 1}]}, headers=headers)
+    sch_id = sch_r.json()["id"]
+    off_r = client.post("/api/academy/admin/offerings", json={"academic_period_id": per_id, "subject_id": sub_id, "grading_scheme_id": sch_id, "quota_max": 10}, headers=headers)
+    off_id = off_r.json()["id"]
+
+    start_r = client.post(f"/api/academy/defense/{off_id}/start", json={}, headers=headers)
+    session_id = start_r.json()["id"]
+
+    client.post(f"/api/academy/defense/{session_id}/answer", json={"answer": "Respuesta uno detallada."}, headers=headers)
+    client.post(f"/api/academy/defense/{session_id}/answer", json={"answer": "Respuesta dos detallada."}, headers=headers)
+    client.post(f"/api/academy/defense/{session_id}/answer", json={"answer": "Respuesta tres detallada."}, headers=headers)
+
+    # Fourth answer on completed session
+    ans4_r = client.post(f"/api/academy/defense/{session_id}/answer", json={"answer": "Intento extra."}, headers=headers)
+    assert ans4_r.status_code == 409
+
+
+def test_015_defense_manual_close(client, db_session):
+    admin, _, _ = seed_admin(db_session)
+    headers = auth_headers(client, email=admin.email, password="testpass123")
+    prog_r = client.post("/api/academy/admin/programs", json={
+        "name": "Prog Cls", "code": f"PCLS-{uuid.uuid4().hex[:6]}", "program_type": "curso_libre", "has_teachers": True, "teachers_can_grade": True
+    }, headers=headers)
+    prog_id = prog_r.json()["id"]
+    plan_r = client.post("/api/academy/admin/study-plans", json={"program_id": prog_id, "name": "Plan Cls", "code": f"PLCLS-{uuid.uuid4().hex[:4]}"}, headers=headers)
+    plan_id = plan_r.json()["id"]
+    sub_r = client.post(f"/api/academy/admin/study-plans/{plan_id}/subjects", json={"name": "Sub Cls", "code": f"SCLS-{uuid.uuid4().hex[:4]}", "credits": 2, "order_index": 1}, headers=headers)
+    sub_id = sub_r.json()["id"]
+    per_r = client.post("/api/academy/admin/periods", json={"name": "Period Cls", "code": f"PERCLS-{uuid.uuid4().hex[:4]}", "start_date": "2026-01-01", "end_date": "2026-12-31"}, headers=headers)
+    per_id = per_r.json()["id"]
+    sch_r = client.post("/api/academy/admin/grading-schemes", json={"name": f"SchemeCls-{uuid.uuid4().hex[:4]}", "scale_max": 100.0, "passing_grade": 70.0, "cuts": [{"name": "C1", "weight_percent": 100.0, "order_index": 1}]}, headers=headers)
+    sch_id = sch_r.json()["id"]
+    off_r = client.post("/api/academy/admin/offerings", json={"academic_period_id": per_id, "subject_id": sub_id, "grading_scheme_id": sch_id, "quota_max": 10}, headers=headers)
+    off_id = off_r.json()["id"]
+
+    start_r = client.post(f"/api/academy/defense/{off_id}/start", json={}, headers=headers)
+    session_id = start_r.json()["id"]
+
+    client.post(f"/api/academy/defense/{session_id}/answer", json={"answer": "Respuesta parcial previa a cierre anticipado."}, headers=headers)
+
+    close_r = client.post(f"/api/academy/defense/{session_id}/close", headers=headers)
+    assert close_r.status_code == 200
+    data = close_r.json()
+    assert data["session_id"] == session_id
+    assert data["status"] == "completed"
+    assert data["score"] is not None
+    assert data["ended_at"] is not None
+

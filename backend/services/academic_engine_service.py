@@ -269,3 +269,71 @@ def close_offering_grades(db: Session, offering_id: UUID, actor_id: UUID) -> dic
     db.flush()
     
     return {"success": True, "incomplete_students": []}
+
+
+def generate_socratic_response(context: Optional[str], student_input: str) -> str:
+    """Genera una respuesta socrática orientada a la mayéutica educativa.
+    
+    En lugar de brindar una respuesta directa y cerrada, formula preguntas guía
+    que invitan al estudiante a la introspección, análisis crítico y deducción.
+    """
+    input_clean = (student_input or "").strip()
+    ctx_clean = (context or "").strip()
+    
+    # Extraer tema o palabras clave para contextualizar
+    topic_hint = f" sobre '{input_clean[:60]}...'" if len(input_clean) > 10 else ""
+    
+    socratic_prompts = [
+        f"¿Por qué crees que este enfoque o planteamiento{topic_hint} es el más apropiado?",
+        "¿Qué pasaría si alteraras las premisas básicas o los supuestos iniciales de tu razonamiento?",
+        "¿Cómo justificarías tu postura ante alguien que defienda la perspectiva contraria?",
+        "¿De qué manera los principios fundamentales que estamos estudiando sustentan o cuestionan esta idea?",
+        "¿Qué evidencia o ejemplo práctico respaldaría la conclusión a la que buscas llegar?"
+    ]
+    
+    intro = "Excelente inquietud para indagar más a fondo. Analicemos juntos las implicaciones de lo que planteas:"
+    if ctx_clean:
+        intro = f"Considerando el contexto de estudio ({ctx_clean[:80]}...), reflexionemos:"
+        
+    return f"{intro}\n\n1. {socratic_prompts[0]}\n2. {socratic_prompts[1]}\n3. {socratic_prompts[2]}"
+
+
+def generate_defense_questions(context: Optional[str] = None, topic: Optional[str] = None) -> list[str]:
+    """Genera una serie de preguntas socráticas para la defensa interactiva de una entrega."""
+    t = f" en '{topic}'" if topic else ""
+    return [
+        f"¿Cómo justificarías las decisiones conceptuales y metodológicas tomadas en tu entrega{t}?",
+        "¿Qué pasaría si las condiciones iniciales o restricciones del problema cambiaran radicalmente; cómo respondería tu solución?",
+        "¿Por qué crees que tu conclusión es válida frente a posibles contraejemplos o interpretaciones alternativas?"
+    ]
+
+
+def evaluate_defense_session(questions: list[str], answers: list[dict]) -> dict:
+    """Evalúa las respuestas de una defensa socrática y genera un score y feedback."""
+    if not answers:
+        return {"score": 0.0, "feedback": "Sesión sin respuestas registradas."}
+        
+    answered_count = len([a for a in answers if (a.get("answer") or "").strip()])
+    total_q = max(len(questions), 1)
+    
+    # Evaluar longitud y profundidad básica de cada respuesta
+    total_depth_score = 0.0
+    for a in answers:
+        ans_text = (a.get("answer") or "").strip()
+        if len(ans_text) >= 50:
+            total_depth_score += 100.0
+        elif len(ans_text) >= 20:
+            total_depth_score += 80.0
+        elif len(ans_text) > 0:
+            total_depth_score += 60.0
+            
+    avg_score = round(total_depth_score / total_q, 1)
+    # Clamp [0, 100]
+    final_score = min(max(avg_score, 0.0), 100.0)
+    
+    feedback = (
+        f"Defensa socrática completada con {answered_count} de {total_q} preguntas respondidas. "
+        f"Argumentación y justificación {'sólida y fundamentada' if final_score >= 70 else 'parcial, requiere mayor profundización conceptual'}."
+    )
+    return {"score": final_score, "feedback": feedback}
+

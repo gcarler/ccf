@@ -8,7 +8,7 @@ explicit Academy permission.
 from __future__ import annotations
 
 import asyncio
-from datetime import date
+from datetime import date, datetime, timezone
 from html import escape as _html_escape
 from typing import Annotated, Any, List, Optional
 from uuid import UUID
@@ -2779,4 +2779,294 @@ def get_my_academic_record(
 ):
     from backend.services.academic_engine_service import compute_student_transcript_summary
     return compute_student_transcript_summary(db, current_user.id)
+
+
+# ── Tutor Socrático & Defensas Interactivas ───────────────────────────────────
+
+@router.post("/socratic/{offering_id}/query", response_model=schemas.SocraticQueryResponse)
+def socratic_query(
+    offering_id: UUID,
+    payload: schemas.SocraticQueryRequest,
+    current_user: AcademyReader,
+    db: Session = Depends(get_db),
+):
+    offering = db.query(models.AcademyPeriodOffering).filter(
+        models.AcademyPeriodOffering.id == offering_id,
+        models.AcademyPeriodOffering.deleted_at.is_(None)
+    ).first()
+    if not offering:
+        raise HTTPException(status_code=404, detail="Oferta no encontrada")
+
+    sede_id = get_user_sede_id(db, current_user.id)
+    from backend.services.academic_engine_service import generate_socratic_response
+    socratic_resp = generate_socratic_response(payload.context, payload.question)
+
+    session = models.AcademySocraticSession(
+        offering_id=offering_id,
+        student_id=current_user.id,
+        question=payload.question,
+        response=socratic_resp,
+        session_type="tutor",
+        created_at=_utcnow(),
+        sede_id=sede_id,
+    )
+    db.add(session)
+    db.commit()
+    db.refresh(session)
+
+    return schemas.SocraticQueryResponse(
+        session_id=session.id,
+        offering_id=offering_id,
+        student_id=current_user.id,
+        question=session.question,
+        socratic_response=session.response,
+        session_type=session.session_type,
+        created_at=session.created_at,
+    )
+
+
+@router.post("/defense/{offering_id}/start", response_model=schemas.DefenseSessionStatusResponse)
+def start_defense_session(
+    offering_id: UUID,
+    payload: schemas.DefenseStartRequest,
+    current_user: AcademyReader,
+    db: Session = Depends(get_db),
+):
+    offering = db.query(models.AcademyPeriodOffering).options(
+        joinedload(models.AcademyPeriodOffering.subject)
+    ).filter(
+        models.AcademyPeriodOffering.id == offering_id,
+        models.AcademyPeriodOffering.deleted_at.is_(None)
+    ).first()
+    if not offering:
+        raise HTTPException(status_code=404, detail="Oferta no encontrada")
+
+    sede_id = get_user_sede_id(db, current_user.id)
+    submission = None
+    if payload.submission_id:
+        submission = db.query(models.AssignmentSubmission).filter(
+            models.AssignmentSubmission.id == payload.submission_id,
+            models.AssignmentSubmission.deleted_at.is_(None)
+        ).first()
+    else:
+        submission = (
+            db.query(models.AssignmentSubmission)
+            .join(models.Enrollment)
+            .filter(
+                models.Enrollment.persona_id == current_user.id,
+                models.AssignmentSubmission.deleted_at.is_(None)
+            )
+            .order_by(models.AssignmentSubmission.created_at.desc())
+            .first()
+        )
+
+    from backend.services.academic_engine_service import generate_defense_questions
+    topic = offering.subject.name if offering.subject else "la materia"
+    questions = generate_defense_questions(
+        context=submission.comment if submission else None,
+        topic=topic
+    )
+
+    now = _utcnow()
+    defense = models.AcademyDefenseSession(
+        offering_id=offering_id,
+        submission_id=submission.id if submission else None,
+        student_id=current_user.id,
+        status="active",
+        duration_seconds=300,
+        questions=questions,
+        answers=[],
+        started_at=now,
+        created_at=now,
+        sede_id=sede_id,
+    )
+    db.add(defense)
+    db.commit()
+    db.refresh(defense)
+
+    return schemas.DefenseSessionStatusResponse(
+        id=defense.id,
+        offering_id=defense.offering_id,
+        submission_id=defense.submission_id,
+        student_id=defense.student_id,
+        status=defense.status,
+        score=defense.score,
+        duration_seconds=defense.duration_seconds,
+        current_question_index=0,
+        total_questions=len(questions),
+        current_question=questions[0] if questions else None,
+        started_at=defense.started_at,
+        ended_at=defense.ended_at,
+        time_remaining_seconds=defense.duration_seconds,
+    )
+
+
+def _as_utc(dt: Optional[datetime]) -> Optional[datetime]:
+    if dt is None:
+        return None
+    if dt.tzinfo is None:
+        return dt.replace(tzinfo=timezone.utc)
+    return dt
+
+
+@router.get("/defense/{session_id}/status", response_model=schemas.DefenseSessionStatusResponse)
+def get_defense_session_status(
+    session_id: UUID,
+    current_user: AcademyReader,
+    db: Session = Depends(get_db),
+):
+    session = db.query(models.AcademyDefenseSession).filter(
+        models.AcademyDefenseSession.id == session_id,
+        models.AcademyDefenseSession.deleted_at.is_(None)
+    ).first()
+    if not session:
+        raise HTTPException(status_code=404, detail="Sesión de defensa no encontrada")
+
+    now = _utcnow()
+    questions = session.questions or []
+    answers = session.answers or []
+    idx = len(answers)
+    curr_q = questions[idx] if idx < len(questions) else None
+
+    started = _as_utc(session.started_at)
+    elapsed = int((now - started).total_seconds()) if started else 0
+    remaining = max(0, session.duration_seconds - elapsed)
+
+    if remaining == 0 and session.status == "active":
+        session.status = "completed"
+        session.ended_at = now
+        from backend.services.academic_engine_service import evaluate_defense_session
+        ev = evaluate_defense_session(questions, answers)
+        session.score = ev["score"]
+        db.commit()
+        db.refresh(session)
+
+    return schemas.DefenseSessionStatusResponse(
+        id=session.id,
+        offering_id=session.offering_id,
+        submission_id=session.submission_id,
+        student_id=session.student_id,
+        status=session.status,
+        score=session.score,
+        duration_seconds=session.duration_seconds,
+        current_question_index=idx,
+        total_questions=len(questions),
+        current_question=curr_q,
+        started_at=session.started_at,
+        ended_at=session.ended_at,
+        time_remaining_seconds=remaining,
+    )
+
+
+@router.post("/defense/{session_id}/answer", response_model=schemas.DefenseAnswerResponse)
+def answer_defense_question(
+    session_id: UUID,
+    payload: schemas.DefenseAnswerRequest,
+    current_user: AcademyReader,
+    db: Session = Depends(get_db),
+):
+    session = db.query(models.AcademyDefenseSession).filter(
+        models.AcademyDefenseSession.id == session_id,
+        models.AcademyDefenseSession.deleted_at.is_(None)
+    ).first()
+    if not session:
+        raise HTTPException(status_code=404, detail="Sesión de defensa no encontrada")
+
+    if session.status != "active":
+        raise HTTPException(status_code=409, detail="La sesión no está activa o ya ha concluido")
+
+    now = _utcnow()
+    started = _as_utc(session.started_at)
+    elapsed = int((now - started).total_seconds()) if started else 0
+    if elapsed >= session.duration_seconds:
+        session.status = "completed"
+        session.ended_at = now
+        from backend.services.academic_engine_service import evaluate_defense_session
+        ev = evaluate_defense_session(session.questions or [], session.answers or [])
+        session.score = ev["score"]
+        db.commit()
+        raise HTTPException(status_code=409, detail="El tiempo límite de la sesión (5 min) ha expirado")
+
+    questions = list(session.questions or [])
+    answers = list(session.answers or [])
+    current_idx = len(answers)
+
+    if current_idx >= len(questions):
+        raise HTTPException(status_code=409, detail="Todas las preguntas de la defensa ya han sido respondidas")
+
+    answer_record = {
+        "question_index": current_idx,
+        "question": questions[current_idx],
+        "answer": payload.answer,
+        "answered_at": now.isoformat()
+    }
+    answers.append(answer_record)
+    session.answers = answers
+
+    new_idx = len(answers)
+    is_completed = (new_idx >= len(questions))
+    next_q = questions[new_idx] if new_idx < len(questions) else None
+    score = None
+    feedback = None
+
+    if is_completed:
+        session.status = "completed"
+        session.ended_at = now
+        from backend.services.academic_engine_service import evaluate_defense_session
+        ev = evaluate_defense_session(questions, answers)
+        session.score = ev["score"]
+        score = session.score
+        feedback = ev["feedback"]
+
+    db.commit()
+    db.refresh(session)
+
+    return schemas.DefenseAnswerResponse(
+        session_id=session.id,
+        status=session.status,
+        current_question_index=new_idx,
+        total_questions=len(questions),
+        next_question=next_q,
+        is_completed=is_completed,
+        score=score,
+        feedback=feedback,
+    )
+
+
+@router.post("/defense/{session_id}/close", response_model=schemas.DefenseCloseResponse)
+def close_defense_session(
+    session_id: UUID,
+    current_user: AcademyReader,
+    db: Session = Depends(get_db),
+):
+    session = db.query(models.AcademyDefenseSession).filter(
+        models.AcademyDefenseSession.id == session_id,
+        models.AcademyDefenseSession.deleted_at.is_(None)
+    ).first()
+    if not session:
+        raise HTTPException(status_code=404, detail="Sesión de defensa no encontrada")
+
+    now = _utcnow()
+    from backend.services.academic_engine_service import evaluate_defense_session
+    questions = session.questions or []
+    answers = session.answers or []
+    ev = evaluate_defense_session(questions, answers)
+
+    session.status = "completed"
+    if not session.ended_at:
+        session.ended_at = now
+    if session.score is None:
+        session.score = ev["score"]
+
+    db.commit()
+    db.refresh(session)
+
+    return schemas.DefenseCloseResponse(
+        session_id=session.id,
+        status=session.status,
+        score=session.score,
+        feedback=ev["feedback"],
+        ended_at=session.ended_at,
+    )
+
 

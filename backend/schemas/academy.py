@@ -1110,3 +1110,72 @@ class AcademyStudentEnrollmentRead(BaseModel):
     deleted_at: Optional[datetime] = None
 
     model_config = ConfigDict(from_attributes=True)
+
+
+# ── Tutor Socrático & Defensas Interactivas ───────────────────────────────────
+
+class SocraticQueryRequest(BaseModel):
+    question: str = Field(min_length=1, description="Pregunta o consulta del estudiante")
+    context: Optional[str] = Field(default=None, description="Contexto temático o lección relacionada")
+
+
+class SocraticQueryResponse(BaseModel):
+    session_id: UUID
+    offering_id: UUID
+    student_id: UUID
+    question: str
+    socratic_response: str
+    session_type: str = "tutor"
+    created_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class DefenseStartRequest(BaseModel):
+    submission_id: Optional[UUID] = Field(default=None, description="ID de la entrega a defender (opcional)")
+
+
+class DefenseSessionStatusResponse(BaseModel):
+    id: UUID
+    offering_id: Optional[UUID] = None
+    submission_id: Optional[UUID] = None
+    student_id: UUID
+    status: str
+    score: Optional[float] = None
+    duration_seconds: int = 300
+    current_question_index: int = 0
+    total_questions: int = 0
+    current_question: Optional[str] = None
+    started_at: Optional[datetime] = None
+    ended_at: Optional[datetime] = None
+    time_remaining_seconds: Optional[int] = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class DefenseAnswerRequest(BaseModel):
+    answer: str = Field(min_length=1, description="Respuesta del estudiante a la pregunta socrática actual")
+
+
+class DefenseAnswerResponse(BaseModel):
+    session_id: UUID
+    status: str
+    current_question_index: int
+    total_questions: int
+    next_question: Optional[str] = None
+    is_completed: bool = False
+    score: Optional[float] = None
+    feedback: Optional[str] = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class DefenseCloseResponse(BaseModel):
+    session_id: UUID
+    status: str
+    score: float
+    feedback: str
+    ended_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
