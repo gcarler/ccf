@@ -177,6 +177,7 @@ def compute_student_transcript_summary(
             total_credits_for_gpa += sub_credits
 
         subjects_list.append({
+            "offering_id": r.offering_id,
             "subject_code": sub_code,
             "subject_name": sub_name,
             "credits": sub_credits,

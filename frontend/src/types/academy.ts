@@ -351,6 +351,71 @@ export interface AcademicTranscriptSummary {
   subjects: AcademicTranscriptSubject[];
 }
 
+export interface StudentAcademicCommission {
+  offering_id: string;
+  subject_name: string;
+  subject_code?: string | null;
+  period_code?: string | null;
+  group_name?: string | null;
+  credits?: number;
+  status?: string | null;
+}
+
+export interface SocraticSession {
+  id: string;
+  offering_id: string;
+  student_id: string;
+  question: string;
+  response: string;
+  session_type: string;
+  created_at: string;
+}
+
+export interface SocraticQueryResponse {
+  session_id: string;
+  offering_id: string;
+  student_id: string;
+  question: string;
+  socratic_response: string;
+  session_type: string;
+  created_at: string;
+}
+
+export interface DefenseSession {
+  id: string;
+  offering_id?: string | null;
+  submission_id?: string | null;
+  student_id: string;
+  status: string;
+  score?: number | null;
+  duration_seconds: number;
+  current_question_index: number;
+  total_questions: number;
+  current_question?: string | null;
+  started_at?: string | null;
+  ended_at?: string | null;
+  time_remaining_seconds?: number | null;
+}
+
+export interface DefenseAnswer {
+  session_id: string;
+  status: string;
+  current_question_index: number;
+  total_questions: number;
+  next_question?: string | null;
+  is_completed: boolean;
+  score?: number | null;
+  feedback?: string | null;
+}
+
+export interface DefenseScore {
+  session_id: string;
+  status: string;
+  score: number;
+  feedback: string;
+  ended_at: string;
+}
+
 export interface StudentEnrollment {
   id: string;
   offering_id: string;
@@ -361,4 +426,3 @@ export interface StudentEnrollment {
   status: string;
   deleted_at?: string | null;
 }
-

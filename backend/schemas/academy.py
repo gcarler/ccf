@@ -1080,6 +1080,7 @@ class AcademyStudentSubjectRecordRead(BaseModel):
 
 
 class AcademicTranscriptSubject(BaseModel):
+    offering_id: Optional[UUID] = None
     subject_code: str
     subject_name: str
     credits: int
