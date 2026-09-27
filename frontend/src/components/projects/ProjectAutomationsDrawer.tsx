@@ -11,27 +11,7 @@ import type {
   AutomationExecutionResult,
   ProjectTaskRecord,
 } from "@/types/projects";
-import {
-  Zap,
-  Play,
-  Plus,
-  Trash2,
-  CheckCircle2,
-  Clock,
-  ArrowRight,
-  Filter,
-  Sliders,
-  Check,
-  RotateCw,
-  Bell,
-  UserCheck,
-  ListPlus,
-  ArrowRightCircle,
-  AlertCircle,
-  HelpCircle,
-  Power,
-  Activity,
-} from "lucide-react";
+import { Zap, Play, Plus, Trash2, CheckCircle2, Clock, Filter, Check, RotateCw, Bell, ListPlus, ArrowRightCircle, AlertCircle, Power, Activity } from "lucide-react";
 import clsx from "clsx";
 
 interface ProjectAutomationsDrawerProps {

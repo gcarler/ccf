@@ -1,5 +1,6 @@
 "use client";
 
+import clsx from 'clsx';
 import { AvatarInitial } from '@/components/ui/AvatarInitial';
 import { apiFetch } from '@/lib/http';
 import { filtroAPersona, type PersonaBusqueda } from '@/lib/filtroAPersonas';

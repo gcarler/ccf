@@ -6,33 +6,8 @@ import { RightPanel } from "@/components/ui/RightPanel";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/context/ToastContext";
 import { apiFetch } from "@/lib/http";
-import type {
-  ProjectTemplate,
-  ProjectTemplateCreate,
-  InstantiateProjectFromTemplate,
-  SaveProjectAsTemplate,
-  ProjectRecord,
-} from "@/types/projects";
-import {
-  BookTemplate,
-  FolderPlus,
-  Copy,
-  Layers,
-  Calendar,
-  DollarSign,
-  Search,
-  CheckCircle2,
-  ChevronRight,
-  ChevronDown,
-  Sparkles,
-  BookmarkPlus,
-  ArrowRight,
-  Clock,
-  Tag,
-  Trash2,
-  Globe,
-  Lock,
-} from "lucide-react";
+import type { ProjectTemplate, InstantiateProjectFromTemplate, SaveProjectAsTemplate, ProjectRecord } from "@/types/projects";
+import { BookTemplate, FolderPlus, Copy, Layers, Search, CheckCircle2, ChevronRight, ChevronDown, Sparkles, BookmarkPlus, Trash2, Globe, Lock } from "lucide-react";
 import clsx from "clsx";
 
 interface ProjectTemplateCatalogDrawerProps {
@@ -60,7 +35,7 @@ export function ProjectTemplateCatalogDrawer({
   onProjectCreated,
 }: ProjectTemplateCatalogDrawerProps) {
   const router = useRouter();
-  const { token, user } = useAuth();
+  const { token } = useAuth();
   const { addToast } = useToast();
 
   const [activeTab, setActiveTab] = useState<"catalog" | "instantiate" | "save_current">("catalog");

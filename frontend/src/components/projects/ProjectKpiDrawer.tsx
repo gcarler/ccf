@@ -6,20 +6,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/context/ToastContext";
 import { apiFetch } from "@/lib/http";
 import type { ProjectKPI } from "@/types/projects";
-import {
-  Target,
-  Plus,
-  Trash2,
-  Edit2,
-  TrendingUp,
-  CheckCircle2,
-  AlertTriangle,
-  AlertOctagon,
-  Calendar,
-  Save,
-  X,
-  Sparkles,
-} from "lucide-react";
+import { Target, Plus, Trash2, TrendingUp, CheckCircle2, AlertTriangle, AlertOctagon, Calendar, Save, X, Sparkles } from "lucide-react";
 import clsx from "clsx";
 
 interface ProjectKpiDrawerProps {
@@ -49,7 +36,7 @@ export function ProjectKpiDrawer({
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
-  const [editingId, setEditingId] = useState<string | null>(null);
+  const [, setEditingId] = useState<string | null>(null);
 
   // Form state
   const [formData, setFormData] = useState({

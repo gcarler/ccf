@@ -11,6 +11,7 @@ import type {
 } from '@/app/plataforma/evangelism/types';
 import { ViewType, getStoredView } from '@/components/ViewSwitcher';
 import { type ConfirmActionState } from '@/components/evangelism/ConfirmActionDrawer';
+import type { EventCreateForm } from './panels/EventCreateDrawer';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
 import { useWikiDocument } from '@/hooks/useWikiDocument';
@@ -67,7 +68,7 @@ export function useEventsPage() {
  const [isScanning, setIsScanning] = useState(false);
 
  // Form states
- const [newEvent, setNewEvent] = useState({
+ const [newEvent, setNewEvent] = useState<EventCreateForm>({
  name: '',
  description: '',
  event_type: 'PERMANENT',

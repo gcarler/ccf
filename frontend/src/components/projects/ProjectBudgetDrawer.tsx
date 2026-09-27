@@ -22,7 +22,6 @@ import {
   FileText,
   PieChart,
 } from "lucide-react";
-import clsx from "clsx";
 
 interface ProjectBudgetDrawerProps {
   projectId: string;

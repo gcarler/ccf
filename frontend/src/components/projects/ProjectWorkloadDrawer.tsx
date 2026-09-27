@@ -5,21 +5,8 @@ import { RightPanel } from "@/components/ui/RightPanel";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/context/ToastContext";
 import { apiFetch } from "@/lib/http";
-import type { ProjectWorkloadSummary, ProjectMemberWorkload } from "@/types/projects";
-import {
-  Users,
-  AlertOctagon,
-  Scale,
-  CheckCircle2,
-  Clock,
-  ArrowRightLeft,
-  ChevronDown,
-  ChevronUp,
-  AlertTriangle,
-  UserX,
-  ExternalLink,
-} from "lucide-react";
-import clsx from "clsx";
+import type { ProjectWorkloadSummary } from "@/types/projects";
+import { Users, AlertOctagon, Scale, CheckCircle2, Clock, ChevronDown, ChevronUp, UserX, ExternalLink } from "lucide-react";
 
 interface ProjectWorkloadDrawerProps {
   projectId: string;

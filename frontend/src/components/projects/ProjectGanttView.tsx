@@ -14,26 +14,7 @@ import type {
 } from "@/types/projects";
 import { RightPanel } from "@/components/ui/RightPanel";
 import { ProjectBaselineDrawer } from "@/components/projects/ProjectBaselineDrawer";
-import {
-  Calendar,
-  ChevronLeft,
-  ChevronRight,
-  ChevronDown,
-  Layers,
-  Link2,
-  Plus,
-  Trash2,
-  Milestone,
-  ZoomIn,
-  Clock,
-  CheckCircle2,
-  AlertTriangle,
-  MoveHorizontal,
-  X,
-  Sparkles,
-  Zap,
-  Sliders,
-} from "lucide-react";
+import { Calendar, ChevronLeft, ChevronRight, ChevronDown, Layers, Link2, Plus, Milestone, Clock, Zap, Sliders } from "lucide-react";
 import clsx from "clsx";
 
 interface Props {
@@ -60,11 +41,6 @@ function toDateKey(date: Date): string {
   return `${y}-${m}-${d}`;
 }
 
-function parseDateKey(key: string): Date {
-  const [y, m, d] = key.split("-").map(Number);
-  return new Date(y, (m || 1) - 1, d || 1);
-}
-
 function addDaysToDate(date: Date, days: number): Date {
   const result = new Date(date);
   result.setDate(result.getDate() + days);
@@ -73,20 +49,17 @@ function addDaysToDate(date: Date, days: number): Date {
 
 export default function ProjectGanttView({
   projectId: propProjectId,
-  projectTitle: propProjectTitle,
   tasks: propTasks,
   phases: propPhases,
   onOpenTask,
-  onTaskDatesChange,
 }: Props) {
   const { token } = useAuth();
   const { addToast } = useToast();
   const ctx = useProjectUpdate();
 
   const projectId = propProjectId || ctx.project?.id || "";
-  const projectTitle = propProjectTitle || ctx.project?.title || "Proyecto";
-  const tasks = propTasks || ctx.tasks || [];
-  const phases = propPhases || ctx.phases || [];
+  const tasks = useMemo(() => propTasks || ctx.tasks || [], [propTasks, ctx.tasks]);
+  const phases = useMemo(() => propPhases || ctx.phases || [], [propPhases, ctx.phases]);
   const milestones: ProjectMilestoneRecord[] = ctx.project?.milestones || [];
 
   // Zoom & View Options
@@ -96,7 +69,7 @@ export default function ProjectGanttView({
 
   // Dependencies
   const [dependencies, setDependencies] = useState<ProjectTaskDependency[]>([]);
-  const [loadingDeps, setLoadingDeps] = useState(false);
+  const [, setLoadingDeps] = useState(false);
   const [showDepDrawer, setShowDepDrawer] = useState(false);
   const [depFormData, setDepFormData] = useState({
     predecessor_id: "",

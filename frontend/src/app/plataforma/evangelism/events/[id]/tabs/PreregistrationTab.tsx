@@ -9,7 +9,7 @@ import {
 } from "lucide-react";
 import clsx from "clsx";
 import SidePanel from "@/components/ui/SidePanel";
-import EventFormStudioDrawer from "../panels/EventFormStudioDrawer";
+import EventFormStudioDrawer from "../../panels/EventFormStudioDrawer";
 
 type RegistrationStatus =
   | "PENDING"

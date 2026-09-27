@@ -180,7 +180,7 @@ export default function WebhooksPage() {
                       "flex items-center gap-1.5 px-3 py-2 text-2xs font-semibold rounded-lg border transition-all text-left",
                       form.events.includes(ev)
                         ? "bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] border-[hsl(var(--primary))]"
-                        : "border-[hsl(var(--border))] text-[hsl(var(--text-secondary))] hover:border-[hsl(var(--primary))/50%] hover:bg-[hsl(var(--surface-2))]
+                        : "border-[hsl(var(--border))] text-[hsl(var(--text-secondary))] hover:border-[hsl(var(--primary))/50%] hover:bg-[hsl(var(--surface-2))]"
                     )}
                   >
                     <div className={clsx("size-3.5 rounded-sm border flex items-center justify-center shrink-0", form.events.includes(ev) ? "border-[hsl(var(--primary-foreground))] bg-[hsl(var(--primary-foreground))/0.2]" : "border-[hsl(var(--text-secondary))/30%]")}>
@@ -311,7 +311,7 @@ export default function WebhooksPage() {
             </p>
           </div>
           <div className="flex gap-2">
-            <button onClick={() => setPendingDelete(null)} className="flex-1 rounded-lg border border-[hsl(var(--border))] px-3 py-2 text-xs font-semibold uppercase tracking-wide transition-colors hover:bg-[hsl(var(--surface-1))]
+            <button onClick={() => setPendingDelete(null)} className="flex-1 rounded-lg border border-[hsl(var(--border))] px-3 py-2 text-xs font-semibold uppercase tracking-wide transition-colors hover:bg-[hsl(var(--surface-1))]">
               Cancelar
             </button>
             <button onClick={remove} className="flex-1 rounded-lg bg-[hsl(var(--destructive))] px-3 py-2 text-xs font-semibold uppercase tracking-wide text-[hsl(var(--primary-foreground))] transition-opacity hover:opacity-90">

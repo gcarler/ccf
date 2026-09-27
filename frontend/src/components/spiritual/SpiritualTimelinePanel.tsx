@@ -81,7 +81,7 @@ export default function SpiritualTimelinePanel() {
                                 <div className={clsx(
                                     'size-6 rounded-lg flex items-center justify-center shrink-0 border-2 relative z-10 transition-all group-hover:scale-110 shadow-lg',
                                     def.bg, def.border
-                                Chad: undefined)}>
+                                )}>
                                     <Icon size={18} className={clsx('transition-all', def.color)} />
                                 </div>
 

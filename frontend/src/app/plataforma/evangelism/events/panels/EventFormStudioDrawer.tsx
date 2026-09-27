@@ -1,12 +1,11 @@
 'use client';
 
-import React, { useEffect, useState, useId } from 'react';
+import React, { useEffect, useState } from 'react';
 import WorkspaceDrawer from '@/components/WorkspaceDrawer';
 import ErrorBoundary from '@/components/ErrorBoundary';
 import { apiFetch } from '@/lib/http';
 import { toast } from 'sonner';
 import {
-  Plus,
   Trash2,
   ArrowUp,
   ArrowDown,
@@ -14,8 +13,6 @@ import {
   Settings,
   Sparkles,
   Save,
-  Check,
-  AlertCircle,
   FileText,
   User,
   Phone,
@@ -28,6 +25,7 @@ import {
   AlignLeft,
   List,
   CheckSquare,
+  type LucideIcon,
 } from 'lucide-react';
 import { DSButton, DSInput } from '@/design';
 import clsx from 'clsx';
@@ -55,7 +53,7 @@ const PRESET_BLOCKS: Array<{
   id: string;
   title: string;
   description: string;
-  icon: React.ComponentType<{ size?: number; className?: string }>;
+  icon: LucideIcon;
   field: FormStudioField;
 }> = [
   {
@@ -154,7 +152,7 @@ const PRESET_BLOCKS: Array<{
 const CUSTOM_TYPES: Array<{
   type: FormStudioField['type'];
   label: string;
-  icon: React.ComponentType<{ size?: number; className?: string }>;
+  icon: LucideIcon;
   defaultLabel: string;
 }> = [
   { type: 'text', label: 'Texto Corto', icon: Type, defaultLabel: 'Texto' },

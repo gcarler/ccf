@@ -412,10 +412,10 @@ export default function BuilderCanvas({
   } : undefined;
 
   const { presenceUsers } = usePresence({
-    resourceType: "cms_page",
-    resourceId: activeSlug || "unselected",
-    currentUser,
+    siteKey,
+    slug: activeSlug || "unselected",
     token: token || undefined,
+    user: currentUser,
   });
 
   const sensors = useSensors(
@@ -435,7 +435,7 @@ export default function BuilderCanvas({
       const oldIndex = sections.findIndex((s) => s.id === active.id);
       const newIndex = sections.findIndex((s) => s.id === over.id);
       if (oldIndex !== -1 && newIndex !== -1) {
-        await builder.reorderSections(oldIndex, newIndex);
+        await builder.moveSectionToIndex(active.id as string, over.id as string);
       }
     }
   };

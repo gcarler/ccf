@@ -20,7 +20,6 @@ import {
   Save,
   Activity,
   Layers,
-  HelpCircle,
 } from "lucide-react";
 import clsx from "clsx";
 
@@ -447,7 +446,7 @@ export function ProjectRiskMatrixDrawer({
                     style={{
                       backgroundColor: count > 0 ? meta.bg : "hsl(var(--surface-2) / 0.5)",
                       borderColor: isSelected ? meta.color : meta.border,
-                      ringColor: meta.color,
+                      ...(isSelected ? ({ "--tw-ring-color": meta.color } as React.CSSProperties) : {}),
                     }}
                     title={`Probabilidad: ${p}, Impacto: ${i}, Severidad: ${score}/25 (${meta.label})`}
                   >

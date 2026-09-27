@@ -6,26 +6,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/context/ToastContext";
 import { apiFetch, apiFetchBlob } from "@/lib/http";
 import type { ProjectExecutiveReportData } from "@/types/projects";
-import {
-  FileText,
-  Download,
-  Printer,
-  FileSpreadsheet,
-  CheckCircle2,
-  AlertTriangle,
-  Clock,
-  DollarSign,
-  TrendingUp,
-  Layers,
-  ShieldAlert,
-  Calendar,
-  User,
-  Activity,
-  Check,
-  RefreshCw,
-  Sliders,
-  ExternalLink,
-} from "lucide-react";
+import { FileText, Download, Printer, FileSpreadsheet, AlertTriangle, Clock, DollarSign, TrendingUp, ShieldAlert, Activity, Check, RefreshCw, Sliders } from "lucide-react";
 import clsx from "clsx";
 
 interface ProjectReportDrawerProps {

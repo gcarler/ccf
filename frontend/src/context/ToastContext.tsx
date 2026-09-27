@@ -2,12 +2,12 @@
 
 import React, { createContext, useContext } from 'react';
 import { X, CheckCircle, AlertCircle, Bell } from 'lucide-react';
-import { useToastStore } from '@/stores/toastStore';
+import { useToastStore, type ToastInput } from '@/stores/toastStore';
 
 type ToastType = 'success' | 'error' | 'info' | 'warning';
 
 interface ToastContextType {
-    addToast: (message: string, type?: ToastType) => void;
+    addToast: (input: ToastInput, type?: ToastType) => void;
     removeToast: (id: string) => void;
 }
 
@@ -25,17 +25,19 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
                 {toasts.map((toast) => (
                     <div
                         key={toast.id}
-                        className={`pointer-events-auto flex items-center gap-3 p-4 rounded-lg border shadow-2xl glass-card animate-in slide-in-from-right-10 fade-in duration-300 min-w-[300px] max-w-md ${toast.type === 'success' ? 'bg-success-soft/90 border-[hsl(var(--success)/20%)] text-success-text' :
+                        role="status"
+                        aria-live="polite"
+                        className={`pointer-events-auto flex items-start gap-3 p-4 rounded-lg border shadow-2xl glass-card animate-in slide-in-from-right-10 fade-in duration-300 min-w-[300px] max-w-md ${toast.type === 'success' ? 'bg-success-soft/90 border-[hsl(var(--success)/20%)] text-success-text' :
                                 toast.type === 'error' ? 'bg-danger-soft/90 border-[hsl(var(--danger)/20%)] text-danger-text' :
                                     toast.type === 'warning' ? 'bg-warning-soft/90 border-[hsl(var(--warning)/20%)] text-warning-text' :
                                         'bg-info-soft/90 border-[hsl(var(--info)/20%)] text-info-text'
                             }`}
                     >
-                        <div className={`p-2 rounded-md ${toast.type === 'success' ? 'bg-[hsl(var(--success))] text-white' :
-                                toast.type === 'error' ? 'bg-[hsl(var(--danger))] text-white' :
-                                    toast.type === 'warning' ? 'bg-[hsl(var(--warning))] text-white' :
-                                        'bg-[hsl(var(--primary))] text-white'
-                            }`}>
+                        <div className={`p-2 rounded-md ${toast.type === 'success' ? 'bg-[hsl(var(--success))] text-[hsl(var(--success-foreground))]' :
+                                toast.type === 'error' ? 'bg-[hsl(var(--danger))] text-[hsl(var(--danger-foreground))]' :
+                                    toast.type === 'warning' ? 'bg-[hsl(var(--warning))] text-[hsl(var(--warning-foreground))]' :
+                                        'bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))]'
+                            }`} aria-hidden="true">
                             {toast.type === 'success' && <CheckCircle size={18} />}
                             {toast.type === 'error' && <AlertCircle size={18} />}
                             {toast.type === 'warning' && <AlertCircle size={18} />}
@@ -43,9 +45,15 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
                         </div>
                         <div className="flex-1">
                             <p className="text-sm font-bold leading-tight">{toast.message}</p>
+                            {toast.description && (
+                                <p className="text-xs text-[hsl(var(--text-secondary))] mt-0.5 leading-snug">
+                                    {toast.description}
+                                </p>
+                            )}
                         </div>
                         <button
                             onClick={() => removeToast(toast.id)}
+                            aria-label="Cerrar notificación"
                             className="p-1 hover:bg-black/5 rounded-lg transition-colors"
                         >
                             <X size={16} />

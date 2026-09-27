@@ -6,8 +6,8 @@ import {
     Radio, Share2, Globe, CheckCircle2, Clock,
     Zap, Trophy, Calendar, TrendingUp, AlertCircle,
     ArrowUpRight, BarChart3, Plus, Trash2,
-    Target, Sliders, Activity, AlertTriangle, AlertOctagon, Sparkles,
-    Wallet, TrendingDown, ShieldAlert, Users, Scale, BookTemplate, FileText,
+    Target, Sliders, Activity, AlertTriangle, AlertOctagon,
+    Wallet, TrendingDown, ShieldAlert, Users, BookTemplate, FileText,
 } from 'lucide-react';
 import clsx from 'clsx';
 import type { ProjectRecord, ProjectTaskRecord, ProjectMilestoneRecord, ProjectAnalytics, ProjectKPI, ProjectBudgetSummary, ProjectRiskSummary, ProjectWorkloadSummary, ProjectTimeTrackingSummary } from '@/types/projects';
@@ -749,12 +749,12 @@ export function ProjectMasterView({ project, tasks, onOpenTask }: ProjectMasterV
 
                 <div className="bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] rounded-xl p-4 shadow-xs space-y-4">
                     {/* Alerta semántica si hay miembros sobrecargados */}
-                    {(workloadSummary?.overloaded_count ?? 0) > 0 && (
+                    {(workloadSummary?.overloaded_members_count ?? 0) > 0 && (
                         <div className="p-3 rounded-lg bg-[hsl(var(--destructive))]/10 border border-[hsl(var(--destructive))]/30 flex items-center justify-between gap-3">
                             <div className="flex items-center gap-2">
                                 <AlertOctagon size={16} className="text-[hsl(var(--destructive))] shrink-0" />
                                 <span className="text-xs font-bold text-[hsl(var(--destructive))]">
-                                    Atención: {workloadSummary?.overloaded_count} miembro(s) con sobrecarga de trabajo. Rebalancea las tareas para evitar cuellos de botella.
+                                    Atención: {workloadSummary?.overloaded_members_count} miembro(s) con sobrecarga de trabajo. Rebalancea las tareas para evitar cuellos de botella.
                                 </span>
                             </div>
                             <button
@@ -779,7 +779,7 @@ export function ProjectMasterView({ project, tasks, onOpenTask }: ProjectMasterV
                         <div className="p-3 rounded-lg bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))]">
                             <span className="text-3xs font-bold uppercase tracking-wider text-[hsl(var(--destructive))]">Sobrecargados</span>
                             <div className="text-base md:text-lg font-black text-[hsl(var(--destructive))] mt-0.5">
-                                {workloadSummary?.overloaded_count ?? 0}
+                                {workloadSummary?.overloaded_members_count ?? 0}
                             </div>
                             <span className="text-3xs text-[hsl(var(--destructive))]/80 font-medium">≥ 5 tareas o vencidas</span>
                         </div>
@@ -787,7 +787,7 @@ export function ProjectMasterView({ project, tasks, onOpenTask }: ProjectMasterV
                         <div className="p-3 rounded-lg bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))]">
                             <span className="text-3xs font-bold uppercase tracking-wider text-[hsl(var(--primary))]">Balanceados</span>
                             <div className="text-base md:text-lg font-black text-[hsl(var(--primary))] mt-0.5">
-                                {workloadSummary?.balanced_count ?? 0}
+                                {workloadSummary?.balanced_members_count ?? 0}
                             </div>
                             <span className="text-3xs text-[hsl(var(--primary))]/80 font-medium">2-4 tareas activas</span>
                         </div>
@@ -795,7 +795,7 @@ export function ProjectMasterView({ project, tasks, onOpenTask }: ProjectMasterV
                         <div className="p-3 rounded-lg bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))]">
                             <span className="text-3xs font-bold uppercase tracking-wider text-[hsl(var(--success))]">Disponibles</span>
                             <div className="text-base md:text-lg font-black text-[hsl(var(--success))] mt-0.5">
-                                {workloadSummary?.available_count ?? 0}
+                                {workloadSummary?.available_members_count ?? 0}
                             </div>
                             <span className="text-3xs text-[hsl(var(--success))]/80 font-medium">Capacidad libre</span>
                         </div>
@@ -828,11 +828,11 @@ export function ProjectMasterView({ project, tasks, onOpenTask }: ProjectMasterV
                                             ? 'bg-[hsl(var(--primary))]'
                                             : 'bg-[hsl(var(--success))]';
                                     return (
-                                        <div key={m.member_id} className="p-2.5 rounded-lg bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] space-y-1.5">
+                                        <div key={m.persona_id ?? m.name} className="p-2.5 rounded-lg bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] space-y-1.5">
                                             <div className="flex items-center justify-between text-2xs">
                                                 <div className="flex items-center gap-1.5 min-w-0">
                                                     <span className="font-bold text-[hsl(var(--foreground))] truncate max-w-[140px]">
-                                                        {m.member_name}
+                                                        {m.name}
                                                     </span>
                                                     {m.overdue_tasks > 0 && (
                                                         <span className="px-1 py-0.2 rounded text-3xs font-black bg-[hsl(var(--destructive))]/20 text-[hsl(var(--destructive))]">
@@ -841,13 +841,13 @@ export function ProjectMasterView({ project, tasks, onOpenTask }: ProjectMasterV
                                                     )}
                                                 </div>
                                                 <span className={clsx("font-black tracking-tight", statusColor)}>
-                                                    {m.active_tasks} activas ({m.capacity_percent}%)
+                                                    {m.active_tasks} activas ({m.workload_percent}%)
                                                 </span>
                                             </div>
                                             <div className="h-1.5 w-full rounded-full bg-[hsl(var(--surface-1))] overflow-hidden">
                                                 <div
                                                     className={clsx("h-full rounded-full transition-all duration-500", barColor)}
-                                                    style={{ width: `${Math.min(100, Math.max(0, m.capacity_percent))}%` }}
+                                                    style={{ width: `${Math.min(100, Math.max(0, m.workload_percent))}%` }}
                                                 />
                                             </div>
                                         </div>

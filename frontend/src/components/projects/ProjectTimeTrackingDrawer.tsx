@@ -10,23 +10,7 @@ import type {
   ProjectTimeLogCreate,
   ProjectTimeTrackingSummary,
 } from "@/types/projects";
-import {
-  Clock,
-  Play,
-  Pause,
-  RotateCcw,
-  CheckCircle2,
-  Trash2,
-  Calendar,
-  User,
-  CheckSquare,
-  DollarSign,
-  PieChart,
-  ListFilter,
-  Layers,
-  Save,
-  Plus,
-} from "lucide-react";
+import { Clock, Play, Pause, RotateCcw, CheckCircle2, Trash2, CheckSquare, PieChart, ListFilter, Layers, Save, Plus } from "lucide-react";
 import clsx from "clsx";
 
 interface ProjectTimeTrackingDrawerProps {
@@ -46,7 +30,7 @@ export function ProjectTimeTrackingDrawer({
   tasks = [],
   onTimeLogged,
 }: ProjectTimeTrackingDrawerProps) {
-  const { token, user } = useAuth();
+  const { token } = useAuth();
   const { addToast } = useToast();
 
   const [activeTab, setActiveTab] = useState<ActiveTab>("stopwatch");

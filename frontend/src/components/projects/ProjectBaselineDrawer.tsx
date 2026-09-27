@@ -6,17 +6,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/context/ToastContext";
 import { apiFetch } from "@/lib/http";
 import type { ProjectBaseline } from "@/types/projects";
-import {
-  Layers,
-  Clock,
-  Plus,
-  Calendar,
-  AlertTriangle,
-  CheckCircle2,
-  TrendingDown,
-  History,
-  Sparkles,
-} from "lucide-react";
+import { Layers, Clock, Plus, History, Sparkles } from "lucide-react";
 import clsx from "clsx";
 
 interface Props {
