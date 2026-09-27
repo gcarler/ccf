@@ -16,7 +16,8 @@ import {
     UserCircle,
     FileText,
     GraduationCap,
-    ShieldCheck
+    ShieldCheck,
+    Sliders,
 } from 'lucide-react';
 
 // Fuente única de la sidebar Academy (ACAD-HIGH-004).
@@ -62,6 +63,7 @@ const ACADEMY_SIDEBAR_SECTIONS = [
             // El sidebar ya no los muestra a usuarios con sólo :read o :study.
             { id: 'teacher', label: 'Panel Docente', href: '/plataforma/academy/teacher', icon: GraduationCap, level: 'edit' as AcademyLevel },
             { id: 'coordination', label: 'Coordinación', href: '/plataforma/academy/coordination', icon: ShieldCheck, level: 'manage' as AcademyLevel },
+            { id: 'admin', label: 'Gestión Institucional', href: '/plataforma/academy/admin', icon: Sliders, level: 'manage' as AcademyLevel },
         ],
     },
 ];

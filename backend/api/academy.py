@@ -10,7 +10,7 @@ from __future__ import annotations
 import asyncio
 from datetime import date
 from html import escape as _html_escape
-from typing import Annotated, Any
+from typing import Annotated, Any, List, Optional
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, Request, UploadFile, status
@@ -34,6 +34,11 @@ from backend.core.uploads import sanitize_filename
 from backend.crud.crm import get_user_sede_id
 from backend.models_shared import _utcnow
 from backend.schemas import academy as schemas
+from backend.services.academic_engine_service import (
+    calculate_and_sync_offering_grades,
+    compute_student_transcript_summary,
+    validate_grading_scheme_cuts,
+)
 
 router = APIRouter(prefix="/academy", tags=["Academy"])
 
@@ -1784,3 +1789,707 @@ def update_assessment_admin(
     db.commit()
     db.refresh(assessment)
     return assessment
+
+
+# ════════════════════════════════════════════════════════════════════════════════
+# SUPER-PRO ACADEMIC SYSTEM: Programs, Study Plans, Credits & Grading Schemes
+# ════════════════════════════════════════════════════════════════════════════════
+
+
+# ── 1. Programas Formativos (Cursos Libres, Diplomados, Carreras, Maestrías) ───
+
+
+@router.get("/admin/programs", response_model=List[schemas.AcademyProgramRead])
+def list_programs_admin(
+    current_user: AcademyEditor,
+    db: Session = Depends(get_db),
+    program_type: Optional[str] = None,
+    is_active: Optional[bool] = None,
+):
+    query = db.query(models.AcademyProgram).filter(models.AcademyProgram.deleted_at.is_(None))
+    user_sede = get_user_sede_id(db, current_user.id)
+    if user_sede:
+        query = query.filter(or_(models.AcademyProgram.sede_id == user_sede, models.AcademyProgram.sede_id.is_(None)))
+    if program_type:
+        query = query.filter(models.AcademyProgram.program_type == program_type)
+    if is_active is not None:
+        query = query.filter(models.AcademyProgram.is_active == is_active)
+    
+    programs = query.order_by(models.AcademyProgram.name.asc()).all()
+    result = []
+    for prog in programs:
+        item = schemas.AcademyProgramRead.model_validate(prog)
+        item.study_plans_count = len([p for p in prog.study_plans if p.deleted_at is None])
+        result.append(item)
+    return result
+
+
+@router.post("/admin/programs", response_model=schemas.AcademyProgramRead, status_code=status.HTTP_201_CREATED)
+def create_program_admin(
+    payload: schemas.AcademyProgramCreate,
+    current_user: AcademyEditor,
+    db: Session = Depends(get_db),
+):
+    existing = db.query(models.AcademyProgram).filter(
+        models.AcademyProgram.code == payload.code.strip().upper(),
+        models.AcademyProgram.deleted_at.is_(None),
+    ).first()
+    if existing:
+        raise HTTPException(status_code=409, detail=f"Ya existe un programa con el código '{payload.code}'")
+
+    user_sede = get_user_sede_id(db, current_user.id)
+    data = payload.model_dump()
+    data["code"] = data["code"].strip().upper()
+    program = models.AcademyProgram(**data, sede_id=user_sede)
+    db.add(program)
+    db.commit()
+    db.refresh(program)
+    res = schemas.AcademyProgramRead.model_validate(program)
+    res.study_plans_count = 0
+    return res
+
+
+@router.get("/admin/programs/{program_id}", response_model=schemas.AcademyProgramRead)
+def get_program_admin(
+    program_id: UUID,
+    current_user: AcademyEditor,
+    db: Session = Depends(get_db),
+):
+    program = db.query(models.AcademyProgram).filter(
+        models.AcademyProgram.id == program_id,
+        models.AcademyProgram.deleted_at.is_(None),
+    ).first()
+    if not program:
+        raise HTTPException(status_code=404, detail="Programa no encontrado")
+    res = schemas.AcademyProgramRead.model_validate(program)
+    res.study_plans_count = len([p for p in program.study_plans if p.deleted_at is None])
+    return res
+
+
+@router.patch("/admin/programs/{program_id}", response_model=schemas.AcademyProgramRead)
+def update_program_admin(
+    program_id: UUID,
+    payload: schemas.AcademyProgramUpdate,
+    current_user: AcademyEditor,
+    db: Session = Depends(get_db),
+):
+    program = db.query(models.AcademyProgram).filter(
+        models.AcademyProgram.id == program_id,
+        models.AcademyProgram.deleted_at.is_(None),
+    ).first()
+    if not program:
+        raise HTTPException(status_code=404, detail="Programa no encontrado")
+    
+    for key, value in payload.model_dump(exclude_unset=True).items():
+        setattr(program, key, value)
+    program.updated_at = _utcnow()
+    db.commit()
+    db.refresh(program)
+    res = schemas.AcademyProgramRead.model_validate(program)
+    res.study_plans_count = len([p for p in program.study_plans if p.deleted_at is None])
+    return res
+
+
+@router.delete("/admin/programs/{program_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_program_admin(
+    program_id: UUID,
+    current_user: AcademyEditor,
+    db: Session = Depends(get_db),
+):
+    program = db.query(models.AcademyProgram).filter(
+        models.AcademyProgram.id == program_id,
+        models.AcademyProgram.deleted_at.is_(None),
+    ).first()
+    if not program:
+        raise HTTPException(status_code=404, detail="Programa no encontrado")
+    program.deleted_at = _utcnow()
+    db.commit()
+
+
+# ── 2. Períodos Académicos (Semestres / Ciclos) ───────────────────────────────
+
+
+@router.get("/admin/periods", response_model=List[schemas.AcademyAcademicPeriodRead])
+def list_academic_periods_admin(
+    current_user: AcademyEditor,
+    db: Session = Depends(get_db),
+    status_filter: Optional[str] = None,
+):
+    query = db.query(models.AcademyAcademicPeriod).filter(models.AcademyAcademicPeriod.deleted_at.is_(None))
+    user_sede = get_user_sede_id(db, current_user.id)
+    if user_sede:
+        query = query.filter(or_(models.AcademyAcademicPeriod.sede_id == user_sede, models.AcademyAcademicPeriod.sede_id.is_(None)))
+    if status_filter:
+        query = query.filter(models.AcademyAcademicPeriod.status == status_filter)
+    periods = query.order_by(models.AcademyAcademicPeriod.start_date.desc()).all()
+    result = []
+    for per in periods:
+        item = schemas.AcademyAcademicPeriodRead.model_validate(per)
+        item.offerings_count = len([o for o in per.offerings if o.deleted_at is None])
+        result.append(item)
+    return result
+
+
+@router.post("/admin/periods", response_model=schemas.AcademyAcademicPeriodRead, status_code=status.HTTP_201_CREATED)
+def create_academic_period_admin(
+    payload: schemas.AcademyAcademicPeriodCreate,
+    current_user: AcademyEditor,
+    db: Session = Depends(get_db),
+):
+    user_sede = get_user_sede_id(db, current_user.id)
+    data = payload.model_dump()
+    data["code"] = data["code"].strip().upper()
+    period = models.AcademyAcademicPeriod(**data, sede_id=user_sede)
+    db.add(period)
+    db.commit()
+    db.refresh(period)
+    res = schemas.AcademyAcademicPeriodRead.model_validate(period)
+    res.offerings_count = 0
+    return res
+
+
+@router.patch("/admin/periods/{period_id}", response_model=schemas.AcademyAcademicPeriodRead)
+def update_academic_period_admin(
+    period_id: UUID,
+    payload: schemas.AcademyAcademicPeriodUpdate,
+    current_user: AcademyEditor,
+    db: Session = Depends(get_db),
+):
+    period = db.query(models.AcademyAcademicPeriod).filter(
+        models.AcademyAcademicPeriod.id == period_id,
+        models.AcademyAcademicPeriod.deleted_at.is_(None),
+    ).first()
+    if not period:
+        raise HTTPException(status_code=404, detail="Período académico no encontrado")
+    
+    for key, value in payload.model_dump(exclude_unset=True).items():
+        setattr(period, key, value)
+    period.updated_at = _utcnow()
+    db.commit()
+    db.refresh(period)
+    res = schemas.AcademyAcademicPeriodRead.model_validate(period)
+    res.offerings_count = len([o for o in period.offerings if o.deleted_at is None])
+    return res
+
+
+@router.delete("/admin/periods/{period_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_academic_period_admin(
+    period_id: UUID,
+    current_user: AcademyEditor,
+    db: Session = Depends(get_db),
+):
+    period = db.query(models.AcademyAcademicPeriod).filter(
+        models.AcademyAcademicPeriod.id == period_id,
+        models.AcademyAcademicPeriod.deleted_at.is_(None),
+    ).first()
+    if not period:
+        raise HTTPException(status_code=404, detail="Período no encontrado")
+    period.deleted_at = _utcnow()
+    db.commit()
+
+
+# ── 3. Esquemas de Calificación y Cortes Porcentuales ──────────────────────────
+
+
+@router.get("/admin/grading-schemes", response_model=List[schemas.AcademyGradingSchemeRead])
+def list_grading_schemes_admin(
+    current_user: AcademyEditor,
+    db: Session = Depends(get_db),
+):
+    query = (
+        db.query(models.AcademyGradingScheme)
+        .options(joinedload(models.AcademyGradingScheme.cuts))
+        .filter(models.AcademyGradingScheme.deleted_at.is_(None))
+    )
+    user_sede = get_user_sede_id(db, current_user.id)
+    if user_sede:
+        query = query.filter(or_(models.AcademyGradingScheme.sede_id == user_sede, models.AcademyGradingScheme.sede_id.is_(None)))
+    schemes = query.order_by(models.AcademyGradingScheme.is_default.desc(), models.AcademyGradingScheme.name.asc()).all()
+    return schemes
+
+
+@router.post("/admin/grading-schemes", response_model=schemas.AcademyGradingSchemeRead, status_code=status.HTTP_201_CREATED)
+def create_grading_scheme_admin(
+    payload: schemas.AcademyGradingSchemeCreate,
+    current_user: AcademyEditor,
+    db: Session = Depends(get_db),
+):
+    cuts_dict = [c.model_dump() for c in payload.cuts]
+    is_valid, error_msg = validate_grading_scheme_cuts(cuts_dict)
+    if not is_valid:
+        raise HTTPException(status_code=422, detail=error_msg)
+
+    user_sede = get_user_sede_id(db, current_user.id)
+    scheme = models.AcademyGradingScheme(
+        name=payload.name,
+        description=payload.description,
+        scale_max=payload.scale_max,
+        passing_grade=payload.passing_grade,
+        is_default=payload.is_default,
+        is_active=payload.is_active,
+        sede_id=user_sede,
+    )
+    db.add(scheme)
+    db.flush()
+
+    for idx, cut_data in enumerate(payload.cuts, start=1):
+        cut = models.AcademyGradingSchemeCut(
+            scheme_id=scheme.id,
+            name=cut_data.name,
+            order_index=cut_data.order_index or idx,
+            weight_percent=cut_data.weight_percent,
+            description=cut_data.description,
+        )
+        db.add(cut)
+
+    db.commit()
+    db.refresh(scheme)
+    return scheme
+
+
+@router.patch("/admin/grading-schemes/{scheme_id}", response_model=schemas.AcademyGradingSchemeRead)
+def update_grading_scheme_admin(
+    scheme_id: UUID,
+    payload: schemas.AcademyGradingSchemeUpdate,
+    current_user: AcademyEditor,
+    db: Session = Depends(get_db),
+):
+    scheme = (
+        db.query(models.AcademyGradingScheme)
+        .options(joinedload(models.AcademyGradingScheme.cuts))
+        .filter(
+            models.AcademyGradingScheme.id == scheme_id,
+            models.AcademyGradingScheme.deleted_at.is_(None),
+        )
+        .first()
+    )
+    if not scheme:
+        raise HTTPException(status_code=404, detail="Esquema de calificación no encontrado")
+
+    update_data = payload.model_dump(exclude_unset=True)
+    cuts_data = update_data.pop("cuts", None)
+
+    if cuts_data is not None:
+        is_valid, error_msg = validate_grading_scheme_cuts(cuts_data)
+        if not is_valid:
+            raise HTTPException(status_code=422, detail=error_msg)
+
+        # Clear existing cuts and replace
+        db.query(models.AcademyGradingSchemeCut).filter(
+            models.AcademyGradingSchemeCut.scheme_id == scheme_id
+        ).delete()
+        for idx, cut_info in enumerate(cuts_data, start=1):
+            c = models.AcademyGradingSchemeCut(
+                scheme_id=scheme.id,
+                name=cut_info["name"],
+                order_index=cut_info.get("order_index") or idx,
+                weight_percent=cut_info["weight_percent"],
+                description=cut_info.get("description"),
+            )
+            db.add(c)
+
+    for key, value in update_data.items():
+        setattr(scheme, key, value)
+    scheme.updated_at = _utcnow()
+    db.commit()
+    db.refresh(scheme)
+    return scheme
+
+
+@router.delete("/admin/grading-schemes/{scheme_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_grading_scheme_admin(
+    scheme_id: UUID,
+    current_user: AcademyEditor,
+    db: Session = Depends(get_db),
+):
+    scheme = db.query(models.AcademyGradingScheme).filter(
+        models.AcademyGradingScheme.id == scheme_id,
+        models.AcademyGradingScheme.deleted_at.is_(None),
+    ).first()
+    if not scheme:
+        raise HTTPException(status_code=404, detail="Esquema no encontrado")
+    scheme.deleted_at = _utcnow()
+    db.commit()
+
+
+# ── 4. Planes de Estudio y Asignaturas con Créditos Educativos ────────────────
+
+
+@router.get("/admin/study-plans", response_model=List[schemas.AcademyStudyPlanRead])
+def list_study_plans_admin(
+    current_user: AcademyEditor,
+    db: Session = Depends(get_db),
+    program_id: Optional[UUID] = None,
+):
+    query = (
+        db.query(models.AcademyStudyPlan)
+        .options(
+            joinedload(models.AcademyStudyPlan.program),
+            joinedload(models.AcademyStudyPlan.subjects),
+        )
+        .filter(models.AcademyStudyPlan.deleted_at.is_(None))
+    )
+    user_sede = get_user_sede_id(db, current_user.id)
+    if user_sede:
+        query = query.filter(or_(models.AcademyStudyPlan.sede_id == user_sede, models.AcademyStudyPlan.sede_id.is_(None)))
+    if program_id:
+        query = query.filter(models.AcademyStudyPlan.program_id == program_id)
+    plans = query.order_by(models.AcademyStudyPlan.name.asc()).all()
+    result = []
+    for p in plans:
+        item = schemas.AcademyStudyPlanRead.model_validate(p)
+        item.program_name = p.program.name if p.program else None
+        item.subjects = [schemas.AcademyStudyPlanSubjectRead.model_validate(s) for s in p.subjects if s.deleted_at is None]
+        result.append(item)
+    return result
+
+
+@router.post("/admin/study-plans", response_model=schemas.AcademyStudyPlanRead, status_code=status.HTTP_201_CREATED)
+def create_study_plan_admin(
+    payload: schemas.AcademyStudyPlanCreate,
+    current_user: AcademyEditor,
+    db: Session = Depends(get_db),
+):
+    user_sede = get_user_sede_id(db, current_user.id)
+    plan = models.AcademyStudyPlan(**payload.model_dump(), sede_id=user_sede)
+    db.add(plan)
+    db.commit()
+    db.refresh(plan)
+    res = schemas.AcademyStudyPlanRead.model_validate(plan)
+    res.subjects = []
+    return res
+
+
+@router.get("/admin/study-plans/{plan_id}", response_model=schemas.AcademyStudyPlanRead)
+def get_study_plan_admin(
+    plan_id: UUID,
+    current_user: AcademyEditor,
+    db: Session = Depends(get_db),
+):
+    plan = (
+        db.query(models.AcademyStudyPlan)
+        .options(
+            joinedload(models.AcademyStudyPlan.program),
+            joinedload(models.AcademyStudyPlan.subjects),
+        )
+        .filter(
+            models.AcademyStudyPlan.id == plan_id,
+            models.AcademyStudyPlan.deleted_at.is_(None),
+        )
+        .first()
+    )
+    if not plan:
+        raise HTTPException(status_code=404, detail="Plan de estudio no encontrado")
+    res = schemas.AcademyStudyPlanRead.model_validate(plan)
+    res.program_name = plan.program.name if plan.program else None
+    res.subjects = [schemas.AcademyStudyPlanSubjectRead.model_validate(s) for s in plan.subjects if s.deleted_at is None]
+    return res
+
+
+@router.post("/admin/study-plans/{plan_id}/subjects", response_model=schemas.AcademyStudyPlanSubjectRead, status_code=status.HTTP_201_CREATED)
+def add_subject_to_study_plan_admin(
+    plan_id: UUID,
+    payload: schemas.AcademyStudyPlanSubjectCreate,
+    current_user: AcademyEditor,
+    db: Session = Depends(get_db),
+):
+    plan = db.query(models.AcademyStudyPlan).filter(
+        models.AcademyStudyPlan.id == plan_id,
+        models.AcademyStudyPlan.deleted_at.is_(None),
+    ).first()
+    if not plan:
+        raise HTTPException(status_code=404, detail="Plan de estudio no encontrado")
+
+    data = payload.model_dump()
+    data["code"] = data["code"].strip().upper()
+    subject = models.AcademyStudyPlanSubject(study_plan_id=plan_id, **data)
+    db.add(subject)
+
+    # Recalculate plan total credits
+    current_subjects = db.query(models.AcademyStudyPlanSubject).filter(
+        models.AcademyStudyPlanSubject.study_plan_id == plan_id,
+        models.AcademyStudyPlanSubject.deleted_at.is_(None),
+    ).all()
+    plan.total_credits = sum(s.credits for s in current_subjects) + payload.credits
+
+    db.commit()
+    db.refresh(subject)
+    return subject
+
+
+@router.patch("/admin/subjects/{subject_id}", response_model=schemas.AcademyStudyPlanSubjectRead)
+def update_subject_admin(
+    subject_id: UUID,
+    payload: schemas.AcademyStudyPlanSubjectUpdate,
+    current_user: AcademyEditor,
+    db: Session = Depends(get_db),
+):
+    subject = db.query(models.AcademyStudyPlanSubject).filter(
+        models.AcademyStudyPlanSubject.id == subject_id,
+        models.AcademyStudyPlanSubject.deleted_at.is_(None),
+    ).first()
+    if not subject:
+        raise HTTPException(status_code=404, detail="Asignatura no encontrada")
+
+    for key, value in payload.model_dump(exclude_unset=True).items():
+        setattr(subject, key, value)
+    subject.updated_at = _utcnow()
+
+    # Recalculate plan total credits
+    plan = db.query(models.AcademyStudyPlan).filter(models.AcademyStudyPlan.id == subject.study_plan_id).first()
+    if plan:
+        active_subjects = db.query(models.AcademyStudyPlanSubject).filter(
+            models.AcademyStudyPlanSubject.study_plan_id == plan.id,
+            models.AcademyStudyPlanSubject.deleted_at.is_(None),
+        ).all()
+        plan.total_credits = sum(s.credits for s in active_subjects)
+
+    db.commit()
+    db.refresh(subject)
+    return subject
+
+
+@router.delete("/admin/subjects/{subject_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_subject_admin(
+    subject_id: UUID,
+    current_user: AcademyEditor,
+    db: Session = Depends(get_db),
+):
+    subject = db.query(models.AcademyStudyPlanSubject).filter(
+        models.AcademyStudyPlanSubject.id == subject_id,
+        models.AcademyStudyPlanSubject.deleted_at.is_(None),
+    ).first()
+    if not subject:
+        raise HTTPException(status_code=404, detail="Asignatura no encontrada")
+    subject.deleted_at = _utcnow()
+
+    plan = db.query(models.AcademyStudyPlan).filter(models.AcademyStudyPlan.id == subject.study_plan_id).first()
+    if plan:
+        active_subjects = db.query(models.AcademyStudyPlanSubject).filter(
+            models.AcademyStudyPlanSubject.study_plan_id == plan.id,
+            models.AcademyStudyPlanSubject.deleted_at.is_(None),
+            models.AcademyStudyPlanSubject.id != subject_id,
+        ).all()
+        plan.total_credits = sum(s.credits for s in active_subjects)
+
+    db.commit()
+
+
+# ── 5. Oferta Académica / Comisiones Docentes y Registro de Notas ─────────────
+
+
+@router.get("/admin/offerings", response_model=List[schemas.AcademyPeriodOfferingRead])
+def list_period_offerings_admin(
+    current_user: AcademyEditor,
+    db: Session = Depends(get_db),
+    period_id: Optional[UUID] = None,
+    docente_id: Optional[UUID] = None,
+):
+    query = (
+        db.query(models.AcademyPeriodOffering)
+        .options(
+            joinedload(models.AcademyPeriodOffering.subject),
+            joinedload(models.AcademyPeriodOffering.academic_period),
+            joinedload(models.AcademyPeriodOffering.docente_persona),
+            joinedload(models.AcademyPeriodOffering.grading_scheme),
+            joinedload(models.AcademyPeriodOffering.records),
+        )
+        .filter(models.AcademyPeriodOffering.deleted_at.is_(None))
+    )
+    user_sede = get_user_sede_id(db, current_user.id)
+    if user_sede:
+        query = query.filter(or_(models.AcademyPeriodOffering.sede_id == user_sede, models.AcademyPeriodOffering.sede_id.is_(None)))
+    if period_id:
+        query = query.filter(models.AcademyPeriodOffering.academic_period_id == period_id)
+    if docente_id:
+        query = query.filter(models.AcademyPeriodOffering.docente_persona_id == docente_id)
+
+    offerings = query.order_by(models.AcademyPeriodOffering.created_at.desc()).all()
+    result = []
+    for off in offerings:
+        item = schemas.AcademyPeriodOfferingRead.model_validate(off)
+        item.subject_name = off.subject.name if off.subject else None
+        item.subject_code = off.subject.code if off.subject else None
+        item.credits = off.subject.credits if off.subject else 0
+        item.period_code = off.academic_period.code if off.academic_period else None
+        item.docente_name = _persona_display_name(off.docente_persona) if off.docente_persona else "Sin asignar"
+        item.grading_scheme_name = off.grading_scheme.name if off.grading_scheme else None
+        item.enrolled_count = len(off.records)
+        result.append(item)
+    return result
+
+
+@router.post("/admin/offerings", response_model=schemas.AcademyPeriodOfferingRead, status_code=status.HTTP_201_CREATED)
+def create_period_offering_admin(
+    payload: schemas.AcademyPeriodOfferingCreate,
+    current_user: AcademyEditor,
+    db: Session = Depends(get_db),
+):
+    user_sede = get_user_sede_id(db, current_user.id)
+    offering = models.AcademyPeriodOffering(**payload.model_dump(), sede_id=user_sede)
+    db.add(offering)
+    db.commit()
+    db.refresh(offering)
+    
+    # Reload with relations
+    off = (
+        db.query(models.AcademyPeriodOffering)
+        .options(
+            joinedload(models.AcademyPeriodOffering.subject),
+            joinedload(models.AcademyPeriodOffering.academic_period),
+            joinedload(models.AcademyPeriodOffering.docente_persona),
+            joinedload(models.AcademyPeriodOffering.grading_scheme),
+        )
+        .filter(models.AcademyPeriodOffering.id == offering.id)
+        .first()
+    )
+    res = schemas.AcademyPeriodOfferingRead.model_validate(off)
+    res.subject_name = off.subject.name if off.subject else None
+    res.subject_code = off.subject.code if off.subject else None
+    res.credits = off.subject.credits if off.subject else 0
+    res.period_code = off.academic_period.code if off.academic_period else None
+    res.docente_name = _persona_display_name(off.docente_persona) if off.docente_persona else "Sin asignar"
+    res.grading_scheme_name = off.grading_scheme.name if off.grading_scheme else None
+    res.enrolled_count = 0
+    return res
+
+
+@router.post("/admin/offerings/{offering_id}/grades", status_code=status.HTTP_200_OK)
+def submit_batch_grades_admin(
+    offering_id: UUID,
+    payload: schemas.AcademyBatchGradeSubmit,
+    current_user: AcademyEditor,
+    db: Session = Depends(get_db),
+):
+    offering = (
+        db.query(models.AcademyPeriodOffering)
+        .filter(
+            models.AcademyPeriodOffering.id == offering_id,
+            models.AcademyPeriodOffering.deleted_at.is_(None),
+        )
+        .first()
+    )
+    if not offering:
+        raise HTTPException(status_code=404, detail="Oferta académica no encontrada")
+
+    affected_personas = set()
+    now_utc = _utcnow()
+
+    for item in payload.grades:
+        affected_personas.add(item.persona_id)
+        existing_grade = (
+            db.query(models.AcademyStudentPeriodGrade)
+            .filter(
+                models.AcademyStudentPeriodGrade.offering_id == offering_id,
+                models.AcademyStudentPeriodGrade.persona_id == item.persona_id,
+                models.AcademyStudentPeriodGrade.cut_id == item.cut_id,
+            )
+            .first()
+        )
+        if existing_grade:
+            existing_grade.grade_value = item.grade_value
+            existing_grade.comments = item.comments
+            existing_grade.graded_by_persona_id = current_user.id
+            existing_grade.graded_at = now_utc
+            existing_grade.updated_at = now_utc
+        else:
+            new_grade = models.AcademyStudentPeriodGrade(
+                offering_id=offering_id,
+                persona_id=item.persona_id,
+                cut_id=item.cut_id,
+                grade_value=item.grade_value,
+                comments=item.comments,
+                graded_by_persona_id=current_user.id,
+                graded_at=now_utc,
+            )
+            db.add(new_grade)
+
+    db.flush()
+
+    # Recalculate weighted final grades for each affected student
+    updated_records = []
+    for pid in affected_personas:
+        rec = calculate_and_sync_offering_grades(db, offering_id, pid, actor_persona_id=current_user.id)
+        updated_records.append(rec)
+
+    db.commit()
+    return {
+        "status": "success",
+        "message": f"Se procesaron las calificaciones de {len(payload.grades)} registros para {len(affected_personas)} estudiantes.",
+        "students_updated": len(affected_personas),
+    }
+
+
+@router.get("/admin/offerings/{offering_id}/grades")
+def get_offering_grades_and_records_admin(
+    offering_id: UUID,
+    current_user: AcademyEditor,
+    db: Session = Depends(get_db),
+):
+    offering = (
+        db.query(models.AcademyPeriodOffering)
+        .options(
+            joinedload(models.AcademyPeriodOffering.grading_scheme).joinedload(models.AcademyGradingScheme.cuts),
+            joinedload(models.AcademyPeriodOffering.subject),
+            joinedload(models.AcademyPeriodOffering.academic_period),
+            joinedload(models.AcademyPeriodOffering.records).joinedload(models.AcademyStudentSubjectRecord.persona),
+            joinedload(models.AcademyPeriodOffering.grades),
+        )
+        .filter(
+            models.AcademyPeriodOffering.id == offering_id,
+            models.AcademyPeriodOffering.deleted_at.is_(None),
+        )
+        .first()
+    )
+    if not offering:
+        raise HTTPException(status_code=404, detail="Oferta académica no encontrada")
+
+    cuts_summary = [
+        {
+            "id": c.id,
+            "name": c.name,
+            "order_index": c.order_index,
+            "weight_percent": c.weight_percent,
+        }
+        for c in (offering.grading_scheme.cuts if offering.grading_scheme else [])
+    ]
+
+    records_summary = []
+    for r in offering.records:
+        records_summary.append({
+            "id": r.id,
+            "persona_id": r.persona_id,
+            "student_name": _persona_display_name(r.persona),
+            "credits_attempted": r.credits_attempted,
+            "credits_earned": r.credits_earned,
+            "calculated_final_grade": r.calculated_final_grade,
+            "passed": r.passed,
+            "status": r.status,
+            "grades_by_cut": {
+                str(g.cut_id): g.grade_value
+                for g in offering.grades
+                if g.persona_id == r.persona_id
+            },
+        })
+
+    return {
+        "offering_id": offering.id,
+        "subject_name": offering.subject.name if offering.subject else "",
+        "subject_code": offering.subject.code if offering.subject else "",
+        "credits": offering.subject.credits if offering.subject else 0,
+        "period_code": offering.academic_period.code if offering.academic_period else "",
+        "cuts": cuts_summary,
+        "records": records_summary,
+    }
+
+
+# ── 6. Historial Académico Consolidado y Promedio Ponderado por Créditos ───────
+
+
+@router.get("/admin/students/{persona_id}/academic-record", response_model=schemas.AcademicTranscriptSummary)
+def get_student_academic_record_admin(
+    persona_id: UUID,
+    current_user: AcademyReader,
+    db: Session = Depends(get_db),
+):
+    return compute_student_transcript_summary(db, persona_id)

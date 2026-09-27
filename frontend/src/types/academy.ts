@@ -177,3 +177,176 @@ export interface CertificateDetail {
   certificate_type?: string | null;
   course_title?: string | null;
 }
+
+// ── Super-PRO Academic ERP Types ──────────────────────────────────────────────
+
+export type ProgramType =
+  | 'curso_libre'
+  | 'diplomado'
+  | 'carrera'
+  | 'especializacion'
+  | 'maestria'
+  | 'doctorado'
+  | 'taller'
+  | 'certificacion'
+  | 'otro';
+
+export interface AcademicProgram {
+  id: string;
+  sede_id?: string | null;
+  code: string;
+  name: string;
+  description?: string | null;
+  program_type: ProgramType | string;
+  level_name?: string | null;
+  total_duration_type: string;
+  total_duration_units: number;
+  total_credits: number;
+  modality: string;
+  has_teachers: boolean;
+  teachers_can_grade: boolean;
+  min_passing_grade: number;
+  grading_scale_max: number;
+  min_attendance_percent: number;
+  is_active: boolean;
+  study_plans_count?: number;
+  created_at?: string | null;
+}
+
+export interface AcademicPeriod {
+  id: string;
+  sede_id?: string | null;
+  code: string;
+  name: string;
+  period_type: string;
+  start_date: string;
+  end_date: string;
+  enrollment_start_date?: string | null;
+  enrollment_end_date?: string | null;
+  grading_deadline?: string | null;
+  status: 'draft' | 'open' | 'in_progress' | 'grading' | 'closed' | string;
+  is_active: boolean;
+  offerings_count?: number;
+  created_at?: string | null;
+}
+
+export interface GradingSchemeCut {
+  id?: string;
+  scheme_id?: string;
+  name: string;
+  order_index: number;
+  weight_percent: number;
+  description?: string | null;
+}
+
+export interface GradingScheme {
+  id: string;
+  sede_id?: string | null;
+  name: string;
+  description?: string | null;
+  scale_max: number;
+  passing_grade: number;
+  is_default: boolean;
+  is_active: boolean;
+  cuts: GradingSchemeCut[];
+  created_at?: string | null;
+}
+
+export interface StudyPlanSubject {
+  id: string;
+  study_plan_id: string;
+  course_id?: string | null;
+  code: string;
+  name: string;
+  level_number: number;
+  credits: number;
+  weekly_hours_theory: number;
+  weekly_hours_practice: number;
+  weekly_hours_independent: number;
+  is_mandatory: boolean;
+  default_grading_scheme_id?: string | null;
+  order_index: number;
+  prerequisite_codes?: string[] | null;
+  created_at?: string | null;
+}
+
+export interface StudyPlan {
+  id: string;
+  program_id: string;
+  sede_id?: string | null;
+  code: string;
+  name: string;
+  total_credits: number;
+  total_levels: number;
+  level_type: string;
+  is_active: boolean;
+  program_name?: string | null;
+  subjects: StudyPlanSubject[];
+  created_at?: string | null;
+}
+
+export interface PeriodOffering {
+  id: string;
+  sede_id?: string | null;
+  academic_period_id: string;
+  subject_id: string;
+  course_id?: string | null;
+  docente_persona_id?: string | null;
+  grading_scheme_id: string;
+  group_name: string;
+  quota_max: number;
+  status: string;
+  classroom?: string | null;
+  schedule_summary?: string | null;
+  subject_name?: string | null;
+  subject_code?: string | null;
+  credits: number;
+  docente_name?: string | null;
+  period_code?: string | null;
+  grading_scheme_name?: string | null;
+  enrolled_count: number;
+  created_at?: string | null;
+}
+
+export interface StudentSubjectRecord {
+  id: string;
+  offering_id: string;
+  persona_id: string;
+  student_name: string;
+  credits_attempted: number;
+  credits_earned: number;
+  calculated_final_grade?: number | null;
+  final_grade_override?: number | null;
+  passed: boolean;
+  status: string;
+  grades_by_cut?: Record<string, number | null>;
+}
+
+export interface OfferingGradesDetail {
+  offering_id: string;
+  subject_name: string;
+  subject_code: string;
+  credits: number;
+  period_code: string;
+  cuts: GradingSchemeCut[];
+  records: StudentSubjectRecord[];
+}
+
+export interface AcademicTranscriptSubject {
+  subject_code: string;
+  subject_name: string;
+  credits: number;
+  period_code: string;
+  final_grade: number;
+  passed: boolean;
+  status: string;
+}
+
+export interface AcademicTranscriptSummary {
+  persona_id: string;
+  student_name: string;
+  total_credits_attempted: number;
+  total_credits_earned: number;
+  weighted_gpa: number;
+  subjects: AcademicTranscriptSubject[];
+}

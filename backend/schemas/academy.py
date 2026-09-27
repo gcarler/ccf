@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 from enum import Enum
 from typing import Any, Dict, List, Literal, Optional
 from uuid import UUID
@@ -768,3 +768,331 @@ class MyProfileResponse(BaseModel):
     certificates_count: int
     active_courses: list[EnrollmentResponse] = []
     recent_certificates: list[Certificate] = []
+
+
+# ── Super-PRO Academy: Programs, Credits, Study Plans & Grading Schemes ──────────
+
+
+class AcademyProgramBase(BaseModel):
+    code: str = Field(min_length=2, max_length=50)
+    name: str = Field(min_length=2, max_length=200)
+    description: Optional[str] = None
+    program_type: str = Field(default="diplomado", max_length=50)
+    level_name: Optional[str] = Field(default=None, max_length=100)
+    total_duration_type: str = Field(default="semestres", max_length=50)
+    total_duration_units: int = Field(default=2, ge=1)
+    total_credits: int = Field(default=0, ge=0)
+    modality: str = Field(default="presencial", max_length=50)
+    has_teachers: bool = True
+    teachers_can_grade: bool = True
+    min_passing_grade: float = Field(default=70.0, ge=0.0)
+    grading_scale_max: float = Field(default=100.0, gt=0.0)
+    min_attendance_percent: float = Field(default=80.0, ge=0.0, le=100.0)
+    is_active: bool = True
+
+
+class AcademyProgramCreate(AcademyProgramBase):
+    model_config = ConfigDict(extra="forbid")
+
+
+class AcademyProgramUpdate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    name: Optional[str] = Field(default=None, min_length=2, max_length=200)
+    description: Optional[str] = None
+    program_type: Optional[str] = Field(default=None, max_length=50)
+    level_name: Optional[str] = Field(default=None, max_length=100)
+    total_duration_type: Optional[str] = Field(default=None, max_length=50)
+    total_duration_units: Optional[int] = Field(default=None, ge=1)
+    total_credits: Optional[int] = Field(default=None, ge=0)
+    modality: Optional[str] = Field(default=None, max_length=50)
+    has_teachers: Optional[bool] = None
+    teachers_can_grade: Optional[bool] = None
+    min_passing_grade: Optional[float] = Field(default=None, ge=0.0)
+    grading_scale_max: Optional[float] = Field(default=None, gt=0.0)
+    min_attendance_percent: Optional[float] = Field(default=None, ge=0.0, le=100.0)
+    is_active: Optional[bool] = None
+
+
+class AcademyProgramRead(AcademyProgramBase):
+    id: UUID
+    sede_id: Optional[UUID] = None
+    created_at: Optional[datetime] = None
+    study_plans_count: int = 0
+    model_config = orm_config
+
+
+class AcademyAcademicPeriodBase(BaseModel):
+    code: str = Field(min_length=2, max_length=50)
+    name: str = Field(min_length=2, max_length=100)
+    period_type: str = Field(default="semestral", max_length=50)
+    start_date: date
+    end_date: date
+    enrollment_start_date: Optional[date] = None
+    enrollment_end_date: Optional[date] = None
+    grading_deadline: Optional[date] = None
+    status: str = Field(default="open", max_length=50)
+    is_active: bool = True
+
+
+class AcademyAcademicPeriodCreate(AcademyAcademicPeriodBase):
+    model_config = ConfigDict(extra="forbid")
+
+
+class AcademyAcademicPeriodUpdate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    code: Optional[str] = Field(default=None, min_length=2, max_length=50)
+    name: Optional[str] = Field(default=None, min_length=2, max_length=100)
+    period_type: Optional[str] = Field(default=None, max_length=50)
+    start_date: Optional[date] = None
+    end_date: Optional[date] = None
+    enrollment_start_date: Optional[date] = None
+    enrollment_end_date: Optional[date] = None
+    grading_deadline: Optional[date] = None
+    status: Optional[str] = Field(default=None, max_length=50)
+    is_active: Optional[bool] = None
+
+
+class AcademyAcademicPeriodRead(AcademyAcademicPeriodBase):
+    id: UUID
+    sede_id: Optional[UUID] = None
+    created_at: Optional[datetime] = None
+    offerings_count: int = 0
+    model_config = orm_config
+
+
+class AcademyGradingSchemeCutBase(BaseModel):
+    name: str = Field(min_length=1, max_length=100)
+    order_index: int = Field(default=1, ge=1)
+    weight_percent: float = Field(default=30.0, ge=0.0, le=100.0)
+    description: Optional[str] = None
+
+
+class AcademyGradingSchemeCutCreate(AcademyGradingSchemeCutBase):
+    model_config = ConfigDict(extra="forbid")
+
+
+class AcademyGradingSchemeCutRead(AcademyGradingSchemeCutBase):
+    id: UUID
+    scheme_id: UUID
+    model_config = orm_config
+
+
+class AcademyGradingSchemeBase(BaseModel):
+    name: str = Field(min_length=2, max_length=100)
+    description: Optional[str] = None
+    scale_max: float = Field(default=100.0, gt=0.0)
+    passing_grade: float = Field(default=70.0, ge=0.0)
+    is_default: bool = False
+    is_active: bool = True
+
+
+class AcademyGradingSchemeCreate(AcademyGradingSchemeBase):
+    cuts: List[AcademyGradingSchemeCutCreate] = Field(default_factory=list)
+    model_config = ConfigDict(extra="forbid")
+
+
+class AcademyGradingSchemeUpdate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    name: Optional[str] = Field(default=None, min_length=2, max_length=100)
+    description: Optional[str] = None
+    scale_max: Optional[float] = Field(default=None, gt=0.0)
+    passing_grade: Optional[float] = Field(default=None, ge=0.0)
+    is_default: Optional[bool] = None
+    is_active: Optional[bool] = None
+    cuts: Optional[List[AcademyGradingSchemeCutCreate]] = None
+
+
+class AcademyGradingSchemeRead(AcademyGradingSchemeBase):
+    id: UUID
+    sede_id: Optional[UUID] = None
+    cuts: List[AcademyGradingSchemeCutRead] = Field(default_factory=list)
+    created_at: Optional[datetime] = None
+    model_config = orm_config
+
+
+class AcademyStudyPlanSubjectBase(BaseModel):
+    code: str = Field(min_length=1, max_length=50)
+    name: str = Field(min_length=1, max_length=200)
+    level_number: int = Field(default=1, ge=1)
+    credits: int = Field(default=3, ge=0)
+    weekly_hours_theory: int = Field(default=2, ge=0)
+    weekly_hours_practice: int = Field(default=2, ge=0)
+    weekly_hours_independent: int = Field(default=4, ge=0)
+    is_mandatory: bool = True
+    course_id: Optional[UUID] = None
+    default_grading_scheme_id: Optional[UUID] = None
+    order_index: int = 0
+    prerequisite_codes: Optional[List[str]] = None
+
+
+class AcademyStudyPlanSubjectCreate(AcademyStudyPlanSubjectBase):
+    model_config = ConfigDict(extra="forbid")
+
+
+class AcademyStudyPlanSubjectUpdate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    code: Optional[str] = Field(default=None, min_length=1, max_length=50)
+    name: Optional[str] = Field(default=None, min_length=1, max_length=200)
+    level_number: Optional[int] = Field(default=None, ge=1)
+    credits: Optional[int] = Field(default=None, ge=0)
+    weekly_hours_theory: Optional[int] = Field(default=None, ge=0)
+    weekly_hours_practice: Optional[int] = Field(default=None, ge=0)
+    weekly_hours_independent: Optional[int] = Field(default=None, ge=0)
+    is_mandatory: Optional[bool] = None
+    course_id: Optional[UUID] = None
+    default_grading_scheme_id: Optional[UUID] = None
+    order_index: Optional[int] = None
+    prerequisite_codes: Optional[List[str]] = None
+
+
+class AcademyStudyPlanSubjectRead(AcademyStudyPlanSubjectBase):
+    id: UUID
+    study_plan_id: UUID
+    created_at: Optional[datetime] = None
+    model_config = orm_config
+
+
+class AcademyStudyPlanBase(BaseModel):
+    program_id: UUID
+    code: str = Field(min_length=2, max_length=50)
+    name: str = Field(min_length=2, max_length=150)
+    total_credits: int = Field(default=0, ge=0)
+    total_levels: int = Field(default=1, ge=1)
+    level_type: str = Field(default="semestre", max_length=50)
+    is_active: bool = True
+
+
+class AcademyStudyPlanCreate(AcademyStudyPlanBase):
+    model_config = ConfigDict(extra="forbid")
+
+
+class AcademyStudyPlanUpdate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    code: Optional[str] = Field(default=None, min_length=2, max_length=50)
+    name: Optional[str] = Field(default=None, min_length=2, max_length=150)
+    total_credits: Optional[int] = Field(default=None, ge=0)
+    total_levels: Optional[int] = Field(default=None, ge=1)
+    level_type: Optional[str] = Field(default=None, max_length=50)
+    is_active: Optional[bool] = None
+
+
+class AcademyStudyPlanRead(AcademyStudyPlanBase):
+    id: UUID
+    sede_id: Optional[UUID] = None
+    subjects: List[AcademyStudyPlanSubjectRead] = Field(default_factory=list)
+    program_name: Optional[str] = None
+    created_at: Optional[datetime] = None
+    model_config = orm_config
+
+
+class AcademyPeriodOfferingBase(BaseModel):
+    academic_period_id: UUID
+    subject_id: UUID
+    course_id: Optional[UUID] = None
+    docente_persona_id: Optional[UUID] = None
+    grading_scheme_id: UUID
+    group_name: str = Field(default="Grupo 01", max_length=50)
+    quota_max: int = Field(default=40, ge=1)
+    status: str = Field(default="open", max_length=50)
+    classroom: Optional[str] = Field(default=None, max_length=100)
+    schedule_summary: Optional[str] = Field(default=None, max_length=200)
+
+
+class AcademyPeriodOfferingCreate(AcademyPeriodOfferingBase):
+    model_config = ConfigDict(extra="forbid")
+
+
+class AcademyPeriodOfferingUpdate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    docente_persona_id: Optional[UUID] = None
+    grading_scheme_id: Optional[UUID] = None
+    group_name: Optional[str] = Field(default=None, max_length=50)
+    quota_max: Optional[int] = Field(default=None, ge=1)
+    status: Optional[str] = Field(default=None, max_length=50)
+    classroom: Optional[str] = Field(default=None, max_length=100)
+    schedule_summary: Optional[str] = Field(default=None, max_length=200)
+
+
+class AcademyPeriodOfferingRead(AcademyPeriodOfferingBase):
+    id: UUID
+    sede_id: Optional[UUID] = None
+    subject_name: Optional[str] = None
+    subject_code: Optional[str] = None
+    credits: int = 0
+    docente_name: Optional[str] = None
+    period_code: Optional[str] = None
+    grading_scheme_name: Optional[str] = None
+    enrolled_count: int = 0
+    created_at: Optional[datetime] = None
+    model_config = orm_config
+
+
+class AcademyStudentPeriodGradeItem(BaseModel):
+    persona_id: UUID
+    cut_id: UUID
+    grade_value: Optional[float] = Field(default=None, ge=0.0)
+    comments: Optional[str] = None
+
+
+class AcademyBatchGradeSubmit(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    offering_id: UUID
+    grades: List[AcademyStudentPeriodGradeItem]
+
+
+class AcademyStudentPeriodGradeRead(BaseModel):
+    id: UUID
+    offering_id: UUID
+    persona_id: UUID
+    student_name: Optional[str] = None
+    cut_id: UUID
+    cut_name: Optional[str] = None
+    cut_weight: float = 0.0
+    grade_value: Optional[float] = None
+    comments: Optional[str] = None
+    graded_by_persona_id: Optional[UUID] = None
+    graded_at: Optional[datetime] = None
+    model_config = orm_config
+
+
+class AcademyStudentSubjectRecordRead(BaseModel):
+    id: UUID
+    offering_id: UUID
+    persona_id: UUID
+    student_name: Optional[str] = None
+    subject_name: Optional[str] = None
+    subject_code: Optional[str] = None
+    credits_attempted: int = 0
+    credits_earned: int = 0
+    calculated_final_grade: Optional[float] = None
+    final_grade_override: Optional[float] = None
+    passed: bool = False
+    attendance_percent: float = 0.0
+    status: str = "enrolled"
+    acta_number: Optional[str] = None
+    model_config = orm_config
+
+
+class AcademicTranscriptSubject(BaseModel):
+    subject_code: str
+    subject_name: str
+    credits: int
+    period_code: str
+    final_grade: float
+    passed: bool
+    status: str
+
+
+class AcademicTranscriptSummary(BaseModel):
+    persona_id: UUID
+    student_name: str
+    total_credits_attempted: int
+    total_credits_earned: int
+    weighted_gpa: float  # Promedio Ponderado Acumulado por Créditos
+    subjects: List[AcademicTranscriptSubject] = Field(default_factory=list)

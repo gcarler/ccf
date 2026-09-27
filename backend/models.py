@@ -5,7 +5,16 @@
 # CMS
 # Academy — single canonical model tree
 from backend.models_academy_core import (
+    AcademyAcademicPeriod,
     AcademyActivityLog,
+    AcademyGradingScheme,
+    AcademyGradingSchemeCut,
+    AcademyPeriodOffering,
+    AcademyProgram,
+    AcademyStudentPeriodGrade,
+    AcademyStudentSubjectRecord,
+    AcademyStudyPlan,
+    AcademyStudyPlanSubject,
     Assessment,
     AssessmentAnswer,
     AssessmentAttempt,
