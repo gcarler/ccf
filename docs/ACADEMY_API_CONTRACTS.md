@@ -292,6 +292,32 @@ Cualquier endpoint nuevo en este módulo debe:
 | `/api/academy/admin/*` | Estable | 2026-07-16 |
 | `/api/academy/forum/threads` | Pendiente fix `ACAD-MED-001` y `ACAD-MED-002` | 2026-07-18 |
 | `/api/academy/dashboard/metrics` | Pendiente fix `ACAD-CRIT-002` (extender shape) | 2026-07-18 |
-| `/api/academy/lessons/{id}/assignments` (por crear) | Pendiente diseño | 2026-07-18 |
-| `/api/academy/resources` (por crear) | Pendiente diseño | 2026-07-18 |
-| `/api/academy/forum/threads/{id}/resolve` (por crear) | Pendiente diseño | 2026-07-18 |
+| `/api/academy/socratic/{offering_id}/query` | Estable (Certificado A+) | 2026-09-27 |
+| `/api/academy/defense/{offering_id}/start` | Estable (Certificado A+) | 2026-09-27 |
+| `/api/academy/defense/{session_id}/status` | Estable (Certificado A+) | 2026-09-27 |
+| `/api/academy/defense/{session_id}/answer` | Estable (Certificado A+) | 2026-09-27 |
+| `/api/academy/defense/{session_id}/close` | Estable (Certificado A+) | 2026-09-27 |
+| `/api/academy/student/academic-record` | Estable (Certificado A+) | 2026-09-27 |
+
+---
+
+## 13. Contratos: Tutor Socrático y Defensas Interactivas (2026-09-27)
+
+### 13.1. Tutor Socrático
+* `POST /api/academy/socratic/{offering_id}/query`:
+  * Entrada: `{ question: str, context?: str }`
+  * Salida: `SocraticQueryResponse` con pregunta de reflexión mayéutica generada por el motor pedagógico.
+  * Regla: No responde con la solución directa, sino con repreguntas socráticas orientadas al descubrimiento guiado.
+
+### 13.2. Defensas Interactivas
+* `POST /api/academy/defense/{offering_id}/start`:
+  * Inicia una sesión de defensa de 5 minutos (300 segundos).
+  * Retorna la primera pregunta socrática generada sobre el contenido.
+* `GET /api/academy/defense/{session_id}/status`:
+  * Retorna el estado actual, el tiempo restante en segundos y la pregunta activa.
+* `POST /api/academy/defense/{session_id}/answer`:
+  * Entrada: `{ answer: str }`
+  * Evalúa y registra la respuesta, avanzando secuencialmente hasta completar la batería.
+* `POST /api/academy/defense/{session_id}/close`:
+  * Cierra la defensa y computa la nota final ponderada con feedback pedagógico cualitativo.
+

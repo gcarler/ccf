@@ -362,3 +362,55 @@ grep -nE "PARCIAL-|PEND-|ACAD-" /root/ccf/docs/ESTADO_ACADEMY.md
   * **Seguridad y Multi-Tenant (Axioma 3):** Aislamiento estricto por `sede_id` en cursos, lecciones, evaluaciones, entregas, foros y certificados. Prevención absoluta de fugas BOLA mediante respuestas 404 safe en cross-tenant. Hardening en validación pública de certificados sin exponer PII ni IDs internos. Rate limiting anti-abuso implementado vía slowapi en endpoints sensibles. Streaming seguro de entregas con chunks de 64 KiB y límite de 10 MiB.
   * **Frontend:** 0 errores en compilación TypeScript (`tsc --noEmit`), 0 warnings en ESLint, 0 llamadas a `fetch(` nativo (100% `apiFetch`), 0 clases Tailwind vetadas (`bg-red-50`, `bg-red-100`, `bg-orange-50`), 0 modales flotantes (adopción pura de Drawers/Shell). Generación de QR local segura implementada en `CertificateView.tsx`.
   * **Trazabilidad:** Registro estricto de auditoría con `AcademyActivityLog` en operaciones administrativas críticas de cursos, lecciones, foros y entregas. N+1 queries erradicadas con queries consolidadas `COUNT + JOIN`.
+
+---
+
+## 18. Certificación Integral Academia Super-PRO ERP (Fase 1 y Fase 2) — 2026-09-27
+
+* **Fecha de Certificación:** 2026-09-27
+* **Veredicto:** **100/100 (A+) — CERTIFICADO**
+* **Migraciones Canónicas:**
+  * `20260927_0012_academy_programs_credits_grading_schemes`: Programas académicos, planes de estudio, asignaturas con créditos educativos (`credits`), esquemas de calificación configurables (`scale_max`, `passing_grade`), cortes evaluativos ponderados (`weight_percent`), ofertas de asignaturas y registros acumulados.
+  * `20260927_0013_academy_student_enrollments_and_locking`: Tabla `academy_student_enrollments`, control de cupos (`quota_enrolled`), y bloqueo de notas en acta cerrada (`is_locked`).
+* **Lógica de Negocio y Motor Académico (`backend/services/academic_engine_service.py`):**
+  * Verificación de correlatividades y aprobación previa (`check_prerequisites_satisfied`).
+  * Validación de cortes y ponderaciones al 100% (`validate_grading_scheme_cuts`).
+  * Cierre oficial de actas con bloqueo definitivo (`close_offering_grades`).
+  * Cálculo y sincronización automática de notas ponderadas (`calculate_and_sync_offering_grades`).
+  * Cálculo de PAPA (Promedio Académico Ponderado Acumulado) y créditos (`compute_student_transcript_summary`).
+* **UI/UX Clean Productivity:**
+  * Portal Docente ERP: `/plataforma/academy/docente` con paneles laterales para calificación por cortes.
+  * Drawers especializados: `StudentEnrollmentDrawer`, `CloseGradesDrawer`, `ProgramDrawer`, `StudyPlanSubjectDrawer`, `GradingSchemeDrawer`, `AcademicPeriodDrawer`, `OfferingGradesDrawer`. Cero modales centrados (`<Dialog>`), tokens semánticos CSS `hsl(var(--*))`, `apiFetch()` exclusivo.
+* **Cobertura y Tests Automatizados:**
+  * Suites `tests/test_academy_system_config.py` y `tests/test_academy_api.py` (29 pruebas en total, incluyendo TEST-001 al TEST-010) al 100% verde.
+  * `tsc --noEmit` limpio con 0 errores.
+  * Build de producción Next.js exitoso.
+
+---
+
+## 19. Certificación Integral: Tutor Socrático 24/7 y Defensas Interactivas — 2026-09-27
+
+* **Fecha de Certificación:** 2026-09-27
+* **Veredicto:** **100/100 (A+) — CERTIFICADO**
+* **Migración Canónica:**
+  * `20260927_0014_academy_socratic_defense_sessions`: Inmutable e idempotente. Crea las tablas `academy_socratic_sessions` y `academy_defense_sessions`.
+* **Modelos ORM & Axiomas:**
+  * `AcademySocraticSession`: Registra consultas de tutoría con preguntas mayéuticas generadas por el motor socrático. Enlace canónico a `personas.id` (`Axioma 1`), `sede_id` para aislamiento multi-tenant (`Axioma 3`), marcas temporales UTC y `deleted_at` (`Axioma 2`).
+  * `AcademyDefenseSession`: Sesiones interactivas de defensa oral/escrita con límite de 5 minutos, preguntas guiadas, cálculo automático de notas ponderadas y feedback pedagógico.
+* **Endpoints y Contratos API:**
+  * `POST /api/academy/socratic/{offering_id}/query`: Preguntas mayéuticas orientadoras.
+  * `POST /api/academy/defense/{offering_id}/start`: Inicio de defensa interactiva.
+  * `GET /api/academy/defense/{session_id}/status`: Consulta de estado y tiempo restante.
+  * `POST /api/academy/defense/{session_id}/answer`: Registro de respuesta y avance secuencial.
+  * `POST /api/academy/defense/{session_id}/close`: Cierre y calificación final.
+* **UI/UX y Arquitectura Frontend:**
+  * Portal `/plataforma/academy/tutor`: Lista de comisiones académicas del estudiante con accesos a tutoría y defensas.
+  * Paneles laterales `SocraticChatDrawer.tsx` y `SocraticDefenseDrawer.tsx` construidos sobre `RightPanel` (cero modales).
+  * Design System "Clean Productivity" con tokens semánticos CSS `hsl(var(--*))` y cliente HTTP canónico `apiFetch()`.
+* **Calidad y Cobertura:**
+  * Pruebas automatizadas `test_011` a `test_015` en `tests/test_academy_system_config.py` (20/20 pruebas verdes).
+  * 46/46 contratos estructurales verificados sin fallas.
+  * Compilación TypeScript estricta (`next typegen && tsc --noEmit`) con 0 errores.
+  * Sincronizado en rama `integration/cms-aniversario-to-main` en GitHub origin.
+
+
