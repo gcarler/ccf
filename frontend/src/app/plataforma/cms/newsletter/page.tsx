@@ -4,27 +4,7 @@ import React, { useCallback, useEffect, useMemo, useState } from "react";
 import dynamic from "next/dynamic";
 import { SITE_KEY } from "@/lib/site-config";
 import { toast } from "sonner";
-import { motion, AnimatePresence } from "framer-motion";
-import {
-  Mail,
-  Plus,
-  Search,
-  Edit2,
-  Trash2,
-  Globe,
-  Loader2,
-  Send,
-  Users,
-  Upload,
-  Calendar,
-  CheckCircle2,
-  XCircle,
-  FileText,
-  AlertTriangle,
-  X,
-  UserPlus,
-  RefreshCw,
-} from "lucide-react";
+import { Mail, Plus, Search, Edit2, Trash2, Globe, Loader2, Send, Users, Upload, Calendar, CheckCircle2, XCircle, FileText, AlertTriangle, UserPlus, RefreshCw } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import SidePanel from "@/components/ui/SidePanel";
 import clsx from "clsx";

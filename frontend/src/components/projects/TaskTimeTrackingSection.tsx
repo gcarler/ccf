@@ -3,8 +3,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { apiFetch } from "@/lib/http";
 import type { ProjectTaskRecord, ProjectTimeLog, ProjectTimeLogCreate } from "@/types/projects";
-import { Clock, Plus, Trash2, CheckCircle2, DollarSign, ChevronDown, ChevronUp } from "lucide-react";
-import clsx from "clsx";
+import { Clock, Plus, Trash2, ChevronUp } from "lucide-react";
 
 interface TaskTimeTrackingSectionProps {
   task: ProjectTaskRecord;
@@ -95,7 +94,6 @@ export default function TaskTimeTrackingSection({
   };
 
   const totalHours = logs.reduce((acc, l) => acc + (l.hours || 0), 0);
-  const billableHours = logs.filter((l) => l.is_billable).reduce((acc, l) => acc + (l.hours || 0), 0);
 
   return (
     <section className="px-4 py-3 border-b border-[hsl(var(--border))]">

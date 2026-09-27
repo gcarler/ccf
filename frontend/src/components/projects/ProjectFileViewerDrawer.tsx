@@ -3,27 +3,7 @@
 import React, { useState } from "react";
 import { RightPanel } from "@/components/ui/RightPanel";
 import type { ProjectFileRecord } from "@/types/projects";
-import {
-  ExternalLink,
-  Download,
-  Copy,
-  FileText,
-  FileSpreadsheet,
-  FileCode,
-  Image as ImageIcon,
-  Music,
-  Video,
-  HardDrive,
-  ZoomIn,
-  ZoomOut,
-  RotateCw,
-  Check,
-  Globe,
-  FileCheck2,
-  Calendar,
-  User,
-  Layers,
-} from "lucide-react";
+import { ExternalLink, Download, Copy, FileCode, Music, HardDrive, ZoomIn, ZoomOut, RotateCw, Check, Calendar, User, Layers } from "lucide-react";
 import { toast } from "sonner";
 import clsx from "clsx";
 

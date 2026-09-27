@@ -13,29 +13,7 @@ import type {
   MgaIndicatorLevel,
   MgaCalculationType,
 } from "@/types/projects";
-import {
-  BarChart3,
-  TrendingUp,
-  Plus,
-  Trash2,
-  Edit2,
-  CheckCircle2,
-  AlertTriangle,
-  Clock,
-  ExternalLink,
-  Save,
-  Check,
-  RotateCw,
-  Sparkles,
-  Award,
-  Layers,
-  Calendar,
-  FileCheck2,
-  Activity,
-  History,
-  Info,
-  Sliders,
-} from "lucide-react";
+import { BarChart3, TrendingUp, Plus, Trash2, Edit2, CheckCircle2, AlertTriangle, Clock, ExternalLink, Save, Check, RotateCw, Sparkles, Award, Layers, FileCheck2, Activity, History, Sliders } from "lucide-react";
 import clsx from "clsx";
 import { toast } from "sonner";
 

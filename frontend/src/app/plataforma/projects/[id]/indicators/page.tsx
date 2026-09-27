@@ -1,32 +1,13 @@
 "use client";
 
 import React, { useEffect, useState, useCallback, useMemo } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 import { apiFetch } from "@/lib/http";
 import type { ProjectIndicator, MgaIndicatorLevel } from "@/types/projects";
 import { ProjectIndicatorsDrawer } from "@/components/projects/ProjectIndicatorsDrawer";
-import {
-  BarChart3,
-  TrendingUp,
-  Plus,
-  RotateCw,
-  Sparkles,
-  Award,
-  Layers,
-  Calendar,
-  Activity,
-  History,
-  Clock,
-  ExternalLink,
-  ChevronLeft,
-  Sliders,
-  CheckCircle2,
-  AlertTriangle,
-  LayoutDashboard,
-  ShieldCheck,
-} from "lucide-react";
+import { BarChart3, TrendingUp, Plus, RotateCw, Activity, Clock, ChevronLeft, Sliders, CheckCircle2, AlertTriangle } from "lucide-react";
 import clsx from "clsx";
 import { toast } from "sonner";
 
@@ -41,7 +22,6 @@ const MGA_LEVELS: { id: MgaIndicatorLevel; label: string; desc: string }[] = [
 
 export default function ProjectIndicatorsPage() {
   const params = useParams();
-  const router = useRouter();
   const projectId = (params?.id as string) ?? "";
   const { token } = useAuth();
 

@@ -19,7 +19,6 @@ import OptimizedImage from "@/components/ui/OptimizedImage";
 import SidePanel from "@/components/ui/SidePanel";
 import clsx from "clsx";
 import { toast } from "sonner";
-import { motion, AnimatePresence } from "framer-motion";
 
 interface CmsMediaItem {
   id: number;

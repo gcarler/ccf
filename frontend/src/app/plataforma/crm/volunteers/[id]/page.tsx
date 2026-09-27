@@ -6,11 +6,9 @@ import { useAuth } from "@/context/AuthContext";
 import { useCrmAccess } from "@/hooks/useCrmAccess";
 import { apiFetch } from "@/lib/http";
 import CrmShell from "@/components/crm/CrmShell";
-import {
-    User, LayoutDashboard, Heart, Star, PencilLine, Trash2, X, Save,
-} from "lucide-react";
+import { User, LayoutDashboard, Heart, Star, PencilLine, Trash2, Save } from "lucide-react";
 import { toast } from "sonner";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import clsx from "clsx";
 import ConfirmActionDrawer, { type ConfirmActionState } from "@/components/ConfirmActionDrawer";
 import SidePanel from "@/components/ui/SidePanel";

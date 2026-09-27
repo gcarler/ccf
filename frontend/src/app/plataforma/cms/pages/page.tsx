@@ -20,6 +20,10 @@ import UniversalWikiView from "@/components/ui/UniversalWikiView";
 
 const CMS_PAGE_VIEWS: ViewType[] = ["grid", "list", "table", "board", "kanban", "calendar", "gantt", "wiki"];
 
+// Pages fully managed by platform modules — hidden from CMS admin entirely.
+// Sermons content comes from YouTube and cannot be managed from here.
+const PLATFORM_MANAGED_SLUGS = new Set(["sermons"]);
+
 const STATUS_CONFIG: Record<string, { label: string; color: string }> = {
   published: { label: "Publicado",   color: "bg-[hsl(var(--success)/15%)] text-[hsl(var(--success))]" },
   draft:     { label: "Borrador",    color: "bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))]" },
@@ -77,10 +81,6 @@ export default function CmsPagesManagement() {
     fetchPages(siteKey).catch(() => toast.error("Error al cargar páginas"));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token, siteKey]);
-
-  // Pages fully managed by platform modules — hidden from CMS admin entirely.
-  // Sermons content comes from YouTube and cannot be managed from here.
-  const PLATFORM_MANAGED_SLUGS = new Set(["sermons"]);
 
   // Pages where only the hero/banner (texts & images) is editable from CMS.
   // The actual content (events list, courses grid) comes from platform modules.

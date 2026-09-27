@@ -1,40 +1,11 @@
 "use client";
 
-import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { RightPanel } from "@/components/ui/RightPanel";
 import { useAuth } from "@/context/AuthContext";
 import { apiFetch } from "@/lib/http";
-import type {
-  ProjectFileRecord,
-  ProjectFilesSummary,
-  ProjectFileSource,
-} from "@/types/projects";
-import {
-  FolderArchive,
-  Upload,
-  Link2,
-  Search,
-  Filter,
-  FileText,
-  FileSpreadsheet,
-  FileCode,
-  Image as ImageIcon,
-  Music,
-  Video,
-  HardDrive,
-  Trash2,
-  Eye,
-  ExternalLink,
-  Download,
-  CheckCircle2,
-  AlertCircle,
-  Plus,
-  RefreshCw,
-  Layers,
-  FileCheck,
-  Globe,
-  SlidersHorizontal,
-} from "lucide-react";
+import type { ProjectFileRecord, ProjectFilesSummary } from "@/types/projects";
+import { FolderArchive, Upload, Link2, Search, FileText, FileSpreadsheet, FileCode, Image as ImageIcon, Music, Video, HardDrive, Trash2, Eye, ExternalLink, Download, RefreshCw, Globe } from "lucide-react";
 import clsx from "clsx";
 import { toast } from "sonner";
 import { ProjectFileViewerDrawer } from "./ProjectFileViewerDrawer";

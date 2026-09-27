@@ -4,34 +4,12 @@ import { ReactNode, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 
-type Variant = "sky" | "emerald" | "amber" | "rose";
-
-const VARIANT_PRESETS: Record<Variant, { primary: string; accent: string }> = {
-    sky: {
-        primary: "to-[hsl(var(--info)/20%)]",
-        accent: "to-[hsl(var(--info)/20%)]"
-    },
-    emerald: {
-        primary: "to-[hsl(var(--success)/15%)]",
-        accent: "from-[hsl(var(--domain-teal)/20%)]"
-    },
-    amber: {
-        primary: "to-[hsl(var(--warning)/20%)]",
-        accent: "from-[hsl(var(--warning)/15%)]"
-    },
-    rose: {
-        primary: "to-[hsl(var(--danger)/20%)]",
-        accent: "to-[hsl(var(--info)/15%)]"
-    }
-};
-
 interface CrmDetailShellProps {
     title: string;
     description?: string;
     rightAction?: ReactNode;
     headerContent?: ReactNode;
     children: ReactNode;
-    variant?: Variant;
     onBack?: () => void;
     contentClassName?: string;
     appearance?: 'dark' | 'light';
@@ -43,12 +21,10 @@ export default function CrmDetailShell({
     rightAction,
     headerContent,
     children,
-    variant = "sky",
     onBack,
     contentClassName
 }: CrmDetailShellProps) {
     const router = useRouter();
-    const preset = VARIANT_PRESETS[variant] || VARIANT_PRESETS.sky;
     const baseBg = 'bg-[hsl(var(--surface-1))] text-[hsl(var(--foreground))]';
     const headerBg = 'bg-[hsl(var(--surface-1)/0.85)] border-[hsl(var(--border))]';
     const subtleText = 'text-[hsl(var(--muted-foreground))]';

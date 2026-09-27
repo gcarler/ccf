@@ -2,21 +2,7 @@
 
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import Image from "next/image";
-import {
-  Heart,
-  Instagram,
-  Facebook,
-  Twitter,
-  Search,
-  UserPlus,
-  X,
-  Check,
-  ChevronLeft,
-  ChevronRight,
-  Sparkles,
-  Pencil,
-  ImageIcon,
-} from "lucide-react";
+import { Heart, Instagram, Facebook, Twitter, Search, UserPlus, Check, ChevronLeft, ChevronRight, Sparkles, Pencil, ImageIcon } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { apiFetch } from "@/lib/http";
 import {

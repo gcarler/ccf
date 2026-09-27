@@ -2,16 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import clsx from 'clsx';
-import {
-  BookOpen,
-  Loader2,
-  Mail,
-  MessageSquare,
-  Plus,
-  Search,
-  Send,
-  X,
-} from 'lucide-react';
+import { BookOpen, Loader2, Mail, MessageSquare, Plus, Search, Send } from 'lucide-react';
 import { apiFetch } from '@/lib/http';
 import SidePanel from '@/components/ui/SidePanel';
 import type {
