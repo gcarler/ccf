@@ -2,9 +2,9 @@
 
 > **Objetivo:** validar evangelismo como módulo aislado antes de cerrar una tarea, commit o despliegue.
 >
-> **Última actualización:** 2026-09-06 (Auditoría Forense y Remediación — Certificación 100/100 A+)  
-> **Métricas:** 384 tests ejecutados y aprobados (286 backend + 98 frontend), 0 fallos, 0 regresiones.  
-> **Reporte Forense:** [`docs/AUDITORIA_FORENSE_EVANGELISMO_2026-09-06.md`](file:///root/ccf/docs/AUDITORIA_FORENSE_EVANGELISMO_2026-09-06.md)
+> **Última actualización:** 2026-09-27 (Certificación Integral Super-PRO Eventos — 100/100 A+)
+> **Métricas:** 7/7 suites canónicas aprobadas en `scripts/test_evangelism_quality.py`, 46/46 contratos estructurales, 0 errores `tsc --noEmit`, 0 regresiones.
+> **Reporte Forense:** [`docs/AUDITORIA_FORENSE_EVANGELISMO_2026-09-06.md`](file:///root/ccf/docs/AUDITORIA_FORENSE_EVANGELISMO_2026-09-06.md) y [`docs/PLAN_DE_TRABAJO_EVANGELISMO.md`](file:///root/ccf/docs/PLAN_DE_TRABAJO_EVANGELISMO.md)
 
 ## 1. Preflight
 
@@ -23,23 +23,22 @@ Confirmar:
 
 ## 2. Backend smoke mínimo y suites canónicas
 
+Ejecutar el gate canónico que orquesta las 7 suites del módulo:
+
 ```bash
 cd /root/ccf
 ./venv/bin/python scripts/test_evangelism_quality.py
 ```
 
-Suites de regresión, endpoints públicos y estrés adversarial:
+Suites incluidas en la ejecución canónica:
+1. `tests/test_evangelism_triple7_flow.py`, `crm_bridge.py`, `reports_api.py`, `calculo_sesiones.py` (Smoke base).
+2. `tests/test_evangelism_habilitacion_regression.py`, `custom_role_regression.py` (Regresiones críticas).
+3. `tests/test_evangelism_form_studio_pass.py` (Form Studio y Pase PDF Super-PRO).
+4. `tests/test_evangelism_gatekeeper.py` (Gatekeeper Scanner, Alarma 409 y Aforo).
+5. `tests/test_evangelism_post_analytics.py` (Analytics Post-Evento y Embudo CRM).
+6. `tests/test_evangelism_followup_campaigns.py` (Automatización de Seguimiento y Mentores).
+7. `tests/test_evangelism_cohort_retention.py` (Cohortes 30d/60d/90d, SMI y Auditoría Multi-Sede).
 
-```bash
-cd /root/ccf
-./venv/bin/python -m pytest -q -o addopts='' \
-  tests/test_evangelism_triple7_flow.py \
-  tests/test_evangelism_crm_bridge.py \
-  tests/test_evangelism_reports_api.py \
-  tests/test_calculo_sesiones.py \
-  tests/test_evangelism_public_endpoints.py \
-  tests/test_evangelism_adversarial_stress.py
-```
 
 ## 3. Backend cobertura profunda
 
@@ -96,9 +95,13 @@ Validar con consola abierta:
 | `/plataforma/evangelism/groups/{id}` | detalle, sesiones y asistencia cargan |
 | `/plataforma/evangelism/events` | lista eventos o estado vacio controlado |
 | `/plataforma/evangelism/events/{id}` | detalle, tabs y asistencia |
+| `/plataforma/evangelism/events/{id}/studio` | Event Form Studio, vista previa de formulario y enlace público |
+| `/plataforma/evangelism/scanner` | Gatekeeper Scanner (cámara/físico), feedback sonoro/lumínico y aforo en vivo |
+| `/plataforma/evangelism/events/{id}/analytics` | Analytics Post-Evento, Embudo de 6 etapas y canalización CRM |
+| `/plataforma/evangelism/events/{id}/followup` | Campañas de seguimiento 24h-72h-7d y asignación de mentores |
+| `/plataforma/evangelism/cohorts` | Análisis de Cohortes (Heatmap matrix), ranking multi-sede y exportación CSV |
 | `/plataforma/evangelism/rankings` | rankings cargan sin errores de contrato |
 | `/plataforma/evangelism/multiplication` | check e historial cargan |
-| `/plataforma/evangelism/scanner` | permisos y validacion de token |
 
 ## 6. Consola del navegador
 
@@ -133,7 +136,7 @@ Validar al menos:
 |---|---|
 | ADMIN | acceso completo en superficies del modulo |
 | GESTOR | validar por guard real; con `evangelism:manage` accede a superficies canonica del modulo, no todo flujo pastoral/admin necesariamente equivale a un nivel concreto |
-| EDITOR | con `evangelism:edit` accede a lectura y operacion en superficies canonicas; queda fuera de superficies que requieren `evangelism:manage` (creacion/eliminacion/estrategia) |
+| EDITOR | con `evangelism:edit` accede a lectura y operacion en superficies canonicas (incluye Gatekeeper Scanner); queda fuera de superficies que requieren `evangelism:manage` |
 | MIEMBRO | no debe acceder a acciones administrativas y solo puede entrar en superficies auth/contextuales si el flujo real lo habilita |
 
 > Tras la migracion RBAC radical (cerrada el 2026-07-17 + wrapper legacy eliminado el 2026-07-21), `require_pastor_or_admin` no gobierna ninguna superficie de evangelismo. Toda la matriz opera con la taxonomia `evangelism:read/edit/manage` mas el bypass por rol (`pastor` = total, `coordinador` = read/edit) definido en `permissions.py`. No hay superficie evangelism donde `EDITOR` con `evangelism:edit` quede fuera por tener el nombre historico del guard equivocado.
@@ -158,13 +161,14 @@ Si el comportamiento real difiere, actualizar `EVANGELISMO_API_CONTRACTS.md`, `E
 - Confirmar caso CRM sin pipeline/etapa hardcodeados.
 - Confirmar follow-up pendiente si aplica.
 
-### Eventos
+### Eventos (Suite Super-PRO)
 
-- Crear evento.
-- Abrir detalle.
-- Registrar asistencia/check-in.
-- Validar duplicado controlado.
-- Revisar analytics/export si aplica.
+- **Form Studio**: Configurar campos personalizados, generar enlace público y emitir pase PDF con correlativo único `#CCF-EVT-YYYY-XXXX`.
+- **Gatekeeper Scanner**: Validar QR de acceso; ante reingreso duplicado verificar alarma visual/sonora y respuesta `409 duplicate_access` con detalle del primer ingreso.
+- **Aforo en vivo**: Comprobar actualización instantánea de aforo y porcentaje de ocupación en `/occupancy`.
+- **Analytics Post-Evento**: Visualizar embudo de conversión de 6 etapas y retención de visitantes; ejecutar canalización idempotente a CRM.
+- **Seguimiento & Mentores**: Comprobar cadencia de contacto (24h/72h/7d) y balanceo automático de mentores por carga activa y zona geográfica.
+- **Cohortes & LTV Espiritual**: Revisar matriz de calor mensual de retención 30d/60d/90d, puntuación de madurez espiritual (SMI 0-100) y descargar exportación CSV con UTF-8 BOM para Excel.
 
 ### Multiplicacion
 

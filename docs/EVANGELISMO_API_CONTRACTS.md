@@ -175,6 +175,10 @@ Archivos:
 - `backend/api/evangelism_events/events_main.py`
 - `backend/api/evangelism_events/events_participantes.py`
 - `backend/api/evangelism_events/events_checkin.py`
+- `backend/api/evangelism_events/events_registrations.py`
+- `backend/api/evangelism_events/events_post_analytics.py`
+- `backend/api/evangelism_events/events_followup.py`
+- `backend/api/evangelism_events/events_cohorts.py`
 
 ### 9.1 CRUD y administración de eventos
 
@@ -189,14 +193,64 @@ Archivos:
 | `GET` | `/events/dashboard-stats` | `require_evangelism_manage` |
 | `GET` | `/events/analytics/global` | `require_evangelism_manage` |
 
-### 9.2 Analytics y export
+### 9.2 Event Form Studio y Pase Digital Super-PRO
+
+Archivos: `backend/api/evangelism_events/events_registrations.py`, `backend/api/public/events_public.py`
 
 | Método | Ruta | Guard |
 |---|---|---|
-| `GET` | `/events/{event_id}/analytics` | `require_evangelism_read` |
-| `GET` | `/events/{event_id}/sessions/{session_date}/export` | `require_evangelism_read` |
+| `GET` | `/events/{event_id}/form` | `require_evangelism_read` |
+| `PUT` | `/events/{event_id}/form` | `require_evangelism_manage` |
+| `POST` | `/api/public/events/{event_id}/register` | Público (Rate limited: 30/min) |
+| `GET` | `/events/{event_id}/registrations/{reg_id}/pass` | `require_evangelism_read` (genera PDF ReportLab) |
+| `GET` | `/api/public/events/{event_id}/registrations/{reg_id}/pass` | Público (genera PDF ReportLab) |
 
-### 9.3 Participación y asignaciones
+### 9.3 Gatekeeper Scanner y Monitor de Aforo en Tiempo Real
+
+Archivo: `backend/api/evangelism_events/events_checkin.py`
+
+| Método | Ruta | Guard |
+|---|---|---|
+| `POST` | `/events/{event_id}/sessions/{session_date}/ccf-evt-checkin` | `require_evangelism_edit` (Valida QR, emite 409 si `duplicate_access`) |
+| `GET` | `/events/{event_id}/sessions/{session_date}/occupancy` | `require_evangelism_read` |
+| `GET` | `/events/{event_id}/occupancy` | `require_evangelism_read` |
+
+### 9.4 Analytics Post-Evento, Embudo de Asistencia y Conversión CRM
+
+Archivo: `backend/api/evangelism_events/events_post_analytics.py`
+
+| Método | Ruta | Guard |
+|---|---|---|
+| `GET` | `/events/{event_id}/post-event-analytics` | `require_evangelism_read` (Embudo 6 etapas, retención de nuevos) |
+| `GET` | `/events/{event_id}/export/post-event-analytics` | `require_evangelism_read` (Exportación analítica) |
+| `GET` | `/events/pastoral-executive-summary` | `require_evangelism_read` (Resumen pastoral multi-evento) |
+| `POST` | `/events/{event_id}/crm-channel` | `require_evangelism_manage` (Canalización batch de nuevos a CRM) |
+
+### 9.5 Automatización de Seguimiento Post-Evento y Asignación de Mentores
+
+Archivo: `backend/api/evangelism_events/events_followup.py`
+
+| Método | Ruta | Guard |
+|---|---|---|
+| `GET` | `/events/{event_id}/followup/overview` | `require_evangelism_read` (Resumen de cadencia 24h-72h-7d) |
+| `GET` | `/events/{event_id}/followup/attendees` | `require_evangelism_read` (Listado con filtros y estados de contacto) |
+| `POST` | `/events/{event_id}/followup/auto-assign-mentors` | `require_evangelism_manage` (Balanceo de carga y matching geográfico) |
+| `POST` | `/events/{event_id}/followup/log-response` | `require_evangelism_edit` (Bitácora pastoral y feedback) |
+| `GET` | `/events/{event_id}/followup/available-mentors` | `require_evangelism_read` (Mentores activos de la sede) |
+
+### 9.6 Análisis de Cohortes de Retención, LTV Espiritual y Auditoría Multi-Sede
+
+Archivo: `backend/api/evangelism_events/events_cohorts.py`
+
+| Método | Ruta | Guard |
+|---|---|---|
+| `GET` | `/events/{event_id}/cohort-retention` | `require_evangelism_read` (Retención a 30d/60d/90d en grupos/academia) |
+| `GET` | `/cohorts/multi-sede` | `require_evangelism_read` (Ranking multi-sede y KPIs globales) |
+| `GET` | `/cohorts/matrix` | `require_evangelism_read` (Matriz mensual de retención tipo heatmap) |
+| `GET` | `/cohorts/attendees/{persona_id}/spiritual-journey` | `require_evangelism_read` (LTV Espiritual y desglose SMI 0-100) |
+| `GET` | `/cohorts/export` | `require_evangelism_manage` (CSV ejecutivo con UTF-8 BOM compatible Excel) |
+
+### 9.7 Participación y asignaciones
 
 | Método | Ruta | Guard |
 |---|---|---|
@@ -206,13 +260,13 @@ Archivos:
 | `GET` | `/events/{event_id}/sessions/{session_date}` | archivo propietario |
 | `POST` | `/events/{event_id}/assignments` | `require_evangelism_manage` |
 
-### 9.4 Visitantes
+### 9.8 Visitantes
 
 | Método | Ruta | Guard |
 |---|---|---|
 | `POST` | `/events/{event_id}/sessions/{session_date}/visitors` | `require_evangelism_edit` + `require_event_access(...)` |
 
-### 9.5 Roles de evento e historial
+### 9.9 Roles de evento e historial
 
 | Método | Ruta | Guard |
 |---|---|---|
@@ -228,8 +282,9 @@ Reglas:
 - `EventAudienceUpdate` exige roles cuando `target_audience == "ROLE"`
 - `DELETE /events/{event_id}` es soft delete operativo: estado cancelado + `deleted_at`
 - `attendance/bulk` debe responder `400` si recibe IDs inválidos, no ignorarlos silenciosamente
-- El check-in rápido de visitantes evita duplicados de attendance para misma persona/fecha/evento
+- El check-in de puerta (`/ccf-evt-checkin`) bloquea reingresos fraudulentos con `409 Conflict` (`status: duplicate_access`) reportando timestamp y operador original
 - Todo detalle, analytics, export y mutación de evento queda restringido a la sede del usuario y excluye eventos con `deleted_at`.
+- Los reportes CSV descargables desde cohorts inician con BOM UTF-8 (`\ufeff`) para compatibilidad directa con Microsoft Excel en español.
 
 ## 10. Multiplicación
 

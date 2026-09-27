@@ -153,13 +153,17 @@ Lectura:
 - La asistencia de grupos no es un flujo “global” de RBAC puro; depende del grupo concreto.
 - Esto es intencional y debe seguir documentado como acceso contextual.
 
-### 5.7 Eventos
+### 5.7 Eventos (Suite Super-PRO)
 
 Archivos:
 
 - `backend/api/evangelism_events/events_main.py`
 - `backend/api/evangelism_events/events_participantes.py`
 - `backend/api/evangelism_events/events_checkin.py`
+- `backend/api/evangelism_events/events_registrations.py`
+- `backend/api/evangelism_events/events_post_analytics.py`
+- `backend/api/evangelism_events/events_followup.py`
+- `backend/api/evangelism_events/events_cohorts.py`
 
 | Superficie | Guard real |
 |---|---|
@@ -167,11 +171,28 @@ Archivos:
 | CRUD, dashboards administrativos, audiencia, roles, assignments | `require_evangelism_manage` |
 | operaciones operativas de participación | `require_evangelism_edit` o `require_evangelism_manage` según endpoint |
 | check-in rápido de visitantes | `require_evangelism_edit` + `require_event_access(...)` |
+| **Form Studio**: lectura esquema de formulario | `require_evangelism_read` |
+| **Form Studio**: guardar configuración de formulario | `require_evangelism_manage` |
+| **Form Studio / Pase**: inscripción pública y descarga pase | Público (Rate-limited SlowAPI) |
+| **Form Studio / Pase**: descarga administrativa de pase PDF | `require_evangelism_read` |
+| **Gatekeeper**: escaneo de puerta y verificación QR (`/ccf-evt-checkin`) | `require_evangelism_edit` (antifraude con `409 duplicate_access`) |
+| **Gatekeeper**: monitor de aforo en vivo (`/occupancy`) | `require_evangelism_read` |
+| **Analytics Post-Evento**: embudo 6 etapas y retención de visitantes | `require_evangelism_read` |
+| **Analytics Post-Evento**: canalización masiva a casos CRM | `require_evangelism_manage` |
+| **Seguimiento Post-Evento**: overview de cadencia y listado de asistentes | `require_evangelism_read` |
+| **Seguimiento Post-Evento**: asignación inteligente de mentores | `require_evangelism_manage` |
+| **Seguimiento Post-Evento**: bitácora de respuesta / interacción pastoral | `require_evangelism_edit` |
+| **Cohortes de Retención**: retención temporal 30d/60d/90d y matriz heatmap | `require_evangelism_read` |
+| **Cohortes de Retención**: LTV Espiritual / SMI por asistente | `require_evangelism_read` |
+| **Cohortes de Retención**: auditoría pastoral multi-sede y exportación CSV | `require_evangelism_manage` |
 
 Lectura:
 
 - Eventos ya no debe describirse como superficie basada en `require_pastor_or_admin`.
-- El check-in de visitante exige `evangelism:edit` y alcance de sede del evento.
+- Operadores de puerta (Gatekeeper) requieren al menos `evangelism:edit`.
+- Lecturas analíticas y monitores de aforo están disponibles para inspectores con `evangelism:read`.
+- Operaciones de impacto estructural (guardar formularios, canalizar a CRM, balancear mentores, exportar CSV pastoral) exigen `evangelism:manage`.
+
 
 ### 5.8 Multiplicación
 
