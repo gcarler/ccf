@@ -514,3 +514,113 @@ export interface CrmChannelResponse {
   message: string;
 }
 
+export interface FollowupStepSummary {
+  name: string;
+  sent_count: number;
+  scheduled_count: number;
+  completion_percentage: number;
+}
+
+export interface FollowupStepDefinition {
+  step_number: number;
+  name: string;
+  channel: string;
+  delay_hours: number;
+  description: string;
+  template_default: string;
+}
+
+export interface FollowupOverviewData {
+  event_id: string;
+  event_name: string;
+  total_checked_in: number;
+  total_enrolled: number;
+  active_in_sequence: number;
+  completed_sequence: number;
+  mentors_assigned: number;
+  mentors_unassigned: number;
+  responses_received: number;
+  response_rate_percentage: number;
+  delivery_rate_percentage: number;
+  steps_summary: {
+    step_1: FollowupStepSummary;
+    step_2: FollowupStepSummary;
+    step_3: FollowupStepSummary;
+  };
+  sequence_definition: FollowupStepDefinition[];
+}
+
+export interface FollowupStepDetail {
+  status: 'PENDING' | 'SENT' | 'FAILED' | 'SKIPPED';
+  scheduled_for?: string | null;
+  sent_at?: string | null;
+  channel?: string | null;
+  message_content?: string | null;
+}
+
+export interface FollowupAttendeeItem {
+  registration_id: string;
+  persona_id: string;
+  full_name: string;
+  first_name?: string | null;
+  last_name?: string | null;
+  email?: string | null;
+  phone?: string | null;
+  registration_code: string;
+  check_in_at: string | null;
+  status: 'ACTIVE' | 'COMPLETED' | 'PAUSED';
+  current_step: number;
+  mentor_persona_id?: string | null;
+  mentor_name?: string | null;
+  mentor_phone?: string | null;
+  suggested_group_id?: string | null;
+  suggested_group_name?: string | null;
+  suggested_group_zone?: string | null;
+  matched_by_zone: boolean;
+  step_1?: FollowupStepDetail | null;
+  step_2?: FollowupStepDetail | null;
+  step_3?: FollowupStepDetail | null;
+  response_received: boolean;
+  response_notes?: string | null;
+  response_at?: string | null;
+}
+
+export interface AvailableMentorItem {
+  mentor_id: string;
+  name: string;
+  email?: string | null;
+  phone?: string | null;
+  group_id?: string | null;
+  group_name?: string | null;
+  group_zone?: string | null;
+  active_mentees_count: number;
+}
+
+export interface AutoAssignMentorsResponse {
+  success: boolean;
+  assigned_count: number;
+  already_assigned_count: number;
+  total_checked_in: number;
+  message: string;
+}
+
+export interface ManualAssignMentorPayload {
+  persona_id: string;
+  mentor_persona_id: string;
+  suggested_group_id?: string | null;
+  notes?: string | null;
+}
+
+export interface TriggerStepPayload {
+  step_number: number;
+  persona_ids?: string[] | null;
+  force?: boolean;
+  custom_content?: string | null;
+}
+
+export interface RecordResponsePayload {
+  persona_id: string;
+  notes: string;
+  channel?: string | null;
+}
+

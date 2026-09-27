@@ -196,6 +196,22 @@ def build_checks(args: argparse.Namespace) -> list[Check]:
             cwd=PROJECT_ROOT,
             reason="Valida métricas reales vs registradas, embudo de conversión a consolidación/grupos de vida y retención de visitantes.",
         ),
+        Check(
+            label="6. Automatización de Seguimiento Post-Evento y Asignación de Mentores (TKT-EVT-FOLLOWUP-04)",
+            cmd=(
+                sys.executable,
+                "-m",
+                "pytest",
+                "-p",
+                "no:cov",
+                "-q",
+                "-o",
+                "addopts=",
+                "tests/test_evangelism_followup_campaigns.py",
+            ),
+            cwd=PROJECT_ROOT,
+            reason="Valida motor de secuencias cadencia 24h-72h-7d, balanceo por carga/zona y aislamiento multi-tenant sede_id.",
+        ),
     ]
 
     if args.backend_deep or args.expanded:

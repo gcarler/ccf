@@ -140,6 +140,20 @@ def fast_checkin_visitor(
         except Exception as exc:
             logger.warning("Failed to create CRM follow-up for evangelism event visitor %s: %s", new_visitor.id, exc)
 
+    try:
+        from backend.services.event_post_followup_service import enroll_in_post_event_followup
+
+        enroll_in_post_event_followup(
+            db=db,
+            event=event,
+            persona=new_visitor,
+            current_user=current_user,
+            auto_assign_mentor=True,
+        )
+        db.commit()
+    except Exception as exc:
+        logger.warning("Failed to auto-enroll visitor in post-event followup %s: %s", new_visitor.id, exc)
+
     return {
         "status": "success",
         "visitor_id": new_visitor.id,
@@ -489,6 +503,21 @@ def unified_checkin(
     db.commit()
     record_admin_action(db, current_user, action="event_checkin", resource_type="event", resource_id=str(event_id))
 
+    try:
+        from backend.services.event_post_followup_service import enroll_in_post_event_followup
+
+        enroll_in_post_event_followup(
+            db=db,
+            event=event,
+            persona=persona,
+            registration=registration,
+            current_user=current_user,
+            auto_assign_mentor=True,
+        )
+        db.commit()
+    except Exception as exc:
+        logger.warning("Failed to auto-enroll attendee in post-event followup %s: %s", persona.id, exc)
+
     reg_code = (
         f"#CCF-EVT-{registration.registration_number:04d}"
         if registration and getattr(registration, "registration_number", None)
@@ -676,6 +705,21 @@ def ccf_evt_checkin(
 
     db.commit()
     record_admin_action(db, current_user, action="event_checkin", resource_type="event", resource_id=str(event_id))
+
+    try:
+        from backend.services.event_post_followup_service import enroll_in_post_event_followup
+
+        enroll_in_post_event_followup(
+            db=db,
+            event=event,
+            persona=persona,
+            registration=reg,
+            current_user=current_user,
+            auto_assign_mentor=True,
+        )
+        db.commit()
+    except Exception as exc:
+        logger.warning("Failed to auto-enroll attendee in post-event followup %s: %s", persona.id, exc)
 
     reg_code = (
         f"#CCF-EVT-{reg.registration_number:04d}"
