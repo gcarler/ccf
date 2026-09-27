@@ -401,3 +401,116 @@ export interface AttendanceRecord {
   es_primera_vez?: boolean;
   requires_seguimiento?: boolean;
 }
+
+// ── Post-Event Analytics & CRM Conversion (TKT-EVT-ANALYTICS-03) ──
+
+export interface PostEventAttendanceMetrics {
+  total_registered: number;
+  total_confirmed: number;
+  total_attended: number;
+  total_absent: number;
+  total_walk_ins: number;
+  total_cancelled: number;
+  attendance_rate: number;
+  no_show_rate: number;
+  capacity_utilization: number | null;
+}
+
+export interface PostEventFunnelStep {
+  step: number;
+  stage_id: string;
+  name: string;
+  count: number;
+  pct_of_total: number;
+  conversion_from_previous: number;
+  dropoff_from_previous: number;
+}
+
+export interface PostEventVisitorRetention {
+  new_visitors_count: number;
+  retained_30d_count: number;
+  retained_30d_rate: number;
+  retained_60d_count: number;
+  retained_60d_rate: number;
+  retained_90d_count: number;
+  retained_90d_rate: number;
+  health_status: 'EXCELLENT' | 'HEALTHY' | 'ATTENTION_NEEDED' | 'CRITICAL';
+}
+
+export interface PostEventCrmCaseItem {
+  stage_id: string;
+  stage_name: string;
+  count: number;
+}
+
+export interface PostEventCrmBreakdown {
+  total_cases_created: number;
+  pending_followup_count: number;
+  cases_by_stage: PostEventCrmCaseItem[];
+}
+
+export interface PostEventAttendeeItem {
+  persona_id: string;
+  full_name: string;
+  phone: string;
+  email: string;
+  church_role: string;
+  is_new_visitor: boolean;
+  attended: boolean;
+  check_in_at: string | null;
+  registration_code: string | null;
+  has_crm_case: boolean;
+  crm_case_id: string | null;
+  crm_stage_name: string | null;
+  crm_stage_color: string | null;
+  assigned_agent_id: string | null;
+  assigned_agent_name: string | null;
+  life_group_id: string | null;
+  life_group_name: string | null;
+  current_funnel_step: string;
+  current_funnel_step_label: string;
+}
+
+export interface PostEventAnalyticsData {
+  event_id: string;
+  event_name: string;
+  event_date: string | null;
+  capacity_max: number | null;
+  attendance_metrics: PostEventAttendanceMetrics;
+  conversion_funnel: PostEventFunnelStep[];
+  visitor_retention: PostEventVisitorRetention;
+  crm_breakdown: PostEventCrmBreakdown;
+  attendees_funnel_summary: PostEventAttendeeItem[];
+}
+
+export interface PastoralExecutiveEventSummary {
+  event_id: string;
+  event_name: string;
+  event_date: string | null;
+  total_registered: number;
+  total_attended: number;
+  attendance_rate: number;
+  new_visitors: number;
+  retention_30d_rate: number;
+  retention_health: string;
+}
+
+export interface PastoralExecutiveSummaryData {
+  sede_id: string;
+  calculated_at: string;
+  kpis: {
+    total_events: number;
+    total_attended: number;
+    total_new_visitors: number;
+    avg_attendance_rate: number;
+    avg_retention_30d_rate: number;
+  };
+  event_summaries: PastoralExecutiveEventSummary[];
+}
+
+export interface CrmChannelResponse {
+  success: boolean;
+  created_cases: number;
+  message: string;
+}
+

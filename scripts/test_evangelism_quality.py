@@ -180,6 +180,22 @@ def build_checks(args: argparse.Namespace) -> list[Check]:
             cwd=PROJECT_ROOT,
             reason="Valida control de acceso, bloqueo anti-fraude duplicate_access y aforo en vivo.",
         ),
+        Check(
+            label="5. Analytics Post-Evento, Embudo de Asistencia y Conversión CRM (TKT-EVT-ANALYTICS-03)",
+            cmd=(
+                sys.executable,
+                "-m",
+                "pytest",
+                "-p",
+                "no:cov",
+                "-q",
+                "-o",
+                "addopts=",
+                "tests/test_evangelism_post_analytics.py",
+            ),
+            cwd=PROJECT_ROOT,
+            reason="Valida métricas reales vs registradas, embudo de conversión a consolidación/grupos de vida y retención de visitantes.",
+        ),
     ]
 
     if args.backend_deep or args.expanded:
