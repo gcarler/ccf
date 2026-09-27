@@ -269,13 +269,15 @@ describe('Adversarial Verification & Edge Cases (R1-R6)', () => {
       fireEvent.click(archiveBtn);
 
       await waitFor(() => {
-        expect(screen.getByText('¿Archivar testimonio?')).toBeInTheDocument();
+        expect(screen.getByRole('dialog', { name: 'Archivar testimonio' })).toBeInTheDocument();
       });
 
-      // Cancel archive modal
+      // Cancel archive drawer
       const cancelBtn = screen.getByText('Cancelar');
       fireEvent.click(cancelBtn);
-      expect(screen.queryByText('¿Archivar testimonio?')).not.toBeInTheDocument();
+      await waitFor(() => {
+        expect(screen.queryByRole('dialog', { name: 'Archivar testimonio' })).not.toBeInTheDocument();
+      });
     });
 
     it('keeps testimonial posts for the testimonials category (category-aware mock guard)', async () => {
@@ -311,16 +313,18 @@ describe('Adversarial Verification & Edge Cases (R1-R6)', () => {
       fireEvent.click(screen.getByText('Añadir Enlace'));
       expect(screen.getByPlaceholderText('Nombre del enlace...')).toBeInTheDocument();
 
-      // Deactivate menu modal
+      // Deactivate menu drawer
       const deactivateBtn = screen.getByRole('button', { name: /Desactivar/i });
       fireEvent.click(deactivateBtn);
       await waitFor(() => {
-        expect(screen.getByText('¿Desactivar menú?')).toBeInTheDocument();
+        expect(screen.getByRole('dialog', { name: 'Desactivar menú' })).toBeInTheDocument();
       });
 
       const cancelBtn = screen.getByText('Cancelar');
       fireEvent.click(cancelBtn);
-      expect(screen.queryByText('¿Desactivar menú?')).not.toBeInTheDocument();
+      await waitFor(() => {
+        expect(screen.queryByRole('dialog', { name: 'Desactivar menú' })).not.toBeInTheDocument();
+      });
     });
   });
 
@@ -349,12 +353,14 @@ describe('Adversarial Verification & Edge Cases (R1-R6)', () => {
       fireEvent.click(archiveBtns[0]);
 
       await waitFor(() => {
-        expect(screen.getByText('¿Archivar comunicado?')).toBeInTheDocument();
+        expect(screen.getByRole('dialog', { name: 'Archivar comunicado' })).toBeInTheDocument();
       });
 
       const cancelBtn = screen.getByText('Cancelar');
       fireEvent.click(cancelBtn);
-      expect(screen.queryByText('¿Archivar comunicado?')).not.toBeInTheDocument();
+      await waitFor(() => {
+        expect(screen.queryByRole('dialog', { name: 'Archivar comunicado' })).not.toBeInTheDocument();
+      });
     });
   });
 

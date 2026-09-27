@@ -12,8 +12,8 @@ vi.mock("@/lib/site-config", () => ({ SITE_KEY: "ccf" }));
 
 vi.mock("@/components/ui/SidePanel", () => ({
   __esModule: true,
-  default: ({ isOpen, children }: { isOpen: boolean; children?: React.ReactNode }) =>
-    isOpen ? <div role="dialog" aria-label="side-panel">{children}</div> : null,
+  default: ({ isOpen, title, children }: { isOpen: boolean; title?: string; children?: React.ReactNode }) =>
+    isOpen ? <div role="dialog" aria-label={title ?? "side-panel"}>{children}</div> : null,
 }));
 
 vi.mock("sonner", () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
@@ -114,13 +114,15 @@ describe("CmsTagsManagement", () => {
     );
   });
 
-  it("archiva una etiqueta tras confirmar el modal", async () => {
+  it("archiva una etiqueta tras confirmar el drawer", async () => {
     vi.mocked(listCmsTags).mockResolvedValue([tag]);
     render(<CmsTagsManagement />);
     await waitFor(() => expect(screen.getByText("Fe")).toBeInTheDocument());
 
     fireEvent.click(screen.getByTitle("Archivar"));
-    expect(screen.getByText("¿Archivar etiqueta?")).toBeInTheDocument();
+    await waitFor(() =>
+      expect(screen.getByRole("dialog", { name: "Archivar etiqueta" })).toBeInTheDocument(),
+    );
 
     const confirm = screen.getAllByRole("button", { name: /^archivar$/i }).at(-1);
     expect(confirm).toBeDefined();

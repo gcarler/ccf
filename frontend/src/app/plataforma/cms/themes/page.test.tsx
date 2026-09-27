@@ -230,13 +230,15 @@ describe("CmsThemesPage", () => {
     expect(await screen.findByText("Tema activado.")).toBeInTheDocument();
   });
 
-  it("archiva un tema tras confirmar el modal", async () => {
+  it("archiva un tema tras confirmar el drawer", async () => {
     vi.mocked(listCmsThemes).mockResolvedValue([theme]);
     render(<CmsThemesPage />);
     await waitFor(() => expect(screen.getByText("Tema Oscuro")).toBeInTheDocument());
 
     fireEvent.click(screen.getByRole("button", { name: /^archivar$/i }));
-    expect(screen.getByText("¿Archivar tema?")).toBeInTheDocument();
+    await waitFor(() =>
+      expect(screen.getByRole("dialog", { name: "Archivar tema" })).toBeInTheDocument(),
+    );
 
     const confirm = screen.getAllByRole("button", { name: /^archivar$/i }).at(-1);
     expect(confirm).toBeDefined();
