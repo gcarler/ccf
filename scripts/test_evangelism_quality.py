@@ -164,6 +164,22 @@ def build_checks(args: argparse.Namespace) -> list[Check]:
             cwd=PROJECT_ROOT,
             reason="Valida formulario dinámico, numeración correlativa y generación de pase PDF ReportLab.",
         ),
+        Check(
+            label="4. Gatekeeper Scanner y Monitor de Aforo (TKT-EVT-GATEKEEPER-02)",
+            cmd=(
+                sys.executable,
+                "-m",
+                "pytest",
+                "-p",
+                "no:cov",
+                "-q",
+                "-o",
+                "addopts=",
+                "tests/test_evangelism_gatekeeper.py",
+            ),
+            cwd=PROJECT_ROOT,
+            reason="Valida control de acceso, bloqueo anti-fraude duplicate_access y aforo en vivo.",
+        ),
     ]
 
     if args.backend_deep or args.expanded:
