@@ -820,3 +820,283 @@ def test_015_defense_manual_close(client, db_session):
     assert data["score"] is not None
     assert data["ended_at"] is not None
 
+
+def test_016_create_knowledge_node(client, db_session):
+    admin, _, _ = seed_admin(db_session)
+    headers = auth_headers(client, email=admin.email, password="testpass123")
+    prog_r = client.post("/api/academy/admin/programs", json={
+        "name": "Prog KnNode", "code": f"PKN-{uuid.uuid4().hex[:6]}", "program_type": "curso_libre", "has_teachers": True, "teachers_can_grade": True
+    }, headers=headers)
+    prog_id = prog_r.json()["id"]
+    plan_r = client.post("/api/academy/admin/study-plans", json={"program_id": prog_id, "name": "Plan KN", "code": f"PLKN-{uuid.uuid4().hex[:4]}"}, headers=headers)
+    plan_id = plan_r.json()["id"]
+    sub_r = client.post(f"/api/academy/admin/study-plans/{plan_id}/subjects", json={"name": "Sub KN", "code": f"SKN-{uuid.uuid4().hex[:4]}", "credits": 2, "order_index": 1}, headers=headers)
+    sub_id = sub_r.json()["id"]
+    per_r = client.post("/api/academy/admin/periods", json={"name": "Period KN", "code": f"PERKN-{uuid.uuid4().hex[:4]}", "start_date": "2026-01-01", "end_date": "2026-12-31"}, headers=headers)
+    per_id = per_r.json()["id"]
+    sch_r = client.post("/api/academy/admin/grading-schemes", json={"name": f"SchemeKN-{uuid.uuid4().hex[:4]}", "scale_max": 100.0, "passing_grade": 70.0, "cuts": [{"name": "C1", "weight_percent": 100.0, "order_index": 1}]}, headers=headers)
+    sch_id = sch_r.json()["id"]
+    off_r = client.post("/api/academy/admin/offerings", json={"academic_period_id": per_id, "subject_id": sub_id, "grading_scheme_id": sch_id, "quota_max": 10}, headers=headers)
+    off_id = off_r.json()["id"]
+
+    node_r = client.post(f"/api/academy/knowledge/{off_id}/nodes", json={
+        "title": "Axiomas Fundamentales",
+        "description": "Comprensión de los 3 axiomas inviolables del sistema CCF",
+        "node_type": "concept",
+        "weight": 1.5,
+    }, headers=headers)
+    assert node_r.status_code == 201
+    node_data = node_r.json()
+    assert node_data["title"] == "Axiomas Fundamentales"
+    assert node_data["offering_id"] == off_id
+    assert node_data["node_type"] == "concept"
+    assert node_data["weight"] == 1.5
+
+
+def test_017_create_knowledge_edge(client, db_session):
+    admin, _, _ = seed_admin(db_session)
+    headers = auth_headers(client, email=admin.email, password="testpass123")
+    prog_r = client.post("/api/academy/admin/programs", json={
+        "name": "Prog KnEdge", "code": f"PKE-{uuid.uuid4().hex[:6]}", "program_type": "curso_libre", "has_teachers": True, "teachers_can_grade": True
+    }, headers=headers)
+    prog_id = prog_r.json()["id"]
+    plan_r = client.post("/api/academy/admin/study-plans", json={"program_id": prog_id, "name": "Plan KE", "code": f"PLKE-{uuid.uuid4().hex[:4]}"}, headers=headers)
+    plan_id = plan_r.json()["id"]
+    sub_r = client.post(f"/api/academy/admin/study-plans/{plan_id}/subjects", json={"name": "Sub KE", "code": f"SKE-{uuid.uuid4().hex[:4]}", "credits": 2, "order_index": 1}, headers=headers)
+    sub_id = sub_r.json()["id"]
+    per_r = client.post("/api/academy/admin/periods", json={"name": "Period KE", "code": f"PERKE-{uuid.uuid4().hex[:4]}", "start_date": "2026-01-01", "end_date": "2026-12-31"}, headers=headers)
+    per_id = per_r.json()["id"]
+    sch_r = client.post("/api/academy/admin/grading-schemes", json={"name": f"SchemeKE-{uuid.uuid4().hex[:4]}", "scale_max": 100.0, "passing_grade": 70.0, "cuts": [{"name": "C1", "weight_percent": 100.0, "order_index": 1}]}, headers=headers)
+    sch_id = sch_r.json()["id"]
+    off_r = client.post("/api/academy/admin/offerings", json={"academic_period_id": per_id, "subject_id": sub_id, "grading_scheme_id": sch_id, "quota_max": 10}, headers=headers)
+    off_id = off_r.json()["id"]
+
+    node1_r = client.post(f"/api/academy/knowledge/{off_id}/nodes", json={"title": "Nodo Origen", "node_type": "concept"}, headers=headers)
+    node2_r = client.post(f"/api/academy/knowledge/{off_id}/nodes", json={"title": "Nodo Destino", "node_type": "skill"}, headers=headers)
+    node1_id = node1_r.json()["id"]
+    node2_id = node2_r.json()["id"]
+
+    # Valid edge
+    edge_r = client.post("/api/academy/knowledge/edges", json={
+        "source_node_id": node1_id,
+        "target_node_id": node2_id,
+        "edge_type": "requires",
+        "weight": 1.0,
+    }, headers=headers)
+    assert edge_r.status_code == 201
+    edge_data = edge_r.json()
+    assert edge_data["source_node_id"] == node1_id
+    assert edge_data["target_node_id"] == node2_id
+    assert edge_data["edge_type"] == "requires"
+
+    # Self connection rejected
+    self_edge_r = client.post("/api/academy/knowledge/edges", json={
+        "source_node_id": node1_id,
+        "target_node_id": node1_id,
+        "edge_type": "requires",
+    }, headers=headers)
+    assert self_edge_r.status_code == 400
+
+
+def test_018_get_knowledge_graph(client, db_session):
+    admin, _, _ = seed_admin(db_session)
+    headers = auth_headers(client, email=admin.email, password="testpass123")
+    prog_r = client.post("/api/academy/admin/programs", json={
+        "name": "Prog KnGraph", "code": f"PKG-{uuid.uuid4().hex[:6]}", "program_type": "curso_libre", "has_teachers": True, "teachers_can_grade": True
+    }, headers=headers)
+    prog_id = prog_r.json()["id"]
+    plan_r = client.post("/api/academy/admin/study-plans", json={"program_id": prog_id, "name": "Plan KG", "code": f"PLKG-{uuid.uuid4().hex[:4]}"}, headers=headers)
+    plan_id = plan_r.json()["id"]
+    sub_r = client.post(f"/api/academy/admin/study-plans/{plan_id}/subjects", json={"name": "Sub KG", "code": f"SKG-{uuid.uuid4().hex[:4]}", "credits": 2, "order_index": 1}, headers=headers)
+    sub_id = sub_r.json()["id"]
+    per_r = client.post("/api/academy/admin/periods", json={"name": "Period KG", "code": f"PERKG-{uuid.uuid4().hex[:4]}", "start_date": "2026-01-01", "end_date": "2026-12-31"}, headers=headers)
+    per_id = per_r.json()["id"]
+    sch_r = client.post("/api/academy/admin/grading-schemes", json={"name": f"SchemeKG-{uuid.uuid4().hex[:4]}", "scale_max": 100.0, "passing_grade": 70.0, "cuts": [{"name": "C1", "weight_percent": 100.0, "order_index": 1}]}, headers=headers)
+    sch_id = sch_r.json()["id"]
+    off_r = client.post("/api/academy/admin/offerings", json={"academic_period_id": per_id, "subject_id": sub_id, "grading_scheme_id": sch_id, "quota_max": 10}, headers=headers)
+    off_id = off_r.json()["id"]
+
+    client.post(f"/api/academy/knowledge/{off_id}/nodes", json={"title": "N1", "node_type": "concept"}, headers=headers)
+    client.post(f"/api/academy/knowledge/{off_id}/nodes", json={"title": "N2", "node_type": "competency"}, headers=headers)
+
+    graph_r = client.get(f"/api/academy/knowledge/{off_id}/graph", headers=headers)
+    assert graph_r.status_code == 200
+    graph_data = graph_r.json()
+    assert graph_data["offering_id"] == off_id
+    assert len(graph_data["nodes"]) >= 2
+    assert isinstance(graph_data["edges"], list)
+
+
+def test_019_knowledge_node_evaluation_and_student_progress(client, db_session):
+    admin, _, _ = seed_admin(db_session)
+    headers = auth_headers(client, email=admin.email, password="testpass123")
+    prog_r = client.post("/api/academy/admin/programs", json={
+        "name": "Prog KnEval", "code": f"PKEV-{uuid.uuid4().hex[:6]}", "program_type": "curso_libre", "has_teachers": True, "teachers_can_grade": True
+    }, headers=headers)
+    prog_id = prog_r.json()["id"]
+    plan_r = client.post("/api/academy/admin/study-plans", json={"program_id": prog_id, "name": "Plan KEV", "code": f"PLKEV-{uuid.uuid4().hex[:4]}"}, headers=headers)
+    plan_id = plan_r.json()["id"]
+    sub_r = client.post(f"/api/academy/admin/study-plans/{plan_id}/subjects", json={"name": "Sub KEV", "code": f"SKEV-{uuid.uuid4().hex[:4]}", "credits": 2, "order_index": 1}, headers=headers)
+    sub_id = sub_r.json()["id"]
+    per_r = client.post("/api/academy/admin/periods", json={"name": "Period KEV", "code": f"PERKEV-{uuid.uuid4().hex[:4]}", "start_date": "2026-01-01", "end_date": "2026-12-31"}, headers=headers)
+    per_id = per_r.json()["id"]
+    sch_r = client.post("/api/academy/admin/grading-schemes", json={"name": f"SchemeKEV-{uuid.uuid4().hex[:4]}", "scale_max": 100.0, "passing_grade": 70.0, "cuts": [{"name": "C1", "weight_percent": 100.0, "order_index": 1}]}, headers=headers)
+    sch_id = sch_r.json()["id"]
+    off_r = client.post("/api/academy/admin/offerings", json={"academic_period_id": per_id, "subject_id": sub_id, "grading_scheme_id": sch_id, "quota_max": 10}, headers=headers)
+    off_id = off_r.json()["id"]
+
+    node_r = client.post(f"/api/academy/knowledge/{off_id}/nodes", json={"title": "Concepto Evaluable", "node_type": "concept"}, headers=headers)
+    node_id = node_r.json()["id"]
+
+    # Evaluate node
+    ev_r = client.post(f"/api/academy/knowledge/nodes/{node_id}/evaluate", json={
+        "response_text": "Este concepto se fundamenta en la arquitectura basada en microservicios y sincronización continua.",
+        "mastery_score": 0.85
+    }, headers=headers)
+    assert ev_r.status_code == 200
+    ev_data = ev_r.json()
+    assert ev_data["node_id"] == node_id
+    assert ev_data["mastery_score"] == 0.85
+    assert ev_data["attempts"] == 1
+
+    # Check student progress
+    prog_r = client.get(f"/api/academy/knowledge/{off_id}/student-progress", headers=headers)
+    assert prog_r.status_code == 200
+    p_data = prog_r.json()
+    assert len(p_data) >= 1
+    matching = [p for p in p_data if p["node_id"] == node_id]
+    assert len(matching) == 1
+    assert matching[0]["mastery_score"] == 0.85
+
+
+def test_020_calculate_learning_path(client, db_session):
+    admin, _, _ = seed_admin(db_session)
+    headers = auth_headers(client, email=admin.email, password="testpass123")
+    prog_r = client.post("/api/academy/admin/programs", json={
+        "name": "Prog KnPath", "code": f"PKP-{uuid.uuid4().hex[:6]}", "program_type": "curso_libre", "has_teachers": True, "teachers_can_grade": True
+    }, headers=headers)
+    prog_id = prog_r.json()["id"]
+    plan_r = client.post("/api/academy/admin/study-plans", json={"program_id": prog_id, "name": "Plan KP", "code": f"PLKP-{uuid.uuid4().hex[:4]}"}, headers=headers)
+    plan_id = plan_r.json()["id"]
+    sub_r = client.post(f"/api/academy/admin/study-plans/{plan_id}/subjects", json={"name": "Sub KP", "code": f"SKP-{uuid.uuid4().hex[:4]}", "credits": 2, "order_index": 1}, headers=headers)
+    sub_id = sub_r.json()["id"]
+    per_r = client.post("/api/academy/admin/periods", json={"name": "Period KP", "code": f"PERKP-{uuid.uuid4().hex[:4]}", "start_date": "2026-01-01", "end_date": "2026-12-31"}, headers=headers)
+    per_id = per_r.json()["id"]
+    sch_r = client.post("/api/academy/admin/grading-schemes", json={"name": f"SchemeKP-{uuid.uuid4().hex[:4]}", "scale_max": 100.0, "passing_grade": 70.0, "cuts": [{"name": "C1", "weight_percent": 100.0, "order_index": 1}]}, headers=headers)
+    sch_id = sch_r.json()["id"]
+    off_r = client.post("/api/academy/admin/offerings", json={"academic_period_id": per_id, "subject_id": sub_id, "grading_scheme_id": sch_id, "quota_max": 10}, headers=headers)
+    off_id = off_r.json()["id"]
+
+    # Create node 1 (prereq) and node 2 (advanced)
+    n1_r = client.post(f"/api/academy/knowledge/{off_id}/nodes", json={"title": "Prerrequisito A", "node_type": "concept"}, headers=headers)
+    n2_r = client.post(f"/api/academy/knowledge/{off_id}/nodes", json={"title": "Avanzado B", "node_type": "skill"}, headers=headers)
+    n1_id = n1_r.json()["id"]
+    n2_id = n2_r.json()["id"]
+
+    client.post("/api/academy/knowledge/edges", json={"source_node_id": n1_id, "target_node_id": n2_id, "edge_type": "requires"}, headers=headers)
+
+    path_r = client.get(f"/api/academy/knowledge/{off_id}/learning-path", headers=headers)
+    assert path_r.status_code == 200
+    p_data = path_r.json()
+    assert p_data["offering_id"] == off_id
+    assert len(p_data["path"]) == 2
+    # Node 1 has no prereqs so it's ready_to_learn; node 2 requires node 1 so it's needs_prerequisites
+    n1_entry = next(item for item in p_data["path"] if item["node_id"] == n1_id)
+    n2_entry = next(item for item in p_data["path"] if item["node_id"] == n2_id)
+    assert n1_entry["status"] == "ready_to_learn"
+    assert n2_entry["status"] == "needs_prerequisites"
+    assert p_data["suggested_next_node"]["node_id"] == n1_id
+
+
+def test_021_create_portfolio_entry_and_publish_toggle(client, db_session):
+    admin, _, _ = seed_admin(db_session)
+    headers = auth_headers(client, email=admin.email, password="testpass123")
+
+    create_r = client.post("/api/academy/portfolio/entries", json={
+        "entry_type": "project",
+        "title": "Proyecto de Fin de Grado",
+        "description": "Implementación de arquitectura limpia y motor pedagógico",
+        "evidence_url": "https://example.com/project-report.pdf",
+        "score": 98.0,
+        "is_public": False,
+    }, headers=headers)
+    assert create_r.status_code == 201
+    entry = create_r.json()
+    entry_id = entry["id"]
+    assert entry["title"] == "Proyecto de Fin de Grado"
+    assert entry["credential_hash"] is not None
+    assert len(entry["credential_hash"]) == 64
+    assert entry["is_public"] is False
+
+    # Get my portfolio
+    my_r = client.get("/api/academy/portfolio/my", headers=headers)
+    assert my_r.status_code == 200
+    assert any(e["id"] == entry_id for e in my_r.json())
+
+    # Toggle publish
+    pub_r = client.post(f"/api/academy/portfolio/entries/{entry_id}/publish", headers=headers)
+    assert pub_r.status_code == 200
+    assert pub_r.json()["is_public"] is True
+
+    # Toggle back
+    priv_r = client.post(f"/api/academy/portfolio/entries/{entry_id}/publish", headers=headers)
+    assert priv_r.status_code == 200
+    assert priv_r.json()["is_public"] is False
+
+
+def test_022_verify_portfolio_credential_and_auto_defense_portfolio(client, db_session):
+    admin, _, _ = seed_admin(db_session)
+    headers = auth_headers(client, email=admin.email, password="testpass123")
+
+    # 1. Manual entry verification
+    create_r = client.post("/api/academy/portfolio/entries", json={
+        "entry_type": "certification",
+        "title": "Certificado de Honor Socrático",
+        "score": 100.0,
+    }, headers=headers)
+    assert create_r.status_code == 201
+    entry_id = create_r.json()["id"]
+
+    verify_r = client.get(f"/api/academy/portfolio/entries/{entry_id}/verify", headers=headers)
+    assert verify_r.status_code == 200
+    v_data = verify_r.json()
+    assert v_data["entry_id"] == entry_id
+    assert v_data["is_valid"] is True
+    assert v_data["credential_hash"] == v_data["calculated_hash"]
+
+    # 2. Defense closure auto-creates portfolio entry
+    prog_r = client.post("/api/academy/admin/programs", json={
+        "name": "Prog PortDef", "code": f"PPD-{uuid.uuid4().hex[:6]}", "program_type": "curso_libre", "has_teachers": True, "teachers_can_grade": True
+    }, headers=headers)
+    prog_id = prog_r.json()["id"]
+    plan_r = client.post("/api/academy/admin/study-plans", json={"program_id": prog_id, "name": "Plan PD", "code": f"PLPD-{uuid.uuid4().hex[:4]}"}, headers=headers)
+    plan_id = plan_r.json()["id"]
+    sub_r = client.post(f"/api/academy/admin/study-plans/{plan_id}/subjects", json={"name": "Sub PD", "code": f"SPD-{uuid.uuid4().hex[:4]}", "credits": 2, "order_index": 1}, headers=headers)
+    sub_id = sub_r.json()["id"]
+    per_r = client.post("/api/academy/admin/periods", json={"name": "Period PD", "code": f"PERPD-{uuid.uuid4().hex[:4]}", "start_date": "2026-01-01", "end_date": "2026-12-31"}, headers=headers)
+    per_id = per_r.json()["id"]
+    sch_r = client.post("/api/academy/admin/grading-schemes", json={"name": f"SchemePD-{uuid.uuid4().hex[:4]}", "scale_max": 100.0, "passing_grade": 70.0, "cuts": [{"name": "C1", "weight_percent": 100.0, "order_index": 1}]}, headers=headers)
+    sch_id = sch_r.json()["id"]
+    off_r = client.post("/api/academy/admin/offerings", json={"academic_period_id": per_id, "subject_id": sub_id, "grading_scheme_id": sch_id, "quota_max": 10}, headers=headers)
+    off_id = off_r.json()["id"]
+
+    start_r = client.post(f"/api/academy/defense/{off_id}/start", json={}, headers=headers)
+    session_id = start_r.json()["id"]
+    client.post(f"/api/academy/defense/{session_id}/answer", json={"answer": "Respuesta completa a la defensa oral."}, headers=headers)
+    close_r = client.post(f"/api/academy/defense/{session_id}/close", headers=headers)
+    assert close_r.status_code == 200
+
+    # Verify auto-created entry appears in my portfolio
+    my_r = client.get("/api/academy/portfolio/my", headers=headers)
+    assert my_r.status_code == 200
+    defense_entries = [e for e in my_r.json() if e["entry_type"] == "defense" and e.get("offering_id") == off_id]
+    assert len(defense_entries) >= 1
+    def_entry = defense_entries[0]
+    assert def_entry["credential_hash"] is not None
+
+    # Verify defense entry hash integrity
+    def_verify_r = client.get(f"/api/academy/portfolio/entries/{def_entry['id']}/verify", headers=headers)
+    assert def_verify_r.status_code == 200
+    assert def_verify_r.json()["is_valid"] is True
+
+

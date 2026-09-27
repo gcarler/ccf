@@ -3047,7 +3047,10 @@ def close_defense_session(
         raise HTTPException(status_code=404, detail="Sesión de defensa no encontrada")
 
     now = _utcnow()
-    from backend.services.academic_engine_service import evaluate_defense_session
+    from backend.services.academic_engine_service import (
+        compute_portfolio_credential_hash,
+        evaluate_defense_session,
+    )
     questions = session.questions or []
     answers = session.answers or []
     ev = evaluate_defense_session(questions, answers)
@@ -3057,6 +3060,31 @@ def close_defense_session(
         session.ended_at = now
     if session.score is None:
         session.score = ev["score"]
+
+    # Requisito (7): Auto-crear AcademyPortfolioEntry al cerrar defensa
+    cred_hash = compute_portfolio_credential_hash(
+        session.student_id, session.id, session.score, session.ended_at
+    )
+    existing_entry = db.query(models.AcademyPortfolioEntry).filter(
+        models.AcademyPortfolioEntry.student_id == session.student_id,
+        models.AcademyPortfolioEntry.credential_hash == cred_hash,
+        models.AcademyPortfolioEntry.deleted_at.is_(None),
+    ).first()
+    if not existing_entry:
+        portfolio_entry = models.AcademyPortfolioEntry(
+            student_id=session.student_id,
+            offering_id=session.offering_id,
+            entry_type="defense",
+            title="Defensa Socrática Interactiva",
+            description=f"Defensa oral/socrática con puntuación oficial de {session.score:.1f}/100.",
+            score=session.score,
+            issued_at=session.ended_at,
+            credential_hash=cred_hash,
+            is_public=False,
+            sede_id=session.sede_id,
+            created_at=now,
+        )
+        db.add(portfolio_entry)
 
     db.commit()
     db.refresh(session)
@@ -3068,5 +3096,359 @@ def close_defense_session(
         feedback=ev["feedback"],
         ended_at=session.ended_at,
     )
+
+
+# ── Grafo de Conocimiento & Prerequisitos Cognitivos ──────────────────────────
+
+@router.get("/knowledge/{offering_id}/graph", response_model=schemas.KnowledgeGraphResponse)
+def get_knowledge_graph(
+    offering_id: UUID,
+    current_user: AcademyReader,
+    db: Session = Depends(get_db),
+):
+    nodes = (
+        db.query(models.AcademyKnowledgeNode)
+        .filter(
+            models.AcademyKnowledgeNode.offering_id == offering_id,
+            models.AcademyKnowledgeNode.deleted_at.is_(None),
+        )
+        .order_by(models.AcademyKnowledgeNode.created_at.asc())
+        .all()
+    )
+    node_ids = [n.id for n in nodes]
+    edges = []
+    if node_ids:
+        edges = (
+            db.query(models.AcademyKnowledgeEdge)
+            .filter(
+                models.AcademyKnowledgeEdge.source_node_id.in_(node_ids),
+                models.AcademyKnowledgeEdge.target_node_id.in_(node_ids),
+                models.AcademyKnowledgeEdge.deleted_at.is_(None),
+            )
+            .all()
+        )
+    return schemas.KnowledgeGraphResponse(
+        offering_id=offering_id,
+        nodes=nodes,
+        edges=edges,
+    )
+
+
+@router.post("/knowledge/{offering_id}/nodes", response_model=schemas.KnowledgeNodeRead, status_code=status.HTTP_201_CREATED)
+def create_knowledge_node(
+    offering_id: UUID,
+    payload: schemas.KnowledgeNodeCreate,
+    current_user: AcademyReader,
+    db: Session = Depends(get_db),
+):
+    if not _can_edit_academy(db, current_user):
+        raise HTTPException(status_code=403, detail="No tienes permisos para crear nodos de conocimiento")
+
+    offering = db.query(models.AcademyPeriodOffering).filter(
+        models.AcademyPeriodOffering.id == offering_id,
+        models.AcademyPeriodOffering.deleted_at.is_(None),
+    ).first()
+    if not offering:
+        raise HTTPException(status_code=404, detail="Comisión académica no encontrada")
+
+    user_sede_id = get_user_sede_id(db, current_user.id)
+    node = models.AcademyKnowledgeNode(
+        offering_id=offering_id,
+        title=payload.title,
+        description=payload.description,
+        node_type=payload.node_type,
+        weight=payload.weight,
+        sede_id=user_sede_id,
+        created_at=_utcnow(),
+    )
+    db.add(node)
+    db.commit()
+    db.refresh(node)
+    return node
+
+
+@router.post("/knowledge/edges", response_model=schemas.KnowledgeEdgeRead, status_code=status.HTTP_201_CREATED)
+def create_knowledge_edge(
+    payload: schemas.KnowledgeEdgeCreate,
+    current_user: AcademyReader,
+    db: Session = Depends(get_db),
+):
+    if not _can_edit_academy(db, current_user):
+        raise HTTPException(status_code=403, detail="No tienes permisos para conectar nodos de conocimiento")
+
+    source_node = db.query(models.AcademyKnowledgeNode).filter(
+        models.AcademyKnowledgeNode.id == payload.source_node_id,
+        models.AcademyKnowledgeNode.deleted_at.is_(None),
+    ).first()
+    target_node = db.query(models.AcademyKnowledgeNode).filter(
+        models.AcademyKnowledgeNode.id == payload.target_node_id,
+        models.AcademyKnowledgeNode.deleted_at.is_(None),
+    ).first()
+    if not source_node or not target_node:
+        raise HTTPException(status_code=404, detail="Uno o ambos nodos no fueron encontrados")
+
+    if source_node.id == target_node.id:
+        raise HTTPException(status_code=400, detail="Un nodo no puede conectarse consigo mismo")
+
+    user_sede_id = get_user_sede_id(db, current_user.id)
+    edge = models.AcademyKnowledgeEdge(
+        source_node_id=payload.source_node_id,
+        target_node_id=payload.target_node_id,
+        edge_type=payload.edge_type,
+        weight=payload.weight,
+        sede_id=user_sede_id,
+        created_at=_utcnow(),
+    )
+    db.add(edge)
+    db.commit()
+    db.refresh(edge)
+    return edge
+
+
+@router.get("/knowledge/{offering_id}/student-progress", response_model=List[schemas.StudentNodeProgressRead])
+def get_student_knowledge_progress(
+    offering_id: UUID,
+    current_user: AcademyReader,
+    db: Session = Depends(get_db),
+):
+    nodes = (
+        db.query(models.AcademyKnowledgeNode.id)
+        .filter(
+            models.AcademyKnowledgeNode.offering_id == offering_id,
+            models.AcademyKnowledgeNode.deleted_at.is_(None),
+        )
+        .all()
+    )
+    node_ids = [n[0] for n in nodes]
+    if not node_ids:
+        return []
+
+    progress = (
+        db.query(models.AcademyStudentNodeProgress)
+        .filter(
+            models.AcademyStudentNodeProgress.student_id == current_user.id,
+            models.AcademyStudentNodeProgress.node_id.in_(node_ids),
+            models.AcademyStudentNodeProgress.deleted_at.is_(None),
+        )
+        .all()
+    )
+    return progress
+
+
+@router.post("/knowledge/nodes/{node_id}/evaluate", response_model=schemas.NodeEvaluateResponse)
+def evaluate_knowledge_node(
+    node_id: UUID,
+    payload: schemas.NodeEvaluateRequest,
+    current_user: AcademyReader,
+    db: Session = Depends(get_db),
+):
+    node = db.query(models.AcademyKnowledgeNode).filter(
+        models.AcademyKnowledgeNode.id == node_id,
+        models.AcademyKnowledgeNode.deleted_at.is_(None),
+    ).first()
+    if not node:
+        raise HTTPException(status_code=404, detail="Nodo de conocimiento no encontrado")
+
+    progress = db.query(models.AcademyStudentNodeProgress).filter(
+        models.AcademyStudentNodeProgress.student_id == current_user.id,
+        models.AcademyStudentNodeProgress.node_id == node_id,
+        models.AcademyStudentNodeProgress.deleted_at.is_(None),
+    ).first()
+
+    now = _utcnow()
+    user_sede_id = get_user_sede_id(db, current_user.id)
+
+    if not progress:
+        progress = models.AcademyStudentNodeProgress(
+            student_id=current_user.id,
+            node_id=node_id,
+            mastery_score=0.0,
+            attempts=0,
+            sede_id=user_sede_id,
+            created_at=now,
+        )
+        db.add(progress)
+
+    progress.attempts += 1
+    progress.last_evaluated_at = now
+
+    if payload.mastery_score is not None:
+        progress.mastery_score = max(0.0, min(1.0, float(payload.mastery_score)))
+        feedback = f"Evaluación registrada con dominio de {progress.mastery_score * 100:.0f}%."
+    elif payload.response_text:
+        text_len = len(payload.response_text.strip())
+        if text_len >= 80:
+            calculated_mastery = 0.95
+            feedback = "Excelente fundamentación conceptual demostrada."
+        elif text_len >= 30:
+            calculated_mastery = 0.75
+            feedback = "Comprensión adecuada del concepto con espacio para profundizar."
+        else:
+            calculated_mastery = 0.50
+            feedback = "Respuesta preliminar; se sugiere mayor desarrollo explicativo."
+        progress.mastery_score = max(progress.mastery_score, calculated_mastery)
+    else:
+        feedback = "Evaluación preliminar registrada."
+
+    db.commit()
+    db.refresh(progress)
+
+    return schemas.NodeEvaluateResponse(
+        node_id=node.id,
+        student_id=current_user.id,
+        mastery_score=progress.mastery_score,
+        attempts=progress.attempts,
+        feedback=feedback,
+        last_evaluated_at=progress.last_evaluated_at,
+    )
+
+
+@router.get("/knowledge/{offering_id}/learning-path", response_model=schemas.LearningPathResponse)
+def get_learning_path(
+    offering_id: UUID,
+    current_user: AcademyReader,
+    db: Session = Depends(get_db),
+):
+    from backend.services.academic_engine_service import compute_learning_path
+    result = compute_learning_path(db, offering_id, current_user.id)
+    return schemas.LearningPathResponse(**result)
+
+
+# ── Portafolio Verificable ───────────────────────────────────────────────────
+
+@router.get("/portfolio/my", response_model=List[schemas.PortfolioEntryRead])
+def get_my_portfolio(
+    current_user: AcademyReader,
+    db: Session = Depends(get_db),
+):
+    entries = (
+        db.query(models.AcademyPortfolioEntry)
+        .filter(
+            models.AcademyPortfolioEntry.student_id == current_user.id,
+            models.AcademyPortfolioEntry.deleted_at.is_(None),
+        )
+        .order_by(models.AcademyPortfolioEntry.issued_at.desc())
+        .all()
+    )
+    return entries
+
+
+@router.get("/portfolio/{student_id}", response_model=List[schemas.PortfolioEntryRead])
+def get_student_portfolio(
+    student_id: UUID,
+    current_user: AcademyReader,
+    db: Session = Depends(get_db),
+):
+    query = db.query(models.AcademyPortfolioEntry).filter(
+        models.AcademyPortfolioEntry.student_id == student_id,
+        models.AcademyPortfolioEntry.deleted_at.is_(None),
+    )
+    if student_id != current_user.id and not _can_edit_academy(db, current_user):
+        query = query.filter(models.AcademyPortfolioEntry.is_public.is_(True))
+
+    entries = query.order_by(models.AcademyPortfolioEntry.issued_at.desc()).all()
+    return entries
+
+
+@router.post("/portfolio/entries", response_model=schemas.PortfolioEntryRead, status_code=status.HTTP_201_CREATED)
+def create_portfolio_entry(
+    payload: schemas.PortfolioEntryCreate,
+    current_user: AcademyReader,
+    db: Session = Depends(get_db),
+):
+    now = _utcnow().replace(microsecond=0)
+    user_sede_id = get_user_sede_id(db, current_user.id)
+    from backend.services.academic_engine_service import compute_portfolio_credential_hash
+    import uuid as _uuid_mod
+    entry_id = _uuid_mod.uuid4()
+    cred_hash = compute_portfolio_credential_hash(current_user.id, entry_id, payload.score, now)
+
+    entry = models.AcademyPortfolioEntry(
+        id=entry_id,
+        student_id=current_user.id,
+        offering_id=payload.offering_id,
+        entry_type=payload.entry_type,
+        title=payload.title,
+        description=payload.description,
+        evidence_url=payload.evidence_url,
+        score=payload.score,
+        issued_at=now,
+        credential_hash=cred_hash,
+        is_public=payload.is_public,
+        sede_id=user_sede_id,
+        created_at=now,
+    )
+    db.add(entry)
+    db.commit()
+    db.refresh(entry)
+    return entry
+
+
+@router.post("/portfolio/entries/{entry_id}/publish", response_model=schemas.PortfolioPublishToggleResponse)
+def toggle_portfolio_publish(
+    entry_id: UUID,
+    current_user: AcademyReader,
+    db: Session = Depends(get_db),
+):
+    entry = db.query(models.AcademyPortfolioEntry).filter(
+        models.AcademyPortfolioEntry.id == entry_id,
+        models.AcademyPortfolioEntry.deleted_at.is_(None),
+    ).first()
+    if not entry:
+        raise HTTPException(status_code=404, detail="Entrada de portafolio no encontrada")
+
+    if entry.student_id != current_user.id and not _can_edit_academy(db, current_user):
+        raise HTTPException(status_code=403, detail="No tienes autorización para modificar esta entrada")
+
+    entry.is_public = not entry.is_public
+    db.commit()
+    db.refresh(entry)
+
+    msg = "Entrada publicada en portafolio público" if entry.is_public else "Entrada privada"
+    return schemas.PortfolioPublishToggleResponse(
+        id=entry.id,
+        is_public=entry.is_public,
+        message=msg,
+    )
+
+
+@router.get("/portfolio/entries/{entry_id}/verify", response_model=schemas.PortfolioVerifyResponse)
+def verify_portfolio_entry(
+    entry_id: UUID,
+    current_user: AcademyReader,
+    db: Session = Depends(get_db),
+):
+    entry = db.query(models.AcademyPortfolioEntry).filter(
+        models.AcademyPortfolioEntry.id == entry_id,
+        models.AcademyPortfolioEntry.deleted_at.is_(None),
+    ).first()
+    if not entry:
+        raise HTTPException(status_code=404, detail="Entrada de portafolio no encontrada")
+
+    from backend.services.academic_engine_service import compute_portfolio_credential_hash
+    calc_hash = compute_portfolio_credential_hash(entry.student_id, entry.id, entry.score, entry.issued_at)
+    is_valid = (entry.credential_hash == calc_hash)
+    if not is_valid and entry.entry_type == "defense":
+        # Check against defense session
+        def_session = db.query(models.AcademyDefenseSession).filter(
+            models.AcademyDefenseSession.student_id == entry.student_id,
+            models.AcademyDefenseSession.score == entry.score,
+            models.AcademyDefenseSession.deleted_at.is_(None),
+        ).first()
+        if def_session:
+            alt_hash = compute_portfolio_credential_hash(entry.student_id, def_session.id, entry.score, entry.issued_at)
+            if alt_hash == entry.credential_hash:
+                is_valid = True
+                calc_hash = alt_hash
+
+    return schemas.PortfolioVerifyResponse(
+        entry_id=entry.id,
+        is_valid=is_valid,
+        credential_hash=entry.credential_hash,
+        calculated_hash=calc_hash,
+        issued_at=entry.issued_at,
+        student_id=entry.student_id,
+    )
+
 
 

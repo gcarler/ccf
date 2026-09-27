@@ -1180,3 +1180,140 @@ class DefenseCloseResponse(BaseModel):
 
     model_config = ConfigDict(from_attributes=True)
 
+
+# ── Grafo de Conocimiento & Portafolio Verificable ────────────────────────────
+
+class KnowledgeNodeCreate(BaseModel):
+    title: str = Field(min_length=1, max_length=255, description="Título del nodo de conocimiento")
+    description: Optional[str] = Field(default=None, description="Descripción del concepto, habilidad o competencia")
+    node_type: str = Field(default="concept", description="Tipo de nodo: concept, skill, competency")
+    weight: float = Field(default=1.0, ge=0.0, description="Ponderación del nodo en la asignatura")
+
+
+class KnowledgeNodeRead(BaseModel):
+    id: UUID
+    offering_id: UUID
+    title: str
+    description: Optional[str] = None
+    node_type: str
+    weight: float
+    created_at: datetime
+    deleted_at: Optional[datetime] = None
+    sede_id: Optional[UUID] = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class KnowledgeEdgeCreate(BaseModel):
+    source_node_id: UUID = Field(description="ID del nodo origen / prerrequisito")
+    target_node_id: UUID = Field(description="ID del nodo destino")
+    edge_type: str = Field(default="requires", description="Tipo de relación: requires, leads_to, related")
+    weight: float = Field(default=1.0, ge=0.0, description="Peso de la conexión")
+
+
+class KnowledgeEdgeRead(BaseModel):
+    id: UUID
+    source_node_id: UUID
+    target_node_id: UUID
+    edge_type: str
+    weight: float
+    created_at: datetime
+    deleted_at: Optional[datetime] = None
+    sede_id: Optional[UUID] = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class KnowledgeGraphResponse(BaseModel):
+    offering_id: UUID
+    nodes: List[KnowledgeNodeRead]
+    edges: List[KnowledgeEdgeRead]
+
+
+class StudentNodeProgressRead(BaseModel):
+    id: UUID
+    student_id: UUID
+    node_id: UUID
+    mastery_score: float
+    attempts: int
+    last_evaluated_at: Optional[datetime] = None
+    created_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class NodeEvaluateRequest(BaseModel):
+    response_text: Optional[str] = Field(default=None, description="Respuesta o argumentación del estudiante")
+    mastery_score: Optional[float] = Field(default=None, ge=0.0, le=1.0, description="Puntaje de dominio opcional")
+
+
+class NodeEvaluateResponse(BaseModel):
+    node_id: UUID
+    student_id: UUID
+    mastery_score: float
+    attempts: int
+    feedback: str
+    last_evaluated_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class LearningPathNode(BaseModel):
+    node_id: UUID
+    title: str
+    node_type: str
+    mastery_score: float
+    status: str
+    order_index: int
+
+
+class LearningPathResponse(BaseModel):
+    offering_id: UUID
+    student_id: UUID
+    current_average_mastery: float
+    path: List[LearningPathNode]
+    suggested_next_node: Optional[LearningPathNode] = None
+
+
+class PortfolioEntryCreate(BaseModel):
+    offering_id: Optional[UUID] = Field(default=None, description="Comisión académica asociada (opcional)")
+    entry_type: str = Field(default="project", description="Tipo: project, defense, certification, grade")
+    title: str = Field(min_length=1, max_length=255, description="Título del logro o evidencia")
+    description: Optional[str] = Field(default=None, description="Descripción detallada del artefacto")
+    evidence_url: Optional[str] = Field(default=None, max_length=500, description="Enlace a la evidencia")
+    score: Optional[float] = Field(default=None, ge=0.0, le=100.0, description="Calificación cuantitativa")
+    is_public: bool = Field(default=False, description="Visibilidad en el portafolio público")
+
+
+class PortfolioEntryRead(BaseModel):
+    id: UUID
+    student_id: UUID
+    offering_id: Optional[UUID] = None
+    entry_type: str
+    title: str
+    description: Optional[str] = None
+    evidence_url: Optional[str] = None
+    score: Optional[float] = None
+    issued_at: datetime
+    credential_hash: Optional[str] = None
+    is_public: bool
+    created_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class PortfolioPublishToggleResponse(BaseModel):
+    id: UUID
+    is_public: bool
+    message: str
+
+
+class PortfolioVerifyResponse(BaseModel):
+    entry_id: UUID
+    is_valid: bool
+    credential_hash: Optional[str] = None
+    calculated_hash: str
+    issued_at: datetime
+    student_id: UUID
+
+

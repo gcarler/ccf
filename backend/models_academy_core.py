@@ -629,3 +629,79 @@ class AcademyDefenseSession(Base):
     submission = relationship("AssignmentSubmission")
     student = relationship("Persona", foreign_keys=[student_id])
 
+
+class AcademyKnowledgeNode(Base):
+    __tablename__ = "academy_knowledge_nodes"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
+    offering_id = Column(UUID(as_uuid=True), ForeignKey("academy_period_offerings.id", ondelete="CASCADE"), nullable=False, index=True)
+    title = Column(String(255), nullable=False)
+    description = Column(Text, nullable=True)
+    node_type = Column(String(50), nullable=False, default="concept")  # 'concept', 'skill', 'competency'
+    weight = Column(Float, nullable=False, default=1.0)
+    created_at = Column(DateTime(timezone=True), default=_utcnow, nullable=False)
+    deleted_at = Column(DateTime(timezone=True), nullable=True)
+    sede_id = Column(UUID(as_uuid=True), ForeignKey("sedes.id", ondelete="SET NULL"), nullable=True, index=True)
+
+    offering = relationship("AcademyPeriodOffering")
+
+
+class AcademyKnowledgeEdge(Base):
+    __tablename__ = "academy_knowledge_edges"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
+    source_node_id = Column(UUID(as_uuid=True), ForeignKey("academy_knowledge_nodes.id", ondelete="CASCADE"), nullable=False, index=True)
+    target_node_id = Column(UUID(as_uuid=True), ForeignKey("academy_knowledge_nodes.id", ondelete="CASCADE"), nullable=False, index=True)
+    edge_type = Column(String(50), nullable=False, default="requires")  # 'requires', 'leads_to', 'related'
+    weight = Column(Float, nullable=False, default=1.0)
+    created_at = Column(DateTime(timezone=True), default=_utcnow, nullable=False)
+    deleted_at = Column(DateTime(timezone=True), nullable=True)
+    sede_id = Column(UUID(as_uuid=True), ForeignKey("sedes.id", ondelete="SET NULL"), nullable=True, index=True)
+
+    source_node = relationship("AcademyKnowledgeNode", foreign_keys=[source_node_id])
+    target_node = relationship("AcademyKnowledgeNode", foreign_keys=[target_node_id])
+
+
+class AcademyStudentNodeProgress(Base):
+    __tablename__ = "academy_student_node_progress"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
+    student_id = Column(UUID(as_uuid=True), ForeignKey("personas.id"), nullable=False, index=True)
+    node_id = Column(UUID(as_uuid=True), ForeignKey("academy_knowledge_nodes.id", ondelete="CASCADE"), nullable=False, index=True)
+    mastery_score = Column(Float, nullable=False, default=0.0)  # 0.0 - 1.0
+    attempts = Column(Integer, nullable=False, default=0)
+    last_evaluated_at = Column(DateTime(timezone=True), nullable=True)
+    created_at = Column(DateTime(timezone=True), default=_utcnow, nullable=False)
+    deleted_at = Column(DateTime(timezone=True), nullable=True)
+    sede_id = Column(UUID(as_uuid=True), ForeignKey("sedes.id", ondelete="SET NULL"), nullable=True, index=True)
+
+    __table_args__ = (
+        UniqueConstraint("student_id", "node_id", name="uq_student_node_progress"),
+    )
+
+    student = relationship("Persona", foreign_keys=[student_id])
+    node = relationship("AcademyKnowledgeNode", foreign_keys=[node_id])
+
+
+class AcademyPortfolioEntry(Base):
+    __tablename__ = "academy_portfolio_entries"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
+    student_id = Column(UUID(as_uuid=True), ForeignKey("personas.id"), nullable=False, index=True)
+    offering_id = Column(UUID(as_uuid=True), ForeignKey("academy_period_offerings.id", ondelete="SET NULL"), nullable=True, index=True)
+    entry_type = Column(String(50), nullable=False, default="project")  # 'project', 'defense', 'certification', 'grade'
+    title = Column(String(255), nullable=False)
+    description = Column(Text, nullable=True)
+    evidence_url = Column(String(500), nullable=True)
+    score = Column(Float, nullable=True)
+    issued_at = Column(DateTime(timezone=True), default=_utcnow, nullable=False)
+    credential_hash = Column(String(64), nullable=True, index=True)
+    is_public = Column(Boolean, nullable=False, default=False)
+    created_at = Column(DateTime(timezone=True), default=_utcnow, nullable=False)
+    deleted_at = Column(DateTime(timezone=True), nullable=True)
+    sede_id = Column(UUID(as_uuid=True), ForeignKey("sedes.id", ondelete="SET NULL"), nullable=True, index=True)
+
+    student = relationship("Persona", foreign_keys=[student_id])
+    offering = relationship("AcademyPeriodOffering", foreign_keys=[offering_id])
+
+

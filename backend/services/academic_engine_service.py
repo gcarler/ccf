@@ -338,3 +338,127 @@ def evaluate_defense_session(questions: list[str], answers: list[dict]) -> dict:
     )
     return {"score": final_score, "feedback": feedback}
 
+
+def compute_portfolio_credential_hash(
+    student_id: UUID,
+    session_or_entry_id: Any,
+    score: Optional[float],
+    issued_at: datetime,
+) -> str:
+    """Generates SHA-256 hash for verifiable portfolio entries and defenses."""
+    import hashlib
+    if hasattr(issued_at, "tzinfo"):
+        if issued_at.tzinfo is None:
+            norm_dt = issued_at.replace(tzinfo=timezone.utc)
+        else:
+            norm_dt = issued_at.astimezone(timezone.utc)
+        ts_str = norm_dt.strftime("%Y-%m-%dT%H:%M:%S")
+    else:
+        ts_str = str(issued_at)
+    score_str = f"{float(score):.1f}" if score is not None else "0.0"
+    payload = f"{student_id}:{session_or_entry_id}:{score_str}:{ts_str}"
+    return hashlib.sha256(payload.encode("utf-8")).hexdigest()
+
+
+
+def compute_learning_path(
+    db: Session,
+    offering_id: UUID,
+    student_id: UUID,
+) -> dict:
+    """Computes the optimal learning path for a student based on knowledge graph and mastery."""
+    nodes = (
+        db.query(models.AcademyKnowledgeNode)
+        .filter(
+            models.AcademyKnowledgeNode.offering_id == offering_id,
+            models.AcademyKnowledgeNode.deleted_at.is_(None),
+        )
+        .order_by(models.AcademyKnowledgeNode.created_at.asc())
+        .all()
+    )
+
+    if not nodes:
+        return {
+            "offering_id": offering_id,
+            "student_id": student_id,
+            "current_average_mastery": 0.0,
+            "path": [],
+            "suggested_next_node": None,
+        }
+
+    node_ids = [n.id for n in nodes]
+
+    edges = (
+        db.query(models.AcademyKnowledgeEdge)
+        .filter(
+            models.AcademyKnowledgeEdge.source_node_id.in_(node_ids),
+            models.AcademyKnowledgeEdge.target_node_id.in_(node_ids),
+            models.AcademyKnowledgeEdge.deleted_at.is_(None),
+        )
+        .all()
+    )
+
+    progress_records = (
+        db.query(models.AcademyStudentNodeProgress)
+        .filter(
+            models.AcademyStudentNodeProgress.student_id == student_id,
+            models.AcademyStudentNodeProgress.node_id.in_(node_ids),
+            models.AcademyStudentNodeProgress.deleted_at.is_(None),
+        )
+        .all()
+    )
+
+    mastery_map = {p.node_id: float(p.mastery_score) for p in progress_records}
+    requires_map: dict[UUID, set[UUID]] = {n.id: set() for n in nodes}
+
+    for e in edges:
+        if e.edge_type == "requires":
+            requires_map[e.target_node_id].add(e.source_node_id)
+
+    path_items = []
+    total_mastery = 0.0
+
+    for idx, node in enumerate(nodes):
+        mastery = mastery_map.get(node.id, 0.0)
+        total_mastery += mastery
+        prereqs = requires_map.get(node.id, set())
+        prereqs_met = all(mastery_map.get(p_id, 0.0) >= 0.7 for p_id in prereqs)
+
+        if mastery >= 0.7:
+            status = "mastered"
+        elif prereqs_met:
+            status = "ready_to_learn"
+        else:
+            status = "needs_prerequisites"
+
+        path_items.append({
+            "node_id": node.id,
+            "title": node.title,
+            "node_type": node.node_type,
+            "mastery_score": round(mastery, 2),
+            "status": status,
+            "order_index": idx,
+        })
+
+    # Sort path: ready_to_learn first, then needs_prerequisites, then mastered
+    status_priority = {"ready_to_learn": 0, "needs_prerequisites": 1, "mastered": 2}
+    sorted_path = sorted(path_items, key=lambda x: (status_priority.get(x["status"], 3), x["order_index"]))
+
+    # Re-index
+    for i, item in enumerate(sorted_path):
+        item["order_index"] = i
+
+    avg_mastery = round(total_mastery / len(nodes), 2)
+    suggested_node = next((p for p in sorted_path if p["status"] == "ready_to_learn"), None)
+    if not suggested_node and sorted_path:
+        suggested_node = next((p for p in sorted_path if p["status"] != "mastered"), sorted_path[0])
+
+    return {
+        "offering_id": offering_id,
+        "student_id": student_id,
+        "current_average_mastery": avg_mastery,
+        "path": sorted_path,
+        "suggested_next_node": suggested_node,
+    }
+
+
