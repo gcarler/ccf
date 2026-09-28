@@ -180,7 +180,7 @@ export default function TemplatesPage() {
               value={formData.titulo || ""}
               onChange={e => setFormData({...formData, titulo: e.target.value})}
               className="w-full bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] rounded-md shadow-xs text-[hsl(var(--text-primary))] px-3 py-2 outline-hidden focus:ring-2 focus:ring-[hsl(var(--primary)/0.3)] transition-all"
-              placeholder="Ej: Bienvenida Nuevos Miembros"
+              placeholder="Ej: Bienvenida Nuevas Personas"
             />
           </div>
 

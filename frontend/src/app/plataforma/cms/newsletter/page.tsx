@@ -630,7 +630,7 @@ export default function CmsNewsletterManagement() {
               <p className="text-sm text-[hsl(var(--text-secondary))] max-w-md mx-auto">
                 {search
                   ? "No hay suscriptores que coincidan con la búsqueda."
-                  : "Agrega o importa la lista de correos de miembros de la congregación."}
+                  : "Agrega o importa la lista de correos de personas de la congregación."}
               </p>
               {canEdit && !search && (
                 <div className="pt-2 flex justify-center gap-3">

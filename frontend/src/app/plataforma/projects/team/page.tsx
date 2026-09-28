@@ -174,7 +174,7 @@ export default function TeamPage() {
                                     : 'border-[hsl(var(--border))] text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--surface-1))]'
                             )}
                         >
-                            Miembros por proyecto
+                            Integrantes por proyecto
                         </button>
                         {viewMode === 'members' && (
                             <select
@@ -200,7 +200,7 @@ export default function TeamPage() {
                                 <span className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--primary))]">Recursos Humanos</span>
                             </div>
                             <h1 className="text-xl font-bold tracking-tight text-[hsl(var(--foreground))] leading-none">
-                                {viewMode === 'workload' ? 'Equipo del Proyecto' : 'Miembros del Proyecto'}
+                                {viewMode === 'workload' ? 'Equipo del Proyecto' : 'Integrantes del Proyecto'}
                             </h1>
                             <p className="text-sm text-[hsl(var(--muted-foreground))] mt-0.5 font-medium">
                                 {viewMode === 'workload'
@@ -219,7 +219,7 @@ export default function TeamPage() {
                             )}
                             {viewMode === 'members' && selectedProjectId && (members[selectedProjectId]?.length ?? 0) > 0 && (
                                 <div className="px-4 py-2 bg-[hsl(var(--surface-1))] rounded-md border border-[hsl(var(--border))] shadow-sm text-center">
-                                    <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--muted-foreground))]">Miembros</p>
+                                    <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--muted-foreground))]">Integrantes</p>
                                     <p className="text-sm font-semibold text-[hsl(var(--primary))]">
                                         {members[selectedProjectId].length}
                                     </p>
@@ -252,7 +252,7 @@ export default function TeamPage() {
                         ) : members[selectedProjectId].length === 0 ? (
                             <EmptyState
                                 icon={Users}
-                                title="Sin miembros en este proyecto"
+                                title="Sin integrantes en este proyecto"
                                 description="Invita colaboradores a este proyecto para que aparezcan aquí."
                             />
                         ) : (
