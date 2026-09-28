@@ -178,6 +178,45 @@ export interface CertificateDetail {
   course_title?: string | null;
 }
 
+export interface AcademyCalendarEvent {
+  id: string;
+  offering_id?: string | null;
+  title: string;
+  description?: string | null;
+  event_type: string;
+  start_date: string;
+  end_date: string;
+  sede_id?: string | null;
+  created_by: string;
+  created_at: string;
+}
+
+export interface WorkloadWeekPrediction {
+  week_number: number;
+  year: number;
+  start_date: string;
+  end_date: string;
+  total_events: number;
+  evaluations_count: number;
+  assignments_count: number;
+  socratic_defenses_count: number;
+  other_events_count: number;
+  workload_score: number;
+  workload_level: string;
+  is_overloaded: boolean;
+  events: AcademyCalendarEvent[];
+}
+
+export interface WorkloadPredictionResponse {
+  student_id?: string | null;
+  offering_id?: string | null;
+  weeks_analyzed: number;
+  total_events: number;
+  overloaded_weeks_count: number;
+  weeks: WorkloadWeekPrediction[];
+  recommendations: string[];
+}
+
 // ── Super-PRO Academic ERP Types ──────────────────────────────────────────────
 
 export type ProgramType =

@@ -55,6 +55,7 @@ const ACADEMY_SIDEBAR_SECTIONS = [
             { id: 'study-groups', label: 'Grupos', href: '/plataforma/academy/grupos', icon: Users, level: 'read' as AcademyLevel },
             { id: 'mentorship', label: 'Mentoría', href: '/plataforma/academy/mentoria', icon: GraduationCap, level: 'read' as AcademyLevel },
             { id: 'recommendations', label: 'Recomendaciones', href: '/plataforma/academy/recomendaciones', icon: Lightbulb, level: 'read' as AcademyLevel },
+            { id: 'calendar', label: 'Calendario', href: '/plataforma/academy/calendario', icon: Calendar, level: 'read' as AcademyLevel },
             { id: 'wellness', label: 'Bienestar', href: '/plataforma/academy/wellness', icon: HeartPulse, level: 'read' as AcademyLevel },
         ],
     },
