@@ -34,6 +34,7 @@ const ACADEMY_SIDEBAR_SECTIONS = [
     {
         title: 'Principal',
         items: [
+            { id: 'student-dashboard', label: 'Mi Dashboard', href: '/plataforma/academy/estudiante', icon: LayoutDashboard, level: 'read' as AcademyLevel },
             { id: 'dashboard', label: 'Resumen', href: '/plataforma/academy', icon: LayoutDashboard, level: 'read' as AcademyLevel },
             { id: 'courses', label: 'Cursos', href: '/plataforma/academy/courses', icon: BookOpen, level: 'read' as AcademyLevel },
             { id: 'curriculum', label: 'Plan de Estudio', href: '/plataforma/academy/curriculum', icon: FileText, level: 'read' as AcademyLevel },

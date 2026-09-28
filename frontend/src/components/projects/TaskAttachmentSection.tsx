@@ -33,7 +33,7 @@ export default function TaskAttachmentSection({
 
         for (const file of Array.from(files)) {
             if (file.size > MAX_BYTES) {
-                alert(`Error: El archivo "${file.name}" supera el límite de ${MAX_MB}MB.`);
+                toast.error(`El archivo "${file.name}" supera el límite de ${MAX_MB}MB.`);
                 if (fileInputRef.current) fileInputRef.current.value = '';
                 return;
             }

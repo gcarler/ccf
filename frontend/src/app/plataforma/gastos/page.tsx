@@ -19,6 +19,7 @@ import {
 import { useAuth } from "@/context/AuthContext";
 import { apiFetch } from "@/lib/http";
 import WorkspaceLayout from "@/components/WorkspaceLayout";
+import ConfirmDeleteDrawer from "@/components/ui/ConfirmDeleteDrawer";
 import clsx from "clsx";
 import { toast } from "sonner";
 
@@ -69,6 +70,7 @@ export default function GastosPage() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [showCreate, setShowCreate] = useState(false);
+  const [lineToDelete, setLineToDelete] = useState<number | null>(null);
   const [form, setForm] = useState({ description: "", items: [{ expense_date: "", category: "", description: "", amount: 0, vendor: "" }] as ExpenseItem[] });
 
   useEffect(() => {
@@ -161,7 +163,7 @@ export default function GastosPage() {
                     <input type="text" placeholder="Categoría" value={item.category} onChange={(e) => { const items = form.items.map((it, i) => i === idx ? { ...it, category: e.target.value } : it); setForm({ ...form, items }); }} className="px-3 py-2 text-sm bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] rounded-lg text-[hsl(var(--text-primary))]" />
                     <input type="text" placeholder="Descripción" value={item.description} onChange={(e) => { const items = form.items.map((it, i) => i === idx ? { ...it, description: e.target.value } : it); setForm({ ...form, items }); }} className="px-3 py-2 text-sm bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] rounded-lg text-[hsl(var(--text-primary))]" />
                     <input type="number" min={0} placeholder="Monto" value={item.amount} onChange={(e) => { const items = form.items.map((it, i) => i === idx ? { ...it, amount: Number(e.target.value) } : it); setForm({ ...form, items }); }} className="px-3 py-2 text-sm bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] rounded-lg text-[hsl(var(--text-primary))]" />
-                    <button type="button" onClick={() => { if (window.confirm('Eliminar esta línea?')) { setForm({ ...form, items: form.items.filter((_, i) => i !== idx) }); } }} className="p-2 text-[hsl(var(--destructive))] hover:bg-[hsl(var(--destructive)/0.08)] rounded-lg"><Trash2 size={14} /></button>
+                    <button type="button" onClick={() => setLineToDelete(idx)} className="p-2 text-[hsl(var(--destructive))] hover:bg-[hsl(var(--destructive)/0.08)] rounded-lg" title="Eliminar línea"><Trash2 size={14} /></button>
                   </div>
                 ))}
                 <button type="button" onClick={() => setForm({ ...form, items: [...form.items, { expense_date: "", category: "", description: "", amount: 0, vendor: "" }] })} className="text-xs font-semibold text-[hsl(var(--primary))] hover:underline">+ Agregar línea</button>
@@ -222,6 +224,19 @@ export default function GastosPage() {
           </div>
         </div>
       </div>
+      <ConfirmDeleteDrawer
+        open={lineToDelete !== null}
+        onClose={() => setLineToDelete(null)}
+        onConfirm={() => {
+          if (lineToDelete !== null) {
+            setForm(prev => ({ ...prev, items: prev.items.filter((_, i) => i !== lineToDelete) }));
+            setLineToDelete(null);
+          }
+        }}
+        title="¿Eliminar línea de gasto?"
+        description="Esta línea se eliminará del reporte de gastos actual en preparación."
+        confirmLabel="Eliminar línea"
+      />
     </WorkspaceLayout>
   );
 }

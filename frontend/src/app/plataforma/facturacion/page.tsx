@@ -18,6 +18,7 @@ import { useAuth } from "@/context/AuthContext";
 import { apiFetch } from "@/lib/http";
 import WorkspaceLayout from "@/components/WorkspaceLayout";
 import SidePanel from "@/components/ui/SidePanel";
+import ConfirmDeleteDrawer from "@/components/ui/ConfirmDeleteDrawer";
 import clsx from "clsx";
 import { toast } from "sonner";
 
@@ -73,6 +74,7 @@ export default function FacturacionPage() {
   const [search, setSearch] = useState("");
   const [showCreate, setShowCreate] = useState(false);
   const [showPayment, setShowPayment] = useState<string | null>(null);
+  const [lineToDelete, setLineToDelete] = useState<number | null>(null);
   const [form, setForm] = useState({ customer_name: "", customer_email: "", customer_tax_id: "", issue_date: "", due_date: "", items: [{ description: "", quantity: 1, unit_price: 0 }] as InvoiceItem[] });
   const [paymentForm, setPaymentForm] = useState({ amount: 0, payment_date: "", payment_method: "transfer", reference: "" });
 
@@ -205,7 +207,7 @@ export default function FacturacionPage() {
                     <input type="text" placeholder="Descripción" value={item.description} onChange={(e) => { const items = form.items.map((it, i) => i === idx ? { ...it, description: e.target.value } : it); setForm({ ...form, items }); }} className="px-3 py-2 text-sm bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] rounded-lg text-[hsl(var(--text-primary))]" />
                     <input type="number" min={0} placeholder="Cantidad" value={item.quantity} onChange={(e) => { const items = form.items.map((it, i) => i === idx ? { ...it, quantity: Number(e.target.value) } : it); setForm({ ...form, items }); }} className="px-3 py-2 text-sm bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] rounded-lg text-[hsl(var(--text-primary))]" />
                     <input type="number" min={0} placeholder="Precio unitario" value={item.unit_price} onChange={(e) => { const items = form.items.map((it, i) => i === idx ? { ...it, unit_price: Number(e.target.value) } : it); setForm({ ...form, items }); }} className="px-3 py-2 text-sm bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] rounded-lg text-[hsl(var(--text-primary))]" />
-                    <button type="button" onClick={() => { if (window.confirm('Eliminar esta línea?')) { setForm({ ...form, items: form.items.filter((_, i) => i !== idx) }); } }} className="p-2 text-[hsl(var(--destructive))] hover:bg-[hsl(var(--destructive)/0.08)] rounded-lg"><Trash2 size={14} /></button>
+                    <button type="button" onClick={() => setLineToDelete(idx)} className="p-2 text-[hsl(var(--destructive))] hover:bg-[hsl(var(--destructive)/0.08)] rounded-lg" title="Eliminar línea"><Trash2 size={14} /></button>
                   </div>
                 ))}
                 <button type="button" onClick={() => setForm({ ...form, items: [...form.items, { description: "", quantity: 1, unit_price: 0 }] })} className="text-xs font-semibold text-[hsl(var(--primary))] hover:underline">+ Agregar línea</button>
@@ -335,6 +337,19 @@ export default function FacturacionPage() {
           </SidePanel>
         </div>
       </div>
+      <ConfirmDeleteDrawer
+        open={lineToDelete !== null}
+        onClose={() => setLineToDelete(null)}
+        onConfirm={() => {
+          if (lineToDelete !== null) {
+            setForm(prev => ({ ...prev, items: prev.items.filter((_, i) => i !== lineToDelete) }));
+            setLineToDelete(null);
+          }
+        }}
+        title="¿Eliminar línea de factura?"
+        description="Esta línea se eliminará de la factura actual en preparación."
+        confirmLabel="Eliminar línea"
+      />
     </WorkspaceLayout>
   );
 }

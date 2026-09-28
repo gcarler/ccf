@@ -20,6 +20,7 @@ import {
   ProjectWhiteboard,
 } from "@/lib/whiteboards";
 import { useAuth } from "@/context/AuthContext";
+import ConfirmDeleteDrawer from "@/components/ui/ConfirmDeleteDrawer";
 
 export default function WhiteboardPage() {
   const router = useRouter();
@@ -27,6 +28,7 @@ export default function WhiteboardPage() {
   const [query, setQuery] = useState("");
   const [boards, setBoards] = useState<ProjectWhiteboard[]>([]);
   const [loading, setLoading] = useState(true);
+  const [boardToDelete, setBoardToDelete] = useState<ProjectWhiteboard | null>(null);
 
   useEffect(() => {
     fetchBoards();
@@ -58,13 +60,12 @@ export default function WhiteboardPage() {
     );
   }, [boards, query]);
 
-  const deleteBoard = async (projectId: string) => {
-    if (!token) return;
-    const confirmed = window.confirm("Eliminar esta pizarra no se puede deshacer. ¿Deseas continuar?");
-    if (!confirmed) return;
+  const confirmDeleteBoard = async () => {
+    if (!token || !boardToDelete) return;
     try {
-      await deleteProjectWhiteboard(projectId, token);
-      setBoards((prev) => prev.filter((b) => b.project_id !== projectId));
+      await deleteProjectWhiteboard(boardToDelete.project_id, token);
+      setBoards((prev) => prev.filter((b) => b.project_id !== boardToDelete.project_id));
+      setBoardToDelete(null);
     } catch (err) {
       console.error("Error deleting whiteboard:", err);
     }
@@ -159,7 +160,7 @@ export default function WhiteboardPage() {
                       Abrir
                     </button>
                     <button
-                      onClick={() => deleteBoard(board.project_id)}
+                      onClick={() => setBoardToDelete(board)}
                       className="rounded-md p-2 text-[hsl(var(--text-secondary))] transition-all hover:bg-[hsl(var(--danger))]/10 hover:text-[hsl(var(--danger))]"
                       title="Eliminar pizarra"
                     >
@@ -193,6 +194,18 @@ export default function WhiteboardPage() {
           )}
         </div>
       </div>
+      <ConfirmDeleteDrawer
+        open={Boolean(boardToDelete)}
+        onClose={() => setBoardToDelete(null)}
+        onConfirm={confirmDeleteBoard}
+        title="¿Eliminar pizarra de proyecto?"
+        description={
+          boardToDelete
+            ? `Se eliminará la pizarra vinculada al proyecto "${boardToDelete.title || boardToDelete.project_id}". Esta acción no se puede deshacer.`
+            : "Eliminar esta pizarra no se puede deshacer."
+        }
+        confirmLabel="Eliminar pizarra"
+      />
     </CrmShell>
   );
 }

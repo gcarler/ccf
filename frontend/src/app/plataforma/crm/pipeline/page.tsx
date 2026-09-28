@@ -32,6 +32,7 @@ import { DSSkeleton, DSTable } from '@/design';
 import { ColumnDef } from '@tanstack/react-table';
 import SplitDropdownButton from '@/components/ui/SplitDropdownButton';
 import WorkspaceDrawer from '@/components/WorkspaceDrawer';
+import ConfirmDeleteDrawer from '@/components/ui/ConfirmDeleteDrawer';
 import { motion, AnimatePresence } from 'framer-motion';
 import clsx from 'clsx';
 
@@ -133,9 +134,15 @@ export default function ConsolidationPipelinePage() {
         }
     }, [token, addToast]);
 
-    const handleBulkDelete = useCallback(async () => {
+    const [showBulkArchiveConfirm, setShowBulkArchiveConfirm] = useState(false);
+
+    const handleBulkDelete = useCallback(() => {
         if (!token || selectedLeads.length === 0) return;
-        if (!window.confirm(`¿Archivar ${selectedLeads.length} caso${selectedLeads.length !== 1 ? 's' : ''} seleccionado${selectedLeads.length !== 1 ? 's' : ''}?`)) return;
+        setShowBulkArchiveConfirm(true);
+    }, [token, selectedLeads.length]);
+
+    const executeBulkDelete = useCallback(async () => {
+        if (!token || selectedLeads.length === 0) return;
         setIsBulkDeleting(true);
         let ok = 0;
         let failed = 0;
@@ -839,6 +846,16 @@ export default function ConsolidationPipelinePage() {
                     )}
                 </form>
             </WorkspaceDrawer>
+
+            <ConfirmDeleteDrawer
+                open={showBulkArchiveConfirm}
+                onClose={() => setShowBulkArchiveConfirm(false)}
+                onConfirm={executeBulkDelete}
+                loading={isBulkDeleting}
+                title="¿Confirmar archivo de casos?"
+                description={`¿Estás seguro de que deseas archivar ${selectedLeads.length} caso${selectedLeads.length !== 1 ? 's' : ''} seleccionado${selectedLeads.length !== 1 ? 's' : ''}? Se marcarán como cerrados/archivados en el pipeline.`}
+                confirmLabel="Archivar casos"
+            />
         </CrmShell>
     );
 }

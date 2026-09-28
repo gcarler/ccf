@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import clsx from "clsx";
 import SidePanel from "@/components/ui/SidePanel";
+import ConfirmDeleteDrawer from "@/components/ui/ConfirmDeleteDrawer";
 import EventFormStudioDrawer from "../../panels/EventFormStudioDrawer";
 
 type RegistrationStatus =
@@ -139,6 +140,12 @@ export default function PreregistrationTab({ eventId, token }: { eventId: string
   const [showFormStudio, setShowFormStudio] = useState(false);
   const [sendingCampaignId, setSendingCampaignId] = useState<string | null>(null);
   const [exportingCsv, setExportingCsv] = useState(false);
+  const [confirmState, setConfirmState] = useState<{
+    title: string;
+    description: string;
+    confirmLabel?: string;
+    onConfirm: () => Promise<void>;
+  } | null>(null);
 
   const handleExportCsv = async () => {
     if (!token) return;
@@ -241,15 +248,21 @@ export default function PreregistrationTab({ eventId, token }: { eventId: string
           Al cerrar la asistencia, los confirmados sin check-in se marcan como ausentes y generan seguimiento CRM automaticamente.
         </div>
         <button
-          onClick={async () => {
-            if (!window.confirm("¿Cerrar la asistencia? Los confirmados sin check-in se marcaran como ausentes.")) return;
-            try {
-              await apiFetch(`/evangelism/events/${eventId}/attendance/close`, { method: "POST", token });
-              toast.success("Asistencia cerrada");
-              loadAll();
-            } catch {
-              toast.error("No se pudo cerrar la asistencia");
-            }
+          onClick={() => {
+            setConfirmState({
+              title: "¿Cerrar asistencia?",
+              description: "¿Cerrar la asistencia? Los confirmados sin check-in se marcarán como ausentes y generarán seguimiento CRM automáticamente.",
+              confirmLabel: "Cerrar asistencia",
+              onConfirm: async () => {
+                try {
+                  await apiFetch(`/evangelism/events/${eventId}/attendance/close`, { method: "POST", token });
+                  toast.success("Asistencia cerrada");
+                  loadAll();
+                } catch {
+                  toast.error("No se pudo cerrar la asistencia");
+                }
+              },
+            });
           }}
           className="shrink-0 inline-flex items-center gap-1.5 rounded-md bg-danger-soft px-3 py-1.5 text-sm font-semibold text-danger-text hover:opacity-80 transition-all"
         >
@@ -321,15 +334,21 @@ export default function PreregistrationTab({ eventId, token }: { eventId: string
                     {sendingCampaignId === c.id ? <Loader2 size={13} className="animate-spin" /> : <Send size={13} />} Enviar
                   </button>
                   <button
-                    onClick={async () => {
-                      if (!window.confirm(`¿Eliminar la campaña "${c.name}"?`)) return;
-                      try {
-                        await apiFetch(`/evangelism/events/${eventId}/campaigns/${c.id}`, { method: "DELETE", token, silent: true });
-                        toast.success("Campaña eliminada");
-                        loadAll();
-                      } catch {
-                        toast.error("No se pudo eliminar la campaña");
-                      }
+                    onClick={() => {
+                      setConfirmState({
+                        title: "¿Eliminar campaña?",
+                        description: `¿Estás seguro de que deseas eliminar la campaña "${c.name}"? Esta acción no se puede deshacer.`,
+                        confirmLabel: "Eliminar campaña",
+                        onConfirm: async () => {
+                          try {
+                            await apiFetch(`/evangelism/events/${eventId}/campaigns/${c.id}`, { method: "DELETE", token, silent: true });
+                            toast.success("Campaña eliminada");
+                            loadAll();
+                          } catch {
+                            toast.error("No se pudo eliminar la campaña");
+                          }
+                        },
+                      });
                     }}
                     className="p-1.5 rounded-md text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--destructive))] hover:bg-[hsl(var(--destructive)/0.08)] transition-all"
                   >
@@ -473,14 +492,20 @@ export default function PreregistrationTab({ eventId, token }: { eventId: string
                         )}
                         {r.registration_status === "CONFIRMED" && (
                           <button
-                            onClick={async () => {
-                              if (!window.confirm("¿Reenviar el correo de confirmación/QR a esta persona?")) return;
-                              try {
-                                await apiFetch(`/evangelism/events/${eventId}/registrations/${r.id}/resend-confirmation`, { method: "POST", token, silent: true });
-                                toast.success("Confirmación reenviada");
-                              } catch {
-                                toast.error("No se pudo reenviar la confirmación");
-                              }
+                            onClick={() => {
+                              setConfirmState({
+                                title: "¿Reenviar confirmación?",
+                                description: `¿Deseas reenviar el correo de confirmación y el código QR de acceso a ${r.persona_name || "esta persona"}?`,
+                                confirmLabel: "Reenviar",
+                                onConfirm: async () => {
+                                  try {
+                                    await apiFetch(`/evangelism/events/${eventId}/registrations/${r.id}/resend-confirmation`, { method: "POST", token, silent: true });
+                                    toast.success("Confirmación reenviada");
+                                  } catch {
+                                    toast.error("No se pudo reenviar la confirmación");
+                                  }
+                                },
+                              });
                             }}
                             className="p-1.5 rounded-md text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] hover:bg-info-soft transition-all"
                             title="Reenviar confirmación"
@@ -499,20 +524,26 @@ export default function PreregistrationTab({ eventId, token }: { eventId: string
                         )}
                         {r.registration_status !== "CANCELLED" && (
                           <button
-                            onClick={async () => {
-                              if (!window.confirm(`¿Marcar a ${r.persona_name || "esta persona"} como CANCELADO?`)) return;
-                              try {
-                                await apiFetch(`/evangelism/events/${eventId}/registrations/${r.id}`, {
-                                  method: "PATCH",
-                                  token,
-                                  body: { registration_status: "CANCELLED" },
-                                  silent: true,
-                                });
-                                toast.success("Inscripción cancelada");
-                                loadAll();
-                              } catch {
-                                toast.error("No se pudo cancelar la inscripción");
-                              }
+                            onClick={() => {
+                              setConfirmState({
+                                title: "¿Cancelar inscripción?",
+                                description: `¿Estás seguro de que deseas marcar la inscripción de ${r.persona_name || "esta persona"} como CANCELADO?`,
+                                confirmLabel: "Cancelar inscripción",
+                                onConfirm: async () => {
+                                  try {
+                                    await apiFetch(`/evangelism/events/${eventId}/registrations/${r.id}`, {
+                                      method: "PATCH",
+                                      token,
+                                      body: { registration_status: "CANCELLED" },
+                                      silent: true,
+                                    });
+                                    toast.success("Inscripción cancelada");
+                                    loadAll();
+                                  } catch {
+                                    toast.error("No se pudo cancelar la inscripción");
+                                  }
+                                },
+                              });
                             }}
                             className="p-1.5 rounded-md text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--destructive))] hover:bg-[hsl(var(--destructive)/0.08)] transition-all"
                             title="Cancelar inscripción"
@@ -567,6 +598,20 @@ export default function PreregistrationTab({ eventId, token }: { eventId: string
           }}
         />
       )}
+
+      <ConfirmDeleteDrawer
+        open={confirmState !== null}
+        onClose={() => setConfirmState(null)}
+        onConfirm={async () => {
+          if (confirmState) {
+            await confirmState.onConfirm();
+            setConfirmState(null);
+          }
+        }}
+        title={confirmState?.title}
+        description={confirmState?.description ?? ""}
+        confirmLabel={confirmState?.confirmLabel}
+      />
     </div>
   );
 }

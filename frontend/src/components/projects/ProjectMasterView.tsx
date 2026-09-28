@@ -25,6 +25,7 @@ import { ProjectTimeTrackingDrawer } from '@/components/projects/ProjectTimeTrac
 import { ProjectTemplateCatalogDrawer } from '@/components/projects/ProjectTemplateCatalogDrawer';
 import { ProjectAutomationsDrawer } from '@/components/projects/ProjectAutomationsDrawer';
 import { ProjectReportDrawer } from '@/components/projects/ProjectReportDrawer';
+import ConfirmDeleteDrawer from '@/components/ui/ConfirmDeleteDrawer';
 import { useProjectUpdate } from '@/context/ProjectUpdateContext';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
@@ -55,6 +56,7 @@ export function ProjectMasterView({ project, tasks, onOpenTask }: ProjectMasterV
     const { addToast } = useToast();
     const { reloadProject, updateProject, updateTask } = useProjectUpdate();
     const [busyMilestoneId, setBusyMilestoneId] = useState<string | null>(null);
+    const [milestoneToDelete, setMilestoneToDelete] = useState<ProjectMilestoneRecord | null>(null);
     const [newMilestone, setNewMilestone] = useState<{ title: string; date: string | null }>({ title: '', date: null });
     const [addingMilestone, setAddingMilestone] = useState(false);
     const [analytics, setAnalytics] = useState<ProjectAnalytics | null>(null);
@@ -192,15 +194,16 @@ export function ProjectMasterView({ project, tasks, onOpenTask }: ProjectMasterV
         }
     };
 
-    const milestoneDelete = async (milestone: ProjectMilestoneRecord) => {
-        if (!window.confirm(`¿Eliminar el hito "${milestone.title}"?`)) return;
-        setBusyMilestoneId(milestone.id);
+    const confirmMilestoneDelete = async () => {
+        if (!milestoneToDelete) return;
+        setBusyMilestoneId(milestoneToDelete.id);
         try {
-            await apiFetch(`/projects/${project.id}/milestones/${milestone.id}`, {
+            await apiFetch(`/projects/${project.id}/milestones/${milestoneToDelete.id}`, {
                 method: 'DELETE', token,
             });
             await reloadProject();
             addToast('Hito eliminado', 'success');
+            setMilestoneToDelete(null);
         } catch {
             addToast('Error al eliminar hito', 'error');
         } finally {
@@ -1005,7 +1008,7 @@ export function ProjectMasterView({ project, tasks, onOpenTask }: ProjectMasterV
                                         />
                                     </div>
                                     <button
-                                        onClick={() => milestoneDelete(m)}
+                                        onClick={() => setMilestoneToDelete(m)}
                                         disabled={isBusy}
                                         title="Eliminar hito"
                                         aria-label="Eliminar hito"
@@ -1166,6 +1169,20 @@ export function ProjectMasterView({ project, tasks, onOpenTask }: ProjectMasterV
                 isOpen={showReportDrawer}
                 onClose={() => setShowReportDrawer(false)}
                 projectTitle={project.title}
+            />
+
+            <ConfirmDeleteDrawer
+                open={Boolean(milestoneToDelete)}
+                onClose={() => setMilestoneToDelete(null)}
+                onConfirm={confirmMilestoneDelete}
+                loading={Boolean(busyMilestoneId)}
+                title="¿Eliminar hito del proyecto?"
+                description={
+                    milestoneToDelete
+                        ? `¿Estás seguro de que deseas eliminar el hito "${milestoneToDelete.title}"? Esta acción no se puede deshacer.`
+                        : "Eliminar este hito no se puede deshacer."
+                }
+                confirmLabel="Eliminar hito"
             />
         </div>
     );

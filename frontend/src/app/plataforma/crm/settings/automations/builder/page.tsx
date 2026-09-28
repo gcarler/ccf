@@ -27,6 +27,7 @@ import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
 import { apiFetch } from '@/lib/http';
 import CrmShell from '@/components/crm/CrmShell';
+import ConfirmDeleteDrawer from '@/components/ui/ConfirmDeleteDrawer';
 import { DSSkeleton } from '@/design';
 import type { CrmAutomationEdgeRecord, CrmAutomationRecord } from '@/types/crm';
 
@@ -101,6 +102,7 @@ export default function AutomationBuilderPage() {
     const [edges, setEdges, onEdgesChange] = useEdgesState<CustomEdge>([]);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
+    const [showDeleteNodeConfirm, setShowDeleteNodeConfirm] = useState(false);
 
     // Sidebar state
     const [selectedNode, setSelectedNode] = useState<CustomNode | null>(null);
@@ -293,9 +295,8 @@ export default function AutomationBuilderPage() {
     };
 
     // Delete node
-    const handleDeleteNode = async () => {
+    const confirmDeleteNode = async () => {
         if (!selectedNode || !token) return;
-        if (!confirm('¿Estás seguro de que deseas eliminar esta automatización? Esto eliminará también sus conexiones.')) return;
 
         try {
             await apiFetch(`/crm/resources/automations/${selectedNode.id}`, {
@@ -306,6 +307,7 @@ export default function AutomationBuilderPage() {
             setNodes(nds => nds.filter(n => n.id !== selectedNode.id));
             setEdges(eds => eds.filter(e => e.source !== selectedNode.id && e.target !== selectedNode.id));
             setSelectedNode(null);
+            setShowDeleteNodeConfirm(false);
             addToast('Automatización eliminada', 'success');
         } catch {
             addToast('Error al eliminar la automatización', 'error');
@@ -582,7 +584,7 @@ export default function AutomationBuilderPage() {
 
                                 <div className="border-t border-[hsl(var(--border))] pt-4 mt-4">
                                     <button
-                                        onClick={handleDeleteNode}
+                                        onClick={() => setShowDeleteNodeConfirm(true)}
                                         className="w-full flex items-center justify-center gap-2 py-2 bg-[hsl(var(--destructive)/0.08)] border border-[hsl(var(--destructive)/0.2)] text-[hsl(var(--destructive))] hover:bg-[hsl(var(--destructive)/0.15)] rounded-md text-xs font-bold uppercase transition-all"
                                     >
                                         <Trash2 size={14} />
@@ -658,6 +660,19 @@ export default function AutomationBuilderPage() {
                     </div>
                 </div>
             </div>
+
+            <ConfirmDeleteDrawer
+                open={showDeleteNodeConfirm}
+                onClose={() => setShowDeleteNodeConfirm(false)}
+                onConfirm={confirmDeleteNode}
+                title="¿Eliminar paso de automatización?"
+                description={
+                    selectedNode
+                        ? `¿Estás seguro de que deseas eliminar el paso "${selectedNode.data?.label || selectedNode.id}"? Esto eliminará también sus conexiones en el canvas.`
+                        : "¿Estás seguro de que deseas eliminar esta automatización? Esto eliminará también sus conexiones."
+                }
+                confirmLabel="Eliminar paso"
+            />
         </CrmShell>
     );
 }

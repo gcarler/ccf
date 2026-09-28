@@ -11,6 +11,7 @@ import { useToast } from '@/context/ToastContext';
 import { apiFetch } from '@/lib/http';
 import CrmShell from '@/components/crm/CrmShell';
 import WorkspaceDrawer from '@/components/WorkspaceDrawer';
+import ConfirmDeleteDrawer from '@/components/ui/ConfirmDeleteDrawer';
 import { DSSkeleton } from '@/design';
 import { motion, AnimatePresence } from 'framer-motion';
 import clsx from 'clsx';
@@ -160,16 +161,16 @@ export default function AutomationsPage() {
         }
     };
 
-    const handleDelete = async (id: string) => {
-        // A-07: destructive action requires explicit confirmation.
-        if (!window.confirm('¿Eliminar esta regla de automatización? Se desactivará y no se podrá reactivar.')) {
-            return;
-        }
-        setDeletingId(id);
+    const [ruleToDelete, setRuleToDelete] = useState<string | null>(null);
+
+    const confirmDeleteRule = async () => {
+        if (!token || !ruleToDelete) return;
+        setDeletingId(ruleToDelete);
         try {
-            await apiFetch(`/admin/automations/${id}`, { method: 'DELETE', token });
-            setRules(prev => prev.filter(r => r.id !== id));
+            await apiFetch(`/admin/automations/${ruleToDelete}`, { method: 'DELETE', token });
+            setRules(prev => prev.filter(r => r.id !== ruleToDelete));
             addToast('Regla eliminada', 'success');
+            setRuleToDelete(null);
         } catch {
             addToast('Error al eliminar regla', 'error');
         } finally {
@@ -306,7 +307,7 @@ export default function AutomationsPage() {
                                                 <Settings2 size={16} />
                                             </button>
                                             <button
-                                                onClick={() => handleDelete(rule.id)}
+                                                onClick={() => setRuleToDelete(rule.id)}
                                                 disabled={deletingId === rule.id}
                                                 className="p-2 rounded-md text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--destructive))] hover:bg-[hsl(var(--destructive)/0.1)] transition-all disabled:opacity-50"
                                             >
@@ -432,6 +433,16 @@ export default function AutomationsPage() {
                     )}
                 </form>
             </WorkspaceDrawer>
+
+            <ConfirmDeleteDrawer
+                open={Boolean(ruleToDelete)}
+                onClose={() => setRuleToDelete(null)}
+                onConfirm={confirmDeleteRule}
+                loading={Boolean(deletingId)}
+                title="¿Eliminar regla de automatización?"
+                description="¿Estás seguro de que deseas eliminar esta regla de automatización? Se desactivará permanentemente y no podrá reactivarse."
+                confirmLabel="Eliminar regla"
+            />
         </CrmShell>
     );
 }

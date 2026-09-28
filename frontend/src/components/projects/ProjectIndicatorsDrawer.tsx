@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { RightPanel } from "@/components/ui/RightPanel";
+import ConfirmDeleteDrawer from "@/components/ui/ConfirmDeleteDrawer";
 import { useAuth } from "@/context/AuthContext";
 import { apiFetch } from "@/lib/http";
 import type {
@@ -84,6 +85,7 @@ export function ProjectIndicatorsDrawer({
   const [recordActual, setRecordActual] = useState("");
   const [recordNotes, setRecordNotes] = useState("");
   const [recordEvidenceUrl, setRecordEvidenceUrl] = useState("");
+  const [indicatorToDelete, setIndicatorToDelete] = useState<string | null>(null);
 
   const loadIndicators = useCallback(async () => {
     if (!token || !projectId) return;
@@ -228,16 +230,16 @@ export function ProjectIndicatorsDrawer({
     }
   };
 
-  const handleDeleteIndicator = async (indicatorId: string) => {
-    if (!token || !projectId) return;
-    if (!window.confirm("¿Está seguro de eliminar este indicador?")) return;
+  const confirmDeleteIndicator = async () => {
+    if (!token || !projectId || !indicatorToDelete) return;
 
     try {
-      await apiFetch(`/projects/${projectId}/advanced-indicators/${indicatorId}`, {
+      await apiFetch(`/projects/${projectId}/advanced-indicators/${indicatorToDelete}`, {
         method: "DELETE",
         token,
       });
       toast.success("Indicador eliminado");
+      setIndicatorToDelete(null);
       void loadIndicators();
       onIndicatorUpdated?.();
     } catch {
@@ -687,7 +689,7 @@ export function ProjectIndicatorsDrawer({
                                 <Edit2 size={13} />
                               </button>
                               <button
-                                onClick={() => handleDeleteIndicator(ind.id)}
+                                onClick={() => setIndicatorToDelete(ind.id)}
                                 className="p-1 rounded hover:bg-[hsl(var(--destructive))]/15 text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--destructive))]"
                                 title="Eliminar indicador"
                               >
@@ -1171,6 +1173,15 @@ export function ProjectIndicatorsDrawer({
           )}
         </div>
       </div>
+
+      <ConfirmDeleteDrawer
+        open={Boolean(indicatorToDelete)}
+        onClose={() => setIndicatorToDelete(null)}
+        onConfirm={confirmDeleteIndicator}
+        title="¿Eliminar indicador del proyecto?"
+        description="¿Estás seguro de que deseas eliminar este indicador? Esta acción no se puede deshacer y borrará también su historial de avance."
+        confirmLabel="Eliminar indicador"
+      />
     </RightPanel>
   );
 }

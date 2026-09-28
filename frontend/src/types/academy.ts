@@ -333,6 +333,7 @@ export interface OfferingGradesDetail {
 }
 
 export interface AcademicTranscriptSubject {
+  offering_id?: string | null;
   subject_code: string;
   subject_name: string;
   credits: number;
@@ -347,6 +348,7 @@ export interface AcademicTranscriptSummary {
   student_name: string;
   total_credits_attempted: number;
   total_credits_earned: number;
+  total_credits_required?: number | null;
   weighted_gpa: number;
   subjects: AcademicTranscriptSubject[];
 }
@@ -535,6 +537,10 @@ export interface WellnessAlert {
   sent_at: string;
   read_at?: string | null;
   created_at: string;
+  signal_type?: string | null;
+  severity?: string | null;
+  detected_at?: string | null;
+  is_resolved?: boolean;
 }
 
 export interface StudentRiskProfile {
@@ -614,4 +620,3 @@ export interface WeeklyReport {
   knowledge_graph_progress_percent: number;
   key_highlights: string[];
 }
-

@@ -21,6 +21,7 @@ import {
   Users,
 } from "lucide-react";
 import { apiFetch, apiFetchBlob } from "@/lib/http";
+import { toast } from "sonner";
 import WorkspaceDrawer from "@/components/WorkspaceDrawer";
 import type {
   EventAnalyticsData,
@@ -111,7 +112,7 @@ export default function AnalyticsTab({ eventId, token }: AnalyticsTabProps) {
       window.URL.revokeObjectURL(url);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Error inesperado";
-      alert("Error al descargar reporte CSV: " + msg);
+      toast.error("Error al descargar reporte CSV: " + msg);
     } finally {
       setExportingCsv(false);
     }
