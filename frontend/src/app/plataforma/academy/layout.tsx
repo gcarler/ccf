@@ -23,6 +23,8 @@ import {
     Map as MapIcon,
     HeartPulse,
     Trophy,
+    Users,
+    Lightbulb,
 } from 'lucide-react';
 
 // Fuente única de la sidebar Academy (ACAD-HIGH-004).
@@ -50,6 +52,9 @@ const ACADEMY_SIDEBAR_SECTIONS = [
             { id: 'portfolio', label: 'Mi Portafolio', href: '/plataforma/academy/portafolio', icon: Award, level: 'read' as AcademyLevel },
             { id: 'learning-map', label: 'Mapa de Aprendizaje', href: '/plataforma/academy/mapa', icon: MapIcon, level: 'read' as AcademyLevel },
             { id: 'achievements', label: 'Logros', href: '/plataforma/academy/logros', icon: Trophy, level: 'read' as AcademyLevel },
+            { id: 'study-groups', label: 'Grupos', href: '/plataforma/academy/grupos', icon: Users, level: 'read' as AcademyLevel },
+            { id: 'mentorship', label: 'Mentoría', href: '/plataforma/academy/mentoria', icon: GraduationCap, level: 'read' as AcademyLevel },
+            { id: 'recommendations', label: 'Recomendaciones', href: '/plataforma/academy/recomendaciones', icon: Lightbulb, level: 'read' as AcademyLevel },
             { id: 'wellness', label: 'Bienestar', href: '/plataforma/academy/wellness', icon: HeartPulse, level: 'read' as AcademyLevel },
         ],
     },

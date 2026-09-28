@@ -669,3 +669,76 @@ export interface AchievementCredentialVerification {
   earned_at: string;
   is_valid: boolean;
 }
+
+export interface StudyGroupMember {
+  id: string;
+  group_id: string;
+  student_id: string;
+  student_name: string;
+  role: string;
+  joined_at: string;
+  sede_id?: string | null;
+}
+
+export interface StudyGroup {
+  id: string;
+  offering_id: string;
+  name: string;
+  description?: string | null;
+  max_members: number;
+  is_active: boolean;
+  created_by: string;
+  creator_name?: string | null;
+  created_at: string;
+  members_count: number;
+  members: StudyGroupMember[];
+}
+
+export interface MentorProfile {
+  id: string;
+  mentor_persona_id?: string | null;
+  persona_id?: string | null;
+  mentor_name?: string | null;
+  name?: string | null;
+  full_name?: string | null;
+  expertise?: string[] | string | null;
+  availability?: string[] | string | null;
+  availability_summary?: string | null;
+  bio?: string | null;
+  description?: string | null;
+}
+
+export interface MentorshipRequest {
+  id: string;
+  mentor_persona_id?: string | null;
+  mentee_persona_id?: string | null;
+  mentor_name?: string | null;
+  mentee_name?: string | null;
+  status: string;
+  message?: string | null;
+  requested_at?: string | null;
+  created_at?: string | null;
+  updated_at?: string | null;
+}
+
+export interface MentorshipMentee {
+  id: string;
+  mentee_persona_id?: string | null;
+  mentee_name: string;
+  status?: string | null;
+  started_at?: string | null;
+  created_at?: string | null;
+  goals?: string[] | null;
+}
+
+export interface AcademyRecommendation {
+  id: string;
+  recommendation_type: string;
+  title: string;
+  reason: string;
+  score: number;
+  description?: string | null;
+  target_url?: string | null;
+  viewed?: boolean;
+  created_at: string;
+}
