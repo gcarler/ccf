@@ -413,4 +413,39 @@ grep -nE "PARCIAL-|PEND-|ACAD-" /root/ccf/docs/ESTADO_ACADEMY.md
   * Compilación TypeScript estricta (`next typegen && tsc --noEmit`) con 0 errores.
   * Sincronizado en rama `integration/cms-aniversario-to-main` en GitHub origin.
 
+---
+
+## 20. Certificación Integral: Grafo de Conocimiento y Portafolio Verificable — 2026-09-28
+
+* **Fecha de Certificación:** 2026-09-28
+* **Veredicto:** **100/100 (A+) — CERTIFICADO**
+* **Migración Canónica:**
+  * `20260927_0015_academy_knowledge_graph`: Inmutable e idempotente. Crea las tablas `academy_knowledge_nodes`, `academy_knowledge_edges`, `academy_student_node_progress` y `academy_portfolio_entries`.
+* **Modelos ORM & Axiomas:**
+  * `AcademyKnowledgeNode`: Estructura atómica de conceptos, habilidades y competencias vinculados a asignaturas (`offering_id`), con pesos de ponderación, `sede_id` (`Axioma 3`), timestamps UTC y `deleted_at` (`Axioma 2`).
+  * `AcademyKnowledgeEdge`: Aristas dirigidas de prerrequisitos (`requires`, `leads_to`, `related`) con validación de ciclos para evitar bucles cognitivos.
+  * `AcademyStudentNodeProgress`: Seguimiento del dominio conceptual de cada alumno vinculado a `personas.id` (`Axioma 1`), con métricas continuas de maestría (`mastery_score` 0.0 a 1.0) y estados de maduración.
+  * `AcademyPortfolioEntry`: Portafolio verificable de evidencias con sellos criptográficos inmutables SHA-256 (`student_id:title:credential_type:score:created_at`), control de visibilidad pública/privada y verificación en vivo contra alteraciones (*anti-tamper*).
+* **Endpoints y Contratos API:**
+  * `GET /api/academy/knowledge/{offering_id}/graph`: Topología completa del grafo y avance cognitivo del alumno.
+  * `POST /api/academy/knowledge/{offering_id}/nodes`: Definición docente de nodos.
+  * `POST /api/academy/knowledge/{offering_id}/edges`: Mapeo de dependencias de aprendizaje.
+  * `GET /api/academy/knowledge/{offering_id}/path`: Motor de ordenamiento topológico para la ruta secuencial óptima.
+  * `POST /api/academy/knowledge/node/{node_id}/progress`: Evaluación y feedback de maestría.
+  * `GET /api/academy/portfolio/my`: Catálogo de evidencias del estudiante autenticado.
+  * `GET /api/academy/portfolio/{student_id}`: Consulta autorizada o pública de portafolio.
+  * `POST /api/academy/portfolio/entry`: Emisión y sellado criptográfico de evidencias.
+  * `GET /api/academy/portfolio/verify/{credential_id}`: Auditoría pública y verificación de hash SHA-256.
+* **UI/UX y Arquitectura Frontend:**
+  * Vistas `/plataforma/academy/knowledge` y `/plataforma/academy/portfolio` enlazadas a la barra de navegación de Academia.
+  * Paneles laterales `RightPanel` (0 modales, cero `<Dialog>`): `NodeCreateDrawer.tsx`, `NodeEvaluateDrawer.tsx`, `PortfolioEntryDrawer.tsx` y `PortfolioVerifyDrawer.tsx`.
+  * Tokens semánticos CSS `hsl(var(--*))` y cliente HTTP canónico `apiFetch()`.
+* **Calidad y Cobertura:**
+  * Pruebas automatizadas `test_016` a `test_020` en `tests/test_academy_system_config.py` (27/27 pruebas verdes al 100%).
+  * 9/9 suites de calidad de academia validadas en hook pre-push.
+  * Verificación de tipos TypeScript (`next typegen && tsc --noEmit`) con 0 errores.
+  * Build de producción Next.js exitoso.
+  * Sincronizado en rama `integration/cms-aniversario-to-main` en GitHub origin.
+
+
 
