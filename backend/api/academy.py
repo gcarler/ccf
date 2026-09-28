@@ -4448,6 +4448,496 @@ def get_calendar_workload_prediction(
     )
 
 
+# ---------------------------------------------------------------------------
+# Hito 6: Recomendaciones de Contenido y Sistema de Mentoría
+# ---------------------------------------------------------------------------
+
+@router.get("/recommendations/my", response_model=List[schemas.RecommendationRead])
+def get_my_recommendations(
+    current_user: AcademyReader,
+    db: Session = Depends(get_db),
+    limit: int = Query(20, ge=1, le=100),
+):
+    """Lista recomendaciones personalizadas de aprendizaje para el estudiante."""
+    recs = (
+        db.query(models.AcademyContentRecommendation)
+        .filter(
+            models.AcademyContentRecommendation.student_id == current_user.id,
+            models.AcademyContentRecommendation.deleted_at.is_(None),
+        )
+        .order_by(
+            models.AcademyContentRecommendation.score.desc(),
+            models.AcademyContentRecommendation.created_at.desc(),
+        )
+        .limit(limit)
+        .all()
+    )
+    return recs
+
+
+@router.post("/recommendations/generate", response_model=List[schemas.RecommendationRead])
+def generate_recommendations(
+    current_user: AcademyReader,
+    db: Session = Depends(get_db),
+):
+    """Genera recomendaciones inteligentes para el estudiante basadas en su trayectoria."""
+    sede_id = get_user_sede_id(db, current_user.id)
+
+    # 1. Recomendación de Grupo de Estudio
+    available_group = (
+        db.query(models.AcademyStudyGroup)
+        .filter(
+            models.AcademyStudyGroup.is_active.is_(True),
+            models.AcademyStudyGroup.deleted_at.is_(None),
+        )
+        .order_by(models.AcademyStudyGroup.created_at.desc())
+        .first()
+    )
+    if available_group:
+        existing = (
+            db.query(models.AcademyContentRecommendation)
+            .filter(
+                models.AcademyContentRecommendation.student_id == current_user.id,
+                models.AcademyContentRecommendation.recommendation_type == "study_group",
+                models.AcademyContentRecommendation.deleted_at.is_(None),
+            )
+            .first()
+        )
+        if not existing:
+            rec = models.AcademyContentRecommendation(
+                student_id=current_user.id,
+                recommendation_type="study_group",
+                title=f"Únete al grupo de estudio: {available_group.name}",
+                description=available_group.description or "Participa en sesiones colaborativas con tus compañeros.",
+                reason="El aprendizaje colaborativo refuerza la retención y la resolución de dudas.",
+                score=0.95,
+                target_url="/plataforma/academy/grupos",
+                sede_id=sede_id,
+            )
+            db.add(rec)
+
+    # 2. Recomendación de Tutor Socrático
+    existing_tutor = (
+        db.query(models.AcademyContentRecommendation)
+        .filter(
+            models.AcademyContentRecommendation.student_id == current_user.id,
+            models.AcademyContentRecommendation.recommendation_type == "socratic_tutor",
+            models.AcademyContentRecommendation.deleted_at.is_(None),
+        )
+        .first()
+    )
+    if not existing_tutor:
+        rec = models.AcademyContentRecommendation(
+            student_id=current_user.id,
+            recommendation_type="socratic_tutor",
+            title="Refuerza tus fundamentos con el Tutor Socrático",
+            description="Explora conceptos teológicos clave mediante preguntas guiadas y mayéutica.",
+            reason="Ideal para profundizar tu comprensión antes de las próximas evaluaciones.",
+            score=0.88,
+            target_url="/plataforma/academy/tutor",
+            sede_id=sede_id,
+        )
+        db.add(rec)
+
+    # 3. Recomendación de Mentoría
+    mentor_p = (
+        db.query(models.AcademyMentorProfile)
+        .filter(
+            models.AcademyMentorProfile.is_active.is_(True),
+            models.AcademyMentorProfile.mentor_persona_id != current_user.id,
+            models.AcademyMentorProfile.deleted_at.is_(None),
+        )
+        .first()
+    )
+    if mentor_p:
+        mentor_user = db.query(models.Persona).filter(models.Persona.id == mentor_p.mentor_persona_id).first()
+        m_first = getattr(mentor_user, "primer_nombre", "") or ""
+        m_last = getattr(mentor_user, "primer_apellido", "") or ""
+        mentor_name = f"{m_first} {m_last}".strip() if (m_first or m_last) else "un mentor"
+        existing_mentor = (
+            db.query(models.AcademyContentRecommendation)
+            .filter(
+                models.AcademyContentRecommendation.student_id == current_user.id,
+                models.AcademyContentRecommendation.recommendation_type == "mentor",
+                models.AcademyContentRecommendation.deleted_at.is_(None),
+            )
+            .first()
+        )
+        if not existing_mentor:
+            rec = models.AcademyContentRecommendation(
+                student_id=current_user.id,
+                recommendation_type="mentor",
+                title=f"Conecta con {mentor_name} para mentoría personalizada",
+                description=mentor_p.bio or "Acompañamiento académico y pastoral en tu proceso de formación.",
+                reason="Un mentor te guiará en la aplicación práctica de tus materias.",
+                score=0.92,
+                target_url="/plataforma/academy/mentoria",
+                sede_id=sede_id,
+            )
+            db.add(rec)
+
+    # 4. Recomendación de Mapa de Conocimiento / Ruta
+    existing_map = (
+        db.query(models.AcademyContentRecommendation)
+        .filter(
+            models.AcademyContentRecommendation.student_id == current_user.id,
+            models.AcademyContentRecommendation.recommendation_type == "learning_path",
+            models.AcademyContentRecommendation.deleted_at.is_(None),
+        )
+        .first()
+    )
+    if not existing_map:
+        rec = models.AcademyContentRecommendation(
+            student_id=current_user.id,
+            recommendation_type="learning_path",
+            title="Revisa tu Mapa de Aprendizaje",
+            description="Visualiza tu avance por competencias y detecta nodos que requieren refuerzo.",
+            reason="Te ayuda a mantener una visión holística de tu plan de estudios.",
+            score=0.82,
+            target_url="/plataforma/academy/mapa",
+            sede_id=sede_id,
+        )
+        db.add(rec)
+
+    db.commit()
+
+    return (
+        db.query(models.AcademyContentRecommendation)
+        .filter(
+            models.AcademyContentRecommendation.student_id == current_user.id,
+            models.AcademyContentRecommendation.deleted_at.is_(None),
+        )
+        .order_by(
+            models.AcademyContentRecommendation.score.desc(),
+            models.AcademyContentRecommendation.created_at.desc(),
+        )
+        .all()
+    )
+
+
+@router.post("/recommendations/{id}/viewed", response_model=schemas.RecommendationRead)
+def mark_recommendation_viewed(
+    id: UUID,
+    current_user: AcademyReader,
+    db: Session = Depends(get_db),
+):
+    """Marca una recomendación como revisada/abierta por el estudiante."""
+    rec = (
+        db.query(models.AcademyContentRecommendation)
+        .filter(
+            models.AcademyContentRecommendation.id == id,
+            models.AcademyContentRecommendation.student_id == current_user.id,
+            models.AcademyContentRecommendation.deleted_at.is_(None),
+        )
+        .first()
+    )
+    if not rec:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Recomendación no encontrada",
+        )
+
+    rec.viewed = True
+    rec.viewed_at = _utcnow()
+    db.commit()
+    db.refresh(rec)
+    return rec
+
+
+@router.get("/mentorship/available-mentors", response_model=List[schemas.MentorProfileRead])
+def get_available_mentors(
+    current_user: AcademyReader,
+    db: Session = Depends(get_db),
+):
+    """Lista mentores académicos activos y disponibles para acompañamiento."""
+    profiles = (
+        db.query(models.AcademyMentorProfile)
+        .options(joinedload(models.AcademyMentorProfile.mentor))
+        .filter(
+            models.AcademyMentorProfile.is_active.is_(True),
+            models.AcademyMentorProfile.deleted_at.is_(None),
+        )
+        .all()
+    )
+    result = []
+    for p in profiles:
+        m = p.mentor
+        full_name = f"{getattr(m, 'primer_nombre', '') or ''} {getattr(m, 'primer_apellido', '') or ''}".strip() if m else "Mentor Académico"
+        if not full_name:
+            full_name = getattr(m, "nombre", None) or "Mentor Académico"
+        result.append(
+            schemas.MentorProfileRead(
+                id=p.id,
+                mentor_persona_id=p.mentor_persona_id,
+                mentor_name=full_name,
+                name=full_name,
+                full_name=full_name,
+                bio=p.bio,
+                description=p.bio,
+                expertise=p.expertise,
+                availability=p.availability_summary,
+                availability_summary=p.availability_summary,
+                max_mentees=p.max_mentees,
+                is_active=p.is_active,
+                created_at=p.created_at,
+            )
+        )
+    return result
+
+
+@router.post("/mentorship/mentor-profile", response_model=schemas.MentorProfileRead, status_code=status.HTTP_201_CREATED)
+def create_or_update_mentor_profile(
+    payload: schemas.MentorProfileCreate,
+    current_user: AcademyReader,
+    db: Session = Depends(get_db),
+):
+    """Registra o actualiza el perfil de un mentor académico."""
+    persona_id = payload.mentor_persona_id or current_user.id
+    profile = (
+        db.query(models.AcademyMentorProfile)
+        .filter(models.AcademyMentorProfile.mentor_persona_id == persona_id)
+        .first()
+    )
+    sede_id = get_user_sede_id(db, current_user.id)
+    if profile:
+        profile.bio = payload.bio
+        profile.expertise = payload.expertise
+        profile.availability_summary = payload.availability_summary
+        profile.max_mentees = payload.max_mentees
+        profile.is_active = payload.is_active
+        profile.deleted_at = None
+    else:
+        profile = models.AcademyMentorProfile(
+            mentor_persona_id=persona_id,
+            bio=payload.bio,
+            expertise=payload.expertise,
+            availability_summary=payload.availability_summary,
+            max_mentees=payload.max_mentees,
+            is_active=payload.is_active,
+            sede_id=sede_id,
+        )
+        db.add(profile)
+    db.commit()
+    db.refresh(profile)
+
+    m = db.query(models.Persona).filter(models.Persona.id == persona_id).first()
+    full_name = f"{getattr(m, 'primer_nombre', '') or ''} {getattr(m, 'primer_apellido', '') or ''}".strip() if m else "Mentor Académico"
+    return schemas.MentorProfileRead(
+        id=profile.id,
+        mentor_persona_id=profile.mentor_persona_id,
+        mentor_name=full_name,
+        name=full_name,
+        full_name=full_name,
+        bio=profile.bio,
+        description=profile.bio,
+        expertise=profile.expertise,
+        availability=profile.availability_summary,
+        availability_summary=profile.availability_summary,
+        max_mentees=profile.max_mentees,
+        is_active=profile.is_active,
+        created_at=profile.created_at,
+    )
+
+
+@router.post("/mentorship/request", response_model=schemas.MentorshipRequestRead, status_code=status.HTTP_201_CREATED)
+def request_mentorship(
+    payload: schemas.MentorshipRequestCreate,
+    current_user: AcademyReader,
+    db: Session = Depends(get_db),
+):
+    """Envía una solicitud de mentoría académica."""
+    if current_user.id == payload.mentor_persona_id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="No puedes solicitarte mentoría a ti mismo",
+        )
+
+    mentor_persona = db.query(models.Persona).filter(models.Persona.id == payload.mentor_persona_id).first()
+    if not mentor_persona:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Mentor no encontrado",
+        )
+
+    existing = (
+        db.query(models.AcademyMentorshipRequest)
+        .filter(
+            models.AcademyMentorshipRequest.mentor_persona_id == payload.mentor_persona_id,
+            models.AcademyMentorshipRequest.mentee_persona_id == current_user.id,
+            models.AcademyMentorshipRequest.status.in_(["pending", "accepted"]),
+            models.AcademyMentorshipRequest.deleted_at.is_(None),
+        )
+        .first()
+    )
+    if existing:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Ya existe una solicitud activa o pendiente con este mentor",
+        )
+
+    sede_id = get_user_sede_id(db, current_user.id)
+    req = models.AcademyMentorshipRequest(
+        mentor_persona_id=payload.mentor_persona_id,
+        mentee_persona_id=current_user.id,
+        status="pending",
+        message=payload.message.strip() if payload.message else None,
+        sede_id=sede_id,
+    )
+    db.add(req)
+    db.commit()
+    db.refresh(req)
+
+    mentor_user = db.query(models.Persona).filter(models.Persona.id == req.mentor_persona_id).first()
+    mentee_user = db.query(models.Persona).filter(models.Persona.id == req.mentee_persona_id).first()
+    m_name = f"{getattr(mentor_user, 'primer_nombre', '') or ''} {getattr(mentor_user, 'primer_apellido', '') or ''}".strip() if mentor_user else "Mentor"
+    me_name = f"{getattr(mentee_user, 'primer_nombre', '') or ''} {getattr(mentee_user, 'primer_apellido', '') or ''}".strip() if mentee_user else "Estudiante"
+
+    return schemas.MentorshipRequestRead(
+        id=req.id,
+        mentor_persona_id=req.mentor_persona_id,
+        mentee_persona_id=req.mentee_persona_id,
+        mentor_name=m_name,
+        mentee_name=me_name,
+        status=req.status,
+        message=req.message,
+        response_note=req.response_note,
+        requested_at=req.requested_at,
+        responded_at=req.responded_at,
+        created_at=req.created_at,
+    )
+
+
+@router.post("/mentorship/respond", response_model=schemas.MentorshipRequestRead)
+def respond_mentorship_request(
+    payload: schemas.MentorshipResponseAction,
+    current_user: AcademyReader,
+    db: Session = Depends(get_db),
+):
+    """El mentor o administrador responde a una solicitud de mentoría (aceptar/rechazar)."""
+    req = (
+        db.query(models.AcademyMentorshipRequest)
+        .filter(
+            models.AcademyMentorshipRequest.id == payload.request_id,
+            models.AcademyMentorshipRequest.deleted_at.is_(None),
+        )
+        .first()
+    )
+    if not req:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Solicitud de mentoría no encontrada",
+        )
+
+    if req.mentor_persona_id != current_user.id and not _can_edit_academy(db, current_user):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="No tienes permiso para responder a esta solicitud",
+        )
+
+    req.status = payload.decision
+    req.response_note = payload.response_note.strip() if payload.response_note else None
+    req.responded_at = _utcnow()
+    db.commit()
+    db.refresh(req)
+
+    mentor_user = db.query(models.Persona).filter(models.Persona.id == req.mentor_persona_id).first()
+    mentee_user = db.query(models.Persona).filter(models.Persona.id == req.mentee_persona_id).first()
+    m_name = f"{getattr(mentor_user, 'primer_nombre', '') or ''} {getattr(mentor_user, 'primer_apellido', '') or ''}".strip() if mentor_user else "Mentor"
+    me_name = f"{getattr(mentee_user, 'primer_nombre', '') or ''} {getattr(mentee_user, 'primer_apellido', '') or ''}".strip() if mentee_user else "Estudiante"
+
+    return schemas.MentorshipRequestRead(
+        id=req.id,
+        mentor_persona_id=req.mentor_persona_id,
+        mentee_persona_id=req.mentee_persona_id,
+        mentor_name=m_name,
+        mentee_name=me_name,
+        status=req.status,
+        message=req.message,
+        response_note=req.response_note,
+        requested_at=req.requested_at,
+        responded_at=req.responded_at,
+        created_at=req.created_at,
+    )
+
+
+@router.get("/mentorship/my-requests", response_model=List[schemas.MentorshipRequestRead])
+def get_my_mentorship_requests(
+    current_user: AcademyReader,
+    db: Session = Depends(get_db),
+):
+    """Lista las solicitudes de mentoría enviadas por el usuario actual como estudiante."""
+    requests = (
+        db.query(models.AcademyMentorshipRequest)
+        .options(
+            joinedload(models.AcademyMentorshipRequest.mentor),
+            joinedload(models.AcademyMentorshipRequest.mentee),
+        )
+        .filter(
+            models.AcademyMentorshipRequest.mentee_persona_id == current_user.id,
+            models.AcademyMentorshipRequest.deleted_at.is_(None),
+        )
+        .order_by(models.AcademyMentorshipRequest.requested_at.desc())
+        .all()
+    )
+    result = []
+    for r in requests:
+        m = r.mentor
+        me = r.mentee
+        m_name = f"{getattr(m, 'primer_nombre', '') or ''} {getattr(m, 'primer_apellido', '') or ''}".strip() if m else "Mentor"
+        me_name = f"{getattr(me, 'primer_nombre', '') or ''} {getattr(me, 'primer_apellido', '') or ''}".strip() if me else "Estudiante"
+        result.append(
+            schemas.MentorshipRequestRead(
+                id=r.id,
+                mentor_persona_id=r.mentor_persona_id,
+                mentee_persona_id=r.mentee_persona_id,
+                mentor_name=m_name,
+                mentee_name=me_name,
+                status=r.status,
+                message=r.message,
+                response_note=r.response_note,
+                requested_at=r.requested_at,
+                responded_at=r.responded_at,
+                created_at=r.created_at,
+            )
+        )
+    return result
+
+
+@router.get("/mentorship/my-mentees", response_model=List[schemas.MentorshipMenteeRead])
+def get_my_mentees(
+    current_user: AcademyReader,
+    db: Session = Depends(get_db),
+):
+    """Lista estudiantes mentorizados aceptados para el mentor actual."""
+    accepted = (
+        db.query(models.AcademyMentorshipRequest)
+        .options(joinedload(models.AcademyMentorshipRequest.mentee))
+        .filter(
+            models.AcademyMentorshipRequest.mentor_persona_id == current_user.id,
+            models.AcademyMentorshipRequest.status == "accepted",
+            models.AcademyMentorshipRequest.deleted_at.is_(None),
+        )
+        .order_by(models.AcademyMentorshipRequest.responded_at.desc())
+        .all()
+    )
+    result = []
+    for req in accepted:
+        me = req.mentee
+        me_name = f"{getattr(me, 'primer_nombre', '') or ''} {getattr(me, 'primer_apellido', '') or ''}".strip() if me else "Estudiante"
+        result.append(
+            schemas.MentorshipMenteeRead(
+                id=req.id,
+                mentee_persona_id=req.mentee_persona_id,
+                mentee_name=me_name,
+                status="active",
+                started_at=req.responded_at or req.requested_at,
+                created_at=req.created_at,
+                goals=[req.message] if req.message else [],
+            )
+        )
+    return result
+
+
 
 
 

@@ -1806,6 +1806,196 @@ def test_040_leave_study_group_and_my_groups(client, db_session):
 
 
 # ---------------------------------------------------------------------------
+# Hito 6: Tests 041 a 048 — Recomendaciones y Sistema de Mentoría
+# ---------------------------------------------------------------------------
+
+def test_041_recommendations_generate_and_my(client, db_session):
+    """Test generating personalized content recommendations and listing via /my."""
+    admin, _, _ = seed_admin(db_session, email="student_rec1@example.com")
+    headers = auth_headers(client, email="student_rec1@example.com", password="testpass123")
+
+    # Generate recommendations
+    gen_r = client.post("/api/academy/recommendations/generate", headers=headers)
+    assert gen_r.status_code == 200, gen_r.text
+    recs = gen_r.json()
+    assert len(recs) >= 1
+    assert any(r["recommendation_type"] in ("study_group", "socratic_tutor", "mentor", "learning_path") for r in recs)
+
+    # List via /my
+    my_r = client.get("/api/academy/recommendations/my", headers=headers)
+    assert my_r.status_code == 200
+    my_recs = my_r.json()
+    assert len(my_recs) == len(recs)
+    for r in my_recs:
+        assert "id" in r
+        assert "score" in r
+        assert "title" in r
+        assert r["viewed"] is False
+
+
+def test_042_recommendation_mark_viewed(client, db_session):
+    """Test marking a recommendation as viewed."""
+    admin, _, _ = seed_admin(db_session, email="student_rec2@example.com")
+    headers = auth_headers(client, email="student_rec2@example.com", password="testpass123")
+
+    client.post("/api/academy/recommendations/generate", headers=headers)
+    my_recs = client.get("/api/academy/recommendations/my", headers=headers).json()
+    rec_id = my_recs[0]["id"]
+
+    view_r = client.post(f"/api/academy/recommendations/{rec_id}/viewed", headers=headers)
+    assert view_r.status_code == 200, view_r.text
+    assert view_r.json()["viewed"] is True
+    assert view_r.json()["viewed_at"] is not None
+
+    # Nonexistent recommendation returns 404
+    fake_r = client.post(f"/api/academy/recommendations/{uuid.uuid4()}/viewed", headers=headers)
+    assert fake_r.status_code == 404
+
+
+def test_043_available_mentors_list(client, db_session):
+    """Test creating a mentor profile and querying available mentors."""
+    mentor_user, _, _ = seed_admin(db_session, email="mentor_prof1@example.com")
+    headers_mentor = auth_headers(client, email="mentor_prof1@example.com", password="testpass123")
+
+    prof_r = client.post("/api/academy/mentorship/mentor-profile", json={
+        "mentor_persona_id": str(mentor_user.id),
+        "bio": "Profesor de Hermenéutica y Griego Bíblico",
+        "expertise": ["Hermenéutica", "Idiomas Bíblicos"],
+        "availability_summary": "Lunes y Miércoles 16:00 - 18:00",
+        "max_mentees": 4,
+    }, headers=headers_mentor)
+    assert prof_r.status_code == 201, prof_r.text
+    prof_data = prof_r.json()
+    assert prof_data["mentor_persona_id"] == str(mentor_user.id)
+    assert "Hermenéutica" in prof_data["expertise"]
+
+    # Student queries available mentors
+    student, _, _ = seed_admin(db_session, email="student_mentee1@example.com")
+    headers_st = auth_headers(client, email="student_mentee1@example.com", password="testpass123")
+    list_r = client.get("/api/academy/mentorship/available-mentors", headers=headers_st)
+    assert list_r.status_code == 200
+    mentors = list_r.json()
+    assert any(m["mentor_persona_id"] == str(mentor_user.id) for m in mentors)
+
+
+def test_044_request_mentorship(client, db_session):
+    """Test student sending a mentorship request to an available mentor."""
+    mentor_user, _, _ = seed_admin(db_session, email="mentor_req2@example.com")
+    student, _, _ = seed_admin(db_session, email="student_req2@example.com")
+    headers_st = auth_headers(client, email="student_req2@example.com", password="testpass123")
+
+    req_r = client.post("/api/academy/mentorship/request", json={
+        "mentor_persona_id": str(mentor_user.id),
+        "message": "Hola mentor, me gustaría asesoría en mi monografía pastoral.",
+    }, headers=headers_st)
+    assert req_r.status_code == 201, req_r.text
+    data = req_r.json()
+    assert data["mentor_persona_id"] == str(mentor_user.id)
+    assert data["mentee_persona_id"] == str(student.id)
+    assert data["status"] == "pending"
+    assert "monografía pastoral" in data["message"]
+
+    # Duplicate request fails with 409
+    dup_r = client.post("/api/academy/mentorship/request", json={
+        "mentor_persona_id": str(mentor_user.id),
+    }, headers=headers_st)
+    assert dup_r.status_code == 409
+
+
+def test_045_request_mentorship_self_forbidden(client, db_session):
+    """Test student requesting self as mentor is rejected with 400 Bad Request."""
+    user, _, _ = seed_admin(db_session, email="self_mentor@example.com")
+    headers = auth_headers(client, email="self_mentor@example.com", password="testpass123")
+
+    bad_r = client.post("/api/academy/mentorship/request", json={
+        "mentor_persona_id": str(user.id),
+        "message": "Solicitud auto-referente",
+    }, headers=headers)
+    assert bad_r.status_code == 400
+    assert "ti mismo" in bad_r.json()["detail"]
+
+
+def test_046_respond_mentorship_accept(client, db_session):
+    """Test mentor accepting a mentorship request."""
+    mentor, _, _ = seed_admin(db_session, email="mentor_acc3@example.com")
+    headers_mentor = auth_headers(client, email="mentor_acc3@example.com", password="testpass123")
+    student, _, _ = seed_admin(db_session, email="student_acc3@example.com")
+    headers_st = auth_headers(client, email="student_acc3@example.com", password="testpass123")
+
+    # Student requests
+    req_r = client.post("/api/academy/mentorship/request", json={
+        "mentor_persona_id": str(mentor.id),
+        "message": "Acompañamiento en Teología Sistemática",
+    }, headers=headers_st)
+    req_id = req_r.json()["id"]
+
+    # Mentor responds with acceptance
+    resp_r = client.post("/api/academy/mentorship/respond", json={
+        "request_id": req_id,
+        "decision": "accepted",
+        "response_note": "Bienvenido, iniciamos reuniones los jueves.",
+    }, headers=headers_mentor)
+    assert resp_r.status_code == 200, resp_r.text
+    data = resp_r.json()
+    assert data["status"] == "accepted"
+    assert data["response_note"] == "Bienvenido, iniciamos reuniones los jueves."
+    assert data["responded_at"] is not None
+
+
+def test_047_my_requests_and_my_mentees(client, db_session):
+    """Test mentee queries /my-requests and mentor queries /my-mentees."""
+    mentor, _, _ = seed_admin(db_session, email="mentor_query4@example.com")
+    headers_mentor = auth_headers(client, email="mentor_query4@example.com", password="testpass123")
+    student, _, _ = seed_admin(db_session, email="student_query4@example.com")
+    headers_st = auth_headers(client, email="student_query4@example.com", password="testpass123")
+
+    # Request and accept
+    req_r = client.post("/api/academy/mentorship/request", json={
+        "mentor_persona_id": str(mentor.id),
+        "message": "Metas de formación pastoral",
+    }, headers=headers_st)
+    req_id = req_r.json()["id"]
+    client.post("/api/academy/mentorship/respond", json={
+        "request_id": req_id,
+        "decision": "accepted",
+    }, headers=headers_mentor)
+
+    # Student checks my-requests
+    st_reqs = client.get("/api/academy/mentorship/my-requests", headers=headers_st).json()
+    assert any(r["id"] == req_id and r["status"] == "accepted" for r in st_reqs)
+
+    # Mentor checks my-mentees
+    mentees = client.get("/api/academy/mentorship/my-mentees", headers=headers_mentor).json()
+    assert any(m["mentee_persona_id"] == str(student.id) for m in mentees)
+
+
+def test_048_respond_mentorship_reject(client, db_session):
+    """Test mentor rejecting a mentorship request."""
+    mentor, _, _ = seed_admin(db_session, email="mentor_rej5@example.com")
+    headers_mentor = auth_headers(client, email="mentor_rej5@example.com", password="testpass123")
+    student, _, _ = seed_admin(db_session, email="student_rej5@example.com")
+    headers_st = auth_headers(client, email="student_rej5@example.com", password="testpass123")
+
+    req_r = client.post("/api/academy/mentorship/request", json={
+        "mentor_persona_id": str(mentor.id),
+        "message": "Solicitud para rechazo",
+    }, headers=headers_st)
+    req_id = req_r.json()["id"]
+
+    resp_r = client.post("/api/academy/mentorship/respond", json={
+        "request_id": req_id,
+        "decision": "rejected",
+        "response_note": "No tengo disponibilidad este trimestre.",
+    }, headers=headers_mentor)
+    assert resp_r.status_code == 200
+    assert resp_r.json()["status"] == "rejected"
+
+    # Mentee does NOT appear in /my-mentees
+    mentees = client.get("/api/academy/mentorship/my-mentees", headers=headers_mentor).json()
+    assert not any(m["mentee_persona_id"] == str(student.id) for m in mentees)
+
+
+# ---------------------------------------------------------------------------
 # Hito 7: Tests 049 a 054 — Calendario Académico Inteligente y Predicción
 # ---------------------------------------------------------------------------
 

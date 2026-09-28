@@ -862,3 +862,62 @@ class AcademyCalendarEvent(Base):
     offering = relationship("AcademyPeriodOffering", foreign_keys=[offering_id])
     creator = relationship("Persona", foreign_keys=[created_by])
 
+
+class AcademyContentRecommendation(Base):
+    """Recomendaciones personalizadas de contenido, tutoría y grupos de estudio."""
+    __tablename__ = "academy_content_recommendations"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
+    student_id = Column(UUID(as_uuid=True), ForeignKey("personas.id"), nullable=False, index=True)
+    recommendation_type = Column(String(50), nullable=False)  # 'study_group', 'socratic_tutor', 'course', 'resource', 'learning_path', 'mentor'
+    title = Column(String(255), nullable=False)
+    description = Column(Text, nullable=True)
+    reason = Column(Text, nullable=False)
+    score = Column(Float, nullable=False, default=1.0)
+    target_url = Column(String(500), nullable=True)
+    viewed = Column(Boolean, nullable=False, default=False)
+    viewed_at = Column(DateTime(timezone=True), nullable=True)
+    sede_id = Column(UUID(as_uuid=True), ForeignKey("sedes.id", ondelete="SET NULL"), nullable=True, index=True)
+    created_at = Column(DateTime(timezone=True), default=_utcnow, nullable=False)
+    deleted_at = Column(DateTime(timezone=True), nullable=True, index=True)
+
+    student = relationship("Persona", foreign_keys=[student_id])
+
+
+class AcademyMentorProfile(Base):
+    """Perfil de mentor académico disponible para acompañamiento."""
+    __tablename__ = "academy_mentor_profiles"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
+    mentor_persona_id = Column(UUID(as_uuid=True), ForeignKey("personas.id"), nullable=False, unique=True, index=True)
+    bio = Column(Text, nullable=True)
+    expertise = Column(JSON, nullable=True)  # List of areas e.g. ["Teología", "Consejería"]
+    availability_summary = Column(String(255), nullable=True)
+    max_mentees = Column(Integer, nullable=False, default=5)
+    is_active = Column(Boolean, nullable=False, default=True)
+    sede_id = Column(UUID(as_uuid=True), ForeignKey("sedes.id", ondelete="SET NULL"), nullable=True, index=True)
+    created_at = Column(DateTime(timezone=True), default=_utcnow, nullable=False)
+    deleted_at = Column(DateTime(timezone=True), nullable=True, index=True)
+
+    mentor = relationship("Persona", foreign_keys=[mentor_persona_id])
+
+
+class AcademyMentorshipRequest(Base):
+    """Solicitudes y vinculaciones de mentoría personalizada entre estudiantes y mentores."""
+    __tablename__ = "academy_mentorship_requests"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
+    mentor_persona_id = Column(UUID(as_uuid=True), ForeignKey("personas.id"), nullable=False, index=True)
+    mentee_persona_id = Column(UUID(as_uuid=True), ForeignKey("personas.id"), nullable=False, index=True)
+    status = Column(String(50), nullable=False, default="pending")  # 'pending', 'accepted', 'rejected', 'completed'
+    message = Column(Text, nullable=True)
+    response_note = Column(Text, nullable=True)
+    requested_at = Column(DateTime(timezone=True), default=_utcnow, nullable=False)
+    responded_at = Column(DateTime(timezone=True), nullable=True)
+    sede_id = Column(UUID(as_uuid=True), ForeignKey("sedes.id", ondelete="SET NULL"), nullable=True, index=True)
+    created_at = Column(DateTime(timezone=True), default=_utcnow, nullable=False)
+    deleted_at = Column(DateTime(timezone=True), nullable=True, index=True)
+
+    mentor = relationship("Persona", foreign_keys=[mentor_persona_id])
+    mentee = relationship("Persona", foreign_keys=[mentee_persona_id])
+

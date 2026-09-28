@@ -1617,3 +1617,97 @@ class WorkloadPredictionResponse(BaseModel):
     weeks: List[WorkloadWeekPrediction] = Field(default_factory=list)
     recommendations: List[str] = Field(default_factory=list)
 
+
+# ---------------------------------------------------------------------------
+# Hito 6: Recomendaciones de Contenido y Sistema de Mentoría
+# ---------------------------------------------------------------------------
+
+class RecommendationRead(BaseModel):
+    id: UUID
+    student_id: UUID
+    recommendation_type: str
+    title: str
+    description: Optional[str] = None
+    reason: str
+    score: float
+    target_url: Optional[str] = None
+    viewed: bool = False
+    viewed_at: Optional[datetime] = None
+    created_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class MentorProfileRead(BaseModel):
+    id: UUID
+    mentor_persona_id: UUID
+    mentor_name: Optional[str] = None
+    name: Optional[str] = None
+    full_name: Optional[str] = None
+    bio: Optional[str] = None
+    description: Optional[str] = None
+    expertise: Optional[Any] = None
+    availability: Optional[Any] = None
+    availability_summary: Optional[str] = None
+    max_mentees: int = 5
+    is_active: bool = True
+    created_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class MentorProfileCreate(BaseModel):
+    mentor_persona_id: Optional[UUID] = None
+    bio: Optional[str] = None
+    expertise: Optional[List[str]] = None
+    availability_summary: Optional[str] = None
+    max_mentees: int = 5
+    is_active: bool = True
+
+
+class MentorshipRequestCreate(BaseModel):
+    mentor_persona_id: UUID
+    message: Optional[str] = None
+
+
+class MentorshipResponseAction(BaseModel):
+    request_id: UUID
+    decision: str  # 'accepted', 'rejected'
+    response_note: Optional[str] = None
+
+    @field_validator("decision")
+    @classmethod
+    def validate_decision(cls, v: str) -> str:
+        norm = v.strip().lower()
+        if norm not in ("accepted", "rejected", "approved", "declined"):
+            raise ValueError("decision debe ser 'accepted' o 'rejected'")
+        return "accepted" if norm in ("accepted", "approved") else "rejected"
+
+
+class MentorshipRequestRead(BaseModel):
+    id: UUID
+    mentor_persona_id: UUID
+    mentee_persona_id: UUID
+    mentor_name: Optional[str] = None
+    mentee_name: Optional[str] = None
+    status: str
+    message: Optional[str] = None
+    response_note: Optional[str] = None
+    requested_at: datetime
+    responded_at: Optional[datetime] = None
+    created_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class MentorshipMenteeRead(BaseModel):
+    id: UUID
+    mentee_persona_id: UUID
+    mentee_name: str
+    status: str = "active"
+    started_at: Optional[datetime] = None
+    created_at: Optional[datetime] = None
+    goals: Optional[List[str]] = None
+
+    model_config = ConfigDict(from_attributes=True)
+
