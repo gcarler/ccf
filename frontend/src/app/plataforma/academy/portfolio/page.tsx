@@ -2,12 +2,11 @@
 
 import React, { useCallback, useEffect, useState } from 'react';
 import {
-  Award,
   Briefcase,
-  CheckCircle2,
   ExternalLink,
   Eye,
   EyeOff,
+  Filter,
   Globe,
   Lock,
   Plus,
@@ -33,9 +32,13 @@ export default function VerifiablePortfolioPage() {
   const [isEntryDrawerOpen, setIsEntryDrawerOpen] = useState(false);
   const [verifyingEntry, setVerifyingEntry] = useState<PortfolioEntry | null>(null);
   const [togglingId, setTogglingId] = useState<string | null>(null);
+  const [typeFilter, setTypeFilter] = useState<'all' | 'project' | 'defense' | 'certification' | 'grade'>('all');
 
   const loadPortfolio = useCallback(async (signal?: AbortSignal) => {
-    if (!token) return;
+    if (!token) {
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     setError(null);
     try {
@@ -49,6 +52,7 @@ export default function VerifiablePortfolioPage() {
       if (!signal?.aborted) {
         const msg = extractErrorMessage(err, 'No pudimos cargar tu portafolio');
         setError(msg);
+        toast.error(msg);
       }
     } finally {
       if (!signal?.aborted) setLoading(false);
@@ -83,6 +87,16 @@ export default function VerifiablePortfolioPage() {
 
   const publicCount = entries.filter((e) => e.is_public).length;
   const verifiedCount = entries.filter((e) => Boolean(e.credential_hash)).length;
+  const visibleEntries = typeFilter === 'all'
+    ? entries
+    : entries.filter((entry) => entry.entry_type === typeFilter);
+  const entryTypes = [
+    { value: 'all', label: 'Todos' },
+    { value: 'project', label: 'Proyectos' },
+    { value: 'defense', label: 'Defensas' },
+    { value: 'certification', label: 'Certificaciones' },
+    { value: 'grade', label: 'Calificaciones' },
+  ] as const;
 
   return (
     <div className="flex h-full min-h-0 flex-col overflow-hidden bg-[hsl(var(--surface-1))] text-[hsl(var(--text-primary))]">
@@ -148,8 +162,27 @@ export default function VerifiablePortfolioPage() {
 
           {/* Listado de evidencias */}
           <section className="space-y-4">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-wrap items-center justify-between gap-3">
               <h2 className="text-base font-semibold">Mis Evidencias y Logros</h2>
+              <div className="flex flex-wrap items-center gap-2" role="group" aria-label="Filtrar portafolio por tipo">
+                <Filter className="size-4 text-[hsl(var(--text-secondary))]" aria-hidden="true" />
+                {entryTypes.map((type) => (
+                  <button
+                    key={type.value}
+                    type="button"
+                    aria-pressed={typeFilter === type.value}
+                    onClick={() => setTypeFilter(type.value)}
+                    className={clsx(
+                      'rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors',
+                      typeFilter === type.value
+                        ? 'border-[hsl(var(--primary))] bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))]'
+                        : 'border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))]',
+                    )}
+                  >
+                    {type.label}
+                  </button>
+                ))}
+              </div>
             </div>
 
             {loading ? (
@@ -168,9 +201,15 @@ export default function VerifiablePortfolioPage() {
                 description="Al defender trabajos o registrar proyectos finales, aparecerán aquí con su firma criptográfica de autenticidad."
                 icon={Briefcase}
               />
+            ) : visibleEntries.length === 0 ? (
+              <EmptyState
+                title="No hay evidencias de este tipo"
+                description="Prueba otro filtro para consultar el resto de tu portafolio."
+                icon={Filter}
+              />
             ) : (
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                {entries.map((entry) => (
+                {visibleEntries.map((entry) => (
                   <article
                     key={entry.id}
                     className="flex flex-col justify-between rounded-2xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-5 shadow-sm transition hover:border-[hsl(var(--primary)/0.4)]"
@@ -228,22 +267,24 @@ export default function VerifiablePortfolioPage() {
                       </div>
 
                       <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
-                        <button
+                        <DSButton
                           type="button"
                           onClick={() => handleTogglePublish(entry)}
                           disabled={togglingId === entry.id}
-                          className="inline-flex items-center gap-1.5 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] px-3 py-1.5 text-xs font-medium text-[hsl(var(--text-primary))] transition hover:bg-[hsl(var(--surface-1))]"
+                          variant="secondary"
+                          loading={togglingId === entry.id}
+                          className="inline-flex items-center gap-1.5 normal-case tracking-normal"
                         >
                           {entry.is_public ? (
                             <>
-                              <EyeOff className="size-3.5" /> Hacer Privado
+                              <EyeOff className="size-3.5" /> Despublicar
                             </>
                           ) : (
                             <>
-                              <Eye className="size-3.5" /> Hacer Público
+                              <Eye className="size-3.5" /> Publicar
                             </>
                           )}
-                        </button>
+                        </DSButton>
 
                         <DSButton
                           variant="secondary"

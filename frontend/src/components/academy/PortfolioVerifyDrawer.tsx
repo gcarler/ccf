@@ -1,12 +1,13 @@
 "use client";
 
 import React, { useEffect, useState } from 'react';
-import { Award, CheckCircle2, Copy, FileText, Loader2, ShieldCheck, XCircle } from 'lucide-react';
+import { CheckCircle2, Copy, ShieldCheck, XCircle } from 'lucide-react';
+import clsx from 'clsx';
 import { DSButton, DSSkeleton } from '@/design';
 import { RightPanel } from '@/components/ui/RightPanel';
 import { apiFetch, extractErrorMessage } from '@/lib/http';
 import { toast } from 'sonner';
-import type { PortfolioEntry, PortfolioVerifyResult } from '@/types/academy';
+import type { CredentialVerification, PortfolioEntry } from '@/types/academy';
 
 interface PortfolioVerifyDrawerProps {
   open: boolean;
@@ -22,7 +23,7 @@ export default function PortfolioVerifyDrawer({
   token,
 }: PortfolioVerifyDrawerProps) {
   const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<PortfolioVerifyResult | null>(null);
+  const [result, setResult] = useState<CredentialVerification | null>(null);
 
   useEffect(() => {
     if (!open || !entry) return;
@@ -30,23 +31,32 @@ export default function PortfolioVerifyDrawer({
     setLoading(true);
     setResult(null);
 
-    apiFetch<PortfolioVerifyResult>(`/academy/portfolio/entries/${entry.id}/verify`, {
+    const controller = new AbortController();
+    apiFetch<CredentialVerification>(`/academy/portfolio/entries/${entry.id}/verify`, {
       token: token || undefined,
+      signal: controller.signal,
     })
       .then((data) => {
         setResult(data);
       })
       .catch((error: unknown) => {
-        toast.error(extractErrorMessage(error, 'No pudimos verificar la autenticidad'));
+        if (!controller.signal.aborted) {
+          toast.error(extractErrorMessage(error, 'No pudimos verificar la autenticidad'));
+        }
       })
       .finally(() => {
-        setLoading(false);
+        if (!controller.signal.aborted) setLoading(false);
       });
+    return () => controller.abort();
   }, [entry, open, token]);
 
-  const copyHash = (hash: string) => {
-    navigator.clipboard.writeText(hash);
-    toast.success('Hash SHA-256 copiado al portapapeles');
+  const copyHash = async (hash: string) => {
+    try {
+      await navigator.clipboard.writeText(hash);
+      toast.success('Hash SHA-256 copiado al portapapeles');
+    } catch {
+      toast.error('No se pudo copiar el hash al portapapeles');
+    }
   };
 
   return (
@@ -72,18 +82,20 @@ export default function PortfolioVerifyDrawer({
           ) : result && entry ? (
             <>
               <section
-                className={`rounded-2xl border p-5 text-center ${
+                className={clsx(
+                  'rounded-2xl border p-5 text-center',
                   result.is_valid
                     ? 'border-[hsl(var(--primary)/0.3)] bg-[hsl(var(--primary)/0.05)]'
-                    : 'border-[hsl(var(--destructive)/0.3)] bg-[hsl(var(--destructive)/0.05)]'
-                }`}
+                    : 'border-[hsl(var(--destructive)/0.3)] bg-[hsl(var(--destructive)/0.05)]',
+                )}
               >
                 <div
-                  className={`mx-auto grid size-14 place-items-center rounded-full ${
+                  className={clsx(
+                    'mx-auto grid size-14 place-items-center rounded-full',
                     result.is_valid
                       ? 'bg-[hsl(var(--primary)/0.15)] text-[hsl(var(--primary))]'
-                      : 'bg-[hsl(var(--destructive)/0.15)] text-[hsl(var(--destructive))]'
-                  }`}
+                      : 'bg-[hsl(var(--destructive)/0.15)] text-[hsl(var(--destructive))]',
+                  )}
                 >
                   {result.is_valid ? <CheckCircle2 className="size-8" /> : <XCircle className="size-8" />}
                 </div>
@@ -132,7 +144,7 @@ export default function PortfolioVerifyDrawer({
                   {result.credential_hash && (
                     <button
                       type="button"
-                      onClick={() => copyHash(result.credential_hash!)}
+                      onClick={() => void copyHash(result.credential_hash ?? '')}
                       className="inline-flex items-center gap-1 text-xs font-semibold text-[hsl(var(--primary))] hover:underline"
                     >
                       <Copy className="size-3.5" /> Copiar

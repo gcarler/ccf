@@ -63,7 +63,7 @@ export default function SocraticTutorPage() {
     setLoading(true);
     setError(null);
     try {
-      const payload = await apiFetch<StudentAcademicRecordPayload>('/academy/student/academic-record', {
+      const payload = await apiFetch<StudentAcademicRecordPayload>('/academy/me/academic-record', {
         token,
         cache: 'no-store',
         signal,

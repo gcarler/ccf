@@ -498,7 +498,7 @@ export interface PortfolioEntry {
   created_at: string;
 }
 
-export interface PortfolioVerifyResult {
+export interface CredentialVerification {
   entry_id: string;
   is_valid: boolean;
   credential_hash?: string | null;
@@ -506,6 +506,8 @@ export interface PortfolioVerifyResult {
   issued_at: string;
   student_id: string;
 }
+
+export type PortfolioVerifyResult = CredentialVerification;
 
 export type WellnessSignalType = 'engagement_drop' | 'grade_risk' | 'absence_pattern' | 'stress_indicator' | string;
 export type WellnessSeverity = 'low' | 'medium' | 'high' | 'critical';
@@ -612,5 +614,4 @@ export interface WeeklyReport {
   knowledge_graph_progress_percent: number;
   key_highlights: string[];
 }
-
 

@@ -2,22 +2,21 @@
 
 import React, { useCallback, useEffect, useState } from 'react';
 import {
-  ArrowRight,
   BookOpen,
   Brain,
-  CheckCircle2,
   Clock,
   Layers,
   Network,
   Plus,
   RefreshCw,
-  Sparkles,
+  Route,
 } from 'lucide-react';
 import clsx from 'clsx';
 import { DSButton, DSSkeleton } from '@/design';
 import EmptyState from '@/components/ui/EmptyState';
-import NodeEvaluateDrawer from '@/components/academy/NodeEvaluateDrawer';
 import NodeCreateDrawer from '@/components/academy/NodeCreateDrawer';
+import LearningPathDrawer from '@/components/academy/LearningPathDrawer';
+import SocraticChatDrawer from '@/components/academy/SocraticChatDrawer';
 import { useAuth } from '@/context/AuthContext';
 import { apiFetch, extractErrorMessage } from '@/lib/http';
 import { toast } from 'sonner';
@@ -83,11 +82,12 @@ export default function KnowledgeGraphPage() {
 
   const [loading, setLoading] = useState(true);
   const [loadingGraph, setLoadingGraph] = useState(false);
+  const [loadingPath, setLoadingPath] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const [evaluatingNode, setEvaluatingNode] = useState<KnowledgeNode | null>(null);
-  const [evaluatingProgress, setEvaluatingProgress] = useState<StudentNodeProgress | null>(null);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [isLearningPathOpen, setIsLearningPathOpen] = useState(false);
 
   const isEditor = Boolean(
     user?.role === 'admin' ||
@@ -97,48 +97,68 @@ export default function KnowledgeGraphPage() {
   );
 
   const loadCommissions = useCallback(async (signal?: AbortSignal) => {
-    if (!token) return;
+    if (!token) {
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     setError(null);
     try {
-      const payload = await apiFetch<StudentAcademicRecordPayload>('/academy/student/academic-record', {
+      // Use the canonical self-service transcript endpoint currently exposed by the backend.
+      const payload = await apiFetch<StudentAcademicRecordPayload>('/academy/me/academic-record', {
         token,
         cache: 'no-store',
         signal,
       });
       const list = normalizeCommissions(payload);
       setCommissions(list);
-      if (list.length > 0 && !selectedOffering) {
-        setSelectedOffering(list[0]);
-      }
+      setSelectedOffering((current) => list.find((item) => item.offering_id === current?.offering_id) ?? list[0] ?? null);
     } catch (err: unknown) {
       if (!signal?.aborted) {
         const msg = extractErrorMessage(err, 'No se pudo cargar el historial de materias');
         setError(msg);
+        toast.error(msg);
       }
     } finally {
       if (!signal?.aborted) setLoading(false);
     }
-  }, [selectedOffering, token]);
+  }, [token]);
 
   const loadGraphData = useCallback(async (offeringId: string) => {
     if (!token) return;
     setLoadingGraph(true);
+    setGraph(null);
+    setProgressList([]);
     try {
-      const [gData, pData, lData] = await Promise.all([
+      const [gData, pData] = await Promise.all([
         apiFetch<KnowledgeGraph>(`/academy/knowledge/${offeringId}/graph`, { token }),
         apiFetch<StudentNodeProgress[]>(`/academy/knowledge/${offeringId}/student-progress`, { token }),
-        apiFetch<LearningPath>(`/academy/knowledge/${offeringId}/learning-path`, { token }),
       ]);
       setGraph(gData);
       setProgressList(pData);
-      setLearningPath(lData);
     } catch (err: unknown) {
       toast.error(extractErrorMessage(err, 'No pudimos cargar el grafo cognitivo'));
     } finally {
       setLoadingGraph(false);
     }
   }, [token]);
+
+  const loadLearningPath = useCallback(async () => {
+    if (!token || !selectedOffering) return;
+    setLoadingPath(true);
+    try {
+      const path = await apiFetch<LearningPath>(
+        `/academy/knowledge/${selectedOffering.offering_id}/learning-path`,
+        { token, cache: 'no-store' },
+      );
+      setLearningPath(path);
+      setIsLearningPathOpen(true);
+    } catch (err: unknown) {
+      toast.error(extractErrorMessage(err, 'No pudimos calcular el camino óptimo'));
+    } finally {
+      setLoadingPath(false);
+    }
+  }, [selectedOffering, token]);
 
   useEffect(() => {
     if (!isAuthenticated) return;
@@ -154,10 +174,19 @@ export default function KnowledgeGraphPage() {
   }, [loadGraphData, selectedOffering?.offering_id]);
 
   const handleEvaluate = (node: KnowledgeNode) => {
-    const p = progressList.find((item) => item.node_id === node.id) || null;
     setEvaluatingNode(node);
-    setEvaluatingProgress(p);
   };
+
+  const evaluateNodeAnswer = useCallback(async (responseText: string) => {
+    if (!token || !evaluatingNode) return;
+    await apiFetch(`/academy/knowledge/nodes/${evaluatingNode.id}/evaluate`, {
+      method: 'POST',
+      token,
+      body: { response_text: responseText },
+    });
+    toast.success('Dominio del nodo actualizado');
+    if (selectedOffering) await loadGraphData(selectedOffering.offering_id);
+  }, [evaluatingNode, loadGraphData, selectedOffering, token]);
 
   const getProgressForNode = (nodeId: string): StudentNodeProgress | null => {
     return progressList.find((p) => p.node_id === nodeId) || null;
@@ -182,6 +211,15 @@ export default function KnowledgeGraphPage() {
             </div>
           </div>
           <div className="flex flex-wrap items-center gap-2">
+            <DSButton
+              variant="secondary"
+              onClick={() => void loadLearningPath()}
+              disabled={!selectedOffering || loadingPath}
+              className="inline-flex items-center gap-2"
+            >
+              <Route className={clsx('size-4', loadingPath && 'animate-pulse')} />
+              {loadingPath ? 'Calculando camino…' : 'Ver Camino Óptimo'}
+            </DSButton>
             {isEditor && selectedOffering && (
               <DSButton onClick={() => setIsCreateOpen(true)} className="inline-flex items-center gap-2">
                 <Plus className="size-4" /> Nuevo Nodo
@@ -238,60 +276,12 @@ export default function KnowledgeGraphPage() {
             </div>
           ) : !selectedOffering ? (
             <EmptyState
-              title="No hay materias activas"
-              description="Inscríbete en una materia para explorar su grafo conceptual y ruta de aprendizaje."
+              title="No hay comisiones disponibles"
+              description="Cuando tengas una comisión activa, aquí podrás explorar su grafo conceptual y ruta de aprendizaje."
               icon={BookOpen}
             />
           ) : (
             <>
-              {/* Resumen del Learning Path */}
-              {learningPath && learningPath.path.length > 0 && (
-                <section className="rounded-2xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] p-5 shadow-sm">
-                  <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[hsl(var(--border))] pb-4">
-                    <div>
-                      <span className="text-xs font-semibold uppercase tracking-wider text-[hsl(var(--primary))]">
-                        Ruta de Aprendizaje Óptima
-                      </span>
-                      <h2 className="mt-0.5 text-lg font-bold">
-                        Dominio Global: {Math.round(learningPath.current_average_mastery * 100)}%
-                      </h2>
-                    </div>
-                    {learningPath.suggested_next_node && (
-                      <div className="inline-flex items-center gap-2 rounded-xl bg-[hsl(var(--primary)/0.1)] px-3 py-2 text-xs font-semibold text-[hsl(var(--primary))]">
-                        <Sparkles className="size-4" />
-                        Siguiente paso recomendado: {learningPath.suggested_next_node.title}
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="mt-4 flex flex-wrap items-center gap-2 overflow-x-auto py-1">
-                    {learningPath.path.map((step, idx) => (
-                      <div key={step.node_id} className="flex items-center gap-2">
-                        <div
-                          className={clsx(
-                            'flex items-center gap-2 rounded-lg border px-3 py-2 text-xs font-semibold',
-                            step.status === 'mastered'
-                              ? 'border-[hsl(var(--primary)/0.4)] bg-[hsl(var(--primary)/0.1)] text-[hsl(var(--primary))]'
-                              : step.status === 'ready_to_learn'
-                              ? 'border-[hsl(var(--primary))] bg-[hsl(var(--surface-1))] text-[hsl(var(--text-primary))] shadow-sm'
-                              : 'border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-[hsl(var(--text-secondary))]'
-                          )}
-                        >
-                          <span className="grid size-5 place-items-center rounded-full bg-[hsl(var(--surface-2))] text-[10px]">
-                            {idx + 1}
-                          </span>
-                          <span>{step.title}</span>
-                          {step.status === 'mastered' && <CheckCircle2 className="size-3.5" />}
-                        </div>
-                        {idx < learningPath.path.length - 1 && (
-                          <ArrowRight className="size-3.5 text-[hsl(var(--text-secondary))]" />
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </section>
-              )}
-
               {/* Listado de Nodos del Grafo */}
               <section className="space-y-4">
                 <div className="flex items-center justify-between">
@@ -311,26 +301,34 @@ export default function KnowledgeGraphPage() {
                     ))}
                   </div>
                 ) : !graph || graph.nodes.length === 0 ? (
-                  <div className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-8 text-center text-sm text-[hsl(var(--text-secondary))]">
-                    Aún no se han definido nodos de conocimiento para esta asignatura.
-                  </div>
+                  <EmptyState
+                    title="Aún no hay nodos de conocimiento"
+                    description="Todavía no se han definido conceptos o competencias para esta comisión."
+                    icon={Layers}
+                  />
                 ) : (
                   <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
                     {graph.nodes.map((node) => {
                       const p = getProgressForNode(node.id);
-                      const masteryPercent = p ? Math.round(p.mastery_score * 100) : 0;
+                      const masteryScore = p?.mastery_score ?? 0;
+                      const masteryPercent = Math.round(Math.min(1, Math.max(0, masteryScore)) * 100);
+                      const masteryStatus = masteryScore >= 0.7
+                        ? { label: 'Dominado', icon: '✅', className: 'text-[hsl(var(--primary))]' }
+                        : masteryScore >= 0.3
+                          ? { label: 'En progreso', icon: '⚠️', className: 'text-[hsl(var(--text-secondary))]' }
+                          : { label: 'Pendiente', icon: '🔴', className: 'text-[hsl(var(--destructive))]' };
                       return (
                         <article
                           key={node.id}
                           className="flex flex-col justify-between rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-4 shadow-sm"
                         >
                           <div>
-                            <div className="flex items-center justify-between gap-2">
+                            <div className="flex flex-wrap items-center justify-between gap-2">
                               <span className="rounded-md bg-[hsl(var(--surface-2))] px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-[hsl(var(--primary))]">
                                 {node.node_type}
                               </span>
-                              <span className="text-[11px] text-[hsl(var(--text-secondary))]">
-                                Peso: {node.weight}
+                              <span className={clsx('inline-flex items-center gap-1 text-[11px] font-semibold', masteryStatus.className)}>
+                                <span aria-hidden="true">{masteryStatus.icon}</span>{masteryStatus.label}
                               </span>
                             </div>
                             <h3 className="mt-2 text-base font-semibold">{node.title}</h3>
@@ -359,13 +357,13 @@ export default function KnowledgeGraphPage() {
 
                             <div className="flex items-center justify-between border-t border-[hsl(var(--border))] pt-3">
                               <span className="flex items-center gap-1 text-[11px] text-[hsl(var(--text-secondary))]">
-                                <Clock className="size-3" /> {p?.attempts ?? 0} intentos
+                                <Clock className="size-3" /> {p?.attempts ?? 0} intentos · Peso {node.weight}
                               </span>
                               <DSButton
                                 onClick={() => handleEvaluate(node)}
                                 className="h-8 px-2.5 text-xs inline-flex items-center gap-1.5"
                               >
-                                <Brain className="size-3.5" /> Evaluar
+                                <Brain className="size-3.5" /> Evaluar Dominio
                               </DSButton>
                             </div>
                           </div>
@@ -380,15 +378,21 @@ export default function KnowledgeGraphPage() {
         </div>
       </main>
 
-      <NodeEvaluateDrawer
+      <SocraticChatDrawer
         open={Boolean(evaluatingNode)}
         onClose={() => setEvaluatingNode(null)}
-        node={evaluatingNode}
-        progress={evaluatingProgress}
+        offering={selectedOffering}
         token={token}
-        onSuccess={() => {
-          if (selectedOffering) void loadGraphData(selectedOffering.offering_id);
-        }}
+        contextOverride={evaluatingNode ? `${selectedOffering?.subject_name ?? 'Comisión'} · ${evaluatingNode.title}` : undefined}
+        evaluationMode
+        onQuestionSubmitted={evaluateNodeAnswer}
+      />
+
+      <LearningPathDrawer
+        open={isLearningPathOpen}
+        onClose={() => setIsLearningPathOpen(false)}
+        learningPath={learningPath}
+        offeringName={selectedOffering?.subject_name}
       />
 
       <NodeCreateDrawer

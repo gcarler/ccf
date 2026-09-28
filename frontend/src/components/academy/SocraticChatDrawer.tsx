@@ -14,9 +14,20 @@ interface SocraticChatDrawerProps {
   onClose: () => void;
   offering: StudentAcademicCommission | null;
   token: string | null;
+  contextOverride?: string;
+  evaluationMode?: boolean;
+  onQuestionSubmitted?: (studentText: string) => Promise<void>;
 }
 
-export default function SocraticChatDrawer({ open, onClose, offering, token }: SocraticChatDrawerProps) {
+export default function SocraticChatDrawer({
+  open,
+  onClose,
+  offering,
+  token,
+  contextOverride,
+  evaluationMode = false,
+  onQuestionSubmitted,
+}: SocraticChatDrawerProps) {
   const [question, setQuestion] = useState('');
   const [messages, setMessages] = useState<SocraticQueryResponse[]>([]);
   const [sending, setSending] = useState(false);
@@ -47,29 +58,38 @@ export default function SocraticChatDrawer({ open, onClose, offering, token }: S
     try {
       const response = await apiFetch<SocraticQueryResponse>(
         `/academy/socratic/${offering.offering_id}/query`,
-        { method: 'POST', token, body: { question: trimmedQuestion, context: offering.subject_name } },
+        { method: 'POST', token, body: { question: trimmedQuestion, context: contextOverride ?? offering.subject_name } },
       );
       setMessages((current) => [...current, response]);
       setQuestion('');
+      if (onQuestionSubmitted) {
+        try {
+          await onQuestionSubmitted(trimmedQuestion);
+        } catch (evaluationError: unknown) {
+          toast.error(extractErrorMessage(evaluationError, 'No pudimos actualizar tu dominio en este nodo'));
+        }
+      }
     } catch (error: unknown) {
       toast.error(extractErrorMessage(error, 'No pudimos enviar tu pregunta al tutor'));
     } finally {
       setSending(false);
     }
-  }, [offering, question, sending, token]);
+  }, [contextOverride, offering, onQuestionSubmitted, question, sending, token]);
 
   return (
     <RightPanel
       open={open}
       onClose={onClose}
-      title={<span className="flex items-center gap-2"><Brain className="size-4 text-[hsl(var(--primary))]" /> Tutor Socrático</span>}
-      subtitle={offering ? `${offering.subject_name}${offering.period_code ? ` · ${offering.period_code}` : ''}` : 'Acompañamiento para pensar y aprender'}
+      title={<span className="flex items-center gap-2"><Brain className="size-4 text-[hsl(var(--primary))]" /> {evaluationMode ? 'Evaluación Socrática de Dominio' : 'Tutor Socrático'}</span>}
+      subtitle={contextOverride || (offering ? `${offering.subject_name}${offering.period_code ? ` · ${offering.period_code}` : ''}` : 'Acompañamiento para pensar y aprender')}
       width="w-full sm:max-w-2xl"
       contentClassName="min-h-0"
     >
       <div className="flex h-full min-h-0 flex-col bg-[hsl(var(--surface-1))] text-[hsl(var(--text-primary))]">
         <div className="border-b border-[hsl(var(--border))] px-4 py-3 text-sm text-[hsl(var(--text-secondary))]">
-          El tutor te guiará con preguntas para que construyas tu propia respuesta.
+          {evaluationMode
+            ? 'Explica con tus palabras el concepto. Tu respuesta actualizará el dominio y el tutor te ayudará a profundizar.'
+            : 'El tutor te guiará con preguntas para que construyas tu propia respuesta.'}
         </div>
         <div ref={scrollRef} className="flex-1 space-y-3 overflow-y-auto p-4" aria-live="polite" aria-label="Conversación con el tutor">
           {loading ? (
@@ -114,7 +134,7 @@ export default function SocraticChatDrawer({ open, onClose, offering, token }: S
             }}
             rows={2}
             maxLength={2000}
-            placeholder="Escribe tu pregunta…"
+            placeholder={evaluationMode ? 'Explica el concepto y cómo lo aplicarías…' : 'Escribe tu pregunta…'}
             className="min-h-11 flex-1 resize-y rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] px-3 py-2 text-sm text-[hsl(var(--text-primary))] placeholder:text-[hsl(var(--text-secondary))] focus:border-[hsl(var(--primary))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)]"
             disabled={sending || !offering}
           />
