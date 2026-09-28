@@ -1439,4 +1439,79 @@ class CopilotWeeklyReportResponse(BaseModel):
     key_highlights: List[str]
 
 
+class AchievementCreate(BaseModel):
+    code: str = Field(max_length=100)
+    title: str = Field(max_length=200)
+    description: Optional[str] = None
+    achievement_type: str = "milestone"
+    points: int = 10
+    badge_icon: Optional[str] = "award"
+    is_active: bool = True
+    sede_id: Optional[UUID] = None
 
+
+class AchievementRead(BaseModel):
+    id: UUID
+    code: str
+    title: str
+    description: Optional[str] = None
+    achievement_type: str
+    points: int
+    badge_icon: Optional[str] = None
+    is_active: bool
+    sede_id: Optional[UUID] = None
+    created_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class StudentAchievementAwardRequest(BaseModel):
+    student_id: UUID
+    achievement_id: UUID
+    offering_id: Optional[UUID] = None
+    evidence: Optional[Dict[str, Any]] = None
+
+
+class StudentAchievementRead(BaseModel):
+    id: UUID
+    student_id: UUID
+    achievement_id: UUID
+    offering_id: Optional[UUID] = None
+    earned_at: datetime
+    evidence: Optional[Dict[str, Any]] = None
+    credential_hash: Optional[str] = None
+    sede_id: Optional[UUID] = None
+    achievement: Optional[AchievementRead] = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class LeaderboardEntryRead(BaseModel):
+    id: UUID
+    student_id: UUID
+    student_name: str
+    total_points: int
+    rank: Optional[int] = None
+    period: str
+    offering_id: Optional[UUID] = None
+    updated_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class LeaderboardRecalculateRequest(BaseModel):
+    period: Optional[str] = "2026-Q3"
+    offering_id: Optional[UUID] = None
+
+
+class CredentialVerificationResponse(BaseModel):
+    verified: bool
+    student_id: UUID
+    student_name: str
+    achievement_id: UUID
+    achievement_title: str
+    badge_icon: Optional[str] = None
+    points: int
+    credential_hash: str
+    earned_at: datetime
+    is_valid: bool = True

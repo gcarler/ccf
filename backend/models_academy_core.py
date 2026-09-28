@@ -744,4 +744,62 @@ class AcademyWellnessAlert(Base):
     recipient = relationship("Persona", foreign_keys=[recipient_id])
 
 
+class AcademyAchievement(Base):
+    __tablename__ = "academy_achievements"
 
+    id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
+    code = Column(String(100), nullable=False, unique=True, index=True)
+    title = Column(String(200), nullable=False)
+    description = Column(Text, nullable=True)
+    achievement_type = Column(String(50), nullable=False, default="milestone")  # 'completion', 'excellence', 'defense', 'streak', 'milestone'
+    points = Column(Integer, nullable=False, default=10)
+    badge_icon = Column(String(100), nullable=True)
+    is_active = Column(Boolean, nullable=False, default=True)
+    created_at = Column(DateTime(timezone=True), default=_utcnow, nullable=False)
+    deleted_at = Column(DateTime(timezone=True), nullable=True, index=True)
+    sede_id = Column(UUID(as_uuid=True), ForeignKey("sedes.id", ondelete="SET NULL"), nullable=True, index=True)
+
+
+class AcademyStudentAchievement(Base):
+    __tablename__ = "academy_student_achievements"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
+    student_id = Column(UUID(as_uuid=True), ForeignKey("personas.id"), nullable=False, index=True)
+    achievement_id = Column(UUID(as_uuid=True), ForeignKey("academy_achievements.id", ondelete="CASCADE"), nullable=False, index=True)
+    offering_id = Column(UUID(as_uuid=True), ForeignKey("academy_period_offerings.id", ondelete="SET NULL"), nullable=True, index=True)
+    earned_at = Column(DateTime(timezone=True), default=_utcnow, nullable=False)
+    evidence = Column(JSON, nullable=True)
+    credential_hash = Column(String(64), nullable=True, index=True)
+    created_at = Column(DateTime(timezone=True), default=_utcnow, nullable=False)
+    deleted_at = Column(DateTime(timezone=True), nullable=True, index=True)
+    sede_id = Column(UUID(as_uuid=True), ForeignKey("sedes.id", ondelete="SET NULL"), nullable=True, index=True)
+
+    __table_args__ = (
+        UniqueConstraint("student_id", "achievement_id", "offering_id", name="uq_student_achievement_offering"),
+    )
+
+    student = relationship("Persona", foreign_keys=[student_id])
+    achievement = relationship("AcademyAchievement", foreign_keys=[achievement_id], backref="student_achievements")
+    offering = relationship("AcademyPeriodOffering", foreign_keys=[offering_id])
+
+
+class AcademyLeaderboard(Base):
+    __tablename__ = "academy_leaderboard"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
+    offering_id = Column(UUID(as_uuid=True), ForeignKey("academy_period_offerings.id", ondelete="SET NULL"), nullable=True, index=True)
+    sede_id = Column(UUID(as_uuid=True), ForeignKey("sedes.id", ondelete="SET NULL"), nullable=True, index=True)
+    period = Column(String(50), nullable=False, default="2026-Q3", index=True)
+    student_id = Column(UUID(as_uuid=True), ForeignKey("personas.id"), nullable=False, index=True)
+    total_points = Column(Integer, nullable=False, default=0)
+    rank = Column(Integer, nullable=True)
+    created_at = Column(DateTime(timezone=True), default=_utcnow, nullable=False)
+    updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow, nullable=False)
+    deleted_at = Column(DateTime(timezone=True), nullable=True, index=True)
+
+    __table_args__ = (
+        UniqueConstraint("student_id", "period", "offering_id", name="uq_leaderboard_student_period_offering"),
+    )
+
+    student = relationship("Persona", foreign_keys=[student_id])
+    offering = relationship("AcademyPeriodOffering", foreign_keys=[offering_id])

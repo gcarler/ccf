@@ -620,3 +620,52 @@ export interface WeeklyReport {
   knowledge_graph_progress_percent: number;
   key_highlights: string[];
 }
+
+export interface Achievement {
+  id: string;
+  code: string;
+  title: string;
+  description?: string | null;
+  achievement_type: 'completion' | 'excellence' | 'defense' | 'streak' | 'milestone';
+  points: number;
+  badge_icon?: string | null;
+  is_active: boolean;
+  sede_id?: string | null;
+  created_at: string;
+}
+
+export interface StudentAchievement {
+  id: string;
+  student_id: string;
+  achievement_id: string;
+  offering_id?: string | null;
+  earned_at: string;
+  evidence?: Record<string, unknown> | null;
+  credential_hash?: string | null;
+  sede_id?: string | null;
+  achievement?: Achievement | null;
+}
+
+export interface LeaderboardEntry {
+  id: string;
+  student_id: string;
+  student_name: string;
+  total_points: number;
+  rank?: number | null;
+  period: string;
+  offering_id?: string | null;
+  updated_at: string;
+}
+
+export interface AchievementCredentialVerification {
+  verified: boolean;
+  student_id: string;
+  student_name: string;
+  achievement_id: string;
+  achievement_title: string;
+  badge_icon?: string | null;
+  points: number;
+  credential_hash: string;
+  earned_at: string;
+  is_valid: boolean;
+}

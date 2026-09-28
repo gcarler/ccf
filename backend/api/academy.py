@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import asyncio
 from datetime import date, datetime, timezone
+import hashlib
 from html import escape as _html_escape
 from typing import Annotated, Any, List, Optional
 from uuid import UUID
@@ -3659,6 +3660,348 @@ def get_weekly_report(
 
     from backend.services.academic_engine_service import generate_weekly_report
     return generate_weekly_report(db=db, offering_id=offering_id)
+
+
+# ============================================================================
+# Hito 4: Logros, Credenciales Verificables y Leaderboard
+# ============================================================================
+
+@router.get("/achievements", response_model=List[schemas.AchievementRead])
+def get_achievements_catalog(
+    current_user: AcademyReader,
+    achievement_type: Optional[str] = None,
+    active_only: bool = True,
+    db: Session = Depends(get_db),
+):
+    user_sede_id = get_user_sede_id(db, current_user.id)
+    q = db.query(models.AcademyAchievement).filter(
+        models.AcademyAchievement.deleted_at.is_(None)
+    )
+    if active_only:
+        q = q.filter(models.AcademyAchievement.is_active.is_(True))
+    if achievement_type:
+        q = q.filter(models.AcademyAchievement.achievement_type == achievement_type)
+    if user_sede_id:
+        q = q.filter(
+            or_(
+                models.AcademyAchievement.sede_id.is_(None),
+                models.AcademyAchievement.sede_id == user_sede_id,
+            )
+        )
+    return q.order_by(models.AcademyAchievement.points.desc(), models.AcademyAchievement.title.asc()).all()
+
+
+@router.post("/achievements", response_model=schemas.AchievementRead, status_code=status.HTTP_201_CREATED)
+def create_achievement(
+    payload: schemas.AchievementCreate,
+    current_user: AcademyEditor,
+    db: Session = Depends(get_db),
+):
+    user_sede_id = get_user_sede_id(db, current_user.id)
+    existing = (
+        db.query(models.AcademyAchievement)
+        .filter(
+            models.AcademyAchievement.code == payload.code,
+            models.AcademyAchievement.deleted_at.is_(None),
+        )
+        .first()
+    )
+    if existing:
+        raise HTTPException(status_code=409, detail="El código de logro ya existe")
+
+    achievement = models.AcademyAchievement(
+        code=payload.code,
+        title=payload.title,
+        description=payload.description,
+        achievement_type=payload.achievement_type,
+        points=payload.points,
+        badge_icon=payload.badge_icon,
+        is_active=payload.is_active,
+        sede_id=payload.sede_id or user_sede_id,
+        created_at=_utcnow(),
+    )
+    db.add(achievement)
+    db.commit()
+    db.refresh(achievement)
+    return achievement
+
+
+@router.get("/achievements/my", response_model=List[schemas.StudentAchievementRead])
+def get_my_achievements(
+    current_user: AcademyReader,
+    db: Session = Depends(get_db),
+):
+    student_id = current_user.id
+    achievements = (
+        db.query(models.AcademyStudentAchievement)
+        .options(joinedload(models.AcademyStudentAchievement.achievement))
+        .filter(
+            models.AcademyStudentAchievement.student_id == student_id,
+            models.AcademyStudentAchievement.deleted_at.is_(None),
+        )
+        .order_by(models.AcademyStudentAchievement.earned_at.desc())
+        .all()
+    )
+    return achievements
+
+
+@router.post("/achievements/award", response_model=schemas.StudentAchievementRead, status_code=status.HTTP_201_CREATED)
+def award_achievement(
+    payload: schemas.StudentAchievementAwardRequest,
+    current_user: AcademyEditor,
+    db: Session = Depends(get_db),
+):
+    user_sede_id = get_user_sede_id(db, current_user.id)
+    achievement = (
+        db.query(models.AcademyAchievement)
+        .filter(
+            models.AcademyAchievement.id == payload.achievement_id,
+            models.AcademyAchievement.deleted_at.is_(None),
+        )
+        .first()
+    )
+    if not achievement:
+        raise HTTPException(status_code=404, detail="Logro no encontrado")
+
+    student = (
+        db.query(models.Persona)
+        .filter(models.Persona.id == payload.student_id)
+        .first()
+    )
+    if not student:
+        raise HTTPException(status_code=404, detail="Estudiante no encontrado")
+
+    existing_q = db.query(models.AcademyStudentAchievement).filter(
+        models.AcademyStudentAchievement.student_id == payload.student_id,
+        models.AcademyStudentAchievement.achievement_id == payload.achievement_id,
+        models.AcademyStudentAchievement.deleted_at.is_(None),
+    )
+    if payload.offering_id:
+        existing_q = existing_q.filter(models.AcademyStudentAchievement.offering_id == payload.offering_id)
+    else:
+        existing_q = existing_q.filter(models.AcademyStudentAchievement.offering_id.is_(None))
+
+    if existing_q.first():
+        raise HTTPException(status_code=409, detail="El estudiante ya cuenta con este logro para la oferta especificada")
+
+    now_utc = _utcnow()
+    # Generar credential_hash criptográfico SHA-256
+    hash_seed = f"{payload.student_id}:{payload.achievement_id}:{payload.offering_id or ''}:{now_utc.isoformat()}"
+    cred_hash = hashlib.sha256(hash_seed.encode("utf-8")).hexdigest()
+
+    sede_id = achievement.sede_id or user_sede_id
+
+    student_achievement = models.AcademyStudentAchievement(
+        student_id=payload.student_id,
+        achievement_id=payload.achievement_id,
+        offering_id=payload.offering_id,
+        earned_at=now_utc,
+        evidence=payload.evidence,
+        credential_hash=cred_hash,
+        sede_id=sede_id,
+        created_at=now_utc,
+    )
+    db.add(student_achievement)
+
+    # Genera AcademyPortfolioEntry tipo certification
+    evidence_url = None
+    if isinstance(payload.evidence, dict):
+        evidence_url = payload.evidence.get("url") or payload.evidence.get("evidence_url")
+
+    portfolio_entry = models.AcademyPortfolioEntry(
+        student_id=payload.student_id,
+        offering_id=payload.offering_id,
+        entry_type="certification",
+        title=f"Certificación / Logro: {achievement.title}",
+        description=achievement.description or f"Logro alcanzado: {achievement.title}",
+        evidence_url=evidence_url,
+        score=float(achievement.points),
+        issued_at=now_utc,
+        credential_hash=cred_hash,
+        is_public=True,
+        sede_id=sede_id,
+        created_at=now_utc,
+    )
+    db.add(portfolio_entry)
+
+    db.commit()
+    db.refresh(student_achievement)
+    return student_achievement
+
+
+@router.get("/achievements/{student_id}/credential/{achievement_id}/verify", response_model=schemas.CredentialVerificationResponse)
+def verify_achievement_credential(
+    student_id: UUID,
+    achievement_id: UUID,
+    db: Session = Depends(get_db),
+):
+    st_ach = (
+        db.query(models.AcademyStudentAchievement)
+        .options(
+            joinedload(models.AcademyStudentAchievement.student),
+            joinedload(models.AcademyStudentAchievement.achievement),
+        )
+        .filter(
+            models.AcademyStudentAchievement.student_id == student_id,
+            models.AcademyStudentAchievement.achievement_id == achievement_id,
+            models.AcademyStudentAchievement.deleted_at.is_(None),
+        )
+        .first()
+    )
+    if not st_ach or not st_ach.credential_hash:
+        raise HTTPException(status_code=404, detail="Credencial de logro no encontrada o no válida")
+
+    return {
+        "verified": True,
+        "student_id": st_ach.student_id,
+        "student_name": _persona_display_name(st_ach.student),
+        "achievement_id": st_ach.achievement_id,
+        "achievement_title": st_ach.achievement.title if st_ach.achievement else "",
+        "badge_icon": st_ach.achievement.badge_icon if st_ach.achievement else None,
+        "points": st_ach.achievement.points if st_ach.achievement else 0,
+        "credential_hash": st_ach.credential_hash,
+        "earned_at": st_ach.earned_at,
+        "is_valid": True,
+    }
+
+
+@router.get("/leaderboard", response_model=List[schemas.LeaderboardEntryRead])
+def get_leaderboard(
+    current_user: AcademyReader,
+    period: str = "2026-Q3",
+    offering_id: Optional[UUID] = None,
+    limit: int = 50,
+    db: Session = Depends(get_db),
+):
+    user_sede_id = get_user_sede_id(db, current_user.id)
+    q = (
+        db.query(models.AcademyLeaderboard)
+        .options(joinedload(models.AcademyLeaderboard.student))
+        .filter(
+            models.AcademyLeaderboard.period == period,
+            models.AcademyLeaderboard.deleted_at.is_(None),
+        )
+    )
+    if offering_id:
+        q = q.filter(models.AcademyLeaderboard.offering_id == offering_id)
+    if user_sede_id:
+        q = q.filter(
+            or_(
+                models.AcademyLeaderboard.sede_id.is_(None),
+                models.AcademyLeaderboard.sede_id == user_sede_id,
+            )
+        )
+
+    rows = (
+        q.order_by(models.AcademyLeaderboard.rank.asc(), models.AcademyLeaderboard.total_points.desc())
+        .limit(limit)
+        .all()
+    )
+
+    results = []
+    for r in rows:
+        results.append(
+            schemas.LeaderboardEntryRead(
+                id=r.id,
+                student_id=r.student_id,
+                student_name=_persona_display_name(r.student),
+                total_points=r.total_points,
+                rank=r.rank,
+                period=r.period,
+                offering_id=r.offering_id,
+                updated_at=r.updated_at,
+            )
+        )
+    return results
+
+
+@router.post("/leaderboard/recalculate", response_model=List[schemas.LeaderboardEntryRead])
+def recalculate_leaderboard(
+    payload: schemas.LeaderboardRecalculateRequest,
+    current_user: AcademyEditor,
+    db: Session = Depends(get_db),
+):
+    user_sede_id = get_user_sede_id(db, current_user.id)
+    period = payload.period or "2026-Q3"
+    offering_id = payload.offering_id
+    now_utc = _utcnow()
+
+    # Aggregate points per student from active AcademyStudentAchievement
+    q = (
+        db.query(
+            models.AcademyStudentAchievement.student_id,
+            func.coalesce(func.sum(models.AcademyAchievement.points), 0).label("total_pts"),
+        )
+        .join(models.AcademyAchievement, models.AcademyStudentAchievement.achievement_id == models.AcademyAchievement.id)
+        .filter(
+            models.AcademyStudentAchievement.deleted_at.is_(None),
+            models.AcademyAchievement.deleted_at.is_(None),
+        )
+    )
+    if offering_id:
+        q = q.filter(models.AcademyStudentAchievement.offering_id == offering_id)
+    if user_sede_id:
+        q = q.filter(
+            or_(
+                models.AcademyStudentAchievement.sede_id.is_(None),
+                models.AcademyStudentAchievement.sede_id == user_sede_id,
+            )
+        )
+
+    totals = (
+        q.group_by(models.AcademyStudentAchievement.student_id)
+        .order_by(func.sum(models.AcademyAchievement.points).desc())
+        .all()
+    )
+
+    results = []
+    for rank_idx, (st_id, total_pts) in enumerate(totals, start=1):
+        board_entry_q = db.query(models.AcademyLeaderboard).filter(
+            models.AcademyLeaderboard.student_id == st_id,
+            models.AcademyLeaderboard.period == period,
+            models.AcademyLeaderboard.deleted_at.is_(None),
+        )
+        if offering_id:
+            board_entry_q = board_entry_q.filter(models.AcademyLeaderboard.offering_id == offering_id)
+        else:
+            board_entry_q = board_entry_q.filter(models.AcademyLeaderboard.offering_id.is_(None))
+
+        board_entry = board_entry_q.first()
+        if board_entry:
+            board_entry.total_points = int(total_pts)
+            board_entry.rank = rank_idx
+            board_entry.updated_at = now_utc
+        else:
+            board_entry = models.AcademyLeaderboard(
+                student_id=st_id,
+                period=period,
+                offering_id=offering_id,
+                total_points=int(total_pts),
+                rank=rank_idx,
+                sede_id=user_sede_id,
+                created_at=now_utc,
+                updated_at=now_utc,
+            )
+            db.add(board_entry)
+        db.flush()
+
+        student = db.query(models.Persona).filter(models.Persona.id == st_id).first()
+        results.append(
+            schemas.LeaderboardEntryRead(
+                id=board_entry.id,
+                student_id=st_id,
+                student_name=_persona_display_name(student),
+                total_points=int(total_pts),
+                rank=rank_idx,
+                period=period,
+                offering_id=offering_id,
+                updated_at=now_utc,
+            )
+        )
+
+    db.commit()
+    return results
+
 
 
 

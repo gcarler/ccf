@@ -1347,4 +1347,256 @@ def test_029_copilot_class_performance_and_weekly_report(client, db_session):
     assert len(rep_data["key_highlights"]) > 0
 
 
+def test_030_achievements_catalog_and_create(client, db_session):
+    """Test creating achievements and querying the catalog with filters."""
+    admin, _, _ = seed_admin(db_session)
+    headers = auth_headers(client, email=admin.email, password="testpass123")
+
+    code1 = f"ACH-EXC-{uuid.uuid4().hex[:6].upper()}"
+    code2 = f"ACH-DEF-{uuid.uuid4().hex[:6].upper()}"
+
+    # 1. Create achievement
+    payload1 = {
+        "code": code1,
+        "title": "Excelencia Teológica",
+        "description": "Obtenido por calificar con 100 en un módulo",
+        "achievement_type": "excellence",
+        "points": 50,
+        "badge_icon": "trophy",
+        "is_active": True,
+    }
+    r1 = client.post("/api/academy/achievements", json=payload1, headers=headers)
+    assert r1.status_code == 201, r1.text
+    ach1 = r1.json()
+    assert ach1["code"] == code1
+    assert ach1["points"] == 50
+
+    # 2. Duplicate code returns 409
+    r_dup = client.post("/api/academy/achievements", json=payload1, headers=headers)
+    assert r_dup.status_code == 409
+
+    # 3. Create second achievement
+    payload2 = {
+        "code": code2,
+        "title": "Defensa Socrática Aprobada",
+        "description": "Completar con éxito la defensa socrática",
+        "achievement_type": "defense",
+        "points": 30,
+        "badge_icon": "shield-check",
+        "is_active": True,
+    }
+    r2 = client.post("/api/academy/achievements", json=payload2, headers=headers)
+    assert r2.status_code == 201
+
+    # 4. List catalog
+    cat_r = client.get("/api/academy/achievements", headers=headers)
+    assert cat_r.status_code == 200
+    catalog = cat_r.json()
+    codes = [a["code"] for a in catalog]
+    assert code1 in codes
+    assert code2 in codes
+
+    # 5. Filter by achievement_type
+    filter_r = client.get("/api/academy/achievements?achievement_type=excellence", headers=headers)
+    assert filter_r.status_code == 200
+    filtered = filter_r.json()
+    assert any(a["code"] == code1 for a in filtered)
+    assert not any(a["code"] == code2 for a in filtered)
+
+
+def test_031_award_achievement_generates_hash_and_portfolio_entry(client, db_session):
+    """Test awarding an achievement generates a 64-char SHA-256 hash and a portfolio certification entry."""
+    admin, _, _ = seed_admin(db_session)
+    headers = auth_headers(client, email=admin.email, password="testpass123")
+
+    from backend.models import Persona, AcademyPortfolioEntry
+    student = Persona(first_name="LogroEstudiante", last_name="Verificable")
+    db_session.add(student)
+    db_session.commit()
+
+    code = f"ACH-COMP-{uuid.uuid4().hex[:6].upper()}"
+    ach_r = client.post("/api/academy/achievements", json={
+        "code": code,
+        "title": "Completitud Canónica",
+        "description": "Completó todos los créditos del programa",
+        "achievement_type": "completion",
+        "points": 100,
+        "badge_icon": "award",
+    }, headers=headers)
+    assert ach_r.status_code == 201
+    ach_id = ach_r.json()["id"]
+
+    # Award achievement
+    award_payload = {
+        "student_id": str(student.id),
+        "achievement_id": ach_id,
+        "evidence": {"project_url": "https://faro.ccf/cert/123", "note": "Defensa sobresaliente"},
+    }
+    award_r = client.post("/api/academy/achievements/award", json=award_payload, headers=headers)
+    assert award_r.status_code == 201, award_r.text
+    awarded = award_r.json()
+
+    assert awarded["student_id"] == str(student.id)
+    assert awarded["achievement_id"] == ach_id
+    assert awarded["credential_hash"] is not None
+    assert len(awarded["credential_hash"]) == 64  # SHA-256 hex string
+
+    # Verify AcademyPortfolioEntry of type certification was generated
+    port_entry = (
+        db_session.query(AcademyPortfolioEntry)
+        .filter(
+            AcademyPortfolioEntry.student_id == student.id,
+            AcademyPortfolioEntry.credential_hash == awarded["credential_hash"],
+        )
+        .first()
+    )
+    assert port_entry is not None
+    assert port_entry.entry_type == "certification"
+    assert port_entry.score == 100.0
+
+    # Duplicate award returns 409
+    dup_r = client.post("/api/academy/achievements/award", json=award_payload, headers=headers)
+    assert dup_r.status_code == 409
+
+
+def test_032_get_my_achievements(client, db_session):
+    """Test retrieving achievements for the authenticated student."""
+    admin, _, _ = seed_admin(db_session)
+    headers = auth_headers(client, email=admin.email, password="testpass123")
+
+    code = f"ACH-MY-{uuid.uuid4().hex[:6].upper()}"
+    ach_r = client.post("/api/academy/achievements", json={
+        "code": code,
+        "title": "Mi Primer Logro",
+        "achievement_type": "milestone",
+        "points": 25,
+    }, headers=headers)
+    ach_id = ach_r.json()["id"]
+
+    # Award to admin's persona
+    client.post("/api/academy/achievements/award", json={
+        "student_id": str(admin.id),
+        "achievement_id": ach_id,
+    }, headers=headers)
+
+    # Query /achievements/my
+    my_r = client.get("/api/academy/achievements/my", headers=headers)
+    assert my_r.status_code == 200
+    my_achievements = my_r.json()
+    assert len(my_achievements) >= 1
+    ach_ids = [a["achievement_id"] for a in my_achievements]
+    assert ach_id in ach_ids
+
+
+def test_033_verify_credential_endpoint(client, db_session):
+    """Test public/verifiable endpoint for student achievement credentials."""
+    admin, _, _ = seed_admin(db_session)
+    headers = auth_headers(client, email=admin.email, password="testpass123")
+
+    from backend.models import Persona
+    student = Persona(first_name="Verif", last_name="Alumno")
+    db_session.add(student)
+    db_session.commit()
+
+    code = f"ACH-VRF-{uuid.uuid4().hex[:6].upper()}"
+    ach_r = client.post("/api/academy/achievements", json={
+        "code": code,
+        "title": "Credencial Verificable",
+        "points": 40,
+        "badge_icon": "check-circle",
+    }, headers=headers)
+    ach_id = ach_r.json()["id"]
+
+    # Award
+    award_r = client.post("/api/academy/achievements/award", json={
+        "student_id": str(student.id),
+        "achievement_id": ach_id,
+    }, headers=headers)
+    cred_hash = award_r.json()["credential_hash"]
+
+    # Verify
+    verify_r = client.get(f"/api/academy/achievements/{student.id}/credential/{ach_id}/verify")
+    assert verify_r.status_code == 200
+    v_data = verify_r.json()
+    assert v_data["verified"] is True
+    assert v_data["credential_hash"] == cred_hash
+    assert v_data["achievement_title"] == "Credencial Verificable"
+    assert v_data["points"] == 40
+    assert "Verif" in v_data["student_name"]
+
+    # Non-existent returns 404
+    fake_id = str(uuid.uuid4())
+    bad_r = client.get(f"/api/academy/achievements/{fake_id}/credential/{ach_id}/verify")
+    assert bad_r.status_code == 404
+
+
+def test_034_leaderboard_recalculate_and_ranks(client, db_session):
+    """Test recalculating leaderboard ranks students by total achievement points."""
+    admin, _, _ = seed_admin(db_session)
+    headers = auth_headers(client, email=admin.email, password="testpass123")
+
+    from backend.models import Persona
+    st_alpha = Persona(first_name="Alpha", last_name="Rank")
+    st_beta = Persona(first_name="Beta", last_name="Rank")
+    db_session.add_all([st_alpha, st_beta])
+    db_session.commit()
+
+    # Create 2 achievements: 30 pts and 70 pts
+    ach30_r = client.post("/api/academy/achievements", json={
+        "code": f"ACH-30-{uuid.uuid4().hex[:6]}", "title": "Logro 30", "points": 30
+    }, headers=headers)
+    ach30_id = ach30_r.json()["id"]
+
+    ach70_r = client.post("/api/academy/achievements", json={
+        "code": f"ACH-70-{uuid.uuid4().hex[:6]}", "title": "Logro 70", "points": 70
+    }, headers=headers)
+    ach70_id = ach70_r.json()["id"]
+
+    # Alpha gets 30 pts
+    client.post("/api/academy/achievements/award", json={
+        "student_id": str(st_alpha.id), "achievement_id": ach30_id
+    }, headers=headers)
+
+    # Beta gets 70 pts + 30 pts = 100 pts
+    client.post("/api/academy/achievements/award", json={
+        "student_id": str(st_beta.id), "achievement_id": ach70_id
+    }, headers=headers)
+    client.post("/api/academy/achievements/award", json={
+        "student_id": str(st_beta.id), "achievement_id": ach30_id
+    }, headers=headers)
+
+    # Recalculate
+    recalc_r = client.post("/api/academy/leaderboard/recalculate", json={
+        "period": "2026-Q3",
+    }, headers=headers)
+    assert recalc_r.status_code == 200
+    board = recalc_r.json()
+    assert len(board) >= 2
+
+    # Beta must be rank 1 with 100 points, Alpha rank 2 with 30 points
+    beta_entry = next(e for e in board if e["student_id"] == str(st_beta.id))
+    alpha_entry = next(e for e in board if e["student_id"] == str(st_alpha.id))
+
+    assert beta_entry["total_points"] == 100
+    assert beta_entry["rank"] == 1
+    assert alpha_entry["total_points"] == 30
+    assert alpha_entry["rank"] == 2
+
+
+def test_035_leaderboard_query_filters(client, db_session):
+    """Test querying leaderboard entries with period and limit."""
+    admin, _, _ = seed_admin(db_session)
+    headers = auth_headers(client, email=admin.email, password="testpass123")
+
+    board_r = client.get("/api/academy/leaderboard?period=2026-Q3&limit=10", headers=headers)
+    assert board_r.status_code == 200
+    entries = board_r.json()
+    assert isinstance(entries, list)
+    if len(entries) > 1:
+        # Must be strictly ordered by rank ascending
+        ranks = [e["rank"] for e in entries if e["rank"] is not None]
+        assert ranks == sorted(ranks)
+
+
+
 
