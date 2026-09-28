@@ -1598,5 +1598,209 @@ def test_035_leaderboard_query_filters(client, db_session):
         assert ranks == sorted(ranks)
 
 
+def test_036_create_study_group(client, db_session):
+    """Test creating an AcademyStudyGroup with auto-leader enrollment."""
+    admin, _, _ = seed_admin(db_session)
+    headers = auth_headers(client, email=admin.email, password="testpass123")
 
+    prog_r = client.post("/api/academy/admin/programs", json={
+        "name": "Prog SG", "code": f"PSG-{uuid.uuid4().hex[:6]}", "program_type": "curso_libre", "has_teachers": True, "teachers_can_grade": True
+    }, headers=headers)
+    prog_id = prog_r.json()["id"]
+    plan_r = client.post("/api/academy/admin/study-plans", json={"program_id": prog_id, "name": "Plan SG", "code": f"PLSG-{uuid.uuid4().hex[:4]}"}, headers=headers)
+    plan_id = plan_r.json()["id"]
+    sub_r = client.post(f"/api/academy/admin/study-plans/{plan_id}/subjects", json={"name": "Sub SG", "code": f"SSG-{uuid.uuid4().hex[:4]}", "credits": 2, "order_index": 1}, headers=headers)
+    sub_id = sub_r.json()["id"]
+    per_r = client.post("/api/academy/admin/periods", json={"name": "Period SG", "code": f"PERSG-{uuid.uuid4().hex[:4]}", "start_date": "2026-01-01", "end_date": "2026-12-31"}, headers=headers)
+    per_id = per_r.json()["id"]
+    sch_r = client.post("/api/academy/admin/grading-schemes", json={"name": f"SchemeSG-{uuid.uuid4().hex[:4]}", "scale_max": 100.0, "passing_grade": 70.0, "cuts": [{"name": "C1", "weight_percent": 100.0, "order_index": 1}]}, headers=headers)
+    sch_id = sch_r.json()["id"]
+    off_r = client.post("/api/academy/admin/offerings", json={"academic_period_id": per_id, "subject_id": sub_id, "grading_scheme_id": sch_id, "quota_max": 20}, headers=headers)
+    off_id = off_r.json()["id"]
+
+    sg_r = client.post("/api/academy/study-groups", json={
+        "offering_id": off_id,
+        "name": "Grupo de Estudio Hermenéutica",
+        "description": "Repaso de textos y preparación para la defensa",
+        "max_members": 5,
+    }, headers=headers)
+    assert sg_r.status_code == 201, sg_r.text
+    sg_data = sg_r.json()
+    assert sg_data["name"] == "Grupo de Estudio Hermenéutica"
+    assert sg_data["max_members"] == 5
+    assert sg_data["is_active"] is True
+    assert sg_data["members_count"] == 1
+    assert sg_data["members"][0]["role"] == "leader"
+
+
+def test_037_list_study_groups_by_offering(client, db_session):
+    """Test querying study groups filtered by offering_id."""
+    admin, _, _ = seed_admin(db_session)
+    headers = auth_headers(client, email=admin.email, password="testpass123")
+
+    prog_r = client.post("/api/academy/admin/programs", json={
+        "name": "Prog SG2", "code": f"PSG2-{uuid.uuid4().hex[:6]}", "program_type": "curso_libre", "has_teachers": True, "teachers_can_grade": True
+    }, headers=headers)
+    prog_id = prog_r.json()["id"]
+    plan_r = client.post("/api/academy/admin/study-plans", json={"program_id": prog_id, "name": "Plan SG2", "code": f"PLSG2-{uuid.uuid4().hex[:4]}"}, headers=headers)
+    plan_id = plan_r.json()["id"]
+    sub_r = client.post(f"/api/academy/admin/study-plans/{plan_id}/subjects", json={"name": "Sub SG2", "code": f"SSG2-{uuid.uuid4().hex[:4]}", "credits": 2, "order_index": 1}, headers=headers)
+    sub_id = sub_r.json()["id"]
+    per_r = client.post("/api/academy/admin/periods", json={"name": "Period SG2", "code": f"PERSG2-{uuid.uuid4().hex[:4]}", "start_date": "2026-01-01", "end_date": "2026-12-31"}, headers=headers)
+    per_id = per_r.json()["id"]
+    sch_r = client.post("/api/academy/admin/grading-schemes", json={"name": f"SchemeSG2-{uuid.uuid4().hex[:4]}", "scale_max": 100.0, "passing_grade": 70.0, "cuts": [{"name": "C1", "weight_percent": 100.0, "order_index": 1}]}, headers=headers)
+    sch_id = sch_r.json()["id"]
+    off_r = client.post("/api/academy/admin/offerings", json={"academic_period_id": per_id, "subject_id": sub_id, "grading_scheme_id": sch_id, "quota_max": 20}, headers=headers)
+    off_id = off_r.json()["id"]
+
+    client.post("/api/academy/study-groups", json={
+        "offering_id": off_id,
+        "name": "Grupo Alpha",
+    }, headers=headers)
+
+    list_r = client.get(f"/api/academy/study-groups/{off_id}", headers=headers)
+    assert list_r.status_code == 200
+    groups = list_r.json()
+    assert len(groups) >= 1
+    assert any(g["name"] == "Grupo Alpha" for g in groups)
+
+
+def test_038_join_study_group(client, db_session):
+    """Test joining a study group and conflict on duplicate join."""
+    admin, _, _ = seed_admin(db_session)
+    headers_admin = auth_headers(client, email=admin.email, password="testpass123")
+
+    st_user, _, _ = seed_admin(db_session, email="st_join@example.com")
+    headers_st = auth_headers(client, email="st_join@example.com", password="testpass123")
+
+    prog_r = client.post("/api/academy/admin/programs", json={
+        "name": "Prog SG3", "code": f"PSG3-{uuid.uuid4().hex[:6]}", "program_type": "curso_libre", "has_teachers": True, "teachers_can_grade": True
+    }, headers=headers_admin)
+    prog_id = prog_r.json()["id"]
+    plan_r = client.post("/api/academy/admin/study-plans", json={"program_id": prog_id, "name": "Plan SG3", "code": f"PLSG3-{uuid.uuid4().hex[:4]}"}, headers=headers_admin)
+    plan_id = plan_r.json()["id"]
+    sub_r = client.post(f"/api/academy/admin/study-plans/{plan_id}/subjects", json={"name": "Sub SG3", "code": f"SSG3-{uuid.uuid4().hex[:4]}", "credits": 2, "order_index": 1}, headers=headers_admin)
+    sub_id = sub_r.json()["id"]
+    per_r = client.post("/api/academy/admin/periods", json={"name": "Period SG3", "code": f"PERSG3-{uuid.uuid4().hex[:4]}", "start_date": "2026-01-01", "end_date": "2026-12-31"}, headers=headers_admin)
+    per_id = per_r.json()["id"]
+    sch_r = client.post("/api/academy/admin/grading-schemes", json={"name": f"SchemeSG3-{uuid.uuid4().hex[:4]}", "scale_max": 100.0, "passing_grade": 70.0, "cuts": [{"name": "C1", "weight_percent": 100.0, "order_index": 1}]}, headers=headers_admin)
+    sch_id = sch_r.json()["id"]
+    off_r = client.post("/api/academy/admin/offerings", json={"academic_period_id": per_id, "subject_id": sub_id, "grading_scheme_id": sch_id, "quota_max": 20}, headers=headers_admin)
+    off_id = off_r.json()["id"]
+
+    sg_r = client.post("/api/academy/study-groups", json={
+        "offering_id": off_id,
+        "name": "Grupo Para Unirse",
+        "max_members": 4,
+    }, headers=headers_admin)
+    sg_id = sg_r.json()["id"]
+
+    # Student joins
+    join_r = client.post(f"/api/academy/study-groups/{sg_id}/join", headers=headers_st)
+    assert join_r.status_code == 201, join_r.text
+    j_data = join_r.json()
+    assert j_data["group_id"] == sg_id
+    assert j_data["role"] == "member"
+
+    # Duplicate join returns 409
+    dup_r = client.post(f"/api/academy/study-groups/{sg_id}/join", headers=headers_st)
+    assert dup_r.status_code == 409
+
+
+def test_039_study_group_max_members_limit(client, db_session):
+    """Test that joining an already full study group fails with 400 Bad Request."""
+    admin, _, _ = seed_admin(db_session)
+    headers_admin = auth_headers(client, email=admin.email, password="testpass123")
+
+    user2, _, _ = seed_admin(db_session, email="st_max2@example.com")
+    headers2 = auth_headers(client, email="st_max2@example.com", password="testpass123")
+
+    user3, _, _ = seed_admin(db_session, email="st_max3@example.com")
+    headers3 = auth_headers(client, email="st_max3@example.com", password="testpass123")
+
+    prog_r = client.post("/api/academy/admin/programs", json={
+        "name": "Prog SG4", "code": f"PSG4-{uuid.uuid4().hex[:6]}", "program_type": "curso_libre", "has_teachers": True, "teachers_can_grade": True
+    }, headers=headers_admin)
+    prog_id = prog_r.json()["id"]
+    plan_r = client.post("/api/academy/admin/study-plans", json={"program_id": prog_id, "name": "Plan SG4", "code": f"PLSG4-{uuid.uuid4().hex[:4]}"}, headers=headers_admin)
+    plan_id = plan_r.json()["id"]
+    sub_r = client.post(f"/api/academy/admin/study-plans/{plan_id}/subjects", json={"name": "Sub SG4", "code": f"SSG4-{uuid.uuid4().hex[:4]}", "credits": 2, "order_index": 1}, headers=headers_admin)
+    sub_id = sub_r.json()["id"]
+    per_r = client.post("/api/academy/admin/periods", json={"name": "Period SG4", "code": f"PERSG4-{uuid.uuid4().hex[:4]}", "start_date": "2026-01-01", "end_date": "2026-12-31"}, headers=headers_admin)
+    per_id = per_r.json()["id"]
+    sch_r = client.post("/api/academy/admin/grading-schemes", json={"name": f"SchemeSG4-{uuid.uuid4().hex[:4]}", "scale_max": 100.0, "passing_grade": 70.0, "cuts": [{"name": "C1", "weight_percent": 100.0, "order_index": 1}]}, headers=headers_admin)
+    sch_id = sch_r.json()["id"]
+    off_r = client.post("/api/academy/admin/offerings", json={"academic_period_id": per_id, "subject_id": sub_id, "grading_scheme_id": sch_id, "quota_max": 20}, headers=headers_admin)
+    off_id = off_r.json()["id"]
+
+    # Max members = 2 (leader + 1 member)
+    sg_r = client.post("/api/academy/study-groups", json={
+        "offering_id": off_id,
+        "name": "Grupo Estricto de 2",
+        "max_members": 2,
+    }, headers=headers_admin)
+    sg_id = sg_r.json()["id"]
+
+    # Member 2 joins -> succeeds (group now full with 2)
+    j2 = client.post(f"/api/academy/study-groups/{sg_id}/join", headers=headers2)
+    assert j2.status_code == 201
+
+    # Member 3 tries to join -> fails with 400
+    j3 = client.post(f"/api/academy/study-groups/{sg_id}/join", headers=headers3)
+    assert j3.status_code == 400
+    assert "límite máximo" in j3.json()["detail"]
+
+
+def test_040_leave_study_group_and_my_groups(client, db_session):
+    """Test leaving a study group and querying personal study group memberships."""
+    admin, _, _ = seed_admin(db_session)
+    headers_admin = auth_headers(client, email=admin.email, password="testpass123")
+
+    user_leave, _, _ = seed_admin(db_session, email="st_leave@example.com")
+    headers_leave = auth_headers(client, email="st_leave@example.com", password="testpass123")
+
+    prog_r = client.post("/api/academy/admin/programs", json={
+        "name": "Prog SG5", "code": f"PSG5-{uuid.uuid4().hex[:6]}", "program_type": "curso_libre", "has_teachers": True, "teachers_can_grade": True
+    }, headers=headers_admin)
+    prog_id = prog_r.json()["id"]
+    plan_r = client.post("/api/academy/admin/study-plans", json={"program_id": prog_id, "name": "Plan SG5", "code": f"PLSG5-{uuid.uuid4().hex[:4]}"}, headers=headers_admin)
+    plan_id = plan_r.json()["id"]
+    sub_r = client.post(f"/api/academy/admin/study-plans/{plan_id}/subjects", json={"name": "Sub SG5", "code": f"SSG5-{uuid.uuid4().hex[:4]}", "credits": 2, "order_index": 1}, headers=headers_admin)
+    sub_id = sub_r.json()["id"]
+    per_r = client.post("/api/academy/admin/periods", json={"name": "Period SG5", "code": f"PERSG5-{uuid.uuid4().hex[:4]}", "start_date": "2026-01-01", "end_date": "2026-12-31"}, headers=headers_admin)
+    per_id = per_r.json()["id"]
+    sch_r = client.post("/api/academy/admin/grading-schemes", json={"name": f"SchemeSG5-{uuid.uuid4().hex[:4]}", "scale_max": 100.0, "passing_grade": 70.0, "cuts": [{"name": "C1", "weight_percent": 100.0, "order_index": 1}]}, headers=headers_admin)
+    sch_id = sch_r.json()["id"]
+    off_r = client.post("/api/academy/admin/offerings", json={"academic_period_id": per_id, "subject_id": sub_id, "grading_scheme_id": sch_id, "quota_max": 20}, headers=headers_admin)
+    off_id = off_r.json()["id"]
+
+    sg_r = client.post("/api/academy/study-groups", json={
+        "offering_id": off_id,
+        "name": "Grupo Para Salir",
+        "max_members": 5,
+    }, headers=headers_admin)
+    sg_id = sg_r.json()["id"]
+
+    # Student joins
+    client.post(f"/api/academy/study-groups/{sg_id}/join", headers=headers_leave)
+
+    # Student queries /study-groups/my
+    my_r = client.get("/api/academy/study-groups/my", headers=headers_leave)
+    assert my_r.status_code == 200
+    my_groups = my_r.json()
+    assert any(g["id"] == sg_id for g in my_groups)
+
+    # Student leaves
+    leave_r = client.delete(f"/api/academy/study-groups/{sg_id}/leave", headers=headers_leave)
+    assert leave_r.status_code == 204
+
+    # Student queries /study-groups/my again -> group no longer present
+    my_r2 = client.get("/api/academy/study-groups/my", headers=headers_leave)
+    assert my_r2.status_code == 200
+    my_groups2 = my_r2.json()
+    assert not any(g["id"] == sg_id for g in my_groups2)
+
+    # Leaving again returns 404
+    leave_again = client.delete(f"/api/academy/study-groups/{sg_id}/leave", headers=headers_leave)
+    assert leave_again.status_code == 404
 

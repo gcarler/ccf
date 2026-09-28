@@ -1515,3 +1515,40 @@ class CredentialVerificationResponse(BaseModel):
     credential_hash: str
     earned_at: datetime
     is_valid: bool = True
+
+
+class StudyGroupMemberRead(BaseModel):
+    id: UUID
+    group_id: UUID
+    student_id: UUID
+    student_name: str
+    role: str
+    joined_at: datetime
+    sede_id: Optional[UUID] = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class StudyGroupCreate(BaseModel):
+    offering_id: UUID
+    name: str = Field(max_length=255)
+    description: Optional[str] = None
+    max_members: int = 5
+
+
+class StudyGroupRead(BaseModel):
+    id: UUID
+    offering_id: UUID
+    name: str
+    description: Optional[str] = None
+    max_members: int
+    is_active: bool
+    created_by: UUID
+    creator_name: Optional[str] = None
+    sede_id: Optional[UUID] = None
+    created_at: datetime
+    members_count: int = 0
+    members: List[StudyGroupMemberRead] = Field(default_factory=list)
+
+    model_config = ConfigDict(from_attributes=True)
+

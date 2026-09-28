@@ -803,3 +803,42 @@ class AcademyLeaderboard(Base):
 
     student = relationship("Persona", foreign_keys=[student_id])
     offering = relationship("AcademyPeriodOffering", foreign_keys=[offering_id])
+
+
+class AcademyStudyGroup(Base):
+    __tablename__ = "academy_study_groups"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
+    offering_id = Column(UUID(as_uuid=True), ForeignKey("academy_period_offerings.id", ondelete="CASCADE"), nullable=False, index=True)
+    name = Column(String(255), nullable=False)
+    description = Column(Text, nullable=True)
+    max_members = Column(Integer, nullable=False, default=5)
+    is_active = Column(Boolean, nullable=False, default=True)
+    created_by = Column(UUID(as_uuid=True), ForeignKey("personas.id"), nullable=False, index=True)
+    sede_id = Column(UUID(as_uuid=True), ForeignKey("sedes.id", ondelete="SET NULL"), nullable=True, index=True)
+    created_at = Column(DateTime(timezone=True), default=_utcnow, nullable=False)
+    deleted_at = Column(DateTime(timezone=True), nullable=True, index=True)
+
+    offering = relationship("AcademyPeriodOffering", foreign_keys=[offering_id])
+    creator = relationship("Persona", foreign_keys=[created_by])
+    members = relationship("AcademyStudyGroupMember", back_populates="group", cascade="all, delete-orphan")
+
+
+class AcademyStudyGroupMember(Base):
+    __tablename__ = "academy_study_group_members"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
+    group_id = Column(UUID(as_uuid=True), ForeignKey("academy_study_groups.id", ondelete="CASCADE"), nullable=False, index=True)
+    student_id = Column(UUID(as_uuid=True), ForeignKey("personas.id"), nullable=False, index=True)
+    role = Column(String(50), nullable=False, default="member")  # 'leader', 'member'
+    joined_at = Column(DateTime(timezone=True), default=_utcnow, nullable=False)
+    sede_id = Column(UUID(as_uuid=True), ForeignKey("sedes.id", ondelete="SET NULL"), nullable=True, index=True)
+    deleted_at = Column(DateTime(timezone=True), nullable=True, index=True)
+
+    __table_args__ = (
+        UniqueConstraint("group_id", "student_id", name="uq_study_group_student"),
+    )
+
+    group = relationship("AcademyStudyGroup", foreign_keys=[group_id], back_populates="members")
+    student = relationship("Persona", foreign_keys=[student_id])
+

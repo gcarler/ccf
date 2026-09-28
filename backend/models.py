@@ -23,6 +23,8 @@ from backend.models_academy_core import (
     AcademyStudentNodeProgress,
     AcademyStudentPeriodGrade,
     AcademyStudentSubjectRecord,
+    AcademyStudyGroup,
+    AcademyStudyGroupMember,
     AcademyStudyPlan,
     AcademyStudyPlanSubject,
     AcademyWellnessAlert,

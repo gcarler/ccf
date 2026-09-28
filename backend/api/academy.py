@@ -4003,6 +4003,232 @@ def recalculate_leaderboard(
     return results
 
 
+# ============================================================================
+# Hito 5: Grupos de Estudio Colaborativos (AcademyStudyGroup)
+# ============================================================================
+
+def _serialize_study_group(group: models.AcademyStudyGroup) -> schemas.StudyGroupRead:
+    active_members = [m for m in (group.members or []) if m.deleted_at is None]
+    members_read = [
+        schemas.StudyGroupMemberRead(
+            id=m.id,
+            group_id=m.group_id,
+            student_id=m.student_id,
+            student_name=_persona_display_name(m.student),
+            role=m.role,
+            joined_at=m.joined_at,
+            sede_id=m.sede_id,
+        )
+        for m in active_members
+    ]
+    return schemas.StudyGroupRead(
+        id=group.id,
+        offering_id=group.offering_id,
+        name=group.name,
+        description=group.description,
+        max_members=group.max_members,
+        is_active=group.is_active,
+        created_by=group.created_by,
+        creator_name=_persona_display_name(group.creator) if group.creator else None,
+        sede_id=group.sede_id,
+        created_at=group.created_at,
+        members_count=len(members_read),
+        members=members_read,
+    )
+
+
+@router.post("/study-groups", response_model=schemas.StudyGroupRead, status_code=status.HTTP_201_CREATED)
+def create_study_group(
+    payload: schemas.StudyGroupCreate,
+    current_user: AcademyReader,
+    db: Session = Depends(get_db),
+):
+    offering = (
+        db.query(models.AcademyPeriodOffering)
+        .filter(
+            models.AcademyPeriodOffering.id == payload.offering_id,
+            models.AcademyPeriodOffering.deleted_at.is_(None),
+        )
+        .first()
+    )
+    if not offering:
+        raise HTTPException(status_code=404, detail="Oferta académica no encontrada")
+
+    user_sede_id = get_user_sede_id(db, current_user.id)
+    now_utc = _utcnow()
+    group = models.AcademyStudyGroup(
+        offering_id=payload.offering_id,
+        name=payload.name,
+        description=payload.description,
+        max_members=payload.max_members,
+        is_active=True,
+        created_by=current_user.id,
+        sede_id=offering.sede_id or user_sede_id,
+        created_at=now_utc,
+    )
+    db.add(group)
+    db.flush()
+
+    leader_member = models.AcademyStudyGroupMember(
+        group_id=group.id,
+        student_id=current_user.id,
+        role="leader",
+        joined_at=now_utc,
+        sede_id=group.sede_id,
+    )
+    db.add(leader_member)
+    db.commit()
+    db.refresh(group)
+    return _serialize_study_group(group)
+
+
+@router.get("/study-groups/my", response_model=List[schemas.StudyGroupRead])
+def get_my_study_groups(
+    current_user: AcademyReader,
+    db: Session = Depends(get_db),
+):
+    memberships = (
+        db.query(models.AcademyStudyGroupMember)
+        .options(
+            joinedload(models.AcademyStudyGroupMember.group)
+            .joinedload(models.AcademyStudyGroup.creator),
+            joinedload(models.AcademyStudyGroupMember.group)
+            .joinedload(models.AcademyStudyGroup.members)
+            .joinedload(models.AcademyStudyGroupMember.student),
+        )
+        .filter(
+            models.AcademyStudyGroupMember.student_id == current_user.id,
+            models.AcademyStudyGroupMember.deleted_at.is_(None),
+        )
+        .all()
+    )
+    groups = []
+    seen = set()
+    for m in memberships:
+        if m.group and m.group.deleted_at is None and m.group.id not in seen:
+            seen.add(m.group.id)
+            groups.append(_serialize_study_group(m.group))
+    return groups
+
+
+@router.get("/study-groups/{offering_id}", response_model=List[schemas.StudyGroupRead])
+def list_study_groups_by_offering(
+    offering_id: UUID,
+    current_user: AcademyReader,
+    db: Session = Depends(get_db),
+):
+    groups = (
+        db.query(models.AcademyStudyGroup)
+        .options(
+            joinedload(models.AcademyStudyGroup.creator),
+            joinedload(models.AcademyStudyGroup.members).joinedload(models.AcademyStudyGroupMember.student),
+        )
+        .filter(
+            models.AcademyStudyGroup.offering_id == offering_id,
+            models.AcademyStudyGroup.deleted_at.is_(None),
+            models.AcademyStudyGroup.is_active.is_(True),
+        )
+        .order_by(models.AcademyStudyGroup.created_at.desc())
+        .all()
+    )
+    return [_serialize_study_group(g) for g in groups]
+
+
+@router.post("/study-groups/{id}/join", response_model=schemas.StudyGroupMemberRead, status_code=status.HTTP_201_CREATED)
+def join_study_group(
+    id: UUID,
+    current_user: AcademyReader,
+    db: Session = Depends(get_db),
+):
+    group = (
+        db.query(models.AcademyStudyGroup)
+        .filter(
+            models.AcademyStudyGroup.id == id,
+            models.AcademyStudyGroup.deleted_at.is_(None),
+        )
+        .first()
+    )
+    if not group:
+        raise HTTPException(status_code=404, detail="Grupo de estudio no encontrado")
+    if not group.is_active:
+        raise HTTPException(status_code=400, detail="El grupo de estudio no está activo")
+
+    active_count = (
+        db.query(models.AcademyStudyGroupMember)
+        .filter(
+            models.AcademyStudyGroupMember.group_id == id,
+            models.AcademyStudyGroupMember.deleted_at.is_(None),
+        )
+        .count()
+    )
+    if active_count >= group.max_members:
+        raise HTTPException(status_code=400, detail="El grupo de estudio ha alcanzado el límite máximo de integrantes")
+
+    existing = (
+        db.query(models.AcademyStudyGroupMember)
+        .filter(
+            models.AcademyStudyGroupMember.group_id == id,
+            models.AcademyStudyGroupMember.student_id == current_user.id,
+        )
+        .first()
+    )
+    if existing and existing.deleted_at is None:
+        raise HTTPException(status_code=409, detail="Ya eres integrante de este grupo de estudio")
+
+    now_utc = _utcnow()
+    if existing:
+        existing.deleted_at = None
+        existing.joined_at = now_utc
+        existing.role = "member"
+        member = existing
+    else:
+        member = models.AcademyStudyGroupMember(
+            group_id=id,
+            student_id=current_user.id,
+            role="member",
+            joined_at=now_utc,
+            sede_id=group.sede_id,
+        )
+        db.add(member)
+
+    db.commit()
+    db.refresh(member)
+    student = db.query(models.Persona).filter(models.Persona.id == current_user.id).first()
+    return schemas.StudyGroupMemberRead(
+        id=member.id,
+        group_id=member.group_id,
+        student_id=member.student_id,
+        student_name=_persona_display_name(student),
+        role=member.role,
+        joined_at=member.joined_at,
+        sede_id=member.sede_id,
+    )
+
+
+@router.delete("/study-groups/{id}/leave", status_code=status.HTTP_204_NO_CONTENT)
+def leave_study_group(
+    id: UUID,
+    current_user: AcademyReader,
+    db: Session = Depends(get_db),
+):
+    membership = (
+        db.query(models.AcademyStudyGroupMember)
+        .filter(
+            models.AcademyStudyGroupMember.group_id == id,
+            models.AcademyStudyGroupMember.student_id == current_user.id,
+            models.AcademyStudyGroupMember.deleted_at.is_(None),
+        )
+        .first()
+    )
+    if not membership:
+        raise HTTPException(status_code=404, detail="No eres integrante de este grupo de estudio")
+
+    membership.deleted_at = _utcnow()
+    db.commit()
+    return None
+
+
+
 
 
 
