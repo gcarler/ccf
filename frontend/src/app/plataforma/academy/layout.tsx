@@ -22,6 +22,7 @@ import {
     Brain,
     Map as MapIcon,
     HeartPulse,
+    Trophy,
 } from 'lucide-react';
 
 // Fuente única de la sidebar Academy (ACAD-HIGH-004).
@@ -48,6 +49,7 @@ const ACADEMY_SIDEBAR_SECTIONS = [
             { id: 'tutor', label: 'Tutor Socrático', href: '/plataforma/academy/tutor', icon: Brain, level: 'read' as AcademyLevel },
             { id: 'portfolio', label: 'Mi Portafolio', href: '/plataforma/academy/portafolio', icon: Award, level: 'read' as AcademyLevel },
             { id: 'learning-map', label: 'Mapa de Aprendizaje', href: '/plataforma/academy/mapa', icon: MapIcon, level: 'read' as AcademyLevel },
+            { id: 'achievements', label: 'Logros', href: '/plataforma/academy/logros', icon: Trophy, level: 'read' as AcademyLevel },
             { id: 'wellness', label: 'Bienestar', href: '/plataforma/academy/wellness', icon: HeartPulse, level: 'read' as AcademyLevel },
         ],
     },
