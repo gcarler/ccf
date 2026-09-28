@@ -5,7 +5,7 @@ from enum import Enum
 from typing import Any, Dict, List, Literal, Optional
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field, computed_field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, computed_field, field_validator, model_validator
 
 from backend.schemas._common import orm_config
 
@@ -1551,4 +1551,69 @@ class StudyGroupRead(BaseModel):
     members: List[StudyGroupMemberRead] = Field(default_factory=list)
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class CalendarEventCreate(BaseModel):
+    title: str = Field(min_length=1, max_length=255)
+    description: Optional[str] = None
+    event_type: str = Field(description="evaluation, assignment, socratic_defense, study_group, milestone")
+    start_date: datetime
+    end_date: datetime
+    offering_id: Optional[UUID] = None
+    sede_id: Optional[UUID] = None
+
+    @field_validator("event_type")
+    @classmethod
+    def validate_event_type(cls, v: str) -> str:
+        allowed = {"evaluation", "assignment", "socratic_defense", "study_group", "milestone"}
+        if v not in allowed:
+            raise ValueError(f"event_type debe ser uno de: {', '.join(sorted(allowed))}")
+        return v
+
+    @model_validator(mode="after")
+    def validate_dates(self):
+        if self.end_date < self.start_date:
+            raise ValueError("end_date no puede ser anterior a start_date")
+        return self
+
+
+class CalendarEventRead(BaseModel):
+    id: UUID
+    offering_id: Optional[UUID] = None
+    title: str
+    description: Optional[str] = None
+    event_type: str
+    start_date: datetime
+    end_date: datetime
+    sede_id: Optional[UUID] = None
+    created_by: UUID
+    created_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class WorkloadWeekPrediction(BaseModel):
+    week_number: int
+    year: int
+    start_date: str
+    end_date: str
+    total_events: int
+    evaluations_count: int
+    assignments_count: int
+    socratic_defenses_count: int
+    other_events_count: int
+    workload_score: float
+    workload_level: str  # low, medium, high, overload
+    is_overloaded: bool
+    events: List[CalendarEventRead] = Field(default_factory=list)
+
+
+class WorkloadPredictionResponse(BaseModel):
+    student_id: Optional[UUID] = None
+    offering_id: Optional[UUID] = None
+    weeks_analyzed: int
+    total_events: int
+    overloaded_weeks_count: int
+    weeks: List[WorkloadWeekPrediction] = Field(default_factory=list)
+    recommendations: List[str] = Field(default_factory=list)
 

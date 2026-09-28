@@ -1804,3 +1804,199 @@ def test_040_leave_study_group_and_my_groups(client, db_session):
     leave_again = client.delete(f"/api/academy/study-groups/{sg_id}/leave", headers=headers_leave)
     assert leave_again.status_code == 404
 
+
+# ---------------------------------------------------------------------------
+# Hito 7: Tests 049 a 054 — Calendario Académico Inteligente y Predicción
+# ---------------------------------------------------------------------------
+
+def test_049_create_calendar_event(client, db_session):
+    """Test creating an academic calendar event with valid attributes."""
+    admin, _, _ = seed_admin(db_session)
+    headers = auth_headers(client, email=admin.email, password="testpass123")
+
+    payload = {
+        "title": "Examen Parcial Hermenéutica",
+        "description": "Evaluación presencial corte 1",
+        "event_type": "evaluation",
+        "start_date": "2026-10-12T08:00:00Z",
+        "end_date": "2026-10-12T10:00:00Z",
+    }
+    r = client.post("/api/academy/calendar/events", json=payload, headers=headers)
+    assert r.status_code == 201, r.text
+    data = r.json()
+    assert data["title"] == "Examen Parcial Hermenéutica"
+    assert data["event_type"] == "evaluation"
+    assert data["created_by"] == str(admin.id)
+    assert "id" in data
+
+
+def test_050_get_calendar_events_filter_by_offering(client, db_session):
+    """Test filtering calendar events by specific academic offering."""
+    admin, _, _ = seed_admin(db_session)
+    headers = auth_headers(client, email=admin.email, password="testpass123")
+
+    prog_r = client.post("/api/academy/admin/programs", json={
+        "name": "Prog Cal", "code": f"PCAL-{uuid.uuid4().hex[:6]}", "program_type": "curso_libre", "has_teachers": True, "teachers_can_grade": True
+    }, headers=headers)
+    prog_id = prog_r.json()["id"]
+    plan_r = client.post("/api/academy/admin/study-plans", json={"program_id": prog_id, "name": "Plan Cal", "code": f"PLCAL-{uuid.uuid4().hex[:4]}"}, headers=headers)
+    plan_id = plan_r.json()["id"]
+    sub_r = client.post(f"/api/academy/admin/study-plans/{plan_id}/subjects", json={"name": "Sub Cal", "code": f"SCAL-{uuid.uuid4().hex[:4]}", "credits": 2, "order_index": 1}, headers=headers)
+    sub_id = sub_r.json()["id"]
+    per_r = client.post("/api/academy/admin/periods", json={"name": "Period Cal", "code": f"PERCAL-{uuid.uuid4().hex[:4]}", "start_date": "2026-01-01", "end_date": "2026-12-31"}, headers=headers)
+    per_id = per_r.json()["id"]
+    sch_r = client.post("/api/academy/admin/grading-schemes", json={"name": f"SchemeCal-{uuid.uuid4().hex[:4]}", "scale_max": 100.0, "passing_grade": 70.0, "cuts": [{"name": "C1", "weight_percent": 100.0, "order_index": 1}]}, headers=headers)
+    sch_id = sch_r.json()["id"]
+    off_r = client.post("/api/academy/admin/offerings", json={"academic_period_id": per_id, "subject_id": sub_id, "grading_scheme_id": sch_id, "quota_max": 20}, headers=headers)
+    off_id = off_r.json()["id"]
+
+    # 1. Event tied to offering
+    e1 = client.post("/api/academy/calendar/events", json={
+        "offering_id": off_id,
+        "title": "Entrega Ensayo Teológico",
+        "event_type": "assignment",
+        "start_date": "2026-10-15T14:00:00Z",
+        "end_date": "2026-10-15T18:00:00Z",
+    }, headers=headers).json()
+
+    # 2. Event global (no offering)
+    client.post("/api/academy/calendar/events", json={
+        "title": "Conferencia General Institucional",
+        "event_type": "milestone",
+        "start_date": "2026-10-16T18:00:00Z",
+        "end_date": "2026-10-16T21:00:00Z",
+    }, headers=headers)
+
+    # Filter by offering_id
+    list_r = client.get(f"/api/academy/calendar/events?offering_id={off_id}", headers=headers)
+    assert list_r.status_code == 200
+    events = list_r.json()
+    assert len(events) >= 1
+    assert any(e["id"] == e1["id"] for e in events)
+    assert all(e["offering_id"] == off_id for e in events)
+
+
+def test_051_get_calendar_events_filter_by_date_range_and_type(client, db_session):
+    """Test filtering calendar events by date window and event_type."""
+    admin, _, _ = seed_admin(db_session)
+    headers = auth_headers(client, email=admin.email, password="testpass123")
+
+    unique_title = f"Defensa Mayéutica {uuid.uuid4().hex[:6]}"
+    client.post("/api/academy/calendar/events", json={
+        "title": unique_title,
+        "event_type": "socratic_defense",
+        "start_date": "2026-11-02T10:00:00Z",
+        "end_date": "2026-11-02T11:00:00Z",
+    }, headers=headers)
+
+    # Query with matching type and date range
+    r = client.get(
+        "/api/academy/calendar/events?event_type=socratic_defense&start_date=2026-11-01T00:00:00Z&end_date=2026-11-03T23:59:59Z",
+        headers=headers,
+    )
+    assert r.status_code == 200
+    events = r.json()
+    assert any(e["title"] == unique_title for e in events)
+
+    # Query outside the date range -> should not contain it
+    r_empty = client.get(
+        f"/api/academy/calendar/events?event_type=socratic_defense&start_date=2026-11-10T00:00:00Z&end_date=2026-11-15T23:59:59Z",
+        headers=headers,
+    )
+    assert r_empty.status_code == 200
+    assert not any(e["title"] == unique_title for e in r_empty.json())
+
+
+def test_052_calendar_event_validation_dates_and_type(client, db_session):
+    """Test invalid calendar event dates, invalid event_type, and nonexistent offering."""
+    admin, _, _ = seed_admin(db_session)
+    headers = auth_headers(client, email=admin.email, password="testpass123")
+
+    # end_date before start_date
+    bad_dates = client.post("/api/academy/calendar/events", json={
+        "title": "Fechas Invertidas",
+        "event_type": "evaluation",
+        "start_date": "2026-10-10T12:00:00Z",
+        "end_date": "2026-10-10T10:00:00Z",
+    }, headers=headers)
+    assert bad_dates.status_code in (400, 422)
+
+    # Invalid event_type
+    bad_type = client.post("/api/academy/calendar/events", json={
+        "title": "Tipo Invalido",
+        "event_type": "recreativo_invalido",
+        "start_date": "2026-10-10T10:00:00Z",
+        "end_date": "2026-10-10T12:00:00Z",
+    }, headers=headers)
+    assert bad_type.status_code == 422
+
+    # Nonexistent offering
+    bad_offering = client.post("/api/academy/calendar/events", json={
+        "title": "Offering Fantasma",
+        "offering_id": str(uuid.uuid4()),
+        "event_type": "assignment",
+        "start_date": "2026-10-10T10:00:00Z",
+        "end_date": "2026-10-10T12:00:00Z",
+    }, headers=headers)
+    assert bad_offering.status_code == 404
+
+
+def test_053_workload_prediction_normal(client, db_session):
+    """Test workload prediction returns structured week projections with balanced status."""
+    admin, _, _ = seed_admin(db_session)
+    headers = auth_headers(client, email=admin.email, password="testpass123")
+
+    r = client.get(
+        "/api/academy/calendar/workload-prediction?weeks_ahead=4&start_from=2026-10-05T00:00:00Z",
+        headers=headers,
+    )
+    assert r.status_code == 200, r.text
+    data = r.json()
+    assert data["weeks_analyzed"] == 4
+    assert len(data["weeks"]) == 4
+    assert "overloaded_weeks_count" in data
+    assert "recommendations" in data
+    for week in data["weeks"]:
+        assert "week_number" in week
+        assert "workload_level" in week
+        assert "is_overloaded" in week
+
+
+def test_054_workload_prediction_overload_detection(client, db_session):
+    """Test workload prediction correctly flags weeks with heavy event clustering (overload)."""
+    admin, _, _ = seed_admin(db_session)
+    headers = auth_headers(client, email=admin.email, password="testpass123")
+
+    # In week of 2026-10-19, create 2 evaluations + 2 assignments to trigger overload
+    overload_week_monday = "2026-10-19T00:00:00Z"
+
+    for i in range(2):
+        client.post("/api/academy/calendar/events", json={
+            "title": f"Examen Riguroso {i+1}",
+            "event_type": "evaluation",
+            "start_date": f"2026-10-2{i+1}T08:00:00Z",
+            "end_date": f"2026-10-2{i+1}T10:00:00Z",
+        }, headers=headers)
+
+    for i in range(2):
+        client.post("/api/academy/calendar/events", json={
+            "title": f"Entrega Proyecto {i+1}",
+            "event_type": "assignment",
+            "start_date": f"2026-10-2{i+3}T14:00:00Z",
+            "end_date": f"2026-10-2{i+3}T18:00:00Z",
+        }, headers=headers)
+
+    # Query workload prediction starting on the overload week
+    r = client.get(
+        f"/api/academy/calendar/workload-prediction?weeks_ahead=2&start_from={overload_week_monday}",
+        headers=headers,
+    )
+    assert r.status_code == 200, r.text
+    data = r.json()
+    assert data["overloaded_weeks_count"] >= 1
+    overloaded_weeks = [w for w in data["weeks"] if w["is_overloaded"]]
+    assert len(overloaded_weeks) >= 1
+    assert overloaded_weeks[0]["workload_level"] == "overload"
+    assert overloaded_weeks[0]["evaluations_count"] >= 2
+    assert any("Sobrecarga detectada" in rec for rec in data["recommendations"])
+

@@ -8,6 +8,7 @@ from backend.models_academy_core import (
     AcademyAcademicPeriod,
     AcademyAchievement,
     AcademyActivityLog,
+    AcademyCalendarEvent,
     AcademyDefenseSession,
     AcademyGradingScheme,
     AcademyGradingSchemeCut,

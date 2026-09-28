@@ -8,7 +8,7 @@ explicit Academy permission.
 from __future__ import annotations
 
 import asyncio
-from datetime import date, datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 import hashlib
 from html import escape as _html_escape
 from typing import Annotated, Any, List, Optional
@@ -4226,6 +4226,226 @@ def leave_study_group(
     membership.deleted_at = _utcnow()
     db.commit()
     return None
+
+
+# ---------------------------------------------------------------------------
+# Hito 7: Calendario Inteligente y Predicción de Carga (AcademyCalendarEvent)
+# ---------------------------------------------------------------------------
+
+@router.post("/calendar/events", response_model=schemas.CalendarEventRead, status_code=status.HTTP_201_CREATED)
+def create_calendar_event(
+    payload: schemas.CalendarEventCreate,
+    current_user: AcademyReader,
+    db: Session = Depends(get_db),
+):
+    """Crea un evento en el calendario académico inteligente."""
+    if payload.end_date < payload.start_date:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="end_date no puede ser anterior a start_date",
+        )
+
+    if payload.offering_id:
+        offering = (
+            db.query(models.AcademyPeriodOffering)
+            .filter(
+                models.AcademyPeriodOffering.id == payload.offering_id,
+                models.AcademyPeriodOffering.deleted_at.is_(None),
+            )
+            .first()
+        )
+        if not offering:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Comisión académica no encontrada",
+            )
+
+    sede_id = payload.sede_id or get_user_sede_id(db, current_user.id)
+
+    event = models.AcademyCalendarEvent(
+        offering_id=payload.offering_id,
+        title=payload.title.strip(),
+        description=payload.description.strip() if payload.description else None,
+        event_type=payload.event_type,
+        start_date=payload.start_date,
+        end_date=payload.end_date,
+        sede_id=sede_id,
+        created_by=current_user.id,
+    )
+    db.add(event)
+    db.commit()
+    db.refresh(event)
+    return event
+
+
+@router.get("/calendar/events", response_model=List[schemas.CalendarEventRead])
+def get_calendar_events(
+    current_user: AcademyReader,
+    db: Session = Depends(get_db),
+    offering_id: Optional[UUID] = Query(None),
+    event_type: Optional[str] = Query(None),
+    start_date: Optional[datetime] = Query(None),
+    end_date: Optional[datetime] = Query(None),
+    student_id: Optional[UUID] = Query(None),
+):
+    """Lista eventos del calendario académico con filtros opcionales."""
+    query = db.query(models.AcademyCalendarEvent).filter(
+        models.AcademyCalendarEvent.deleted_at.is_(None)
+    )
+
+    if offering_id:
+        query = query.filter(models.AcademyCalendarEvent.offering_id == offering_id)
+
+    if event_type:
+        query = query.filter(models.AcademyCalendarEvent.event_type == event_type)
+
+    if start_date:
+        query = query.filter(models.AcademyCalendarEvent.end_date >= start_date)
+
+    if end_date:
+        query = query.filter(models.AcademyCalendarEvent.start_date <= end_date)
+
+    if student_id:
+        enrolled_offering_ids = [
+            e.offering_id
+            for e in db.query(models.AcademyStudentEnrollment.offering_id)
+            .filter(
+                models.AcademyStudentEnrollment.persona_id == student_id,
+                models.AcademyStudentEnrollment.deleted_at.is_(None),
+            )
+            .all()
+        ]
+        query = query.filter(
+            or_(
+                models.AcademyCalendarEvent.offering_id.in_(enrolled_offering_ids),
+                models.AcademyCalendarEvent.offering_id.is_(None),
+                models.AcademyCalendarEvent.created_by == student_id,
+            )
+        )
+
+    events = query.order_by(models.AcademyCalendarEvent.start_date.asc()).all()
+    return events
+
+
+@router.get("/calendar/workload-prediction", response_model=schemas.WorkloadPredictionResponse)
+def get_calendar_workload_prediction(
+    current_user: AcademyReader,
+    db: Session = Depends(get_db),
+    student_id: Optional[UUID] = Query(None),
+    offering_id: Optional[UUID] = Query(None),
+    weeks_ahead: int = Query(4, ge=1, le=16),
+    start_from: Optional[datetime] = Query(None),
+):
+    """Calcula semanas con sobrecarga académica analizando eventos y entregas."""
+    effective_student_id = student_id or current_user.id
+    ref_date = start_from or _utcnow()
+    if ref_date.tzinfo is None:
+        ref_date = ref_date.replace(tzinfo=timezone.utc)
+
+    offering_filter_ids = []
+    if offering_id:
+        offering_filter_ids = [offering_id]
+    elif student_id:
+        enrolled = (
+            db.query(models.AcademyStudentEnrollment.offering_id)
+            .filter(
+                models.AcademyStudentEnrollment.persona_id == student_id,
+                models.AcademyStudentEnrollment.deleted_at.is_(None),
+            )
+            .all()
+        )
+        offering_filter_ids = [e.offering_id for e in enrolled]
+
+    event_query = db.query(models.AcademyCalendarEvent).filter(
+        models.AcademyCalendarEvent.deleted_at.is_(None)
+    )
+
+    if offering_filter_ids:
+        event_query = event_query.filter(
+            or_(
+                models.AcademyCalendarEvent.offering_id.in_(offering_filter_ids),
+                models.AcademyCalendarEvent.offering_id.is_(None),
+                models.AcademyCalendarEvent.created_by == (student_id or current_user.id),
+            )
+        )
+    elif offering_id:
+        event_query = event_query.filter(models.AcademyCalendarEvent.offering_id == offering_id)
+
+    all_events = event_query.order_by(models.AcademyCalendarEvent.start_date.asc()).all()
+
+    def _to_utc(dt: datetime) -> datetime:
+        return dt if dt.tzinfo else dt.replace(tzinfo=timezone.utc)
+
+    start_of_week = ref_date - timedelta(days=ref_date.weekday())
+    start_of_week = start_of_week.replace(hour=0, minute=0, second=0, microsecond=0)
+
+    weeks_list = []
+    total_events_count = 0
+    overloaded_weeks_count = 0
+    recommendations = []
+
+    for w in range(weeks_ahead):
+        w_start = start_of_week + timedelta(weeks=w)
+        w_end = w_start + timedelta(days=6, hours=23, minutes=59, seconds=59)
+
+        w_events = [
+            e for e in all_events
+            if (w_start <= _to_utc(e.start_date) <= w_end) or (w_start <= _to_utc(e.end_date) <= w_end)
+        ]
+
+        total_events_count += len(w_events)
+        evaluations = [e for e in w_events if e.event_type == "evaluation"]
+        assignments = [e for e in w_events if e.event_type == "assignment"]
+        socratic = [e for e in w_events if e.event_type == "socratic_defense"]
+        others = [e for e in w_events if e.event_type not in ("evaluation", "assignment", "socratic_defense")]
+
+        score = (len(evaluations) * 3.0) + (len(socratic) * 2.5) + (len(assignments) * 2.0) + (len(others) * 1.0)
+        is_overload = score >= 6.0 or len(evaluations) >= 2 or (len(evaluations) + len(assignments)) >= 3
+        if is_overload:
+            level = "overload"
+            overloaded_weeks_count += 1
+            recommendations.append(
+                f"Semana {w_start.isocalendar()[1]}: Sobrecarga detectada ({len(evaluations)} evaluaciones, {len(assignments)} entregas). Se sugiere reprogramar o espaciar entregas."
+            )
+        elif score >= 4.0:
+            level = "high"
+        elif score >= 2.0:
+            level = "medium"
+        else:
+            level = "low"
+
+        cal_events_read = [schemas.CalendarEventRead.model_validate(e) for e in w_events]
+
+        weeks_list.append(
+            schemas.WorkloadWeekPrediction(
+                week_number=w_start.isocalendar()[1],
+                year=w_start.year,
+                start_date=w_start.strftime("%Y-%m-%d"),
+                end_date=w_end.strftime("%Y-%m-%d"),
+                total_events=len(w_events),
+                evaluations_count=len(evaluations),
+                assignments_count=len(assignments),
+                socratic_defenses_count=len(socratic),
+                other_events_count=len(others),
+                workload_score=round(score, 1),
+                workload_level=level,
+                is_overloaded=is_overload,
+                events=cal_events_read,
+            )
+        )
+
+    if not recommendations:
+        recommendations.append("Carga académica balanceada. No se proyectan picos críticos de sobrecarga.")
+
+    return schemas.WorkloadPredictionResponse(
+        student_id=effective_student_id,
+        offering_id=offering_id,
+        weeks_analyzed=weeks_ahead,
+        total_events=total_events_count,
+        overloaded_weeks_count=overloaded_weeks_count,
+        weeks=weeks_list,
+        recommendations=recommendations,
+    )
 
 
 

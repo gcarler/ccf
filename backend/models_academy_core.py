@@ -842,3 +842,23 @@ class AcademyStudyGroupMember(Base):
     group = relationship("AcademyStudyGroup", foreign_keys=[group_id], back_populates="members")
     student = relationship("Persona", foreign_keys=[student_id])
 
+
+class AcademyCalendarEvent(Base):
+    """Eventos y compromisos en el calendario académico inteligente."""
+    __tablename__ = "academy_calendar_events"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
+    offering_id = Column(UUID(as_uuid=True), ForeignKey("academy_period_offerings.id", ondelete="SET NULL"), nullable=True, index=True)
+    title = Column(String(255), nullable=False)
+    description = Column(Text, nullable=True)
+    event_type = Column(String(50), nullable=False)  # 'evaluation', 'assignment', 'socratic_defense', 'study_group', 'milestone'
+    start_date = Column(DateTime(timezone=True), nullable=False)
+    end_date = Column(DateTime(timezone=True), nullable=False)
+    sede_id = Column(UUID(as_uuid=True), ForeignKey("sedes.id", ondelete="SET NULL"), nullable=True, index=True)
+    created_by = Column(UUID(as_uuid=True), ForeignKey("personas.id"), nullable=False, index=True)
+    created_at = Column(DateTime(timezone=True), default=_utcnow, nullable=False)
+    deleted_at = Column(DateTime(timezone=True), nullable=True, index=True)
+
+    offering = relationship("AcademyPeriodOffering", foreign_keys=[offering_id])
+    creator = relationship("Persona", foreign_keys=[created_by])
+
