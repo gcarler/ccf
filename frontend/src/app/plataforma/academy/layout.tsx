@@ -20,6 +20,8 @@ import {
     Sliders,
     Award,
     Brain,
+    Network,
+    Briefcase,
 } from 'lucide-react';
 
 // Fuente única de la sidebar Academy (ACAD-HIGH-004).
@@ -43,6 +45,8 @@ const ACADEMY_SIDEBAR_SECTIONS = [
             { id: 'grades', label: 'Calificaciones', href: '/plataforma/academy/grades', icon: BarChart3, level: 'study' as AcademyLevel },
             { id: 'certificates', label: 'Certificados', href: '/plataforma/academy/certificates', icon: FileCheck, level: 'study' as AcademyLevel },
             { id: 'tutor', label: 'Tutor Socrático', href: '/plataforma/academy/tutor', icon: Brain, level: 'read' as AcademyLevel },
+            { id: 'knowledge', label: 'Grafo Cognitivo', href: '/plataforma/academy/knowledge', icon: Network, level: 'read' as AcademyLevel },
+            { id: 'portfolio', label: 'Portafolio', href: '/plataforma/academy/portfolio', icon: Briefcase, level: 'read' as AcademyLevel },
         ],
     },
     {

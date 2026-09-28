@@ -426,3 +426,84 @@ export interface StudentEnrollment {
   status: string;
   deleted_at?: string | null;
 }
+
+export interface KnowledgeNode {
+  id: string;
+  offering_id: string;
+  title: string;
+  description?: string | null;
+  node_type: 'concept' | 'skill' | 'competency' | string;
+  weight: number;
+  created_at: string;
+  deleted_at?: string | null;
+  sede_id?: string | null;
+}
+
+export interface KnowledgeEdge {
+  id: string;
+  source_node_id: string;
+  target_node_id: string;
+  edge_type: 'requires' | 'leads_to' | 'related' | string;
+  weight: number;
+  created_at: string;
+  deleted_at?: string | null;
+  sede_id?: string | null;
+}
+
+export interface KnowledgeGraph {
+  offering_id: string;
+  nodes: KnowledgeNode[];
+  edges: KnowledgeEdge[];
+}
+
+export interface StudentNodeProgress {
+  id: string;
+  student_id: string;
+  node_id: string;
+  mastery_score: number;
+  attempts: number;
+  last_evaluated_at?: string | null;
+  created_at: string;
+}
+
+export interface LearningPathNode {
+  node_id: string;
+  title: string;
+  node_type: string;
+  mastery_score: number;
+  status: 'ready_to_learn' | 'needs_prerequisites' | 'mastered' | string;
+  order_index: number;
+}
+
+export interface LearningPath {
+  offering_id: string;
+  student_id: string;
+  current_average_mastery: number;
+  path: LearningPathNode[];
+  suggested_next_node?: LearningPathNode | null;
+}
+
+export interface PortfolioEntry {
+  id: string;
+  student_id: string;
+  offering_id?: string | null;
+  entry_type: 'project' | 'defense' | 'certification' | 'grade' | string;
+  title: string;
+  description?: string | null;
+  evidence_url?: string | null;
+  score?: number | null;
+  issued_at: string;
+  credential_hash?: string | null;
+  is_public: boolean;
+  created_at: string;
+}
+
+export interface PortfolioVerifyResult {
+  entry_id: string;
+  is_valid: boolean;
+  credential_hash?: string | null;
+  calculated_hash: string;
+  issued_at: string;
+  student_id: string;
+}
+
