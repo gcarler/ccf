@@ -22,6 +22,7 @@ import {
     Brain,
     Network,
     Briefcase,
+    HeartPulse,
 } from 'lucide-react';
 
 // Fuente única de la sidebar Academy (ACAD-HIGH-004).
@@ -47,6 +48,7 @@ const ACADEMY_SIDEBAR_SECTIONS = [
             { id: 'tutor', label: 'Tutor Socrático', href: '/plataforma/academy/tutor', icon: Brain, level: 'read' as AcademyLevel },
             { id: 'knowledge', label: 'Grafo Cognitivo', href: '/plataforma/academy/knowledge', icon: Network, level: 'read' as AcademyLevel },
             { id: 'portfolio', label: 'Portafolio', href: '/plataforma/academy/portfolio', icon: Briefcase, level: 'read' as AcademyLevel },
+            { id: 'wellness', label: 'Bienestar', href: '/plataforma/academy/wellness', icon: HeartPulse, level: 'read' as AcademyLevel },
         ],
     },
     {

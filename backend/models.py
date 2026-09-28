@@ -22,6 +22,8 @@ from backend.models_academy_core import (
     AcademyStudentSubjectRecord,
     AcademyStudyPlan,
     AcademyStudyPlanSubject,
+    AcademyWellnessAlert,
+    AcademyWellnessSignal,
     Assessment,
     AssessmentAnswer,
     AssessmentAttempt,

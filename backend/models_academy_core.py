@@ -705,3 +705,43 @@ class AcademyPortfolioEntry(Base):
     offering = relationship("AcademyPeriodOffering", foreign_keys=[offering_id])
 
 
+class AcademyWellnessSignal(Base):
+    __tablename__ = "academy_wellness_signals"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
+    student_id = Column(UUID(as_uuid=True), ForeignKey("personas.id"), nullable=False, index=True)
+    offering_id = Column(UUID(as_uuid=True), ForeignKey("academy_period_offerings.id", ondelete="SET NULL"), nullable=True, index=True)
+    signal_type = Column(String(50), nullable=False)  # 'engagement_drop', 'grade_risk', 'absence_pattern', 'stress_indicator'
+    severity = Column(String(20), nullable=False, default="medium")  # 'low', 'medium', 'high', 'critical'
+    detected_at = Column(DateTime(timezone=True), default=_utcnow, nullable=False)
+    details = Column(JSON, nullable=True)
+    is_resolved = Column(Boolean, nullable=False, default=False)
+    resolved_at = Column(DateTime(timezone=True), nullable=True)
+    resolved_by_id = Column(UUID(as_uuid=True), ForeignKey("personas.id", ondelete="SET NULL"), nullable=True)
+    created_at = Column(DateTime(timezone=True), default=_utcnow, nullable=False)
+    deleted_at = Column(DateTime(timezone=True), nullable=True)
+    sede_id = Column(UUID(as_uuid=True), ForeignKey("sedes.id", ondelete="SET NULL"), nullable=True, index=True)
+
+    student = relationship("Persona", foreign_keys=[student_id])
+    offering = relationship("AcademyPeriodOffering", foreign_keys=[offering_id])
+    resolved_by = relationship("Persona", foreign_keys=[resolved_by_id])
+
+
+class AcademyWellnessAlert(Base):
+    __tablename__ = "academy_wellness_alerts"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
+    signal_id = Column(UUID(as_uuid=True), ForeignKey("academy_wellness_signals.id", ondelete="CASCADE"), nullable=False, index=True)
+    recipient_id = Column(UUID(as_uuid=True), ForeignKey("personas.id"), nullable=False, index=True)
+    message = Column(Text, nullable=False)
+    sent_at = Column(DateTime(timezone=True), default=_utcnow, nullable=False)
+    read_at = Column(DateTime(timezone=True), nullable=True)
+    created_at = Column(DateTime(timezone=True), default=_utcnow, nullable=False)
+    deleted_at = Column(DateTime(timezone=True), nullable=True)
+    sede_id = Column(UUID(as_uuid=True), ForeignKey("sedes.id", ondelete="SET NULL"), nullable=True, index=True)
+
+    signal = relationship("AcademyWellnessSignal", foreign_keys=[signal_id], backref="alerts")
+    recipient = relationship("Persona", foreign_keys=[recipient_id])
+
+
+

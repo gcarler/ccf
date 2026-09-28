@@ -3451,4 +3451,215 @@ def verify_portfolio_entry(
     )
 
 
+# =============================================================================
+# WELLNESS & COPILOT ENDPOINTS (Hito 3 - Campus OS Cognitivo)
+# =============================================================================
+
+@router.get("/wellness/{offering_id}/signals", response_model=List[schemas.WellnessSignalRead])
+def get_offering_wellness_signals(
+    offering_id: UUID,
+    current_user: AcademyReader,
+    db: Session = Depends(get_db),
+):
+    if not _can_edit_academy(db, current_user):
+        raise HTTPException(status_code=403, detail="Solo docentes o administradores pueden consultar señales de bienestar")
+
+    signals = (
+        db.query(models.AcademyWellnessSignal)
+        .options(joinedload(models.AcademyWellnessSignal.student))
+        .filter(
+            models.AcademyWellnessSignal.offering_id == offering_id,
+            models.AcademyWellnessSignal.deleted_at.is_(None),
+        )
+        .order_by(models.AcademyWellnessSignal.detected_at.desc())
+        .all()
+    )
+
+    result = []
+    for s in signals:
+        read_obj = schemas.WellnessSignalRead.model_validate(s)
+        if s.student:
+            read_obj.student_name = f"{getattr(s.student, 'nombre', '')} {getattr(s.student, 'apellido', '')}".strip()
+        result.append(read_obj)
+    return result
+
+
+@router.post("/wellness/signals", response_model=schemas.WellnessSignalRead, status_code=status.HTTP_201_CREATED)
+def create_wellness_signal(
+    payload: schemas.WellnessSignalCreate,
+    current_user: AcademyReader,
+    db: Session = Depends(get_db),
+):
+    if not _can_edit_academy(db, current_user):
+        raise HTTPException(status_code=403, detail="Solo docentes o administradores pueden registrar señales de bienestar")
+
+    user_sede_id = get_user_sede_id(db, current_user.id)
+    now = _utcnow()
+    signal = models.AcademyWellnessSignal(
+        student_id=payload.student_id,
+        offering_id=payload.offering_id,
+        signal_type=payload.signal_type,
+        severity=payload.severity,
+        details=payload.details or {},
+        detected_at=now,
+        created_at=now,
+        sede_id=user_sede_id,
+    )
+    db.add(signal)
+    db.commit()
+    db.refresh(signal)
+
+    if payload.severity in ("high", "critical"):
+        alert = models.AcademyWellnessAlert(
+            signal_id=signal.id,
+            recipient_id=current_user.id,
+            message=f"Alerta Preventiva ({payload.severity.upper()}): {payload.details.get('reason', '') if payload.details else payload.signal_type}",
+            sent_at=now,
+            created_at=now,
+            sede_id=user_sede_id,
+        )
+        db.add(alert)
+        db.commit()
+
+    return signal
+
+
+@router.post("/wellness/detect", response_model=schemas.WellnessDetectResponse)
+def detect_wellness_signals(
+    payload: schemas.WellnessDetectRequest,
+    current_user: AcademyReader,
+    db: Session = Depends(get_db),
+):
+    if not _can_edit_academy(db, current_user):
+        raise HTTPException(status_code=403, detail="Solo docentes o administradores pueden ejecutar detección de bienestar")
+
+    from backend.services.academic_engine_service import detect_offering_wellness_signals
+
+    user_sede_id = get_user_sede_id(db, current_user.id)
+    count, signals = detect_offering_wellness_signals(
+        db=db,
+        offering_id=payload.offering_id,
+        actor_id=current_user.id,
+        user_sede_id=user_sede_id,
+    )
+
+    summary_msg = f"Detección completada: se identificaron {count} nuevas señales de bienestar estudiantil." if count > 0 else "Detección completada: no se detectaron nuevas señales críticas ni patrones de riesgo en la comisión."
+    return schemas.WellnessDetectResponse(
+        detected_count=count,
+        signals=[schemas.WellnessSignalRead.model_validate(s) for s in signals],
+        summary=summary_msg,
+    )
+
+
+@router.get("/wellness/my-alerts", response_model=List[schemas.WellnessAlertRead])
+def get_my_wellness_alerts(
+    current_user: AcademyReader,
+    db: Session = Depends(get_db),
+):
+    alerts = (
+        db.query(models.AcademyWellnessAlert)
+        .filter(
+            models.AcademyWellnessAlert.recipient_id == current_user.id,
+            models.AcademyWellnessAlert.deleted_at.is_(None),
+        )
+        .order_by(models.AcademyWellnessAlert.sent_at.desc())
+        .all()
+    )
+    return alerts
+
+
+@router.post("/wellness/signals/{id}/resolve", response_model=schemas.WellnessSignalRead)
+def resolve_wellness_signal(
+    id: UUID,
+    current_user: AcademyReader,
+    db: Session = Depends(get_db),
+):
+    if not _can_edit_academy(db, current_user):
+        raise HTTPException(status_code=403, detail="Solo docentes o administradores pueden resolver señales de bienestar")
+
+    signal = (
+        db.query(models.AcademyWellnessSignal)
+        .filter(
+            models.AcademyWellnessSignal.id == id,
+            models.AcademyWellnessSignal.deleted_at.is_(None),
+        )
+        .first()
+    )
+    if not signal:
+        raise HTTPException(status_code=404, detail="Señal de bienestar no encontrada")
+
+    signal.is_resolved = True
+    signal.resolved_at = _utcnow()
+    signal.resolved_by_id = current_user.id
+    db.commit()
+    db.refresh(signal)
+    return signal
+
+
+@router.get("/wellness/student/{student_id}/risk-profile", response_model=schemas.StudentRiskProfileResponse)
+def get_student_risk_profile(
+    student_id: UUID,
+    current_user: AcademyReader,
+    db: Session = Depends(get_db),
+):
+    if student_id != current_user.id and not _can_edit_academy(db, current_user):
+        raise HTTPException(status_code=403, detail="No tienes autorización para consultar el perfil de riesgo de este estudiante")
+
+    from backend.services.academic_engine_service import compute_student_risk_profile
+    return compute_student_risk_profile(db=db, student_id=student_id)
+
+
+@router.post("/copilot/suggest-activities", response_model=schemas.CopilotActivitySuggestionResponse)
+def suggest_activities(
+    payload: schemas.CopilotActivitySuggestionRequest,
+    current_user: AcademyReader,
+    db: Session = Depends(get_db),
+):
+    if not _can_edit_academy(db, current_user):
+        raise HTTPException(status_code=403, detail="Solo docentes pueden solicitar sugerencias de actividades al copiloto")
+
+    from backend.services.academic_engine_service import suggest_copilot_activities
+    return suggest_copilot_activities(db=db, offering_id=payload.offering_id, topic=payload.topic)
+
+
+@router.post("/copilot/generate-rubric", response_model=schemas.CopilotRubricResponse)
+def generate_rubric(
+    payload: schemas.CopilotRubricRequest,
+    current_user: AcademyReader,
+    db: Session = Depends(get_db),
+):
+    if not _can_edit_academy(db, current_user):
+        raise HTTPException(status_code=403, detail="Solo docentes pueden generar rúbricas con el copiloto")
+
+    from backend.services.academic_engine_service import generate_copilot_rubric
+    return generate_copilot_rubric(title=payload.title, competencies=payload.competencies)
+
+
+@router.post("/copilot/analyze-class-performance", response_model=schemas.CopilotClassPerformanceResponse)
+def analyze_performance(
+    payload: schemas.CopilotClassPerformanceRequest,
+    current_user: AcademyReader,
+    db: Session = Depends(get_db),
+):
+    if not _can_edit_academy(db, current_user):
+        raise HTTPException(status_code=403, detail="Solo docentes pueden consultar el análisis de rendimiento grupal")
+
+    from backend.services.academic_engine_service import analyze_class_performance
+    return analyze_class_performance(db=db, offering_id=payload.offering_id)
+
+
+@router.get("/copilot/weekly-report/{offering_id}", response_model=schemas.CopilotWeeklyReportResponse)
+def get_weekly_report(
+    offering_id: UUID,
+    current_user: AcademyReader,
+    db: Session = Depends(get_db),
+):
+    if not _can_edit_academy(db, current_user):
+        raise HTTPException(status_code=403, detail="Solo docentes pueden acceder al reporte semanal del copiloto")
+
+    from backend.services.academic_engine_service import generate_weekly_report
+    return generate_weekly_report(db=db, offering_id=offering_id)
+
+
+
 

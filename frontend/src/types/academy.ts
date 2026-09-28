@@ -507,3 +507,110 @@ export interface PortfolioVerifyResult {
   student_id: string;
 }
 
+export type WellnessSignalType = 'engagement_drop' | 'grade_risk' | 'absence_pattern' | 'stress_indicator' | string;
+export type WellnessSeverity = 'low' | 'medium' | 'high' | 'critical';
+
+export interface WellnessSignal {
+  id: string;
+  student_id: string;
+  offering_id?: string | null;
+  signal_type: WellnessSignalType;
+  severity: WellnessSeverity;
+  detected_at: string;
+  details?: Record<string, unknown> | null;
+  is_resolved: boolean;
+  resolved_at?: string | null;
+  resolved_by_id?: string | null;
+  created_at: string;
+  student_name?: string | null;
+}
+
+export interface WellnessAlert {
+  id: string;
+  signal_id: string;
+  recipient_id: string;
+  message: string;
+  sent_at: string;
+  read_at?: string | null;
+  created_at: string;
+}
+
+export interface StudentRiskProfile {
+  student_id: string;
+  risk_score: number;
+  risk_level: 'low' | 'medium' | 'high' | 'critical' | string;
+  active_signals_count: number;
+  signals: WellnessSignal[];
+  recommendations: string[];
+}
+
+export interface CopilotSuggestion {
+  activity_type: 'socratic_dialogue' | 'practical_exercise' | 'recommended_resource' | 'group_challenge' | string;
+  title: string;
+  description: string;
+  estimated_duration_minutes: number;
+  aligned_nodes: string[];
+}
+
+export interface CopilotRubricCriterion {
+  criterion: string;
+  weight: number;
+  levels: {
+    level_1_insufficient: string;
+    level_2_basic: string;
+    level_3_competent: string;
+    level_4_exemplary: string;
+    [key: string]: string;
+  };
+}
+
+export interface CopilotRubric {
+  title: string;
+  competencies: string[];
+  criteria: CopilotRubricCriterion[];
+}
+
+export interface ClassPerformanceReport {
+  offering_id: string;
+  total_students: number;
+  average_grade: number;
+  grade_distribution: {
+    '90-100': number;
+    '80-89': number;
+    '70-79': number;
+    'under_70': number;
+    [key: string]: number;
+  };
+  weak_knowledge_nodes: Array<{
+    node_id: string;
+    title: string;
+    average_mastery: number;
+    students_count: number;
+  }>;
+  at_risk_students: Array<{
+    student_id: string;
+    signal_type: string;
+    severity: string;
+    reason: string;
+  }>;
+  pedagogical_recommendations: string[];
+}
+
+export interface WeeklyReport {
+  offering_id: string;
+  week_period: string;
+  total_enrolled: number;
+  average_attendance_percent: number;
+  grades_summary: {
+    average: number;
+    highest: number;
+    lowest: number;
+    evaluations_count: number;
+  };
+  wellness_alerts_count: number;
+  active_wellness_signals: WellnessSignal[];
+  knowledge_graph_progress_percent: number;
+  key_highlights: string[];
+}
+
+

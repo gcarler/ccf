@@ -1100,3 +1100,251 @@ def test_022_verify_portfolio_credential_and_auto_defense_portfolio(client, db_s
     assert def_verify_r.json()["is_valid"] is True
 
 
+def test_023_create_wellness_signal_and_alert(client, db_session):
+    admin, _, _ = seed_admin(db_session)
+    headers = auth_headers(client, email=admin.email, password="testpass123")
+
+    from backend.models import Persona
+    student = Persona(first_name="WellStud1", last_name="Test")
+    db_session.add(student)
+    db_session.commit()
+
+    # Create dummy offering
+    prog_r = client.post("/api/academy/admin/programs", json={
+        "name": "Prog Well1", "code": f"PW1-{uuid.uuid4().hex[:6]}", "program_type": "curso_libre", "has_teachers": True, "teachers_can_grade": True
+    }, headers=headers)
+    prog_id = prog_r.json()["id"]
+    plan_r = client.post("/api/academy/admin/study-plans", json={"program_id": prog_id, "name": "Plan W1", "code": f"PLW1-{uuid.uuid4().hex[:4]}"}, headers=headers)
+    plan_id = plan_r.json()["id"]
+    sub_r = client.post(f"/api/academy/admin/study-plans/{plan_id}/subjects", json={"name": "Sub W1", "code": f"SW1-{uuid.uuid4().hex[:4]}", "credits": 2, "order_index": 1}, headers=headers)
+    sub_id = sub_r.json()["id"]
+    per_r = client.post("/api/academy/admin/periods", json={"name": "Period W1", "code": f"PERW1-{uuid.uuid4().hex[:4]}", "start_date": "2026-01-01", "end_date": "2026-12-31"}, headers=headers)
+    per_id = per_r.json()["id"]
+    sch_r = client.post("/api/academy/admin/grading-schemes", json={"name": f"SchemeW1-{uuid.uuid4().hex[:4]}", "scale_max": 100.0, "passing_grade": 70.0, "cuts": [{"name": "C1", "weight_percent": 100.0, "order_index": 1}]}, headers=headers)
+    sch_id = sch_r.json()["id"]
+    off_r = client.post("/api/academy/admin/offerings", json={"academic_period_id": per_id, "subject_id": sub_id, "grading_scheme_id": sch_id, "quota_max": 10}, headers=headers)
+    off_id = off_r.json()["id"]
+
+    # Post wellness signal
+    sig_r = client.post("/api/academy/wellness/signals", json={
+        "student_id": str(student.id),
+        "offering_id": off_id,
+        "signal_type": "engagement_drop",
+        "severity": "high",
+        "details": {"reason": "El estudiante no ha accedido a la plataforma en 10 días"},
+    }, headers=headers)
+    assert sig_r.status_code == 201
+    sig_data = sig_r.json()
+    assert sig_data["student_id"] == str(student.id)
+    assert sig_data["signal_type"] == "engagement_drop"
+    assert sig_data["severity"] == "high"
+    assert sig_data["is_resolved"] is False
+
+    # Check offering signals
+    off_sigs_r = client.get(f"/api/academy/wellness/{off_id}/signals", headers=headers)
+    assert off_sigs_r.status_code == 200
+    assert any(s["id"] == sig_data["id"] for s in off_sigs_r.json())
+
+    # Check my alerts (high severity generated an alert)
+    alerts_r = client.get("/api/academy/wellness/my-alerts", headers=headers)
+    assert alerts_r.status_code == 200
+    assert any(a["signal_id"] == sig_data["id"] for a in alerts_r.json())
+
+
+def test_024_detect_wellness_signals_automatic(client, db_session):
+    admin, _, _ = seed_admin(db_session)
+    headers = auth_headers(client, email=admin.email, password="testpass123")
+
+    from backend.models import Persona
+    student = Persona(first_name="WellDetect", last_name="Student")
+    db_session.add(student)
+    db_session.commit()
+
+    prog_r = client.post("/api/academy/admin/programs", json={
+        "name": "Prog WDetect", "code": f"PWD-{uuid.uuid4().hex[:6]}", "program_type": "curso_libre", "has_teachers": True, "teachers_can_grade": True
+    }, headers=headers)
+    prog_id = prog_r.json()["id"]
+    plan_r = client.post("/api/academy/admin/study-plans", json={"program_id": prog_id, "name": "Plan WD", "code": f"PLWD-{uuid.uuid4().hex[:4]}"}, headers=headers)
+    plan_id = plan_r.json()["id"]
+    sub_r = client.post(f"/api/academy/admin/study-plans/{plan_id}/subjects", json={"name": "Sub WD", "code": f"SWD-{uuid.uuid4().hex[:4]}", "credits": 2, "order_index": 1}, headers=headers)
+    sub_id = sub_r.json()["id"]
+    per_r = client.post("/api/academy/admin/periods", json={"name": "Period WD", "code": f"PERWD-{uuid.uuid4().hex[:4]}", "start_date": "2026-01-01", "end_date": "2026-12-31"}, headers=headers)
+    per_id = per_r.json()["id"]
+    sch_r = client.post("/api/academy/admin/grading-schemes", json={"name": f"SchemeWD-{uuid.uuid4().hex[:4]}", "scale_max": 100.0, "passing_grade": 70.0, "cuts": [{"name": "C1", "weight_percent": 100.0, "order_index": 1}]}, headers=headers)
+    sch_id = sch_r.json()["id"]
+    cut_id = sch_r.json()["cuts"][0]["id"]
+    off_r = client.post("/api/academy/admin/offerings", json={"academic_period_id": per_id, "subject_id": sub_id, "grading_scheme_id": sch_id, "quota_max": 10}, headers=headers)
+    off_id = off_r.json()["id"]
+
+    # Enroll student
+    client.post(f"/api/academy/admin/offerings/{off_id}/students", json={"persona_id": str(student.id)}, headers=headers)
+
+    # Register failing grade < 60
+    client.post(f"/api/academy/admin/offerings/{off_id}/grades", json={
+        "grades": [{"persona_id": str(student.id), "cut_id": cut_id, "grade_value": 45.0}]
+    }, headers=headers)
+
+    # Trigger wellness detection
+    detect_r = client.post("/api/academy/wellness/detect", json={"offering_id": off_id}, headers=headers)
+    assert detect_r.status_code == 200
+    d_data = detect_r.json()
+    assert d_data["detected_count"] >= 1
+    assert any(s["student_id"] == str(student.id) and s["signal_type"] == "grade_risk" for s in d_data["signals"])
+
+
+def test_025_resolve_wellness_signal(client, db_session):
+    admin, _, _ = seed_admin(db_session)
+    headers = auth_headers(client, email=admin.email, password="testpass123")
+
+    from backend.models import Persona
+    student = Persona(first_name="WellRes", last_name="Student")
+    db_session.add(student)
+    db_session.commit()
+
+    sig_r = client.post("/api/academy/wellness/signals", json={
+        "student_id": str(student.id),
+        "signal_type": "stress_indicator",
+        "severity": "medium",
+        "details": {"reason": "El estudiante reporta sobrecarga con asignaciones simultáneas"},
+    }, headers=headers)
+    sig_id = sig_r.json()["id"]
+
+    # Resolve
+    res_r = client.post(f"/api/academy/wellness/signals/{sig_id}/resolve", headers=headers)
+    assert res_r.status_code == 200
+    r_data = res_r.json()
+    assert r_data["id"] == sig_id
+    assert r_data["is_resolved"] is True
+    assert r_data["resolved_at"] is not None
+    assert r_data["resolved_by_id"] == str(admin.id)
+
+
+def test_026_student_risk_profile(client, db_session):
+    admin, _, _ = seed_admin(db_session)
+    headers = auth_headers(client, email=admin.email, password="testpass123")
+
+    from backend.models import Persona
+    student = Persona(first_name="RiskProf", last_name="Student")
+    db_session.add(student)
+    db_session.commit()
+
+    # Create 2 signals
+    client.post("/api/academy/wellness/signals", json={
+        "student_id": str(student.id),
+        "signal_type": "grade_risk",
+        "severity": "high",
+        "details": {"reason": "Nota baja en corte 1"},
+    }, headers=headers)
+    client.post("/api/academy/wellness/signals", json={
+        "student_id": str(student.id),
+        "signal_type": "engagement_drop",
+        "severity": "medium",
+        "details": {"reason": "Baja participación"},
+    }, headers=headers)
+
+    prof_r = client.get(f"/api/academy/wellness/student/{student.id}/risk-profile", headers=headers)
+    assert prof_r.status_code == 200
+    p_data = prof_r.json()
+    assert p_data["student_id"] == str(student.id)
+    assert p_data["risk_score"] >= 50.0
+    assert p_data["active_signals_count"] >= 2
+    assert len(p_data["recommendations"]) > 0
+
+
+def test_027_copilot_suggest_activities(client, db_session):
+    admin, _, _ = seed_admin(db_session)
+    headers = auth_headers(client, email=admin.email, password="testpass123")
+
+    prog_r = client.post("/api/academy/admin/programs", json={
+        "name": "Prog Cop1", "code": f"PC1-{uuid.uuid4().hex[:6]}", "program_type": "curso_libre", "has_teachers": True, "teachers_can_grade": True
+    }, headers=headers)
+    prog_id = prog_r.json()["id"]
+    plan_r = client.post("/api/academy/admin/study-plans", json={"program_id": prog_id, "name": "Plan C1", "code": f"PLC1-{uuid.uuid4().hex[:4]}"}, headers=headers)
+    plan_id = plan_r.json()["id"]
+    sub_r = client.post(f"/api/academy/admin/study-plans/{plan_id}/subjects", json={"name": "Sub C1", "code": f"SC1-{uuid.uuid4().hex[:4]}", "credits": 2, "order_index": 1}, headers=headers)
+    sub_id = sub_r.json()["id"]
+    per_r = client.post("/api/academy/admin/periods", json={"name": "Period C1", "code": f"PERC1-{uuid.uuid4().hex[:4]}", "start_date": "2026-01-01", "end_date": "2026-12-31"}, headers=headers)
+    per_id = per_r.json()["id"]
+    sch_r = client.post("/api/academy/admin/grading-schemes", json={"name": f"SchemeC1-{uuid.uuid4().hex[:4]}", "scale_max": 100.0, "passing_grade": 70.0, "cuts": [{"name": "C1", "weight_percent": 100.0, "order_index": 1}]}, headers=headers)
+    sch_id = sch_r.json()["id"]
+    off_r = client.post("/api/academy/admin/offerings", json={"academic_period_id": per_id, "subject_id": sub_id, "grading_scheme_id": sch_id, "quota_max": 10}, headers=headers)
+    off_id = off_r.json()["id"]
+
+    # Create knowledge node in this offering
+    client.post(f"/api/academy/knowledge/{off_id}/nodes", json={
+        "title": "Hermenéutica Bíblica y Exégesis",
+        "description": "Métodos histórico-gramaticales de interpretación",
+        "node_type": "concept",
+        "weight": 1.0,
+    }, headers=headers)
+
+    sug_r = client.post("/api/academy/copilot/suggest-activities", json={
+        "offering_id": off_id,
+        "topic": "Hermenéutica",
+    }, headers=headers)
+    assert sug_r.status_code == 200
+    s_data = sug_r.json()
+    assert s_data["offering_id"] == off_id
+    assert len(s_data["suggestions"]) == 4
+    types = [act["activity_type"] for act in s_data["suggestions"]]
+    assert "socratic_dialogue" in types
+    assert "practical_exercise" in types
+
+
+def test_028_copilot_generate_rubric(client, db_session):
+    admin, _, _ = seed_admin(db_session)
+    headers = auth_headers(client, email=admin.email, password="testpass123")
+
+    rubric_r = client.post("/api/academy/copilot/generate-rubric", json={
+        "title": "Ensayo Teológico sobre Gracia y Discipulado",
+        "competencies": ["Pensamiento crítico teológico", "Aplicación pastoral práctica"],
+    }, headers=headers)
+    assert rubric_r.status_code == 200
+    r_data = rubric_r.json()
+    assert r_data["title"] == "Ensayo Teológico sobre Gracia y Discipulado"
+    assert len(r_data["criteria"]) == 4
+    total_weight = sum(c["weight"] for c in r_data["criteria"])
+    assert abs(total_weight - 100.0) < 0.1
+    for crit in r_data["criteria"]:
+        assert "level_1_insufficient" in crit["levels"]
+        assert "level_4_exemplary" in crit["levels"]
+
+
+def test_029_copilot_class_performance_and_weekly_report(client, db_session):
+    admin, _, _ = seed_admin(db_session)
+    headers = auth_headers(client, email=admin.email, password="testpass123")
+
+    prog_r = client.post("/api/academy/admin/programs", json={
+        "name": "Prog CopRep", "code": f"PCR-{uuid.uuid4().hex[:6]}", "program_type": "curso_libre", "has_teachers": True, "teachers_can_grade": True
+    }, headers=headers)
+    prog_id = prog_r.json()["id"]
+    plan_r = client.post("/api/academy/admin/study-plans", json={"program_id": prog_id, "name": "Plan CR", "code": f"PLCR-{uuid.uuid4().hex[:4]}"}, headers=headers)
+    plan_id = plan_r.json()["id"]
+    sub_r = client.post(f"/api/academy/admin/study-plans/{plan_id}/subjects", json={"name": "Sub CR", "code": f"SCR-{uuid.uuid4().hex[:4]}", "credits": 2, "order_index": 1}, headers=headers)
+    sub_id = sub_r.json()["id"]
+    per_r = client.post("/api/academy/admin/periods", json={"name": "Period CR", "code": f"PERCR-{uuid.uuid4().hex[:4]}", "start_date": "2026-01-01", "end_date": "2026-12-31"}, headers=headers)
+    per_id = per_r.json()["id"]
+    sch_r = client.post("/api/academy/admin/grading-schemes", json={"name": f"SchemeCR-{uuid.uuid4().hex[:4]}", "scale_max": 100.0, "passing_grade": 70.0, "cuts": [{"name": "C1", "weight_percent": 100.0, "order_index": 1}]}, headers=headers)
+    sch_id = sch_r.json()["id"]
+    off_r = client.post("/api/academy/admin/offerings", json={"academic_period_id": per_id, "subject_id": sub_id, "grading_scheme_id": sch_id, "quota_max": 10}, headers=headers)
+    off_id = off_r.json()["id"]
+
+    # 1. Performance analysis
+    perf_r = client.post("/api/academy/copilot/analyze-class-performance", json={"offering_id": off_id}, headers=headers)
+    assert perf_r.status_code == 200
+    perf_data = perf_r.json()
+    assert perf_data["offering_id"] == off_id
+    assert "grade_distribution" in perf_data
+    assert "pedagogical_recommendations" in perf_data
+
+    # 2. Weekly report
+    rep_r = client.get(f"/api/academy/copilot/weekly-report/{off_id}", headers=headers)
+    assert rep_r.status_code == 200
+    rep_data = rep_r.json()
+    assert rep_data["offering_id"] == off_id
+    assert "grades_summary" in rep_data
+    assert "key_highlights" in rep_data
+    assert len(rep_data["key_highlights"]) > 0
+
+
+

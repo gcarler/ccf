@@ -1317,3 +1317,126 @@ class PortfolioVerifyResponse(BaseModel):
     student_id: UUID
 
 
+# =============================================================================
+# WELLNESS & COPILOT SCHEMAS (Hito 3 - Campus OS Cognitivo)
+# =============================================================================
+
+class WellnessSignalCreate(BaseModel):
+    student_id: UUID
+    offering_id: Optional[UUID] = None
+    signal_type: str = Field(description="engagement_drop, grade_risk, absence_pattern, stress_indicator")
+    severity: str = Field(default="medium", description="low, medium, high, critical")
+    details: Optional[Dict[str, Any]] = None
+
+
+class WellnessSignalRead(BaseModel):
+    id: UUID
+    student_id: UUID
+    offering_id: Optional[UUID] = None
+    signal_type: str
+    severity: str
+    detected_at: datetime
+    details: Optional[Dict[str, Any]] = None
+    is_resolved: bool
+    resolved_at: Optional[datetime] = None
+    resolved_by_id: Optional[UUID] = None
+    created_at: datetime
+    student_name: Optional[str] = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class WellnessAlertRead(BaseModel):
+    id: UUID
+    signal_id: UUID
+    recipient_id: UUID
+    message: str
+    sent_at: datetime
+    read_at: Optional[datetime] = None
+    created_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class WellnessDetectRequest(BaseModel):
+    offering_id: UUID
+
+
+class WellnessDetectResponse(BaseModel):
+    detected_count: int
+    signals: List[WellnessSignalRead]
+    summary: str
+
+
+class StudentRiskProfileResponse(BaseModel):
+    student_id: UUID
+    risk_score: float
+    risk_level: str
+    active_signals_count: int
+    signals: List[WellnessSignalRead]
+    recommendations: List[str]
+
+
+class CopilotActivityItem(BaseModel):
+    activity_type: str
+    title: str
+    description: str
+    estimated_duration_minutes: int
+    aligned_nodes: List[str] = Field(default_factory=list)
+
+
+class CopilotActivitySuggestionRequest(BaseModel):
+    offering_id: UUID
+    topic: str
+
+
+class CopilotActivitySuggestionResponse(BaseModel):
+    offering_id: UUID
+    topic: str
+    suggestions: List[CopilotActivityItem]
+
+
+class CopilotRubricCriterion(BaseModel):
+    criterion: str
+    weight: float
+    levels: Dict[str, str]
+
+
+class CopilotRubricRequest(BaseModel):
+    title: str
+    competencies: List[str]
+
+
+class CopilotRubricResponse(BaseModel):
+    title: str
+    competencies: List[str]
+    criteria: List[CopilotRubricCriterion]
+
+
+class CopilotClassPerformanceRequest(BaseModel):
+    offering_id: UUID
+
+
+class CopilotClassPerformanceResponse(BaseModel):
+    offering_id: UUID
+    total_students: int
+    average_grade: float
+    grade_distribution: Dict[str, int]
+    weak_knowledge_nodes: List[Dict[str, Any]]
+    at_risk_students: List[Dict[str, Any]]
+    pedagogical_recommendations: List[str]
+
+
+class CopilotWeeklyReportResponse(BaseModel):
+    offering_id: UUID
+    week_period: str
+    total_enrolled: int
+    average_attendance_percent: float
+    grades_summary: Dict[str, Any]
+    wellness_alerts_count: int
+    active_wellness_signals: List[WellnessSignalRead]
+    knowledge_graph_progress_percent: float
+    key_highlights: List[str]
+
+
+
