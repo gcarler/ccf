@@ -40,6 +40,11 @@ BACKUP_STALE_SECONDS = BACKUP_INTERVAL_SECONDS + 2 * 60 * 60
 BACKUP_RETENTION = 14
 TASK_STALE_SECONDS = 7 * 24 * 60 * 60
 TMUX_AGENT_COMMANDS = {"agy": "agy", "agy2": "agy", "codex": "codex", "freebuff": "node"}
+SECRET_ASSIGNMENT_RE = re.compile(
+    r"(?i)(\b(?:password|passwd|secret|token|api[_-]?key|authorization)\b\s*[:=]\s*)([^\s,;]+)"
+)
+BEARER_RE = re.compile(r"(?i)\bBearer\s+[A-Za-z0-9._~+/=-]+")
+JWT_RE = re.compile(r"\beyJ[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\b")
 
 
 class BridgeError(Exception):
@@ -48,6 +53,15 @@ class BridgeError(Exception):
 
 def utc_now() -> str:
     return datetime.now(timezone.utc).isoformat()
+
+
+def safe_detail(value: str) -> str:
+    """Redact common credential forms before they reach persistent audit records or logs."""
+    redacted = BEARER_RE.sub("Bearer [REDACTED]", value)
+    redacted = SECRET_ASSIGNMENT_RE.sub(r"\1[REDACTED]", redacted)
+    redacted = JWT_RE.sub("[REDACTED_JWT]", redacted)
+    return "".join(" " if unicodedata.category(char) in {"Cc", "Cf", "Zl", "Zp"} else char
+                   for char in redacted)[:500]
 
 
 def after_seconds(seconds: int) -> str:
@@ -286,6 +300,7 @@ class Bridge:
     @staticmethod
     def _transition(conn: sqlite3.Connection, task_id: str, old: str | None, new: str, actor: str, detail: str) -> None:
         now = utc_now()
+        detail = safe_detail(detail)
         conn.execute("UPDATE tasks SET status=?, updated_at=? WHERE id=?", (new, now, task_id))
         conn.execute(
             "INSERT INTO transitions (task_id,old_status,new_status,actor,detail,created_at) VALUES (?,?,?,?,?,?)",
@@ -295,11 +310,9 @@ class Bridge:
     @staticmethod
     def _operation(conn: sqlite3.Connection, kind: str, actor: str, detail: str = "",
                    task_id: str | None = None, event_id: str | None = None) -> None:
-        safe_detail = "".join(" " if unicodedata.category(char) in {"Cc", "Cf", "Zl", "Zp"} else char
-                              for char in detail)[:500]
         conn.execute(
             "INSERT INTO operations (task_id,event_id,kind,actor,detail,created_at) VALUES (?,?,?,?,?,?)",
-            (task_id, event_id, kind, actor, safe_detail, utc_now()),
+            (task_id, event_id, kind, actor, safe_detail(detail), utc_now()),
         )
 
     @staticmethod
@@ -415,10 +428,17 @@ class Bridge:
 
     def _escalate_dead_event(self, conn: sqlite3.Connection, event_id: str, task_id: str,
                              target: str, kind: str) -> None:
-        if kind == "BRIDGE_ALERT" or conn.execute(
-            "SELECT 1 FROM operations WHERE event_id=? AND kind='DEAD_LETTER_ALERT' LIMIT 1",
-            (event_id,),
-        ).fetchone():
+        if kind == "BRIDGE_ALERT":
+            return
+        alert = conn.execute(
+            "SELECT created_at FROM operations WHERE event_id=? AND kind='DEAD_LETTER_ALERT' "
+            "ORDER BY id DESC LIMIT 1", (event_id,),
+        ).fetchone()
+        retry = conn.execute(
+            "SELECT created_at FROM operations WHERE event_id=? AND kind='RETRY' "
+            "ORDER BY id DESC LIMIT 1", (event_id,),
+        ).fetchone()
+        if alert and (not retry or alert["created_at"] >= retry["created_at"]):
             return
         task = self._task(conn, task_id)
         coordinator = task["coordinator"] or task["reviewer"]
@@ -903,10 +923,23 @@ class Bridge:
     def history(self, task_id: str) -> list[dict]:
         with closing(self.connect()) as conn:
             self._task(conn, task_id)
-            return [dict(row) for row in conn.execute(
-                "SELECT id,task_id,event_id,kind,actor,detail,created_at FROM operations "
-                "WHERE task_id=? ORDER BY id", (task_id,),
-            ).fetchall()]
+            operations = [
+                {**dict(row), "record_type": "OPERATION"}
+                for row in conn.execute(
+                    "SELECT id,task_id,event_id,kind,actor,detail,created_at FROM operations "
+                    "WHERE task_id=?", (task_id,),
+                ).fetchall()
+            ]
+            transitions = [
+                {**dict(row), "record_type": "TRANSITION", "event_id": None,
+                 "kind": "STATUS_TRANSITION"}
+                for row in conn.execute(
+                    "SELECT id,task_id,old_status,new_status,actor,detail,created_at FROM transitions "
+                    "WHERE task_id=?", (task_id,),
+                ).fetchall()
+            ]
+            records = operations + transitions
+            return sorted(records, key=lambda row: (row["created_at"], row["record_type"], row["id"]))
 
     def pending_events(self) -> list[dict]:
         with closing(self.connect()) as conn:
@@ -995,6 +1028,7 @@ class Bridge:
             return result
 
     def record_dispatch(self, event_id: str, claim_token: str, success: bool, error: str = "") -> None:
+        error = safe_detail(error)
         with self.transaction() as conn:
             row = conn.execute(
                 "SELECT task_id,status,claim_token,attempts,target,kind FROM events WHERE id=?", (event_id,),
@@ -1100,7 +1134,7 @@ def daemon(bridge: Bridge, interval: float = 1.0, once: bool = False) -> None:
         while event := bridge.claim_pending():
             success, error = send_to_tmux(event)
             bridge.record_dispatch(event["id"], event["claim_token"], success, error)
-            print(f"{utc_now()} {event['id']} {event['target']} {'SENT' if success else 'FAILED'} {error}", flush=True)
+            print(f"{utc_now()} {event['id']} {event['target']} {'SENT' if success else 'FAILED'} {safe_detail(error)}", flush=True)
             if not once:
                 bridge.heartbeat(instance_id)
                 last_heartbeat = time.monotonic()

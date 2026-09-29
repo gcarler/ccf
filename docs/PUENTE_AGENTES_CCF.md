@@ -131,9 +131,14 @@ proceso activo corresponde al agente esperado; si volvió a un shell, deja el
 evento en `FAILED`. Los mensajes se normalizan a una línea de comentario de
 shell y no incluyen notas ni hallazgos completos. El envío
 directo de archivos a `.bridge/events/` ya no pertenece al flujo canónico.
-Los cambios de estado usan transacciones SQLite. `get-history` y las últimas
-operaciones de `status` conservan ACK, pausas, reintentos, expiraciones de lease
-y resultados de cada envío con actor y fecha. Para revertir el despliegue,
+Los cambios de estado usan transacciones SQLite. `get-history` presenta una
+línea temporal cronológica unificada de transiciones de estado y operaciones
+(ACK, pausas, reintentos, expiraciones de lease y resultados de cada envío),
+con tipo de registro, actor y fecha. Los errores habituales de transporte se
+redactan antes de persistirse o aparecer en logs; esto no sustituye la regla de
+no enviar secretos ni datos sensibles en entradas o notas. Tras reintentar
+manualmente un evento muerto, un nuevo agotamiento vuelve a generar una alerta
+al coordinador. Para revertir el despliegue,
 se puede detener el daemon nuevo y consultar los JSON heredados, que no se
 sobrescriben; las tareas creadas después de la migración solo existen en SQLite.
 

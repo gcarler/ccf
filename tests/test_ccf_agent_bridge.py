@@ -83,6 +83,14 @@ def test_full_handoff_review_revision_and_done(bridge: tuple[Bridge, str]) -> No
     assert store.task("TKT-1")["status"] == "DONE"
     assert store.active_tasks() == []
     assert len(store.latest("audits", "TKT-1")["evidence"]) > 0
+    history = store.history("TKT-1")
+    transitions = [row["new_status"] for row in history if row["record_type"] == "TRANSITION"]
+    assert transitions == ["ASSIGNED", "WORKING", "AWAITING_AUDIT", "REVISION_REQUIRED",
+                           "AWAITING_AUDIT", "APPROVED", "DONE"]
+    assert "ACK" in {row["kind"] for row in history if row["record_type"] == "OPERATION"}
+    assert {"ASSIGNED", "AWAITING_AUDIT", "REVISION_REQUIRED", "APPROVED", "DONE"}.issubset(
+        set(transitions)
+    )
     store.assign("TKT-2", "academy", "Otra tarea", "Tarea siguiente", "codex", "agy", ["criterio"], ["TKT-1"], coordinator="freebuff")
     assert store.task("TKT-2")["depends_on"] == ["TKT-1"]
 
@@ -449,6 +457,40 @@ def test_pause_and_retry_are_journaled(bridge: tuple[Bridge, str]) -> None:
     assert {"PAUSE", "RESUME", "RETRY", "DISPATCH_FAILED"}.issubset({row["kind"] for row in operations})
     retry = next(row for row in operations if row["kind"] == "RETRY")
     assert retry["actor"] == "agy" and "session missing" in retry["detail"]
+
+
+def test_dead_letter_alert_repeats_after_explicit_retry(bridge: tuple[Bridge, str]) -> None:
+    store, _ = bridge
+    event = store.assign("TKT-ALERT-CYCLE", "academy", "Alerta", "Reintento auditable",
+                         "agy2", "codex", ["criterio"], coordinator="freebuff")
+    with store.transaction() as conn:
+        conn.execute("UPDATE events SET status='DEAD' WHERE id=?", (event,))
+        store._escalate_dead_event(conn, event, "TKT-ALERT-CYCLE", "agy2", "TASK_ASSIGNED")
+    store.retry_event(event, "freebuff")
+    with store.transaction() as conn:
+        conn.execute("UPDATE events SET status='DEAD' WHERE id=?", (event,))
+        store._escalate_dead_event(conn, event, "TKT-ALERT-CYCLE", "agy2", "TASK_ASSIGNED")
+        alerts = conn.execute(
+            "SELECT COUNT(*) FROM operations WHERE event_id=? AND kind='DEAD_LETTER_ALERT'", (event,),
+        ).fetchone()[0]
+    assert alerts == 2
+
+
+def test_dispatch_errors_redact_common_credentials(bridge: tuple[Bridge, str]) -> None:
+    store, _ = bridge
+    event = store.assign("TKT-REDACT", "academy", "Redacción", "No persistir secretos",
+                         "agy2", "codex", ["criterio"], coordinator="freebuff")
+    claim = store.claim_pending()
+    assert claim is not None and claim["id"] == event
+    store.record_dispatch(event, claim["claim_token"], False,
+                          "password=hunter2 token=abc123 Authorization: Bearer xyz.secret.sig")
+    with store.connect() as conn:
+        persisted = conn.execute("SELECT last_error FROM events WHERE id=?", (event,)).fetchone()[0]
+        detail = conn.execute(
+            "SELECT detail FROM operations WHERE event_id=? AND kind='DISPATCH_FAILED'", (event,),
+        ).fetchone()[0]
+    assert "hunter2" not in persisted and "abc123" not in persisted and "xyz.secret.sig" not in persisted
+    assert "hunter2" not in detail and "abc123" not in detail and "xyz.secret.sig" not in detail
 
 
 def test_invalid_snapshot_does_not_mark_import_complete(tmp_path: Path) -> None:
