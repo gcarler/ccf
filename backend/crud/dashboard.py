@@ -306,6 +306,7 @@ def get_evangelism_dashboard(
             sqlt(f"""
         SELECT COUNT(*) FROM asistencias a
         JOIN sesiones_grupo sg ON a.sesion_id = sg.id
+        JOIN grupos_evangelismo ge ON sg.grupo_id = ge.id
         WHERE sg.fecha_sesion >= :cutoff {where_asi}
         AND a.requiere_seguimiento = true
     """),
@@ -351,18 +352,30 @@ def get_evangelism_dashboard(
             )
         )
 
-    # Detalle asistentes
+    # Detalle asistentes (última asistencia por persona).
+    # ``SELECT DISTINCT ON`` es sintaxis exclusiva de PostgreSQL; se usa
+    # ROW_NUMBER() OVER (portable SQLite >= 3.25 / PostgreSQL) para
+    # quedarse con la fila más reciente de cada persona.
     asistentes_rows = db.execute(
         sqlt(f"""
-        SELECT DISTINCT ON (a.persona_id) p.id, p.first_name, p.last_name, ge.nombre as grupo,
+        SELECT p.id, p.first_name, p.last_name, ge.nombre as grupo,
                sg.fecha_sesion as ultima_asistencia
-        FROM asistencias a
-        JOIN sesiones_grupo sg ON a.sesion_id = sg.id
+        FROM (
+            SELECT a.persona_id, a.sesion_id,
+                   ROW_NUMBER() OVER (
+                       PARTITION BY a.persona_id ORDER BY sg.fecha_sesion DESC
+                   ) AS rn
+            FROM asistencias a
+            JOIN sesiones_grupo sg ON a.sesion_id = sg.id
+            JOIN grupos_evangelismo ge ON sg.grupo_id = ge.id
+            WHERE sg.fecha_sesion >= :cutoff {where_asi}
+            AND a.estado = 'Presente'
+        ) ranked
+        JOIN sesiones_grupo sg ON sg.id = ranked.sesion_id
         JOIN grupos_evangelismo ge ON sg.grupo_id = ge.id
-        JOIN personas p ON a.persona_id = p.id
-        WHERE sg.fecha_sesion >= :cutoff {where_asi}
-        AND a.estado = 'Presente'
-        ORDER BY a.persona_id, sg.fecha_sesion DESC
+        JOIN personas p ON ranked.persona_id = p.id
+        WHERE ranked.rn = 1
+        ORDER BY sg.fecha_sesion DESC
         LIMIT 50
     """),
         {"cutoff": cutoff, **params},
@@ -580,27 +593,53 @@ def get_academy_dashboard(db: Session, sede_id=None) -> AcademyDashboard:
 # ═══════════════════════════════════════════════════════════════════
 
 
-def get_finance_dashboard(db: Session) -> FinanceDashboard:
+def get_finance_dashboard(db: Session, sede_id: Optional[str] = None) -> FinanceDashboard:
+    """Dashboard de finanzas con scope multi-tenant (Axioma 3).
+
+    ``sede_id`` (resuelto SIEMPRE del actor autenticado en la capa API)
+    filtra donaciones por sede; ``None`` ⇒ vista consolidada de la
+    plataforma (solo superadmin). En todos los casos se excluyen filas
+    con soft delete (``deleted_at IS NULL``).
+    """
     from sqlalchemy import text as sqlt
 
-    total_donations = db.execute(sqlt("SELECT COUNT(*) FROM donations")).scalar() or 0
-    total_amount = db.execute(sqlt("SELECT COALESCE(SUM(amount), 0) FROM donations")).scalar() or 0
+    sede_where = ""
+    params: dict = {}
+    if sede_id:
+        sede_where = "AND sede_id = :sede_id"
+        params["sede_id"] = str(sede_id)
+
+    total_donations = (
+        db.execute(sqlt(f"SELECT COUNT(*) FROM donations WHERE deleted_at IS NULL {sede_where}"), params).scalar() or 0
+    )
+    total_amount = (
+        db.execute(
+            sqlt(f"SELECT COALESCE(SUM(amount), 0) FROM donations WHERE deleted_at IS NULL {sede_where}"), params
+        ).scalar()
+        or 0
+    )
     this_month, _ = _month_range(0)
     monthly = (
         db.execute(
-            sqlt("SELECT COALESCE(SUM(amount), 0) FROM donations WHERE created_at >= :start"), {"start": this_month}
+            sqlt(
+                f"SELECT COALESCE(SUM(amount), 0) FROM donations "
+                f"WHERE deleted_at IS NULL AND created_at >= :start {sede_where}"
+            ),
+            {**params, "start": this_month},
         ).scalar()
         or 0
     )
 
     # Ingresos por categoría
     by_category = db.execute(
-        sqlt("""
+        sqlt(f"""
         SELECT donation_type, COALESCE(SUM(amount), 0) as total
         FROM donations
+        WHERE deleted_at IS NULL {sede_where}
         GROUP BY donation_type
         ORDER BY total DESC
-    """)
+    """),
+        params,
     ).all()
 
     income_by_category = [ChartDataPoint(label=r[0] or "Sin tipo", value=float(r[1])) for r in by_category]
@@ -611,8 +650,11 @@ def get_finance_dashboard(db: Session) -> FinanceDashboard:
         start, end = _month_range(i)
         c = (
             db.execute(
-                sqlt("SELECT COALESCE(SUM(amount), 0) FROM donations WHERE created_at BETWEEN :s AND :e"),
-                {"s": start, "e": end},
+                sqlt(
+                    f"SELECT COALESCE(SUM(amount), 0) FROM donations "
+                    f"WHERE deleted_at IS NULL AND created_at BETWEEN :s AND :e {sede_where}"
+                ),
+                {"s": start, "e": end, **params},
             ).scalar()
             or 0
         )
@@ -620,12 +662,14 @@ def get_finance_dashboard(db: Session) -> FinanceDashboard:
 
     # Últimas donaciones
     latest = db.execute(
-        sqlt("""
+        sqlt(f"""
         SELECT donor_name, donation_type, amount, created_at
         FROM donations
+        WHERE deleted_at IS NULL {sede_where}
         ORDER BY created_at DESC
         LIMIT 5
-    """)
+    """),
+        params,
     ).all()
 
     latest_donations = [
@@ -658,18 +702,29 @@ def get_finance_dashboard(db: Session) -> FinanceDashboard:
 # ═══════════════════════════════════════════════════════════════════
 
 
-def get_agenda_dashboard(db: Session) -> AgendaDashboard:
+def get_agenda_dashboard(db: Session, sede_id: Optional[str] = None) -> AgendaDashboard:
+    """Dashboard de agenda con scope multi-tenant (Axioma 3).
+
+    ``sede_id`` filtra ``EventoAgenda`` y ``RecursoFisico`` por sede del
+    actor; ``None`` ⇒ vista consolidada. Las colisiones de reservas se
+    scoped vía el evento propietario. Soft deletes respetados en todas
+    las entidades.
+    """
     from sqlalchemy import func
 
     from backend.models_agenda import EventoAgenda, ParticipanteEvento, RecursoFisico, ReservaRecurso
 
     now = _utcnow()
 
-    total = db.query(func.count(EventoAgenda.id)).filter(EventoAgenda.deleted_at.is_(None)).scalar() or 0
+    evento_scope = [EventoAgenda.deleted_at.is_(None)]
+    if sede_id:
+        evento_scope.append(EventoAgenda.sede_id == str(sede_id))
+
+    total = db.query(func.count(EventoAgenda.id)).filter(*evento_scope).scalar() or 0
     upcoming = (
         db.query(func.count(EventoAgenda.id))
         .filter(
-            EventoAgenda.deleted_at.is_(None),
+            *evento_scope,
             EventoAgenda.fecha_inicio >= now,
         )
         .scalar()
@@ -679,7 +734,7 @@ def get_agenda_dashboard(db: Session) -> AgendaDashboard:
     proximos = (
         db.query(EventoAgenda)
         .filter(
-            EventoAgenda.deleted_at.is_(None),
+            *evento_scope,
             EventoAgenda.fecha_inicio >= now,
         )
         .order_by(EventoAgenda.fecha_inicio.asc())
@@ -705,26 +760,26 @@ def get_agenda_dashboard(db: Session) -> AgendaDashboard:
         for ev in proximos
     ]
 
-    total_recursos = (
-        db.query(func.count(RecursoFisico.id))
-        .filter(
-            RecursoFisico.deleted_at.is_(None),
-            RecursoFisico.activo.is_(True),
-        )
-        .scalar()
-        or 0
-    )
+    recurso_scope = [
+        RecursoFisico.deleted_at.is_(None),
+        RecursoFisico.activo.is_(True),
+    ]
+    if sede_id:
+        recurso_scope.append(RecursoFisico.sede_id == str(sede_id))
+    total_recursos = db.query(func.count(RecursoFisico.id)).filter(*recurso_scope).scalar() or 0
 
-    colisiones = (
+    col_q = (
         db.query(func.count(ReservaRecurso.id))
+        .join(EventoAgenda, ReservaRecurso.evento_id == EventoAgenda.id)
         .filter(
             ReservaRecurso.deleted_at.is_(None),
             ReservaRecurso.bloqueo_inicio < now,
             ReservaRecurso.bloqueo_fin > now,
         )
-        .scalar()
-        or 0
     )
+    if sede_id:
+        col_q = col_q.filter(EventoAgenda.sede_id == str(sede_id))
+    colisiones = col_q.scalar() or 0
 
     return AgendaDashboard(
         cards=[
@@ -1296,21 +1351,48 @@ def get_projects_dashboard(db: Session, sede_id: Optional[str] = None) -> Projec
 # ═══════════════════════════════════════════════════════════════════
 
 
-def get_admin_dashboard(db: Session) -> AdminGlobalDashboard:
+def get_admin_dashboard(db: Session, sede_id: Optional[str] = None) -> AdminGlobalDashboard:
+    """Dashboard global de administración con scope multi-tenant (Axioma 3).
+
+    ``sede_id`` filtra usuarios, personas y sesiones por sede; ``None`` ⇒
+    vista consolidada (solo superadmin). La distribución de roles usa
+    ``RolPlataforma`` (fuente canónica en Auth v3) en lugar de la
+    inexistente columna ``Usuario.role`` (AttributeError latente). Solo
+    se cuentan entidades no borradas (soft deletes).
+    """
     from sqlalchemy import func
 
-    users = db.query(func.count(models.Usuario.id)).scalar() or 0
-    sessions = db.query(func.count(models.TokenSesion.id)).filter(models.TokenSesion.revoked == False).scalar() or 0
-    personas = db.query(func.count(models.Persona.id)).scalar() or 0
+    from backend.models_auth import RolPlataforma
 
-    # Roles distribution using ORM
-    roles = db.query(models.Usuario.role, func.count(models.Usuario.id)).group_by(models.Usuario.role).all()
+    user_scope = []
+    persona_scope = []  # Persona no modela soft delete (sin columna deleted_at)
+    if sede_id:
+        user_scope.append(models.Usuario.sede_id == str(sede_id))
+        persona_scope.append(models.Persona.sede_id == str(sede_id))
+
+    users = db.query(func.count(models.Usuario.id)).filter(*user_scope).scalar() or 0
+    sessions_q = db.query(func.count(models.TokenSesion.id)).filter(models.TokenSesion.revoked == False)  # noqa: E712
+    if sede_id:
+        sessions_q = sessions_q.join(models.Usuario, models.TokenSesion.user_id == models.Usuario.id).filter(
+            models.Usuario.sede_id == str(sede_id)
+        )
+    sessions = sessions_q.scalar() or 0
+    personas = db.query(func.count(models.Persona.id)).filter(*persona_scope).scalar() or 0
+
+    # Distribución de roles de plataforma (Auth v3) vía rol_plataforma_id
+    roles = (
+        db.query(RolPlataforma.nombre, func.count(models.Usuario.id))
+        .join(models.Usuario, models.Usuario.rol_plataforma_id == RolPlataforma.id)
+        .filter(*user_scope)
+        .group_by(RolPlataforma.nombre)
+        .all()
+    )
     roles_chart = [ChartDataPoint(label=r[0] or "sin rol", value=float(r[1])) for r in roles]
 
     # Church roles distribution using ORM
     church_roles = (
         db.query(models.Persona.church_role, func.count(models.Persona.id))
-        .filter(models.Persona.church_role.isnot(None))
+        .filter(models.Persona.church_role.isnot(None), *persona_scope)
         .group_by(models.Persona.church_role)
         .order_by(func.count(models.Persona.id).desc())
         .limit(5)
