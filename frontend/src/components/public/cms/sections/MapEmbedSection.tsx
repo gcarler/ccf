@@ -60,7 +60,7 @@ export function MapEmbedSection({ section }: { section: Partial<CmsSection<"map_
             loading="lazy"
           />
         ) : (
-          <div className="w-full h-full flex items-center justify-center text-gray-400 text-sm">
+          <div className="w-full h-full flex items-center justify-center text-site-on-surface-variant text-sm">
             Sin ubicación o coordenadas para mostrar en el mapa
           </div>
         )}

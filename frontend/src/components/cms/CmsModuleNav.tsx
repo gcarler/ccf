@@ -149,7 +149,7 @@ export function CmsModuleNav() {
                 <Icon size={8} />
                 {tab.label}
                 {tab.id === "comments" && (stats?.pendingCommentsTotal ?? 0) > 0 && (
-                  <span className="ml-1 rounded-full bg-amber-500 px-1.5 py-0.5 text-2xs font-bold text-white">
+                  <span className="ml-1 rounded-full bg-[hsl(var(--warning))] px-1.5 py-0.5 text-2xs font-bold text-[hsl(var(--warning-foreground))]">
                     {stats?.pendingCommentsTotal}
                   </span>
                 )}

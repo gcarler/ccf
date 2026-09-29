@@ -385,7 +385,7 @@ export default function PublicLocationsManager({
               key={loc.id}
               className={`group relative rounded-2xl border transition-all duration-200 overflow-hidden flex flex-col justify-between ${
                 loc.is_main
-                  ? "border-amber-500/40 bg-[hsl(var(--surface-2))] shadow-md ring-1 ring-amber-500/20"
+                  ? "border-[hsl(var(--warning)/0.4)] bg-[hsl(var(--surface-2))] shadow-md ring-1 ring-[hsl(var(--warning)/0.2)]"
                   : "border-[hsl(var(--border))] dark:border-white/[0.06] bg-[hsl(var(--surface-2))] hover:border-[hsl(var(--primary))/0.4]"
               }`}
             >
@@ -393,7 +393,7 @@ export default function PublicLocationsManager({
               <div className="p-3 border-b border-[hsl(var(--border))] dark:border-white/[0.06] flex items-center justify-between bg-[hsl(var(--surface-3))/0.5]">
                 <div className="flex items-center gap-1.5 flex-wrap">
                   {loc.is_main ? (
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-3xs font-black uppercase tracking-wider bg-amber-500/20 text-amber-700 dark:text-amber-300 border border-amber-500/30">
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-3xs font-black uppercase tracking-wider bg-[hsl(var(--warning)/0.15)] text-[hsl(var(--warning))] border border-[hsl(var(--warning)/0.3)]">
                       <Sparkles size={10} /> Sede Principal
                     </span>
                   ) : (
@@ -403,11 +403,11 @@ export default function PublicLocationsManager({
                   )}
 
                   {loc.is_active ? (
-                    <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-3xs font-semibold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400">
+                    <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-3xs font-semibold bg-[hsl(var(--success)/0.15)] text-[hsl(var(--success))]">
                       <Check size={9} /> Activa
                     </span>
                   ) : (
-                    <span className="inline-flex items-center px-1.5 py-0.5 rounded text-3xs font-semibold bg-zinc-500/15 text-zinc-500">
+                    <span className="inline-flex items-center px-1.5 py-0.5 rounded text-3xs font-semibold bg-[hsl(var(--surface-3))] text-[hsl(var(--text-secondary))]">
                       Oculta
                     </span>
                   )}
@@ -509,7 +509,7 @@ export default function PublicLocationsManager({
                     </span>
                   )}
                   {(loc.lat && loc.lng) ? (
-                    <span className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-semibold">
+                    <span className="flex items-center gap-1 text-[hsl(var(--success))] font-semibold">
                       <Navigation size={10} /> GPS listo
                     </span>
                   ) : null}
@@ -807,7 +807,7 @@ export default function PublicLocationsManager({
                       onChange={(e) => setFormData({ ...formData, is_main: e.target.checked })}
                       className="sr-only peer"
                     />
-                    <div className="w-10 h-6 bg-zinc-300 peer-focus:outline-none rounded-full peer dark:bg-zinc-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-zinc-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[hsl(var(--primary))]"></div>
+                    <div className="w-10 h-6 bg-[hsl(var(--surface-3))] peer-focus:outline-none rounded-full peer dark:bg-[hsl(var(--surface-3))] peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-[hsl(var(--border))] after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[hsl(var(--primary))]"></div>
                   </label>
                 </div>
 
@@ -825,7 +825,7 @@ export default function PublicLocationsManager({
                       onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })}
                       className="sr-only peer"
                     />
-                    <div className="w-10 h-6 bg-zinc-300 peer-focus:outline-none rounded-full peer dark:bg-zinc-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-zinc-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[hsl(var(--primary))]"></div>
+                    <div className="w-10 h-6 bg-[hsl(var(--surface-3))] peer-focus:outline-none rounded-full peer dark:bg-[hsl(var(--surface-3))] peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-[hsl(var(--border))] after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[hsl(var(--primary))]"></div>
                   </label>
                 </div>
               </div>

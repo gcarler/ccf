@@ -71,9 +71,9 @@ function AlertBadge({ rules, metrics }: { rules: AlertRule[]; metrics: Record<st
     if (!activeAlerts.length) return null;
 
     return (
-        <div className="flex items-center gap-1.5 px-2 py-1 bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 rounded-md">
+        <div className="flex items-center gap-1.5 px-2 py-1 bg-[hsl(var(--destructive)/0.1)] border border-[hsl(var(--destructive)/0.2)] rounded-md">
             <AlertTriangle size={12} className="text-[hsl(var(--destructive))]" />
-            <span className="text-2xs font-bold text-[hsl(var(--destructive))] dark:text-[hsl(var(--destructive))]">
+            <span className="text-2xs font-bold text-[hsl(var(--destructive))]">
                 {activeAlerts.length} alerta{activeAlerts.length > 1 ? 's' : ''}
             </span>
         </div>

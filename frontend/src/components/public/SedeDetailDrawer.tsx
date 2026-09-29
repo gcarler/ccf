@@ -330,7 +330,7 @@ export default function SedeDetailDrawer({
                 >
                   {copied ? (
                     <>
-                      <Check size={13} className="text-emerald-600" />
+                      <Check size={13} className="text-[hsl(var(--success))]" />
                       <span>Copiada</span>
                     </>
                   ) : (
@@ -377,11 +377,11 @@ export default function SedeDetailDrawer({
                 href={whatsappUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-full py-3 px-4 rounded-xl font-bold text-sm tracking-wide border shadow-sm transition-all flex items-center justify-center gap-2 hover:bg-emerald-50 hover:border-emerald-600"
+                className="w-full py-3 px-4 rounded-xl font-bold text-sm tracking-wide border shadow-sm transition-all flex items-center justify-center gap-2 hover:bg-[hsl(var(--success)/0.15)] hover:border-[hsl(var(--success))]"
                 style={{
-                  background: "rgba(16, 185, 129, 0.08)",
-                  borderColor: "rgba(16, 185, 129, 0.4)",
-                  color: "#059669",
+                  background: "hsl(var(--success) / 0.08)",
+                  borderColor: "hsl(var(--success) / 0.4)",
+                  color: "hsl(var(--success))",
                 }}
               >
                 <MessageCircle size={17} />

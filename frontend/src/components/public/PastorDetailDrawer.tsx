@@ -357,11 +357,11 @@ export default function PastorDetailDrawer({
               <button
                 type="button"
                 onClick={handleWhatsApp}
-                className="w-full py-3 px-4 rounded-xl font-bold text-xs uppercase tracking-wider border shadow-sm transition-all flex items-center justify-center gap-2 hover:bg-emerald-50 hover:border-emerald-600"
+                className="w-full py-3 px-4 rounded-xl font-bold text-xs uppercase tracking-wider border shadow-sm transition-all flex items-center justify-center gap-2 hover:bg-[hsl(var(--success)/0.15)] hover:border-[hsl(var(--success))]"
                 style={{
-                  background: "rgba(16, 185, 129, 0.08)",
-                  borderColor: "rgba(16, 185, 129, 0.35)",
-                  color: "#059669",
+                  background: "hsl(var(--success) / 0.08)",
+                  borderColor: "hsl(var(--success) / 0.35)",
+                  color: "hsl(var(--success))",
                 }}
               >
                 <MessageCircle size={16} />
@@ -381,7 +381,7 @@ export default function PastorDetailDrawer({
                 >
                   {copied ? (
                     <>
-                      <Check size={14} className="text-emerald-600" />
+                      <Check size={14} className="text-[hsl(var(--success))]" />
                       <span>¡Enlace copiado!</span>
                     </>
                   ) : (

@@ -212,7 +212,7 @@ export default function CmsJsonMediaField({
 
   return (
     <div className="space-y-3">
-      <label className="text-xs font-semibold text-gray-700 dark:text-gray-300">{label}</label>
+      <label className="text-xs font-semibold text-[hsl(var(--text-primary))]">{label}</label>
       {looksLikeSermonFeed && thumbnailOverridePaths.length === 0 && (
         <div className="flex items-center justify-between gap-3 rounded-md border border-[hsl(var(--border))] p-3 dark:border-white/10">
           <div>

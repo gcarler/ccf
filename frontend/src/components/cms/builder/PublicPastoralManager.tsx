@@ -425,7 +425,7 @@ export default function PublicPastoralManager({
                         </span>
                       ) : (
                         <span className="inline-flex items-center gap-1 text-3xs text-[hsl(var(--text-secondary))] font-semibold">
-                          <span className="w-1.5 h-1.5 rounded-full bg-neutral-400" /> Oculto
+                          <span className="w-1.5 h-1.5 rounded-full bg-[hsl(var(--text-secondary))]" /> Oculto
                         </span>
                       )}
                       <span className="text-3xs text-[hsl(var(--text-secondary))] font-mono">
@@ -512,7 +512,7 @@ export default function PublicPastoralManager({
                     type="button"
                     onClick={() => handleOpenDelete(p)}
                     title="Remover pastor"
-                    className="p-1.5 rounded-lg hover:bg-red-500/10 text-[hsl(var(--text-secondary))] hover:text-red-500 transition-colors"
+                    className="p-1.5 rounded-lg hover:bg-[hsl(var(--destructive)/0.1)] text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--destructive))] transition-colors"
                   >
                     <Trash2 size={13} />
                   </button>

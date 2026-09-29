@@ -162,7 +162,7 @@ export default function UnifiedSidebar({
                         {logoUrl ? (
                             <OptimizedImage src={logoUrl} alt={logoDisplayName} fill className="w-full h-full object-contain drop-shadow-sm" />
                         ) : (
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-6 h-6 text-blue-600 dark:text-blue-400">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-6 h-6 text-[hsl(var(--primary))]">
                                 <path d="M8 22L10 6L12 2L14 6L16 22H8Z" strokeLinejoin="round" />
                                 <circle cx="12" cy="4" r="1.5" fill="currentColor" />
                             </svg>

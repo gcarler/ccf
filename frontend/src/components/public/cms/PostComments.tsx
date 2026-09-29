@@ -112,9 +112,9 @@ export function PostComments({ postId }: PostCommentsProps) {
   return (
     <div className="w-full space-y-8 py-6" data-testid="post-comments-component">
       {/* Header Badge */}
-      <div className="flex items-center gap-3 border-b border-gray-200 pb-4 dark:border-gray-800">
+      <div className="flex items-center gap-3 border-b border-[hsl(var(--border))] pb-4">
         <MessageSquare className="h-6 w-6 text-primary" />
-        <h3 className="text-xl font-bold text-gray-900 dark:text-white">Comentarios</h3>
+        <h3 className="text-xl font-bold text-[hsl(var(--text-primary))]">Comentarios</h3>
         <span
           className="rounded-full bg-primary/10 px-3 py-0.5 text-xs font-semibold text-primary"
           data-testid="comments-count-badge"
@@ -124,41 +124,41 @@ export function PostComments({ postId }: PostCommentsProps) {
       </div>
 
       {/* Main Comment Form */}
-      <form onSubmit={handleCreateRootComment} className="space-y-4 rounded-xl border border-gray-200 bg-gray-50/50 p-5 dark:border-gray-800 dark:bg-gray-900/50">
-        <h4 className="text-sm font-semibold text-gray-900 dark:text-white">Deja un comentario</h4>
+      <form onSubmit={handleCreateRootComment} className="space-y-4 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] p-5">
+        <h4 className="text-sm font-semibold text-[hsl(var(--text-primary))]">Deja un comentario</h4>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
-            <label className="block text-xs font-medium text-gray-700 dark:text-gray-300">Nombre</label>
+            <label className="block text-xs font-medium text-[hsl(var(--text-secondary))]">Nombre</label>
             <input
               type="text"
               required
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="Tu nombre"
-              className="mt-1 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+              className="mt-1 w-full rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] px-3 py-2 text-sm text-[hsl(var(--text-primary))] focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
             />
           </div>
           <div>
-            <label className="block text-xs font-medium text-gray-700 dark:text-gray-300">Correo Electrónico</label>
+            <label className="block text-xs font-medium text-[hsl(var(--text-secondary))]">Correo Electrónico</label>
             <input
               type="email"
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="tu@email.com"
-              className="mt-1 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+              className="mt-1 w-full rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] px-3 py-2 text-sm text-[hsl(var(--text-primary))] focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
             />
           </div>
         </div>
         <div>
-          <label className="block text-xs font-medium text-gray-700 dark:text-gray-300">Comentario</label>
+          <label className="block text-xs font-medium text-[hsl(var(--text-secondary))]">Comentario</label>
           <textarea
             required
             rows={3}
             value={content}
             onChange={(e) => setContent(e.target.value)}
             placeholder="Escribe tu comentario aquí..."
-            className="mt-1 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+            className="mt-1 w-full rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] px-3 py-2 text-sm text-[hsl(var(--text-primary))] focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
           />
         </div>
         <button
@@ -174,17 +174,17 @@ export function PostComments({ postId }: PostCommentsProps) {
       {/* Comments List */}
       {loading ? (
         <div className="space-y-4" data-testid="comments-loading">
-          <div className="h-16 animate-pulse rounded-lg bg-gray-100 dark:bg-gray-800" />
-          <div className="h-16 animate-pulse rounded-lg bg-gray-100 dark:bg-gray-800" />
+          <div className="h-16 animate-pulse rounded-lg bg-[hsl(var(--surface-3))]" />
+          <div className="h-16 animate-pulse rounded-lg bg-[hsl(var(--surface-3))]" />
         </div>
       ) : comments.length === 0 ? (
-        <div className="py-8 text-center text-sm text-gray-500 dark:text-gray-400">
+        <div className="py-8 text-center text-sm text-[hsl(var(--text-secondary))]">
           No hay comentarios aprobados aún. ¡Sé el primero en comentar!
         </div>
       ) : (
         <div className="space-y-6" data-testid="comments-tree">
           {comments.map((comment) => (
-            <div key={comment.id} className="space-y-3 rounded-xl border border-gray-100 bg-white p-5 shadow-sm dark:border-gray-800 dark:bg-gray-900">
+            <div key={comment.id} className="space-y-3 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-5 shadow-sm">
               {/* Root Comment Header */}
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
@@ -192,8 +192,8 @@ export function PostComments({ postId }: PostCommentsProps) {
                     {comment.author_name.charAt(0).toUpperCase()}
                   </div>
                   <div>
-                    <h5 className="text-sm font-semibold text-gray-900 dark:text-white">{comment.author_name}</h5>
-                    <span className="text-2xs text-gray-500 dark:text-gray-400">
+                    <h5 className="text-sm font-semibold text-[hsl(var(--text-primary))]">{comment.author_name}</h5>
+                    <span className="text-2xs text-[hsl(var(--text-secondary))]">
                       {new Date(comment.created_at).toLocaleDateString("es-ES", {
                         day: "numeric",
                         month: "short",
@@ -214,7 +214,7 @@ export function PostComments({ postId }: PostCommentsProps) {
                       setReplyContent("");
                     }
                   }}
-                  className="inline-flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-medium text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800"
+                  className="inline-flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-medium text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))]"
                 >
                   <CornerDownRight className="h-3.5 w-3.5" />
                   Responder
@@ -222,7 +222,7 @@ export function PostComments({ postId }: PostCommentsProps) {
               </div>
 
               {/* Comment Content */}
-              <p className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap pl-10">
+              <p className="text-sm text-[hsl(var(--text-primary))] whitespace-pre-wrap pl-10">
                 {comment.content}
               </p>
 
@@ -238,7 +238,7 @@ export function PostComments({ postId }: PostCommentsProps) {
                     <button
                       type="button"
                       onClick={() => setActiveReplyId(null)}
-                      className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+                      className="text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))]"
                     >
                       <X className="h-4 w-4" />
                     </button>
@@ -250,7 +250,7 @@ export function PostComments({ postId }: PostCommentsProps) {
                       value={replyName}
                       onChange={(e) => setReplyName(e.target.value)}
                       placeholder="Tu nombre"
-                      className="w-full rounded-md border border-gray-300 bg-white px-3 py-1.5 text-xs text-gray-900 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                      className="w-full rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] px-3 py-1.5 text-xs text-[hsl(var(--text-primary))]"
                     />
                     <input
                       type="email"
@@ -258,7 +258,7 @@ export function PostComments({ postId }: PostCommentsProps) {
                       value={replyEmail}
                       onChange={(e) => setReplyEmail(e.target.value)}
                       placeholder="Tu correo"
-                      className="w-full rounded-md border border-gray-300 bg-white px-3 py-1.5 text-xs text-gray-900 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                      className="w-full rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] px-3 py-1.5 text-xs text-[hsl(var(--text-primary))]"
                     />
                   </div>
                   <textarea
@@ -267,13 +267,13 @@ export function PostComments({ postId }: PostCommentsProps) {
                     value={replyContent}
                     onChange={(e) => setReplyContent(e.target.value)}
                     placeholder="Escribe tu respuesta..."
-                    className="w-full rounded-md border border-gray-300 bg-white px-3 py-1.5 text-xs text-gray-900 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                    className="w-full rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] px-3 py-1.5 text-xs text-[hsl(var(--text-primary))]"
                   />
                   <div className="flex justify-end gap-2">
                     <button
                       type="button"
                       onClick={() => setActiveReplyId(null)}
-                      className="rounded-md border border-gray-300 px-3 py-1 text-xs font-medium text-gray-600 hover:bg-gray-100 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
+                      className="rounded-md border border-[hsl(var(--border))] px-3 py-1 text-xs font-medium text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))]"
                     >
                       Cancelar
                     </button>
@@ -291,22 +291,22 @@ export function PostComments({ postId }: PostCommentsProps) {
 
               {/* Nested Replies */}
               {comment.replies && comment.replies.length > 0 && (
-                <div className="ml-6 space-y-3 border-l-2 border-gray-200 pl-4 dark:border-gray-800">
+                <div className="ml-6 space-y-3 border-l-2 border-[hsl(var(--border))] pl-4">
                   {comment.replies.map((reply) => (
-                    <div key={reply.id} className="space-y-1 rounded-lg bg-gray-50 p-3 dark:bg-gray-800/50">
+                    <div key={reply.id} className="space-y-1 rounded-lg bg-[hsl(var(--surface-2))] p-3">
                       <div className="flex items-center gap-2">
-                        <div className="flex h-6 w-6 items-center justify-center rounded-full bg-gray-200 text-gray-700 font-bold text-2xs dark:bg-gray-700 dark:text-gray-200">
+                        <div className="flex h-6 w-6 items-center justify-center rounded-full bg-[hsl(var(--surface-3))] text-[hsl(var(--text-primary))] font-bold text-2xs">
                           {reply.author_name.charAt(0).toUpperCase()}
                         </div>
-                        <span className="text-xs font-semibold text-gray-900 dark:text-white">{reply.author_name}</span>
-                        <span className="text-2xs text-gray-400">
+                        <span className="text-xs font-semibold text-[hsl(var(--text-primary))]">{reply.author_name}</span>
+                        <span className="text-2xs text-[hsl(var(--text-secondary))]">
                           {new Date(reply.created_at).toLocaleDateString("es-ES", {
                             day: "numeric",
                             month: "short",
                           })}
                         </span>
                       </div>
-                      <p className="text-xs text-gray-700 dark:text-gray-300 whitespace-pre-wrap pl-8">
+                      <p className="text-xs text-[hsl(var(--text-primary))] whitespace-pre-wrap pl-8">
                         {reply.content}
                       </p>
                     </div>

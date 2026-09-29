@@ -239,8 +239,8 @@ export default function PublicSearchModal({
         <div className="flex-1 overflow-y-auto p-4 space-y-4">
           {/* Loading state indicator */}
           {loading && results.length === 0 && (
-            <div className="py-12 flex flex-col items-center justify-center text-zinc-400">
-              <Loader2 className="w-8 h-8 animate-spin mb-2 text-sky-500" />
+            <div className="py-12 flex flex-col items-center justify-center text-site-on-surface-variant">
+              <Loader2 className="w-8 h-8 animate-spin mb-2 text-site-primary" />
               <p className="text-sm">Buscando resultados...</p>
             </div>
           )}

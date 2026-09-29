@@ -206,22 +206,22 @@ export default function AnalyticsTab({ eventId, token }: AnalyticsTabProps) {
       case "EXCELLENT":
         return {
           label: "Excelente",
-          className: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20",
+          className: "bg-[hsl(var(--success)/0.1)] text-[hsl(var(--success))] border-[hsl(var(--success)/0.2)]",
         };
       case "HEALTHY":
         return {
           label: "Saludable",
-          className: "bg-teal-500/10 text-teal-600 dark:text-teal-400 border-teal-500/20",
+          className: "bg-[hsl(var(--info)/0.1)] text-[hsl(var(--info))] border-[hsl(var(--info)/0.2)]",
         };
       case "ATTENTION_NEEDED":
         return {
           label: "Atención Necesaria",
-          className: "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20",
+          className: "bg-[hsl(var(--warning)/0.1)] text-[hsl(var(--warning))] border-[hsl(var(--warning)/0.2)]",
         };
       default:
         return {
           label: "Crítico",
-          className: "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20",
+          className: "bg-[hsl(var(--destructive)/0.1)] text-[hsl(var(--destructive))] border-[hsl(var(--destructive)/0.2)]",
         };
     }
   };
@@ -291,7 +291,7 @@ export default function AnalyticsTab({ eventId, token }: AnalyticsTabProps) {
       {channelingMessage && (
         <div className="flex items-center justify-between p-3 rounded-lg border border-[hsl(var(--border-subtle))] bg-[hsl(var(--surface-1))] text-xs">
           <div className="flex items-center gap-2 text-[hsl(var(--text-primary))]">
-            <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+            <CheckCircle2 className="h-4 w-4 text-[hsl(var(--success))]" />
             <span>{channelingMessage}</span>
           </div>
           <button
@@ -331,7 +331,7 @@ export default function AnalyticsTab({ eventId, token }: AnalyticsTabProps) {
                 <span className="text-2xl font-bold text-[hsl(var(--primary))]">
                   {m.total_attended}
                 </span>
-                <span className="ml-2 inline-flex items-center px-1.5 py-0.5 rounded text-3xs font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+                <span className="ml-2 inline-flex items-center px-1.5 py-0.5 rounded text-3xs font-bold bg-[hsl(var(--success)/0.1)] text-[hsl(var(--success))]">
                   {m.attendance_rate}%
                 </span>
               </div>
@@ -346,7 +346,7 @@ export default function AnalyticsTab({ eventId, token }: AnalyticsTabProps) {
                 <span className="text-2xl font-bold text-[hsl(var(--destructive))]">
                   {m.total_absent}
                 </span>
-                <span className="ml-2 inline-flex items-center px-1.5 py-0.5 rounded text-3xs font-bold bg-rose-500/10 text-rose-600 dark:text-rose-400">
+                <span className="ml-2 inline-flex items-center px-1.5 py-0.5 rounded text-3xs font-bold bg-[hsl(var(--destructive)/0.1)] text-[hsl(var(--destructive))]">
                   {m.no_show_rate}%
                 </span>
               </div>
@@ -437,12 +437,12 @@ export default function AnalyticsTab({ eventId, token }: AnalyticsTabProps) {
                         </div>
                         {step.step > 1 && (
                           <div className="text-2xs">
-                            <span className="text-emerald-600 dark:text-emerald-400 font-semibold">
+                            <span className="text-[hsl(var(--success))] font-semibold">
                               {step.conversion_from_previous}%
                             </span>{" "}
                             conversión
                             <span className="mx-1 text-[hsl(var(--border-subtle))]">|</span>
-                            <span className="text-rose-500 font-semibold">
+                            <span className="text-[hsl(var(--destructive))] font-semibold">
                               -{step.dropoff_from_previous}%
                             </span>{" "}
                             deserción
@@ -660,7 +660,7 @@ export default function AnalyticsTab({ eventId, token }: AnalyticsTabProps) {
                         <div className="flex items-center gap-1.5">
                           {a.full_name}
                           {a.is_new_visitor && (
-                            <span className="px-1.5 py-0.2 rounded text-3xs font-bold bg-amber-500/10 text-amber-600 dark:text-amber-400">
+                            <span className="px-1.5 py-0.2 rounded text-3xs font-bold bg-[hsl(var(--warning)/0.1)] text-[hsl(var(--warning))]">
                               Nuevo
                             </span>
                           )}
@@ -699,7 +699,7 @@ export default function AnalyticsTab({ eventId, token }: AnalyticsTabProps) {
                       <td className="py-2.5 px-3 text-2xs">
                         {a.crm_stage_name ? (
                           <div className="flex items-center gap-1 font-medium text-[hsl(var(--text-primary))]">
-                            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                            <span className="h-1.5 w-1.5 rounded-full bg-[hsl(var(--success))]" />
                             {a.crm_stage_name}
                           </div>
                         ) : (
@@ -759,9 +759,9 @@ export default function AnalyticsTab({ eventId, token }: AnalyticsTabProps) {
               <h3
                 className={`text-2xl font-bold ${
                   monthlyAnalytics.kpis.trend_percentage > 0
-                    ? "text-emerald-500"
+                    ? "text-[hsl(var(--success))]"
                     : monthlyAnalytics.kpis.trend_percentage < 0
-                    ? "text-rose-500"
+                    ? "text-[hsl(var(--destructive))]"
                     : "text-[hsl(var(--text-secondary))]"
                 }`}
               >
@@ -850,7 +850,7 @@ export default function AnalyticsTab({ eventId, token }: AnalyticsTabProps) {
                   {selectedAttendee.church_role}
                 </span>
                 {selectedAttendee.is_new_visitor && (
-                  <span className="px-2 py-0.5 rounded text-3xs font-bold bg-amber-500/10 text-amber-600 dark:text-amber-400">
+                  <span className="px-2 py-0.5 rounded text-3xs font-bold bg-[hsl(var(--warning)/0.1)] text-[hsl(var(--warning))]">
                     Nuevo Visitante
                   </span>
                 )}
@@ -896,11 +896,11 @@ export default function AnalyticsTab({ eventId, token }: AnalyticsTabProps) {
                 <div>
                   <span className="text-[hsl(var(--text-secondary))]">Caso CRM:</span>{" "}
                   {selectedAttendee.has_crm_case ? (
-                    <span className="font-semibold text-emerald-500">
+                    <span className="font-semibold text-[hsl(var(--success))]">
                       Asignado ({selectedAttendee.crm_stage_name})
                     </span>
                   ) : (
-                    <span className="font-semibold text-amber-500">
+                    <span className="font-semibold text-[hsl(var(--warning))]">
                       Sin caso creado
                     </span>
                   )}

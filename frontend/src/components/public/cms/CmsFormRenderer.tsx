@@ -890,7 +890,7 @@ export default function CmsFormRenderer({
   if (status === "success") {
     return (
       <div className="flex flex-col items-center justify-center text-center space-y-3 py-8">
-        <div className="w-16 h-16 rounded-full bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
+        <div className="w-16 h-16 rounded-full bg-[hsl(var(--success)/0.15)] text-[hsl(var(--success))] flex items-center justify-center">
           <Check size={32} strokeWidth={3} />
         </div>
         <p className="text-base font-bold text-[hsl(var(--text-primary))]" role="status" aria-live="polite">

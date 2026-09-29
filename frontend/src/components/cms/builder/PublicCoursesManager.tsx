@@ -323,11 +323,11 @@ export default function PublicCoursesManager({
       </div>
 
       {/* ── Banner Informativo de Orden y Destacado ── */}
-      <div className="mb-6 p-4 rounded-xl border border-amber-500/20 bg-amber-500/5 flex items-start gap-3">
-        <Sparkles className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
+      <div className="mb-6 p-4 rounded-xl border border-[hsl(var(--warning)/0.2)] bg-[hsl(var(--warning)/0.05)] flex items-start gap-3">
+        <Sparkles className="w-5 h-5 text-[hsl(var(--warning))] shrink-0 mt-0.5" />
         <div className="text-xs text-[hsl(var(--text-secondary))] leading-relaxed">
           <span className="font-bold text-[hsl(var(--text-primary))]">Prioridad y Curso Destacado: </span>
-          El curso en la posición <strong className="text-amber-600 dark:text-amber-400">#1</strong> es presentado automáticamente en la tarjeta principal grande del catálogo en{" "}
+          El curso en la posición <strong className="text-[hsl(var(--warning))]">#1</strong> es presentado automáticamente en la tarjeta principal grande del catálogo en{" "}
           <code className="text-2xs px-1.5 py-0.5 rounded bg-[hsl(var(--surface-3))] font-mono">/cursos</code>. Los siguientes 3 aparecen en la columna lateral de recomendaciones y los demás en la cuadrícula general. Usa los botones <strong>Subir (▲)</strong> y <strong>Bajar (▼)</strong> para definir la secuencia exacta.
         </div>
       </div>
@@ -370,7 +370,7 @@ export default function PublicCoursesManager({
               key={course.id}
               className={`group relative rounded-2xl border transition-all duration-200 overflow-hidden flex flex-col justify-between ${
                 index === 0
-                  ? "border-amber-500/40 bg-[hsl(var(--surface-2))] shadow-md ring-1 ring-amber-500/20"
+                  ? "border-[hsl(var(--warning)/0.4)] bg-[hsl(var(--surface-2))] shadow-md ring-1 ring-[hsl(var(--warning)/0.2)]"
                   : "border-[hsl(var(--border))] dark:border-white/[0.06] bg-[hsl(var(--surface-2))] hover:border-[hsl(var(--primary))/0.4]"
               }`}
             >
@@ -378,7 +378,7 @@ export default function PublicCoursesManager({
               <div className="p-3 border-b border-[hsl(var(--border))] dark:border-white/[0.06] flex items-center justify-between bg-[hsl(var(--surface-3))/0.5]">
                 <div className="flex items-center gap-1.5 flex-wrap">
                   {index === 0 ? (
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-3xs font-black uppercase tracking-wider bg-amber-500/20 text-amber-700 dark:text-amber-300 border border-amber-500/30">
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-3xs font-black uppercase tracking-wider bg-[hsl(var(--warning)/0.15)] text-[hsl(var(--warning))] border border-[hsl(var(--warning)/0.3)]">
                       <Sparkles size={10} /> #1 Destacado Principal
                     </span>
                   ) : (
@@ -388,11 +388,11 @@ export default function PublicCoursesManager({
                   )}
 
                   {course.is_published ? (
-                    <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-3xs font-semibold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400">
+                    <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-3xs font-semibold bg-[hsl(var(--success)/0.15)] text-[hsl(var(--success))]">
                       <Check size={9} /> Publicado
                     </span>
                   ) : (
-                    <span className="inline-flex items-center px-1.5 py-0.5 rounded text-3xs font-semibold bg-zinc-500/15 text-zinc-500">
+                    <span className="inline-flex items-center px-1.5 py-0.5 rounded text-3xs font-semibold bg-[hsl(var(--surface-3))] text-[hsl(var(--text-secondary))]">
                       Oculto
                     </span>
                   )}
@@ -755,7 +755,7 @@ export default function PublicCoursesManager({
                       onChange={(e) => setFormData({ ...formData, is_published: e.target.checked })}
                       className="sr-only peer"
                     />
-                    <div className="w-10 h-6 bg-zinc-300 peer-focus:outline-none rounded-full peer dark:bg-zinc-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-zinc-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[hsl(var(--primary))]"></div>
+                    <div className="w-10 h-6 bg-[hsl(var(--surface-3))] peer-focus:outline-none rounded-full peer dark:bg-[hsl(var(--surface-3))] peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-[hsl(var(--border))] after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[hsl(var(--primary))]"></div>
                   </label>
                 </div>
 

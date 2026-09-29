@@ -733,7 +733,7 @@ function UserMenuDropdown({ displayName, username, logout }: { displayName: stri
                         <div className="mt-1 pt-1 border-t border-[hsl(var(--border))] dark:border-white/5 px-1.5">
                             <button
                                 onClick={() => { setIsOpen(false); logout(); }}
-                                className="w-full flex items-center gap-3 px-3 py-1.5 rounded-lg text-xs text-[hsl(var(--destructive))] dark:text-[hsl(var(--destructive))] hover:bg-red-50 dark:hover:bg-red-500/10 transition-all text-left"
+                                className="w-full flex items-center gap-3 px-3 py-1.5 rounded-lg text-xs text-[hsl(var(--destructive))] hover:bg-[hsl(var(--destructive)/0.1)] transition-all text-left"
                             >
                                 <LogOut size={14} />
                                 <span className="font-semibold">Cerrar sesión</span>

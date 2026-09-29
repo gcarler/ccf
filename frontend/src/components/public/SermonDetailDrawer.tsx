@@ -295,11 +295,11 @@ export default function SermonDetailDrawer({
                 <button
                   type="button"
                   onClick={handleShareWhatsApp}
-                  className="flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl text-xs font-bold transition-all hover:bg-emerald-50 hover:border-emerald-500 border shadow-2xs"
+                  className="flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl text-xs font-bold transition-all hover:bg-[hsl(var(--success)/0.15)] hover:border-[hsl(var(--success))] border shadow-2xs"
                   style={{
-                    background: "rgba(16, 185, 129, 0.08)",
-                    borderColor: "rgba(16, 185, 129, 0.35)",
-                    color: "#059669",
+                    background: "hsl(var(--success) / 0.08)",
+                    borderColor: "hsl(var(--success) / 0.35)",
+                    color: "hsl(var(--success))",
                   }}
                 >
                   <MessageCircle size={15} />
@@ -318,7 +318,7 @@ export default function SermonDetailDrawer({
                 >
                   {copied ? (
                     <>
-                      <Check size={14} className="text-emerald-600" />
+                      <Check size={14} className="text-[hsl(var(--success))]" />
                       <span>{copiedLabel}</span>
                     </>
                   ) : (

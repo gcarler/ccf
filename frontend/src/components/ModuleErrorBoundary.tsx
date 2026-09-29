@@ -46,9 +46,9 @@ export class ModuleErrorBoundary extends Component<Props, State> {
 
       return (
         <div className="min-h-[400px] flex items-center justify-center bg-[hsl(var(--surface-1))] dark:bg-[hsl(var(--surface-2))]">
-          <div className="max-w-md w-full p-6 bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-2))] border border-red-200 dark:border-red-900/30 rounded-xl shadow-lg">
+          <div className="max-w-md w-full p-6 bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-2))] border border-[hsl(var(--destructive)/0.3)] rounded-xl shadow-lg">
             <div className="flex items-center gap-3 mb-4">
-              <div className="p-2 rounded-lg bg-red-100 dark:bg-red-900/20 text-[hsl(var(--destructive))] dark:text-[hsl(var(--destructive))]">
+              <div className="p-2 rounded-lg bg-[hsl(var(--destructive)/0.1)] text-[hsl(var(--destructive))]">
                 <AlertTriangle size={20} />
               </div>
               <div>

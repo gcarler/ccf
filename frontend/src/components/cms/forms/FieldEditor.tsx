@@ -119,7 +119,7 @@ export function makeDefaultField(type: CmsFormFieldType, seq: number): CmsFormFi
 }
 
 const inputCls =
-  "w-full px-2.5 py-1.5 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg text-xs focus:ring-1 focus:ring-blue-500 focus:outline-none";
+  "w-full px-2.5 py-1.5 bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] rounded-lg text-xs text-[hsl(var(--text-primary))] focus:ring-1 focus:ring-[hsl(var(--primary))] focus:outline-none";
 
 interface FieldEditorProps {
   field: CmsFormField;
@@ -163,9 +163,9 @@ export function FieldEditor({
   const needsConditionList = !!field.visible_if && (field.visible_if.operator === "in" || field.visible_if.operator === "not_in");
 
   return (
-    <div className="p-4 bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 shadow-sm space-y-3 relative group">
-      <div className="flex items-center justify-between gap-2 border-b border-zinc-100 dark:border-zinc-800 pb-2">
-        <span className="text-xs font-semibold uppercase tracking-wider text-blue-600 dark:text-blue-400">
+    <div className="p-4 bg-[hsl(var(--surface-1))] rounded-xl border border-[hsl(var(--border))] shadow-sm space-y-3 relative group">
+      <div className="flex items-center justify-between gap-2 border-b border-[hsl(var(--border))] pb-2">
+        <span className="text-xs font-semibold uppercase tracking-wider text-[hsl(var(--primary))]">
           Campo #{index + 1} — {typeLabel}
         </span>
 
@@ -175,7 +175,7 @@ export function FieldEditor({
             <button
               type="button"
               onClick={onDuplicate}
-              className="p-1 text-zinc-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+              className="p-1 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] transition-colors"
               title="Duplicar campo"
               aria-label={`Duplicar campo ${index + 1}`}
             >
@@ -186,7 +186,7 @@ export function FieldEditor({
             type="button"
             onClick={() => onMove("up")}
             disabled={index === 0}
-            className="p-1 text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 disabled:opacity-30"
+            className="p-1 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] disabled:opacity-30"
             title="Mover arriba"
             aria-label={`Mover campo ${index + 1} arriba`}
           >
@@ -196,7 +196,7 @@ export function FieldEditor({
             type="button"
             onClick={() => onMove("down")}
             disabled={index === total - 1}
-            className="p-1 text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 disabled:opacity-30"
+            className="p-1 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] disabled:opacity-30"
             title="Mover abajo"
             aria-label={`Mover campo ${index + 1} abajo`}
           >
@@ -205,7 +205,7 @@ export function FieldEditor({
           <button
             type="button"
             onClick={onRemove}
-            className="p-1 text-zinc-400 hover:text-red-600 transition-colors ml-1"
+            className="p-1 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--destructive))] transition-colors ml-1"
             title="Eliminar campo"
             aria-label={`Eliminar campo ${index + 1}`}
           >
@@ -215,12 +215,12 @@ export function FieldEditor({
       </div>
 
       {field.type === "divider" ? (
-        <p className="text-xs text-zinc-400 italic">Separador visual — sin configuración adicional.</p>
+        <p className="text-xs text-[hsl(var(--text-secondary))] italic">Separador visual — sin configuración adicional.</p>
       ) : (
         <>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="space-y-1">
-              <label htmlFor={fid("label")} className="text-xs font-medium text-zinc-700 dark:text-zinc-300">
+              <label htmlFor={fid("label")} className="text-xs font-medium text-[hsl(var(--text-secondary))]">
                 {META_TYPES.has(field.type) ? "Título" : "Etiqueta / Título"} *
               </label>
               <input
@@ -235,7 +235,7 @@ export function FieldEditor({
 
             {!META_TYPES.has(field.type) && field.type !== "checkbox" && field.type !== "page" && (
               <div className="space-y-1">
-                <label htmlFor={fid("placeholder")} className="text-xs font-medium text-zinc-700 dark:text-zinc-300">
+                <label htmlFor={fid("placeholder")} className="text-xs font-medium text-[hsl(var(--text-secondary))]">
                   Texto de marca de agua (Placeholder)
                 </label>
                 <input
@@ -251,7 +251,7 @@ export function FieldEditor({
 
           {field.type === "checkbox" && (
             <div className="space-y-1">
-              <label htmlFor={fid("label")} className="text-xs font-medium text-zinc-700 dark:text-zinc-300">Texto de la casilla</label>
+              <label htmlFor={fid("label")} className="text-xs font-medium text-[hsl(var(--text-secondary))]">Texto de la casilla</label>
               <input
                 id={fid("label")}
                 type="text"
@@ -264,7 +264,7 @@ export function FieldEditor({
 
           {OPTION_TYPES.has(field.type) && (
             <div className="space-y-2 pt-1">
-              <span id={fid("options-label")} className="text-xs font-medium text-zinc-700 dark:text-zinc-300">
+              <span id={fid("options-label")} className="text-xs font-medium text-[hsl(var(--text-secondary))]">
                 Opciones *
               </span>
               <div className="space-y-1.5" aria-labelledby={fid("options-label")}>
@@ -286,7 +286,7 @@ export function FieldEditor({
                       onClick={() =>
                         update({ options: (field.options || []).filter((_, i) => i !== optIdx) })
                       }
-                      className="p-1 text-zinc-400 hover:text-red-600 transition-colors shrink-0"
+                      className="p-1 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--destructive))] transition-colors shrink-0"
                       title="Eliminar opción"
                       aria-label={`Eliminar opción ${optIdx + 1}`}
                     >
@@ -298,16 +298,16 @@ export function FieldEditor({
               <button
                 type="button"
                 onClick={() => update({ options: [...(field.options || []), "Nueva opción"] })}
-                className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/40 rounded-lg transition-colors"
+                className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-[hsl(var(--primary))] hover:bg-[hsl(var(--primary)/0.1)] rounded-lg transition-colors"
               >
                 <Plus className="w-3.5 h-3.5" /> Agregar opción
               </button>
-              <label className="flex items-center gap-2 text-xs font-medium text-zinc-700 dark:text-zinc-300 cursor-pointer pt-1">
+              <label className="flex items-center gap-2 text-xs font-medium text-[hsl(var(--text-secondary))] cursor-pointer pt-1">
                 <input
                   type="checkbox"
                   checked={!!field.allow_other}
                   onChange={(e) => update({ allow_other: e.target.checked })}
-                  className="w-3.5 h-3.5 text-blue-600 rounded focus:ring-blue-500"
+                  className="w-3.5 h-3.5 text-[hsl(var(--primary))] rounded focus:ring-[hsl(var(--primary))]"
                 />
                 Permitir respuesta libre (&ldquo;Otra opción&rdquo;)
               </label>
@@ -317,7 +317,7 @@ export function FieldEditor({
           {TEXT_TYPES.has(field.type) && (
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div className="space-y-1">
-                <label htmlFor={fid("min_length")} className="text-xs font-medium text-zinc-700 dark:text-zinc-300">Mín. caracteres</label>
+                <label htmlFor={fid("min_length")} className="text-xs font-medium text-[hsl(var(--text-secondary))]">Mín. caracteres</label>
                 <input
                   id={fid("min_length")}
                   type="number"
@@ -330,7 +330,7 @@ export function FieldEditor({
                 />
               </div>
               <div className="space-y-1">
-                <label htmlFor={fid("max_length")} className="text-xs font-medium text-zinc-700 dark:text-zinc-300">Máx. caracteres</label>
+                <label htmlFor={fid("max_length")} className="text-xs font-medium text-[hsl(var(--text-secondary))]">Máx. caracteres</label>
                 <input
                   id={fid("max_length")}
                   type="number"
@@ -343,7 +343,7 @@ export function FieldEditor({
                 />
               </div>
               <div className="space-y-1 sm:col-span-1">
-                <label htmlFor={fid("regex_pattern")} className="text-xs font-medium text-zinc-700 dark:text-zinc-300">Patrón (regex)</label>
+                <label htmlFor={fid("regex_pattern")} className="text-xs font-medium text-[hsl(var(--text-secondary))]">Patrón (regex)</label>
                 <input
                   id={fid("regex_pattern")}
                   type="text"
@@ -355,7 +355,7 @@ export function FieldEditor({
               </div>
               {field.regex_pattern && (
                 <div className="space-y-1 sm:col-span-3">
-                  <label htmlFor={fid("regex_message")} className="text-xs font-medium text-zinc-700 dark:text-zinc-300">
+                  <label htmlFor={fid("regex_message")} className="text-xs font-medium text-[hsl(var(--text-secondary))]">
                     Mensaje de error del patrón
                   </label>
                   <input
@@ -373,7 +373,7 @@ export function FieldEditor({
           {NUMERIC_TYPES.has(field.type) && (
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
               <div className="space-y-1">
-                <label htmlFor={fid("min_value")} className="text-xs font-medium text-zinc-700 dark:text-zinc-300">Valor mín.</label>
+                <label htmlFor={fid("min_value")} className="text-xs font-medium text-[hsl(var(--text-secondary))]">Valor mín.</label>
                 <input
                   id={fid("min_value")}
                   type="number"
@@ -385,7 +385,7 @@ export function FieldEditor({
                 />
               </div>
               <div className="space-y-1">
-                <label htmlFor={fid("max_value")} className="text-xs font-medium text-zinc-700 dark:text-zinc-300">Valor máx.</label>
+                <label htmlFor={fid("max_value")} className="text-xs font-medium text-[hsl(var(--text-secondary))]">Valor máx.</label>
                 <input
                   id={fid("max_value")}
                   type="number"
@@ -398,7 +398,7 @@ export function FieldEditor({
               </div>
               {field.type === "slider" && (
                 <div className="space-y-1">
-                  <label htmlFor={fid("step")} className="text-xs font-medium text-zinc-700 dark:text-zinc-300">Paso</label>
+                  <label htmlFor={fid("step")} className="text-xs font-medium text-[hsl(var(--text-secondary))]">Paso</label>
                   <input
                     id={fid("step")}
                     type="number"
@@ -417,7 +417,7 @@ export function FieldEditor({
           {field.type === "file" && (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="space-y-1">
-                <label htmlFor={fid("max_file_mb")} className="text-xs font-medium text-zinc-700 dark:text-zinc-300">
+                <label htmlFor={fid("max_file_mb")} className="text-xs font-medium text-[hsl(var(--text-secondary))]">
                   Máx. tamaño (MB)
                 </label>
                 <input
@@ -432,7 +432,7 @@ export function FieldEditor({
                 />
               </div>
               <div className="space-y-1">
-                <label htmlFor={fid("accept")} className="text-xs font-medium text-zinc-700 dark:text-zinc-300">
+                <label htmlFor={fid("accept")} className="text-xs font-medium text-[hsl(var(--text-secondary))]">
                   Tipos permitidos (MIME)
                 </label>
                 <input
@@ -449,7 +449,7 @@ export function FieldEditor({
 
           {field.type === "section" && (
             <div className="space-y-1">
-              <label htmlFor={fid("helper_text")} className="text-xs font-medium text-zinc-700 dark:text-zinc-300">Descripción</label>
+              <label htmlFor={fid("helper_text")} className="text-xs font-medium text-[hsl(var(--text-secondary))]">Descripción</label>
               <input
                 id={fid("helper_text")}
                 type="text"
@@ -462,7 +462,7 @@ export function FieldEditor({
 
           {!META_TYPES.has(field.type) && (
             <div className="space-y-1">
-              <label htmlFor={fid("helper_text")} className="text-xs font-medium text-zinc-700 dark:text-zinc-300">Texto de ayuda</label>
+              <label htmlFor={fid("helper_text")} className="text-xs font-medium text-[hsl(var(--text-secondary))]">Texto de ayuda</label>
               <input
                 id={fid("helper_text")}
                 type="text"
@@ -475,17 +475,17 @@ export function FieldEditor({
 
           {/* Visible if (condicionales) */}
           {!META_TYPES.has(field.type) && field.type !== "page" && conditionTargets.length > 0 && (
-            <div className="space-y-2 pt-1 border-t border-zinc-100 dark:border-zinc-800">
+            <div className="space-y-2 pt-1 border-t border-[hsl(var(--border))]">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">
+                <span className="text-xs font-semibold text-[hsl(var(--text-secondary))]">
                   Mostrar solo si…
                 </span>
-                <label className="flex items-center gap-1.5 text-xs text-zinc-500 dark:text-zinc-400 cursor-pointer">
+                <label className="flex items-center gap-1.5 text-xs text-[hsl(var(--text-secondary))] cursor-pointer">
                   <input
                     type="checkbox"
                     checked={hasCondition}
                     onChange={(e) => update({ visible_if: e.target.checked ? { field_id: conditionTargets[0].id, operator: "eq", value: "" } : undefined })}
-                    className="w-3.5 h-3.5 text-blue-600 rounded focus:ring-blue-500"
+                    className="w-3.5 h-3.5 text-[hsl(var(--primary))] rounded focus:ring-[hsl(var(--primary))]"
                   />
                   Activar condición
                 </label>
@@ -561,12 +561,12 @@ export function FieldEditor({
 
           {!META_TYPES.has(field.type) && (
             <div className="flex items-center pt-1">
-              <label className="flex items-center gap-2 text-xs font-medium text-zinc-700 dark:text-zinc-300 cursor-pointer">
+              <label className="flex items-center gap-2 text-xs font-medium text-[hsl(var(--text-secondary))] cursor-pointer">
                 <input
                   type="checkbox"
                   checked={field.required}
                   onChange={(e) => update({ required: e.target.checked })}
-                  className="w-3.5 h-3.5 text-blue-600 rounded focus:ring-blue-500"
+                  className="w-3.5 h-3.5 text-[hsl(var(--primary))] rounded focus:ring-[hsl(var(--primary))]"
                 />
                 Campo obligatorio
               </label>

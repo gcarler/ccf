@@ -131,13 +131,13 @@ export function PopupManager() {
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.9, y: 20 }}
             transition={{ type: "spring", damping: 25, stiffness: 300 }}
-            className="relative bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl max-w-lg w-full p-6 sm:p-8 border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-zinc-100 my-auto"
+            className="relative bg-[hsl(var(--surface-1))] rounded-2xl shadow-2xl max-w-lg w-full p-6 sm:p-8 border border-[hsl(var(--border))] text-[hsl(var(--text-primary))] my-auto"
           >
             {/* Close Button */}
             <button
               onClick={handleClose}
               aria-label="Cerrar popup"
-              className="absolute top-4 right-4 p-2 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 rounded-full hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+              className="absolute top-4 right-4 p-2 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] rounded-full hover:bg-[hsl(var(--surface-2))] transition-colors"
             >
               <X className="w-5 h-5" />
             </button>
