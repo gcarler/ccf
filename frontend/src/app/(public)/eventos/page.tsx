@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 
+import { apiFetch } from "@/lib/http";
 import PublicHeroWithSlides from "@/components/public/PublicHeroWithSlides";
 import { useCmsV2Page } from "@/hooks/useCmsV2Page";
 import PublicEventRegisterDrawer, {
@@ -60,12 +61,8 @@ export default function EventosPage() {
   // Fetch enriched public events from backend
   useEffect(() => {
     setLoading(true);
-    fetch("/api/evangelism/public/upcoming-events")
-      .then((res) => {
-        if (!res.ok) throw new Error("Error al obtener eventos");
-        return res.json();
-      })
-      .then((data: PublicMeetingEvent[]) => {
+    apiFetch<PublicMeetingEvent[]>("/evangelism/public/upcoming-events", { silent: true })
+      .then((data) => {
         if (Array.isArray(data)) {
           setPublicMeetings(data);
         }

@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { X, Calendar, Clock, MapPin, Users, HeartHandshake, CheckCircle2, Download, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
+import { apiFetch } from "@/lib/http";
 
 export interface PublicMeetingEvent {
   id: string;
@@ -84,21 +85,16 @@ export default function PublicEventRegisterDrawer({
 
     setIsSubmitting(true);
     try {
-      const res = await fetch(`/api/evangelism/public/strategies/${event.id}/register`, {
+      await apiFetch(`/evangelism/public/strategies/${event.id}/register`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
+        body: {
           nombre: nombre.trim(),
           email: email.trim() || undefined,
           telefono: telefono.trim() || undefined,
           asistentes_count: asistentesCount,
           peticion_oracion: peticionOracion.trim() || undefined,
-        }),
+        },
       });
-
-      if (!res.ok) {
-        throw new Error("No se pudo procesar el registro en este momento.");
-      }
 
       setConfirmed(true);
       toast.success("¡Tu asistencia ha sido confirmada con éxito! Te esperamos.");

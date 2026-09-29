@@ -1,26 +1,24 @@
-from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.orm import Session
-from backend.core.database import get_db
-from backend.core.permissions import require_evangelism_manage
-from backend.core.tenant import require_user_sede_id
-from backend.models_evangelism import EstrategiaEvangelismo
-from backend import models
+from __future__ import annotations
+
 import datetime
 import re
 import uuid as _uuid
-from typing import List, Optional
+from typing import Optional
+
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from sqlalchemy.orm import Session, joinedload
+
+from backend import models
 from backend.core.database import get_db
 from backend.core.permissions import require_evangelism_manage
 from backend.core.tenant import require_user_sede_id
 from backend.models_evangelism import EstrategiaEvangelismo
-from backend import models
 
 router = APIRouter(prefix="", tags=["Evangelism Public"])
 
 DIAS_SEMANA = {
-    "lunes": 0, "martes": 1, "miercoles": 2, "miércoles": 2, 
+    "lunes": 0, "martes": 1, "miercoles": 2, "miércoles": 2,
     "jueves": 3, "viernes": 4, "sabado": 5, "sábado": 5, "domingo": 6
 }
 
@@ -190,7 +188,7 @@ def register_public_strategy_attendance(
 
 @router.get("/strategies/public-config")
 def get_public_strategies_config(
-    db: Session = Depends(get_db), 
+    db: Session = Depends(get_db),
     current_user: models.User = Depends(require_evangelism_manage)
 ):
     user_sede_id = require_user_sede_id(db, current_user)
@@ -198,7 +196,7 @@ def get_public_strategies_config(
         EstrategiaEvangelismo.sede_id == user_sede_id,
         EstrategiaEvangelismo.deleted_at.is_(None)
     ).order_by(EstrategiaEvangelismo.nombre).all()
-    
+
     return [
         {
             "id": str(est.id),
@@ -216,9 +214,9 @@ class TogglePublicPayload(BaseModel):
 
 @router.patch("/strategies/{estrategia_id}/toggle-public")
 def toggle_public_strategy(
-    estrategia_id: str, 
+    estrategia_id: str,
     payload: TogglePublicPayload,
-    db: Session = Depends(get_db), 
+    db: Session = Depends(get_db),
     current_user: models.User = Depends(require_evangelism_manage)
 ):
     user_sede_id = require_user_sede_id(db, current_user)
@@ -229,8 +227,8 @@ def toggle_public_strategy(
     ).first()
     if not est:
         raise HTTPException(status_code=404, detail="Estrategia no encontrada")
-        
+
     est.is_public = payload.is_public
     db.commit()
-    
+
     return {"id": str(est.id), "is_public": est.is_public}
