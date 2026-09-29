@@ -14,11 +14,12 @@ from html import escape as _html_escape
 from typing import Annotated, Any, List, Optional
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, Request, UploadFile, status
+from fastapi import APIRouter, BackgroundTasks, Depends, File, Form, HTTPException, Query, Request, UploadFile, status
 from sqlalchemy import and_, func, or_
 from sqlalchemy.orm import Session, contains_eager, joinedload, selectinload
 
 from backend import models
+from backend.tasks.academy_notifications import queue_academy_notification
 from backend.api.academy_cache import (
     _fetch_dashboard_metrics_cached,
     _fetch_list_lessons_cached,
@@ -790,10 +791,174 @@ def my_certificates(
     ]
 
 
+@router.get("/me/data-export", response_model=schemas.AcademyDataExport)
+@academy_limiter.limit("1/day")
+def export_my_academy_data(
+    request: Request,
+    current_user: AcademyStudent,
+    db: Session = Depends(get_db),
+):
+    """Export all Academy data owned by the authenticated student.
+
+    The export is deliberately scoped by ``persona_id`` and never accepts an
+    arbitrary user identifier. Course titles are included for portability,
+    while soft-deleted rows remain excluded from the active product export.
+    """
+    enrollments = (
+        db.query(models.Enrollment)
+        .options(joinedload(models.Enrollment.course))
+        .filter(
+            models.Enrollment.persona_id == current_user.id,
+            models.Enrollment.deleted_at.is_(None),
+        )
+        .order_by(models.Enrollment.created_at.asc())
+        .all()
+    )
+    enrollment_ids = [enrollment.id for enrollment in enrollments]
+    lesson_progress = (
+        db.query(models.LessonProgress)
+        .filter(models.LessonProgress.persona_id == current_user.id)
+        .order_by(models.LessonProgress.updated_at.asc())
+        .all()
+    )
+    certificates = (
+        db.query(models.Certificate)
+        .join(models.Enrollment, models.Certificate.enrollment_id == models.Enrollment.id)
+        .filter(
+            models.Enrollment.persona_id == current_user.id,
+            models.Enrollment.deleted_at.is_(None),
+        )
+        .order_by(models.Certificate.issued_at.asc())
+        .all()
+    )
+    threads = (
+        db.query(models.ForumThread)
+        .filter(models.ForumThread.author_persona_id == current_user.id)
+        .order_by(models.ForumThread.created_at.asc())
+        .all()
+    )
+    comments = (
+        db.query(models.ForumComment)
+        .filter(models.ForumComment.author_persona_id == current_user.id)
+        .order_by(models.ForumComment.created_at.asc())
+        .all()
+    )
+    submissions = (
+        db.query(models.AssignmentSubmission)
+        .filter(
+            models.AssignmentSubmission.enrollment_id.in_(enrollment_ids),
+            models.AssignmentSubmission.deleted_at.is_(None),
+        )
+        .order_by(models.AssignmentSubmission.created_at.asc())
+        .all()
+        if enrollment_ids
+        else []
+    )
+    activity_logs = (
+        db.query(models.AcademyActivityLog)
+        .filter(models.AcademyActivityLog.persona_id == current_user.id)
+        .order_by(models.AcademyActivityLog.created_at.asc())
+        .all()
+    )
+
+    return {
+        "exported_at": _utcnow(),
+        "profile": {
+            "persona_id": str(current_user.id),
+            "username": current_user.username or current_user.email or "",
+            "email": current_user.email,
+        },
+        "enrollments": [
+            {
+                "id": str(enrollment.id),
+                "course_id": str(enrollment.course_id),
+                "course_title": enrollment.course.title if enrollment.course else None,
+                "status": enrollment.status,
+                "progress_percent": enrollment.progress_percent,
+                "final_grade": enrollment.final_grade,
+                "certificate_issued": enrollment.certificate_issued,
+                "created_at": enrollment.created_at,
+            }
+            for enrollment in enrollments
+        ],
+        "progress": [
+            {
+                "id": str(progress.id),
+                "lesson_id": str(progress.lesson_id),
+                "progress_percent": progress.progress_percent,
+                "last_position_seconds": progress.last_position_seconds,
+                "is_completed": progress.is_completed,
+                "updated_at": progress.updated_at,
+            }
+            for progress in lesson_progress
+        ],
+        "certificates": [
+            {
+                "id": str(certificate.id),
+                "enrollment_id": str(certificate.enrollment_id),
+                "certificate_code": certificate.certificate_code,
+                "certificate_type": certificate.certificate_type,
+                "issued_at": certificate.issued_at,
+            }
+            for certificate in certificates
+        ],
+        "forum_threads": [
+            {
+                "id": str(thread.id),
+                "course_id": str(thread.course_id) if thread.course_id else None,
+                "title": thread.title,
+                "category": thread.category,
+                "content": thread.content,
+                "is_resolved": thread.is_resolved,
+                "created_at": thread.created_at,
+            }
+            for thread in threads
+        ],
+        "forum_comments": [
+            {
+                "id": str(comment.id),
+                "thread_id": str(comment.thread_id),
+                "parent_id": str(comment.parent_id) if comment.parent_id else None,
+                "content": comment.content,
+                "created_at": comment.created_at,
+            }
+            for comment in comments
+        ],
+        "assignment_submissions": [
+            {
+                "id": str(submission.id),
+                "enrollment_id": str(submission.enrollment_id),
+                "lesson_id": str(submission.lesson_id),
+                "file_url": submission.file_url,
+                "comment": submission.comment,
+                "grade": submission.grade,
+                "teacher_feedback": submission.teacher_feedback,
+                "created_at": submission.created_at,
+            }
+            for submission in submissions
+        ],
+        "activity_logs": [
+            {
+                "id": str(log.id),
+                "event_type": log.event_type,
+                "course_id": str(log.course_id) if log.course_id else None,
+                "value": log.value,
+                "payload_json": log.payload_json,
+                "created_at": log.created_at,
+            }
+            for log in activity_logs
+        ],
+    }
+
+
 @router.post("/enrollments/{enrollment_id}/request-certificate")
 @academy_limiter.limit("5/minute")
 def request_certificate(
-    enrollment_id: UUID, request: Request, current_user: AcademyStudent, db: Session = Depends(get_db)
+    enrollment_id: UUID,
+    request: Request,
+    background_tasks: BackgroundTasks,
+    current_user: AcademyStudent,
+    db: Session = Depends(get_db),
 ):
     enrollment = _get_own_enrollment(db, current_user, enrollment_id)
     if enrollment.status != "completed" and not enrollment.approved:
@@ -810,6 +975,17 @@ def request_certificate(
     enrollment.certificate_issued = True
     enrollment.certificate_code = code
     db.add(certificate)
+    course_title = enrollment.course.title if enrollment.course else "Curso"
+    queue_academy_notification(
+        db,
+        background_tasks,
+        recipient_id=current_user.id,
+        title="Certificado emitido",
+        content=f"Tu certificado de {course_title} ya está disponible.",
+        subject="Tu certificado de Academy está disponible",
+        url=f"/plataforma/academy/certificates/{code}",
+        sede_id=get_user_sede_id(db, current_user.id),
+    )
     db.commit()
     db.refresh(certificate)
     _invalidate_dashboard_for(db, current_user)  # M-04 — contador de certificados fresh
