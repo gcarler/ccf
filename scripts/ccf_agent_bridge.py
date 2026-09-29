@@ -70,6 +70,8 @@ class Bridge:
         self._init_db()
 
     def connect(self) -> sqlite3.Connection:
+        if self.db_path.is_symlink():
+            raise BridgeError("La base SQLite del puente no puede ser un enlace simbólico")
         conn = sqlite3.connect(self.db_path, timeout=10)
         conn.row_factory = sqlite3.Row
         conn.execute("PRAGMA busy_timeout=10000")
@@ -78,7 +80,14 @@ class Bridge:
 
     def _init_db(self) -> None:
         with closing(self.connect()) as conn, conn:
-            os.chmod(self.db_path, 0o600)
+            try:
+                db_fd = os.open(self.db_path, os.O_RDONLY | os.O_NOFOLLOW | os.O_CLOEXEC)
+            except OSError as exc:
+                raise BridgeError(f"No se pudo asegurar la base SQLite del puente: {exc}") from exc
+            try:
+                os.fchmod(db_fd, 0o600)
+            finally:
+                os.close(db_fd)
             conn.execute("PRAGMA journal_mode=WAL")
             conn.execute("BEGIN IMMEDIATE")
             schema = """

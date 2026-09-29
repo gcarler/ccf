@@ -281,3 +281,14 @@ def test_permissions_do_not_change_arbitrary_existing_directory(tmp_path: Path) 
     with pytest.raises(BridgeError, match="directorio del puente"):
         Bridge(data_dir=tmp_path, repo_root=tmp_path / "repo")
     assert tmp_path.stat().st_mode & 0o777 == original_mode
+
+
+def test_sqlite_symlink_is_rejected_without_touching_target(tmp_path: Path) -> None:
+    data = tmp_path / "bridge"
+    data.mkdir()
+    target = tmp_path / "unrelated.txt"
+    target.write_text("keep me", encoding="utf-8")
+    (data / "bridge.sqlite3").symlink_to(target)
+    with pytest.raises(BridgeError, match="enlace simbólico"):
+        Bridge(data_dir=data, repo_root=tmp_path)
+    assert target.read_text(encoding="utf-8") == "keep me"
