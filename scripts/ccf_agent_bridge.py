@@ -22,7 +22,6 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Iterator
 
-
 REPO_ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_BRIDGE_DIR = REPO_ROOT / ".bridge"
 OPEN_STATUSES = ("ASSIGNED", "WORKING", "AWAITING_AUDIT", "REVISION_REQUIRED", "APPROVED")
