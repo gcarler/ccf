@@ -35,6 +35,10 @@ MAX_DELIVERY_ATTEMPTS = 6
 HEARTBEAT_INTERVAL_SECONDS = 5
 HEARTBEAT_STALE_SECONDS = 20
 RETRY_DELAYS_SECONDS = (5, 15, 45, 120, 300)
+BACKUP_INTERVAL_SECONDS = 24 * 60 * 60
+BACKUP_STALE_SECONDS = BACKUP_INTERVAL_SECONDS + 2 * 60 * 60
+BACKUP_RETENTION = 14
+TASK_STALE_SECONDS = 7 * 24 * 60 * 60
 TMUX_AGENT_COMMANDS = {"agy": "agy", "agy2": "agy", "codex": "codex", "freebuff": "node"}
 
 
@@ -211,6 +215,8 @@ class Bridge:
             conn.execute("CREATE INDEX IF NOT EXISTS ix_bridge_tasks_worktree_status ON tasks(worktree,status)")
             conn.execute("CREATE INDEX IF NOT EXISTS ix_bridge_tasks_queue ON tasks(status,priority,created_at,id)")
             conn.execute("CREATE INDEX IF NOT EXISTS ix_bridge_operations_task ON operations(task_id,id)")
+            conn.execute("CREATE INDEX IF NOT EXISTS ix_bridge_events_task ON events(task_id,id)")
+            conn.execute("CREATE INDEX IF NOT EXISTS ix_bridge_audits_task ON audits(task_id,id)")
         self._import_legacy_once()
 
     @contextmanager
@@ -359,8 +365,8 @@ class Bridge:
         coordinator = self._actor(coordinator)
         if len({owner, reviewer, coordinator}) != 3:
             raise BridgeError("Coordinador, desarrollador y auditor deben ser distintos")
-        if owner not in TMUX_AGENT_COMMANDS or reviewer not in TMUX_AGENT_COMMANDS:
-            raise BridgeError("Desarrollador o auditor sin sesión de agente configurada para tmux")
+        if any(actor not in TMUX_AGENT_COMMANDS for actor in (owner, reviewer, coordinator)):
+            raise BridgeError("Coordinador, desarrollador o auditor sin sesión de agente configurada para tmux")
         if not TASK_ID_RE.fullmatch(task_id) or not title.strip() or not description.strip():
             raise BridgeError("ID, título y descripción son obligatorios")
         if not criteria or any(not criterion.strip() for criterion in criteria):
@@ -712,6 +718,13 @@ class Bridge:
                 "SELECT id,owner,reviewer,coordinator,worktree,priority,dependencies_json,activation_error,created_at "
                 "FROM tasks WHERE status='QUEUED' ORDER BY priority DESC,created_at,id LIMIT 50"
             ).fetchall()
+            stale_cutoff = (datetime.now(timezone.utc) - timedelta(seconds=TASK_STALE_SECONDS)).isoformat()
+            stalled = conn.execute(
+                f"SELECT id,owner,reviewer,coordinator,status,updated_at FROM tasks "
+                f"WHERE status IN ({','.join('?' for _ in OPEN_STATUSES)}) AND updated_at<=? "
+                "ORDER BY updated_at LIMIT 50",
+                (*OPEN_STATUSES, stale_cutoff),
+            ).fetchall()
             heartbeat = conn.execute("SELECT value FROM meta WHERE key='daemon_heartbeat'").fetchone()
             heartbeat_at = json.loads(heartbeat["value"])["at"] if heartbeat else None
             heartbeat_age = ((datetime.now(timezone.utc) - datetime.fromisoformat(heartbeat_at)).total_seconds()
@@ -740,6 +753,7 @@ class Bridge:
             return {
                 "paused": bool(paused and paused[0] == "1"),
                 "active_tasks": self.active_tasks(),
+                "stalled_tasks": [dict(row) for row in stalled],
                 "queued_tasks": queued_details,
                 "events": {row["status"]: row["count"] for row in events},
                 "events_needing_attention": [dict(row) for row in attention],
@@ -766,6 +780,20 @@ class Bridge:
                 "(status='SENDING' AND (claimed_at IS NULL OR claimed_at<=?))",
                 (ack_cutoff, lease_cutoff),
             ).fetchone()[0]
+            backup = conn.execute("SELECT value FROM meta WHERE key='bridge_backup_at'").fetchone()
+            backup_file = conn.execute("SELECT value FROM meta WHERE key='bridge_backup_path'").fetchone()
+        backup_at = backup["value"] if backup else None
+        backup_age = ((datetime.now(timezone.utc) - datetime.fromisoformat(backup_at)).total_seconds()
+                      if backup_at else None)
+        backup_path = Path(backup_file["value"]) if backup_file else None
+        backup_valid = False
+        if backup_path and backup_path.parent == self.data_dir / "backups" and \
+                not backup_path.is_symlink() and backup_path.is_file():
+            try:
+                with closing(sqlite3.connect(f"{backup_path.resolve().as_uri()}?mode=ro", uri=True)) as snapshot:
+                    backup_valid = snapshot.execute("PRAGMA integrity_check").fetchone()[0] == "ok"
+            except sqlite3.Error:
+                backup_valid = False
         issues = []
         if status["daemon"]["state"] != "HEALTHY":
             issues.append(f"daemon_{status['daemon']['state'].lower()}")
@@ -775,10 +803,102 @@ class Bridge:
             issues.append("delivery_failures_retrying")
         if overdue:
             issues.append("delivery_or_ack_overdue")
+        if status["stalled_tasks"]:
+            issues.append("tasks_stalled")
+        if backup_age is None or backup_age > BACKUP_STALE_SECONDS:
+            issues.append("backup_stale")
+        elif not backup_valid:
+            issues.append("backup_unavailable_or_invalid")
         return {"state": "HEALTHY" if not issues else "DEGRADED", "issues": issues,
                 "daemon": status["daemon"], "events": status["events"],
+                "backup": {"state": "FRESH" if backup_age is not None and
+                           backup_age <= BACKUP_STALE_SECONDS and backup_valid
+                           else "STALE" if backup_age is not None else "NEVER",
+                           "last_at": backup_at,
+                           "age_seconds": round(backup_age, 1) if backup_age is not None else None,
+                           "path": str(backup_path) if backup_path else None,
+                           "integrity_ok": backup_valid},
                 "attention": status["events_needing_attention"],
                 "queued": len(status["queued_tasks"])}
+
+    def escalate_stalled_tasks(self) -> None:
+        cutoff = (datetime.now(timezone.utc) - timedelta(seconds=TASK_STALE_SECONDS)).isoformat()
+        with self.transaction() as conn:
+            stalled = conn.execute(
+                f"SELECT id,owner,reviewer,coordinator,status,revision,updated_at FROM tasks "
+                f"WHERE status IN ({','.join('?' for _ in OPEN_STATUSES)}) AND updated_at<=?",
+                (*OPEN_STATUSES, cutoff),
+            ).fetchall()
+            for task in stalled:
+                already_alerted = conn.execute(
+                    "SELECT 1 FROM operations WHERE task_id=? AND kind='TASK_STALE_ALERT' AND created_at>=? LIMIT 1",
+                    (task["id"], task["updated_at"]),
+                ).fetchone()
+                if already_alerted:
+                    continue
+                coordinator = task["coordinator"] or task["reviewer"]
+                event_id = self._queue(
+                    conn, task["id"], coordinator, "BRIDGE_ALERT",
+                    f"La tarea {task['id']} no cambia de estado desde hace siete días; revisar owner {task['owner']}.",
+                    task["revision"],
+                )
+                self._operation(conn, "TASK_STALE_ALERT", "bridge", f"event={event_id}; updated_at={task['updated_at']}",
+                                task_id=task["id"], event_id=event_id)
+
+    def backup(self) -> dict:
+        backup_dir = self.data_dir / "backups"
+        if backup_dir.is_symlink():
+            raise BridgeError("El directorio de respaldos no puede ser un enlace simbólico")
+        backup_dir.mkdir(mode=0o700, parents=False, exist_ok=True)
+        os.chmod(backup_dir, 0o700)
+        stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S%fZ")
+        destination_path = backup_dir / f"bridge-{stamp}.sqlite3"
+        created_backup_file = False
+        try:
+            destination_fd = os.open(
+                destination_path, os.O_CREAT | os.O_EXCL | os.O_RDWR | os.O_NOFOLLOW | os.O_CLOEXEC, 0o600,
+            )
+            created_backup_file = True
+            os.close(destination_fd)
+            with closing(self.connect()) as source, closing(sqlite3.connect(destination_path)) as destination:
+                source.backup(destination)
+                if destination.execute("PRAGMA integrity_check").fetchone()[0] != "ok":
+                    raise BridgeError("El respaldo SQLite no pasó integrity_check")
+            backup_fd = os.open(destination_path, os.O_RDONLY | os.O_NOFOLLOW | os.O_CLOEXEC)
+            try:
+                os.fchmod(backup_fd, 0o600)
+            finally:
+                os.close(backup_fd)
+        except Exception:
+            if created_backup_file and destination_path.exists() and not destination_path.is_symlink():
+                destination_path.unlink()
+            raise
+        backup_at = utc_now()
+        with self.transaction() as conn:
+            conn.execute(
+                "INSERT INTO meta (key,value) VALUES ('bridge_backup_at',?) "
+                "ON CONFLICT(key) DO UPDATE SET value=excluded.value", (backup_at,),
+            )
+            conn.execute(
+                "INSERT INTO meta (key,value) VALUES ('bridge_backup_path',?) "
+                "ON CONFLICT(key) DO UPDATE SET value=excluded.value", (str(destination_path),),
+            )
+            self._operation(conn, "BACKUP_CREATED", "bridge", destination_path.name)
+        candidates = sorted(
+            path for path in backup_dir.glob("bridge-????????T????????????Z.sqlite3")
+            if path.is_file() and not path.is_symlink()
+        )
+        for stale in candidates[:-BACKUP_RETENTION]:
+            stale.unlink()
+        return {"path": str(destination_path), "created_at": backup_at,
+                "retained": min(len(candidates), BACKUP_RETENTION)}
+
+    def backup_if_due(self) -> dict | None:
+        with closing(self.connect()) as conn:
+            last = conn.execute("SELECT value FROM meta WHERE key='bridge_backup_at'").fetchone()
+        if last and (datetime.now(timezone.utc) - datetime.fromisoformat(last["value"])).total_seconds() < BACKUP_INTERVAL_SECONDS:
+            return None
+        return self.backup()
 
     def history(self, task_id: str) -> list[dict]:
         with closing(self.connect()) as conn:
@@ -957,18 +1077,33 @@ def send_to_tmux(event: dict) -> tuple[bool, str]:
 def daemon(bridge: Bridge, interval: float = 1.0, once: bool = False) -> None:
     instance_id = uuid.uuid4().hex
     last_heartbeat = 0.0
+    last_backup_check = 0.0
+    last_maintenance = 0.0
     while True:
-        if time.monotonic() - last_heartbeat >= HEARTBEAT_INTERVAL_SECONDS or once:
+        now_monotonic = time.monotonic()
+        if not once and now_monotonic - last_heartbeat >= HEARTBEAT_INTERVAL_SECONDS:
             bridge.heartbeat(instance_id)
             last_heartbeat = time.monotonic()
-        bridge.activate_ready()
-        bridge.escalate_dead_letters()
+        if once or now_monotonic - last_maintenance >= HEARTBEAT_INTERVAL_SECONDS:
+            bridge.activate_ready()
+            bridge.escalate_dead_letters()
+            bridge.escalate_stalled_tasks()
+            last_maintenance = time.monotonic()
+        if time.monotonic() - last_backup_check >= 60:
+            try:
+                backup = bridge.backup_if_due()
+                if backup:
+                    print(f"{utc_now()} BACKUP_CREATED {backup['path']}", flush=True)
+            except (BridgeError, OSError, sqlite3.Error, ValueError) as exc:
+                print(f"{utc_now()} BACKUP_FAILED {exc}", file=sys.stderr, flush=True)
+            last_backup_check = time.monotonic()
         while event := bridge.claim_pending():
             success, error = send_to_tmux(event)
             bridge.record_dispatch(event["id"], event["claim_token"], success, error)
             print(f"{utc_now()} {event['id']} {event['target']} {'SENT' if success else 'FAILED'} {error}", flush=True)
-            bridge.heartbeat(instance_id)
-            last_heartbeat = time.monotonic()
+            if not once:
+                bridge.heartbeat(instance_id)
+                last_heartbeat = time.monotonic()
         if once:
             return
         time.sleep(max(interval, 0.2))
@@ -1023,6 +1158,7 @@ def build_parser() -> argparse.ArgumentParser:
         sub.add_parser(name).add_argument("--id")
     sub.add_parser("status")
     sub.add_parser("health").add_argument("--json", action="store_true", help="Emitir resultado JSON (formato predeterminado)")
+    sub.add_parser("backup", help="Crear y verificar un respaldo SQLite consistente")
     sub.add_parser("activate-ready")
     for name in ("pause", "resume"):
         sub.add_parser(name).add_argument("--actor", required=True)
@@ -1080,6 +1216,11 @@ def main(argv: list[str] | None = None) -> int:
             result = bridge.status()
         elif command == "health":
             result = bridge.health()
+        elif command == "backup":
+            try:
+                result = bridge.backup()
+            except (OSError, sqlite3.Error) as exc:
+                raise BridgeError(f"No se pudo crear el respaldo SQLite: {exc}") from exc
         elif command == "get-task":
             result = bridge.task(_resolve_id(bridge, args.id))
         elif command == "get-submission":

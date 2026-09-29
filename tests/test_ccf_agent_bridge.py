@@ -98,6 +98,9 @@ def test_no_cross_task_or_unverified_submission(bridge: tuple[Bridge, str]) -> N
         store.assign("TKT-B", "academy", "B", "Segundo encargo", "agy", "agy", ["criterio"], coordinator="freebuff")
     with pytest.raises(BridgeError, match="criterios"):
         store.assign("TKT-B", "academy", "B", "Segundo encargo", "agy2", "agy", [], coordinator="freebuff")
+    with pytest.raises(BridgeError, match="sin sesión"):
+        store.assign("TKT-B", "academy", "B", "Segundo encargo", "agy2", "codex", ["criterio"],
+                     coordinator="unconfigured-agent")
     delivered(store, assignment, "codex")
     sha = make_work_commit(store.repo_root)
     with pytest.raises(BridgeError, match="Solo codex"):
@@ -221,10 +224,12 @@ def test_dead_letter_escalates_once_to_coordinator(bridge, monkeypatch):
 def test_daemon_heartbeat_and_health_json_argument(bridge):
     store, _ = bridge
     assert store.health()["state"] == "DEGRADED"
+    store.backup()
     store.heartbeat("test-instance")
     assert store.health()["state"] == "HEALTHY"
     assert store.status()["daemon"]["instance_id"] == "test-instance"
     assert build_parser().parse_args(["health", "--json"]).command == "health"
+    assert build_parser().parse_args(["backup"]).command == "backup"
 
     event_id = store.assign("TKT-HEALTH", "academy", "Salud", "ACK vencido", "agy2", "codex",
                             ["criterio"], coordinator="freebuff")
@@ -234,6 +239,84 @@ def test_daemon_heartbeat_and_health_json_argument(bridge):
     with store.transaction() as conn:
         conn.execute("UPDATE events SET sent_at='2000-01-01T00:00:00+00:00' WHERE id=?", (event_id,))
     assert "delivery_or_ack_overdue" in store.health()["issues"]
+
+
+def test_one_shot_daemon_does_not_claim_continuous_health(bridge, monkeypatch):
+    import scripts.ccf_agent_bridge as bridge_module
+
+    store, _ = bridge
+    monkeypatch.setattr(bridge_module, "send_to_tmux", lambda _event: (True, ""))
+    bridge_module.daemon(store, once=True)
+    assert store.status()["daemon"]["state"] == "NOT_STARTED"
+
+
+def test_sqlite_backup_is_consistent_private_and_restorable(bridge, tmp_path):
+    store, _ = bridge
+    event_id = store.assign("TKT-BACKUP", "academy", "Respaldo", "Restaurable", "agy2", "codex",
+                            ["criterio"], coordinator="freebuff")
+    result = store.backup()
+    backup_path = Path(result["path"])
+    assert backup_path.stat().st_mode & 0o777 == 0o600
+    assert backup_path.parent.stat().st_mode & 0o777 == 0o700
+    assert store.backup_if_due() is None
+    with sqlite3.connect(f"file:{backup_path}?mode=ro", uri=True) as snapshot:
+        assert snapshot.execute("PRAGMA integrity_check").fetchone()[0] == "ok"
+        assert snapshot.execute("SELECT id FROM events WHERE id=?", (event_id,)).fetchone()[0] == event_id
+    restore_dir = tmp_path / "restore" / "bridge"
+    restore_dir.mkdir(parents=True)
+    with sqlite3.connect(f"file:{backup_path}?mode=ro", uri=True) as snapshot, \
+            sqlite3.connect(restore_dir / "bridge.sqlite3") as restored_db:
+        snapshot.backup(restored_db)
+    restored = Bridge(data_dir=restore_dir, repo_root=store.repo_root)
+    assert restored.task("TKT-BACKUP")["status"] == "ASSIGNED"
+
+
+def test_health_detects_missing_backup_file(bridge):
+    store, _ = bridge
+    store.heartbeat("test-instance")
+    backup = store.backup()
+    assert store.health()["backup"]["integrity_ok"] is True
+    Path(backup["path"]).unlink()
+    assert "backup_unavailable_or_invalid" in store.health()["issues"]
+
+
+def test_backup_retention_keeps_only_newest_files(bridge, monkeypatch):
+    store, _ = bridge
+    import scripts.ccf_agent_bridge as bridge_module
+
+    monkeypatch.setattr(bridge_module, "BACKUP_RETENTION", 2)
+    paths = [Path(store.backup()["path"]) for _ in range(4)]
+    retained = sorted((store.data_dir / "backups").glob("bridge-????????T????????????Z.sqlite3"))
+    assert len(retained) == 2
+    assert paths[-1].exists()
+    assert paths[-2].exists()
+
+
+def test_stalled_task_is_visible_and_escalated_once(bridge):
+    store, _ = bridge
+    store.assign("TKT-STALE", "academy", "Estancada", "Sin actividad", "agy2", "codex",
+                 ["criterio"], coordinator="freebuff")
+    with store.transaction() as conn:
+        conn.execute("UPDATE tasks SET updated_at='2000-01-01T00:00:00+00:00' WHERE id='TKT-STALE'")
+    assert store.health()["state"] == "DEGRADED"
+    assert store.health()["issues"] == ["daemon_not_started", "tasks_stalled", "backup_stale"]
+    store.escalate_stalled_tasks()
+    store.escalate_stalled_tasks()
+    with store.connect() as conn:
+        alerts = conn.execute(
+            "SELECT COUNT(*) FROM events WHERE task_id='TKT-STALE' AND kind='BRIDGE_ALERT'",
+        ).fetchone()[0]
+    assert alerts == 1
+
+
+def test_schema_upgrade_preserves_existing_task_and_event(bridge):
+    store, _ = bridge
+    event_id = store.assign("TKT-KEEP", "academy", "Upgrade", "Conservar fila", "agy2", "codex",
+                            ["criterio"], coordinator="freebuff")
+    store = Bridge(data_dir=store.data_dir, repo_root=store.repo_root)
+    assert store.task("TKT-KEEP")["title"] == "Upgrade"
+    assert store.task("TKT-KEEP")["status"] == "ASSIGNED"
+    assert store.pending_events()[0]["id"] == event_id
 
 
 def test_one_dispatcher_claims_each_event(bridge: tuple[Bridge, str]) -> None:
@@ -304,6 +387,8 @@ def test_stale_claim_recovers_without_aba(bridge: tuple[Bridge, str]) -> None:
 
 def test_parallel_schema_upgrade_is_serialized(bridge: tuple[Bridge, str]) -> None:
     store, _ = bridge
+    event_id = store.assign("TKT-CONCURRENT-UPGRADE", "academy", "Upgrade", "Preservar datos",
+                            "agy2", "codex", ["criterio"], coordinator="freebuff")
     with sqlite3.connect(store.db_path) as conn:
         conn.execute("DROP INDEX ix_bridge_events_status_claimed")
         conn.execute("DROP INDEX ix_bridge_events_status_created")
@@ -311,6 +396,8 @@ def test_parallel_schema_upgrade_is_serialized(bridge: tuple[Bridge, str]) -> No
         conn.execute("DROP INDEX ix_bridge_tasks_worktree_status")
         conn.execute("DROP INDEX ix_bridge_events_status_due")
         conn.execute("DROP INDEX ix_bridge_tasks_queue")
+        conn.execute("DROP INDEX ix_bridge_events_task")
+        conn.execute("DROP INDEX ix_bridge_audits_task")
         conn.execute("ALTER TABLE tasks DROP COLUMN coordinator")
         conn.execute("ALTER TABLE tasks DROP COLUMN dependencies_json")
         conn.execute("ALTER TABLE tasks DROP COLUMN baseline_sha")
@@ -332,6 +419,10 @@ def test_parallel_schema_upgrade_is_serialized(bridge: tuple[Bridge, str]) -> No
         assert {"claim_token", "claimed_at", "next_attempt_at"}.issubset(
             {row[1] for row in conn.execute("PRAGMA table_info(events)")}
         )
+        assert tuple(conn.execute(
+            "SELECT title,status FROM tasks WHERE id='TKT-CONCURRENT-UPGRADE'",
+        ).fetchone()) == ("Upgrade", "ASSIGNED")
+        assert conn.execute("SELECT id FROM events WHERE id=?", (event_id,)).fetchone()[0] == event_id
 
 
 def test_ack_during_dispatch_is_not_lost(bridge: tuple[Bridge, str]) -> None:

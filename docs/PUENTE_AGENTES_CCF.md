@@ -32,6 +32,13 @@ Si la auditoría falla: `AWAITING_AUDIT → REVISION_REQUIRED → AWAITING_AUDIT
 activa por prioridad/FIFO cuando sus dependencias estén `DONE` y el desarrollador
 y el worktree estén libres. `assign` conserva la asignación inmediata.
 
+La automatización cubre la cola, el enrutamiento de avisos, sus reintentos,
+alertas de fallos, los respaldos y la recuperación del proceso. Un coordinador
+todavía define la tarea, su dueño, auditor y criterios; el auditor ejecuta su
+verificación y dicta. El puente no inventa requisitos, no puntúa la calidad,
+no aprueba entregas ni integra o publica ramas por su cuenta. Esa separación
+queda reflejada como transición y actor en el historial de cada ticket.
+
 ## Uso
 
 ```bash
@@ -97,7 +104,21 @@ evento; un ACK tardío sigue siendo válido e idempotente. Una entrega fallida
 reintenta automáticamente con esperas de 5, 15, 45, 120 y 300 segundos, hasta
 seis intentos. Al agotarse, el evento pasa a `DEAD` y se crea una sola alerta
 `BRIDGE_ALERT` al coordinador; las alertas no se escalan recursivamente. El
-coordinador puede inspeccionar y reintentar eventos `DEAD` con `retry`.
+coordinador puede inspeccionar y reintentar eventos `DEAD` con `retry`. El
+coordinador, desarrollador y auditor deben ser nombres de agentes con un panel
+tmux registrado. `daemon --once` ejecuta un ciclo manual y no escribe un
+heartbeat que simule un servicio continuo. El daemon crea un respaldo SQLite
+consistente al iniciar y luego cada 24 horas. Conserva los 14 respaldos más
+recientes en `.bridge/backups/` con permisos `0700`/`0600`; `health --json`
+marca la base degradada si no existe un respaldo reciente. `backup` crea uno
+manualmente y verifica `integrity_check`; la recuperación se prueba abriendo
+la copia con SQLite Backup API antes de reanudar el dispatcher. Estas copias
+permanecen en el mismo volumen del host: protegen frente a corrupción lógica,
+pero no frente a pérdida del disco/host ni sustituyen la réplica externa del
+respaldo de producción.
+Una tarea activa sin transición durante siete días aparece en `stalled_tasks`,
+degrada `health` y genera una sola alerta al coordinador para ese periodo de
+inactividad; una transición posterior reinicia el plazo.
 
 Un envío interrumpido en `SENDING` recupera automáticamente la entrega al
 vencer el lease de 60 segundos. Cada intento tiene un token de propiedad:

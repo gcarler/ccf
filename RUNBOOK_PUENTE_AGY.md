@@ -28,9 +28,10 @@ No arrancar el proceso nuevo mientras el daemon heredado siga ejecutándose.
    pendientes y las sesiones tmux de sus destinatarios. Pausar nuevas
    asignaciones con `pause --actor agy` durante el relevo. No cerrar ni
    cancelar tickets para despejar la cola.
-2. Crear un respaldo consistente de `.bridge/bridge.sqlite3` usando la API
-   SQLite de backup (no copiar solo el archivo en modo WAL). Guardar el
-   respaldo fuera del checkout y comprobar que puede abrirse.
+2. Confirmar con `health --json` un respaldo reciente en `.bridge/backups/`.
+   Si hace falta, `python3 scripts/ccf_agent_bridge.py backup` crea uno
+   consistente mediante SQLite Backup API y comprueba `integrity_check`; no
+   copiar solo el archivo principal cuando SQLite opera con WAL.
 3. Detener el PID exacto del proceso heredado `ccf_tmux_daemon.py`; verificar
    con `pgrep -af` que no queda otro dispatcher. Arrancar únicamente el app
    nuevo: `pm2 start /root/ccf/ecosystem.config.cjs --only ccf-agent-bridge`.
