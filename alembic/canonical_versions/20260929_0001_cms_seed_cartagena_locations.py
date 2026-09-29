@@ -197,7 +197,7 @@ def _seed(conn: sa.engine.Connection) -> None:
                 "(id, name, address, city, latitude, longitude, is_main, is_active, "
                 " location_type, sort_order, image_url, created_at) "
                 "VALUES (:id, :name, :address, :city, :latitude, :longitude, "
-                " :is_main, 1, :location_type, :sort_order, :image_url, :now)"
+                " :is_main, :is_active, :location_type, :sort_order, :image_url, :now)"
             ),
             {
                 "id": str(uuid.uuid4()),
@@ -207,6 +207,10 @@ def _seed(conn: sa.engine.Connection) -> None:
                 "latitude": spec["latitude"],
                 "longitude": spec["longitude"],
                 "is_main": spec["is_main"],
+                # Booleano nativo parametrizado: un literal ``1`` rompe
+                # PostgreSQL (psycopg2.errors.DatatypeMismatch) porque la
+                # columna es boolean; SQLite lo adapta a 1/0 vía driver.
+                "is_active": True,
                 "location_type": CANONICAL_TYPE,
                 "sort_order": spec["sort_order"],
                 "image_url": spec.get("image_url"),
@@ -234,12 +238,12 @@ def _downgrade(conn: sa.engine.Connection) -> None:
     # ANY(...) es específico de Postgres; para portabilidad (tests SQLite y
     # entornos PG<la versión que sea) se usa IN con placeholders nombrados.
     placeholders = ", ".join(f":name_{i}" for i in range(len(names)))
-    params: dict = {"location_type": CANONICAL_TYPE, "now": now}
+    params: dict = {"location_type": CANONICAL_TYPE, "now": now, "is_active": False}
     for i, name in enumerate(names):
         params[f"name_{i}"] = name
     result = conn.execute(
         sa.text(
-            f"UPDATE church_locations SET deleted_at = :now, is_active = 0 "
+            f"UPDATE church_locations SET deleted_at = :now, is_active = :is_active "
             f"WHERE location_type = :location_type AND name IN ({placeholders}) "
             f"AND deleted_at IS NULL"
         ),
