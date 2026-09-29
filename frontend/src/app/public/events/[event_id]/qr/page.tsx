@@ -74,12 +74,11 @@ function QrTicket({
     if (cancelled) {
         return (
             <div className="flex flex-col items-center justify-center text-center space-y-4 animate-in fade-in zoom-in duration-500">
-                <div className="w-20 h-20 rounded-full flex items-center justify-center shadow-2xl"
-                    style={{ background: 'hsl(var(--success-muted))', color: 'hsl(var(--success-text))' }}>
+                <div className="w-20 h-20 rounded-full flex items-center justify-center shadow-2xl bg-[hsl(var(--success)/0.15)] text-[hsl(var(--success))] border border-[hsl(var(--success)/0.3)]">
                     <Check size={40} strokeWidth={3} />
                 </div>
                 <h1 className="text-lg font-bold text-[hsl(var(--text-primary))]">Inscripción cancelada</h1>
-                <p className="text-sm font-medium text-[hsl(var(--text-secondary))]">
+                <p className="text-sm font-medium text-[hsl(var(--text-secondary))] max-w-sm">
                     Tu cupo fue liberado. Si el evento tiene lista de espera, se notificará al siguiente inscrito.
                 </p>
             </div>
@@ -88,7 +87,7 @@ function QrTicket({
 
     return (
         <div className="flex flex-col items-center justify-center text-center space-y-4 animate-in fade-in zoom-in duration-500">
-            <div className="p-4 bg-white rounded-md shadow-xl border border-[hsl(var(--border-primary))] flex items-center justify-center">
+            <div className="p-4 bg-white rounded-xl shadow-xl border border-[hsl(var(--border))] flex items-center justify-center">
                 <QRCodeSVG
                     id="event-ticket-qr"
                     value={typeof window !== 'undefined' ? `${window.location.origin}/public/events/${eventId}/qr?token=${token}` : ''}
@@ -98,38 +97,40 @@ function QrTicket({
                 />
             </div>
             <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
-                <QrCode size={14} /> Presenta este código en el ingreso
+                <QrCode size={14} className="text-[hsl(var(--primary))]" /> Presenta este código en el ingreso
             </div>
 
             {personName && (
-                <p className="text-sm font-bold text-[hsl(var(--text-primary))] -mt-2">{personName}</p>
+                <p className="text-base font-bold text-[hsl(var(--text-primary))] -mt-1 tracking-tight">{personName}</p>
             )}
             {registrationStatus && (
-                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-2xs font-bold uppercase tracking-wide"
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-2xs font-bold uppercase tracking-wide border shadow-sm"
                     style={
                         registrationStatus === 'CONFIRMED' || registrationStatus === 'CHECKED_IN'
-                            ? { background: 'hsl(var(--success-muted))', color: 'hsl(var(--success-text))' }
-                            : { background: 'hsl(var(--warning-muted))', color: 'hsl(var(--warning-text))' }
+                            ? { background: 'hsl(var(--success)/0.12)', color: 'hsl(var(--success))', borderColor: 'hsl(var(--success)/0.3)' }
+                            : { background: 'hsl(var(--warning)/0.12)', color: 'hsl(var(--warning))', borderColor: 'hsl(var(--warning)/0.3)' }
                     }>
                     {registrationStatus === 'CONFIRMED' ? 'Confirmado' : registrationStatus === 'CHECKED_IN' ? 'Check-in realizado' : registrationStatus}
                 </span>
             )}
             {participantRoleCode && (
-                <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-[hsl(var(--info))]/30 bg-[hsl(var(--info-muted))] text-[hsl(var(--info-text))] text-2xs font-bold uppercase tracking-wide">
+                <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-[hsl(var(--primary)/0.3)] bg-[hsl(var(--primary)/0.1)] text-[hsl(var(--primary))] text-2xs font-bold uppercase tracking-wide">
                     <Users size={13} /> Rol: {participantRoleLabel(participantRoleCode)}
                 </div>
             )}
 
             {error && (
-                <div className="p-4 bg-danger-soft text-danger-text rounded-lg text-sm font-bold w-full">{error}</div>
+                <div className="p-3.5 bg-[hsl(var(--destructive)/0.12)] text-[hsl(var(--destructive))] border border-[hsl(var(--destructive)/0.25)] rounded-lg text-sm font-semibold w-full">
+                    {error}
+                </div>
             )}
 
             {cancelToken && (
-                <div className="pt-2 w-full border-t border-[hsl(var(--border))]">
+                <div className="pt-3 w-full border-t border-[hsl(var(--border))]">
                     {!confirmCancel ? (
                         <button
                             onClick={() => setConfirmCancel(true)}
-                            className="w-full py-2.5 rounded-lg text-sm font-semibold uppercase tracking-wide border border-[hsl(var(--danger))] text-[hsl(var(--danger))] hover:bg-danger-soft transition-all"
+                            className="w-full py-2.5 rounded-lg text-xs font-semibold uppercase tracking-wider border border-[hsl(var(--destructive)/0.4)] text-[hsl(var(--destructive))] hover:bg-[hsl(var(--destructive)/0.08)] transition-all"
                         >
                             Cancelar mi inscripción
                         </button>
@@ -142,14 +143,14 @@ function QrTicket({
                                 <button
                                     onClick={() => setConfirmCancel(false)}
                                     disabled={cancelling}
-                                    className="py-2.5 rounded-lg text-sm font-semibold uppercase tracking-wide border border-[hsl(var(--border))] text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--bg-muted))] transition-all disabled:opacity-50"
+                                    className="py-2.5 rounded-lg text-xs font-semibold uppercase tracking-wider border border-[hsl(var(--border))] text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] transition-all disabled:opacity-50"
                                 >
                                     No, conservar
                                 </button>
                                 <button
                                     onClick={handleCancel}
                                     disabled={cancelling}
-                                    className="py-2.5 rounded-lg text-sm font-semibold uppercase tracking-wide bg-danger-soft text-danger-text hover:bg-[hsl(var(--danger))] hover:text-white transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                                    className="py-2.5 rounded-lg text-xs font-semibold uppercase tracking-wider bg-[hsl(var(--destructive))] text-white hover:opacity-90 transition-all flex items-center justify-center gap-2 disabled:opacity-50 shadow-sm"
                                 >
                                     {cancelling ? <Loader2 size={14} className="animate-spin" /> : <X size={14} />} Sí, cancelar
                                 </button>
@@ -203,13 +204,13 @@ export default function PublicEventQrPage() {
     if (!token) {
         return (
             <div className="min-h-screen bg-[hsl(var(--surface-1))] flex items-center justify-center p-4">
-                <div className="w-full max-w-md bg-[hsl(var(--bg-primary))] rounded-lg shadow-2xl border border-[hsl(var(--border))] p-6 text-center">
-                    <div className="mx-auto w-16 h-16 rounded-full bg-danger-soft text-danger-text flex items-center justify-center mb-4">
+                <div className="w-full max-w-md bg-[hsl(var(--surface-2))] rounded-xl shadow-2xl border border-[hsl(var(--border))] p-6 text-center space-y-3">
+                    <div className="mx-auto w-16 h-16 rounded-full bg-[hsl(var(--destructive)/0.12)] text-[hsl(var(--destructive))] flex items-center justify-center border border-[hsl(var(--destructive)/0.25)]">
                         <X size={32} />
                     </div>
-                    <h1 className="text-lg font-bold text-[hsl(var(--text-primary))]">Código inválido</h1>
-                    <p className="text-sm font-medium text-[hsl(var(--text-secondary))] mt-2">
-                        Este enlace no contiene un código QR válido.
+                    <h1 className="text-lg font-bold text-[hsl(var(--text-primary))]">Código no especificado</h1>
+                    <p className="text-sm font-medium text-[hsl(var(--text-secondary))]">
+                        Este enlace no contiene el parámetro del código de ingreso. Revisa tu confirmación de inscripción.
                     </p>
                 </div>
             </div>
@@ -218,32 +219,32 @@ export default function PublicEventQrPage() {
 
     return (
         <div className="min-h-screen bg-[hsl(var(--surface-1))] flex items-center justify-center p-3 sm:p-4 relative overflow-hidden">
-            <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-[hsl(var(--info-muted))]/50 blur-[120px] rounded-full mix-blend-multiply pointer-events-none" />
-            <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-[hsl(var(--info-muted))]/50 blur-[120px] rounded-full mix-blend-multiply pointer-events-none" />
+            <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-[hsl(var(--primary)/0.04)] blur-[120px] rounded-full pointer-events-none" />
+            <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-[hsl(var(--primary)/0.04)] blur-[120px] rounded-full pointer-events-none" />
 
-            <div className="w-full max-w-lg bg-[hsl(var(--bg-primary))] rounded-lg shadow-2xl border border-[hsl(var(--border))] p-4 sm:p-6 relative z-10">
+            <div className="w-full max-w-lg bg-[hsl(var(--surface-2))] rounded-2xl shadow-2xl border border-[hsl(var(--border))] p-4 sm:p-6 relative z-10">
                 <div className="flex flex-col items-center justify-center text-center space-y-2 mb-4">
-                    <div className="w-16 h-8 bg-gradient-to-tr from-[hsl(var(--info))] to-[hsl(var(--info))] text-white rounded-lg flex items-center justify-center shadow-lg shadow-[hsl(var(--info)/30%)] rotate-3">
-                        <Calendar size={28} className="drop-shadow-md" />
+                    <div className="w-14 h-14 bg-gradient-to-tr from-[hsl(var(--primary))] to-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] rounded-xl flex items-center justify-center shadow-lg shadow-[hsl(var(--primary)/25%)]">
+                        <Calendar size={28} className="drop-shadow-sm" />
                     </div>
-                    <h1 className="text-lg font-bold text-[hsl(var(--text-primary))] tracking-tight">Código de Ingreso</h1>
-                    <p className="text-sm font-medium text-[hsl(var(--text-secondary))] flex items-center gap-2">
-                        <ShieldCheck size={14} /> CCF Eventos
+                    <h1 className="text-xl font-bold text-[hsl(var(--text-primary))] tracking-tight">Código de Ingreso</h1>
+                    <p className="text-xs font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide flex items-center gap-1.5">
+                        <ShieldCheck size={14} className="text-[hsl(var(--primary))]" /> CCF Eventos Oficial
                     </p>
                 </div>
 
                 {ticketLoading ? (
                     <div className="flex flex-col items-center justify-center text-center space-y-3 py-10">
-                        <Loader2 size={28} className="animate-spin text-[hsl(var(--primary))]" />
-                        <p className="text-sm font-semibold text-[hsl(var(--text-secondary))]">Validando tu código...</p>
+                        <Loader2 size={32} className="animate-spin text-[hsl(var(--primary))]" />
+                        <p className="text-sm font-semibold text-[hsl(var(--text-secondary))]">Validando tu credencial de ingreso...</p>
                     </div>
                 ) : ticketError ? (
                     <div className="flex flex-col items-center justify-center text-center space-y-3 py-6">
-                        <div className="w-16 h-16 rounded-full bg-danger-soft text-danger-text flex items-center justify-center">
+                        <div className="w-16 h-16 rounded-full bg-[hsl(var(--destructive)/0.12)] text-[hsl(var(--destructive))] flex items-center justify-center border border-[hsl(var(--destructive)/0.25)]">
                             <X size={28} />
                         </div>
-                        <p className="text-sm font-bold text-[hsl(var(--text-primary))]">Código no válido</p>
-                        <p className="text-sm font-medium text-[hsl(var(--text-secondary))]">{ticketError}</p>
+                        <p className="text-sm font-bold text-[hsl(var(--text-primary))]">Credencial no válida o inactiva</p>
+                        <p className="text-xs font-medium text-[hsl(var(--text-secondary))] max-w-xs">{ticketError}</p>
                     </div>
                 ) : (
                     <QrTicket

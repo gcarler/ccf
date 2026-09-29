@@ -177,6 +177,8 @@ interface AttendeeListItem {
   check_in_at?: string | null;
 }
 
+import { sanitizeAndExtractQrToken } from './utils';
+
 export default function GatekeeperScannerPage() {
   const { token: authToken } = useAuth();
 
@@ -329,7 +331,7 @@ export default function GatekeeperScannerPage() {
 
   // ── Procesar escaneo de credencial QR ─────────────────────────────────────
   const processScan = async (rawToken: string) => {
-    const token = rawToken.trim();
+    const token = sanitizeAndExtractQrToken(rawToken);
     if (!token) return;
 
     if (feedbackTimerRef.current) {
