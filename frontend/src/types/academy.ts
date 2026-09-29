@@ -217,6 +217,48 @@ export interface WorkloadPredictionResponse {
   recommendations: string[];
 }
 
+export interface InstitutionalAcademySummary {
+  sede_id?: string | null;
+  total_students: number;
+  retention_projected_rate: number;
+  socratic_pass_rate: number;
+  wellness_health_index: number;
+  active_study_groups: number;
+  total_offerings: number;
+  active_mentorships: number;
+  total_achievements_awarded: number;
+  generated_at: string;
+}
+
+export interface CohortHealthAlert {
+  id: string;
+  signal_type?: string;
+  severity?: string;
+  student_id?: string;
+  detected_at?: string | null;
+}
+
+export interface CohortHealthResponse {
+  offering_id: string;
+  subject_name: string;
+  period_code: string;
+  sede_id?: string | null;
+  enrolled_students_count: number;
+  average_grade: number;
+  completion_rate: number;
+  lowest_mastery_nodes: Array<{
+    node_id: string;
+    title: string;
+    code?: string | null;
+    average_mastery: number;
+    evaluated_students_count: number;
+  }>;
+  active_alerts_count: number;
+  active_alerts: CohortHealthAlert[];
+  health_status: 'healthy' | 'needs_attention' | 'at_risk' | string;
+  recommendations: string[];
+}
+
 // ── Super-PRO Academic ERP Types ──────────────────────────────────────────────
 
 export type ProgramType =
@@ -780,4 +822,47 @@ export interface AcademyRecommendation {
   target_url?: string | null;
   viewed?: boolean;
   created_at: string;
+}
+
+export interface KnowledgeNodeMasteryBrief {
+  node_id: string;
+  title: string;
+  code?: string | null;
+  average_mastery: number;
+  evaluated_students_count: number;
+}
+
+export interface ActiveWellnessAlertBrief {
+  id: string;
+  signal_type: string;
+  severity: string;
+  student_id: string;
+  detected_at?: string | null;
+}
+
+export interface CohortHealth {
+  offering_id: string;
+  subject_name: string;
+  period_code: string;
+  sede_id?: string | null;
+  enrolled_students_count: number;
+  average_grade: number;
+  completion_rate: number;
+  lowest_mastery_nodes: KnowledgeNodeMasteryBrief[];
+  active_alerts_count: number;
+  active_alerts: ActiveWellnessAlertBrief[];
+  health_status: 'healthy' | 'needs_attention' | 'at_risk';
+  recommendations: string[];
+}
+
+export interface InstitutionalSummaryKPIs {
+  total_students: number;
+  retention_projected_rate: number;
+  socratic_pass_rate: number;
+  wellness_health_index: number;
+  active_study_groups: number;
+  total_defense_sessions: number;
+  pending_wellness_signals: number;
+  sede_id?: string | null;
+  calculated_at: string;
 }

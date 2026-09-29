@@ -81,6 +81,7 @@ const ACADEMY_SIDEBAR_SECTIONS = [
             { id: 'teacher', label: 'Panel Docente', href: '/plataforma/academy/teacher', icon: GraduationCap, level: 'edit' as AcademyLevel },
             { id: 'docente', label: 'Mi Portal Docente ERP', href: '/plataforma/academy/docente', icon: Award, level: 'edit' as AcademyLevel },
             { id: 'coordination', label: 'Coordinación', href: '/plataforma/academy/coordination', icon: ShieldCheck, level: 'manage' as AcademyLevel },
+            { id: 'analytics', label: 'Analítica Institucional', href: '/plataforma/academy/analitica', icon: BarChart3, level: 'manage' as AcademyLevel },
             { id: 'admin', label: 'Gestión Institucional', href: '/plataforma/academy/admin', icon: Sliders, level: 'manage' as AcademyLevel },
         ],
     },
