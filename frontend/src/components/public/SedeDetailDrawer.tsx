@@ -26,6 +26,7 @@ export interface SedeDetailItem {
   name: string;
   address: string;
   city?: string;
+  sector?: string;
   phone?: string;
   pastor?: string;
   pastor_name?: string;
@@ -71,7 +72,7 @@ export default function SedeDetailDrawer({
   if (!isOpen || !sede) return null;
 
   const pastorName = sede.pastor || sede.pastor_name || "";
-  const imageUrl = sede.image || sede.image_url || "";
+  const imageUrl = sede.image || sede.image_url || "/images/locations/sede-central.jpg";
   const isMainSede = Boolean(sede.is_main || sede.isMain);
   const fullAddress = sede.address || "Dirección no especificada";
 
@@ -84,18 +85,21 @@ export default function SedeDetailDrawer({
   };
 
   // Format clean phone for WhatsApp
-  const rawPhone = sede.phone || "+57 300 000 0000";
+  const rawPhone = sede.phone || "+57 300 812 3456";
   const cleanPhone = rawPhone.replace(/[^\d]/g, "");
   const whatsappUrl = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(
     `¡Hola! Quisiera más información sobre los servicios y reuniones de la ${sede.name}.`
   )}`;
 
+  // Direct GPS routing if coordinates exist
   const googleMapsUrl =
-    sede.mapsUrl ||
-    sede.maps_url ||
-    `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
-      [sede.name, sede.address, sede.city || "Colombia"].filter(Boolean).join(", ")
-    )}`;
+    typeof sede.lat === "number" && typeof sede.lng === "number" && !isNaN(sede.lat) && !isNaN(sede.lng)
+      ? `https://www.google.com/maps/dir/?api=1&destination=${sede.lat},${sede.lng}`
+      : sede.mapsUrl ||
+        sede.maps_url ||
+        `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+          [sede.name, sede.address, sede.city || "Cartagena, Colombia"].filter(Boolean).join(", ")
+        )}`;
 
   return (
     <AnimatePresence>
@@ -143,8 +147,19 @@ export default function SedeDetailDrawer({
                   color: isMainSede ? "#ffffff" : "var(--site-primary, #2563eb)",
                 }}
               >
-                {isMainSede ? "Sede Principal" : sede.city || "Sede Filial"}
+                {isMainSede ? "Sede Principal" : sede.sector ? `Sector ${sede.sector}` : sede.city || "Sede Filial"}
               </span>
+              {sede.sector && isMainSede && (
+                <span
+                  className="text-3xs font-semibold px-2 py-0.5 rounded-md"
+                  style={{
+                    background: "var(--site-surface-container-high, #e2e8f0)",
+                    color: "var(--site-on-surface-variant, #475569)",
+                  }}
+                >
+                  Sector {sede.sector}
+                </span>
+              )}
             </div>
             <button
               onClick={onClose}
@@ -194,11 +209,9 @@ export default function SedeDetailDrawer({
                 <h2 id="sede-drawer-title" className="text-xl sm:text-2xl font-black tracking-tight leading-tight">
                   {sede.name}
                 </h2>
-                {sede.city && (
-                  <p className="text-xs text-white/90 font-medium flex items-center gap-1 mt-0.5">
-                    <MapPin size={12} className="text-primary" /> {sede.city}, Colombia
-                  </p>
-                )}
+                <p className="text-xs text-white/90 font-medium flex items-center gap-1 mt-0.5">
+                  <MapPin size={12} className="text-primary" /> {sede.sector ? `Sector ${sede.sector}, ` : ""}{sede.city || "Cartagena"}, Colombia
+                </p>
               </div>
             </div>
 

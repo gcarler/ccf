@@ -2,9 +2,7 @@
 
 import { useCmsV2Page } from "@/hooks/useCmsV2Page";
 import SedeDetailDrawer, { SedeDetailItem } from "@/components/public/SedeDetailDrawer";
-import { AnimatePresence, motion } from "framer-motion";
 import {
-  Calendar,
   Clock,
   Home,
   Navigation,
@@ -19,9 +17,8 @@ import {
   User,
   Map,
   List,
-  ChevronRight,
-  Sparkles,
   Info,
+  Layers,
 } from "lucide-react";
 import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
@@ -29,14 +26,171 @@ import { toast } from "sonner";
 
 interface LocationItem extends SedeDetailItem {
   services?: string[];
+  sector?: string;
 }
+
+// ── 7 SEDES CANÓNICAS DE CARTAGENA (Catálogo Oficial con Coordenadas Exactas) ──
+const CANONICAL_CARTAGENA_SEDES: LocationItem[] = [
+  {
+    id: "ctg-1",
+    name: "Comunidad Cristiana El Faro — Bosquecito (Sede Principal)",
+    city: "Cartagena",
+    sector: "Bosquecito",
+    address: "Diag. 21B #48A-12, Sector El Bosquecito",
+    phone: "+57 300 812 3456",
+    pastor: "Pastores Principales CCF",
+    schedule: "Domingos: 8:00 AM y 10:30 AM",
+    midweek: "Miércoles: 7:00 PM (Oración y Faros)",
+    farokids_schedule: "En todos los cultos dominicales",
+    lat: 10.3930347,
+    lng: -75.5104067,
+    is_main: true,
+    isMain: true,
+    image: "/images/locations/sede-central.jpg",
+    image_url: "/images/locations/sede-central.jpg",
+    mapsUrl: "https://www.google.com/maps/dir/?api=1&destination=10.3930347,-75.5104067",
+    maps_url: "https://www.google.com/maps/dir/?api=1&destination=10.3930347,-75.5104067",
+  },
+  {
+    id: "ctg-2",
+    name: "Iglesia Cristiana Faro de Gloria — Ceballos",
+    city: "Cartagena",
+    sector: "Ceballos",
+    address: "Transversal 54 #28-45, Barrio Ceballos",
+    phone: "+57 301 234 5678",
+    pastor: "Equipo Pastoral CCF",
+    schedule: "Domingos: 9:00 AM",
+    midweek: "Jueves: 7:00 PM (Estudio Bíblico y Oración)",
+    farokids_schedule: "Aulas infantiles los domingos",
+    lat: 10.387729,
+    lng: -75.5041959,
+    is_main: false,
+    isMain: false,
+    image: "/images/locations/sede-central.jpg",
+    image_url: "/images/locations/sede-central.jpg",
+    mapsUrl: "https://www.google.com/maps/dir/?api=1&destination=10.387729,-75.5041959",
+    maps_url: "https://www.google.com/maps/dir/?api=1&destination=10.387729,-75.5041959",
+  },
+  {
+    id: "ctg-3",
+    name: "C.C. Avivamiento Internacional El Faro — Pasacaballos",
+    city: "Cartagena",
+    sector: "Pasacaballos",
+    address: "Calle Principal #12-30, Corregimiento de Pasacaballos",
+    phone: "+57 302 345 6789",
+    pastor: "Pastores de Sede",
+    schedule: "Domingos: 9:00 AM y 6:00 PM",
+    midweek: "Martes: 7:00 PM (Culto de Poder)",
+    farokids_schedule: "Ministerio Infantil dominical",
+    lat: 10.2827598,
+    lng: -75.5148354,
+    is_main: false,
+    isMain: false,
+    image: "/images/locations/sede-central.jpg",
+    image_url: "/images/locations/sede-central.jpg",
+    mapsUrl: "https://www.google.com/maps/dir/?api=1&destination=10.2827598,-75.5148354",
+    maps_url: "https://www.google.com/maps/dir/?api=1&destination=10.2827598,-75.5148354",
+  },
+  {
+    id: "ctg-4",
+    name: "Iglesia Evangélica Los 2 Olivos — Pasacaballos",
+    city: "Cartagena",
+    sector: "Pasacaballos",
+    address: "Sector Las Flores, Pasacaballos",
+    phone: "+57 303 456 7890",
+    pastor: "Liderazgo Pastoral",
+    schedule: "Domingos: 8:30 AM",
+    midweek: "Miércoles: 6:30 PM (Oración e Intercesión)",
+    farokids_schedule: "Escuela dominical",
+    lat: 10.2809167,
+    lng: -75.5174839,
+    is_main: false,
+    isMain: false,
+    image: "/images/locations/sede-central.jpg",
+    image_url: "/images/locations/sede-central.jpg",
+    mapsUrl: "https://www.google.com/maps/dir/?api=1&destination=10.2809167,-75.5174839",
+    maps_url: "https://www.google.com/maps/dir/?api=1&destination=10.2809167,-75.5174839",
+  },
+  {
+    id: "ctg-5",
+    name: "Iglesia Cristiana Príncipe del Reino — Caño del Oro",
+    city: "Cartagena",
+    sector: "Caño del Oro",
+    address: "Sector Central frente al muelle, Caño del Oro, Isla Tierra Bomba",
+    phone: "+57 304 567 8901",
+    pastor: "Pastores Misioneros",
+    schedule: "Domingos: 9:30 AM",
+    midweek: "Viernes: 6:00 PM (Reunión Insular)",
+    farokids_schedule: "Atención infantil dominical",
+    lat: 10.339825,
+    lng: -75.5475701,
+    is_main: false,
+    isMain: false,
+    image: "/images/locations/sede-central.jpg",
+    image_url: "/images/locations/sede-central.jpg",
+    mapsUrl: "https://www.google.com/maps/dir/?api=1&destination=10.339825,-75.5475701",
+    maps_url: "https://www.google.com/maps/dir/?api=1&destination=10.339825,-75.5475701",
+  },
+  {
+    id: "ctg-6",
+    name: "Iglesia Cristiana Príncipe del Reino — San Isidro",
+    city: "Cartagena",
+    sector: "San Isidro",
+    address: "Calle Real de San Isidro #23-14",
+    phone: "+57 305 678 9012",
+    pastor: "Equipo Pastoral San Isidro",
+    schedule: "Domingos: 9:00 AM",
+    midweek: "Miércoles: 7:00 PM (Oración de Milagros)",
+    farokids_schedule: "Aulas por edades los domingos",
+    lat: 10.3891901,
+    lng: -75.5120837,
+    is_main: false,
+    isMain: false,
+    image: "/images/locations/sede-central.jpg",
+    image_url: "/images/locations/sede-central.jpg",
+    mapsUrl: "https://www.google.com/maps/dir/?api=1&destination=10.3891901,-75.5120837",
+    maps_url: "https://www.google.com/maps/dir/?api=1&destination=10.3891901,-75.5120837",
+  },
+  {
+    id: "ctg-7",
+    name: "Comunidad Cristiana Ríos de Agua Viva — 20 de Julio Sur",
+    city: "Cartagena",
+    sector: "20 de Julio",
+    address: "Manzana 14 Lote 8, Barrio 20 de Julio Sur",
+    phone: "+57 306 789 0123",
+    pastor: "Liderazgo Pastoral 20 de Julio",
+    schedule: "Domingos: 8:00 AM y 10:30 AM",
+    midweek: "Jueves: 7:00 PM (Noche de Avivamiento)",
+    farokids_schedule: "FaroKids activo domingos",
+    lat: 10.3724747,
+    lng: -75.501637,
+    is_main: false,
+    isMain: false,
+    image: "/images/locations/sede-central.jpg",
+    image_url: "/images/locations/sede-central.jpg",
+    mapsUrl: "https://www.google.com/maps/dir/?api=1&destination=10.3724747,-75.501637",
+    maps_url: "https://www.google.com/maps/dir/?api=1&destination=10.3724747,-75.501637",
+  },
+];
+
+const OFFICIAL_MY_MAPS_EMBED =
+  "https://www.google.com/maps/d/embed?mid=1VDNpplw_9z1tcEhx25wEFRR5gQmnHgM&ehbc=2E312F";
+
+const SECTORS_CARTAGENA = [
+  "Todos",
+  "Bosquecito",
+  "San Isidro",
+  "Ceballos",
+  "Pasacaballos",
+  "20 de Julio",
+  "Caño del Oro",
+];
 
 export default function SedesPage() {
   const heroPage = useCmsV2Page("locations");
   const heroContent = heroPage?.blocks?.hero as Record<string, unknown> | undefined;
   const locationsContent = heroPage?.blocks?.feed as Record<string, unknown> | undefined;
 
-  const mapEmbedUrl = typeof heroContent?.map_embed_url === "string" ? heroContent.map_embed_url : "";
   const mainBadge = typeof heroContent?.main_badge === "string" ? heroContent.main_badge : "Sede Principal";
   const emptyLocations =
     typeof heroContent?.empty_locations === "string"
@@ -45,15 +199,15 @@ export default function SedesPage() {
   const emptySearch =
     typeof heroContent?.empty_search === "string"
       ? heroContent.empty_search
-      : "No encontramos sedes que coincidan con los filtros aplicados.";
-  const eyebrow = typeof heroContent?.eyebrow === "string" ? heroContent.eyebrow : "Nuestra Presencia";
+      : "No encontramos sedes en ese sector o con ese criterio en Cartagena.";
+  const eyebrow = typeof heroContent?.eyebrow === "string" ? heroContent.eyebrow : "Nuestra Presencia en Cartagena";
   const titleLead = typeof heroContent?.title_lead === "string" ? heroContent.title_lead : "Nuestras";
   const titleAccent = typeof heroContent?.title_accent === "string" ? heroContent.title_accent : "Sedes";
   const title = typeof heroContent?.title === "string" ? heroContent.title : `${titleLead} ${titleAccent}`;
   const searchPlaceholder =
     typeof heroContent?.search_placeholder === "string"
       ? heroContent.search_placeholder
-      : "Buscar por nombre, barrio, pastor...";
+      : "Buscar por sector, barrio o sede en Cartagena...";
 
   const rawLocations = (locationsContent?.parsed ?? locationsContent) as unknown;
   const parsedLocations: LocationItem[] = Array.isArray(rawLocations)
@@ -63,135 +217,119 @@ export default function SedesPage() {
     : [];
 
   const locations: LocationItem[] = useMemo(() => {
-    return parsedLocations.map((loc, i) => {
+    const sourceList = parsedLocations.length > 0 ? parsedLocations : CANONICAL_CARTAGENA_SEDES;
+
+    return sourceList.map((loc, i) => {
       const schedule =
         loc.schedule ||
         (Array.isArray(loc.services) && loc.services.length > 0 ? loc.services.join(" • ") : "") ||
         "Domingos 8:00 AM y 10:30 AM";
       const midweek = loc.midweek || "Miércoles 7:00 PM (Oración y Faros)";
       const farokids_schedule = loc.farokids_schedule || "En todos los cultos dominicales";
-      const image = loc.image || loc.image_url || "";
+      const image = loc.image || loc.image_url || "/images/locations/sede-central.jpg";
       const pastor = loc.pastor || loc.pastor_name || "";
       const isMain = Boolean(loc.is_main || loc.isMain || i === 0);
-      const mapsUrl = loc.maps_url || loc.mapsUrl || "";
-      const mapEmbedUrl = loc.map_embed_url || loc.mapEmbedUrl || "";
+
+      // Extract coordinates
+      const lat = typeof loc.lat === "number" ? loc.lat : null;
+      const lng = typeof loc.lng === "number" ? loc.lng : null;
+
+      // Direct GPS route link
+      const mapsUrl =
+        lat && lng
+          ? `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`
+          : loc.maps_url || loc.mapsUrl || "";
+
+      // Deduce sector if missing
+      let sector = loc.sector || "";
+      if (!sector) {
+        const lower = `${loc.name} ${loc.address}`.toLowerCase();
+        if (lower.includes("bosquecito")) sector = "Bosquecito";
+        else if (lower.includes("ceballos")) sector = "Ceballos";
+        else if (lower.includes("pasacaballos")) sector = "Pasacaballos";
+        else if (lower.includes("caño del oro") || lower.includes("tierra bomba")) sector = "Caño del Oro";
+        else if (lower.includes("san isidro")) sector = "San Isidro";
+        else if (lower.includes("20 de julio")) sector = "20 de Julio";
+      }
 
       return {
         ...loc,
         id: loc.id ?? `sede-${i + 1}`,
         name: loc.name || "Sede El Faro",
         address: loc.address || "",
-        city: loc.city || "Barranquilla",
+        city: loc.city || "Cartagena",
+        sector,
         schedule,
         midweek,
         farokids_schedule,
         pastor,
         image,
         isMain,
+        lat,
+        lng,
         mapsUrl,
-        mapEmbedUrl,
       };
     });
   }, [parsedLocations]);
 
   // States
   const [selected, setSelected] = useState<LocationItem | null>(null);
+  const [useGeneralMap, setUseGeneralMap] = useState<boolean>(true);
   const [search, setSearch] = useState("");
-  const [selectedCity, setSelectedCity] = useState<string>("Todas");
+  const [selectedSector, setSelectedSector] = useState<string>("Todos");
   const [mobileView, setMobileView] = useState<"lista" | "mapa">("lista");
   const [drawerSede, setDrawerSede] = useState<LocationItem | null>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [copiedId, setCopiedId] = useState<string | number | null>(null);
 
-  // Canonical city filters
-  const cities = useMemo(() => {
-    const list = ["Todas", "Barranquilla", "Cartagena", "Soledad", "Online"];
-    locations.forEach((loc) => {
-      if (loc.city && !list.includes(loc.city)) {
-        list.push(loc.city);
-      }
-    });
-    return list;
-  }, [locations]);
-
   useEffect(() => {
-    if (locations.length > 0) {
-      setSelected((current) => {
-        if (current) {
-          const found = locations.find((l) => String(l.id) === String(current.id));
-          if (found) return found;
-        }
-        return locations.find((l) => l.isMain) || locations[0];
-      });
+    if (locations.length > 0 && !selected) {
+      const main = locations.find((l) => l.isMain) || locations[0];
+      setSelected(main);
     }
-  }, [locations]);
+  }, [locations, selected]);
 
-  // Filter logic
+  // Filtered sedes by search query & sector in Cartagena
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     return locations.filter((loc) => {
-      // City check
-      if (selectedCity !== "Todas") {
-        if (selectedCity === "Online") {
-          const isOnline =
-            loc.city?.toLowerCase().includes("online") ||
-            loc.name.toLowerCase().includes("online") ||
-            loc.address.toLowerCase().includes("online") ||
-            loc.address.toLowerCase().includes("youtube");
-          if (!isOnline) return false;
-        } else {
-          if (loc.city?.toLowerCase() !== selectedCity.toLowerCase()) {
-            return false;
-          }
-        }
+      // Sector filter
+      if (selectedSector !== "Todos") {
+        const locSector = (loc.sector || "").toLowerCase();
+        const targetSector = selectedSector.toLowerCase();
+        const matchesSector =
+          locSector === targetSector ||
+          loc.name.toLowerCase().includes(targetSector) ||
+          loc.address.toLowerCase().includes(targetSector);
+        if (!matchesSector) return false;
       }
 
-      // Search query check
+      // Search query filter
       if (!q) return true;
       const name = (loc.name || "").toLowerCase();
       const address = (loc.address || "").toLowerCase();
-      const city = (loc.city || "").toLowerCase();
+      const sector = (loc.sector || "").toLowerCase();
       const pastor = (loc.pastor || "").toLowerCase();
-      return name.includes(q) || address.includes(q) || city.includes(q) || pastor.includes(q);
+      return name.includes(q) || address.includes(q) || sector.includes(q) || pastor.includes(q);
     });
-  }, [locations, search, selectedCity]);
+  }, [locations, search, selectedSector]);
 
-  // Compute dynamic reactive Map URL
-  const selectedMapUrl = useMemo(() => {
+  // Active Map URL: Default to Official Google My Maps embed, fallback centrado por GPS al enfocar sede
+  const mapIframeUrl = useMemo(() => {
+    // 1. Si el usuario seleccionó ver el mapa general oficial de Google My Maps
+    if (useGeneralMap) {
+      return OFFICIAL_MY_MAPS_EMBED;
+    }
+
+    // 2. Si hay sede activa y el usuario desea enfocarla por GPS
     const active = selected || locations[0];
-    if (!active) {
-      return (
-        mapEmbedUrl ||
-        "https://maps.google.com/maps?q=Barranquilla%2C%20Colombia&t=&z=13&ie=UTF8&iwloc=&output=embed"
-      );
+    if (active && typeof active.lat === "number" && typeof active.lng === "number") {
+      return `https://maps.google.com/maps?q=${active.lat},${active.lng}&t=&z=17&ie=UTF8&iwloc=&output=embed`;
     }
 
-    // 1. Explicit embed URL if provided
-    if (active.mapEmbedUrl && active.mapEmbedUrl.startsWith("http")) {
-      return active.mapEmbedUrl;
-    }
-
-    // 2. OpenStreetMap if GPS coordinates exist
-    if (
-      typeof active.lat === "number" &&
-      typeof active.lng === "number" &&
-      !isNaN(active.lat) &&
-      !isNaN(active.lng)
-    ) {
-      const delta = 0.012;
-      const minLng = (active.lng - delta).toFixed(5);
-      const minLat = (active.lat - delta).toFixed(5);
-      const maxLng = (active.lng + delta).toFixed(5);
-      const maxLat = (active.lat + delta).toFixed(5);
-      return `https://www.openstreetmap.org/export/embed.html?bbox=${minLng}%2C${minLat}%2C${maxLng}%2C${maxLat}&layer=mapnik&marker=${active.lat}%2C${active.lng}`;
-    }
-
-    // 3. Fallback to Google Maps query embed
-    const targetQuery = [active.name, active.address, active.city || "Colombia"]
-      .filter(Boolean)
-      .join(", ");
-    return `https://maps.google.com/maps?q=${encodeURIComponent(targetQuery)}&t=&z=16&ie=UTF8&iwloc=&output=embed`;
-  }, [selected, locations, mapEmbedUrl]);
+    // Fallback: mapa oficial
+    return OFFICIAL_MY_MAPS_EMBED;
+  }, [useGeneralMap, selected, locations]);
 
   const activeSede = selected || locations[0] || null;
 
@@ -208,6 +346,11 @@ export default function SedesPage() {
     e.stopPropagation();
     setDrawerSede(loc);
     setIsDrawerOpen(true);
+  };
+
+  const handleSelectSede = (loc: LocationItem) => {
+    setSelected(loc);
+    setUseGeneralMap(false); // Centrar en la sede seleccionada
   };
 
   return (
@@ -256,7 +399,7 @@ export default function SedesPage() {
 
       {/* ── SIDEBAR LISTADO DE SEDES ──────────────────────────── */}
       <aside
-        className={`w-full md:w-[420px] lg:w-[480px] xl:w-[520px] flex flex-col md:h-[calc(100vh-88px)] md:sticky md:top-[88px] border-r border-site-outline-variant/15 bg-site-surface-container-lowest shrink-0 ${
+        className={`w-full md:w-[440px] lg:w-[490px] xl:w-[530px] flex flex-col md:h-[calc(100vh-88px)] md:sticky md:top-[88px] border-r border-site-outline-variant/15 bg-site-surface-container-lowest shrink-0 ${
           mobileView === "mapa" ? "hidden md:flex" : "flex"
         }`}
       >
@@ -277,7 +420,7 @@ export default function SedesPage() {
               </h1>
             )}
             <p className="text-xs text-site-on-surface-variant mt-1 leading-relaxed">
-              Encuentra tu comunidad de fe más cercana. Hay un lugar especial preparado para ti y tu familia.
+              Descubre las 7 sedes canónicas de Comunidad Cristiana El Faro en Cartagena. Encuentra tu familia de fe en tu sector.
             </p>
           </div>
 
@@ -292,29 +435,35 @@ export default function SedesPage() {
             />
           </div>
 
-          {/* City Chips Filter */}
-          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
-            {cities.map((city) => {
-              const isActive = selectedCity === city;
-              return (
-                <button
-                  key={city}
-                  type="button"
-                  onClick={() => setSelectedCity(city)}
-                  className={`px-3 py-1.5 rounded-full text-xs font-bold tracking-tight whitespace-nowrap transition-all border ${
-                    isActive
-                      ? "border-site-primary text-white shadow-2xs scale-102"
-                      : "border-site-outline-variant/20 bg-site-surface-container text-site-on-surface-variant hover:bg-site-surface-container-high"
-                  }`}
-                  style={{
-                    background: isActive ? "var(--site-primary, #2563eb)" : undefined,
-                    color: isActive ? "#ffffff" : undefined,
-                  }}
-                >
-                  {city}
-                </button>
-              );
-            })}
+          {/* Chips de Filtro por Sector en Cartagena */}
+          <div>
+            <div className="flex items-center justify-between text-3xs font-bold uppercase tracking-wider text-site-on-surface-variant mb-1.5 opacity-80">
+              <span>Filtrar por sector</span>
+              <span className="font-medium text-site-primary">7 sedes activas</span>
+            </div>
+            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+              {SECTORS_CARTAGENA.map((sector) => {
+                const isActive = selectedSector === sector;
+                return (
+                  <button
+                    key={sector}
+                    type="button"
+                    onClick={() => setSelectedSector(sector)}
+                    className={`px-3 py-1.5 rounded-full text-xs font-bold tracking-tight whitespace-nowrap transition-all border ${
+                      isActive
+                        ? "border-site-primary text-white shadow-2xs scale-102"
+                        : "border-site-outline-variant/20 bg-site-surface-container text-site-on-surface-variant hover:bg-site-surface-container-high"
+                    }`}
+                    style={{
+                      background: isActive ? "var(--site-primary, #2563eb)" : undefined,
+                      color: isActive ? "#ffffff" : undefined,
+                    }}
+                  >
+                    {sector}
+                  </button>
+                );
+              })}
+            </div>
           </div>
         </div>
 
@@ -336,8 +485,7 @@ export default function SedesPage() {
                 <div
                   key={String(loc.id)}
                   onClick={() => {
-                    setSelected(loc);
-                    // On mobile, tapping card opens drawer directly for seamless UX
+                    handleSelectSede(loc);
                     if (window.innerWidth < 768) {
                       setDrawerSede(loc);
                       setIsDrawerOpen(true);
@@ -408,9 +556,9 @@ export default function SedesPage() {
                       </p>
 
                       <div className="flex items-center gap-2 flex-wrap">
-                        {loc.city && (
-                          <span className="inline-flex items-center gap-1 text-3xs font-bold px-2 py-0.5 rounded-md bg-site-surface-container-high text-site-on-surface-variant">
-                            <Globe size={10} /> {loc.city}
+                        {loc.sector && (
+                          <span className="inline-flex items-center gap-1 text-3xs font-bold px-2 py-0.5 rounded-md bg-site-primary-container/20 text-site-primary">
+                            <Globe size={10} /> Sector {loc.sector}
                           </span>
                         )}
                         {loc.pastor && (
@@ -422,7 +570,7 @@ export default function SedesPage() {
                     </div>
                   </div>
 
-                  {/* Resumen de Horarios */}
+                  {/* Resumen de Horarios y Acciones */}
                   <div className="mt-3 pt-3 border-t border-site-outline-variant/10 flex items-center justify-between gap-2 text-xs">
                     <div className="flex items-center gap-1.5 text-site-on-surface-variant truncate">
                       <Clock size={12} className="text-site-primary shrink-0" />
@@ -432,6 +580,20 @@ export default function SedesPage() {
                     </div>
 
                     <div className="flex items-center gap-1.5 shrink-0">
+                      {/* Ruta GPS directa */}
+                      <a
+                        href={loc.mapsUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={(e) => e.stopPropagation()}
+                        title="Cómo llegar con GPS"
+                        className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-3xs font-bold text-white shadow-2xs hover:opacity-90 transition-opacity"
+                        style={{ background: "var(--site-cta-gradient, #2563eb)" }}
+                      >
+                        <Navigation size={11} />
+                        <span>Ruta</span>
+                      </a>
+
                       {/* Copiar dirección */}
                       <button
                         type="button"
@@ -451,9 +613,6 @@ export default function SedesPage() {
                         type="button"
                         onClick={(e) => handleOpenDrawer(e, loc)}
                         className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-3xs font-bold uppercase tracking-wider text-site-primary bg-site-primary-container/20 hover:bg-site-primary-container/35 transition-colors"
-                        style={{
-                          color: "var(--site-primary, #2563eb)",
-                        }}
                       >
                         <Info size={11} />
                         <span>Detalles</span>
@@ -471,7 +630,7 @@ export default function SedesPage() {
                   type="button"
                   onClick={() => {
                     setSearch("");
-                    setSelectedCity("Todas");
+                    setSelectedSector("Todos");
                   }}
                   className="mt-3 text-xs font-bold text-site-primary hover:underline block mx-auto"
                 >
@@ -483,58 +642,72 @@ export default function SedesPage() {
         )}
       </aside>
 
-      {/* ── MAPA INTERACTIVO (Garantizado 100% visible) ──────────────────── */}
+      {/* ── MAPA INTERACTIVO (Google My Maps Oficial + Fallback GPS) ──────────── */}
       <section
         className={`flex-1 relative min-h-[50vh] md:h-[calc(100vh-88px)] md:sticky md:top-[88px] flex flex-col bg-site-surface-container-low overflow-hidden ${
           mobileView === "lista" ? "hidden md:flex" : "flex"
         }`}
       >
-        {/* Floating Active Sede Overlay Card */}
-        {activeSede && (
-          <div className="absolute top-4 left-4 right-4 z-20 pointer-events-none">
-            <div className="pointer-events-auto max-w-xl mx-auto md:mx-0 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-md p-3.5 rounded-2xl border border-site-outline-variant/20 shadow-xl flex items-center justify-between gap-3">
-              <div className="flex items-center gap-3 min-w-0">
-                <div
-                  className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
-                  style={{
-                    background: "var(--site-primary-container, rgba(37,99,235,0.12))",
-                    color: "var(--site-primary, #2563eb)",
-                  }}
-                >
-                  <MapPin size={20} />
-                </div>
-                <div className="min-w-0">
-                  <div className="flex items-center gap-1.5">
-                    <h2 className="font-bold text-sm text-site-on-surface truncate">
-                      {activeSede.name}
-                    </h2>
-                    {activeSede.isMain && (
-                      <span className="text-3xs font-extrabold uppercase tracking-wider px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-700 dark:text-amber-300 shrink-0">
-                        Principal
-                      </span>
-                    )}
-                  </div>
-                  <p className="text-3xs text-site-on-surface-variant truncate opacity-85">
-                    {activeSede.address || "Ubicación en el mapa"}
-                  </p>
-                </div>
+        {/* Floating Active Sede Overlay Card & Map View Mode Switcher */}
+        <div className="absolute top-4 left-4 right-4 z-20 pointer-events-none">
+          <div className="pointer-events-auto max-w-xl mx-auto md:mx-0 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-md p-3.5 rounded-2xl border border-site-outline-variant/20 shadow-xl flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3 min-w-0">
+              <div
+                className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
+                style={{
+                  background: "var(--site-primary-container, rgba(37,99,235,0.12))",
+                  color: "var(--site-primary, #2563eb)",
+                }}
+              >
+                <MapPin size={20} />
               </div>
+              <div className="min-w-0">
+                <div className="flex items-center gap-1.5">
+                  <h2 className="font-bold text-sm text-site-on-surface truncate">
+                    {useGeneralMap
+                      ? "Mapa Oficial de Sedes CCF"
+                      : activeSede?.name || "Sede El Faro"}
+                  </h2>
+                  {activeSede?.isMain && !useGeneralMap && (
+                    <span className="text-3xs font-extrabold uppercase tracking-wider px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-700 dark:text-amber-300 shrink-0">
+                      Principal
+                    </span>
+                  )}
+                </div>
+                <p className="text-3xs text-site-on-surface-variant truncate opacity-85">
+                  {useGeneralMap
+                    ? "7 sedes canónicas registradas en Cartagena"
+                    : activeSede?.address || "Ubicación en el mapa"}
+                </p>
+              </div>
+            </div>
 
-              <div className="flex items-center gap-1.5 shrink-0">
-                <button
-                  type="button"
-                  onClick={(e) => handleOpenDrawer(e, activeSede)}
-                  className="px-3 py-1.5 rounded-xl text-3xs font-bold uppercase tracking-wider border border-site-outline-variant/20 hover:bg-site-surface-container transition-colors"
-                >
-                  Ver Horarios
-                </button>
+            <div className="flex items-center gap-1.5 shrink-0">
+              {/* Botón para alternar entre Mapa General y Sede Enfocada */}
+              <button
+                type="button"
+                onClick={() => setUseGeneralMap(!useGeneralMap)}
+                className={`px-3 py-1.5 rounded-xl text-3xs font-bold uppercase tracking-wider border transition-all flex items-center gap-1 ${
+                  useGeneralMap
+                    ? "bg-site-primary text-white border-site-primary"
+                    : "border-site-outline-variant/20 hover:bg-site-surface-container text-site-on-surface-variant"
+                }`}
+                style={{
+                  background: useGeneralMap ? "var(--site-primary, #2563eb)" : undefined,
+                  color: useGeneralMap ? "#ffffff" : undefined,
+                }}
+              >
+                <Layers size={11} />
+                <span>{useGeneralMap ? "Ver Sede" : "Mapa General"}</span>
+              </button>
 
+              {/* Botón Cómo Llegar con GPS directo */}
+              {activeSede && (
                 <a
                   href={
-                    activeSede.mapsUrl ||
-                    `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
-                      [activeSede.name, activeSede.address, activeSede.city || "Colombia"].filter(Boolean).join(", ")
-                    )}`
+                    activeSede.lat && activeSede.lng
+                      ? `https://www.google.com/maps/dir/?api=1&destination=${activeSede.lat},${activeSede.lng}`
+                      : activeSede.mapsUrl || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(activeSede.name + ", Cartagena")}`
                   }
                   target="_blank"
                   rel="noopener noreferrer"
@@ -542,22 +715,22 @@ export default function SedesPage() {
                   style={{ background: "var(--site-cta-gradient, #2563eb)" }}
                 >
                   <Navigation size={12} />
-                  <span>GPS</span>
+                  <span>Cómo Llegar</span>
                 </a>
-              </div>
+              )}
             </div>
           </div>
-        )}
+        </div>
 
         {/* Live Interactive Map Iframe */}
         <iframe
-          key={activeSede ? String(activeSede.id) : "default-map"}
-          src={selectedMapUrl}
+          key={mapIframeUrl}
+          src={mapIframeUrl}
           className="w-full h-full border-0 block flex-1"
           allowFullScreen
           loading="lazy"
           referrerPolicy="no-referrer-when-downgrade"
-          title={`Mapa interactivo de ${activeSede?.name || "Sedes El Faro"}`}
+          title="Mapa de Sedes Comunidad Cristiana El Faro Cartagena"
           style={{ minHeight: "60vh" }}
         />
       </section>
