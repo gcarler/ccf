@@ -33,7 +33,7 @@ type RouteDescriptor = {
 const ROUTE_META_MAP: Record<string, { slug: string; fallbackTitle: string }> = {
     "/":                { slug: "home", fallbackTitle: SITE_NAME },
     "/nosotros":        { slug: "about", fallbackTitle: "Nosotros" },
-    "/pastores":        { slug: "pastors", fallbackTitle: "Pastores" },
+    "/pastores":        { slug: "pastors", fallbackTitle: "Equipo Pastoral y Liderazgo | Comunidad Cristiana El Faro (CCF)" },
     "/conocer-a-jesus": { slug: "discover", fallbackTitle: "Conocer a Jesús" },
     "/eventos":         { slug: "events", fallbackTitle: "Eventos y Calendario | Comunidad Cristiana El Faro (CCF)" },
     "/predicas":        { slug: "sermons", fallbackTitle: "Prédicas y Mensajes | Comunidad Cristiana El Faro (CCF)" },
