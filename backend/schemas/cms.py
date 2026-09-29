@@ -1225,6 +1225,32 @@ class CmsLocationRead(BaseModel):
     model_config = orm_config
 
 
+class CmsLocationPublicRead(BaseModel):
+    """Sede para el portal público (/sedes) — sin datos de administración.
+
+    Contrato alineado con ``CmsLocationRead`` (mismos nombres de campos de
+    contenido) para que el frontend consuma cualquiera de las dos fuentes
+    (endpoint público JSON o feed sincronizado a la sección CMS).
+    """
+
+    id: str
+    name: str
+    address: str
+    city: str = ""
+    phone: str = ""
+    pastor: str = ""
+    schedule: str = ""
+    midweek: str = ""
+    image: Optional[str] = None
+    maps_url: Optional[str] = None
+    map_embed_url: Optional[str] = None
+    lat: Optional[float] = None
+    lng: Optional[float] = None
+    is_main: bool = False
+    location_type: str = "Central"
+    sort_order: int = 0
+
+
 class CmsLocationUpdate(BaseModel):
     name: Optional[str] = None
     address: Optional[str] = None
