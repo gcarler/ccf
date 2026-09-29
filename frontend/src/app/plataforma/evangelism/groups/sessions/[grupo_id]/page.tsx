@@ -226,9 +226,9 @@ method: 'POST', token: token, silent: true, body: attPayload,
  };
 
  const ROLE_STYLES: Record<string, { bg: string; text: string; border: string; icon: typeof User }> = {
- 'Líder': { bg: 'bg-info-soft', text: 'text-info-text dark:text-info', border: 'border-info-muted', icon: Shield },
- 'Asistente del Líder': { bg: 'bg-info-soft', text: 'text-info-text dark:text-info', border: 'border-info-muted', icon: User },
- 'Anfitrión': { bg: 'bg-warning-soft', text: 'text-warning-text dark:text-warning', border: 'border-warning-muted', icon: Home },
+ 'Líder': { bg: 'bg-[hsl(var(--info)/0.15)]', text: 'text-[hsl(var(--info))]', border: 'border-[hsl(var(--info)/0.3)]', icon: Shield },
+ 'Asistente del Líder': { bg: 'bg-[hsl(var(--info)/0.15)]', text: 'text-[hsl(var(--info))]', border: 'border-[hsl(var(--info)/0.3)]', icon: User },
+ 'Anfitrión': { bg: 'bg-[hsl(var(--warning)/0.15)]', text: 'text-[hsl(var(--warning))]', border: 'border-[hsl(var(--warning)/0.3)]', icon: Home },
  'Participante': { bg: 'bg-[hsl(var(--bg-muted))]', text: 'text-[hsl(var(--text-primary))]', border: 'border-[hsl(var(--border-primary))]', icon: Users },
  'Asignado': { bg: 'bg-[hsl(var(--bg-muted))]', text: 'text-[hsl(var(--text-primary))]', border: 'border-[hsl(var(--border-primary))]', icon: Users },
  };
@@ -245,7 +245,7 @@ method: 'POST', token: token, silent: true, body: attPayload,
  <AlertCircle size={48} className="text-[hsl(var(--text-secondary))] mb-4" />
  <h2 className="text-lg font-bold text-[hsl(var(--text-primary))]">No se pudo cargar el grupo</h2>
  <p className="mt-2 text-sm text-[hsl(var(--text-secondary))] max-w-md">La plataforma recibió una respuesta inválida al consultar este grupo. Puedes volver a intentarlo desde la lista de grupos.</p>
- <button onClick={() => router.push('/plataforma/evangelism/groups')} className="mt-4 px-4 h-9 rounded-lg bg-[hsl(var(--primary))] text-white text-xs font-semibold hover:bg-[hsl(var(--primary))] transition-colors">Volver</button>
+ <button onClick={() => router.push('/plataforma/evangelism/groups')} className="mt-4 px-4 h-9 rounded-lg bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] text-xs font-semibold hover:bg-[hsl(var(--primary))] transition-colors">Volver</button>
  </div>
  </EvangelismShell>
  );
@@ -255,7 +255,7 @@ method: 'POST', token: token, silent: true, body: attPayload,
  <div className="flex flex-col items-center justify-center py-16 text-center">
  <AlertCircle size={48} className="text-[hsl(var(--text-secondary))] mb-4" />
  <h2 className="text-lg font-bold text-[hsl(var(--text-primary))]">Grupo no encontrado</h2>
- <button onClick={() => router.push('/plataforma/evangelism/groups')} className="mt-4 px-4 h-9 rounded-lg bg-[hsl(var(--primary))] text-white text-xs font-semibold hover:bg-[hsl(var(--primary))] transition-colors">Volver</button>
+ <button onClick={() => router.push('/plataforma/evangelism/groups')} className="mt-4 px-4 h-9 rounded-lg bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] text-xs font-semibold hover:bg-[hsl(var(--primary))] transition-colors">Volver</button>
  </div>
  </EvangelismShell>
  );
@@ -266,7 +266,7 @@ method: 'POST', token: token, silent: true, body: attPayload,
  {/* Header */}
  <div className="flex items-start justify-between">
  <div className="flex items-start gap-3">
- <button onClick={() => router.push('/plataforma/evangelism/groups')} className="p-1.5 rounded-lg hover:bg-[hsl(var(--bg-muted))] text-[hsl(var(--text-secondary))] hover:text-white transition-all mt-1"><ArrowLeft size={16} /></button>
+ <button onClick={() => router.push('/plataforma/evangelism/groups')} className="p-1.5 rounded-lg hover:bg-[hsl(var(--surface-2))] text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] transition-all mt-1"><ArrowLeft size={16} /></button>
  <div>
  <h1 className="text-xl font-bold text-[hsl(var(--text-primary))]">Reportar Sesión</h1>
  <p className="text-sm text-[hsl(var(--text-secondary))] font-medium">{house.name} · {house.zone || 'Sin zona'}</p>
@@ -275,21 +275,21 @@ method: 'POST', token: token, silent: true, body: attPayload,
  </div>
 
  {/* Date */}
- <div className="bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-card))] border border-[hsl(var(--border-primary))] rounded-lg p-4">
+ <div className="bg-[hsl(var(--surface-1))] border border-[hsl(var(--border-primary))] rounded-lg p-4">
  <label className="text-2xs font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] flex items-center gap-1.5 mb-2"><Calendar size={12} /> Fecha</label>
  <input type="date" value={sessionDate} onChange={e => setSessionDate(e.target.value)} className="w-full md:w-auto px-3 py-2 rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-muted))] text-sm text-[hsl(var(--text-primary))] focus:border-[hsl(var(--primary))] focus:outline-none" />
  </div>
 
  {/* Stats */}
  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
- <div className="bg-success-soft border border-success-muted rounded-lg p-3 text-center"><p className="text-lg font-bold text-[hsl(var(--secondary))] dark:text-[hsl(var(--secondary))]">{stats.present}</p><p className="text-2xs font-semibold text-[hsl(var(--secondary))] dark:text-[hsl(var(--secondary))]">Presentes</p></div>
- <div className="bg-danger-soft border border-danger-muted rounded-lg p-3 text-center"><p className="text-lg font-bold text-[hsl(var(--destructive))] dark:text-[hsl(var(--destructive))]">{stats.absent}</p><p className="text-2xs font-semibold text-[hsl(var(--destructive))] dark:text-[hsl(var(--destructive))]">Ausentes</p></div>
- <div className="bg-info-soft border border-info-muted rounded-lg p-3 text-center"><p className="text-lg font-bold text-info-text dark:text-info">{stats.firstTime}</p><p className="text-2xs font-semibold text-info-text dark:text-info">Nuevos</p></div>
+ <div className="bg-[hsl(var(--success)/0.1)] border border-[hsl(var(--success)/0.25)] rounded-lg p-3 text-center"><p className="text-lg font-bold text-[hsl(var(--success))]">{stats.present}</p><p className="text-2xs font-semibold text-[hsl(var(--success))]">Presentes</p></div>
+ <div className="bg-[hsl(var(--destructive)/0.1)] border border-[hsl(var(--destructive)/0.25)] rounded-lg p-3 text-center"><p className="text-lg font-bold text-[hsl(var(--destructive))]">{stats.absent}</p><p className="text-2xs font-semibold text-[hsl(var(--destructive))]">Ausentes</p></div>
+ <div className="bg-[hsl(var(--info)/0.1)] border border-[hsl(var(--info)/0.25)] rounded-lg p-3 text-center"><p className="text-lg font-bold text-[hsl(var(--info))]">{stats.firstTime}</p><p className="text-2xs font-semibold text-[hsl(var(--info))]">Nuevos</p></div>
  <div className="bg-[hsl(var(--bg-muted))] border border-[hsl(var(--border-primary))] rounded-lg p-3 text-center"><p className="text-lg font-bold text-[hsl(var(--text-primary))]">{stats.total}</p><p className="text-2xs font-semibold text-[hsl(var(--text-secondary))]">Total</p></div>
  </div>
 
  {/* Attendance */}
- <div className="bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-card))] border border-[hsl(var(--border-primary))] rounded-lg overflow-hidden">
+ <div className="bg-[hsl(var(--surface-1))] border border-[hsl(var(--border-primary))] rounded-lg overflow-hidden">
  <div className="px-4 py-3 border-b border-[hsl(var(--border-primary))] flex items-center justify-between">
  <h2 className="text-2xs font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] flex items-center gap-1.5"><Users size={12} /> Asistencia ({people.length})</h2>
  <div className="relative">
@@ -312,9 +312,9 @@ method: 'POST', token: token, silent: true, body: attPayload,
  </div>
  </div>
  <div className="flex items-center gap-1 shrink-0">
- <button onClick={() => updateStatus(person.persona_id, 'present')} className={`p-1.5 rounded-lg transition-all ${person.status === 'present' ? 'bg-success-soft text-success' : 'text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--bg-muted))]'}`} title="Presente"><CheckCircle2 size={16} /></button>
- <button onClick={() => updateStatus(person.persona_id, 'absent')} className={`p-1.5 rounded-lg transition-all ${person.status === 'absent' ? 'bg-danger-soft text-danger' : 'text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--bg-muted))]'}`} title="Ausente"><XCircle size={16} /></button>
- <button onClick={() => updateStatus(person.persona_id, 'first_time')} className={`p-1.5 rounded-lg transition-all ${person.status === 'first_time' ? 'bg-info-soft text-info' : 'text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--bg-muted))]'}`} title="Primera vez"><UserPlus size={16} /></button>
+ <button onClick={() => updateStatus(person.persona_id, 'present')} className={`p-1.5 rounded-lg transition-all ${person.status === 'present' ? 'bg-[hsl(var(--success)/0.15)] text-[hsl(var(--success))]' : 'text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--bg-muted))]'}`} title="Presente"><CheckCircle2 size={16} /></button>
+ <button onClick={() => updateStatus(person.persona_id, 'absent')} className={`p-1.5 rounded-lg transition-all ${person.status === 'absent' ? 'bg-[hsl(var(--destructive)/0.15)] text-[hsl(var(--destructive))]' : 'text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--bg-muted))]'}`} title="Ausente"><XCircle size={16} /></button>
+ <button onClick={() => updateStatus(person.persona_id, 'first_time')} className={`p-1.5 rounded-lg transition-all ${person.status === 'first_time' ? 'bg-[hsl(var(--info)/0.15)] text-[hsl(var(--info))]' : 'text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--bg-muted))]'}`} title="Primera vez"><UserPlus size={16} /></button>
  </div>
  </div>
  );
@@ -323,19 +323,19 @@ method: 'POST', token: token, silent: true, body: attPayload,
  </div>
 
  {/* New Guests */}
- <div className="bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-card))] border border-[hsl(var(--border-primary))] rounded-lg overflow-hidden">
+ <div className="bg-[hsl(var(--surface-1))] border border-[hsl(var(--border-primary))] rounded-lg overflow-hidden">
  <div className="px-4 py-3 border-b border-[hsl(var(--border-primary))] flex items-center justify-between">
  <h2 className="text-2xs font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] flex items-center gap-1.5"><UserPlus size={12} /> Invitados nuevos ({newGuests.length})</h2>
- <button onClick={addGuest} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-[hsl(var(--primary))] text-white text-2xs font-bold hover:bg-[hsl(var(--primary))]"><Plus size={11} /> Agregar</button>
+ <button onClick={addGuest} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] text-2xs font-bold hover:bg-[hsl(var(--primary))]"><Plus size={11} /> Agregar</button>
  </div>
  <AnimatePresence>
  {newGuests.map((g, i) => (
- <motion.div key={i} initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="px-4 py-3 border-b border-[hsl(var(--border-primary))] last:border-b-0 bg-info-soft">
+ <motion.div key={i} initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="px-4 py-3 border-b border-[hsl(var(--border-primary))] last:border-b-0 bg-[hsl(var(--surface-2))]">
  <div className="flex items-center gap-2">
- <input type="text" value={g.firstName} onChange={e => updateGuest(i, 'firstName', e.target.value)} placeholder="Nombre" className="flex-1 px-3 py-2 rounded-lg border border-info-muted bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-card))] text-sm text-[hsl(var(--text-primary))] focus:border-[hsl(var(--primary))] focus:outline-none" />
- <input type="text" value={g.lastName} onChange={e => updateGuest(i, 'lastName', e.target.value)} placeholder="Apellido" className="flex-1 px-3 py-2 rounded-lg border border-info-muted bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-card))] text-sm text-[hsl(var(--text-primary))] focus:border-[hsl(var(--primary))] focus:outline-none" />
- <input type="text" value={g.phone} onChange={e => updateGuest(i, 'phone', e.target.value)} placeholder="Teléfono" className="flex-1 px-3 py-2 rounded-lg border border-info-muted bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-card))] text-sm text-[hsl(var(--text-primary))] focus:border-[hsl(var(--primary))] focus:outline-none" />
- <button onClick={() => removeGuest(i)} className="p-2 rounded-lg text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--destructive))] hover:bg-danger-soft"><XCircle size={16} /></button>
+ <input type="text" value={g.firstName} onChange={e => updateGuest(i, 'firstName', e.target.value)} placeholder="Nombre" className="flex-1 px-3 py-2 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-sm text-[hsl(var(--foreground))] focus:border-[hsl(var(--primary))] focus:outline-none" />
+ <input type="text" value={g.lastName} onChange={e => updateGuest(i, 'lastName', e.target.value)} placeholder="Apellido" className="flex-1 px-3 py-2 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-sm text-[hsl(var(--foreground))] focus:border-[hsl(var(--primary))] focus:outline-none" />
+ <input type="text" value={g.phone} onChange={e => updateGuest(i, 'phone', e.target.value)} placeholder="Teléfono" className="flex-1 px-3 py-2 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-sm text-[hsl(var(--foreground))] focus:border-[hsl(var(--primary))] focus:outline-none" />
+ <button onClick={() => removeGuest(i)} className="p-2 rounded-lg text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--destructive))] hover:bg-[hsl(var(--destructive)/0.1)]"><XCircle size={16} /></button>
  </div>
  </motion.div>
  ))}
@@ -344,7 +344,7 @@ method: 'POST', token: token, silent: true, body: attPayload,
  </div>
 
  {/* Session Details */}
- <div className="bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-card))] border border-[hsl(var(--border-primary))] rounded-lg p-4 space-y-4">
+ <div className="bg-[hsl(var(--surface-1))] border border-[hsl(var(--border-primary))] rounded-lg p-4 space-y-4">
  <h2 className="text-2xs font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] flex items-center gap-1.5"><FileText size={12} /> Detalles</h2>
  <div>
  <label className="block text-2xs font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] mb-1">Tema</label>
@@ -365,8 +365,8 @@ method: 'POST', token: token, silent: true, body: attPayload,
 
  {/* Submit */}
  <div className="flex items-center justify-end gap-3 pb-4">
- <button onClick={() => router.push('/plataforma/evangelism/groups')} className="px-4 h-9 rounded-lg border border-[hsl(var(--border-primary))] text-xs font-semibold text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--bg-muted))] dark:hover:bg-white/5">Cancelar</button>
- <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} onClick={handleSubmit} disabled={saving} className="inline-flex items-center gap-2 px-6 h-10 rounded-lg bg-[hsl(var(--primary))] text-white text-sm font-bold hover:bg-[hsl(var(--primary))] disabled:opacity-60 shadow-sm">
+ <button onClick={() => router.push('/plataforma/evangelism/groups')} className="px-4 h-9 rounded-lg border border-[hsl(var(--border-primary))] text-xs font-semibold text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))]">Cancelar</button>
+ <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} onClick={handleSubmit} disabled={saving} className="inline-flex items-center gap-2 px-6 h-10 rounded-lg bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] text-sm font-bold hover:bg-[hsl(var(--primary))] disabled:opacity-60 shadow-sm">
  {saving ? <><Clock size={16} className="animate-spin" /> Guardando...</> : <><Save size={16} /> Guardar Reporte</>}
  </motion.button>
  </div>

@@ -64,7 +64,7 @@ export function GroupSidebarList({
                   setSelectedPersonaIds(new Set());
                   setFormData({ capacity: 15, status: 'Activo' });
                 }}
-                className="bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))] text-white rounded-lg size-7 flex items-center justify-center transition-all shadow-sm active:scale-95"
+                className="bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] rounded-lg size-7 flex items-center justify-center transition-all shadow-sm active:scale-95"
               >
                 <Plus size={14} />
               </button>
@@ -132,7 +132,7 @@ export function GroupSidebarList({
                       className="flex-1 text-left min-w-0"
                     >
                       <p
-                        className={`text-xs font-bold truncate leading-tight ${isActive ? 'text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))]' : 'text-[hsl(var(--text-primary))]'}`}
+                        className={`text-xs font-bold truncate leading-tight ${isActive ? 'text-[hsl(var(--primary))]' : 'text-[hsl(var(--text-primary))]'}`}
                       >
                         {h.name}
                       </p>
@@ -141,7 +141,7 @@ export function GroupSidebarList({
                           {h.zone || 'Sin zona'}
                         </p>
                         {h.leader_id && (
-                          <span className="text-2xs font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-md bg-info-soft text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] shrink-0">
+                          <span className="text-2xs font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-md bg-[hsl(var(--info)/0.15)] text-[hsl(var(--info))] shrink-0">
                             {getPersonaName(h.leader_id).split(' ')[0]}
                           </span>
                         )}
@@ -149,7 +149,7 @@ export function GroupSidebarList({
                     </button>
                     <button
                       onClick={(e) => { e.stopPropagation(); requestDeleteHouse(h); }}
-                      className="shrink-0 p-1 rounded text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--destructive))] dark:hover:text-[hsl(var(--destructive))] hover:bg-danger-soft transition-colors"
+                      className="shrink-0 p-1 rounded text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--destructive))] hover:bg-[hsl(var(--destructive)/0.1)] transition-colors"
                       title="Eliminar grupo"
                     >
                       <Trash2 size={13} />

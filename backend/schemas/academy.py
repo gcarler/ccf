@@ -1,11 +1,11 @@
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 from enum import Enum
 from typing import Any, Dict, List, Literal, Optional
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field, computed_field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, computed_field, field_validator, model_validator
 
 from backend.schemas._common import orm_config
 
@@ -783,3 +783,986 @@ class MyProfileResponse(BaseModel):
     certificates_count: int
     active_courses: list[EnrollmentResponse] = []
     recent_certificates: list[Certificate] = []
+
+
+# ── Super-PRO Academy: Programs, Credits, Study Plans & Grading Schemes ──────────
+
+
+class AcademyProgramBase(BaseModel):
+    code: str = Field(min_length=2, max_length=50)
+    name: str = Field(min_length=2, max_length=200)
+    description: Optional[str] = None
+    program_type: str = Field(default="diplomado", max_length=50)
+    level_name: Optional[str] = Field(default=None, max_length=100)
+    total_duration_type: str = Field(default="semestres", max_length=50)
+    total_duration_units: int = Field(default=2, ge=1)
+    total_credits: int = Field(default=0, ge=0)
+    modality: str = Field(default="presencial", max_length=50)
+    has_teachers: bool = True
+    teachers_can_grade: bool = True
+    min_passing_grade: float = Field(default=70.0, ge=0.0)
+    grading_scale_max: float = Field(default=100.0, gt=0.0)
+    min_attendance_percent: float = Field(default=80.0, ge=0.0, le=100.0)
+    is_active: bool = True
+
+
+class AcademyProgramCreate(AcademyProgramBase):
+    model_config = ConfigDict(extra="forbid")
+
+
+class AcademyProgramUpdate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    name: Optional[str] = Field(default=None, min_length=2, max_length=200)
+    description: Optional[str] = None
+    program_type: Optional[str] = Field(default=None, max_length=50)
+    level_name: Optional[str] = Field(default=None, max_length=100)
+    total_duration_type: Optional[str] = Field(default=None, max_length=50)
+    total_duration_units: Optional[int] = Field(default=None, ge=1)
+    total_credits: Optional[int] = Field(default=None, ge=0)
+    modality: Optional[str] = Field(default=None, max_length=50)
+    has_teachers: Optional[bool] = None
+    teachers_can_grade: Optional[bool] = None
+    min_passing_grade: Optional[float] = Field(default=None, ge=0.0)
+    grading_scale_max: Optional[float] = Field(default=None, gt=0.0)
+    min_attendance_percent: Optional[float] = Field(default=None, ge=0.0, le=100.0)
+    is_active: Optional[bool] = None
+
+
+class AcademyProgramRead(AcademyProgramBase):
+    id: UUID
+    sede_id: Optional[UUID] = None
+    created_at: Optional[datetime] = None
+    study_plans_count: int = 0
+    model_config = orm_config
+
+
+class AcademyAcademicPeriodBase(BaseModel):
+    code: str = Field(min_length=2, max_length=50)
+    name: str = Field(min_length=2, max_length=100)
+    period_type: str = Field(default="semestral", max_length=50)
+    start_date: date
+    end_date: date
+    enrollment_start_date: Optional[date] = None
+    enrollment_end_date: Optional[date] = None
+    grading_deadline: Optional[date] = None
+    status: str = Field(default="open", max_length=50)
+    is_active: bool = True
+
+
+class AcademyAcademicPeriodCreate(AcademyAcademicPeriodBase):
+    model_config = ConfigDict(extra="forbid")
+
+
+class AcademyAcademicPeriodUpdate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    code: Optional[str] = Field(default=None, min_length=2, max_length=50)
+    name: Optional[str] = Field(default=None, min_length=2, max_length=100)
+    period_type: Optional[str] = Field(default=None, max_length=50)
+    start_date: Optional[date] = None
+    end_date: Optional[date] = None
+    enrollment_start_date: Optional[date] = None
+    enrollment_end_date: Optional[date] = None
+    grading_deadline: Optional[date] = None
+    status: Optional[str] = Field(default=None, max_length=50)
+    is_active: Optional[bool] = None
+
+
+class AcademyAcademicPeriodRead(AcademyAcademicPeriodBase):
+    id: UUID
+    sede_id: Optional[UUID] = None
+    created_at: Optional[datetime] = None
+    offerings_count: int = 0
+    model_config = orm_config
+
+
+class AcademyGradingSchemeCutBase(BaseModel):
+    name: str = Field(min_length=1, max_length=100)
+    order_index: int = Field(default=1, ge=1)
+    weight_percent: float = Field(default=30.0, ge=0.0, le=100.0)
+    description: Optional[str] = None
+
+
+class AcademyGradingSchemeCutCreate(AcademyGradingSchemeCutBase):
+    model_config = ConfigDict(extra="forbid")
+
+
+class AcademyGradingSchemeCutRead(AcademyGradingSchemeCutBase):
+    id: UUID
+    scheme_id: UUID
+    model_config = orm_config
+
+
+class AcademyGradingSchemeBase(BaseModel):
+    name: str = Field(min_length=2, max_length=100)
+    description: Optional[str] = None
+    scale_max: float = Field(default=100.0, gt=0.0)
+    passing_grade: float = Field(default=70.0, ge=0.0)
+    is_default: bool = False
+    is_active: bool = True
+
+
+class AcademyGradingSchemeCreate(AcademyGradingSchemeBase):
+    cuts: List[AcademyGradingSchemeCutCreate] = Field(default_factory=list)
+    model_config = ConfigDict(extra="forbid")
+
+
+class AcademyGradingSchemeUpdate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    name: Optional[str] = Field(default=None, min_length=2, max_length=100)
+    description: Optional[str] = None
+    scale_max: Optional[float] = Field(default=None, gt=0.0)
+    passing_grade: Optional[float] = Field(default=None, ge=0.0)
+    is_default: Optional[bool] = None
+    is_active: Optional[bool] = None
+    cuts: Optional[List[AcademyGradingSchemeCutCreate]] = None
+
+
+class AcademyGradingSchemeRead(AcademyGradingSchemeBase):
+    id: UUID
+    sede_id: Optional[UUID] = None
+    cuts: List[AcademyGradingSchemeCutRead] = Field(default_factory=list)
+    created_at: Optional[datetime] = None
+    model_config = orm_config
+
+
+class AcademyStudyPlanSubjectBase(BaseModel):
+    code: str = Field(min_length=1, max_length=50)
+    name: str = Field(min_length=1, max_length=200)
+    level_number: int = Field(default=1, ge=1)
+    credits: int = Field(default=3, ge=0)
+    weekly_hours_theory: int = Field(default=2, ge=0)
+    weekly_hours_practice: int = Field(default=2, ge=0)
+    weekly_hours_independent: int = Field(default=4, ge=0)
+    is_mandatory: bool = True
+    course_id: Optional[UUID] = None
+    default_grading_scheme_id: Optional[UUID] = None
+    order_index: int = 0
+    prerequisite_codes: Optional[List[str]] = None
+
+
+class AcademyStudyPlanSubjectCreate(AcademyStudyPlanSubjectBase):
+    model_config = ConfigDict(extra="forbid")
+
+
+class AcademyStudyPlanSubjectUpdate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    code: Optional[str] = Field(default=None, min_length=1, max_length=50)
+    name: Optional[str] = Field(default=None, min_length=1, max_length=200)
+    level_number: Optional[int] = Field(default=None, ge=1)
+    credits: Optional[int] = Field(default=None, ge=0)
+    weekly_hours_theory: Optional[int] = Field(default=None, ge=0)
+    weekly_hours_practice: Optional[int] = Field(default=None, ge=0)
+    weekly_hours_independent: Optional[int] = Field(default=None, ge=0)
+    is_mandatory: Optional[bool] = None
+    course_id: Optional[UUID] = None
+    default_grading_scheme_id: Optional[UUID] = None
+    order_index: Optional[int] = None
+    prerequisite_codes: Optional[List[str]] = None
+
+
+class AcademyStudyPlanSubjectRead(AcademyStudyPlanSubjectBase):
+    id: UUID
+    study_plan_id: UUID
+    created_at: Optional[datetime] = None
+    model_config = orm_config
+
+
+class AcademyStudyPlanBase(BaseModel):
+    program_id: UUID
+    code: str = Field(min_length=2, max_length=50)
+    name: str = Field(min_length=2, max_length=150)
+    total_credits: int = Field(default=0, ge=0)
+    total_levels: int = Field(default=1, ge=1)
+    level_type: str = Field(default="semestre", max_length=50)
+    is_active: bool = True
+
+
+class AcademyStudyPlanCreate(AcademyStudyPlanBase):
+    model_config = ConfigDict(extra="forbid")
+
+
+class AcademyStudyPlanUpdate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    code: Optional[str] = Field(default=None, min_length=2, max_length=50)
+    name: Optional[str] = Field(default=None, min_length=2, max_length=150)
+    total_credits: Optional[int] = Field(default=None, ge=0)
+    total_levels: Optional[int] = Field(default=None, ge=1)
+    level_type: Optional[str] = Field(default=None, max_length=50)
+    is_active: Optional[bool] = None
+
+
+class AcademyStudyPlanRead(AcademyStudyPlanBase):
+    id: UUID
+    sede_id: Optional[UUID] = None
+    subjects: List[AcademyStudyPlanSubjectRead] = Field(default_factory=list)
+    program_name: Optional[str] = None
+    created_at: Optional[datetime] = None
+    model_config = orm_config
+
+
+class AcademyPeriodOfferingBase(BaseModel):
+    academic_period_id: UUID
+    subject_id: UUID
+    course_id: Optional[UUID] = None
+    docente_persona_id: Optional[UUID] = None
+    grading_scheme_id: UUID
+    group_name: str = Field(default="Grupo 01", max_length=50)
+    quota_max: int = Field(default=40, ge=1)
+    status: str = Field(default="open", max_length=50)
+    classroom: Optional[str] = Field(default=None, max_length=100)
+    schedule_summary: Optional[str] = Field(default=None, max_length=200)
+
+
+class AcademyPeriodOfferingCreate(AcademyPeriodOfferingBase):
+    model_config = ConfigDict(extra="forbid")
+
+
+class AcademyPeriodOfferingUpdate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    docente_persona_id: Optional[UUID] = None
+    grading_scheme_id: Optional[UUID] = None
+    group_name: Optional[str] = Field(default=None, max_length=50)
+    quota_max: Optional[int] = Field(default=None, ge=1)
+    status: Optional[str] = Field(default=None, max_length=50)
+    classroom: Optional[str] = Field(default=None, max_length=100)
+    schedule_summary: Optional[str] = Field(default=None, max_length=200)
+
+
+class AcademyPeriodOfferingRead(AcademyPeriodOfferingBase):
+    id: UUID
+    sede_id: Optional[UUID] = None
+    subject_name: Optional[str] = None
+    subject_code: Optional[str] = None
+    credits: int = 0
+    docente_name: Optional[str] = None
+    period_code: Optional[str] = None
+    grading_scheme_name: Optional[str] = None
+    enrolled_count: int = 0
+    created_at: Optional[datetime] = None
+    model_config = orm_config
+
+
+class AcademyStudentPeriodGradeItem(BaseModel):
+    persona_id: UUID
+    cut_id: UUID
+    grade_value: Optional[float] = Field(default=None, ge=0.0)
+    comments: Optional[str] = None
+
+
+class AcademyBatchGradeSubmit(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    offering_id: Optional[UUID] = None
+    grades: List[AcademyStudentPeriodGradeItem]
+
+
+class AcademyStudentPeriodGradeRead(BaseModel):
+    id: UUID
+    offering_id: UUID
+    persona_id: UUID
+    student_name: Optional[str] = None
+    cut_id: UUID
+    cut_name: Optional[str] = None
+    cut_weight: float = 0.0
+    grade_value: Optional[float] = None
+    comments: Optional[str] = None
+    graded_by_persona_id: Optional[UUID] = None
+    graded_at: Optional[datetime] = None
+    model_config = orm_config
+
+
+class AcademyStudentSubjectRecordRead(BaseModel):
+    id: UUID
+    offering_id: UUID
+    persona_id: UUID
+    student_name: Optional[str] = None
+    subject_name: Optional[str] = None
+    subject_code: Optional[str] = None
+    credits_attempted: int = 0
+    credits_earned: int = 0
+    calculated_final_grade: Optional[float] = None
+    final_grade_override: Optional[float] = None
+    passed: bool = False
+    attendance_percent: float = 0.0
+    status: str = "enrolled"
+    acta_number: Optional[str] = None
+    model_config = orm_config
+
+
+class AcademicTranscriptSubject(BaseModel):
+    offering_id: Optional[UUID] = None
+    subject_code: str
+    subject_name: str
+    credits: int
+    period_code: str
+    final_grade: float
+    passed: bool
+    status: str
+
+
+class AcademicTranscriptSummary(BaseModel):
+    persona_id: UUID
+    student_name: str
+    total_credits_attempted: int
+    total_credits_earned: int
+    weighted_gpa: float  # Promedio Ponderado Acumulado por Créditos
+    subjects: List[AcademicTranscriptSubject] = Field(default_factory=list)
+
+class AcademyStudentEnrollmentCreate(BaseModel):
+    persona_id: UUID
+
+class AcademyStudentEnrollmentRead(BaseModel):
+    id: UUID
+    offering_id: UUID
+    persona_id: UUID
+    enrolled_by_persona_id: UUID
+    enrolled_at: datetime
+    status: str
+    deleted_at: Optional[datetime] = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+# ── Tutor Socrático & Defensas Interactivas ───────────────────────────────────
+
+class SocraticQueryRequest(BaseModel):
+    question: str = Field(min_length=1, description="Pregunta o consulta del estudiante")
+    context: Optional[str] = Field(default=None, description="Contexto temático o lección relacionada")
+
+
+class SocraticQueryResponse(BaseModel):
+    session_id: UUID
+    offering_id: UUID
+    student_id: UUID
+    question: str
+    socratic_response: str
+    session_type: str = "tutor"
+    created_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class DefenseStartRequest(BaseModel):
+    submission_id: Optional[UUID] = Field(default=None, description="ID de la entrega a defender (opcional)")
+
+
+class DefenseSessionStatusResponse(BaseModel):
+    id: UUID
+    offering_id: Optional[UUID] = None
+    submission_id: Optional[UUID] = None
+    student_id: UUID
+    status: str
+    score: Optional[float] = None
+    duration_seconds: int = 300
+    current_question_index: int = 0
+    total_questions: int = 0
+    current_question: Optional[str] = None
+    started_at: Optional[datetime] = None
+    ended_at: Optional[datetime] = None
+    time_remaining_seconds: Optional[int] = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class DefenseAnswerRequest(BaseModel):
+    answer: str = Field(min_length=1, description="Respuesta del estudiante a la pregunta socrática actual")
+
+
+class DefenseAnswerResponse(BaseModel):
+    session_id: UUID
+    status: str
+    current_question_index: int
+    total_questions: int
+    next_question: Optional[str] = None
+    is_completed: bool = False
+    score: Optional[float] = None
+    feedback: Optional[str] = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class DefenseCloseResponse(BaseModel):
+    session_id: UUID
+    status: str
+    score: float
+    feedback: str
+    ended_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+# ── Grafo de Conocimiento & Portafolio Verificable ────────────────────────────
+
+class KnowledgeNodeCreate(BaseModel):
+    title: str = Field(min_length=1, max_length=255, description="Título del nodo de conocimiento")
+    description: Optional[str] = Field(default=None, description="Descripción del concepto, habilidad o competencia")
+    node_type: str = Field(default="concept", description="Tipo de nodo: concept, skill, competency")
+    weight: float = Field(default=1.0, ge=0.0, description="Ponderación del nodo en la asignatura")
+
+
+class KnowledgeNodeRead(BaseModel):
+    id: UUID
+    offering_id: UUID
+    title: str
+    description: Optional[str] = None
+    node_type: str
+    weight: float
+    created_at: datetime
+    deleted_at: Optional[datetime] = None
+    sede_id: Optional[UUID] = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class KnowledgeEdgeCreate(BaseModel):
+    source_node_id: UUID = Field(description="ID del nodo origen / prerrequisito")
+    target_node_id: UUID = Field(description="ID del nodo destino")
+    edge_type: str = Field(default="requires", description="Tipo de relación: requires, leads_to, related")
+    weight: float = Field(default=1.0, ge=0.0, description="Peso de la conexión")
+
+
+class KnowledgeEdgeRead(BaseModel):
+    id: UUID
+    source_node_id: UUID
+    target_node_id: UUID
+    edge_type: str
+    weight: float
+    created_at: datetime
+    deleted_at: Optional[datetime] = None
+    sede_id: Optional[UUID] = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class KnowledgeGraphResponse(BaseModel):
+    offering_id: UUID
+    nodes: List[KnowledgeNodeRead]
+    edges: List[KnowledgeEdgeRead]
+
+
+class StudentNodeProgressRead(BaseModel):
+    id: UUID
+    student_id: UUID
+    node_id: UUID
+    mastery_score: float
+    attempts: int
+    last_evaluated_at: Optional[datetime] = None
+    created_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class NodeEvaluateRequest(BaseModel):
+    response_text: Optional[str] = Field(default=None, description="Respuesta o argumentación del estudiante")
+    mastery_score: Optional[float] = Field(default=None, ge=0.0, le=1.0, description="Puntaje de dominio opcional")
+
+
+class NodeEvaluateResponse(BaseModel):
+    node_id: UUID
+    student_id: UUID
+    mastery_score: float
+    attempts: int
+    feedback: str
+    last_evaluated_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class LearningPathNode(BaseModel):
+    node_id: UUID
+    title: str
+    node_type: str
+    mastery_score: float
+    status: str
+    order_index: int
+
+
+class LearningPathResponse(BaseModel):
+    offering_id: UUID
+    student_id: UUID
+    current_average_mastery: float
+    path: List[LearningPathNode]
+    suggested_next_node: Optional[LearningPathNode] = None
+
+
+class PortfolioEntryCreate(BaseModel):
+    offering_id: Optional[UUID] = Field(default=None, description="Comisión académica asociada (opcional)")
+    entry_type: str = Field(default="project", description="Tipo: project, defense, certification, grade")
+    title: str = Field(min_length=1, max_length=255, description="Título del logro o evidencia")
+    description: Optional[str] = Field(default=None, description="Descripción detallada del artefacto")
+    evidence_url: Optional[str] = Field(default=None, max_length=500, description="Enlace a la evidencia")
+    score: Optional[float] = Field(default=None, ge=0.0, le=100.0, description="Calificación cuantitativa")
+    is_public: bool = Field(default=False, description="Visibilidad en el portafolio público")
+
+
+class PortfolioEntryRead(BaseModel):
+    id: UUID
+    student_id: UUID
+    offering_id: Optional[UUID] = None
+    entry_type: str
+    title: str
+    description: Optional[str] = None
+    evidence_url: Optional[str] = None
+    score: Optional[float] = None
+    issued_at: datetime
+    credential_hash: Optional[str] = None
+    is_public: bool
+    created_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class PortfolioPublishToggleResponse(BaseModel):
+    id: UUID
+    is_public: bool
+    message: str
+
+
+class PortfolioVerifyResponse(BaseModel):
+    entry_id: UUID
+    is_valid: bool
+    credential_hash: Optional[str] = None
+    calculated_hash: str
+    issued_at: datetime
+    student_id: UUID
+
+
+# =============================================================================
+# WELLNESS & COPILOT SCHEMAS (Hito 3 - Campus OS Cognitivo)
+# =============================================================================
+
+class WellnessSignalCreate(BaseModel):
+    student_id: UUID
+    offering_id: Optional[UUID] = None
+    signal_type: str = Field(description="engagement_drop, grade_risk, absence_pattern, stress_indicator")
+    severity: str = Field(default="medium", description="low, medium, high, critical")
+    details: Optional[Dict[str, Any]] = None
+
+
+class WellnessSignalRead(BaseModel):
+    id: UUID
+    student_id: UUID
+    offering_id: Optional[UUID] = None
+    signal_type: str
+    severity: str
+    detected_at: datetime
+    details: Optional[Dict[str, Any]] = None
+    is_resolved: bool
+    resolved_at: Optional[datetime] = None
+    resolved_by_id: Optional[UUID] = None
+    created_at: datetime
+    student_name: Optional[str] = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class WellnessAlertRead(BaseModel):
+    id: UUID
+    signal_id: UUID
+    recipient_id: UUID
+    message: str
+    sent_at: datetime
+    read_at: Optional[datetime] = None
+    created_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class WellnessDetectRequest(BaseModel):
+    offering_id: UUID
+
+
+class WellnessDetectResponse(BaseModel):
+    detected_count: int
+    signals: List[WellnessSignalRead]
+    summary: str
+
+
+class StudentRiskProfileResponse(BaseModel):
+    student_id: UUID
+    risk_score: float
+    risk_level: str
+    active_signals_count: int
+    signals: List[WellnessSignalRead]
+    recommendations: List[str]
+
+
+class CopilotActivityItem(BaseModel):
+    activity_type: str
+    title: str
+    description: str
+    estimated_duration_minutes: int
+    aligned_nodes: List[str] = Field(default_factory=list)
+
+
+class CopilotActivitySuggestionRequest(BaseModel):
+    offering_id: UUID
+    topic: str
+
+
+class CopilotActivitySuggestionResponse(BaseModel):
+    offering_id: UUID
+    topic: str
+    suggestions: List[CopilotActivityItem]
+
+
+class CopilotRubricCriterion(BaseModel):
+    criterion: str
+    weight: float
+    levels: Dict[str, str]
+
+
+class CopilotRubricRequest(BaseModel):
+    title: str
+    competencies: List[str]
+
+
+class CopilotRubricResponse(BaseModel):
+    title: str
+    competencies: List[str]
+    criteria: List[CopilotRubricCriterion]
+
+
+class CopilotClassPerformanceRequest(BaseModel):
+    offering_id: UUID
+
+
+class CopilotClassPerformanceResponse(BaseModel):
+    offering_id: UUID
+    total_students: int
+    average_grade: float
+    grade_distribution: Dict[str, int]
+    weak_knowledge_nodes: List[Dict[str, Any]]
+    at_risk_students: List[Dict[str, Any]]
+    pedagogical_recommendations: List[str]
+
+
+class CopilotWeeklyReportResponse(BaseModel):
+    offering_id: UUID
+    week_period: str
+    total_enrolled: int
+    average_attendance_percent: float
+    grades_summary: Dict[str, Any]
+    wellness_alerts_count: int
+    active_wellness_signals: List[WellnessSignalRead]
+    knowledge_graph_progress_percent: float
+    key_highlights: List[str]
+
+
+class AchievementCreate(BaseModel):
+    code: str = Field(max_length=100)
+    title: str = Field(max_length=200)
+    description: Optional[str] = None
+    achievement_type: str = "milestone"
+    points: int = 10
+    badge_icon: Optional[str] = "award"
+    is_active: bool = True
+    sede_id: Optional[UUID] = None
+
+
+class AchievementRead(BaseModel):
+    id: UUID
+    code: str
+    title: str
+    description: Optional[str] = None
+    achievement_type: str
+    points: int
+    badge_icon: Optional[str] = None
+    is_active: bool
+    sede_id: Optional[UUID] = None
+    created_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class StudentAchievementAwardRequest(BaseModel):
+    student_id: UUID
+    achievement_id: UUID
+    offering_id: Optional[UUID] = None
+    evidence: Optional[Dict[str, Any]] = None
+
+
+class StudentAchievementRead(BaseModel):
+    id: UUID
+    student_id: UUID
+    achievement_id: UUID
+    offering_id: Optional[UUID] = None
+    earned_at: datetime
+    evidence: Optional[Dict[str, Any]] = None
+    credential_hash: Optional[str] = None
+    sede_id: Optional[UUID] = None
+    achievement: Optional[AchievementRead] = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class LeaderboardEntryRead(BaseModel):
+    id: UUID
+    student_id: UUID
+    student_name: str
+    total_points: int
+    rank: Optional[int] = None
+    period: str
+    offering_id: Optional[UUID] = None
+    updated_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class LeaderboardRecalculateRequest(BaseModel):
+    period: Optional[str] = "2026-Q3"
+    offering_id: Optional[UUID] = None
+
+
+class CredentialVerificationResponse(BaseModel):
+    verified: bool
+    student_id: UUID
+    student_name: str
+    achievement_id: UUID
+    achievement_title: str
+    badge_icon: Optional[str] = None
+    points: int
+    credential_hash: str
+    earned_at: datetime
+    is_valid: bool = True
+
+
+class StudyGroupMemberRead(BaseModel):
+    id: UUID
+    group_id: UUID
+    student_id: UUID
+    student_name: str
+    role: str
+    joined_at: datetime
+    sede_id: Optional[UUID] = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class StudyGroupCreate(BaseModel):
+    offering_id: UUID
+    name: str = Field(max_length=255)
+    description: Optional[str] = None
+    max_members: int = 5
+
+
+class StudyGroupRead(BaseModel):
+    id: UUID
+    offering_id: UUID
+    name: str
+    description: Optional[str] = None
+    max_members: int
+    is_active: bool
+    created_by: UUID
+    creator_name: Optional[str] = None
+    sede_id: Optional[UUID] = None
+    created_at: datetime
+    members_count: int = 0
+    members: List[StudyGroupMemberRead] = Field(default_factory=list)
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class CalendarEventCreate(BaseModel):
+    title: str = Field(min_length=1, max_length=255)
+    description: Optional[str] = None
+    event_type: str = Field(description="evaluation, assignment, socratic_defense, study_group, milestone")
+    start_date: datetime
+    end_date: datetime
+    offering_id: Optional[UUID] = None
+    sede_id: Optional[UUID] = None
+
+    @field_validator("event_type")
+    @classmethod
+    def validate_event_type(cls, v: str) -> str:
+        allowed = {"evaluation", "assignment", "socratic_defense", "study_group", "milestone"}
+        if v not in allowed:
+            raise ValueError(f"event_type debe ser uno de: {', '.join(sorted(allowed))}")
+        return v
+
+    @model_validator(mode="after")
+    def validate_dates(self):
+        if self.end_date < self.start_date:
+            raise ValueError("end_date no puede ser anterior a start_date")
+        return self
+
+
+class CalendarEventRead(BaseModel):
+    id: UUID
+    offering_id: Optional[UUID] = None
+    title: str
+    description: Optional[str] = None
+    event_type: str
+    start_date: datetime
+    end_date: datetime
+    sede_id: Optional[UUID] = None
+    created_by: UUID
+    created_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class WorkloadWeekPrediction(BaseModel):
+    week_number: int
+    year: int
+    start_date: str
+    end_date: str
+    total_events: int
+    evaluations_count: int
+    assignments_count: int
+    socratic_defenses_count: int
+    other_events_count: int
+    workload_score: float
+    workload_level: str  # low, medium, high, overload
+    is_overloaded: bool
+    events: List[CalendarEventRead] = Field(default_factory=list)
+
+
+class WorkloadPredictionResponse(BaseModel):
+    student_id: Optional[UUID] = None
+    offering_id: Optional[UUID] = None
+    weeks_analyzed: int
+    total_events: int
+    overloaded_weeks_count: int
+    weeks: List[WorkloadWeekPrediction] = Field(default_factory=list)
+    recommendations: List[str] = Field(default_factory=list)
+
+
+# ---------------------------------------------------------------------------
+# Hito 6: Recomendaciones de Contenido y Sistema de Mentoría
+# ---------------------------------------------------------------------------
+
+class RecommendationRead(BaseModel):
+    id: UUID
+    student_id: UUID
+    recommendation_type: str
+    title: str
+    description: Optional[str] = None
+    reason: str
+    score: float
+    target_url: Optional[str] = None
+    viewed: bool = False
+    viewed_at: Optional[datetime] = None
+    created_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class MentorProfileRead(BaseModel):
+    id: UUID
+    mentor_persona_id: UUID
+    mentor_name: Optional[str] = None
+    name: Optional[str] = None
+    full_name: Optional[str] = None
+    bio: Optional[str] = None
+    description: Optional[str] = None
+    expertise: Optional[Any] = None
+    availability: Optional[Any] = None
+    availability_summary: Optional[str] = None
+    max_mentees: int = 5
+    is_active: bool = True
+    created_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class MentorProfileCreate(BaseModel):
+    mentor_persona_id: Optional[UUID] = None
+    bio: Optional[str] = None
+    expertise: Optional[List[str]] = None
+    availability_summary: Optional[str] = None
+    max_mentees: int = 5
+    is_active: bool = True
+
+
+class MentorshipRequestCreate(BaseModel):
+    mentor_persona_id: UUID
+    message: Optional[str] = None
+
+
+class MentorshipResponseAction(BaseModel):
+    request_id: UUID
+    decision: str  # 'accepted', 'rejected'
+    response_note: Optional[str] = None
+
+    @field_validator("decision")
+    @classmethod
+    def validate_decision(cls, v: str) -> str:
+        norm = v.strip().lower()
+        if norm not in ("accepted", "rejected", "approved", "declined"):
+            raise ValueError("decision debe ser 'accepted' o 'rejected'")
+        return "accepted" if norm in ("accepted", "approved") else "rejected"
+
+
+class MentorshipRequestRead(BaseModel):
+    id: UUID
+    mentor_persona_id: UUID
+    mentee_persona_id: UUID
+    mentor_name: Optional[str] = None
+    mentee_name: Optional[str] = None
+    status: str
+    message: Optional[str] = None
+    response_note: Optional[str] = None
+    requested_at: datetime
+    responded_at: Optional[datetime] = None
+    created_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class MentorshipMenteeRead(BaseModel):
+    id: UUID
+    mentee_persona_id: UUID
+    mentee_name: str
+    status: str = "active"
+    started_at: Optional[datetime] = None
+    created_at: Optional[datetime] = None
+    goals: Optional[List[str]] = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+# ---------------------------------------------------------------------------
+# Hito 8: Analítica Institucional y Salud de Cohortes
+# ---------------------------------------------------------------------------
+
+class InstitutionalSummaryKPIs(BaseModel):
+    sede_id: Optional[UUID] = None
+    total_students: int
+    retention_projected_rate: float
+    socratic_pass_rate: float
+    wellness_health_index: float
+    active_study_groups: int
+    total_offerings: int = 0
+    active_mentorships: int = 0
+    total_achievements_awarded: int = 0
+    generated_at: datetime
+
+
+class KnowledgeNodeMasteryBrief(BaseModel):
+    node_id: UUID
+    title: str
+    code: Optional[str] = None
+    average_mastery: float
+    evaluated_students_count: int
+
+
+class CohortHealthResponse(BaseModel):
+    offering_id: UUID
+    subject_name: str
+    period_code: str
+    sede_id: Optional[UUID] = None
+    enrolled_students_count: int
+    average_grade: float
+    completion_rate: float
+    lowest_mastery_nodes: List[KnowledgeNodeMasteryBrief] = Field(default_factory=list)
+    active_alerts_count: int
+    active_alerts: List[Dict[str, Any]] = Field(default_factory=list)
+    health_status: str  # 'healthy', 'needs_attention', 'at_risk'
+    recommendations: List[str] = Field(default_factory=list)
+

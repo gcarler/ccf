@@ -11,10 +11,11 @@ import {
     getPriorityOption,
 } from '@/lib/projects/constants';
 import type { TaskPriority } from '@/lib/projects/constants';
-import type { ProjectTaskRecord, TaskSupplyRecord } from '@/types/projects';
+import type { ProjectTaskRecord, TaskSupplyRecord, ProjectUserFavorite } from '@/types/projects';
 import { AlignLeft } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useCallback, useEffect, useRef, useState, type MouseEvent as ReactMouseEvent } from 'react';
+import { toast } from 'sonner';
 
 import TaskDetailHeader from './TaskDetailHeader';
 import TaskMetaFields from './TaskMetaFields';
@@ -24,6 +25,7 @@ import TaskActivitySection from './TaskActivitySection';
 import type { Activity } from './TaskActivitySection';
 import { toggleActivity, addChild, updateTitle } from './TaskActivitySection';
 import TaskCommentSection from './TaskCommentSection';
+import TaskTimeTrackingSection from './TaskTimeTrackingSection';
 
 const MIN_WIDTH = 400;
 const DEFAULT_WIDTH = 520;
@@ -45,6 +47,7 @@ interface TaskDetailPanelProps {
     onDelete?: (taskId: string) => void;
     onActivityCreated?: () => void;
     onVerRutaClick?: () => void;
+    onFavoriteToggle?: (taskId: string, isFav: boolean) => void;
 }
 
 export default function TaskDetailPanel({
@@ -55,6 +58,7 @@ export default function TaskDetailPanel({
     onDelete,
     onActivityCreated,
     onVerRutaClick,
+    onFavoriteToggle,
 }: TaskDetailPanelProps) {
     const { token, loading: authLoading } = useAuth();
 
@@ -209,6 +213,44 @@ export default function TaskDetailPanel({
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [task?.id]);
 
+    // ── Favorites sync ──────────────────────────────────────────
+    useEffect(() => {
+        let active = true;
+        if (!task?.id || !task?.project_id || !token) {
+            setStarred(false);
+            return;
+        }
+        apiFetch<(string | ProjectUserFavorite)[]>(`/projects/${task.project_id}/favorites?entity_type=task`, { token })
+            .then(favs => {
+                if (active && Array.isArray(favs)) {
+                    const isFav = favs.some(f => (typeof f === 'string' ? f : f.entity_id) === task.id);
+                    setStarred(isFav);
+                }
+            })
+            .catch(() => {});
+        return () => { active = false; };
+    }, [task?.id, task?.project_id, token]);
+
+    const handleStarToggle = async () => {
+        if (!task || !requireAuth('Debes iniciar sesión para marcar favoritos.')) return;
+        const prevStarred = starred;
+        const nextStarred = !prevStarred;
+        setStarred(nextStarred);
+        try {
+            const res = await apiFetch<{ is_favorite: boolean; entity_id: string }>(
+                `/projects/${task.project_id}/tasks/${task.id}/toggle-favorite`,
+                { method: 'POST', token }
+            );
+            const actualStatus = res?.is_favorite ?? nextStarred;
+            setStarred(actualStatus);
+            onFavoriteToggle?.(task.id, actualStatus);
+            toast.success(actualStatus ? 'Tarea añadida a favoritos' : 'Tarea removida de favoritos');
+        } catch {
+            setStarred(prevStarred);
+            toast.error('No se pudo actualizar el estado de favorito.');
+        }
+    };
+
     // ── Save ────────────────────────────────────────────────────
     const handleSave = async () => {
         if (!task || !requireAuth('Debes iniciar sesión para guardar cambios de la tarea.')) return;
@@ -314,7 +356,7 @@ export default function TaskDetailPanel({
                 style={{ width, minWidth: `min(${MIN_WIDTH}px, 100%)`, maxWidth: '100%' }}
                 role="complementary"
                 aria-label="Detalle de tarea"
-                className="relative h-full flex flex-col bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--bg-primary))] border-l border-[hsl(var(--border))] dark:border-white/[0.07] shadow-[-16px_0_48px_rgba(0,0,0,0.08)] dark:shadow-[-16px_0_48px_rgba(0,0,0,0.35)] overflow-hidden"
+                className="relative h-full flex flex-col bg-[hsl(var(--surface-1))] border-l border-[hsl(var(--border))] shadow-2xl overflow-hidden"
             >
                 {/* Resize handle */}
                 <div
@@ -322,7 +364,7 @@ export default function TaskDetailPanel({
                     className="absolute left-0 top-0 bottom-0 w-1.5 cursor-ew-resize z-10 group flex items-center justify-center"
                     title="Arrastrar para redimensionar"
                 >
-                    <div className="w-[3px] h-8 rounded-full bg-[hsl(var(--surface-3))] dark:bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity" />
+                    <div className="w-[3px] h-8 rounded-full bg-[hsl(var(--surface-3))] opacity-0 group-hover:opacity-100 transition-opacity" />
                 </div>
 
                 <TaskDetailHeader
@@ -338,7 +380,7 @@ export default function TaskDetailPanel({
                     onSave={handleSave}
                     onStatusCycle={handleStatusCycle}
                     onFileClick={() => {}}
-                    onStarToggle={() => setStarred(v => !v)}
+                    onStarToggle={handleStarToggle}
                     onExpandToggle={() => {
                         const maxW = Math.floor(window.innerWidth * MAX_RATIO);
                         setWidth(prev => prev < maxW - 50 ? maxW : DEFAULT_WIDTH);
@@ -361,8 +403,8 @@ export default function TaskDetailPanel({
                     />
 
                     {/* Description */}
-                    <section className="px-4 py-3 border-b border-[hsl(var(--border))] dark:border-white/[0.05]">
-                        <p className="text-2xs font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] mb-2 flex items-center gap-1.5">
+                    <section className="px-4 py-3 border-b border-[hsl(var(--border))]">
+                        <p className="text-2xs font-semibold uppercase tracking-wider text-[hsl(var(--muted-foreground))] mb-2 flex items-center gap-1.5">
                             <AlignLeft size={11} /> Descripción
                         </p>
                         <textarea
@@ -371,7 +413,7 @@ export default function TaskDetailPanel({
                             onBlur={handleSave}
                             rows={3}
                             placeholder="Añade una descripción..."
-                            className="w-full text-base font-medium text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] bg-transparent resize-none outline-none placeholder:text-[hsl(var(--text-secondary))] dark:placeholder:text-[hsl(var(--text-secondary))] leading-relaxed focus:ring-0"
+                            className="w-full text-base font-medium text-[hsl(var(--foreground))] bg-transparent resize-none outline-none placeholder:text-[hsl(var(--muted-foreground))] leading-relaxed focus:ring-0"
                         />
                     </section>
 
@@ -388,6 +430,12 @@ export default function TaskDetailPanel({
                         task={task}
                         supplies={supplies}
                         onSuppliesChange={(next) => { setSupplies(next); onUpdate?.({ ...task, supplies: next }); }}
+                        token={token}
+                        onActivityCreated={onActivityCreated}
+                    />
+
+                    <TaskTimeTrackingSection
+                        task={task}
                         token={token}
                         onActivityCreated={onActivityCreated}
                     />

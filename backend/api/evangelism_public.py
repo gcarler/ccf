@@ -1,19 +1,18 @@
-import datetime
-
-from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
-
-from backend import models
 from backend.core.database import get_db
 from backend.core.permissions import require_evangelism_manage
 from backend.core.tenant import require_user_sede_id
 from backend.models_evangelism import EstrategiaEvangelismo
+from backend import models
+import datetime
+from pydantic import BaseModel
+from typing import List, Optional
 
 router = APIRouter(prefix="", tags=["Evangelism Public"])
 
 DIAS_SEMANA = {
-    "lunes": 0, "martes": 1, "miercoles": 2, "miércoles": 2,
+    "lunes": 0, "martes": 1, "miercoles": 2, "miércoles": 2, 
     "jueves": 3, "viernes": 4, "sabado": 5, "sábado": 5, "domingo": 6
 }
 
@@ -37,7 +36,7 @@ def get_next_occurrence(dia_str, hora_str):
         next_date = now + datetime.timedelta(days=days_ahead)
         next_dt = next_date.replace(hour=hh, minute=mm, second=0, microsecond=0)
         return next_dt
-    except Exception:
+    except Exception as e:
         return None
 
 @router.get("/public/upcoming-events")
@@ -67,7 +66,7 @@ def get_upcoming_public_events(db: Session = Depends(get_db)):
 
 @router.get("/strategies/public-config")
 def get_public_strategies_config(
-    db: Session = Depends(get_db),
+    db: Session = Depends(get_db), 
     current_user: models.User = Depends(require_evangelism_manage)
 ):
     user_sede_id = require_user_sede_id(db, current_user)
@@ -93,9 +92,9 @@ class TogglePublicPayload(BaseModel):
 
 @router.patch("/strategies/{estrategia_id}/toggle-public")
 def toggle_public_strategy(
-    estrategia_id: str,
+    estrategia_id: str, 
     payload: TogglePublicPayload,
-    db: Session = Depends(get_db),
+    db: Session = Depends(get_db), 
     current_user: models.User = Depends(require_evangelism_manage)
 ):
     user_sede_id = require_user_sede_id(db, current_user)

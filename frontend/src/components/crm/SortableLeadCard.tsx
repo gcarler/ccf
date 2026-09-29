@@ -61,17 +61,17 @@ export function SortableLeadCard({ lead, stage, onClick, isDragging: isOverlayDr
             onClick={onClick}
             className={clsx(
                 "group relative p-4 mb-3 rounded-lg transition-all cursor-grab active:cursor-grabbing",
-                "bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))]/50 dark:border-white/5",
-                "hover:border-[hsl(var(--info)/100%)]/30 hover:shadow-[0_20px_40px_-15px_rgba(0,0,0,0.05)] dark:hover:shadow-[0_20px_40px_-15px_rgba(0,0,0,0.3)]",
+                "bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))]",
+                "hover:border-[hsl(var(--primary)/0.3)] hover:shadow-lg",
                 "hover:-translate-y-1 active:scale-[0.98]",
                 isDragging && "opacity-0",
-                isOverlayDragging && "opacity-100 scale-105 shadow-2xl ring-2 ring-[hsl(var(--primary))]/30",
-                isSlaOverdue && "ring-1 ring-[hsl(var(--warning)/20%)] shadow-[0_0_20px_rgba(245,158,11,0.05)]"
+                isOverlayDragging && "opacity-100 scale-105 shadow-2xl ring-2 ring-[hsl(var(--primary)/0.3)]",
+                isSlaOverdue && "ring-1 ring-[hsl(var(--warning)/0.2)] shadow-sm"
             )}
         >
             {/* SLA Overdue Pulse */}
             {isSlaOverdue && (
-                <div className="absolute inset-0 rounded-lg ring-2 ring-[hsl(var(--warning)/10%)] animate-pulse pointer-events-none" />
+                <div className="absolute inset-0 rounded-lg ring-2 ring-[hsl(var(--warning)/0.1)] animate-pulse pointer-events-none" />
             )}
             {/* Top Glow Accent */}
             <div className={clsx("absolute top-0 left-6 right-6 h-[1.5px] opacity-20 blur-[1px]", stage.color)} />
@@ -86,7 +86,7 @@ export function SortableLeadCard({ lead, stage, onClick, isDragging: isOverlayDr
                             fill="transparent"
                             stroke="currentColor"
                             strokeWidth="2.5"
-                            className="text-[hsl(var(--text-secondary))] dark:text-white/5"
+                            className="text-[hsl(var(--muted-foreground))] opacity-20"
                         />
                         <circle
                             cx="22" cy="22" r={radius}
@@ -103,7 +103,7 @@ export function SortableLeadCard({ lead, stage, onClick, isDragging: isOverlayDr
                     </svg>
 
                     <div className={clsx(
-                        "size-8 rounded-lg flex items-center justify-center text-white font-bold text-xs shadow-lg relative z-10 transition-transform group-hover:scale-105",
+                        "size-8 rounded-lg flex items-center justify-center text-[hsl(var(--primary-foreground))] font-bold text-xs shadow-lg relative z-10 transition-transform group-hover:scale-105",
                         stage.color,
                         glowColor
                     )}>
@@ -111,18 +111,18 @@ export function SortableLeadCard({ lead, stage, onClick, isDragging: isOverlayDr
                     </div>
 
                     {isSlaOverdue && (
-                        <div className="absolute -top-1 -right-1 size-3 rounded-full bg-[hsl(var(--warning))] border-2 border-white dark:border-[hsl(var(--border))] z-20 animate-bounce" />
+                        <div className="absolute -top-1 -right-1 size-3 rounded-full bg-[hsl(var(--warning))] border-2 border-[hsl(var(--surface-1))] z-20 animate-bounce" />
                     )}
                 </div>
 
                 <div className="flex-1 min-w-0 pt-0.5">
                     <div className="flex items-center justify-between gap-2">
-                        <h4 className="font-bold text-[hsl(var(--text-primary))] dark:text-white text-sm leading-tight truncate group-hover:text-[hsl(var(--primary))] dark:group-hover:text-[hsl(var(--primary))] transition-colors">
+                        <h4 className="font-bold text-[hsl(var(--foreground))] text-sm leading-tight truncate group-hover:text-[hsl(var(--primary))] transition-colors">
                             {lead.nombre_completo || `${lead.first_name ?? ''} ${lead.last_name ?? ''}`.trim()}
                         </h4>
-                        <ChevronRight size={14} className="text-[hsl(var(--text-secondary))] group-hover:text-[hsl(var(--primary))] group-hover:translate-x-1 transition-all" />
+                        <ChevronRight size={14} className="text-[hsl(var(--muted-foreground))] group-hover:text-[hsl(var(--primary))] group-hover:translate-x-1 transition-all" />
                     </div>
-                    <p className="text-xs text-[hsl(var(--text-secondary))] font-bold flex items-center gap-1 mt-1">
+                    <p className="text-xs text-[hsl(var(--muted-foreground))] font-bold flex items-center gap-1 mt-1">
                         <Phone size={10} strokeWidth={3} />
                         {lead.phone}
                     </p>
@@ -133,14 +133,14 @@ export function SortableLeadCard({ lead, stage, onClick, isDragging: isOverlayDr
             <div className="absolute top-4 right-4 flex gap-1 opacity-0 group-hover:opacity-100 transition-all scale-90 group-hover:scale-100">
                 <button
                     onClick={(e) => { e.stopPropagation(); window.open(`tel:${lead.phone}`); }}
-                    className="size-7 rounded-lg bg-info-soft dark:bg-[hsl(var(--info))]/10 text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] flex items-center justify-center hover:bg-[hsl(var(--primary))] hover:text-white transition-all shadow-sm"
+                    className="size-7 rounded-lg bg-[hsl(var(--primary)/0.1)] text-[hsl(var(--primary))] flex items-center justify-center hover:bg-[hsl(var(--primary))] hover:text-[hsl(var(--primary-foreground))] transition-all shadow-sm"
                     aria-label="Llamar"
                 >
                     <Phone size={12} />
                 </button>
                 <button
                     onClick={(e) => { e.stopPropagation(); window.open(`https://wa.me/${lead.phone.replace(/[^0-9]/g, '')}`); }}
-                    className="size-7 rounded-lg bg-success-soft dark:bg-[hsl(var(--success))]/10 text-success-text dark:text-[hsl(var(--success))] flex items-center justify-center hover:bg-[hsl(var(--success))] hover:text-white transition-all shadow-sm"
+                    className="size-7 rounded-lg bg-[hsl(var(--success)/0.1)] text-[hsl(var(--success))] flex items-center justify-center hover:bg-[hsl(var(--success))] hover:text-[hsl(var(--success-foreground))] transition-all shadow-sm"
                     aria-label="WhatsApp"
                 >
                     <MessageCircle size={12} />
@@ -148,12 +148,12 @@ export function SortableLeadCard({ lead, stage, onClick, isDragging: isOverlayDr
             </div>
 
             {/* Divider */}
-            <div className="h-px w-full bg-[hsl(var(--surface-2))] dark:bg-white/5 mb-3.5" />
+            <div className="h-px w-full bg-[hsl(var(--surface-2))] mb-3.5" />
 
             {/* Footer Metadata */}
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                    <div className="px-2 py-0.5 rounded-lg bg-[hsl(var(--surface-2))] dark:bg-white/5 text-2xs font-bold text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] uppercase tracking-wide flex items-center gap-1.5">
+                    <div className="px-2 py-0.5 rounded-lg bg-[hsl(var(--surface-2))] text-2xs font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wide flex items-center gap-1.5">
                         <span className="text-sm">{SOURCES[lead.source] ?? '📌'}</span>
                         {lead.source}
                     </div>
@@ -163,9 +163,9 @@ export function SortableLeadCard({ lead, stage, onClick, isDragging: isOverlayDr
                     {daysSince !== null && (
                         <div className={clsx(
                             "flex items-center gap-1 text-2xs font-bold",
-                            daysSince > 14 ? 'text-[hsl(var(--danger))]' :
+                            daysSince > 14 ? 'text-[hsl(var(--destructive))]' :
                             daysSince > 7 ? 'text-[hsl(var(--warning))]' :
-                            'text-[hsl(var(--text-secondary))]'
+                            'text-[hsl(var(--muted-foreground))]'
                         )}>
                             <Clock size={11} strokeWidth={3} />
                             {daysSince === 0 ? 'HOY' : `${daysSince}d`}

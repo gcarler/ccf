@@ -193,6 +193,7 @@ class EstrategiaEvangelismo(Base):
 
     # General
     strategy_type = Column(String(100), nullable=True)
+    is_public = Column(Boolean, default=False)
     status = Column(String(50), default="active")
     default_role_id = Column(
         UUID(as_uuid=True), ForeignKey("estrategia_roles_personalizados.id", ondelete="SET NULL"), nullable=True

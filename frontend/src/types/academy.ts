@@ -177,3 +177,692 @@ export interface CertificateDetail {
   certificate_type?: string | null;
   course_title?: string | null;
 }
+
+export interface AcademyCalendarEvent {
+  id: string;
+  offering_id?: string | null;
+  title: string;
+  description?: string | null;
+  event_type: string;
+  start_date: string;
+  end_date: string;
+  sede_id?: string | null;
+  created_by: string;
+  created_at: string;
+}
+
+export interface WorkloadWeekPrediction {
+  week_number: number;
+  year: number;
+  start_date: string;
+  end_date: string;
+  total_events: number;
+  evaluations_count: number;
+  assignments_count: number;
+  socratic_defenses_count: number;
+  other_events_count: number;
+  workload_score: number;
+  workload_level: string;
+  is_overloaded: boolean;
+  events: AcademyCalendarEvent[];
+}
+
+export interface WorkloadPredictionResponse {
+  student_id?: string | null;
+  offering_id?: string | null;
+  weeks_analyzed: number;
+  total_events: number;
+  overloaded_weeks_count: number;
+  weeks: WorkloadWeekPrediction[];
+  recommendations: string[];
+}
+
+export interface InstitutionalAcademySummary {
+  sede_id?: string | null;
+  total_students: number;
+  retention_projected_rate: number;
+  socratic_pass_rate: number;
+  wellness_health_index: number;
+  active_study_groups: number;
+  total_offerings: number;
+  active_mentorships: number;
+  total_achievements_awarded: number;
+  generated_at: string;
+}
+
+export interface CohortHealthAlert {
+  id: string;
+  signal_type?: string;
+  severity?: string;
+  student_id?: string;
+  detected_at?: string | null;
+}
+
+export interface CohortHealthResponse {
+  offering_id: string;
+  subject_name: string;
+  period_code: string;
+  sede_id?: string | null;
+  enrolled_students_count: number;
+  average_grade: number;
+  completion_rate: number;
+  lowest_mastery_nodes: Array<{
+    node_id: string;
+    title: string;
+    code?: string | null;
+    average_mastery: number;
+    evaluated_students_count: number;
+  }>;
+  active_alerts_count: number;
+  active_alerts: CohortHealthAlert[];
+  health_status: 'healthy' | 'needs_attention' | 'at_risk' | string;
+  recommendations: string[];
+}
+
+// ── Super-PRO Academic ERP Types ──────────────────────────────────────────────
+
+export type ProgramType =
+  | 'curso_libre'
+  | 'diplomado'
+  | 'carrera'
+  | 'especializacion'
+  | 'maestria'
+  | 'doctorado'
+  | 'taller'
+  | 'certificacion'
+  | 'otro';
+
+export interface AcademicProgram {
+  id: string;
+  sede_id?: string | null;
+  code: string;
+  name: string;
+  description?: string | null;
+  program_type: ProgramType | string;
+  level_name?: string | null;
+  total_duration_type: string;
+  total_duration_units: number;
+  total_credits: number;
+  modality: string;
+  has_teachers: boolean;
+  teachers_can_grade: boolean;
+  min_passing_grade: number;
+  grading_scale_max: number;
+  min_attendance_percent: number;
+  is_active: boolean;
+  study_plans_count?: number;
+  created_at?: string | null;
+}
+
+export interface AcademicPeriod {
+  id: string;
+  sede_id?: string | null;
+  code: string;
+  name: string;
+  period_type: string;
+  start_date: string;
+  end_date: string;
+  enrollment_start_date?: string | null;
+  enrollment_end_date?: string | null;
+  grading_deadline?: string | null;
+  status: 'draft' | 'open' | 'in_progress' | 'grading' | 'closed' | string;
+  is_active: boolean;
+  offerings_count?: number;
+  created_at?: string | null;
+}
+
+export interface GradingSchemeCut {
+  id?: string;
+  scheme_id?: string;
+  name: string;
+  order_index: number;
+  weight_percent: number;
+  description?: string | null;
+}
+
+export interface GradingScheme {
+  id: string;
+  sede_id?: string | null;
+  name: string;
+  description?: string | null;
+  scale_max: number;
+  passing_grade: number;
+  is_default: boolean;
+  is_active: boolean;
+  cuts: GradingSchemeCut[];
+  created_at?: string | null;
+}
+
+export interface StudyPlanSubject {
+  id: string;
+  study_plan_id: string;
+  course_id?: string | null;
+  code: string;
+  name: string;
+  level_number: number;
+  credits: number;
+  weekly_hours_theory: number;
+  weekly_hours_practice: number;
+  weekly_hours_independent: number;
+  is_mandatory: boolean;
+  default_grading_scheme_id?: string | null;
+  order_index: number;
+  prerequisite_codes?: string[] | null;
+  created_at?: string | null;
+}
+
+export interface StudyPlan {
+  id: string;
+  program_id: string;
+  sede_id?: string | null;
+  code: string;
+  name: string;
+  total_credits: number;
+  total_levels: number;
+  level_type: string;
+  is_active: boolean;
+  program_name?: string | null;
+  subjects: StudyPlanSubject[];
+  created_at?: string | null;
+}
+
+export interface PeriodOffering {
+  id: string;
+  sede_id?: string | null;
+  academic_period_id: string;
+  subject_id: string;
+  course_id?: string | null;
+  docente_persona_id?: string | null;
+  grading_scheme_id: string;
+  group_name: string;
+  quota_max: number;
+  status: string;
+  classroom?: string | null;
+  schedule_summary?: string | null;
+  subject_name?: string | null;
+  subject_code?: string | null;
+  credits: number;
+  docente_name?: string | null;
+  period_code?: string | null;
+  grading_scheme_name?: string | null;
+  enrolled_count: number;
+  created_at?: string | null;
+}
+
+export interface StudentSubjectRecord {
+  id: string;
+  offering_id: string;
+  persona_id: string;
+  student_name: string;
+  credits_attempted: number;
+  credits_earned: number;
+  calculated_final_grade?: number | null;
+  final_grade_override?: number | null;
+  passed: boolean;
+  status: string;
+  grades_by_cut?: Record<string, number | null>;
+}
+
+export interface OfferingGradesDetail {
+  offering_id: string;
+  subject_name: string;
+  subject_code: string;
+  credits: number;
+  period_code: string;
+  cuts: GradingSchemeCut[];
+  records: StudentSubjectRecord[];
+}
+
+export interface AcademicTranscriptSubject {
+  offering_id?: string | null;
+  subject_code: string;
+  subject_name: string;
+  credits: number;
+  period_code: string;
+  final_grade: number;
+  passed: boolean;
+  status: string;
+}
+
+export interface AcademicTranscriptSummary {
+  persona_id: string;
+  student_name: string;
+  total_credits_attempted: number;
+  total_credits_earned: number;
+  total_credits_required?: number | null;
+  weighted_gpa: number;
+  subjects: AcademicTranscriptSubject[];
+}
+
+export interface StudentAcademicCommission {
+  offering_id: string;
+  subject_name: string;
+  subject_code?: string | null;
+  period_code?: string | null;
+  group_name?: string | null;
+  credits?: number;
+  status?: string | null;
+}
+
+export interface SocraticSession {
+  id: string;
+  offering_id: string;
+  student_id: string;
+  question: string;
+  response: string;
+  session_type: string;
+  created_at: string;
+}
+
+export interface SocraticQueryResponse {
+  session_id: string;
+  offering_id: string;
+  student_id: string;
+  question: string;
+  socratic_response: string;
+  session_type: string;
+  created_at: string;
+}
+
+export interface DefenseSession {
+  id: string;
+  offering_id?: string | null;
+  submission_id?: string | null;
+  student_id: string;
+  status: string;
+  score?: number | null;
+  duration_seconds: number;
+  current_question_index: number;
+  total_questions: number;
+  current_question?: string | null;
+  started_at?: string | null;
+  ended_at?: string | null;
+  time_remaining_seconds?: number | null;
+}
+
+export interface DefenseAnswer {
+  session_id: string;
+  status: string;
+  current_question_index: number;
+  total_questions: number;
+  next_question?: string | null;
+  is_completed: boolean;
+  score?: number | null;
+  feedback?: string | null;
+}
+
+export interface DefenseScore {
+  session_id: string;
+  status: string;
+  score: number;
+  feedback: string;
+  ended_at: string;
+}
+
+export interface StudentEnrollment {
+  id: string;
+  offering_id: string;
+  persona_id: string;
+  student_name?: string | null;
+  enrolled_by_persona_id?: string | null;
+  enrolled_at: string;
+  status: string;
+  deleted_at?: string | null;
+}
+
+export interface KnowledgeNode {
+  id: string;
+  offering_id: string;
+  title: string;
+  description?: string | null;
+  node_type: 'concept' | 'skill' | 'competency' | string;
+  weight: number;
+  created_at: string;
+  deleted_at?: string | null;
+  sede_id?: string | null;
+}
+
+export interface KnowledgeEdge {
+  id: string;
+  source_node_id: string;
+  target_node_id: string;
+  edge_type: 'requires' | 'leads_to' | 'related' | string;
+  weight: number;
+  created_at: string;
+  deleted_at?: string | null;
+  sede_id?: string | null;
+}
+
+export interface KnowledgeGraph {
+  offering_id: string;
+  nodes: KnowledgeNode[];
+  edges: KnowledgeEdge[];
+}
+
+export interface StudentNodeProgress {
+  id: string;
+  student_id: string;
+  node_id: string;
+  mastery_score: number;
+  attempts: number;
+  last_evaluated_at?: string | null;
+  created_at: string;
+}
+
+export interface LearningPathNode {
+  node_id: string;
+  title: string;
+  node_type: string;
+  mastery_score: number;
+  status: 'ready_to_learn' | 'needs_prerequisites' | 'mastered' | string;
+  order_index: number;
+}
+
+export interface LearningPath {
+  offering_id: string;
+  student_id: string;
+  current_average_mastery: number;
+  path: LearningPathNode[];
+  suggested_next_node?: LearningPathNode | null;
+}
+
+export interface PortfolioEntry {
+  id: string;
+  student_id: string;
+  offering_id?: string | null;
+  entry_type: 'project' | 'defense' | 'certification' | 'grade' | string;
+  title: string;
+  description?: string | null;
+  evidence_url?: string | null;
+  score?: number | null;
+  issued_at: string;
+  credential_hash?: string | null;
+  is_public: boolean;
+  created_at: string;
+}
+
+export interface CredentialVerification {
+  entry_id: string;
+  is_valid: boolean;
+  credential_hash?: string | null;
+  calculated_hash: string;
+  issued_at: string;
+  student_id: string;
+}
+
+export type PortfolioVerifyResult = CredentialVerification;
+
+export type WellnessSignalType = 'engagement_drop' | 'grade_risk' | 'absence_pattern' | 'stress_indicator' | string;
+export type WellnessSeverity = 'low' | 'medium' | 'high' | 'critical';
+
+export interface WellnessSignal {
+  id: string;
+  student_id: string;
+  offering_id?: string | null;
+  signal_type: WellnessSignalType;
+  severity: WellnessSeverity;
+  detected_at: string;
+  details?: Record<string, unknown> | null;
+  is_resolved: boolean;
+  resolved_at?: string | null;
+  resolved_by_id?: string | null;
+  created_at: string;
+  student_name?: string | null;
+}
+
+export interface WellnessAlert {
+  id: string;
+  signal_id: string;
+  recipient_id: string;
+  message: string;
+  sent_at: string;
+  read_at?: string | null;
+  created_at: string;
+  signal_type?: string | null;
+  severity?: string | null;
+  detected_at?: string | null;
+  is_resolved?: boolean;
+}
+
+export interface StudentRiskProfile {
+  student_id: string;
+  risk_score: number;
+  risk_level: 'low' | 'medium' | 'high' | 'critical' | string;
+  active_signals_count: number;
+  signals: WellnessSignal[];
+  recommendations: string[];
+}
+
+export interface CopilotSuggestion {
+  activity_type: 'socratic_dialogue' | 'practical_exercise' | 'recommended_resource' | 'group_challenge' | string;
+  title: string;
+  description: string;
+  estimated_duration_minutes: number;
+  aligned_nodes: string[];
+}
+
+export interface CopilotRubricCriterion {
+  criterion: string;
+  weight: number;
+  levels: {
+    level_1_insufficient: string;
+    level_2_basic: string;
+    level_3_competent: string;
+    level_4_exemplary: string;
+    [key: string]: string;
+  };
+}
+
+export interface CopilotRubric {
+  title: string;
+  competencies: string[];
+  criteria: CopilotRubricCriterion[];
+}
+
+export interface ClassPerformanceReport {
+  offering_id: string;
+  total_students: number;
+  average_grade: number;
+  grade_distribution: {
+    '90-100': number;
+    '80-89': number;
+    '70-79': number;
+    'under_70': number;
+    [key: string]: number;
+  };
+  weak_knowledge_nodes: Array<{
+    node_id: string;
+    title: string;
+    average_mastery: number;
+    students_count: number;
+  }>;
+  at_risk_students: Array<{
+    student_id: string;
+    signal_type: string;
+    severity: string;
+    reason: string;
+  }>;
+  pedagogical_recommendations: string[];
+}
+
+export interface WeeklyReport {
+  offering_id: string;
+  week_period: string;
+  total_enrolled: number;
+  average_attendance_percent: number;
+  grades_summary: {
+    average: number;
+    highest: number;
+    lowest: number;
+    evaluations_count: number;
+  };
+  wellness_alerts_count: number;
+  active_wellness_signals: WellnessSignal[];
+  knowledge_graph_progress_percent: number;
+  key_highlights: string[];
+}
+
+export interface Achievement {
+  id: string;
+  code: string;
+  title: string;
+  description?: string | null;
+  achievement_type: 'completion' | 'excellence' | 'defense' | 'streak' | 'milestone';
+  points: number;
+  badge_icon?: string | null;
+  is_active: boolean;
+  sede_id?: string | null;
+  created_at: string;
+}
+
+export interface StudentAchievement {
+  id: string;
+  student_id: string;
+  achievement_id: string;
+  offering_id?: string | null;
+  earned_at: string;
+  evidence?: Record<string, unknown> | null;
+  credential_hash?: string | null;
+  sede_id?: string | null;
+  achievement?: Achievement | null;
+}
+
+export interface LeaderboardEntry {
+  id: string;
+  student_id: string;
+  student_name: string;
+  total_points: number;
+  rank?: number | null;
+  period: string;
+  offering_id?: string | null;
+  updated_at: string;
+}
+
+export interface AchievementCredentialVerification {
+  verified: boolean;
+  student_id: string;
+  student_name: string;
+  achievement_id: string;
+  achievement_title: string;
+  badge_icon?: string | null;
+  points: number;
+  credential_hash: string;
+  earned_at: string;
+  is_valid: boolean;
+}
+
+export interface StudyGroupMember {
+  id: string;
+  group_id: string;
+  student_id: string;
+  student_name: string;
+  role: string;
+  joined_at: string;
+  sede_id?: string | null;
+}
+
+export interface StudyGroup {
+  id: string;
+  offering_id: string;
+  name: string;
+  description?: string | null;
+  max_members: number;
+  is_active: boolean;
+  created_by: string;
+  creator_name?: string | null;
+  created_at: string;
+  members_count: number;
+  members: StudyGroupMember[];
+}
+
+export interface MentorProfile {
+  id: string;
+  mentor_persona_id?: string | null;
+  persona_id?: string | null;
+  mentor_name?: string | null;
+  name?: string | null;
+  full_name?: string | null;
+  expertise?: string[] | string | null;
+  availability?: string[] | string | null;
+  availability_summary?: string | null;
+  bio?: string | null;
+  description?: string | null;
+}
+
+export interface MentorshipRequest {
+  id: string;
+  mentor_persona_id?: string | null;
+  mentee_persona_id?: string | null;
+  mentor_name?: string | null;
+  mentee_name?: string | null;
+  status: string;
+  message?: string | null;
+  requested_at?: string | null;
+  created_at?: string | null;
+  updated_at?: string | null;
+}
+
+export interface MentorshipMentee {
+  id: string;
+  mentee_persona_id?: string | null;
+  mentee_name: string;
+  status?: string | null;
+  started_at?: string | null;
+  created_at?: string | null;
+  goals?: string[] | null;
+}
+
+export interface AcademyRecommendation {
+  id: string;
+  recommendation_type: string;
+  title: string;
+  reason: string;
+  score: number;
+  description?: string | null;
+  target_url?: string | null;
+  viewed?: boolean;
+  created_at: string;
+}
+
+export interface KnowledgeNodeMasteryBrief {
+  node_id: string;
+  title: string;
+  code?: string | null;
+  average_mastery: number;
+  evaluated_students_count: number;
+}
+
+export interface ActiveWellnessAlertBrief {
+  id: string;
+  signal_type: string;
+  severity: string;
+  student_id: string;
+  detected_at?: string | null;
+}
+
+export interface CohortHealth {
+  offering_id: string;
+  subject_name: string;
+  period_code: string;
+  sede_id?: string | null;
+  enrolled_students_count: number;
+  average_grade: number;
+  completion_rate: number;
+  lowest_mastery_nodes: KnowledgeNodeMasteryBrief[];
+  active_alerts_count: number;
+  active_alerts: ActiveWellnessAlertBrief[];
+  health_status: 'healthy' | 'needs_attention' | 'at_risk';
+  recommendations: string[];
+}
+
+export interface InstitutionalSummaryKPIs {
+  total_students: number;
+  retention_projected_rate: number;
+  socratic_pass_rate: number;
+  wellness_health_index: number;
+  active_study_groups: number;
+  total_defense_sessions: number;
+  pending_wellness_signals: number;
+  sede_id?: string | null;
+  calculated_at: string;
+}

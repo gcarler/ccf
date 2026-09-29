@@ -71,13 +71,13 @@ export default function AdminPersonasPage() {
             <main className="flex-1 overflow-y-auto p-3 lg:p-4">
                 <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="space-y-3">
                     <header className="space-y-1">
-                        <h1 className="text-lg font-bold text-[hsl(var(--text-primary))] dark:text-white tracking-tight">Personas</h1>
-                        <p className="text-sm text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">
+                        <h1 className="text-lg font-bold text-[hsl(var(--text-primary))] tracking-tight">Personas</h1>
+                        <p className="text-sm text-[hsl(var(--text-secondary))]">
                             Base de datos central de la congregación.
                         </p>
                     </header>
 
-                    <section className="bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))] rounded-lg border border-[hsl(var(--border))] dark:border-white/5 shadow-xl shadow-black/10/20 dark:shadow-none overflow-hidden">
+                    <section className="bg-[hsl(var(--bg-primary))] rounded-lg border border-[hsl(var(--border))] shadow-lg overflow-hidden">
                         {loading ? (
                             <div className="p-4 space-y-3">
                                 {[1, 2, 3, 4, 5].map((i) => (
@@ -92,7 +92,7 @@ export default function AdminPersonasPage() {
                             <div className="overflow-x-auto">
                                 <table className="w-full text-left">
                                     <thead>
-                                        <tr className="bg-[hsl(var(--surface-1))]/60 dark:bg-black/20 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
+                                        <tr className="bg-[hsl(var(--surface-1))]/60 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
                                             <th className="px-4 py-3">Nombre</th>
                                             <th className="px-4 py-3">Correo</th>
                                             <th className="px-4 py-3">Teléfono</th>
@@ -100,44 +100,44 @@ export default function AdminPersonasPage() {
                                             <th className="px-4 py-3 text-right">Acciones</th>
                                         </tr>
                                     </thead>
-                                    <tbody className="divide-y divide-[hsl(var(--border))] dark:divide-white/5">
+                                    <tbody className="divide-y divide-[hsl(var(--border))]">
                                         {filtered.map((persona) => (
-                                            <tr key={persona.id} className="hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5 transition-colors">
+                                            <tr key={persona.id} className="hover:bg-[hsl(var(--surface-1))] transition-colors">
                                                 <td className="px-4 py-3">
                                                     <div className="flex items-center gap-3">
-                                                        <div className="size-9 rounded-md bg-[hsl(var(--info-muted))] dark:bg-[hsl(var(--info)/0.1)] text-[hsl(var(--primary))] flex items-center justify-center font-bold text-xs">
+                                                        <div className="size-9 rounded-md bg-[hsl(var(--info-muted))] text-[hsl(var(--primary))] flex items-center justify-center font-bold text-xs">
                                                             {(persona.first_name || "P").slice(0, 1)}
                                                             {(persona.last_name || "").slice(0, 1)}
                                                         </div>
                                                         <div>
-                                                            <p className="text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-white">
+                                                            <p className="text-sm font-semibold text-[hsl(var(--text-primary))]">
                                                                 {persona.first_name} {persona.last_name}
                                                             </p>
                                                             <p className="text-2xs text-[hsl(var(--text-secondary))]">ID: {String(persona.id)}</p>
                                                         </div>
                                                     </div>
                                                 </td>
-                                                <td className="px-4 py-3 text-sm text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">
+                                                <td className="px-4 py-3 text-sm text-[hsl(var(--text-secondary))]">
                                                     <div className="flex items-center gap-2">
                                                         <Mail size={13} className="text-[hsl(var(--text-secondary))]" />
                                                         {persona.email || "Sin correo"}
                                                     </div>
                                                 </td>
-                                                <td className="px-4 py-3 text-sm text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">
+                                                <td className="px-4 py-3 text-sm text-[hsl(var(--text-secondary))]">
                                                     <div className="flex items-center gap-2">
                                                         <Phone size={13} className="text-[hsl(var(--text-secondary))]" />
                                                         {persona.phone || "Sin teléfono"}
                                                     </div>
                                                 </td>
                                                 <td className="px-4 py-3">
-                                                    <span className="inline-flex items-center rounded-md bg-[hsl(var(--surface-2))] dark:bg-white/5 px-2.5 py-1 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
+                                                    <span className="inline-flex items-center rounded-md bg-[hsl(var(--surface-2))] px-2.5 py-1 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
                                                         {persona.church_role || "Sin rol"}
                                                     </span>
                                                 </td>
                                                 <td className="px-4 py-3 text-right">
                                                     <button
                                                         onClick={() => router.push(`/plataforma/admin/personas/${persona.id}`)}
-                                                        className="inline-flex items-center gap-2 rounded-md bg-[hsl(var(--primary))] px-3 py-2 text-2xs font-semibold uppercase tracking-wide text-white shadow-sm hover:opacity-95"
+                                                        className="inline-flex items-center gap-2 rounded-md bg-[hsl(var(--primary))] px-3 py-2 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--primary-foreground))] shadow-sm hover:opacity-95"
                                                     >
                                                         Ver expediente <ArrowRight size={13} />
                                                     </button>

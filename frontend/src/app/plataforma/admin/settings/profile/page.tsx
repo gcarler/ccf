@@ -28,11 +28,11 @@ export default function AdminSettingsProfilePage() {
     return (
         <div className="min-h-full bg-[hsl(var(--bg-muted))]/20 font-display">
             {/* Header */}
-            <div className="bg-[hsl(var(--bg-muted))]/40 backdrop-blur-xl border-b border-white/5 sticky top-0 z-20">
+            <div className="bg-[hsl(var(--surface-1))] backdrop-blur-xl border-b border-[hsl(var(--border))] sticky top-0 z-20">
                 <div className="px-4 py-2 flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                        <Church size={18} className="text-primary" />
-                        <h1 className="text-base font-semibold uppercase tracking-wide text-white">
+                        <Church size={18} className="text-[hsl(var(--primary))]" />
+                        <h1 className="text-base font-semibold uppercase tracking-wide text-[hsl(var(--text-primary))]">
                             Perfil del Ministerio
                         </h1>
                     </div>
@@ -49,14 +49,14 @@ export default function AdminSettingsProfilePage() {
                         {!editing ? (
                             <button
                                 onClick={() => setEditing(true)}
-                                className="flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/15 text-white border border-white/10 rounded-md text-xs font-semibold uppercase tracking-wide transition-all"
+                                className="flex items-center gap-2 px-4 py-2 bg-[hsl(var(--surface-2))] hover:bg-[hsl(var(--surface-3))] text-[hsl(var(--text-primary))] border border-[hsl(var(--border))] rounded-md text-xs font-semibold uppercase tracking-wide transition-all"
                             >
                                 <Edit2 size={14} /> Editar
                             </button>
                         ) : (
                             <button
                                 onClick={handleSave}
-                                className="flex items-center gap-2 px-3 py-2 bg-primary hover:bg-primary/80 text-white rounded-md text-xs font-semibold uppercase tracking-wide shadow-lg shadow-primary/20 transition-all"
+                                className="flex items-center gap-2 px-3 py-2 bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] rounded-md text-xs font-semibold uppercase tracking-wide shadow-lg shadow-[hsl(var(--primary)/0.2)] transition-all"
                             >
                                 <Save size={14} /> Guardar Cambios
                             </button>
@@ -69,11 +69,11 @@ export default function AdminSettingsProfilePage() {
                 {/* Logo Upload */}
                 <div className="flex flex-col items-center gap-3">
                     <div className="relative">
-                        <div className="size-10 rounded-lg border-2 border-primary/30 bg-primary/10 flex items-center justify-center shadow-2xl shadow-primary/10 overflow-hidden">
-                            <Church size={48} className="text-primary" />
+                        <div className="size-10 rounded-lg border-2 border-[hsl(var(--primary)/0.3)] bg-[hsl(var(--primary)/0.1)] flex items-center justify-center shadow-2xl shadow-[hsl(var(--primary)/0.1)] overflow-hidden">
+                            <Church size={48} className="text-[hsl(var(--primary))]" />
                         </div>
                         {editing && (
-                            <button className="absolute -bottom-2 -right-2 size-9 rounded-md bg-primary text-white flex items-center justify-center shadow-xl border-2 border-[hsl(var(--border))] hover:scale-110 transition-all">
+                            <button className="absolute -bottom-2 -right-2 size-9 rounded-md bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] flex items-center justify-center shadow-xl border-2 border-[hsl(var(--border))] hover:scale-110 transition-all">
                                 <Camera size={16} />
                             </button>
                         )}
@@ -116,7 +116,7 @@ export default function AdminSettingsProfilePage() {
                 </Section>
 
                 {editing && (
-                    <div className="flex items-start gap-3 p-4 bg-[hsl(var(--warning))]/10 border border-[hsl(var(--warning)/100%)]/20 rounded-lg text-xs text-[hsl(var(--warning))] font-bold">
+                    <div className="flex items-start gap-3 p-4 bg-[hsl(var(--warning)/0.15)] border border-[hsl(var(--warning)/0.2)] rounded-lg text-xs text-[hsl(var(--warning))] font-bold">
                         <AlertCircle size={16} className="shrink-0 mt-0.5" />
                         Los cambios se reflejarán en todo el ecosistema CCF, incluyendo el sitio público.
                     </div>
@@ -131,7 +131,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
         <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="bg-[hsl(var(--bg-muted))]/40 backdrop-blur-xl border border-white/5 rounded-lg p-3 space-y-4"
+            className="bg-[hsl(var(--surface-1))] backdrop-blur-xl border border-[hsl(var(--border))] rounded-lg p-3 space-y-4"
         >
             <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-5">{title}</p>
             {children}
@@ -152,13 +152,13 @@ function Field({ label, value, editing, onChange, multiline }: {
                         rows={3}
                         value={value}
                         onChange={e => onChange(e.target.value)}
-                        className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-md text-sm text-white placeholder:text-[hsl(var(--text-secondary))] focus:ring-2 focus:ring-primary/30 focus:border-primary/40 transition-all resize-none outline-none"
+                        className="w-full px-4 py-3 bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] rounded-md text-sm text-[hsl(var(--text-primary))] placeholder:text-[hsl(var(--text-secondary))] focus:ring-2 focus:ring-[hsl(var(--primary)/0.3)] focus:border-[hsl(var(--primary))] transition-all resize-none outline-none"
                     />
                 ) : (
                     <input
                         value={value}
                         onChange={e => onChange(e.target.value)}
-                        className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-md text-sm text-white placeholder:text-[hsl(var(--text-secondary))] focus:ring-2 focus:ring-primary/30 focus:border-primary/40 transition-all outline-none"
+                        className="w-full px-4 py-3 bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] rounded-md text-sm text-[hsl(var(--text-primary))] placeholder:text-[hsl(var(--text-secondary))] focus:ring-2 focus:ring-[hsl(var(--primary)/0.3)] focus:border-[hsl(var(--primary))] transition-all outline-none"
                     />
                 )
             ) : (

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import datetime
 import uuid
+import pytest
 
 from backend import models
 from backend.api.evangelism_public import get_next_occurrence

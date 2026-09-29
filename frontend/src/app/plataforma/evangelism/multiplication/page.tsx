@@ -223,7 +223,7 @@ export default function MultiplicationPage() {
               id="umbral-select"
               value={umbral}
               onChange={(e) => setUmbral(Number(e.target.value))}
-              className="bg-[hsl(var(--bg-muted))] dark:bg-black/20 border border-[hsl(var(--border-primary))] rounded-lg py-1 px-2 text-sm font-bold outline-none focus:ring-2 focus:ring-[hsl(var(--primary))] appearance-none"
+              className="bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] rounded-lg py-1 px-2 text-sm font-bold text-[hsl(var(--foreground))] outline-none focus:ring-2 focus:ring-[hsl(var(--primary))] appearance-none"
             >
               {[10, 12, 15, 18, 20, 25].map((v) => (
                 <option key={v} value={v}>
@@ -259,14 +259,14 @@ export default function MultiplicationPage() {
                   key={check.grupo_id}
                   className={`flex items-center gap-3 border rounded-lg p-3 transition-all ${
                     check.excede_umbral
-                      ? 'bg-success-soft/50 dark:bg-[hsl(var(--success))]/10 border-[hsl(var(--success)/25%)] dark:border-[hsl(var(--success)/100%)]/20 hover:shadow-md'
+                      ? 'bg-[hsl(var(--success)/0.1)] border-[hsl(var(--success)/0.25)] hover:shadow-md'
                       : 'bg-[hsl(var(--bg-primary))] border-[hsl(var(--border-primary))] hover:shadow-sm'
                   }`}
                 >
                   <div
                     className={`size-10 rounded-lg flex items-center justify-center shrink-0 ${
                       check.excede_umbral
-                        ? 'bg-[hsl(var(--success-muted))] dark:bg-[hsl(var(--success))]/20 text-success-text dark:text-[hsl(var(--success))]'
+                        ? 'bg-[hsl(var(--success)/0.15)] text-[hsl(var(--success))]'
                         : 'bg-[hsl(var(--bg-muted))] text-[hsl(var(--text-secondary))]'
                     }`}
                   >
@@ -291,7 +291,7 @@ export default function MultiplicationPage() {
                   {check.excede_umbral && (
                     <button
                       onClick={() => openSplitDrawer(check)}
-                      className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 bg-[hsl(var(--success))] text-white rounded-lg text-2xs font-semibold uppercase tracking-wide shadow-lg shadow-[hsl(var(--success)/20%)] hover:bg-[hsl(var(--success))] active:scale-95 transition-all"
+                      className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 bg-[hsl(var(--success))] text-[hsl(var(--primary-foreground))] rounded-lg text-2xs font-semibold uppercase tracking-wide shadow-lg shadow-[hsl(var(--success)/20%)] hover:bg-[hsl(var(--success))] active:scale-95 transition-all"
                     >
                       <Scissors size={14} />
                       Dividir
@@ -305,9 +305,9 @@ export default function MultiplicationPage() {
 
         {/* Eligible Groups Summary */}
         {eligibleGroups.length > 0 && (
-          <DSCard tone="light" className="border-[hsl(var(--success)/25%)] dark:border-[hsl(var(--success)/100%)]/20">
+          <DSCard tone="light" className="border-[hsl(var(--success)/0.25)]">
             <div className="flex items-center gap-3">
-              <div className="size-10 rounded-lg bg-[hsl(var(--success-muted))] dark:bg-[hsl(var(--success))]/20 text-success-text dark:text-[hsl(var(--success))] flex items-center justify-center shrink-0">
+              <div className="size-10 rounded-lg bg-[hsl(var(--success)/0.15)] text-[hsl(var(--success))] flex items-center justify-center shrink-0">
                 <GitBranch size={18} />
               </div>
               <div>
@@ -349,7 +349,7 @@ export default function MultiplicationPage() {
                   key={item.grupo_id}
                   className="flex items-center gap-3 bg-[hsl(var(--bg-primary))] border border-[hsl(var(--border-primary))] rounded-lg p-3 hover:shadow-sm transition-all"
                 >
-                  <div className="size-10 rounded-lg bg-[hsl(var(--info-muted))] dark:bg-[hsl(var(--info))]/30 text-[hsl(var(--primary))] flex items-center justify-center shrink-0">
+                  <div className="size-10 rounded-lg bg-[hsl(var(--info)/0.15)] text-[hsl(var(--info))] flex items-center justify-center shrink-0">
                     <GitBranch size={18} />
                   </div>
                   <div className="flex-1 min-w-0">
@@ -403,7 +403,7 @@ export default function MultiplicationPage() {
             <button
               onClick={handleSplit}
               disabled={savingSplit || !nuevoNombre.trim() || !nuevoLiderId}
-              className="flex items-center gap-2 px-3 py-2 bg-[hsl(var(--success))] text-white rounded-lg text-xs font-semibold uppercase tracking-wide shadow-lg shadow-[hsl(var(--success)/20%)] hover:bg-[hsl(var(--success))] active:scale-95 transition-all disabled:opacity-60"
+              className="flex items-center gap-2 px-3 py-2 bg-[hsl(var(--success))] text-[hsl(var(--primary-foreground))] rounded-lg text-xs font-semibold uppercase tracking-wide shadow-lg shadow-[hsl(var(--success)/20%)] hover:bg-[hsl(var(--success))] active:scale-95 transition-all disabled:opacity-60"
             >
               {savingSplit ? (
                 <Loader2 size={14} className="animate-spin" />
@@ -416,11 +416,11 @@ export default function MultiplicationPage() {
         }
       >
         <div className="space-y-4 mt-4">
-          <div className="p-4 bg-warning-soft dark:bg-[hsl(var(--warning))]/20 rounded-lg border border-[hsl(var(--warning)/20%)] dark:border-[hsl(var(--warning)/100%)]/30">
-            <p className="text-2xs font-semibold uppercase tracking-wide text-warning-text dark:text-warning-text mb-1">
+          <div className="p-4 bg-[hsl(var(--warning)/0.1)] rounded-lg border border-[hsl(var(--warning)/0.25)]">
+            <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--warning))] mb-1">
               Acción irreversible
             </p>
-            <p className="text-sm text-warning-text dark:text-[hsl(var(--warning))]">
+            <p className="text-sm text-[hsl(var(--warning))]">
               Esta operación transferirá aproximadamente la mitad de las personas del grupo{' '}
               <strong>{selectedGroup?.grupo_nombre}</strong> al nuevo grupo. Asegúrate de que el
               nuevo líder esté preparado.
@@ -436,7 +436,7 @@ export default function MultiplicationPage() {
               value={nuevoNombre}
               onChange={(e) => setNuevoNombre(e.target.value)}
               placeholder="Ej: Grupo Norte (Hijo)"
-              className="w-full bg-[hsl(var(--bg-muted))] dark:bg-black/20 border border-[hsl(var(--border-primary))] rounded-lg py-1.5 px-4 text-sm font-bold outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]"
+              className="w-full bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] rounded-lg py-1.5 px-4 text-sm font-bold text-[hsl(var(--foreground))] outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]"
             />
           </div>
 
@@ -450,7 +450,7 @@ export default function MultiplicationPage() {
               <select
                 value={nuevoLiderId}
                 onChange={(e) => setNuevoLiderId(e.target.value)}
-                className="w-full bg-[hsl(var(--bg-muted))] dark:bg-black/20 border border-[hsl(var(--border-primary))] rounded-lg py-1.5 px-4 text-sm font-bold outline-none focus:ring-2 focus:ring-[hsl(var(--primary))] appearance-none"
+                className="w-full bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] rounded-lg py-1.5 px-4 text-sm font-bold text-[hsl(var(--foreground))] outline-none focus:ring-2 focus:ring-[hsl(var(--primary))] appearance-none"
               >
                 <option value="">— Seleccionar líder —</option>
                 {personasOptions.map((p) => (
@@ -465,7 +465,7 @@ export default function MultiplicationPage() {
                 value={nuevoLiderId}
                 onChange={(e) => setNuevoLiderId(e.target.value)}
                 placeholder="UUID de la persona líder"
-                className="w-full bg-[hsl(var(--bg-muted))] dark:bg-black/20 border border-[hsl(var(--border-primary))] rounded-lg py-1.5 px-4 text-sm font-bold outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]"
+                className="w-full bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] rounded-lg py-1.5 px-4 text-sm font-bold text-[hsl(var(--foreground))] outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]"
               />
             )}
             <p className="text-2xs text-[hsl(var(--text-secondary))]">

@@ -99,7 +99,7 @@ export function MessageBubble({ message, isOwn, showSender, onReply }: MessageBu
             )}
             <div className={clsx('space-y-0.5', isOwn ? 'max-w-[80%] md:max-w-[68%]' : 'max-w-[85%] md:max-w-[68%]')}>
                 {!isOwn && showSender && (
-                    <p className="text-2xs font-bold text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] px-1">
+                    <p className="text-2xs font-bold text-[hsl(var(--text-secondary))] px-1">
                         {message.sender_name}
                     </p>
                 )}
@@ -107,12 +107,12 @@ export function MessageBubble({ message, isOwn, showSender, onReply }: MessageBu
                     className={clsx(
                         'px-3 md:px-3.5 py-2 rounded-2xl text-base md:text-sm leading-relaxed',
                         isOwn
-                            ? 'bg-[hsl(var(--primary))] text-white rounded-br-md'
-                            : 'bg-[hsl(var(--bg-primary))] dark:bg-white/[0.07] border border-[hsl(var(--border))] dark:border-white/[0.06] text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] rounded-bl-md shadow-sm'
+                            ? 'bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] rounded-br-md'
+                            : 'bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] text-[hsl(var(--text-primary))] rounded-bl-md shadow-sm'
                     )}
                 >
                     {message.reply_preview && (
-                        <div className="mb-1 px-2 py-1 rounded-md bg-black/5 dark:bg-white/5 border-l-2 border-[hsl(var(--primary))] text-2xs text-[hsl(var(--text-secondary))]">
+                        <div className="mb-1 px-2 py-1 rounded-md bg-[hsl(var(--surface-2))] border-l-2 border-[hsl(var(--primary))] text-2xs text-[hsl(var(--text-secondary))]">
                             <span className="font-bold">{message.reply_preview.sender_name}: </span>
                             {message.reply_preview.content || '📎 Adjunto'}
                         </div>
@@ -135,7 +135,7 @@ export function MessageBubble({ message, isOwn, showSender, onReply }: MessageBu
                                         href={resolvedUrl}
                                         target="_blank"
                                         rel="noopener noreferrer"
-                                        className="flex items-center gap-2 px-3 py-2 rounded-lg bg-black/5 dark:bg-white/10 hover:bg-black/10 transition-colors"
+                                        className="flex items-center gap-2 px-3 py-2 rounded-lg bg-[hsl(var(--surface-2))] hover:opacity-90 transition-colors"
                                     >
                                         <FileText size={16} />
                                         <span className="text-xs font-medium truncate max-w-[180px]">

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import {
     DndContext,
     closestCenter,
@@ -16,9 +16,13 @@ import {
     SortableContext,
     horizontalListSortingStrategy
 } from '@dnd-kit/sortable';
+import { Star } from 'lucide-react';
+import clsx from 'clsx';
+import { useAuth } from '@/context/AuthContext';
+import { apiFetch } from '@/lib/http';
 import { KanbanColumn } from './KanbanColumn';
 import { useProjectUpdate, type PhaseDef } from '@/context/ProjectUpdateContext';
-import type { ProjectRecord, ProjectTaskRecord } from '@/types/projects';
+import type { ProjectRecord, ProjectTaskRecord, ProjectUserFavorite } from '@/types/projects';
 
 interface Props {
     project: ProjectRecord;
@@ -30,7 +34,28 @@ interface Props {
 
 export function ProjectKanbanBoard({ project, tasks, phases, onOpenTask, onAddTask }: Props) {
     const { updateTask, deleteTask, createTask } = useProjectUpdate();
+    const { token } = useAuth();
     const [activeTask, setActiveTask] = useState<ProjectTaskRecord | null>(null);
+    const [onlyFavorites, setOnlyFavorites] = useState(false);
+    const [favoriteTaskIds, setFavoriteTaskIds] = useState<Set<string>>(new Set());
+
+    useEffect(() => {
+        let active = true;
+        if (!project?.id || !token) return;
+        apiFetch<(string | ProjectUserFavorite)[]>(`/projects/${project.id}/favorites?entity_type=task`, { token })
+            .then(favs => {
+                if (active && Array.isArray(favs)) {
+                    setFavoriteTaskIds(new Set(favs.map(f => typeof f === 'string' ? f : f.entity_id)));
+                }
+            })
+            .catch(() => {});
+        return () => { active = false; };
+    }, [project?.id, token]);
+
+    const displayedTasks = useMemo(() => {
+        if (!onlyFavorites) return tasks;
+        return tasks.filter(t => favoriteTaskIds.has(t.id));
+    }, [tasks, onlyFavorites, favoriteTaskIds]);
 
     const sensors = useSensors(
         useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
@@ -71,10 +96,10 @@ export function ProjectKanbanBoard({ project, tasks, phases, onOpenTask, onAddTa
     if (phases.length === 0) {
         return (
             <div className="h-full flex flex-col items-center justify-center gap-2 p-6 text-center">
-                <p className="text-sm font-semibold text-[hsl(var(--text-secondary))]">
+                <p className="text-sm font-semibold text-[hsl(var(--muted-foreground))]">
                     No hay columnas para mostrar
                 </p>
-                <p className="text-xs text-[hsl(var(--text-secondary))]">
+                <p className="text-xs text-[hsl(var(--muted-foreground))]">
                     Este proyecto aún no tiene fases. Crea fases desde el gestor de fases para ver el tablero.
                 </p>
             </div>
@@ -82,34 +107,67 @@ export function ProjectKanbanBoard({ project, tasks, phases, onOpenTask, onAddTa
     }
 
     return (
-        <DndContext
-            sensors={sensors}
-            collisionDetection={closestCenter}
-            onDragStart={handleDragStart}
-            onDragEnd={handleDragEnd}
-        >
-            <div className="flex h-full overflow-x-auto gap-3 p-3 pb-4 scrollbar-thin bg-[hsl(var(--surface-1))]/50 dark:bg-[hsl(var(--admin-bg-secondary))]">
-                <SortableContext
-                    items={phases.map(s => s.slug)}
-                    strategy={horizontalListSortingStrategy}
+        <div className="flex flex-col h-full bg-[hsl(var(--surface-1))]">
+            <div className="shrink-0 flex items-center justify-between px-3 py-1.5 border-b border-[hsl(var(--border))] bg-[hsl(var(--surface-1))]">
+                <button
+                    type="button"
+                    onClick={() => setOnlyFavorites(prev => !prev)}
+                    className={clsx(
+                        'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold transition-all border',
+                        onlyFavorites
+                            ? 'bg-[hsl(var(--warning)/0.15)] text-[hsl(var(--warning))] border-[hsl(var(--warning)/0.3)] shadow-xs'
+                            : 'text-[hsl(var(--muted-foreground))] border-[hsl(var(--border))] hover:bg-[hsl(var(--surface-2))] hover:text-[hsl(var(--foreground))]'
+                    )}
+                    title="Filtrar por tareas favoritas"
                 >
-                    {phases.map(phase => (
-                        <KanbanColumn
-                            key={phase.slug}
-                            id={phase.slug}
-                            name={phase.name}
-                            color={phase.color}
-                            tasks={tasks.filter(t => (t.status || 'todo').toLowerCase() === phase.slug.toLowerCase())}
-                            onOpenTask={onOpenTask}
-                            onAddTask={onAddTask}
-                            projectId={project.id}
-                            onCreateTask={createTask}
-                            onTaskUpdate={updateTask}
-                            onTaskDelete={deleteTask}
-                        />
-                    ))}
-                </SortableContext>
+                    <Star size={13} className={clsx(onlyFavorites ? 'fill-current text-[hsl(var(--warning))]' : '')} />
+                    <span>Solo Mis Favoritas</span>
+                    {favoriteTaskIds.size > 0 && (
+                        <span className={clsx(
+                            'px-1.5 py-0.2 rounded-full text-3xs font-bold',
+                            onlyFavorites
+                                ? 'bg-[hsl(var(--warning))] text-[hsl(var(--background))]'
+                                : 'bg-[hsl(var(--surface-3))] text-[hsl(var(--muted-foreground))]'
+                        )}>
+                            {favoriteTaskIds.size}
+                        </span>
+                    )}
+                </button>
+                <span className="text-2xs text-[hsl(var(--muted-foreground))]">
+                    {displayedTasks.length} de {tasks.length} tareas
+                </span>
             </div>
+
+            <div className="flex-1 min-h-0">
+                <DndContext
+                    sensors={sensors}
+                    collisionDetection={closestCenter}
+                    onDragStart={handleDragStart}
+                    onDragEnd={handleDragEnd}
+                >
+                    <div className="flex h-full overflow-x-auto gap-3 p-3 pb-4 scrollbar-thin bg-[hsl(var(--surface-1))]">
+                        <SortableContext
+                            items={phases.map(s => s.slug)}
+                            strategy={horizontalListSortingStrategy}
+                        >
+                            {phases.map(phase => (
+                                <KanbanColumn
+                                    key={phase.slug}
+                                    id={phase.slug}
+                                    name={phase.name}
+                                    color={phase.color}
+                                    tasks={displayedTasks.filter(t => (t.status || 'todo').toLowerCase() === phase.slug.toLowerCase())}
+                                    onOpenTask={onOpenTask}
+                                    onAddTask={onAddTask}
+                                    projectId={project.id}
+                                    onCreateTask={createTask}
+                                    onTaskUpdate={updateTask}
+                                    onTaskDelete={deleteTask}
+                                />
+                            ))}
+                        </SortableContext>
+                    </div>
+
 
             {/* Drag overlay — lightweight ghost.
 
@@ -122,13 +180,13 @@ export function ProjectKanbanBoard({ project, tasks, phases, onOpenTask, onAddTa
                 {activeTask && (
                     <div
                         role="presentation"
-                        className="rotate-1 opacity-90 cursor-grabbing bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-primary))] rounded-md shadow-2xl border border-[hsl(var(--info)/100%)] p-3 w-[260px]"
+                        className="rotate-1 opacity-90 cursor-grabbing bg-[hsl(var(--surface-1))] rounded-md shadow-2xl border border-[hsl(var(--primary))] p-3 w-[260px]"
                     >
                         <div className="h-[3px] w-full mb-2 bg-[hsl(var(--primary))] rounded-full" />
-                        <p className="text-base font-semibold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] line-clamp-2">
+                        <p className="text-base font-semibold text-[hsl(var(--foreground))] line-clamp-2">
                             {activeTask.title || 'Tarea'}
                         </p>
-                        <div className="flex items-center gap-3 mt-2 text-2xs text-[hsl(var(--text-secondary))]">
+                        <div className="flex items-center gap-3 mt-2 text-2xs text-[hsl(var(--muted-foreground))]">
                             {activeTask.priority && (
                                 <span className="font-bold uppercase tracking-wide">{activeTask.priority}</span>
                             )}
@@ -140,5 +198,7 @@ export function ProjectKanbanBoard({ project, tasks, phases, onOpenTask, onAddTa
                 )}
             </DragOverlay>
         </DndContext>
+            </div>
+        </div>
     );
 }

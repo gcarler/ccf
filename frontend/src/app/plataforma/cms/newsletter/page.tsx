@@ -4,27 +4,7 @@ import React, { useCallback, useEffect, useMemo, useState } from "react";
 import dynamic from "next/dynamic";
 import { SITE_KEY } from "@/lib/site-config";
 import { toast } from "sonner";
-import { motion, AnimatePresence } from "framer-motion";
-import {
-  Mail,
-  Plus,
-  Search,
-  Edit2,
-  Trash2,
-  Globe,
-  Loader2,
-  Send,
-  Users,
-  Upload,
-  Calendar,
-  CheckCircle2,
-  XCircle,
-  FileText,
-  AlertTriangle,
-  X,
-  UserPlus,
-  RefreshCw,
-} from "lucide-react";
+import { Mail, Plus, Search, Edit2, Trash2, Globe, Loader2, Send, Users, Upload, Calendar, CheckCircle2, XCircle, FileText, AlertTriangle, UserPlus, RefreshCw } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import SidePanel from "@/components/ui/SidePanel";
 import clsx from "clsx";
@@ -352,19 +332,19 @@ export default function CmsNewsletterManagement() {
     switch (statusStr) {
       case "sent":
         return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-[hsl(var(--success))]/10 text-[hsl(var(--success))] border border-[hsl(var(--success))]/20">
             <CheckCircle2 size={12} /> Enviado
           </span>
         );
       case "scheduled":
         return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20">
+          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-[hsl(var(--info))]/10 text-[hsl(var(--info))] border border-[hsl(var(--info))]/20">
             <Calendar size={12} /> Programado
           </span>
         );
       default:
         return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-500/10 text-slate-600 dark:text-slate-400 border border-slate-500/20">
+          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-[hsl(var(--surface-3))] text-[hsl(var(--text-secondary))] border border-[hsl(var(--border))]">
             <FileText size={12} /> Borrador
           </span>
         );
@@ -445,7 +425,7 @@ export default function CmsNewsletterManagement() {
           >
             <Users size={16} />
             <span>Suscriptores</span>
-            <span className="ml-1 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 px-2 py-0.5 text-xs font-semibold">
+            <span className="ml-1 rounded-full bg-[hsl(var(--success))]/10 text-[hsl(var(--success))] px-2 py-0.5 text-xs font-semibold">
               {activeSubscribersCount} activos
             </span>
           </button>
@@ -467,7 +447,7 @@ export default function CmsNewsletterManagement() {
           {canEdit && activeTab === "campaigns" && (
             <button
               onClick={openNewCampaign}
-              className="flex items-center gap-2 bg-[hsl(var(--primary))] text-white px-4 py-2 rounded-lg text-sm font-medium hover:opacity-90 transition-all shadow-sm"
+              className="flex items-center gap-2 bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] px-4 py-2 rounded-lg text-sm font-medium hover:opacity-90 transition-all shadow-sm"
             >
               <Plus size={16} />
               <span>Crear Campaña</span>
@@ -478,7 +458,7 @@ export default function CmsNewsletterManagement() {
             <>
               <button
                 onClick={() => setIsSubscriberModalOpen(true)}
-                className="flex items-center gap-2 bg-[hsl(var(--primary))] text-white px-3.5 py-2 rounded-lg text-sm font-medium hover:opacity-90 transition-all shadow-sm"
+                className="flex items-center gap-2 bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] px-3.5 py-2 rounded-lg text-sm font-medium hover:opacity-90 transition-all shadow-sm"
               >
                 <UserPlus size={16} />
                 <span>+ Agregar</span>
@@ -512,7 +492,7 @@ export default function CmsNewsletterManagement() {
           ))}
         </div>
       ) : error ? (
-        <div className="p-8 text-center bg-red-500/10 border border-red-500/20 rounded-xl text-red-600 dark:text-red-400 space-y-2">
+        <div className="p-8 text-center bg-[hsl(var(--destructive))]/10 border border-[hsl(var(--destructive))]/20 rounded-xl text-[hsl(var(--destructive))] space-y-2">
           <AlertTriangle size={32} className="mx-auto" />
           <p className="font-semibold">{error}</p>
           <button
@@ -536,7 +516,7 @@ export default function CmsNewsletterManagement() {
             {canEdit && !search && (
               <button
                 onClick={openNewCampaign}
-                className="mt-2 inline-flex items-center gap-2 bg-[hsl(var(--primary))] text-white px-4 py-2 rounded-lg text-sm font-medium hover:opacity-90 transition-all"
+                className="mt-2 inline-flex items-center gap-2 bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] px-4 py-2 rounded-lg text-sm font-medium hover:opacity-90 transition-all"
               >
                 <Plus size={16} /> Crear Campaña
               </button>
@@ -602,7 +582,7 @@ export default function CmsNewsletterManagement() {
                     {canEdit && (
                       <button
                         onClick={() => setPendingDeleteNewsletter(newsletter)}
-                        className="p-1.5 text-red-500 hover:bg-red-500/10 rounded-lg transition-colors"
+                        className="p-1.5 text-[hsl(var(--destructive))] hover:bg-[hsl(var(--destructive))]/10 rounded-lg transition-colors"
                         title="Eliminar campaña"
                       >
                         <Trash2 size={16} />
@@ -613,7 +593,7 @@ export default function CmsNewsletterManagement() {
                   {canEdit && (
                     <button
                       onClick={() => setSendingNewsletter(newsletter)}
-                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-[hsl(var(--primary))] text-white hover:opacity-90 transition-all"
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] hover:opacity-90 transition-all"
                     >
                       <Send size={14} />
                       <span>Enviar ahora</span>
@@ -629,7 +609,7 @@ export default function CmsNewsletterManagement() {
         <div className="space-y-4">
           <div className="flex items-center justify-between bg-[hsl(var(--surface-1))] p-4 rounded-xl border border-[hsl(var(--border))]">
             <div className="flex items-center gap-3">
-              <div className="p-2.5 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-lg">
+              <div className="p-2.5 bg-[hsl(var(--success))]/10 text-[hsl(var(--success))] rounded-lg">
                 <Users size={20} />
               </div>
               <div>
@@ -650,13 +630,13 @@ export default function CmsNewsletterManagement() {
               <p className="text-sm text-[hsl(var(--text-secondary))] max-w-md mx-auto">
                 {search
                   ? "No hay suscriptores que coincidan con la búsqueda."
-                  : "Agrega o importa la lista de correos de miembros de la congregación."}
+                  : "Agrega o importa la lista de correos de personas de la congregación."}
               </p>
               {canEdit && !search && (
                 <div className="pt-2 flex justify-center gap-3">
                   <button
                     onClick={() => setIsSubscriberModalOpen(true)}
-                    className="inline-flex items-center gap-2 bg-[hsl(var(--primary))] text-white px-4 py-2 rounded-lg text-sm font-medium hover:opacity-90 transition-all"
+                    className="inline-flex items-center gap-2 bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] px-4 py-2 rounded-lg text-sm font-medium hover:opacity-90 transition-all"
                   >
                     <UserPlus size={16} /> + Agregar
                   </button>
@@ -710,8 +690,8 @@ export default function CmsNewsletterManagement() {
                             className={clsx(
                               "inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold transition-all cursor-pointer",
                               sub.is_active
-                                ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20"
-                                : "bg-slate-500/10 text-slate-500 border border-slate-500/20"
+                                ? "bg-[hsl(var(--success))]/10 text-[hsl(var(--success))] border border-[hsl(var(--success))]/20"
+                                : "bg-[hsl(var(--surface-3))] text-[hsl(var(--text-secondary))] border border-[hsl(var(--border))]"
                             )}
                           >
                             {sub.is_active ? (
@@ -729,7 +709,7 @@ export default function CmsNewsletterManagement() {
                           <td className="py-3.5 px-4 text-right">
                             <button
                               onClick={() => setPendingDeleteSubscriber(sub)}
-                              className="p-1.5 text-red-500 hover:bg-red-500/10 rounded-lg transition-colors"
+                              className="p-1.5 text-[hsl(var(--destructive))] hover:bg-[hsl(var(--destructive))]/10 rounded-lg transition-colors"
                               title="Eliminar suscriptor"
                             >
                               <Trash2 size={16} />
@@ -827,7 +807,7 @@ export default function CmsNewsletterManagement() {
             <button
               type="submit"
               disabled={savingCampaign}
-              className="flex items-center gap-2 bg-[hsl(var(--primary))] text-white px-5 py-2 rounded-lg text-sm font-medium hover:opacity-90 disabled:opacity-50"
+              className="flex items-center gap-2 bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] px-5 py-2 rounded-lg text-sm font-medium hover:opacity-90 disabled:opacity-50"
             >
               {savingCampaign && <Loader2 size={16} className="animate-spin" />}
               <span>{editingNewsletter ? "Guardar Cambios" : "Crear Campaña"}</span>
@@ -836,288 +816,238 @@ export default function CmsNewsletterManagement() {
         </form>
       </SidePanel>
 
-      {/* Modal: Send Confirmation */}
-      <AnimatePresence>
+      {/* SidePanel: Send Confirmation Drawer */}
+      <SidePanel
+        isOpen={Boolean(sendingNewsletter)}
+        onClose={() => setSendingNewsletter(null)}
+        title="Confirmar Envío Directo"
+        width="w-[480px]"
+      >
         {sendingNewsletter && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              className="bg-[hsl(var(--bg-primary))] border border-[hsl(var(--border))] rounded-2xl max-w-md w-full p-6 space-y-4 shadow-xl"
-            >
-              <div className="flex items-center justify-between border-b border-[hsl(var(--border))] pb-3">
-                <div className="flex items-center gap-2 text-[hsl(var(--primary))] font-bold text-lg">
-                  <Send size={20} /> Confirmar Envío Directo
-                </div>
-                <button
-                  onClick={() => setSendingNewsletter(null)}
-                  className="text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))]"
-                >
-                  <X size={18} />
-                </button>
+          <div className="p-4 space-y-4">
+            <p className="text-sm text-[hsl(var(--text-primary))]">
+              ¿Estás seguro de que deseas enviar inmediatamente el boletín{" "}
+              <strong className="text-[hsl(var(--primary))]">&quot;{sendingNewsletter.name}&quot;</strong>?
+            </p>
+            <div className="p-3 bg-[hsl(var(--surface-1))] rounded-xl border border-[hsl(var(--border))] space-y-1.5 text-xs text-[hsl(var(--text-secondary))]">
+              <div className="flex justify-between">
+                <span>Asunto:</span>
+                <span className="font-semibold text-[hsl(var(--text-primary))]">
+                  {sendingNewsletter.subject}
+                </span>
               </div>
+              <div className="flex justify-between">
+                <span>Suscriptores activos a enviar:</span>
+                <span className="font-bold text-[hsl(var(--success))]">
+                  {activeSubscribersCount} correos
+                </span>
+              </div>
+            </div>
 
-              <div className="space-y-3">
-                <p className="text-sm text-[hsl(var(--text-primary))]">
-                  ¿Estás seguro de que deseas enviar inmediatamente el boletín{" "}
-                  <strong className="text-[hsl(var(--primary))]">&quot;<span>{sendingNewsletter.name}</span>&quot;</strong>?
-                </p>
-                <div className="p-3 bg-[hsl(var(--surface-1))] rounded-xl border border-[hsl(var(--border))] space-y-1.5 text-xs text-[hsl(var(--text-secondary))]">
-                  <div className="flex justify-between">
-                    <span>Asunto:</span>
-                    <span className="font-semibold text-[hsl(var(--text-primary))]">
-                      {sendingNewsletter.subject}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Suscriptores activos a enviar:</span>
-                    <span className="font-bold text-emerald-600 dark:text-emerald-400">
-                      {activeSubscribersCount} correos
-                    </span>
-                  </div>
-                </div>
-              </div>
+            <p className="text-2xs text-[hsl(var(--text-secondary))]">
+              Esta acción despachará los correos a todos los suscriptores activos registrados en el sitio.
+            </p>
 
-              <div className="pt-2 flex justify-end gap-3">
-                <button
-                  type="button"
-                  onClick={() => setSendingNewsletter(null)}
-                  disabled={isSending}
-                  className="px-4 py-2 text-sm font-medium rounded-lg border border-[hsl(var(--border))] hover:bg-[hsl(var(--surface-2))]"
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="button"
-                  onClick={handleConfirmSend}
-                  disabled={isSending}
-                  className="flex items-center gap-2 bg-[hsl(var(--primary))] text-white px-5 py-2 rounded-lg text-sm font-semibold hover:opacity-90 disabled:opacity-50"
-                >
-                  {isSending && <Loader2 size={16} className="animate-spin" />}
-                  <span>Enviar Ahora</span>
-                </button>
-              </div>
-            </motion.div>
+            <div className="pt-4 flex justify-end gap-3 border-t border-[hsl(var(--border))]">
+              <button
+                type="button"
+                onClick={() => setSendingNewsletter(null)}
+                disabled={isSending}
+                className="px-4 py-2 text-sm font-medium rounded-lg border border-[hsl(var(--border))] text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))]"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmSend}
+                disabled={isSending}
+                className="flex items-center gap-2 bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] px-5 py-2 rounded-lg text-sm font-semibold hover:opacity-90 disabled:opacity-50"
+              >
+                {isSending && <Loader2 size={16} className="animate-spin" />}
+                <span>Enviar Ahora</span>
+              </button>
+            </div>
           </div>
         )}
-      </AnimatePresence>
+      </SidePanel>
 
-      {/* Modal: Delete Campaign Confirmation */}
-      <AnimatePresence>
+      {/* SidePanel: Delete Campaign Confirmation Drawer */}
+      <SidePanel
+        isOpen={Boolean(pendingDeleteNewsletter)}
+        onClose={() => setPendingDeleteNewsletter(null)}
+        title="Eliminar Campaña"
+        width="w-[450px]"
+      >
         {pendingDeleteNewsletter && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              className="bg-[hsl(var(--bg-primary))] border border-[hsl(var(--border))] rounded-2xl max-w-md w-full p-6 space-y-4 shadow-xl"
-            >
-              <h3 className="text-lg font-bold text-red-600 dark:text-red-400 flex items-center gap-2">
-                <AlertTriangle size={20} /> Eliminar Campaña
-              </h3>
-              <p className="text-sm text-[hsl(var(--text-secondary))]">
-                ¿Estás seguro de que deseas eliminar la campaña{" "}
-                <strong>&quot;{pendingDeleteNewsletter.name}&quot;</strong>? Esta acción no se puede deshacer.
-              </p>
-              <div className="pt-2 flex justify-end gap-3">
-                <button
-                  onClick={() => setPendingDeleteNewsletter(null)}
-                  disabled={deletingNewsletter}
-                  className="px-4 py-2 text-sm font-medium rounded-lg border border-[hsl(var(--border))]"
-                >
-                  Cancelar
-                </button>
-                <button
-                  onClick={handleConfirmDeleteNewsletter}
-                  disabled={deletingNewsletter}
-                  className="flex items-center gap-2 bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-red-700 disabled:opacity-50"
-                >
-                  {deletingNewsletter && <Loader2 size={16} className="animate-spin" />}
-                  <span>Eliminar</span>
-                </button>
-              </div>
-            </motion.div>
+          <div className="p-4 space-y-4">
+            <div className="flex items-center gap-2 text-[hsl(var(--destructive))] font-bold text-base">
+              <AlertTriangle size={18} />
+              <span>Confirmar Eliminación</span>
+            </div>
+            <p className="text-sm text-[hsl(var(--text-secondary))]">
+              ¿Estás seguro de que deseas eliminar la campaña{" "}
+              <strong className="text-[hsl(var(--text-primary))]">&quot;{pendingDeleteNewsletter.name}&quot;</strong>? Esta acción no se puede deshacer.
+            </p>
+            <div className="pt-4 flex justify-end gap-3 border-t border-[hsl(var(--border))]">
+              <button
+                onClick={() => setPendingDeleteNewsletter(null)}
+                disabled={deletingNewsletter}
+                className="px-4 py-2 text-sm font-medium rounded-lg border border-[hsl(var(--border))] text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))]"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleConfirmDeleteNewsletter}
+                disabled={deletingNewsletter}
+                className="flex items-center gap-2 bg-[hsl(var(--destructive))] text-[hsl(var(--destructive-foreground))] px-4 py-2 rounded-lg text-sm font-semibold hover:opacity-90 disabled:opacity-50"
+              >
+                {deletingNewsletter && <Loader2 size={16} className="animate-spin" />}
+                <span>Eliminar</span>
+              </button>
+            </div>
           </div>
         )}
-      </AnimatePresence>
+      </SidePanel>
 
-      {/* Modal: Single Manual Subscriber */}
-      <AnimatePresence>
-        {isSubscriberModalOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              className="bg-[hsl(var(--bg-primary))] border border-[hsl(var(--border))] rounded-2xl max-w-md w-full p-6 space-y-4 shadow-xl"
-            >
-              <div className="flex items-center justify-between border-b border-[hsl(var(--border))] pb-3">
-                <div className="flex items-center gap-2 font-bold text-lg">
-                  <UserPlus size={20} className="text-[hsl(var(--primary))]" /> Agregar Suscriptor
-                </div>
-                <button
-                  onClick={() => setIsSubscriberModalOpen(false)}
-                  className="text-[hsl(var(--text-secondary))]"
-                >
-                  <X size={18} />
-                </button>
-              </div>
-
-              <form onSubmit={handleAddSubscriber} className="space-y-4">
-                <div>
-                  <label className="block text-xs font-semibold mb-1">Correo Electrónico *</label>
-                  <input
-                    type="email"
-                    required
-                    placeholder="usuario@ejemplo.com"
-                    value={subscriberEmail}
-                    onChange={(e) => setSubscriberEmail(e.target.value)}
-                    className="w-full px-3.5 py-2 text-sm rounded-lg bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold mb-1">Nombre Completo (Opcional)</label>
-                  <input
-                    type="text"
-                    placeholder="Juan Pérez"
-                    value={subscriberName}
-                    onChange={(e) => setSubscriberName(e.target.value)}
-                    className="w-full px-3.5 py-2 text-sm rounded-lg bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]"
-                  />
-                </div>
-
-                <div className="pt-2 flex justify-end gap-3">
-                  <button
-                    type="button"
-                    onClick={() => setIsSubscriberModalOpen(false)}
-                    className="px-4 py-2 text-sm font-medium rounded-lg border border-[hsl(var(--border))]"
-                  >
-                    Cancelar
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={savingSubscriber}
-                    className="flex items-center gap-2 bg-[hsl(var(--primary))] text-white px-5 py-2 rounded-lg text-sm font-semibold hover:opacity-90 disabled:opacity-50"
-                  >
-                    {savingSubscriber && <Loader2 size={16} className="animate-spin" />}
-                    <span>Agregar</span>
-                  </button>
-                </div>
-              </form>
-            </motion.div>
+      {/* SidePanel: Single Manual Subscriber Drawer */}
+      <SidePanel
+        isOpen={isSubscriberModalOpen}
+        onClose={() => setIsSubscriberModalOpen(false)}
+        title="Agregar Suscriptor"
+        width="w-[450px]"
+      >
+        <form onSubmit={handleAddSubscriber} className="p-4 space-y-4">
+          <div>
+            <label className="block text-xs font-semibold mb-1 text-[hsl(var(--text-primary))]">Correo Electrónico *</label>
+            <input
+              type="email"
+              required
+              placeholder="usuario@ejemplo.com"
+              value={subscriberEmail}
+              onChange={(e) => setSubscriberEmail(e.target.value)}
+              className="w-full px-3.5 py-2 text-sm rounded-lg bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] text-[hsl(var(--text-primary))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]"
+            />
           </div>
-        )}
-      </AnimatePresence>
 
-      {/* Modal: Bulk CSV Import */}
-      <AnimatePresence>
-        {isImportModalOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              className="bg-[hsl(var(--bg-primary))] border border-[hsl(var(--border))] rounded-2xl max-w-lg w-full p-6 space-y-4 shadow-xl"
-            >
-              <div className="flex items-center justify-between border-b border-[hsl(var(--border))] pb-3">
-                <div className="flex items-center gap-2 font-bold text-lg">
-                  <Upload size={20} className="text-[hsl(var(--primary))]" /> Importación Masiva de Suscriptores (CSV)
-                </div>
-                <button
-                  onClick={() => setIsImportModalOpen(false)}
-                  className="text-[hsl(var(--text-secondary))]"
-                >
-                  <X size={18} />
-                </button>
-              </div>
-
-              <form onSubmit={handleImportCsv} className="space-y-4">
-                <div className="space-y-2">
-                  <label className="block text-xs font-semibold">Seleccionar archivo CSV / TXT</label>
-                  <input
-                    type="file"
-                    accept=".csv,.txt"
-                    onChange={handleFileUpload}
-                    className="w-full text-sm text-[hsl(var(--text-secondary))] file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-[hsl(var(--surface-2))] file:text-[hsl(var(--text-primary))] hover:file:bg-[hsl(var(--border))]"
-                  />
-                </div>
-
-                <div className="space-y-1">
-                  <label className="block text-xs font-semibold">O pegar contenido CSV manualmente</label>
-                  <p className="text-2xs text-[hsl(var(--text-secondary))]">
-                    Formato: <code>correo@ejemplo.com, Nombre</code> (un registro por línea).
-                  </p>
-                  <textarea
-                    rows={6}
-                    placeholder={`juan@ejemplo.com, Juan Pérez\nmaria@ejemplo.com, María Gómez\npedro@ejemplo.com`}
-                    value={csvContent}
-                    onChange={(e) => setCsvContent(e.target.value)}
-                    className="w-full p-3 text-xs font-mono rounded-lg bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]"
-                  />
-                </div>
-
-                <div className="pt-2 flex justify-end gap-3">
-                  <button
-                    type="button"
-                    onClick={() => setIsImportModalOpen(false)}
-                    className="px-4 py-2 text-sm font-medium rounded-lg border border-[hsl(var(--border))]"
-                  >
-                    Cancelar
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={importing || !csvContent.trim()}
-                    className="flex items-center gap-2 bg-[hsl(var(--primary))] text-white px-5 py-2 rounded-lg text-sm font-semibold hover:opacity-90 disabled:opacity-50"
-                  >
-                    {importing && <Loader2 size={16} className="animate-spin" />}
-                    <span>Procesar Importación</span>
-                  </button>
-                </div>
-              </form>
-            </motion.div>
+          <div>
+            <label className="block text-xs font-semibold mb-1 text-[hsl(var(--text-primary))]">Nombre Completo (Opcional)</label>
+            <input
+              type="text"
+              placeholder="Juan Pérez"
+              value={subscriberName}
+              onChange={(e) => setSubscriberName(e.target.value)}
+              className="w-full px-3.5 py-2 text-sm rounded-lg bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] text-[hsl(var(--text-primary))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]"
+            />
           </div>
-        )}
-      </AnimatePresence>
 
-      {/* Modal: Delete Subscriber Confirmation */}
-      <AnimatePresence>
+          <div className="pt-4 flex justify-end gap-3 border-t border-[hsl(var(--border))]">
+            <button
+              type="button"
+              onClick={() => setIsSubscriberModalOpen(false)}
+              className="px-4 py-2 text-sm font-medium rounded-lg border border-[hsl(var(--border))] text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))]"
+            >
+              Cancelar
+            </button>
+            <button
+              type="submit"
+              disabled={savingSubscriber}
+              className="flex items-center gap-2 bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] px-5 py-2 rounded-lg text-sm font-semibold hover:opacity-90 disabled:opacity-50"
+            >
+              {savingSubscriber && <Loader2 size={16} className="animate-spin" />}
+              <span>Agregar</span>
+            </button>
+          </div>
+        </form>
+      </SidePanel>
+
+      {/* SidePanel: Bulk CSV Import Drawer */}
+      <SidePanel
+        isOpen={isImportModalOpen}
+        onClose={() => setIsImportModalOpen(false)}
+        title="Importación Masiva de Suscriptores (CSV)"
+        width="w-[550px]"
+      >
+        <form onSubmit={handleImportCsv} className="p-4 space-y-4">
+          <div className="space-y-2">
+            <label className="block text-xs font-semibold text-[hsl(var(--text-primary))]">Seleccionar archivo CSV / TXT</label>
+            <input
+              type="file"
+              accept=".csv,.txt"
+              onChange={handleFileUpload}
+              className="w-full text-sm text-[hsl(var(--text-secondary))] file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-[hsl(var(--surface-2))] file:text-[hsl(var(--text-primary))] hover:file:bg-[hsl(var(--border))]"
+            />
+          </div>
+
+          <div className="space-y-1">
+            <label className="block text-xs font-semibold text-[hsl(var(--text-primary))]">O pegar contenido CSV manualmente</label>
+            <p className="text-2xs text-[hsl(var(--text-secondary))]">
+              Formato: <code>correo@ejemplo.com, Nombre</code> (un registro por línea).
+            </p>
+            <textarea
+              rows={6}
+              placeholder={`juan@ejemplo.com, Juan Pérez\nmaria@ejemplo.com, María Gómez\npedro@ejemplo.com`}
+              value={csvContent}
+              onChange={(e) => setCsvContent(e.target.value)}
+              className="w-full p-3 text-xs font-mono rounded-lg bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] text-[hsl(var(--text-primary))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]"
+            />
+          </div>
+
+          <div className="pt-4 flex justify-end gap-3 border-t border-[hsl(var(--border))]">
+            <button
+              type="button"
+              onClick={() => setIsImportModalOpen(false)}
+              className="px-4 py-2 text-sm font-medium rounded-lg border border-[hsl(var(--border))] text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))]"
+            >
+              Cancelar
+            </button>
+            <button
+              type="submit"
+              disabled={importing || !csvContent.trim()}
+              className="flex items-center gap-2 bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] px-5 py-2 rounded-lg text-sm font-semibold hover:opacity-90 disabled:opacity-50"
+            >
+              {importing && <Loader2 size={16} className="animate-spin" />}
+              <span>Procesar Importación</span>
+            </button>
+          </div>
+        </form>
+      </SidePanel>
+
+      {/* SidePanel: Delete Subscriber Confirmation Drawer */}
+      <SidePanel
+        isOpen={Boolean(pendingDeleteSubscriber)}
+        onClose={() => setPendingDeleteSubscriber(null)}
+        title="Eliminar Suscriptor"
+        width="w-[450px]"
+      >
         {pendingDeleteSubscriber && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              className="bg-[hsl(var(--bg-primary))] border border-[hsl(var(--border))] rounded-2xl max-w-md w-full p-6 space-y-4 shadow-xl"
-            >
-              <h3 className="text-lg font-bold text-red-600 dark:text-red-400 flex items-center gap-2">
-                <AlertTriangle size={20} /> Eliminar Suscriptor
-              </h3>
-              <p className="text-sm text-[hsl(var(--text-secondary))]">
-                ¿Estás seguro de que deseas eliminar a <strong>{pendingDeleteSubscriber.email}</strong>?
-              </p>
-              <div className="pt-2 flex justify-end gap-3">
-                <button
-                  onClick={() => setPendingDeleteSubscriber(null)}
-                  disabled={deletingSubscriber}
-                  className="px-4 py-2 text-sm font-medium rounded-lg border border-[hsl(var(--border))]"
-                >
-                  Cancelar
-                </button>
-                <button
-                  onClick={handleConfirmDeleteSubscriber}
-                  disabled={deletingSubscriber}
-                  className="flex items-center gap-2 bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-red-700 disabled:opacity-50"
-                >
-                  {deletingSubscriber && <Loader2 size={16} className="animate-spin" />}
-                  <span>Eliminar</span>
-                </button>
-              </div>
-            </motion.div>
+          <div className="p-4 space-y-4">
+            <div className="flex items-center gap-2 text-[hsl(var(--destructive))] font-bold text-base">
+              <AlertTriangle size={18} />
+              <span>Confirmar Eliminación</span>
+            </div>
+            <p className="text-sm text-[hsl(var(--text-secondary))]">
+              ¿Estás seguro de que deseas eliminar a <strong className="text-[hsl(var(--text-primary))]">{pendingDeleteSubscriber.email}</strong>?
+            </p>
+            <div className="pt-4 flex justify-end gap-3 border-t border-[hsl(var(--border))]">
+              <button
+                onClick={() => setPendingDeleteSubscriber(null)}
+                disabled={deletingSubscriber}
+                className="px-4 py-2 text-sm font-medium rounded-lg border border-[hsl(var(--border))] text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))]"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleConfirmDeleteSubscriber}
+                disabled={deletingSubscriber}
+                className="flex items-center gap-2 bg-[hsl(var(--destructive))] text-[hsl(var(--destructive-foreground))] px-4 py-2 rounded-lg text-sm font-semibold hover:opacity-90 disabled:opacity-50"
+              >
+                {deletingSubscriber && <Loader2 size={16} className="animate-spin" />}
+                <span>Eliminar</span>
+              </button>
+            </div>
           </div>
         )}
-      </AnimatePresence>
+      </SidePanel>
     </div>
   );
 }

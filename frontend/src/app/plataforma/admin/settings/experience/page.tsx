@@ -129,13 +129,13 @@ export default function WorkspaceExperienceManager() {
     const renderList = () => (
         <div className="space-y-4">
             {featureRows.map((feature) => (
-                <button key={feature.id} onClick={() => toggleFeature(feature.id)} className="w-full text-left bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/5 rounded-lg p-3 flex items-center justify-between gap-3 hover:border-[hsl(var(--info)/30%)] transition-all">
+                <button key={feature.id} onClick={() => toggleFeature(feature.id)} className="w-full text-left bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] rounded-lg p-3 flex items-center justify-between gap-3 hover:border-[hsl(var(--primary))]/30 transition-all">
                     <div className="flex items-center gap-3">
-                        <div className={clsx("size-7 rounded-lg flex items-center justify-center", feature.enabled ? "bg-[hsl(var(--primary))] text-white" : "bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))]")}>
+                        <div className={clsx("size-7 rounded-lg flex items-center justify-center", feature.enabled ? "bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))]" : "bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))]")}>
                             <feature.icon size={24} />
                         </div>
                         <div>
-                            <h3 className="text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-white uppercase tracking-tight">{feature.label}</h3>
+                            <h3 className="text-sm font-semibold text-[hsl(var(--text-primary))] uppercase tracking-tight">{feature.label}</h3>
                             <p className="mt-1 text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">{feature.desc}</p>
                         </div>
                     </div>
@@ -146,19 +146,19 @@ export default function WorkspaceExperienceManager() {
     );
 
     const renderTable = () => (
-        <div className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 overflow-x-auto bg-[hsl(var(--bg-primary))] dark:bg-white/5">
+        <div className="rounded-lg border border-[hsl(var(--border))] overflow-x-auto bg-[hsl(var(--surface-1))]">
             <table className="w-full min-w-[480px] text-left">
-                <thead className="bg-[hsl(var(--surface-1))] dark:bg-white/5">
+                <thead className="bg-[hsl(var(--surface-2))]">
                     <tr>
                         <th className="px-3 py-1.5 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Feature</th>
                         <th className="px-3 py-1.5 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hidden md:table-cell">Descripción</th>
                         <th className="px-3 py-1.5 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Estado</th>
                     </tr>
                 </thead>
-                <tbody className="divide-y divide-[hsl(var(--border))] dark:divide-white/5">
+                <tbody className="divide-y divide-[hsl(var(--border))]">
                     {featureRows.map((feature) => (
-                        <tr key={feature.id} onClick={() => toggleFeature(feature.id)} className="hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/[0.03] cursor-pointer">
-                            <td className="px-3 py-1.5 text-sm font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">{feature.label}</td>
+                        <tr key={feature.id} onClick={() => toggleFeature(feature.id)} className="hover:bg-[hsl(var(--surface-2))] cursor-pointer">
+                            <td className="px-3 py-1.5 text-sm font-bold text-[hsl(var(--text-primary))]">{feature.label}</td>
                             <td className="px-3 py-1.5 hidden md:table-cell text-xs text-[hsl(var(--text-secondary))]">{feature.desc}</td>
                             <td className="px-3 py-1.5"><span className={clsx("px-2 py-0.5 rounded-full text-2xs font-semibold uppercase", feature.enabled ? "bg-[hsl(var(--success-muted))] text-[hsl(var(--success))]" : "bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))]")}>{feature.enabled ? 'Activo' : 'Inactivo'}</span></td>
                         </tr>
@@ -171,15 +171,15 @@ export default function WorkspaceExperienceManager() {
     const renderBoard = () => (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
             {groupedFeatures.map((group) => (
-                <section key={group.id} className="rounded-lg bg-[hsl(var(--surface-1))] dark:bg-white/[0.03] border border-[hsl(var(--border))] dark:border-white/10 p-3">
+                <section key={group.id} className="rounded-lg bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] p-3">
                     <div className="flex items-center justify-between mb-5">
                         <span className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{group.label}</span>
                         <span className="font-semibold text-[hsl(var(--text-secondary))]">{group.rows.length}</span>
                     </div>
                     <div className="space-y-3">
                         {group.rows.map((feature) => (
-                            <button key={feature.id} onClick={() => toggleFeature(feature.id)} className="w-full text-left bg-[hsl(var(--bg-primary))] dark:bg-white/[0.05] border border-[hsl(var(--border))] dark:border-white/5 rounded-lg p-4 hover:border-[hsl(var(--info)/30%)] transition-all">
-                                <p className="text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-white uppercase tracking-tight">{feature.label}</p>
+                            <button key={feature.id} onClick={() => toggleFeature(feature.id)} className="w-full text-left bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] rounded-lg p-4 hover:border-[hsl(var(--primary))]/30 transition-all">
+                                <p className="text-sm font-semibold text-[hsl(var(--text-primary))] uppercase tracking-tight">{feature.label}</p>
                                 <p className="mt-2 text-2xs font-bold text-[hsl(var(--text-secondary))]">{feature.desc}</p>
                             </button>
                         ))}
@@ -190,7 +190,7 @@ export default function WorkspaceExperienceManager() {
     );
 
     return (
-        <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))] overflow-hidden animate-fade-in font-display">
+        <div className="flex flex-col h-full bg-[hsl(var(--surface-1))] overflow-hidden animate-fade-in font-display">
             <WorkspaceToolbar
                 breadcrumbs={[{ label: 'Ajustes', icon: Settings }, { label: 'Experiencia de Usuario', icon: Sparkles }]}
                 viewType={viewType}
@@ -201,7 +201,7 @@ export default function WorkspaceExperienceManager() {
                         <button onClick={() => router.back()} className="px-4 py-2 font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide hover:text-[hsl(var(--text-primary))]">Cancelar</button>
                         <button
                             onClick={handleSave} disabled={isSaving}
-                            className="flex items-center gap-2 px-3 py-2 bg-[hsl(var(--bg-muted))] dark:bg-[hsl(var(--bg-primary))] text-white dark:text-[hsl(var(--text-primary))] rounded-md text-xs font-semibold uppercase tracking-wide shadow-xl active:scale-95 transition-all"
+                            className="flex items-center gap-2 px-3 py-2 bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] rounded-md text-xs font-semibold uppercase tracking-wide shadow-xl active:scale-95 transition-all"
                         >
                             {isSaving ? <RotateCcw className="animate-spin" size={14} /> : <Save size={14} />} Guardar Workspace
                         </button>
@@ -216,13 +216,13 @@ export default function WorkspaceExperienceManager() {
 
                     {/* Header */}
                     <header className="space-y-4">
-                        <div className="inline-flex items-center gap-2 px-3 py-1 bg-info-soft dark:bg-[hsl(var(--info))]/20 text-info-text rounded-lg text-2xs font-semibold uppercase tracking-wide border border-[hsl(var(--info)/20%)] dark:border-[hsl(var(--info)/30%)]">
+                        <div className="inline-flex items-center gap-2 px-3 py-1 bg-[hsl(var(--primary))]/10 text-[hsl(var(--primary))] rounded-lg text-2xs font-semibold uppercase tracking-wide border border-[hsl(var(--primary))]/20">
                             <Zap size={14} /> Workspace Experience Manager v3.0
                         </div>
-                        <h1 className="text-lg lg:text-xl font-bold text-[hsl(var(--text-primary))] dark:text-white tracking-tighter leading-none">
+                        <h1 className="text-lg lg:text-xl font-bold text-[hsl(var(--text-primary))] tracking-tighter leading-none">
                             El cerebro de tu <span className="text-[hsl(var(--primary))] italic">interfaz.</span>
                         </h1>
-                        <p className="text-xl text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] font-medium max-w-2xl leading-relaxed">
+                        <p className="text-xl text-[hsl(var(--text-secondary))] font-medium max-w-2xl leading-relaxed">
                             Activa funcionalidades de alto nivel, personaliza el motor visual y define el flujo de herramientas para todo tu equipo.
                         </p>
                     </header>
@@ -258,18 +258,18 @@ export default function WorkspaceExperienceManager() {
                                         className={clsx(
                                             "p-4 rounded-lg border-2 transition-all cursor-pointer group relative overflow-hidden",
                                             isEnabled
-                                                ? "bg-[hsl(var(--bg-primary))] dark:bg-white/5 border-[hsl(var(--info)/100%)] shadow-2xl shadow-[hsl(var(--info)/10%)] scale-[1.02]"
-                                                : "bg-[hsl(var(--surface-1))] dark:bg-black/20 border-transparent grayscale opacity-60 hover:grayscale-0 hover:opacity-100"
+                                                ? "bg-[hsl(var(--surface-2))] border-[hsl(var(--primary))] shadow-2xl shadow-[hsl(var(--primary)/10%)] scale-[1.02]"
+                                                : "bg-[hsl(var(--surface-1))] border-transparent grayscale opacity-60 hover:grayscale-0 hover:opacity-100"
                                         )}
                                     >
                                         {isEnabled && <div className="absolute top-3 right-6 size-2 rounded-full bg-[hsl(var(--primary))] shadow-[0_0_10px_hsl(var(--primary))]" />}
                                         <div className="space-y-3">
-                                            <div className={clsx("size-7 rounded-lg flex items-center justify-center shadow-lg transition-transform group-hover:rotate-12", isEnabled ? "bg-[hsl(var(--primary))] text-white" : "bg-[hsl(var(--bg-primary))] dark:bg-white/10 text-[hsl(var(--text-secondary))]")}>
+                                            <div className={clsx("size-7 rounded-lg flex items-center justify-center shadow-lg transition-transform group-hover:rotate-12", isEnabled ? "bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))]" : "bg-[hsl(var(--surface-3))] text-[hsl(var(--text-secondary))]")}>
                                                 <feature.icon size={24} />
                                             </div>
                                             <div>
-                                                <h4 className="text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-white uppercase tracking-tight">{feature.label}</h4>
-                                                <p className="text-sm text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] font-medium mt-1 leading-snug">{feature.desc}</p>
+                                                <h4 className="text-sm font-semibold text-[hsl(var(--text-primary))] uppercase tracking-tight">{feature.label}</h4>
+                                                <p className="text-sm text-[hsl(var(--text-secondary))] font-medium mt-1 leading-snug">{feature.desc}</p>
                                             </div>
                                         </div>
                                     </div>
@@ -284,27 +284,27 @@ export default function WorkspaceExperienceManager() {
                             <h3 className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Motor Visual y Marca</h3>
                         </div>
 
-                        <div className="p-4 bg-[hsl(var(--bg-muted))] rounded-lg text-white shadow-2xl relative overflow-hidden group border border-white/5">
+                        <div className="p-4 bg-[hsl(var(--surface-2))] rounded-lg text-[hsl(var(--text-primary))] shadow-2xl relative overflow-hidden group border border-[hsl(var(--border))]">
                             <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity"><Palette size={120} /></div>
                             <div className="relative z-10 grid grid-cols-1 md:grid-cols-2 gap-3 items-center">
                                 <div className="space-y-3">
-                                    <h4 className="text-lg font-bold tracking-tight">Personalización de Marca</h4>
+                                    <h4 className="text-lg font-bold tracking-tight text-[hsl(var(--text-primary))]">Personalización de Marca</h4>
                                     <p className="text-[hsl(var(--text-secondary))] text-sm font-medium leading-relaxed italic">&ldquo;Configura el ADN visual de la plataforma para que refleje la identidad de Centro Cristiano de Fe.&rdquo;</p>
                                     <div className="flex gap-4">
-                                        <div className="size-10 rounded-full bg-[hsl(var(--primary))] cursor-pointer border-2 border-white ring-4 ring-[hsl(var(--info)/20%)] shadow-xl" />
+                                        <div className="size-10 rounded-full bg-[hsl(var(--primary))] cursor-pointer border-2 border-[hsl(var(--primary-foreground))] ring-4 ring-[hsl(var(--primary)/20%)] shadow-xl" />
                                         <div className="size-10 rounded-full bg-[hsl(var(--info))] cursor-pointer hover:scale-110 transition-all" />
                                         <div className="size-10 rounded-full bg-[hsl(var(--success))] cursor-pointer hover:scale-110 transition-all" />
                                         <div className="size-10 rounded-full bg-[hsl(var(--danger))] cursor-pointer hover:scale-110 transition-all" />
                                     </div>
                                 </div>
-                                <div className="space-y-3 bg-white/5 p-4 rounded-lg border border-white/10 backdrop-blur-md">
+                                <div className="space-y-3 bg-[hsl(var(--surface-1))] p-4 rounded-lg border border-[hsl(var(--border))] backdrop-blur-md">
                                     <div className="space-y-2">
                                         <label className="text-2xs font-semibold uppercase text-[hsl(var(--text-secondary))] tracking-wide ml-2">Nombre del Workspace</label>
-                                        <input type="text" defaultValue={SITE_NAME} className="w-full bg-black/40 border border-white/10 rounded-lg p-4 text-sm font-bold outline-none focus:border-[hsl(var(--info)/100%)] transition-all" />
+                                        <input type="text" defaultValue={SITE_NAME} className="w-full bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] rounded-lg p-4 text-sm font-bold text-[hsl(var(--text-primary))] outline-none focus:border-[hsl(var(--primary))] transition-all placeholder:text-[hsl(var(--text-secondary))]" />
                                     </div>
                                     <div className="space-y-2">
                                         <label className="text-2xs font-semibold uppercase text-[hsl(var(--text-secondary))] tracking-wide ml-2">URL del Logotipo (SVG/PNG)</label>
-                                        <input type="text" placeholder="https://..." className="w-full bg-black/40 border border-white/10 rounded-lg p-4 text-sm font-bold outline-none focus:border-[hsl(var(--info)/100%)] transition-all" />
+                                        <input type="text" placeholder="https://..." className="w-full bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] rounded-lg p-4 text-sm font-bold text-[hsl(var(--text-primary))] outline-none focus:border-[hsl(var(--primary))] transition-all placeholder:text-[hsl(var(--text-secondary))]" />
                                     </div>
                                 </div>
                             </div>

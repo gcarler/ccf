@@ -56,7 +56,7 @@ export default function VideoPlayer({ src, onProgress, onComplete, initialTime =
     };
 
     return (
-        <div className="relative group bg-black rounded-lg overflow-hidden shadow-2xl aspect-video">
+        <div className="relative group bg-[hsl(var(--surface-3))] rounded-lg overflow-hidden shadow-2xl aspect-video">
             <video
                 ref={videoRef}
                 src={src}
@@ -67,9 +67,9 @@ export default function VideoPlayer({ src, onProgress, onComplete, initialTime =
             />
 
             {/* Overlay Controls */}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-4 space-y-3">
+            <div className="absolute inset-0 bg-gradient-to-t from-[hsl(var(--background)/0.8)] via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-4 space-y-3">
                 {/* Progress Bar */}
-                <div className="relative h-1.5 w-full bg-white/20 rounded-full cursor-pointer overflow-hidden">
+                <div className="relative h-1.5 w-full bg-[hsl(var(--surface-1)/0.3)] rounded-full cursor-pointer overflow-hidden">
                     <div
                         className="absolute top-0 left-0 h-full bg-[hsl(var(--primary))] transition-all duration-100"
                         style={{ width: `${progress}%` }}
@@ -78,21 +78,21 @@ export default function VideoPlayer({ src, onProgress, onComplete, initialTime =
 
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                        <button onClick={togglePlay} className="text-white hover:scale-110 transition-transform">
+                        <button onClick={togglePlay} className="text-[hsl(var(--foreground))] hover:scale-110 transition-transform">
                             {isPlaying ? <Pause size={24} fill="currentColor" /> : <Play size={24} fill="currentColor" />}
                         </button>
-                        <button className="text-white hover:rotate-12 transition-transform">
+                        <button className="text-[hsl(var(--foreground))] hover:rotate-12 transition-transform">
                             <RotateCcw size={20} />
                         </button>
-                        <div className="text-white text-sm font-bold font-mono">
+                        <div className="text-[hsl(var(--foreground))] text-sm font-bold font-mono">
                             {formatTime(videoRef.current?.currentTime || 0)} / {formatTime(duration)}
                         </div>
                     </div>
 
                     <div className="flex items-center gap-4">
-                        <button className="text-white"><Volume2 size={20} /></button>
-                        <button className="text-white"><Settings size={20} /></button>
-                        <button className="text-white"><Maximize size={20} /></button>
+                        <button className="text-[hsl(var(--foreground))]"><Volume2 size={20} /></button>
+                        <button className="text-[hsl(var(--foreground))]"><Settings size={20} /></button>
+                        <button className="text-[hsl(var(--foreground))]"><Maximize size={20} /></button>
                     </div>
                 </div>
             </div>
@@ -101,9 +101,9 @@ export default function VideoPlayer({ src, onProgress, onComplete, initialTime =
             {!isPlaying && (
                 <div
                     onClick={togglePlay}
-                    className="absolute inset-0 flex items-center justify-center bg-black/20 backdrop-blur-[2px] cursor-pointer"
+                    className="absolute inset-0 flex items-center justify-center bg-[hsl(var(--background)/0.3)] backdrop-blur-[2px] cursor-pointer"
                 >
-                    <div className="size-10 rounded-full bg-[hsl(var(--primary))] text-white flex items-center justify-center shadow-2xl shadow-[hsl(var(--info)/40%)] animate-pulse">
+                    <div className="size-10 rounded-full bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] flex items-center justify-center shadow-2xl shadow-[hsl(var(--info)/40%)] animate-pulse">
                         <Play size={32} fill="currentColor" className="ml-1" />
                     </div>
                 </div>

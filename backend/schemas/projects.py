@@ -1,11 +1,11 @@
 from __future__ import annotations
 
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Annotated, Any, List, Literal, Optional
 from uuid import UUID
 
-from pydantic import BaseModel, BeforeValidator, ConfigDict, Field, field_validator
+from pydantic import BaseModel, BeforeValidator, ConfigDict, Field, field_validator, model_validator
 
 from backend.schemas._common import orm_config
 
@@ -181,18 +181,395 @@ class ProjectTask(ProjectTaskBase):
     model_config = orm_config
 
 
+class ProjectKPIBase(BaseModel):
+    title: str = Field(..., min_length=1, max_length=150)
+    description: Optional[str] = None
+    target_value: float = Field(..., gt=0)
+    current_value: float = Field(default=0.0)
+    unit: str = Field(default="unidades", max_length=30)
+    category: str = Field(default="impact", max_length=50)
+    due_date: Optional[datetime] = None
+
+
+class ProjectKPICreate(ProjectKPIBase):
+    pass
+
+
+class ProjectKPIUpdate(BaseModel):
+    title: Optional[str] = Field(default=None, min_length=1, max_length=150)
+    description: Optional[str] = None
+    target_value: Optional[float] = Field(default=None, gt=0)
+    current_value: Optional[float] = None
+    unit: Optional[str] = Field(default=None, max_length=30)
+    category: Optional[str] = Field(default=None, max_length=50)
+    due_date: Optional[datetime] = None
+
+
+class ProjectKPI(ProjectKPIBase):
+    id: UUIDStr
+    project_id: UUIDStr
+    created_at: datetime
+    updated_at: Optional[datetime] = None
+    progress_percent: int = 0
+    model_config = orm_config
+
+    @classmethod
+    def model_validate(cls, obj, **kwargs):
+        instance = super().model_validate(obj, **kwargs)
+        if instance.target_value and instance.target_value > 0:
+            pct = round((instance.current_value / instance.target_value) * 100)
+            instance.progress_percent = max(0, min(100, pct))
+        return instance
+
+
+class ProjectTaskDependencyCreate(BaseModel):
+    predecessor_id: UUIDStr
+    successor_id: UUIDStr
+    dependency_type: Literal["FS", "SS", "FF", "SF"] = "FS"
+    lag_days: int = Field(default=0, ge=0)
+
+
+class ProjectTaskDependency(BaseModel):
+    id: UUIDStr
+    project_id: UUIDStr
+    predecessor_id: UUIDStr
+    successor_id: UUIDStr
+    dependency_type: str = "FS"
+    lag_days: int = 0
+    created_at: datetime
+    model_config = orm_config
+
+
+class ProjectExpenseBase(BaseModel):
+    category: str = Field(default="general", max_length=50)
+    description: Optional[str] = None
+    amount: float = Field(default=0.0, ge=0)
+    date: Optional[datetime] = None
+    receipt_url: Optional[str] = Field(default=None, max_length=500)
+    status: Literal["planned", "committed", "paid"] = "planned"
+
+
+class ProjectExpenseCreate(ProjectExpenseBase):
+    amount: float = Field(..., ge=0)
+
+
+class ProjectExpenseUpdate(BaseModel):
+    category: Optional[str] = Field(default=None, max_length=50)
+    description: Optional[str] = None
+    amount: Optional[float] = Field(default=None, ge=0)
+    date: Optional[datetime] = None
+    receipt_url: Optional[str] = Field(default=None, max_length=500)
+    status: Optional[Literal["planned", "committed", "paid"]] = None
+
+
+class ProjectExpense(ProjectExpenseBase):
+    id: UUIDStr
+    project_id: UUIDStr
+    created_by: Optional[UUIDStr] = None
+    creator_name: Optional[str] = None
+    created_at: datetime
+    updated_at: Optional[datetime] = None
+    model_config = orm_config
+
+
+class ProjectBudgetSummary(BaseModel):
+    project_id: UUIDStr
+    budget_allocated: float = 0.0
+    budget_spent: float = 0.0
+    remaining_budget: float = 0.0
+    burn_rate_percent: float = 0.0
+    total_expenses_count: int = 0
+    planned_amount: float = 0.0
+    committed_amount: float = 0.0
+    paid_amount: float = 0.0
+    by_category: dict[str, float] = Field(default_factory=dict)
+    model_config = orm_config
+
+
+class ProjectRiskBase(BaseModel):
+    title: str = Field(..., min_length=1, max_length=255)
+    category: str = Field(default="tecnico", max_length=50)
+    probability: int = Field(default=3, ge=1, le=5)
+    impact: int = Field(default=3, ge=1, le=5)
+    mitigation_plan: Optional[str] = None
+    contingency_plan: Optional[str] = None
+    owner_id: Optional[UUIDStr] = None
+    status: Literal["active", "mitigated", "occurred"] = "active"
+
+    @field_validator("title", mode="before")
+    @classmethod
+    def _title_no_blank(cls, v: Any) -> Any:
+        return _strip_str_or_passthrough(v)
+
+
+class ProjectRiskCreate(ProjectRiskBase):
+    pass
+
+
+class ProjectRiskUpdate(BaseModel):
+    title: Optional[str] = Field(default=None, min_length=1, max_length=255)
+    category: Optional[str] = Field(default=None, max_length=50)
+    probability: Optional[int] = Field(default=None, ge=1, le=5)
+    impact: Optional[int] = Field(default=None, ge=1, le=5)
+    mitigation_plan: Optional[str] = None
+    contingency_plan: Optional[str] = None
+    owner_id: Optional[UUIDStr] = None
+    status: Optional[Literal["active", "mitigated", "occurred"]] = None
+
+    @field_validator("title", mode="before")
+    @classmethod
+    def _title_no_blank(cls, v: Any) -> Any:
+        return _strip_str_or_passthrough(v)
+
+
+class ProjectRisk(ProjectRiskBase):
+    id: UUIDStr
+    project_id: UUIDStr
+    severity_score: int = 9
+    severity_level: Literal["low", "medium", "high", "critical"] = "medium"
+    owner_name: Optional[str] = None
+    created_at: datetime
+    updated_at: Optional[datetime] = None
+    model_config = orm_config
+
+    @classmethod
+    def model_validate(cls, obj, **kwargs):
+        # Resolve owner full name if owner relation is present
+        if hasattr(obj, "owner") and getattr(obj, "owner", None) is not None:
+            owner_obj = getattr(obj, "owner")
+            name = getattr(owner_obj, "full_name", None) or f"{getattr(owner_obj, 'nombres', '')} {getattr(owner_obj, 'apellidos', '')}".strip()
+            if name:
+                if isinstance(obj, dict):
+                    obj["owner_name"] = name
+                else:
+                    setattr(obj, "owner_name", name)
+        instance = super().model_validate(obj, **kwargs)
+        prob = instance.probability or 1
+        imp = instance.impact or 1
+        instance.severity_score = prob * imp
+        if instance.severity_score >= 15:
+            instance.severity_level = "critical"
+        elif instance.severity_score >= 10:
+            instance.severity_level = "high"
+        elif instance.severity_score >= 5:
+            instance.severity_level = "medium"
+        else:
+            instance.severity_level = "low"
+        return instance
+
+
+class ProjectRiskSummary(BaseModel):
+    project_id: UUIDStr
+    total_risks: int = 0
+    active_risks: int = 0
+    mitigated_risks: int = 0
+    occurred_risks: int = 0
+    critical_count: int = 0
+    high_count: int = 0
+    medium_count: int = 0
+    low_count: int = 0
+    matrix_5x5: List[dict] = Field(default_factory=list)
+    by_category: dict[str, int] = Field(default_factory=dict)
+    model_config = orm_config
+
+
+class TaskReassignPayload(BaseModel):
+    new_assignee_id: Optional[UUIDStr] = None
+
+
+class ProjectWorkloadTaskItem(BaseModel):
+    id: UUIDStr
+    title: str
+    status: str = "todo"
+    priority: str = "medium"
+    due_date: Optional[datetime] = None
+    is_overdue: bool = False
+    model_config = orm_config
+
+
+class ProjectMemberWorkload(BaseModel):
+    persona_id: Optional[UUIDStr] = None
+    name: str = "Sin Asignar"
+    email: Optional[str] = None
+    avatar_url: Optional[str] = None
+    total_tasks: int = 0
+    active_tasks: int = 0
+    completed_tasks: int = 0
+    overdue_tasks: int = 0
+    urgent_tasks: int = 0
+    high_tasks: int = 0
+    medium_tasks: int = 0
+    low_tasks: int = 0
+    capacity_status: Literal["available", "balanced", "overloaded"] = "available"
+    workload_percent: int = 0
+    tasks: List[ProjectWorkloadTaskItem] = Field(default_factory=list)
+    model_config = orm_config
+
+
+class ProjectWorkloadSummary(BaseModel):
+    project_id: UUIDStr
+    total_members: int = 0
+    total_active_tasks: int = 0
+    total_completed_tasks: int = 0
+    total_overdue_tasks: int = 0
+    overloaded_members_count: int = 0
+    balanced_members_count: int = 0
+    available_members_count: int = 0
+    unassigned_tasks_count: int = 0
+    members: List[ProjectMemberWorkload] = Field(default_factory=list)
+    model_config = orm_config
+
+
+# ============================================================================
+# Critical Path Method (CPM) Schemas (Super-PRO Fase 4)
+# ============================================================================
+
+class TaskCriticalPathItem(BaseModel):
+    task_id: UUIDStr
+    title: str
+    duration_days: int
+    early_start: int
+    early_finish: int
+    late_start: int
+    late_finish: int
+    slack_days: int
+    is_critical: bool
+    early_start_date: Optional[datetime] = None
+    early_finish_date: Optional[datetime] = None
+    late_start_date: Optional[datetime] = None
+    late_finish_date: Optional[datetime] = None
+    model_config = orm_config
+
+
+class ProjectCriticalPathSummary(BaseModel):
+    project_id: UUIDStr
+    total_duration_days: int
+    critical_tasks_count: int
+    critical_path_task_ids: List[UUIDStr] = Field(default_factory=list)
+    tasks: List[TaskCriticalPathItem] = Field(default_factory=list)
+    has_cycles: bool = False
+    model_config = orm_config
+
+
+# ============================================================================
+# Project Baseline Schemas (Super-PRO Fase 4)
+# ============================================================================
+
+class ProjectBaselineCreate(BaseModel):
+    name: str = Field(default="Línea Base", min_length=1, max_length=100)
+    description: Optional[str] = None
+
+
+class TaskBaselineComparisonItem(BaseModel):
+    task_id: UUIDStr
+    title: str
+    baseline_start: Optional[datetime] = None
+    baseline_due: Optional[datetime] = None
+    baseline_duration: int = 1
+    current_start: Optional[datetime] = None
+    current_due: Optional[datetime] = None
+    current_duration: int = 1
+    variance_days: int = 0
+    status: str = "todo"
+    model_config = orm_config
+
+
+class ProjectBaseline(BaseModel):
+    id: UUIDStr
+    project_id: UUIDStr
+    name: str
+    description: Optional[str] = None
+    created_by: Optional[UUIDStr] = None
+    created_at: datetime
+    snapshot_data: dict = Field(default_factory=dict)
+    comparisons: List[TaskBaselineComparisonItem] = Field(default_factory=list)
+    total_variance_days: int = 0
+    model_config = orm_config
+
+
+class ProjectBaselineSummary(BaseModel):
+    has_baseline: bool = False
+    latest_baseline: Optional[ProjectBaseline] = None
+    total_baselines: int = 0
+    model_config = orm_config
+
+
+# ============================================================================
+# Time Tracking Schemas (Super-PRO Fase 5)
+# ============================================================================
+
+class ProjectTimeLogBase(BaseModel):
+    task_id: Optional[UUIDStr] = None
+    hours: float = Field(..., gt=0, le=24, description="Horas dedicadas (0-24)")
+    date: Optional[datetime] = None
+    description: Optional[str] = None
+    is_billable: bool = True
+
+
+class ProjectTimeLogCreate(ProjectTimeLogBase):
+    pass
+
+
+class ProjectTimeLog(ProjectTimeLogBase):
+    id: UUIDStr
+    project_id: UUIDStr
+    persona_id: UUIDStr
+    persona_name: Optional[str] = None
+    task_title: Optional[str] = None
+    created_at: datetime
+    updated_at: Optional[datetime] = None
+    deleted_at: Optional[datetime] = None
+    model_config = orm_config
+
+
+class TaskTimeSummaryItem(BaseModel):
+    task_id: UUIDStr
+    task_title: str
+    total_hours: float
+    billable_hours: float
+    logs_count: int
+    model_config = orm_config
+
+
+class MemberTimeSummaryItem(BaseModel):
+    persona_id: UUIDStr
+    persona_name: str
+    avatar_url: Optional[str] = None
+    total_hours: float
+    billable_hours: float
+    logs_count: int
+    model_config = orm_config
+
+
+class ProjectTimeTrackingSummary(BaseModel):
+    project_id: UUIDStr
+    total_hours: float = 0.0
+    billable_hours: float = 0.0
+    non_billable_hours: float = 0.0
+    total_logs: int = 0
+    by_task: List[TaskTimeSummaryItem] = Field(default_factory=list)
+    by_member: List[MemberTimeSummaryItem] = Field(default_factory=list)
+    model_config = orm_config
+
+
+
+
+
+
 class ProjectBase(BaseModel):
-    # Cierre ``PEND-QUALITY-PROJECT-TITLE-NORM-001`` (anotación diferida
-    # del code review del ``2026-07-16``): endurecemos ``title`` con la
-    # misma regla que ``ProjectTaskBase.title`` (``min_length=1`` +
-    # ``field_validator(mode='before')`` con strip) para coherencia del
-    # módulo de proyectos.
     title: str = Field(..., min_length=1, max_length=500)
     description: Optional[str] = None
     status: ProjectStatus = "planning"
     owner_id: Optional[UUIDStr] = None
     color: Optional[str] = None
     icon: Optional[str] = None
+    start_date: Optional[datetime] = None
+    target_date: Optional[datetime] = None
+    progress_mode: Literal["auto_tasks", "milestones", "manual"] = "auto_tasks"
+    manual_progress: float = 0.0
+    budget_allocated: Optional[float] = None
+    budget_spent: Optional[float] = None
+    health_override: Optional[Literal["on_track", "at_risk", "off_track"]] = None
 
     @field_validator("title", mode="before")
     @classmethod
@@ -217,6 +594,13 @@ class ProjectUpdate(BaseModel):
     owner_id: Optional[UUIDStr] = None
     color: Optional[str] = None
     icon: Optional[str] = None
+    start_date: Optional[datetime] = None
+    target_date: Optional[datetime] = None
+    progress_mode: Optional[Literal["auto_tasks", "milestones", "manual"]] = None
+    manual_progress: Optional[float] = None
+    budget_allocated: Optional[float] = None
+    budget_spent: Optional[float] = None
+    health_override: Optional[Literal["on_track", "at_risk", "off_track"]] = None
 
 
 class ProjectMilestoneBase(BaseModel):
@@ -257,7 +641,15 @@ class Project(ProjectBase):
     tasks: List[ProjectTask] = Field(default_factory=list)
     milestones: List[ProjectMilestone] = Field(default_factory=list)
     activities: List[ProjectActivityLog] = Field(default_factory=list)
+    kpis: List[ProjectKPI] = Field(default_factory=list)
+    dependencies: List[ProjectTaskDependency] = Field(default_factory=list)
+    expenses: List[ProjectExpense] = Field(default_factory=list)
+    budget_summary: Optional[ProjectBudgetSummary] = None
+    risks: List[ProjectRisk] = Field(default_factory=list)
+    risks_summary: Optional[ProjectRiskSummary] = None
+    workload_summary: Optional[ProjectWorkloadSummary] = None
     progress_percent: int = 0
+    health_status: Literal["on_track", "at_risk", "off_track", "completed"] = "on_track"
     model_config = ConfigDict(from_attributes=True, populate_by_name=True)
 
     @classmethod
@@ -266,10 +658,46 @@ class Project(ProjectBase):
         if hasattr(obj, "activity_logs") and not isinstance(obj, dict):
             obj.__dict__.setdefault("activities", list(obj.activity_logs or []))
         instance = super().model_validate(obj, **kwargs)
-        # Calculate progress from tasks if not set on model
-        if hasattr(obj, "tasks") and obj.tasks:
+
+        # Calculate progress depending on progress_mode
+        if instance.progress_mode == "manual":
+            instance.progress_percent = max(0, min(100, round(instance.manual_progress or 0.0)))
+        elif instance.progress_mode == "milestones" and hasattr(obj, "milestones") and obj.milestones:
+            total_m = len(obj.milestones)
+            done_m = sum(1 for m in obj.milestones if getattr(m, "is_completed", False))
+            instance.progress_percent = round((done_m / total_m) * 100) if total_m else 0
+        elif hasattr(obj, "tasks") and obj.tasks:
             done = sum(1 for t in obj.tasks if getattr(t, "status", "") == "completed")
             instance.progress_percent = round((done / len(obj.tasks)) * 100)
+        else:
+            instance.progress_percent = 0
+
+        # Calculate health_status
+        if instance.status == "completed":
+            instance.health_status = "completed"
+        elif instance.health_override:
+            instance.health_status = instance.health_override
+        else:
+            # Automatic health derived from overdue tasks or status
+            now_dt = datetime.now(timezone.utc)
+            tasks_list = getattr(obj, "tasks", []) or []
+            overdue_count = 0
+            for t in tasks_list:
+                d_date = getattr(t, "due_date", None)
+                t_status = getattr(t, "status", "")
+                if t_status != "completed" and d_date:
+                    # Compare timezone-aware
+                    d_dt = d_date if hasattr(d_date, "tzinfo") and d_date.tzinfo else d_date.replace(tzinfo=timezone.utc)
+                    if d_dt < now_dt:
+                        overdue_count += 1
+
+            if overdue_count >= 2:
+                instance.health_status = "off_track"
+            elif overdue_count == 1:
+                instance.health_status = "at_risk"
+            else:
+                instance.health_status = "on_track"
+
         return instance
 
 
@@ -325,6 +753,7 @@ class ProjectCommentCreateWithProject(ProjectCommentBase):
 class ProjectCommentUpdate(BaseModel):
     content: Optional[str] = None
     is_resolved: Optional[bool] = None
+    is_pinned: Optional[bool] = None
     attachments: Optional[List[CommentAttachment]] = None
     mentions: Optional[List[UUIDStr]] = None
 
@@ -335,10 +764,17 @@ class ProjectCommentItem(ProjectCommentBase):
     author_id: Optional[UUIDStr] = None
     author_name: str
     is_resolved: bool = False
+    is_pinned: bool = False
+    pinned_at: Optional[datetime] = None
+    pinned_by: Optional[UUIDStr] = None
+    pinner_name: Optional[str] = None
     created_at: datetime
     updated_at: datetime
     module_type: Literal["project", "activity", "agenda"] = "project"
     context_title: Optional[str] = None
+
+
+ProjectComment = ProjectCommentItem
 
 
 class InboxReadToggle(BaseModel):
@@ -462,3 +898,348 @@ class ProjectMember(BaseModel):
     invited_at: Optional[datetime] = None
     persona_name: Optional[str] = None
     model_config = orm_config
+
+
+# ── Project Templates (Super-PRO Fase 6) ───────────────────────────────────
+
+class TemplatePhaseItem(BaseModel):
+    title: Optional[str] = None
+    name: Optional[str] = None
+    description: Optional[str] = None
+    order: int = 0
+    order_index: int = 0
+    slug: Optional[str] = None
+    color: Optional[str] = "#94a3b8"
+
+    @model_validator(mode="before")
+    @classmethod
+    def _normalize(cls, data: Any) -> Any:
+        if isinstance(data, dict):
+            val = data.get("title") or data.get("name") or "Fase"
+            data["title"] = val
+            data["name"] = val
+            ord_val = data.get("order") if data.get("order") is not None else data.get("order_index", 0)
+            data["order"] = ord_val
+            data["order_index"] = ord_val
+            if not data.get("slug"):
+                import re
+                clean = re.sub(r"[^a-zA-Z0-9_]", "_", val.lower())[:20]
+                data["slug"] = clean or "phase"
+        return data
+
+
+class TemplateTaskItem(BaseModel):
+    title: str = Field(..., min_length=1, max_length=500)
+    description: Optional[str] = None
+    priority: str = "medium"
+    phase_index: Optional[int] = None
+    phase_name: Optional[str] = None
+    duration_days: int = 1
+    day_offset: int = 0
+    is_milestone: bool = False
+
+
+class TemplateStructure(BaseModel):
+    phases: List[TemplatePhaseItem] = Field(default_factory=list)
+    tasks: List[TemplateTaskItem] = Field(default_factory=list)
+    default_view: Optional[str] = "kanban"
+    tags: List[str] = Field(default_factory=list)
+
+
+class ProjectTemplateBase(BaseModel):
+    name: str = Field(..., min_length=1, max_length=255)
+    description: Optional[str] = None
+    category: str = "general"
+    default_budget: float = 0.0
+    structure: TemplateStructure = Field(default_factory=TemplateStructure)
+    is_public: bool = True
+
+
+class ProjectTemplateCreate(ProjectTemplateBase):
+    sede_id: Optional[UUIDStr] = None
+
+
+class ProjectTemplateUpdate(BaseModel):
+    name: Optional[str] = Field(default=None, min_length=1, max_length=255)
+    description: Optional[str] = None
+    category: Optional[str] = None
+    default_budget: Optional[float] = None
+    structure: Optional[TemplateStructure] = None
+    is_public: Optional[bool] = None
+
+
+class ProjectTemplate(ProjectTemplateBase):
+    id: UUIDStr
+    created_by: Optional[UUIDStr] = None
+    creator_name: Optional[str] = None
+    sede_id: Optional[UUIDStr] = None
+    created_at: datetime
+    updated_at: datetime
+    model_config = orm_config
+
+
+class InstantiateProjectFromTemplate(BaseModel):
+    title: str = Field(..., min_length=1, max_length=500)
+    description: Optional[str] = None
+    start_date: Optional[datetime] = None
+    budget_allocated: Optional[float] = None
+    owner_id: Optional[UUIDStr] = None
+
+
+class SaveProjectAsTemplate(BaseModel):
+    name: str = Field(..., min_length=1, max_length=255)
+    description: Optional[str] = None
+    category: str = "general"
+    is_public: bool = True
+
+
+# ── Project Automations & Triggers (Super-PRO Fase 7) ───────────────────────
+
+class ProjectAutomationRuleBase(BaseModel):
+    name: str = Field(..., min_length=1, max_length=255)
+    description: Optional[str] = None
+    trigger_event: str = Field(default="task_completed", max_length=50)
+    condition_data: dict = Field(default_factory=dict)
+    action_type: str = Field(default="notify_assignee", max_length=50)
+    action_data: dict = Field(default_factory=dict)
+    is_active: bool = True
+
+
+class ProjectAutomationRuleCreate(ProjectAutomationRuleBase):
+    project_id: Optional[UUIDStr] = None
+    sede_id: Optional[UUIDStr] = None
+
+
+class ProjectAutomationRuleUpdate(BaseModel):
+    name: Optional[str] = Field(default=None, min_length=1, max_length=255)
+    description: Optional[str] = None
+    trigger_event: Optional[str] = None
+    condition_data: Optional[dict] = None
+    action_type: Optional[str] = None
+    action_data: Optional[dict] = None
+    is_active: Optional[bool] = None
+
+
+class ProjectAutomationRule(ProjectAutomationRuleBase):
+    id: UUIDStr
+    project_id: Optional[UUIDStr] = None
+    execution_count: int = 0
+    last_triggered_at: Optional[datetime] = None
+    created_by: Optional[UUIDStr] = None
+    creator_name: Optional[str] = None
+    sede_id: Optional[UUIDStr] = None
+    created_at: datetime
+    updated_at: datetime
+    model_config = orm_config
+
+
+class EvaluateAutomationPayload(BaseModel):
+    trigger_event: str
+    task_id: Optional[UUIDStr] = None
+    context_data: Optional[dict] = Field(default_factory=dict)
+
+    def __init__(self, **data):
+        if "context" in data and "context_data" not in data:
+            data["context_data"] = data.pop("context")
+        super().__init__(**data)
+
+
+class AutomationExecutionResult(BaseModel):
+    rule_id: UUIDStr
+    rule_name: str
+    action_type: str
+    status: str
+    details: Optional[str] = None
+
+
+# ── Project Indicators MGA / CREMA & SPI (Super-PRO CREMA Fase 1) ───────────
+
+class ProjectIndicatorRecordBase(BaseModel):
+    period: str = Field(..., min_length=1, max_length=50)
+    target_value: float = 0.0
+    actual_value: float = 0.0
+    spi: Optional[float] = None
+    notes: Optional[str] = None
+    evidence_url: Optional[str] = None
+    reported_at: Optional[datetime] = None
+
+
+class ProjectIndicatorRecordCreate(ProjectIndicatorRecordBase):
+    indicator_id: Optional[UUIDStr] = None
+
+
+class ProjectIndicatorRecord(ProjectIndicatorRecordBase):
+    id: UUIDStr
+    indicator_id: UUIDStr
+    reported_by: Optional[UUIDStr] = None
+    reporter_name: Optional[str] = None
+    created_at: datetime
+    updated_at: datetime
+    model_config = orm_config
+
+
+class ProjectIndicatorBase(BaseModel):
+    code: Optional[str] = None
+    name: str = Field(..., min_length=1, max_length=255)
+    description: Optional[str] = None
+    level: str = Field(default="PRODUCTO_PRINCIPAL", max_length=50)
+    calculation_type: str = Field(default="ABSOLUTO_ACUMULADO", max_length=50)
+    unit_of_measure: Optional[str] = None
+    baseline_value: float = 0.0
+    target_value: float = 0.0
+    current_value: float = 0.0
+    frequency: str = Field(default="mensual", max_length=50)
+    period_targets: dict = Field(default_factory=dict)
+    crema_score: Optional[float] = None
+    crema_evaluation: dict = Field(default_factory=dict)
+
+
+class ProjectIndicatorCreate(ProjectIndicatorBase):
+    project_id: Optional[UUIDStr] = None
+    sede_id: Optional[UUIDStr] = None
+
+
+class ProjectIndicatorUpdate(BaseModel):
+    code: Optional[str] = None
+    name: Optional[str] = Field(default=None, min_length=1, max_length=255)
+    description: Optional[str] = None
+    level: Optional[str] = None
+    calculation_type: Optional[str] = None
+    unit_of_measure: Optional[str] = None
+    baseline_value: Optional[float] = None
+    target_value: Optional[float] = None
+    current_value: Optional[float] = None
+    frequency: Optional[str] = None
+    period_targets: Optional[dict] = None
+    crema_score: Optional[float] = None
+    crema_evaluation: Optional[dict] = None
+
+
+class ProjectIndicator(ProjectIndicatorBase):
+    id: UUIDStr
+    project_id: UUIDStr
+    created_by: Optional[UUIDStr] = None
+    creator_name: Optional[str] = None
+    sede_id: Optional[UUIDStr] = None
+    records_count: int = 0
+    last_spi: Optional[float] = None
+    created_at: datetime
+    updated_at: datetime
+    records: List[ProjectIndicatorRecord] = Field(default_factory=list)
+    model_config = orm_config
+
+
+class ValidateCremaPayload(BaseModel):
+    name: str = Field(..., min_length=1, max_length=255)
+    description: Optional[str] = None
+    level: Optional[str] = "PRODUCTO_PRINCIPAL"
+    calculation_type: Optional[str] = "ABSOLUTO_ACUMULADO"
+    unit_of_measure: Optional[str] = None
+    target_value: Optional[float] = None
+    frequency: Optional[str] = "mensual"
+
+
+class CremaCriterionDetail(BaseModel):
+    score: float
+    passed: bool
+    recommendations: List[str] = Field(default_factory=list)
+
+
+class CremaValidationResult(BaseModel):
+    score: float
+    status: str
+    criteria: dict
+    summary: str
+
+
+# ── Project User Favorites and Pinning (Super-PRO Files Fase 1) ───────────
+
+class ProjectUserFavoriteBase(BaseModel):
+    entity_type: str = Field(default="task", max_length=50)
+    entity_id: UUIDStr
+
+
+class ProjectUserFavorite(ProjectUserFavoriteBase):
+    id: UUIDStr
+    project_id: UUIDStr
+    persona_id: UUIDStr
+    created_at: datetime
+    model_config = orm_config
+
+
+class ProjectUserFavoriteToggleResponse(BaseModel):
+    is_favorite: bool
+    entity_type: str
+    entity_id: UUIDStr
+    message: str
+
+
+class ProjectPinCommentPayload(BaseModel):
+    is_pinned: Optional[bool] = None
+
+
+# ── Bóveda Documental y Visor Universal Embebido (Super-PRO Files Fase 2) ──
+
+class ProjectFileBase(BaseModel):
+    name: str = Field(..., min_length=1, max_length=255)
+    description: Optional[str] = None
+    category: str = Field(default="general", max_length=100)
+    file_source: Literal["local", "drive", "dropbox", "onedrive"] = "local"
+    file_url: str
+    file_type: Optional[str] = None
+    file_size: Optional[int] = None
+    drive_file_id: Optional[str] = None
+    task_id: Optional[UUIDStr] = None
+    phase_id: Optional[UUIDStr] = None
+
+
+class ProjectFileCreate(BaseModel):
+    name: str = Field(..., min_length=1, max_length=255)
+    description: Optional[str] = None
+    category: Optional[str] = "general"
+    file_source: Literal["local", "drive", "dropbox", "onedrive"] = "local"
+    file_url: str
+    file_type: Optional[str] = None
+    file_size: Optional[int] = None
+    drive_file_id: Optional[str] = None
+    task_id: Optional[UUIDStr] = None
+    phase_id: Optional[UUIDStr] = None
+
+
+class ProjectFileLinkDrivePayload(BaseModel):
+    drive_url: str = Field(..., min_length=5, description="URL pública o compartida de Google Drive / Docs")
+    name: Optional[str] = Field(None, max_length=255, description="Nombre descriptivo del documento")
+    description: Optional[str] = None
+    category: Optional[str] = "general"
+    task_id: Optional[UUIDStr] = None
+    phase_id: Optional[UUIDStr] = None
+
+
+class ProjectFileUpdate(BaseModel):
+    name: Optional[str] = Field(None, min_length=1, max_length=255)
+    description: Optional[str] = None
+    category: Optional[str] = None
+    task_id: Optional[UUIDStr] = None
+    phase_id: Optional[UUIDStr] = None
+
+
+class ProjectFile(ProjectFileBase):
+    id: UUIDStr
+    project_id: UUIDStr
+    embed_url: Optional[str] = None
+    task_title: Optional[str] = None
+    phase_name: Optional[str] = None
+    uploaded_by: Optional[UUIDStr] = None
+    uploader_name: Optional[str] = None
+    created_at: datetime
+    updated_at: Optional[datetime] = None
+    model_config = orm_config
+
+
+class ProjectFilesSummary(BaseModel):
+    project_id: UUIDStr
+    total_files: int = 0
+    total_size_bytes: int = 0
+    by_source: dict[str, int] = Field(default_factory=dict)
+    by_category: dict[str, int] = Field(default_factory=dict)
+    files: List[ProjectFile] = Field(default_factory=list)

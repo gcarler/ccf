@@ -56,10 +56,10 @@ export default function PipelineLeadSidebar({ lead, stages = [], onUpdateStage, 
     const currentStage = safeStages.find(s => s.value === lead.stage);
 
     return (
-        <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-2))]">
+        <div className="flex flex-col h-full bg-[hsl(var(--surface-1))]">
             {/* Header Cinematic */}
-            <div className="p-4 border-b border-[hsl(var(--border))] dark:border-white/[0.04] bg-[hsl(var(--surface-1))]/50 dark:bg-[hsl(var(--surface-2))]/50 backdrop-blur-3xl shrink-0 relative overflow-hidden rounded-t-lg">
-                <div className="absolute top-0 right-0 p-4 opacity-[0.03] pointer-events-none text-[hsl(var(--primary))] dark:text-white">
+            <div className="p-4 border-b border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] shrink-0 relative overflow-hidden rounded-t-lg">
+                <div className="absolute top-0 right-0 p-4 opacity-[0.03] pointer-events-none text-[hsl(var(--primary))]">
                     <User size={160} />
                 </div>
 
@@ -67,16 +67,16 @@ export default function PipelineLeadSidebar({ lead, stages = [], onUpdateStage, 
                     <div className="relative">
                         <motion.div
                             whileHover={{ scale: 1.05 }}
-                            className="size-10 rounded-lg bg-gradient-to-br from-[hsl(var(--info))] to-[hsl(var(--info))] text-white flex items-center justify-center font-bold text-xl shadow-2xl shadow-[hsl(var(--info)/30%)] border-4 border-white dark:border-[hsl(var(--border))]"
+                            className="size-10 rounded-lg bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] flex items-center justify-center font-bold text-xl shadow-lg border-2 border-[hsl(var(--border))]"
                         >
                             {lead.nombre_completo?.split(/\s+/).filter(Boolean)[0]?.[0] ?? ''}{lead.nombre_completo?.split(/\s+/).filter(Boolean).slice(-1)[0]?.[0] ?? ''}
                         </motion.div>
-                        <div className="absolute -bottom-1 -right-1 size-8 rounded-lg bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-2))] border-[3px] border-[hsl(var(--border))] dark:border-[hsl(var(--border))] flex items-center justify-center text-[hsl(var(--primary))] shadow-xl overflow-hidden">
+                        <div className="absolute -bottom-1 -right-1 size-8 rounded-lg bg-[hsl(var(--surface-1))] border-2 border-[hsl(var(--border))] flex items-center justify-center text-[hsl(var(--primary))] shadow-sm overflow-hidden">
                             <Zap size={12} fill="currentColor" className="animate-pulse" />
                         </div>
                     </div>
                     <div className="flex-1 min-w-0">
-                        <h2 className="text-lg font-bold text-[hsl(var(--text-primary))] dark:text-white uppercase tracking-[-0.04em] leading-[0.9] mb-2">
+                        <h2 className="text-lg font-bold text-[hsl(var(--foreground))] uppercase tracking-[-0.04em] leading-[0.9] mb-2">
                             {lead.nombre_completo || ''}
                         </h2>
                         <div className="flex items-center gap-2.5">
@@ -90,15 +90,15 @@ export default function PipelineLeadSidebar({ lead, stages = [], onUpdateStage, 
                     </div>
                 </div>
 
-                <div className="p-4 bg-white/40 dark:bg-white/[0.03] backdrop-blur-sm rounded-md border border-[hsl(var(--border))] dark:border-white/[0.05] shadow-sm mt-3 relative z-10 flex items-center justify-between">
+                <div className="p-4 bg-[hsl(var(--surface-2))] rounded-md border border-[hsl(var(--border))] shadow-sm mt-3 relative z-10 flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                        <div className="p-2.5 bg-[hsl(var(--info))]/10 rounded-md text-[hsl(var(--primary))]"><Smartphone size={16} /></div>
+                        <div className="p-2.5 bg-[hsl(var(--primary)/0.1)] rounded-md text-[hsl(var(--primary))]"><Smartphone size={16} /></div>
                         <div>
-                            <p className="text-xs font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">{(lead.telefono ?? lead.phone) || 'Sin teléfono'}</p>
-                            <p className="text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">WhatsApp Disponible</p>
+                            <p className="text-xs font-bold text-[hsl(var(--foreground))]">{(lead.telefono ?? lead.phone) || 'Sin teléfono'}</p>
+                            <p className="text-2xs font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wide">WhatsApp Disponible</p>
                         </div>
                     </div>
-                    <button className="p-2.5 bg-[hsl(var(--primary))] text-white rounded-md shadow-lg shadow-[hsl(var(--info)/20%)] active:scale-90 transition-all" aria-label="Llamar">
+                    <button className="p-2.5 bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] rounded-md shadow-md active:scale-90 transition-all" aria-label="Llamar">
                         <Phone size={14} />
                     </button>
                 </div>
@@ -107,33 +107,33 @@ export default function PipelineLeadSidebar({ lead, stages = [], onUpdateStage, 
             {/* Actions & Detail */}
             <div className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar">
                 <section className="space-y-4">
-                    <h3 className="text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide flex items-center gap-3">
+                    <h3 className="text-2xs font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wide flex items-center gap-3">
                         <Zap size={14} className="text-[hsl(var(--primary))]" /> Acciones de Consolidación
                     </h3>
                     <div className="space-y-2">
                         <button
                             onClick={() => onViewFullProfile(lead.id)}
-                            className="w-full flex items-center gap-4 p-3 bg-[hsl(var(--primary))] text-white rounded-md text-xs font-bold uppercase tracking-wider hover:bg-[hsl(var(--primary))] transition-all shadow-xl shadow-[hsl(var(--info)/20%)] active:scale-95 group"
+                            className="w-full flex items-center gap-4 p-3 bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] rounded-md text-xs font-bold uppercase tracking-wider hover:bg-[hsl(var(--primary))] transition-all shadow-md active:scale-95 group"
                         >
                             <ExternalLink size={16} className="group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
                             Ver Expediente Completo
                         </button>
                         <div className="grid grid-cols-2 gap-2">
-                            <button className="flex items-center justify-center gap-2 p-4 bg-[hsl(var(--surface-1))] dark:bg-white/[0.02] border border-[hsl(var(--border))] dark:border-white/[0.05] rounded-lg text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--bg-primary))] dark:hover:bg-white/[0.05] transition-all">
+                            <button className="flex items-center justify-center gap-2 p-4 bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] rounded-lg text-2xs font-bold uppercase tracking-wide text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--surface-2))] transition-all">
                                 <MessageCircle size={14} className="text-[hsl(var(--success))]" /> WhatsApp
                             </button>
-                            <button className="flex items-center justify-center gap-2 p-4 bg-[hsl(var(--surface-1))] dark:bg-white/[0.02] border border-[hsl(var(--border))] dark:border-white/[0.05] rounded-lg text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--bg-primary))] dark:hover:bg-white/[0.05] transition-all">
-                                <FileText size={14} className="text-[hsl(var(--info))]" /> Notas
+                            <button className="flex items-center justify-center gap-2 p-4 bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] rounded-lg text-2xs font-bold uppercase tracking-wide text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--surface-2))] transition-all">
+                                <FileText size={14} className="text-[hsl(var(--primary))]" /> Notas
                             </button>
                         </div>
                     </div>
                 </section>
 
                 <section className="space-y-4">
-                    <h3 className="text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide flex items-center gap-3">
+                    <h3 className="text-2xs font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wide flex items-center gap-3">
                         <History size={14} className="text-[hsl(var(--primary))]" /> Modificar Etapa
                     </h3>
-                    <div className="grid grid-cols-1 gap-1.5 focus-within:ring-2 focus-within:ring-[hsl(var(--primary))]/10 p-1.5 bg-[hsl(var(--surface-1))] dark:bg-black/20 rounded-lg border border-[hsl(var(--border))] dark:border-white/[0.05]">
+                    <div className="grid grid-cols-1 gap-1.5 focus-within:ring-2 focus-within:ring-[hsl(var(--primary))]/10 p-1.5 bg-[hsl(var(--surface-1))] rounded-lg border border-[hsl(var(--border))]">
                         {safeStages.map(s => (
                             <button
                                 key={s.value}
@@ -142,7 +142,7 @@ export default function PipelineLeadSidebar({ lead, stages = [], onUpdateStage, 
                                     "w-full flex items-center gap-3 px-4 py-1.5 rounded-lg text-2xs font-bold uppercase tracking-wide transition-all group",
                                     lead.stage === s.value
                                         ? `${s.bg} ${s.text} shadow-sm border border-current/20`
-                                        : 'bg-transparent text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--bg-primary))] dark:hover:bg-white/5'
+                                        : 'bg-transparent text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--surface-2))]'
                                 )}
                             >
                                 <div className={clsx("size-1.5 rounded-full", s.color)} />
@@ -156,11 +156,11 @@ export default function PipelineLeadSidebar({ lead, stages = [], onUpdateStage, 
 
 
                 <section className="space-y-3 pb-12">
-                    <h3 className="text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide flex items-center gap-3">
+                    <h3 className="text-2xs font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wide flex items-center gap-3">
                         <History size={14} className="text-[hsl(var(--primary))]" /> Historial de Actividad
                     </h3>
 
-                    <div className="relative pl-4 space-y-3 before:absolute before:left-0 before:top-2 before:bottom-2 before:w-px before:bg-[hsl(var(--surface-2))] dark:before:bg-white/5">
+                    <div className="relative pl-4 space-y-3 before:absolute before:left-0 before:top-2 before:bottom-2 before:w-px before:bg-[hsl(var(--surface-2))]">
                         <AnimatePresence mode="popLayout">
                             {auditLogs.length > 0 ? (
                                 auditLogs.map((log, idx) => (
@@ -171,29 +171,29 @@ export default function PipelineLeadSidebar({ lead, stages = [], onUpdateStage, 
                                         transition={{ delay: idx * 0.05 }}
                                         className="relative"
                                     >
-                                        <div className="absolute -left-[21px] top-0 size-[13px] rounded-full bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-2))] border-2 border-[hsl(var(--info)/100%)] shadow-sm z-10" />
+                                        <div className="absolute -left-[21px] top-0 size-[13px] rounded-full bg-[hsl(var(--surface-1))] border-2 border-[hsl(var(--primary))] shadow-sm z-10" />
 
                                         <div className="space-y-2">
                                             <div className="flex items-center justify-between">
                                                 <div className="flex items-center gap-2">
-                                                    <span className="text-2xs font-bold text-[hsl(var(--text-primary))] dark:text-white uppercase">
+                                                    <span className="text-2xs font-bold text-[hsl(var(--foreground))] uppercase">
                                                         {log.action === 'update_pipeline_lead' ? 'Movimiento de Etapa' : log.action}
                                                     </span>
                                                 </div>
-                                                <span className="text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase flex items-center gap-1">
+                                                <span className="text-2xs font-bold text-[hsl(var(--muted-foreground))] uppercase flex items-center gap-1">
                                                     <Clock size={10} /> {new Date(log.created_at).toLocaleDateString()}
                                                 </span>
                                             </div>
 
-                                            <div className="p-4 rounded-md bg-[hsl(var(--surface-1))] dark:bg-white/[0.02] border border-[hsl(var(--border))] dark:border-white/[0.04] text-xs leading-relaxed">
-                                                <p className="text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] font-medium">
+                                            <div className="p-4 rounded-md bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] text-xs leading-relaxed">
+                                                <p className="text-[hsl(var(--muted-foreground))] font-medium">
                                                     {log.metadata?.stage ? (
-                                                        <>Se movió a <span className="font-bold text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))]">{STAGE_LABEL[log.metadata.stage] || log.metadata.stage}</span></>
+                                                        <>Se movió a <span className="font-bold text-[hsl(var(--primary))]">{STAGE_LABEL[log.metadata.stage] || log.metadata.stage}</span></>
                                                     ) : (
                                                         'Actualización de datos generales'
                                                     )}
                                                 </p>
-                                                <div className="mt-2 flex items-center gap-2 text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">
+                                                <div className="mt-2 flex items-center gap-2 text-2xs font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wide">
                                                     <UserCircle2 size={12} /> Responsable: System Audit
                                                 </div>
                                             </div>
@@ -201,7 +201,7 @@ export default function PipelineLeadSidebar({ lead, stages = [], onUpdateStage, 
                                     </motion.div>
                                 ))
                             ) : (
-                                <p className="text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide pl-2">
+                                <p className="text-2xs font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wide pl-2">
                                     {loadingAudit ? 'Cargando registros...' : 'No hay actividad reciente registrada'}
                                 </p>
                             )}

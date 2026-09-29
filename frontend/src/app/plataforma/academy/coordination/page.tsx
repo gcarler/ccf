@@ -108,11 +108,11 @@ export default function CoordinationConsole() {
                         <div className="flex items-center gap-3">
                             <button
                                 onClick={() => router.push('/plataforma/academy/coordination/courses/new')}
-                                className="inline-flex items-center gap-2 px-3 py-2 bg-[hsl(var(--primary))] text-white rounded-lg text-2xs font-semibold uppercase tracking-wide shadow-xl shadow-[hsl(var(--info)/20%)] hover:scale-105 active:scale-95 transition-all"
+                                className="inline-flex items-center gap-2 px-3 py-2 bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] rounded-lg text-2xs font-semibold uppercase tracking-wide shadow-xl shadow-[hsl(var(--info)/20%)] hover:scale-105 active:scale-95 transition-all"
                             >
                                 <Plus size={14} /> Nuevo Programa
                             </button>
-                            <div className="h-4 w-px bg-[hsl(var(--surface-3))] dark:bg-white/10 mx-1" />
+                            <div className="h-4 w-px bg-[hsl(var(--surface-3))] mx-1" />
                             <span className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
                                 Alistamiento: {readinessPerc}%
                             </span>
@@ -130,11 +130,11 @@ export default function CoordinationConsole() {
                     )}
 
                     {readiness && viewType === 'grid' && (
-                        <section className="bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/5 rounded-lg p-4 shadow-[var(--shadow-floating)]">
+                        <section className="bg-[hsl(var(--bg-primary))] border border-[hsl(var(--border))] rounded-lg p-4 shadow-[var(--shadow-floating)]">
                             <header className="flex items-center justify-between mb-3">
                                 <div>
                                     <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--primary))] mb-2">Checklist de alistamiento</p>
-                                    <h2 className="text-xl font-bold text-[hsl(var(--text-primary))] dark:text-white tracking-tight">Piloto Academia CCF</h2>
+                                    <h2 className="text-xl font-bold text-[hsl(var(--text-primary))] tracking-tight">Piloto Academia CCF</h2>
                                 </div>
                                 <div className="text-right">
                                     <div className="size-8 rounded-full border-4 border-[hsl(var(--info)/100%)]/20 flex items-center justify-center relative">
@@ -151,16 +151,16 @@ export default function CoordinationConsole() {
                                         'rounded-lg border p-3 flex items-center gap-4 transition-all group hover:scale-[1.01]',
                                         item.completed
                                             ? 'border-[hsl(var(--success)/0.3)] bg-[hsl(var(--success-muted))]'
-                                            : 'border-[hsl(var(--border))] dark:border-white/5 bg-[hsl(var(--surface-1))]/50 dark:bg-white/[0.02]'
+                                            : 'border-[hsl(var(--border))] bg-[hsl(var(--surface-1))]/50'
                                     )}>
                                         <div className={clsx(
                                             'size-10 rounded-md flex items-center justify-center transition-transform group-hover:rotate-12',
-                                            item.completed ? 'bg-[hsl(var(--success))] text-white shadow-lg shadow-[hsl(var(--success))/0.2]' : 'bg-[hsl(var(--surface-3))] dark:bg-white/10 text-[hsl(var(--text-secondary))]'
+                                            item.completed ? 'bg-[hsl(var(--success))] text-[hsl(var(--primary-foreground))] shadow-lg shadow-[hsl(var(--success))/0.2]' : 'bg-[hsl(var(--surface-3))] text-[hsl(var(--text-secondary))]'
                                         )}>
                                             {item.completed ? <ShieldCheck size={20} /> : <AlertTriangle size={20} />}
                                         </div>
                                         <div>
-                                            <p className="text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-white uppercase tracking-tight">{item.label}</p>
+                                            <p className="text-sm font-semibold text-[hsl(var(--text-primary))] uppercase tracking-tight">{item.label}</p>
                                             <p className={clsx("text-2xs font-bold uppercase tracking-wide mt-1", item.completed ? 'text-[hsl(var(--success))]' : 'text-[hsl(var(--text-secondary))]')}>
                                                 {item.completed ? 'Verificado por IA' : 'Acción Requerida'}
                                             </p>
@@ -172,31 +172,31 @@ export default function CoordinationConsole() {
                     )}
 
                     {viewType === 'wiki' && (
-                        <section className="bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/5 rounded-lg p-4 shadow-[var(--shadow-floating)] space-y-3">
+                        <section className="bg-[hsl(var(--bg-primary))] border border-[hsl(var(--border))] rounded-lg p-4 shadow-[var(--shadow-floating)] space-y-3">
                             <div className="flex items-center justify-between">
-                                <h3 className="text-lg font-bold text-[hsl(var(--text-primary))] dark:text-white uppercase tracking-tight">Manual Operativo de Coordinación</h3>
+                                <h3 className="text-lg font-bold text-[hsl(var(--text-primary))] uppercase tracking-tight">Manual Operativo de Coordinación</h3>
                                 <DSBadge tone="blue" label="Autosave activo" />
                             </div>
                             <textarea
                                 value={wikiNotes}
                                 onChange={(e) => setWikiNotes(e.target.value)}
                                 placeholder="Documenta políticas de cohortes, apertura/cierre de cursos, certificación y actas..."
-                                className="w-full min-h-[400px] bg-[hsl(var(--surface-1))]/50 dark:bg-black/20 rounded-lg border border-[hsl(var(--border))] dark:border-white/5 p-3 text-sm font-medium text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] outline-none focus:ring-4 focus:ring-[hsl(var(--primary))]/5 transition-all"
+                                className="w-full min-h-[400px] bg-[hsl(var(--surface-1))]/50 rounded-lg border border-[hsl(var(--border))] p-3 text-sm font-medium text-[hsl(var(--text-primary))] outline-none focus:ring-4 focus:ring-[hsl(var(--primary))]/5 transition-all"
                             />
                         </section>
                     )}
 
                     {(viewType === 'grid' || viewType === 'table' || viewType === 'list') && (
                         <DSCard tone="light" className="shadow-2xl overflow-hidden rounded-lg">
-                            <header className="p-4 border-b border-[hsl(var(--border))] dark:border-white/5 space-y-3">
+                            <header className="p-4 border-b border-[hsl(var(--border))] space-y-3">
                                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                                     <div>
                                         <DSBadge tone="blue" label="Gestión de Cohortes" />
-                                        <h3 className="text-lg font-bold text-[hsl(var(--text-primary))] dark:text-white tracking-tight mt-2">Programas Académicos</h3>
+                                        <h3 className="text-lg font-bold text-[hsl(var(--text-primary))] tracking-tight mt-2">Programas Académicos</h3>
                                     </div>
                                     <button
                                         onClick={downloadSnapshot}
-                                        className="inline-flex items-center gap-2 text-2xs font-semibold uppercase tracking-wide px-3 py-2.5 rounded-md border-2 border-[hsl(var(--border))] dark:border-white/5 text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5 transition-all active:scale-95"
+                                        className="inline-flex items-center gap-2 text-2xs font-semibold uppercase tracking-wide px-3 py-2.5 rounded-md border-2 border-[hsl(var(--border))] text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] transition-all active:scale-95"
                                     >
                                         <Download size={14} /> Exportar Auditoría
                                     </button>
@@ -209,11 +209,11 @@ export default function CoordinationConsole() {
                                             value={search}
                                             onChange={(e) => setSearch(e.target.value)}
                                             placeholder="Filtrar por nombre del curso o cohorte..."
-                                            className="w-full bg-[hsl(var(--surface-1))] dark:bg-white/5 border-2 border-transparent focus:border-[hsl(var(--info)/100%)]/20 rounded-lg py-3 pl-12 pr-4 text-sm font-bold outline-none transition-all shadow-inner"
+                                            className="w-full bg-[hsl(var(--surface-1))] border-2 border-transparent focus:border-[hsl(var(--info)/100%)]/20 rounded-lg py-3 pl-12 pr-4 text-sm font-bold outline-none transition-all shadow-inner"
                                         />
                                     </div>
                                     <div className="flex items-center gap-3">
-                                        <div className="flex bg-[hsl(var(--surface-2))] dark:bg-white/5 p-1 rounded-lg border border-[hsl(var(--border))] dark:border-white/10">
+                                        <div className="flex bg-[hsl(var(--surface-2))] p-1 rounded-lg border border-[hsl(var(--border))]">
                                             {(['all', 'formal', 'non_formal'] as const).map((m) => (
                                                 <button
                                                     key={m}
@@ -221,7 +221,7 @@ export default function CoordinationConsole() {
                                                     className={clsx(
                                                         "px-4 py-2 rounded-md text-2xs font-semibold uppercase tracking-wide transition-all",
                                                         modalityFilter === m
-                                                            ? "bg-[hsl(var(--bg-primary))] dark:bg-white/10 text-[hsl(var(--primary))] shadow-lg shadow-[hsl(var(--info)/5%)]"
+                                                            ? "bg-[hsl(var(--bg-primary))] text-[hsl(var(--primary))] shadow-lg shadow-[hsl(var(--info)/5%)]"
                                                             : "text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-secondary))]"
                                                     )}
                                                 >
@@ -236,7 +236,7 @@ export default function CoordinationConsole() {
                             {filteredCourses.length > 0 ? (
                                 <div className="overflow-x-auto">
                                     <table className="w-full text-left">
-                                        <thead className="bg-[hsl(var(--surface-1))]/50 dark:bg-white/[0.02] text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
+                                        <thead className="bg-[hsl(var(--surface-1))]/50 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
                                             <tr>
                                                 <th className="px-4 py-1.5">Curso / Programa</th>
                                                 <th className="px-4 py-1.5">Cohorte Activa</th>
@@ -245,12 +245,12 @@ export default function CoordinationConsole() {
                                                 <th className="px-4 py-1.5 text-right">Control</th>
                                             </tr>
                                         </thead>
-                                        <tbody className="divide-y divide-[hsl(var(--border))] dark:divide-white/5">
+                                        <tbody className="divide-y divide-[hsl(var(--border))]">
                                             {filteredCourses.map((course) => (
-                                                <tr key={course.id} className="group hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/[0.01] transition-colors">
+                                                <tr key={course.id} className="group hover:bg-[hsl(var(--surface-1))] transition-colors">
                                                     <td className="px-4 py-2">
                                                         <div
-                                                            className="font-bold text-[hsl(var(--text-primary))] dark:text-white cursor-pointer group-hover:text-[hsl(var(--primary))] transition-colors"
+                                                            className="font-bold text-[hsl(var(--text-primary))] cursor-pointer group-hover:text-[hsl(var(--primary))] transition-colors"
                                                             onClick={() => router.push(`/plataforma/academy/courses/${course.id}`)}
                                                         >
                                                             {course.title}
@@ -258,7 +258,7 @@ export default function CoordinationConsole() {
                                                         <div className="text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide mt-1">ID: {course.id}</div>
                                                     </td>
                                                     <td className="px-4 py-2">
-                                                        <span className="px-3 py-1 bg-[hsl(var(--surface-2))] dark:bg-white/5 rounded-full font-semibold text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] uppercase tracking-wide">
+                                                        <span className="px-3 py-1 bg-[hsl(var(--surface-2))] rounded-full font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">
                                                             {course.cohort_name || 'Sin cohorte'}
                                                         </span>
                                                     </td>
@@ -278,13 +278,13 @@ export default function CoordinationConsole() {
                                                         <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-all">
                                                             <button
                                                                 onClick={() => router.push(`/plataforma/academy/courses/${course.id}/lessons`)}
-                                                                className="px-4 py-2 rounded-md text-2xs font-semibold uppercase tracking-wide bg-[hsl(var(--primary))] text-white shadow-lg shadow-[hsl(var(--info)/20%)] hover:scale-105 active:scale-95 transition-all"
+                                                                className="px-4 py-2 rounded-md text-2xs font-semibold uppercase tracking-wide bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] shadow-lg shadow-[hsl(var(--info)/20%)] hover:scale-105 active:scale-95 transition-all"
                                                             >
                                                                 Lecciones
                                                             </button>
                                                             <button
                                                                 onClick={() => router.push(`/plataforma/academy/courses/${course.id}/edit`)}
-                                                                className="px-4 py-2 rounded-md text-2xs font-semibold uppercase tracking-wide border-2 border-[hsl(var(--border))] dark:border-white/5 text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--bg-primary))] dark:hover:bg-white/10 transition-all active:scale-95"
+                                                                className="px-4 py-2 rounded-md text-2xs font-semibold uppercase tracking-wide border-2 border-[hsl(var(--border))] text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--bg-primary))] transition-all active:scale-95"
                                                             >
                                                                 Config
                                                             </button>

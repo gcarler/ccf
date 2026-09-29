@@ -8,6 +8,7 @@ import clsx from "clsx";
 import { toast } from "sonner";
 import { useAuth } from "@/context/AuthContext";
 import { SITE_KEY } from "@/lib/site-config";
+import SidePanel from "@/components/ui/SidePanel";
 import {
   listCmsPageVersions,
   rollbackCmsPageVersion,
@@ -184,7 +185,7 @@ export default function PageVersionsDiffPage() {
 
   // ── Render ───────────────────────────────────────────────────────
   return (
-    <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-primary))]">
+    <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] ">
       <Header
         siteKey={siteKey}
         sites={sites}
@@ -210,7 +211,7 @@ export default function PageVersionsDiffPage() {
           </div>
         )}
         {error && !loading && (
-          <div className="rounded-lg border border-[hsl(var(--danger)/25%)] dark:border-[hsl(var(--danger)/100%)]/30 bg-danger-soft dark:bg-[hsl(var(--danger))]/10 p-4 text-danger-text dark:text-[hsl(var(--danger))] text-sm">
+          <div className="rounded-lg border border-[hsl(var(--destructive)/0.25)] bg-[hsl(var(--destructive)/0.1)] p-4 text-[hsl(var(--destructive))] text-sm">
             <p className="font-semibold mb-1">No se pudieron cargar las versiones</p>
             <p className="opacity-80">{error}</p>
           </div>
@@ -243,36 +244,38 @@ export default function PageVersionsDiffPage() {
         )}
       </div>
       {rollingBack && (
-        <div className="fixed bottom-4 right-4 z-50 inline-flex items-center gap-2 rounded-md border border-[hsl(var(--warning)/30%)] bg-warning-soft dark:bg-[hsl(var(--warning))]/10 px-3 py-2 text-sm text-warning-text dark:text-[hsl(var(--warning))] shadow-lg">
+        <div className="fixed bottom-4 right-4 z-50 inline-flex items-center gap-2 rounded-md border border-[hsl(var(--warning)/30%)] bg-[hsl(var(--warning)/10%)] px-3 py-2 text-sm text-[hsl(var(--warning))] shadow-lg">
           <Loader2 size={14} className="animate-spin" /> Restaurando versión…
         </div>
       )}
-      {pendingRollbackVersionId && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="w-full max-w-md rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-6 shadow-xl dark:border-white/10 dark:bg-[hsl(var(--admin-bg-tertiary))]">
-            <h3 className="text-lg font-bold text-[hsl(var(--text-primary))] dark:text-white">
-              ¿Restaurar esta versión?
-            </h3>
-            <p className="mt-2 text-sm text-[hsl(var(--text-secondary))]">
-              Las secciones actuales serán reemplazadas con los datos de la versión seleccionada.
-            </p>
-            <div className="mt-6 flex justify-end gap-3">
-              <button
-                onClick={() => setPendingRollbackVersionId(null)}
-                className="rounded-md border border-[hsl(var(--border))] px-4 py-2 text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] dark:border-white/10"
-              >
-                Cancelar
-              </button>
-              <button
-                onClick={confirmRollback}
-                className="rounded-md bg-[hsl(var(--primary))] px-4 py-2 text-xs font-semibold uppercase tracking-wide text-white hover:opacity-90"
-              >
-                Restaurar
-              </button>
-            </div>
+      <SidePanel
+        isOpen={Boolean(pendingRollbackVersionId)}
+        onClose={() => setPendingRollbackVersionId(null)}
+        title="Restaurar esta versión"
+        width="w-[420px]"
+      >
+        <div className="p-4 space-y-4">
+          <p className="text-sm text-[hsl(var(--text-secondary))]">
+            Las secciones actuales serán reemplazadas con los datos de la versión seleccionada.
+          </p>
+          <div className="flex gap-3 justify-end pt-4 border-t border-[hsl(var(--border))]">
+            <button
+              type="button"
+              onClick={() => setPendingRollbackVersionId(null)}
+              className="px-4 py-2 rounded-lg text-sm font-semibold text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] transition-colors"
+            >
+              Cancelar
+            </button>
+            <button
+              type="button"
+              onClick={confirmRollback}
+              className="px-4 py-2 rounded-lg text-sm font-semibold bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] hover:opacity-90 transition-colors"
+            >
+              Restaurar
+            </button>
           </div>
         </div>
-      )}
+      </SidePanel>
     </div>
   );
 }
@@ -297,7 +300,7 @@ function Header({
   onBackToBuilder: () => void;
 }) {
   return (
-    <header className="h-12 border-b border-[hsl(var(--border))] dark:border-white/5 flex items-center px-4 gap-3 shrink-0 bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-primary))]">
+    <header className="h-12 border-b border-[hsl(var(--border))] flex items-center px-4 gap-3 shrink-0 bg-[hsl(var(--bg-primary))]">
       <button
         onClick={onBackToBuilder}
         className="inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] transition-colors"
@@ -306,14 +309,14 @@ function Header({
       </button>
       <div className="flex items-center gap-2 flex-1 min-w-0">
         <History size={16} className="text-[hsl(var(--primary))] shrink-0" />
-        <h1 className="text-sm font-semibold uppercase tracking-wide text-[hsl(var(--text-primary))] dark:text-white truncate">
+        <h1 className="text-sm font-semibold uppercase tracking-wide text-[hsl(var(--text-primary))] truncate">
           Diff de versiones — /{slug}
         </h1>
       </div>
       <select
         value={siteKey}
         onChange={(e) => onSiteKeyChange(e.target.value)}
-        className="rounded-md border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-2.5 py-1 text-sm"
+        className="rounded-md border border-[hsl(var(--border))] bg-transparent px-2.5 py-1 text-sm"
       >
         {sites.length === 0 && <option value={SITE_KEY}>{SITE_KEY}</option>}
         {sites.map((s) => (
@@ -325,7 +328,7 @@ function Header({
       <button
         onClick={onReload}
         disabled={loading}
-        className="inline-flex items-center gap-1.5 rounded-md border border-[hsl(var(--border))] dark:border-white/10 px-2.5 py-1 text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5 transition-all disabled:opacity-50"
+        className="inline-flex items-center gap-1.5 rounded-md border border-[hsl(var(--border))] px-2.5 py-1 text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] transition-all disabled:opacity-50"
       >
         <RefreshCw size={12} className={loading ? "animate-spin" : ""} /> Recargar
       </button>
@@ -350,7 +353,7 @@ function VersionToolbar({
 }) {
   if (versions.length < 2) return null;
   return (
-    <div className="h-10 border-b border-[hsl(var(--border))] dark:border-white/5 flex items-center px-4 gap-3 shrink-0 bg-[hsl(var(--surface-1))] dark:bg-white/[0.02]">
+    <div className="h-10 border-b border-[hsl(var(--border))] flex items-center px-4 gap-3 shrink-0 bg-[hsl(var(--surface-1))]">
       <span className="text-2xs font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))]">
         Comparar
       </span>
@@ -396,8 +399,8 @@ function VersionPicker({
       className={clsx(
         "relative inline-flex items-center gap-1.5 rounded-md border px-2 py-1",
         accent === "rose"
-          ? "border-[hsl(var(--danger)/25%)] dark:border-[hsl(var(--danger)/100%)]/30 bg-danger-soft/60 dark:bg-[hsl(var(--danger))]/5"
-          : "border-[hsl(var(--success)/25%)] dark:border-[hsl(var(--success)/100%)]/30 bg-success-soft/60 dark:bg-[hsl(var(--success))]/5",
+          ? "border-[hsl(var(--destructive)/30%)] bg-[hsl(var(--destructive)/10%)]"
+          : "border-[hsl(var(--success)/30%)] bg-[hsl(var(--success)/10%)]",
       )}
     >
       <span className="text-2xs font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))]">
@@ -407,7 +410,7 @@ function VersionPicker({
         value={value ?? ""}
         onChange={(e) => onChange(e.target.value)}
         disabled={disabled}
-        className="appearance-none bg-transparent pr-5 pl-1 text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-white focus:outline-none"
+        className="appearance-none bg-transparent pr-5 pl-1 text-sm font-semibold text-[hsl(var(--text-primary))] focus:outline-none"
       >
         {versions.map((v) => (
           <option key={v.id} value={v.id}>
@@ -435,11 +438,11 @@ function EmptyState({
   onBackToBuilder: () => void;
 }) {
   return (
-    <div className="rounded-lg border border-dashed border-[hsl(var(--border))] dark:border-white/10 p-8 text-center space-y-3">
-      <div className="inline-flex size-10 items-center justify-center rounded-md bg-[hsl(var(--surface-2))] dark:bg-white/5 text-[hsl(var(--text-secondary))]">
+    <div className="rounded-lg border border-dashed border-[hsl(var(--border))] p-8 text-center space-y-3">
+      <div className="inline-flex size-10 items-center justify-center rounded-md bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))]">
         <History size={20} />
       </div>
-      <p className="text-base font-semibold text-[hsl(var(--text-primary))] dark:text-white">
+      <p className="text-base font-semibold text-[hsl(var(--text-primary))]">
         Esta página aún no tiene versiones publicadas
       </p>
       <p className="text-sm text-[hsl(var(--text-secondary))] max-w-md mx-auto">
@@ -449,7 +452,7 @@ function EmptyState({
       </p>
       <button
         onClick={onBackToBuilder}
-        className="inline-flex items-center gap-1.5 mt-2 rounded-md border border-[hsl(var(--border))] dark:border-white/10 px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5"
+        className="inline-flex items-center gap-1.5 mt-2 rounded-md border border-[hsl(var(--border))] px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))]"
       >
         <ArrowLeft size={12} /> Ir al builder
       </button>
@@ -465,10 +468,10 @@ function SingleVersionState({
   onBackToBuilder: () => void;
 }) {
   return (
-    <div className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 p-6 space-y-3">
+    <div className="rounded-lg border border-[hsl(var(--border))] p-6 space-y-3">
       <div className="flex items-center gap-2">
         <History size={16} className="text-[hsl(var(--primary))]" />
-        <p className="text-sm font-semibold uppercase tracking-wider text-[hsl(var(--text-primary))] dark:text-white">
+        <p className="text-sm font-semibold uppercase tracking-wider text-[hsl(var(--text-primary))]">
           Solo hay una versión publicada
         </p>
       </div>
@@ -479,7 +482,7 @@ function SingleVersionState({
       </p>
       <button
         onClick={onBackToBuilder}
-        className="inline-flex items-center gap-1.5 rounded-md bg-[hsl(var(--primary))] text-white px-3 py-1.5 text-xs font-semibold uppercase tracking-wide shadow-xl shadow-[hsl(var(--info)/20%)] hover:opacity-90"
+        className="inline-flex items-center gap-1.5 rounded-md bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] px-3 py-1.5 text-xs font-semibold uppercase tracking-wide shadow-sm hover:opacity-90"
       >
         <RotateCcw size={12} /> Ir al builder
       </button>

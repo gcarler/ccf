@@ -78,7 +78,7 @@ export default function CommunityGruposPage() {
           <button className="size-9 rounded-lg bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] flex items-center justify-center text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] transition-all">
             <Filter size={18} />
           </button>
-          <button className="h-8 px-4 rounded-lg bg-[hsl(var(--primary))] text-white font-semibold uppercase tracking-wide text-2xs flex items-center gap-2 shadow-lg hover:opacity-90 transition-all">
+          <button className="h-8 px-4 rounded-lg bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] font-semibold uppercase tracking-wide text-2xs flex items-center gap-2 shadow-lg hover:opacity-90 transition-all">
             <Plus size={16} strokeWidth={3} />
             Unirse a un Grupo
           </button>
@@ -141,7 +141,7 @@ export default function CommunityGruposPage() {
       {drawer.open && drawer.group && (
         <>
           <div
-            className="fixed inset-x-0 bottom-0 top-10 bg-black/40 z-40"
+            className="fixed inset-x-0 bottom-0 top-10 bg-[hsl(var(--background)/0.6)] backdrop-blur-sm z-40"
             onClick={closeDrawer}
           />
           <div className="fixed top-10 right-0 h-[calc(100vh-2.5rem)] w-full max-w-xl bg-[hsl(var(--surface-1))] border-l border-[hsl(var(--border))] z-50 shadow-2xl animate-in slide-in-from-right duration-300 overflow-y-auto">
@@ -213,7 +213,7 @@ export default function CommunityGruposPage() {
                   </div>
 
                   <div className="pt-4 space-y-2">
-                    <button className="w-full h-9 rounded-lg bg-[hsl(var(--primary))] text-white font-semibold text-xs uppercase tracking-wide hover:opacity-90 transition-all">
+                    <button className="w-full h-9 rounded-lg bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] font-semibold text-xs uppercase tracking-wide hover:opacity-90 transition-all">
                       Contactar al Líder
                     </button>
                     <button className="w-full h-9 rounded-lg bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] text-[hsl(var(--text-primary))] font-semibold text-xs uppercase tracking-wide hover:bg-[hsl(var(--surface-3))] transition-all">

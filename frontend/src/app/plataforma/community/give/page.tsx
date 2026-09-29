@@ -73,11 +73,11 @@ export default function GivingAndConnection() {
     if (step === 2) {
         return (
             <div className="flex flex-col items-center justify-center py-1.5 px-4 animate-in fade-in zoom-in-95 duration-700">
-                <div className="w-24 h-24 rounded-md bg-[hsl(var(--primary))] flex items-center justify-center shadow-[0_20px_40px_rgba(var(--primary-rgb),0.3)] mb-3 rotate-3">
-                    <CheckCircle2 size={48} className="text-white" />
+                <div className="w-24 h-24 rounded-md bg-[hsl(var(--primary))] flex items-center justify-center shadow-lg shadow-[hsl(var(--primary)/0.2)] mb-3 rotate-3">
+                    <CheckCircle2 size={48} className="text-[hsl(var(--primary-foreground))]" />
                 </div>
 
-                <h1 className="text-[hsl(var(--text-primary))] text-lg font-bold text-center leading-tight mb-4 tracking-tighter">
+                <h1 className="text-[hsl(var(--foreground))] text-lg font-bold text-center leading-tight mb-4 tracking-tighter">
                     Generosidad en Acción
                 </h1>
 
@@ -85,7 +85,7 @@ export default function GivingAndConnection() {
                     <div className="absolute top-0 right-0 w-32 h-32 bg-[hsl(var(--primary)/0.05)] rounded-full blur-3xl"></div>
                     <div className="flex flex-col items-center text-center relative z-10">
                         <Heart className="text-[hsl(var(--primary))] mb-3 opacity-80" size={32} />
-                        <p className="text-[hsl(var(--text-secondary))] text-base italic leading-relaxed font-medium mb-3">
+                        <p className="text-[hsl(var(--muted-foreground))] text-base italic leading-relaxed font-medium mb-3">
                             &quot;Cada uno dé como propuso en su corazón: no con tristeza, ni por necesidad, porque Dios ama al dador alegre.&quot;
                         </p>
 
@@ -99,14 +99,14 @@ export default function GivingAndConnection() {
                         whileHover={{ scale: 1.02 }}
                         whileTap={{ scale: 0.98 }}
                         onClick={() => router.push('/plataforma/community/testimonies/publish')}
-                        className="w-full flex items-center justify-center gap-3 bg-[hsl(var(--primary))] text-white font-semibold uppercase tracking-wide text-xs py-2 rounded-lg shadow-xl shadow-primary/20 transition-all"
+                        className="w-full flex items-center justify-center gap-3 bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] font-semibold uppercase tracking-wide text-xs py-2 rounded-lg shadow-xl shadow-[hsl(var(--primary)/0.2)] transition-all"
                     >
                         <Send size={18} />
                         Compartir Testimonio
                     </motion.button>
                     <button
                         onClick={() => setStep(1)}
-                        className="w-full flex items-center justify-center gap-3 bg-[hsl(var(--surface-3))] text-[hsl(var(--text-primary))] font-semibold uppercase tracking-wide text-xs py-2 rounded-lg transition-all hover:bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))]"
+                        className="w-full flex items-center justify-center gap-3 bg-[hsl(var(--surface-3))] text-[hsl(var(--foreground))] font-semibold uppercase tracking-wide text-xs py-2 rounded-lg transition-all hover:bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))]"
                     >
                         Volver a Ofrendar
                     </button>
@@ -127,10 +127,10 @@ export default function GivingAndConnection() {
                             <div className="size-2 rounded-full bg-current shadow-[0_0_10px_currentColor]"></div>
                             Ministerio
                         </div>
-                        <h1 className="text-lg md:text-xl font-bold text-[hsl(var(--text-primary))] tracking-tighter leading-none">
+                        <h1 className="text-lg md:text-xl font-bold text-[hsl(var(--foreground))] tracking-tighter leading-none">
                             Siembra en tierra <br/><span className="text-[hsl(var(--primary))]">Fértil</span>
                         </h1>
-                        <p className="text-[hsl(var(--text-secondary))] text-sm leading-relaxed max-w-sm font-medium">
+                        <p className="text-[hsl(var(--muted-foreground))] text-sm leading-relaxed max-w-sm font-medium">
                             Tu generosidad impulsa nuestro alcance comunitario y nos ayuda a difundir el mensaje de esperanza.
                         </p>
                     </div>
@@ -157,8 +157,8 @@ export default function GivingAndConnection() {
                                         key={amt}
                                         onClick={() => setAmount(amt)}
                                         className={`h-8 flex items-center justify-center rounded-lg font-black transition-all border text-base ${amount === amt
-                                            ? 'bg-[hsl(var(--primary))] text-white shadow-xl shadow-primary/30 border-transparent scale-105'
-                                            : 'bg-[hsl(var(--surface-1))] text-[hsl(var(--text-secondary))] border-[hsl(var(--border))] hover:border-[hsl(var(--primary)/0.4)]'
+                                            ? 'bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] shadow-xl shadow-[hsl(var(--primary)/0.2)] border-transparent scale-105'
+                                            : 'bg-[hsl(var(--surface-1))] text-[hsl(var(--muted-foreground))] border-[hsl(var(--border))] hover:border-[hsl(var(--primary)/0.4)]'
                                             }`}
                                     >
                                         ${amt}
@@ -169,7 +169,7 @@ export default function GivingAndConnection() {
                             <div className="relative group">
                                 <span className="font-semibold text-xl opacity-40 group-focus-within:opacity-100 transition-opacity">$</span>
                                 <input
-                                    className="w-full bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] rounded-lg py-2 pl-14 pr-6 text-[hsl(var(--text-primary))] focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))] text-xl font-bold shadow-inner outline-none transition-all"
+                                    className="w-full bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] rounded-lg py-2 pl-14 pr-6 text-[hsl(var(--foreground))] focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))] text-xl font-bold shadow-inner outline-none transition-all"
                                     placeholder="0"
                                     type="number"
                                     value={amount}
@@ -179,8 +179,8 @@ export default function GivingAndConnection() {
 
                             <div className="space-y-4">
                                 <label className="flex items-center gap-4 cursor-pointer group p-4 rounded-lg bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] hover:border-[hsl(var(--primary)/0.3)] transition-all">
-                                    <div className={`size-6 rounded-lg border-2 flex items-center justify-center transition-all ${isAnonymous ? 'bg-[hsl(var(--primary))] border-[hsl(var(--primary))] shadow-lg shadow-primary/20' : 'border-[hsl(var(--border))] group-hover:border-[hsl(var(--primary)/0.5)]'}`}>
-                                        {isAnonymous && <CheckCircle2 size={14} className="text-white" />}
+                                    <div className={`size-6 rounded-lg border-2 flex items-center justify-center transition-all ${isAnonymous ? 'bg-[hsl(var(--primary))] border-[hsl(var(--primary))] shadow-lg shadow-[hsl(var(--primary)/0.2)]' : 'border-[hsl(var(--border))] group-hover:border-[hsl(var(--primary)/0.5)]'}`}>
+                                        {isAnonymous && <CheckCircle2 size={14} className="text-[hsl(var(--primary-foreground))]" />}
                                     </div>
                                     <input
                                         type="checkbox"
@@ -189,8 +189,8 @@ export default function GivingAndConnection() {
                                         onChange={() => setIsAnonymous(!isAnonymous)}
                                     />
                                     <div className="flex flex-col">
-                                        <span className="text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-primary))]">Donación Anónima</span>
-                                        <span className="text-2xs text-[hsl(var(--text-secondary))] font-medium uppercase tracking-tight">Ocultar mi nombre del registro público</span>
+                                        <span className="text-xs font-semibold uppercase tracking-wide text-[hsl(var(--foreground))]">Donación Anónima</span>
+                                        <span className="text-2xs text-[hsl(var(--muted-foreground))] font-medium uppercase tracking-tight">Ocultar mi nombre del registro público</span>
                                     </div>
                                 </label>
                             </div>
@@ -200,10 +200,10 @@ export default function GivingAndConnection() {
                                 whileTap={{ scale: 0.99 }}
                                 onClick={handleDonate}
                                 disabled={isSubmitting}
-                                className="w-full bg-[hsl(var(--primary))] hover:opacity-90 text-white py-2 rounded-lg font-semibold uppercase tracking-wide text-xs shadow-2xl shadow-primary/20 transition-all flex items-center justify-center gap-3 border border-primary/20 disabled:opacity-50"
+                                className="w-full bg-[hsl(var(--primary))] hover:opacity-90 text-[hsl(var(--primary-foreground))] py-2 rounded-lg font-semibold uppercase tracking-wide text-xs shadow-2xl shadow-[hsl(var(--primary)/0.2)] transition-all flex items-center justify-center gap-3 border border-[hsl(var(--primary)/0.2)] disabled:opacity-50"
                             >
                                 {isSubmitting ? (
-                                    <div className="size-5 rounded-full border-2 border-white border-t-transparent animate-spin"></div>
+                                    <div className="size-5 rounded-full border-2 border-[hsl(var(--primary-foreground))] border-t-transparent animate-spin"></div>
                                 ) : (
                                     <>
                                         <Wallet size={20} />
@@ -224,12 +224,12 @@ export default function GivingAndConnection() {
                         </h4>
 
                         <div className="bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] rounded-md p-4 shadow-sm space-y-3">
-                            <p className="text-[hsl(var(--text-secondary))] text-xs font-semibold leading-relaxed">
+                            <p className="text-[hsl(var(--muted-foreground))] text-xs font-semibold leading-relaxed">
                                 Comparte tus peticiones con nuestro equipo. Estamos creyendo junto a ti por cada milagro.
                             </p>
 
                             <textarea
-                                className="w-full bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] rounded-lg p-3 text-[hsl(var(--text-primary))] placeholder-[hsl(var(--text-secondary)/0.5)] focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))] resize-none min-h-[140px] shadow-inner text-sm font-medium outline-none transition-all"
+                                className="w-full bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] rounded-lg p-3 text-[hsl(var(--foreground))] placeholder-[hsl(var(--muted-foreground)/0.5)] focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))] resize-none min-h-[140px] shadow-inner text-sm font-medium outline-none transition-all"
                                 placeholder="¿Cómo podemos orar por ti?"
                                 value={prayerRequest}
                                 onChange={(e) => setPrayerRequest(e.target.value)}
@@ -238,7 +238,7 @@ export default function GivingAndConnection() {
                             <button
                                 onClick={handlePrayerRequest}
                                 disabled={!prayerRequest.trim()}
-                                className="w-full h-8 flex items-center justify-center gap-2 bg-[hsl(var(--surface-3))] text-[hsl(var(--primary))] font-semibold uppercase tracking-wide text-2xs hover:bg-[hsl(var(--primary))] hover:text-white rounded-md transition-all border border-[hsl(var(--primary)/0.1)] disabled:opacity-50 disabled:hover:bg-[hsl(var(--surface-3))] disabled:hover:text-[hsl(var(--primary))]"
+                                className="w-full h-8 flex items-center justify-center gap-2 bg-[hsl(var(--surface-3))] text-[hsl(var(--primary))] font-semibold uppercase tracking-wide text-2xs hover:bg-[hsl(var(--primary))] hover:text-[hsl(var(--primary-foreground))] rounded-md transition-all border border-[hsl(var(--primary)/0.1)] disabled:opacity-50 disabled:hover:bg-[hsl(var(--surface-3))] disabled:hover:text-[hsl(var(--primary))]"
                             >
                                 <span>Enviar Petición</span>
                                 <Send size={14} />
@@ -249,22 +249,22 @@ export default function GivingAndConnection() {
                     {/* Contact Pills */}
                     <section className="space-y-4">
                         <div className="flex items-center gap-4 bg-[hsl(var(--surface-2))] px-4 py-2 rounded-md border border-[hsl(var(--border))] hover:border-[hsl(var(--primary)/0.3)] transition-all cursor-pointer group">
-                            <div className="size-8 rounded-md bg-[hsl(var(--primary)/0.1)] flex items-center justify-center text-[hsl(var(--primary))] group-hover:bg-[hsl(var(--primary))] group-hover:text-white transition-all">
+                            <div className="size-8 rounded-md bg-[hsl(var(--primary)/0.1)] flex items-center justify-center text-[hsl(var(--primary))] group-hover:bg-[hsl(var(--primary))] group-hover:text-[hsl(var(--primary-foreground))] transition-all">
                                 <Mail size={18} />
                             </div>
                             <div className="flex flex-col">
-                                <span className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Email Ministerio</span>
-                                <span className="text-xs font-bold text-[hsl(var(--text-primary))]">hola@iglesiamoderna.org</span>
+                                <span className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--muted-foreground))]">Email Ministerio</span>
+                                <span className="text-xs font-bold text-[hsl(var(--foreground))]">hola@iglesiamoderna.org</span>
                             </div>
                         </div>
 
-                        <div className="flex items-center gap-4 bg-[hsl(var(--surface-2))] px-4 py-2 rounded-md border border-[hsl(var(--border))] hover:border-[hsl(var(--success)/100%)]/30 transition-all cursor-pointer group">
-                            <div className="size-8 rounded-md bg-[hsl(var(--success))]/10 flex items-center justify-center text-[hsl(var(--success))] group-hover:bg-[hsl(var(--success))] group-hover:text-white transition-all">
+                        <div className="flex items-center gap-4 bg-[hsl(var(--surface-2))] px-4 py-2 rounded-md border border-[hsl(var(--border))] hover:border-[hsl(var(--success,var(--primary))/0.3)] transition-all cursor-pointer group">
+                            <div className="size-8 rounded-md bg-[hsl(var(--success,var(--primary))/0.1)] flex items-center justify-center text-[hsl(var(--success,var(--primary)))] group-hover:bg-[hsl(var(--success,var(--primary)))] group-hover:text-[hsl(var(--primary-foreground))] transition-all">
                                 <Phone size={18} />
                             </div>
                             <div className="flex flex-col">
-                                <span className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">WhatsApp</span>
-                                <span className="text-xs font-bold text-[hsl(var(--text-primary))]">+1 (555) 0123-456</span>
+                                <span className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--muted-foreground))]">WhatsApp</span>
+                                <span className="text-xs font-bold text-[hsl(var(--foreground))]">+1 (555) 0123-456</span>
                             </div>
                         </div>
                     </section>

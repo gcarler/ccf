@@ -95,6 +95,15 @@ class CrmEventBase(BaseModel):
     cancellation_reason: Optional[str] = None
     # plan_clasificador_contextual: rol contextual por defecto del evento.
     participant_role_code: Optional[str] = Field(default=None, max_length=40)
+    requires_registration: bool = False
+    requires_email_verification: bool = False
+    registration_opens_at: Optional[AwareDateTime] = None
+    registration_closes_at: Optional[AwareDateTime] = None
+    capacity_max: Optional[int] = None
+    waiting_list_enabled: bool = False
+    qr_mode: Optional[str] = "PER_REGISTRANT"
+    contact_person: Optional[str] = None
+    form_id: Optional[UUID] = None
 
 
 class CrmEventCreate(CrmEventBase):
@@ -111,10 +120,21 @@ class CrmEventUpdate(BaseModel):
     target_role_ids: Optional[list[UUID]] = None
     target_persona_ids: Optional[list[str]] = None
     event_date: Optional[AwareDateTime] = None
+    start_time: Optional[str] = None
+    end_time: Optional[str] = None
     location: Optional[str] = None
     status: Optional[str] = None
     cancellation_reason: Optional[str] = None
     participant_role_code: Optional[str] = Field(default=None, max_length=40)
+    requires_registration: Optional[bool] = None
+    requires_email_verification: Optional[bool] = None
+    registration_opens_at: Optional[AwareDateTime] = None
+    registration_closes_at: Optional[AwareDateTime] = None
+    capacity_max: Optional[int] = None
+    waiting_list_enabled: Optional[bool] = None
+    qr_mode: Optional[str] = None
+    contact_person: Optional[str] = None
+    form_id: Optional[UUID] = None
 
 
 class CrmEvent(CrmEventBase):
@@ -1476,6 +1496,8 @@ class EventRegistrationRead(BaseModel):
     extras: dict = {}
     waiting_list_position: Optional[int] = None
     participant_role_code: Optional[str] = None
+    registration_number: Optional[int] = None
+    registration_code: Optional[str] = None
     reminder_sent_count: int = 0
     last_reminder_sent_at: Optional[AwareDateTime] = None
     model_config = orm_config

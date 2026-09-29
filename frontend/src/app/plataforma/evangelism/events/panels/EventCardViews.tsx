@@ -56,7 +56,7 @@ export default function EventCardViews({
   role="link"
   onClick={() => onOpenEvent(ev.id)}
   onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onOpenEvent(ev.id); } }}
-  className="p-4 rounded-md border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-card))] hover:border-[hsl(var(--primary)/0.3)] hover:shadow-[0_8px_30px_hsl(var(--primary)/0.12)] transition-all group flex flex-col justify-between cursor-pointer"
+  className="p-4 rounded-md border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-primary))] hover:border-[hsl(var(--primary)/0.3)] hover:shadow-[0_8px_30px_hsl(var(--primary)/0.12)] transition-all group flex flex-col justify-between cursor-pointer"
   >
  <div>
  <div className="flex justify-between items-start mb-4">
@@ -91,10 +91,10 @@ export default function EventCardViews({
  </div>
  </div>
  <div className="mt-3 flex items-center justify-between gap-2">
- <button onClick={(e) => { e.stopPropagation(); onOpenQr(ev); }} className="size-8 flex items-center justify-center bg-[hsl(var(--bg-muted))] hover:bg-[hsl(var(--primary))] text-[hsl(var(--text-secondary))] hover:text-white rounded-md transition-all shrink-0" title="Generar QR">
+ <button onClick={(e) => { e.stopPropagation(); onOpenQr(ev); }} className="size-8 flex items-center justify-center bg-[hsl(var(--bg-muted))] hover:bg-[hsl(var(--primary))] text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary-foreground))] rounded-md transition-all shrink-0" title="Generar QR">
  <QrCode size={16} />
  </button>
- <button onClick={(e) => { e.stopPropagation(); onOpenAttendance(ev); }} className="flex-1 py-1.5 bg-[hsl(var(--bg-muted))] group-hover:bg-[hsl(var(--primary))] text-[hsl(var(--text-secondary))] group-hover:text-white rounded-md text-2xs font-semibold uppercase tracking-wide transition-all">
+ <button onClick={(e) => { e.stopPropagation(); onOpenAttendance(ev); }} className="flex-1 py-1.5 bg-[hsl(var(--bg-muted))] group-hover:bg-[hsl(var(--primary))] text-[hsl(var(--text-secondary))] group-hover:text-[hsl(var(--primary-foreground))] rounded-md text-2xs font-semibold uppercase tracking-wide transition-all">
  Panel de Asistencia
  </button>
  <div className="relative shrink-0" onClick={e => e.stopPropagation()}>
@@ -105,16 +105,16 @@ export default function EventCardViews({
  <MoreVertical size={16} />
  </button>
  {menuOpenId === ev.id && (
- <div className="absolute right-0 bottom-12 z-50 bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-card))] border border-[hsl(var(--border-primary))] rounded-lg shadow-[0_8px_30px_hsl(var(--primary)/0.15)] overflow-hidden w-40 animate-in fade-in slide-in-from-bottom-2">
+ <div className="absolute right-0 bottom-12 z-50 bg-[hsl(var(--bg-primary))] border border-[hsl(var(--border-primary))] rounded-lg shadow-[0_8px_30px_hsl(var(--primary)/0.15)] overflow-hidden w-40 animate-in fade-in slide-in-from-bottom-2">
   <button
   onClick={() => onEdit(ev)}
-  className="w-full flex items-center gap-3 px-4 py-1.5 text-sm font-bold text-[hsl(var(--text-primary))] hover:bg-info-muted dark:hover:bg-white/5 transition-all"
+  className="w-full flex items-center gap-3 px-4 py-1.5 text-sm font-bold text-[hsl(var(--text-primary))] hover:bg-[hsl(var(--info-muted))] transition-all"
   >
   <Pencil size={14} className="text-[hsl(var(--primary))]" /> Editar
   </button>
   <button
   onClick={() => onDelete(ev.id)}
-  className="w-full flex items-center gap-3 px-4 py-1.5 text-sm font-bold text-[hsl(var(--destructive))] hover:bg-danger-muted dark:hover:bg-[hsl(var(--danger)/0.1)] transition-all"
+  className="w-full flex items-center gap-3 px-4 py-1.5 text-sm font-bold text-[hsl(var(--destructive))] hover:bg-[hsl(var(--destructive)/0.08)] transition-all"
   >
   <Trash2 size={14} /> Eliminar
   </button>
@@ -131,12 +131,12 @@ export default function EventCardViews({
 
  {/* LIST VIEW */}
  {viewType === 'list' && (
- <div className="bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-card))] rounded-md border border-[hsl(var(--border-primary))] overflow-hidden shadow-sm divide-y divide-[hsl(var(--border-primary))]">
+ <div className="bg-[hsl(var(--bg-primary))] rounded-md border border-[hsl(var(--border-primary))] overflow-hidden shadow-sm divide-y divide-[hsl(var(--border-primary))]">
  {events.map(ev => {
  const attendanceStat = getEventAttendanceStat(ev);
  return (
- <div key={ev.id} className="flex items-center gap-4 px-4 py-2 hover:bg-[hsl(var(--bg-muted))] dark:hover:bg-white/5 transition-colors group">
- <div className="w-9 h-9 rounded-md bg-[hsl(var(--info-muted))] dark:bg-[hsl(var(--info)/0.2)] text-[hsl(var(--primary))] flex items-center justify-center shrink-0">
+ <div key={ev.id} className="flex items-center gap-4 px-4 py-2 hover:bg-[hsl(var(--bg-muted))] transition-colors group">
+ <div className="w-9 h-9 rounded-md bg-[hsl(var(--info-muted))] text-[hsl(var(--primary))] flex items-center justify-center shrink-0">
  <Calendar size={16} />
  </div>
  <div className="flex-1 min-w-0">
@@ -145,7 +145,7 @@ export default function EventCardViews({
   role="link"
   onClick={() => onOpenEvent(ev.id)}
   onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onOpenEvent(ev.id); } }}
-  className="font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-primary))] text-sm truncate cursor-pointer hover:text-[hsl(var(--primary))] transition-colors"
+  className="font-bold text-[hsl(var(--text-primary))] text-sm truncate cursor-pointer hover:text-[hsl(var(--primary))] transition-colors"
   >
  {ev.name}
  </p>
@@ -170,10 +170,10 @@ export default function EventCardViews({
  {eventTypeLabel[ev.event_type] ?? ev.event_type}
  </span>
  </div>
- <button onClick={(e) => { e.stopPropagation(); onOpenQr(ev); }} className="px-3 py-1.5 rounded-md bg-[hsl(var(--info-muted))] dark:bg-[hsl(var(--info)/0.2)] text-[hsl(var(--primary))] text-2xs font-semibold uppercase opacity-0 group-hover:opacity-100 transition-opacity mr-2">
+ <button onClick={(e) => { e.stopPropagation(); onOpenQr(ev); }} className="px-3 py-1.5 rounded-md bg-[hsl(var(--info-muted))] text-[hsl(var(--primary))] text-2xs font-semibold uppercase opacity-0 group-hover:opacity-100 transition-opacity mr-2">
  QR
  </button>
- <button onClick={(e) => { e.stopPropagation(); onOpenAttendance(ev); }} className="px-3 py-1.5 rounded-md bg-[hsl(var(--info-muted))] dark:bg-[hsl(var(--info)/0.2)] text-[hsl(var(--primary))] text-2xs font-semibold uppercase opacity-0 group-hover:opacity-100 transition-opacity">
+ <button onClick={(e) => { e.stopPropagation(); onOpenAttendance(ev); }} className="px-3 py-1.5 rounded-md bg-[hsl(var(--info-muted))] text-[hsl(var(--primary))] text-2xs font-semibold uppercase opacity-0 group-hover:opacity-100 transition-opacity">
  Asistencia
  </button>
  </div>
@@ -183,7 +183,7 @@ export default function EventCardViews({
  )}
 
  {viewType === 'table' && (
- <div className="overflow-x-auto rounded-md border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-card))] shadow-sm">
+ <div className="overflow-x-auto rounded-md border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-primary))] shadow-sm">
  <table className="w-full min-w-[480px] text-left">
  <thead className="bg-[hsl(var(--bg-muted))]">
  <tr>
@@ -200,7 +200,7 @@ export default function EventCardViews({
  return (
  <tr key={event.id} className="border-t border-[hsl(var(--border-primary))] hover:bg-[hsl(var(--bg-muted))]">
  <td className="px-3 py-2">
- <button onClick={() => onOpenEvent(event.id)} className="font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-primary))] hover:text-[hsl(var(--primary))]">
+ <button onClick={() => onOpenEvent(event.id)} className="font-bold text-[hsl(var(--text-primary))] hover:text-[hsl(var(--primary))]">
  {event.name}
  </button>
  </td>

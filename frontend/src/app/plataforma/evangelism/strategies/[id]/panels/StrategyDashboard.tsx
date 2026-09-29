@@ -26,7 +26,6 @@ interface StrategyDashboardProps {
   attendanceByGroup: AttendanceByGroupEntry[];
   formatDate: (dateStr: string | null | undefined) => string;
   onOpenGroupDrawer: () => void;
-  onOpenMassAttendance: () => void;
   onOpenPersona: (group: StrategyGroup) => void;
   onRequestDeleteGroup: (id: string, name: string) => void;
   onOpenGroupAttendance: (group: StrategyGroup) => void;
@@ -64,7 +63,6 @@ export default function StrategyDashboard({
   attendanceByGroup,
   formatDate,
   onOpenGroupDrawer,
-  onOpenMassAttendance,
   onOpenPersona,
   onRequestDeleteGroup,
   onOpenGroupAttendance,
@@ -106,29 +104,15 @@ export default function StrategyDashboard({
                   </p>
                 )}
               </div>
-              {strategy.typology === 'evento_masivo' ? (
-                <button onClick={onOpenMassAttendance}
-                  className="inline-flex items-center gap-1.5 px-3 h-8 rounded-lg bg-[hsl(var(--primary))] text-white text-xs font-semibold hover:bg-[hsl(var(--primary))] transition-colors">
-                  <ClipboardList size={14} />Diligenciar asistencia
-                </button>
-              ) : canManage ? (
+              {canManage ? (
                 <button onClick={onOpenGroupDrawer}
-                  className="inline-flex items-center gap-1.5 px-3 h-8 rounded-lg bg-[hsl(var(--primary))] text-white text-xs font-semibold hover:bg-[hsl(var(--primary))] transition-colors">
+                  className="inline-flex items-center gap-1.5 px-3 h-8 rounded-lg bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] text-xs font-semibold hover:bg-[hsl(var(--primary))] transition-colors">
                   <Plus size={14} />Nuevo grupo
                 </button>
               ) : null}
             </div>
-            {strategy.typology === 'evento_masivo' ? (
-              <div className="flex flex-col items-center justify-center py-12 text-center bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))] border border-[hsl(var(--border-primary))] rounded-lg">
-                <ClipboardList size={32} className="text-[hsl(var(--primary))] mb-2" />
-                <p className="text-sm font-semibold text-[hsl(var(--text-primary))]">Evento masivo sin grupos</p>
-                <p className="text-xs text-[hsl(var(--text-secondary))] max-w-md mt-1">La asistencia de esta estrategia se registra directamente como asistencia de evento, sin crear grupos.</p>
-                <button onClick={onOpenMassAttendance} className="mt-4 inline-flex items-center gap-1.5 px-3 h-8 rounded-lg border border-[hsl(var(--primary))] text-[hsl(var(--primary))] text-xs font-semibold hover:bg-info-soft transition-colors">
-                  <ClipboardList size={14} />Abrir registro de asistencia
-                </button>
-              </div>
-            ) : groups.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-12 text-center bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))] border border-[hsl(var(--border-primary))] rounded-lg">
+            {groups.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-12 text-center bg-[hsl(var(--bg-primary))] border border-[hsl(var(--border-primary))] rounded-lg">
                 <Home size={32} className="text-[hsl(var(--text-secondary))] mb-2" />
                 <p className="text-sm font-medium text-[hsl(var(--text-secondary))]">Sin grupos aún</p>
                 <p className="text-xs text-[hsl(var(--text-secondary))]">Crea el primer grupo para esta estrategia</p>
@@ -139,22 +123,22 @@ export default function StrategyDashboard({
                   <div key={g.id}
                     role="button"
                     tabIndex={0}
-                    className="group bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))] border border-[hsl(var(--border-primary))] rounded-lg p-4 hover:border-[hsl(var(--primary)/0.3)] dark:hover:border-[hsl(var(--primary)/0.5)] transition-all cursor-pointer relative"
+                    className="group bg-[hsl(var(--bg-primary))] border border-[hsl(var(--border-primary))] rounded-lg p-4 hover:border-[hsl(var(--primary)/0.3)] transition-all cursor-pointer relative"
                     onClick={() => canManage ? onOpenPersona(g) : router.push(`/plataforma/evangelism/groups/${g.id}`)}
                     onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); (e.currentTarget as HTMLElement).click(); } }}>
                     {canManage ? (
                       <button onClick={e => { e.stopPropagation(); onRequestDeleteGroup(g.id, g.name); }}
-                        className="absolute top-2 right-2 p-1 rounded text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--destructive))] hover:bg-[hsl(var(--destructive)/0.08)] dark:hover:bg-[hsl(var(--destructive)/0.15)] opacity-0 group-hover:opacity-100 transition-all z-10" title="Eliminar">
+                        className="absolute top-2 right-2 p-1 rounded text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--destructive))] hover:bg-[hsl(var(--destructive)/0.08)] opacity-0 group-hover:opacity-100 transition-all z-10" title="Eliminar">
                         <Trash2 size={14} />
                       </button>
                     ) : null}
                     <button onClick={e => { e.stopPropagation(); router.push(`/plataforma/evangelism/groups/${g.id}`); }}
-                      className="absolute top-2 right-8 p-1 rounded text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] hover:bg-info-soft dark:hover:bg-[hsl(var(--info))]/20 opacity-0 group-hover:opacity-100 transition-all z-10" title="Ver detalle">
+                      className="absolute top-2 right-8 p-1 rounded text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] hover:bg-[hsl(var(--info-muted))] opacity-0 group-hover:opacity-100 transition-all z-10" title="Ver detalle">
                       <Calendar size={14} />
                     </button>
                     {canManage ? (
                       <button onClick={e => { e.stopPropagation(); onOpenGroupAttendance(g); }}
-                        className="absolute top-2 right-[3.25rem] p-1 rounded text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--success))] hover:bg-[hsl(var(--success-muted))] dark:hover:bg-[hsl(var(--success)/0.15)] opacity-0 group-hover:opacity-100 transition-all z-10" title="Registrar asistencia">
+                        className="absolute top-2 right-[3.25rem] p-1 rounded text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--success))] hover:bg-[hsl(var(--success-muted))] opacity-0 group-hover:opacity-100 transition-all z-10" title="Registrar asistencia">
                         <ClipboardList size={14} />
                       </button>
                     ) : null}
@@ -162,7 +146,7 @@ export default function StrategyDashboard({
                     <div className="absolute top-2 right-[4.75rem] z-20">
                       <button
                         onClick={e => { e.stopPropagation(); onShareMenuToggle(g.id); }}
-                        className="p-1 rounded text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--success))] hover:bg-[hsl(var(--success-muted))] dark:hover:bg-[hsl(var(--success)/0.15)] opacity-0 group-hover:opacity-100 transition-all"
+                        className="p-1 rounded text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--success))] hover:bg-[hsl(var(--success-muted))] opacity-0 group-hover:opacity-100 transition-all"
                         title="Compartir enlace del grupo"
                       >
                         <Share2 size={14} />
@@ -170,7 +154,7 @@ export default function StrategyDashboard({
                       {shareMenuId === g.id && (
                         <div
                           onClick={e => e.stopPropagation()}
-                          className="absolute top-7 right-0 w-52 bg-[hsl(var(--bg-primary))] dark:bg-[var(--admin-bg-elevated)] border border-[hsl(var(--border-primary))] rounded-lg shadow-xl py-1"
+                          className="absolute top-7 right-0 w-52 bg-[hsl(var(--bg-primary))] border border-[hsl(var(--border-primary))] rounded-lg shadow-xl py-1"
                         >
                           <p className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] px-3 py-1.5">Compartir enlace del grupo</p>
                           <button onClick={() => shareGroupLink(g.id, g.name, 'copy')}
@@ -208,17 +192,6 @@ export default function StrategyDashboard({
       {activeTab === 'attendance' && (
         <ErrorBoundary moduleName="Estrategia - Asistencia" compact>
           <div className="space-y-4">
-            {strategy.typology === 'evento_masivo' ? (
-              <div className="flex flex-col items-center justify-center py-12 text-center bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))] border border-[hsl(var(--border-primary))] rounded-lg">
-                <ClipboardList size={32} className="text-[hsl(var(--primary))] mb-2" />
-                <p className="text-sm font-semibold text-[hsl(var(--text-primary))]">Asistencia del evento masivo</p>
-                <p className="text-xs text-[hsl(var(--text-secondary))] max-w-md mt-1">No se requiere grupo. Usa el registro de eventos para marcar asistentes, fecha y scanner.</p>
-                <button onClick={onOpenMassAttendance} className="mt-4 inline-flex items-center gap-1.5 px-3 h-8 rounded-lg bg-[hsl(var(--primary))] text-white text-xs font-semibold hover:opacity-90 transition-colors">
-                  <ClipboardList size={14} />Diligenciar asistencia
-                </button>
-              </div>
-            ) : (
-            <>
             <div className="flex items-center justify-between">
               <p className="text-xs font-bold uppercase tracking-wider text-[hsl(var(--text-secondary))]">
                 Grupos — sesiones recientes
@@ -241,9 +214,9 @@ export default function StrategyDashboard({
                 {attendanceByGroup.map(({ group: grp, sessions: grpSessions, latest }) => {
                   const isHabilitado = latest?.estado_habilitacion === 'HABILITADO';
                   return (
-                    <div key={grp.id} className={`bg-[hsl(var(--bg-primary))] rounded-xl border overflow-hidden ${isHabilitado ? 'border-[hsl(var(--success)/0.3)] dark:border-[hsl(var(--success)/0.2)]' : 'border-[hsl(var(--border-primary))]'}`}>
+                    <div key={grp.id} className={`bg-[hsl(var(--bg-primary))] rounded-xl border overflow-hidden ${isHabilitado ? 'border-[hsl(var(--success)/0.3)]' : 'border-[hsl(var(--border-primary))]'}`}>
                       {/* Cabecera del grupo */}
-                      <div className={`flex items-center justify-between px-4 py-3 ${isHabilitado ? 'bg-[hsl(var(--success-muted))] dark:bg-[hsl(var(--success)/0.1)]' : 'bg-[hsl(var(--bg-secondary))]'}`}>
+                      <div className={`flex items-center justify-between px-4 py-3 ${isHabilitado ? 'bg-[hsl(var(--success-muted))]' : 'bg-[hsl(var(--bg-secondary))]'}`}>
                         <div className="min-w-0">
                           <div className="flex items-center gap-2">
                             {isHabilitado && <span className="size-1.5 rounded-full bg-[hsl(var(--success))] animate-pulse shrink-0" />}
@@ -257,7 +230,7 @@ export default function StrategyDashboard({
                         {latest && isHabilitado && canManage && (
                           <button
                             onClick={() => onOpenAttendance(latest)}
-                            className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wide transition-all active:scale-95 bg-[hsl(var(--primary))] text-white hover:opacity-90 shadow-sm"
+                            className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wide transition-all active:scale-95 bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] hover:opacity-90 shadow-sm"
                           >
                             <ClipboardList size={12} />
                             Registrar
@@ -273,12 +246,12 @@ export default function StrategyDashboard({
                           });
                           const isClosed = s.estado_habilitacion === 'CERRADO' || s.estado_habilitacion === 'CANCELADA';
                           const habColor = s.estado_habilitacion === 'HABILITADO'
-                            ? 'bg-[hsl(var(--success)/0.2)] text-[hsl(var(--success))] dark:bg-[hsl(var(--success)/0.15)] dark:text-[hsl(var(--success))]'
+                            ? 'bg-[hsl(var(--success-muted))] text-[hsl(var(--success))]'
                             : s.estado_habilitacion === 'CANCELADA'
-                              ? 'bg-[hsl(var(--destructive)/0.08)] text-[hsl(var(--destructive))] dark:bg-[hsl(var(--destructive)/0.15)]'
+                              ? 'bg-[hsl(var(--destructive)/0.08)] text-[hsl(var(--destructive))]'
                               : s.estado_habilitacion === 'CERRADO'
-                                ? 'bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))] dark:bg-white/10 dark:text-[hsl(var(--text-secondary))]'
-                                : 'bg-[hsl(var(--warning-muted))] text-[hsl(var(--warning))] dark:bg-[hsl(var(--warning)/0.15)] dark:text-[hsl(var(--warning))]';
+                                ? 'bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))]'
+                                : 'bg-[hsl(var(--warning-muted))] text-[hsl(var(--warning))]';
                           return (
                             <div key={s.id} className="flex items-center gap-3 px-4 py-2.5 hover:bg-[hsl(var(--bg-muted))] transition-colors">
                               <div className="flex-1 min-w-0 flex items-center gap-2">
@@ -318,8 +291,6 @@ export default function StrategyDashboard({
                 })}
               </div>
             )}
-            </>
-            )}
           </div>
         </ErrorBoundary>
       )}
@@ -329,7 +300,7 @@ export default function StrategyDashboard({
         <ErrorBoundary moduleName="Estrategia - Metricas">
           <div className="space-y-4">
             <div className="bg-[hsl(var(--bg-primary))] border border-[hsl(var(--border-primary))] rounded-xl p-8 flex flex-col items-center text-center gap-4">
-              <div className="p-4 rounded-2xl bg-[hsl(var(--info-muted))] dark:bg-[hsl(var(--info)/0.15)]">
+              <div className="p-4 rounded-2xl bg-[hsl(var(--info-muted))]">
                 <BarChart3 size={36} className="text-[hsl(var(--primary))]" />
               </div>
               <div>
@@ -340,7 +311,7 @@ export default function StrategyDashboard({
               </div>
               <button
                 onClick={() => router.push(`/plataforma/evangelism/strategies/${id}/analytics`)}
-                className="flex items-center gap-2 px-5 py-2.5 bg-[hsl(var(--primary))] hover:opacity-90 text-white rounded-lg text-sm font-semibold transition-all shadow-sm"
+                className="flex items-center gap-2 px-5 py-2.5 bg-[hsl(var(--primary))] hover:opacity-90 text-[hsl(var(--primary-foreground))] rounded-lg text-sm font-semibold transition-all shadow-sm"
               >
                 <BarChart3 size={15} />
                 Abrir dashboard analítico
@@ -402,7 +373,7 @@ export default function StrategyDashboard({
             <div className="bg-[hsl(var(--bg-secondary))] border border-[hsl(var(--border-primary))] rounded-lg p-4">
               <div className="flex items-center justify-between mb-3">
                 <h3 className="text-2xs font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))]">Seguimiento Pendiente</h3>
-                <span className="text-2xs font-bold px-2 py-0.5 bg-[hsl(var(--warning-muted))] dark:bg-[hsl(var(--warning)/0.15)] text-[hsl(var(--warning))] rounded-full">
+                <span className="text-2xs font-bold px-2 py-0.5 bg-[hsl(var(--warning-muted))] text-[hsl(var(--warning))] rounded-full">
                   {followUps.filter(f => !f.estado_completado).length}
                 </span>
               </div>
@@ -430,7 +401,7 @@ export default function StrategyDashboard({
                             toast.success('Seguimiento completado');
                             onFollowUpsChanged();
                           } catch { toast.error('Error al actualizar'); }
-                        }} className="px-2 py-0.5 text-2xs font-bold text-[hsl(var(--success))] hover:bg-[hsl(var(--success-muted))] dark:hover:bg-[hsl(var(--success)/0.15)] rounded transition-colors">
+                        }} className="px-2 py-0.5 text-2xs font-bold text-[hsl(var(--success))] hover:bg-[hsl(var(--success-muted))] rounded transition-colors">
                           Completar
                         </button>
                       ) : null}

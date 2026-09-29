@@ -67,7 +67,7 @@ export default function NotificationsCenter() {
             </header>
 
             {error && (
-                <div className="mb-3 rounded-lg border border-[hsl(var(--danger)/25%)] bg-danger-soft px-4 py-1.5 text-sm font-semibold text-danger-text">
+                <div className="mb-3 rounded-lg border border-[hsl(var(--destructive)/0.3)] bg-[hsl(var(--destructive)/0.15)] px-4 py-1.5 text-sm font-semibold text-[hsl(var(--destructive))]">
                     {error}
                 </div>
             )}

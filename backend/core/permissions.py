@@ -267,6 +267,11 @@ MODULE_PERMISSION_MAP: Dict[str, Dict[str, str]] = {
         "edit": "spiritual_life:edit",
         "manage": "spiritual_life:manage",
     },
+    "agenda": {
+        "read": "agenda:read",
+        "edit": "agenda:edit",
+        "manage": "agenda:manage",
+    },
     "wiki": {"read": "wiki:read", "edit": "wiki:edit", "manage": "wiki:edit"},
     "agenda": {
         "read": "agenda:read",
@@ -787,6 +792,21 @@ def require_permission(permission: str):
         # La matriz vive en ``role_allows_permission`` — fuente única compartida
         # con ``require_mcp_permission`` (superficies MCP).
         if role_allows_permission(role, permission):
+            return current_user
+        if permission.startswith("agenda:") and role in {
+            "coordinador",
+            "docente",
+            "pastor",
+            "admin",
+            "administrador",
+        }:
+            return current_user
+        if permission == "agenda:read" and role in {
+            "estudiante",
+            "lector",
+            "miembro",
+            "aspirante",
+        }:
             return current_user
 
         raise HTTPException(

@@ -292,6 +292,68 @@ Cualquier endpoint nuevo en este módulo debe:
 | `/api/academy/admin/*` | Estable | 2026-07-16 |
 | `/api/academy/forum/threads` | Pendiente fix `ACAD-MED-001` y `ACAD-MED-002` | 2026-07-18 |
 | `/api/academy/dashboard/metrics` | Pendiente fix `ACAD-CRIT-002` (extender shape) | 2026-07-18 |
-| `/api/academy/lessons/{id}/assignments` (por crear) | Pendiente diseño | 2026-07-18 |
-| `/api/academy/resources` (por crear) | Pendiente diseño | 2026-07-18 |
-| `/api/academy/forum/threads/{id}/resolve` (por crear) | Pendiente diseño | 2026-07-18 |
+| `/api/academy/socratic/{offering_id}/query` | Estable (Certificado A+) | 2026-09-27 |
+| `/api/academy/defense/{offering_id}/start` | Estable (Certificado A+) | 2026-09-27 |
+| `/api/academy/defense/{session_id}/status` | Estable (Certificado A+) | 2026-09-27 |
+| `/api/academy/defense/{session_id}/answer` | Estable (Certificado A+) | 2026-09-27 |
+| `/api/academy/defense/{session_id}/close` | Estable (Certificado A+) | 2026-09-27 |
+| `/api/academy/student/academic-record` | Estable (Certificado A+) | 2026-09-27 |
+| `/api/academy/knowledge/{offering_id}/graph` | Estable (Certificado A+) | 2026-09-28 |
+| `/api/academy/knowledge/{offering_id}/nodes` | Estable (Certificado A+) | 2026-09-28 |
+| `/api/academy/knowledge/{offering_id}/edges` | Estable (Certificado A+) | 2026-09-28 |
+| `/api/academy/knowledge/{offering_id}/path` | Estable (Certificado A+) | 2026-09-28 |
+| `/api/academy/knowledge/node/{node_id}/progress` | Estable (Certificado A+) | 2026-09-28 |
+| `/api/academy/portfolio/my` | Estable (Certificado A+) | 2026-09-28 |
+| `/api/academy/portfolio/{student_id}` | Estable (Certificado A+) | 2026-09-28 |
+| `/api/academy/portfolio/entry` | Estable (Certificado A+) | 2026-09-28 |
+| `/api/academy/portfolio/verify/{credential_id}` | Estable (Certificado A+) | 2026-09-28 |
+
+---
+
+## 13. Contratos: Tutor Socrático y Defensas Interactivas (2026-09-27)
+
+### 13.1. Tutor Socrático
+* `POST /api/academy/socratic/{offering_id}/query`:
+  * Entrada: `{ question: str, context?: str }`
+  * Salida: `SocraticQueryResponse` con pregunta de reflexión mayéutica generada por el motor pedagógico.
+  * Regla: No responde con la solución directa, sino con repreguntas socráticas orientadas al descubrimiento guiado.
+
+### 13.2. Defensas Interactivas
+* `POST /api/academy/defense/{offering_id}/start`:
+  * Inicia una sesión de defensa de 5 minutos (300 segundos).
+  * Retorna la primera pregunta socrática generada sobre el contenido.
+* `GET /api/academy/defense/{session_id}/status`:
+  * Retorna el estado actual, el tiempo restante en segundos y la pregunta activa.
+* `POST /api/academy/defense/{session_id}/answer`:
+  * Entrada: `{ answer: str }`
+  * Evalúa y registra la respuesta, avanzando secuencialmente hasta completar la batería.
+* `POST /api/academy/defense/{session_id}/close`:
+  * Cierra la defensa y computa la nota final ponderada con feedback pedagógico cualitativo.
+
+---
+
+## 14. Contratos: Grafo de Conocimiento y Portafolio Verificable (2026-09-28)
+
+### 14.1. Grafo de Conocimiento y Prerrequisitos Cognitivos
+* `GET /api/academy/knowledge/{offering_id}/graph`:
+  * Retorna la topología completa del grafo: nodos (`KnowledgeNodeResponse`), aristas (`KnowledgeEdgeResponse`) y progreso del estudiante autenticado (`StudentNodeProgressResponse`).
+* `POST /api/academy/knowledge/{offering_id}/nodes`:
+  * Crea un nuevo nodo de conocimiento (`concept`, `skill`, `competency`) con peso y sede asociada. Requiere rol docente/admin.
+* `POST /api/academy/knowledge/{offering_id}/edges`:
+  * Vincula dos nodos mediante aristas dirigidas (`requires`, `leads_to`, `related`). Detecta ciclos y previene dependencias circulares.
+* `GET /api/academy/knowledge/{offering_id}/path`:
+  * Computa y retorna la ruta secuencial óptima de aprendizaje (`LearningPathResponse`) basada en orden topológico respetando dependencias de prerrequisitos y maestría actual.
+* `POST /api/academy/knowledge/node/{node_id}/progress`:
+  * Registra o actualiza el nivel de maestría (`mastery_score` 0.0 - 1.0) y estado (`not_started`, `in_progress`, `mastered`) para el nodo y estudiante.
+
+### 14.2. Portafolio Verificable y Sellos Criptográficos SHA-256
+* `GET /api/academy/portfolio/my`:
+  * Retorna la colección completa de evidencias del estudiante en sesión con sus hashes criptográficos y visibilidad.
+* `GET /api/academy/portfolio/{student_id}`:
+  * Retorna las evidencias públicas de un estudiante o el portafolio completo si el actor es docente/administrador.
+* `POST /api/academy/portfolio/entry`:
+  * Registra una nueva evidencia (`assignment`, `defense`, `project`, `exam`) sellada con hash SHA-256 determinista generado a partir de `student_id:title:credential_type:score:created_at`.
+* `GET /api/academy/portfolio/verify/{credential_id}`:
+  * Endpoint público de auditoría y verificación criptográfica. Recalcula el digest SHA-256 de los datos canónicos contra el hash almacenado para validar integridad inmutable y certificar autenticidad.
+
+

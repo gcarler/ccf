@@ -14,11 +14,11 @@ interface FormSectionProps {
 export default function FormSection({ title, defaultOpen, children }: FormSectionProps) {
   const [open, setOpen] = useState(defaultOpen ?? false);
   return (
-    <div className="border border-[hsl(var(--border))] dark:border-white/10 rounded-lg overflow-hidden">
+    <div className="border border-[hsl(var(--border))] rounded-lg overflow-hidden">
       <button
         type="button"
         onClick={() => setOpen(!open)}
-        className="w-full flex items-center justify-between px-3 py-2 bg-[hsl(var(--surface-1))] dark:bg-white/5 text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] dark:hover:text-[hsl(var(--text-secondary))] transition-colors"
+        className="w-full flex items-center justify-between px-3 py-2 bg-[hsl(var(--surface-1))] text-xs font-bold uppercase tracking-wide text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] transition-colors"
       >
         <span>{title}</span>
         <ChevronDown size={14} className={clsx("transition-transform", open && "rotate-180")} />

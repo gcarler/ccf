@@ -37,32 +37,32 @@ const TRIGGER_META: Record<
   overload: {
     icon: ShieldAlert,
     label: "Carga alta de tareas",
-    color: "text-[hsl(var(--danger))]",
-    bg: "bg-danger-soft dark:bg-[hsl(var(--danger))]/20",
+    color: "text-[hsl(var(--destructive))]",
+    bg: "bg-[hsl(var(--destructive)/0.15)]",
   },
   deadline: {
     icon: Bell,
     label: "Tarea cerca de su deadline",
     color: "text-[hsl(var(--primary))]",
-    bg: "bg-info-soft dark:bg-[hsl(var(--info))]/20",
+    bg: "bg-[hsl(var(--primary)/0.15)]",
   },
   stale: {
     icon: Clock,
     label: "Sin cambios por varios días",
     color: "text-[hsl(var(--warning))]",
-    bg: "bg-warning-soft dark:bg-[hsl(var(--warning))]/20",
+    bg: "bg-[hsl(var(--warning)/0.15)]",
   },
   weekly_summary: {
     icon: Bot,
     label: "Resumen periódico",
     color: "text-[hsl(var(--primary))]",
-    bg: "bg-info-soft dark:bg-[hsl(var(--info))]/20",
+    bg: "bg-[hsl(var(--primary)/0.15)]",
   },
   manual: {
     icon: Sparkles,
     label: "Disparador manual",
     color: "text-[hsl(var(--primary))]",
-    bg: "bg-info-soft dark:bg-[hsl(var(--info))]/20",
+    bg: "bg-[hsl(var(--primary)/0.15)]",
   },
 };
 
@@ -72,7 +72,7 @@ function getTriggerMeta(triggerType: string) {
       icon: Sparkles,
       label: triggerType,
       color: "text-[hsl(var(--primary))]",
-      bg: "bg-info-soft dark:bg-[hsl(var(--info))]/20",
+      bg: "bg-[hsl(var(--primary)/0.15)]",
     }
   );
 }
@@ -171,7 +171,7 @@ export default function AutomationsPage() {
       <div className="flex flex-col h-full font-display">
         <div className="w-full mx-auto p-3 space-y-3 pb-4">
           {error && (
-            <div className="rounded-lg border border-[hsl(var(--warning)/25%)] bg-warning-soft p-3 text-warning-text dark:border-[hsl(var(--warning)/100%)]/20 dark:bg-[hsl(var(--warning))]/10 dark:text-[hsl(var(--warning))]">
+            <div className="rounded-lg border border-[hsl(var(--warning)/0.3)] bg-[hsl(var(--warning)/0.1)] p-3 text-[hsl(var(--warning))]">
               <p className="text-xs font-bold uppercase tracking-wide">{error}</p>
             </div>
           )}
@@ -179,24 +179,24 @@ export default function AutomationsPage() {
           <div className="flex items-center justify-between">
             <div>
               <div className="flex items-center gap-2 mb-1">
-                <div className="size-7 rounded-lg bg-info-soft dark:bg-[hsl(var(--info))]/30 flex items-center justify-center">
+                <div className="size-7 rounded-lg bg-[hsl(var(--primary)/0.1)] flex items-center justify-center">
                   <Sparkles size={14} className="text-[hsl(var(--primary))]" />
                 </div>
                 <span className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--primary))]">
                   Motor Optimus 3.0
                 </span>
               </div>
-              <h1 className="text-xl font-bold tracking-tight text-[hsl(var(--text-primary))] dark:text-white leading-none">
+              <h1 className="text-xl font-bold tracking-tight text-[hsl(var(--foreground))] leading-none">
                 Automatizaciones
               </h1>
-              <p className="text-sm text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] mt-0.5 font-medium">
+              <p className="text-sm text-[hsl(var(--muted-foreground))] mt-0.5 font-medium">
                 Configura cómo el sistema reacciona a los desafíos de tu ministerio.
               </p>
             </div>
             <button
               onClick={handleCreate}
               disabled={creating}
-              className="flex items-center gap-2 px-4 py-1.5 bg-[hsl(var(--primary))] text-white rounded-lg text-xs font-semibold uppercase tracking-wide shadow-xl shadow-[hsl(var(--info)/20%)] hover:bg-[hsl(var(--primary))] active:scale-95 transition-all disabled:opacity-60"
+              className="flex items-center gap-2 px-4 py-1.5 bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] rounded-lg text-xs font-semibold uppercase tracking-wide shadow-xl hover:bg-[hsl(var(--primary))]/90 active:scale-95 transition-all disabled:opacity-60"
             >
               {creating ? (
                 <Loader2 size={13} className="animate-spin" />
@@ -209,16 +209,16 @@ export default function AutomationsPage() {
 
           {/* Active count */}
           <div className="flex items-center gap-3">
-            <span className="px-2.5 py-1 bg-success-soft dark:bg-[hsl(var(--success))]/20 text-success-text dark:text-[hsl(var(--success))] rounded-full text-2xs font-semibold uppercase tracking-wide border border-[hsl(var(--success)/25%)] dark:border-[hsl(var(--success)/100%)]/20">
+            <span className="px-2.5 py-1 bg-[hsl(var(--success)/0.15)] text-[hsl(var(--success,var(--primary)))] rounded-full text-2xs font-semibold uppercase tracking-wide border border-[hsl(var(--success)/0.3)]">
               {rules.filter((r) => r.is_active).length} activas
             </span>
-            <span className="px-2.5 py-1 bg-[hsl(var(--surface-2))] dark:bg-white/5 text-[hsl(var(--text-secondary))] rounded-full text-2xs font-semibold uppercase tracking-wide border border-[hsl(var(--border))] dark:border-white/10">
+            <span className="px-2.5 py-1 bg-[hsl(var(--surface-2))] text-[hsl(var(--muted-foreground))] rounded-full text-2xs font-semibold uppercase tracking-wide border border-[hsl(var(--border))]">
               {rules.filter((r) => !r.is_active).length} inactivas
             </span>
           </div>
 
           {loading ? (
-            <div className="flex items-center justify-center py-12 text-[hsl(var(--text-secondary))]">
+            <div className="flex items-center justify-center py-12 text-[hsl(var(--muted-foreground))]">
               <Loader2 size={24} className="animate-spin mr-2" />
               Cargando automatizaciones...
             </div>
@@ -232,21 +232,19 @@ export default function AutomationsPage() {
                     key={rule.id}
                     initial={{ opacity: 0, y: 16 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: idx * 0.07 }}                      className={clsx(
+                    transition={{ delay: idx * 0.07 }}
+                    className={clsx(
                       "group p-3 rounded-lg border transition-all",
                       rule.is_active
-                        ? "bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))] border-[hsl(var(--border))] dark:border-white/[0.06] shadow-sm hover:shadow-lg hover:border-[hsl(var(--info)/25%)] dark:hover:border-[hsl(var(--info)/100%)]/20"
-                        : "bg-[hsl(var(--surface-1))] dark:bg-white/[0.02] border-[hsl(var(--border))] dark:border-white/[0.04] opacity-60"
+                        ? "bg-[hsl(var(--surface-1))] border-[hsl(var(--border))] shadow-sm hover:shadow-lg hover:border-[hsl(var(--primary)/0.5)]"
+                        : "bg-[hsl(var(--surface-1))] border-[hsl(var(--border))] opacity-60"
                     )}
                   >
                     <div className="flex items-start justify-between mb-4">
                       <div
                         className={clsx(
-                          "size-10 rounded-md flex items-center justify-center border shrink-0",
-                          meta.bg,
-                          meta.color
-                            .replace("text-", "border-")
-                            .replace("500", "200") + " dark:border-opacity-20"
+                          "size-10 rounded-md flex items-center justify-center border shrink-0 border-[hsl(var(--border))]",
+                          meta.bg
                         )}
                       >
                         <Icon size={18} className={meta.color} />
@@ -266,27 +264,27 @@ export default function AutomationsPage() {
                         ) : (
                           <ToggleLeft
                             size={32}
-                            className="text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]"
+                            className="text-[hsl(var(--muted-foreground))]"
                           />
                         )}
                       </button>
                     </div>
 
                     <div className="space-y-1 mb-4">
-                      <h3 className="text-sm font-bold text-[hsl(var(--text-primary))] dark:text-white leading-tight">
+                      <h3 className="text-sm font-bold text-[hsl(var(--foreground))] leading-tight">
                         {rule.name}
                       </h3>
-                      <p className="text-xs font-medium text-[hsl(var(--text-secondary))] uppercase tracking-wider">
+                      <p className="text-xs font-medium text-[hsl(var(--muted-foreground))] uppercase tracking-wider">
                         {meta.label}
                       </p>
                     </div>
 
-                    <div className="pt-3 border-t border-[hsl(var(--border))] dark:border-white/5 flex items-center justify-between">
+                    <div className="pt-3 border-t border-[hsl(var(--border))] flex items-center justify-between">
                       <button className="text-2xs font-semibold uppercase text-[hsl(var(--primary))] tracking-wide flex items-center gap-1.5 hover:underline">
                         Configurar lógica <ArrowRight size={11} />
                       </button>
                       {!rule.is_active && (
-                        <span className="px-2 py-0.5 bg-[hsl(var(--surface-2))] dark:bg-white/5 text-[hsl(var(--text-secondary))] rounded-md text-2xs font-semibold uppercase tracking-wide">
+                        <span className="px-2 py-0.5 bg-[hsl(var(--surface-2))] text-[hsl(var(--muted-foreground))] rounded-md text-2xs font-semibold uppercase tracking-wide">
                           Inactivo
                         </span>
                       )}
@@ -301,16 +299,16 @@ export default function AutomationsPage() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: rules.length * 0.07 }}
                 onClick={handleCreate}
-                className="flex flex-col items-center justify-center p-3 rounded-lg border-2 border-dashed border-[hsl(var(--border))] dark:border-white/10 text-center gap-2 group cursor-pointer hover:border-[hsl(var(--info)/40%)] dark:hover:border-[hsl(var(--info)/100%)]/40 hover:bg-info-soft/50 dark:hover:bg-[hsl(var(--info))]/10 transition-all min-h-[100px]"
+                className="flex flex-col items-center justify-center p-3 rounded-lg border-2 border-dashed border-[hsl(var(--border))] text-center gap-2 group cursor-pointer hover:border-[hsl(var(--primary))] hover:bg-[hsl(var(--surface-2))] transition-all min-h-[100px]"
               >
-                <div className="size-10 rounded-md bg-[hsl(var(--bg-primary))] dark:bg-white/5 shadow-sm border border-[hsl(var(--border))] dark:border-white/10 flex items-center justify-center text-[hsl(var(--text-secondary))] group-hover:text-[hsl(var(--primary))] group-hover:border-[hsl(var(--info)/25%)] dark:group-hover:border-[hsl(var(--info)/100%)]/30 transition-all">
+                <div className="size-10 rounded-md bg-[hsl(var(--surface-1))] shadow-sm border border-[hsl(var(--border))] flex items-center justify-center text-[hsl(var(--muted-foreground))] group-hover:text-[hsl(var(--primary))] group-hover:border-[hsl(var(--primary))] transition-all">
                   <Plus size={18} />
                 </div>
                 <div>
-                  <h4 className="text-base font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] group-hover:text-[hsl(var(--primary))] transition-colors">
+                  <h4 className="text-base font-bold text-[hsl(var(--foreground))] group-hover:text-[hsl(var(--primary))] transition-colors">
                     Crear Regla
                   </h4>
-                  <p className="text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide mt-0.5">
+                  <p className="text-2xs font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wide mt-0.5">
                     Expandir Inteligencia
                   </p>
                 </div>

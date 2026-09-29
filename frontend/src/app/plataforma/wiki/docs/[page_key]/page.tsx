@@ -98,7 +98,7 @@ export default function WikiDocEditPage() {
     }, [doc]);
 
     if (loading) return (
-        <div className="flex-1 flex items-center justify-center bg-[hsl(var(--bg-primary))] dark:bg-[#141517]">
+        <div className="flex-1 flex items-center justify-center bg-[hsl(var(--bg-primary))]">
             <motion.div
                 animate={{ rotate: 360 }}
                 transition={{ repeat: Infinity, duration: 1, ease: "linear" }}
@@ -108,7 +108,7 @@ export default function WikiDocEditPage() {
     );
 
     if (error) return (
-        <div className="flex-1 flex items-center justify-center bg-[hsl(var(--bg-primary))] dark:bg-[#141517]">
+        <div className="flex-1 flex items-center justify-center bg-[hsl(var(--bg-primary))]">
             <div className="text-center space-y-4">
                 <AlertCircle size={32} className="text-[hsl(var(--danger))] mx-auto" />
                 <p className="font-bold text-sm text-[hsl(var(--danger))]">{error}</p>
@@ -117,7 +117,7 @@ export default function WikiDocEditPage() {
     );
 
     if (!doc) return (
-        <div className="flex-1 flex items-center justify-center bg-[hsl(var(--bg-primary))] dark:bg-[#141517]">
+        <div className="flex-1 flex items-center justify-center bg-[hsl(var(--bg-primary))]">
             <div className="text-center space-y-4">
                 <BookOpen size={32} className="text-[hsl(var(--text-secondary))] mx-auto" />
                 <p className="font-bold text-sm text-[hsl(var(--text-secondary))]">Documento no encontrado</p>
@@ -136,18 +136,18 @@ export default function WikiDocEditPage() {
 
     return (
         <WorkspaceLayout sidebarTitle="Wiki" sidebarSections={sidebarSections}>
-            <div className="flex-1 flex flex-col bg-[hsl(var(--bg-primary))] dark:bg-[#141517] overflow-hidden">
-            <header className="h-8 px-3 border-b border-[hsl(var(--border))] dark:border-white/5 flex items-center justify-between shrink-0 bg-white/80 dark:bg-[#141517]/80 backdrop-blur-md sticky top-0 z-10">
+            <div className="flex-1 flex flex-col bg-[hsl(var(--bg-primary))] overflow-hidden">
+            <header className="h-8 px-3 border-b border-[hsl(var(--border))] flex items-center justify-between shrink-0 bg-[hsl(var(--surface-1))]/80 backdrop-blur-md sticky top-0 z-10">
                 <div className="flex items-center gap-4">
                     <button
                         onClick={() => router.push('/plataforma/wiki')}
-                        className="p-2 hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5 rounded-md text-[hsl(var(--text-secondary))] transition-all"
+                        className="p-2 hover:bg-[hsl(var(--surface-2))] rounded-md text-[hsl(var(--text-secondary))] transition-all"
                         aria-label="Volver al listado"
                     >
                         <ChevronLeft size={20} />
                     </button>
-                    <div className="w-[1px] h-4 bg-[hsl(var(--surface-3))] dark:bg-white/10" />
-                    <h1 className="text-base font-bold text-[hsl(var(--text-primary))] dark:text-white truncate max-w-[300px]">
+                    <div className="w-[1px] h-4 bg-[hsl(var(--surface-3))]" />
+                    <h1 className="text-base font-bold text-[hsl(var(--text-primary))] truncate max-w-[300px]">
                         {doc.title}
                         {isReadonly && <span className="ml-2 text-2xs text-[hsl(var(--text-secondary))] font-normal">(solo lectura)</span>}
                     </h1>
@@ -158,7 +158,7 @@ export default function WikiDocEditPage() {
                         <button
                             title="Historial de versiones"
                             aria-label="Historial de versiones"
-                            className="p-2 hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5 rounded-md text-[hsl(var(--text-secondary))]"
+                            className="p-2 hover:bg-[hsl(var(--surface-2))] rounded-md text-[hsl(var(--text-secondary))]"
                             onClick={() => router.push(`/plataforma/wiki/docs/${page_key}?tab=versions`)}
                         >
                             <History size={18} />
@@ -167,7 +167,7 @@ export default function WikiDocEditPage() {
                     <button
                         title="Copiar enlace"
                         aria-label="Copiar enlace del documento"
-                        className="p-2 hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5 rounded-md text-[hsl(var(--text-secondary))]"
+                        className="p-2 hover:bg-[hsl(var(--surface-2))] rounded-md text-[hsl(var(--text-secondary))]"
                         onClick={() => navigator.clipboard.writeText(window.location.href).catch(() => {})}
                     >
                         <Share2 size={18} />
@@ -175,7 +175,7 @@ export default function WikiDocEditPage() {
                     <button
                         title="Exportar HTML"
                         aria-label="Exportar como HTML"
-                        className="p-2 hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5 rounded-md text-[hsl(var(--text-secondary))]"
+                        className="p-2 hover:bg-[hsl(var(--surface-2))] rounded-md text-[hsl(var(--text-secondary))]"
                         onClick={handleExportHtml}
                     >
                         <Download size={18} />
@@ -184,7 +184,7 @@ export default function WikiDocEditPage() {
                         <button
                             title="Cambiar a vista lectura"
                             aria-label="Vista lectura"
-                            className="p-2 hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5 rounded-md text-[hsl(var(--text-secondary))]"
+                            className="p-2 hover:bg-[hsl(var(--surface-2))] rounded-md text-[hsl(var(--text-secondary))]"
                             onClick={() => router.push(`/plataforma/wiki/docs/${page_key}?view=read`)}
                         >
                             <Eye size={18} />
@@ -194,7 +194,7 @@ export default function WikiDocEditPage() {
                         <button
                             title="Editar documento"
                             aria-label="Editar documento"
-                            className="p-2 hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5 rounded-md text-[hsl(var(--text-secondary))]"
+                            className="p-2 hover:bg-[hsl(var(--surface-2))] rounded-md text-[hsl(var(--text-secondary))]"
                             onClick={() => router.push(`/plataforma/wiki/docs/${page_key}`)}
                         >
                             <BookOpen size={18} />
@@ -207,7 +207,7 @@ export default function WikiDocEditPage() {
                 {isReadonly ? (
                     <div className="max-w-4xl mx-auto py-8 px-6">
                         <div
-                            className="prose prose-slate dark:prose-invert max-w-none"
+                            className="prose max-w-none text-[hsl(var(--text-primary))]"
                             dangerouslySetInnerHTML={{ __html: sanitize(doc.content || '') }}
                         />
                     </div>

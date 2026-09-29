@@ -187,7 +187,7 @@ export default function UserDetailPage() {
                                 disabled={isSubmitting}
                                 className={`px-3 py-2.5 rounded-md text-2xs font-semibold uppercase tracking-wide transition-all shadow-sm border ${
                                     user.is_active
-                                    ? 'bg-[hsl(var(--bg-primary))] dark:bg-white/5 border-[hsl(var(--danger)/25%)] dark:border-[hsl(var(--destructive))/0.3] text-[hsl(var(--destructive))] hover:bg-[hsl(var(--destructive)/0.08)]'
+                                    ? 'bg-[hsl(var(--bg-primary))] border-[hsl(var(--danger)/25%)] text-[hsl(var(--destructive))] hover:bg-[hsl(var(--destructive)/0.08)]'
                                     : 'bg-[hsl(var(--success-muted))] border-[hsl(var(--success)/0.3)] text-[hsl(var(--success))] hover:bg-[hsl(var(--success))/0.15]'
                                 }`}
                             >
@@ -203,20 +203,20 @@ export default function UserDetailPage() {
                     {/* Left Column - Main Info */}
                     <div className="lg:col-span-8 space-y-3">
                         {/* Profile Header */}
-                        <div className="p-4 bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))] rounded-lg border border-[hsl(var(--border))] dark:border-white/5 shadow-xl shadow-black/10/20 dark:shadow-none flex flex-col md:flex-row items-center gap-3 relative overflow-hidden">
+                        <div className="p-4 bg-[hsl(var(--bg-primary))] rounded-lg border border-[hsl(var(--border))] shadow-lg flex flex-col md:flex-row items-center gap-3 relative overflow-hidden">
                             <div className="absolute top-0 right-0 w-64 h-48 bg-gradient-to-bl to-[hsl(var(--info)/10%)] to-transparent pointer-events-none rounded-bl-full" />
 
-                            <div className="size-10 rounded-full bg-[hsl(var(--surface-1))] dark:bg-black/20 flex items-center justify-center border-4 border-white dark:border-[hsl(var(--bg-primary))] shadow-xl relative z-10">
+                            <div className="size-10 rounded-full bg-[hsl(var(--surface-1))] flex items-center justify-center border-4 border-[hsl(var(--border))] shadow-xl relative z-10">
                                 <User size={48} className="text-[hsl(var(--text-secondary))]" strokeWidth={1.5} />
-                                {user.is_active && <div className="absolute bottom-2 right-2 size-4 bg-[hsl(var(--success))] border-2 border-white dark:border-[hsl(var(--bg-primary))] rounded-full" />}
+                                {user.is_active && <div className="absolute bottom-2 right-2 size-4 bg-[hsl(var(--success))] border-2 border-[hsl(var(--surface-1))] rounded-full" />}
                             </div>
 
                             <div className="space-y-3 text-center md:text-left relative z-10 flex-1">
-                                <h1 className="text-lg font-bold text-[hsl(var(--text-primary))] dark:text-white tracking-tight">{user.username}</h1>
+                                <h1 className="text-lg font-bold text-[hsl(var(--text-primary))] tracking-tight">{user.username}</h1>
                                 <div className="flex flex-wrap items-center justify-center md:justify-start gap-3">
                                     <DSBadge tone="blue" label={user.role.toUpperCase()} />
                                     <DSBadge tone={user.is_active ? 'emerald' : 'amber'} label={user.is_active ? 'ACTIVO' : 'SUSPENDIDO'} />
-                                    <span className="text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide bg-[hsl(var(--surface-1))] dark:bg-white/5 px-3 py-1 rounded-full">
+                                    <span className="text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide bg-[hsl(var(--surface-1))] px-3 py-1 rounded-full">
                                         ID: {user.id}
                                     </span>
                                 </div>
@@ -229,16 +229,16 @@ export default function UserDetailPage() {
                                 <Shield size={14} className="text-[hsl(var(--primary))]"/> Detalles de la Cuenta
                             </h3>
                             <div className="space-y-4">
-                                <div className="flex flex-col sm:flex-row sm:items-center justify-between p-3 rounded-lg bg-[hsl(var(--surface-1))] dark:bg-black/20 border border-[hsl(var(--border))] dark:border-white/5 gap-4">
+                                <div className="flex flex-col sm:flex-row sm:items-center justify-between p-3 rounded-lg bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] gap-4">
                                     <div className="flex items-center gap-4">
-                                        <div className="size-10 rounded-md bg-[hsl(var(--info-muted))] dark:bg-[hsl(var(--info))]/20 text-[hsl(var(--primary))] flex items-center justify-center"><Shield size={18} /></div>
+                                        <div className="size-10 rounded-md bg-[hsl(var(--info-muted))] text-[hsl(var(--primary))] flex items-center justify-center"><Shield size={18} /></div>
                                         <div>
                                             <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-1">Rol Asignado (Permisos Granulares)</p>
                                             {isEditingRole ? (
                                                 <select
                                                     value={editRoleId || ''}
                                                     onChange={e => setEditRoleId(e.target.value || null)}
-                                                    className="bg-[hsl(var(--bg-primary))] border border-[hsl(var(--info)/100%)]/50 rounded-lg px-3 py-1.5 text-sm font-bold text-[hsl(var(--text-primary))] dark:text-white focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.2] min-w-[200px]"
+                                                    className="bg-[hsl(var(--bg-primary))] border border-[hsl(var(--info)/100%)]/50 rounded-lg px-3 py-1.5 text-sm font-bold text-[hsl(var(--text-primary))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.2] min-w-[200px]"
                                                 >
                                                     <option value="">Sin rol asignado</option>
                                                     {roles.map(r => (
@@ -246,7 +246,7 @@ export default function UserDetailPage() {
                                                     ))}
                                                 </select>
                                             ) : (
-                                                <span className="text-sm font-bold text-[hsl(var(--text-primary))] dark:text-white">
+                                                <span className="text-sm font-bold text-[hsl(var(--text-primary))]">
                                                     {user.rol_plataforma_id ? roles.find(r => r.id === user.rol_plataforma_id)?.name : (user.role_name || user.role || 'Sin rol')}
                                                 </span>
                                             )}
@@ -254,18 +254,18 @@ export default function UserDetailPage() {
                                     </div>
                                     {isEditingRole ? (
                                         <div className="flex items-center gap-2">
-                                            <button onClick={() => setIsEditingRole(false)} className="p-2 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-secondary))] transition-colors bg-[hsl(var(--bg-primary))] dark:bg-white/5 rounded-lg shadow-sm"><X size={16}/></button>
-                                            <button onClick={saveRole} disabled={isSubmitting} className="p-2 text-white bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))] transition-colors rounded-lg shadow-md"><Check size={16}/></button>
+                                            <button onClick={() => setIsEditingRole(false)} className="p-2 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-secondary))] transition-colors bg-[hsl(var(--bg-primary))] rounded-lg shadow-sm"><X size={16}/></button>
+                                            <button onClick={saveRole} disabled={isSubmitting} className="p-2 text-[hsl(var(--primary-foreground))] bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))] transition-colors rounded-lg shadow-md"><Check size={16}/></button>
                                         </div>
                                     ) : (
-                                        <button onClick={() => setIsEditingRole(true)} className="px-4 py-2 bg-[hsl(var(--bg-primary))] dark:bg-white/5 text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] rounded-md text-2xs font-semibold uppercase tracking-wide hover:bg-info-soft hover:text-[hsl(var(--primary))] transition-colors shadow-sm">
+                                        <button onClick={() => setIsEditingRole(true)} className="px-4 py-2 bg-[hsl(var(--bg-primary))] text-[hsl(var(--text-secondary))] rounded-md text-2xs font-semibold uppercase tracking-wide hover:bg-info-soft hover:text-[hsl(var(--primary))] transition-colors shadow-sm">
                                             Cambiar Rol
                                         </button>
                                     )}
                                 </div>
-                                <div className="flex flex-col sm:flex-row sm:items-center justify-between p-3 rounded-lg bg-[hsl(var(--surface-1))] dark:bg-black/20 border border-[hsl(var(--border))] dark:border-white/5 gap-4">
+                                <div className="flex flex-col sm:flex-row sm:items-center justify-between p-3 rounded-lg bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] gap-4">
                                     <div className="flex items-center gap-4">
-                                        <div className="size-10 rounded-md bg-[hsl(var(--info-muted))] dark:bg-[hsl(var(--info))]/20 text-[hsl(var(--primary))] flex items-center justify-center"><Mail size={18} /></div>
+                                        <div className="size-10 rounded-md bg-[hsl(var(--info-muted))] text-[hsl(var(--primary))] flex items-center justify-center"><Mail size={18} /></div>
                                         <div>
                                             <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-1">Correo Electrónico</p>
                                             {isEditingEmail ? (
@@ -273,21 +273,21 @@ export default function UserDetailPage() {
                                                     type="email"
                                                     value={editEmail}
                                                     onChange={e => setEditEmail(e.target.value)}
-                                                    className="bg-[hsl(var(--bg-primary))] border border-[hsl(var(--info)/100%)]/50 rounded-lg px-3 py-1.5 text-sm font-bold text-[hsl(var(--text-primary))] dark:text-white focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.2]"
+                                                    className="bg-[hsl(var(--bg-primary))] border border-[hsl(var(--info)/100%)]/50 rounded-lg px-3 py-1.5 text-sm font-bold text-[hsl(var(--text-primary))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.2]"
                                                     autoFocus
                                                 />
                                             ) : (
-                                                <span className="text-sm font-bold text-[hsl(var(--text-primary))] dark:text-white">{user.email || 'No asignado'}</span>
+                                                <span className="text-sm font-bold text-[hsl(var(--text-primary))]">{user.email || 'No asignado'}</span>
                                             )}
                                         </div>
                                     </div>
                                     {isEditingEmail ? (
                                         <div className="flex items-center gap-2">
-                                            <button onClick={() => setIsEditingEmail(false)} className="p-2 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-secondary))] transition-colors bg-[hsl(var(--bg-primary))] dark:bg-white/5 rounded-lg shadow-sm"><X size={16}/></button>
-                                            <button onClick={saveEmail} disabled={isSubmitting} className="p-2 text-white bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))] transition-colors rounded-lg shadow-md"><Check size={16}/></button>
+                                            <button onClick={() => setIsEditingEmail(false)} className="p-2 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-secondary))] transition-colors bg-[hsl(var(--bg-primary))] rounded-lg shadow-sm"><X size={16}/></button>
+                                            <button onClick={saveEmail} disabled={isSubmitting} className="p-2 text-[hsl(var(--primary-foreground))] bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))] transition-colors rounded-lg shadow-md"><Check size={16}/></button>
                                         </div>
                                     ) : (
-                                        <button onClick={() => setIsEditingEmail(true)} className="px-4 py-2 bg-[hsl(var(--bg-primary))] dark:bg-white/5 text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] rounded-md text-2xs font-semibold uppercase tracking-wide hover:bg-info-soft hover:text-[hsl(var(--primary))] transition-colors shadow-sm">
+                                        <button onClick={() => setIsEditingEmail(true)} className="px-4 py-2 bg-[hsl(var(--bg-primary))] text-[hsl(var(--text-secondary))] rounded-md text-2xs font-semibold uppercase tracking-wide hover:bg-info-soft hover:text-[hsl(var(--primary))] transition-colors shadow-sm">
                                             Cambiar Email
                                         </button>
                                     )}
@@ -304,7 +304,7 @@ export default function UserDetailPage() {
                             </h3>
                             <button
                                 onClick={() => setPasswordModalOpen(true)}
-                                className="w-full py-1.5 bg-[hsl(var(--bg-muted))] dark:bg-[hsl(var(--bg-primary))] text-white dark:text-[hsl(var(--text-primary))] rounded-lg text-xs font-semibold uppercase tracking-wide shadow-xl hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-2"
+                                className="w-full py-1.5 bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] rounded-lg text-xs font-semibold uppercase tracking-wide shadow-xl hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-2"
                             >
                                 <Lock size={16} /> Resetear Password
                             </button>
@@ -313,11 +313,11 @@ export default function UserDetailPage() {
                             </p>
                         </DSCard>
 
-                        <div className="p-4 rounded-lg border-2 border-dashed border-[hsl(var(--border))] dark:border-white/10 flex flex-col items-center justify-center text-center gap-4">
+                        <div className="p-4 rounded-lg border-2 border-dashed border-[hsl(var(--border))] flex flex-col items-center justify-center text-center gap-4">
                             <Clock size={24} className="text-[hsl(var(--text-secondary))]" />
                             <div>
                                 <p className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Actividad Reciente</p>
-                                <p className="text-sm font-bold text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] mt-1">
+                                <p className="text-sm font-bold text-[hsl(var(--text-secondary))] mt-1">
                                     No hay registros recientes para este perfil.
                                 </p>
                             </div>
@@ -341,7 +341,7 @@ export default function UserDetailPage() {
                             type="button"
                             onClick={handlePasswordReset}
                             disabled={isSubmitting || newPassword.length < 6}
-                            className="flex items-center gap-2 px-4 py-2 bg-[hsl(var(--warning))] text-white rounded-lg text-xs font-semibold uppercase tracking-wide shadow-lg shadow-[hsl(var(--warning))/0.2] hover:bg-[hsl(var(--warning))/0.85] active:scale-95 transition-all disabled:opacity-50"
+                            className="flex items-center gap-2 px-4 py-2 bg-[hsl(var(--warning))] text-[hsl(var(--primary-foreground))] rounded-lg text-xs font-semibold uppercase tracking-wide shadow-lg shadow-[hsl(var(--warning))/0.2] hover:bg-[hsl(var(--warning))/0.85] active:scale-95 transition-all disabled:opacity-50"
                         >
                             <Lock size={16} /> {isSubmitting ? 'Procesando...' : 'Confirmar Cambio'}
                         </button>
@@ -356,7 +356,7 @@ export default function UserDetailPage() {
                             value={newPassword}
                             onChange={e => setNewPassword(e.target.value)}
                             placeholder="Min. 6 caracteres..."
-                            className="w-full bg-[hsl(var(--surface-1))] dark:bg-black/20 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg px-3 py-1.5 text-sm font-bold text-[hsl(var(--text-primary))] dark:text-white focus:outline-none focus:ring-2 focus:ring-[hsl(var(--warning))/0.5]"
+                            className="w-full bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] rounded-lg px-3 py-1.5 text-sm font-bold text-[hsl(var(--text-primary))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--warning))/0.5]"
                             autoFocus
                         />
                     </div>

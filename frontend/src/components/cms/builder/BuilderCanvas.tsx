@@ -111,9 +111,9 @@ function SortableSectionWrapper({
       <div
         ref={setNodeRef}
         style={style}
-        className="opacity-40 border-dashed border-2 border-primary-500 bg-primary-50/50 dark:bg-primary-950/20 rounded-lg min-h-[100px] p-4 flex items-center justify-center transition-all"
+        className="opacity-40 border-dashed border-2 border-[hsl(var(--primary))] bg-[hsl(var(--primary)/10%)] rounded-lg min-h-[100px] p-4 flex items-center justify-center transition-all"
       >
-        <span className="text-2xs font-semibold uppercase tracking-wide text-primary-500 font-mono">
+        <span className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--primary))] font-mono">
           Moviendo {section.type}...
         </span>
       </div>
@@ -129,20 +129,20 @@ function SortableSectionWrapper({
       onClick={() => setActiveSectionId(section.id)}
       className={`relative rounded-md border p-3 transition-all cursor-pointer ${
         section.status === "archived"
-          ? "opacity-70 border-[hsl(var(--warning)/25%)] bg-warning-soft/40 dark:bg-[hsl(var(--warning))]/5"
+          ? "opacity-70 border-[hsl(var(--warning)/25%)] bg-[hsl(var(--warning)/10%)]"
           : section.id === activeSectionId
-          ? "border-primary ring-2 ring-primary/40 bg-primary/5"
+          ? "border-[hsl(var(--primary))] ring-2 ring-[hsl(var(--primary)/40%)] bg-[hsl(var(--primary)/5%)]"
           : hoveredSectionId === section.id && canvasMode !== "esquema"
-          ? "border-primary ring-2 ring-primary border-2"
-          : "border-[hsl(var(--border))] dark:border-white/10"
+          ? "border-[hsl(var(--primary))] ring-2 ring-[hsl(var(--primary))] border-2"
+          : "border-[hsl(var(--border))]"
       }`}
     >
       {/* Hover Overlay & Section Controls */}
       {hoveredSectionId === section.id && (
-        <div className="absolute inset-0 border-2 border-primary rounded-md pointer-events-none z-20">
+        <div className="absolute inset-0 border-2 border-[hsl(var(--primary))] rounded-md pointer-events-none z-20">
           <div
             onPointerDown={(e) => e.stopPropagation()}
-            className="absolute -top-3.5 right-3 z-30 flex items-center gap-1 rounded-md border border-primary bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-tertiary))] px-2.5 py-1 shadow-md text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-primary))] dark:text-white pointer-events-auto"
+            className="absolute -top-3.5 right-3 z-30 flex items-center gap-1 rounded-md border border-[hsl(var(--primary))] bg-[hsl(var(--surface-1))] px-2.5 py-1 shadow-md text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--foreground))] pointer-events-auto"
           >
             {canEdit && (
               <>
@@ -150,13 +150,13 @@ function SortableSectionWrapper({
                   type="button"
                   {...listeners}
                   {...attributes}
-                  className="inline-flex items-center p-0.5 cursor-grab active:cursor-grabbing text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+                  className="inline-flex items-center p-0.5 cursor-grab active:cursor-grabbing text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))]"
                   title="Arrastrar sección"
                   aria-label="Arrastrar sección"
                 >
-                  <GripVertical size={16} className="cursor-grab active:cursor-grabbing text-gray-400" />
+                  <GripVertical size={16} className="cursor-grab active:cursor-grabbing text-[hsl(var(--muted-foreground))]" />
                 </button>
-                <span className="text-[hsl(var(--border))] dark:text-white/20">|</span>
+                <span className="text-[hsl(var(--border))]">|</span>
               </>
             )}
             <button
@@ -167,12 +167,12 @@ function SortableSectionWrapper({
                 await builder.moveSection(section.id, "up");
               }}
               disabled={!canEdit || index === 0}
-              className="inline-flex items-center gap-1 hover:text-primary disabled:opacity-40 transition-colors"
+              className="inline-flex items-center gap-1 hover:text-[hsl(var(--primary))] disabled:opacity-40 transition-colors"
               title="Mover arriba"
             >
               <ArrowUp size={11} /> ⬆ Mover arriba
             </button>
-            <span className="text-[hsl(var(--border))] dark:text-white/20">|</span>
+            <span className="text-[hsl(var(--border))]">|</span>
             <button
               type="button"
               onPointerDown={(e) => e.stopPropagation()}
@@ -181,12 +181,12 @@ function SortableSectionWrapper({
                 await builder.moveSection(section.id, "down");
               }}
               disabled={!canEdit || index === totalSections - 1}
-              className="inline-flex items-center gap-1 hover:text-primary disabled:opacity-40 transition-colors"
+              className="inline-flex items-center gap-1 hover:text-[hsl(var(--primary))] disabled:opacity-40 transition-colors"
               title="Mover abajo"
             >
               <ArrowDown size={11} /> ⬇ Mover abajo
             </button>
-            <span className="text-[hsl(var(--border))] dark:text-white/20">|</span>
+            <span className="text-[hsl(var(--border))]">|</span>
             <button
               type="button"
               onPointerDown={(e) => e.stopPropagation()}
@@ -197,12 +197,12 @@ function SortableSectionWrapper({
                 }
               }}
               disabled={!canEdit}
-              className="inline-flex items-center gap-1 hover:text-primary disabled:opacity-40 transition-colors"
+              className="inline-flex items-center gap-1 hover:text-[hsl(var(--primary))] disabled:opacity-40 transition-colors"
               title="Duplicar"
             >
               <Copy size={11} /> ⧉ Duplicar
             </button>
-            <span className="text-[hsl(var(--border))] dark:text-white/20">|</span>
+            <span className="text-[hsl(var(--border))]">|</span>
             <button
               type="button"
               onPointerDown={(e) => e.stopPropagation()}
@@ -217,7 +217,7 @@ function SortableSectionWrapper({
                 }
               }}
               disabled={!canEdit}
-              className="inline-flex items-center gap-1 hover:text-red-500 text-red-500/90 disabled:opacity-40 transition-colors"
+              className="inline-flex items-center gap-1 hover:text-[hsl(var(--destructive))] text-[hsl(var(--destructive))]/90 disabled:opacity-40 transition-colors"
               title="Eliminar"
             >
               <Trash2 size={11} /> ✕ Eliminar
@@ -234,11 +234,11 @@ function SortableSectionWrapper({
               type="button"
               {...attributes}
               {...listeners}
-              className="p-1 rounded hover:bg-black/5 dark:hover:bg-white/10 text-muted-foreground hover:text-foreground transition-colors touch-none shrink-0 cursor-grab active:cursor-grabbing text-gray-400"
+              className="p-1 rounded hover:bg-[hsl(var(--surface-2))] text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] transition-colors touch-none shrink-0 cursor-grab active:cursor-grabbing"
               aria-label="Arrastrar para reordenar sección"
               title="Arrastrar para reordenar"
             >
-              <GripVertical size={16} className="cursor-grab active:cursor-grabbing text-gray-400" />
+              <GripVertical size={16} className="cursor-grab active:cursor-grabbing text-[hsl(var(--muted-foreground))]" />
             </button>
           )}
           <button
@@ -247,10 +247,10 @@ function SortableSectionWrapper({
             onClick={() => setActiveSectionId(section.id)}
             className="text-left"
           >
-            <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
+            <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--muted-foreground))]">
               {section.type} {section.status === "archived" ? "· archivada" : ""}
             </p>
-            <p className="text-sm font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">
+            <p className="text-sm font-bold text-[hsl(var(--foreground))]">
               {safeString(section.props_json?.title) || "Sección"}
             </p>
           </button>
@@ -265,7 +265,7 @@ function SortableSectionWrapper({
               builder.moveSection(section.id, "up");
             }}
             disabled={!canEdit || index === 0}
-            className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 p-1.5 disabled:opacity-50 hover:bg-black/5 dark:hover:bg-white/10 transition-colors"
+            className="rounded-lg border border-[hsl(var(--border))] p-1.5 disabled:opacity-50 hover:bg-[hsl(var(--surface-2))] transition-colors text-[hsl(var(--foreground))]"
             aria-label="Subir sección"
             title="Subir sección"
           >
@@ -279,7 +279,7 @@ function SortableSectionWrapper({
               builder.moveSection(section.id, "down");
             }}
             disabled={!canEdit || index === totalSections - 1}
-            className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 p-1.5 disabled:opacity-50 hover:bg-black/5 dark:hover:bg-white/10 transition-colors"
+            className="rounded-lg border border-[hsl(var(--border))] p-1.5 disabled:opacity-50 hover:bg-[hsl(var(--surface-2))] transition-colors text-[hsl(var(--foreground))]"
             aria-label="Bajar sección"
             title="Bajar sección"
           >
@@ -288,8 +288,8 @@ function SortableSectionWrapper({
         </div>
       </div>
 
-      {/* Content Preview / Render */}
-      <div className="relative mt-3">
+      {/* Main Section Content Preview */}
+      <div className="mt-3 relative">
         {canvasMode === "render" || canvasMode === "wysiwyg" ? (
           <SectionRenderPreview
             section={section}
@@ -308,9 +308,9 @@ function SortableSectionWrapper({
         {showHeatmap && (
           <div data-heatmap-type={heatmapType} className="absolute inset-0 pointer-events-none z-10 overflow-hidden rounded-lg">
             {heatmapType === "clicks" && (
-              <div className="absolute inset-0 bg-red-500/[0.02] backdrop-blur-[0.2px]">
+              <div className="absolute inset-0 bg-[hsl(var(--destructive))]/[0.02] backdrop-blur-[0.2px]">
                 <div className="absolute top-1/4 left-1/4 w-12 h-12 rounded-full bg-[radial-gradient(circle,rgba(239,68,68,0.75)_0%,rgba(245,158,11,0.4)_50%,rgba(0,0,0,0)_100%)] animate-pulse inline-flex items-center justify-center">
-                  <span className="text-2xs text-white font-bold opacity-60">72%</span>
+                  <span className="text-2xs text-[hsl(var(--primary-foreground))] font-bold opacity-80">72%</span>
                 </div>
                 <div className="absolute top-2/3 left-1/2 w-18 h-18 rounded-full bg-[radial-gradient(circle,rgba(239,68,68,0.65)_0%,rgba(16,185,129,0.3)_60%,rgba(0,0,0,0)_100%)]" style={{ animationDelay: "300ms" }} />
                 <div className="absolute top-1/3 left-2/3 w-14 h-14 rounded-full bg-[radial-gradient(circle,rgba(59,130,246,0.65)_0%,rgba(0,0,0,0)_80%)]" style={{ animationDelay: "600ms" }} />
@@ -318,11 +318,11 @@ function SortableSectionWrapper({
               </div>
             )}
             {heatmapType === "scroll" && (
-              <div className="absolute inset-0 flex flex-col justify-between text-2xs font-bold text-white/90">
+              <div className="absolute inset-0 flex flex-col justify-between text-2xs font-bold text-[hsl(var(--foreground))]/90">
                 <div className="w-full h-[25%] bg-gradient-to-b to-[hsl(var(--success)/20%)] to-transparent border-t border-[hsl(var(--success)/100%)]/40 p-1">100% de usuarios visualizan esta zona (Above the fold)</div>
-                <div className="w-full h-[25%] bg-gradient-to-b from-yellow-500/20 to-transparent border-t border-yellow-500/40 p-1">78% de usuarios se desplazan hasta aquí</div>
-                <div className="w-full h-[25%] bg-gradient-to-b from-orange-500/20 to-transparent border-t border-orange-500/40 p-1">45% de usuarios continúan leyendo</div>
-                <div className="w-full h-[25%] bg-gradient-to-b from-red-500/20 to-red-500/5 border-t border-red-500/40 p-1">22% de usuarios llegan al final</div>
+                <div className="w-full h-[25%] bg-gradient-to-b from-[hsl(var(--warning,var(--primary))/20%)] to-transparent border-t border-[hsl(var(--warning,var(--primary))/40%)] p-1">78% de usuarios se desplazan hasta aquí</div>
+                <div className="w-full h-[25%] bg-gradient-to-b from-[hsl(var(--warning,var(--primary))/30%)] to-transparent border-t border-[hsl(var(--warning,var(--primary))/50%)] p-1">45% de usuarios continúan leyendo</div>
+                <div className="w-full h-[25%] bg-gradient-to-b from-[hsl(var(--destructive)/20%)] to-[hsl(var(--destructive)/5%)] border-t border-[hsl(var(--destructive)/40%)] p-1">22% de usuarios llegan al final</div>
               </div>
             )}
             {heatmapType === "attention" && (
@@ -350,19 +350,19 @@ function ActiveDragOverlay({
   if (!activeDragSection) return null;
 
   return (
-    <div className="opacity-95 shadow-xl border-2 border-primary rounded-lg bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-tertiary))] p-3 flex items-center justify-between gap-3 cursor-grabbing">
+    <div className="opacity-95 shadow-xl border-2 border-[hsl(var(--primary))] rounded-lg bg-[hsl(var(--surface-1))] p-3 flex items-center justify-between gap-3 cursor-grabbing">
       <div className="flex items-center gap-2">
-        <GripVertical size={16} className="cursor-grab active:cursor-grabbing text-gray-400" />
+        <GripVertical size={16} className="cursor-grab active:cursor-grabbing text-[hsl(var(--muted-foreground))]" />
         <div>
-          <p className="text-2xs font-semibold uppercase tracking-wide text-primary">
+          <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--primary))]">
             {activeDragSection.type}
           </p>
-          <p className="text-sm font-bold text-[hsl(var(--text-primary))] dark:text-white truncate">
+          <p className="text-sm font-bold text-[hsl(var(--foreground))] truncate">
             {safeString(activeDragSection.props_json?.title) || "Sección"}
           </p>
         </div>
       </div>
-      <span className="text-2xs font-medium bg-primary/10 text-primary px-2 py-1 rounded font-mono">
+      <span className="text-2xs font-medium bg-[hsl(var(--primary)/10%)] text-[hsl(var(--primary))] px-2 py-1 rounded font-mono">
         Moviendo...
       </span>
     </div>
@@ -378,42 +378,46 @@ export default function BuilderCanvas({
 }) {
   const {
     sections,
+    activeSlug,
     activeSectionId,
     setActiveSectionId,
-    activeSlug,
-    canEdit,
-    siteKey,
-    canvasMode,
-    setCanvasMode,
-    previewDevice,
-    setPreviewDevice,
-    showHeatmap,
-    heatmapType,
-    moveSectionToIndex,
-    loadSectionsAndVersions,
     newSectionType,
     setNewSectionType,
     addSection,
+    canEdit,
+    previewDevice,
+    setPreviewDevice,
+    siteKey,
     token,
+    loadSectionsAndVersions,
     canvasTokens,
     canvasThemeName,
-    themeLoading,
     reloadTheme,
+    themeLoading,
+    showHeatmap,
+    heatmapType,
+    canvasMode,
+    setCanvasMode,
   } = builder;
 
   const [hoveredSectionId, setHoveredSectionId] = useState<string | null>(null);
-  const [showWysiwygBadge, setShowWysiwygBadge] = useState(true);
-  const [wysiwygBannerSeen, setWysiwygBannerSeen] = useState(false);
+  const [showWysiwygBadge, setShowWysiwygBadge] = useState<boolean>(true);
+  const [wysiwygBannerSeen, setWysiwygBannerSeen] = useState<boolean>(false);
 
-  const { token: authToken, user } = useAuth();
+  // Context Presence Integration
+  const auth = useAuth();
+  const currentUser = auth?.user ? {
+    id: auth.user.id || "anonymous",
+    name: auth.user.nombre || auth.user.email || "Usuario",
+  } : undefined;
+
   const { presenceUsers } = usePresence({
     siteKey,
-    slug: activeSlug,
-    token: token ?? authToken,
-    user,
+    slug: activeSlug || "unselected",
+    token: token || undefined,
+    user: currentUser,
   });
 
-  // Configure Sensors with Pointer activation constraint (5px) and Keyboard WCAG support
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
@@ -425,23 +429,23 @@ export default function BuilderCanvas({
     })
   );
 
-  async function handleDragEnd(event: DragEndEvent) {
+  const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
     if (over && active.id !== over.id) {
       const oldIndex = sections.findIndex((s) => s.id === active.id);
       const newIndex = sections.findIndex((s) => s.id === over.id);
       if (oldIndex !== -1 && newIndex !== -1) {
-        await moveSectionToIndex(active.id as string, newIndex);
+        await builder.moveSectionToIndex(active.id as string, over.id as string);
       }
     }
-  }
+  };
 
   return (
-    <section className="lg:col-span-6 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-tertiary))] p-4 space-y-4">
+    <section className="lg:col-span-6 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-4 space-y-4">
       {/* Top Canvas Header Bar */}
       <div className="flex items-center justify-between gap-2 flex-wrap">
         <div className="flex items-center gap-3 flex-wrap">
-          <h2 className="text-lg font-semibold">
+          <h2 className="text-lg font-semibold text-[hsl(var(--foreground))]">
             Canvas · {activeSlug ? `/${activeSlug}` : "Selecciona página"}
           </h2>
           {/* Presence Avatar Bar */}
@@ -451,22 +455,22 @@ export default function BuilderCanvas({
                 {presenceUsers.slice(0, 4).map((u) => (
                   <div
                     key={u.id}
-                    className="relative group flex items-center justify-center size-7 rounded-full text-white text-xs font-bold ring-2 ring-[hsl(var(--bg-primary))] dark:ring-[hsl(var(--admin-bg-tertiary))] cursor-pointer select-none"
-                    style={{ backgroundColor: u.color || "#3B82F6" }}
+                    className="relative group flex items-center justify-center size-7 rounded-full text-[hsl(var(--primary-foreground))] text-xs font-bold ring-2 ring-[hsl(var(--surface-1))] cursor-pointer select-none"
+                    style={{ backgroundColor: u.color || "hsl(var(--primary))" }}
                   >
                     {u.initials}
-                    <div className="absolute top-full mt-1 hidden group-hover:block z-50 whitespace-nowrap rounded bg-gray-900 text-white text-[10px] py-1 px-2 shadow-lg">
+                    <div className="absolute top-full mt-1 hidden group-hover:block z-50 whitespace-nowrap rounded bg-[hsl(var(--surface-1))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))] text-[10px] py-1 px-2 shadow-lg">
                       {u.name}
                     </div>
                   </div>
                 ))}
                 {presenceUsers.length > 4 && (
-                  <div className="flex items-center justify-center size-7 rounded-full bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 text-xs font-semibold ring-2 ring-[hsl(var(--bg-primary))] dark:ring-[hsl(var(--admin-bg-tertiary))] select-none">
+                  <div className="flex items-center justify-center size-7 rounded-full bg-[hsl(var(--surface-2))] text-[hsl(var(--foreground))] text-xs font-semibold ring-2 ring-[hsl(var(--surface-1))] select-none">
                     +{presenceUsers.length - 4} más
                   </div>
                 )}
               </div>
-              <span className="text-2xs text-[hsl(var(--text-secondary))] font-medium">
+              <span className="text-2xs text-[hsl(var(--muted-foreground))] font-medium">
                 {presenceUsers.length === 1
                   ? "1 persona editando ahora"
                   : `${presenceUsers.length} personas editando ahora`}
@@ -478,7 +482,7 @@ export default function BuilderCanvas({
 
           {/* Active theme badge + reload + palette hover */}
           <div
-            className="hidden sm:inline-flex relative group items-center gap-1.5 rounded-full border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-2))] dark:bg-white/5 px-2.5 py-1 text-2xs font-semibold text-[hsl(var(--text-secondary))] cursor-default"
+            className="hidden sm:inline-flex relative group items-center gap-1.5 rounded-full border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] px-2.5 py-1 text-2xs font-semibold text-[hsl(var(--muted-foreground))] cursor-default"
             title="Tema activo aplicado al canvas"
           >
             <Palette size={10} />
@@ -495,8 +499,8 @@ export default function BuilderCanvas({
             </button>
             {/* Palette tooltip */}
             <div role="tooltip" className="absolute top-full mt-1.5 right-0 hidden group-hover:block z-50 w-44">
-              <div className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-tertiary))] shadow-lg p-2 space-y-1">
-                <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] px-0.5">
+              <div className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] shadow-lg p-2 space-y-1">
+                <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--muted-foreground))] px-0.5">
                   Paleta del tema
                 </p>
                 {Object.entries(canvasTokens)
@@ -505,10 +509,10 @@ export default function BuilderCanvas({
                   .map(([key, value]) => (
                     <div key={key} className="flex items-center gap-2">
                       <div
-                        className="size-4 rounded-sm border border-[hsl(var(--border))] dark:border-white/10 shrink-0"
+                        className="size-4 rounded-sm border border-[hsl(var(--border))] shrink-0"
                         style={{ backgroundColor: value as string }}
                       />
-                      <span className="text-2xs font-mono text-[hsl(var(--text-secondary))] truncate">
+                      <span className="text-2xs font-mono text-[hsl(var(--muted-foreground))] truncate">
                         {key.replace("--site-", "")}
                       </span>
                     </div>
@@ -518,11 +522,11 @@ export default function BuilderCanvas({
           </div>
 
           {/* Canvas Mode Toggle */}
-          <div className="inline-flex rounded-lg border border-[hsl(var(--border))] dark:border-white/10 overflow-hidden">
+          <div className="inline-flex rounded-lg border border-[hsl(var(--border))] overflow-hidden">
             <button
               onClick={() => setCanvasMode("esquema")}
               className={`px-2 py-1.5 text-2xs font-semibold uppercase tracking-wide inline-flex items-center gap-1 ${
-                canvasMode === "esquema" ? "bg-primary text-white" : "bg-transparent"
+                canvasMode === "esquema" ? "bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))]" : "bg-transparent text-[hsl(var(--foreground))]"
               }`}
               title="Vista esquemática"
             >
@@ -531,7 +535,7 @@ export default function BuilderCanvas({
             <button
               onClick={() => setCanvasMode("render")}
               className={`px-2 py-1.5 text-2xs font-semibold uppercase tracking-wide inline-flex items-center gap-1 ${
-                canvasMode === "render" ? "bg-primary text-white" : "bg-transparent"
+                canvasMode === "render" ? "bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))]" : "bg-transparent text-[hsl(var(--foreground))]"
               }`}
               title="Vista render real"
             >
@@ -543,13 +547,13 @@ export default function BuilderCanvas({
                 setShowWysiwygBadge(false);
               }}
               className={`relative px-2 py-1.5 text-2xs font-semibold uppercase tracking-wide inline-flex items-center gap-1 ${
-                canvasMode === "wysiwyg" ? "bg-primary text-white" : "bg-transparent"
+                canvasMode === "wysiwyg" ? "bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))]" : "bg-transparent text-[hsl(var(--foreground))]"
               }`}
               title="Vista edición WYSIWYG"
             >
               <Pencil size={11} /> ✏ WYSIWYG
               {showWysiwygBadge && (
-                <span className="ml-1 rounded-full bg-emerald-500 text-white px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider">
+                <span className="ml-1 rounded-full bg-[hsl(var(--success,var(--primary)))] text-[hsl(var(--primary-foreground))] px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider">
                   Nuevo
                 </span>
               )}
@@ -557,11 +561,11 @@ export default function BuilderCanvas({
           </div>
 
           {/* Device Toggle */}
-          <div className="inline-flex rounded-lg border border-[hsl(var(--border))] dark:border-white/10 overflow-hidden">
+          <div className="inline-flex rounded-lg border border-[hsl(var(--border))] overflow-hidden">
             <button
               onClick={() => setPreviewDevice("desktop")}
               className={`px-2 py-1.5 text-2xs font-semibold uppercase tracking-wide inline-flex items-center gap-1 ${
-                previewDevice === "desktop" ? "bg-primary text-white" : "bg-transparent"
+                previewDevice === "desktop" ? "bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))]" : "bg-transparent text-[hsl(var(--foreground))]"
               }`}
             >
               <Monitor size={11} /> Desktop
@@ -569,7 +573,7 @@ export default function BuilderCanvas({
             <button
               onClick={() => setPreviewDevice("mobile")}
               className={`px-2 py-1.5 text-2xs font-semibold uppercase tracking-wide inline-flex items-center gap-1 ${
-                previewDevice === "mobile" ? "bg-primary text-white" : "bg-transparent"
+                previewDevice === "mobile" ? "bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))]" : "bg-transparent text-[hsl(var(--foreground))]"
               }`}
             >
               <Smartphone size={11} /> Mobile
@@ -580,10 +584,10 @@ export default function BuilderCanvas({
           <select
             value={newSectionType}
             onChange={(e) => setNewSectionType(e.target.value)}
-            className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-3 py-2 text-sm"
+            className="rounded-lg border border-[hsl(var(--border))] bg-transparent px-3 py-2 text-sm text-[hsl(var(--foreground))]"
           >
             {SECTION_TYPES.map((type) => (
-              <option key={type} value={type}>
+              <option key={type} value={type} className="bg-[hsl(var(--surface-1))] text-[hsl(var(--foreground))]">
                 {SECTION_TYPE_LABEL[type] ?? type}
               </option>
             ))}
@@ -591,7 +595,7 @@ export default function BuilderCanvas({
           <button
             onClick={() => addSection()}
             disabled={!activeSlug || !canEdit}
-            className="inline-flex items-center gap-2 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 px-3 py-2 text-2xs font-semibold uppercase tracking-wide disabled:opacity-50"
+            className="inline-flex items-center gap-2 rounded-lg border border-[hsl(var(--border))] px-3 py-2 text-2xs font-semibold uppercase tracking-wide disabled:opacity-50 text-[hsl(var(--foreground))]"
           >
             <Plus size={12} /> Añadir
           </button>
@@ -600,14 +604,14 @@ export default function BuilderCanvas({
 
       {/* Banner Notice */}
       {canvasMode === "wysiwyg" && !wysiwygBannerSeen && (
-        <div className="flex items-center justify-between rounded-md border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-xs text-emerald-700 dark:text-emerald-300">
+        <div className="flex items-center justify-between rounded-md border border-[hsl(var(--primary))/30%] bg-[hsl(var(--primary))/10%] px-3 py-2 text-xs text-[hsl(var(--primary))]">
           <span className="flex items-center gap-1.5 font-medium">
             ✏ Doble-click en una sección para editar el texto directamente
           </span>
           <button
             type="button"
             onClick={() => setWysiwygBannerSeen(true)}
-            className="text-emerald-700 dark:text-emerald-300 hover:opacity-75 p-0.5"
+            className="text-[hsl(var(--primary))] hover:opacity-75 p-0.5"
             title="Cerrar aviso"
           >
             <X size={14} />
@@ -665,7 +669,7 @@ export default function BuilderCanvas({
         </DndContext>
 
         {sections.length === 0 && (
-          <p className="text-sm text-[hsl(var(--text-secondary))]">
+          <p className="text-sm text-[hsl(var(--muted-foreground))]">
             No hay secciones en esta página.
           </p>
         )}

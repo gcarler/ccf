@@ -1,23 +1,26 @@
 "use client";
 
-import { useMemo, useRef } from 'react';
+import { useMemo, useRef, useState, useEffect } from 'react';
 import AgGridTable, { ColDef, type AgGridTableRef } from '@/components/ui/AgGridTable';
 import clsx from 'clsx';
-import type { ProjectTaskRecord } from '@/types/projects';
+import { Star } from 'lucide-react';
+import { useAuth } from '@/context/AuthContext';
+import { apiFetch } from '@/lib/http';
+import type { ProjectTaskRecord, ProjectUserFavorite } from '@/types/projects';
 import { getStatusOption, getPriorityOption } from '@/lib/projects/constants';
 
 const STATUS_CLS: Record<string, string> = {
-    completed:   'bg-success-soft border-[hsl(var(--success)/20%)] text-success-text',
-    in_progress: 'bg-info-soft border-[hsl(var(--info)/20%)] text-[hsl(var(--primary))]',
-    review:      'bg-warning-soft border-[hsl(var(--warning)/20%)] text-warning-text',
-    todo:        'bg-slate-50 border-slate-100 text-slate-600',
+    completed:   'bg-[hsl(var(--success)/0.1)] border-[hsl(var(--success)/0.2)] text-[hsl(var(--success))]',
+    in_progress: 'bg-[hsl(var(--info)/0.1)] border-[hsl(var(--info)/0.2)] text-[hsl(var(--info))]',
+    review:      'bg-[hsl(var(--warning)/0.1)] border-[hsl(var(--warning)/0.2)] text-[hsl(var(--warning))]',
+    todo:        'bg-[hsl(var(--surface-2))] border-[hsl(var(--border))] text-[hsl(var(--muted-foreground))]',
 };
 
 const PRIORITY_CLS: Record<string, string> = {
-    urgent: 'text-danger-text',
-    high:   'text-orange-500',
+    urgent: 'text-[hsl(var(--destructive))]',
+    high:   'text-[hsl(var(--warning))]',
     medium: 'text-[hsl(var(--primary))]',
-    low:    'text-[hsl(var(--text-secondary))]',
+    low:    'text-[hsl(var(--muted-foreground))]',
 };
 
 function TitleRenderer({ value, data }: { value: string; data: { id?: string; status?: string } }) {
@@ -25,10 +28,10 @@ function TitleRenderer({ value, data }: { value: string; data: { id?: string; st
     return (
         <div className="flex items-center gap-2.5">
             <div className={clsx('size-4 rounded-full border-2 flex items-center justify-center flex-shrink-0',
-                st ? 'bg-[hsl(var(--success))] border-[hsl(var(--success)/100%)] text-white' : 'border-[hsl(var(--border))] dark:border-white/20')}>
+                st ? 'bg-[hsl(var(--success))] border-[hsl(var(--success))] text-[hsl(var(--primary-foreground))]' : 'border-[hsl(var(--border))]')}>
                 {st && <span className="text-2xs font-bold">✓</span>}
             </div>
-            <span className="text-base font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] truncate">{value}</span>
+            <span className="text-base font-bold text-[hsl(var(--foreground))] truncate">{value}</span>
         </div>
     );
 }
@@ -44,10 +47,10 @@ function PriorityRenderer({ value }: { value: string }) {
 }
 
 function AssigneeRenderer({ value }: { value: string | null | undefined }) {
-    if (!value) return <span className="text-xs text-[hsl(var(--text-secondary))]">—</span>;
+    if (!value) return <span className="text-xs text-[hsl(var(--muted-foreground))]">—</span>;
     return (
         <span
-            className="text-xs font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]"
+            className="text-xs font-bold text-[hsl(var(--foreground))]"
             title={value}
         >
             {String(value).replace(/-/g, '').slice(0, 8)}
@@ -56,12 +59,35 @@ function AssigneeRenderer({ value }: { value: string | null | undefined }) {
 }
 
 function DateRenderer({ value }: { value: string }) {
-    if (!value) return <span className="text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] text-xs">—</span>;
-    return <span className="text-xs font-bold text-[hsl(var(--text-secondary))]">{new Date(value).toLocaleDateString('es-CO', { day: '2-digit', month: 'short', year: '2-digit' })}</span>;
+    if (!value) return <span className="text-[hsl(var(--muted-foreground))] text-xs">—</span>;
+    return <span className="text-xs font-bold text-[hsl(var(--muted-foreground))]">{new Date(value).toLocaleDateString('es-CO', { day: '2-digit', month: 'short', year: '2-digit' })}</span>;
 }
 
-export default function ProjectTableView({ tasks }: { tasks: ProjectTaskRecord[] }) {
+export default function ProjectTableView({ tasks, projectId }: { tasks: ProjectTaskRecord[]; projectId?: string }) {
     const gridRef = useRef<AgGridTableRef>(null);
+    const { token } = useAuth();
+    const [onlyFavorites, setOnlyFavorites] = useState(false);
+    const [favoriteTaskIds, setFavoriteTaskIds] = useState<Set<string>>(new Set());
+
+    const effectiveProjectId = projectId || tasks[0]?.project_id;
+
+    useEffect(() => {
+        let active = true;
+        if (!effectiveProjectId || !token) return;
+        apiFetch<(string | ProjectUserFavorite)[]>(`/projects/${effectiveProjectId}/favorites?entity_type=task`, { token })
+            .then(favs => {
+                if (active && Array.isArray(favs)) {
+                    setFavoriteTaskIds(new Set(favs.map(f => typeof f === 'string' ? f : f.entity_id)));
+                }
+            })
+            .catch(() => {});
+        return () => { active = false; };
+    }, [effectiveProjectId, token]);
+
+    const displayedTasks = useMemo(() => {
+        if (!onlyFavorites) return tasks;
+        return tasks.filter(t => favoriteTaskIds.has(t.id));
+    }, [tasks, onlyFavorites, favoriteTaskIds]);
 
     const colDefs = useMemo<ColDef[]>(() => [
         { field: 'title',    headerName: 'Tarea',        flex: 2, cellRenderer: TitleRenderer },
@@ -73,19 +99,52 @@ export default function ProjectTableView({ tasks }: { tasks: ProjectTaskRecord[]
 
     // Inline height is dynamic (based on row count) and cannot be expressed with
     // static Tailwind classes. It is intentionally kept as an inline style.
-    const height = Math.min(Math.max(tasks.length * 36 + 40, 200), 600);
+    const height = Math.min(Math.max(displayedTasks.length * 36 + 40, 200), 600);
 
     return (
-        <div className="min-w-0 rounded-lg overflow-hidden border border-[hsl(var(--border))] dark:border-white/10 shadow-sm" style={{ height }}>
-            <AgGridTable
-                ref={gridRef}
-                density="compact"
-                rowData={tasks}
-                columnDefs={colDefs}
-                defaultColDef={{ resizable: true, sortable: true, suppressMovable: false, minWidth: 96 }}
-                getRowId={(p) => String(p.data.id)}
-                suppressCellFocus
-            />
+        <div className="flex flex-col gap-2">
+            <div className="flex items-center justify-between px-3 py-1.5 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))]">
+                <button
+                    type="button"
+                    onClick={() => setOnlyFavorites(prev => !prev)}
+                    className={clsx(
+                        'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold transition-all border',
+                        onlyFavorites
+                            ? 'bg-[hsl(var(--warning)/0.15)] text-[hsl(var(--warning))] border-[hsl(var(--warning)/0.3)] shadow-xs'
+                            : 'text-[hsl(var(--muted-foreground))] border-[hsl(var(--border))] hover:bg-[hsl(var(--surface-2))] hover:text-[hsl(var(--foreground))]'
+                    )}
+                    title="Filtrar por tareas favoritas"
+                >
+                    <Star size={13} className={clsx(onlyFavorites ? 'fill-current text-[hsl(var(--warning))]' : '')} />
+                    <span>Solo Mis Favoritas</span>
+                    {favoriteTaskIds.size > 0 && (
+                        <span className={clsx(
+                            'px-1.5 py-0.2 rounded-full text-3xs font-bold',
+                            onlyFavorites
+                                ? 'bg-[hsl(var(--warning))] text-[hsl(var(--background))]'
+                                : 'bg-[hsl(var(--surface-3))] text-[hsl(var(--muted-foreground))]'
+                        )}>
+                            {favoriteTaskIds.size}
+                        </span>
+                    )}
+                </button>
+                <span className="text-2xs text-[hsl(var(--muted-foreground))]">
+                    {displayedTasks.length} de {tasks.length} tareas
+                </span>
+            </div>
+
+            <div className="min-w-0 rounded-lg overflow-hidden border border-[hsl(var(--border))] shadow-sm" style={{ height }}>
+                <AgGridTable
+                    ref={gridRef}
+                    density="compact"
+                    rowData={displayedTasks}
+                    columnDefs={colDefs}
+                    defaultColDef={{ resizable: true, sortable: true, suppressMovable: false, minWidth: 96 }}
+                    getRowId={(p) => String(p.data.id)}
+                    suppressCellFocus
+                />
+            </div>
         </div>
     );
 }
+

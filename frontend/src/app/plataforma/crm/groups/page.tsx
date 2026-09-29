@@ -26,7 +26,7 @@ import { toast } from 'sonner';
 import WorkspaceDrawer from '@/components/WorkspaceDrawer';
 import { Grupo } from '@/types/crm';
 
-const ZONE_COLORS = ['from-[hsl(var(--info))] to-[hsl(var(--info))]', 'from-[hsl(var(--info))] to-[hsl(var(--info))]', 'from-[hsl(var(--success))] to-[hsl(var(--domain-teal))]', 'from-orange-500 to-[hsl(var(--warning))]', 'from-[hsl(var(--danger))] to-[hsl(var(--domain-pink))]', 'from-[hsl(var(--info))] to-[hsl(var(--domain-cyan))]'];
+const ZONE_COLORS = ['from-[hsl(var(--info))] to-[hsl(var(--info))]', 'from-[hsl(var(--info))] to-[hsl(var(--info))]', 'from-[hsl(var(--success))] to-[hsl(var(--domain-teal))]', 'from-[hsl(var(--warning))] to-[hsl(var(--warning))]', 'from-[hsl(var(--danger))] to-[hsl(var(--domain-pink))]', 'from-[hsl(var(--info))] to-[hsl(var(--domain-cyan))]'];
 
 function getZoneColor(id: string) {
     const n = parseInt(String(id).replace(/-/g, '').slice(-4), 16) || 0;
@@ -224,23 +224,23 @@ export default function CrmGroupsPage() {
         >
             <main className="flex-1 overflow-y-auto scrollbar-thin">
                 {/* Header */}
-                <div className="px-3 py-4 border-b border-[hsl(var(--border))]/50 dark:border-white/5 mb-4">
-                    <h1 className="text-2xl font-bold text-[hsl(var(--text-primary))] dark:text-white tracking-tight">Grupos</h1>
+                <div className="px-3 py-4 border-b border-[hsl(var(--border))] mb-4">
+                    <h1 className="text-2xl font-bold text-[hsl(var(--foreground))] tracking-tight">Grupos</h1>
                 </div>
 
                 {groupsError && (
-                    <div className="mx-3 mb-3 rounded-lg border border-[hsl(var(--warning)/30%)]/60 bg-warning-soft dark:bg-[hsl(var(--warning))]/10 dark:border-[hsl(var(--warning)/100%)]/30 p-3 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                    <div className="mx-3 mb-3 rounded-lg border border-[hsl(var(--warning)/0.3)] bg-[hsl(var(--warning)/0.1)] p-3 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
                         <div className="min-w-0">
-                            <p className="text-xs font-bold uppercase tracking-wide text-warning-text dark:text-[hsl(var(--warning))]">
+                            <p className="text-xs font-bold uppercase tracking-wide text-[hsl(var(--warning))]">
                                 No se pudo cargar la lista de grupos
                             </p>
-                            <p className="text-sm text-warning-text/80 dark:text-[hsl(var(--warning)/80%)] mt-1 break-words">
+                            <p className="text-sm text-[hsl(var(--warning))] mt-1 break-words">
                                 {groupsError}
                             </p>
                         </div>
                         <button
                             onClick={loadGroups}
-                            className="shrink-0 px-3 py-2 rounded-lg bg-[hsl(var(--primary))] text-white text-2xs font-bold uppercase tracking-wide shadow-lg shadow-[hsl(var(--info)/20%)] hover:opacity-90 transition-all"
+                            className="shrink-0 px-3 py-2 rounded-lg bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] text-2xs font-bold uppercase tracking-wide shadow-sm hover:opacity-90 transition-all"
                         >
                             Reintentar
                         </button>
@@ -255,12 +255,12 @@ export default function CrmGroupsPage() {
                         { label: 'Grupos Activos', value: stats.active, icon: Activity, bg: 'bg-[hsl(var(--primary))]' },
                         { label: 'Ocup. Promedio', value: `${stats.avgCapacity}%`, icon: TrendingUp, bg: 'bg-[hsl(var(--warning))]' },
                     ].map(s => (
-                        <div key={s.label} className="bg-[hsl(var(--surface-1))] dark:bg-[#252528] rounded-lg border border-[hsl(var(--border))]/70 dark:border-white/5 p-3 shadow-sm hover:shadow-lg transition-all duration-300">
-                            <div className={`inline-flex size-8 rounded-md ${s.bg} items-center justify-center text-white mb-3 shadow-md`}>
+                        <div key={s.label} className="bg-[hsl(var(--surface-1))] rounded-lg border border-[hsl(var(--border))] p-3 shadow-sm hover:shadow-md transition-all duration-300">
+                            <div className={`inline-flex size-8 rounded-md ${s.bg} items-center justify-center text-[hsl(var(--primary-foreground))] mb-3 shadow-sm`}>
                                 <s.icon size={18} />
                             </div>
-                            <div className="text-xl font-bold text-[hsl(var(--text-primary))] dark:text-white">{loading ? '—' : s.value}</div>
-                            <p className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] mt-1">{s.label}</p>
+                            <div className="text-xl font-bold text-[hsl(var(--foreground))]">{loading ? '—' : s.value}</div>
+                            <p className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--muted-foreground))] mt-1">{s.label}</p>
                         </div>
                     ))}
                 </div>
@@ -268,12 +268,12 @@ export default function CrmGroupsPage() {
                 <div className="px-3 space-y-3 pb-12">
                     {/* Search */}
                     <div className="relative max-w-md">
-                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-[hsl(var(--text-secondary))]" size={16} />
+                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-[hsl(var(--muted-foreground))]" size={16} />
                         <input
                             value={query}
                             onChange={e => setQuery(e.target.value)}
                             placeholder="Buscar por nombre, zona o líder..."
-                            className="w-full bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg py-1.5 pl-11 pr-4 text-xs font-medium outline-none focus:ring-2 focus:ring-[hsl(var(--success)/30%)] focus:border-[hsl(var(--success)/40%)] transition-all placeholder:text-[hsl(var(--text-secondary))]"
+                            className="w-full bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] rounded-lg py-1.5 pl-11 pr-4 text-xs font-medium outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))] transition-all placeholder:text-[hsl(var(--muted-foreground))]"
                         />
                     </div>
 
@@ -281,18 +281,18 @@ export default function CrmGroupsPage() {
                     {/* Loading */}
                     {loading && (
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                            {[...Array(6)].map((_, i) => <div key={i} className="bg-[hsl(var(--surface-2))] dark:bg-white/5 rounded-lg animate-pulse h-52" />)}
+                            {[...Array(6)].map((_, i) => <div key={i} className="bg-[hsl(var(--surface-2))] rounded-lg animate-pulse h-52" />)}
                         </div>
                     )}
 
                     {/* Empty */}
                     {!loading && !groupsError && filtered.length === 0 && (
                         <div className="py-1.5 text-center">
-                            <div className="size-10 rounded-md bg-[hsl(var(--surface-2))] dark:bg-white/5 flex items-center justify-center mx-auto mb-3">
-                                <Home size={36} className="text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]" />
+                            <div className="size-10 rounded-md bg-[hsl(var(--surface-2))] flex items-center justify-center mx-auto mb-3">
+                                <Home size={36} className="text-[hsl(var(--muted-foreground))]" />
                             </div>
-                            <h3 className="text-sm font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide mb-2">Sin grupos registrados</h3>
-                            <p className="text-sm text-[hsl(var(--text-secondary))] font-medium mb-3">
+                            <h3 className="text-sm font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wide mb-2">Sin grupos registrados</h3>
+                            <p className="text-sm text-[hsl(var(--muted-foreground))] font-medium mb-3">
                                 {query ? `No se encontraron grupos con "${query}"` : 'Registra el primer grupo de la red.'}
                             </p>
 
@@ -312,51 +312,51 @@ export default function CrmGroupsPage() {
                                         animate={{ opacity: 1, y: 0 }}
                                         transition={{ delay: idx * 0.04 }}
                                         onClick={() => router.push(`/plataforma/crm/groups/${group.id}`)}
-                                        className="group bg-[hsl(var(--surface-1))] dark:bg-[#252528] rounded-lg border border-[hsl(var(--border))]/70 dark:border-white/5 overflow-hidden shadow-sm hover:shadow-xl hover:shadow-black/10/60 dark:hover:shadow-black/30 hover:-translate-y-1 transition-all duration-300 cursor-pointer"
+                                        className="group bg-[hsl(var(--surface-1))] rounded-lg border border-[hsl(var(--border))] overflow-hidden shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300 cursor-pointer"
                                     >
                                         {/* Card top accent */}
                                         <div className={`h-[3px] bg-gradient-to-r ${getZoneColor(group.id)}`} />
 
                                         <div className="p-4">
                                             <div className="flex items-start justify-between mb-4">
-                                                <div className={`size-9 rounded-lg bg-gradient-to-br ${getZoneColor(group.id)} flex items-center justify-center text-white shadow-lg`}>
+                                                <div className={`size-9 rounded-lg bg-gradient-to-br ${getZoneColor(group.id)} flex items-center justify-center text-[hsl(var(--primary-foreground))] shadow-sm`}>
                                                     <Home size={22} />
                                                 </div>
                                                 <div className="flex items-center gap-2">
-                                                    <span className={`px-2 py-0.5 rounded-full text-2xs font-bold uppercase tracking-wide ${isActive ? 'bg-[hsl(var(--success-muted))] dark:bg-[hsl(var(--success))]/20 text-success-text dark:text-[hsl(var(--success))]' : 'bg-[hsl(var(--surface-2))] dark:bg-white/5 text-[hsl(var(--text-secondary))]'}`}>
+                                                    <span className={`px-2 py-0.5 rounded-full text-2xs font-bold uppercase tracking-wide ${isActive ? 'bg-[hsl(var(--success)/0.15)] text-[hsl(var(--success))]' : 'bg-[hsl(var(--surface-2))] text-[hsl(var(--muted-foreground))]'}`}>
                                                         {isActive ? 'Activo' : group.status}
                                                     </span>
-                                                    <button onClick={e => { e.stopPropagation(); }} className="p-1.5 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-secondary))] dark:hover:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5 rounded-lg transition-colors" aria-label="Más opciones">
+                                                    <button onClick={e => { e.stopPropagation(); }} className="p-1.5 text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] hover:bg-[hsl(var(--surface-2))] rounded-lg transition-colors" aria-label="Más opciones">
                                                         <MoreHorizontal size={16} />
                                                     </button>
                                                 </div>
                                             </div>
 
-                                            <h3 className="text-sm font-bold text-[hsl(var(--text-primary))] dark:text-white mb-1 group-hover:text-success-text dark:group-hover:text-[hsl(var(--success))] transition-colors">
+                                            <h3 className="text-sm font-bold text-[hsl(var(--foreground))] mb-1 group-hover:text-[hsl(var(--primary))] transition-colors">
                                                 {group.name}
                                             </h3>
 
                                             <div className="space-y-1.5 mt-3 mb-4">
                                                 {group.address && (
-                                                    <div className="flex items-center gap-2 text-[hsl(var(--text-secondary))]">
+                                                    <div className="flex items-center gap-2 text-[hsl(var(--muted-foreground))]">
                                                         <MapPin size={11} className="shrink-0" />
                                                         <span className="text-xs font-medium truncate">{group.address}</span>
                                                     </div>
                                                 )}
                                                 {group.zone && (
-                                                    <div className="flex items-center gap-2 text-[hsl(var(--text-secondary))]">
+                                                    <div className="flex items-center gap-2 text-[hsl(var(--muted-foreground))]">
                                                         <Star size={11} className="shrink-0" />
                                                         <span className="text-xs font-medium">Zona: {group.zone}</span>
                                                     </div>
                                                 )}
                                                 {group.leader_name && (
-                                                    <div className="flex items-center gap-2 text-[hsl(var(--text-secondary))]">
+                                                    <div className="flex items-center gap-2 text-[hsl(var(--muted-foreground))]">
                                                         <Shield size={11} className="shrink-0" />
                                                         <span className="text-xs font-medium">Líder: {group.leader_name}</span>
                                                     </div>
                                                 )}
                                                 {group.schedule && (
-                                                    <div className="flex items-center gap-2 text-[hsl(var(--text-secondary))]">
+                                                    <div className="flex items-center gap-2 text-[hsl(var(--muted-foreground))]">
                                                         <Calendar size={11} className="shrink-0" />
                                                         <span className="text-xs font-medium">{group.schedule}</span>
                                                     </div>
@@ -366,12 +366,12 @@ export default function CrmGroupsPage() {
                                             {/* Occupancy bar */}
                                             <div className="space-y-1.5">
                                                 <div className="flex items-center justify-between">
-                                                    <span className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Ocupación</span>
-                                                    <span className="text-xs font-bold text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">
+                                                    <span className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--muted-foreground))]">Ocupación</span>
+                                                    <span className="text-xs font-bold text-[hsl(var(--muted-foreground))]">
                                                         {group.personas_count || 0}/{group.capacity || '—'}
                                                     </span>
                                                 </div>
-                                                <div className="h-1.5 bg-[hsl(var(--surface-2))] dark:bg-white/5 rounded-full overflow-hidden">
+                                                <div className="h-1.5 bg-[hsl(var(--surface-2))] rounded-full overflow-hidden">
                                                     <motion.div
                                                         initial={{ width: 0 }}
                                                         animate={{ width: `${Math.min(occupancy, 100)}%` }}
@@ -381,16 +381,16 @@ export default function CrmGroupsPage() {
                                                 </div>
                                             </div>
 
-                                            <div className="flex items-center justify-between mt-4 pt-4 border-t border-[hsl(var(--border))] dark:border-white/5">
-                                                <div className="flex items-center gap-1.5 text-[hsl(var(--text-secondary))]">
+                                            <div className="flex items-center justify-between mt-4 pt-4 border-t border-[hsl(var(--border))]">
+                                                <div className="flex items-center gap-1.5 text-[hsl(var(--muted-foreground))]">
                                                     <Users size={13} />
                                                     <span className="text-xs font-bold">{group.personas_count || 0} integrantes</span>
                                                 </div>
                                                 <div className="flex items-center gap-2">
-                                                    <button onClick={e => { e.stopPropagation(); setInviteGroup(group); }} className="p-2 text-[hsl(var(--text-secondary))] hover:text-success-text hover:bg-success-soft dark:hover:bg-[hsl(var(--success))]/20 rounded-md transition-colors" aria-label="Agregar">
+                                                    <button onClick={e => { e.stopPropagation(); setInviteGroup(group); }} className="p-2 text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--primary))] hover:bg-[hsl(var(--surface-2))] rounded-md transition-colors" aria-label="Agregar">
                                                         <UserPlus size={14} />
                                                     </button>
-                                                    <ChevronRight size={16} className="text-[hsl(var(--text-secondary))] group-hover:text-[hsl(var(--success))] group-hover:translate-x-1 transition-all" />
+                                                    <ChevronRight size={16} className="text-[hsl(var(--muted-foreground))] group-hover:text-[hsl(var(--primary))] group-hover:translate-x-1 transition-all" />
                                                 </div>
                                             </div>
                                         </div>
@@ -412,25 +412,25 @@ export default function CrmGroupsPage() {
             >
                 <div className="space-y-2">
                     <div className="relative">
-                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-[hsl(var(--text-secondary))]" size={16} />
+                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-[hsl(var(--muted-foreground))]" size={16} />
                         <input
                             value={personaQuery}
                             onChange={event => setPersonaQuery(event.target.value)}
                             placeholder="Buscar persona..."
-                            className="w-full rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] py-1.5 pl-11 pr-4 text-sm font-medium outline-none focus:ring-2 focus:ring-[hsl(var(--success)/20%)] dark:border-white/10 dark:bg-white/5 dark:text-white"
+                            className="w-full rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] py-1.5 pl-11 pr-4 text-sm font-medium outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] text-[hsl(var(--foreground))]"
                         />
                     </div>
                     <div className="space-y-2">
                         {filteredPersonas.map(persona => (
-                            <div key={persona.id} className="flex items-center justify-between rounded-lg border border-[hsl(var(--border))] p-4 dark:border-white/10">
+                            <div key={persona.id} className="flex items-center justify-between rounded-lg border border-[hsl(var(--border))] p-4">
                                 <div>
-                                    <p className="text-sm font-bold text-[hsl(var(--text-primary))] dark:text-white">{persona.nombre_completo || `${persona.first_name ?? ''} ${persona.last_name ?? ''}`.trim()}</p>
-                                    <p className="text-xs text-[hsl(var(--text-secondary))]">{persona.church_role || 'Persona'}</p>
+                                    <p className="text-sm font-bold text-[hsl(var(--foreground))]">{persona.nombre_completo || `${persona.first_name ?? ''} ${persona.last_name ?? ''}`.trim()}</p>
+                                    <p className="text-xs text-[hsl(var(--muted-foreground))]">{persona.church_role || 'Persona'}</p>
                                 </div>
                                 <button
                                     onClick={() => handleInvitePersona(persona.id)}
                                     disabled={assigningPersonaId === persona.id}
-                                    className="flex items-center gap-2 rounded-md bg-[hsl(var(--success))] px-4 py-2 text-2xs font-bold uppercase tracking-wide text-white disabled:opacity-60"
+                                    className="flex items-center gap-2 rounded-md bg-[hsl(var(--success))] px-4 py-2 text-2xs font-bold uppercase tracking-wide text-[hsl(var(--primary-foreground))] disabled:opacity-60"
                                 >
                                     {assigningPersonaId === persona.id ? <Loader2 size={12} className="animate-spin" /> : <UserPlus size={12} />}
                                     Agregar
@@ -438,25 +438,25 @@ export default function CrmGroupsPage() {
                             </div>
                         ))}
                         {personasError && (
-                            <div className="rounded-lg border border-[hsl(var(--warning)/30%)]/60 bg-warning-soft dark:bg-[hsl(var(--warning))]/10 dark:border-[hsl(var(--warning)/100%)]/30 p-3 text-left">
-                                <p className="text-xs font-bold uppercase tracking-wide text-warning-text dark:text-[hsl(var(--warning))]">
+                            <div className="rounded-lg border border-[hsl(var(--warning)/0.3)] bg-[hsl(var(--warning)/0.1)] p-3 text-left">
+                                <p className="text-xs font-bold uppercase tracking-wide text-[hsl(var(--warning))]">
                                     No se pudo cargar la lista de personas
                                 </p>
-                                <p className="text-sm text-warning-text/80 dark:text-[hsl(var(--warning)/80%)] mt-1 break-words">
+                                <p className="text-sm text-[hsl(var(--warning))] mt-1 break-words">
                                     {personasError}
                                 </p>
                                 <button
                                     onClick={() => {
                                         setInviteGroup(current => (current ? { ...current } : current));
                                     }}
-                                    className="mt-3 px-3 py-2 rounded-lg bg-[hsl(var(--primary))] text-white text-2xs font-bold uppercase tracking-wide shadow-lg shadow-[hsl(var(--info)/20%)] hover:opacity-90 transition-all"
+                                    className="mt-3 px-3 py-2 rounded-lg bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] text-2xs font-bold uppercase tracking-wide shadow-sm hover:opacity-90 transition-all"
                                 >
                                     Reintentar
                                 </button>
                             </div>
                         )}
                         {!personasError && filteredPersonas.length === 0 && (
-                            <div className="rounded-lg border border-dashed border-[hsl(var(--border))] p-4 text-center text-sm text-[hsl(var(--text-secondary))] dark:border-white/10">
+                            <div className="rounded-lg border border-dashed border-[hsl(var(--border))] p-4 text-center text-sm text-[hsl(var(--muted-foreground))]">
                                 No se encontraron personas.
                             </div>
                         )}

@@ -25,6 +25,7 @@ import {
     Search
 } from 'lucide-react';
 import WorkspaceToolbar from '@/components/WorkspaceToolbar';
+import SidePanel from '@/components/ui/SidePanel';
 import type { ViewType } from '@/components/ViewSwitcher';
 import UniversalCalendarView from '@/components/ui/UniversalCalendarView';
 import UniversalGanttView from '@/components/ui/UniversalGanttView';
@@ -150,18 +151,18 @@ export default function AnnouncementsAdmin() {
     const renderList = () => (
         <div className="space-y-4">
             {announcements.map((ann) => (
-                <div key={ann.id} className="bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/5 rounded-lg p-3 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                <div key={ann.id} className="bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] rounded-lg p-3 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                     <div>
                         <div className="flex items-center gap-2 mb-2">
                             <span className="text-[hsl(var(--primary))] text-2xs font-semibold uppercase tracking-wide">{ann.category}</span>
-                            {ann.featured && <span className="px-2 py-0.5 rounded-full bg-info-soft text-[hsl(var(--primary))] text-2xs font-semibold uppercase">Destacado</span>}
+                            {ann.featured && <span className="px-2 py-0.5 rounded-full bg-[hsl(var(--primary)/10%)] text-[hsl(var(--primary))] text-2xs font-semibold uppercase">Destacado</span>}
                             <span className={clsx(
                                 "px-2 py-0.5 rounded-full text-2xs font-semibold uppercase",
                                 ann.status === 'published' ? "bg-[hsl(var(--success-muted))] text-[hsl(var(--success))]" : ann.status === 'draft' ? "bg-[hsl(var(--warning-muted))] text-[hsl(var(--warning))]" : "bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))]"
                             )}>{STATUS_LABELS[ann.status]}</span>
                         </div>
-                        <h3 className="text-lg font-bold text-[hsl(var(--text-primary))] dark:text-white uppercase tracking-tight">{ann.title}</h3>
-                        <p className="mt-2 text-sm text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] line-clamp-2">{ann.content}</p>
+                        <h3 className="text-lg font-bold text-[hsl(var(--text-primary))] uppercase tracking-tight">{ann.title}</h3>
+                        <p className="mt-2 text-sm text-[hsl(var(--text-secondary))] line-clamp-2">{ann.content}</p>
                     </div>
                     <div className="self-start md:self-center flex items-center gap-2">
                         {ann.status !== 'published' && (
@@ -170,11 +171,11 @@ export default function AnnouncementsAdmin() {
                             </button>
                         )}
                         {ann.status !== 'archived' && (
-                            <button onClick={() => handleStatusChange(ann, 'archived')} className="p-3 bg-[hsl(var(--surface-1))] dark:bg-white/5 text-[hsl(var(--text-secondary))] hover:text-danger-text rounded-md transition-all" title="Archivar">
+                            <button onClick={() => handleStatusChange(ann, 'archived')} className="p-3 bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--destructive))] rounded-md transition-all" title="Archivar">
                                 <Archive size={16} />
                             </button>
                         )}
-                        <button className="p-3 bg-[hsl(var(--surface-1))] dark:bg-white/5 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] rounded-md transition-all"><Edit3 size={16} /></button>
+                        <button className="p-3 bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] rounded-md transition-all"><Edit3 size={16} /></button>
                     </div>
                 </div>
             ))}
@@ -182,9 +183,9 @@ export default function AnnouncementsAdmin() {
     );
 
     const renderTable = () => (
-        <div className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 overflow-x-auto bg-[hsl(var(--bg-primary))] dark:bg-white/5">
+        <div className="rounded-lg border border-[hsl(var(--border))] overflow-x-auto bg-[hsl(var(--surface-1))]">
             <table className="w-full min-w-[480px] text-left">
-                <thead className="bg-[hsl(var(--surface-1))] dark:bg-white/5">
+                <thead className="bg-[hsl(var(--surface-1))]">
                     <tr>
                         <th className="px-3 py-1.5 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Comunicado</th>
                         <th className="px-3 py-1.5 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hidden md:table-cell">Categoría</th>
@@ -192,10 +193,10 @@ export default function AnnouncementsAdmin() {
                         <th className="px-3 py-1.5 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Estado</th>
                     </tr>
                 </thead>
-                <tbody className="divide-y divide-[hsl(var(--border))] dark:divide-white/5">
+                <tbody className="divide-y divide-[hsl(var(--border))]">
                     {announcements.map((ann) => (
-                        <tr key={ann.id} className="hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/[0.03]">
-                            <td className="px-3 py-1.5 text-sm font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">{ann.title}</td>
+                        <tr key={ann.id} className="hover:bg-[hsl(var(--surface-2))]">
+                            <td className="px-3 py-1.5 text-sm font-bold text-[hsl(var(--text-primary))]">{ann.title}</td>
                             <td className="px-3 py-1.5 hidden md:table-cell text-xs text-[hsl(var(--text-secondary))]">{ann.category}</td>
                             <td className="px-3 py-1.5 hidden lg:table-cell text-xs text-[hsl(var(--text-secondary))]">{new Date(ann.date).toLocaleDateString('es-ES')}</td>
                             <td className="px-3 py-1.5">
@@ -216,15 +217,15 @@ export default function AnnouncementsAdmin() {
     const renderBoard = () => (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
             {groupedAnnouncements.map((group) => (
-                <section key={group.id} className="rounded-lg bg-[hsl(var(--surface-1))] dark:bg-white/[0.03] border border-[hsl(var(--border))] dark:border-white/10 p-3">
+                <section key={group.id} className="rounded-lg bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] p-3">
                     <div className="flex items-center justify-between mb-5">
                         <span className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{group.label}</span>
                         <span className="font-semibold text-[hsl(var(--text-secondary))]">{group.items.length}</span>
                     </div>
                     <div className="space-y-4">
                         {group.items.map((ann) => (
-                            <div key={ann.id} className="bg-[hsl(var(--bg-primary))] dark:bg-white/[0.05] border border-[hsl(var(--border))] dark:border-white/5 rounded-lg p-3">
-                                <p className="text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-white uppercase tracking-tight">{ann.title}</p>
+                            <div key={ann.id} className="bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] rounded-lg p-3">
+                                <p className="text-sm font-semibold text-[hsl(var(--text-primary))] uppercase tracking-tight">{ann.title}</p>
                                 <p className="mt-2 text-2xs font-bold text-[hsl(var(--primary))] uppercase tracking-wide">{ann.category} · {STATUS_LABELS[ann.status]}</p>
                                 <p className="mt-4 text-xs text-[hsl(var(--text-secondary))] line-clamp-3">{ann.content}</p>
                             </div>
@@ -266,7 +267,7 @@ export default function AnnouncementsAdmin() {
                 rightActions={
                     <button
                         onClick={() => router.push('/plataforma/cms/announcements/new')}
-                        className="flex items-center gap-3 px-4 py-3 bg-[hsl(var(--primary))] text-white rounded-lg text-xs font-semibold uppercase tracking-wide shadow-xl shadow-[hsl(var(--info)/20%)] active:scale-95 transition-all hover:bg-[hsl(var(--primary))]"
+                        className="flex items-center gap-3 px-4 py-3 bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] rounded-lg text-xs font-semibold uppercase tracking-wide shadow-xl shadow-[hsl(var(--info)/20%)] active:scale-95 transition-all hover:opacity-90"
                     >
                         <Plus size={18} /> Nuevo Comunicado
                     </button>
@@ -286,7 +287,7 @@ export default function AnnouncementsAdmin() {
                         >
                             <Sparkles size={12} className="animate-pulse" /> Difusión de Visión CCF
                         </motion.div>
-                        <h1 className="text-xl lg:text-xl font-bold text-[hsl(var(--text-primary))] dark:text-white tracking-tighter leading-none">
+                        <h1 className="text-xl lg:text-xl font-bold text-[hsl(var(--text-primary))] tracking-tighter leading-none">
                             El latido de la <br/> <span className="text-[hsl(var(--primary))] italic text-transparent bg-clip-text bg-gradient-to-r from-[hsl(var(--info))] to-[hsl(var(--info))]">Comunidad.</span>
                         </h1>
                     </header>
@@ -320,22 +321,22 @@ export default function AnnouncementsAdmin() {
                                 <motion.section
                                     initial={{ opacity: 0, scale: 0.98 }}
                                     animate={{ opacity: 1, scale: 1 }}
-                                    className="relative group overflow-hidden rounded-lg h-48 shadow-2xl border border-white/10"
+                                    className="relative group overflow-hidden rounded-lg h-48 shadow-2xl border border-[hsl(var(--border))]"
                                 >
                                     <div
-                                        className="absolute inset-0 bg-gradient-to-br from-[hsl(var(--admin-bg-tertiary))] via-[hsl(var(--surface-2))] to-[hsl(var(--admin-bg-deep))] dark:from-[hsl(var(--admin-bg-secondary))] dark:via-[hsl(var(--admin-bg-tertiary))] dark:to-black transition-transform duration-1000 group-hover:scale-105"
+                                        className="absolute inset-0 bg-gradient-to-br from-[hsl(var(--surface-1))] via-[hsl(var(--surface-2))] to-[hsl(var(--surface-3))] transition-transform duration-1000 group-hover:scale-105"
                                         style={{ backgroundImage: `linear-gradient(to top, rgba(10, 15, 22, 0.95) 0%, rgba(10, 15, 22, 0.4) 50%, transparent 100%), radial-gradient(circle at 80% 20%, hsl(var(--primary) / 0.18) 0%, transparent 60%)` }}
                                     />
-                                    <div className="absolute inset-0 bg-[hsl(var(--info))]/5 mix-blend-overlay" />
+                                    <div className="absolute inset-0 bg-[hsl(var(--primary)/5%)] mix-blend-overlay" />
 
                                     <div className="absolute bottom-0 left-0 right-0 p-4 lg:p-4 flex flex-col items-start gap-3 relative z-10">
                                         <div className="flex items-center gap-4">
-                                            <span className="px-3 py-2 bg-[hsl(var(--primary))] text-white text-2xs font-semibold uppercase tracking-wide rounded-full shadow-2xl shadow-[hsl(var(--info)/40%)]">Noticia Destacada</span>
-                                            <span className="px-3 py-2 bg-white/10 backdrop-blur-xl text-white text-2xs font-semibold uppercase tracking-wide rounded-full border border-white/10">{featuredAnn.category}</span>
+                                            <span className="px-3 py-2 bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] text-2xs font-semibold uppercase tracking-wide rounded-full shadow-2xl shadow-[hsl(var(--info)/40%)]">Noticia Destacada</span>
+                                            <span className="px-3 py-2 bg-[hsl(var(--surface-2))] text-[hsl(var(--text-primary))] text-2xs font-semibold uppercase tracking-wide rounded-full border border-[hsl(var(--border))]">{featuredAnn.category}</span>
                                         </div>
-                                        <h2 className="text-white text-lg lg:text-xl font-bold leading-tight tracking-tighter uppercase max-w-4xl">{featuredAnn.title}</h2>
+                                        <h2 className="text-[hsl(var(--text-primary))] text-lg lg:text-xl font-bold leading-tight tracking-tighter uppercase max-w-4xl">{featuredAnn.title}</h2>
                                         <p className="text-[hsl(var(--text-secondary))] text-lg font-medium line-clamp-2 max-w-2xl leading-relaxed italic">&ldquo;{featuredAnn.content.substring(0, 150)}...&rdquo;</p>
-                                        <button className="mt-4 px-4 py-2 bg-[hsl(var(--bg-primary))] text-[hsl(var(--text-primary))] rounded-lg font-black text-xs uppercase tracking-wide shadow-2xl hover:translate-y-[-4px] active:scale-95 transition-all flex items-center gap-3 group/btn">
+                                        <button className="mt-4 px-4 py-2 bg-[hsl(var(--surface-1))] text-[hsl(var(--text-primary))] rounded-lg font-black text-xs uppercase tracking-wide shadow-2xl hover:translate-y-[-4px] active:scale-95 transition-all flex items-center gap-3 group/btn">
                                             Editar Reporte <Edit3 size={18} className="group-hover/btn:rotate-12 transition-transform" />
                                         </button>
                                     </div>
@@ -345,7 +346,7 @@ export default function AnnouncementsAdmin() {
                             {/* Feed Grid */}
                             <section className="space-y-4">
                                 <div className="flex flex-col md:flex-row items-center justify-between px-4 gap-4">
-                                    <h3 className="text-[hsl(var(--text-primary))] dark:text-white text-xl font-bold tracking-wide uppercase flex items-center gap-3 shrink-0">
+                                    <h3 className="text-[hsl(var(--text-primary))] text-xl font-bold tracking-wide uppercase flex items-center gap-3 shrink-0">
                                         <Megaphone size={20} className="text-[hsl(var(--primary))]" /> Últimas Actualizaciones
                                     </h3>
                                     <div className="flex items-center gap-4 w-full md:w-auto flex-1 justify-end">
@@ -356,7 +357,7 @@ export default function AnnouncementsAdmin() {
                                                 placeholder="Buscar por título o contenido..."
                                                 value={searchQuery}
                                                 onChange={e => setSearchQuery(e.target.value)}
-                                                className="w-full pl-9 pr-4 py-2 bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg text-sm focus:border-[hsl(var(--primary))] outline-none transition-colors"
+                                                className="w-full pl-9 pr-4 py-2 bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] rounded-lg text-sm focus:border-[hsl(var(--primary))] outline-none transition-colors"
                                             />
                                         </div>
                                         <span className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide hidden lg:block">
@@ -373,24 +374,24 @@ export default function AnnouncementsAdmin() {
                                                 initial={{ opacity: 0, y: 30 }}
                                                 animate={{ opacity: 1, y: 0 }}
                                                 transition={{ delay: i * 0.05 }}
-                                                className="ann-aura group bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/5 p-4 rounded-lg flex flex-col gap-3 shadow-sm hover:shadow-2xl transition-all duration-500 overflow-hidden"
+                                                className="ann-aura group bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] p-4 rounded-lg flex flex-col gap-3 shadow-sm hover:shadow-2xl transition-all duration-500 overflow-hidden"
                                                 style={{ '--aura-color': 'rgba(59, 130, 246, 0.1)' } as CSSAuraProperties}
                                             >
                                                 <div className="flex justify-between items-start">
                                                     <div className="flex flex-col gap-2">
-                                                        <span className="text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] text-2xs font-semibold uppercase tracking-wide">{ann.category}</span>
-                                                        <h4 className="text-lg font-bold text-[hsl(var(--text-primary))] dark:text-white tracking-tighter uppercase leading-none group-hover:text-[hsl(var(--primary))] transition-colors">{ann.title}</h4>
+                                                        <span className="text-[hsl(var(--primary))] text-2xs font-semibold uppercase tracking-wide">{ann.category}</span>
+                                                        <h4 className="text-lg font-bold text-[hsl(var(--text-primary))] tracking-tighter uppercase leading-none group-hover:text-[hsl(var(--primary))] transition-colors">{ann.title}</h4>
                                                     </div>
-                                                    <div className="size-7 rounded-lg bg-[hsl(var(--surface-1))] dark:bg-white/5 flex items-center justify-center text-[hsl(var(--text-secondary))] group-hover:text-[hsl(var(--primary))] transition-all">
+                                                    <div className="size-7 rounded-lg bg-[hsl(var(--surface-2))] flex items-center justify-center text-[hsl(var(--text-secondary))] group-hover:text-[hsl(var(--primary))] transition-all">
                                                         <Megaphone size={20} />
                                                     </div>
                                                 </div>
 
-                                                <p className="text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] text-sm font-medium leading-relaxed line-clamp-3 italic">
+                                                <p className="text-[hsl(var(--text-secondary))] text-sm font-medium leading-relaxed line-clamp-3 italic">
                                                     {ann.content}
                                                 </p>
 
-                                                <div className="flex items-center justify-between pt-8 border-t border-[hsl(var(--border))] dark:border-white/5">
+                                                <div className="flex items-center justify-between pt-8 border-t border-[hsl(var(--border))]">
                                                     <div className="flex items-center gap-2 text-[hsl(var(--text-secondary))]">
                                                         <Calendar size={14} />
                                                         <span className="text-2xs font-semibold uppercase tracking-wide">{new Date(ann.date).toLocaleDateString('es-ES', { month: 'short', day: 'numeric' })}</span>
@@ -401,8 +402,8 @@ export default function AnnouncementsAdmin() {
                                                                 <CheckCircle2 size={16} />
                                                             </button>
                                                         )}
-                                                        <button className="p-3 bg-[hsl(var(--surface-1))] dark:bg-white/5 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] rounded-md transition-all"><Edit3 size={16} /></button>
-                                                        <button onClick={() => handleStatusChange(ann, 'archived')} className="p-3 bg-[hsl(var(--surface-1))] dark:bg-white/5 text-[hsl(var(--text-secondary))] hover:text-danger-text rounded-md transition-all" title="Archivar"><X size={16} /></button>
+                                                        <button className="p-3 bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] rounded-md transition-all"><Edit3 size={16} /></button>
+                                                        <button onClick={() => handleStatusChange(ann, 'archived')} className="p-3 bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--destructive))] rounded-md transition-all" title="Archivar"><X size={16} /></button>
                                                     </div>
                                                 </div>
                                             </motion.div>
@@ -412,13 +413,13 @@ export default function AnnouncementsAdmin() {
                                     {/* Empty State / Add Card */}
                                     <div
                                         onClick={() => router.push('/plataforma/cms/announcements/new')}
-                                        className="bg-[hsl(var(--surface-1))]/50 dark:bg-white/5 border-2 border-dashed border-[hsl(var(--border))] dark:border-white/10 rounded-lg p-4 flex flex-col items-center justify-center text-center space-y-3 hover:border-[hsl(var(--info)/100%)]/50 hover:bg-info-soft/50 transition-all cursor-pointer group"
+                                        className="bg-[hsl(var(--surface-1))] border-2 border-dashed border-[hsl(var(--border))] rounded-lg p-4 flex flex-col items-center justify-center text-center space-y-3 hover:border-[hsl(var(--primary)/50%)] hover:bg-[hsl(var(--primary)/5%)] transition-all cursor-pointer group"
                                     >
-                                        <div className="size-8 rounded-lg bg-[hsl(var(--bg-primary))] shadow-xl flex items-center justify-center text-[hsl(var(--text-secondary))] group-hover:text-[hsl(var(--primary))] group-hover:scale-110 group-hover:rotate-90 transition-all duration-500">
+                                        <div className="size-8 rounded-lg bg-[hsl(var(--surface-2))] shadow-xl flex items-center justify-center text-[hsl(var(--text-secondary))] group-hover:text-[hsl(var(--primary))] group-hover:scale-110 group-hover:rotate-90 transition-all duration-500">
                                             <Plus size={40} strokeWidth={1.5} />
                                         </div>
                                         <div>
-                                            <p className="text-xl font-bold text-[hsl(var(--text-primary))] dark:text-white uppercase tracking-tight">Nuevo Mensaje</p>
+                                            <p className="text-xl font-bold text-[hsl(var(--text-primary))] uppercase tracking-tight">Nuevo Mensaje</p>
                                             <p className="text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide mt-1">Impactar a toda la congregación</p>
                                         </div>
                                     </div>
@@ -428,37 +429,36 @@ export default function AnnouncementsAdmin() {
                     )}
                 </div>
             </main>
-            <AnimatePresence>
-                {pendingArchive && (
-                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-                        <motion.div
-                            initial={{ opacity: 0, scale: 0.95 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            exit={{ opacity: 0, scale: 0.95 }}
-                            className="w-full max-w-sm rounded-xl bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-secondary))] p-5 shadow-2xl border border-[hsl(var(--border))] dark:border-white/10"
+
+            {/* SidePanel: Confirm Archive Drawer */}
+            <SidePanel
+                isOpen={Boolean(pendingArchive)}
+                onClose={() => setPendingArchive(null)}
+                title="Archivar comunicado"
+                width="w-[420px]"
+            >
+                <div className="p-4 space-y-4">
+                    <p className="text-sm text-[hsl(var(--text-secondary))]">
+                        El comunicado dejará de estar visible inmediatamente. Podrás restaurarlo después si es necesario.
+                    </p>
+                    <div className="flex gap-3 justify-end pt-4 border-t border-[hsl(var(--border))]">
+                        <button
+                            type="button"
+                            onClick={() => setPendingArchive(null)}
+                            className="px-4 py-2 rounded-lg text-sm font-semibold text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] transition-colors"
                         >
-                            <h3 className="text-lg font-bold text-[hsl(var(--text-primary))] dark:text-white mb-2">¿Archivar comunicado?</h3>
-                            <p className="text-sm text-[hsl(var(--text-secondary))] mb-6">
-                                El comunicado dejará de estar visible inmediatamente.
-                            </p>
-                            <div className="flex gap-3 justify-end">
-                                <button
-                                    onClick={() => setPendingArchive(null)}
-                                    className="px-4 py-2 rounded-lg text-sm font-semibold text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5 transition-colors"
-                                >
-                                    Cancelar
-                                </button>
-                                <button
-                                    onClick={confirmArchive}
-                                    className="px-4 py-2 rounded-lg text-sm font-semibold bg-warning-soft text-warning-text hover:bg-[hsl(var(--warning-muted))] transition-colors"
-                                >
-                                    Archivar
-                                </button>
-                            </div>
-                        </motion.div>
+                            Cancelar
+                        </button>
+                        <button
+                            type="button"
+                            onClick={confirmArchive}
+                            className="px-4 py-2 rounded-lg text-sm font-semibold bg-[hsl(var(--warning))] text-[hsl(var(--warning-foreground))] hover:opacity-90 transition-colors"
+                        >
+                            Archivar
+                        </button>
                     </div>
-                )}
-            </AnimatePresence>
+                </div>
+            </SidePanel>
         </div>
     );
 }

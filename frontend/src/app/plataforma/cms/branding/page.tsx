@@ -10,14 +10,15 @@ import {
   Upload,
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
+import { useSiteBranding } from "@/lib/site-branding";
 import { apiFetch } from "@/lib/http";
 import { SITE_KEY } from "@/lib/site-config";
-import { listCmsSites, listCmsThemes, patchCmsTheme } from "@/lib/cms/v2";
-import { CmsSite } from "@/types/cms-v2";
+import { listCmsThemes, patchCmsTheme } from "@/lib/cms/v2";
 import { canEditCms } from "@/lib/cms/permissions";
 import OptimizedImage from "@/components/ui/OptimizedImage";
+import SidePanel from "@/components/ui/SidePanel";
+import clsx from "clsx";
 import { toast } from "sonner";
-import { motion, AnimatePresence } from "framer-motion";
 
 interface CmsMediaItem {
   id: number;
@@ -31,64 +32,22 @@ interface CmsMediaItem {
 export default function CmsBrandingPage() {
   const { token, user } = useAuth();
   const canEdit = canEditCms(user?.role);
+  const { logoUrl: currentLogoUrl, logoName: currentLogoName } = useSiteBranding();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const [sites, setSites] = useState<CmsSite[]>([]);
-  const [siteKey, setSiteKey] = useState(SITE_KEY);
   const [logoUrl, setLogoUrl] = useState("");
   const [logoName, setLogoName] = useState("");
-  const [loadingTheme, setLoadingTheme] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [mediaItems, setMediaItems] = useState<CmsMediaItem[]>([]);
   const [showMediaPicker, setShowMediaPicker] = useState(false);
   const [pendingRemoveLogo, setPendingRemoveLogo] = useState(false);
 
-  // Load the available sites once, keeping the configured site as the fallback.
+  // Initialize from current branding
   useEffect(() => {
-    if (!token) {
-      setLoadingTheme(false);
-      return;
-    }
-    listCmsSites(token)
-      .then((rows) => {
-        const nextSites = Array.isArray(rows) ? rows : [];
-        setSites(nextSites);
-        if (nextSites.length > 0 && !nextSites.some((site) => site.site_key === siteKey)) {
-          setSiteKey(nextSites[0].site_key);
-        }
-      })
-      .catch(() => {
-        setSites([]);
-        toast.error("Error al cargar sitios CMS");
-      });
-  }, [token, siteKey]);
-
-  // Read branding from the selected site's active theme.
-  useEffect(() => {
-    if (!token || !siteKey) return;
-    let mounted = true;
-    setLoadingTheme(true);
-    setLogoUrl("");
-    setLogoName("");
-    listCmsThemes(siteKey, token)
-      .then((themes) => {
-        if (!mounted) return;
-        const activeTheme = themes?.find((theme) => theme.is_active) || themes?.[0];
-        const tokens = activeTheme?.tokens_json || {};
-        setLogoUrl(typeof tokens["--site-logo-url"] === "string" ? tokens["--site-logo-url"] : "");
-        setLogoName(typeof tokens["--site-logo-name"] === "string" ? tokens["--site-logo-name"] : "");
-      })
-      .catch(() => {
-        if (mounted) toast.error("Error al cargar el branding del sitio");
-      })
-      .finally(() => {
-        if (mounted) setLoadingTheme(false);
-      });
-    return () => {
-      mounted = false;
-    };
-  }, [siteKey, token]);
+    setLogoUrl(currentLogoUrl || "");
+    setLogoName(currentLogoName || "");
+  }, [currentLogoUrl, currentLogoName]);
 
   // Load media items for picker
   useEffect(() => {
@@ -141,8 +100,8 @@ export default function CmsBrandingPage() {
     }
     setSaving(true);
     try {
-      // Get the active theme for the selected site
-      const themes = await listCmsThemes(siteKey, token);
+      // Get the active theme for this site
+      const themes = await listCmsThemes(SITE_KEY, token);
       const activeTheme = themes?.find((t) => t.is_active) || themes?.[0];
       if (!activeTheme) {
         toast.error("No hay un tema activo para este sitio");
@@ -154,7 +113,7 @@ export default function CmsBrandingPage() {
         "--site-logo-url": logoUrl,
         "--site-logo-name": logoName,
       };
-      await patchCmsTheme(siteKey, activeTheme.id, { tokens_json: updatedTokens }, token);
+      await patchCmsTheme(SITE_KEY, activeTheme.id, { tokens_json: updatedTokens }, token);
       toast.success("Branding guardado correctamente");
     } catch {
       toast.error("Error al guardar el branding");
@@ -192,31 +151,14 @@ export default function CmsBrandingPage() {
             </p>
           )}
         </div>
-        <div className="flex items-center gap-2">
-          <label htmlFor="cms-branding-site" className="sr-only">Sitio CMS</label>
-          <select
-            id="cms-branding-site"
-            value={siteKey}
-            onChange={(event) => setSiteKey(event.target.value)}
-            className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] px-3 py-2 text-xs text-[hsl(var(--text-primary))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]/50"
-            aria-label="Sitio CMS"
-          >
-            {sites.length === 0 && <option value={siteKey}>{siteKey}</option>}
-            {sites.map((site) => (
-              <option key={site.site_key} value={site.site_key}>
-                {site.name} ({site.site_key})
-              </option>
-            ))}
-          </select>
-          <button
-            onClick={handleSave}
-            disabled={saving || loadingTheme || !canEdit}
-            className="inline-flex items-center gap-2 rounded-lg bg-[hsl(var(--primary))] text-white px-4 py-2 text-xs font-semibold uppercase tracking-wide hover:opacity-90 transition-opacity disabled:opacity-50"
-          >
-            {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
-            Guardar
-          </button>
-        </div>
+        <button
+          onClick={handleSave}
+          disabled={saving || !canEdit}
+          className="inline-flex items-center gap-2 rounded-lg bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] px-4 py-2 text-xs font-semibold uppercase tracking-wide hover:opacity-90 transition-opacity disabled:opacity-50"
+        >
+          {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
+          Guardar
+        </button>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -275,7 +217,7 @@ export default function CmsBrandingPage() {
                 <button
                   onClick={handleRemoveLogo}
                   disabled={!canEdit}
-                  className="inline-flex items-center gap-2 rounded-lg border border-red-200 px-3 py-2 text-xs font-semibold text-red-600 hover:bg-red-50 transition-colors"
+                  className="inline-flex items-center gap-2 rounded-lg border border-[hsl(var(--destructive))]/30 px-3 py-2 text-xs font-semibold text-[hsl(var(--destructive))] hover:bg-[hsl(var(--destructive))]/10 transition-colors"
                 >
                   <Trash2 size={12} />
                 </button>
@@ -340,18 +282,18 @@ export default function CmsBrandingPage() {
         </div>
         <div className="p-6 space-y-4">
           {/* Navbar preview */}
-          <div className="rounded-lg border border-[hsl(var(--border))] bg-white overflow-hidden">
+          <div className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] overflow-hidden">
             <div className="flex items-center gap-3 px-4 py-3">
               {logoUrl ? (
                 <OptimizedImage src={logoUrl} alt={logoName || "Logo"} width={32} height={32} className="size-8 rounded-lg object-contain" />
               ) : (
-                <div className="size-8 rounded-lg bg-[hsl(var(--primary))] flex items-center justify-center text-white text-2xs font-bold">CCF</div>
+                <div className="size-8 rounded-lg bg-[hsl(var(--primary))] flex items-center justify-center text-[hsl(var(--primary-foreground))] text-2xs font-bold">CCF</div>
               )}
               <div>
-                <p className="text-2xs font-black uppercase tracking-[0.25em] text-gray-900">
+                <p className="text-2xs font-black uppercase tracking-[0.25em] text-[hsl(var(--text-primary))]">
                   {logoName || "Comunidad Cristiana El Faro"}
                 </p>
-                <p className="text-2xs font-semibold uppercase tracking-[0.2em] text-gray-500">
+                <p className="text-2xs font-semibold uppercase tracking-[0.2em] text-[hsl(var(--text-secondary))]">
                   Plataforma
                 </p>
               </div>
@@ -360,7 +302,7 @@ export default function CmsBrandingPage() {
 
           {/* Sidebar preview */}
           <div className="flex gap-4">
-            <div className="w-16 rounded-lg border border-[hsl(var(--border))] bg-white p-2 flex flex-col items-center gap-2">
+            <div className="w-16 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-2 flex flex-col items-center gap-2">
               <div className="size-10 rounded-lg bg-[hsl(var(--primary))]/10 flex items-center justify-center">
                 {logoUrl ? (
                   <OptimizedImage src={logoUrl} alt={logoName || "Logo"} width={24} height={24} className="size-6 rounded object-contain" />
@@ -369,18 +311,18 @@ export default function CmsBrandingPage() {
                 )}
               </div>
             </div>
-            <div className="flex-1 rounded-lg border border-[hsl(var(--border))] bg-white p-3">
+            <div className="flex-1 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-3">
               <div className="flex items-center gap-2">
                 {logoUrl ? (
                   <OptimizedImage src={logoUrl} alt={logoName || "Logo"} width={28} height={28} className="size-7 rounded object-contain" />
                 ) : (
-                  <div className="size-7 rounded-lg bg-[hsl(var(--primary))] flex items-center justify-center text-white text-2xs font-bold">CCF</div>
+                  <div className="size-7 rounded-lg bg-[hsl(var(--primary))] flex items-center justify-center text-[hsl(var(--primary-foreground))] text-2xs font-bold">CCF</div>
                 )}
                 <div>
-                  <p className="text-2xs font-black uppercase tracking-[0.25em] text-gray-900">
+                  <p className="text-2xs font-black uppercase tracking-[0.25em] text-[hsl(var(--text-primary))]">
                     {logoName || "El Faro"}
                   </p>
-                  <p className="text-2xs text-gray-500">Plataforma</p>
+                  <p className="text-2xs text-[hsl(var(--text-secondary))]">Plataforma</p>
                 </div>
               </div>
             </div>
@@ -388,80 +330,72 @@ export default function CmsBrandingPage() {
         </div>
       </div>
 
-      {/* Media Picker Modal */}
-      {showMediaPicker && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-          <div className="w-full max-w-2xl max-h-[80vh] bg-white rounded-xl border border-[hsl(var(--border))] shadow-2xl overflow-hidden flex flex-col">
-            <div className="flex items-center justify-between px-4 py-3 border-b border-[hsl(var(--border))]">
-              <h3 className="text-sm font-bold text-gray-900">Elegir imagen de Media Library</h3>
-              <button onClick={() => setShowMediaPicker(false)} className="p-1 rounded hover:bg-gray-100">
-                <span className="text-gray-400 text-lg">&times;</span>
-              </button>
+      {/* SidePanel: Media Picker Drawer */}
+      <SidePanel
+        isOpen={showMediaPicker}
+        onClose={() => setShowMediaPicker(false)}
+        title="Elegir imagen de Media Library"
+        width="w-[550px]"
+      >
+        <div className="p-4 space-y-4">
+          {mediaItems.length === 0 ? (
+            <p className="text-center text-sm text-[hsl(var(--text-secondary))] py-8">No hay imágenes en la media library</p>
+          ) : (
+            <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
+              {mediaItems.filter((item) => item.mime_type?.startsWith("image/")).map((item) => (
+                <button
+                  key={item.id}
+                  onClick={() => {
+                    setLogoUrl(item.url);
+                    setShowMediaPicker(false);
+                    toast.success("Logo seleccionado");
+                  }}
+                  className={clsx(
+                    "relative aspect-square rounded-lg border-2 overflow-hidden hover:border-[hsl(var(--primary))] transition-colors",
+                    logoUrl === item.url ? "border-[hsl(var(--primary))]" : "border-transparent"
+                  )}
+                >
+                  <OptimizedImage
+                    src={item.url}
+                    alt={item.alt_text || item.filename || "Imagen"}
+                    fill
+                    sizes="120px"
+                    className="object-cover"
+                  />
+                </button>
+              ))}
             </div>
-            <div className="flex-1 overflow-y-auto p-4">
-              {mediaItems.length === 0 ? (
-                <p className="text-center text-sm text-gray-400 py-8">No hay imágenes en la media library</p>
-              ) : (
-                <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
-                  {mediaItems.filter((item) => item.mime_type?.startsWith("image/")).map((item) => (
-                    <button
-                      key={item.id}
-                      onClick={() => {
-                        setLogoUrl(item.url);
-                        setShowMediaPicker(false);
-                        toast.success("Logo seleccionado");
-                      }}
-                      className={`relative aspect-square rounded-lg border-2 overflow-hidden hover:border-[hsl(var(--primary))] transition-colors ${
-                        logoUrl === item.url ? "border-[hsl(var(--primary))]" : "border-transparent"
-                      }`}
-                    >
-                      <OptimizedImage
-                        src={item.url}
-                        alt={item.alt_text || item.filename || "Imagen"}
-                        fill
-                        sizes="120px"
-                        className="object-cover"
-                      />
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
+          )}
+        </div>
+      </SidePanel>
+
+      {/* SidePanel: Confirm Remove Logo Drawer */}
+      <SidePanel
+        isOpen={pendingRemoveLogo}
+        onClose={() => setPendingRemoveLogo(false)}
+        title="Eliminar logo"
+        width="w-[420px]"
+      >
+        <div className="p-4 space-y-4">
+          <p className="text-sm text-[hsl(var(--text-secondary))]">
+            Se usará un fallback de texto en su lugar. Recuerda hacer clic en &quot;Guardar&quot; para aplicar los cambios.
+          </p>
+          <div className="flex gap-3 justify-end pt-4 border-t border-[hsl(var(--border))]">
+            <button
+              onClick={() => setPendingRemoveLogo(false)}
+              className="px-4 py-2 rounded-lg text-sm font-semibold text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] transition-colors border border-[hsl(var(--border))]"
+            >
+              Cancelar
+            </button>
+            <button
+              onClick={confirmRemoveLogo}
+              className="px-4 py-2 rounded-lg text-sm font-semibold bg-[hsl(var(--destructive))] hover:opacity-90 text-[hsl(var(--destructive-foreground))] transition-colors"
+            >
+              Eliminar logo
+            </button>
           </div>
         </div>
-      )}
-
-      <AnimatePresence>
-        {pendingRemoveLogo && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              className="w-full max-w-sm rounded-xl bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-secondary))] p-5 shadow-2xl border border-[hsl(var(--border))] dark:border-white/10"
-            >
-              <h3 className="text-lg font-bold text-[hsl(var(--text-primary))] dark:text-white mb-2">¿Eliminar logo?</h3>
-              <p className="text-sm text-[hsl(var(--text-secondary))] mb-6">
-                Se usará un fallback de texto en su lugar. Recuerda hacer clic en &quot;Guardar&quot; para aplicar los cambios.
-              </p>
-              <div className="flex gap-3 justify-end">
-                <button
-                  onClick={() => setPendingRemoveLogo(false)}
-                  className="px-4 py-2 rounded-lg text-sm font-semibold text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5 transition-colors"
-                >
-                  Cancelar
-                </button>
-                <button
-                  onClick={confirmRemoveLogo}
-                  className="px-4 py-2 rounded-lg text-sm font-semibold bg-[hsl(var(--danger))] hover:opacity-90 text-white transition-colors"
-                >
-                  Eliminar logo
-                </button>
-              </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
+      </SidePanel>
     </div>
   );
 }

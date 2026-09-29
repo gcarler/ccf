@@ -2,15 +2,14 @@
 
 import React, { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Calendar, MapPin, Plus, Clock, FileText, Pencil, Save, Trash2, X, Repeat } from "lucide-react";
+import { Calendar, MapPin, Plus, Clock, FileText, Pencil, Save, Trash2, X } from "lucide-react";
 import WorkspaceLayout from "@/components/WorkspaceLayout";
 import { useAuth } from "@/context/AuthContext";
 import { apiFetch } from "@/lib/http";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
-import type { AgendaEvent, AgendaFormState, AgendaRecurrencePreset } from "@/types/agenda";
-import { buildRecurrenceRule, describeRecurrence, presetFromRule } from "@/types/agenda";
+import type { AgendaEvent, AgendaFormState } from "@/types/agenda";
 
 function formatEventWindow(event: AgendaEvent) {
     const start = new Date(event.start_at);
@@ -41,8 +40,6 @@ export default function AgendaEventsPage() {
         start_at: new Date().toISOString().slice(0, 10),
         end_at: new Date().toISOString().slice(0, 10),
         location: "",
-        recurrence: "",
-        recurrence_until: "",
     });
     const [editForm, setEditForm] = useState<AgendaFormState>({
         title: "",
@@ -50,8 +47,6 @@ export default function AgendaEventsPage() {
         start_at: new Date().toISOString().slice(0, 10),
         end_at: new Date().toISOString().slice(0, 10),
         location: "",
-        recurrence: "",
-        recurrence_until: "",
     });
 
     const sortedEvents = useMemo(
@@ -94,7 +89,6 @@ export default function AgendaEventsPage() {
                     end_at: new Date(form.end_at).toISOString(),
                     location: form.location.trim() || null,
                     is_all_day: true,
-                    recurrence_rule: buildRecurrenceRule(form.recurrence),
                 },
             });
             toast.success("Evento de agenda creado");
@@ -104,8 +98,6 @@ export default function AgendaEventsPage() {
                 start_at: new Date().toISOString().slice(0, 10),
                 end_at: new Date().toISOString().slice(0, 10),
                 location: "",
-                recurrence: "",
-                recurrence_until: "",
             });
             await loadEvents();
         } catch {
@@ -123,8 +115,6 @@ export default function AgendaEventsPage() {
             start_at: event.start_at.slice(0, 10),
             end_at: (event.end_at || event.start_at).slice(0, 10),
             location: event.location || "",
-            recurrence: presetFromRule(event.recurrence_rule),
-            recurrence_until: event.recurrence_until?.slice(0, 10) || "",
         });
     };
 
@@ -132,11 +122,6 @@ export default function AgendaEventsPage() {
         if (!token || !editForm.title.trim()) return;
         setEditingEventSaving(true);
         try {
-            // Tri-estado de la serie: preset elegido => actualiza la regla;
-            // "No se repite" sobre una serie activa => "" (elimina la serie);
-            // sin serie previa => undefined (el campo se omite en el PUT).
-            const event = events.find((e) => e.id === eventId);
-            const recurrenceRule = buildRecurrenceRule(editForm.recurrence);
             await apiFetch(`/agenda/events/${eventId}`, {
                 method: "PUT",
                 token,
@@ -147,7 +132,6 @@ export default function AgendaEventsPage() {
                     end_at: new Date(editForm.end_at).toISOString(),
                     location: editForm.location.trim() || null,
                     is_all_day: true,
-                    recurrence_rule: recurrenceRule ?? (event?.is_recurring ? "" : undefined),
                 },
             });
             toast.success("Evento actualizado");
@@ -188,26 +172,26 @@ export default function AgendaEventsPage() {
                 { label: "Agenda simple", icon: FileText },
             ]}
         >
-            <div className="h-full overflow-y-auto bg-[hsl(var(--surface-1))] dark:bg-[#141517]">
+            <div className="h-full overflow-y-auto bg-[hsl(var(--surface-1))]">
                 <div className="mx-auto max-w-6xl space-y-3 p-3 p-4">
-                    <section className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-3 shadow-sm dark:border-white/10 dark:bg-[hsl(var(--surface-1))]">
+                    <section className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-3 shadow-sm">
                         <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
                             <div>
                                 <p className="text-xs font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))]">Agenda de iglesia</p>
-                                <h1 className="mt-2 text-xl font-bold tracking-tight text-[hsl(var(--text-primary))] dark:text-white">Eventos sin seguimiento de asistencia</h1>
+                                <h1 className="mt-2 text-xl font-bold tracking-tight text-[hsl(var(--text-primary))]">Eventos sin seguimiento de asistencia</h1>
                                 <p className="mt-2 max-w-2xl text-sm font-medium text-[hsl(var(--text-secondary))]">
                                     Usa esta agenda para reuniones, avisos y actividades internas que deben aparecer en el calendario general, sin QR ni analítica ministerial.
                                 </p>
                             </div>
                             <div className="flex flex-wrap items-center gap-2">
-                                <span className="rounded-full border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] px-3 py-1 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] dark:border-white/10 dark:bg-white/5 dark:text-[hsl(var(--text-secondary))]">
+                                <span className="rounded-full border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] px-3 py-1 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
                                     {isAgendaEditing ? "Edición rápida" : "Agenda completa"}
                                 </span>
                                 <span
                                     className={`rounded-full px-3 py-1 text-2xs font-semibold uppercase tracking-wide ${
                                         isAgendaEditing
-                                            ? "bg-warning-soft text-warning-text dark:bg-[hsl(var(--warning))]/10 dark:text-warning-text"
-                                            : "bg-success-soft text-success-text dark:bg-[hsl(var(--success))]/10 dark:text-success-text"
+                                            ? "bg-[hsl(var(--warning-soft))] text-[hsl(var(--warning-text))]"
+                                            : "bg-[hsl(var(--success-soft))] text-[hsl(var(--success-text))]"
                                     }`}
                                 >
                                     {isAgendaEditing ? "1 evento en edición" : `${sortedEvents.length} eventos visibles`}
@@ -217,13 +201,13 @@ export default function AgendaEventsPage() {
                     </section>
 
                     <section className="grid gap-3 lg:grid-cols-[380px,1fr]">
-                        <form onSubmit={handleCreate} className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-3 shadow-sm dark:border-white/10 dark:bg-[hsl(var(--surface-1))]">
+                        <form onSubmit={handleCreate} className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-3 shadow-sm">
                             <div className="mb-5 flex items-center gap-3">
-                                <div className="flex size-6 items-center justify-center rounded-lg bg-info-soft text-[hsl(var(--primary))] dark:bg-[hsl(var(--info))]/10 dark:text-[hsl(var(--primary))]">
+                                <div className="flex size-6 items-center justify-center rounded-lg bg-[hsl(var(--info-soft))] text-[hsl(var(--primary))]">
                                     <Plus size={18} />
                                 </div>
                                 <div>
-                                    <h2 className="text-sm font-semibold uppercase tracking-wide text-[hsl(var(--text-primary))] dark:text-white">Nuevo evento de agenda</h2>
+                                    <h2 className="text-sm font-semibold uppercase tracking-wide text-[hsl(var(--text-primary))]">Nuevo evento de agenda</h2>
                                     <p className="text-xs font-medium text-[hsl(var(--text-secondary))]">Sólo calendario general</p>
                                 </div>
                             </div>
@@ -235,7 +219,7 @@ export default function AgendaEventsPage() {
                                         value={form.title}
                                         onChange={(e) => setForm((prev) => ({ ...prev, title: e.target.value }))}
                                         placeholder="Ej: Reunión de liderazgo"
-                                        className="w-full rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] px-4 py-3 text-sm font-bold text-[hsl(var(--text-primary))] outline-none focus:border-[hsl(var(--info)/100%)] dark:border-white/10 dark:bg-black/20 dark:text-white"
+                                        className="w-full rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] px-4 py-3 text-sm font-bold text-[hsl(var(--text-primary))] outline-none focus:border-[hsl(var(--primary))]"
                                     />
                                 </div>
 
@@ -246,7 +230,7 @@ export default function AgendaEventsPage() {
                                             type="date"
                                             value={form.start_at}
                                             onChange={(e) => setForm((prev) => ({ ...prev, start_at: e.target.value }))}
-                                            className="w-full rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] px-4 py-3 text-sm font-bold text-[hsl(var(--text-primary))] outline-none focus:border-[hsl(var(--info)/100%)] dark:border-white/10 dark:bg-black/20 dark:text-white"
+                                            className="w-full rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] px-4 py-3 text-sm font-bold text-[hsl(var(--text-primary))] outline-none focus:border-[hsl(var(--primary))]"
                                         />
                                     </div>
                                     <div className="space-y-1.5">
@@ -255,24 +239,9 @@ export default function AgendaEventsPage() {
                                             type="date"
                                             value={form.end_at}
                                             onChange={(e) => setForm((prev) => ({ ...prev, end_at: e.target.value }))}
-                                            className="w-full rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] px-4 py-3 text-sm font-bold text-[hsl(var(--text-primary))] outline-none focus:border-[hsl(var(--info)/100%)] dark:border-white/10 dark:bg-black/20 dark:text-white"
+                                            className="w-full rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] px-4 py-3 text-sm font-bold text-[hsl(var(--text-primary))] outline-none focus:border-[hsl(var(--primary))]"
                                         />
                                     </div>
-                                </div>
-
-                                <div className="space-y-1.5">
-                                    <label className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Repetición</label>
-                                    <select
-                                        value={form.recurrence}
-                                        onChange={(e) => setForm((prev) => ({ ...prev, recurrence: e.target.value as AgendaRecurrencePreset }))}
-                                        className="w-full rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] px-4 py-3 text-sm font-bold text-[hsl(var(--text-primary))] outline-none focus:border-[hsl(var(--info)/100%)] dark:border-white/10 dark:bg-black/20 dark:text-white"
-                                    >
-                                        <option value="">No se repite</option>
-                                        <option value="DAILY">Todos los días</option>
-                                        <option value="WEEKLY">Semanalmente</option>
-                                        <option value="BIWEEKLY">Cada 2 semanas</option>
-                                        <option value="MONTHLY">Mensualmente</option>
-                                    </select>
                                 </div>
 
                                 <div className="space-y-1.5">
@@ -281,7 +250,7 @@ export default function AgendaEventsPage() {
                                         value={form.location}
                                         onChange={(e) => setForm((prev) => ({ ...prev, location: e.target.value }))}
                                         placeholder="Ej: Salón principal"
-                                        className="w-full rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] px-4 py-3 text-sm font-bold text-[hsl(var(--text-primary))] outline-none focus:border-[hsl(var(--info)/100%)] dark:border-white/10 dark:bg-black/20 dark:text-white"
+                                        className="w-full rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] px-4 py-3 text-sm font-bold text-[hsl(var(--text-primary))] outline-none focus:border-[hsl(var(--primary))]"
                                     />
                                 </div>
 
@@ -292,7 +261,7 @@ export default function AgendaEventsPage() {
                                         value={form.description}
                                         onChange={(e) => setForm((prev) => ({ ...prev, description: e.target.value }))}
                                         placeholder="Notas de la reunión o contexto para la agenda"
-                                        className="w-full resize-none rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] px-4 py-3 text-sm font-medium text-[hsl(var(--text-primary))] outline-none focus:border-[hsl(var(--info)/100%)] dark:border-white/10 dark:bg-black/20 dark:text-white"
+                                        className="w-full resize-none rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] px-4 py-3 text-sm font-medium text-[hsl(var(--text-primary))] outline-none focus:border-[hsl(var(--primary))]"
                                     />
                                 </div>
                             </div>
@@ -300,20 +269,20 @@ export default function AgendaEventsPage() {
                             <button
                                 type="submit"
                                 disabled={saving || !form.title.trim()}
-                                className="mt-5 inline-flex items-center gap-2 rounded-lg bg-[hsl(var(--primary))] px-3 py-3 text-xs font-semibold uppercase tracking-wide text-white transition-all hover:bg-[hsl(var(--primary))] disabled:opacity-50"
+                                className="mt-5 inline-flex items-center gap-2 rounded-lg bg-[hsl(var(--primary))] px-3 py-3 text-xs font-semibold uppercase tracking-wide text-[hsl(var(--primary-foreground))] transition-all hover:opacity-90 disabled:opacity-50"
                             >
                                 <Plus size={14} />
                                 {saving ? "Guardando..." : "Crear evento"}
                             </button>
                         </form>
 
-                        <section className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-3 shadow-sm dark:border-white/10 dark:bg-[hsl(var(--surface-1))]">
+                        <section className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-3 shadow-sm">
                             <div className="mb-5 flex items-center justify-between gap-3">
                                 <div>
-                                    <h2 className="text-sm font-semibold uppercase tracking-wide text-[hsl(var(--text-primary))] dark:text-white">Próximos eventos</h2>
+                                    <h2 className="text-sm font-semibold uppercase tracking-wide text-[hsl(var(--text-primary))]">Próximos eventos</h2>
                                     <p className="text-xs font-medium text-[hsl(var(--text-secondary))]">Se reflejan también en el calendario general</p>
                                 </div>
-                                <span className="rounded-full bg-[hsl(var(--surface-2))] px-3 py-1 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] dark:bg-white/5 dark:text-[hsl(var(--text-secondary))]">
+                                <span className="rounded-full bg-[hsl(var(--surface-2))] px-3 py-1 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
                                     {sortedEvents.length} registrados
                                 </span>
                             </div>
@@ -321,11 +290,11 @@ export default function AgendaEventsPage() {
                             {loading ? (
                                 <div className="grid gap-4">
                                     {Array.from({ length: 4 }).map((_, index) => (
-                                        <div key={index} className="h-28 animate-pulse rounded-lg bg-[hsl(var(--surface-2))] dark:bg-white/5" />
+                                        <div key={index} className="h-28 animate-pulse rounded-lg bg-[hsl(var(--surface-2))]" />
                                     ))}
                                 </div>
                             ) : sortedEvents.length === 0 ? (
-                                <div className="rounded-lg border border-dashed border-[hsl(var(--border))] px-3 py-1.5 text-center dark:border-white/10">
+                                <div className="rounded-lg border border-dashed border-[hsl(var(--border))] px-3 py-1.5 text-center">
                                     <p className="text-sm font-bold text-[hsl(var(--text-secondary))]">No hay eventos de agenda todavía.</p>
                                     <p className="mt-1 text-xs font-medium text-[hsl(var(--text-secondary))]">Crea reuniones simples aquí; evangelismo queda aparte.</p>
                                 </div>
@@ -334,26 +303,26 @@ export default function AgendaEventsPage() {
                                     {sortedEvents.map((event) => (
                                         <article
                                             key={event.id}
-                                            className="rounded-lg border border-[hsl(var(--border))] p-3 transition-colors hover:border-[hsl(var(--info)/30%)] dark:border-white/10 dark:hover:border-[hsl(var(--info)/100%)]/30"
+                                            className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-3 transition-colors hover:border-[hsl(var(--primary)/30%)]"
                                         >
                                             {editingEventId === event.id ? (
                                                 <div className="space-y-4">
                                                     <div className="flex items-center justify-between gap-3">
-                                                        <span className="rounded-full bg-warning-soft px-3 py-1 text-2xs font-semibold uppercase tracking-wide text-warning-text dark:bg-[hsl(var(--warning))]/10 dark:text-[hsl(var(--warning))]">
+                                                        <span className="rounded-full bg-[hsl(var(--warning-soft))] px-3 py-1 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--warning-text))]">
                                                             Edición rápida
                                                         </span>
                                                         <div className="flex gap-2">
                                                             <button
                                                                 onClick={() => handleInlineDelete(event.id)}
                                                                 disabled={deletingEventId === event.id}
-                                                                className="inline-flex items-center gap-1 rounded-md border border-destructive/20 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-destructive transition-all hover:bg-destructive/10 disabled:opacity-50 dark:border-destructive/30 dark:hover:bg-destructive/20"
+                                                                className="inline-flex items-center gap-1 rounded-md border border-[hsl(var(--destructive)/30%)] px-3 py-2 text-xs font-semibold uppercase tracking-wide text-[hsl(var(--destructive))] transition-all hover:bg-[hsl(var(--destructive)/10%)] disabled:opacity-50"
                                                             >
                                                                 <Trash2 size={12} />
                                                                 {deletingEventId === event.id ? "Eliminando..." : "Eliminar"}
                                                             </button>
                                                             <button
                                                                 onClick={() => setEditingEventId(null)}
-                                                                className="inline-flex items-center gap-1 rounded-md border border-[hsl(var(--border))] px-3 py-2 text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] transition-all hover:bg-[hsl(var(--surface-1))] dark:border-white/10 dark:hover:bg-white/5"
+                                                                className="inline-flex items-center gap-1 rounded-md border border-[hsl(var(--border))] px-3 py-2 text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] transition-all hover:bg-[hsl(var(--surface-2))]"
                                                             >
                                                                 <X size={12} />
                                                                 Cancelar
@@ -361,7 +330,7 @@ export default function AgendaEventsPage() {
                                                             <button
                                                                 onClick={() => handleInlineUpdate(event.id)}
                                                                 disabled={editingEventSaving}
-                                                                className="inline-flex items-center gap-1 rounded-md bg-[hsl(var(--primary))] px-3 py-2 text-xs font-semibold uppercase tracking-wide text-white transition-all hover:bg-[hsl(var(--primary))] disabled:opacity-50"
+                                                                className="inline-flex items-center gap-1 rounded-md bg-[hsl(var(--primary))] px-3 py-2 text-xs font-semibold uppercase tracking-wide text-[hsl(var(--primary-foreground))] transition-all hover:opacity-90 disabled:opacity-50"
                                                             >
                                                                 <Save size={12} />
                                                                 {editingEventSaving ? "Guardando..." : "Guardar"}
@@ -375,7 +344,7 @@ export default function AgendaEventsPage() {
                                                             <input
                                                                 value={editForm.title}
                                                                 onChange={(e) => setEditForm((prev) => ({ ...prev, title: e.target.value }))}
-                                                                className="w-full rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] px-4 py-3 text-sm font-bold text-[hsl(var(--text-primary))] outline-none focus:border-[hsl(var(--info)/100%)] dark:border-white/10 dark:bg-black/20 dark:text-white"
+                                                                className="w-full rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] px-4 py-3 text-sm font-bold text-[hsl(var(--text-primary))] outline-none focus:border-[hsl(var(--primary))]"
                                                             />
                                                         </div>
                                                         <div className="space-y-1.5">
@@ -384,7 +353,7 @@ export default function AgendaEventsPage() {
                                                                 type="date"
                                                                 value={editForm.start_at}
                                                                 onChange={(e) => setEditForm((prev) => ({ ...prev, start_at: e.target.value }))}
-                                                                className="w-full rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] px-4 py-3 text-sm font-bold text-[hsl(var(--text-primary))] outline-none focus:border-[hsl(var(--info)/100%)] dark:border-white/10 dark:bg-black/20 dark:text-white"
+                                                                className="w-full rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] px-4 py-3 text-sm font-bold text-[hsl(var(--text-primary))] outline-none focus:border-[hsl(var(--primary))]"
                                                             />
                                                         </div>
                                                         <div className="space-y-1.5">
@@ -393,34 +362,15 @@ export default function AgendaEventsPage() {
                                                                 type="date"
                                                                 value={editForm.end_at}
                                                                 onChange={(e) => setEditForm((prev) => ({ ...prev, end_at: e.target.value }))}
-                                                                className="w-full rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] px-4 py-3 text-sm font-bold text-[hsl(var(--text-primary))] outline-none focus:border-[hsl(var(--info)/100%)] dark:border-white/10 dark:bg-black/20 dark:text-white"
+                                                                className="w-full rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] px-4 py-3 text-sm font-bold text-[hsl(var(--text-primary))] outline-none focus:border-[hsl(var(--primary))]"
                                                             />
-                                                        </div>
-                                                        <div className="space-y-1.5 md:col-span-2">
-                                                            <label className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Repetición</label>
-                                                            <select
-                                                                value={editForm.recurrence}
-                                                                onChange={(e) => setEditForm((prev) => ({ ...prev, recurrence: e.target.value as AgendaRecurrencePreset }))}
-                                                                className="w-full rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] px-4 py-3 text-sm font-bold text-[hsl(var(--text-primary))] outline-none focus:border-[hsl(var(--info)/100%)] dark:border-white/10 dark:bg-black/20 dark:text-white"
-                                                            >
-                                                                <option value="">No se repite</option>
-                                                                <option value="DAILY">Todos los días</option>
-                                                                <option value="WEEKLY">Semanalmente</option>
-                                                                <option value="BIWEEKLY">Cada 2 semanas</option>
-                                                                <option value="MONTHLY">Mensualmente</option>
-                                                            </select>
-                                                            {event.is_recurring && !editForm.recurrence ? (
-                                                                <p className="text-2xs font-medium text-[hsl(var(--text-secondary))]">
-                                                                    Serie activa ({describeRecurrence(event.recurrence_rule)}). Elige otro patrón para cambiarla, o &quot;No se repite&quot; para eliminarla.
-                                                                </p>
-                                                            ) : null}
                                                         </div>
                                                         <div className="space-y-1.5 md:col-span-2">
                                                             <label className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Ubicación</label>
                                                             <input
                                                                 value={editForm.location}
                                                                 onChange={(e) => setEditForm((prev) => ({ ...prev, location: e.target.value }))}
-                                                                className="w-full rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] px-4 py-3 text-sm font-bold text-[hsl(var(--text-primary))] outline-none focus:border-[hsl(var(--info)/100%)] dark:border-white/10 dark:bg-black/20 dark:text-white"
+                                                                className="w-full rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] px-4 py-3 text-sm font-bold text-[hsl(var(--text-primary))] outline-none focus:border-[hsl(var(--primary))]"
                                                             />
                                                         </div>
                                                         <div className="space-y-1.5 md:col-span-2">
@@ -429,7 +379,7 @@ export default function AgendaEventsPage() {
                                                                 rows={3}
                                                                 value={editForm.description}
                                                                 onChange={(e) => setEditForm((prev) => ({ ...prev, description: e.target.value }))}
-                                                                className="w-full resize-none rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] px-4 py-3 text-sm font-medium text-[hsl(var(--text-primary))] outline-none focus:border-[hsl(var(--info)/100%)] dark:border-white/10 dark:bg-black/20 dark:text-white"
+                                                                className="w-full resize-none rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] px-4 py-3 text-sm font-medium text-[hsl(var(--text-primary))] outline-none focus:border-[hsl(var(--primary))]"
                                                             />
                                                         </div>
                                                     </div>
@@ -442,33 +392,27 @@ export default function AgendaEventsPage() {
                                                                 onClick={() => router.push(`/plataforma/agenda/events/${event.id}`)}
                                                                 className="text-left"
                                                             >
-                                                                <h3 className="text-lg font-bold text-[hsl(var(--text-primary))] transition-colors hover:text-[hsl(var(--primary))] dark:text-white dark:hover:text-[hsl(var(--primary))]">{event.title}</h3>
+                                                                <h3 className="text-lg font-bold text-[hsl(var(--text-primary))] transition-colors hover:text-[hsl(var(--primary))]">{event.title}</h3>
                                                             </button>
                                                             {event.description ? (
                                                                 <p className="max-w-2xl text-sm font-medium text-[hsl(var(--text-secondary))]">{event.description}</p>
                                                             ) : null}
                                                         </div>
                                                         <div className="flex items-center gap-2">
-                                                            {event.is_recurring ? (
-                                                                <span className="inline-flex items-center gap-1 rounded-full bg-success-soft px-3 py-1 text-2xs font-semibold uppercase tracking-wide text-success-text dark:bg-[hsl(var(--success))]/10 dark:text-success-text">
-                                                                    <Repeat size={10} />
-                                                                    {describeRecurrence(event.recurrence_rule)}
-                                                                </span>
-                                                            ) : null}
-                                                            <span className="rounded-full bg-info-soft px-3 py-1 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--primary))] dark:bg-[hsl(var(--info))]/10 dark:text-[hsl(var(--primary))]">
+                                                            <span className="rounded-full bg-[hsl(var(--info-soft))] px-3 py-1 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--info-text))]">
                                                                 Agenda simple
                                                             </span>
                                                             <button
                                                                 onClick={() => handleInlineDelete(event.id)}
                                                                 disabled={deletingEventId === event.id}
-                                                                className="inline-flex items-center gap-1 rounded-md border border-destructive/20 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-destructive transition-all hover:bg-destructive/10 disabled:opacity-50 dark:border-destructive/30 dark:hover:bg-destructive/20"
+                                                                className="inline-flex items-center gap-1 rounded-md border border-[hsl(var(--destructive)/30%)] px-3 py-2 text-xs font-semibold uppercase tracking-wide text-[hsl(var(--destructive))] transition-all hover:bg-[hsl(var(--destructive)/10%)] disabled:opacity-50"
                                                             >
                                                                 <Trash2 size={12} />
                                                                 {deletingEventId === event.id ? "Eliminando..." : "Eliminar"}
                                                             </button>
                                                             <button
                                                                 onClick={() => startInlineEdit(event)}
-                                                                className="inline-flex items-center gap-1 rounded-md border border-[hsl(var(--border))] px-3 py-2 text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] transition-all hover:bg-[hsl(var(--surface-1))] dark:border-white/10 dark:hover:bg-white/5"
+                                                                className="inline-flex items-center gap-1 rounded-md border border-[hsl(var(--border))] px-3 py-2 text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] transition-all hover:bg-[hsl(var(--surface-2))]"
                                                             >
                                                                 <Pencil size={12} />
                                                                 Editar
@@ -476,7 +420,7 @@ export default function AgendaEventsPage() {
                                                         </div>
                                                     </div>
 
-                                                    <div className="mt-4 flex flex-col gap-2 text-sm font-bold text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">
+                                                    <div className="mt-4 flex flex-col gap-2 text-sm font-bold text-[hsl(var(--text-secondary))]">
                                                         <div className="flex items-center gap-2">
                                                             <Clock size={14} className="text-[hsl(var(--text-secondary))]" />
                                                             <span>{formatEventWindow(event)}</span>

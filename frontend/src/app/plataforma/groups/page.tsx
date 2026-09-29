@@ -33,14 +33,14 @@ export default function GroupsPage() {
     }, [token]);
 
     return (
-        <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))] overflow-hidden">
+        <div className="flex flex-col h-full bg-[hsl(var(--surface-1))] overflow-hidden">
             <WorkspaceToolbar
                 breadcrumbs={[
                     { label: 'Grupos', icon: Home },
                     { label: 'Dashboard', icon: TrendingUp },
                 ]}
                 rightActions={
-                    <button className="px-4 py-2 bg-[hsl(var(--primary))] text-white rounded-md text-2xs font-semibold uppercase tracking-wide shadow-lg shadow-[hsl(var(--primary)/0.2)] hover:scale-105 transition-all flex items-center gap-2">
+                    <button className="px-4 py-2 bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] rounded-md text-2xs font-semibold uppercase tracking-wide shadow-lg shadow-[hsl(var(--primary)/0.2)] hover:scale-105 transition-all flex items-center gap-2">
                         <Plus size={14} /> Nuevo Grupo
                     </button>
                 }
@@ -62,13 +62,13 @@ export default function GroupsPage() {
                                         <Home size={24} />
                                     </div>
                                     <div>
-                                        <h3 className="text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-white uppercase">{group.name}</h3>
+                                        <h3 className="text-sm font-semibold text-[hsl(var(--text-primary))] uppercase">{group.name}</h3>
                                         <p className="text-xs font-medium text-[hsl(var(--text-secondary))] flex items-center gap-1">
                                             <MapPin size={12} /> {group.address || 'Ubicación pendiente'}
                                         </p>
                                     </div>
                                 </div>
-                                <button className="p-2 text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] rounded-lg">
+                                <button className="p-2 text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] rounded-lg">
                                     <MoreHorizontal size={18} />
                                 </button>
                             </div>

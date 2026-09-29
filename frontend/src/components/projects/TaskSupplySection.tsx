@@ -81,17 +81,17 @@ export default function TaskSupplySection({
     };
 
     return (
-        <section className="px-4 py-3 border-b border-[hsl(var(--border))] dark:border-white/[0.05]">
+        <section className="px-4 py-3 border-b border-[hsl(var(--border))]">
             {error && (
-                <div className="mb-2 rounded-md border border-[hsl(var(--warning)/25%)] bg-warning-soft p-2 text-warning-text dark:border-[hsl(var(--warning)/100%)]/20 dark:bg-[hsl(var(--warning))]/10 dark:text-[hsl(var(--warning))]">
+                <div className="mb-2 rounded-md border border-[hsl(var(--warning)/0.3)] bg-[hsl(var(--warning)/0.1)] p-2 text-[hsl(var(--warning))]">
                     <p className="text-2xs font-bold uppercase tracking-wide">{error}</p>
                 </div>
             )}
 
             <div className="mb-3 flex items-center justify-between">
-                <p className="flex items-center gap-1.5 text-2xs font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))]">
+                <p className="flex items-center gap-1.5 text-2xs font-semibold uppercase tracking-wider text-[hsl(var(--muted-foreground))]">
                     <Boxes size={11} /> Insumos
-                    <span className="rounded bg-[hsl(var(--surface-2))] px-1.5 py-0.5 text-2xs font-bold text-[hsl(var(--text-secondary))] dark:bg-white/[0.06] dark:text-[hsl(var(--text-secondary))]">
+                    <span className="rounded bg-[hsl(var(--surface-2))] px-1.5 py-0.5 text-2xs font-bold text-[hsl(var(--muted-foreground))]">
                         {supplies.length}
                     </span>
                 </p>
@@ -99,7 +99,7 @@ export default function TaskSupplySection({
 
             <div className="space-y-2">
                 {supplies.length === 0 && (
-                    <p className="text-xs italic text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">
+                    <p className="text-xs italic text-[hsl(var(--muted-foreground))]">
                         Sin insumos registrados.
                     </p>
                 )}
@@ -107,7 +107,7 @@ export default function TaskSupplySection({
                 {supplies.map(supply => (
                     <div
                         key={supply.id}
-                        className="grid grid-cols-[minmax(0,1fr)_72px_110px] items-center gap-2 rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] px-3 py-2 dark:border-white/[0.06] dark:bg-white/[0.03]"
+                        className="grid grid-cols-[minmax(0,1fr)_72px_110px] items-center gap-2 rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] px-3 py-2"
                     >
                         <input
                             value={supply.item_name}
@@ -117,7 +117,7 @@ export default function TaskSupplySection({
                                 const original = task.supplies?.find(item => item.id === supply.id);
                                 if (value && value !== original?.item_name) handleUpdateSupply(supply, { item_name: value });
                             }}
-                            className="min-w-0 bg-transparent text-sm font-bold text-[hsl(var(--text-primary))] outline-none dark:text-[hsl(var(--text-secondary))]"
+                            className="min-w-0 bg-transparent text-sm font-bold text-[hsl(var(--foreground))] outline-none"
                         />
                         <input
                             type="number"
@@ -132,13 +132,13 @@ export default function TaskSupplySection({
                                 const original = task.supplies?.find(item => item.id === supply.id);
                                 if (quantity !== original?.quantity) handleUpdateSupply(supply, { quantity });
                             }}
-                            className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] px-2 py-1.5 text-xs font-bold outline-none dark:border-white/10 dark:bg-white/5"
+                            className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] px-2 py-1.5 text-xs font-bold text-[hsl(var(--foreground))] outline-none"
                         />
                         <select
                             value={supply.status}
                             disabled={savingSupplyId === supply.id}
                             onChange={event => handleUpdateSupply(supply, { status: event.target.value })}
-                            className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] px-2 py-1.5 text-xs font-bold outline-none dark:border-white/10 dark:bg-white/5"
+                            className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] px-2 py-1.5 text-xs font-bold text-[hsl(var(--foreground))] outline-none"
                         >
                             <option value="pending">Pendiente</option>
                             <option value="ready">Listo</option>
@@ -148,7 +148,7 @@ export default function TaskSupplySection({
                             onClick={() => handleDeleteSupply(supply.id)}
                             disabled={deletingSupplyId === supply.id}
                             title="Eliminar insumo"
-                            className="p-1.5 rounded-md text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--danger))] hover:bg-danger-soft dark:hover:bg-[hsl(var(--danger))]/10 transition-colors disabled:opacity-50"
+                            className="p-1.5 rounded-md text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--destructive))] hover:bg-[hsl(var(--destructive)/0.1)] transition-colors disabled:opacity-50"
                         >
                             {deletingSupplyId === supply.id ? <Loader2 size={12} className="animate-spin" /> : <Trash2 size={12} />}
                         </button>
@@ -162,19 +162,19 @@ export default function TaskSupplySection({
                     onChange={event => setNewSupplyName(event.target.value)}
                     onKeyDown={event => event.key === 'Enter' && handleAddSupply()}
                     placeholder="Nuevo insumo"
-                    className="min-w-0 rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] px-3 py-2 text-sm font-medium outline-none dark:border-white/10 dark:bg-white/5"
+                    className="min-w-0 rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] px-3 py-2 text-sm font-medium text-[hsl(var(--foreground))] placeholder:text-[hsl(var(--muted-foreground))] outline-none"
                 />
                 <input
                     type="number"
                     min={1}
                     value={newSupplyQuantity}
                     onChange={event => setNewSupplyQuantity(Math.max(1, Number(event.target.value) || 1))}
-                    className="rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] px-2 py-2 text-sm font-bold outline-none dark:border-white/10 dark:bg-white/5"
+                    className="rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] px-2 py-2 text-sm font-bold text-[hsl(var(--foreground))] outline-none"
                 />
                 <button
                     onClick={handleAddSupply}
                     disabled={creatingSupply || !newSupplyName.trim()}
-                    className="rounded-md bg-[hsl(var(--primary))] px-3 py-2 text-2xs font-semibold uppercase tracking-wide text-white disabled:opacity-50"
+                    className="rounded-md bg-[hsl(var(--primary))] px-3 py-2 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--primary-foreground))] disabled:opacity-50"
                 >
                     {creatingSupply ? '...' : 'Agregar'}
                 </button>

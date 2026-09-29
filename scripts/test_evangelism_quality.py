@@ -25,6 +25,7 @@ if PROJECT_ROOT is None:
 FRONTEND_ROOT = PROJECT_ROOT / "frontend"
 
 os.chdir(PROJECT_ROOT)
+os.environ["COVERAGE_FILE"] = "/tmp/.coverage_evangelism"
 
 GREEN = "\033[0;32m"
 RED = "\033[0;31m"
@@ -76,7 +77,23 @@ def run_command(check: Check) -> bool:
     if check.reason:
         info(check.reason)
     info("Ejecutando: " + " ".join(check.cmd))
-    result = subprocess.run(list(check.cmd), cwd=check.cwd, text=True, capture_output=True)
+    if len(check.cmd) > 2 and check.cmd[1] == "-m" and check.cmd[2] == "pytest":
+        import pytest
+        pytest_args = list(check.cmd[3:])
+        ret = pytest.main(pytest_args)
+        if ret == 0:
+            ok(f"{check.label} OK")
+            return True
+        if check.optional:
+            warn(f"{check.label} no pasó y queda como validación opcional")
+        else:
+            fail(f"{check.label} falló")
+        return False
+
+    env = dict(os.environ)
+    env.pop("PYTHONPATH", None)
+    env.pop("LD_LIBRARY_PATH", None)
+    result = subprocess.run(list(check.cmd), cwd=check.cwd, text=True, capture_output=True, env=env)
     if result.stdout.strip():
         for line in result.stdout.strip().splitlines():
             print(f"    {line}")
@@ -101,6 +118,8 @@ def build_checks(args: argparse.Namespace) -> list[Check]:
                 sys.executable,
                 "-m",
                 "pytest",
+                "-p",
+                "no:cov",
                 "-q",
                 "-o",
                 "addopts=",
@@ -118,6 +137,8 @@ def build_checks(args: argparse.Namespace) -> list[Check]:
                 sys.executable,
                 "-m",
                 "pytest",
+                "-p",
+                "no:cov",
                 "-q",
                 "-o",
                 "addopts=",
@@ -126,6 +147,86 @@ def build_checks(args: argparse.Namespace) -> list[Check]:
             ),
             cwd=PROJECT_ROOT,
             reason="Protege habilitación de sesiones y roles personalizados.",
+        ),
+        Check(
+            label="3. Event Form Studio y Digital Pass Super-PRO (TKT-EVT-STUDIO-01)",
+            cmd=(
+                sys.executable,
+                "-m",
+                "pytest",
+                "-p",
+                "no:cov",
+                "-q",
+                "-o",
+                "addopts=",
+                "tests/test_evangelism_form_studio_pass.py",
+            ),
+            cwd=PROJECT_ROOT,
+            reason="Valida formulario dinámico, numeración correlativa y generación de pase PDF ReportLab.",
+        ),
+        Check(
+            label="4. Gatekeeper Scanner y Monitor de Aforo (TKT-EVT-GATEKEEPER-02)",
+            cmd=(
+                sys.executable,
+                "-m",
+                "pytest",
+                "-p",
+                "no:cov",
+                "-q",
+                "-o",
+                "addopts=",
+                "tests/test_evangelism_gatekeeper.py",
+            ),
+            cwd=PROJECT_ROOT,
+            reason="Valida control de acceso, bloqueo anti-fraude duplicate_access y aforo en vivo.",
+        ),
+        Check(
+            label="5. Analytics Post-Evento, Embudo de Asistencia y Conversión CRM (TKT-EVT-ANALYTICS-03)",
+            cmd=(
+                sys.executable,
+                "-m",
+                "pytest",
+                "-p",
+                "no:cov",
+                "-q",
+                "-o",
+                "addopts=",
+                "tests/test_evangelism_post_analytics.py",
+            ),
+            cwd=PROJECT_ROOT,
+            reason="Valida métricas reales vs registradas, embudo de conversión a consolidación/grupos de vida y retención de visitantes.",
+        ),
+        Check(
+            label="6. Automatización de Seguimiento Post-Evento y Asignación de Mentores (TKT-EVT-FOLLOWUP-04)",
+            cmd=(
+                sys.executable,
+                "-m",
+                "pytest",
+                "-p",
+                "no:cov",
+                "-q",
+                "-o",
+                "addopts=",
+                "tests/test_evangelism_followup_campaigns.py",
+            ),
+            cwd=PROJECT_ROOT,
+            reason="Valida motor de secuencias cadencia 24h-72h-7d, balanceo por carga/zona y aislamiento multi-tenant sede_id.",
+        ),
+        Check(
+            label="7. Análisis de Cohortes de Retención, LTV Espiritual y Auditoría Pastoral Multi-Sede (TKT-EVT-COHORT-RETENTION-05)",
+            cmd=(
+                sys.executable,
+                "-m",
+                "pytest",
+                "-p",
+                "no:cov",
+                "-q",
+                "-o",
+                "addopts=",
+                "tests/test_evangelism_cohort_retention.py",
+            ),
+            cwd=PROJECT_ROOT,
+            reason="Valida retención temporal 30d/60d/90d en grupos/academia, cálculo SMI, rankings inter-sedes y exportación ejecutiva CSV.",
         ),
     ]
 
@@ -137,6 +238,8 @@ def build_checks(args: argparse.Namespace) -> list[Check]:
                     sys.executable,
                     "-m",
                     "pytest",
+                    "-p",
+                    "no:cov",
                     "-q",
                     "-o",
                     "addopts=",

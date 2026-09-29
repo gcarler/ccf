@@ -92,12 +92,12 @@ export const FALLBACK_MEMBER_ROLES = [
 ];
 
 export const ROLE_COLORS: Record<string, string> = {
-  lider: 'bg-[hsl(var(--info-muted))] text-[hsl(var(--primary))] dark:bg-[hsl(var(--info))]/30 dark:text-info-text',
-  colider: 'bg-[hsl(var(--info-muted))] text-[hsl(var(--primary))] dark:bg-[hsl(var(--info))]/30 dark:text-info-text',
-  persona: 'bg-[hsl(var(--bg-muted))] text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]',
-  visitante: 'bg-[hsl(var(--warning-muted))] text-[hsl(var(--warning))] dark:bg-[hsl(var(--warning)/0.15)] dark:text-[hsl(var(--warning))]',
-  asistente: 'bg-[hsl(var(--bg-muted))] text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]',
-  personalizado: 'bg-[hsl(var(--info-muted))] text-[hsl(var(--primary))] dark:bg-[hsl(var(--info))]/30 dark:text-info-text',
+  lider: 'bg-[hsl(var(--info-muted))] text-[hsl(var(--info))]',
+  colider: 'bg-[hsl(var(--info-muted))] text-[hsl(var(--info))]',
+  persona: 'bg-[hsl(var(--bg-muted))] text-[hsl(var(--text-secondary))]',
+  visitante: 'bg-[hsl(var(--warning-muted))] text-[hsl(var(--warning))]',
+  asistente: 'bg-[hsl(var(--bg-muted))] text-[hsl(var(--text-secondary))]',
+  personalizado: 'bg-[hsl(var(--info-muted))] text-[hsl(var(--info))]',
 };
 
 export const TABS: { id: TabId; label: string; icon: LucideIcon }[] = [

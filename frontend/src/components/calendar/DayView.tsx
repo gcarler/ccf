@@ -51,7 +51,7 @@ export default function DayView({
           >
             <div className="flex-1 relative cursor-pointer">
               {HOURS.map(h => (
-                <div key={h} className="absolute left-0 right-0 border-t border-[hsl(var(--border))] dark:border-white/[0.04]"
+                <div key={h} className="absolute left-0 right-0 border-t border-[hsl(var(--border)/40%)]"
                   style={{ top: h * HOUR_HEIGHT }} />
               ))}
               {isToday(currentDate) && (

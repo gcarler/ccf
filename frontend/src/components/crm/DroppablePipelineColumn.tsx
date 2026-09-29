@@ -58,14 +58,14 @@ export function DroppablePipelineColumn({ stage, leads, onLeadClick, onNewLead, 
             {/* Column Header */}
             <div className="flex items-center justify-between px-4 py-1.5 mb-2 group/header">
                 <div className="flex items-center gap-3">
-                    <div className={clsx("size-5 rounded-full flex items-center justify-center bg-[hsl(var(--bg-primary))] dark:bg-black/20 shadow-sm border border-[hsl(var(--border))] dark:border-white/10")}>
+                    <div className={clsx("size-5 rounded-full flex items-center justify-center bg-[hsl(var(--surface-1))] shadow-sm border border-[hsl(var(--border))]")}>
                         <div className={clsx("size-1.5 rounded-full animate-pulse", stage.dot || stage.color)} />
                     </div>
                     <div className="flex flex-col">
-                        <h3 className="text-2xs font-bold text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] uppercase tracking-wide leading-tight">
+                        <h3 className="text-2xs font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wide leading-tight">
                             {stage.label}
                         </h3>
-                        <span className="text-2xs font-bold text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] uppercase">
+                        <span className="text-2xs font-bold text-[hsl(var(--muted-foreground))] uppercase">
                             {leads.length} {leads.length === 1 ? 'Prospecto' : 'Prospectos'}
                         </span>
                     </div>
@@ -75,13 +75,13 @@ export function DroppablePipelineColumn({ stage, leads, onLeadClick, onNewLead, 
                     {allowEditing && (
                         <button
                             onClick={onNewLead}
-                            className="size-7 rounded-md bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 flex items-center justify-center text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] hover:border-[hsl(var(--info)/100%)]/30 hover:shadow-lg transition-all"
+                            className="size-7 rounded-md bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] flex items-center justify-center text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--primary))] hover:border-[hsl(var(--primary)/0.3)] hover:shadow-lg transition-all"
                             aria-label="Agregar"
                         >
                             <UserPlus size={12} />
                         </button>
                     )}
-                    <button className="size-7 rounded-md bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 flex items-center justify-center text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-secondary))] transition-all" aria-label="Más opciones">
+                    <button className="size-7 rounded-md bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] flex items-center justify-center text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] transition-all" aria-label="Más opciones">
                         <MoreHorizontal size={12} />
                     </button>
                 </div>
@@ -92,7 +92,7 @@ export function DroppablePipelineColumn({ stage, leads, onLeadClick, onNewLead, 
                 ref={setNodeRef}
                 className={clsx(
                     "flex-1 flex flex-col p-3 rounded-md transition-all duration-300",
-                    isOver ? "bg-white/40 dark:bg-white/5 backdrop-blur-md ring-2 ring-[hsl(var(--primary))]/20" : "bg-[hsl(var(--surface-1))]/50 dark:bg-white/[0.02]"
+                    isOver ? "bg-[hsl(var(--surface-2))] ring-2 ring-[hsl(var(--primary)/0.2)]" : "bg-[hsl(var(--surface-1))]"
                 )}
             >
                 <motion.div
@@ -128,14 +128,14 @@ export function DroppablePipelineColumn({ stage, leads, onLeadClick, onNewLead, 
                         <div className={clsx(
                             "flex flex-col items-center justify-center gap-3 py-1.5 px-4 rounded-lg border-2 border-dashed transition-all duration-500",
                             isOver
-                                ? "border-[hsl(var(--info)/100%)]/50 bg-[hsl(var(--info))]/5 scale-[0.98]"
-                                : "border-[hsl(var(--border))] dark:border-white/5"
+                                ? "border-[hsl(var(--primary)/0.5)] bg-[hsl(var(--primary)/0.05)] scale-[0.98]"
+                                : "border-[hsl(var(--border))]"
                         )}>
-                            <div className="p-4 rounded-lg bg-[hsl(var(--bg-primary))] dark:bg-white/5 shadow-sm border border-[hsl(var(--border))] dark:border-white/5">
-                                {stage.emptyIcon ? <stage.emptyIcon size={24} className="text-[hsl(var(--text-secondary))]" /> : <UserPlus size={24} className="text-[hsl(var(--text-secondary))]" />}
+                            <div className="p-4 rounded-lg bg-[hsl(var(--surface-1))] shadow-sm border border-[hsl(var(--border))]">
+                                {stage.emptyIcon ? <stage.emptyIcon size={24} className="text-[hsl(var(--muted-foreground))]" /> : <UserPlus size={24} className="text-[hsl(var(--muted-foreground))]" />}
                             </div>
                             <div className="text-center">
-                                <p className="text-2xs font-bold text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] uppercase tracking-wide leading-normal">
+                                <p className="text-2xs font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wide leading-normal">
                                     {isOver ? '¡Suelta para asignar!' : `Sin ${stage.label.toLowerCase()}`}
                                 </p>
                                 {allowEditing && !isOver && (
@@ -155,9 +155,9 @@ export function DroppablePipelineColumn({ stage, leads, onLeadClick, onNewLead, 
                 {allowEditing && (
                     <button
                         onClick={onNewLead}
-                        className="w-full mt-auto py-1.5 rounded-lg border border-dashed border-[hsl(var(--border))] dark:border-white/10 text-2xs font-bold text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] hover:border-[hsl(var(--info)/100%)]/30 hover:bg-[hsl(var(--bg-primary))] dark:hover:bg-white/5 transition-all flex items-center justify-center gap-2 group"
+                        className="w-full mt-auto py-1.5 rounded-lg border border-dashed border-[hsl(var(--border))] text-2xs font-bold text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--primary))] hover:border-[hsl(var(--primary)/0.3)] hover:bg-[hsl(var(--surface-2))] transition-all flex items-center justify-center gap-2 group"
                     >
-                        <div className="size-5 rounded-lg bg-[hsl(var(--surface-2))] dark:bg-white/5 flex items-center justify-center group-hover:bg-info-soft transition-colors">
+                        <div className="size-5 rounded-lg bg-[hsl(var(--surface-2))] flex items-center justify-center group-hover:bg-[hsl(var(--primary)/0.1)] transition-colors">
                             <UserPlus size={10} />
                         </div>
                         AGREGAR PROSPECTO

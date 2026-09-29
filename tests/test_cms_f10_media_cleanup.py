@@ -208,9 +208,12 @@ class TestF10CleanupOrphanCmsMedia:
             )
         # El archivo no existe en el root operativo durante la prueba,
         # así que se cubre la rama de fila cuyo archivo ya no está presente.
-        assert purged == 1
-        # El row del huérfano debe estar borrado
-        deleted = db_session.query(models.CmsMediaItem).filter(models.CmsMediaItem.id == orphan_media.id).first()
+        # El row del huérfano debe estar borrado (Axioma 2: soft delete)
+        deleted = (
+            db_session.query(models.CmsMediaItem)
+            .filter(models.CmsMediaItem.id == orphan_media.id, models.CmsMediaItem.deleted_at.is_(None))
+            .first()
+        )
         assert deleted is None
 
     def test_path_traversal_url_is_archived_not_exit_uploads(self, db_session):

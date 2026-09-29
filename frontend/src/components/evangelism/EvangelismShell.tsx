@@ -12,6 +12,7 @@ import {
   GitBranch,
   Scan,
   ShieldAlert,
+  TrendingUp,
   Trophy,
   Users,
   Zap,
@@ -122,6 +123,7 @@ export default function EvangelismShell({
             items: [
                 { id: 'ev-rankings', label: 'Rankings', href: '/plataforma/evangelism/rankings', icon: Trophy },
                 { id: 'ev-multiplication', label: 'Multiplicación', href: '/plataforma/evangelism/multiplication', icon: GitBranch },
+                { id: 'ev-cohorts', label: 'Cohortes y LTV', href: '/plataforma/evangelism/cohorts', icon: TrendingUp },
             ],
         },
         {

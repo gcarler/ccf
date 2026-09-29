@@ -1,11 +1,14 @@
 import uuid
 import uuid as _uuid
+from typing import Optional, Any
 
 from sqlalchemy import (
     JSON,
+    BigInteger,
     Boolean,
     Column,
     DateTime,
+    Float,
     ForeignKey,
     Integer,
     String,
@@ -28,6 +31,13 @@ class Project(Base):
     owner_id = Column(UUID(as_uuid=True), ForeignKey("personas.id", ondelete="SET NULL"), nullable=True, index=True)
     color = Column(String(20), nullable=True)
     icon = Column(String(50), nullable=True)
+    start_date = Column(DateTime(timezone=True), nullable=True)
+    target_date = Column(DateTime(timezone=True), nullable=True)
+    progress_mode = Column(String(20), default="auto_tasks", nullable=False)
+    manual_progress = Column(Float, default=0.0, nullable=False)
+    budget_allocated = Column(Float, nullable=True)
+    budget_spent = Column(Float, nullable=True)
+    health_override = Column(String(20), nullable=True)
     deleted_at = Column(DateTime(timezone=True), nullable=True)
     created_at = Column(DateTime(timezone=True), default=_utcnow, index=True)
     updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
@@ -40,6 +50,15 @@ class Project(Base):
     whiteboard = relationship(
         "ProjectWhiteboard", back_populates="project", uselist=False, cascade="all, delete-orphan"
     )
+    kpis = relationship("ProjectKPI", back_populates="project", cascade="all, delete-orphan")
+    dependencies = relationship("ProjectTaskDependency", back_populates="project", cascade="all, delete-orphan")
+    expenses = relationship("ProjectExpense", back_populates="project", cascade="all, delete-orphan")
+    risks = relationship("ProjectRisk", back_populates="project", cascade="all, delete-orphan")
+    baselines = relationship("ProjectBaseline", back_populates="project", cascade="all, delete-orphan")
+    time_logs = relationship("ProjectTimeLog", back_populates="project", cascade="all, delete-orphan")
+    automations = relationship("ProjectAutomationRule", back_populates="project", cascade="all, delete-orphan")
+    indicators = relationship("ProjectIndicator", back_populates="project", cascade="all, delete-orphan")
+    files = relationship("ProjectFile", back_populates="project", cascade="all, delete-orphan")
 
     # ``name`` is a thin alias over ``title`` so callers that pass or read
     # ``name`` (e.g. ``tests/test_crud_integration.py::TestProjectsCrud``)
@@ -122,6 +141,7 @@ class ProjectTask(Base):
     assignee = relationship("Persona", foreign_keys=[assignee_id])
     supplies = relationship("TaskSupply", back_populates="task", cascade="all, delete-orphan")
     attachments = relationship("ProjectAttachment", back_populates="task", cascade="all, delete-orphan")
+    time_logs = relationship("ProjectTimeLog", back_populates="task", cascade="all, delete-orphan")
     subtasks = relationship(
         "ProjectTask",
         backref=backref("parent", remote_side="ProjectTask.id"),
@@ -167,11 +187,15 @@ class ProjectComment(Base):
     attachments = Column(JSON, default=list, nullable=False)
     mentions = Column(JSON, default=list, nullable=False)
     is_resolved = Column(Boolean, default=False)
+    is_pinned = Column(Boolean, default=False, nullable=False, index=True)
+    pinned_at = Column(DateTime(timezone=True), nullable=True)
+    pinned_by = Column(UUID(as_uuid=True), ForeignKey("personas.id", ondelete="SET NULL"), nullable=True, index=True)
     deleted_at = Column(DateTime(timezone=True), nullable=True)
     created_at = Column(DateTime(timezone=True), default=_utcnow, index=True)
     updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
 
     author = relationship("Persona", foreign_keys=[author_id])
+    pinner = relationship("Persona", foreign_keys=[pinned_by])
 
 
 class ProjectPhase(Base):
@@ -234,3 +258,280 @@ class ProjectDocument(Base):
 
     project = relationship("Project")
     author = relationship("Persona", foreign_keys=[author_id])
+
+
+class ProjectKPI(Base):
+    __tablename__ = "project_kpis"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    project_id = Column(UUID(as_uuid=True), ForeignKey("projects.id", ondelete="CASCADE"), nullable=False, index=True)
+    title = Column(String(150), nullable=False)
+    description = Column(Text, nullable=True)
+    target_value = Column(Float, nullable=False)
+    current_value = Column(Float, default=0.0, nullable=False)
+    unit = Column(String(30), default="unidades", nullable=False)
+    category = Column(String(50), default="impact", nullable=False)
+    due_date = Column(DateTime(timezone=True), nullable=True)
+    created_at = Column(DateTime(timezone=True), default=_utcnow, index=True)
+    updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
+    deleted_at = Column(DateTime(timezone=True), nullable=True, index=True)
+
+    project = relationship("Project", back_populates="kpis")
+
+
+class ProjectTaskDependency(Base):
+    __tablename__ = "project_task_dependencies"
+    __table_args__ = (UniqueConstraint("predecessor_id", "successor_id", name="uq_project_task_dependency_pair"),)
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    project_id = Column(UUID(as_uuid=True), ForeignKey("projects.id", ondelete="CASCADE"), nullable=False, index=True)
+    predecessor_id = Column(UUID(as_uuid=True), ForeignKey("project_tasks.id", ondelete="CASCADE"), nullable=False, index=True)
+    successor_id = Column(UUID(as_uuid=True), ForeignKey("project_tasks.id", ondelete="CASCADE"), nullable=False, index=True)
+    dependency_type = Column(String(10), default="FS", nullable=False)
+    lag_days = Column(Integer, default=0, nullable=False)
+    created_at = Column(DateTime(timezone=True), default=_utcnow, index=True)
+    deleted_at = Column(DateTime(timezone=True), nullable=True)
+
+    project = relationship("Project", back_populates="dependencies")
+    predecessor = relationship("ProjectTask", foreign_keys=[predecessor_id])
+    successor = relationship("ProjectTask", foreign_keys=[successor_id])
+
+
+class ProjectExpense(Base):
+    __tablename__ = "project_expenses"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    project_id = Column(UUID(as_uuid=True), ForeignKey("projects.id", ondelete="CASCADE"), nullable=False, index=True)
+    category = Column(String(50), default="general", nullable=False)
+    description = Column(Text, nullable=True)
+    amount = Column(Float, default=0.0, nullable=False)
+    date = Column(DateTime(timezone=True), default=_utcnow, nullable=False)
+    receipt_url = Column(String(500), nullable=True)
+    status = Column(String(20), default="planned", nullable=False, index=True)
+    created_by = Column(UUID(as_uuid=True), ForeignKey("personas.id", ondelete="SET NULL"), nullable=True, index=True)
+    created_at = Column(DateTime(timezone=True), default=_utcnow, index=True)
+    updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
+    deleted_at = Column(DateTime(timezone=True), nullable=True, index=True)
+
+    project = relationship("Project", back_populates="expenses")
+    creator = relationship("Persona", foreign_keys=[created_by])
+
+
+class ProjectRisk(Base):
+    __tablename__ = "project_risks"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    project_id = Column(UUID(as_uuid=True), ForeignKey("projects.id", ondelete="CASCADE"), nullable=False, index=True)
+    title = Column(String(200), nullable=False)
+    category = Column(String(50), default="tecnico", nullable=False)
+    probability = Column(Integer, default=3, nullable=False)
+    impact = Column(Integer, default=3, nullable=False)
+    severity_score = Column(Integer, default=9, nullable=False)
+    mitigation_plan = Column(Text, nullable=True)
+    contingency_plan = Column(Text, nullable=True)
+    owner_id = Column(UUID(as_uuid=True), ForeignKey("personas.id", ondelete="SET NULL"), nullable=True, index=True)
+    status = Column(String(20), default="active", nullable=False, index=True)
+    created_at = Column(DateTime(timezone=True), default=_utcnow, index=True)
+    updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
+    deleted_at = Column(DateTime(timezone=True), nullable=True, index=True)
+
+    project = relationship("Project", back_populates="risks")
+    owner = relationship("Persona", foreign_keys=[owner_id])
+
+
+class ProjectBaseline(Base):
+    __tablename__ = "project_baselines"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    project_id = Column(UUID(as_uuid=True), ForeignKey("projects.id", ondelete="CASCADE"), nullable=False, index=True)
+    name = Column(String(100), default="Línea Base Inicial", nullable=False)
+    description = Column(Text, nullable=True)
+    snapshot_data = Column(JSON, nullable=False, default=dict)
+    created_by = Column(UUID(as_uuid=True), ForeignKey("personas.id", ondelete="SET NULL"), nullable=True, index=True)
+    created_at = Column(DateTime(timezone=True), default=_utcnow, index=True)
+    deleted_at = Column(DateTime(timezone=True), nullable=True, index=True)
+
+    project = relationship("Project", back_populates="baselines")
+    creator = relationship("Persona", foreign_keys=[created_by])
+
+
+class ProjectTimeLog(Base):
+    __tablename__ = "project_time_logs"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    project_id = Column(UUID(as_uuid=True), ForeignKey("projects.id", ondelete="CASCADE"), nullable=False, index=True)
+    task_id = Column(UUID(as_uuid=True), ForeignKey("project_tasks.id", ondelete="CASCADE"), nullable=True, index=True)
+    persona_id = Column(UUID(as_uuid=True), ForeignKey("personas.id", ondelete="SET NULL"), nullable=False, index=True)
+    hours = Column(Float, nullable=False)
+    date = Column(DateTime(timezone=True), default=_utcnow, nullable=False)
+    description = Column(Text, nullable=True)
+    is_billable = Column(Boolean, default=True, nullable=False)
+    created_at = Column(DateTime(timezone=True), default=_utcnow, index=True)
+    updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
+    deleted_at = Column(DateTime(timezone=True), nullable=True, index=True)
+
+    project = relationship("Project", back_populates="time_logs")
+    task = relationship("ProjectTask", back_populates="time_logs")
+    persona = relationship("Persona", foreign_keys=[persona_id])
+
+
+class ProjectTemplate(Base):
+    __tablename__ = "project_templates"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    name = Column(String(255), nullable=False)
+    description = Column(Text, nullable=True)
+    category = Column(String(100), default="general", nullable=False, index=True)
+    default_budget = Column(Float, default=0.0, nullable=False)
+    structure = Column(JSON, nullable=False, default=dict)
+    created_by = Column(UUID(as_uuid=True), ForeignKey("personas.id", ondelete="SET NULL"), nullable=True, index=True)
+    is_public = Column(Boolean, default=True, nullable=False, index=True)
+    sede_id = Column(UUID(as_uuid=True), ForeignKey("sedes.id", ondelete="SET NULL"), nullable=True, index=True)
+    created_at = Column(DateTime(timezone=True), default=_utcnow, nullable=False)
+    updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow, nullable=False)
+    deleted_at = Column(DateTime(timezone=True), nullable=True, index=True)
+
+    creator = relationship("Persona", foreign_keys=[created_by])
+
+
+class ProjectAutomationRule(Base):
+    __tablename__ = "project_automation_rules"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    project_id = Column(UUID(as_uuid=True), ForeignKey("projects.id", ondelete="CASCADE"), nullable=True, index=True)
+    name = Column(String(255), nullable=False)
+    description = Column(Text, nullable=True)
+    trigger_event = Column(String(50), nullable=False, index=True)
+    condition_data = Column(JSON, nullable=False, default=dict)
+    action_type = Column(String(50), nullable=False)
+    action_data = Column(JSON, nullable=False, default=dict)
+    is_active = Column(Boolean, default=True, nullable=False, index=True)
+    execution_count = Column(Integer, default=0, nullable=False)
+    last_triggered_at = Column(DateTime(timezone=True), nullable=True)
+    created_by = Column(UUID(as_uuid=True), ForeignKey("personas.id", ondelete="SET NULL"), nullable=True, index=True)
+    sede_id = Column(UUID(as_uuid=True), ForeignKey("sedes.id", ondelete="SET NULL"), nullable=True, index=True)
+    created_at = Column(DateTime(timezone=True), default=_utcnow, nullable=False)
+    updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow, nullable=False)
+    deleted_at = Column(DateTime(timezone=True), nullable=True, index=True)
+
+    project = relationship("Project", back_populates="automations")
+    creator = relationship("Persona", foreign_keys=[created_by])
+
+
+class ProjectIndicator(Base):
+    __tablename__ = "project_indicators"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    project_id = Column(UUID(as_uuid=True), ForeignKey("projects.id", ondelete="CASCADE"), nullable=False, index=True)
+    code = Column(String(50), nullable=True, index=True)
+    name = Column(String(255), nullable=False)
+    description = Column(Text, nullable=True)
+    level = Column(String(50), default="PRODUCTO_PRINCIPAL", nullable=False, index=True)
+    calculation_type = Column(String(50), default="ABSOLUTO_ACUMULADO", nullable=False, index=True)
+    unit_of_measure = Column(String(50), nullable=True)
+    baseline_value = Column(Float, default=0.0, nullable=False)
+    target_value = Column(Float, default=0.0, nullable=False)
+    current_value = Column(Float, default=0.0, nullable=False)
+    frequency = Column(String(50), default="mensual", nullable=False)
+    period_targets = Column(JSON, default=dict, nullable=False)
+    crema_score = Column(Float, nullable=True)
+    crema_evaluation = Column(JSON, default=dict, nullable=False)
+    created_by = Column(UUID(as_uuid=True), ForeignKey("personas.id", ondelete="SET NULL"), nullable=True, index=True)
+    sede_id = Column(UUID(as_uuid=True), ForeignKey("sedes.id", ondelete="SET NULL"), nullable=True, index=True)
+    created_at = Column(DateTime(timezone=True), default=_utcnow, nullable=False)
+    updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow, nullable=False)
+    deleted_at = Column(DateTime(timezone=True), nullable=True, index=True)
+
+    project = relationship("Project", back_populates="indicators")
+    creator = relationship("Persona", foreign_keys=[created_by])
+    records = relationship("ProjectIndicatorRecord", back_populates="indicator", cascade="all, delete-orphan")
+
+
+class ProjectIndicatorRecord(Base):
+    __tablename__ = "project_indicator_records"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    indicator_id = Column(UUID(as_uuid=True), ForeignKey("project_indicators.id", ondelete="CASCADE"), nullable=False, index=True)
+    period = Column(String(50), nullable=False, index=True)
+    target_value = Column(Float, default=0.0, nullable=False)
+    actual_value = Column(Float, default=0.0, nullable=False)
+    spi = Column(Float, nullable=True)
+    notes = Column(Text, nullable=True)
+    evidence_url = Column(String(500), nullable=True)
+    reported_by = Column(UUID(as_uuid=True), ForeignKey("personas.id", ondelete="SET NULL"), nullable=True, index=True)
+    reported_at = Column(DateTime(timezone=True), default=_utcnow, nullable=False)
+    created_at = Column(DateTime(timezone=True), default=_utcnow, nullable=False)
+    updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow, nullable=False)
+    deleted_at = Column(DateTime(timezone=True), nullable=True, index=True)
+
+    indicator = relationship("ProjectIndicator", back_populates="records")
+    reporter = relationship("Persona", foreign_keys=[reported_by])
+
+
+class ProjectUserFavorite(Base):
+    __tablename__ = "project_user_favorites"
+    __table_args__ = (
+        UniqueConstraint("persona_id", "entity_type", "entity_id", name="uq_project_user_favorites_entity"),
+    )
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    project_id = Column(UUID(as_uuid=True), ForeignKey("projects.id", ondelete="CASCADE"), nullable=False, index=True)
+    persona_id = Column(UUID(as_uuid=True), ForeignKey("personas.id", ondelete="CASCADE"), nullable=False, index=True)
+    entity_type = Column(String(50), default="task", nullable=False, index=True)
+    entity_id = Column(UUID(as_uuid=True), nullable=False, index=True)
+    created_at = Column(DateTime(timezone=True), default=_utcnow, nullable=False)
+
+    project = relationship("Project")
+    persona = relationship("Persona", foreign_keys=[persona_id])
+
+
+class ProjectFile(Base):
+    """Bóveda documental y visor universal embebido (Google Drive, PDFs, imágenes)."""
+    __tablename__ = "project_files"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    project_id = Column(UUID(as_uuid=True), ForeignKey("projects.id", ondelete="CASCADE"), nullable=False, index=True)
+    name = Column(String(255), nullable=False)
+    description = Column(Text, nullable=True)
+    category = Column(String(100), default="general", nullable=False, index=True)
+    file_source = Column(String(50), default="local", nullable=False, index=True)  # 'local', 'drive', 'dropbox', 'onedrive'
+    file_url = Column(Text, nullable=False)
+    file_type = Column(String(100), nullable=True)
+    file_size = Column(BigInteger, nullable=True)
+    drive_file_id = Column(String(255), nullable=True, index=True)
+    task_id = Column(UUID(as_uuid=True), ForeignKey("project_tasks.id", ondelete="SET NULL"), nullable=True, index=True)
+    phase_id = Column(UUID(as_uuid=True), ForeignKey("project_phases.id", ondelete="SET NULL"), nullable=True, index=True)
+    uploaded_by = Column(UUID(as_uuid=True), ForeignKey("personas.id", ondelete="RESTRICT"), nullable=True, index=True)
+    sede_id = Column(UUID(as_uuid=True), ForeignKey("sedes.id", ondelete="SET NULL"), nullable=True, index=True)
+    created_at = Column(DateTime(timezone=True), default=_utcnow, nullable=False)
+    updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow, nullable=True)
+    deleted_at = Column(DateTime(timezone=True), nullable=True, index=True)
+
+    project = relationship("Project", back_populates="files")
+    task = relationship("ProjectTask", backref="project_files")
+    phase = relationship("ProjectPhase", backref="project_files")
+    uploader = relationship("Persona", foreign_keys=[uploaded_by])
+    sede = relationship("Sede", foreign_keys=[sede_id])
+
+    @property
+    def embed_url(self) -> Optional[str]:
+        """Calcula dinámicamente la URL embebible para iframes."""
+        if self.file_source == "drive" or (self.file_url and ("drive.google.com" in self.file_url or "docs.google.com" in self.file_url)):
+            if self.drive_file_id:
+                url_str = (self.file_url or "").lower()
+                if "document/d/" in url_str:
+                    return f"https://docs.google.com/document/d/{self.drive_file_id}/preview"
+                elif "spreadsheets/d/" in url_str:
+                    return f"https://docs.google.com/spreadsheets/d/{self.drive_file_id}/preview"
+                elif "presentation/d/" in url_str:
+                    return f"https://docs.google.com/presentation/d/{self.drive_file_id}/preview"
+                elif "forms/d/" in url_str:
+                    return f"https://docs.google.com/forms/d/{self.drive_file_id}/viewform?embedded=true"
+                return f"https://drive.google.com/file/d/{self.drive_file_id}/preview"
+        return self.file_url
+
+
+
+
+
+

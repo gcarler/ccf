@@ -68,8 +68,8 @@ export function GroupPersonasSection(props: GroupPersonasSectionProps) {
           onClick={() => setIsAddingPersonas(!isAddingPersonas)}
           className={`px-4 py-2 text-xs font-semibold uppercase tracking-wide rounded-lg transition-colors flex items-center gap-2 ${
             isAddingPersonas
-              ? 'bg-[hsl(var(--bg-muted))] text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--bg-muted))] dark:hover:bg-white/20'
-              : 'bg-info-soft text-[hsl(var(--primary))] hover:bg-info-muted dark:bg-[hsl(var(--info)/0.1)] dark:text-[hsl(var(--primary))]'
+              ? 'bg-[hsl(var(--surface-2))] text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--surface-3))]'
+              : 'bg-[hsl(var(--info)/0.15)] text-[hsl(var(--info))] hover:bg-[hsl(var(--info)/0.25)]'
           }`}
         >
           <UserPlus size={14} /> {isAddingPersonas ? 'Ocultar catálogo' : 'Añadir personas'}
@@ -79,7 +79,7 @@ export function GroupPersonasSection(props: GroupPersonasSectionProps) {
       {selectedPersonaIds.size > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
           {personas.filter(m => selectedPersonaIds.has(m.id)).map(persona => (
-            <div key={persona.id} className="flex items-center justify-between gap-3 rounded-lg border border-info-muted dark:border-[hsl(var(--info)/0.3)] bg-info-soft px-4 py-1.5">
+            <div key={persona.id} className="flex items-center justify-between gap-3 rounded-lg border border-[hsl(var(--info)/0.25)] bg-[hsl(var(--info)/0.1)] px-4 py-1.5">
               <div className="min-w-0">
                 <p className="text-sm font-bold text-[hsl(var(--text-primary))] truncate">
                   {persona.nombre_completo}
@@ -110,17 +110,17 @@ export function GroupPersonasSection(props: GroupPersonasSectionProps) {
       )}
 
       {/* QUICK ACTION TO ATTENDANCE PANEL */}
-      <div className="mt-3 pt-6 border-t border-[hsl(var(--border-primary))] flex items-center justify-between bg-info-soft rounded-lg px-4 py-2">
+      <div className="mt-3 pt-6 border-t border-[hsl(var(--border-primary))] flex items-center justify-between bg-[hsl(var(--info)/0.1)] rounded-lg px-4 py-2">
         <div>
-          <h3 className="text-sm font-semibold text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] mb-1">Registrar Asistencia Semanal</h3>
-          <p className="text-xs font-medium text-info-text/70 dark:text-info/70">
+          <h3 className="text-sm font-semibold text-[hsl(var(--info))] mb-1">Registrar Asistencia Semanal</h3>
+          <p className="text-xs font-medium text-[hsl(var(--info))]/70">
             Ir al panel dedicado para registrar la asistencia, ofrendas y novedades de las reuniones semanales de este grupo.
           </p>
         </div>
         <div className="flex flex-col sm:flex-row sm:items-center gap-2 shrink-0">
           <a
             href={`/plataforma/evangelism/groups/${selectedHouse.id}`}
-            className="px-3 py-2.5 bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))] text-white rounded-md text-xs font-semibold uppercase tracking-wide transition-all shadow-lg shadow-primary flex items-center gap-2"
+            className="px-3 py-2.5 bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] rounded-md text-xs font-semibold uppercase tracking-wide transition-all shadow-lg shadow-primary flex items-center gap-2"
           >
             <Calendar size={14} /> Registrar Asistencia
           </a>
@@ -129,7 +129,7 @@ export function GroupPersonasSection(props: GroupPersonasSectionProps) {
               type="button"
               onClick={() => downloadGroupAttendancePdf(selectedHouse.id)}
               title="Descargar reporte de asistencia (PDF)"
-              className="px-2.5 py-2.5 bg-danger-soft text-[hsl(var(--destructive))] dark:text-danger border border-danger-muted dark:border-[hsl(var(--danger)/0.3)] hover:bg-danger-muted dark:hover:bg-[hsl(var(--danger)/0.15)] rounded-md text-xs font-bold transition-all flex items-center gap-1.5"
+              className="px-2.5 py-2.5 bg-[hsl(var(--destructive)/0.1)] text-[hsl(var(--destructive))] border border-[hsl(var(--destructive)/0.3)] hover:bg-[hsl(var(--destructive)/0.2)] rounded-md text-xs font-bold transition-all flex items-center gap-1.5"
             >
               <FileText size={13} /> PDF
             </button>
@@ -137,7 +137,7 @@ export function GroupPersonasSection(props: GroupPersonasSectionProps) {
               type="button"
               onClick={() => downloadGroupAttendanceExcel(selectedHouse.id)}
               title="Descargar reporte de asistencia (Excel)"
-              className="px-2.5 py-2.5 bg-success-soft text-[hsl(var(--secondary))] dark:text-success border border-success-muted dark:border-[hsl(var(--success)/0.3)] hover:bg-success-soft dark:hover:bg-[hsl(var(--success)/0.15)] rounded-md text-xs font-bold transition-all flex items-center gap-1.5"
+              className="px-2.5 py-2.5 bg-[hsl(var(--success)/0.1)] text-[hsl(var(--success))] border border-[hsl(var(--success)/0.3)] hover:bg-[hsl(var(--success)/0.2)] rounded-md text-xs font-bold transition-all flex items-center gap-1.5"
             >
               <FileSpreadsheet size={13} /> XLSX
             </button>

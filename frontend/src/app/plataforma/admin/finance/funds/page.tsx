@@ -4,6 +4,7 @@ import React, { useCallback, useEffect, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { apiFetch } from "@/lib/http";
 import WorkspaceToolbar from "@/components/WorkspaceToolbar";
+import ConfirmActionDrawer from "@/components/ConfirmActionDrawer";
 import {
     Wallet, Plus, LayoutDashboard, TrendingUp, X, Trash2, PencilLine, Save,
     Eye, EyeOff,
@@ -12,7 +13,7 @@ import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import clsx from "clsx";
 
-const INPUT = "w-full bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-md py-2.5 px-4 text-sm outline-none focus:ring-4 focus:ring-[hsl(var(--primary))]/10 focus:border-[hsl(var(--info)/100%)] transition-all";
+const INPUT = "w-full bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] rounded-md py-2.5 px-4 text-sm text-[hsl(var(--text-primary))] outline-none focus:ring-4 focus:ring-[hsl(var(--primary))]/10 focus:border-[hsl(var(--info)/100%)] transition-all";
 const LABEL = "block text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-1.5";
 
 type Fund = {
@@ -36,7 +37,7 @@ function ProgressBar({ value, max }: { value: number; max?: number }) {
                 <span>Progreso</span>
                 <span>{pct}%</span>
             </div>
-            <div className="h-1.5 w-full bg-[hsl(var(--surface-2))] dark:bg-white/10 rounded-full overflow-hidden">
+            <div className="h-1.5 w-full bg-[hsl(var(--surface-2))] rounded-full overflow-hidden">
                 <div className="h-full bg-[hsl(var(--primary))] rounded-full transition-all" style={{ width: `${pct}%` }} />
             </div>
         </div>
@@ -51,7 +52,6 @@ export default function FundsPage() {
     const [selected, setSelected] = useState<Fund | null>(null);
     const [saving, setSaving] = useState(false);
     const [deleteTarget, setDeleteTarget] = useState<Fund | null>(null);
-    const [deleting, setDeleting] = useState(false);
 
     // Form
     const [fName, setFName] = useState("");
@@ -117,7 +117,6 @@ export default function FundsPage() {
 
     const handleDelete = async () => {
         if (!deleteTarget) return;
-        setDeleting(true);
         try {
             await apiFetch(`/finance/admin/funds/${deleteTarget.id}`, { method: "DELETE", token });
             toast.success("Fondo eliminado");
@@ -125,8 +124,6 @@ export default function FundsPage() {
             loadFunds();
         } catch {
             toast.error("Error al eliminar fondo");
-        } finally {
-            setDeleting(false);
         }
     };
 
@@ -143,7 +140,7 @@ export default function FundsPage() {
                 ]}
                 rightActions={
                     <button onClick={openCreate}
-                        className="flex items-center gap-2 px-3 py-2 bg-[hsl(var(--primary))] text-white rounded-md text-2xs font-semibold uppercase tracking-wide shadow-lg shadow-[hsl(var(--info)/20%)] hover:bg-[hsl(var(--primary))] active:scale-95 transition-all">
+                        className="flex items-center gap-2 px-3 py-2 bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] rounded-md text-2xs font-semibold uppercase tracking-wide shadow-lg shadow-[hsl(var(--info)/20%)] hover:bg-[hsl(var(--primary))] active:scale-95 transition-all">
                         <Plus size={14} /> Nuevo Fondo
                     </button>
                 }
@@ -157,7 +154,7 @@ export default function FundsPage() {
                         { label: "Balance Total", value: `$${totalBalance.toLocaleString()}`, color: "text-[hsl(var(--success))]" },
                         { label: "Fondos Públicos", value: String(publicCount), color: "text-[hsl(var(--primary))]" },
                     ].map((s) => (
-                        <div key={s.label} className="bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))] rounded-lg border border-[hsl(var(--border))] dark:border-white/5 p-3 shadow-sm">
+                        <div key={s.label} className="bg-[hsl(var(--surface-1))] rounded-lg border border-[hsl(var(--border))] p-3 shadow-sm">
                             <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-2">{s.label}</p>
                             <p className={clsx("text-lg font-bold tracking-tight", s.color)}>{s.value}</p>
                         </div>
@@ -168,18 +165,18 @@ export default function FundsPage() {
                 {loading ? (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                         {[...Array(3)].map((_, i) => (
-                            <div key={i} className="bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))] rounded-lg border border-[hsl(var(--border))] dark:border-white/5 p-3 shadow-sm animate-pulse h-36" />
+                            <div key={i} className="bg-[hsl(var(--surface-1))] rounded-lg border border-[hsl(var(--border))] p-3 shadow-sm animate-pulse h-36" />
                         ))}
                     </div>
                 ) : funds.length === 0 ? (
-                    <div className="bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))] rounded-lg border border-[hsl(var(--border))] dark:border-white/5 p-4 text-center shadow-sm">
-                        <div className="size-8 rounded-lg bg-[hsl(var(--info-muted))] dark:bg-[hsl(var(--info)/0.1)] flex items-center justify-center mx-auto mb-4">
+                    <div className="bg-[hsl(var(--surface-1))] rounded-lg border border-[hsl(var(--border))] p-4 text-center shadow-sm">
+                        <div className="size-8 rounded-lg bg-[hsl(var(--info-muted))] flex items-center justify-center mx-auto mb-4">
                             <Wallet className="text-[hsl(var(--primary))]" size={28} />
                         </div>
                         <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Sin fondos registrados</p>
                         <p className="text-xs text-[hsl(var(--text-secondary))] mt-1">Crea el primer fondo ministerial</p>
                         <button onClick={openCreate}
-                            className="mt-5 px-3 py-2.5 bg-[hsl(var(--primary))] text-white rounded-md text-2xs font-semibold uppercase tracking-wide shadow-lg shadow-[hsl(var(--info)/20%)] hover:bg-[hsl(var(--primary))] transition-all">
+                            className="mt-5 px-3 py-2.5 bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] rounded-md text-2xs font-semibold uppercase tracking-wide shadow-lg shadow-[hsl(var(--info)/20%)] hover:bg-[hsl(var(--primary))] transition-all">
                             Crear Fondo
                         </button>
                     </div>
@@ -187,24 +184,24 @@ export default function FundsPage() {
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                         {funds.map((f) => (
                             <motion.div key={f.id} layout
-                                className="bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))] rounded-lg border border-[hsl(var(--border))] dark:border-white/5 p-3 shadow-sm group hover:shadow-md hover:border-[hsl(var(--info)/25%)] dark:hover:border-[hsl(var(--info)/100%)]/20 transition-all">
+                                className="bg-[hsl(var(--surface-1))] rounded-lg border border-[hsl(var(--border))] p-3 shadow-sm group hover:shadow-md hover:border-[hsl(var(--info)/25%)] transition-all">
                                 <div className="flex items-start justify-between gap-3 mb-3">
-                                    <div className="size-10 rounded-md bg-[hsl(var(--info-muted))] dark:bg-[hsl(var(--info)/0.1)] flex items-center justify-center text-[hsl(var(--primary))] flex-shrink-0">
+                                    <div className="size-10 rounded-md bg-[hsl(var(--info-muted))] flex items-center justify-center text-[hsl(var(--primary))] flex-shrink-0">
                                         <Wallet size={18} />
                                     </div>
                                     <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                                         <button onClick={() => openEdit(f)}
-                                            className="size-8 rounded-lg bg-[hsl(var(--surface-2))] dark:bg-white/5 flex items-center justify-center text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--primary))] hover:text-white transition-all">
+                                            className="size-8 rounded-lg bg-[hsl(var(--surface-2))] flex items-center justify-center text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--primary))] hover:text-[hsl(var(--primary-foreground))] transition-all">
                                             <PencilLine size={13} />
                                         </button>
                                         <button onClick={() => setDeleteTarget(f)}
-                                            className="size-8 rounded-lg bg-[hsl(var(--surface-2))] dark:bg-white/5 flex items-center justify-center text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--destructive))] hover:text-white transition-all">
+                                            className="size-8 rounded-lg bg-[hsl(var(--surface-2))] flex items-center justify-center text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--destructive))] hover:text-[hsl(var(--destructive-foreground))] transition-all">
                                             <Trash2 size={13} />
                                         </button>
                                     </div>
                                 </div>
 
-                                <h3 className="font-bold text-[hsl(var(--text-primary))] dark:text-white text-sm leading-tight mb-1">{f.name}</h3>
+                                <h3 className="font-bold text-[hsl(var(--text-primary))] text-sm leading-tight mb-1">{f.name}</h3>
                                 {f.description && (
                                     <p className="text-xs text-[hsl(var(--text-secondary))] line-clamp-2 mb-3">{f.description}</p>
                                 )}
@@ -217,8 +214,8 @@ export default function FundsPage() {
                                     <span className={clsx(
                                         "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md border text-2xs font-semibold uppercase tracking-wide",
                                         f.is_public
-                                            ? "bg-[hsl(var(--success-muted))] dark:bg-[hsl(var(--success)/0.1)] text-[hsl(var(--success))] dark:text-[hsl(var(--success))] border-[hsl(var(--success))/0.2]"
-                                            : "bg-[hsl(var(--surface-1))] dark:bg-white/5 text-[hsl(var(--text-secondary))] border-[hsl(var(--border))] dark:border-white/10"
+                                            ? "bg-[hsl(var(--success-muted))] text-[hsl(var(--success))] border-[hsl(var(--success))/0.2]"
+                                            : "bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))] border-[hsl(var(--border))]"
                                     )}>
                                         {f.is_public ? <Eye size={10} /> : <EyeOff size={10} />}
                                         {f.is_public ? "Público" : "Interno"}
@@ -237,24 +234,24 @@ export default function FundsPage() {
                 {drawerMode && (
                     <>
                         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                            className="fixed inset-x-0 bottom-0 top-10 z-[90] bg-black/30 backdrop-blur-sm"
+                            className="fixed inset-x-0 bottom-0 top-10 z-[90] bg-[hsl(var(--surface-3)/0.4)] backdrop-blur-sm"
                             onClick={() => setDrawerMode(null)} />
                         <motion.aside
                             initial={{ x: "100%", opacity: 0 }} animate={{ x: 0, opacity: 1 }}
                             exit={{ x: "100%", opacity: 0 }}
                             transition={{ type: "spring", damping: 26, stiffness: 260 }}
-                            className="fixed top-10 right-0 h-[calc(100vh-2.5rem)] z-[100] w-full max-w-md bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))] shadow-2xl rounded-l-[2.5rem] overflow-hidden flex flex-col">
-                            <div className="flex items-center justify-between p-4 border-b border-[hsl(var(--border))] dark:border-white/5 flex-shrink-0">
+                            className="fixed top-10 right-0 h-[calc(100vh-2.5rem)] z-[100] w-full max-w-md bg-[hsl(var(--surface-1))] shadow-2xl rounded-l-[2.5rem] overflow-hidden flex flex-col">
+                            <div className="flex items-center justify-between p-4 border-b border-[hsl(var(--border))] flex-shrink-0">
                                 <div>
                                     <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
                                         {drawerMode === "create" ? "Nuevo Fondo" : "Editar Fondo"}
                                     </p>
-                                    <h2 className="text-xl font-bold text-[hsl(var(--text-primary))] dark:text-white mt-1">
+                                    <h2 className="text-xl font-bold text-[hsl(var(--text-primary))] mt-1">
                                         {drawerMode === "create" ? "Crear Fondo Ministerial" : selected?.name}
                                     </h2>
                                 </div>
                                 <button onClick={() => setDrawerMode(null)}
-                                    className="size-10 rounded-md bg-[hsl(var(--surface-2))] dark:bg-white/5 flex items-center justify-center text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-3))] dark:hover:bg-white/10 transition-all">
+                                    className="size-10 rounded-md bg-[hsl(var(--surface-2))] flex items-center justify-center text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-3))] transition-all">
                                     <X size={18} />
                                 </button>
                             </div>
@@ -276,14 +273,14 @@ export default function FundsPage() {
                                     <input type="number" value={fTarget} onChange={(e) => setFTarget(e.target.value)}
                                         placeholder="0.00" className={INPUT} />
                                 </div>
-                                <div className="flex items-center gap-3 p-4 bg-[hsl(var(--surface-1))] dark:bg-white/5 rounded-md">
+                                <div className="flex items-center gap-3 p-4 bg-[hsl(var(--surface-2))] rounded-md">
                                     <button onClick={() => setFPublic(!fPublic)}
                                         className={clsx("size-10 rounded-md flex items-center justify-center transition-all flex-shrink-0",
-                                            fPublic ? "bg-[hsl(var(--success))] text-white" : "bg-[hsl(var(--surface-3))] dark:bg-white/10 text-[hsl(var(--text-secondary))]")}>
+                                            fPublic ? "bg-[hsl(var(--success))] text-[hsl(var(--primary-foreground))]" : "bg-[hsl(var(--surface-3))] text-[hsl(var(--text-secondary))]")}>
                                         {fPublic ? <Eye size={16} /> : <EyeOff size={16} />}
                                     </button>
                                     <div>
-                                        <p className="text-xs font-semibold text-[hsl(var(--text-primary))] dark:text-white">
+                                        <p className="text-xs font-semibold text-[hsl(var(--text-primary))]">
                                             {fPublic ? "Visible al público" : "Solo uso interno"}
                                         </p>
                                         <p className="text-2xs text-[hsl(var(--text-secondary))]">
@@ -293,13 +290,13 @@ export default function FundsPage() {
                                 </div>
                             </div>
 
-                            <div className="p-3 border-t border-[hsl(var(--border))] dark:border-white/5 flex gap-3 flex-shrink-0">
+                            <div className="p-3 border-t border-[hsl(var(--border))] flex gap-3 flex-shrink-0">
                                 <button onClick={() => setDrawerMode(null)}
-                                    className="flex-1 py-3 rounded-md border border-[hsl(var(--border))] dark:border-white/10 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5 transition-all">
+                                    className="flex-1 py-3 rounded-md border border-[hsl(var(--border))] text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] transition-all">
                                     Cancelar
                                 </button>
                                 <button onClick={handleSave} disabled={saving}
-                                    className="flex-1 py-3 rounded-md bg-[hsl(var(--primary))] text-white text-2xs font-semibold uppercase tracking-wide shadow-lg shadow-[hsl(var(--info)/20%)] hover:bg-[hsl(var(--primary))] disabled:opacity-50 transition-all flex items-center justify-center gap-2">
+                                    className="flex-1 py-3 rounded-md bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] text-2xs font-semibold uppercase tracking-wide shadow-lg shadow-[hsl(var(--info)/20%)] hover:bg-[hsl(var(--primary))] disabled:opacity-50 transition-all flex items-center justify-center gap-2">
                                     <Save size={14} /> {saving ? "Guardando..." : "Guardar"}
                                 </button>
                             </div>
@@ -308,34 +305,17 @@ export default function FundsPage() {
                 )}
             </AnimatePresence>
 
-            {/* Delete Confirm Modal */}
-            <AnimatePresence>
-                {deleteTarget && (
-                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                        className="fixed inset-0 z-[110] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
-                        <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }}
-                            className="bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))] rounded-lg p-4 max-w-sm w-full shadow-2xl border border-[hsl(var(--border))] dark:border-white/10">
-                            <div className="size-7 rounded-lg bg-[hsl(var(--destructive)/0.08)] dark:bg-[hsl(var(--destructive)/0.1)] flex items-center justify-center text-[hsl(var(--destructive))] mb-5">
-                                <Trash2 size={24} />
-                            </div>
-                            <h3 className="text-lg font-bold text-[hsl(var(--text-primary))] dark:text-white mb-2">¿Eliminar fondo?</h3>
-                            <p className="text-sm text-[hsl(var(--text-secondary))] mb-3">
-                                Se eliminará <span className="font-bold">{deleteTarget.name}</span>. Esta acción no se puede deshacer.
-                            </p>
-                            <div className="flex gap-3">
-                                <button onClick={() => setDeleteTarget(null)}
-                                    className="flex-1 py-3 rounded-md border border-[hsl(var(--border))] dark:border-white/10 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] transition-all">
-                                    Cancelar
-                                </button>
-                                <button onClick={handleDelete} disabled={deleting}
-                                    className="flex-1 py-3 rounded-md bg-[hsl(var(--destructive))] text-white text-2xs font-semibold uppercase tracking-wide shadow-lg shadow-[hsl(var(--destructive))/0.2] hover:bg-[hsl(var(--destructive))] disabled:opacity-50 transition-all">
-                                    {deleting ? "Eliminando..." : "Sí, eliminar"}
-                                </button>
-                            </div>
-                        </motion.div>
-                    </motion.div>
-                )}
-            </AnimatePresence>
+            {/* Delete Confirm Drawer */}
+            <ConfirmActionDrawer
+                action={deleteTarget ? {
+                    title: '¿Eliminar fondo?',
+                    description: `Se eliminará ${deleteTarget.name}. Esta acción no se puede deshacer.`,
+                    destructive: true,
+                    confirmLabel: 'Sí, eliminar',
+                    onConfirm: handleDelete,
+                } : null}
+                onClose={() => setDeleteTarget(null)}
+            />
         </div>
     );
 }

@@ -1,5 +1,6 @@
 'use client';
 
+import React, { useState } from 'react';
 import type { ViewType } from '@/components/ViewSwitcher';
 import ConfirmActionDrawer from '@/components/evangelism/ConfirmActionDrawer';
 import EvangelismShell from '@/components/evangelism/EvangelismShell';
@@ -15,6 +16,8 @@ import EventCreateDrawer from './panels/EventCreateDrawer';
 import EventAttendanceDrawer from './panels/EventAttendanceDrawer';
 import EventEditDrawer from './panels/EventEditDrawer';
 import EventDeleteDrawer from './panels/EventDeleteDrawer';
+import EventFormStudioDrawer from './panels/EventFormStudioDrawer';
+import type { MinistryEvent } from '../types';
 import { useEventsPage } from './useEventsPage';
 
 const ALL_VIEWS: ViewType[] = ['table', 'list', 'grid', 'board', 'kanban', 'gantt', 'calendar', 'wiki'];
@@ -105,6 +108,8 @@ function EventsPage() {
   handleDeleteEvent,
   handleUpdateEvent,
  } = useEventsPage();
+
+ const [formStudioEvent, setFormStudioEvent] = useState<MinistryEvent | null>(null);
 
  if (loading) {
  return (
@@ -252,7 +257,18 @@ function EventsPage() {
     onDeletePreset={deleteAudiencePreset}
     onAddSuggestions={addSuggestedAudiencePresets}
     onSavePreset={saveAudiencePreset}
+    onOpenFormStudio={(evt) => setFormStudioEvent(evt)}
   />
+
+  {formStudioEvent && (
+    <EventFormStudioDrawer
+      isOpen={!!formStudioEvent}
+      onClose={() => setFormStudioEvent(null)}
+      eventId={formStudioEvent.id}
+      eventName={formStudioEvent.name}
+    />
+  )}
+
  <ConfirmActionDrawer action={confirmAction} onClose={() => setConfirmAction(null)} />
  </EvangelismShell>
  </>

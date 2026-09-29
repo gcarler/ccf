@@ -6,15 +6,14 @@ import { useAuth } from "@/context/AuthContext";
 import { useCrmAccess } from "@/hooks/useCrmAccess";
 import { apiFetch } from "@/lib/http";
 import CrmShell from "@/components/crm/CrmShell";
-import {
-    User, LayoutDashboard, Heart, Star, PencilLine, Trash2, X, Save,
-} from "lucide-react";
+import { User, LayoutDashboard, Heart, Star, PencilLine, Trash2, Save } from "lucide-react";
 import { toast } from "sonner";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import clsx from "clsx";
 import ConfirmActionDrawer, { type ConfirmActionState } from "@/components/ConfirmActionDrawer";
+import SidePanel from "@/components/ui/SidePanel";
 
-const INPUT = "w-full bg-[hsl(var(--bg-muted))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-md py-2.5 px-4 text-sm text-[hsl(var(--text-primary))] outline-none focus:ring-4 focus:ring-[hsl(var(--primary))]/10 focus:border-[hsl(var(--info)/100%)] transition-all";
+const INPUT = "w-full bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] rounded-md py-2.5 px-4 text-sm text-[hsl(var(--text-primary))] outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.2] focus:border-[hsl(var(--primary))] transition-all";
 const LABEL = "block text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-1.5";
 
 type Volunteer = {
@@ -30,9 +29,9 @@ type Volunteer = {
 
 function Badge({ label, tone = "blue" }: { label: string; tone?: string }) {
     const styles: Record<string, string> = {
-        blue: "bg-info-soft dark:bg-[hsl(var(--info))]/10 text-[hsl(var(--primary))] dark:text-info-text border-[hsl(var(--info)/25%)]/50",
-        emerald: "bg-success-soft dark:bg-[hsl(var(--success))]/10 text-success-text dark:text-success-text border-[hsl(var(--success)/25%)]/50",
-        sky: "bg-info-soft dark:bg-[hsl(var(--info))]/10 text-info-text dark:text-info-text border-[hsl(var(--info)/25%)]/50",
+        blue: "bg-[hsl(var(--primary)/0.1)] text-[hsl(var(--primary))] border-[hsl(var(--primary)/0.2)]",
+        emerald: "bg-[hsl(var(--success)/0.1)] text-[hsl(var(--success))] border-[hsl(var(--success)/0.2)]",
+        sky: "bg-[hsl(var(--primary)/0.1)] text-[hsl(var(--primary))] border-[hsl(var(--primary)/0.2)]",
     };
     return (
         <span className={clsx("inline-flex items-center px-3 py-1 rounded-md border text-2xs font-bold uppercase tracking-wide", styles[tone] ?? styles.blue)}>
@@ -144,12 +143,12 @@ export default function VolunteerDetailPage() {
  className="w-full space-y-3">
 
                     {/* Hero */}
-                    <header className="bg-[hsl(var(--surface-1))] dark:bg-[#15171c] rounded-lg border border-[hsl(var(--border))] dark:border-white/5 p-3 lg:p-4 shadow-sm flex items-center gap-3">
-                        <div className="size-10 rounded-lg bg-gradient-to-br from-[hsl(var(--info))] to-[hsl(var(--info))] text-white flex items-center justify-center font-bold text-lg shadow-xl flex-shrink-0">
+                    <header className="bg-[hsl(var(--surface-1))] rounded-lg border border-[hsl(var(--border))] p-3 lg:p-4 shadow-sm flex items-center gap-3">
+                        <div className="size-10 rounded-lg bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] flex items-center justify-center font-bold text-lg shadow-xl flex-shrink-0">
                             {initials}
                         </div>
                         <div className="flex-1 min-w-0">
-                            <h1 className="text-lg font-bold text-[hsl(var(--text-primary))] dark:text-white uppercase tracking-tight">{volunteer.name}</h1>
+                            <h1 className="text-lg font-bold text-[hsl(var(--text-primary))] uppercase tracking-tight">{volunteer.name}</h1>
                             <div className="flex items-center gap-2 mt-2">
                                 <Badge label={String(volunteer.role || "SIN ROL").toUpperCase()} tone="blue" />
                                 <Badge label={String(volunteer.status || "inactive").toUpperCase()} tone="emerald" />
@@ -158,7 +157,7 @@ export default function VolunteerDetailPage() {
                         {canEditCrm && (
                             <div className="flex items-center gap-2 flex-shrink-0">
                                 <button onClick={openEdit}
-                                    className="flex items-center gap-2 px-4 py-2 bg-[hsl(var(--primary))] text-white rounded-md text-2xs font-bold uppercase tracking-wide shadow-lg shadow-[hsl(var(--info)/20%)] hover:bg-[hsl(var(--primary))] transition-all">
+                                    className="flex items-center gap-2 px-4 py-2 bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] rounded-md text-2xs font-bold uppercase tracking-wide shadow-lg shadow-[hsl(var(--primary)/0.2)] hover:opacity-90 transition-all">
                                     <PencilLine size={13} /> Editar
                                 </button>
                                 <button
@@ -169,7 +168,7 @@ export default function VolunteerDetailPage() {
                                         destructive: true,
                                         onConfirm: handleDelete,
                                     })}
-                                    className="size-10 rounded-md bg-danger-soft dark:bg-[hsl(var(--danger))]/10 text-danger-text flex items-center justify-center hover:bg-[hsl(var(--danger-muted))] transition-all border border-[hsl(var(--danger)/25%)]/50">
+                                    className="size-10 rounded-md bg-[hsl(var(--destructive)/0.1)] text-[hsl(var(--destructive))] flex items-center justify-center hover:bg-[hsl(var(--destructive)/0.2)] transition-all border border-[hsl(var(--destructive)/0.2)]">
                                     <Trash2 size={15} />
                                 </button>
                             </div>
@@ -178,23 +177,23 @@ export default function VolunteerDetailPage() {
 
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
                         <div className="lg:col-span-2 space-y-3">
-                            <div className="bg-[hsl(var(--surface-1))] dark:bg-[#15171c] rounded-lg border border-[hsl(var(--border))] dark:border-white/5 p-3 shadow-sm">
+                            <div className="bg-[hsl(var(--surface-1))] rounded-lg border border-[hsl(var(--border))] p-3 shadow-sm">
                                 <p className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-5">Información del Servidor</p>
                                 <div className="grid grid-cols-2 gap-3">
                                     <div>
                                         <p className="text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase mb-1">Equipo</p>
-                                        <p className="text-sm font-bold text-[hsl(var(--text-primary))] dark:text-white">{volunteer.team || "Sin equipo"}</p>
+                                        <p className="text-sm font-bold text-[hsl(var(--text-primary))]">{volunteer.team || "Sin equipo"}</p>
                                     </div>
                                     <div>
                                         <p className="text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase mb-1">Fecha de Ingreso</p>
-                                        <p className="text-sm font-bold text-[hsl(var(--text-primary))] dark:text-white">
+                                        <p className="text-sm font-bold text-[hsl(var(--text-primary))]">
                                             {volunteer.joined_date ? new Date(volunteer.joined_date).toLocaleDateString("es-ES") : "Sin fecha"}
                                         </p>
                                     </div>
                                 </div>
                             </div>
 
-                            <div className="bg-[hsl(var(--surface-1))] dark:bg-[#15171c] rounded-lg border border-[hsl(var(--border))] dark:border-white/5 p-3 shadow-sm">
+                            <div className="bg-[hsl(var(--surface-1))] rounded-lg border border-[hsl(var(--border))] p-3 shadow-sm">
                                 <p className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-4">Habilidades y Dones</p>
                                 <div className="flex flex-wrap gap-2">
                                     {(volunteer.skills ?? []).length > 0
@@ -205,12 +204,12 @@ export default function VolunteerDetailPage() {
                         </div>
 
                         <aside className="space-y-3">
-                            <div className="bg-[hsl(var(--surface-1))] dark:bg-[#15171c] rounded-lg border border-[hsl(var(--border))] dark:border-white/5 p-3 shadow-sm">
+                            <div className="bg-[hsl(var(--surface-1))] rounded-lg border border-[hsl(var(--border))] p-3 shadow-sm">
                                 <p className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-5">Métricas de Servicio</p>
                                 <div className="space-y-4">
                                     <div className="flex items-center justify-between">
                                         <span className="text-xs font-medium text-[hsl(var(--text-secondary))]">Horas Totales</span>
-                                        <span className="text-sm font-bold text-[hsl(var(--text-primary))] dark:text-white">{volunteer.total_hours}h</span>
+                                        <span className="text-sm font-bold text-[hsl(var(--text-primary))]">{volunteer.total_hours}h</span>
                                     </div>
                                     <div className="flex items-center justify-between">
                                         <span className="text-xs font-medium text-[hsl(var(--text-secondary))]">Fidelidad</span>
@@ -226,49 +225,42 @@ export default function VolunteerDetailPage() {
             </main>
 
             {/* Edit Drawer */}
-            <AnimatePresence>
-                {editOpen && (
-                    <>
-                        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                            className="fixed inset-x-0 bottom-0 top-10 z-[90] bg-black/30 backdrop-blur-sm"
-                            onClick={() => setEditOpen(false)} />
-                        <motion.aside
-                            initial={{ x: "100%", opacity: 0 }} animate={{ x: 0, opacity: 1 }}
-                            exit={{ x: "100%", opacity: 0 }}
-                            transition={{ type: "spring", damping: 26, stiffness: 260 }}
-                            className="fixed top-10 right-0 h-[calc(100vh-2.5rem)] z-[100] w-full max-w-md bg-[hsl(var(--surface-1))] dark:bg-[#15171c] shadow-2xl rounded-l-lg overflow-hidden flex flex-col">
-                            <div className="flex items-center justify-between p-4 border-b border-[hsl(var(--border))] dark:border-white/5">
-                                <div>
-                                    <p className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Editar Servidor</p>
-                                    <h2 className="text-xl font-bold text-[hsl(var(--text-primary))] dark:text-white mt-1">{volunteer.name}</h2>
-                                </div>
-                                <button onClick={() => setEditOpen(false)}
-                                    className="size-10 rounded-md bg-[hsl(var(--surface-2))] dark:bg-white/5 flex items-center justify-center text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-3))] dark:hover:bg-white/10 transition-all">
-                                    <X size={18} />
-                                </button>
-                            </div>
-                            <div className="flex-1 overflow-y-auto p-4 space-y-5">
-                                <div>
-                                    <label className={LABEL}>Rol / Cargo</label>
-                                    <input value={fRole} onChange={(e) => setFRole(e.target.value)}
-                                        placeholder="Ej: Ujier, Música, Tecnología..."
-                                        className={INPUT} />
-                                </div>
-                            </div>
-                            <div className="p-3 border-t border-[hsl(var(--border))] dark:border-white/5 flex gap-3">
-                                <button onClick={() => setEditOpen(false)}
-                                    className="flex-1 py-3 rounded-md border border-[hsl(var(--border))] dark:border-white/10 text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] transition-all">
-                                    Cancelar
-                                </button>
-                                <button onClick={handleSave} disabled={saving}
-                                    className="flex-1 py-3 rounded-md bg-[hsl(var(--primary))] text-white text-2xs font-bold uppercase tracking-wide shadow-lg shadow-[hsl(var(--info)/20%)] hover:bg-[hsl(var(--primary))] disabled:opacity-50 transition-all flex items-center justify-center gap-2">
-                                    <Save size={14} /> {saving ? "Guardando..." : "Guardar"}
-                                </button>
-                            </div>
-                        </motion.aside>
-                    </>
-                )}
-            </AnimatePresence>
+            <SidePanel
+                isOpen={editOpen}
+                onClose={() => setEditOpen(false)}
+                title="Editar Servidor"
+                subtitle={volunteer.name}
+                width="w-full max-w-md"
+            >
+                <div className="flex flex-col gap-4 py-2">
+                    <div>
+                        <label className={LABEL}>Rol / Cargo</label>
+                        <input
+                            value={fRole}
+                            onChange={(e) => setFRole(e.target.value)}
+                            placeholder="Ej: Ujier, Música, Tecnología..."
+                            className={INPUT}
+                        />
+                    </div>
+                    <div className="pt-4 border-t border-[hsl(var(--border))] flex gap-3">
+                        <button
+                            type="button"
+                            onClick={() => setEditOpen(false)}
+                            className="flex-1 py-2.5 rounded-md border border-[hsl(var(--border))] text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] transition-colors"
+                        >
+                            Cancelar
+                        </button>
+                        <button
+                            type="button"
+                            onClick={handleSave}
+                            disabled={saving}
+                            className="flex-1 py-2.5 rounded-md bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] text-2xs font-bold uppercase tracking-wide hover:opacity-90 disabled:opacity-50 transition-opacity flex items-center justify-center gap-2"
+                        >
+                            <Save size={14} /> {saving ? "Guardando..." : "Guardar"}
+                        </button>
+                    </div>
+                </div>
+            </SidePanel>
 
             <ConfirmActionDrawer action={confirmDelete} onClose={() => setConfirmDelete(null)} />
         </CrmShell>

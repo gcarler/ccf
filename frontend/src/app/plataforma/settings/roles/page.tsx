@@ -94,12 +94,12 @@ export default function RolesSettingsPage() {
  <div className="w-full space-y-3">
                     <header className="flex items-center justify-between">
                         <div>
-                            <h1 className="text-xl font-bold text-[hsl(var(--text-primary))] dark:text-white uppercase tracking-tight">Ministerios y Tipos de Asistencia</h1>
+                            <h1 className="text-xl font-bold text-[hsl(var(--text-primary))] uppercase tracking-tight">Ministerios y Tipos de Asistencia</h1>
                             <p className="text-sm font-medium text-[hsl(var(--text-secondary))] mt-2">Configura los roles de la iglesia. Esto afectará los perfiles y el CRM.</p>
                         </div>
                         <button
                             onClick={() => setIsEditing({ id: 0, name: '', color: 'text-[hsl(var(--text-secondary))] bg-[hsl(var(--surface-2))]', is_leadership: false })}
-                            className="px-3 py-3 bg-[hsl(var(--primary))] text-white rounded-lg text-2xs font-semibold uppercase tracking-wide hover:scale-105 transition-all flex items-center gap-2"
+                            className="px-3 py-3 bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] rounded-lg text-2xs font-semibold uppercase tracking-wide hover:scale-105 transition-all flex items-center gap-2"
                         >
                             <Plus size={16}/> Nuevo Rol
                         </button>
@@ -109,7 +109,7 @@ export default function RolesSettingsPage() {
                         {loading ? (
                             <div className="py-1.5 text-center animate-pulse text-[hsl(var(--text-secondary))] font-bold">Cargando roles...</div>
                         ) : (
-                            <div className="divide-y divide-[hsl(var(--border))] dark:divide-white/5">
+                            <div className="divide-y divide-[hsl(var(--border))]">
                                 {roles.map(role => (
                                     <div key={role.id} className="py-1.5 flex items-center justify-between group">
                                         <div className="flex items-center gap-4">
@@ -117,16 +117,16 @@ export default function RolesSettingsPage() {
                                                 {role.name}
                                             </span>
                                             {role.is_leadership && (
-                                                <span className="px-2 py-1 bg-warning-soft dark:bg-[hsl(var(--warning))]/20 text-warning-text text-2xs font-semibold uppercase tracking-wide rounded-lg">
+                                                <span className="px-2 py-1 bg-[hsl(var(--warning-muted))] text-[hsl(var(--warning))] text-2xs font-semibold uppercase tracking-wide rounded-lg border border-[hsl(var(--warning)/0.3)]">
                                                     Suma a Liderazgo
                                                 </span>
                                             )}
                                         </div>
                                         <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-all">
-                                            <button onClick={() => setIsEditing(role)} className="p-2 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] bg-[hsl(var(--surface-1))] dark:bg-white/5 rounded-md">
+                                            <button onClick={() => setIsEditing(role)} className="p-2 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] bg-[hsl(var(--surface-2))] rounded-md transition-colors">
                                                 <Edit2 size={16}/>
                                             </button>
-                                            <button onClick={() => setIsDeleting(role)} className="p-2 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--destructive))] bg-[hsl(var(--surface-1))] dark:bg-white/5 rounded-md">
+                                            <button onClick={() => setIsDeleting(role)} className="p-2 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--destructive))] bg-[hsl(var(--surface-2))] rounded-md transition-colors">
                                                 <Trash2 size={16}/>
                                             </button>
                                         </div>
@@ -150,7 +150,7 @@ export default function RolesSettingsPage() {
                         <button type="button" onClick={() => setIsEditing(null)} className="px-4 py-2 text-xs font-bold text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] transition-colors">
                             Cancelar
                         </button>
-                        <button type="button" onClick={handleSave as any} className="flex items-center gap-2 px-4 py-2 bg-[hsl(var(--primary))] text-white rounded-lg text-xs font-semibold uppercase tracking-wide shadow-lg shadow-[hsl(var(--info)/30%)] hover:bg-[hsl(var(--primary))] active:scale-95 transition-all">
+                        <button type="button" onClick={handleSave as any} className="flex items-center gap-2 px-4 py-2 bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] rounded-lg text-xs font-semibold uppercase tracking-wide shadow-md shadow-[hsl(var(--primary)/0.2)] hover:bg-[hsl(var(--primary))] active:scale-95 transition-all">
                             <Save size={16}/> Guardar
                         </button>
                     </>
@@ -160,18 +160,18 @@ export default function RolesSettingsPage() {
                     <div className="space-y-3 mt-4">
                         <div className="space-y-1.5">
                             <label className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] block">Nombre del Rol</label>
-                            <input required autoFocus value={isEditing.name} onChange={e => setIsEditing({...isEditing, name: e.target.value})} className="w-full px-4 py-3 bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-md text-sm outline-none" />
+                            <input required autoFocus value={isEditing.name} onChange={e => setIsEditing({...isEditing, name: e.target.value})} className="w-full px-4 py-3 bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] rounded-md text-sm outline-none focus:border-[hsl(var(--primary))]" />
                         </div>
                         <div className="space-y-1.5">
                             <label className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] block">Clases de Color (Tailwind)</label>
-                            <input required value={isEditing.color} onChange={e => setIsEditing({...isEditing, color: e.target.value})} className="w-full px-4 py-3 bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-md text-sm outline-none font-mono" />
-                            <div className="mt-3 p-4 bg-[hsl(var(--surface-1))] dark:bg-white/5 rounded-md flex justify-center border border-[hsl(var(--border))] dark:border-white/10">
+                            <input required value={isEditing.color} onChange={e => setIsEditing({...isEditing, color: e.target.value})} className="w-full px-4 py-3 bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] rounded-md text-sm outline-none font-mono focus:border-[hsl(var(--primary))]" />
+                            <div className="mt-3 p-4 bg-[hsl(var(--surface-2))] rounded-md flex justify-center border border-[hsl(var(--border))]">
                                 <span className={`px-4 py-2 rounded-md text-xs font-semibold uppercase tracking-wide ${isEditing.color}`}>Previsualización</span>
                             </div>
                         </div>
                         <div className="flex items-center gap-3 mt-4">
                             <input type="checkbox" id="is_leadership" checked={isEditing.is_leadership} onChange={e => setIsEditing({...isEditing, is_leadership: e.target.checked})} className="size-5 rounded border-[hsl(var(--border))] text-[hsl(var(--primary))] focus:ring-[hsl(var(--primary))]" />
-                            <label htmlFor="is_leadership" className="text-sm font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] cursor-pointer">
+                            <label htmlFor="is_leadership" className="text-sm font-bold text-[hsl(var(--text-primary))] cursor-pointer">
                                 Pertenece al Liderazgo <span className="block text-2xs text-[hsl(var(--text-secondary))] font-medium">Sus asistencias se agruparán en &ldquo;Liderazgo&rdquo;</span>
                             </label>
                         </div>
@@ -190,7 +190,7 @@ export default function RolesSettingsPage() {
                         <button type="button" onClick={() => setIsDeleting(null)} className="px-4 py-2 text-xs font-bold text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] transition-colors">
                             Cancelar
                         </button>
-                        <button type="button" onClick={handleDelete as any} className="flex items-center gap-2 px-4 py-2 bg-[hsl(var(--destructive))] text-white rounded-lg text-xs font-semibold uppercase tracking-wide shadow-lg shadow-red-500/30 hover:bg-[hsl(var(--destructive))] active:scale-95 transition-all">
+                        <button type="button" onClick={handleDelete as any} className="flex items-center gap-2 px-4 py-2 bg-[hsl(var(--destructive))] text-[hsl(var(--primary-foreground))] rounded-lg text-xs font-semibold uppercase tracking-wide shadow-md shadow-[hsl(var(--destructive)/0.2)] hover:bg-[hsl(var(--destructive))] active:scale-95 transition-all">
                             <Trash2 size={16}/> Confirmar Eliminación
                         </button>
                     </>
@@ -198,13 +198,13 @@ export default function RolesSettingsPage() {
             >
                 {isDeleting && (
                     <div className="space-y-3 mt-4">
-                        <div className="bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-900/30 text-[hsl(var(--destructive))] p-4 rounded-md text-sm font-bold">
+                        <div className="bg-[hsl(var(--destructive-muted))] border border-[hsl(var(--destructive)/0.3)] text-[hsl(var(--destructive))] p-4 rounded-md text-sm font-bold">
                             Estás a punto de eliminar el rol &ldquo;{isDeleting.name}&rdquo;.
                             Es obligatorio transferir a las personas que actualmente tienen este rol hacia otro distinto.
                         </div>
                         <div className="space-y-1.5">
                             <label className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] block">Rol de Reemplazo (Fallback)</label>
-                            <select required value={fallbackId} onChange={e => setFallbackId(Number(e.target.value))} className="w-full px-4 py-3 bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-md text-sm outline-none font-bold">
+                            <select required value={fallbackId} onChange={e => setFallbackId(Number(e.target.value))} className="w-full px-4 py-3 bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] rounded-md text-sm outline-none font-bold focus:border-[hsl(var(--primary))]">
                                 <option value="" disabled>Seleccione un rol...</option>
                                 {roles.filter(r => r.id !== isDeleting.id).map(r => (
                                     <option key={r.id} value={r.id}>{r.name}</option>

@@ -4,9 +4,34 @@ import { ProjectMasterView } from './ProjectMasterView';
 import { SortableTaskCard } from './SortableTaskCard';
 import type { ProjectRecord, ProjectTaskRecord } from '@/types/projects';
 
+// Mock next/navigation (ProjectMasterView monta drawers que usan useRouter)
+vi.mock('next/navigation', () => ({
+    useRouter: () => ({ push: vi.fn(), back: vi.fn(), replace: vi.fn() }),
+    usePathname: () => '/plataforma/proyectos',
+    useParams: () => ({}),
+}));
+
 // Mock AuthContext to avoid real auth calls
 vi.mock('@/context/AuthContext', () => ({
     useAuth: () => ({ token: 'mock-token', loading: false, user: null, isAuthenticated: true, login: vi.fn(), logout: vi.fn(), refreshUser: vi.fn() }),
+}));
+
+// Mock SidebarLayerContext (RightPanel lo consume internamente)
+vi.mock('@/context/SidebarLayerContext', () => ({
+    useSidebarLayers: () => ({
+        layers: { RIGHT: false, S2: false },
+        openLayer: vi.fn(),
+        closeLayer: vi.fn(),
+        toggleLayer: vi.fn(),
+        closeTopLayer: vi.fn(),
+        rightMode: 'overlay',
+        setRightMode: vi.fn(),
+        sidebarStack: [],
+        stackDirection: 'forward',
+        pushSidebarPanel: vi.fn(),
+        popSidebarPanel: vi.fn(),
+        resetSidebarStack: vi.fn(),
+    }),
 }));
 
 // Mock ProjectUpdateContext

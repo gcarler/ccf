@@ -39,8 +39,6 @@ export default function NewAnnouncementPage() {
         }
         setLoading(true);
         try {
-            // Endpoint v2 nativo: la categoria canonica "announcements" se asigna
-            // server-side. Los campos v1 (category, is_featured) van en seo_json.
             await createCmsPostByCategory(SITE_KEY, 'announcements', {
                 title: formData.title,
                 excerpt: formData.content.slice(0, 200) || null,
@@ -106,7 +104,7 @@ export default function NewAnnouncementPage() {
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 pb-4">
                 {/* Editor Content */}
                 <div className="lg:col-span-8 space-y-3">
-                    <section className="bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg p-4 shadow-xl space-y-3 relative overflow-hidden">
+                    <section className="bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] rounded-lg p-4 shadow-xl space-y-3 relative overflow-hidden">
                         <div className="absolute top-0 right-0 -mr-12 -mt-3 size-10 bg-[hsl(var(--info))]/5 rounded-full blur-3xl" />
 
                         <div className="relative z-10 space-y-3">
@@ -115,7 +113,7 @@ export default function NewAnnouncementPage() {
                                 <input
                                     value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})}
                                     placeholder="Ej: Gran Vigilia de Oración - Próximo Viernes"
-                                    className="w-full bg-[hsl(var(--surface-1))] dark:bg-black/20 border border-[hsl(var(--border))] dark:border-white/5 rounded-lg py-2 px-4 text-lg font-bold outline-none focus:ring-4 focus:ring-[hsl(var(--primary))]/10 transition-all"
+                                    className="w-full bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] rounded-lg py-2 px-4 text-lg font-bold outline-none focus:ring-4 focus:ring-[hsl(var(--primary))]/10 transition-all"
                                 />
                             </div>
 
@@ -124,18 +122,20 @@ export default function NewAnnouncementPage() {
                                 <textarea
                                     value={formData.content} onChange={e => setFormData({...formData, content: e.target.value})}
                                     placeholder="Escribe los detalles aquí..."
-                                    className="w-full h-48 bg-[hsl(var(--surface-1))] dark:bg-black/20 border border-[hsl(var(--border))] dark:border-white/5 rounded-lg p-4 text-lg font-medium leading-relaxed outline-none focus:ring-4 focus:ring-[hsl(var(--primary))]/10 transition-all resize-none"
+                                    className="w-full h-48 bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] rounded-lg p-4 text-lg font-medium leading-relaxed outline-none focus:ring-4 focus:ring-[hsl(var(--primary))]/10 transition-all resize-none"
                                 />
                             </div>
                         </div>
                     </section>
 
                     {/* AI Copywriting Suggestion */}
-                    <section className="bg-info-soft dark:bg-[hsl(var(--info))]/10 rounded-lg p-4 border border-[hsl(var(--info)/20%)] dark:border-[hsl(var(--info)/100%)]/20 flex gap-3 items-start group">
-                        <div className="size-7 rounded-lg bg-[hsl(var(--primary))] flex items-center justify-center shrink-0 shadow-lg shadow-[hsl(var(--info)/20%)] transition-transform group-hover:scale-110"><Bot size={24} className="text-white" /></div>
+                    <section className="bg-[hsl(var(--primary))]/10 rounded-lg p-4 border border-[hsl(var(--primary))]/20 flex gap-3 items-start group">
+                        <div className="size-7 rounded-lg bg-[hsl(var(--primary))] flex items-center justify-center shrink-0 shadow-lg shadow-[hsl(var(--info)/20%)] transition-transform group-hover:scale-110">
+                            <Bot size={24} className="text-[hsl(var(--primary-foreground))]" />
+                        </div>
                         <div className="space-y-2">
-                            <h4 className="font-semibold text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] uppercase tracking-wide flex items-center gap-2"><Sparkles size={14} /> Optimus Copy Helper</h4>
-                            <p className="text-sm text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] font-medium italic leading-relaxed">
+                            <h4 className="font-semibold text-[hsl(var(--primary))] uppercase tracking-wide flex items-center gap-2"><Sparkles size={14} /> Optimus Copy Helper</h4>
+                            <p className="text-sm text-[hsl(var(--text-secondary))] font-medium italic leading-relaxed">
                                 &ldquo;Tu anuncio tiene un tono formal excelente. Sugiero añadir una invitación a la acción (Call to Action) al final para aumentar la participación en un 20%.&rdquo;
                             </p>
                         </div>
@@ -144,7 +144,7 @@ export default function NewAnnouncementPage() {
 
                 {/* Settings Sidebar */}
                 <aside className="lg:col-span-4 space-y-3">
-                    <section className="p-4 bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg shadow-xl space-y-3">
+                    <section className="p-4 bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] rounded-lg shadow-xl space-y-3">
                         <h3 className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Ajustes de Publicación</h3>
 
                         <div className="space-y-3">
@@ -152,7 +152,7 @@ export default function NewAnnouncementPage() {
                                 <label className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide px-2">Categoría</label>
                                 <select
                                     value={formData.category} onChange={e => setFormData({...formData, category: e.target.value})}
-                                    className="w-full bg-[hsl(var(--surface-1))] dark:bg-black/10 border-none rounded-md py-3 px-4 text-xs font-bold outline-none"
+                                    className="w-full bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] rounded-md py-3 px-4 text-xs font-bold outline-none"
                                 >
                                     <option>General</option>
                                     <option>Eventos</option>
@@ -161,10 +161,10 @@ export default function NewAnnouncementPage() {
                                 </select>
                             </div>
 
-                            <div className="flex items-center justify-between p-4 bg-[hsl(var(--surface-1))] dark:bg-black/10 rounded-lg">
+                            <div className="flex items-center justify-between p-4 bg-[hsl(var(--surface-2))] rounded-lg">
                                 <div className="flex items-center gap-3">
                                     <Users size={18} className="text-[hsl(var(--text-secondary))]" />
-                                    <span className="text-xs font-bold text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] uppercase">Alcance Global</span>
+                                    <span className="text-xs font-bold text-[hsl(var(--text-secondary))] uppercase">Alcance Global</span>
                                 </div>
                                 <div className="size-5 rounded-full bg-[hsl(var(--success))] shadow-[0_0_8px_hsl(var(--success))]" />
                             </div>
@@ -174,35 +174,35 @@ export default function NewAnnouncementPage() {
                                 onClick={() => setFormData({ ...formData, is_featured: !formData.is_featured })}
                                 className={`w-full flex items-center justify-between p-4 rounded-lg transition-all ${
                                     formData.is_featured
-                                        ? 'bg-info-soft text-[hsl(var(--primary))] dark:bg-[hsl(var(--info))]/10 dark:text-info-text'
-                                        : 'bg-[hsl(var(--surface-1))] dark:bg-black/10 text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]'
+                                        ? 'bg-[hsl(var(--primary))]/10 text-[hsl(var(--primary))]'
+                                        : 'bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))]'
                                 }`}
                             >
                                 <span className="text-xs font-bold uppercase">Destacar anuncio</span>
-                                <span className={`size-5 rounded-full ${formData.is_featured ? 'bg-[hsl(var(--primary))]' : 'bg-[hsl(var(--surface-2))] dark:bg-white/20'}`} />
+                                <span className={`size-5 rounded-full ${formData.is_featured ? 'bg-[hsl(var(--primary))]' : 'bg-[hsl(var(--surface-2))]'}`} />
                             </button>
 
-                            <button className="w-full py-1.5 border-2 border-dashed border-[hsl(var(--border))] dark:border-white/10 rounded-lg text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] transition-all flex flex-col items-center gap-2">
+                            <button className="w-full py-1.5 border-2 border-dashed border-[hsl(var(--border))] rounded-lg text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] transition-all flex flex-col items-center gap-2">
                                 <ImageIcon size={24} />
                                 <span className="text-2xs font-semibold uppercase">Añadir Imagen de Portada</span>
                             </button>
                         </div>
                     </section>
 
-                    <section className="p-4 bg-[hsl(var(--bg-muted))] rounded-lg text-white shadow-2xl space-y-3 relative overflow-hidden group">
+                    <section className="p-4 bg-[hsl(var(--surface-2))] rounded-lg text-[hsl(var(--text-primary))] border border-[hsl(var(--border))] shadow-2xl space-y-3 relative overflow-hidden group">
                         <div className="absolute top-0 right-0 -mr-10 -mt-3 size-10 bg-[hsl(var(--info))]/20 rounded-full blur-3xl" />
                         <div className="relative z-10 flex flex-col gap-3">
                             <div className="flex items-center gap-3">
                                 <Eye size={20} className="text-[hsl(var(--primary))]" />
                                 <h4 className="text-xs font-semibold uppercase tracking-wide">Vista Previa Móvil</h4>
                             </div>
-                            <div className="aspect-[9/16] w-full rounded-lg bg-white/5 border border-white/10 p-3 space-y-4">
-                                <div className="h-4 w-2/3 bg-white/20 rounded-full" />
-                                <div className="h-32 w-full bg-white/5 rounded-lg" />
+                            <div className="aspect-[9/16] w-full rounded-lg bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] p-3 space-y-4">
+                                <div className="h-4 w-2/3 bg-[hsl(var(--surface-3))] rounded-full" />
+                                <div className="h-32 w-full bg-[hsl(var(--surface-3))] rounded-lg" />
                                 <div className="space-y-2">
-                                    <div className="h-3 w-full bg-white/10 rounded-full" />
-                                    <div className="h-3 w-full bg-white/10 rounded-full" />
-                                    <div className="h-3 w-1/2 bg-white/10 rounded-full" />
+                                    <div className="h-3 w-full bg-[hsl(var(--surface-3))] rounded-full" />
+                                    <div className="h-3 w-full bg-[hsl(var(--surface-3))] rounded-full" />
+                                    <div className="h-3 w-1/2 bg-[hsl(var(--surface-3))] rounded-full" />
                                 </div>
                             </div>
                         </div>

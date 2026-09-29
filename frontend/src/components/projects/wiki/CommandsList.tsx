@@ -59,9 +59,9 @@ export const CommandsList = forwardRef((props: CommandsListProps, ref) => {
     }));
 
     return (
-        <div className="bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-secondary))] border border-[hsl(var(--border))] dark:border-white/10 rounded-lg shadow-2xl overflow-hidden p-1.5 min-w-[240px] animate-in fade-in zoom-in-95 duration-100 font-display">
+        <div className="bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] rounded-lg shadow-2xl overflow-hidden p-1.5 min-w-[240px] animate-in fade-in zoom-in-95 duration-100 font-display">
             <div className="px-2 py-1.5 mb-1">
-                <span className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Comandos Rápidos</span>
+                <span className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--muted-foreground))]">Comandos Rápidos</span>
             </div>
             {props.items.length ? (
                 props.items.map((item: CommandItem, index: number) => (
@@ -71,26 +71,26 @@ export const CommandsList = forwardRef((props: CommandsListProps, ref) => {
                         className={clsx(
                             "w-full flex items-center gap-3 px-2 py-2 rounded-md transition-all text-left",
                             index === selectedIndex
-                                ? "bg-[hsl(var(--primary))] text-white shadow-lg shadow-[hsl(var(--info)/20%)]"
-                                : "text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5"
+                                ? "bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] shadow-lg"
+                                : "text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--surface-2))]"
                         )}
                     >
                         <div className={clsx(
                             "size-7 rounded-md flex items-center justify-center",
-                            index === selectedIndex ? "bg-white/20" : "bg-[hsl(var(--surface-2))] dark:bg-white/5"
+                            index === selectedIndex ? "bg-[hsl(var(--primary-foreground)/0.2)]" : "bg-[hsl(var(--surface-2))]"
                         )}>
                             <item.icon size={14} />
                         </div>
                         <div>
                             <p className="text-sm font-bold leading-none">{item.title}</p>
-                            <p className={clsx("text-2xs mt-0.5 font-medium", index === selectedIndex ? "text-[hsl(var(--info))]" : "text-[hsl(var(--text-secondary))]")}>
+                            <p className={clsx("text-2xs mt-0.5 font-medium", index === selectedIndex ? "text-[hsl(var(--primary-foreground)/0.8)]" : "text-[hsl(var(--muted-foreground))]")}>
                                 {item.description}
                             </p>
                         </div>
                     </button>
                 ))
             ) : (
-                <div className="px-3 py-1.5 text-center text-xs text-[hsl(var(--text-secondary))] font-bold uppercase tracking-wide">
+                <div className="px-3 py-1.5 text-center text-xs text-[hsl(var(--muted-foreground))] font-bold uppercase tracking-wide">
                     Sin comandos
                 </div>
             )}

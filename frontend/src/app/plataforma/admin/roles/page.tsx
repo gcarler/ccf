@@ -235,7 +235,7 @@ export default function RolesPage() {
                 title={editingRole.id ? "Editar Rol" : "Nuevo Rol"}
                 subtitle="Configura los alcances de este perfil"
                 actions={
-                    <button onClick={handleSaveRole} className="flex items-center gap-2 px-3 py-2 bg-[hsl(var(--bg-muted))] text-[hsl(var(--text-primary))] dark:text-white rounded-lg text-xs font-bold uppercase tracking-wide hover:bg-[hsl(var(--surface-2))] active:scale-95 transition-all shadow-xl">
+                    <button onClick={handleSaveRole} className="flex items-center gap-2 px-3 py-2 bg-[hsl(var(--bg-muted))] text-[hsl(var(--text-primary))] rounded-lg text-xs font-bold uppercase tracking-wide hover:bg-[hsl(var(--surface-2))] active:scale-95 transition-all shadow-xl">
                         <Save size={14} /> Guardar Cambios
                     </button>
                 }
@@ -272,7 +272,7 @@ export default function RolesPage() {
                                                     onClick={() => togglePermission(p)}
                                                     className={`flex items-start gap-4 p-4 rounded-md cursor-pointer border transition-all ${isActive ? 'bg-info-soft border-[hsl(var(--info)/25%)]' : 'bg-[hsl(var(--bg-primary))] border-[hsl(var(--border))] hover:border-[hsl(var(--border))] hover:bg-[hsl(var(--surface-1))]'}`}
                                                 >
-                                                    <div className={`mt-0.5 shrink-0 w-5 h-5 rounded flex items-center justify-center transition-all ${isActive ? 'bg-[hsl(var(--primary))] text-white shadow-md' : 'bg-[hsl(var(--surface-2))] text-transparent border border-[hsl(var(--border))]'}`}>
+                                                    <div className={`mt-0.5 shrink-0 w-5 h-5 rounded flex items-center justify-center transition-all ${isActive ? 'bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] shadow-md' : 'bg-[hsl(var(--surface-2))] text-transparent border border-[hsl(var(--border))]'}`}>
                                                         <Check size={12} strokeWidth={4} />
                                                     </div>
                                                     <div>

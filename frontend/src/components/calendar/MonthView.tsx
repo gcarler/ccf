@@ -35,7 +35,7 @@ export default function MonthView({ currentDate, events, onSave, onEventClick }:
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
       {/* Day of week headers */}
-      <div className="grid grid-cols-7 shrink-0 border-b border-[hsl(var(--border))] dark:border-white/5">
+      <div className="grid grid-cols-7 shrink-0 border-b border-[hsl(var(--border))]">
         {['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'].map(d => (
           <div
             key={d}
@@ -61,7 +61,7 @@ export default function MonthView({ currentDate, events, onSave, onEventClick }:
             >
               <div
                 className={clsx(
-                  'min-h-[100px] p-2 border-r border-b border-[hsl(var(--border))] dark:border-white/5 group transition-colors cursor-pointer hover:bg-[hsl(var(--surface-1))]/50 dark:hover:bg-white/[0.02]',
+                  'min-h-[100px] p-2 border-r border-b border-[hsl(var(--border))] group transition-colors cursor-pointer hover:bg-[hsl(var(--surface-2))]',
                   !inMonth && 'opacity-30',
                   openPopoverDay === dayKey && 'ring-2 ring-inset ring-[hsl(var(--primary))]/50'
                 )}
@@ -70,8 +70,8 @@ export default function MonthView({ currentDate, events, onSave, onEventClick }:
                   className={clsx(
                     'inline-flex size-6 items-center justify-center rounded-full text-xs font-bold transition-all',
                     isToday(day)
-                      ? 'bg-[hsl(var(--primary))] text-white shadow-sm shadow-[hsl(var(--info))]'
-                      : 'text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] group-hover:text-[hsl(var(--text-primary))] dark:group-hover:text-white'
+                      ? 'bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] shadow-sm'
+                      : 'text-[hsl(var(--text-secondary))] group-hover:text-[hsl(var(--text-primary))]'
                   )}
                 >
                   {format(day, 'd')}
@@ -80,7 +80,7 @@ export default function MonthView({ currentDate, events, onSave, onEventClick }:
                   <div
                     key={e.id}
                     onClick={(evt) => { evt.stopPropagation(); onEventClick(e); }}
-                    className="truncate cursor-pointer rounded px-1 py-0.5 text-white mt-1"
+                    className="truncate cursor-pointer rounded px-1 py-0.5 text-[hsl(var(--primary-foreground))] mt-1"
                     style={{ backgroundColor: e.color }}
                   >
                     <div className="flex items-center gap-1">

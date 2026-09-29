@@ -13,22 +13,23 @@ import type {
     BitacoraEnvio, CampaignResult, CanalEnvio, CategoriaRecurso,
     PlantillaMensaje, RecursoAdjunto,
 } from '@/types/crm';
+import SidePanel from '@/components/ui/SidePanel';
 import ResourceBankGallery from './ResourceBankGallery';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 const CANAL_META: Record<CanalEnvio, { label: string; icon: React.ElementType; color: string; bg: string }> = {
-    WHATSAPP: { label: 'WhatsApp', icon: MessageSquare, color: 'text-[hsl(var(--success))] dark:text-[hsl(var(--success))]', bg: 'bg-[hsl(var(--success-muted))] dark:bg-[hsl(var(--success)/0.2)]' },
-    EMAIL:    { label: 'Email',    icon: Mail,          color: 'text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))]',    bg: 'bg-[hsl(var(--info-muted))] dark:bg-[hsl(var(--primary)/0.2)]' },
-    SMS:      { label: 'SMS',      icon: Send,          color: 'text-[hsl(var(--warning))] dark:text-[hsl(var(--warning))]',  bg: 'bg-[hsl(var(--warning-muted))] dark:bg-[hsl(var(--warning)/0.2)]' },
+    WHATSAPP: { label: 'WhatsApp', icon: MessageSquare, color: 'text-[hsl(var(--success))]', bg: 'bg-[hsl(var(--success)/0.1)]' },
+    EMAIL:    { label: 'Email',    icon: Mail,          color: 'text-[hsl(var(--primary))]', bg: 'bg-[hsl(var(--primary)/0.1)]' },
+    SMS:      { label: 'SMS',      icon: Send,          color: 'text-[hsl(var(--warning))]', bg: 'bg-[hsl(var(--warning)/0.1)]' },
 };
 
 const ESTADO_META: Record<string, { label: string; cls: string }> = {
-    PROCESANDO: { label: 'Procesando', cls: 'bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))] dark:bg-white/10 dark:text-[hsl(var(--text-secondary))]' },
-    ENVIADO:    { label: 'Enviado',    cls: 'bg-[hsl(var(--info-muted))] text-[hsl(var(--primary))] dark:bg-[hsl(var(--primary)/0.2)] dark:text-[hsl(var(--primary))]' },
-    ENTREGADO:  { label: 'Entregado', cls: 'bg-[hsl(var(--success-muted))] text-[hsl(var(--success))] dark:bg-[hsl(var(--success)/0.2)] dark:text-[hsl(var(--success))]' },
-    LEIDO:      { label: 'Leído',     cls: 'bg-[hsl(var(--info-muted))] text-[hsl(var(--info))] dark:bg-[hsl(var(--primary)/0.2)] dark:text-[hsl(var(--primary))]' },
-    FALLIDO:    { label: 'Fallido',   cls: 'bg-[hsl(var(--destructive)/0.08)] text-[hsl(var(--destructive))] dark:bg-[hsl(var(--destructive)/0.2)] dark:text-[hsl(var(--destructive))]' },
+    PROCESANDO: { label: 'Procesando', cls: 'bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))]' },
+    ENVIADO:    { label: 'Enviado',    cls: 'bg-[hsl(var(--primary)/0.1)] text-[hsl(var(--primary))]' },
+    ENTREGADO:  { label: 'Entregado',  cls: 'bg-[hsl(var(--success)/0.1)] text-[hsl(var(--success))]' },
+    LEIDO:      { label: 'Leído',      cls: 'bg-[hsl(var(--info)/0.1)] text-[hsl(var(--info))]' },
+    FALLIDO:    { label: 'Fallido',    cls: 'bg-[hsl(var(--destructive)/0.08)] text-[hsl(var(--destructive))]' },
 };
 
 function fmt(iso: string) {
@@ -81,22 +82,22 @@ function PlantillaCard({
                 'group relative rounded-xl border p-4 cursor-pointer transition-all duration-150',
                 selected
                     ? 'border-[hsl(var(--primary))] bg-[hsl(var(--primary)/0.04)] shadow-md'
-                    : 'border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-white/5 hover:border-[hsl(var(--border))] dark:hover:border-white/20 hover:shadow-sm',
+                    : 'border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] hover:border-[hsl(var(--border))] hover:shadow-xs',
             )}
         >
             {/* Header */}
             <div className="flex items-start justify-between gap-2 mb-2">
                 <div className="flex items-center gap-1.5 min-w-0">
                     {plantilla.categoria && (
-                        <CategoriaDot color={plantilla.categoria.color_ui_hex ?? '#6B7280'} />
+                        <CategoriaDot color={plantilla.categoria.color_ui_hex ?? 'hsl(var(--text-secondary))'} />
                     )}
-                    <span className="text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-white truncate">{plantilla.titulo}</span>
+                    <span className="text-sm font-semibold text-[hsl(var(--text-primary))] truncate">{plantilla.titulo}</span>
                 </div>
                 <CanalBadge canal={plantilla.canal} />
             </div>
 
             {/* Preview */}
-            <p className="text-xs text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] line-clamp-2 mb-3">
+            <p className="text-xs text-[hsl(var(--text-secondary))] line-clamp-2 mb-3">
                 {plantilla.contenido_texto}
             </p>
 
@@ -104,7 +105,7 @@ function PlantillaCard({
             {(plantilla.variables_requeridas ?? []).length > 0 && (
                 <div className="flex flex-wrap gap-1 mb-3">
                     {(plantilla.variables_requeridas ?? []).slice(0, 4).map(v => (
-                        <span key={v} className="text-2xs font-mono bg-[hsl(var(--surface-2))] dark:bg-white/10 text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] px-1.5 py-0.5 rounded">
+                        <span key={v} className="text-2xs font-mono bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))] px-1.5 py-0.5 rounded">
                             {`{{${v}}}`}
                         </span>
                     ))}
@@ -124,13 +125,13 @@ function PlantillaCard({
             <div className="absolute top-3 right-3 hidden group-hover:flex items-center gap-1">
                 <button
                     onClick={e => { e.stopPropagation(); onEdit(); }}
-                    className="size-6 flex items-center justify-center rounded-md bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] dark:border-white/10 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] dark:hover:text-white shadow-sm transition-colors"
+                    className="size-6 flex items-center justify-center rounded-md bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] hover:bg-[hsl(var(--surface-2))] shadow-xs transition-colors"
                 >
                     <Pencil size={12} />
                 </button>
                 <button
                     onClick={e => { e.stopPropagation(); onDelete(); }}
-                    className="size-6 flex items-center justify-center rounded-md bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-2))] border border-[hsl(var(--destructive)/0.2)] dark:border-[hsl(var(--destructive)/0.3)] text-[hsl(var(--destructive))] hover:bg-[hsl(var(--destructive)/0.08)] dark:hover:bg-[hsl(var(--destructive)/0.2)] shadow-sm transition-colors"
+                    className="size-6 flex items-center justify-center rounded-md bg-[hsl(var(--surface-1))] border border-[hsl(var(--destructive)/0.2)] text-[hsl(var(--destructive))] hover:bg-[hsl(var(--destructive)/0.08)] shadow-xs transition-colors"
                 >
                     <Trash2 size={12} />
                 </button>
@@ -216,32 +217,32 @@ function DetailPanel({
     ] as const;
 
     return (
-        <div className="flex flex-col h-full border-l border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-[hsl(var(--bg-muted))]/50">
+        <div className="flex flex-col h-full border-l border-[hsl(var(--border))] bg-[hsl(var(--surface-1))]">
             {/* Header */}
-            <div className="flex items-start justify-between gap-2 px-4 pt-4 pb-3 border-b border-[hsl(var(--border))] dark:border-white/10">
+            <div className="flex items-start justify-between gap-2 px-4 pt-4 pb-3 border-b border-[hsl(var(--border))]">
                 <div className="min-w-0">
                     <div className="flex items-center gap-2 mb-1">
                         <CanalBadge canal={plantilla.canal} />
                         {plantilla.categoria && (
-                            <span className="text-xs font-medium" style={{ color: plantilla.categoria.color_ui_hex ?? '#6B7280' }}>
+                            <span className="text-xs font-medium" style={{ color: plantilla.categoria.color_ui_hex ?? 'hsl(var(--text-secondary))' }}>
                                 {plantilla.categoria.nombre}
                             </span>
                         )}
                     </div>
-                    <h3 className="text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-white leading-tight">{plantilla.titulo}</h3>
+                    <h3 className="text-sm font-semibold text-[hsl(var(--text-primary))] leading-tight">{plantilla.titulo}</h3>
                 </div>
                 <div className="flex items-center gap-1 shrink-0">
-                    <button onClick={onEdit} className="size-7 flex items-center justify-center rounded-lg text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-3))] dark:hover:bg-white/10 transition-colors" aria-label="Editar">
+                    <button onClick={onEdit} className="size-7 flex items-center justify-center rounded-lg text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] transition-colors" aria-label="Editar">
                         <Pencil size={14} />
                     </button>
-                    <button onClick={onClose} className="size-7 flex items-center justify-center rounded-lg text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-3))] dark:hover:bg-white/10 transition-colors" aria-label="Cerrar">
+                    <button onClick={onClose} className="size-7 flex items-center justify-center rounded-lg text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] transition-colors" aria-label="Cerrar">
                         <X size={14} />
                     </button>
                 </div>
             </div>
 
             {/* Tabs */}
-            <div className="flex border-b border-[hsl(var(--border))] dark:border-white/10 px-4">
+            <div className="flex border-b border-[hsl(var(--border))] px-4">
                 {tabs.map(t => {
                     const Icon = t.icon;
                     return (
@@ -252,7 +253,7 @@ function DetailPanel({
                                 'flex items-center gap-1.5 text-xs font-medium py-2.5 px-2 border-b-2 -mb-px transition-colors',
                                 tab === t.key
                                     ? 'border-[hsl(var(--primary))] text-[hsl(var(--primary))]'
-                                    : 'border-transparent text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] dark:hover:text-[hsl(var(--text-secondary))]',
+                                    : 'border-transparent text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))]',
                             )}
                         >
                             <Icon size={12} />{t.label}
@@ -268,7 +269,7 @@ function DetailPanel({
                         {plantilla.canal === 'EMAIL' && plantilla.asunto && (
                             <div>
                                 <p className="text-2xs font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wider mb-1">Asunto</p>
-                                <p className="text-sm text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">{plantilla.asunto}</p>
+                                <p className="text-sm text-[hsl(var(--text-primary))]">{plantilla.asunto}</p>
                             </div>
                         )}
 
@@ -284,7 +285,7 @@ function DetailPanel({
                                                 value={vars[v] ?? ''}
                                                 onChange={e => setVars(p => ({ ...p, [v]: e.target.value }))}
                                                 placeholder={`Valor de ${v}`}
-                                                className="flex-1 text-xs px-2 py-1.5 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-white/5 text-[hsl(var(--text-primary))] dark:text-white placeholder:text-[hsl(var(--text-secondary))] focus:outline-none focus:ring-1 focus:ring-[hsl(var(--primary)/0.5)]"
+                                                className="flex-1 text-xs px-2 py-1.5 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-[hsl(var(--text-primary))] placeholder:text-[hsl(var(--text-secondary))] focus:outline-hidden focus:ring-1 focus:ring-[hsl(var(--primary)/0.3)] transition-all"
                                             />
                                         </div>
                                     ))}
@@ -296,19 +297,19 @@ function DetailPanel({
                         <div>
                             <p className="text-2xs font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wider mb-2">Vista previa</p>
                             {plantilla.contenido_html ? (
-                                <div className="rounded-xl border border-[hsl(var(--border))] dark:border-white/10 overflow-hidden">
-                                    <div className="flex items-center gap-2 px-3 py-2 bg-[hsl(var(--primary)/0.05)] dark:bg-[hsl(var(--primary)/0.1)] border-b border-[hsl(var(--border))] dark:border-white/10">
+                                <div className="rounded-xl border border-[hsl(var(--border))] overflow-hidden">
+                                    <div className="flex items-center gap-2 px-3 py-2 bg-[hsl(var(--primary)/0.05)] border-b border-[hsl(var(--border))]">
                                         <span className="text-2xs font-medium text-[hsl(var(--primary))]">Vista previa HTML</span>
                                     </div>
                                     <iframe
                                         srcDoc={plantilla.contenido_html}
                                         title="Vista previa HTML"
-                                        className="w-full h-[400px] bg-white"
+                                        className="w-full h-[400px] bg-[hsl(var(--surface-1))]"
                                         sandbox="allow-same-origin"
                                     />
                                 </div>
                             ) : (
-                                <div className="rounded-xl bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 p-3 text-sm text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] whitespace-pre-wrap leading-relaxed">
+                                <div className="rounded-xl bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] p-3 text-sm text-[hsl(var(--text-primary))] whitespace-pre-wrap leading-relaxed">
                                     {previewText}
                                 </div>
                             )}
@@ -318,7 +319,7 @@ function DetailPanel({
                         <div className="flex gap-2">
                             <button
                                 onClick={copyText}
-                                className="flex-1 flex items-center justify-center gap-1.5 text-xs font-medium h-8 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-white/5 text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/10 transition-colors"
+                                className="flex-1 flex items-center justify-center gap-1.5 text-xs font-medium h-8 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] hover:text-[hsl(var(--text-primary))] transition-colors"
                             >
                                 {copied ? <Check size={12} className="text-[hsl(var(--success))]" /> : null}
                                 {copied ? 'Copiado' : 'Copiar texto'}
@@ -326,14 +327,14 @@ function DetailPanel({
                             {plantilla.canal === 'EMAIL' && (
                                 <a
                                     href={`/plataforma/crm/resources/builder/${plantilla.id}`}
-                                    className="flex-1 flex items-center justify-center gap-1.5 text-xs font-medium h-8 rounded-lg border border-[hsl(var(--primary)/0.3)] dark:border-[hsl(var(--primary)/0.4)] bg-[hsl(var(--primary)/0.05)] dark:bg-[hsl(var(--primary)/0.1)] text-[hsl(var(--primary))] hover:bg-[hsl(var(--primary)/0.1)] dark:hover:bg-[hsl(var(--primary)/0.15)] transition-colors"
+                                    className="flex-1 flex items-center justify-center gap-1.5 text-xs font-medium h-8 rounded-lg border border-[hsl(var(--primary)/0.3)] bg-[hsl(var(--primary)/0.05)] text-[hsl(var(--primary))] hover:bg-[hsl(var(--primary)/0.1)] transition-colors"
                                 >
                                     <Palette size={12} />Diseñar
                                 </a>
                             )}
                             <button
                                 onClick={onSend}
-                                className="flex-1 flex items-center justify-center gap-1.5 text-xs font-medium h-8 rounded-lg bg-[hsl(var(--primary))] text-white hover:opacity-90 transition-opacity"
+                                className="flex-1 flex items-center justify-center gap-1.5 text-xs font-medium h-8 rounded-lg bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] hover:opacity-90 transition-opacity"
                             >
                                 <Send size={12} />Registrar envío
                             </button>
@@ -345,16 +346,16 @@ function DetailPanel({
                     <>
                         <div className="space-y-2">
                             {(plantilla.adjuntos ?? []).map(a => (
-                                <div key={a.id} className="flex items-center gap-3 p-2.5 rounded-xl bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10">
-                                    <div className="size-8 rounded-lg bg-[hsl(var(--surface-2))] dark:bg-white/10 flex items-center justify-center shrink-0">
+                                <div key={a.id} className="flex items-center gap-3 p-2.5 rounded-xl bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))]">
+                                    <div className="size-8 rounded-lg bg-[hsl(var(--surface-2))] flex items-center justify-center shrink-0">
                                         <FileText size={14} className="text-[hsl(var(--text-secondary))]" />
                                     </div>
                                     <div className="flex-1 min-w-0">
-                                        <p className="text-xs font-medium text-[hsl(var(--text-primary))] dark:text-white truncate">{a.nombre_recurso}</p>
+                                        <p className="text-xs font-medium text-[hsl(var(--text-primary))] truncate">{a.nombre_recurso}</p>
                                         <p className="text-2xs text-[hsl(var(--text-secondary))]">{a.tipo_mime} · {fmtBytes(a.peso_bytes)}</p>
                                     </div>
                                     <a href={a.url_acceso} target="_blank" rel="noopener noreferrer"
-                                        className="size-6 flex items-center justify-center rounded-lg text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] dark:hover:text-white transition-colors">
+                                        className="size-6 flex items-center justify-center rounded-lg text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] hover:bg-[hsl(var(--surface-2))] transition-colors">
                                         <Download size={12} />
                                     </a>
                                     <button onClick={() => handleDeleteAdjunto(a.id)}
@@ -372,7 +373,7 @@ function DetailPanel({
                         <button
                             onClick={() => fileRef.current?.click()}
                             disabled={uploading}
-                            className="w-full flex items-center justify-center gap-2 h-9 rounded-xl border-2 border-dashed border-[hsl(var(--border))] dark:border-white/20 text-xs font-medium text-[hsl(var(--text-secondary))] hover:border-[hsl(var(--primary)/0.5)] hover:text-[hsl(var(--primary))] transition-colors disabled:opacity-50"
+                            className="w-full flex items-center justify-center gap-2 h-9 rounded-xl border-2 border-dashed border-[hsl(var(--border))] text-xs font-medium text-[hsl(var(--text-secondary))] hover:border-[hsl(var(--primary)/0.5)] hover:text-[hsl(var(--primary))] transition-colors disabled:opacity-50"
                         >
                             {uploading ? <Loader2 size={13} className="animate-spin" /> : <Upload size={13} />}
                             {uploading ? 'Subiendo…' : 'Subir archivo'}
@@ -392,7 +393,7 @@ function DetailPanel({
                             {bitacora.map(b => {
                                 const em = ESTADO_META[b.estado] ?? { label: b.estado, cls: '' };
                                 return (
-                                    <div key={b.id} className="p-3 rounded-xl bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10">
+                                    <div key={b.id} className="p-3 rounded-xl bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))]">
                                         <div className="flex items-center justify-between mb-1">
                                             <span className={clsx('text-2xs font-medium px-2 py-0.5 rounded-full', em.cls)}>{em.label}</span>
                                             <span className="text-2xs text-[hsl(var(--text-secondary))]">{fmt(b.fecha_envio)}</span>
@@ -508,163 +509,159 @@ function PlantillaDrawer({
     if (!open) return null;
 
     return (
-        <>
-            <div className="fixed inset-0 bg-black/40 z-40" onClick={onClose} />
-            <div className="fixed right-0 top-0 bottom-0 w-[480px] bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--bg-muted))] border-l border-[hsl(var(--border))] dark:border-white/10 z-50 flex flex-col shadow-2xl">
-                <div className="flex items-center justify-between px-5 py-4 border-b border-[hsl(var(--border))] dark:border-white/10">
-                    <h2 className="text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-white">
-                        {editing ? 'Editar plantilla' : 'Nueva plantilla'}
-                    </h2>
-                    <button onClick={onClose} className="size-7 flex items-center justify-center rounded-lg text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/10 transition-colors" aria-label="Cerrar">
-                        <X size={15} />
-                    </button>
+        <SidePanel
+            isOpen={open}
+            onClose={onClose}
+            title={editing ? 'Editar plantilla' : 'Nueva plantilla'}
+            subtitle="Define canal, variables requeridas y contenido"
+            width="w-[500px]"
+        >
+            <div className="space-y-5 py-2">
+                {/* Título */}
+                <div>
+                    <label className="block text-xs font-medium text-[hsl(var(--text-secondary))] mb-1">Título *</label>
+                    <input
+                        value={form.titulo}
+                        onChange={e => setF('titulo', e.target.value)}
+                        className="w-full text-sm px-3 py-2 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-[hsl(var(--text-primary))] focus:outline-hidden focus:ring-2 focus:ring-[hsl(var(--primary)/0.3)] transition-all"
+                        placeholder="Nombre de la plantilla"
+                    />
                 </div>
 
-                <div className="flex-1 overflow-y-auto px-5 py-4 space-y-5">
-                    {/* Título */}
+                {/* Canal */}
+                <div>
+                    <label className="block text-xs font-medium text-[hsl(var(--text-secondary))] mb-1">Canal *</label>
+                    <div className="flex gap-2">
+                        {(['WHATSAPP', 'EMAIL', 'SMS'] as CanalEnvio[]).map(c => {
+                            const m = CANAL_META[c]; const Icon = m.icon;
+                            return (
+                                <button
+                                    key={c}
+                                    type="button"
+                                    onClick={() => setF('canal', c)}
+                                    className={clsx(
+                                        'flex-1 flex items-center justify-center gap-1.5 h-9 rounded-lg border text-xs font-medium transition-all',
+                                        form.canal === c
+                                            ? `${m.bg} ${m.color} border-current`
+                                            : 'border-[hsl(var(--border))] text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))]',
+                                    )}
+                                >
+                                    <Icon size={13} />{m.label}
+                                </button>
+                            );
+                        })}
+                    </div>
+                </div>
+
+                {/* Categoría */}
+                <div>
+                    <label className="block text-xs font-medium text-[hsl(var(--text-secondary))] mb-1">Categoría *</label>
+                    <select
+                        value={form.categoria_id}
+                        onChange={e => setF('categoria_id', e.target.value)}
+                        className="w-full text-sm px-3 py-2 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-[hsl(var(--text-primary))] focus:outline-hidden focus:ring-2 focus:ring-[hsl(var(--primary)/0.3)] transition-all"
+                    >
+                        <option value="">Seleccionar categoría…</option>
+                        {categorias.map(c => (
+                            <option key={c.id} value={c.id}>{c.nombre}</option>
+                        ))}
+                    </select>
+                </div>
+
+                {/* Asunto (solo email) */}
+                {form.canal === 'EMAIL' && (
                     <div>
-                        <label className="block text-xs font-medium text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] mb-1">Título *</label>
+                        <label className="block text-xs font-medium text-[hsl(var(--text-secondary))] mb-1">Asunto del email</label>
                         <input
-                            value={form.titulo}
-                            onChange={e => setF('titulo', e.target.value)}
-                            className="w-full text-sm px-3 py-2 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-white/5 text-[hsl(var(--text-primary))] dark:text-white focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.4)]"
-                            placeholder="Nombre de la plantilla"
+                            value={form.asunto}
+                            onChange={e => setF('asunto', e.target.value)}
+                            className="w-full text-sm px-3 py-2 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-[hsl(var(--text-primary))] focus:outline-hidden focus:ring-2 focus:ring-[hsl(var(--primary)/0.3)] transition-all"
+                            placeholder="Asunto del correo"
                         />
                     </div>
+                )}
 
-                    {/* Canal */}
-                    <div>
-                        <label className="block text-xs font-medium text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] mb-1">Canal *</label>
-                        <div className="flex gap-2">
-                            {(['WHATSAPP', 'EMAIL', 'SMS'] as CanalEnvio[]).map(c => {
-                                const m = CANAL_META[c]; const Icon = m.icon;
-                                return (
-                                    <button
-                                        key={c}
-                                        onClick={() => setF('canal', c)}
-                                        className={clsx(
-                                            'flex-1 flex items-center justify-center gap-1.5 h-9 rounded-lg border text-xs font-medium transition-all',
-                                            form.canal === c
-                                                ? `${m.bg} ${m.color} border-current`
-                                                : 'border-[hsl(var(--border))] dark:border-white/10 text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5',
-                                        )}
-                                    >
-                                        <Icon size={13} />{m.label}
+                {/* Variables */}
+                <div>
+                    <label className="block text-xs font-medium text-[hsl(var(--text-secondary))] mb-1">Variables requeridas</label>
+                    <div className="flex gap-2 mb-2">
+                        <input
+                            value={newVar}
+                            onChange={e => setNewVar(e.target.value)}
+                            onKeyDown={e => e.key === 'Enter' && addVar()}
+                            placeholder="nombre_variable"
+                            className="flex-1 text-xs px-2.5 py-1.5 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-[hsl(var(--text-primary))] focus:outline-hidden focus:ring-2 focus:ring-[hsl(var(--primary)/0.3)] transition-all"
+                        />
+                        <button type="button" onClick={addVar} className="px-3 h-8 rounded-lg bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))] text-xs font-medium hover:bg-[hsl(var(--surface-3))] transition-colors">
+                            + Agregar
+                        </button>
+                    </div>
+                    {form.variables_requeridas.length > 0 && (
+                        <div className="flex flex-wrap gap-1.5">
+                            {form.variables_requeridas.map(v => (
+                                <span key={v} className="inline-flex items-center gap-1 text-xs font-mono bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))] px-2 py-0.5 rounded-md border border-[hsl(var(--border))]">
+                                    {`{{${v}}}`}
+                                    <button type="button" onClick={() => removeVar(v)} className="text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--destructive))] ml-0.5" aria-label="Eliminar variable">
+                                        <X size={10} />
                                     </button>
-                                );
-                            })}
-                        </div>
-                    </div>
-
-                    {/* Categoría */}
-                    <div>
-                        <label className="block text-xs font-medium text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] mb-1">Categoría *</label>
-                        <select
-                            value={form.categoria_id}
-                            onChange={e => setF('categoria_id', e.target.value)}
-                            className="w-full text-sm px-3 py-2 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-2))] text-[hsl(var(--text-primary))] dark:text-white focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.4)]"
-                        >
-                            <option value="">Seleccionar categoría…</option>
-                            {categorias.map(c => (
-                                <option key={c.id} value={c.id}>{c.nombre}</option>
+                                </span>
                             ))}
-                        </select>
-                    </div>
-
-                    {/* Asunto (solo email) */}
-                    {form.canal === 'EMAIL' && (
-                        <div>
-                            <label className="block text-xs font-medium text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] mb-1">Asunto del email</label>
-                            <input
-                                value={form.asunto}
-                                onChange={e => setF('asunto', e.target.value)}
-                                className="w-full text-sm px-3 py-2 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-white/5 text-[hsl(var(--text-primary))] dark:text-white focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.4)]"
-                                placeholder="Asunto del correo"
-                            />
                         </div>
                     )}
+                </div>
 
-                    {/* Variables */}
-                    <div>
-                        <label className="block text-xs font-medium text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] mb-1">Variables requeridas</label>
-                        <div className="flex gap-2 mb-2">
-                            <input
-                                value={newVar}
-                                onChange={e => setNewVar(e.target.value)}
-                                onKeyDown={e => e.key === 'Enter' && addVar()}
-                                placeholder="nombre_variable"
-                                className="flex-1 text-xs px-2.5 py-1.5 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-white/5 text-[hsl(var(--text-primary))] dark:text-white focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.4)]"
-                            />
-                            <button onClick={addVar} className="px-3 h-8 rounded-lg bg-[hsl(var(--surface-2))] dark:bg-white/10 text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] text-xs font-medium hover:bg-[hsl(var(--surface-3))] dark:hover:bg-white/20 transition-colors">
-                                + Agregar
-                            </button>
-                        </div>
+                {/* Contenido */}
+                <div>
+                    <div className="flex items-center justify-between mb-1">
+                        <label className="text-xs font-medium text-[hsl(var(--text-secondary))]">Contenido *</label>
                         {form.variables_requeridas.length > 0 && (
-                            <div className="flex flex-wrap gap-1.5">
+                            <div className="flex gap-1 flex-wrap justify-end">
                                 {form.variables_requeridas.map(v => (
-                                    <span key={v} className="inline-flex items-center gap-1 text-xs font-mono bg-[hsl(var(--surface-2))] dark:bg-white/10 text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] px-2 py-0.5 rounded-md">
+                                    <button key={v} type="button" onClick={() => insertVar(v)}
+                                        className="text-2xs font-mono bg-[hsl(var(--surface-2))] hover:bg-[hsl(var(--surface-3))] text-[hsl(var(--text-secondary))] px-1.5 py-0.5 rounded transition-colors border border-[hsl(var(--border))]">
                                         {`{{${v}}}`}
-                                        <button onClick={() => removeVar(v)} className="text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--destructive))] ml-0.5" aria-label="Eliminar variable">
-                                            <X size={10} />
-                                        </button>
-                                    </span>
+                                    </button>
                                 ))}
                             </div>
                         )}
                     </div>
-
-                    {/* Contenido */}
-                    <div>
-                        <div className="flex items-center justify-between mb-1">
-                            <label className="text-xs font-medium text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">Contenido *</label>
-                            {form.variables_requeridas.length > 0 && (
-                                <div className="flex gap-1 flex-wrap justify-end">
-                                    {form.variables_requeridas.map(v => (
-                                        <button key={v} onClick={() => insertVar(v)}
-                                            className="text-2xs font-mono bg-[hsl(var(--surface-2))] dark:bg-white/10 hover:bg-[hsl(var(--surface-3))] dark:hover:bg-white/20 text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] px-1.5 py-0.5 rounded transition-colors">
-                                            {`{{${v}}}`}
-                                        </button>
-                                    ))}
-                                </div>
-                            )}
-                        </div>
-                        <textarea
-                            ref={bodyRef}
-                            value={form.contenido_texto}
-                            onChange={e => setF('contenido_texto', e.target.value)}
-                            rows={8}
-                            className="w-full text-sm px-3 py-2 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-white/5 text-[hsl(var(--text-primary))] dark:text-white placeholder:text-[hsl(var(--text-secondary))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.4)] resize-none font-mono leading-relaxed"
-                            placeholder="Hola {{nombre}}, te escribimos desde {{sede}}…"
-                        />
-                    </div>
-
-                    {/* Meta template id */}
-                    <div>
-                        <label className="block text-xs font-medium text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] mb-1">ID plantilla Meta (WhatsApp Business API)</label>
-                        <input
-                            value={form.meta_template_id}
-                            onChange={e => setF('meta_template_id', e.target.value)}
-                            className="w-full text-sm px-3 py-2 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-white/5 text-[hsl(var(--text-primary))] dark:text-white focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.4)]"
-                            placeholder="Opcional — ej: bienvenida_nuevo_v1"
-                        />
-                    </div>
+                    <textarea
+                        ref={bodyRef}
+                        value={form.contenido_texto}
+                        onChange={e => setF('contenido_texto', e.target.value)}
+                        rows={8}
+                        className="w-full text-sm px-3 py-2 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-[hsl(var(--text-primary))] placeholder:text-[hsl(var(--text-secondary))] focus:outline-hidden focus:ring-2 focus:ring-[hsl(var(--primary)/0.3)] resize-none font-mono leading-relaxed"
+                        placeholder="Hola {{nombre}}, te escribimos desde {{sede}}…"
+                    />
                 </div>
 
-                <div className="px-5 py-4 border-t border-[hsl(var(--border))] dark:border-white/10 flex gap-2">
-                    <button onClick={onClose} className="flex-1 h-9 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 text-sm text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5 transition-colors">
+                {/* Meta template id */}
+                <div>
+                    <label className="block text-xs font-medium text-[hsl(var(--text-secondary))] mb-1">ID plantilla Meta (WhatsApp Business API)</label>
+                    <input
+                        value={form.meta_template_id}
+                        onChange={e => setF('meta_template_id', e.target.value)}
+                        className="w-full text-sm px-3 py-2 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-[hsl(var(--text-primary))] focus:outline-hidden focus:ring-2 focus:ring-[hsl(var(--primary)/0.3)] transition-all"
+                        placeholder="Opcional — ej: bienvenida_nuevo_v1"
+                    />
+                </div>
+
+                <div className="pt-4 border-t border-[hsl(var(--border))] flex gap-2">
+                    <button type="button" onClick={onClose} className="flex-1 h-9 rounded-lg border border-[hsl(var(--border))] text-sm text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] transition-colors">
                         Cancelar
                     </button>
                     <button
+                        type="button"
                         onClick={submit}
                         disabled={saving || !form.titulo || !form.contenido_texto || !form.categoria_id}
-                        className="flex-1 h-9 rounded-lg bg-[hsl(var(--primary))] text-white text-sm font-medium hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center justify-center gap-1.5"
+                        className="flex-1 h-9 rounded-lg bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] text-sm font-medium hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center justify-center gap-1.5"
                     >
                         {saving && <Loader2 size={13} className="animate-spin" />}
                         {editing ? 'Guardar cambios' : 'Crear plantilla'}
                     </button>
                 </div>
             </div>
-        </>
+        </SidePanel>
     );
 }
 
@@ -705,50 +702,47 @@ function CatDrawer({
     if (!open) return null;
 
     return (
-        <>
-            <div className="fixed inset-0 bg-black/40 z-40" onClick={onClose} />
-            <div className="fixed right-0 top-0 bottom-0 w-80 bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--bg-muted))] border-l border-[hsl(var(--border))] dark:border-white/10 z-50 flex flex-col shadow-2xl">
-                <div className="flex items-center justify-between px-5 py-4 border-b border-[hsl(var(--border))] dark:border-white/10">
-                    <h2 className="text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-white">Nueva categoría</h2>
-                    <button onClick={onClose} className="size-7 flex items-center justify-center rounded-lg text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/10 transition-colors" aria-label="Cerrar">
-                        <X size={15} />
-                    </button>
+        <SidePanel
+            isOpen={open}
+            onClose={onClose}
+            title="Nueva categoría"
+            subtitle="Crea una categoría para organizar plantillas y recursos"
+            width="w-[400px]"
+        >
+            <div className="space-y-4 py-2">
+                <div>
+                    <label className="block text-xs font-medium text-[hsl(var(--text-secondary))] mb-1">Nombre *</label>
+                    <input value={nombre} onChange={e => setNombre(e.target.value)}
+                        className="w-full text-sm px-3 py-2 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-[hsl(var(--text-primary))] focus:outline-hidden focus:ring-2 focus:ring-[hsl(var(--primary)/0.3)] transition-all"
+                        placeholder="Ej: Bienvenida nuevos" />
                 </div>
-                <div className="flex-1 px-5 py-4 space-y-4">
-                    <div>
-                        <label className="block text-xs font-medium text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] mb-1">Nombre *</label>
-                        <input value={nombre} onChange={e => setNombre(e.target.value)}
-                            className="w-full text-sm px-3 py-2 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-white/5 text-[hsl(var(--text-primary))] dark:text-white focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.4)]"
-                            placeholder="Ej: Bienvenida nuevos" />
-                    </div>
-                    <div>
-                        <label className="block text-xs font-medium text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] mb-1">Descripción</label>
-                        <input value={descripcion} onChange={e => setDescripcion(e.target.value)}
-                            className="w-full text-sm px-3 py-2 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-white/5 text-[hsl(var(--text-primary))] dark:text-white focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.4)]"
-                            placeholder="Opcional" />
-                    </div>
-                    <div>
-                        <label className="block text-xs font-medium text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] mb-2">Color</label>
-                        <div className="flex flex-wrap gap-2">
-                            {DEFAULT_COLORS.map(c => (
-                                <button key={c} onClick={() => setColor(c)}
-                                    className={clsx('size-7 rounded-full border-2 transition-transform', color === c ? 'scale-110 border-[hsl(var(--border))] dark:border-white/60' : 'border-transparent')}
-                                    style={{ background: c }} />
-                            ))}
-                            <input type="color" value={color} onChange={e => setColor(e.target.value)}
-                                className="size-7 rounded-full border-2 border-transparent cursor-pointer overflow-hidden" />
-                        </div>
+                <div>
+                    <label className="block text-xs font-medium text-[hsl(var(--text-secondary))] mb-1">Descripción</label>
+                    <input value={descripcion} onChange={e => setDescripcion(e.target.value)}
+                        className="w-full text-sm px-3 py-2 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-[hsl(var(--text-primary))] focus:outline-hidden focus:ring-2 focus:ring-[hsl(var(--primary)/0.3)] transition-all"
+                        placeholder="Opcional" />
+                </div>
+                <div>
+                    <label className="block text-xs font-medium text-[hsl(var(--text-secondary))] mb-2">Color</label>
+                    <div className="flex flex-wrap gap-2 items-center">
+                        {DEFAULT_COLORS.map(c => (
+                            <button key={c} type="button" onClick={() => setColor(c)}
+                                className={clsx('size-7 rounded-full border-2 transition-transform', color === c ? 'scale-110 border-[hsl(var(--foreground))] shadow-xs' : 'border-transparent')}
+                                style={{ background: c }} />
+                        ))}
+                        <input type="color" value={color} onChange={e => setColor(e.target.value)}
+                            className="size-7 rounded-full border-2 border-transparent cursor-pointer overflow-hidden" />
                     </div>
                 </div>
-                <div className="px-5 py-4 border-t border-[hsl(var(--border))] dark:border-white/10 flex gap-2">
-                    <button onClick={onClose} className="flex-1 h-9 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 text-sm text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5 transition-colors">Cancelar</button>
-                    <button onClick={submit} disabled={saving || !nombre.trim()}
-                        className="flex-1 h-9 rounded-lg bg-[hsl(var(--primary))] text-white text-sm font-medium hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-1.5 transition-opacity">
+                <div className="pt-4 border-t border-[hsl(var(--border))] flex gap-2">
+                    <button type="button" onClick={onClose} className="flex-1 h-9 rounded-lg border border-[hsl(var(--border))] text-sm text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] transition-colors">Cancelar</button>
+                    <button type="button" onClick={submit} disabled={saving || !nombre.trim()}
+                        className="flex-1 h-9 rounded-lg bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] text-sm font-medium hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-1.5 transition-opacity">
                         {saving && <Loader2 size={13} className="animate-spin" />}Crear
                     </button>
                 </div>
             </div>
-        </>
+        </SidePanel>
     );
 }
 
@@ -859,93 +853,85 @@ function SendDrawer({
     // ── Result screen (campaign) ──────────────────────────────────────────────
     if (campResult) {
         return (
-            <>
-                <div className="fixed inset-0 bg-black/40 z-40" onClick={() => { setCampResult(null); onClose(); }} />
-                <div className="fixed right-0 top-0 bottom-0 w-[420px] bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--bg-muted))] border-l border-[hsl(var(--border))] dark:border-white/10 z-50 flex flex-col shadow-2xl">
-                    <div className="flex items-center justify-between px-5 py-4 border-b border-[hsl(var(--border))] dark:border-white/10">
-                        <h2 className="text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-white">Campaña enviada</h2>
-                        <button onClick={() => { setCampResult(null); onClose(); }} className="size-7 flex items-center justify-center rounded-lg text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/10 transition-colors" aria-label="Cerrar">
-                            <X size={15} />
-                        </button>
+            <SidePanel
+                isOpen={open}
+                onClose={() => { setCampResult(null); onClose(); }}
+                title="Campaña enviada"
+                subtitle={`ID: ${campResult.external_id}`}
+                width="w-[440px]"
+            >
+                <div className="flex flex-col items-center justify-center py-6 gap-5 text-center">
+                    <div className="size-16 rounded-full bg-[hsl(var(--success-muted))] flex items-center justify-center">
+                        <Megaphone size={28} className="text-[hsl(var(--success))]" />
                     </div>
-                    <div className="flex-1 flex flex-col items-center justify-center px-5 gap-5 text-center">
-                        <div className="size-16 rounded-full bg-[hsl(var(--success-muted))] dark:bg-[hsl(var(--success)/0.2)] flex items-center justify-center">
-                            <Megaphone size={28} className="text-[hsl(var(--success))] dark:text-[hsl(var(--success))]" />
-                        </div>
-                        <div>
-                            <p className="text-lg font-semibold text-[hsl(var(--text-primary))] dark:text-white">{campResult.campaign_name}</p>
-                            <p className="text-xs text-[hsl(var(--text-secondary))] mt-1">ID: {campResult.external_id}</p>
-                        </div>
-                        <div className="flex gap-6">
-                            <div className="text-center">
-                                <p className="text-2xl font-bold text-[hsl(var(--text-primary))] dark:text-white">{campResult.target_count}</p>
-                                <p className="text-2xs font-semibold uppercase text-[hsl(var(--text-secondary))]">Destinatarios</p>
-                            </div>
-                            <div className="text-center">
-                                <p className="text-2xl font-bold text-[hsl(var(--success))]">{campResult.delivered_count}</p>
-                                <p className="text-2xs font-semibold uppercase text-[hsl(var(--success))]">Enviados</p>
-                            </div>
-                            {campResult.failed_count > 0 && (
-                                <div className="text-center">
-                                    <p className="text-2xl font-bold text-[hsl(var(--destructive))]">{campResult.failed_count}</p>
-                                    <p className="text-2xs font-semibold uppercase text-[hsl(var(--destructive))]">Fallidos</p>
-                                </div>
-                            )}
-                        </div>
-                        <button onClick={() => { setCampResult(null); onClose(); }}
-                            className="mt-4 h-9 px-6 rounded-lg bg-[hsl(var(--primary))] text-white text-sm font-medium hover:opacity-90 transition-opacity">
-                            Cerrar
-                        </button>
+                    <div>
+                        <p className="text-lg font-semibold text-[hsl(var(--text-primary))]">{campResult.campaign_name}</p>
+                        <p className="text-xs text-[hsl(var(--text-secondary))] mt-1">ID: {campResult.external_id}</p>
                     </div>
+                    <div className="flex gap-6">
+                        <div className="text-center">
+                            <p className="text-2xl font-bold text-[hsl(var(--text-primary))]">{campResult.target_count}</p>
+                            <p className="text-2xs font-semibold uppercase text-[hsl(var(--text-secondary))]">Destinatarios</p>
+                        </div>
+                        <div className="text-center">
+                            <p className="text-2xl font-bold text-[hsl(var(--success))]">{campResult.delivered_count}</p>
+                            <p className="text-2xs font-semibold uppercase text-[hsl(var(--success))]">Enviados</p>
+                        </div>
+                        {campResult.failed_count > 0 && (
+                            <div className="text-center">
+                                <p className="text-2xl font-bold text-[hsl(var(--destructive))]">{campResult.failed_count}</p>
+                                <p className="text-2xs font-semibold uppercase text-[hsl(var(--destructive))]">Fallidos</p>
+                            </div>
+                        )}
+                    </div>
+                    <button type="button" onClick={() => { setCampResult(null); onClose(); }}
+                        className="mt-4 h-9 px-6 rounded-lg bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] text-sm font-medium hover:opacity-90 transition-opacity">
+                        Cerrar
+                    </button>
                 </div>
-            </>
+            </SidePanel>
         );
     }
 
     return (
-        <>
-            <div className="fixed inset-0 bg-black/40 z-40" onClick={onClose} />
-            <div className="fixed right-0 top-0 bottom-0 w-[460px] bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--bg-muted))] border-l border-[hsl(var(--border))] dark:border-white/10 z-50 flex flex-col shadow-2xl">
-                <div className="flex items-center justify-between px-5 py-4 border-b border-[hsl(var(--border))] dark:border-white/10">
-                    <div>
-                        <h2 className="text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-white">Registrar envío</h2>
-                        <p className="text-xs text-[hsl(var(--text-secondary))] mt-0.5">{plantilla.titulo}</p>
-                    </div>
-                    <button onClick={onClose} className="size-7 flex items-center justify-center rounded-lg text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/10 transition-colors" aria-label="Cerrar">
-                        <X size={15} />
-                    </button>
-                </div>
-
+        <SidePanel
+            isOpen={open}
+            onClose={onClose}
+            title="Registrar envío"
+            subtitle={plantilla.titulo}
+            width="w-[500px]"
+        >
+            <div className="flex flex-col gap-4 py-2">
                 {/* Mode toggle */}
-                <div className="flex border-b border-[hsl(var(--border))] dark:border-white/10">
-                    <button onClick={() => setModo('individual')}
+                <div className="flex border-b border-[hsl(var(--border))]">
+                    <button type="button" onClick={() => setModo('individual')}
                         className={clsx('flex-1 flex items-center justify-center gap-2 py-2.5 text-xs font-semibold uppercase tracking-wide transition-colors',
                             modo === 'individual'
                                 ? 'text-[hsl(var(--primary))] border-b-2 border-[hsl(var(--primary))]'
-                                : 'text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-secondary))] dark:hover:text-[hsl(var(--text-secondary))]'
+                                : 'text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))]'
                         )}>
                         <Send size={12} />Individual
                     </button>
-                    <button onClick={() => setModo('campaign')}
+                    <button type="button" onClick={() => setModo('campaign')}
                         className={clsx('flex-1 flex items-center justify-center gap-2 py-2.5 text-xs font-semibold uppercase tracking-wide transition-colors',
                             modo === 'campaign'
                                 ? 'text-[hsl(var(--primary))] border-b-2 border-[hsl(var(--primary))]'
-                                : 'text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-secondary))] dark:hover:text-[hsl(var(--text-secondary))]'
+                                : 'text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))]'
                         )}>
                         <Users size={12} />Campaña
                     </button>
                 </div>
 
-                <div className="flex-1 overflow-y-auto px-5 py-4 space-y-5">
+                <div className="space-y-4">
                     {modo === 'individual' ? (
                         <>
                             {/* Destinatario */}
                             <div>
-                                <label className="block text-xs font-medium text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] mb-1">Destinatario *</label>
+                                <label className="block text-xs font-medium text-[hsl(var(--text-secondary))] mb-1">Destinatario *</label>
                                 {destinatario ? (
-                                    <div className="flex items-center justify-between px-3 py-2 rounded-lg bg-[hsl(var(--success-muted))] dark:bg-[hsl(var(--success)/0.2)] border border-[hsl(var(--success)/0.3)] dark:border-[hsl(var(--success)/0.3)]">
-                                        <span className="text-sm text-[hsl(var(--success))] dark:text-[hsl(var(--success))] font-medium">{destinatario.nombre}</span>
-                                        <button onClick={() => setDestinatario(null)} className="text-[hsl(var(--success))] hover:text-[hsl(var(--success))] dark:hover:text-[hsl(var(--success))]">
+                                    <div className="flex items-center justify-between px-3 py-2 rounded-lg bg-[hsl(var(--success)/0.1)] border border-[hsl(var(--success)/0.3)]">
+                                        <span className="text-sm text-[hsl(var(--success))] font-medium">{destinatario.nombre}</span>
+                                        <button onClick={() => setDestinatario(null)} className="text-[hsl(var(--success))] hover:opacity-80">
                                             <X size={13} />
                                         </button>
                                     </div>
@@ -956,14 +942,14 @@ function SendDrawer({
                                             value={search}
                                             onChange={e => setSearch(e.target.value)}
                                             placeholder="Buscar persona por nombre…"
-                                            className="w-full text-sm pl-8 pr-3 py-2 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-white/5 text-[hsl(var(--text-primary))] dark:text-white focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.4)]"
+                                            className="w-full text-sm pl-8 pr-3 py-2 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-[hsl(var(--text-primary))] focus:outline-hidden focus:ring-2 focus:ring-[hsl(var(--primary)/0.3)] transition-all"
                                         />
                                         {(searching || results.length > 0) && (
-                                            <div className="absolute top-full left-0 right-0 mt-1 bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] dark:border-white/10 rounded-xl shadow-lg z-10 overflow-hidden">
+                                            <div className="absolute top-full left-0 right-0 mt-1 bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] rounded-xl shadow-lg z-10 overflow-hidden">
                                                 {searching && <div className="p-3 text-xs text-[hsl(var(--text-secondary))] text-center"><Loader2 size={12} className="animate-spin inline mr-1" />Buscando…</div>}
                                                 {results.map(r => (
                                                     <button key={r.id} onClick={() => { setDestinatario(r); setSearch(''); setResults([]); }}
-                                                        className="w-full text-left px-4 py-2.5 text-sm text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5 transition-colors flex items-center gap-2">
+                                                        className="w-full text-left px-4 py-2.5 text-sm text-[hsl(var(--text-primary))] hover:bg-[hsl(var(--surface-2))] transition-colors flex items-center gap-2">
                                                         <ChevronRight size={12} className="text-[hsl(var(--text-secondary))]" />{r.nombre}
                                                     </button>
                                                 ))}
@@ -977,18 +963,18 @@ function SendDrawer({
                         <>
                             {/* Campaign name */}
                             <div>
-                                <label className="block text-xs font-medium text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] mb-1">Nombre de campaña</label>
+                                <label className="block text-xs font-medium text-[hsl(var(--text-secondary))] mb-1">Nombre de campaña</label>
                                 <input
                                     value={campaignName}
                                     onChange={e => setCampaignName(e.target.value)}
                                     placeholder="Nombre de la campaña"
-                                    className="w-full text-sm px-3 py-2 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-white/5 text-[hsl(var(--text-primary))] dark:text-white focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.4)]"
+                                    className="w-full text-sm px-3 py-2 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-[hsl(var(--text-primary))] focus:outline-hidden focus:ring-2 focus:ring-[hsl(var(--primary)/0.3)] transition-all"
                                 />
                             </div>
 
                             {/* Segments */}
                             <div>
-                                <label className="block text-xs font-medium text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] mb-2">Segmentos de audiencia</label>
+                                <label className="block text-xs font-medium text-[hsl(var(--text-secondary))] mb-2">Segmentos de audiencia</label>
                                 <div className="space-y-1.5">
                                     {SEGMENTOS.map(seg => (
                                         <label key={seg}
@@ -997,18 +983,18 @@ function SendDrawer({
                                                 'flex items-center gap-3 px-3 py-2.5 rounded-lg border cursor-pointer transition-colors',
                                                 selectedSegments.includes(seg)
                                                     ? 'border-[hsl(var(--primary)/0.5)] bg-[hsl(var(--primary)/0.04)]'
-                                                    : 'border-[hsl(var(--border))] dark:border-white/10 hover:border-[hsl(var(--border))] dark:hover:border-white/20'
+                                                    : 'border-[hsl(var(--border))] hover:border-[hsl(var(--primary)/0.3)]'
                                             )}
                                         >
                                             <div className={clsx(
                                                 'size-4 rounded border-2 flex items-center justify-center transition-colors',
                                                 selectedSegments.includes(seg)
                                                     ? 'bg-[hsl(var(--primary))] border-[hsl(var(--primary))]'
-                                                    : 'border-[hsl(var(--border))] dark:border-[hsl(var(--border))]'
+                                                    : 'border-[hsl(var(--border))]'
                                             )}>
-                                                {selectedSegments.includes(seg) && <Check size={10} className="text-white" />}
+                                                {selectedSegments.includes(seg) && <Check size={10} className="text-[hsl(var(--primary-foreground))]" />}
                                             </div>
-                                            <span className="text-sm text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">{LABEL_SEGMENTO[seg]}</span>
+                                            <span className="text-sm text-[hsl(var(--text-primary))]">{LABEL_SEGMENTO[seg]}</span>
                                         </label>
                                     ))}
                                 </div>
@@ -1019,7 +1005,7 @@ function SendDrawer({
                     {/* Variables */}
                     {plantilla.variables_requeridas.length > 0 && (
                         <div>
-                            <label className="block text-xs font-medium text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] mb-2">
+                            <label className="block text-xs font-medium text-[hsl(var(--text-secondary))] mb-2">
                                 {modo === 'campaign' ? 'Variables (aplican a todos)' : 'Variables'}
                             </label>
                             <div className="space-y-2">
@@ -1030,7 +1016,7 @@ function SendDrawer({
                                             value={vars[v] ?? ''}
                                             onChange={e => setVars(p => ({ ...p, [v]: e.target.value }))}
                                             placeholder={v}
-                                            className="flex-1 text-xs px-2 py-1.5 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-white/5 text-[hsl(var(--text-primary))] dark:text-white focus:outline-none focus:ring-1 focus:ring-[hsl(var(--primary)/0.4)]"
+                                            className="flex-1 text-xs px-2 py-1.5 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-[hsl(var(--text-primary))] focus:outline-hidden focus:ring-1 focus:ring-[hsl(var(--primary)/0.3)] transition-all"
                                         />
                                     </div>
                                 ))}
@@ -1040,37 +1026,37 @@ function SendDrawer({
 
                     {/* Preview */}
                     <div>
-                        <p className="text-xs font-medium text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] mb-2">Mensaje hidratado</p>
+                        <p className="text-xs font-medium text-[hsl(var(--text-secondary))] mb-2">Mensaje hidratado</p>
                         {plantilla?.contenido_html ? (
-                            <div className="rounded-xl border border-[hsl(var(--border))] dark:border-white/10 overflow-hidden">
-                                <div className="flex items-center gap-2 px-3 py-2 bg-[hsl(var(--primary)/0.05)] dark:bg-[hsl(var(--primary)/0.1)] border-b border-[hsl(var(--border))] dark:border-white/10">
+                            <div className="rounded-xl border border-[hsl(var(--border))] overflow-hidden">
+                                <div className="flex items-center gap-2 px-3 py-2 bg-[hsl(var(--primary)/0.05)] border-b border-[hsl(var(--border))]">
                                     <span className="text-2xs font-medium text-[hsl(var(--primary))]">Vista previa HTML</span>
                                 </div>
                                 <iframe
                                     srcDoc={plantilla.contenido_html}
                                     title="Vista previa HTML"
-                                    className="w-full h-[300px] bg-white"
+                                    className="w-full h-[300px] bg-[hsl(var(--surface-1))]"
                                     sandbox="allow-same-origin"
                                 />
                             </div>
                         ) : (
-                            <div className="rounded-xl bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 p-3 text-sm text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] whitespace-pre-wrap leading-relaxed min-h-[80px]">
+                            <div className="rounded-xl bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] p-3 text-sm text-[hsl(var(--text-primary))] whitespace-pre-wrap leading-relaxed min-h-[80px]">
                                 {previewText}
                             </div>
                         )}
                     </div>
                 </div>
 
-                <div className="px-5 py-4 border-t border-[hsl(var(--border))] dark:border-white/10 flex gap-2">
-                    <button onClick={onClose} className="flex-1 h-9 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 text-sm text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5 transition-colors">Cancelar</button>
-                    <button onClick={send} disabled={sending || (modo === 'individual' ? !destinatario : selectedSegments.length === 0)}
-                        className="flex-1 h-9 rounded-lg bg-[hsl(var(--primary))] text-white text-sm font-medium hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-1.5 transition-opacity">
+                <div className="pt-4 border-t border-[hsl(var(--border))] flex gap-2">
+                    <button type="button" onClick={onClose} className="flex-1 h-9 rounded-lg border border-[hsl(var(--border))] text-sm text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] transition-colors">Cancelar</button>
+                    <button type="button" onClick={send} disabled={sending || (modo === 'individual' ? !destinatario : selectedSegments.length === 0)}
+                        className="flex-1 h-9 rounded-lg bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] text-sm font-medium hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-1.5 transition-opacity">
                         {sending && <Loader2 size={13} className="animate-spin" />}
                         {modo === 'campaign' ? <><Users size={13} />Enviar campaña</> : <><Send size={13} />Registrar envío</>}
                     </button>
                 </div>
             </div>
-        </>
+        </SidePanel>
     );
 }
 
@@ -1167,7 +1153,7 @@ export default function RecursosPage() {
     return (
         <div className="flex h-full overflow-hidden">
             {/* ── Category sidebar ── */}
-            <div className="w-52 shrink-0 flex flex-col border-r border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--bg-muted))] overflow-y-auto">
+            <div className="w-52 shrink-0 flex flex-col border-r border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] overflow-y-auto">
                 <div className="px-4 pt-5 pb-3">
                     <p className="text-2xs font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wider mb-2">Categorías</p>
                     <button
@@ -1176,7 +1162,7 @@ export default function RecursosPage() {
                             'w-full text-left px-3 py-2 rounded-lg text-sm flex items-center gap-2 transition-colors mb-1',
                             filterCat === null
                                 ? 'bg-[hsl(var(--primary)/0.08)] text-[hsl(var(--primary))] font-medium'
-                                : 'text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5',
+                                : 'text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] hover:text-[hsl(var(--text-primary))]',
                         )}
                     >
                         <BookOpen size={14} />Todas
@@ -1189,7 +1175,7 @@ export default function RecursosPage() {
                                 'w-full text-left px-3 py-2 rounded-lg text-sm flex items-center gap-2 transition-colors mb-0.5',
                                 filterCat === c.id
                                     ? 'bg-[hsl(var(--primary)/0.08)] text-[hsl(var(--primary))] font-medium'
-                                    : 'text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5',
+                                    : 'text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] hover:text-[hsl(var(--text-primary))]',
                             )}
                         >
                             <CategoriaDot color={c.color_ui_hex} />
@@ -1200,7 +1186,7 @@ export default function RecursosPage() {
                 <div className="mt-auto px-4 pb-4">
                     <button
                         onClick={() => setCatDrawerOpen(true)}
-                        className="w-full flex items-center justify-center gap-1.5 h-8 rounded-lg border border-dashed border-[hsl(var(--border))] dark:border-white/20 text-xs text-[hsl(var(--text-secondary))] hover:border-[hsl(var(--primary)/0.5)] hover:text-[hsl(var(--primary))] transition-colors"
+                        className="w-full flex items-center justify-center gap-1.5 h-8 rounded-lg border border-dashed border-[hsl(var(--border))] text-xs text-[hsl(var(--text-secondary))] hover:border-[hsl(var(--primary)/0.5)] hover:text-[hsl(var(--primary))] transition-colors"
                     >
                         <Plus size={12} />Nueva categoría
                     </button>
@@ -1210,11 +1196,11 @@ export default function RecursosPage() {
             {/* ── Main area ── */}
             <div className="flex-1 flex flex-col overflow-hidden">
                 {/* Toolbar */}
-                <div className="flex items-center gap-3 px-5 py-3 border-b border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--bg-muted))] shrink-0">
+                <div className="flex items-center gap-3 px-5 py-3 border-b border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] shrink-0">
                     <div className="flex gap-1.5">
                         <button
                             onClick={() => setFilterCanal(null)}
-                            className={clsx('h-7 px-3 rounded-full text-xs font-medium transition-all', filterCanal === null ? 'bg-[hsl(var(--surface-2))] dark:bg-[hsl(var(--bg-primary))] text-white dark:text-[hsl(var(--text-primary))]' : 'bg-[hsl(var(--surface-2))] dark:bg-white/10 text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-3))] dark:hover:bg-white/20')}
+                            className={clsx('h-7 px-3 rounded-full text-xs font-medium transition-all', filterCanal === null ? 'bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))]' : 'bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-3))] hover:text-[hsl(var(--text-primary))]')}
                         >
                             Todos
                         </button>
@@ -1223,7 +1209,7 @@ export default function RecursosPage() {
                             return (
                                 <button key={c} onClick={() => setFilterCanal(filterCanal === c ? null : c)}
                                     className={clsx('h-7 px-3 rounded-full text-xs font-medium flex items-center gap-1 transition-all',
-                                        filterCanal === c ? `${m.bg} ${m.color} ring-1 ring-current` : 'bg-[hsl(var(--surface-2))] dark:bg-white/10 text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-3))] dark:hover:bg-white/20')}>
+                                        filterCanal === c ? `${m.bg} ${m.color} ring-1 ring-current` : 'bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-3))] hover:text-[hsl(var(--text-primary))]')}>
                                     <Icon size={11} />{m.label}
                                 </button>
                             );
@@ -1235,7 +1221,7 @@ export default function RecursosPage() {
                             value={search}
                             onChange={e => setSearch(e.target.value)}
                             placeholder="Buscar plantillas…"
-                            className="w-full pl-8 pr-3 h-8 text-xs rounded-lg bg-[hsl(var(--surface-2))] dark:bg-white/10 border border-transparent text-[hsl(var(--text-primary))] dark:text-white placeholder:text-[hsl(var(--text-secondary))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.4)]"
+                            className="w-full pl-8 pr-3 h-8 text-xs rounded-lg bg-[hsl(var(--surface-2))] border border-transparent text-[hsl(var(--text-primary))] placeholder:text-[hsl(var(--text-secondary))] focus:outline-hidden focus:ring-2 focus:ring-[hsl(var(--primary)/0.3)] transition-all"
                         />
                     </div>
                     <button
@@ -1246,7 +1232,7 @@ export default function RecursosPage() {
                     </button>
                     <button
                         onClick={openCreate}
-                        className="h-8 px-3 rounded-lg bg-[hsl(var(--primary))] text-white text-xs font-medium flex items-center gap-1.5 hover:opacity-90 transition-opacity shrink-0"
+                        className="h-8 px-3 rounded-lg bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] text-xs font-medium flex items-center gap-1.5 hover:opacity-90 transition-opacity shrink-0"
                     >
                         <Plus size={13} />Nueva plantilla
                     </button>
@@ -1255,14 +1241,14 @@ export default function RecursosPage() {
                 {/* Grid */}
                 <div className="flex-1 overflow-y-auto p-5">
                     {!loading && error && (
-                        <div className="mb-4 flex flex-col gap-3 rounded-md border border-[hsl(var(--warning)/0.2)] bg-[hsl(var(--warning-muted))] p-4 text-[hsl(var(--warning))] dark:border-[hsl(var(--warning)/0.2)] dark:bg-[hsl(var(--warning)/0.1)] dark:text-[hsl(var(--warning))] md:flex-row md:items-center md:justify-between">
+                        <div className="mb-4 flex flex-col gap-3 rounded-md border border-[hsl(var(--warning)/0.3)] bg-[hsl(var(--warning)/0.1)] p-4 text-[hsl(var(--warning))] md:flex-row md:items-center md:justify-between">
                             <div>
                                 <p className="text-xs font-bold uppercase tracking-wide">No se pudo cargar el módulo</p>
                                 <p className="text-xs">{error}</p>
                             </div>
                             <button
                                 onClick={() => setReloadKey(key => key + 1)}
-                                className="rounded-md border border-[hsl(var(--warning)/0.3)] px-3 py-1.5 text-xs font-bold uppercase tracking-wide hover:bg-[hsl(var(--warning-muted))] dark:border-[hsl(var(--warning)/0.4)] dark:hover:bg-[hsl(var(--warning)/0.2)]"
+                                className="rounded-md border border-[hsl(var(--warning)/0.4)] px-3 py-1.5 text-xs font-bold uppercase tracking-wide hover:bg-[hsl(var(--warning)/0.2)] transition-colors"
                             >
                                 Reintentar
                             </button>
@@ -1273,8 +1259,8 @@ export default function RecursosPage() {
                     )}
                     {!loading && !error && plantillas.length === 0 && (
                         <div className="flex flex-col items-center justify-center py-20 text-center">
-                            <BookOpen size={40} className="text-[hsl(var(--text-secondary))] dark:text-white/20 mb-3" />
-                            <p className="text-sm font-medium text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">Sin plantillas</p>
+                            <BookOpen size={40} className="text-[hsl(var(--text-secondary))] mb-3 opacity-30" />
+                            <p className="text-sm font-medium text-[hsl(var(--text-secondary))]">Sin plantillas</p>
                             <p className="text-xs text-[hsl(var(--text-secondary))] mt-1">Crea tu primera plantilla con el botón de arriba</p>
                         </div>
                     )}

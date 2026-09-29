@@ -20,11 +20,11 @@ interface Milestone {
 }
 
 const MILESTONE_DEFS: Record<string, { label: string; icon: any; color: string; bg: string; border: string }> = {
-    Decision_Fe:       { label: 'Decisión de Fe',        icon: Zap,    color: 'text-warning-text',  bg: 'bg-warning-soft dark:bg-[hsl(var(--warning))]/20',    border: 'border-[hsl(var(--warning)/25%)] dark:border-[hsl(var(--warning)/100%)]/20' },
-    Bautismo_Aguas:    { label: 'Bautismo en Aguas',      icon: Waves,  color: 'text-[hsl(var(--domain-cyan)/90%)]',   bg: 'bg-[hsl(var(--domain-cyan)/10%)] dark:bg-[hsl(var(--domain-cyan)/20%)]',      border: 'border-[hsl(var(--domain-cyan)/30%)] dark:border-[hsl(var(--domain-cyan)/20%)]'   },
-    Bautismo_Espiritu: { label: 'Bautismo del Espíritu',  icon: Star,   color: 'text-[hsl(var(--primary))]', bg: 'bg-info-soft dark:bg-[hsl(var(--info))]/20',  border: 'border-[hsl(var(--info)/25%)] dark:border-[hsl(var(--info)/100%)]/20'},
-    Persona_Oficial:   { label: 'Participación Oficial',      icon: Shield, color: 'text-success-text',bg: 'bg-success-soft dark:bg-[hsl(var(--success))]/20', border: 'border-[hsl(var(--success)/25%)] dark:border-[hsl(var(--success)/100%)]/20'},
-    Liderazgo:         { label: 'Llamado al Liderazgo',   icon: Users,  color: 'text-[hsl(var(--primary))]',   bg: 'bg-info-soft dark:bg-[hsl(var(--info))]/20',      border: 'border-[hsl(var(--info)/25%)] dark:border-[hsl(var(--info)/100%)]/20'  },
+    Decision_Fe:       { label: 'Decisión de Fe',        icon: Zap,    color: 'text-[hsl(var(--warning))]',  bg: 'bg-[hsl(var(--warning)/10%)]',    border: 'border-[hsl(var(--warning)/25%)]' },
+    Bautismo_Aguas:    { label: 'Bautismo en Aguas',      icon: Waves,  color: 'text-[hsl(var(--domain-cyan)/90%)]',   bg: 'bg-[hsl(var(--domain-cyan)/10%)]',      border: 'border-[hsl(var(--domain-cyan)/25%)]'   },
+    Bautismo_Espiritu: { label: 'Bautismo del Espíritu',  icon: Star,   color: 'text-[hsl(var(--primary))]', bg: 'bg-[hsl(var(--primary)/10%)]',  border: 'border-[hsl(var(--primary)/25%)]'},
+    Persona_Oficial:   { label: 'Participación Oficial',      icon: Shield, color: 'text-[hsl(var(--success))]',bg: 'bg-[hsl(var(--success)/10%)]', border: 'border-[hsl(var(--success)/25%)]'},
+    Liderazgo:         { label: 'Llamado al Liderazgo',   icon: Users,  color: 'text-[hsl(var(--primary))]',   bg: 'bg-[hsl(var(--primary)/10%)]',      border: 'border-[hsl(var(--primary)/25%)]'  },
 };
 
 export default function SpiritualTimelinePage() {
@@ -44,29 +44,29 @@ export default function SpiritualTimelinePage() {
     }, [token, user?.id]);
 
     return (
-        <div className="flex flex-col h-full bg-[hsl(var(--surface-1))] dark:bg-[#0f1012] overflow-y-auto font-display">
+        <div className="flex flex-col h-full bg-[hsl(var(--surface-1))] overflow-y-auto font-display">
             <div className="max-w-4xl mx-auto w-full p-3 space-y-3 pb-4">
 
                 {/* Sub-header */}
                 <div className="flex items-center justify-between">
                     <div>
                         <div className="flex items-center gap-2 mb-1">
-                            <div className="size-7 rounded-lg bg-info-soft dark:bg-[hsl(var(--info))]/30 flex items-center justify-center">
+                            <div className="size-7 rounded-lg bg-[hsl(var(--primary)/10%)] flex items-center justify-center">
                                 <Calendar size={14} className="text-[hsl(var(--primary))]" />
                             </div>
                             <span className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--primary))]">Línea de Tiempo</span>
                         </div>
-                        <h1 className="text-xl font-bold tracking-tight text-[hsl(var(--text-primary))] dark:text-white leading-none">
+                        <h1 className="text-xl font-bold tracking-tight text-[hsl(var(--text-primary))] leading-none">
                             Mi Ruta de Victoria
                         </h1>
-                        <p className="text-sm text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] mt-0.5 font-medium">
+                        <p className="text-sm text-[hsl(var(--text-secondary))] mt-0.5 font-medium">
                             Cada hito de tu caminar con Cristo, registrado y celebrado.
                         </p>
                     </div>
                     {canManage && (
                         <Link
                             href="/plataforma/admin/spiritual-life/milestones"
-                            className="flex items-center gap-2 px-4 py-1.5 bg-[hsl(var(--primary))] text-white rounded-lg text-xs font-semibold uppercase tracking-wide shadow-xl shadow-[hsl(var(--info)/20%)] active:scale-95 transition-all"
+                            className="flex items-center gap-2 px-4 py-1.5 bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] rounded-lg text-xs font-semibold uppercase tracking-wide shadow-xl shadow-[hsl(var(--primary)/20%)] active:scale-95 transition-all"
                         >
                             <Plus size={13} /> Administrar Hitos
                         </Link>
@@ -87,7 +87,7 @@ export default function SpiritualTimelinePage() {
                 ) : (
                     <div className="relative">
                         {/* Vertical line */}
-                        <div className="absolute left-[22px] top-4 bottom-4 w-px bg-[hsl(var(--surface-3))] dark:bg-white/10" />
+                        <div className="absolute left-[22px] top-4 bottom-4 w-px bg-[hsl(var(--surface-3))]" />
 
                         <div className="space-y-4">
                             {milestones.map((m, i) => {
@@ -95,8 +95,8 @@ export default function SpiritualTimelinePage() {
                                     label: m.type,
                                     icon: CheckCircle2,
                                     color: 'text-[hsl(var(--text-secondary))]',
-                                    bg: 'bg-[hsl(var(--surface-1))] dark:bg-white/5',
-                                    border: 'border-[hsl(var(--border))] dark:border-white/10',
+                                    bg: 'bg-[hsl(var(--surface-1))]',
+                                    border: 'border-[hsl(var(--border))]',
                                 };
                                 const Icon = def.icon;
                                 return (
@@ -116,12 +116,12 @@ export default function SpiritualTimelinePage() {
                                         </div>
 
                                         {/* Card */}
-                                        <div className="flex-1 bg-[hsl(var(--bg-primary))] dark:bg-[#1a1b1e] border border-[hsl(var(--border))] dark:border-white/[0.06] rounded-lg p-4 shadow-sm hover:shadow-md hover:border-[hsl(var(--border))] dark:hover:border-white/15 transition-all">
+                                        <div className="flex-1 bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] rounded-lg p-4 shadow-sm hover:shadow-md hover:border-[hsl(var(--primary)/30%)] transition-all">
                                             <div className="flex items-start justify-between gap-3">
                                                 <div>
-                                                    <p className="text-base font-bold text-[hsl(var(--text-primary))] dark:text-white">{def.label}</p>
+                                                    <p className="text-base font-bold text-[hsl(var(--text-primary))]">{def.label}</p>
                                                     {m.notes && (
-                                                        <p className="text-sm text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] mt-0.5">{m.notes}</p>
+                                                        <p className="text-sm text-[hsl(var(--text-secondary))] mt-0.5">{m.notes}</p>
                                                     )}
                                                 </div>
                                                 <span className="shrink-0 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
@@ -140,7 +140,7 @@ export default function SpiritualTimelinePage() {
                 {!loading && (
                     <section>
                         <h2 className="text-2xs font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] mb-3">Próximos Hitos</h2>
-                        <div className="bg-[hsl(var(--bg-primary))] dark:bg-[#1a1b1e] border border-[hsl(var(--border))] dark:border-white/[0.06] rounded-lg overflow-hidden shadow-sm divide-y divide-[hsl(var(--border))] dark:divide-white/5">
+                        <div className="bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] rounded-lg overflow-hidden shadow-sm divide-y divide-[hsl(var(--border))]">
                             {Object.entries(MILESTONE_DEFS)
                                 .filter(([key]) => !milestones.some(m => m.type === key))
                                 .map(([key, def]) => {
@@ -150,8 +150,8 @@ export default function SpiritualTimelinePage() {
                                             <div className={clsx('size-8 rounded-md flex items-center justify-center border shrink-0', def.bg, def.border)}>
                                                 <Icon size={14} className={def.color} />
                                             </div>
-                                            <p className="text-sm font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] flex-1">{def.label}</p>
-                                            <Lock size={13} className="text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]" />
+                                            <p className="text-sm font-bold text-[hsl(var(--text-primary))] flex-1">{def.label}</p>
+                                            <Lock size={13} className="text-[hsl(var(--text-secondary))]" />
                                         </div>
                                     );
                                 })}

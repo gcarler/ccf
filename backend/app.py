@@ -198,7 +198,13 @@ async def http_exception_handler(request: Request, exc: StarletteHTTPException):
         logger.error("HTTP %d on %s %s: %s", exc.status_code, request.method, request.url.path, exc.detail)
     else:
         logger.warning("HTTP %d on %s %s: %s", exc.status_code, request.method, request.url.path, exc.detail)
-    return JSONResponse(status_code=exc.status_code, content={"detail": exc.detail}, headers=exc.headers)
+    if isinstance(exc.detail, dict):
+        content = dict(exc.detail)
+        if "detail" not in content:
+            content["detail"] = exc.detail.get("message", str(exc.detail))
+    else:
+        content = {"detail": exc.detail}
+    return JSONResponse(status_code=exc.status_code, content=content, headers=exc.headers)
 
 
 @app.exception_handler(CmsError)

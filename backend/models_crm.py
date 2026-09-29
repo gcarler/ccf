@@ -241,11 +241,13 @@ class EventRegistration(Base):
         Index("ix_reg_event_status", "event_id", "registration_status"),
         Index("ix_reg_qr", "qr_token_hash"),
         Index("ix_reg_deleted_at", "deleted_at"),
+        Index("ix_event_registrations_event_reg_num", "event_id", "registration_number"),
     )
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
     event_id = Column(UUID(as_uuid=True), ForeignKey("crm_events.id", ondelete="CASCADE"), nullable=False)
     persona_id = Column(UUID(as_uuid=True), ForeignKey("personas.id", ondelete="CASCADE"), nullable=False)
+    registration_number = Column(Integer, nullable=True, index=True)
     registration_status = Column(String(20), nullable=False, default="PENDING")
     qr_token = Column(String(128), nullable=True, unique=True, index=True)
     qr_token_hash = Column(String(128), nullable=True, index=True)

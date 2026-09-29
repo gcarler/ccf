@@ -38,10 +38,10 @@ interface ScheduleItem {
 }
 
 const TYPE_OPTIONS: { value: ContactItem["type"]; label: string; icon: React.ElementType; color: string }[] = [
-  { value: "phone", label: "Teléfono", icon: Phone, color: "text-[hsl(var(--success))] bg-success-soft dark:bg-[hsl(var(--success))]/10" },
-  { value: "whatsapp", label: "WhatsApp", icon: MessageCircle, color: "text-green-600 bg-green-50 dark:bg-green-500/10" },
-  { value: "email", label: "Correo", icon: Mail, color: "text-[hsl(var(--primary))] bg-info-soft dark:bg-[hsl(var(--info))]/10" },
-  { value: "address", label: "Dirección", icon: MapPin, color: "text-[hsl(var(--warning))] bg-warning-soft dark:bg-[hsl(var(--warning))]/10" },
+  { value: "phone", label: "Teléfono", icon: Phone, color: "text-[hsl(var(--success))] bg-[hsl(var(--success-muted))]" },
+  { value: "whatsapp", label: "WhatsApp", icon: MessageCircle, color: "text-[hsl(var(--success))] bg-[hsl(var(--success-muted))]" },
+  { value: "email", label: "Correo", icon: Mail, color: "text-[hsl(var(--primary))] bg-[hsl(var(--info-muted))]" },
+  { value: "address", label: "Dirección", icon: MapPin, color: "text-[hsl(var(--warning))] bg-[hsl(var(--warning)/0.15)]" },
 ];
 
 const DEFAULT_CONTACTS: ContactItem[] = [
@@ -208,19 +208,19 @@ export default function AdminSettingsContactPage() {
   const displaySchedule = editing ? draftSchedule : schedule;
 
   return (
-    <div className="min-h-full bg-[hsl(var(--bg-muted))]/20 font-display">
+    <div className="min-h-full bg-[hsl(var(--bg-primary))] font-display">
       {/* Header */}
-      <div className="bg-[hsl(var(--bg-muted))]/40 backdrop-blur-xl border-b border-white/5 sticky top-0 z-20">
+      <div className="bg-[hsl(var(--surface-1))] backdrop-blur-xl border-b border-[hsl(var(--border))] sticky top-0 z-20">
         <div className="px-4 py-2 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <button
               onClick={() => router.back()}
-              className="p-2 rounded-lg bg-white/5 border border-white/10 text-[hsl(var(--text-secondary))] hover:text-white transition-all"
+              className="p-2 rounded-lg bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] transition-all"
             >
               <ArrowLeft size={16} />
             </button>
             <Contact size={18} className="text-[hsl(var(--primary))]" />
-            <h1 className="text-base font-semibold uppercase tracking-wide text-white">
+            <h1 className="text-base font-semibold uppercase tracking-wide text-[hsl(var(--text-primary))]">
               Información de Contacto
             </h1>
           </div>
@@ -228,7 +228,7 @@ export default function AdminSettingsContactPage() {
             {editing && (
               <button
                 onClick={cancelEditing}
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-white/5 hover:bg-white/10 text-white border border-white/10 rounded-md text-2xs font-semibold uppercase tracking-wide transition-all"
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-[hsl(var(--surface-2))] hover:bg-[hsl(var(--surface-3))] text-[hsl(var(--text-primary))] border border-[hsl(var(--border))] rounded-md text-2xs font-semibold uppercase tracking-wide transition-all"
               >
                 <X size={12} /> Cancelar
               </button>
@@ -236,7 +236,7 @@ export default function AdminSettingsContactPage() {
             {!editing ? (
               <button
                 onClick={startEditing}
-                className="flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/15 text-white border border-white/10 rounded-md text-xs font-semibold uppercase tracking-wide transition-all"
+                className="flex items-center gap-2 px-4 py-2 bg-[hsl(var(--surface-2))] hover:bg-[hsl(var(--surface-3))] text-[hsl(var(--text-primary))] border border-[hsl(var(--border))] rounded-md text-xs font-semibold uppercase tracking-wide transition-all"
               >
                 <Edit2 size={14} /> Editar
               </button>
@@ -244,7 +244,7 @@ export default function AdminSettingsContactPage() {
               <button
                 onClick={handleSave}
                 disabled={saving}
-                className="flex items-center gap-2 px-3 py-2 bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))]/80 text-white rounded-md text-xs font-semibold uppercase tracking-wide shadow-lg shadow-[hsl(var(--primary))]/20 transition-all disabled:opacity-60"
+                className="flex items-center gap-2 px-3 py-2 bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] rounded-md text-xs font-semibold uppercase tracking-wide shadow-lg shadow-[hsl(var(--primary)/0.2)] transition-all disabled:opacity-60"
               >
                 {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
                 Guardar
@@ -259,7 +259,7 @@ export default function AdminSettingsContactPage() {
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-[hsl(var(--bg-muted))]/40 backdrop-blur-xl border border-white/5 rounded-lg p-4"
+          className="bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] rounded-lg p-4"
         >
           <div className="flex items-center justify-between mb-4">
             <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
@@ -289,8 +289,8 @@ export default function AdminSettingsContactPage() {
                     className={clsx(
                       "flex items-center gap-3 p-3 rounded-lg border transition-all",
                       c.active
-                        ? "bg-white/5 border-white/5 hover:bg-white/8"
-                        : "bg-white/[0.02] border-white/[0.03] opacity-60"
+                        ? "bg-[hsl(var(--surface-2))] border-[hsl(var(--border))] hover:bg-[hsl(var(--surface-3))]"
+                        : "bg-[hsl(var(--surface-1))] border-[hsl(var(--border))]/50 opacity-60"
                     )}
                   >
                     {/* Type selector or icon */}
@@ -312,7 +312,7 @@ export default function AdminSettingsContactPage() {
                               initial={{ opacity: 0, y: -5, scale: 0.95 }}
                               animate={{ opacity: 1, y: 0, scale: 1 }}
                               exit={{ opacity: 0, y: -5, scale: 0.95 }}
-                              className="absolute top-full left-0 mt-1 bg-[hsl(var(--bg-primary))] border border-white/10 rounded-lg shadow-xl z-30 overflow-hidden min-w-[140px]"
+                              className="absolute top-full left-0 mt-1 bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] rounded-lg shadow-xl z-30 overflow-hidden min-w-[140px]"
                             >
                               {TYPE_OPTIONS.map((opt) => {
                                 const OptIcon = opt.icon;
@@ -327,7 +327,7 @@ export default function AdminSettingsContactPage() {
                                       "w-full flex items-center gap-2 px-3 py-2 text-xs font-medium transition-all",
                                       c.type === opt.value
                                         ? "bg-[hsl(var(--primary))]/10 text-[hsl(var(--primary))]"
-                                        : "text-[hsl(var(--text-secondary))] hover:bg-white/5"
+                                        : "text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))]"
                                     )}
                                   >
                                     <OptIcon size={12} /> {opt.label}
@@ -351,10 +351,10 @@ export default function AdminSettingsContactPage() {
                           value={c.label}
                           onChange={(e) => updateContact(c.id, "label", e.target.value)}
                           placeholder="Etiqueta"
-                          className="bg-transparent border-b border-white/20 text-xs font-semibold text-white uppercase tracking-wide w-full outline-none focus:border-[hsl(var(--primary))] transition-colors py-0.5"
+                          className="bg-transparent border-b border-[hsl(var(--border))] text-xs font-semibold text-[hsl(var(--text-primary))] uppercase tracking-wide w-full outline-none focus:border-[hsl(var(--primary))] transition-colors py-0.5"
                         />
                       ) : (
-                        <p className="text-xs font-semibold text-white uppercase tracking-wide">
+                        <p className="text-xs font-semibold text-[hsl(var(--text-primary))] uppercase tracking-wide">
                           {c.label}
                         </p>
                       )}
@@ -363,7 +363,7 @@ export default function AdminSettingsContactPage() {
                           value={c.value}
                           onChange={(e) => updateContact(c.id, "value", e.target.value)}
                           placeholder="Valor"
-                          className="bg-transparent border-b border-white/15 text-sm text-[hsl(var(--text-secondary))] font-medium w-full outline-none focus:border-[hsl(var(--primary))] transition-colors py-0.5"
+                          className="bg-transparent border-b border-[hsl(var(--border))] text-sm text-[hsl(var(--text-secondary))] font-medium w-full outline-none focus:border-[hsl(var(--primary))] transition-colors py-0.5"
                         />
                       ) : (
                         <p className="text-sm text-[hsl(var(--text-secondary))] font-medium truncate">
@@ -378,12 +378,12 @@ export default function AdminSettingsContactPage() {
                         onClick={() => toggleContactActive(c.id)}
                         className={clsx(
                           "w-9 h-5 rounded-full transition-all relative shrink-0",
-                          c.active ? "bg-[hsl(var(--primary))]" : "bg-white/10"
+                          c.active ? "bg-[hsl(var(--primary))]" : "bg-[hsl(var(--surface-3))]"
                         )}
                       >
                         <div
                           className={clsx(
-                            "absolute top-0.5 size-4 rounded-full bg-white transition-all",
+                            "absolute top-0.5 size-4 rounded-full bg-[hsl(var(--primary-foreground))] transition-all",
                             c.active ? "left-[18px]" : "left-0.5"
                           )}
                         />
@@ -394,13 +394,13 @@ export default function AdminSettingsContactPage() {
                             <div className="flex items-center gap-1">
                               <button
                                 onClick={() => handleDeleteContact(c.id)}
-                                className="px-2 py-1 bg-[hsl(var(--danger))] text-white text-2xs font-bold uppercase rounded transition-all"
+                                className="px-2 py-1 bg-[hsl(var(--destructive))] text-[hsl(var(--destructive-foreground))] text-2xs font-bold uppercase rounded transition-all"
                               >
                                 Sí
                               </button>
                               <button
                                 onClick={() => setDeleteConfirmId(null)}
-                                className="px-2 py-1 bg-white/10 text-[hsl(var(--text-secondary))] text-2xs font-bold uppercase rounded transition-all"
+                                className="px-2 py-1 bg-[hsl(var(--surface-3))] text-[hsl(var(--text-secondary))] text-2xs font-bold uppercase rounded transition-all"
                               >
                                 No
                               </button>
@@ -408,7 +408,7 @@ export default function AdminSettingsContactPage() {
                           ) : (
                             <button
                               onClick={() => setDeleteConfirmId(c.id)}
-                              className="p-1.5 text-[hsl(var(--danger))]/50 hover:text-[hsl(var(--danger))] transition-colors rounded-lg hover:bg-[hsl(var(--danger))]/10"
+                              className="p-1.5 text-[hsl(var(--destructive))]/70 hover:text-[hsl(var(--destructive))] transition-colors rounded-lg hover:bg-[hsl(var(--destructive))]/10"
                             >
                               <Trash2 size={14} />
                             </button>
@@ -433,7 +433,7 @@ export default function AdminSettingsContactPage() {
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="bg-[hsl(var(--bg-muted))]/40 backdrop-blur-xl border border-white/5 rounded-lg p-4"
+          className="bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] rounded-lg p-4"
         >
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
@@ -460,24 +460,24 @@ export default function AdminSettingsContactPage() {
                   initial={{ opacity: 0, scale: 0.95 }}
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.95, height: 0 }}
-                  className="flex items-center gap-3 p-3 rounded-lg bg-white/5"
+                  className="flex items-center gap-3 p-3 rounded-lg bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))]"
                 >
                   {editing ? (
                     <input
                       value={s.day}
                       onChange={(e) => updateSchedule(i, "day", e.target.value)}
                       placeholder="Día"
-                      className="bg-transparent border-b border-white/20 text-sm font-bold text-white outline-none focus:border-[hsl(var(--primary))] transition-colors w-40"
+                      className="bg-transparent border-b border-[hsl(var(--border))] text-sm font-bold text-[hsl(var(--text-primary))] outline-none focus:border-[hsl(var(--primary))] transition-colors w-40"
                     />
                   ) : (
-                    <p className="text-sm font-bold text-white w-40">{s.day}</p>
+                    <p className="text-sm font-bold text-[hsl(var(--text-primary))] w-40">{s.day}</p>
                   )}
                   {editing ? (
                     <input
                       value={s.hours}
                       onChange={(e) => updateSchedule(i, "hours", e.target.value)}
                       placeholder="Horario"
-                      className="bg-transparent border-b border-white/15 text-xs text-[hsl(var(--text-secondary))] font-medium outline-none focus:border-[hsl(var(--primary))] transition-colors flex-1 text-right"
+                      className="bg-transparent border-b border-[hsl(var(--border))] text-xs text-[hsl(var(--text-secondary))] font-medium outline-none focus:border-[hsl(var(--primary))] transition-colors flex-1 text-right"
                     />
                   ) : (
                     <p className="text-xs text-[hsl(var(--text-secondary))] font-medium flex-1 text-right">
@@ -490,13 +490,13 @@ export default function AdminSettingsContactPage() {
                         <div className="flex items-center gap-1 shrink-0">
                           <button
                             onClick={() => handleDeleteSchedule(i)}
-                            className="px-2 py-1 bg-[hsl(var(--danger))] text-white text-2xs font-bold uppercase rounded transition-all"
+                            className="px-2 py-1 bg-[hsl(var(--destructive))] text-[hsl(var(--destructive-foreground))] text-2xs font-bold uppercase rounded transition-all"
                           >
                             Sí
                           </button>
                           <button
                             onClick={() => setDeleteConfirmScheduleIdx(null)}
-                            className="px-2 py-1 bg-white/10 text-[hsl(var(--text-secondary))] text-2xs font-bold uppercase rounded transition-all"
+                            className="px-2 py-1 bg-[hsl(var(--surface-3))] text-[hsl(var(--text-secondary))] text-2xs font-bold uppercase rounded transition-all"
                           >
                             No
                           </button>
@@ -504,7 +504,7 @@ export default function AdminSettingsContactPage() {
                       ) : (
                         <button
                           onClick={() => setDeleteConfirmScheduleIdx(i)}
-                          className="p-1.5 text-[hsl(var(--danger))]/50 hover:text-[hsl(var(--danger))] transition-colors rounded-lg hover:bg-[hsl(var(--danger))]/10 shrink-0"
+                          className="p-1.5 text-[hsl(var(--destructive))]/70 hover:text-[hsl(var(--destructive))] transition-colors rounded-lg hover:bg-[hsl(var(--destructive))]/10 shrink-0"
                         >
                           <Trash2 size={14} />
                         </button>
@@ -528,12 +528,12 @@ export default function AdminSettingsContactPage() {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="bg-[hsl(var(--bg-muted))]/40 backdrop-blur-xl border border-white/5 rounded-lg p-4"
+            className="bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] rounded-lg p-4"
           >
             <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-3">
               Vista Previa — Contacto Público
             </p>
-            <div className="p-4 bg-white/[0.03] rounded-lg border border-white/5 space-y-3">
+            <div className="p-4 bg-[hsl(var(--surface-2))] rounded-lg border border-[hsl(var(--border))] space-y-3">
               {contacts.filter((c) => c.active).map((c) => {
                 const typeDef = TYPE_OPTIONS.find((t) => t.value === c.type) ?? TYPE_OPTIONS[0];
                 const Icon = typeDef.icon;
@@ -543,21 +543,21 @@ export default function AdminSettingsContactPage() {
                       <Icon size={12} />
                     </div>
                     <div className="min-w-0">
-                      <p className="text-2xs font-bold text-white/50 uppercase tracking-wide">{c.label}</p>
+                      <p className="text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">{c.label}</p>
                       <p className="text-xs text-[hsl(var(--text-secondary))] font-medium truncate">{c.value}</p>
                     </div>
                   </div>
                 );
               })}
               {schedule.length > 0 && (
-                <div className="pt-2 mt-2 border-t border-white/5">
+                <div className="pt-2 mt-2 border-t border-[hsl(var(--border))]">
                   <div className="flex items-center gap-1.5 mb-2">
                     <Clock size={10} className="text-[hsl(var(--primary))]" />
-                    <p className="text-2xs font-bold text-white/50 uppercase tracking-wide">Horarios</p>
+                    <p className="text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Horarios</p>
                   </div>
                   {schedule.map((s, i) => (
                     <div key={i} className="flex justify-between text-2xs py-0.5">
-                      <span className="font-bold text-white/70">{s.day}</span>
+                      <span className="font-bold text-[hsl(var(--text-primary))]">{s.day}</span>
                       <span className="text-[hsl(var(--text-secondary))]">{s.hours}</span>
                     </div>
                   ))}

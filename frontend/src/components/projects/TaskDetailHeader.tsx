@@ -16,7 +16,7 @@ const STATUS_ICONS: Record<TaskStatus, ElementType> = {
 
 function getStatusMap(status: TaskStatus) {
     const opt = getStatusOption(status);
-    return { label: opt.label, color: opt.text.split(' ')[0], bg: opt.bg.split(' dark:')[0], icon: STATUS_ICONS[status] };
+    return { label: opt.label, color: opt.text.split(' ')[0], bg: opt.bg.split(' ')[0], icon: STATUS_ICONS[status] };
 }
 
 export default function TaskDetailHeader({
@@ -58,23 +58,23 @@ export default function TaskDetailHeader({
     const StatusIcon = status.icon;
 
     return (
-        <header className="shrink-0 px-4 pt-3 pb-0 border-b border-[hsl(var(--border))] dark:border-white/[0.06]">
+        <header className="shrink-0 px-4 pt-3 pb-0 border-b border-[hsl(var(--border))]">
             {error && (
-                <div className="mb-2 rounded-md border border-[hsl(var(--warning)/25%)] bg-warning-soft p-2 text-warning-text dark:border-[hsl(var(--warning)/100%)]/20 dark:bg-[hsl(var(--warning))]/10 dark:text-[hsl(var(--warning))]">
+                <div className="mb-2 rounded-md border border-[hsl(var(--warning)/0.3)] bg-[hsl(var(--warning)/0.1)] p-2 text-[hsl(var(--warning))]">
                     <p className="text-2xs font-bold uppercase tracking-wide">{error}</p>
                 </div>
             )}
 
             <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center gap-1 text-xs text-[hsl(var(--text-secondary))] min-w-0">
+                <div className="flex items-center gap-1 text-xs text-[hsl(var(--muted-foreground))] min-w-0">
                     <Home size={11} className="shrink-0" />
-                    <ChevronRight size={10} className="text-[hsl(var(--text-secondary))] shrink-0" />
+                    <ChevronRight size={10} className="text-[hsl(var(--muted-foreground))] shrink-0" />
                     <FolderOpen size={11} className="shrink-0" />
-                    <span className="truncate max-w-[100px] hover:text-[hsl(var(--text-secondary))] dark:hover:text-[hsl(var(--text-secondary))] cursor-pointer transition-colors">
+                    <span className="truncate max-w-[100px] hover:text-[hsl(var(--foreground))] cursor-pointer transition-colors">
                         {projectTitle}
                     </span>
-                    <ChevronRight size={10} className="text-[hsl(var(--text-secondary))] shrink-0" />
-                    <span className="font-semibold text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] truncate max-w-[120px]">
+                    <ChevronRight size={10} className="text-[hsl(var(--muted-foreground))] shrink-0" />
+                    <span className="font-semibold text-[hsl(var(--foreground))] truncate max-w-[120px]">
                         {task.title}
                     </span>
                 </div>
@@ -83,7 +83,7 @@ export default function TaskDetailHeader({
                     <button
                         onClick={onVerRutaClick}
                         title="Ver ruta jerárquica"
-                        className="flex items-center gap-1 px-2 py-1 rounded-lg text-2xs font-bold text-[hsl(var(--primary))] bg-info-soft dark:bg-[hsl(var(--info))]/10 hover:bg-[hsl(var(--info-muted))] dark:hover:bg-[hsl(var(--info))]/20 transition-all border border-[hsl(var(--info)/25%)]/50 dark:border-[hsl(var(--info)/100%)]/20"
+                        className="flex items-center gap-1 px-2 py-1 rounded-lg text-2xs font-bold text-[hsl(var(--primary))] bg-[hsl(var(--primary)/0.1)] hover:bg-[hsl(var(--primary)/0.15)] transition-all border border-[hsl(var(--primary)/0.2)]"
                     >
                         <GitBranch size={11} />
                         Ver Ruta
@@ -93,7 +93,7 @@ export default function TaskDetailHeader({
                         onClick={onFileClick}
                         disabled={uploading}
                         title={uploading ? "Subiendo archivo" : "Adjuntar archivo"}
-                        className="p-1.5 rounded-lg text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-secondary))] dark:hover:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5 transition-all disabled:cursor-wait disabled:opacity-60"
+                        className="p-1.5 rounded-lg text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] hover:bg-[hsl(var(--surface-2))] transition-all disabled:cursor-wait disabled:opacity-60"
                     >
                         {uploading ? <Loader2 size={14} className="animate-spin" /> : <Paperclip size={14} />}
                     </button>
@@ -104,8 +104,8 @@ export default function TaskDetailHeader({
                         className={clsx(
                             'p-1.5 rounded-lg transition-all',
                             starred
-                                ? 'text-[hsl(var(--warning))] bg-warning-soft dark:bg-[hsl(var(--warning))]/10'
-                                : 'text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--warning))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5'
+                                ? 'text-[hsl(var(--warning))] bg-[hsl(var(--warning)/0.1)]'
+                                : 'text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--warning))] hover:bg-[hsl(var(--surface-2))]'
                         )}
                     >
                         <Star size={14} fill={starred ? 'currentColor' : 'none'} />
@@ -113,7 +113,7 @@ export default function TaskDetailHeader({
 
                     <button
                         title="Expandir a pantalla completa"
-                        className="p-1.5 rounded-lg text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-secondary))] dark:hover:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5 transition-all"
+                        className="p-1.5 rounded-lg text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] hover:bg-[hsl(var(--surface-2))] transition-all"
                         onClick={onExpandToggle}
                     >
                         <Maximize2 size={14} />
@@ -122,7 +122,7 @@ export default function TaskDetailHeader({
                     <button
                         onClick={onDeleteTask}
                         title="Eliminar tarea"
-                        className="p-1.5 rounded-lg text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--danger))] hover:bg-danger-soft dark:hover:bg-[hsl(var(--danger))]/10 transition-all"
+                        className="p-1.5 rounded-lg text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--destructive))] hover:bg-[hsl(var(--destructive)/0.1)] transition-all"
                     >
                         <Trash2 size={14} />
                     </button>
@@ -130,7 +130,7 @@ export default function TaskDetailHeader({
                     <button
                         onClick={onClose}
                         title="Cerrar panel"
-                        className="p-1.5 rounded-lg text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] dark:hover:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5 transition-all ml-0.5"
+                        className="p-1.5 rounded-lg text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] hover:bg-[hsl(var(--surface-2))] transition-all ml-0.5"
                     >
                         <X size={14} />
                     </button>
@@ -156,7 +156,7 @@ export default function TaskDetailHeader({
                 onChange={e => onTitleChange(e.target.value)}
                 onBlur={onSave}
                 rows={1}
-                className="w-full min-h-[28px] text-sm font-bold text-[hsl(var(--text-primary))] dark:text-white bg-transparent resize-none outline-none leading-snug placeholder:text-[hsl(var(--text-secondary))] dark:placeholder:text-[hsl(var(--text-secondary))] pb-3"
+                className="w-full min-h-[28px] text-sm font-bold text-[hsl(var(--foreground))] bg-transparent resize-none outline-none leading-snug placeholder:text-[hsl(var(--muted-foreground))] pb-3"
                 placeholder="Nombre de la tarea..."
                 onInput={e => {
                     const t = e.currentTarget;

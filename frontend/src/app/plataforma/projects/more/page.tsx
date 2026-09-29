@@ -138,7 +138,7 @@ export default function ProjectsMorePage() {
         >
             <main className="flex-1 overflow-y-auto p-3">
                 {error && (
-                    <div className="mb-3 rounded-lg border border-[hsl(var(--warning)/25%)] bg-warning-soft p-3 text-warning-text dark:border-[hsl(var(--warning)/100%)]/20 dark:bg-[hsl(var(--warning))]/10 dark:text-[hsl(var(--warning))]">
+                    <div className="mb-3 rounded-lg border border-[hsl(var(--warning)/0.3)] bg-[hsl(var(--warning)/0.1)] p-3 text-[hsl(var(--warning))]">
                         <p className="text-xs font-bold uppercase tracking-wide">{error}</p>
                     </div>
                 )}
@@ -146,16 +146,16 @@ export default function ProjectsMorePage() {
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">{[1, 2, 3].map((idx) => <DSSkeleton key={idx} className="h-32 rounded-lg" />)}</div>
                 ) : !error && summary.length === 0 && workload.length === 0 && projects.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-16 text-center">
-                        <BarChart3 size={48} className="text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] mb-4" />
-                        <h3 className="text-lg font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">Sin datos de resumen</h3>
-                        <p className="text-sm text-[hsl(var(--text-secondary))] mt-1 max-w-md">Aún no hay suficiente información de proyectos para mostrar métricas.</p>
+                        <BarChart3 size={48} className="text-[hsl(var(--muted-foreground))] mb-4" />
+                        <h3 className="text-lg font-bold text-[hsl(var(--foreground))]">Sin datos de resumen</h3>
+                        <p className="text-sm text-[hsl(var(--muted-foreground))] mt-1 max-w-md">Aún no hay suficiente información de proyectos para mostrar métricas.</p>
                     </div>
                 ) : viewType === 'list' ? (
-                    <div className="space-y-3">{summary.map((row) => <article key={row.project_status} className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 p-3 bg-[hsl(var(--bg-primary))] dark:bg-white/5"><h3 className="font-bold uppercase">{row.project_status}</h3><p className="text-sm text-[hsl(var(--text-secondary))] mt-1">{row.total_projects} proyectos · {row.total_tasks} tareas · {row.completed_tasks} completadas</p></article>)}</div>
+                    <div className="space-y-3">{summary.map((row) => <article key={row.project_status} className="rounded-lg border border-[hsl(var(--border))] p-3 bg-[hsl(var(--surface-1))]"><h3 className="font-bold uppercase">{row.project_status}</h3><p className="text-sm text-[hsl(var(--muted-foreground))] mt-1">{row.total_projects} proyectos · {row.total_tasks} tareas · {row.completed_tasks} completadas</p></article>)}</div>
                 ) : viewType === 'table' ? (
-                    <div className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 overflow-x-auto"><table className="w-full min-w-[480px] text-left"><thead className="bg-[hsl(var(--surface-1))] dark:bg-white/5"><tr><th className="px-3 py-2 text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Estado</th><th className="px-3 py-2 text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Proyectos</th><th className="px-3 py-2 text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Tareas</th></tr></thead><tbody className="divide-y divide-[hsl(var(--border))] dark:divide-white/5">{summary.map((row) => <tr key={row.project_status}><td className="px-3 py-2 text-sm font-medium">{row.project_status}</td><td className="px-3 py-2 text-xs text-[hsl(var(--text-secondary))]">{row.total_projects}</td><td className="px-3 py-2 text-xs text-[hsl(var(--text-secondary))]">{row.total_tasks}</td></tr>)}</tbody></table></div>
+                    <div className="rounded-lg border border-[hsl(var(--border))] overflow-x-auto"><table className="w-full min-w-[480px] text-left"><thead className="bg-[hsl(var(--surface-2))]"><tr><th className="px-3 py-2 text-2xs font-bold uppercase tracking-wide text-[hsl(var(--muted-foreground))]">Estado</th><th className="px-3 py-2 text-2xs font-bold uppercase tracking-wide text-[hsl(var(--muted-foreground))]">Proyectos</th><th className="px-3 py-2 text-2xs font-bold uppercase tracking-wide text-[hsl(var(--muted-foreground))]">Tareas</th></tr></thead><tbody className="divide-y divide-[hsl(var(--border))]">{summary.map((row) => <tr key={row.project_status}><td className="px-3 py-2 text-sm font-medium">{row.project_status}</td><td className="px-3 py-2 text-xs text-[hsl(var(--muted-foreground))]">{row.total_projects}</td><td className="px-3 py-2 text-xs text-[hsl(var(--muted-foreground))]">{row.total_tasks}</td></tr>)}</tbody></table></div>
                 ) : viewType === 'board' || viewType === 'kanban' ? (
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">{summary.map((row) => <section key={row.project_status} className="rounded-lg bg-[hsl(var(--surface-1))] dark:bg-white/[0.03] border border-[hsl(var(--border))] dark:border-white/10 p-3"><p className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{row.project_status}</p><p className="text-xl font-bold mt-2">{row.total_projects}</p><p className="text-sm text-[hsl(var(--text-secondary))] mt-1">{row.total_tasks} tareas</p></section>)}</div>
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">{summary.map((row) => <section key={row.project_status} className="rounded-lg bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] p-3"><p className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--muted-foreground))]">{row.project_status}</p><p className="text-xl font-bold mt-2">{row.total_projects}</p><p className="text-sm text-[hsl(var(--muted-foreground))] mt-1">{row.total_tasks} tareas</p></section>)}</div>
                 ) : viewType === 'calendar' ? (
                     <UniversalCalendarView events={calendarEvents} title="Calendario de carga" />
                 ) : viewType === 'gantt' ? (
@@ -169,10 +169,10 @@ export default function ProjectsMorePage() {
                             <MetricCard label="Tareas" value={metrics.tasks} />
                             <MetricCard label="Tareas completadas" value={metrics.done} />
                         </section>
-                        <section className="mt-3 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 p-3 bg-[hsl(var(--surface-1))] dark:bg-white/5">
+                        <section className="mt-3 rounded-lg border border-[hsl(var(--border))] p-3 bg-[hsl(var(--surface-1))]">
                             <h3 className="font-bold flex items-center gap-2"><BarChart3 size={16} /> Estado de pipeline</h3>
-                            <p className="text-sm text-[hsl(var(--text-secondary))] mt-2">En planificacion: {metrics.planning} · Activos: {metrics.active}</p>
-                            <p className="text-sm text-[hsl(var(--text-secondary))] mt-1">Responsables con tareas vencidas: {metrics.overloaded}</p>
+                            <p className="text-sm text-[hsl(var(--muted-foreground))] mt-2">En planificacion: {metrics.planning} · Activos: {metrics.active}</p>
+                            <p className="text-sm text-[hsl(var(--muted-foreground))] mt-1">Responsables con tareas vencidas: {metrics.overloaded}</p>
                         </section>
                     </>
                 )}
@@ -183,9 +183,9 @@ export default function ProjectsMorePage() {
 
 function MetricCard({ label, value }: { label: string; value: number }) {
     return (
-        <article className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 p-3 bg-[hsl(var(--bg-primary))] dark:bg-white/5">
-            <p className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{label}</p>
-            <p className="text-xl font-bold text-[hsl(var(--text-primary))] dark:text-white mt-1">{value}</p>
+        <article className="rounded-lg border border-[hsl(var(--border))] p-3 bg-[hsl(var(--surface-1))]">
+            <p className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--muted-foreground))]">{label}</p>
+            <p className="text-xl font-bold text-[hsl(var(--foreground))] mt-1">{value}</p>
         </article>
     );
 }

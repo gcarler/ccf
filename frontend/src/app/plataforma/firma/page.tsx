@@ -101,48 +101,48 @@ export default function FirmaPage() {
   };
 
   const statusConfig: Record<string, { label: string; color: string }> = {
-    draft: { label: "Borrador", color: "bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))] dark:bg-white/5 dark:text-[hsl(var(--text-secondary))]" },
+    draft: { label: "Borrador", color: "bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))] " },
     sent: { label: "Enviado", color: "bg-[hsl(var(--warning-muted))] text-[hsl(var(--warning))]" },
     completed: { label: "Completado", color: "bg-[hsl(var(--success-muted))] text-[hsl(var(--success))]" },
     expired: { label: "Expirado", color: "bg-[hsl(var(--destructive)/0.08)] text-[hsl(var(--destructive))]" },
-    cancelled: { label: "Cancelado", color: "bg-gray-100 text-gray-600 dark:bg-gray-900/10 dark:text-gray-400" },
+    cancelled: { label: "Cancelado", color: "bg-[hsl(var(--surface-3))] text-[hsl(var(--text-muted))]" },
   };
 
   return (
     <WorkspaceLayout sidebarTitle="Firma Digital" sidebarSections={SECTIONS}>
-      <div className="h-full overflow-y-auto bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))] font-display scrollbar-thin">
+      <div className="h-full overflow-y-auto bg-[hsl(var(--bg-primary))] font-display scrollbar-thin">
         <div className="w-full px-4 py-3 space-y-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <button onClick={() => router.push("/plataforma/contabilidad")} className="p-1.5 rounded-md hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5 text-[hsl(var(--text-secondary))]">
+              <button onClick={() => router.push("/plataforma/contabilidad")} className="p-1.5 rounded-md hover:bg-[hsl(var(--surface-1))] text-[hsl(var(--text-secondary))]">
                 <ArrowLeft size={16} />
               </button>
               <div>
-                <h1 className="text-lg font-bold text-[hsl(var(--text-primary))] dark:text-white tracking-tight uppercase">Firma Digital</h1>
+                <h1 className="text-lg font-bold text-[hsl(var(--text-primary))] tracking-tight uppercase">Firma Digital</h1>
                 <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--primary))] mt-0.5">Contratos · Firmas · Validez legal internacional</p>
               </div>
             </div>
-            <button onClick={() => setShowCreate(true)} className="flex items-center gap-1.5 px-3 py-1.5 bg-[hsl(var(--primary))] text-white rounded-md text-2xs font-semibold shadow-sm hover:bg-[hsl(var(--primary))] active:scale-95 transition-all">
+            <button onClick={() => setShowCreate(true)} className="flex items-center gap-1.5 px-3 py-1.5 bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] rounded-md text-2xs font-semibold shadow-sm hover:bg-[hsl(var(--primary))] active:scale-95 transition-all">
               <Plus size={12} /> Nueva Solicitud
             </button>
           </div>
 
           {showCreate && (
-            <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} className="bg-[hsl(var(--bg-primary))] dark:bg-[#111418] rounded-lg border border-[hsl(var(--border))] dark:border-white/10 p-4 space-y-3">
-              <h3 className="text-sm font-bold text-[hsl(var(--text-primary))] dark:text-white">Nueva Solicitud de Firma</h3>
-              <input type="text" placeholder="Título del documento" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} className="w-full px-3 py-2 text-sm bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg" />
-              <input type="text" placeholder="Descripción" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} className="w-full px-3 py-2 text-sm bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg" />
-              <input type="text" placeholder="URL del documento" value={form.document_url} onChange={(e) => setForm({ ...form, document_url: e.target.value })} className="w-full px-3 py-2 text-sm bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg" />
-              <input type="datetime-local" value={form.expiry_date} onChange={(e) => setForm({ ...form, expiry_date: e.target.value })} className="w-full px-3 py-2 text-sm bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg" />
+            <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} className="bg-[hsl(var(--surface-1))] rounded-lg border border-[hsl(var(--border))] p-4 space-y-3">
+              <h3 className="text-sm font-bold text-[hsl(var(--text-primary))]">Nueva Solicitud de Firma</h3>
+              <input type="text" placeholder="Título del documento" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} className="w-full px-3 py-2 text-sm bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] rounded-lg" />
+              <input type="text" placeholder="Descripción" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} className="w-full px-3 py-2 text-sm bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] rounded-lg" />
+              <input type="text" placeholder="URL del documento" value={form.document_url} onChange={(e) => setForm({ ...form, document_url: e.target.value })} className="w-full px-3 py-2 text-sm bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] rounded-lg" />
+              <input type="datetime-local" value={form.expiry_date} onChange={(e) => setForm({ ...form, expiry_date: e.target.value })} className="w-full px-3 py-2 text-sm bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] rounded-lg" />
               <div className="grid grid-cols-2 gap-2">
-                <select value={form.country_code} onChange={(e) => setForm({ ...form, country_code: e.target.value })} className="px-3 py-2 text-sm bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg">
+                <select value={form.country_code} onChange={(e) => setForm({ ...form, country_code: e.target.value })} className="px-3 py-2 text-sm bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] rounded-lg">
                   <option value="CO">Colombia</option>
                   <option value="MX">México</option>
                   <option value="US">Estados Unidos</option>
                   <option value="CL">Chile</option>
                   <option value="PE">Perú</option>
                 </select>
-                <select value={form.legal_framework} onChange={(e) => setForm({ ...form, legal_framework: e.target.value })} className="px-3 py-2 text-sm bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg">
+                <select value={form.legal_framework} onChange={(e) => setForm({ ...form, legal_framework: e.target.value })} className="px-3 py-2 text-sm bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] rounded-lg">
                   <option value="eidas">eIDAS (UE)</option>
                   <option value="ueta">UETA (USA)</option>
                   <option value="simple">Firma Simple</option>
@@ -152,10 +152,10 @@ export default function FirmaPage() {
                 <p className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Firmantes</p>
                 {form.signers.map((signer, idx) => (
                   <div key={idx} className="grid grid-cols-1 md:grid-cols-3 gap-2">
-                    <input type="text" placeholder="Nombre completo" value={signer.full_name} onChange={(e) => { const s = [...form.signers]; s[idx].full_name = e.target.value; setForm({ ...form, signers: s }); }} className="px-3 py-2 text-sm bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg" />
-                    <input type="email" placeholder="Email" value={signer.email} onChange={(e) => { const s = [...form.signers]; s[idx].email = e.target.value; setForm({ ...form, signers: s }); }} className="px-3 py-2 text-sm bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg" />
+                    <input type="text" placeholder="Nombre completo" value={signer.full_name} onChange={(e) => { const s = [...form.signers]; s[idx].full_name = e.target.value; setForm({ ...form, signers: s }); }} className="px-3 py-2 text-sm bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] rounded-lg" />
+                    <input type="email" placeholder="Email" value={signer.email} onChange={(e) => { const s = [...form.signers]; s[idx].email = e.target.value; setForm({ ...form, signers: s }); }} className="px-3 py-2 text-sm bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] rounded-lg" />
                     <div className="flex gap-2">
-                      <select value={signer.role} onChange={(e) => { const s = [...form.signers]; s[idx].role = e.target.value; setForm({ ...form, signers: s }); }} className="flex-1 px-3 py-2 text-sm bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg">
+                      <select value={signer.role} onChange={(e) => { const s = [...form.signers]; s[idx].role = e.target.value; setForm({ ...form, signers: s }); }} className="flex-1 px-3 py-2 text-sm bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] rounded-lg">
                         <option value="signer">Firmante</option>
                         <option value="witness">Testigo</option>
                         <option value="approver">Aprobador</option>
@@ -167,8 +167,8 @@ export default function FirmaPage() {
                 <button onClick={() => setForm({ ...form, signers: [...form.signers, { email: "", full_name: "", role: "signer", signing_order: form.signers.length }] })} className="text-xs font-semibold text-[hsl(var(--primary))] hover:underline">+ Agregar firmante</button>
               </div>
               <div className="flex gap-2">
-                <button onClick={() => setShowCreate(false)} className="px-4 py-2 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 text-xs font-semibold">Cancelar</button>
-                <button onClick={handleCreate} className="px-4 py-2 rounded-lg bg-[hsl(var(--primary))] text-white text-xs font-semibold">Crear Solicitud</button>
+                <button onClick={() => setShowCreate(false)} className="px-4 py-2 rounded-lg border border-[hsl(var(--border))] text-xs font-semibold">Cancelar</button>
+                <button onClick={handleCreate} className="px-4 py-2 rounded-lg bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] text-xs font-semibold">Crear Solicitud</button>
               </div>
             </motion.div>
           )}
@@ -182,12 +182,12 @@ export default function FirmaPage() {
               requests.map((req) => {
                 const st = statusConfig[req.status] || statusConfig.draft;
                 return (
-                  <motion.div key={req.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="bg-[hsl(var(--bg-primary))] dark:bg-[#111418] rounded-lg border border-[hsl(var(--border))] dark:border-white/10 p-4 shadow-sm">
+                  <motion.div key={req.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="bg-[hsl(var(--surface-1))] rounded-lg border border-[hsl(var(--border))] p-4 shadow-sm">
                     <div className="flex items-center justify-between mb-3">
                       <div className="flex items-center gap-2">
                         <div className="size-8 rounded-lg bg-[hsl(var(--info-muted))] text-[hsl(var(--info))] flex items-center justify-center"><PenTool size={16} /></div>
                         <div>
-                          <p className="text-sm font-bold text-[hsl(var(--text-primary))] dark:text-white">{req.title}</p>
+                          <p className="text-sm font-bold text-[hsl(var(--text-primary))]">{req.title}</p>
                           <p className="text-2xs text-[hsl(var(--text-secondary))]">{req.country_code} · {req.legal_framework}</p>
                         </div>
                       </div>
@@ -198,11 +198,11 @@ export default function FirmaPage() {
 
                     <div className="space-y-2">
                       {req.signers?.map((signer: any) => (
-                        <div key={signer.id} className="flex items-center justify-between py-2 border-t border-[hsl(var(--border))] dark:border-white/5">
+                        <div key={signer.id} className="flex items-center justify-between py-2 border-t border-[hsl(var(--border))]">
                           <div className="flex items-center gap-2">
                             <User size={14} className="text-[hsl(var(--text-secondary))]" />
                             <div>
-                              <p className="text-xs font-semibold text-[hsl(var(--text-primary))] dark:text-white">{signer.full_name}</p>
+                              <p className="text-xs font-semibold text-[hsl(var(--text-primary))]">{signer.full_name}</p>
                               <p className="text-2xs text-[hsl(var(--text-secondary))]">{signer.email} · {signer.role}</p>
                             </div>
                           </div>
@@ -213,7 +213,7 @@ export default function FirmaPage() {
                               "bg-[hsl(var(--warning-muted))] text-[hsl(var(--warning))]"
                             )}>{signer.status}</span>
                             {req.status === "sent" && signer.status === "pending" && (
-                              <button onClick={() => handleSign(req.id, signer.id)} className="px-2 py-1 rounded-md bg-[hsl(var(--primary))] text-white text-2xs font-bold uppercase tracking-wide flex items-center gap-1"><PenTool size={10} /> Firmar</button>
+                              <button onClick={() => handleSign(req.id, signer.id)} className="px-2 py-1 rounded-md bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] text-2xs font-bold uppercase tracking-wide flex items-center gap-1"><PenTool size={10} /> Firmar</button>
                             )}
                           </div>
                         </div>

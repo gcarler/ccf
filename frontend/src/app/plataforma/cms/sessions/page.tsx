@@ -63,7 +63,7 @@ export default function SessionsPage() {
           </div>
         </div>
         {sessions.length > 1 && (
-          <button onClick={() => setPendingAction({ type: "all" })} className="flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg border border-red-200 text-[hsl(var(--destructive))] hover:bg-red-50">
+          <button onClick={() => setPendingAction({ type: "all" })} className="flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg border border-[hsl(var(--destructive)/30%)] text-[hsl(var(--destructive))] hover:bg-[hsl(var(--destructive)/10%)]">
             <Trash2 size={14} /> Revocar todas
           </button>
         )}
@@ -87,7 +87,7 @@ export default function SessionsPage() {
                 <p className="text-xs text-[hsl(var(--text-secondary))]">Activa: {new Date(s.last_activity_at).toLocaleString("es")}</p>
                 <p className="text-2xs text-[hsl(var(--text-secondary))]">Inicio: {new Date(s.created_at).toLocaleString("es")}</p>
               </div>
-              <button onClick={() => setPendingAction({ type: "one", id: s.id })} className="p-2 rounded-lg hover:bg-red-50 shrink-0" title="Revocar">
+              <button onClick={() => setPendingAction({ type: "one", id: s.id })} className="p-2 rounded-lg hover:bg-[hsl(var(--destructive)/10%)] shrink-0" title="Revocar">
                 <Trash2 size={14} className="text-[hsl(var(--destructive))]" />
               </button>
             </div>
@@ -104,7 +104,7 @@ export default function SessionsPage() {
           <p className="text-sm text-[hsl(var(--text-secondary))]">Esta accion cerrara el acceso de la sesion indicada.</p>
           <div className="flex gap-2">
             <button onClick={() => setPendingAction(null)} className="flex-1 rounded-lg border px-3 py-2 text-sm font-medium">Cancelar</button>
-            <button onClick={confirmPendingAction} className="flex-1 rounded-lg bg-[hsl(var(--destructive))] px-3 py-2 text-sm font-medium text-white hover:bg-[hsl(var(--destructive))]">Confirmar revocación</button>
+            <button onClick={confirmPendingAction} className="flex-1 rounded-lg bg-[hsl(var(--destructive))] px-3 py-2 text-sm font-medium text-[hsl(var(--primary-foreground))] hover:bg-[hsl(var(--destructive))]">Confirmar revocación</button>
           </div>
         </div>
       </SidePanel>

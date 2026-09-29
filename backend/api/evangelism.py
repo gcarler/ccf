@@ -19,6 +19,7 @@ from backend.api.evangelism_notifications import router as notifications_router
 from backend.api.evangelism_public import router as public_events_router
 from backend.api.evangelism_rankings import router as rankings_router
 from backend.api.evangelism_reports import router as reports_router
+from backend.api.evangelism_public import router as public_events_router
 from backend.api.evangelism_shared import utc_now
 from backend.core.database import get_db
 from backend.core.permissions import require_module_access

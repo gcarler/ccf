@@ -22,15 +22,15 @@ export default function UploadMaterials() {
     if (!isAuthenticated) return null;
 
     return (
-        <div className="flex flex-col h-full bg-[hsl(var(--bg-muted))]/20 font-display">
+        <div className="flex flex-col h-full bg-[hsl(var(--background))] font-display">
             {/* Header Area */}
-            <div className="bg-[hsl(var(--bg-muted))]/40 backdrop-blur-xl border-b border-white/5 sticky top-0 z-50">
+            <div className="bg-[hsl(var(--surface-1))]/80 backdrop-blur-xl border-b border-[hsl(var(--border))] sticky top-0 z-50">
                 <div className="px-4 pt-10 pb-4 flex items-center justify-between">
-                    <button onClick={() => router.back()} className="p-3 rounded-lg bg-white/5 border border-white/10 text-[hsl(var(--text-secondary))] hover:text-white transition-all">
+                    <button onClick={() => router.back()} className="p-3 rounded-lg bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] transition-all">
                         <ArrowLeft size={20} />
                     </button>
-                    <h1 className="text-xl font-bold text-white tracking-tight uppercase tracking-tight">Cargar Materiales</h1>
-                    <button className="p-3 rounded-lg bg-white/5 border border-white/10 text-[hsl(var(--text-secondary))] hover:text-white transition-all">
+                    <h1 className="text-xl font-bold text-[hsl(var(--foreground))] tracking-tight uppercase tracking-tight">Cargar Materiales</h1>
+                    <button className="p-3 rounded-lg bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] transition-all">
                         <HelpCircle size={20} />
                     </button>
                 </div>
@@ -40,77 +40,77 @@ export default function UploadMaterials() {
 
                 {/* Lesson Header */}
                 <section className="space-y-4">
-                    <span className="text-2xs font-semibold uppercase tracking-wide text-primary bg-primary/10 px-4 py-1.5 rounded-full border border-primary/20 shadow-lg shadow-primary/5">Gestión de Contenido</span>
-                    <h2 className="text-lg font-bold text-white tracking-tight uppercase tracking-tight">Lección: Fundamentos de la Fe Cristiana</h2>
-                    <p className="text-sm font-medium text-[hsl(var(--text-secondary))] leading-relaxed">Seleccione los archivos multimedia para esta sesión de discipulado.</p>
+                    <span className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--primary))] bg-[hsl(var(--primary)/0.1)] px-4 py-1.5 rounded-full border border-[hsl(var(--primary)/0.2)] shadow-lg shadow-[hsl(var(--primary)/0.05)]">Gestión de Contenido</span>
+                    <h2 className="text-lg font-bold text-[hsl(var(--foreground))] tracking-tight uppercase tracking-tight">Lección: Fundamentos de la Fe Cristiana</h2>
+                    <p className="text-sm font-medium text-[hsl(var(--muted-foreground))] leading-relaxed">Seleccione los archivos multimedia para esta sesión de discipulado.</p>
                 </section>
 
                 {/* Video Upload Card */}
-                <section className="bg-[hsl(var(--bg-muted))]/40 backdrop-blur-xl border border-white/10 rounded-lg p-4 space-y-3 shadow-2xl relative overflow-hidden group">
+                <section className="bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] rounded-lg p-4 space-y-3 shadow-2xl relative overflow-hidden group">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
-                            <div className="size-7 rounded-lg bg-primary/10 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-all shadow-lg">
+                            <div className="size-7 rounded-lg bg-[hsl(var(--primary)/0.1)] flex items-center justify-center text-[hsl(var(--primary))] group-hover:bg-[hsl(var(--primary))] group-hover:text-[hsl(var(--primary-foreground))] transition-all shadow-lg">
                                 <Video size={28} />
                             </div>
                             <div>
-                                <p className="text-base font-bold text-white tracking-tight uppercase tracking-tight">Video de la Lección</p>
-                                <p className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide mt-1">MP4 • Máx. 500MB</p>
+                                <p className="text-base font-bold text-[hsl(var(--foreground))] tracking-tight uppercase tracking-tight">Video de la Lección</p>
+                                <p className="font-semibold text-[hsl(var(--muted-foreground))] uppercase tracking-wide mt-1">MP4 • Máx. 500MB</p>
                             </div>
                         </div>
-                        <CloudUpload size={24} className="text-primary animate-pulse" />
+                        <CloudUpload size={24} className="text-[hsl(var(--primary))] animate-pulse" />
                     </div>
 
                     <div className="space-y-4">
                         <div className="flex justify-between items-end">
                             <div className="space-y-1">
-                                <span className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide block">Subiendo...</span>
-                                <span className="text-xs font-semibold text-white">fundamentos_v1.mp4</span>
+                                <span className="font-semibold text-[hsl(var(--muted-foreground))] uppercase tracking-wide block">Subiendo...</span>
+                                <span className="text-xs font-semibold text-[hsl(var(--foreground))]">fundamentos_v1.mp4</span>
                             </div>
-                            <span className="text-sm font-semibold text-primary">{uploadProgress}%</span>
+                            <span className="text-sm font-semibold text-[hsl(var(--primary))]">{uploadProgress}%</span>
                         </div>
-                        <div className="h-2.5 w-full rounded-full bg-[hsl(var(--bg-muted))] border border-white/5 p-0.5">
+                        <div className="h-2.5 w-full rounded-full bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] p-0.5">
                             <div
-                                className="h-full rounded-full bg-gradient-to-r from-primary-400 to-primary shadow-[0_0_8px_hsl(var(--info))] transition-all duration-500"
+                                className="h-full rounded-full bg-[hsl(var(--primary))] shadow-sm shadow-[hsl(var(--primary)/0.5)] transition-all duration-500"
                                 style={{ width: `${uploadProgress}%` }}
                             ></div>
                         </div>
-                        <p className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide flex items-center gap-2">
+                        <p className="font-semibold text-[hsl(var(--muted-foreground))] uppercase tracking-wide flex items-center gap-2">
                             324MB de 432MB • Quedan 2 min
                         </p>
                     </div>
                 </section>
 
                 {/* PDF Upload Card */}
-                <section className="bg-[hsl(var(--bg-muted))]/40 backdrop-blur-xl border border-white/5 rounded-lg p-4 space-y-3 shadow-2xl group hover:border-[hsl(var(--success)/100%)]/30 transition-all">
+                <section className="bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] rounded-lg p-4 space-y-3 shadow-2xl group hover:border-[hsl(var(--success)/0.3)] transition-all">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
-                            <div className="size-7 rounded-lg bg-[hsl(var(--success))]/10 flex items-center justify-center text-[hsl(var(--success))] group-hover:bg-[hsl(var(--success))] group-hover:text-white transition-all shadow-lg">
+                            <div className="size-7 rounded-lg bg-[hsl(var(--success)/0.1)] flex items-center justify-center text-[hsl(var(--success))] group-hover:bg-[hsl(var(--success))] group-hover:text-[hsl(var(--primary-foreground))] transition-all shadow-lg">
                                 <FileText size={28} />
                             </div>
                             <div>
-                                <p className="text-base font-bold text-white tracking-tight uppercase tracking-tight">Guía del Alumno (PDF)</p>
-                                <p className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide mt-1">PDF • Máx. 25MB</p>
+                                <p className="text-base font-bold text-[hsl(var(--foreground))] tracking-tight uppercase tracking-tight">Guía del Alumno (PDF)</p>
+                                <p className="font-semibold text-[hsl(var(--muted-foreground))] uppercase tracking-wide mt-1">PDF • Máx. 25MB</p>
                             </div>
                         </div>
-                        <button className="size-10 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-[hsl(var(--text-secondary))] hover:text-white transition-all">
+                        <button className="size-10 rounded-full bg-[hsl(var(--surface-2))] hover:bg-[hsl(var(--surface-3,var(--surface-2)))] flex items-center justify-center text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] transition-all">
                             <Plus size={20} />
                         </button>
                     </div>
-                    <div className="flex items-center justify-center border-2 border-dashed border-white/5 rounded-lg py-1.5 cursor-pointer hover:border-[hsl(var(--success)/100%)]/40 hover:bg-[hsl(var(--success))]/5 transition-all group/box">
-                        <p className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide group-hover/box:text-[hsl(var(--success))] transition-colors">Toca para seleccionar archivo PDF</p>
+                    <div className="flex items-center justify-center border-2 border-dashed border-[hsl(var(--border))] rounded-lg py-1.5 cursor-pointer hover:border-[hsl(var(--success)/0.4)] hover:bg-[hsl(var(--success)/0.05)] transition-all group/box">
+                        <p className="font-semibold text-[hsl(var(--muted-foreground))] uppercase tracking-wide group-hover/box:text-[hsl(var(--success))] transition-colors">Toca para seleccionar archivo PDF</p>
                     </div>
                 </section>
 
                 {/* Audio Upload Card */}
-                <section className="bg-[hsl(var(--bg-muted))]/40 backdrop-blur-xl border border-white/10 rounded-lg p-4 space-y-3 shadow-2xl">
+                <section className="bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] rounded-lg p-4 space-y-3 shadow-2xl">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
                             <div className="size-7 rounded-lg bg-[hsl(var(--warning)/0.1)] flex items-center justify-center text-[hsl(var(--warning))] shadow-lg">
                                 <Mic size={28} />
                             </div>
                             <div>
-                                <p className="text-base font-bold text-white tracking-tight uppercase tracking-tight">Audio (MP3)</p>
-                                <p className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide mt-1">MP3 • Máx. 100MB</p>
+                                <p className="text-base font-bold text-[hsl(var(--foreground))] tracking-tight uppercase tracking-tight">Audio (MP3)</p>
+                                <p className="font-semibold text-[hsl(var(--muted-foreground))] uppercase tracking-wide mt-1">MP3 • Máx. 100MB</p>
                             </div>
                         </div>
                         <CheckCircle2 size={24} className="text-[hsl(var(--success))]" />
@@ -123,16 +123,16 @@ export default function UploadMaterials() {
                         <div className="h-2 w-full rounded-full bg-[hsl(var(--success)/0.2)]">
                             <div className="h-full rounded-full bg-[hsl(var(--success))] w-full shadow-[0_0_8px_hsl(var(--success)/0.4)]"></div>
                         </div>
-                        <p className="text-2xs font-semibold text-[hsl(var(--text-secondary))] italic">podcast_leccion_01.mp3 • 45.2 MB</p>
+                        <p className="text-2xs font-semibold text-[hsl(var(--muted-foreground))] italic">podcast_leccion_01.mp3 • 45.2 MB</p>
                     </div>
                 </section>
 
                 {/* Action Section */}
                 <section className="space-y-3 pt-4">
-                    <button className="w-full h-8 bg-primary hover:bg-primary-600 text-white font-black rounded-lg shadow-2xl shadow-primary/30 hover:scale-[1.02] active:scale-[0.98] transition-all text-sm uppercase tracking-wide border border-primary-400/20">
+                    <button className="w-full h-8 bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary)/0.9)] text-[hsl(var(--primary-foreground))] font-black rounded-lg shadow-xl shadow-[hsl(var(--primary)/0.3)] hover:scale-[1.02] active:scale-[0.98] transition-all text-sm uppercase tracking-wide border border-[hsl(var(--primary)/0.2)]">
                         Finalizar y Publicar
                     </button>
-                    <p className="text-center font-semibold text-[hsl(var(--text-primary))] uppercase tracking-wide leading-loose max-w-xs mx-auto">
+                    <p className="text-center font-semibold text-[hsl(var(--foreground))] uppercase tracking-wide leading-loose max-w-xs mx-auto">
                         Los materiales estarán disponibles para todos los personas registrados una vez finalizado.
                     </p>
                 </section>

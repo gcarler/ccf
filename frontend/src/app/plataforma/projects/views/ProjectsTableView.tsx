@@ -25,7 +25,7 @@ export default function ProjectsTableView({ projects, onUpdate }: ProjectsTableV
                     return (
                         <div className="flex items-center gap-3">
                             <div
-                                className="size-8 rounded-lg flex items-center justify-center font-semibold text-white"
+                                className="size-8 rounded-lg flex items-center justify-center font-semibold text-[hsl(var(--primary-foreground))]"
                                 style={{ backgroundColor: project.color || 'hsl(var(--primary))' }}
                             >
                                 {project.title.slice(0, 2).toUpperCase()}
@@ -35,10 +35,10 @@ export default function ProjectsTableView({ projects, onUpdate }: ProjectsTableV
                                     value={project.title}
                                     onChange={(v) => onUpdate(project.id, { title: v })}
                                     placeholder="Título del proyecto"
-                                    className="text-base font-bold text-[hsl(var(--text-primary))] dark:text-white truncate"
+                                    className="text-base font-bold text-[hsl(var(--foreground))] truncate"
                                     inputClassName="text-base"
                                 />
-                                <p className="text-xs text-[hsl(var(--text-secondary))] truncate">
+                                <p className="text-xs text-[hsl(var(--muted-foreground))] truncate">
                                     {project.description || 'Sin descripción'}
                                 </p>
                             </div>
@@ -66,7 +66,7 @@ export default function ProjectsTableView({ projects, onUpdate }: ProjectsTableV
                 cell: ({ row }) => {
                     const tasks = row.original.tasks?.length || 0;
                     return (
-                        <span className="text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">
+                        <span className="text-sm font-semibold text-[hsl(var(--foreground))]">
                             {tasks}
                         </span>
                     );
@@ -76,7 +76,7 @@ export default function ProjectsTableView({ projects, onUpdate }: ProjectsTableV
                 accessorKey: 'created_at',
                 header: 'Creado',
                 cell: ({ getValue }) => (
-                    <span className="text-sm text-[hsl(var(--text-secondary))]">
+                    <span className="text-sm text-[hsl(var(--muted-foreground))]">
                         {formatDate(getValue() as string, { locale: 'es-PE' })}
                     </span>
                 ),

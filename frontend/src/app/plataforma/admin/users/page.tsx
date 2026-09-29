@@ -132,12 +132,12 @@ export default function AdminUsersPage() {
                         <button
                             onClick={handleBulkProvision}
                             disabled={provisioning}
-                            className="flex items-center gap-2 px-3 py-2.5 bg-[hsl(var(--success))] text-white rounded-md text-xs font-semibold uppercase tracking-wide shadow-xl shadow-[hsl(var(--success))/0.2] hover:bg-[hsl(var(--success))] active:scale-95 transition-all disabled:opacity-50"
+                            className="flex items-center gap-2 px-3 py-2.5 bg-[hsl(var(--success))] text-[hsl(var(--primary-foreground))] rounded-md text-xs font-semibold uppercase tracking-wide shadow-xl shadow-[hsl(var(--success))/0.2] hover:bg-[hsl(var(--success))] active:scale-95 transition-all disabled:opacity-50"
                         >
                             {provisioning ? <Loader2 size={14} className="animate-spin" /> : <Zap size={14} />}
                             {provisioning ? 'Provisionando...' : 'Provisionar Todos'}
                         </button>
-                        <button className="flex items-center gap-2 px-3 py-2.5 bg-[hsl(var(--primary))] text-white rounded-md text-xs font-semibold uppercase tracking-wide shadow-xl shadow-[hsl(var(--primary))/0.2] active:scale-95 transition-all">
+                        <button className="flex items-center gap-2 px-3 py-2.5 bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] rounded-md text-xs font-semibold uppercase tracking-wide shadow-xl shadow-[hsl(var(--primary))/0.2] active:scale-95 transition-all">
                             <UserPlus size={14} /> Nuevo Acceso
                         </button>
                     </div>
@@ -151,16 +151,16 @@ export default function AdminUsersPage() {
                 >
                     {/* Header */}
                     <motion.div variants={itemVariants} className="space-y-2">
-                        <h1 className="text-lg font-bold text-[hsl(var(--text-primary))] dark:text-white tracking-tighter">Usuarios <span className="text-transparent bg-clip-text bg-gradient-to-r from-[hsl(var(--primary))] to-[hsl(var(--primary))]">Ministeriales.</span></h1>
-                        <p className="text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] font-medium">Control total sobre roles, permisos y estados de cuenta del staff y la congregación.</p>
+                        <h1 className="text-lg font-bold text-[hsl(var(--text-primary))] tracking-tighter">Usuarios <span className="text-transparent bg-clip-text bg-gradient-to-r from-[hsl(var(--primary))] to-[hsl(var(--primary))]">Ministeriales.</span></h1>
+                        <p className="text-[hsl(var(--text-secondary))] font-medium">Control total sobre roles, permisos y estados de cuenta del staff y la congregación.</p>
                     </motion.div>
 
                     {/* Users Table */}
-                    <motion.div variants={itemVariants} className="bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))] rounded-lg border border-[hsl(var(--border))] dark:border-white/5 shadow-xl shadow-black/10/20 dark:shadow-none overflow-hidden relative">
+                    <motion.div variants={itemVariants} className="bg-[hsl(var(--bg-primary))] rounded-lg border border-[hsl(var(--border))] shadow-lg overflow-hidden relative">
                         <div className="overflow-x-auto">
                             <table className="w-full text-left border-collapse">
                                 <thead>
-                                    <tr className="bg-[hsl(var(--surface-1))]/50 dark:bg-black/20 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
+                                    <tr className="bg-[hsl(var(--surface-1))]/50 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
                                         <th className="px-4 py-2">Identidad</th>
                                         <th className="px-4 py-2">Rol Ministerial</th>
                                         <th className="px-4 py-2">Reputación (XP)</th>
@@ -168,24 +168,24 @@ export default function AdminUsersPage() {
                                         <th className="px-4 py-2 text-right">Acciones</th>
                                     </tr>
                                 </thead>
-                                <tbody className="divide-y divide-[hsl(var(--border))] dark:divide-white/5">
+                                <tbody className="divide-y divide-[hsl(var(--border))]">
                                     {loading ? (
                                         [...Array(6)].map((_, i) => (
-                                            <tr key={i}><td colSpan={5} className="px-4 py-2"><div className="h-8 w-full bg-[hsl(var(--surface-2))] dark:bg-white/5 rounded-lg animate-pulse" /></td></tr>
+                                            <tr key={i}><td colSpan={5} className="px-4 py-2"><div className="h-8 w-full bg-[hsl(var(--surface-2))] rounded-lg animate-pulse" /></td></tr>
                                         ))
                                     ) : filteredUsers.map((user) => (
                                         <tr
                                             key={user.id}
-                                            className="group hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5 transition-all cursor-pointer"
+                                            className="group hover:bg-[hsl(var(--surface-1))] transition-all cursor-pointer"
                                             onClick={() => { setSelectedUser(user); setIsDrawerOpen(true); }}
                                         >
                                             <td className="px-4 py-2">
                                                 <div className="flex items-center gap-4">
-                                                    <div className="size-10 rounded-lg bg-gradient-to-tr from-[hsl(var(--primary))] to-[hsl(var(--primary))] flex items-center justify-center text-white font-semibold shadow-lg">
+                                                    <div className="size-10 rounded-lg bg-[hsl(var(--primary))] flex items-center justify-center text-[hsl(var(--primary-foreground))] font-semibold shadow-lg">
                                                         {user.username.substring(0, 2).toUpperCase()}
                                                     </div>
                                                     <div>
-                                                        <p className="text-sm font-bold text-[hsl(var(--text-primary))] dark:text-white group-hover:text-[hsl(var(--primary))] transition-colors">{user.username}</p>
+                                                        <p className="text-sm font-bold text-[hsl(var(--text-primary))] group-hover:text-[hsl(var(--primary))] transition-colors">{user.username}</p>
                                                         <p className="text-xs font-medium text-[hsl(var(--text-secondary))]">{user.email}</p>
                                                     </div>
                                                 </div>
@@ -193,9 +193,9 @@ export default function AdminUsersPage() {
                                             <td className="px-4 py-2">
                                                 <span className={clsx(
                                                     "inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-2xs font-semibold uppercase tracking-wide",
-                                                    ['admin', 'administrador'].includes(user.role) ? "bg-[hsl(var(--info-muted))] text-[hsl(var(--info))] dark:bg-[hsl(var(--info)/0.1)] dark:text-[hsl(var(--info))]" :
-                                                    user.role === 'pastor' ? "bg-[hsl(var(--info-muted))] text-[hsl(var(--primary))] dark:bg-[hsl(var(--info)/0.1)] dark:text-[hsl(var(--primary))]" :
-                                                    "bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))] dark:bg-white/5 dark:text-[hsl(var(--text-secondary))]"
+                                                    ['admin', 'administrador'].includes(user.role) ? "bg-[hsl(var(--info-muted))] text-[hsl(var(--info))]" :
+                                                    user.role === 'pastor' ? "bg-[hsl(var(--info-muted))] text-[hsl(var(--primary))]" :
+                                                    "bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))]"
                                                 )}>
                                                     <Shield size={10} /> {user.role}
                                                 </span>
@@ -203,7 +203,7 @@ export default function AdminUsersPage() {
                                             <td className="px-4 py-2">
                                                 <div className="flex items-center gap-2">
                                                     <Star size={14} className="text-[hsl(var(--warning))] fill-[hsl(var(--warning))]" />
-                                                    <span className="text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">{user.xp || 0} XP</span>
+                                                    <span className="text-sm font-semibold text-[hsl(var(--text-primary))]">{user.xp || 0} XP</span>
                                                 </div>
                                             </td>
                                             <td className="px-4 py-2">
@@ -214,10 +214,10 @@ export default function AdminUsersPage() {
                                             </td>
                                             <td className="px-4 py-2 text-right">
                                                 <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                    <button onClick={(e) => { e.stopPropagation(); handleUpdateUser(user.id, { is_active: !user.is_active }); }} className="p-2 hover:bg-[hsl(var(--bg-primary))] dark:hover:bg-white/10 rounded-md transition-all text-[hsl(var(--text-secondary))]">
+                                                    <button onClick={(e) => { e.stopPropagation(); handleUpdateUser(user.id, { is_active: !user.is_active }); }} className="p-2 hover:bg-[hsl(var(--surface-1))] rounded-md transition-all text-[hsl(var(--text-secondary))]">
                                                         {user.is_active ? <XCircle size={18} /> : <CheckCircle2 size={18} />}
                                                     </button>
-                                                    <button onClick={(e) => { e.stopPropagation(); handleDeleteUser(user.id); }} className="p-2 hover:bg-[hsl(var(--destructive)/0.08)] dark:hover:bg-[hsl(var(--destructive)/0.1)] rounded-md transition-all text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--destructive))]">
+                                                    <button onClick={(e) => { e.stopPropagation(); handleDeleteUser(user.id); }} className="p-2 hover:bg-[hsl(var(--destructive)/0.08)] rounded-md transition-all text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--destructive))]">
                                                         <Trash2 size={18} />
                                                     </button>
                                                 </div>
@@ -265,8 +265,8 @@ export default function AdminUsersPage() {
                                         className={clsx(
                                             "flex items-center justify-between p-3 rounded-lg border-2 transition-all group",
                                             selectedUser.role === role
-                                                ? "bg-[hsl(var(--primary))] border-[hsl(var(--primary))] text-white shadow-xl shadow-[hsl(var(--primary))/0.2]"
-                                                : "bg-[hsl(var(--surface-1))] dark:bg-white/5 border-[hsl(var(--border))] dark:border-white/5 text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] hover:border-[hsl(var(--info)/100%)]/30"
+                                                ? "bg-[hsl(var(--primary))] border-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] shadow-xl shadow-[hsl(var(--primary))/0.2]"
+                                                : "bg-[hsl(var(--surface-1))] border-[hsl(var(--border))] text-[hsl(var(--text-secondary))] hover:border-[hsl(var(--info)/100%)]/30"
                                         )}
                                     >
                                         <span className="text-sm font-semibold uppercase tracking-wide">{role}</span>
@@ -278,7 +278,7 @@ export default function AdminUsersPage() {
 
                         <section className="space-y-4">
                             <h4 className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide flex items-center gap-2"><Key size={14} className="text-[hsl(var(--primary))]" /> Seguridad de Cuenta</h4>
-                            <button className="w-full p-3 bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/5 rounded-lg text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] transition-all flex items-center justify-center gap-3">
+                            <button className="w-full p-3 bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] rounded-lg text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] transition-all flex items-center justify-center gap-3">
                                 <Zap size={16} className="text-[hsl(var(--warning))]" /> Resetear Contraseña (Forzar)
                             </button>
                         </section>

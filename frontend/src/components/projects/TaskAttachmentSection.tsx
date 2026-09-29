@@ -33,7 +33,7 @@ export default function TaskAttachmentSection({
 
         for (const file of Array.from(files)) {
             if (file.size > MAX_BYTES) {
-                alert(`Error: El archivo "${file.name}" supera el límite de ${MAX_MB}MB.`);
+                toast.error(`El archivo "${file.name}" supera el límite de ${MAX_MB}MB.`);
                 if (fileInputRef.current) fileInputRef.current.value = '';
                 return;
             }
@@ -59,18 +59,18 @@ export default function TaskAttachmentSection({
     };
 
     return (
-        <section className="px-4 py-3 border-b border-[hsl(var(--border))] dark:border-white/[0.05]">
+        <section className="px-4 py-3 border-b border-[hsl(var(--border))]">
             <div className="mb-3 flex items-center justify-between">
-                <p className="flex items-center gap-1.5 text-2xs font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))]">
+                <p className="flex items-center gap-1.5 text-2xs font-semibold uppercase tracking-wider text-[hsl(var(--muted-foreground))]">
                     <Paperclip size={11} /> Archivos
-                    <span className="rounded bg-[hsl(var(--surface-2))] px-1.5 py-0.5 text-2xs font-bold text-[hsl(var(--text-secondary))] dark:bg-white/[0.06] dark:text-[hsl(var(--text-secondary))]">
+                    <span className="rounded bg-[hsl(var(--surface-2))] px-1.5 py-0.5 text-2xs font-bold text-[hsl(var(--muted-foreground))]">
                         {attachments.length}
                     </span>
                 </p>
             </div>
 
             {attachments.length === 0 ? (
-                <p className="text-xs italic text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">
+                <p className="text-xs italic text-[hsl(var(--muted-foreground))]">
                     Sin archivos adjuntos aun.
                 </p>
             ) : (
@@ -78,7 +78,7 @@ export default function TaskAttachmentSection({
                     {attachments.map(attachment => (
                         <div
                             key={attachment.id}
-                            className="flex items-center justify-between gap-3 rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] px-3 py-2 dark:border-white/[0.06] dark:bg-white/[0.03]"
+                            className="flex items-center justify-between gap-3 rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] px-3 py-2"
                         >
                             <a
                                 href={attachment.file_url}
@@ -86,10 +86,10 @@ export default function TaskAttachmentSection({
                                 rel="noreferrer"
                                 className="min-w-0 flex-1 text-left transition hover:text-[hsl(var(--primary))]"
                             >
-                                <p className="truncate text-sm font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">
+                                <p className="truncate text-sm font-bold text-[hsl(var(--foreground))]">
                                     {attachment.filename}
                                 </p>
-                                <p className="text-2xs text-[hsl(var(--text-secondary))]">
+                                <p className="text-2xs text-[hsl(var(--muted-foreground))]">
                                     {attachment.file_size ? `${Math.max(1, Math.round(attachment.file_size / 1024))} KB` : 'Archivo adjunto'}
                                 </p>
                             </a>
@@ -98,7 +98,7 @@ export default function TaskAttachmentSection({
                                     href={attachment.file_url}
                                     target="_blank"
                                     rel="noreferrer"
-                                    className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))] hover:underline"
+                                    className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--primary))] hover:underline"
                                 >
                                     Abrir
                                 </a>
@@ -106,7 +106,7 @@ export default function TaskAttachmentSection({
                                     onClick={() => onDelete(attachment.id)}
                                     disabled={deletingAttachmentId === attachment.id}
                                     title="Eliminar adjunto"
-                                    className="p-1.5 rounded-md text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--danger))] hover:bg-danger-soft dark:hover:bg-[hsl(var(--danger))]/10 transition-colors disabled:opacity-50"
+                                    className="p-1.5 rounded-md text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--destructive))] hover:bg-[hsl(var(--destructive)/0.1)] transition-colors disabled:opacity-50"
                                 >
                                     {deletingAttachmentId === attachment.id ? <Loader2 size={12} className="animate-spin" /> : <Trash2 size={12} />}
                                 </button>

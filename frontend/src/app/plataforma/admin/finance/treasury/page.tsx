@@ -79,7 +79,7 @@ export default function AdminTreasuryPage() {
                     <div className="inline-flex items-center gap-2 px-3 py-1 bg-[hsl(var(--warning)/0.1)] text-[hsl(var(--warning))] rounded-full text-2xs font-semibold uppercase tracking-wide w-fit">
                         <DollarSign size={12} /> Gestion de Tesoreria
                     </div>
-                    <h1 className="text-lg font-bold tracking-tighter text-white uppercase italic">
+                    <h1 className="text-lg font-bold tracking-tighter text-[hsl(var(--text-primary))] uppercase italic">
                         Libro <span className="text-[hsl(var(--warning))]">Contable</span>
                     </h1>
                     <p className="text-muted-foreground text-sm max-w-xl">
@@ -89,24 +89,24 @@ export default function AdminTreasuryPage() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                <StatCard label="Saldo Total" value={`$${totalBalance.toLocaleString()}`} icon={TrendingUp} color="text-primary" bg="bg-primary/10" />
+                <StatCard label="Saldo Total" value={`$${totalBalance.toLocaleString()}`} icon={TrendingUp} color="text-[hsl(var(--primary))]" bg="bg-[hsl(var(--primary)/0.1)]" />
                 <StatCard label="Fondos Activos" value={funds.length} icon={PieChart} color="text-[hsl(var(--success))]" bg="bg-[hsl(var(--success))/0.1]" />
                 <StatCard label="Transacciones" value={transactions.length} icon={Calendar} color="text-[hsl(var(--primary))]" bg="bg-[hsl(var(--primary))/0.1]" />
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
-                <div className="lg:col-span-2 bg-[hsl(var(--surface-1))] border border-white/5 rounded-lg overflow-hidden">
-                    <div className="p-3 border-b border-white/5 flex items-center justify-between">
-                        <h3 className="text-xs font-semibold text-white uppercase tracking-wide">Movimientos Reales</h3>
+                <div className="lg:col-span-2 bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] rounded-lg overflow-hidden">
+                    <div className="p-3 border-b border-[hsl(var(--border))] flex items-center justify-between">
+                        <h3 className="text-xs font-semibold text-[hsl(var(--text-primary))] uppercase tracking-wide">Movimientos Reales</h3>
                         <Filter size={18} className="text-muted-foreground" />
                     </div>
                     <div className="overflow-x-auto">
                         <table className="w-full text-left">
-                            <tbody className="divide-y divide-white/5">
+                            <tbody className="divide-y divide-[hsl(var(--border))]">
                                 {transactions.map((tx, i) => (
-                                    <tr key={i} className="group hover:bg-white/[0.02] transition-colors">
+                                    <tr key={i} className="group hover:bg-[hsl(var(--surface-2))] transition-colors">
                                         <td className="px-3 py-2">
-                                            <div className="text-sm font-bold text-white uppercase tracking-tight">
+                                            <div className="text-sm font-bold text-[hsl(var(--text-primary))] uppercase tracking-tight">
                                                 {tx.person?.nombre_completo || tx.person?.first_name ? `Ofrenda: ${tx.person.nombre_completo || tx.person.first_name}` : 'Entrada General'}
                                             </div>
                                             <div className="text-2xs text-muted-foreground font-bold uppercase tracking-wide">ID: {tx.donation_id}</div>
@@ -131,18 +131,18 @@ export default function AdminTreasuryPage() {
                     </div>
                 </div>
 
-                <div className="bg-[hsl(var(--surface-1))] border border-white/5 p-4 rounded-lg space-y-3">
-                    <h3 className="text-xs font-semibold text-white uppercase tracking-wide flex items-center gap-2">
+                <div className="bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] p-4 rounded-lg space-y-3">
+                    <h3 className="text-xs font-semibold text-[hsl(var(--text-primary))] uppercase tracking-wide flex items-center gap-2">
                         <PieChart size={14} className="text-[hsl(var(--warning))]" /> Estados de Fondos
                     </h3>
                     <div className="space-y-3">
                         {funds.map((fund, i) => (
                             <div key={i} className="space-y-2">
                                 <div className="flex justify-between text-2xs font-semibold uppercase tracking-wide">
-                                    <span className="text-white/60">{fund.name}</span>
-                                    <span className="text-white">${(fund.current_balance || 0).toLocaleString()}</span>
+                                    <span className="text-[hsl(var(--text-secondary))]">{fund.name}</span>
+                                    <span className="text-[hsl(var(--text-primary))]">${(fund.current_balance || 0).toLocaleString()}</span>
                                 </div>
-                                <div className="h-1.5 bg-white/5 rounded-full overflow-hidden">
+                                <div className="h-1.5 bg-[hsl(var(--surface-2))] rounded-full overflow-hidden">
                                     <div className="h-full bg-[hsl(var(--warning))]" style={{ width: '100%' }} />
                                 </div>
                             </div>

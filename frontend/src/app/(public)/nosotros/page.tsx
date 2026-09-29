@@ -9,6 +9,7 @@ import type { CmsSection } from "@/types/cms-v2";
 
 import RichText from "@/components/public/RichText";
 import PublicHeroWithSlides from "@/components/public/PublicHeroWithSlides";
+import { apiFetch } from "@/lib/http";
 
 const VALOR_ICONS: Record<string, React.ReactNode> = {
     palabra:    <BookOpen size={20} />,
@@ -573,8 +574,7 @@ export default function NosotrosPage() {
 
     React.useEffect(() => {
         let mounted = true;
-        fetch('/api/public/stats')
-            .then(res => res.ok ? res.json() : null)
+        apiFetch<{ stats?: Array<{ value: string; label: string }> }>('/public/stats', { silent: true })
             .then(data => {
                 if (mounted && data?.stats && Array.isArray(data.stats) && data.stats.length > 0) {
                     setLiveStats(data.stats);

@@ -9,17 +9,16 @@ El frontend de CCF tiene **tres capas** de componentes:
 ```
 src/
 ├── design/                          ← Sistema de diseño (primitivas atómicas)
-│   ├── tokens.ts                    ← Tokens de diseño
+│   ├── tokens-semantic.ts           ← Tokens semánticos (fuente de verdad TS)
 │   ├── components/                  ← Componentes base (DS*)
 │   └── README.md                    ← Esta documentación
 │
 └── components/
     ├── ui/                          ← Componentes UI reutilizables
     │   ├── DataTable.tsx            ← Tabla interactiva (TanStack)
-    │   ├── TaskEditDrawer.tsx       ← Drawer de edición de tareas
-    │   - Componenentes de vista
+    │   ├── RightPanel.tsx           ← Panel lateral derecho (drawer)
     │   ├── inline-editors/          ← Editores inline para edición directa
-    │   - etc.
+    │   └── ...
     └── Workspace*.tsx               ← Componentes de layout del workspace
 ```
 
@@ -34,7 +33,7 @@ import { DSButton, DSCard, DSMetric } from '@/design';
 Los componentes UI se importan desde `@/components`:
 
 ```tsx
-import { DataTable, Skeleton, PersonaSelect } from '@/components';
+import { DataTable, DSSkeleton, PersonaSelect } from '@/components';
 import TaskEditDrawer from '@/components/ui/TaskEditDrawer';
 ```
 
@@ -84,12 +83,12 @@ Definidos en `tokens.ts`:
 | `PersonaSelect` | Selector de personas con búsqueda | [Story](../ui/PersonaSelect.stories.tsx) |
 | `RightPanel` | Panel lateral derecho (push/overlay) | [Story](../ui/RightPanel.stories.tsx) |
 | `SidePanel` | Panel lateral izquierdo con navegación | [Story](../ui/SidePanel.stories.tsx) |
-| `Skeleton` | Esqueleto de carga con shimmer | [Story](../ui/Skeleton.stories.tsx) |
+| `AgGridTable` | Tabla empresarial AG Grid tematizada | [Story](../ui/AgGridTable.stories.tsx) |
 | `SplitDropdownButton` | Botón dividido con dropdown | [Story](../ui/SplitDropdownButton.stories.tsx) |
 | `StatusPicker` | Selector de estado personalizado | [Story](../ui/StatusPicker.stories.tsx) |
 | `TextPromptDrawer` | Drawer para entrada de texto | [Story](../ui/TextPromptDrawer.stories.tsx) |
 | `ThemeToggle` | Cambio de tema claro/oscuro (icon/pill/row) | [Story](../ui/ThemeToggle.stories.tsx) |
-| `Tooltip` | Tooltip con Radix | [Story](../ui/Tooltip.stories.tsx) |
+| `OptimizedImage` | Imagen con carga optimizada | [Story](../ui/OptimizedImage.stories.tsx) |
 | `UniversalCalendarView` | Vista calendario de eventos | [Story](../ui/UniversalCalendarView.stories.tsx) |
 | `UniversalCreationDrawer` | Drawer universal de creación | [Story](../ui/UniversalCreationDrawer.stories.tsx) |
 | `UniversalListView` | Vista lista genérica | [Story](../ui/UniversalListView.stories.tsx) |

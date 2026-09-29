@@ -12,9 +12,11 @@ from fastapi import (
     APIRouter,
     Depends,
     File,
+    Form,
     HTTPException,
     Query,
     Request,
+    Response,
     UploadFile,
     WebSocket,
     WebSocketDisconnect,
@@ -88,6 +90,10 @@ def _project_comment_to_schema(
         author_id=str(comment.author_id) if comment.author_id is not None else None,
         author_name=_author_name(author),
         is_resolved=comment.is_resolved,
+        is_pinned=getattr(comment, "is_pinned", False),
+        pinned_at=getattr(comment, "pinned_at", None),
+        pinned_by=str(comment.pinned_by) if getattr(comment, "pinned_by", None) is not None else None,
+        pinner_name=_author_name(getattr(comment, "pinner", None)) if getattr(comment, "pinner", None) else None,
         created_at=comment.created_at,
         updated_at=comment.updated_at,
         attachments=comment.attachments or [],
@@ -211,6 +217,8 @@ def _ensure_project(db: Session, project_id: str, user_sede=None) -> models.Proj
             selectinload(models.Project.tasks).selectinload(models.ProjectTask.subtasks),
             selectinload(models.Project.milestones),
             selectinload(models.Project.activity_logs),
+            selectinload(models.Project.kpis),
+            selectinload(models.Project.dependencies),
         )
         .filter(models.Project.id == _to_uuid(project_id), models.Project.deleted_at.is_(None))
         .first()
@@ -760,10 +768,18 @@ def _prepare_task_for_response(task: models.ProjectTask) -> models.ProjectTask:
 
 def _prepare_project_for_response(project: models.Project) -> models.Project:
     _normalize_dates(project)
-    for milestone in project.milestones:
+    for milestone in getattr(project, "milestones", []) or []:
         _normalize_dates(milestone)
-    for task in project.tasks:
+    for task in getattr(project, "tasks", []) or []:
         _prepare_task_for_response(task)
+    for kpi in getattr(project, "kpis", []) or []:
+        _normalize_dates(kpi)
+    for dep in getattr(project, "dependencies", []) or []:
+        _normalize_dates(dep)
+    for exp in getattr(project, "expenses", []) or []:
+        _normalize_dates(exp)
+    for risk in getattr(project, "risks", []) or []:
+        _normalize_dates(risk)
     return project
 
 
@@ -954,13 +970,20 @@ def list_all_comments(
         q = q.filter(models.ProjectComment.is_resolved.is_(False))
     if task_id:
         q = q.filter(models.ProjectComment.task_id == _to_uuid(task_id))
-    rows = q.order_by(models.ProjectComment.created_at.desc()).offset(offset).limit(limit).all()
-    # Batch-fetch authors to avoid N+1 queries
+    rows = (
+        q.order_by(models.ProjectComment.is_pinned.desc(), models.ProjectComment.created_at.desc())
+        .offset(offset)
+        .limit(limit)
+        .all()
+    )
+    # Batch-fetch authors and pinners to avoid N+1 queries
     author_ids = {row.author_id for row in rows if row.author_id}
-    authors_map = {}
-    if author_ids:
-        authors = db.query(models.Persona).filter(models.Persona.id.in_(author_ids)).all()
-        authors_map = {p.id: _author_name(p) for p in authors}
+    pinner_ids = {row.pinned_by for row in rows if getattr(row, "pinned_by", None)}
+    all_person_ids = author_ids | pinner_ids
+    persons_map = {}
+    if all_person_ids:
+        persons = db.query(models.Persona).filter(models.Persona.id.in_(all_person_ids)).all()
+        persons_map = {p.id: _author_name(p) for p in persons}
     result = []
     for row in rows:
         result.append(
@@ -970,8 +993,12 @@ def list_all_comments(
                 task_id=str(row.task_id) if row.task_id is not None else None,
                 content=row.content,
                 author_id=str(row.author_id) if row.author_id is not None else None,
-                author_name=authors_map.get(row.author_id, "Usuario"),
+                author_name=persons_map.get(row.author_id, "Usuario"),
                 is_resolved=row.is_resolved,
+                is_pinned=getattr(row, "is_pinned", False),
+                pinned_at=getattr(row, "pinned_at", None),
+                pinned_by=str(row.pinned_by) if getattr(row, "pinned_by", None) is not None else None,
+                pinner_name=persons_map.get(row.pinned_by) if getattr(row, "pinned_by", None) else None,
                 created_at=row.created_at,
                 updated_at=row.updated_at,
                 attachments=row.attachments or [],
@@ -1710,6 +1737,212 @@ def list_whiteboards(
     return [_normalize_dates(b) for b in boards]
 
 
+# ---------------------------------------------------------------------------
+# PROJECT TEMPLATES & CATALOG (Super-PRO Fase 6)
+# NOTA: /templates y /from-template deben ir ANTES de /{project_id}
+# ---------------------------------------------------------------------------
+
+@router.get(
+    "/templates",
+    response_model=List[schemas.ProjectTemplate],
+    tags=["Projects Templates Super-PRO"],
+)
+def list_project_templates(
+    category: Optional[str] = None,
+    search: Optional[str] = None,
+    is_public: Optional[bool] = None,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("projects", "read")),
+):
+    """Lista las plantillas disponibles de proyectos aplicando alcance multi-tenant (Axioma 3)."""
+    user_sede = get_user_sede_id(db, current_user.id)
+    templates = crud.get_project_templates(
+        db,
+        sede_id=user_sede,
+        category=category,
+        search=search,
+        is_public=is_public,
+    )
+    for t in templates:
+        _normalize_dates(t)
+    return templates
+
+
+@router.post(
+    "/templates",
+    response_model=schemas.ProjectTemplate,
+    status_code=status.HTTP_201_CREATED,
+    tags=["Projects Templates Super-PRO"],
+)
+def create_project_template_endpoint(
+    payload: schemas.ProjectTemplateCreate,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("projects", "edit")),
+):
+    """Crea una nueva plantilla reutilizable de proyecto."""
+    user_sede = get_user_sede_id(db, current_user.id)
+    creator_persona_id = get_user_persona_id(db, current_user.id)
+    try:
+        template = crud.create_project_template(
+            db,
+            template_in=payload,
+            creator_persona_id=creator_persona_id,
+            sede_id=user_sede,
+        )
+        _normalize_dates(template)
+        return template
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Error creando plantilla: {str(e)}")
+
+
+@router.get(
+    "/templates/{template_id}",
+    response_model=schemas.ProjectTemplate,
+    tags=["Projects Templates Super-PRO"],
+)
+def get_project_template_endpoint(
+    template_id: str,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("projects", "read")),
+):
+    """Obtiene el detalle y estructura de una plantilla de proyecto."""
+    user_sede = get_user_sede_id(db, current_user.id)
+    template = crud.get_project_template(db, _to_uuid(template_id), sede_id=user_sede)
+    if not template:
+        raise HTTPException(status_code=404, detail="Plantilla no encontrada")
+    _normalize_dates(template)
+    return template
+
+
+@router.patch(
+    "/templates/{template_id}",
+    response_model=schemas.ProjectTemplate,
+    tags=["Projects Templates Super-PRO"],
+)
+def update_project_template_endpoint(
+    template_id: str,
+    payload: schemas.ProjectTemplateUpdate,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("projects", "edit")),
+):
+    """Actualiza los metadatos o estructura de una plantilla."""
+    user_sede = get_user_sede_id(db, current_user.id)
+    template = crud.update_project_template(
+        db,
+        template_id=_to_uuid(template_id),
+        template_in=payload,
+        sede_id=user_sede,
+    )
+    if not template:
+        raise HTTPException(status_code=404, detail="Plantilla no encontrada")
+    _normalize_dates(template)
+    return template
+
+
+@router.delete(
+    "/templates/{template_id}",
+    tags=["Projects Templates Super-PRO"],
+)
+def delete_project_template_endpoint(
+    template_id: str,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("projects", "edit")),
+):
+    """Elimina (soft-delete) una plantilla de proyecto."""
+    user_sede = get_user_sede_id(db, current_user.id)
+    deleted = crud.delete_project_template(db, _to_uuid(template_id), sede_id=user_sede)
+    if not deleted:
+        raise HTTPException(status_code=404, detail="Plantilla no encontrada")
+    return {"ok": True, "message": "Plantilla eliminada correctamente"}
+
+
+@router.post(
+    "/from-template/{template_id}",
+    response_model=schemas.Project,
+    status_code=status.HTTP_201_CREATED,
+    tags=["Projects Templates Super-PRO"],
+)
+@router.post(
+    "/templates/{template_id}/instantiate",
+    response_model=schemas.Project,
+    status_code=status.HTTP_201_CREATED,
+    tags=["Projects Templates Super-PRO"],
+)
+def instantiate_project_from_template_endpoint(
+    template_id: str,
+    payload: schemas.InstantiateProjectFromTemplate,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("projects", "edit")),
+):
+    """Instancia atómicamente un nuevo proyecto a partir de una plantilla."""
+    user_sede = get_user_sede_id(db, current_user.id)
+    if not user_sede:
+        first_sede = db.query(models.ChurchLocation).filter(models.ChurchLocation.deleted_at.is_(None)).first()
+        user_sede = first_sede.id if first_sede else None
+        if not user_sede:
+            raise HTTPException(status_code=409, detail="No se pudo determinar sede para instanciar el proyecto")
+
+    creator_persona_id = get_user_persona_id(db, current_user.id)
+    if not creator_persona_id:
+        raise HTTPException(status_code=401, detail="No se pudo determinar la persona autenticada")
+
+    try:
+        project = crud.create_project_from_template(
+            db,
+            template_id=_to_uuid(template_id),
+            payload=payload,
+            creator_persona_id=creator_persona_id,
+            sede_id=user_sede,
+        )
+        _normalize_dates(project)
+        return project
+    except ValueError as ve:
+        raise HTTPException(status_code=400, detail=str(ve))
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Error al instanciar proyecto: {str(e)}")
+
+
+@router.post(
+    "/{project_id}/save-as-template",
+    response_model=schemas.ProjectTemplate,
+    status_code=status.HTTP_201_CREATED,
+    tags=["Projects Templates Super-PRO"],
+)
+def save_project_as_template_endpoint(
+    project_id: str,
+    payload: schemas.SaveProjectAsTemplate,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("projects", "edit")),
+):
+    """Captura las fases y tareas del proyecto activo para guardarlo como plantilla reutilizable."""
+    user_sede = get_user_sede_id(db, current_user.id)
+    _ensure_project(db, project_id, user_sede=user_sede)
+    creator_persona_id = get_user_persona_id(db, current_user.id)
+    if not creator_persona_id:
+        raise HTTPException(status_code=401, detail="No se pudo determinar la persona autenticada")
+    try:
+        template = crud.save_project_as_template(
+            db,
+            project_id=_to_uuid(project_id),
+            payload=payload,
+            creator_persona_id=creator_persona_id,
+            sede_id=user_sede,
+        )
+        _log_project_activity(
+            db,
+            project_id,
+            current_user.id,
+            "saved_as_template",
+            f"Proyecto guardado como plantilla '{template.name}'",
+        )
+        _normalize_dates(template)
+        return template
+    except ValueError as ve:
+        raise HTTPException(status_code=400, detail=str(ve))
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Error al guardar plantilla: {str(e)}")
+
+
 @router.get("/{project_id}", response_model=schemas.Project)
 def get_project(
     project_id: str,
@@ -1722,6 +1955,9 @@ def get_project(
     for log in p.activity_logs:
         _normalize_dates(log)
         log.user_name = log.persona.nombre_completo if log.persona else "Sistema"
+    p.budget_summary = crud.get_project_budget_summary(db, p.id)
+    p.risks_summary = crud.get_project_risks_summary(db, p.id)
+    p.workload_summary = crud.get_project_workload(db, p.id)
     return p
 
 
@@ -3038,3 +3274,1796 @@ def update_project_milestone(
     db.refresh(milestone)
     _normalize_dates(milestone)
     return milestone
+
+
+# ── KPIS (PROYECTOS PRO) ───────────────────────────────────────────────────────
+
+
+@router.get(
+    "/{project_id}/kpis",
+    response_model=List[schemas.ProjectKPI],
+    tags=["Projects PRO"],
+)
+def list_project_kpis(
+    project_id: str,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("projects", "read")),
+):
+    """Lista los indicadores clave de desempeño (KPIs) del proyecto."""
+    user_sede = get_user_sede_id(db, current_user.id)
+    _ensure_project(db, project_id, user_sede=user_sede)
+    kpis = crud.get_project_kpis(db, _to_uuid(project_id))
+    for k in kpis:
+        _normalize_dates(k)
+    return kpis
+
+
+@router.post(
+    "/{project_id}/kpis",
+    response_model=schemas.ProjectKPI,
+    status_code=status.HTTP_201_CREATED,
+    tags=["Projects PRO"],
+)
+def create_project_kpi(
+    project_id: str,
+    payload: schemas.ProjectKPICreate,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("projects", "edit")),
+):
+    """Crea un nuevo indicador o meta personalizada para el proyecto."""
+    user_sede = get_user_sede_id(db, current_user.id)
+    _ensure_project(db, project_id, user_sede=user_sede)
+    kpi = crud.create_project_kpi(db, _to_uuid(project_id), payload)
+    _log_project_activity(
+        db,
+        project_id,
+        current_user.id,
+        "kpi_created",
+        f"Indicador '{kpi.title}' creado (Meta: {kpi.target_value} {kpi.unit})",
+    )
+    db.commit()
+    _normalize_dates(kpi)
+    return kpi
+
+
+@router.patch(
+    "/{project_id}/kpis/{kpi_id}",
+    response_model=schemas.ProjectKPI,
+    tags=["Projects PRO"],
+)
+def update_project_kpi(
+    project_id: str,
+    kpi_id: str,
+    payload: schemas.ProjectKPIUpdate,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("projects", "edit")),
+):
+    """Actualiza el avance o metadatos de un indicador."""
+    user_sede = get_user_sede_id(db, current_user.id)
+    _ensure_project(db, project_id, user_sede=user_sede)
+    kpi = crud.get_project_kpi(db, _to_uuid(project_id), _to_uuid(kpi_id))
+    if not kpi:
+        raise HTTPException(status_code=404, detail="Indicador no encontrado")
+    prev_val = kpi.current_value
+    updated_kpi = crud.update_project_kpi(db, _to_uuid(project_id), _to_uuid(kpi_id), payload)
+    if payload.current_value is not None and payload.current_value != prev_val:
+        _log_project_activity(
+            db,
+            project_id,
+            current_user.id,
+            "kpi_progress",
+            f"Indicador '{kpi.title}' actualizado a {payload.current_value} / {kpi.target_value} {kpi.unit}",
+        )
+        db.commit()
+    _normalize_dates(updated_kpi)
+    return updated_kpi
+
+
+@router.delete(
+    "/{project_id}/kpis/{kpi_id}",
+    response_model=dict,
+    tags=["Projects PRO"],
+)
+def delete_project_kpi(
+    project_id: str,
+    kpi_id: str,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("projects", "edit")),
+):
+    """Elimina un indicador mediante soft delete."""
+    user_sede = get_user_sede_id(db, current_user.id)
+    _ensure_project(db, project_id, user_sede=user_sede)
+    kpi = crud.get_project_kpi(db, _to_uuid(project_id), _to_uuid(kpi_id))
+    if not kpi:
+        raise HTTPException(status_code=404, detail="Indicador no encontrado")
+    crud.delete_project_kpi(db, _to_uuid(project_id), _to_uuid(kpi_id))
+    _log_project_activity(
+        db,
+        project_id,
+        current_user.id,
+        "kpi_deleted",
+        f"Indicador '{kpi.title}' eliminado",
+    )
+    db.commit()
+    return {"ok": True, "deleted": kpi_id}
+
+
+# ── DEPENDENCIES (GANTT PRO) ───────────────────────────────────────────────────
+
+
+@router.get(
+    "/{project_id}/dependencies",
+    response_model=List[schemas.ProjectTaskDependency],
+    tags=["Projects PRO"],
+)
+def list_task_dependencies(
+    project_id: str,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("projects", "read")),
+):
+    """Lista las dependencias entre tareas para la vista Gantt PRO."""
+    user_sede = get_user_sede_id(db, current_user.id)
+    _ensure_project(db, project_id, user_sede=user_sede)
+    deps = crud.get_task_dependencies(db, _to_uuid(project_id))
+    for d in deps:
+        _normalize_dates(d)
+    return deps
+
+
+@router.post(
+    "/{project_id}/dependencies",
+    response_model=schemas.ProjectTaskDependency,
+    status_code=status.HTTP_201_CREATED,
+    tags=["Projects PRO"],
+)
+def create_task_dependency(
+    project_id: str,
+    payload: schemas.ProjectTaskDependencyCreate,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("projects", "edit")),
+):
+    """Crea una dependencia (FS, SS, FF) entre dos tareas."""
+    user_sede = get_user_sede_id(db, current_user.id)
+    _ensure_project(db, project_id, user_sede=user_sede)
+    if str(payload.predecessor_id) == str(payload.successor_id):
+        raise HTTPException(status_code=400, detail="Una tarea no puede depender de sí misma (ciclo detectado)")
+    dep = crud.create_task_dependency(db, _to_uuid(project_id), payload)
+    _normalize_dates(dep)
+    return dep
+
+
+@router.delete(
+    "/{project_id}/dependencies/{dependency_id}",
+    response_model=dict,
+    tags=["Projects PRO"],
+)
+def delete_task_dependency(
+    project_id: str,
+    dependency_id: str,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("projects", "edit")),
+):
+    """Elimina una dependencia entre tareas."""
+    user_sede = get_user_sede_id(db, current_user.id)
+    _ensure_project(db, project_id, user_sede=user_sede)
+    ok = crud.delete_task_dependency(db, _to_uuid(project_id), _to_uuid(dependency_id))
+    if not ok:
+        raise HTTPException(status_code=404, detail="Dependencia no encontrada")
+    return {"ok": True, "deleted": dependency_id}
+
+
+# ── EXPENSES & BUDGET (SUPER-PRO FASE 1) ───────────────────────────────────────
+
+
+@router.get(
+    "/{project_id}/expenses",
+    response_model=List[schemas.ProjectExpense],
+    tags=["Projects Super-PRO"],
+)
+def list_project_expenses(
+    project_id: str,
+    status: Optional[str] = None,
+    category: Optional[str] = None,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("projects", "read")),
+):
+    """Lista las partidas de gastos de un proyecto con filtros opcionales."""
+    user_sede = get_user_sede_id(db, current_user.id)
+    _ensure_project(db, project_id, user_sede=user_sede)
+    expenses = crud.get_project_expenses(db, _to_uuid(project_id), status=status, category=category)
+    for exp in expenses:
+        _normalize_dates(exp)
+    return expenses
+
+
+@router.post(
+    "/{project_id}/expenses",
+    response_model=schemas.ProjectExpense,
+    status_code=status.HTTP_201_CREATED,
+    tags=["Projects Super-PRO"],
+)
+def create_project_expense(
+    project_id: str,
+    payload: schemas.ProjectExpenseCreate,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("projects", "edit")),
+):
+    """Crea una partida de gasto y recalcula el presupuesto gastado."""
+    user_sede = get_user_sede_id(db, current_user.id)
+    _ensure_project(db, project_id, user_sede=user_sede)
+    persona_id = get_user_persona_id(db, current_user.id)
+    expense = crud.create_project_expense(
+        db,
+        project_id=_to_uuid(project_id),
+        expense_in=payload,
+        created_by=_to_uuid(persona_id) if persona_id else None,
+    )
+    _log_project_activity(
+        db,
+        project_id,
+        current_user.id,
+        "expense_created",
+        f"Gasto registrado: ${payload.amount:.2f} en '{payload.category}' ({payload.description or 'Sin descripción'})",
+    )
+    db.commit()
+    _normalize_dates(expense)
+    return expense
+
+
+@router.get(
+    "/{project_id}/expenses/{expense_id}",
+    response_model=schemas.ProjectExpense,
+    tags=["Projects Super-PRO"],
+)
+def get_project_expense(
+    project_id: str,
+    expense_id: str,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("projects", "read")),
+):
+    """Obtiene el detalle de un gasto específico."""
+    user_sede = get_user_sede_id(db, current_user.id)
+    _ensure_project(db, project_id, user_sede=user_sede)
+    expense = crud.get_project_expense(db, _to_uuid(project_id), _to_uuid(expense_id))
+    if not expense:
+        raise HTTPException(status_code=404, detail="Gasto no encontrado")
+    _normalize_dates(expense)
+    return expense
+
+
+@router.patch(
+    "/{project_id}/expenses/{expense_id}",
+    response_model=schemas.ProjectExpense,
+    tags=["Projects Super-PRO"],
+)
+def update_project_expense(
+    project_id: str,
+    expense_id: str,
+    payload: schemas.ProjectExpenseUpdate,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("projects", "edit")),
+):
+    """Actualiza una partida de gasto y recalcula el presupuesto del proyecto."""
+    user_sede = get_user_sede_id(db, current_user.id)
+    _ensure_project(db, project_id, user_sede=user_sede)
+    expense = crud.update_project_expense(
+        db,
+        project_id=_to_uuid(project_id),
+        expense_id=_to_uuid(expense_id),
+        expense_in=payload,
+    )
+    if not expense:
+        raise HTTPException(status_code=404, detail="Gasto no encontrado")
+    _log_project_activity(
+        db,
+        project_id,
+        current_user.id,
+        "expense_updated",
+        f"Gasto '{expense.id}' actualizado",
+    )
+    db.commit()
+    _normalize_dates(expense)
+    return expense
+
+
+@router.delete(
+    "/{project_id}/expenses/{expense_id}",
+    response_model=dict,
+    tags=["Projects Super-PRO"],
+)
+def delete_project_expense(
+    project_id: str,
+    expense_id: str,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("projects", "edit")),
+):
+    """Elimina (soft-delete) una partida de gasto y recalcula el presupuesto."""
+    user_sede = get_user_sede_id(db, current_user.id)
+    _ensure_project(db, project_id, user_sede=user_sede)
+    ok = crud.delete_project_expense(db, _to_uuid(project_id), _to_uuid(expense_id))
+    if not ok:
+        raise HTTPException(status_code=404, detail="Gasto no encontrado")
+    _log_project_activity(
+        db,
+        project_id,
+        current_user.id,
+        "expense_deleted",
+        f"Gasto '{expense_id}' eliminado",
+    )
+    db.commit()
+    return {"ok": True, "deleted": expense_id}
+
+
+@router.get(
+    "/{project_id}/budget-summary",
+    response_model=schemas.ProjectBudgetSummary,
+    tags=["Projects Super-PRO"],
+)
+def get_project_budget_summary(
+    project_id: str,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("projects", "read")),
+):
+    """Obtiene el resumen financiero y de quema presupuestaria del proyecto."""
+    user_sede = get_user_sede_id(db, current_user.id)
+    _ensure_project(db, project_id, user_sede=user_sede)
+    summary = crud.get_project_budget_summary(db, _to_uuid(project_id))
+    if not summary:
+        raise HTTPException(status_code=404, detail="Proyecto no encontrado")
+    return summary
+
+
+# ── RISKS / RAID MATRIX (Super-PRO Fase 2) ───────────────────────────────────
+
+
+@router.get(
+    "/{project_id}/risks",
+    response_model=List[schemas.ProjectRisk],
+    tags=["Projects Super-PRO"],
+)
+def list_project_risks(
+    project_id: str,
+    status: Optional[str] = None,
+    category: Optional[str] = None,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("projects", "read")),
+):
+    """Lista todos los riesgos registrados de la matriz RAID del proyecto."""
+    user_sede = get_user_sede_id(db, current_user.id)
+    _ensure_project(db, project_id, user_sede=user_sede)
+    risks = crud.get_project_risks(
+        db, _to_uuid(project_id), status=status, category=category
+    )
+    for r in risks:
+        _normalize_dates(r)
+    return risks
+
+
+@router.post(
+    "/{project_id}/risks",
+    response_model=schemas.ProjectRisk,
+    status_code=status.HTTP_201_CREATED,
+    tags=["Projects Super-PRO"],
+)
+def create_project_risk(
+    project_id: str,
+    payload: schemas.ProjectRiskCreate,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("projects", "edit")),
+):
+    """Registra un nuevo riesgo en la matriz RAID del proyecto."""
+    user_sede = get_user_sede_id(db, current_user.id)
+    _ensure_project(db, project_id, user_sede=user_sede)
+    risk = crud.create_project_risk(
+        db,
+        project_id=_to_uuid(project_id),
+        risk_in=payload,
+    )
+    _log_project_activity(
+        db,
+        project_id,
+        current_user.id,
+        "risk_created",
+        f"Riesgo registrado: '{payload.title}' (Severidad: {payload.probability * payload.impact}/25, Categoría: {payload.category})",
+    )
+    db.commit()
+    _normalize_dates(risk)
+    return risk
+
+
+@router.get(
+    "/{project_id}/risks/{risk_id}",
+    response_model=schemas.ProjectRisk,
+    tags=["Projects Super-PRO"],
+)
+def get_project_risk(
+    project_id: str,
+    risk_id: str,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("projects", "read")),
+):
+    """Obtiene el detalle de un riesgo específico."""
+    user_sede = get_user_sede_id(db, current_user.id)
+    _ensure_project(db, project_id, user_sede=user_sede)
+    risk = crud.get_project_risk(db, _to_uuid(project_id), _to_uuid(risk_id))
+    if not risk:
+        raise HTTPException(status_code=404, detail="Riesgo no encontrado")
+    _normalize_dates(risk)
+    return risk
+
+
+@router.patch(
+    "/{project_id}/risks/{risk_id}",
+    response_model=schemas.ProjectRisk,
+    tags=["Projects Super-PRO"],
+)
+def update_project_risk(
+    project_id: str,
+    risk_id: str,
+    payload: schemas.ProjectRiskUpdate,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("projects", "edit")),
+):
+    """Actualiza la probabilidad, impacto, estado o planes de mitigación de un riesgo."""
+    user_sede = get_user_sede_id(db, current_user.id)
+    _ensure_project(db, project_id, user_sede=user_sede)
+    risk = crud.update_project_risk(
+        db,
+        project_id=_to_uuid(project_id),
+        risk_id=_to_uuid(risk_id),
+        risk_in=payload,
+    )
+    if not risk:
+        raise HTTPException(status_code=404, detail="Riesgo no encontrado")
+    _log_project_activity(
+        db,
+        project_id,
+        current_user.id,
+        "risk_updated",
+        f"Riesgo '{risk.title}' actualizado (Severidad: {risk.severity_score}/25, Estado: {risk.status})",
+    )
+    db.commit()
+    _normalize_dates(risk)
+    return risk
+
+
+@router.delete(
+    "/{project_id}/risks/{risk_id}",
+    response_model=dict,
+    tags=["Projects Super-PRO"],
+)
+def delete_project_risk(
+    project_id: str,
+    risk_id: str,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("projects", "edit")),
+):
+    """Elimina (soft-delete) un riesgo de la matriz RAID."""
+    user_sede = get_user_sede_id(db, current_user.id)
+    _ensure_project(db, project_id, user_sede=user_sede)
+    ok = crud.delete_project_risk(db, _to_uuid(project_id), _to_uuid(risk_id))
+    if not ok:
+        raise HTTPException(status_code=404, detail="Riesgo no encontrado")
+    _log_project_activity(
+        db,
+        project_id,
+        current_user.id,
+        "risk_deleted",
+        f"Riesgo '{risk_id}' eliminado de la matriz",
+    )
+    db.commit()
+    return {"ok": True, "deleted": risk_id}
+
+
+@router.post(
+    "/{project_id}/risks/{risk_id}/convert-to-task",
+    response_model=schemas.ProjectTask,
+    status_code=status.HTTP_201_CREATED,
+    tags=["Projects Super-PRO"],
+)
+def convert_risk_to_task(
+    project_id: str,
+    risk_id: str,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("projects", "edit")),
+):
+    """Convierte un riesgo ocurrido/materializado en una tarea de contingencia inmediata."""
+    user_sede = get_user_sede_id(db, current_user.id)
+    _ensure_project(db, project_id, user_sede=user_sede)
+    persona_id = get_user_persona_id(db, current_user.id)
+    task = crud.convert_risk_to_task(
+        db,
+        project_id=_to_uuid(project_id),
+        risk_id=_to_uuid(risk_id),
+        actor_id=_to_uuid(persona_id) if persona_id else None,
+    )
+    if not task:
+        raise HTTPException(status_code=404, detail="Riesgo no encontrado")
+    _normalize_dates(task)
+    return task
+
+
+@router.get(
+    "/{project_id}/risks-summary",
+    response_model=schemas.ProjectRiskSummary,
+    tags=["Projects Super-PRO"],
+)
+def get_project_risks_summary(
+    project_id: str,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("projects", "read")),
+):
+    """Obtiene la matriz 5x5 agregada y métricas de severidad para el proyecto."""
+    user_sede = get_user_sede_id(db, current_user.id)
+    _ensure_project(db, project_id, user_sede=user_sede)
+    summary = crud.get_project_risks_summary(db, _to_uuid(project_id))
+    if not summary:
+        raise HTTPException(status_code=404, detail="Proyecto no encontrado")
+    return summary
+
+
+# ── WORKLOAD PLANNING & TEAM CAPACITY (Super-PRO Fase 3) ─────────────────────
+
+
+@router.get(
+    "/{project_id}/workload",
+    response_model=schemas.ProjectWorkloadSummary,
+    tags=["Projects Super-PRO"],
+)
+def get_project_workload(
+    project_id: str,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("projects", "read")),
+):
+    """Calcula la matriz de carga de trabajo, balance de equipo y saturación operativa."""
+    user_sede = get_user_sede_id(db, current_user.id)
+    _ensure_project(db, project_id, user_sede=user_sede)
+    workload = crud.get_project_workload(db, _to_uuid(project_id))
+    if not workload:
+        raise HTTPException(status_code=404, detail="Proyecto no encontrado")
+    return workload
+
+
+@router.patch(
+    "/{project_id}/tasks/{task_id}/reassign",
+    response_model=schemas.ProjectTask,
+    tags=["Projects Super-PRO"],
+)
+def reassign_project_task(
+    project_id: str,
+    task_id: str,
+    payload: schemas.TaskReassignPayload,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_project_access("edit")),
+):
+    """Reasigna rápidamente una tarea entre miembros con validación multi-tenant y auditoría."""
+    user_sede = get_user_sede_id(db, current_user.id)
+    project = _ensure_project(db, project_id, user_sede=user_sede)
+    task = _ensure_task_in_project(db, project_id, task_id)
+
+    if payload.new_assignee_id is not None:
+        _assert_assignee_in_sede(db, payload.new_assignee_id, user_sede)
+
+    previous_assignee_id = getattr(task, "assignee_id", None)
+    new_uuid = _to_uuid(payload.new_assignee_id) if payload.new_assignee_id else None
+
+    updated_task = crud.reassign_project_task(
+        db,
+        project_id=_to_uuid(project_id),
+        task_id=_to_uuid(task_id),
+        new_assignee_id=new_uuid,
+    )
+    if not updated_task:
+        raise HTTPException(status_code=404, detail="Tarea no encontrada")
+
+    # Registro de bitácora ministerial y notificación
+    if _assignment_changed(previous_assignee_id, new_uuid):
+        assignee_name = "Sin Asignar"
+        if new_uuid:
+            p = db.query(models.Persona).filter(models.Persona.id == new_uuid).first()
+            if p:
+                assignee_name = p.nombre_completo
+
+        _log_project_activity(
+            db,
+            project_id,
+            current_user.id,
+            "task_reassigned",
+            f"Tarea '{task.title}' reasignada a {assignee_name}",
+        )
+        if new_uuid:
+            notify_task_assigned(
+                db,
+                task=updated_task,
+                project=project,
+                assigned_by_user_id=current_user.id,
+                previous_assignee_id=previous_assignee_id,
+            )
+
+    db.commit()
+    _prepare_task_for_response(updated_task)
+    return updated_task
+
+
+# ── CRITICAL PATH METHOD (CPM) & BASELINE TRACKING (Super-PRO Fase 4) ────────
+
+
+@router.get(
+    "/{project_id}/critical-path",
+    response_model=schemas.ProjectCriticalPathSummary,
+    tags=["Projects Super-PRO"],
+)
+def get_project_critical_path(
+    project_id: str,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("projects", "read")),
+):
+    """Calcula el Método de la Ruta Crítica (CPM): Early/Late Start/Finish, Holgura y Tareas Críticas."""
+    user_sede = get_user_sede_id(db, current_user.id)
+    _ensure_project(db, project_id, user_sede=user_sede)
+    cpm = crud.calculate_critical_path(db, _to_uuid(project_id))
+    if not cpm:
+        raise HTTPException(status_code=404, detail="Proyecto no encontrado")
+    return cpm
+
+
+@router.post(
+    "/{project_id}/baseline",
+    response_model=schemas.ProjectBaseline,
+    tags=["Projects Super-PRO"],
+)
+def create_project_baseline_endpoint(
+    project_id: str,
+    payload: schemas.ProjectBaselineCreate,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_project_access("edit")),
+):
+    """Congela el cronograma planificado del proyecto en una nueva instantánea de línea base."""
+    user_sede = get_user_sede_id(db, current_user.id)
+    project = _ensure_project(db, project_id, user_sede=user_sede)
+    try:
+        baseline = crud.create_project_baseline(
+            db,
+            project_id=_to_uuid(project_id),
+            baseline_in=payload,
+            user_id=current_user.id,
+        )
+        _log_project_activity(
+            db,
+            project_id,
+            current_user.id,
+            "baseline_created",
+            f"Línea base '{baseline.name}' congelada con éxito",
+        )
+        baseline_summary = crud.get_project_latest_baseline(db, _to_uuid(project_id))
+        return baseline_summary or baseline
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Error creando línea base: {str(e)}")
+
+
+@router.get(
+    "/{project_id}/baseline",
+    response_model=Optional[schemas.ProjectBaseline],
+    tags=["Projects Super-PRO"],
+)
+def get_project_latest_baseline_endpoint(
+    project_id: str,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("projects", "read")),
+):
+    """Obtiene la última línea base y la comparación de varianza contra el cronograma real."""
+    user_sede = get_user_sede_id(db, current_user.id)
+    _ensure_project(db, project_id, user_sede=user_sede)
+    baseline_summary = crud.get_project_latest_baseline(db, _to_uuid(project_id))
+    return baseline_summary
+
+
+@router.get(
+    "/{project_id}/baselines",
+    response_model=List[schemas.ProjectBaseline],
+    tags=["Projects Super-PRO"],
+)
+def list_project_baselines_endpoint(
+    project_id: str,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("projects", "read")),
+):
+    """Lista el historial de líneas base congeladas del proyecto."""
+    user_sede = get_user_sede_id(db, current_user.id)
+    _ensure_project(db, project_id, user_sede=user_sede)
+    baselines = crud.list_project_baselines(db, _to_uuid(project_id))
+    return baselines
+
+
+# ---------------------------------------------------------------------------
+# TIME TRACKING & WORKLOGS (Super-PRO Fase 5)
+# ---------------------------------------------------------------------------
+
+@router.get(
+    "/{project_id}/time-logs",
+    response_model=List[schemas.ProjectTimeLog],
+    tags=["Projects Super-PRO"],
+)
+def list_project_time_logs(
+    project_id: str,
+    task_id: Optional[str] = None,
+    persona_id: Optional[str] = None,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("projects", "read")),
+):
+    """Lista los registros de tiempo de un proyecto con filtros opcionales."""
+    user_sede = get_user_sede_id(db, current_user.id)
+    _ensure_project(db, project_id, user_sede=user_sede)
+    logs = crud.get_project_time_logs(
+        db,
+        project_id=_to_uuid(project_id),
+        task_id=_to_uuid(task_id) if task_id else None,
+        persona_id=_to_uuid(persona_id) if persona_id else None,
+    )
+    for l in logs:
+        _normalize_dates(l)
+    return logs
+
+
+@router.post(
+    "/{project_id}/time-logs",
+    response_model=schemas.ProjectTimeLog,
+    status_code=status.HTTP_201_CREATED,
+    tags=["Projects Super-PRO"],
+)
+def create_project_time_log(
+    project_id: str,
+    payload: schemas.ProjectTimeLogCreate,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("projects", "edit")),
+):
+    """Registra una entrada de tiempo manual o desde el cronómetro interactivo."""
+    user_sede = get_user_sede_id(db, current_user.id)
+    _ensure_project(db, project_id, user_sede=user_sede)
+    if payload.task_id:
+        _ensure_task_in_project(db, project_id, str(payload.task_id))
+
+    actor_persona_id = get_user_persona_id(db, current_user.id)
+    persona_id = payload.persona_id or actor_persona_id
+    if not persona_id:
+        raise HTTPException(status_code=400, detail="No se pudo determinar la persona asociada al registro")
+
+    try:
+        time_log = crud.create_project_time_log(
+            db,
+            project_id=_to_uuid(project_id),
+            log_in=payload,
+            persona_id=_to_uuid(persona_id),
+            created_by=current_user.id,
+        )
+        task_info = f" en la tarea {payload.task_id}" if payload.task_id else ""
+        _log_project_activity(
+            db,
+            project_id,
+            current_user.id,
+            "time_logged",
+            f"Registro de tiempo: {payload.hours:.2f}h{task_info} ({payload.description or 'Sin descripción'})",
+        )
+        _normalize_dates(time_log)
+        return time_log
+    except ValueError as ve:
+        raise HTTPException(status_code=400, detail=str(ve))
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Error al registrar tiempo: {str(e)}")
+
+
+@router.delete(
+    "/{project_id}/time-logs/{log_id}",
+    tags=["Projects Super-PRO"],
+)
+def delete_project_time_log(
+    project_id: str,
+    log_id: str,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("projects", "edit")),
+):
+    """Elimina (soft-delete) un registro de tiempo."""
+    user_sede = get_user_sede_id(db, current_user.id)
+    _ensure_project(db, project_id, user_sede=user_sede)
+    deleted = crud.delete_project_time_log(db, _to_uuid(project_id), _to_uuid(log_id))
+    if not deleted:
+        raise HTTPException(status_code=404, detail="Registro de tiempo no encontrado")
+    _log_project_activity(
+        db,
+        project_id,
+        current_user.id,
+        "time_log_deleted",
+        f"Registro de tiempo {log_id} eliminado",
+    )
+    return {"ok": True, "message": "Registro de tiempo eliminado correctamente"}
+
+
+@router.get(
+    "/{project_id}/tasks/{task_id}/time-logs",
+    response_model=List[schemas.ProjectTimeLog],
+    tags=["Projects Super-PRO"],
+)
+def list_task_time_logs(
+    project_id: str,
+    task_id: str,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("projects", "read")),
+):
+    """Obtiene los registros de tiempo específicos de una tarea de un proyecto."""
+    user_sede = get_user_sede_id(db, current_user.id)
+    _ensure_project(db, project_id, user_sede=user_sede)
+    _ensure_task_in_project(db, project_id, task_id)
+    logs = crud.get_project_time_logs(db, _to_uuid(project_id), task_id=_to_uuid(task_id))
+    for l in logs:
+        _normalize_dates(l)
+    return logs
+
+
+@router.get(
+    "/{project_id}/time-tracking-summary",
+    response_model=schemas.ProjectTimeTrackingSummary,
+    tags=["Projects Super-PRO"],
+)
+def get_project_time_tracking_summary(
+    project_id: str,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("projects", "read")),
+):
+    """Devuelve el resumen consolidado de horas registradas, facturables vs no facturables y desglose por tarea y miembro."""
+    user_sede = get_user_sede_id(db, current_user.id)
+    _ensure_project(db, project_id, user_sede=user_sede)
+    summary = crud.get_project_time_tracking_summary(db, _to_uuid(project_id))
+    return summary
+
+
+# ---------------------------------------------------------------------------
+# PROJECT AUTOMATIONS & TRIGGERS (Super-PRO Fase 7)
+# ---------------------------------------------------------------------------
+
+@router.get(
+    "/{project_id}/automations",
+    response_model=List[schemas.ProjectAutomationRule],
+    tags=["Projects Automations Super-PRO"],
+)
+def list_project_automations(
+    project_id: str,
+    is_active: Optional[bool] = None,
+    trigger_event: Optional[str] = None,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("projects", "read")),
+):
+    """Obtiene las reglas de automatización asociadas a un proyecto y las de alcance general."""
+    user_sede = get_user_sede_id(db, current_user.id)
+    _ensure_project(db, project_id, user_sede=user_sede)
+    rules = crud.get_project_automation_rules(
+        db,
+        project_id=_to_uuid(project_id),
+        user_sede_id=user_sede,
+        is_active=is_active,
+        trigger_event=trigger_event,
+    )
+    for r in rules:
+        _normalize_dates(r)
+    return rules
+
+
+@router.post(
+    "/{project_id}/automations",
+    response_model=schemas.ProjectAutomationRule,
+    status_code=status.HTTP_201_CREATED,
+    tags=["Projects Automations Super-PRO"],
+)
+def create_project_automation(
+    project_id: str,
+    payload: schemas.ProjectAutomationRuleCreate,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("projects", "edit")),
+):
+    """Crea una nueva regla de automatización reactiva para el proyecto."""
+    user_sede = get_user_sede_id(db, current_user.id)
+    _ensure_project(db, project_id, user_sede=user_sede)
+
+    # Forzar project_id y sede_id de forma canónica
+    payload.project_id = str(_to_uuid(project_id))
+    rule = crud.create_project_automation_rule(
+        db,
+        payload,
+        creator_persona_id=current_user.id,
+        user_sede_id=user_sede,
+    )
+    _log_project_activity(
+        db,
+        project_id,
+        current_user.id,
+        "automation_rule_created",
+        f"Regla de automatización '{rule.name}' creada (Disparador: {rule.trigger_event})",
+    )
+    _normalize_dates(rule)
+    return rule
+
+
+@router.get(
+    "/{project_id}/automations/{rule_id}",
+    response_model=schemas.ProjectAutomationRule,
+    tags=["Projects Automations Super-PRO"],
+)
+def get_project_automation(
+    project_id: str,
+    rule_id: str,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("projects", "read")),
+):
+    """Obtiene el detalle de una regla de automatización específica."""
+    user_sede = get_user_sede_id(db, current_user.id)
+    _ensure_project(db, project_id, user_sede=user_sede)
+    rule = crud.get_project_automation_rule(db, _to_uuid(rule_id), user_sede_id=user_sede)
+    if not rule or (rule.project_id and str(rule.project_id) != str(_to_uuid(project_id))):
+        raise HTTPException(status_code=404, detail="Regla de automatización no encontrada")
+    _normalize_dates(rule)
+    return rule
+
+
+@router.patch(
+    "/{project_id}/automations/{rule_id}",
+    response_model=schemas.ProjectAutomationRule,
+    tags=["Projects Automations Super-PRO"],
+)
+def update_project_automation(
+    project_id: str,
+    rule_id: str,
+    payload: schemas.ProjectAutomationRuleUpdate,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("projects", "edit")),
+):
+    """Actualiza una regla de automatización (cambiar disparador, acción, estado activo/inactivo)."""
+    user_sede = get_user_sede_id(db, current_user.id)
+    _ensure_project(db, project_id, user_sede=user_sede)
+    rule = crud.get_project_automation_rule(db, _to_uuid(rule_id), user_sede_id=user_sede)
+    if not rule or (rule.project_id and str(rule.project_id) != str(_to_uuid(project_id))):
+        raise HTTPException(status_code=404, detail="Regla de automatización no encontrada")
+
+    updated = crud.update_project_automation_rule(db, _to_uuid(rule_id), payload, user_sede_id=user_sede)
+    _log_project_activity(
+        db,
+        project_id,
+        current_user.id,
+        "automation_rule_updated",
+        f"Regla de automatización '{updated.name}' actualizada",
+    )
+    _normalize_dates(updated)
+    return updated
+
+
+@router.delete(
+    "/{project_id}/automations/{rule_id}",
+    tags=["Projects Automations Super-PRO"],
+)
+def delete_project_automation(
+    project_id: str,
+    rule_id: str,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("projects", "edit")),
+):
+    """Elimina (soft-delete) una regla de automatización."""
+    user_sede = get_user_sede_id(db, current_user.id)
+    _ensure_project(db, project_id, user_sede=user_sede)
+    rule = crud.get_project_automation_rule(db, _to_uuid(rule_id), user_sede_id=user_sede)
+    if not rule or (rule.project_id and str(rule.project_id) != str(_to_uuid(project_id))):
+        raise HTTPException(status_code=404, detail="Regla de automatización no encontrada")
+
+    crud.delete_project_automation_rule(db, _to_uuid(rule_id), user_sede_id=user_sede)
+    _log_project_activity(
+        db,
+        project_id,
+        current_user.id,
+        "automation_rule_deleted",
+        f"Regla de automatización '{rule.name}' eliminada",
+    )
+    return {"ok": True, "message": "Regla de automatización eliminada correctamente"}
+
+
+@router.post(
+    "/{project_id}/automations/evaluate",
+    response_model=List[schemas.AutomationExecutionResult],
+    tags=["Projects Automations Super-PRO"],
+)
+def evaluate_project_automations_endpoint(
+    project_id: str,
+    payload: schemas.EvaluateAutomationPayload,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("projects", "edit")),
+):
+    """Evalúa manualmente o prueba los disparadores de automatización para un proyecto."""
+    user_sede = get_user_sede_id(db, current_user.id)
+    _ensure_project(db, project_id, user_sede=user_sede)
+
+    context = payload.context_data or {}
+    if payload.task_id:
+        context["task_id"] = str(payload.task_id)
+
+    results = crud.evaluate_project_automations(
+        db,
+        _to_uuid(project_id),
+        trigger_event=payload.trigger_event,
+        context=context,
+        actor_persona_id=current_user.id,
+        user_sede_id=user_sede,
+    )
+    return results
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 16. EXPORTACIONES Y REPORTES EJECUTIVOS (Super-PRO Fase 8 - FINAL)
+# ─────────────────────────────────────────────────────────────────────────────
+
+@router.get(
+    "/{project_id}/export/executive-data",
+    tags=["Projects Reports & Exports Super-PRO"],
+)
+def get_project_executive_data_endpoint(
+    project_id: str,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("projects", "read")),
+):
+    """Obtiene el conjunto de datos estructurado y métricas consolidadas para el informe ejecutivo."""
+    user_sede = get_user_sede_id(db, current_user.id)
+    _ensure_project(db, project_id, user_sede=user_sede)
+
+    data = crud.get_project_executive_report_data(
+        db,
+        _to_uuid(project_id),
+        user_sede_id=user_sede,
+    )
+    if not data:
+        raise HTTPException(status_code=404, detail="Datos del proyecto no encontrados")
+    return data
+
+
+@router.get(
+    "/{project_id}/export/summary-pdf",
+    tags=["Projects Reports & Exports Super-PRO"],
+)
+def export_project_summary_pdf_endpoint(
+    project_id: str,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("projects", "read")),
+):
+    """Genera y descarga el informe ejecutivo del proyecto en formato PDF con membrete CCF."""
+    user_sede = get_user_sede_id(db, current_user.id)
+    _ensure_project(db, project_id, user_sede=user_sede)
+
+    data = crud.get_project_executive_report_data(
+        db,
+        _to_uuid(project_id),
+        user_sede_id=user_sede,
+    )
+    if not data:
+        raise HTTPException(status_code=404, detail="Datos del proyecto no encontrados")
+
+    pdf_bytes = crud.generate_project_summary_pdf(data)
+    filename = f"reporte_ejecutivo_{project_id}.pdf"
+
+    _log_project_activity(
+        db,
+        project_id,
+        current_user.id,
+        "report_pdf_exported",
+        f"Informe ejecutivo PDF generado y descargado para proyecto '{data.get('project', {}).get('title', project_id)}'",
+    )
+
+    return Response(
+        content=pdf_bytes,
+        media_type="application/pdf",
+        headers={
+            "Content-Disposition": f'inline; filename="{filename}"',
+            "Cache-Control": "no-cache",
+        },
+    )
+
+
+@router.get(
+    "/{project_id}/export/tasks-csv",
+    tags=["Projects Reports & Exports Super-PRO"],
+)
+def export_project_tasks_csv_endpoint(
+    project_id: str,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("projects", "read")),
+):
+    """Descarga el cronograma de tareas del proyecto en formato CSV (BOM UTF-8 para Excel)."""
+    user_sede = get_user_sede_id(db, current_user.id)
+    _ensure_project(db, project_id, user_sede=user_sede)
+
+    csv_text = crud.generate_project_tasks_csv(
+        db,
+        _to_uuid(project_id),
+        user_sede_id=user_sede,
+    )
+    filename = f"tareas_proyecto_{project_id}.csv"
+
+    _log_project_activity(
+        db,
+        project_id,
+        current_user.id,
+        "tasks_csv_exported",
+        f"Exportación de tareas CSV completada",
+    )
+
+    return Response(
+        content=csv_text.encode("utf-8"),
+        media_type="text/csv; charset=utf-8",
+        headers={
+            "Content-Disposition": f'attachment; filename="{filename}"',
+            "Cache-Control": "no-cache",
+        },
+    )
+
+
+@router.get(
+    "/{project_id}/export/expenses-csv",
+    tags=["Projects Reports & Exports Super-PRO"],
+)
+def export_project_expenses_csv_endpoint(
+    project_id: str,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("projects", "read")),
+):
+    """Descarga el libro mayor de gastos y desembolsos del proyecto en formato CSV."""
+    user_sede = get_user_sede_id(db, current_user.id)
+    _ensure_project(db, project_id, user_sede=user_sede)
+
+    csv_text = crud.generate_project_expenses_csv(
+        db,
+        _to_uuid(project_id),
+        user_sede_id=user_sede,
+    )
+    filename = f"gastos_proyecto_{project_id}.csv"
+
+    _log_project_activity(
+        db,
+        project_id,
+        current_user.id,
+        "expenses_csv_exported",
+        f"Exportación de libro mayor de gastos CSV completada",
+    )
+
+    return Response(
+        content=csv_text.encode("utf-8"),
+        media_type="text/csv; charset=utf-8",
+        headers={
+            "Content-Disposition": f'attachment; filename="{filename}"',
+            "Cache-Control": "no-cache",
+        },
+    )
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 17. INDICADORES MGA / CREMA Y SEGUIMIENTO SPI (Super-PRO CREMA Fase 1)
+# ─────────────────────────────────────────────────────────────────────────────
+
+@router.get(
+    "/{project_id}/advanced-indicators",
+    response_model=List[schemas.ProjectIndicator],
+    tags=["Projects MGA CREMA Indicators"],
+)
+def list_project_indicators_endpoint(
+    project_id: str,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("projects", "read")),
+):
+    """Obtiene la lista de indicadores MGA/CREMA configurados en el proyecto con su último SPI."""
+    user_sede = get_user_sede_id(db, current_user.id)
+    _ensure_project(db, project_id, user_sede=user_sede)
+
+    indicators = crud.get_project_indicators(db, _to_uuid(project_id), sede_id=user_sede)
+    for ind in indicators:
+        _normalize_dates(ind)
+        for r in getattr(ind, "records", []):
+            _normalize_dates(r)
+    return indicators
+
+
+@router.post(
+    "/{project_id}/advanced-indicators",
+    response_model=schemas.ProjectIndicator,
+    status_code=status.HTTP_201_CREATED,
+    tags=["Projects MGA CREMA Indicators"],
+)
+def create_project_indicator_endpoint(
+    project_id: str,
+    payload: schemas.ProjectIndicatorCreate,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("projects", "edit")),
+):
+    """Crea un nuevo indicador MGA evaluando automáticamente sus atributos bajo criterios CREMA."""
+    user_sede = get_user_sede_id(db, current_user.id)
+    _ensure_project(db, project_id, user_sede=user_sede)
+
+    persona_id = _get_persona_id_for_user(db, current_user.id)
+    payload.project_id = str(_to_uuid(project_id))
+
+    indicator = crud.create_project_indicator(
+        db,
+        _to_uuid(project_id),
+        payload,
+        created_by=persona_id,
+        sede_id=user_sede,
+    )
+
+    _log_project_activity(
+        db,
+        project_id,
+        current_user.id,
+        "indicator_created",
+        f"Indicador '{indicator.name}' creado (Nivel: {indicator.level}, CREMA: {indicator.crema_score}/100)",
+    )
+
+    _normalize_dates(indicator)
+    return indicator
+
+
+@router.get(
+    "/{project_id}/advanced-indicators/{indicator_id}",
+    response_model=schemas.ProjectIndicator,
+    tags=["Projects MGA CREMA Indicators"],
+)
+def get_project_indicator_endpoint(
+    project_id: str,
+    indicator_id: str,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("projects", "read")),
+):
+    """Obtiene el detalle de un indicador específico con su evaluación CREMA y desglose de avance."""
+    user_sede = get_user_sede_id(db, current_user.id)
+    _ensure_project(db, project_id, user_sede=user_sede)
+
+    ind = crud.get_project_indicator(
+        db,
+        _to_uuid(indicator_id),
+        project_id=_to_uuid(project_id),
+        sede_id=user_sede,
+    )
+    if not ind:
+        raise HTTPException(status_code=404, detail="Indicador no encontrado")
+
+    _normalize_dates(ind)
+    for r in getattr(ind, "records", []):
+        _normalize_dates(r)
+    return ind
+
+
+@router.patch(
+    "/{project_id}/advanced-indicators/{indicator_id}",
+    response_model=schemas.ProjectIndicator,
+    tags=["Projects MGA CREMA Indicators"],
+)
+def update_project_indicator_endpoint(
+    project_id: str,
+    indicator_id: str,
+    payload: schemas.ProjectIndicatorUpdate,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("projects", "edit")),
+):
+    """Actualiza la definición de un indicador recalculando la calificación CREMA si aplica."""
+    user_sede = get_user_sede_id(db, current_user.id)
+    _ensure_project(db, project_id, user_sede=user_sede)
+
+    persona_id = _get_persona_id_for_user(db, current_user.id)
+    updated = crud.update_project_indicator(
+        db,
+        _to_uuid(indicator_id),
+        payload,
+        user_id=persona_id,
+        sede_id=user_sede,
+    )
+    if not updated:
+        raise HTTPException(status_code=404, detail="Indicador no encontrado")
+
+    _log_project_activity(
+        db,
+        project_id,
+        current_user.id,
+        "indicator_updated",
+        f"Indicador '{updated.name}' actualizado",
+    )
+
+    _normalize_dates(updated)
+    return updated
+
+
+@router.delete(
+    "/{project_id}/advanced-indicators/{indicator_id}",
+    tags=["Projects MGA CREMA Indicators"],
+)
+def delete_project_indicator_endpoint(
+    project_id: str,
+    indicator_id: str,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("projects", "edit")),
+):
+    """Elimina lógicamente (soft-delete) un indicador de proyecto."""
+    user_sede = get_user_sede_id(db, current_user.id)
+    _ensure_project(db, project_id, user_sede=user_sede)
+
+    persona_id = _get_persona_id_for_user(db, current_user.id)
+    success = crud.delete_project_indicator(
+        db,
+        _to_uuid(indicator_id),
+        user_id=persona_id,
+        sede_id=user_sede,
+    )
+    if not success:
+        raise HTTPException(status_code=404, detail="Indicador no encontrado")
+
+    _log_project_activity(
+        db,
+        project_id,
+        current_user.id,
+        "indicator_deleted",
+        f"Indicador eliminado",
+    )
+
+    return {"ok": True, "message": "Indicador eliminado exitosamente", "id": indicator_id}
+
+
+@router.post(
+    "/{project_id}/indicators/validate-crema",
+    response_model=schemas.CremaValidationResult,
+    tags=["Projects MGA CREMA Indicators"],
+)
+def validate_crema_indicator_endpoint(
+    project_id: str,
+    payload: schemas.ValidateCremaPayload,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("projects", "read")),
+):
+    """Microservicio validador inteligente de criterios C, R, E, M, A (Metodología MGA/BID)."""
+    user_sede = get_user_sede_id(db, current_user.id)
+    _ensure_project(db, project_id, user_sede=user_sede)
+
+    result = crud.validate_crema_indicator(payload)
+    return result
+
+
+@router.post(
+    "/{project_id}/indicators/{indicator_id}/records",
+    response_model=schemas.ProjectIndicatorRecord,
+    status_code=status.HTTP_201_CREATED,
+    tags=["Projects MGA CREMA Indicators"],
+)
+def create_project_indicator_record_endpoint(
+    project_id: str,
+    indicator_id: str,
+    payload: schemas.ProjectIndicatorRecordCreate,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("projects", "edit")),
+):
+    """Registra una medición periódica calculando automáticamente el SPI (Schedule/Performance Index)."""
+    user_sede = get_user_sede_id(db, current_user.id)
+    _ensure_project(db, project_id, user_sede=user_sede)
+
+    persona_id = _get_persona_id_for_user(db, current_user.id)
+    payload.indicator_id = str(_to_uuid(indicator_id))
+
+    try:
+        record = crud.create_project_indicator_record(
+            db,
+            _to_uuid(indicator_id),
+            payload,
+            reported_by=persona_id,
+            sede_id=user_sede,
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+    _log_project_activity(
+        db,
+        project_id,
+        current_user.id,
+        "indicator_record_created",
+        f"Medición registrada en período '{record.period}' (Meta: {record.target_value}, Real: {record.actual_value}, SPI: {record.spi})",
+    )
+
+    _normalize_dates(record)
+    return record
+
+
+@router.get(
+    "/{project_id}/indicators/{indicator_id}/records",
+    response_model=List[schemas.ProjectIndicatorRecord],
+    tags=["Projects MGA CREMA Indicators"],
+)
+def list_project_indicator_records_endpoint(
+    project_id: str,
+    indicator_id: str,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("projects", "read")),
+):
+    """Lista el historial cronológico de mediciones y cálculo de SPI de un indicador."""
+    user_sede = get_user_sede_id(db, current_user.id)
+    _ensure_project(db, project_id, user_sede=user_sede)
+
+    try:
+        records = crud.get_project_indicator_records(
+            db,
+            _to_uuid(indicator_id),
+            sede_id=user_sede,
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+    for r in records:
+        _normalize_dates(r)
+    return records
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 18. FAVORITOS DE USUARIO Y FIJACIÓN DE COMENTARIOS (Super-PRO Files Fase 1)
+# ─────────────────────────────────────────────────────────────────────────────
+
+@router.post(
+    "/{project_id}/tasks/{task_id}/toggle-favorite",
+    response_model=schemas.ProjectUserFavoriteToggleResponse,
+    tags=["Projects Favorites & Pins Super-PRO"],
+)
+def toggle_task_favorite_endpoint(
+    project_id: str,
+    task_id: str,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("projects", "read")),
+):
+    """Alterna el estado favorito de una tarea para el usuario autenticado (Axioma 3)."""
+    user_sede = get_user_sede_id(db, current_user.id)
+    _ensure_project(db, project_id, user_sede=user_sede)
+
+    persona_id = _get_persona_id_for_user(db, current_user.id)
+
+    try:
+        result = crud.toggle_task_favorite(
+            db,
+            _to_uuid(project_id),
+            _to_uuid(task_id),
+            persona_id,
+            sede_id=user_sede,
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+    return result
+
+
+@router.get(
+    "/{project_id}/favorites",
+    response_model=List[str],
+    tags=["Projects Favorites & Pins Super-PRO"],
+)
+def get_project_favorites_endpoint(
+    project_id: str,
+    entity_type: str = Query("task", description="Tipo de entidad (task, doc)"),
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("projects", "read")),
+):
+    """Obtiene la lista de identificadores favoritos del usuario en el proyecto."""
+    user_sede = get_user_sede_id(db, current_user.id)
+    _ensure_project(db, project_id, user_sede=user_sede)
+
+    persona_id = _get_persona_id_for_user(db, current_user.id)
+
+    try:
+        fav_ids = crud.get_project_user_favorites(
+            db,
+            _to_uuid(project_id),
+            persona_id,
+            entity_type=entity_type,
+            sede_id=user_sede,
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+    return fav_ids
+
+
+@router.post(
+    "/{project_id}/tasks/{task_id}/comments/{comment_id}/pin",
+    response_model=schemas.ProjectCommentItem,
+    tags=["Projects Favorites & Pins Super-PRO"],
+)
+def pin_task_comment_endpoint(
+    project_id: str,
+    task_id: str,
+    comment_id: str,
+    payload: Optional[schemas.ProjectPinCommentPayload] = None,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("projects", "edit")),
+):
+    """Fija o desfija un comentario en la cabecera del hilo de discusión."""
+    user_sede = get_user_sede_id(db, current_user.id)
+    _ensure_project(db, project_id, user_sede=user_sede)
+
+    persona_id = _get_persona_id_for_user(db, current_user.id)
+
+    try:
+        comment = crud.pin_project_comment(
+            db,
+            _to_uuid(project_id),
+            _to_uuid(comment_id),
+            persona_id,
+            task_id=_to_uuid(task_id),
+            is_pinned=payload.is_pinned if payload else None,
+            sede_id=user_sede,
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+    persona = (
+        db.query(models.Persona).filter(models.Persona.id == comment.author_id).first()
+        if comment.author_id
+        else None
+    )
+    return _project_comment_to_schema(comment, persona)
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# 19. BÓVEDA DOCUMENTAL Y VISOR UNIVERSAL EMBEBIDO (SUPER-PRO FILES FASE 2)
+# ══════════════════════════════════════════════════════════════════════════════
+
+def _project_file_to_schema(file_obj: models.ProjectFile) -> schemas.ProjectFile:
+    embed_url = file_obj.file_url
+    if file_obj.file_source == "drive" or file_obj.drive_file_id:
+        _, emb, _ = crud.normalize_drive_embed_url(file_obj.file_url)
+        if emb:
+            embed_url = emb
+
+    uploader_name = None
+    if file_obj.uploader:
+        uploader_name = (
+            getattr(file_obj.uploader, "nombre_completo", None)
+            or f"{getattr(file_obj.uploader, 'nombre', '')} {getattr(file_obj.uploader, 'apellido', '')}".strip()
+            or "Usuario"
+        )
+
+    task_title = getattr(file_obj.task, "title", None) if file_obj.task else None
+    phase_name = getattr(file_obj.phase, "name", None) if file_obj.phase else None
+
+    return schemas.ProjectFile(
+        id=str(file_obj.id),
+        project_id=str(file_obj.project_id),
+        name=file_obj.name,
+        description=file_obj.description,
+        category=file_obj.category,
+        file_source=file_obj.file_source,
+        file_url=file_obj.file_url,
+        embed_url=embed_url,
+        file_type=file_obj.file_type,
+        file_size=file_obj.file_size,
+        drive_file_id=file_obj.drive_file_id,
+        task_id=str(file_obj.task_id) if file_obj.task_id else None,
+        task_title=task_title,
+        phase_id=str(file_obj.phase_id) if file_obj.phase_id else None,
+        phase_name=phase_name,
+        uploaded_by=str(file_obj.uploaded_by) if file_obj.uploaded_by else None,
+        uploader_name=uploader_name,
+        created_at=file_obj.created_at,
+        updated_at=file_obj.updated_at,
+    )
+
+
+@router.post(
+    "/{project_id}/files/upload",
+    response_model=schemas.ProjectFile,
+    tags=["Projects Boveda Documental Super-PRO"],
+)
+async def upload_project_file_endpoint(
+    project_id: str,
+    file: UploadFile = File(...),
+    name: Optional[str] = Form(None),
+    description: Optional[str] = Form(None),
+    category: Optional[str] = Form("general"),
+    task_id: Optional[str] = Form(None),
+    phase_id: Optional[str] = Form(None),
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("projects", "edit")),
+):
+    """Sube un archivo local a la bóveda documental del proyecto."""
+    user_sede = get_user_sede_id(db, current_user.id)
+    _ensure_project(db, project_id, user_sede=user_sede)
+
+    filename = sanitize_filename(file.filename or "archivo")
+    contents = await file.read()
+
+    if len(contents) > MAX_UPLOAD_SIZE:
+        raise HTTPException(status_code=400, detail="El archivo excede el tamaño máximo permitido")
+
+    url = storage_service.save_file(contents, filename, subfolder="projects/boveda")
+    persona_id = _get_persona_id_for_user(db, current_user.id)
+
+    doc_name = name.strip() if name and name.strip() else filename
+
+    try:
+        new_file = crud.create_project_file(
+            db,
+            _to_uuid(project_id),
+            name=doc_name,
+            file_url=url,
+            file_source="local",
+            category=category or "general",
+            description=description,
+            file_type=file.content_type,
+            file_size=len(contents),
+            task_id=_to_uuid(task_id) if task_id else None,
+            phase_id=_to_uuid(phase_id) if phase_id else None,
+            uploaded_by=persona_id,
+            sede_id=user_sede,
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+    _log_project_activity(
+        db,
+        project_id,
+        current_user.id,
+        "file_uploaded",
+        f"Archivo '{doc_name}' subido a la bóveda documental",
+    )
+    return _project_file_to_schema(new_file)
+
+
+@router.post(
+    "/{project_id}/files/link-drive",
+    response_model=schemas.ProjectFile,
+    tags=["Projects Boveda Documental Super-PRO"],
+)
+def link_project_drive_file_endpoint(
+    project_id: str,
+    payload: schemas.ProjectFileLinkDrivePayload,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("projects", "edit")),
+):
+    """Vincula un documento o recurso de Google Drive a la bóveda del proyecto."""
+    user_sede = get_user_sede_id(db, current_user.id)
+    _ensure_project(db, project_id, user_sede=user_sede)
+
+    persona_id = _get_persona_id_for_user(db, current_user.id)
+
+    try:
+        drive_file = crud.link_drive_file(
+            db,
+            _to_uuid(project_id),
+            drive_url=payload.drive_url,
+            name=payload.name,
+            description=payload.description,
+            category=payload.category or "general",
+            task_id=_to_uuid(payload.task_id) if payload.task_id else None,
+            phase_id=_to_uuid(payload.phase_id) if payload.phase_id else None,
+            uploaded_by=persona_id,
+            sede_id=user_sede,
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+    _log_project_activity(
+        db,
+        project_id,
+        current_user.id,
+        "drive_file_linked",
+        f"Documento de Google Drive '{drive_file.name}' vinculado a la bóveda",
+    )
+    return _project_file_to_schema(drive_file)
+
+
+@router.get(
+    "/{project_id}/files",
+    response_model=List[schemas.ProjectFile],
+    tags=["Projects Boveda Documental Super-PRO"],
+)
+def list_project_files_endpoint(
+    project_id: str,
+    category: Optional[str] = Query(None, description="Filtrar por categoría"),
+    file_source: Optional[str] = Query(None, description="Filtrar por origen (local, drive, etc.)"),
+    task_id: Optional[str] = Query(None, description="Filtrar por tarea"),
+    phase_id: Optional[str] = Query(None, description="Filtrar por fase"),
+    search: Optional[str] = Query(None, description="Término de búsqueda"),
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("projects", "read")),
+):
+    """Obtiene el listado de archivos de la bóveda documental del proyecto."""
+    user_sede = get_user_sede_id(db, current_user.id)
+    _ensure_project(db, project_id, user_sede=user_sede)
+
+    try:
+        files = crud.get_project_files(
+            db,
+            _to_uuid(project_id),
+            category=category,
+            file_source=file_source,
+            task_id=_to_uuid(task_id) if task_id else None,
+            phase_id=_to_uuid(phase_id) if phase_id else None,
+            search=search,
+            sede_id=user_sede,
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+    return [_project_file_to_schema(f) for f in files]
+
+
+@router.get(
+    "/{project_id}/files/summary",
+    response_model=schemas.ProjectFilesSummary,
+    tags=["Projects Boveda Documental Super-PRO"],
+)
+def get_project_files_summary_endpoint(
+    project_id: str,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("projects", "read")),
+):
+    """Obtiene el resumen consolidado de la bóveda documental del proyecto."""
+    user_sede = get_user_sede_id(db, current_user.id)
+    _ensure_project(db, project_id, user_sede=user_sede)
+
+    try:
+        summary = crud.get_project_files_summary(
+            db,
+            _to_uuid(project_id),
+            sede_id=user_sede,
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+    return schemas.ProjectFilesSummary(
+        project_id=str(project_id),
+        total_files=summary["total_files"],
+        total_size_bytes=summary["total_size_bytes"],
+        by_source=summary["by_source"],
+        by_category=summary["by_category"],
+        files=[_project_file_to_schema(f) for f in summary["files"]],
+    )
+
+
+@router.delete(
+    "/{project_id}/files/{file_id}",
+    response_model=dict,
+    tags=["Projects Boveda Documental Super-PRO"],
+)
+def delete_project_file_endpoint(
+    project_id: str,
+    file_id: str,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("projects", "edit")),
+):
+    """Elimina (soft-delete) un archivo de la bóveda documental del proyecto."""
+    user_sede = get_user_sede_id(db, current_user.id)
+    _ensure_project(db, project_id, user_sede=user_sede)
+
+    try:
+        success = crud.delete_project_file(
+            db,
+            _to_uuid(file_id),
+            project_id=_to_uuid(project_id),
+            user_id=current_user.id,
+            sede_id=user_sede,
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+    if not success:
+        raise HTTPException(status_code=404, detail="Archivo no encontrado en este proyecto")
+
+    _log_project_activity(
+        db,
+        project_id,
+        current_user.id,
+        "file_deleted",
+        f"Archivo '{file_id}' eliminado de la bóveda documental",
+    )
+    return {"deleted": True, "file_id": file_id}
+
+
+
+
+
+
+
+
+
+

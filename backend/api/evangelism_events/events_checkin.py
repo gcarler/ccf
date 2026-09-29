@@ -13,10 +13,13 @@ from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
 from backend import models, schemas
-from backend.api.evangelism_events._shared import require_event_access
+from backend.api.evangelism_events._shared import (
+    _get_persona_for_user,
+    require_event_access,
+)
 from backend.core.audit import record_admin_action
 from backend.core.database import get_db
-from backend.core.permissions import require_evangelism_edit
+from backend.core.permissions import require_evangelism_edit, require_evangelism_read
 from backend.core.rate_limit import academy_limiter
 from backend.core.tenant import require_user_sede_id
 from backend.services.event_registration_service import is_qr_token_expired
@@ -137,6 +140,20 @@ def fast_checkin_visitor(
         except Exception as exc:
             logger.warning("Failed to create CRM follow-up for evangelism event visitor %s: %s", new_visitor.id, exc)
 
+    try:
+        from backend.services.event_post_followup_service import enroll_in_post_event_followup
+
+        enroll_in_post_event_followup(
+            db=db,
+            event=event,
+            persona=new_visitor,
+            current_user=current_user,
+            auto_assign_mentor=True,
+        )
+        db.commit()
+    except Exception as exc:
+        logger.warning("Failed to auto-enroll visitor in post-event followup %s: %s", new_visitor.id, exc)
+
     return {
         "status": "success",
         "visitor_id": new_visitor.id,
@@ -152,6 +169,21 @@ def fast_checkin_visitor(
 
 def _utcnow() -> datetime.datetime:
     return datetime.datetime.now(datetime.timezone.utc)
+
+
+def _get_user_display_name(db: Session, user_id) -> str:
+    if not user_id:
+        return "Operador de Puerta"
+    persona = _get_persona_for_user(db, user_id)
+    if persona and persona.nombre_completo:
+        return persona.nombre_completo
+    try:
+        user = db.query(models.User).filter(models.User.id == user_id).first()
+        if user:
+            return user.username or user.email or str(user.id)
+    except Exception:
+        pass
+    return "Operador de Puerta"
 
 
 def _qr_token_secret_hash(qr_token: str) -> str:
@@ -396,8 +428,8 @@ def unified_checkin(
             db.flush()
         source = "walk_in"
 
-    # Idempotencia: verificar si ya tiene EventAttendance(attended=True).
-    is_duplicate = bool(
+    # Idempotencia y validación de doble acceso
+    existing_attendance = (
         db.query(models.EventAttendance)
         .filter(
             models.EventAttendance.event_id == event.id,
@@ -407,6 +439,48 @@ def unified_checkin(
         )
         .first()
     )
+    is_duplicate = bool(existing_attendance)
+
+    if qr_kind == "CCF-EVT" and registration:
+        if (
+            registration.check_in_at is not None
+            or is_duplicate
+            or (existing_attendance is not None and existing_attendance.check_in_at is not None)
+            or registration.registration_status == "CHECKED_IN"
+        ):
+            first_checkin_dt = (
+                registration.check_in_at
+                or (existing_attendance.check_in_at if existing_attendance else None)
+                or (existing_attendance.scanned_at if existing_attendance else None)
+                or _utcnow()
+            )
+            first_checkin_iso = (
+                first_checkin_dt.isoformat()
+                if hasattr(first_checkin_dt, "isoformat")
+                else str(first_checkin_dt)
+            )
+            checked_by_id = registration.checked_in_by
+            checked_by_name = _get_user_display_name(db, checked_by_id)
+            reg_code = (
+                f"#CCF-EVT-{registration.registration_number:04d}"
+                if getattr(registration, "registration_number", None)
+                else f"#CCF-EVT-{str(registration.id)[:8].upper()}"
+            )
+
+            raise HTTPException(
+                status_code=409,
+                detail={
+                    "status": "duplicate_access",
+                    "message": f"Acceso duplicado: {persona.nombre_completo} ya ingresó previamente a este evento",
+                    "first_checkin_at": first_checkin_iso,
+                    "checked_by_name": checked_by_name,
+                    "persona_id": str(persona.id),
+                    "persona_name": persona.nombre_completo,
+                    "first_name": persona.first_name,
+                    "last_name": persona.last_name,
+                    "registration_code": reg_code,
+                },
+            )
 
     attendance, _created = _upsert_attendance(
         db,
@@ -417,24 +491,76 @@ def unified_checkin(
         role_at_event=registration.participant_role_code if registration else None,
     )
 
-    if registration and registration.registration_status != "CHECKED_IN":
+    now_utc = datetime.datetime.now(datetime.timezone.utc)
+    if registration:
         registration.registration_status = "CHECKED_IN"
-        registration.check_in_at = _utcnow()
+        registration.check_in_at = now_utc
         registration.checked_in_by = current_user.id
+
+    attendance.check_in_at = now_utc
+    attendance.scanned_at = now_utc
 
     db.commit()
     record_admin_action(db, current_user, action="event_checkin", resource_type="event", resource_id=str(event_id))
+
+    try:
+        from backend.services.event_post_followup_service import enroll_in_post_event_followup
+
+        enroll_in_post_event_followup(
+            db=db,
+            event=event,
+            persona=persona,
+            registration=registration,
+            current_user=current_user,
+            auto_assign_mentor=True,
+        )
+        db.commit()
+    except Exception as exc:
+        logger.warning("Failed to auto-enroll attendee in post-event followup %s: %s", persona.id, exc)
+
+    reg_code = (
+        f"#CCF-EVT-{registration.registration_number:04d}"
+        if registration and getattr(registration, "registration_number", None)
+        else (f"#CCF-EVT-{str(registration.id)[:8].upper()}" if registration else None)
+    )
+
+    attendance_count = (
+        db.query(models.EventAttendance)
+        .filter(
+            models.EventAttendance.event_id == event.id,
+            models.EventAttendance.session_date == session_day,
+            models.EventAttendance.attended.is_(True),
+        )
+        .count()
+    )
+    capacity = event.capacity_max or 0
+    percentage = round((attendance_count / capacity * 100), 1) if capacity > 0 else 0.0
+
     return {
         "status": "success",
-        "is_duplicate": is_duplicate,
+        "message": f"Acceso autorizado: {persona.nombre_completo}",
+        "is_duplicate": False,
         "persona_id": str(persona.id),
         "persona_name": persona.nombre_completo,
+        "first_name": persona.first_name,
+        "last_name": persona.last_name,
+        "email": persona.email,
+        "phone": persona.phone or persona.mobile_phone,
+        "registration_code": reg_code,
+        "registration_id": str(registration.id) if registration else None,
         "source": source,
         "qr_kind": qr_kind,
-        # plan_clasificador_contextual: rol efectivo + rol persistido en asistencia.
         "participant_role_code": (registration.participant_role_code if registration else None),
         "role_at_event": attendance.role_at_event,
+        "check_in_at": attendance.check_in_at.isoformat() if attendance.check_in_at else None,
         "checked_in_at": attendance.check_in_at.isoformat() if attendance.check_in_at else None,
+        "checked_in_by": str(current_user.id),
+        "checked_by_name": _get_user_display_name(db, current_user.id),
+        "occupancy": {
+            "count": attendance_count,
+            "capacity_max": capacity,
+            "percentage": percentage,
+        },
     }
 
 @academy_limiter.limit("30/minute")
@@ -447,13 +573,15 @@ def ccf_evt_checkin(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_evangelism_edit),
 ):
-    """Check-in por QR de inscripción (``CCF-EVT-``) con rol contextual.
+    """Check-in por QR de inscripción (``CCF-EVT-``) con rol contextual y bloqueo anti-fraude.
 
-    plan_clasificador_contextual §7: el scanner de eventos escanea el QR de la
-    inscripción y este endpoint registra la asistencia persistiendo el rol
-    contextual de la inscripción en ``role_at_event``. Devuelve
-    ``participant_role_code`` (rol efectivo) y ``role_at_event`` (persistido).
-    Idempotente: repeticiones retornan ``is_duplicate=True`` sin duplicar.
+    TKT-EVT-GATEKEEPER-02:
+    - Valida QRs CCF-EVT- e inscripciones.
+    - Si la persona ya ingresó (check_in_at establecido o asistencia previa en la sesión),
+      bloquea el reingreso con status 'duplicate_access' y HTTP 409 con detalle del
+      primer ingreso (first_checkin_at, checked_by_name) para prevenir fraude.
+    - Si es válido, registra check_in_at=datetime.now(timezone.utc),
+      checked_in_by=current_user.id y devuelve status 'success' con PII y registration_code.
     """
     event = require_event_access(db, current_user, event_id)
 
@@ -502,7 +630,12 @@ def ccf_evt_checkin(
         raise HTTPException(status_code=410, detail="El QR expiró")
 
     persona = reg.persona
-    is_duplicate = bool(
+    if not persona:
+        persona = db.query(models.Persona).filter(models.Persona.id == persona_uuid).first()
+        if not persona:
+            raise HTTPException(status_code=404, detail="Persona no encontrada")
+
+    existing_attendance = (
         db.query(models.EventAttendance)
         .filter(
             models.EventAttendance.event_id == event.id,
@@ -513,6 +646,52 @@ def ccf_evt_checkin(
         .first()
     )
 
+    is_duplicate = bool(
+        existing_attendance
+        or reg.check_in_at is not None
+        or reg.registration_status == "CHECKED_IN"
+    )
+
+    if is_duplicate:
+        first_checkin_dt = (
+            reg.check_in_at
+            or (existing_attendance.check_in_at if existing_attendance else None)
+            or (existing_attendance.scanned_at if existing_attendance else None)
+            or _utcnow()
+        )
+        first_checkin_iso = (
+            first_checkin_dt.isoformat()
+            if hasattr(first_checkin_dt, "isoformat")
+            else str(first_checkin_dt)
+        )
+        checked_by_id = reg.checked_in_by
+        checked_by_name = _get_user_display_name(db, checked_by_id)
+        reg_code = (
+            f"#CCF-EVT-{reg.registration_number:04d}"
+            if getattr(reg, "registration_number", None)
+            else f"#CCF-EVT-{str(reg.id)[:8].upper()}"
+        )
+
+        raise HTTPException(
+            status_code=409,
+            detail={
+                "status": "duplicate_access",
+                "message": f"Acceso duplicado: {persona.nombre_completo} ya ingresó previamente a este evento",
+                "first_checkin_at": first_checkin_iso,
+                "checked_by_name": checked_by_name,
+                "persona_id": str(persona.id),
+                "persona_name": persona.nombre_completo,
+                "first_name": persona.first_name,
+                "last_name": persona.last_name,
+                "registration_code": reg_code,
+            },
+        )
+
+    now_utc = datetime.datetime.now(datetime.timezone.utc)
+    reg.registration_status = "CHECKED_IN"
+    reg.check_in_at = now_utc
+    reg.checked_in_by = current_user.id
+
     attendance, _created = _upsert_attendance(
         db,
         event.id,
@@ -521,25 +700,120 @@ def ccf_evt_checkin(
         source="qr_event_registration",
         role_at_event=reg.participant_role_code,
     )
-
-    if reg.registration_status != "CHECKED_IN":
-        reg.registration_status = "CHECKED_IN"
-        reg.check_in_at = _utcnow()
-        reg.checked_in_by = current_user.id
+    attendance.check_in_at = now_utc
+    attendance.scanned_at = now_utc
 
     db.commit()
     record_admin_action(db, current_user, action="event_checkin", resource_type="event", resource_id=str(event_id))
+
+    try:
+        from backend.services.event_post_followup_service import enroll_in_post_event_followup
+
+        enroll_in_post_event_followup(
+            db=db,
+            event=event,
+            persona=persona,
+            registration=reg,
+            current_user=current_user,
+            auto_assign_mentor=True,
+        )
+        db.commit()
+    except Exception as exc:
+        logger.warning("Failed to auto-enroll attendee in post-event followup %s: %s", persona.id, exc)
+
+    reg_code = (
+        f"#CCF-EVT-{reg.registration_number:04d}"
+        if getattr(reg, "registration_number", None)
+        else f"#CCF-EVT-{str(reg.id)[:8].upper()}"
+    )
+
+    attendance_count = (
+        db.query(models.EventAttendance)
+        .filter(
+            models.EventAttendance.event_id == event.id,
+            models.EventAttendance.session_date == session_day,
+            models.EventAttendance.attended.is_(True),
+        )
+        .count()
+    )
+    capacity = event.capacity_max or 0
+    percentage = round((attendance_count / capacity * 100), 1) if capacity > 0 else 0.0
+
     return {
         "status": "success",
-        "is_duplicate": is_duplicate,
+        "message": f"Acceso autorizado: {persona.nombre_completo}",
+        "is_duplicate": False,
         "persona_id": str(persona.id),
         "persona_name": persona.nombre_completo,
+        "first_name": persona.first_name,
+        "last_name": persona.last_name,
+        "email": persona.email,
+        "phone": persona.phone or persona.mobile_phone,
+        "registration_code": reg_code,
+        "registration_id": str(reg.id),
         "source": "qr_event_registration",
         # plan_clasificador_contextual: rol efectivo + rol persistido en asistencia.
         "participant_role_code": reg.participant_role_code,
         "role_at_event": attendance.role_at_event,
-        "checked_in_at": attendance.check_in_at.isoformat() if attendance.check_in_at else None,
+        "check_in_at": reg.check_in_at.isoformat(),
+        "checked_in_at": attendance.check_in_at.isoformat(),
+        "checked_in_by": str(current_user.id),
+        "checked_by_name": _get_user_display_name(db, current_user.id),
+        "occupancy": {
+            "count": attendance_count,
+            "capacity_max": capacity,
+            "percentage": percentage,
+        },
     }
+
+
+@router.get("/events/{event_id}/sessions/{session_date}/occupancy", response_model=dict)
+def get_session_occupancy(
+    event_id: UUID,
+    session_date: str,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_evangelism_read),
+):
+    """Monitor de aforo en vivo: contador en tiempo real y porcentaje de capacidad."""
+    event = require_event_access(db, current_user, event_id)
+    try:
+        session_day = datetime.datetime.strptime(session_date, "%Y-%m-%d").date()
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Formato de fecha inválido, esperado YYYY-MM-DD")
+
+    attendance_count = (
+        db.query(models.EventAttendance)
+        .filter(
+            models.EventAttendance.event_id == event.id,
+            models.EventAttendance.session_date == session_day,
+            models.EventAttendance.attended.is_(True),
+        )
+        .count()
+    )
+    capacity = event.capacity_max or 0
+    percentage = round((attendance_count / capacity * 100), 1) if capacity > 0 else 0.0
+
+    return {
+        "event_id": str(event.id),
+        "event_name": event.name,
+        "session_date": session_date,
+        "checked_in_count": attendance_count,
+        "capacity_max": capacity,
+        "percentage": percentage,
+        "is_full": capacity > 0 and attendance_count >= capacity,
+    }
+
+
+@router.get("/events/{event_id}/occupancy", response_model=dict)
+def get_event_occupancy(
+    event_id: UUID,
+    session_date: Optional[str] = None,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_evangelism_read),
+):
+    """Monitor de aforo en vivo para el evento (fecha de hoy o sesión especificada)."""
+    today_str = session_date or datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d")
+    return get_session_occupancy(event_id, today_str, db, current_user)
 
 
 @academy_limiter.limit("30/minute")

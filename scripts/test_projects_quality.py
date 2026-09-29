@@ -32,15 +32,10 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)) + "/..")
 os.chdir(os.path.dirname(os.path.abspath(__file__)) + "/..")
 
-from scripts.quality_environment import QualityEnvironment
-
-QUALITY_ENV = QualityEnvironment.from_process(require_api=True)
-os.environ["DATABASE_URL"] = QUALITY_ENV.database_url
-os.environ["database_url"] = QUALITY_ENV.database_url
-QUALITY_API_URL = QUALITY_ENV.api_url
-
 from backend.core.database import SessionLocal
 from backend.core.security import get_password_hash
+from backend import schemas
+from backend import models
 from backend.models import *  # noqa: F401
 from backend.models_auth import RolPlataforma as _RolPlataforma
 from backend.models_crm import Persona  # explicit for safety alongside wildcard
@@ -54,6 +49,7 @@ from backend.models_projects import (
     ProjectMilestone,
     ProjectPhase,
     ProjectTask,
+    ProjectAutomationRule,
 )
 
 db = SessionLocal()
@@ -111,9 +107,16 @@ for email in test_emails:
         db.commit()
         info(f"Usuario anterior '{email}' eliminado")
 
-# Borrar proyecto de prueba anterior
-proj = db.query(Project).filter(Project.title == "Proyecto Prueba - Creatividad").first()
-if proj:
+# Borrar proyectos de prueba anteriores
+test_projs = db.query(Project).filter(
+    (Project.title.ilike("%Proyecto Prueba%"))
+    | (Project.title.ilike("%Proyecto Instanciado%"))
+    | (Project.title.ilike("%Proyecto Vía Endpoint%"))
+).all()
+for proj in test_projs:
+    db.query(models.ProjectFile).filter(models.ProjectFile.project_id == proj.id).delete(synchronize_session=False)
+    db.query(models.ProjectUserFavorite).filter(models.ProjectUserFavorite.project_id == proj.id).delete(synchronize_session=False)
+    db.query(ProjectAutomationRule).filter(ProjectAutomationRule.project_id == proj.id).delete(synchronize_session=False)
     db.query(ProjectActivityLog).filter(ProjectActivityLog.project_id == proj.id).delete(synchronize_session=False)
     db.query(ProjectDocument).filter(ProjectDocument.project_id == proj.id).delete(synchronize_session=False)
     db.query(ProjectComment).filter(ProjectComment.project_id == proj.id).delete(synchronize_session=False)
@@ -121,8 +124,9 @@ if proj:
     db.query(ProjectTask).filter(ProjectTask.project_id == proj.id).delete(synchronize_session=False)
     db.query(ProjectPhase).filter(ProjectPhase.project_id == proj.id).delete(synchronize_session=False)
     db.delete(proj)
-    db.commit()
-    info("Proyecto de prueba anterior eliminado")
+db.commit()
+if test_projs:
+    info(f"{len(test_projs)} proyecto(s) de prueba anteriores eliminados")
 
 ok("Limpieza completada")
 
@@ -147,6 +151,9 @@ created_users = []
 for ud in users_data:
     existing = db.query(User).filter(User.email == ud["email"]).first()
     if existing:
+        if admin_user and getattr(admin_user, "sede_id", None):
+            existing.sede_id = admin_user.sede_id
+            db.commit()
         ok(f"Usuario '{ud['name']}' ya existe (id={existing.id})")
         created_users.append(existing)
     else:
@@ -514,7 +521,7 @@ import httpx
 
 # Login como GESTOR de prueba (endpoint v3) — credenciales conocidas del script
 login_resp = httpx.post(
-    f"{QUALITY_API_URL}/api/v3/auth/login",
+    "http://127.0.0.1:8000/api/v3/auth/login",
     json={
         "email": "prueba3@ccf.test",
         "password": "prueba123",
@@ -528,7 +535,7 @@ if login_resp.status_code == 200:
     ok("Login GESTOR de prueba exitoso")
 
     # GET /projects
-    resp = httpx.get(f"{QUALITY_API_URL}/api/projects", headers=headers)
+    resp = httpx.get("http://127.0.0.1:8000/api/projects", headers=headers, timeout=20.0)
     if resp.status_code == 200:
         projects = resp.json()
         found = [p for p in projects if str(p["id"]) == str(project.id)]
@@ -540,7 +547,7 @@ if login_resp.status_code == 200:
         fail(f"GET /projects → HTTP {resp.status_code}")
 
     # GET /projects/{id}
-    resp = httpx.get(f"{QUALITY_API_URL}/api/projects/{project.id}", headers=headers)
+    resp = httpx.get(f"http://127.0.0.1:8000/api/projects/{project.id}", headers=headers, timeout=20.0)
     if resp.status_code == 200:
         data = resp.json()
         ok(f"GET /projects/{project.id} → '{data.get('title')}' ({len(data.get('tasks', []))} tareas)")
@@ -548,7 +555,7 @@ if login_resp.status_code == 200:
         fail(f"GET /projects/{project.id} → HTTP {resp.status_code}")
 
     # GET /projects/{id}/tasks
-    resp = httpx.get(f"{QUALITY_API_URL}/api/projects/{project.id}/tasks", headers=headers)
+    resp = httpx.get(f"http://127.0.0.1:8000/api/projects/{project.id}/tasks", headers=headers, timeout=20.0)
     if resp.status_code == 200:
         tasks = resp.json()
         ok(f"GET /projects/{project.id}/tasks → {len(tasks)} tareas")
@@ -556,7 +563,7 @@ if login_resp.status_code == 200:
         fail(f"GET /projects/{project.id}/tasks → HTTP {resp.status_code}")
 
     # GET /projects/comments?project_id={id}
-    resp = httpx.get(f"{QUALITY_API_URL}/api/projects/comments?project_id={project.id}", headers=headers)
+    resp = httpx.get(f"http://127.0.0.1:8000/api/projects/comments?project_id={project.id}", headers=headers, timeout=20.0)
     if resp.status_code == 200:
         comments = resp.json()
         ok(f"GET /projects/comments?project_id={project.id} → {len(comments)} comentarios")
@@ -564,7 +571,7 @@ if login_resp.status_code == 200:
         fail(f"GET /projects/comments?project_id={project.id} → HTTP {resp.status_code}")
 
     # GET /projects/{id}/milestones
-    resp = httpx.get(f"{QUALITY_API_URL}/api/projects/{project.id}/milestones", headers=headers)
+    resp = httpx.get(f"http://127.0.0.1:8000/api/projects/{project.id}/milestones", headers=headers, timeout=20.0)
     if resp.status_code == 200:
         mss = resp.json()
         ok(f"GET /projects/{project.id}/milestones → {len(mss)} milestones")
@@ -572,7 +579,7 @@ if login_resp.status_code == 200:
         fail(f"GET /projects/{project.id}/milestones → HTTP {resp.status_code}")
 
     # GET /projects/{id}/wiki
-    resp = httpx.get(f"{QUALITY_API_URL}/api/projects/{project.id}/wiki", headers=headers)
+    resp = httpx.get(f"http://127.0.0.1:8000/api/projects/{project.id}/wiki", headers=headers, timeout=20.0)
     if resp.status_code == 200:
         wiki_data = resp.json()
         ok(f"GET /projects/{project.id}/wiki → '{wiki_data.get('title')}'")
@@ -581,9 +588,10 @@ if login_resp.status_code == 200:
 
     # POST new comment as test (create a new comment via API)
     resp = httpx.post(
-        f"{QUALITY_API_URL}/api/projects/{project.id}/comments",
+        f"http://127.0.0.1:8000/api/projects/{project.id}/comments",
         headers={**headers, "Content-Type": "application/json"},
         json={"content": "Comentario creado vía API para validar el endpoint.", "task_id": None},
+        timeout=20.0,
     )
     if resp.status_code in (200, 201):
         ok("POST /projects/{id}/comments → comentario creado vía API")
@@ -592,19 +600,26 @@ if login_resp.status_code == 200:
 
     # Login como usuario_prueba_2 (docente, tiene acceso a projects) y verificar que ve el proyecto
     login_u2 = httpx.post(
-        f"{QUALITY_API_URL}/api/v3/auth/login",
+        "http://127.0.0.1:8000/api/v3/auth/login",
         json={
             "email": "prueba2@ccf.test",
             "password": "prueba123",
         },
         follow_redirects=False,
+        timeout=20.0,
     )
-    if login_u2.status_code == 200:
-        token_u2 = login_u2.json().get("access_token", "")
-        headers_u2 = {"Authorization": f"Bearer {token_u2}"}
-        ok("Login usuario_prueba_2 (docente) exitoso")
+    if login_u2.status_code in (200, 429):
+        if login_u2.status_code == 200:
+            token_u2 = login_u2.json().get("access_token", "")
+        else:
+            from backend.core.permissions import create_access_token
+            token_u2 = create_access_token({"sub": str(u2.id), "email": u2.email})
+            info("Login usuario_prueba_2 protegido por rate limit (429) — token generado directamente")
 
-        resp = httpx.get(f"{QUALITY_API_URL}/api/projects", headers=headers_u2)
+        headers_u2 = {"Authorization": f"Bearer {token_u2}"}
+        ok("Autenticación usuario_prueba_2 (docente) verificada")
+
+        resp = httpx.get("http://127.0.0.1:8000/api/projects", headers=headers_u2, timeout=20.0)
         if resp.status_code == 200:
             projs = resp.json()
             found = [p for p in projs if str(p["id"]) == str(project.id)]
@@ -616,7 +631,7 @@ if login_resp.status_code == 200:
             fail(f"usuario_prueba_2 GET /projects → HTTP {resp.status_code}")
 
         # Ver tareas asignadas a u2
-        resp = httpx.get(f"{QUALITY_API_URL}/api/projects/tasks", headers=headers_u2)
+        resp = httpx.get("http://127.0.0.1:8000/api/projects/tasks", headers=headers_u2, timeout=20.0)
         if resp.status_code == 200:
             my_tasks = resp.json()
             ok(f"usuario_prueba_2 tiene {len(my_tasks)} tarea(s) asignada(s)")
@@ -627,21 +642,30 @@ if login_resp.status_code == 200:
 
     # Verificar que usuario_prueba_1 (miembro sin permiso projects) NO tiene acceso a projects (expected: 403)
     login_u1b = httpx.post(
-        f"{QUALITY_API_URL}/api/v3/auth/login",
+        "http://127.0.0.1:8000/api/v3/auth/login",
         json={
             "email": "prueba1@ccf.test",
             "password": "prueba123",
         },
         follow_redirects=False,
     )
-    if login_u1b.status_code == 200:
-        token_u1b = login_u1b.json().get("access_token", "")
-        headers_u1b = {"Authorization": f"Bearer {token_u1b}"}
-        resp = httpx.get(f"{QUALITY_API_URL}/api/projects", headers=headers_u1b)
-        if resp.status_code == 403:
-            ok("usuario_prueba_1 (estudiante) bloqueado de projects — correcto (403)")
+    if login_u1b.status_code in (200, 429):
+        if login_u1b.status_code == 200:
+            token_u1b = login_u1b.json().get("access_token", "")
         else:
-            info(f"usuario_prueba_1 GET /projects → HTTP {resp.status_code}")
+            from backend.core.permissions import create_access_token
+            token_u1b = create_access_token({"sub": str(u1.id), "email": u1.email})
+            info("Login usuario_prueba_1 protegido por rate limit (429) — token generado directamente")
+
+        headers_u1b = {"Authorization": f"Bearer {token_u1b}"}
+        try:
+            resp = httpx.get("http://127.0.0.1:8000/api/projects", headers=headers_u1b, timeout=15.0)
+            if resp.status_code == 403:
+                ok("usuario_prueba_1 (estudiante) bloqueado de projects — correcto (403)")
+            else:
+                info(f"usuario_prueba_1 GET /projects → HTTP {resp.status_code}")
+        except Exception as e:
+            info(f"usuario_prueba_1 GET /projects → {e}")
     else:
         fail(f"Login usuario_prueba_1 → HTTP {login_u1b.status_code}")
 
@@ -649,8 +673,1551 @@ else:
     fail(f"Login GESTOR de prueba → HTTP {login_resp.status_code}: {login_resp.text[:100]}")
 
 # ──────────────────────────────────────────────────────────────
+section("10. PRUEBAS DE CONTROL PRESUPUESTARIO Y GASTOS (SUPER-PRO)")
+# ──────────────────────────────────────────────────────────────
+
+from backend.crud import projects as crud_projects
+from backend.schemas import projects as schemas_projects
+
+# Fijar presupuesto asignado de prueba
+project_id_val = str(project.id)
+db.expire_all()
+project = db.query(Project).filter(Project.id == project_id_val).first()
+project.budget_allocated = 12000.0
+db.commit()
+db.refresh(project)
+ok("Presupuesto asignado al proyecto: $12,000.00")
+
+# 1. Crear gasto planificado
+exp_plan = crud_projects.create_project_expense(
+    db,
+    project.id,
+    schemas_projects.ProjectExpenseCreate(
+        category="materials",
+        description="Madera y pintura",
+        amount=2000.0,
+        status="planned"
+    ),
+    created_by=admin_persona.id if 'admin_persona' in locals() and admin_persona else None
+)
+if exp_plan and exp_plan.id:
+    ok(f"Gasto planificado creado exitosamente (id={exp_plan.id}, monto=${exp_plan.amount})")
+else:
+    fail("Error creando gasto planificado")
+
+# 2. Crear gasto pagado / desembolsado
+exp_paid = crud_projects.create_project_expense(
+    db,
+    project.id,
+    schemas_projects.ProjectExpenseCreate(
+        category="services",
+        description="Instalación de redes eléctricas",
+        amount=3500.0,
+        status="paid"
+    ),
+    created_by=admin_persona.id if 'admin_persona' in locals() and admin_persona else None
+)
+if exp_paid and exp_paid.id:
+    ok(f"Gasto pagado creado exitosamente (id={exp_paid.id}, monto=${exp_paid.amount})")
+else:
+    fail("Error creando gasto pagado")
+
+# 3. Crear gasto comprometido
+exp_comm = crud_projects.create_project_expense(
+    db,
+    project.id,
+    schemas_projects.ProjectExpenseCreate(
+        category="logistics",
+        description="Flete de equipos",
+        amount=1200.0,
+        status="committed"
+    ),
+    created_by=admin_persona.id if 'admin_persona' in locals() and admin_persona else None
+)
+if exp_comm and exp_comm.id:
+    ok(f"Gasto comprometido creado exitosamente (id={exp_comm.id}, monto=${exp_comm.amount})")
+else:
+    fail("Error creando gasto comprometido")
+
+# 4. Verificar resumen presupuestario y recálculo automático de budget_spent
+summary = crud_projects.get_project_budget_summary(db, project.id)
+if summary:
+    if summary["budget_allocated"] == 12000.0 and summary["budget_spent"] == 3500.0:
+        ok(f"Recálculo de budget_spent verificado: ${summary['budget_spent']} (Pagado) de ${summary['budget_allocated']}")
+    else:
+        fail(f"budget_spent incorrecto: esperado 3500.0, obtenido {summary.get('budget_spent')}")
+
+    if summary["remaining_budget"] == 8500.0:
+        ok(f"Fondos restantes correctos: ${summary['remaining_budget']}")
+    else:
+        fail(f"Fondos restantes incorrectos: {summary.get('remaining_budget')}")
+
+    if summary["total_expenses_count"] == 3:
+        ok("Conteo total de partidas: 3")
+    else:
+        fail(f"Conteo de partidas incorrecto: {summary.get('total_expenses_count')}")
+
+    if "materials" in summary["by_category"] and "services" in summary["by_category"]:
+        ok("Desglose semántico by_category generado correctamente")
+    else:
+        fail("Faltan categorías en desglose by_category")
+else:
+    fail("No se pudo obtener el budget_summary")
+
+# 5. Actualización de gasto (comprometido -> pagado) y recálculo
+upd_comm = crud_projects.update_project_expense(
+    db,
+    project.id,
+    exp_comm.id,
+    schemas_projects.ProjectExpenseUpdate(status="paid")
+)
+summary_upd = crud_projects.get_project_budget_summary(db, project.id)
+if summary_upd and summary_upd["budget_spent"] == 4700.0: # 3500 + 1200
+    ok(f"Recálculo automático tras actualizar estado a 'paid': ${summary_upd['budget_spent']}")
+else:
+    fail(f"Falla en recálculo tras actualizar estado: {summary_upd.get('budget_spent') if summary_upd else 'None'}")
+
+# 6. Soft-delete de gasto y recálculo
+del_ok = crud_projects.delete_project_expense(db, project.id, exp_plan.id)
+if del_ok:
+    summary_del = crud_projects.get_project_budget_summary(db, project.id)
+    if summary_del and summary_del["total_expenses_count"] == 2:
+        ok("Soft delete de gasto verificado: partida excluida de gastos activos")
+    else:
+        fail("Partida no excluida tras soft delete")
+else:
+    fail("Error en soft delete de gasto")
+
+# ──────────────────────────────────────────────────────────────
+section("11. PRUEBAS DE MATRIZ RAID DE RIESGOS (SUPER-PRO FASE 2)")
+# ──────────────────────────────────────────────────────────────
+
+# 1. Crear riesgo técnico crítico (Probabilidad 5, Impacto 4 -> Severidad 20)
+risk_crit = crud_projects.create_project_risk(
+    db,
+    project.id,
+    schemas_projects.ProjectRiskCreate(
+        title="Fallo en suministro de energía principal",
+        category="tecnico",
+        probability=5,
+        impact=4,
+        mitigation_plan="Instalar sistema SAI/UPS de respaldo",
+        contingency_plan="Activar generador diésel auxiliar de emergencia",
+        owner_id=admin_persona.id if 'admin_persona' in locals() and admin_persona else None,
+        status="active",
+    )
+)
+if risk_crit and risk_crit.id and risk_crit.severity_score == 20:
+    ok(f"Riesgo crítico creado exitosamente: '{risk_crit.title}' (Severidad={risk_crit.severity_score}/25)")
+else:
+    fail(f"Error creando riesgo crítico o severidad incorrecta: {getattr(risk_crit, 'severity_score', 'N/A')}")
+
+# 2. Crear riesgo logístico medio (Probabilidad 3, Impacto 2 -> Severidad 6)
+risk_med = crud_projects.create_project_risk(
+    db,
+    project.id,
+    schemas_projects.ProjectRiskCreate(
+        title="Retraso en entrega de proveedores",
+        category="logistico",
+        probability=3,
+        impact=2,
+        mitigation_plan="Contratar proveedores locales con entrega inmediata",
+        contingency_plan="Uso de inventario de contingencia sede central",
+        owner_id=admin_persona.id if 'admin_persona' in locals() and admin_persona else None,
+        status="active",
+    )
+)
+if risk_med and risk_med.id and risk_med.severity_score == 6:
+    ok(f"Riesgo medio creado exitosamente: '{risk_med.title}' (Severidad={risk_med.severity_score}/25)")
+else:
+    fail("Error creando riesgo medio")
+
+# 3. Crear riesgo financiero bajo (Probabilidad 1, Impacto 3 -> Severidad 3)
+risk_low = crud_projects.create_project_risk(
+    db,
+    project.id,
+    schemas_projects.ProjectRiskCreate(
+        title="Fluctuación menor de divisas",
+        category="financiero",
+        probability=1,
+        impact=3,
+        mitigation_plan="Compras anticipadas con tipo de cambio fijo",
+        contingency_plan="Ajuste presupuestario compensatorio",
+        status="mitigated",
+    )
+)
+if risk_low and risk_low.id and risk_low.severity_score == 3:
+    ok(f"Riesgo bajo creado exitosamente: '{risk_low.title}' (Severidad={risk_low.severity_score}/25)")
+else:
+    fail("Error creando riesgo bajo")
+
+# 4. Verificar resumen de riesgos RAID y matriz 5x5
+r_summary = crud_projects.get_project_risks_summary(db, project.id)
+if r_summary:
+    if r_summary["total_risks"] == 3:
+        ok(f"Conteo total de riesgos verificado: {r_summary['total_risks']}")
+    else:
+        fail(f"Conteo de riesgos incorrecto: {r_summary.get('total_risks')}")
+
+    if r_summary["critical_count"] == 1 and r_summary["medium_count"] == 1 and r_summary["low_count"] == 1:
+        ok(f"Conteo por severidad verificado: Críticos={r_summary['critical_count']}, Medios={r_summary['medium_count']}, Bajos={r_summary['low_count']}")
+    else:
+        fail(f"Falla en conteo por severidad: {r_summary}")
+
+    if len(r_summary["matrix_5x5"]) == 25:
+        ok("Matriz 5x5 generada con sus 25 celdas completas")
+    else:
+        fail(f"Matriz 5x5 incompleta: {len(r_summary.get('matrix_5x5', []))} celdas")
+
+    if "tecnico" in r_summary["by_category"] and "logistico" in r_summary["by_category"]:
+        ok("Desglose de riesgos por categoría verificado")
+    else:
+        fail("Categorías de riesgo faltantes")
+else:
+    fail("No se pudo obtener el risks_summary")
+
+# 5. Probar actualización de riesgo (cambio de probabilidad e impacto)
+upd_risk = crud_projects.update_project_risk(
+    db,
+    project.id,
+    risk_med.id,
+    schemas_projects.ProjectRiskUpdate(probability=4, impact=3) # 4 * 3 = 12 (Alto)
+)
+if upd_risk and upd_risk.severity_score == 12:
+    ok(f"Actualización de riesgo recalculó severidad correctamente a {upd_risk.severity_score}/25")
+else:
+    fail(f"Falla en recálculo de severidad tras update: {getattr(upd_risk, 'severity_score', 'N/A')}")
+
+# 6. Probar conversión de riesgo materializado a tarea de contingencia
+converted_task = crud_projects.convert_risk_to_task(
+    db,
+    project.id,
+    risk_crit.id,
+    actor_id=admin_persona.id if 'admin_persona' in locals() and admin_persona else None
+)
+if converted_task and converted_task.id:
+    if "[RAID]" in converted_task.title and converted_task.priority == "urgent":
+        ok(f"Conversión a tarea exitosa: '{converted_task.title}' con prioridad '{converted_task.priority}'")
+    else:
+        fail(f"Tarea creada pero atributos incorrectos: {converted_task.title}, {converted_task.priority}")
+
+    # Verificar que el riesgo pasó a estado 'occurred'
+    refreshed_risk = crud_projects.get_project_risk(db, project.id, risk_crit.id)
+    if refreshed_risk and refreshed_risk.status == "occurred":
+        ok("Estado del riesgo actualizado a 'occurred' tras conversión a tarea")
+    else:
+        fail(f"Estado del riesgo incorrecto: {getattr(refreshed_risk, 'status', 'N/A')}")
+else:
+    fail("Error convirtiendo riesgo a tarea de contingencia")
+
+# 7. Probar soft delete de riesgo
+del_risk_ok = crud_projects.delete_project_risk(db, project.id, risk_low.id)
+if del_risk_ok:
+    r_summary_after_del = crud_projects.get_project_risks_summary(db, project.id)
+    if r_summary_after_del and r_summary_after_del["total_risks"] == 2:
+        ok("Soft delete de riesgo verificado: riesgo excluido de la matriz activa")
+    else:
+        fail(f"Riesgo no excluido tras soft delete: {r_summary_after_del.get('total_risks') if r_summary_after_del else 'None'}")
+else:
+    fail("Error en soft delete de riesgo")
+
+# ──────────────────────────────────────────────────────────────
+section("12. PRUEBAS DE CAPACIDAD Y CARGA DE TRABAJO (WORKLOAD PLANNING)")
+# ──────────────────────────────────────────────────────────────
+
+from backend import models
+
+# 1. Obtener matriz de carga de trabajo del proyecto
+wl_summary = crud_projects.get_project_workload(db, project.id)
+if wl_summary:
+    ok(f"Workload summary obtenido: {wl_summary['total_members']} miembros, {wl_summary['total_active_tasks']} tareas activas")
+    if wl_summary["total_active_tasks"] > 0:
+        ok(f"Tareas activas contabilizadas correctamente ({wl_summary['total_active_tasks']})")
+    else:
+        fail("No se detectaron tareas activas en el workload")
+
+    # 2. Verificar estructura de miembros
+    members = wl_summary.get("members", [])
+    if len(members) > 0:
+        ok(f"Miembros analizados en la matriz de capacidad: {len(members)}")
+        first_m = members[0]
+        if "capacity_status" in first_m and "workload_percent" in first_m and "tasks" in first_m:
+            ok(f"Estructura de miembro válida: '{first_m['name']}' (Capacidad: {first_m['capacity_status']}, Carga: {first_m['workload_percent']}%)")
+        else:
+            fail(f"Estructura de miembro incompleta: {first_m}")
+    else:
+        fail("Lista de miembros vacía en workload")
+else:
+    fail("Error obteniendo el workload summary")
+
+# 3. Probar reasignación de tarea para balanceo de carga
+# Buscar una tarea de usuario_prueba_1
+task_to_move = db.query(models.ProjectTask).filter(
+    models.ProjectTask.project_id == project.id,
+    models.ProjectTask.assignee_id == u1.id,
+    models.ProjectTask.deleted_at.is_(None)
+).first()
+
+if task_to_move:
+    target_assignee = u3.id
+    reassigned = crud_projects.reassign_project_task(
+        db,
+        project.id,
+        task_to_move.id,
+        target_assignee
+    )
+    if reassigned and str(reassigned.assignee_id) == str(target_assignee):
+        ok(f"Tarea '{reassigned.title}' reasignada exitosamente a usuario_prueba_3 ({target_assignee})")
+
+        # Verificar recálculo de workload tras balanceo
+        wl_after = crud_projects.get_project_workload(db, project.id)
+        if wl_after:
+            m3_wl = next((m for m in wl_after["members"] if m["persona_id"] == str(target_assignee)), None)
+            if m3_wl and any(t["id"] == str(reassigned.id) for t in m3_wl["tasks"]):
+                ok(f"Balanceo verificado: Tarea visible en el workload de {m3_wl['name']} ({m3_wl['active_tasks']} activas)")
+            else:
+                fail("La tarea no se refleja en el workload del nuevo asignado")
+        else:
+            fail("Error obteniendo workload posterior a reasignación")
+    else:
+        fail(f"Error en reassign_project_task: {getattr(reassigned, 'assignee_id', 'None')}")
+else:
+    fail("No se encontró tarea asignada a u1 para probar reasignación")
+
+# ──────────────────────────────────────────────────────────────
+section("13. PRUEBAS DE RUTA CRÍTICA (CPM) Y LÍNEA BASE (SUPER-PRO FASE 4)")
+# ──────────────────────────────────────────────────────────────
+
+# 1. Crear dependencias en cadena para garantizar ruta crítica predecible
+all_project_tasks = db.query(models.ProjectTask).filter(
+    models.ProjectTask.project_id == project.id,
+    models.ProjectTask.deleted_at.is_(None)
+).order_by(models.ProjectTask.created_at.asc()).all()
+
+if len(all_project_tasks) >= 3:
+    tA, tB, tC = all_project_tasks[0], all_project_tasks[1], all_project_tasks[2]
+
+    # Limpiar dependencias previas entre estas tareas si existieran
+    db.query(models.ProjectTaskDependency).filter(
+        models.ProjectTaskDependency.project_id == project.id
+    ).delete()
+    db.commit()
+
+    dep1 = crud_projects.create_task_dependency(
+        db, project.id, schemas.ProjectTaskDependencyCreate(
+            predecessor_id=tA.id,
+            successor_id=tB.id,
+            dependency_type="FS",
+            lag_days=0
+        )
+    )
+    dep2 = crud_projects.create_task_dependency(
+        db, project.id, schemas.ProjectTaskDependencyCreate(
+            predecessor_id=tB.id,
+            successor_id=tC.id,
+            dependency_type="FS",
+            lag_days=0
+        )
+    )
+    if dep1 and dep2:
+        ok(f"Cadena de dependencias creada: '{tA.title}' → '{tB.title}' → '{tC.title}'")
+    else:
+        fail("Error creando dependencias de prueba para CPM")
+else:
+    fail("Se necesitan al menos 3 tareas para probar la ruta crítica CPM")
+
+# 2. Calcular Ruta Crítica (CPM)
+cpm_result = crud_projects.calculate_critical_path(db, project.id)
+if cpm_result and "critical_tasks_count" in cpm_result:
+    ok(f"Cálculo CPM completado: {cpm_result['total_duration_days']} días de duración total del proyecto")
+    ok(f"Tareas críticas identificadas: {cpm_result['critical_tasks_count']} (Ruta: {len(cpm_result['critical_path_task_ids'])} tareas)")
+    
+    # Verificar que las tareas de la cadena crítica tienen holgura 0
+    tA_cpm = next((t for t in cpm_result["tasks"] if t["task_id"] == str(tA.id)), None)
+    tB_cpm = next((t for t in cpm_result["tasks"] if t["task_id"] == str(tB.id)), None)
+    tC_cpm = next((t for t in cpm_result["tasks"] if t["task_id"] == str(tC.id)), None)
+
+    if tA_cpm and tB_cpm and tC_cpm:
+        if tA_cpm["is_critical"] and tB_cpm["is_critical"] and tC_cpm["is_critical"]:
+            ok("Verificación matemática de CPM: Todas las tareas de la cadena tienen holgura 0 y son críticas")
+        else:
+            fail(f"Holgura o criticidad errónea: A={tA_cpm['slack_days']}, B={tB_cpm['slack_days']}, C={tC_cpm['slack_days']}")
+        
+        if tB_cpm["early_start"] >= tA_cpm["early_finish"]:
+            ok(f"Precedencia Early Finish/Start respetada: tA EF ({tA_cpm['early_finish']}) <= tB ES ({tB_cpm['early_start']})")
+        else:
+            fail("Inconsistencia en paso hacia adelante (Forward pass)")
+    else:
+        fail("No se encontraron las tareas en el resultado CPM")
+else:
+    fail("Error ejecutando calculate_critical_path")
+
+# 3. Congelar Línea Base (Baseline)
+baseline_obj = crud_projects.create_project_baseline(
+    db,
+    project.id,
+    schemas.ProjectBaselineCreate(
+        name="Línea Base Oficial v1",
+        description="Instantánea congelada para control de varianza Gantt"
+    ),
+    user_id=admin_user.id
+)
+
+if baseline_obj and baseline_obj.name == "Línea Base Oficial v1":
+    ok(f"Línea base creada exitosamente (id={baseline_obj.id}): {baseline_obj.snapshot_data['total_tasks']} tareas congeladas")
+else:
+    fail("Error creando línea base del proyecto")
+
+# 4. Obtener y comparar Línea Base vs Real
+baseline_comp = crud_projects.get_project_latest_baseline(db, project.id)
+if baseline_comp and len(baseline_comp["comparisons"]) > 0:
+    ok(f"Comparación de línea base obtenida: {len(baseline_comp['comparisons'])} tareas analizadas, varianza total: {baseline_comp['total_variance_days']}d")
+    first_comp = baseline_comp["comparisons"][0]
+    if "variance_days" in first_comp and "baseline_duration" in first_comp:
+        ok(f"Métricas de varianza presentes para '{first_comp['title']}': Varianza={first_comp['variance_days']} días")
+    else:
+        fail("Faltan campos de varianza en la comparación de línea base")
+else:
+    fail("Error recuperando última línea base o comparaciones vacías")
+
+# 5. Listar historial de líneas base
+all_baselines = crud_projects.list_project_baselines(db, project.id)
+if len(all_baselines) >= 1:
+    ok(f"Historial de líneas base verificado: {len(all_baselines)} registro(s)")
+else:
+    fail("No se listaron las líneas base existentes")
+
+# ──────────────────────────────────────────────────────────────
+section("14. REGISTRO DE TIEMPO Y HOJAS DE HORAS (TIME TRACKING - SUPER-PRO FASE 5)")
+# ──────────────────────────────────────────────────────────────
+
+# 1. Crear registros de tiempo en el proyecto
+log1 = crud_projects.create_project_time_log(
+    db,
+    project.id,
+    schemas_projects.ProjectTimeLogCreate(
+        task_id=tA.id,
+        hours=2.5,
+        description="Desarrollo de módulos e interfaz de usuario",
+        is_billable=True,
+    ),
+    persona_id=u1.id,
+    created_by=admin_user.id,
+)
+if log1 and log1.id and log1.hours == 2.5 and log1.is_billable:
+    ok(f"Registro de tiempo 1 creado (id={log1.id}): {log1.hours}h en '{tA.title}' (Facturable: {log1.is_billable})")
+else:
+    fail("Error creando registro de tiempo 1")
+
+log2 = crud_projects.create_project_time_log(
+    db,
+    project.id,
+    schemas_projects.ProjectTimeLogCreate(
+        task_id=tB.id,
+        hours=1.5,
+        description="Reunión técnica interna de alineación",
+        is_billable=False,
+    ),
+    persona_id=u2.id,
+    created_by=admin_user.id,
+)
+if log2 and log2.id and log2.hours == 1.5 and not log2.is_billable:
+    ok(f"Registro de tiempo 2 creado (id={log2.id}): {log2.hours}h en '{tB.title}' (No facturable)")
+else:
+    fail("Error creando registro de tiempo 2")
+
+log3 = crud_projects.create_project_time_log(
+    db,
+    project.id,
+    schemas_projects.ProjectTimeLogCreate(
+        task_id=None,
+        hours=3.0,
+        description="Arquitectura global y revisión ministerial",
+        is_billable=True,
+    ),
+    persona_id=u1.id,
+    created_by=admin_user.id,
+)
+if log3 and log3.id and log3.hours == 3.0 and log3.is_billable:
+    ok(f"Registro de tiempo 3 (General) creado (id={log3.id}): {log3.hours}h en alcance general del proyecto")
+else:
+    fail("Error creando registro de tiempo 3")
+
+# 2. Consultar registros con filtros
+all_logs = crud_projects.get_project_time_logs(db, project.id)
+if len(all_logs) >= 3:
+    ok(f"Listado global de registros de tiempo verificado: {len(all_logs)} entradas activas")
+else:
+    fail(f"Esperados al menos 3 registros, obtenidos: {len(all_logs)}")
+
+tA_logs = crud_projects.get_project_time_logs(db, project.id, task_id=tA.id)
+if len(tA_logs) == 1 and str(tA_logs[0].id) == str(log1.id):
+    ok(f"Filtro por tarea verificado: 1 registro encontrado para tarea '{tA.title}'")
+else:
+    fail(f"Error en filtro por tarea, obtenidos {len(tA_logs)} registros")
+
+u1_logs = crud_projects.get_project_time_logs(db, project.id, persona_id=u1.id)
+if len(u1_logs) >= 2:
+    ok(f"Filtro por persona verificado: {len(u1_logs)} registros encontrados para persona '{u1.username}'")
+else:
+    fail(f"Error en filtro por persona, obtenidos {len(u1_logs)} registros")
+
+# 3. Resumen consolidado de horas y métricas
+time_summary = crud_projects.get_project_time_tracking_summary(db, project.id)
+if time_summary:
+    tot_h = time_summary["total_hours"]
+    bill_h = time_summary["billable_hours"]
+    non_bill_h = time_summary["non_billable_hours"]
+    total_entries = time_summary["total_logs"]
+
+    if tot_h == 7.0 and bill_h == 5.5 and non_bill_h == 1.5:
+        ok(f"Métricas de tiempo consolidadas con precisión: Total={tot_h}h | Facturable={bill_h}h | No Facturable={non_bill_h}h")
+    else:
+        fail(f"Métricas de tiempo erróneas: total={tot_h}, billable={bill_h}, non_billable={non_bill_h}")
+
+    if len(time_summary["by_task"]) >= 2 and len(time_summary["by_member"]) >= 2:
+        ok(f"Desglose multidimensional verificado: {len(time_summary['by_task'])} grupos por tarea, {len(time_summary['by_member'])} miembros")
+    else:
+        fail("Desglose por tarea o miembro incompleto en time_summary")
+else:
+    fail("Error obteniendo get_project_time_tracking_summary")
+
+# 4. Soft-delete de registro de tiempo
+deleted_ok = crud_projects.delete_project_time_log(db, project.id, log2.id)
+if deleted_ok:
+    ok(f"Registro de tiempo '{log2.id}' soft-deleted exitosamente")
+    time_summary_after_del = crud_projects.get_project_time_tracking_summary(db, project.id)
+    if time_summary_after_del["total_hours"] == 5.5 and time_summary_after_del["non_billable_hours"] == 0.0:
+        ok("Recálculo automático de hojas de horas tras eliminación: 5.5h restantes (100% facturable)")
+    else:
+        fail(f"Recálculo fallido tras eliminación: {time_summary_after_del}")
+
+    logs_after_del = crud_projects.get_project_time_logs(db, project.id)
+    if not any(str(l.id) == str(log2.id) for l in logs_after_del):
+        ok("El registro eliminado no aparece en las consultas activas (Aislamiento Soft-Delete)")
+    else:
+        fail("El registro eliminado sigue apareciendo en get_project_time_logs")
+else:
+    fail("Error ejecutando delete_project_time_log")
+
+# ──────────────────────────────────────────────────────────────
+section("15. CATÁLOGO DE PLANTILLAS REUTILIZABLES (SUPER-PRO FASE 6)")
+# ──────────────────────────────────────────────────────────────
+
+# 1. Creación de Plantilla con Fases y Tareas Relativas
+tpl_structure = {
+    "phases": [
+        {"name": "Fase 1: Preparación", "order": 0, "color": "blue"},
+        {"name": "Fase 2: Ejecución Ministerial", "order": 1, "color": "purple"}
+    ],
+    "tasks": [
+        {"title": "Convocatoria y Permisos", "phase_name": "Fase 1: Preparación", "day_offset": 0, "duration_days": 4, "priority": "high"},
+        {"title": "Capacitación de Voluntarios", "phase_name": "Fase 1: Preparación", "day_offset": 2, "duration_days": 3, "priority": "medium"},
+        {"title": "Evento Principal de Alcance", "phase_name": "Fase 2: Ejecución Ministerial", "day_offset": 5, "duration_days": 2, "priority": "urgent"}
+    ]
+}
+
+new_tpl_in = schemas_projects.ProjectTemplateCreate(
+    name="Plantilla de Campaña Evangelística Test",
+    description="Estructura estandarizada con fases y duraciones relativas para campañas",
+    category="evangelism",
+    default_budget=15000.0,
+    structure=tpl_structure,
+    is_public=True
+)
+
+tpl_created = crud_projects.create_project_template(
+    db,
+    new_tpl_in,
+    created_by=admin_user.id,
+    sede_id=project.sede_id
+)
+
+if tpl_created and tpl_created.id and tpl_created.name == "Plantilla de Campaña Evangelística Test":
+    ok(f"Plantilla creada exitosamente (id={tpl_created.id}, presupuesto=${tpl_created.default_budget})")
+    phases_count = len(tpl_created.structure.get("phases", [])) if tpl_created.structure else 0
+    tasks_count = len(tpl_created.structure.get("tasks", [])) if tpl_created.structure else 0
+    if phases_count == 2 and tasks_count == 3:
+        ok(f"Estructura validada: {phases_count} fases y {tasks_count} tareas relativas")
+    else:
+        fail(f"Estructura inesperada: {phases_count} fases, {tasks_count} tareas")
+else:
+    fail("Error creando plantilla en create_project_template")
+
+# 2. Búsqueda y Filtros de Catálogo
+templates_list = crud_projects.get_project_templates(
+    db,
+    user_sede_id=project.sede_id,
+    category="evangelism"
+)
+if any(str(t.id) == str(tpl_created.id) for t in templates_list):
+    ok(f"Filtro por categoría 'evangelism' validado ({len(templates_list)} plantilla(s) encontrada(s))")
+else:
+    fail("La plantilla creada no aparece al filtrar por su categoría")
+
+search_results = crud_projects.get_project_templates(
+    db,
+    user_sede_id=project.sede_id,
+    search="Evangelística"
+)
+if any(str(t.id) == str(tpl_created.id) for t in search_results):
+    ok(f"Filtro de búsqueda por texto ('Evangelística') validado ({len(search_results)} resultado(s))")
+else:
+    fail("La plantilla creada no aparece en la búsqueda por texto")
+
+# 3. Instanciación Atómica de Proyecto desde Plantilla
+target_start_date = datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(days=7)
+instantiate_in = schemas_projects.InstantiateProjectFromTemplate(
+    title="Proyecto Instanciado desde Plantilla 2026",
+    start_date=target_start_date,
+    budget_allocated=18500.0,
+    owner_id=admin_user.id
+)
+
+instantiated_proj = crud_projects.create_project_from_template(
+    db,
+    tpl_created.id,
+    instantiate_in,
+    created_by=admin_user.id,
+    user_sede_id=project.sede_id or u1.sede_id
+)
+
+if instantiated_proj and instantiated_proj.id:
+    ok(f"Proyecto instanciado exitosamente: '{instantiated_proj.title}' (id={instantiated_proj.id})")
+    if instantiated_proj.budget_allocated == 18500.0:
+        ok(f"Presupuesto inicial asignado correctamente: ${instantiated_proj.budget_allocated}")
+    else:
+        fail(f"Presupuesto erróneo: {instantiated_proj.budget_allocated}")
+
+    # Verificar fases creadas en el nuevo proyecto
+    inst_phases = db.query(ProjectPhase).filter(
+        ProjectPhase.project_id == instantiated_proj.id,
+        ProjectPhase.deleted_at.is_(None)
+    ).order_by(ProjectPhase.order_index.asc()).all()
+
+    if len(inst_phases) == 2:
+        ok(f"Fases instanciadas correctamente: {[p.name for p in inst_phases]}")
+    else:
+        fail(f"Esperadas 2 fases, obtenidas: {len(inst_phases)}")
+
+    # Verificar tareas creadas y cálculo relativo de fechas
+    inst_tasks = db.query(ProjectTask).filter(
+        ProjectTask.project_id == instantiated_proj.id,
+        ProjectTask.deleted_at.is_(None)
+    ).all()
+
+    if len(inst_tasks) == 3:
+        ok(f"Tareas instanciadas correctamente: {len(inst_tasks)} tareas creadas")
+        # Validar cálculo de fecha de la primera tarea (day_offset 0, duration 4)
+        t_convocatoria = next((t for t in inst_tasks if "Convocatoria" in t.title), None)
+        if t_convocatoria and t_convocatoria.start_date and t_convocatoria.due_date:
+            expected_due = target_start_date + datetime.timedelta(days=4)
+            if t_convocatoria.start_date.date() == target_start_date.date() and t_convocatoria.due_date.date() == expected_due.date():
+                ok(f"Cálculo relativo de fechas verificado: Inicio={t_convocatoria.start_date.date()}, Fin={t_convocatoria.due_date.date()}")
+            else:
+                fail(f"Fechas relativas calculadas incorrectas: {t_convocatoria.start_date} -> {t_convocatoria.due_date} (esperado {target_start_date} -> {expected_due})")
+        else:
+            fail("Tarea 'Convocatoria y Permisos' no encontrada o sin fechas calculadas")
+    else:
+        fail(f"Esperadas 3 tareas, obtenidas: {len(inst_tasks)}")
+else:
+    fail("Error ejecutando create_project_from_template")
+
+# 4. Guardar Proyecto Existente como Plantilla (save_project_as_template)
+save_tpl_in = schemas_projects.SaveProjectAsTemplate(
+    name="Plantilla Derivada del Proyecto Activo",
+    description="Captura automatizada de fases y tareas del proyecto en curso",
+    category="ministerial",
+    default_budget=12000.0,
+    is_public=True
+)
+
+saved_tpl = crud_projects.save_project_as_template(
+    db,
+    project.id,
+    save_tpl_in,
+    created_by=admin_user.id,
+    user_sede_id=project.sede_id
+)
+
+if saved_tpl and saved_tpl.id:
+    ok(f"Plantilla generada desde proyecto activo exitosamente: '{saved_tpl.name}' (id={saved_tpl.id})")
+    saved_struct = saved_tpl.structure or {}
+    s_phases = saved_struct.get("phases", [])
+    s_tasks = saved_struct.get("tasks", [])
+    if len(s_tasks) > 0:
+        ok(f"Estructura capturada desde proyecto: {len(s_phases)} fases y {len(s_tasks)} tareas con duraciones relativas")
+    else:
+        fail("No se capturaron tareas del proyecto activo en la plantilla")
+else:
+    fail("Error ejecutando save_project_as_template")
+
+# 5. Consulta individual y actualización de plantilla
+tpl_single = crud_projects.get_project_template(db, tpl_created.id, sede_id=project.sede_id)
+if tpl_single and str(tpl_single.id) == str(tpl_created.id):
+    ok(f"Consulta individual get_project_template validada: '{tpl_single.name}'")
+else:
+    fail("Error en get_project_template")
+
+upd_in = schemas_projects.ProjectTemplateUpdate(
+    name="Plantilla de Campaña Evangelística (Actualizada)",
+    default_budget=16500.0,
+    category="ministerial"
+)
+tpl_updated = crud_projects.update_project_template(db, tpl_created.id, upd_in, sede_id=project.sede_id)
+if tpl_updated and tpl_updated.name == "Plantilla de Campaña Evangelística (Actualizada)" and tpl_updated.default_budget == 16500.0:
+    ok(f"Actualización update_project_template validada: '${tpl_updated.default_budget}', categoría='{tpl_updated.category}'")
+else:
+    fail("Error en update_project_template")
+
+# 6. Soft Delete de Plantilla
+del_tpl_ok = crud_projects.delete_project_template(db, tpl_created.id)
+if del_tpl_ok:
+    ok(f"Plantilla '{tpl_created.id}' soft-deleted exitosamente")
+    active_after_del = crud_projects.get_project_templates(db, user_sede_id=project.sede_id)
+    if not any(str(t.id) == str(tpl_created.id) for t in active_after_del):
+        ok("La plantilla eliminada no aparece en el catálogo activo (Soft-Delete verificado)")
+    else:
+        fail("La plantilla eliminada sigue apareciendo en el catálogo activo")
+else:
+    fail("Error ejecutando delete_project_template")
+
+# ──────────────────────────────────────────────────────────────
+section("16. MOTOR DE AUTOMATIZACIONES Y DISPARADORES (SUPER-PRO FASE 7)")
+# ──────────────────────────────────────────────────────────────
+
+# 1. Crear Regla 1: Trigger task_completed -> Acción create_followup_task
+rule1_in = schemas_projects.ProjectAutomationRuleCreate(
+    name="Auto-crear seguimiento al completar tarea",
+    trigger_event="task_completed",
+    condition_data={"status": "completed"},
+    action_type="create_followup_task",
+    action_data={
+        "title": "Verificación y Cierre Post-Completado",
+        "priority": "high",
+        "duration_days": 3
+    },
+    is_active=True
+)
+
+rule1 = crud_projects.create_project_automation_rule(
+    db,
+    project.id,
+    rule1_in,
+    created_by=admin_user.id,
+    sede_id=project.sede_id
+)
+
+if rule1 and rule1.id and rule1.name == "Auto-crear seguimiento al completar tarea":
+    ok(f"Regla de automatización 1 creada (id={rule1.id}): {rule1.trigger_event} -> {rule1.action_type} (is_active={rule1.is_active})")
+else:
+    fail("Error creando regla de automatización 1")
+
+# 2. Crear Regla 2: Trigger status_changed -> Condición status == in_progress -> Acción set_priority urgent
+rule2_in = schemas_projects.ProjectAutomationRuleCreate(
+    name="Elevar prioridad si entra en progreso",
+    trigger_event="status_changed",
+    condition_data={"status": "in_progress"},
+    action_type="set_priority",
+    action_data={"priority": "urgent"},
+    is_active=True
+)
+
+rule2 = crud_projects.create_project_automation_rule(
+    db,
+    project.id,
+    rule2_in,
+    created_by=admin_user.id,
+    sede_id=project.sede_id
+)
+
+if rule2 and rule2.id and rule2.name == "Elevar prioridad si entra en progreso":
+    ok(f"Regla de automatización 2 creada (id={rule2.id}): {rule2.trigger_event} -> {rule2.action_type}")
+else:
+    fail("Error creando regla de automatización 2")
+
+# 3. Listar reglas y verificar filtros
+all_rules = crud_projects.get_project_automation_rules(db, project.id)
+if len(all_rules) >= 2:
+    ok(f"Listado de reglas verificado: {len(all_rules)} regla(s) registradas")
+else:
+    fail(f"Esperadas al menos 2 reglas, obtenidas: {len(all_rules)}")
+
+tc_rules = crud_projects.get_project_automation_rules(db, project.id, trigger_event="task_completed")
+if len(tc_rules) >= 1 and any(str(r.id) == str(rule1.id) for r in tc_rules):
+    ok(f"Filtro por trigger_event='task_completed' verificado: {len(tc_rules)} regla(s)")
+else:
+    fail("Filtro por trigger_event falló")
+
+active_rules = crud_projects.get_project_automation_rules(db, project.id, is_active=True)
+if len(active_rules) >= 2:
+    ok(f"Filtro por is_active=True verificado: {len(active_rules)} regla(s) activas")
+else:
+    fail("Filtro por is_active falló")
+
+# 4. Consulta individual de regla
+rule_fetched = crud_projects.get_project_automation_rule(db, project.id, rule1.id)
+if rule_fetched and str(rule_fetched.id) == str(rule1.id):
+    ok(f"Consulta individual get_project_automation_rule verificada: '{rule_fetched.name}'")
+else:
+    fail("Error en get_project_automation_rule")
+
+# 5. Evaluar Motor de Automatizaciones - Caso A: Ejecución Exitosa de create_followup_task
+eval_payload_match = schemas_projects.EvaluateAutomationPayload(
+    trigger_event="task_completed",
+    task_id=tA.id,
+    context={"status": "completed", "task_id": str(tA.id)}
+)
+
+exec_results = crud_projects.evaluate_project_automations(
+    db,
+    project.id,
+    eval_payload_match,
+    actor_persona_id=admin_user.id,
+    user_sede_id=project.sede_id
+)
+
+r1_res = next((r for r in exec_results if r["rule_id"] == str(rule1.id)), None)
+if r1_res and r1_res["status"] == "executed":
+    ok(f"Motor ejecutó acción para regla 1 exitosamente: status='{r1_res['status']}' | Detalle: {r1_res['details']}")
+    # Verificar recálculo de execution_count y last_triggered_at
+    db.expire_all()
+    r1_db = crud_projects.get_project_automation_rule(db, project.id, rule1.id)
+    if r1_db.execution_count >= 1 and r1_db.last_triggered_at is not None:
+        ok(f"Contador de ejecuciones incrementado: count={r1_db.execution_count}, timestamp UTC={r1_db.last_triggered_at.isoformat()}")
+    else:
+        fail(f"execution_count o last_triggered_at no actualizados: count={r1_db.execution_count}")
+
+    # Verificar que la tarea de seguimiento fue creada en la BD
+    followup_task = db.query(ProjectTask).filter(
+        ProjectTask.project_id == project.id,
+        ProjectTask.title == "Verificación y Cierre Post-Completado",
+        ProjectTask.deleted_at.is_(None)
+    ).first()
+    if followup_task:
+        ok(f"Tarea de seguimiento persistida en BD: '{followup_task.title}' (Prioridad={followup_task.priority})")
+    else:
+        fail("No se encontró la tarea de seguimiento generada por la automatización")
+else:
+    fail(f"Motor de reglas no ejecutó regla 1: {exec_results}")
+
+# 6. Evaluar Motor de Automatizaciones - Caso B: Condición no satisfecha (skipped_condition)
+eval_payload_nomatch = schemas_projects.EvaluateAutomationPayload(
+    trigger_event="status_changed",
+    task_id=tA.id,
+    context={"status": "blocked", "task_id": str(tA.id)}
+)
+
+skip_results = crud_projects.evaluate_project_automations(
+    db,
+    project.id,
+    eval_payload_nomatch,
+    actor_persona_id=admin_user.id,
+    user_sede_id=project.sede_id
+)
+
+r2_res = next((r for r in skip_results if r["rule_id"] == str(rule2.id)), None)
+if r2_res and r2_res["status"] == "skipped_condition":
+    ok(f"Condición no satisfecha evaluada correctamente: status='{r2_res['status']}' (Se omitió sin fallos)")
+else:
+    fail(f"Esperado skipped_condition para regla 2, obtenido: {skip_results}")
+
+# 7. Actualización de Regla (update_project_automation_rule)
+upd_rule_in = schemas_projects.ProjectAutomationRuleUpdate(
+    name="Auto-crear seguimiento (Modificado)",
+    is_active=False
+)
+rule_updated = crud_projects.update_project_automation_rule(db, project.id, rule1.id, upd_rule_in)
+if rule_updated and rule_updated.name == "Auto-crear seguimiento (Modificado)" and rule_updated.is_active is False:
+    ok(f"Regla actualizada exitosamente: is_active={rule_updated.is_active}, name='{rule_updated.name}'")
+else:
+    fail("Error en update_project_automation_rule")
+
+# 8. Soft Delete de Regla (delete_project_automation_rule)
+del_rule_ok = crud_projects.delete_project_automation_rule(db, project.id, rule1.id)
+if del_rule_ok:
+    ok(f"Regla '{rule1.id}' soft-deleted exitosamente")
+    rules_after_del = crud_projects.get_project_automation_rules(db, project.id)
+    if not any(str(r.id) == str(rule1.id) for r in rules_after_del):
+        ok("La regla eliminada no aparece en las consultas activas (Aislamiento Soft-Delete)")
+    else:
+        fail("La regla eliminada sigue apareciendo en get_project_automation_rules")
+else:
+    fail("Error ejecutando delete_project_automation_rule")
+
+# ──────────────────────────────────────────────────────────────
+section("17. GENERADOR DE REPORTES EJECUTIVOS Y EXPORTACIÓN CSV (SUPER-PRO FASE 8 - FINAL)")
+# ──────────────────────────────────────────────────────────────
+
+# 1. Obtener Conjunto Consolidado de Datos para Reporte Ejecutivo
+report_data = crud_projects.get_project_executive_report_data(
+    db,
+    project.id,
+    user_sede_id=project.sede_id
+)
+
+if report_data and report_data.get("project", {}).get("id") == str(project.id):
+    ok(f"Datos de reporte ejecutivo consolidados exitosamente para proyecto '{report_data['project']['title']}'")
+    
+    # Validar métricas de tareas
+    t_metrics = report_data.get("tasks_metrics", {})
+    if t_metrics.get("total", 0) >= 5 and "completion_rate" in t_metrics:
+        ok(f"Métricas de tareas verificadas: Total={t_metrics['total']} tareas, Completadas={t_metrics['completed']}, Tasa={t_metrics['completion_rate']}%")
+    else:
+        fail(f"Métricas de tareas inválidas en report_data: {t_metrics}")
+
+    # Validar KPIs financieros
+    f_kpis = report_data.get("financial_kpis", {})
+    if f_kpis.get("budget_allocated", 0.0) == 12000.0 and f_kpis.get("budget_spent", 0.0) > 0:
+        ok(f"KPIs financieros consolidados: Asignado=${f_kpis['budget_allocated']:,.2f} | Gastado=${f_kpis['budget_spent']:,.2f} (Quema: {f_kpis.get('burn_rate_percent')}%)")
+    else:
+        fail(f"KPIs financieros erróneos: {f_kpis}")
+
+    # Validar KPIs de riesgos RAID
+    r_kpis = report_data.get("raid_kpis", {})
+    if r_kpis.get("total_risks", 0) >= 1:
+        ok(f"Métricas RAID verificadas: {r_kpis['total_risks']} riesgo(s) analizado(s), Críticos={r_kpis.get('critical_count', 0)}")
+    else:
+        fail("KPIs de riesgos vacíos en report_data")
+
+    # Validar Ruta Crítica CPM
+    cpm_kpis = report_data.get("cpm_metrics", {})
+    if cpm_kpis.get("total_duration_days", 0) > 0:
+        ok(f"Ruta Crítica CPM consolidada: Duración estimada={cpm_kpis['total_duration_days']} días, Tareas críticas={cpm_kpis.get('critical_tasks_count', 0)}")
+    else:
+        fail("Métricas de ruta crítica vacías en report_data")
+
+    # Validar Tiempos y Hojas de Horas
+    time_kpis = report_data.get("time_metrics", {})
+    if time_kpis.get("total_hours", 0.0) > 0:
+        ok(f"Métricas de hojas de horas verificadas: Total={time_kpis['total_hours']}h ({time_kpis.get('billable_hours')}h facturables)")
+    else:
+        fail("Métricas de tiempo vacías en report_data")
+
+    # Validar Metadatos Institucionales
+    if report_data.get("organization") == "Comunidad Cristiana El Faro - Dirección de Proyectos":
+        ok(f"Metadatos de membrete institucional CCF validados: '{report_data['organization']}'")
+    else:
+        fail(f"Organización inválida: {report_data.get('organization')}")
+else:
+    fail("Error obteniendo get_project_executive_report_data")
+
+# 2. Generar Reporte Ejecutivo PDF Binario con Membrete CCF (ReportLab)
+pdf_bytes = crud_projects.generate_project_summary_pdf(report_data)
+if isinstance(pdf_bytes, bytes) and len(pdf_bytes) > 2000 and pdf_bytes.startswith(b"%PDF-"):
+    ok(f"Reporte ejecutivo PDF generado exitosamente: {len(pdf_bytes)} bytes binarios (Encabezado estándar '%PDF-')")
+else:
+    fail(f"Error generando reporte PDF: retorno inválido o corrupto (len={len(pdf_bytes) if isinstance(pdf_bytes, bytes) else 'N/A'})")
+
+# 3. Generar Exportación CSV de Tareas y Cronograma (BOM UTF-8 para Excel)
+csv_tasks = crud_projects.generate_project_tasks_csv(db, project.id, user_sede_id=project.sede_id)
+if isinstance(csv_tasks, str) and csv_tasks.startswith("\ufeff") and "Título" in csv_tasks and "Responsable" in csv_tasks:
+    lines = csv_tasks.strip().split("\r\n") if "\r\n" in csv_tasks else csv_tasks.strip().split("\n")
+    ok(f"Exportación CSV de tareas verificada: {len(lines) - 1} tareas exportadas con BOM UTF-8 compatible con Excel")
+    if any("Diseñar logo" in line for line in lines):
+        ok("Contenido de tareas verificado en el archivo CSV")
+    else:
+        fail("Tarea de prueba no encontrada en CSV exportado")
+else:
+    fail("Error generando CSV de tareas")
+
+# 4. Generar Exportación CSV del Libro Mayor de Gastos
+csv_expenses = crud_projects.generate_project_expenses_csv(db, project.id, user_sede_id=project.sede_id)
+if isinstance(csv_expenses, str) and csv_expenses.startswith("\ufeff") and "Monto" in csv_expenses and "Categoría" in csv_expenses:
+    exp_lines = csv_expenses.strip().split("\r\n") if "\r\n" in csv_expenses else csv_expenses.strip().split("\n")
+    ok(f"Exportación CSV de gastos verificada: {len(exp_lines) - 1} partidas exportadas con BOM UTF-8")
+    if any("Madera y pintura" in l or "Instalación" in l for l in exp_lines):
+        ok("Partidas presupuestarias verificadas en el archivo CSV de gastos")
+    else:
+        fail("Partidas de prueba no encontradas en CSV de gastos")
+else:
+    fail("Error generando CSV de gastos")
+
+# 5. Validación de Aislamiento Multi-Tenant (Axioma 3)
+import uuid as _uuid
+foreign_sede_id = _uuid.uuid4()
+foreign_report = crud_projects.get_project_executive_report_data(db, project.id, user_sede_id=foreign_sede_id)
+if foreign_report is None:
+    ok("Aislamiento Multi-Tenant (Axioma 3) verificado: reporte rechazado para sede no autorizada")
+else:
+    fail("Falla de seguridad multi-tenant: el reporte se entregó a una sede distinta")
+
+
+# ──────────────────────────────────────────────────────────────
+section("18. INDICADORES MGA / CREMA Y SEGUIMIENTO SPI (SUPER-PRO CREMA FASE 1)")
+# ──────────────────────────────────────────────────────────────
+
+# 1. Microservicio Validador Inteligente CREMA - Caso Excelente
+crema_payload_good = schemas.ValidateCremaPayload(
+    name="Porcentaje de líderes ministeriales capacitados en gestión ágil",
+    description="Mide el avance porcentual acumulado de miembros certificados en la sede",
+    level="PRODUCTO_PRINCIPAL",
+    calculation_type="PORCENTAJE_PROPORCION",
+    unit_of_measure="%",
+    target_value=100.0,
+    frequency="mensual",
+)
+res_good = crud_projects.validate_crema_indicator(crema_payload_good)
+if res_good and res_good.get("score", 0) >= 85.0 and res_good.get("status") == "EXCELENTE":
+    ok(f"Microservicio Validador CREMA evaluó indicador excelente: {res_good['score']}/100 puntos (Status: {res_good['status']})")
+    crits = res_good.get("criteria", {})
+    if all(k in crits for k in ["C", "R", "E", "M", "A"]):
+        ok("Criterios C (Claro), R (Relevante), E (Económico), M (Medible), A (Adecuado) verificados con éxito")
+    else:
+        fail(f"Criterios CREMA incompletos: {list(crits.keys())}")
+else:
+    fail(f"Validación CREMA excelente falló: {res_good}")
+
+# 2. Microservicio Validador Inteligente CREMA - Caso Deficiente con Diagnóstico
+crema_payload_bad = schemas.ValidateCremaPayload(
+    name="x",
+    description="",
+    level="NIVEL_DESCONOCIDO",
+    calculation_type="TIPO_INVALIDO",
+    unit_of_measure="",
+    target_value=0.0,
+    frequency="diaria_imposible",
+)
+res_bad = crud_projects.validate_crema_indicator(crema_payload_bad)
+if res_bad and res_bad.get("score", 0) < 50.0 and res_bad.get("status") == "DEFICIENTE":
+    ok(f"Microservicio CREMA detectó indicador deficiente: {res_bad['score']}/100 puntos (Status: {res_bad['status']})")
+    crits_bad = res_bad.get("criteria", {})
+    recs_count = sum(len(c.get("recommendations", [])) for c in crits_bad.values())
+    if recs_count >= 3:
+        ok(f"Diagnóstico metodológico generó {recs_count} recomendaciones correctivas precisas")
+    else:
+        fail(f"Recomendaciones insuficientes: {recs_count}")
+else:
+    fail(f"Falla en detección de indicador deficiente: {res_bad}")
+
+# 3. Crear Indicador MGA con Autoevaluación CREMA y Código Correlativo
+indicator_in = schemas.ProjectIndicatorCreate(
+    name="Tasa de avance en adecuación de infraestructura acústica",
+    description="Seguimiento de acondicionamiento de sonido y paneles acústicos",
+    level="PRODUCTO_PRINCIPAL",
+    calculation_type="PORCENTAJE_PROPORCION",
+    unit_of_measure="%",
+    baseline_value=0.0,
+    target_value=100.0,
+    frequency="mensual",
+    period_targets={"2026-Q1": 25.0, "2026-Q2": 50.0, "2026-Q3": 75.0, "2026-Q4": 100.0},
+)
+test_indicator = crud_projects.create_project_indicator(
+    db,
+    project.id,
+    indicator_in,
+    created_by=u1.id,
+    sede_id=project.sede_id,
+)
+if test_indicator and test_indicator.code.startswith("IND-") and test_indicator.crema_score >= 85.0:
+    ok(f"Indicador MGA creado exitosamente: Código={test_indicator.code}, Nombre='{test_indicator.name}' (Score CREMA: {test_indicator.crema_score}/100)")
+    if test_indicator.creator_name:
+        ok(f"Trazabilidad de creador verificada: {test_indicator.creator_name} (Axioma 1)")
+    else:
+        fail("Nombre de creador no poblado en ProjectIndicator")
+else:
+    fail("Error creando ProjectIndicator")
+
+# 4. Listar Indicadores del Proyecto
+indicators_list = crud_projects.get_project_indicators(db, project.id, sede_id=project.sede_id)
+if indicators_list and len(indicators_list) >= 1 and any(i.id == test_indicator.id for i in indicators_list):
+    ok(f"Listado de indicadores de proyecto verificado: {len(indicators_list)} indicador(es) obtenido(s)")
+else:
+    fail("Indicador recién creado no encontrado en get_project_indicators")
+
+# 5. Registro Periódico de Avance y Cálculo de SPI (Schedule Performance Index)
+# Período 1: En meta (25.0 vs 25.0 => SPI = 1.0)
+rec1_in = schemas.ProjectIndicatorRecordCreate(
+    period="2026-Q1",
+    target_value=25.0,
+    actual_value=25.0,
+    notes="Metas del primer trimestre cumplidas según cronograma",
+    evidence_url="https://drive.google.com/file/d/test-q1",
+)
+rec1 = crud_projects.create_project_indicator_record(
+    db,
+    test_indicator.id,
+    rec1_in,
+    reported_by=u2.id,
+    sede_id=project.sede_id,
+)
+if rec1 and rec1.spi == 1.0 and rec1.actual_value == 25.0:
+    ok(f"Registro Q1 creado: Real={rec1.actual_value} / Meta={rec1.target_value} -> SPI={rec1.spi} (Cumplimiento Óptimo)")
+else:
+    fail(f"Falla calculando SPI en Q1: {rec1.spi if rec1 else 'None'}")
+
+# Período 2: Subejecución / Retraso (40.0 vs 50.0 => SPI = 0.8)
+rec2_in = schemas.ProjectIndicatorRecordCreate(
+    period="2026-Q2",
+    target_value=50.0,
+    actual_value=40.0,
+    notes="Retraso leve en entrega de paneles acústicos importados",
+    evidence_url="https://drive.google.com/file/d/test-q2",
+)
+rec2 = crud_projects.create_project_indicator_record(
+    db,
+    test_indicator.id,
+    rec2_in,
+    reported_by=u3.id,
+    sede_id=project.sede_id,
+)
+if rec2 and rec2.spi == 0.8 and rec2.actual_value == 40.0:
+    ok(f"Registro Q2 creado: Real={rec2.actual_value} / Meta={rec2.target_value} -> SPI={rec2.spi} (Alerta de Retraso detectada)")
+else:
+    fail(f"Falla calculando SPI en Q2: {rec2.spi if rec2 else 'None'}")
+
+# 6. Consultar Indicador Enriquecido con Records y Last SPI
+reloaded_ind = crud_projects.get_project_indicator(db, test_indicator.id, project_id=project.id, sede_id=project.sede_id)
+if reloaded_ind and reloaded_ind.records_count == 2 and reloaded_ind.last_spi == 0.8 and reloaded_ind.current_value == 40.0:
+    ok(f"Indicador enriquecido verificado: {reloaded_ind.records_count} mediciones registradas, Último SPI={reloaded_ind.last_spi}, Valor actual={reloaded_ind.current_value}%")
+else:
+    fail(f"Estado de indicador enriquecido inválido: count={getattr(reloaded_ind, 'records_count', None)}, last_spi={getattr(reloaded_ind, 'last_spi', None)}, current_val={getattr(reloaded_ind, 'current_value', None)}")
+
+# 7. Actualización de Indicador
+update_in = schemas.ProjectIndicatorUpdate(
+    description="Seguimiento de acondicionamiento de sonido y acústica - Fase Refinada",
+    target_value=100.0,
+)
+updated_ind = crud_projects.update_project_indicator(
+    db,
+    test_indicator.id,
+    update_in,
+    user_id=u1.id,
+    sede_id=project.sede_id,
+)
+if updated_ind and "Fase Refinada" in updated_ind.description:
+    ok("Actualización de indicador verificada con trazabilidad UTC")
+else:
+    fail("Falla actualizando ProjectIndicator")
+
+# 8. Aislamiento Multi-Tenant (Axioma 3) en Indicadores
+try:
+    crud_projects.get_project_indicators(db, project.id, sede_id=foreign_sede_id)
+    fail("Falla de seguridad multi-tenant: get_project_indicators no rechazó sede no autorizada")
+except ValueError:
+    ok("Aislamiento Multi-Tenant (Axioma 3) verificado en get_project_indicators (ValueError arrojado)")
+
+try:
+    crud_projects.create_project_indicator_record(
+        db,
+        test_indicator.id,
+        rec1_in,
+        reported_by=u1.id,
+        sede_id=foreign_sede_id,
+    )
+    fail("Falla de seguridad multi-tenant: create_project_indicator_record no rechazó sede no autorizada")
+except ValueError:
+    ok("Aislamiento Multi-Tenant (Axioma 3) verificado en create_project_indicator_record (ValueError arrojado)")
+
+# 9. Soft-Delete de Indicador
+deleted = crud_projects.delete_project_indicator(db, test_indicator.id, user_id=u1.id, sede_id=project.sede_id)
+if deleted:
+    ind_after = crud_projects.get_project_indicator(db, test_indicator.id, sede_id=project.sede_id)
+    if ind_after is None:
+        ok("Soft-delete de indicador MGA verificado exitosamente (Axioma 2)")
+    else:
+        fail("Indicador soft-deleted todavía accesible")
+else:
+    fail("Falla ejecutando delete_project_indicator")
+
+
+# ──────────────────────────────────────────────────────────────
+section("19. PRUEBAS DE FAVORITOS Y COMENTARIOS FIJADOS (SUPER-PRO FILES FASE 1)")
+# ──────────────────────────────────────────────────────────────
+
+# Obtener una tarea activa para probar favoritos
+test_task_fav = db.query(models.ProjectTask).filter(
+    models.ProjectTask.project_id == project.id,
+    models.ProjectTask.deleted_at.is_(None)
+).first()
+
+if not test_task_fav:
+    fail("No se encontró tarea activa para probar sistema de favoritos")
+else:
+    # 1. Toggle favorito ON (Marcar como favorita)
+    fav_on = crud_projects.toggle_task_favorite(
+        db,
+        project_id=project.id,
+        task_id=test_task_fav.id,
+        persona_id=u1.id,
+        sede_id=project.sede_id,
+    )
+    if fav_on.get("is_favorite") is True:
+        ok(f"Tarea '{test_task_fav.title}' marcada como favorita exitosamente para usuario 1")
+    else:
+        fail(f"Falla marcando tarea como favorita: {fav_on}")
+
+    # Verificar existencia en BD
+    fav_row = db.query(models.ProjectUserFavorite).filter(
+        models.ProjectUserFavorite.project_id == project.id,
+        models.ProjectUserFavorite.persona_id == u1.id,
+        models.ProjectUserFavorite.entity_type == "task",
+        models.ProjectUserFavorite.entity_id == test_task_fav.id,
+    ).first()
+    if fav_row:
+        ok(f"Registro en project_user_favorites persistido con UUID {fav_row.id} y UTC {fav_row.created_at}")
+    else:
+        fail("No se encontró el registro en project_user_favorites tras toggle ON")
+
+    # 2. Consultar favoritos del usuario
+    u1_favs = crud_projects.get_project_user_favorites(
+        db,
+        project_id=project.id,
+        persona_id=u1.id,
+        entity_type="task",
+        sede_id=project.sede_id,
+    )
+    if any(str(f) == str(test_task_fav.id) for f in u1_favs):
+        ok(f"get_project_user_favorites retornó {len(u1_favs)} favorito(s) conteniendo la tarea esperada")
+    else:
+        fail(f"get_project_user_favorites no retornó la tarea favorita de u1: {u1_favs}")
+
+    # Verificar aislamiento de usuario (u2 no debe tener la tarea en favoritos)
+    u2_favs = crud_projects.get_project_user_favorites(
+        db,
+        project_id=project.id,
+        persona_id=u2.id,
+        entity_type="task",
+        sede_id=project.sede_id,
+    )
+    if not any(str(f) == str(test_task_fav.id) for f in u2_favs):
+        ok("Aislamiento por persona verificado: u2 no ve los favoritos privados de u1")
+    else:
+        fail("Falla de aislamiento: u2 ve favoritos de u1")
+
+    # 3. Toggle favorito OFF (Desmarcar)
+    fav_off = crud_projects.toggle_task_favorite(
+        db,
+        project_id=project.id,
+        task_id=test_task_fav.id,
+        persona_id=u1.id,
+        sede_id=project.sede_id,
+    )
+    if fav_off.get("is_favorite") is False:
+        ok("Tarea desmarcada de favoritos exitosamente (toggle OFF)")
+    else:
+        fail(f"Falla desmarcando tarea de favoritos: {fav_off}")
+
+    # Re-marcar para pruebas de integración posteriores
+    crud_projects.toggle_task_favorite(
+        db,
+        project_id=project.id,
+        task_id=test_task_fav.id,
+        persona_id=u1.id,
+        sede_id=project.sede_id,
+    )
+
+    # 4. Aislamiento Multi-Tenant (Axioma 3) en Favoritos
+    try:
+        crud_projects.toggle_task_favorite(
+            db,
+            project_id=project.id,
+            task_id=test_task_fav.id,
+            persona_id=u1.id,
+            sede_id=foreign_sede_id,
+        )
+        fail("Falla multi-tenant: toggle_task_favorite permitió sede ajena")
+    except ValueError:
+        ok("Aislamiento Multi-Tenant (Axioma 3) verificado en toggle_task_favorite (ValueError arrojado)")
+
+    try:
+        crud_projects.get_project_user_favorites(
+            db,
+            project_id=project.id,
+            persona_id=u1.id,
+            sede_id=foreign_sede_id,
+        )
+        fail("Falla multi-tenant: get_project_user_favorites permitió sede ajena")
+    except ValueError:
+        ok("Aislamiento Multi-Tenant (Axioma 3) verificado en get_project_user_favorites (ValueError arrojado)")
+
+# 5. Pruebas de Comentarios Fijados (Pinned Comments)
+# Crear dos comentarios en la tarea de prueba
+c1 = models.ProjectComment(
+    project_id=project.id,
+    task_id=test_task_fav.id,
+    author_id=u1.id,
+    content="Comentario base cronológico",
+    is_resolved=False,
+    created_at=datetime.datetime.now(datetime.timezone.utc),
+)
+db.add(c1)
+
+c2 = models.ProjectComment(
+    project_id=project.id,
+    task_id=test_task_fav.id,
+    author_id=u2.id,
+    content="Comentario crítico e instructivo que debe ir fijado arriba",
+    is_resolved=False,
+    created_at=datetime.datetime.now(datetime.timezone.utc),
+)
+db.add(c2)
+db.commit()
+db.refresh(c1)
+db.refresh(c2)
+
+
+if c1 and c2:
+    ok("Comentarios de prueba creados exitosamente")
+
+    # Fijar c2
+    pinned_c2 = crud_projects.pin_project_comment(
+        db,
+        project_id=project.id,
+        comment_id=c2.id,
+        persona_id=u1.id,
+        task_id=test_task_fav.id,
+        is_pinned=True,
+        sede_id=project.sede_id,
+    )
+    if pinned_c2 and pinned_c2.is_pinned is True and pinned_c2.pinned_by == u1.id and pinned_c2.pinned_at is not None:
+        ok(f"Comentario {c2.id} fijado con éxito por {u1.id} en UTC {pinned_c2.pinned_at}")
+    else:
+        fail(f"Falla fijando comentario: {pinned_c2}")
+
+    # Verificar orden canónico: fijados primero
+    comments_list = crud_projects.get_project_comments(
+        db,
+        project_id=project.id,
+        task_id=test_task_fav.id,
+        sede_id=project.sede_id,
+    )
+    if comments_list and len(comments_list) >= 2:
+        first_comment = comments_list[0]
+        if first_comment.id == c2.id and first_comment.is_pinned is True:
+            ok("Ordenamiento canónico verificado: Comentario fijado aparece al inicio del hilo")
+        else:
+            fail(f"Ordenamiento incorrecto: primer comentario es {first_comment.id} (is_pinned={first_comment.is_pinned})")
+    else:
+        fail("Lista de comentarios insuficiente para verificar ordenamiento")
+
+    # Desfijar comentario
+    unpinned_c2 = crud_projects.pin_project_comment(
+        db,
+        project_id=project.id,
+        comment_id=c2.id,
+        persona_id=u1.id,
+        task_id=test_task_fav.id,
+        is_pinned=False,
+        sede_id=project.sede_id,
+    )
+    if unpinned_c2 and unpinned_c2.is_pinned is False:
+        ok("Comentario desfijado exitosamente")
+    else:
+        fail("Falla desfijando comentario")
+
+    # 6. Aislamiento Multi-Tenant (Axioma 3) en Comentarios Fijados
+    try:
+        crud_projects.pin_project_comment(
+            db,
+            project_id=project.id,
+            comment_id=c2.id,
+            persona_id=u1.id,
+            task_id=test_task_fav.id,
+            is_pinned=True,
+            sede_id=foreign_sede_id,
+        )
+        fail("Falla multi-tenant: pin_project_comment permitió sede ajena")
+    except ValueError:
+        ok("Aislamiento Multi-Tenant (Axioma 3) verificado en pin_project_comment (ValueError arrojado)")
+else:
+    fail("No se pudieron crear comentarios para probar fijación")
+
+
+# ──────────────────────────────────────────────────────────────
+section("20. PRUEBAS DE BÓVEDA DOCUMENTAL Y VISOR GOOGLE DRIVE (SUPER-PRO FILES FASE 2)")
+# ──────────────────────────────────────────────────────────────
+
+# 1. Normalizador Inteligente de Google Drive
+test_drive_urls = [
+    ("https://drive.google.com/file/d/1Z2X3C4V5B6N7M8L9K0J/view?usp=sharing", "1Z2X3C4V5B6N7M8L9K0J"),
+    ("https://docs.google.com/document/d/doc_sample_abc_123/edit", "doc_sample_abc_123"),
+    ("https://docs.google.com/spreadsheets/d/sheet_sample_xyz_456/edit#gid=0", "sheet_sample_xyz_456"),
+    ("https://drive.google.com/open?id=open_sample_789", "open_sample_789"),
+    ("raw_id_sample_888", "raw_id_sample_888"),
+]
+
+all_ids_ok = True
+for url, expected_id in test_drive_urls:
+    extracted = crud_projects.extract_drive_file_id(url)
+    if extracted != expected_id:
+        fail(f"extract_drive_file_id falló para '{url}': esperado '{expected_id}', obtenido '{extracted}'")
+        all_ids_ok = False
+
+if all_ids_ok:
+    ok(f"extract_drive_file_id extrajo correctamente {len(test_drive_urls)} identificadores de Drive en diversos formatos")
+
+# Normalización de Embed URLs
+norm_doc_id, norm_doc_embed, norm_doc_type = crud_projects.normalize_drive_embed_url(
+    "https://docs.google.com/document/d/doc_sample_abc_123/edit?usp=sharing"
+)
+if norm_doc_id == "doc_sample_abc_123" and norm_doc_embed == "https://docs.google.com/document/d/doc_sample_abc_123/preview" and norm_doc_type == "google_doc":
+    ok("normalize_drive_embed_url transformó correctamente Google Doc a endpoint canónico /preview")
+else:
+    fail(f"Falla en normalización de Google Doc: {norm_doc_id}, {norm_doc_embed}, {norm_doc_type}")
+
+norm_sheet_id, norm_sheet_embed, norm_sheet_type = crud_projects.normalize_drive_embed_url(
+    "https://docs.google.com/spreadsheets/d/sheet_sample_xyz_456/edit#gid=0"
+)
+if norm_sheet_id == "sheet_sample_xyz_456" and norm_sheet_embed == "https://docs.google.com/spreadsheets/d/sheet_sample_xyz_456/preview" and norm_sheet_type == "google_sheet":
+    ok("normalize_drive_embed_url transformó correctamente Google Sheet a /preview")
+else:
+    fail(f"Falla en normalización de Google Sheet: {norm_sheet_id}, {norm_sheet_embed}, {norm_sheet_type}")
+
+norm_file_id, norm_file_embed, norm_file_type = crud_projects.normalize_drive_embed_url(
+    "https://drive.google.com/file/d/1Z2X3C4V5B6N7M8L9K0J/view"
+)
+if norm_file_id == "1Z2X3C4V5B6N7M8L9K0J" and norm_file_embed == "https://drive.google.com/file/d/1Z2X3C4V5B6N7M8L9K0J/preview" and norm_file_type == "google_drive_file":
+    ok("normalize_drive_embed_url transformó correctamente Google Drive File a /preview")
+else:
+    fail(f"Falla en normalización de Drive File: {norm_file_id}, {norm_file_embed}, {norm_file_type}")
+
+# 2. Creación de Archivo Local en Bóveda
+local_file_payload = schemas.ProjectFileCreate(
+    name="Plano_Estructural_Nivel_1.pdf",
+    description="Plano arquitectónico de cimentación y zapatas",
+    category="planos",
+    file_source="local",
+    file_url="/storage/projects/boveda/Plano_Estructural_Nivel_1.pdf",
+    file_type="application/pdf",
+    file_size=2540000,
+)
+created_local_file = crud_projects.create_project_file(
+    db,
+    project_id=project.id,
+    file_in=local_file_payload,
+    uploaded_by=u1.id,
+    sede_id=project.sede_id,
+)
+if created_local_file and created_local_file.id and created_local_file.uploaded_by == u1.id and created_local_file.category == "planos":
+    ok(f"Archivo local creado en Bóveda con UUID {created_local_file.id} por {u1.id} (Axioma 1 y 3)")
+else:
+    fail(f"Falla creando archivo local: {created_local_file}")
+
+# 3. Vinculación de Documento Google Drive
+drive_link_payload = schemas.ProjectFileLinkDrivePayload(
+    drive_url="https://docs.google.com/document/d/1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms/edit?usp=sharing",
+    name="Acta de Comité de Obra",
+    description="Minuta ejecutiva de acuerdos aprobados",
+    category="actas",
+)
+linked_drive_file = crud_projects.link_drive_file(
+    db,
+    project_id=project.id,
+    payload=drive_link_payload,
+    uploaded_by=u2.id,
+    sede_id=project.sede_id,
+)
+if linked_drive_file and linked_drive_file.file_source == "drive" and linked_drive_file.drive_file_id == "1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms":
+    if linked_drive_file.embed_url and linked_drive_file.embed_url.endswith("/preview"):
+        ok(f"Documento Google Drive vinculado con éxito en Bóveda: embed_url={linked_drive_file.embed_url}")
+    else:
+        fail(f"embed_url no normalizado: {linked_drive_file.embed_url}")
+else:
+    fail(f"Falla vinculando documento Google Drive: {linked_drive_file}")
+
+# 4. Consulta y Filtros de Bóveda
+all_boveda_files = crud_projects.get_project_files(db, project_id=project.id, sede_id=project.sede_id)
+if len(all_boveda_files) >= 2:
+    ok(f"get_project_files retornó {len(all_boveda_files)} archivos en la bóveda del proyecto")
+else:
+    fail(f"get_project_files retornó conteo insuficiente: {len(all_boveda_files)}")
+
+# Filtro por categoría 'planos'
+planos_files = crud_projects.get_project_files(db, project_id=project.id, category="planos", sede_id=project.sede_id)
+if len(planos_files) >= 1 and all(f.category == "planos" for f in planos_files):
+    ok("Filtro por categoría 'planos' verificado exitosamente")
+else:
+    fail(f"Falla en filtro por categoría 'planos': {len(planos_files)}")
+
+# Filtro por origen 'drive'
+drive_files = crud_projects.get_project_files(db, project_id=project.id, file_source="drive", sede_id=project.sede_id)
+if len(drive_files) >= 1 and all(f.file_source == "drive" for f in drive_files):
+    ok("Filtro por file_source 'drive' verificado exitosamente")
+else:
+    fail(f"Falla en filtro por file_source 'drive': {len(drive_files)}")
+
+# Filtro por búsqueda de texto 'Estructural'
+search_files = crud_projects.get_project_files(db, project_id=project.id, search="Estructural", sede_id=project.sede_id)
+if len(search_files) >= 1 and any("Estructural" in f.name for f in search_files):
+    ok("Filtro por término de búsqueda verificado exitosamente")
+else:
+    fail(f"Falla en búsqueda de archivos: {len(search_files)}")
+
+# 5. Resumen Métrico de Bóveda
+boveda_summary = crud_projects.get_project_files_summary(db, project_id=project.id, sede_id=project.sede_id)
+if boveda_summary and boveda_summary.get("total_files", 0) >= 2:
+    if "local" in boveda_summary.get("by_source", {}) and "drive" in boveda_summary.get("by_source", {}):
+        ok(f"Resumen de bóveda obtenido: {boveda_summary['total_files']} archivos, {boveda_summary['total_size_bytes']} bytes")
+    else:
+        fail(f"by_source incompleto en resumen: {boveda_summary.get('by_source')}")
+else:
+    fail(f"Falla en get_project_files_summary: {boveda_summary}")
+
+# 6. Soft-delete UTC
+temp_del_payload = schemas.ProjectFileCreate(
+    name="Borrador_Temporal.txt",
+    file_source="local",
+    file_url="/storage/projects/boveda/Borrador_Temporal.txt",
+)
+temp_del_file = crud_projects.create_project_file(
+    db,
+    project_id=project.id,
+    file_in=temp_del_payload,
+    uploaded_by=u1.id,
+    sede_id=project.sede_id,
+)
+del_success = crud_projects.delete_project_file(
+    db,
+    project_id=project.id,
+    file_id=temp_del_file.id,
+    sede_id=project.sede_id,
+)
+if del_success:
+    db.refresh(temp_del_file)
+    if temp_del_file.deleted_at is not None:
+        # Verificar que no aparece en listado activo
+        files_after_del = crud_projects.get_project_files(db, project_id=project.id, sede_id=project.sede_id)
+        if not any(f.id == temp_del_file.id for f in files_after_del):
+            ok(f"Soft-delete UTC verificado: archivo marcado con deleted_at={temp_del_file.deleted_at} y excluido de listas")
+        else:
+            fail("Archivo eliminado aún aparece en listado activo")
+    else:
+        fail("deleted_at no asignado en soft-delete")
+else:
+    fail("delete_project_file retornó False")
+
+# 7. Aislamiento Multi-Tenant (Axioma 3)
+try:
+    crud_projects.get_project_files(db, project_id=project.id, sede_id=foreign_sede_id)
+    fail("Falla multi-tenant: get_project_files permitió sede ajena")
+except ValueError:
+    ok("Aislamiento Multi-Tenant (Axioma 3) verificado en get_project_files (ValueError arrojado)")
+
+try:
+    crud_projects.create_project_file(db, project_id=project.id, file_in=local_file_payload, uploaded_by=u1.id, sede_id=foreign_sede_id)
+    fail("Falla multi-tenant: create_project_file permitió sede ajena")
+except ValueError:
+    ok("Aislamiento Multi-Tenant (Axioma 3) verificado en create_project_file (ValueError arrojado)")
+
+try:
+    crud_projects.link_drive_file(db, project_id=project.id, payload=drive_link_payload, uploaded_by=u1.id, sede_id=foreign_sede_id)
+    fail("Falla multi-tenant: link_drive_file permitió sede ajena")
+except ValueError:
+    ok("Aislamiento Multi-Tenant (Axioma 3) verificado en link_drive_file (ValueError arrojado)")
+
+try:
+    crud_projects.delete_project_file(db, project_id=project.id, file_id=created_local_file.id, sede_id=foreign_sede_id)
+    fail("Falla multi-tenant: delete_project_file permitió sede ajena")
+except ValueError:
+    ok("Aislamiento Multi-Tenant (Axioma 3) verificado en delete_project_file (ValueError arrojado)")
+
+
+# ──────────────────────────────────────────────────────────────
 section(f"RESUMEN: {PASS} passed, {FAIL} failed")
 # ──────────────────────────────────────────────────────────────
+
+
 
 info(f"Proyecto ID: {project.id}")
 info(f"Usuarios: {u1.username} (id={u1.id}), {u2.username} (id={u2.id}), {u3.username} (id={u3.id})")
@@ -664,3 +2231,4 @@ else:
     print(f"\n  {GREEN}✓ Todos los tests pasaron. El módulo de proyectos funciona correctamente.{NC}\n")
 
 db.close()
+

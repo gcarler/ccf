@@ -78,14 +78,14 @@ export default function ResourcesLibrary() {
                 watchers={['Equipo Recursos', 'Optimus Brain']}
                 primaryAction={{ label: showFavorites ? 'Ver todos' : 'Favoritos', icon: Star, onClick: () => setShowFavorites((prev) => !prev) }}
             />
-            <div className="relative group mb-3 rounded-md border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-[#111418] p-4">
+            <div className="relative group mb-3 rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-4">
                 <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
-                    <Search className="text-[hsl(var(--text-secondary))] group-focus-within:text-primary" size={20} />
+                    <Search className="text-[hsl(var(--text-secondary))] group-focus-within:text-[hsl(var(--primary))]" size={20} />
                 </div>
                 <input
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
-                    className="w-full bg-transparent border border-[hsl(var(--border))] dark:border-white/10 rounded-lg py-2 pl-12 pr-4 text-sm text-[hsl(var(--text-primary))] dark:text-white placeholder:text-[hsl(var(--text-secondary))] focus:ring-2 focus:ring-primary/50 focus:border-primary/50"
+                    className="w-full bg-transparent border border-[hsl(var(--border))] rounded-lg py-2 pl-12 pr-4 text-sm text-[hsl(var(--foreground))] placeholder:text-[hsl(var(--muted-foreground))] focus:ring-2 focus:ring-[hsl(var(--primary)/0.5)] focus:border-[hsl(var(--primary)/0.5)]"
                     placeholder="Buscar lecciones o cursos"
                     type="text"
                 />
@@ -101,7 +101,7 @@ export default function ResourcesLibrary() {
                     ))}
                     <button
                         onClick={handleRefresh}
-                        className="ml-auto text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:text-primary"
+                        className="ml-auto text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))]"
                     >
                         Actualizar
                     </button>
@@ -121,13 +121,13 @@ export default function ResourcesLibrary() {
             {!loading && resources.length === 0 && (
                 <div className="py-1.5 text-center text-[hsl(var(--text-secondary))] space-y-3">
                     <BookOpen className="w-12 h-8 mx-auto text-[hsl(var(--text-secondary))]" />
-                    <p className="text-sm font-bold text-white">No hay material disponible aún</p>
+                    <p className="text-sm font-bold text-[hsl(var(--foreground))]">No hay material disponible aún</p>
                     <p className="text-sm">Cuando tus cursos publiquen material descargable aparecerá en esta biblioteca.</p>
                 </div>
             )}
 
             {favoriteResources.length > 0 && (
-                <section className="py-2 flex flex-col gap-3 rounded-md border border-[hsl(var(--border))] dark:border-white/10 bg-white/70 dark:bg-[#16191d] p-4">
+                <section className="py-2 flex flex-col gap-3 rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-4">
                     <div className="flex items-center justify-between">
                         <h2 className="text-sm font-semibold uppercase tracking-wide text-[hsl(var(--warning))] flex items-center gap-2">
                             <Star size={14} /> Guardados
@@ -140,8 +140,8 @@ export default function ResourcesLibrary() {
                 </section>
             )}
 
-            <section className="py-2 flex flex-col gap-3 rounded-md border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-[#111418] p-4">
-                 <h2 className="text-base font-bold text-[hsl(var(--text-primary))] dark:text-white tracking-tight">{filteredResources.length} recursos encontrados</h2>
+            <section className="py-2 flex flex-col gap-3 rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-4">
+                 <h2 className="text-base font-bold text-[hsl(var(--foreground))] tracking-tight">{filteredResources.length} recursos encontrados</h2>
                  {filteredResources.map((resource) => (
                      <ResourceRow key={resource.id} resource={resource} isFavorite={favorites.includes(resource.id)} onToggleFavorite={toggleFavorite} />
                  ))}
@@ -157,26 +157,26 @@ function cleanSnippet(html: string) {
 
 function ResourceRow({ resource, isFavorite, onToggleFavorite }: { resource: ResourceEntry; isFavorite?: boolean; onToggleFavorite: (id: string) => void; }) {
     return (
-        <article className="bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 hover:border-primary/30 rounded-md p-3 flex items-center gap-3 shadow-xl transition-all">
-            <div className="size-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0 border border-primary/20 text-primary">
+        <article className="bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] hover:border-[hsl(var(--primary)/0.3)] rounded-md p-3 flex items-center gap-3 shadow-xl transition-all">
+            <div className="size-8 rounded-lg bg-[hsl(var(--primary)/0.1)] flex items-center justify-center shrink-0 border border-[hsl(var(--primary)/0.2)] text-[hsl(var(--primary))]">
                 {resource.snippet.length > 120 ? <FileText size={28} /> : <BookOpen size={28} />}
             </div>
             <div className="flex flex-col flex-1 min-w-0">
                 <p className="text-2xs text-[hsl(var(--text-secondary))] font-semibold uppercase tracking-wide mb-1">{resource.courseTitle}</p>
-                <h3 className="text-base font-bold text-[hsl(var(--text-primary))] dark:text-white truncate">{resource.lessonTitle}</h3>
-                <p className="text-sm text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] mt-1 line-clamp-2">{resource.snippet}</p>
+                <h3 className="text-base font-bold text-[hsl(var(--foreground))] truncate">{resource.lessonTitle}</h3>
+                <p className="text-sm text-[hsl(var(--muted-foreground))] mt-1 line-clamp-2">{resource.snippet}</p>
                 <p className="text-2xs text-[hsl(var(--text-secondary))] font-semibold uppercase tracking-wide mt-3">{resource.duration}</p>
             </div>
             <div className="flex items-center gap-3">
                 <button
                     onClick={() => onToggleFavorite(resource.id)}
-                    className={`size-8 rounded-full border ${isFavorite ? 'border-[hsl(var(--warning)/40%)] text-[hsl(var(--warning))] bg-warning-soft' : 'border-[hsl(var(--border))] dark:border-white/10 text-[hsl(var(--text-secondary))] bg-[hsl(var(--bg-primary))] dark:bg-white/10'} hover:scale-105 transition-transform`}
+                    className={`size-8 rounded-full border ${isFavorite ? 'border-[hsl(var(--warning)/40%)] text-[hsl(var(--warning))] bg-[hsl(var(--warning)/0.1)]' : 'border-[hsl(var(--border))] text-[hsl(var(--muted-foreground))] bg-[hsl(var(--surface-1))]'} hover:scale-105 transition-transform`}
                 >
                     <Star size={18} fill={isFavorite ? 'currentColor' : 'none'} />
                 </button>
                 <a
                     href={resource.href}
-                    className="shrink-0 size-9 rounded-full bg-[hsl(var(--bg-primary))] dark:bg-white/10 flex items-center justify-center border border-[hsl(var(--border))] dark:border-white/10 hover:bg-primary hover:border-primary/40 transition-colors text-[hsl(var(--text-secondary))] hover:text-white"
+                    className="shrink-0 size-9 rounded-full bg-[hsl(var(--surface-1))] flex items-center justify-center border border-[hsl(var(--border))] hover:bg-[hsl(var(--primary))] hover:border-[hsl(var(--primary)/0.4)] transition-colors text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--primary-foreground))]"
                 >
                     <Download size={20} />
                 </a>

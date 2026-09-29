@@ -1,5 +1,10 @@
 # Estado del Modulo Messaging / Community — CCF
 
+> [!IMPORTANT]
+> **DESACOPLAMIENTO MODULAR (2026-07-31):** Este documento híbrido representa el histórico previo a la separación arquitectónica de submódulos. Para la documentación canónica activa y certificada al 100%, consultar:
+> - **Módulo Mensajería y Chat:** [`docs/ESTADO_CHAT.md`](file:///root/ccf/docs/ESTADO_CHAT.md), [`docs/CHAT_API_CONTRACTS.md`](file:///root/ccf/docs/CHAT_API_CONTRACTS.md), [`docs/CHAT_RBAC_MATRIX.md`](file:///root/ccf/docs/CHAT_RBAC_MATRIX.md), [`docs/CHAT_QA_CHECKLIST.md`](file:///root/ccf/docs/CHAT_QA_CHECKLIST.md).
+> - **Módulo Comunidad:** [`docs/ESTADO_COMMUNITY.md`](file:///root/ccf/docs/ESTADO_COMMUNITY.md), [`docs/AUDITORIA_FORENSE_COMMUNITY.md`](file:///root/ccf/docs/AUDITORIA_FORENSE_COMMUNITY.md).
+
 > **TL;DR (una linea):** Messaging / Community cubre notificaciones, inbox interno, chat directo, tablero comunitario, grupos publicos y eventos comunitarios. Comparte runtime con CRM, evangelismo, agenda y auth; no debe corregirse desde otros modulos sin probar primero el contrato propio.
 
 **Proposito.** Handover canonico para trabajar mensajeria y comunidad como unidad funcional, sin mezclar fixes de CRM, evangelismo o plataforma compartida cuando el fallo real vive en `messaging`, `chat` o `community`.

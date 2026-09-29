@@ -51,22 +51,22 @@ export default function ProjectSettingsDrawer({
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
                         onClick={onClose}
-                        className="fixed inset-0 z-[100] bg-black/40 backdrop-blur-sm"
+                        className="fixed inset-0 z-[100] bg-[hsl(var(--background)/0.6)] backdrop-blur-sm"
                     />
                     <motion.div
                         initial={{ x: "100%" }}
                         animate={{ x: 0 }}
                         exit={{ x: "100%" }}
                         transition={{ type: "spring", damping: 25, stiffness: 200 }}
-                        className="fixed top-0 right-0 z-[101] h-full w-full max-w-md bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-secondary))] border-l border-[hsl(var(--border))] dark:border-white/10 shadow-2xl flex flex-col"
+                        className="fixed top-0 right-0 z-[101] h-full w-full max-w-md bg-[hsl(var(--surface-1))] border-l border-[hsl(var(--border))] shadow-2xl flex flex-col"
                     >
-                        <div className="flex items-center justify-between px-4 py-3 border-b border-[hsl(var(--border))] dark:border-white/5">
-                            <h2 className="text-sm font-bold uppercase tracking-wide text-[hsl(var(--text-primary))] dark:text-white">
+                        <div className="flex items-center justify-between px-4 py-3 border-b border-[hsl(var(--border))]">
+                            <h2 className="text-sm font-bold uppercase tracking-wide text-[hsl(var(--foreground))]">
                                 Editar Proyecto
                             </h2>
                             <button
                                 onClick={onClose}
-                                className="p-1.5 rounded-lg text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5 transition-colors"
+                                className="p-1.5 rounded-lg text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--surface-2))] transition-colors"
                             >
                                 <X size={16} />
                             </button>
@@ -74,7 +74,7 @@ export default function ProjectSettingsDrawer({
 
                         <div className="flex-1 overflow-y-auto p-4 space-y-5">
                             <div className="space-y-1">
-                                <label className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
+                                <label className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--muted-foreground))]">
                                     Título
                                 </label>
                                 <InlineTextInput
@@ -85,7 +85,7 @@ export default function ProjectSettingsDrawer({
                             </div>
 
                             <div className="space-y-1">
-                                <label className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
+                                <label className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--muted-foreground))]">
                                     Descripción
                                 </label>
                                 <InlineTextArea
@@ -97,7 +97,7 @@ export default function ProjectSettingsDrawer({
                             </div>
 
                             <div className="space-y-1">
-                                <label className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
+                                <label className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--muted-foreground))]">
                                     Estado
                                 </label>
                                 <InlineProjectStatusPicker
@@ -107,7 +107,7 @@ export default function ProjectSettingsDrawer({
                             </div>
 
                             <div className="space-y-1">
-                                <label className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
+                                <label className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--muted-foreground))]">
                                     Responsable
                                 </label>
                             <div className="flex items-center gap-2">
@@ -119,7 +119,7 @@ export default function ProjectSettingsDrawer({
                             </div>
 
                             <div className="space-y-1">
-                                <label className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
+                                <label className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--muted-foreground))]">
                                     Color
                                 </label>
                                 <div className="flex items-center gap-3">
@@ -127,25 +127,25 @@ export default function ProjectSettingsDrawer({
                                         type="color"
                                         value={draft.color || DEFAULT_PROJECT_COLOR}
                                         onChange={(e) => setDraft((prev) => ({ ...prev, color: e.target.value }))}
-                                        className="h-10 w-20 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent cursor-pointer"
+                                        className="h-10 w-20 rounded-lg border border-[hsl(var(--border))] bg-transparent cursor-pointer"
                                     />
-                                    <span className="text-sm font-mono text-[hsl(var(--text-secondary))]">
+                                    <span className="text-sm font-mono text-[hsl(var(--muted-foreground))]">
                                         {draft.color || DEFAULT_PROJECT_COLOR}
                                     </span>
                                 </div>
                             </div>
                         </div>
 
-                        <div className="p-4 border-t border-[hsl(var(--border))] dark:border-white/5 flex items-center justify-end gap-2">
+                        <div className="p-4 border-t border-[hsl(var(--border))] flex items-center justify-end gap-2">
                             <button
                                 onClick={onClose}
-                                className="px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5 transition-colors"
+                                className="px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wide text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--surface-2))] transition-colors"
                             >
                                 Cancelar
                             </button>
                             <button
                                 onClick={handleSave}
-                                className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[hsl(var(--primary))] text-white text-xs font-bold uppercase tracking-wide hover:bg-[hsl(var(--primary))]/90 active:scale-95 transition-all"
+                                className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] text-xs font-bold uppercase tracking-wide hover:bg-[hsl(var(--primary))]/90 active:scale-95 transition-all"
                             >
                                 <Save size={14} /> Guardar Cambios
                             </button>

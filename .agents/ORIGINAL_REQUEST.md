@@ -308,44 +308,105 @@ En el componente `PublicSectionRenderer.tsx` y páginas públicas del CMS:
 - [ ] `PYTHONPATH=. python3 -m pytest tests/ -v` — todos los tests previos siguen pasando.
 - [ ] `git status` muestra working tree clean al finalizar (commit de cierre con prefijo `feat(cms):` o `docs(cms):`).
 
+## 2026-09-06T03:06:45Z
 
-## 2026-09-06T03:06:47Z
+Auditoría forense adversarial e independiente sobre el módulo de Calendario y Agenda de la plataforma CCF, validando de forma imparcial la remediación, el aislamiento multi-sede, los contratos API, la nueva taxonomía canónica RBAC (agenda:*) y emitiendo un reporte forense conclusivo.
 
-Modularizar atómicamente las secciones de la página Home en la base de datos de CCF (Comunidad Cristiana El Faro) y habilitar controles de reordenamiento interactivo en tiempo real desde el CMS con renderizado dinámico en el sitio público.
-
-Working directory: /root/ccf-cms-main-final
+Working directory: /root/ccf
 Integrity mode: development
 
 ## Requirements
 
-### R1. Atomic Database Modularization (PostgreSQL)
-Decouple the monolithic `feed` section in `cms_sections` into discrete atomic sections with distinct `section_key`s (`welcome` / `feed` for Bento cards, `activities` for upcoming events, `newsletter` for the subscription form) while preserving `hero` and `discover_cta`. Must execute under an idempotent, atomic transaction with zero data loss.
+### R1. Auditoría Adversarial de Backend y Contratos API
+Validar de forma independiente la integridad operativa de los endpoints de agenda (`/api/agenda/*`) y el agregador cross-módulo (`/api/system/calendar`), ejecutando las suites de prueba de eventos, recursos, participantes y reservas con detección de solapamiento horario (409 Conflict). Comprobar que no existen llamadas a borrado destructivo (`db.delete`) ni datetimes naive sin zona horaria UTC.
 
-### R2. Interactive Reordering Controls in CMS Builder
-Provide intuitive visual reordering controls (Move Up / Move Down buttons) on every section card within `PublicContentEditor`. Trigger optimistic UI updates and persist changes immediately via the existing `reorderCmsSections` API (`POST /api/cms/v2/sites/{site_key}/pages/{slug}/sections/reorder`) with error rollback and notification.
+### R2. Auditoría Forense de Seguridad y RBAC Canónico
+Evaluar el aislamiento multi-inquilino estricto por `sede_id` y auditar la efectividad de la nueva taxonomía canónica `agenda:read`, `agenda:edit`, `agenda:manage` en los guards de `agenda.py`, matrices de `permissions.py` y `kernel_rbac.py`. Verificar tanto el bloqueo 403 Forbidden para actores sin permisos como la retrocompatibilidad transparente para actores con credenciales heredadas de `spiritual_life:*`.
 
-### R3. Dynamic Section Rendering in Public Home Page
-Refactor `PublicHomePage.tsx` from static JSX ordering to dynamically render sections based on `sort_order`. Maintain 100% backward compatibility with legacy combined schemas so no component breaks if fallback props are present.
+### R3. Auditoría de Calidad Frontend e Integración de Accesos
+Verificar las reglas de acceso en `workspaceAccess.ts`, la compilación estricta TypeScript (`tsc --noEmit`), el linter (`eslint --max-warnings=0`) y la erradicación total de clases banned (ej. `bg-red-50`) y modales prohibidos en las vistas de `/plataforma/calendar` y `/plataforma/agenda`.
 
-### R4. Real-time Cache Invalidation & Verification
-Verify that Redis cache invalidation triggers instantly upon reordering, test the end-to-end flow with automated tests, and ensure zero TypeScript errors (`tsc --noEmit`) and successful build deployment.
+### R4. Reporte Forense Conclusivo Independiente
+Generar un reporte forense riguroso que detalle la matriz de evaluación por ejes, métricas cuantitativas de pruebas ejecutadas vs aprobadas, verificación de invariantes y veredicto final sobre la calificación 100/100 (A+).
 
 ## Acceptance Criteria
 
-### Database Integrity
-- [ ] Idempotent migration script executes without errors and separates `feed` into atomic sections without losing existing card, activity, or newsletter props.
-- [ ] `cms_sections` reflects valid distinct `sort_order` integer sequences.
+### Integridad Operativa y Pruebas
+- [ ] 100% de las pruebas automatizadas del módulo de agenda ejecutadas y aprobadas (mínimo 47 tests en suites canónicas).
+- [ ] 0 llamadas a borrado físico `db.delete(` en `backend/api/agenda.py` y `backend/crud/agenda.py`.
+- [ ] 0 marcas de tiempo naive o llamadas a `datetime.utcnow`.
 
-### CMS Builder
-- [ ] `PublicContentEditor` displays Up/Down action buttons on each section header with appropriate disabled states for top/bottom items.
-- [ ] Clicking Up/Down sends `items: [{id, sort_order}]` to `/sections/reorder` and updates the layout immediately.
-- [ ] Network errors trigger an automatic state rollback and user-facing error toast.
+### Seguridad y Aislamiento
+- [ ] Verificación de aislamiento multi-inquilino (`sede_id`) en todas las consultas de agenda y en el agregador `/api/system/calendar`.
+- [ ] Verificación de que peticiones sin permisos requeridos reciben HTTP 403 Forbidden.
+- [ ] Verificación de que usuarios con permisos heredados `spiritual_life:*` conservan acceso válido por retrocompatibilidad.
 
-### Public Site
-- [ ] `PublicHomePage` renders all sections respecting the exact order defined in `cms_sections.sort_order`.
-- [ ] Moving Newsletter above Bienvenidos a Casa in CMS immediately reflects in `http://localhost:3000/` without delay.
-- [ ] Fallback support guarantees zero regressions if a section contains legacy combined fields.
+### Estándares de Frontend
+- [ ] Compilación TypeScript (`tsc --noEmit`) con 0 errores en frontend.
+- [ ] Análisis estático ESLint con 0 warnings y 0 errores en archivos de agenda y calendario.
+- [ ] 0 instancias de clases prohibidas (`bg-red-50`, `bg-red-100`) o modales prohibidos en la interfaz.
 
-### Verification & Quality
-- [ ] `npx tsc --noEmit -p frontend/tsconfig.json` passes cleanly with 0 type errors.
-- [ ] Deployment script `bash scripts/deploy_frontend.sh` executes with HTTP 200 verification.
+### Reporte de Auditoría
+- [ ] Emisión de reporte forense documentando evidencia de cada verificación con veredicto final explícito.
+
+## Verification Resources
+
+- Suite canónica de agenda: `./venv/bin/python scripts/test_agenda_quality.py --backend-deep`
+- Suite de RBAC y taxonomía: `./venv/bin/python -m pytest tests/test_permissions_and_more.py`
+- Suite de control de acceso frontend: `npm test src/lib/workspaceAccess.test.ts` (en `/root/ccf/frontend`)
+- Typecheck frontend: `npx tsc --noEmit` (en `/root/ccf/frontend`)
+- Linter frontend: `npx eslint src/lib/workspaceAccess.ts src/app/plataforma/admin/access/page.tsx src/app/plataforma/calendar/page.tsx src/app/plataforma/agenda/events/page.tsx "src/app/plataforma/agenda/events/[id]/page.tsx" --max-warnings 0` (en `/root/ccf/frontend`)
+- Documentación de referencia: `docs/ESTADO_AGENDA.md`, `docs/AUDITORIA_FORENSE_AGENDA_2026-09-05.md`, `docs/SYSTEM_CALENDAR_CONTRACT.md`, `docs/AGENDA_RBAC_MATRIX.md`
+
+## 2026-09-06T04:12:32Z
+
+Auditoría forense adversarial e independiente sobre el módulo de Evangelismo de CCF (`/api/evangelism/*` y `/plataforma/evangelism`), evaluando de forma imparcial la integridad operativa de estrategias, grupos, sesiones, asistencias, eventos, escáner QR y el puente CRM, remediando las brechas para elevar la calificación de 95/100 a 100/100 (A+), y certificando la suite documental canónica.
+
+Working directory: /root/ccf
+Integrity mode: development
+
+## Requirements
+
+### R1. Auditoría Adversarial de Backend y Contratos API
+Ejecutar de forma independiente las suites de prueba de Evangelismo (smoke canónico `scripts/test_evangelism_quality.py`, regresiones críticas, suite de cobertura profunda `test_evangelism_module_coverage.py` con 225 tests, flujo Triple 7 y puente CRM). Comprobar que todos los endpoints respetan los contratos, que no existen llamadas a borrado destructivo (`0 db.delete(`) ni datetimes naive sin zona horaria UTC (`0 datetime.utcnow`).
+
+### R2. Auditoría Forense de Seguridad, RBAC y Aislamiento Multi-Tenant
+Evaluar el aislamiento multi-inquilino estricto por `sede_id` (Axioma 3) en estrategias, grupos, sesiones, registro de asistencia, seguimiento post-evento, rankings y scanner QR. Auditar los guards canónicos `evangelism:read`, `evangelism:edit`, `evangelism:manage`, los bypasses autorizados de rol (pastor/coordinador), y la prevención de fugas de existencia BOLA en endpoints de consulta y mutación.
+
+### R3. Remediación Integral de Brechas y Elevación a 100/100 (A+)
+Identificar cualquier inconsistencia, fallo residual o advertencia que mantenga la calificación en 95/100 (A-). Implementar las correcciones necesarias en backend y frontend manteniendo 100% retrocompatibilidad y sin generar regresiones en otros módulos.
+
+### R4. Auditoría de Frontend y Estándares UI/UX
+Verificar la compilación TypeScript estricta (`tsc --noEmit`), el análisis estático ESLint (`--max-warnings=0`), el uso exclusivo de `apiFetch` (0 `fetch` nativo sin interceptores de sede/auth), 0 modales flotantes prohibidos (uso obligatorio de Drawer/Shell), 0 clases Tailwind banned (`bg-red-50`), y reglas de acceso en `workspaceAccess.ts`.
+
+### R5. Reporte Forense Conclusivo Independiente
+Generar un reporte forense riguroso (`docs/AUDITORIA_FORENSE_EVANGELISMO_2026-09-06.md`) que detalle la matriz de evaluación por ejes, métricas cuantitativas de pruebas ejecutadas vs aprobadas, remediaciones implementadas y veredicto final sobre la calificación 100/100 (A+).
+
+## Acceptance Criteria
+
+### Integridad Operativa y Pruebas
+- [ ] 100% de las pruebas automatizadas del módulo de Evangelismo ejecutadas y aprobadas (mínimo 277 tests sin fallos).
+- [ ] 0 llamadas a borrado físico `db.delete(` en `backend/api/evangelism*` y `backend/crud/evangelism.py`.
+- [ ] 0 marcas de tiempo naive o llamadas a `datetime.utcnow` en el módulo.
+
+### Seguridad y Aislamiento
+- [ ] Verificación de aislamiento multi-inquilino (`sede_id`) en todas las consultas y mutaciones de evangelismo.
+- [ ] Verificación de que peticiones sin permisos requeridos reciben HTTP 403 Forbidden o HTTP 404 safe según contrato.
+- [ ] Verificación de integridad en la sincronización del puente con CRM (`evangelism_crm_bridge.py`).
+
+### Estándares de Frontend
+- [ ] Compilación TypeScript (`tsc --noEmit`) con 0 errores en frontend.
+- [ ] Análisis estático ESLint con 0 warnings y 0 errores en archivos de `/plataforma/evangelism` y componentes asociados.
+- [ ] 0 instancias de clases prohibidas (`bg-red-50`, `bg-red-100`) o modales prohibidos en la interfaz.
+
+### Reporte de Auditoría
+- [ ] Emisión de reporte forense documentando evidencia de cada verificación con veredicto final explícito certificando la calificación 100/100 (A+).
+
+## Verification Resources
+
+- Smoke canónico de evangelismo: `./venv/bin/python scripts/test_evangelism_quality.py`
+- Suite de cobertura profunda: `./venv/bin/python -m pytest -q -o addopts='' tests/test_evangelism_module_coverage.py`
+- Suite de regresión y bridge: `./venv/bin/python -m pytest -q -o addopts='' tests/test_evangelism_triple7_flow.py tests/test_evangelism_crm_bridge.py tests/test_evangelism_reports_api.py tests/test_calculo_sesiones.py`
+- Typecheck frontend: `npx tsc --noEmit` (en `/root/ccf/frontend`)
+- Linter frontend: `npx eslint src/app/plataforma/evangelism src/components/evangelism --max-warnings 0` (en `/root/ccf/frontend`)
+- Documentación de referencia: `docs/ESTADO_EVANGELISMO.md`, `docs/EVANGELISMO_API_CONTRACTS.md`, `docs/EVANGELISMO_RBAC_MATRIX.md`, `docs/EVANGELISMO_QA_CHECKLIST.md`

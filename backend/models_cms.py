@@ -31,6 +31,7 @@ class CmsMediaItem(Base):
     sede_id = Column(UUID(as_uuid=True), ForeignKey("sedes.id"), nullable=False, index=True)
     created_at = Column(DateTime(timezone=True), default=_utcnow)
     updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
+    deleted_at = Column(DateTime(timezone=True), nullable=True, index=True)
 
     # ── Relationships (núcleo CMS) ──────────────────────────────────────
     created_by_persona = relationship("Persona", foreign_keys=[created_by_persona_id], lazy="joined")
@@ -649,6 +650,7 @@ class CmsPopup(Base):
     show_on_pages = Column(JSON, nullable=False, default=list)
     created_at = Column(DateTime(timezone=True), nullable=False, default=_utcnow)
     updated_at = Column(DateTime(timezone=True), nullable=False, default=_utcnow, onupdate=_utcnow)
+    deleted_at = Column(DateTime(timezone=True), nullable=True, index=True)
 
     # Relationships
     site = relationship("CmsSite", back_populates="popups", lazy="joined")
@@ -678,6 +680,7 @@ class CmsForm(Base):
     honeypot_enabled = Column(Boolean, default=True)
     created_at = Column(DateTime(timezone=True), default=_utcnow)
     updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
+    deleted_at = Column(DateTime(timezone=True), nullable=True, index=True)
 
     # Relationships
     site = relationship("CmsSite", back_populates="forms", lazy="joined")
@@ -723,6 +726,7 @@ class CmsNewsletter(Base):
     recipient_count = Column(Integer, default=0, nullable=False)
     created_at = Column(DateTime(timezone=True), default=_utcnow, nullable=False)
     updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow, nullable=False)
+    deleted_at = Column(DateTime(timezone=True), nullable=True, index=True)
 
     site = relationship("CmsSite", back_populates="newsletters", lazy="joined")
 
@@ -744,6 +748,7 @@ class CmsSubscriber(Base):
     subscribed_at = Column(DateTime(timezone=True), default=_utcnow, nullable=False)
     unsubscribed_at = Column(DateTime(timezone=True), nullable=True)
     source = Column(String(50), default="manual", nullable=False)
+    deleted_at = Column(DateTime(timezone=True), nullable=True, index=True)
 
     site = relationship("CmsSite", back_populates="subscribers", lazy="joined")
 
@@ -855,6 +860,7 @@ class Announcement(Base):
     published_at = Column(DateTime(timezone=True), nullable=True, index=True)
     created_at = Column(DateTime(timezone=True), default=_utcnow)
     updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
+    deleted_at = Column(DateTime(timezone=True), nullable=True, index=True)
 
     # Relationships
     created_by_persona = relationship("Persona", foreign_keys=[created_by_persona_id], lazy="joined")
@@ -895,6 +901,7 @@ class Testimonial(Base):
         index=True,
     )
     created_at = Column(DateTime(timezone=True), default=_utcnow)
+    deleted_at = Column(DateTime(timezone=True), nullable=True, index=True)
 
     # Relationships
     author_persona = relationship("Persona", foreign_keys=[author_persona_id], lazy="joined")

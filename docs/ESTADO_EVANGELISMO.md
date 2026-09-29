@@ -88,14 +88,15 @@ npm run test:e2e:evangelism
 npm run test:e2e:evangelism:deep
 ```
 
-**Estado actual (Revalidado 2026-09-06 — Auditoría Forense Integral y Remediación):**
+**Estado actual (Revalidado 2026-09-27 — Certificación Integral Super-PRO Eventos y Auditoría Forense):**
 - **Veredicto Forense:** **100% CERTIFICADO (Calificación: A+ / 100/100)**
-- **Reporte Forense:** [`docs/AUDITORIA_FORENSE_EVANGELISMO_2026-09-06.md`](file:///root/ccf/docs/AUDITORIA_FORENSE_EVANGELISMO_2026-09-06.md)
-- **Tests Automatizados:** **384 tests ejecutados y aprobados (286 backend + 98 frontend), 0 fallos**.
-- **Aislamiento Multi-tenant (Axioma 3):** Sede isolation blindada con validación pre-commit en creación de eventos, bulk attendance intra-sede, BOLA safe 404 en reportes y aislamiento en endpoints públicos (`/strategies/public-config`, `/strategies/{id}/toggle-public`).
+- **Reporte Forense:** [`docs/AUDITORIA_FORENSE_EVANGELISMO_2026-09-06.md`](file:///root/ccf/docs/AUDITORIA_FORENSE_EVANGELISMO_2026-09-06.md) y [`docs/PLAN_DE_TRABAJO_EVANGELISMO.md`](file:///root/ccf/docs/PLAN_DE_TRABAJO_EVANGELISMO.md) (Sección 6).
+- **Ciclo Super-PRO Eventos:** 6 Fases completadas (`TKT-EVT-STUDIO-01` a `TKT-EVT-CERT-06`).
+- **Tests Automatizados:** **7/7 suites canónicas aprobadas en `scripts/test_evangelism_quality.py`**, 46/46 contratos estructurales aprobados, 0 fallos, 0 regresiones.
+- **Aislamiento Multi-tenant (Axioma 3):** Sede isolation blindada con validación pre-commit en creación de eventos, bulk attendance intra-sede, BOLA safe 404 en reportes y aislamiento en endpoints públicos (`/strategies/public-config`, `/strategies/{id}/toggle-public`, `/events/{id}/register-public`).
 - **Ciclo de vida de datos:** 0 llamadas a `db.delete(` (eliminación lógica estricta con `deleted_at = _utcnow()` y `activo = False`).
 - **Zonas horarias:** 0 llamadas a `datetime.utcnow` ni datetimes naive (100% UTC-aware con `timezone.utc`).
-- **Frontend Quality:** 100% `apiFetch`, 0 modales prohibidos (arquitectura pura Drawer/Shell), 0 clases Tailwind banned (`bg-red-50`, `bg-red-100`), normalización semántica con `color-mix`, 100% controles con `aria-label`, `tsc --noEmit` 0 errores, ESLint 0 warnings.
+- **Frontend Quality:** 100% `apiFetch`, 0 modales prohibidos (arquitectura pura Drawer/Shell con `WorkspaceDrawer`), 0 clases Tailwind banned, normalización semántica con `color-mix`, 100% controles con `aria-label`, `tsc --noEmit` 0 errores, ESLint 0 warnings.
 
 ---
 
@@ -330,6 +331,12 @@ Componentes compartidos:
 19. **Soft-delete de eventos CRM** `[PEND-CRM-EVENTS-SOFT-DELETE-001]` — cerrada el `2026-07-18`. `CrmEvent` recupero `deleted_at`, el router de eventos consulta solo activos y la migracion `20260718_0001_crm_events_deleted_at.py` deja el contrato persistido.
 20. **Auditoría forense integral de calidad y seguridad** `[AUDITORIA-FORENSE-2026-09-05]` — cerrada el `2026-09-05`. Inspección forense estricta por el equipo auditor: 277 tests de backend pasaron (100%), aislamiento multi-tenant sede verificado en todos los endpoints de grupos/sesiones/asistencias/scanner, 0 llamadas a `db.delete(`, 0 llamadas a `datetime.utcnow`, 0 modales banned en frontend, 100% `apiFetch`, `tsc --noEmit` y ESLint con 0 errores y 0 warnings. Calificación: **A- / 95/100**.
 21. **Auditoría forense adversarial, remediación integral y elevación a 100/100 (A+)** `[AUDITORIA-FORENSE-2026-09-06]` — cerrada el `2026-09-06`. Ejecución adversarial colegiada con 5 revisores y subagente orquestador. Remediadas todas las brechas residuales: pre-commit validation en creación de eventos, aislamiento por `sede_id` en endpoints públicos y bulk attendance, BOLA safe 404 en reportes, soft-delete con `deleted_at = _utcnow()` en participantes, erradicación de 8 clases banned en frontend y normalización CSS con `color-mix`. Ejecutados 384 tests (286 backend + 98 frontend) con 0 fallos. Calificación final: **100/100 (A+ / CERTIFICADO)**. Ver [`docs/AUDITORIA_FORENSE_EVANGELISMO_2026-09-06.md`](file:///root/ccf/docs/AUDITORIA_FORENSE_EVANGELISMO_2026-09-06.md).
+22. **Event Form Studio y Digital Pass Super-PRO** `[TKT-EVT-STUDIO-01]` — cerrada el `2026-09-27`. Constructor de formularios dinámicos con slugs públicos, correlativos únicos `CCF-EVT-YYYY-XXXX`, generación de pase PDF con ReportLab (`Canvas` puro, Flowables, QR embebido) y rate limiting SlowAPI. Validado con `tests/test_evangelism_form_studio_pass.py` (2 passed).
+23. **Gatekeeper Scanner de Puerta, Alarma Anti-Duplicados y Monitor de Aforo** `[TKT-EVT-GATEKEEPER-02]` — cerrada el `2026-09-27`. Control de acceso por QR, bloqueo estricto anti-fraude `duplicate_access` (HTTP 409 con detalle de primer ingreso), monitor de aforo en vivo (`GET /capacity-live`) y UI con feedback Web Audio API y lumínico. Validado con `tests/test_evangelism_gatekeeper.py` (4 passed).
+24. **Analytics Post-Evento, Embudo de Asistencia y Conversión CRM** `[TKT-EVT-ANALYTICS-03]` — cerrada el `2026-09-27`. Embudo de conversión de 6 etapas, retención de nuevos visitantes y canalización batch a CRM. Validado con `tests/test_evangelism_post_analytics.py` (7 passed).
+25. **Automatización de Seguimiento Post-Evento, Campañas Multicanal y Mentores** `[TKT-EVT-FOLLOWUP-04]` — cerrada el `2026-09-27`. Cadencia 24h-72h-7d, asignación inteligente de mentores con balanceo por carga activa y matching geográfico/zona pastoral. Validado con `tests/test_evangelism_followup_campaigns.py` (5 passed).
+26. **Análisis de Cohortes de Retención, LTV Espiritual y Auditoría Pastoral Multi-Sede** `[TKT-EVT-COHORT-RETENTION-05]` — cerrada el `2026-09-27`. Retención a 30d/60d/90d en grupos de vida y academia, cálculo de Índice de Madurez Espiritual (SMI 0-100 / LTV Espiritual), ranking inter-sedes y exportación CSV con UTF-8 BOM compatible Excel. Validado con `tests/test_evangelism_cohort_retention.py` (6 passed).
+27. **Certificación Integral 100/100 A+, Documentación Canónica y Handoff Ejecutivo** `[TKT-EVT-CERT-06]` — cerrada el `2026-09-27`. Consolidación de 7 gates canónicos en `scripts/test_evangelism_quality.py` (7/7 passed), contratos estructurales (46 passed), typecheck TypeScript 100% limpio y actualización canónica integral.
 
 ---
 
@@ -347,10 +354,12 @@ Componentes compartidos:
 10. `backend/api/evangelism_grupos/grupos_main.py` — grupos, seasons, analytics, visitantes.
 11. `backend/api/evangelism_grupos/grupos_sesiones.py` — sesiones y habilitacion.
 12. `backend/api/evangelism_grupos/grupos_asistencias.py` — asistencia y seguimiento.
-13. `backend/api/evangelism_events/` — eventos y check-in.
+13. `backend/api/evangelism_events/` — eventos, form studio, scanner, analytics, follow-up, cohorts.
 14. `backend/services/evangelism_crm_bridge.py` — integracion CRM.
-15. `frontend/src/app/plataforma/evangelism/strategies/[id]/page.tsx` — pantalla mas sensible.
-16. `frontend/src/components/evangelism/` — shell/drawers compartidos.
+15. `backend/services/event_cohort_retention_service.py` — servicio de cohortes y retención.
+16. `frontend/src/app/plataforma/evangelism/strategies/[id]/page.tsx` — pantalla de estrategia.
+17. `frontend/src/app/plataforma/evangelism/events/` — eventos, studio, scanner, cohortes.
+18. `frontend/src/components/evangelism/` — shell/drawers compartidos.
 
 ---
 
@@ -370,6 +379,12 @@ Componentes compartidos:
 
 | ID | Pieza | Archivo o area |
 |---|---|---|
+| `TKT-EVT-STUDIO-01` | Cerrada el 2026-09-27. Event Form Studio, correlativos únicos y pase PDF ReportLab. | `backend/api/evangelism_events/events_form_studio.py` + `frontend/src/app/plataforma/evangelism/events/[id]/studio/` |
+| `TKT-EVT-GATEKEEPER-02` | Cerrada el 2026-09-27. Gatekeeper Scanner, alarma anti-duplicados 409 y monitor de aforo. | `backend/api/evangelism_events/events_checkin.py` + `frontend/src/app/plataforma/evangelism/scanner/` |
+| `TKT-EVT-ANALYTICS-03` | Cerrada el 2026-09-27. Analytics Post-Evento, Embudo de Asistencia y Conversión CRM. | `backend/api/evangelism_events/events_analytics.py` + `frontend/src/app/plataforma/evangelism/events/[id]/analytics/` |
+| `TKT-EVT-FOLLOWUP-04` | Cerrada el 2026-09-27. Automatización de Seguimiento 24h-72h-7d y Asignación de Mentores. | `backend/api/evangelism_events/events_followup.py` + `frontend/src/app/plataforma/evangelism/events/[id]/followup/` |
+| `TKT-EVT-COHORT-RETENTION-05` | Cerrada el 2026-09-27. Análisis de Cohortes 30d/60d/90d, SMI / LTV y Auditoría Multi-Sede CSV. | `backend/services/event_cohort_retention_service.py` + `backend/api/evangelism_events/events_cohorts.py` + `frontend/src/app/plataforma/evangelism/cohorts/` |
+| `TKT-EVT-CERT-06` | Cerrada el 2026-09-27. Certificación Integral 100/100 A+, Documentación Canónica y Handoff Ejecutivo. | Documentación canónica + `scripts/test_evangelism_quality.py` (7/7 suites) |
 | `PARCIAL-STRATEGY-PAGE-001` | Cerrada el 2026-07-18. Ownership de datos y acciones consolidado en hooks canonicos; page revalidada con lint + E2E profundo. | `frontend/src/app/plataforma/evangelism/strategies/[id]/page.tsx` + `useStrategyDetail.ts` |
 | `PEND-STRATEGY-DECOMPOSE-001` | Cerrada el 2026-07-18. La page ya consume hooks canonicos y elimina duplicacion estructural de fetch/search/session actions. | `useStrategyDetail.ts` + page.tsx |
 | `PEND-PERSONAS-SEARCH-001` | Cerrada el 2026-07-17. Endpoint remoto + AbortController en frontend | `backend/api/evangelism_grupos/grupos_sesiones.py` + `useStrategyDetail.ts` |
@@ -388,5 +403,5 @@ Componentes compartidos:
 Busqueda rapida:
 
 ```bash
-grep -nE '^\d+\. \*\*.*\[(PARCIAL|PEND)-|^\| `(PARCIAL|PEND)-' /root/ccf/docs/ESTADO_EVANGELISMO.md
+grep -nE '^\d+\. \*\*.*\[(PARCIAL|PEND|TKT)-|^\| `(PARCIAL|PEND|TKT)-' /root/ccf/docs/ESTADO_EVANGELISMO.md
 ```

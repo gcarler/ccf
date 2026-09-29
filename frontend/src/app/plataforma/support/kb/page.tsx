@@ -39,19 +39,19 @@ const CATEGORY_META: Record<
   string,
   { icon: LucideIcon; color: string }
 > = {
-  "getting-started": { icon: Zap, color: "text-[hsl(var(--warning))] bg-warning-soft dark:bg-[hsl(var(--warning))]/10" },
-  crm: { icon: Users, color: "text-[hsl(var(--primary))] bg-info-soft dark:bg-[hsl(var(--info))]/10" },
-  academy: { icon: BookOpen, color: "text-[hsl(var(--info))] bg-info-soft dark:bg-[hsl(var(--info))]/10" },
-  projects: { icon: Layout, color: "text-[hsl(var(--success))] bg-success-soft dark:bg-[hsl(var(--success))]/10" },
-  finances: { icon: TrendingUp, color: "text-[hsl(var(--danger))] bg-danger-soft dark:bg-[hsl(var(--danger))]/10" },
-  admin: { icon: FileText, color: "text-[hsl(var(--text-secondary))] bg-[hsl(var(--surface-2))] dark:bg-white/5" },
+  "getting-started": { icon: Zap, color: "text-[hsl(var(--warning))] bg-[hsl(var(--warning))]/10" },
+  crm: { icon: Users, color: "text-[hsl(var(--primary))] bg-[hsl(var(--info))]/10" },
+  academy: { icon: BookOpen, color: "text-[hsl(var(--info))] bg-[hsl(var(--info))]/10" },
+  projects: { icon: Layout, color: "text-[hsl(var(--success))] bg-[hsl(var(--success))]/10" },
+  finances: { icon: TrendingUp, color: "text-[hsl(var(--danger))] bg-[hsl(var(--danger))]/10" },
+  admin: { icon: FileText, color: "text-[hsl(var(--text-secondary))] bg-[hsl(var(--surface-2))]" },
 };
 
 function getCategoryMeta(id: string) {
   return (
     CATEGORY_META[id] ?? {
       icon: Book,
-      color: "text-[hsl(var(--text-secondary))] bg-[hsl(var(--surface-2))] dark:bg-white/5",
+      color: "text-[hsl(var(--text-secondary))] bg-[hsl(var(--surface-2))]",
     }
   );
 }
@@ -95,19 +95,15 @@ export default function SupportKBPage() {
   });
 
   return (
-    <div className="h-full flex flex-col bg-[hsl(var(--surface-1))] dark:bg-[#0f1117]">
+    <div className="h-full flex flex-col bg-[hsl(var(--surface-1))]">
       {/* Hero Search */}
       <div className="bg-gradient-to-br from-[hsl(var(--info))] to-[hsl(var(--info))] p-4 text-center relative overflow-hidden">
         <div
-          className="absolute inset-0 opacity-10"
-          style={{
-            backgroundImage:
-              "radial-gradient(circle at 50% 0%, white 0%, transparent 60%)",
-          }}
+          className="absolute inset-0 opacity-10 bg-radial-[circle_at_50%_0%] from-[hsl(var(--primary))] to-transparent"
         />
         <div className="relative">
-          <Book size={32} className="text-white/60 mx-auto mb-4" />
-          <h1 className="text-lg font-bold text-white mb-2">
+          <Book size={32} className="text-[hsl(var(--text-secondary))] mx-auto mb-4" />
+          <h1 className="text-lg font-bold text-[hsl(var(--text-primary))] mb-2">
             Base de Conocimientos
           </h1>
           <p className="text-[hsl(var(--info))] text-sm mb-3">
@@ -163,8 +159,8 @@ export default function SupportKBPage() {
                           className={clsx(
                             "flex items-center gap-4 p-3 rounded-lg border transition-all text-left shadow-sm group",
                             selectedCat === cat.id
-                              ? "border-[hsl(var(--info)/100%)] bg-info-soft dark:bg-[hsl(var(--info))]/10"
-                              : "border-[hsl(var(--border))]/60 dark:border-white/5 bg-[hsl(var(--bg-primary))] dark:bg-[#1a1d27] hover:shadow-md"
+                              ? "border-[hsl(var(--info))] bg-[hsl(var(--info))]/10"
+                              : "border-[hsl(var(--border))]/60 bg-[hsl(var(--bg-primary))] hover:shadow-md"
                           )}
                         >
                           <div
@@ -176,7 +172,7 @@ export default function SupportKBPage() {
                             <Icon size={20} />
                           </div>
                           <div>
-                            <p className="text-base font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">
+                            <p className="text-base font-bold text-[hsl(var(--text-primary))]">
                               {cat.label}
                             </p>
                             <p className="text-2xs text-[hsl(var(--text-secondary))]">
@@ -203,20 +199,20 @@ export default function SupportKBPage() {
                     No se encontraron artículos.
                   </p>
                 ) : (
-                  <div className="bg-[hsl(var(--bg-primary))] dark:bg-[#1a1d27] rounded-lg border border-[hsl(var(--border))]/60 dark:border-white/5 shadow-sm divide-y divide-[hsl(var(--border))] dark:divide-white/5 overflow-hidden">
+                  <div className="bg-[hsl(var(--bg-primary))] rounded-lg border border-[hsl(var(--border))]/60 shadow-sm divide-y divide-[hsl(var(--border))] overflow-hidden">
                     {filteredArticles.map((article, i) => (
                       <motion.div
                         key={article.id}
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         transition={{ delay: 0.2 + i * 0.04 }}
-                        className="flex items-center gap-4 px-3 py-1.5 hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5 transition-all cursor-pointer group"
+                        className="flex items-center gap-4 px-3 py-1.5 hover:bg-[hsl(var(--surface-1))] transition-all cursor-pointer group"
                       >
-                        <div className="size-8 rounded-lg bg-[hsl(var(--surface-2))] dark:bg-white/5 flex items-center justify-center font-semibold text-[hsl(var(--text-secondary))]">
+                        <div className="size-8 rounded-lg bg-[hsl(var(--surface-2))] flex items-center justify-center font-semibold text-[hsl(var(--text-secondary))]">
                           {i + 1}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-base font-semibold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] truncate group-hover:text-[hsl(var(--primary))] transition-colors">
+                          <p className="text-base font-semibold text-[hsl(var(--text-primary))] truncate group-hover:text-[hsl(var(--primary))] transition-colors">
                             {article.title}
                           </p>
                           <div className="flex items-center gap-3 mt-0.5">

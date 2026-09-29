@@ -16,7 +16,15 @@ import {
     UserCircle,
     FileText,
     GraduationCap,
-    ShieldCheck
+    ShieldCheck,
+    Sliders,
+    Award,
+    Brain,
+    Map as MapIcon,
+    HeartPulse,
+    Trophy,
+    Users,
+    Lightbulb,
 } from 'lucide-react';
 
 // Fuente única de la sidebar Academy (ACAD-HIGH-004).
@@ -29,6 +37,7 @@ const ACADEMY_SIDEBAR_SECTIONS = [
     {
         title: 'Principal',
         items: [
+            { id: 'student-dashboard', label: 'Mi Dashboard', href: '/plataforma/academy/estudiante', icon: LayoutDashboard, level: 'read' as AcademyLevel },
             { id: 'dashboard', label: 'Resumen', href: '/plataforma/academy', icon: LayoutDashboard, level: 'read' as AcademyLevel },
             { id: 'courses', label: 'Cursos', href: '/plataforma/academy/courses', icon: BookOpen, level: 'read' as AcademyLevel },
             { id: 'curriculum', label: 'Plan de Estudio', href: '/plataforma/academy/curriculum', icon: FileText, level: 'read' as AcademyLevel },
@@ -39,6 +48,15 @@ const ACADEMY_SIDEBAR_SECTIONS = [
         items: [
             { id: 'grades', label: 'Calificaciones', href: '/plataforma/academy/grades', icon: BarChart3, level: 'study' as AcademyLevel },
             { id: 'certificates', label: 'Certificados', href: '/plataforma/academy/certificates', icon: FileCheck, level: 'study' as AcademyLevel },
+            { id: 'tutor', label: 'Tutor Socrático', href: '/plataforma/academy/tutor', icon: Brain, level: 'read' as AcademyLevel },
+            { id: 'portfolio', label: 'Mi Portafolio', href: '/plataforma/academy/portafolio', icon: Award, level: 'read' as AcademyLevel },
+            { id: 'learning-map', label: 'Mapa de Aprendizaje', href: '/plataforma/academy/mapa', icon: MapIcon, level: 'read' as AcademyLevel },
+            { id: 'achievements', label: 'Logros', href: '/plataforma/academy/logros', icon: Trophy, level: 'read' as AcademyLevel },
+            { id: 'study-groups', label: 'Grupos', href: '/plataforma/academy/grupos', icon: Users, level: 'read' as AcademyLevel },
+            { id: 'mentorship', label: 'Mentoría', href: '/plataforma/academy/mentoria', icon: GraduationCap, level: 'read' as AcademyLevel },
+            { id: 'recommendations', label: 'Recomendaciones', href: '/plataforma/academy/recomendaciones', icon: Lightbulb, level: 'read' as AcademyLevel },
+            { id: 'calendar', label: 'Calendario', href: '/plataforma/academy/calendario', icon: Calendar, level: 'read' as AcademyLevel },
+            { id: 'wellness', label: 'Bienestar', href: '/plataforma/academy/wellness', icon: HeartPulse, level: 'read' as AcademyLevel },
         ],
     },
     {
@@ -61,7 +79,10 @@ const ACADEMY_SIDEBAR_SECTIONS = [
             // ACAD-HIGH-001: Panel Docente requiere academy:edit, Coordinación academy:manage.
             // El sidebar ya no los muestra a usuarios con sólo :read o :study.
             { id: 'teacher', label: 'Panel Docente', href: '/plataforma/academy/teacher', icon: GraduationCap, level: 'edit' as AcademyLevel },
+            { id: 'docente', label: 'Mi Portal Docente ERP', href: '/plataforma/academy/docente', icon: Award, level: 'edit' as AcademyLevel },
             { id: 'coordination', label: 'Coordinación', href: '/plataforma/academy/coordination', icon: ShieldCheck, level: 'manage' as AcademyLevel },
+            { id: 'analytics', label: 'Analítica Institucional', href: '/plataforma/academy/analitica', icon: BarChart3, level: 'manage' as AcademyLevel },
+            { id: 'admin', label: 'Gestión Institucional', href: '/plataforma/academy/admin', icon: Sliders, level: 'manage' as AcademyLevel },
         ],
     },
 ];
@@ -103,7 +124,7 @@ export default function AcademyLayout({ children }: { children: React.ReactNode 
                 sidebarSections={visibleSections}
                 allowedPermissions={['academy:read', 'academy:study', 'academy:edit', 'academy:manage']}
             >
-                <div className="bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))] h-full">
+                <div className="bg-[hsl(var(--bg-primary))] h-full">
                     {children}
                 </div>
             </WorkspaceLayout>

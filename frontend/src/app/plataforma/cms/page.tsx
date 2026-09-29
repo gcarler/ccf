@@ -395,10 +395,10 @@ export default function CmsHomePage() {
   }
 
   return (
-    <div className="h-full overflow-y-auto bg-[hsl(var(--surface-1))]/60 dark:bg-[hsl(var(--admin-bg-primary))]">
+    <div className="h-full overflow-y-auto bg-[hsl(var(--surface-1))]">
       <div className="space-y-3 px-4 py-2 lg:px-3">
         {dataIssue && (
-          <div className="flex items-start gap-3 rounded-lg border border-[hsl(var(--warning)/25%)] bg-warning-soft px-4 py-3 text-sm text-warning-text dark:border-[hsl(var(--warning)/100%)]/30 dark:bg-[hsl(var(--warning))]/10 dark:text-[hsl(var(--warning))]">
+          <div className="flex items-start gap-3 rounded-lg border border-[hsl(var(--warning)/30%)] bg-[hsl(var(--warning)/10%)] px-4 py-3 text-sm text-[hsl(var(--warning))]">
             <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
             <span>{dataIssue}</span>
           </div>
@@ -410,7 +410,7 @@ export default function CmsHomePage() {
             href="/"
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 rounded-lg border border-[hsl(var(--border))] px-3 py-2 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:border-[hsl(var(--info)/30%)] hover:text-[hsl(var(--primary))] dark:border-white/10 dark:text-[hsl(var(--text-secondary))]"
+            className="inline-flex items-center gap-2 rounded-lg border border-[hsl(var(--border))] px-3 py-2 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:border-[hsl(var(--info)/30%)] hover:text-[hsl(var(--primary))]"
           >
             Ver sitio público
             <ExternalLink size={14} />
@@ -421,17 +421,17 @@ export default function CmsHomePage() {
         <section className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-5">
           {loading ? (
             Array.from({ length: 10 }).map((_, i) => (
-              <div key={`skel-metric-${i}`} className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] dark:bg-white/5 p-4 shadow-sm h-24 animate-pulse dark:border-white/10" />
+              <div key={`skel-metric-${i}`} className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-4 shadow-sm h-24 animate-pulse" />
             ))
           ) : metricCards.map((metric) => {
             const Icon = metric.icon;
             return (
-              <Link key={metric.label} href={metric.href} className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-4 shadow-sm dark:border-white/10 dark:bg-[hsl(var(--admin-bg-tertiary))] transition-colors hover:border-[hsl(var(--info)/30%)] dark:hover:border-[hsl(var(--info)/100%)]/50 group">
+              <Link key={metric.label} href={metric.href} className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-4 shadow-sm transition-colors hover:border-[hsl(var(--info)/30%)] group">
                 <div className="flex items-center justify-between gap-3">
                   <p className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] truncate">{metric.label}</p>
                   <Icon size={15} className="text-[hsl(var(--text-secondary))] group-hover:text-[hsl(var(--primary))] transition-colors" />
                 </div>
-                <p className="mt-3 text-2xl font-bold text-[hsl(var(--text-primary))] dark:text-white">
+                <p className="mt-3 text-2xl font-bold text-[hsl(var(--text-primary))]">
                   {metric.value}
                 </p>
               </Link>
@@ -447,24 +447,24 @@ export default function CmsHomePage() {
             { label: "Subir Media", href: "/plataforma/cms/media", icon: ImageIcon, color: "bg-[hsl(var(--info))]" },
             { label: "Nuevo Anuncio", href: "/plataforma/cms/announcements", icon: Megaphone, color: "bg-[hsl(var(--warning))]" },
           ].map(action => (
-            <Link key={action.label} href={action.href} className="flex items-center gap-3 p-3 rounded-xl border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-white/5 hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/10 transition-all active:scale-95 group">
-              <div className={`p-2 rounded-lg ${action.color} text-white shadow-md group-hover:scale-110 transition-transform`}>
+            <Link key={action.label} href={action.href} className="flex items-center gap-3 p-3 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] hover:bg-[hsl(var(--surface-2))] transition-all active:scale-95 group">
+              <div className={`p-2 rounded-lg ${action.color} text-[hsl(var(--primary-foreground))] shadow-md group-hover:scale-110 transition-transform`}>
                 <action.icon size={16} />
               </div>
-              <span className="text-sm font-bold text-[hsl(var(--text-primary))] dark:text-white">{action.label}</span>
+              <span className="text-sm font-bold text-[hsl(var(--text-primary))]">{action.label}</span>
             </Link>
           ))}
         </section>
 
         {/* Charts row */}
         <section className="grid grid-cols-1 gap-3 lg:grid-cols-2">
-          <div className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-3 shadow-sm dark:border-white/10 dark:bg-[hsl(var(--admin-bg-tertiary))]">
+          <div className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-3 shadow-sm">
             <div className="mb-3">
               <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Tendencias</p>
-              <h2 className="mt-1 text-lg font-semibold text-[hsl(var(--text-primary))] dark:text-white">Publicaciones por mes</h2>
+              <h2 className="mt-1 text-lg font-semibold text-[hsl(var(--text-primary))]">Publicaciones por mes</h2>
             </div>
             {loading ? (
-              <div className="h-40 bg-[hsl(var(--surface-1))] dark:bg-white/5 rounded-lg animate-pulse" />
+              <div className="h-40 bg-[hsl(var(--surface-1))] rounded-lg animate-pulse" />
             ) : pubsChart.length > 0 ? (
               <div className="flex items-end gap-2 h-40">
                 {pubsChart.map((d) => (
@@ -486,27 +486,27 @@ export default function CmsHomePage() {
             )}
           </div>
 
-          <div className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-3 shadow-sm dark:border-white/10 dark:bg-[hsl(var(--admin-bg-tertiary))]">
+          <div className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-3 shadow-sm">
             <div className="mb-3">
               <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Contenido</p>
-              <h2 className="mt-1 text-lg font-semibold text-[hsl(var(--text-primary))] dark:text-white">Secciones por tipo</h2>
+              <h2 className="mt-1 text-lg font-semibold text-[hsl(var(--text-primary))]">Secciones por tipo</h2>
             </div>
             {loading ? (
               <div className="space-y-3">
-                {[1, 2, 3, 4].map(i => <div key={i} className="h-4 bg-[hsl(var(--surface-1))] dark:bg-white/5 rounded animate-pulse" />)}
+                {[1, 2, 3, 4].map(i => <div key={i} className="h-4 bg-[hsl(var(--surface-1))] rounded animate-pulse" />)}
               </div>
             ) : contentTypeChart.length > 0 ? (
               <div className="space-y-2">
                 {contentTypeChart.map((d) => (
                   <div key={d.label} className="flex items-center gap-3">
                     <span className="w-24 text-xs text-[hsl(var(--text-secondary))] truncate">{d.label}</span>
-                    <div className="flex-1 h-4 rounded bg-[hsl(var(--surface-1))] dark:bg-white/5 overflow-hidden">
+                    <div className="flex-1 h-4 rounded bg-[hsl(var(--surface-1))] overflow-hidden">
                       <div
                         className="h-full rounded bg-[hsl(var(--success))]/80"
                         style={{ width: `${Math.max((d.value / maxTypeValue) * 100, 2)}%` }}
                       />
                     </div>
-                    <span className="w-8 text-right text-xs font-semibold text-[hsl(var(--text-primary))] dark:text-white">{Math.round(d.value)}</span>
+                    <span className="w-8 text-right text-xs font-semibold text-[hsl(var(--text-primary))]">{Math.round(d.value)}</span>
                   </div>
                 ))}
               </div>
@@ -521,14 +521,14 @@ export default function CmsHomePage() {
 
         {/* Quality + Role */}
         <section className="grid grid-cols-1 gap-3 xl:grid-cols-[1.2fr_0.8fr]">
-          <div className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-3 shadow-sm dark:border-white/10 dark:bg-[hsl(var(--admin-bg-tertiary))]">
-            <div className="flex flex-col gap-3 border-b border-[hsl(var(--border))] pb-4 dark:border-white/10 md:flex-row md:items-center md:justify-between">
+          <div className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-3 shadow-sm">
+            <div className="flex flex-col gap-3 border-b border-[hsl(var(--border))] pb-4 md:flex-row md:items-center md:justify-between">
               <div>
                 <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Control de calidad</p>
-                <h2 className="mt-1 text-xl font-semibold text-[hsl(var(--text-primary))] dark:text-white">Prioridades editoriales</h2>
+                <h2 className="mt-1 text-xl font-semibold text-[hsl(var(--text-primary))]">Prioridades editoriales</h2>
               </div>
               <div className="flex items-center gap-3">
-                <div className="flex h-8 w-14 items-center justify-center rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-sm font-semibold text-[hsl(var(--text-primary))] dark:border-white/10 dark:bg-white/5 dark:text-white">
+                <div className="flex h-8 w-14 items-center justify-center rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-sm font-semibold text-[hsl(var(--text-primary))]">
                   {qualityScore === null ? "..." : `${qualityScore}%`}
                 </div>
                 <p className="max-w-44 text-xs leading-relaxed text-[hsl(var(--text-secondary))]">
@@ -545,19 +545,19 @@ export default function CmsHomePage() {
                   <Link
                     key={check.label}
                     href={canEdit ? check.href : "/plataforma/cms"}
-                    className="group rounded-lg border border-[hsl(var(--border))] p-4 transition-colors hover:border-[hsl(var(--info)/30%)] dark:border-white/10 dark:hover:border-[hsl(var(--info)/100%)]/50"
+                    className="group rounded-lg border border-[hsl(var(--border))] p-4 transition-colors hover:border-[hsl(var(--info)/30%)]"
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex items-center gap-3">
-                        <div className={isWarning ? "rounded-lg bg-warning-soft p-2 text-warning-text dark:bg-[hsl(var(--warning))]/10 dark:text-warning-text" : "rounded-lg bg-success-soft p-2 text-success-text dark:bg-[hsl(var(--success))]/10 dark:text-success-text"}>
+                        <div className={isWarning ? "rounded-lg bg-[hsl(var(--warning)/10%)] p-2 text-[hsl(var(--warning))]" : "rounded-lg bg-[hsl(var(--success)/10%)] p-2 text-[hsl(var(--success))]"}>
                           <Icon size={16} />
                         </div>
                         <div>
-                          <p className="text-sm font-bold text-[hsl(var(--text-primary))] dark:text-white">{check.label}</p>
+                          <p className="text-sm font-bold text-[hsl(var(--text-primary))]">{check.label}</p>
                           <p className="mt-1 text-xs text-[hsl(var(--text-secondary))]">{check.description}</p>
                         </div>
                       </div>
-                      <span className={isWarning ? "text-lg font-semibold text-warning-text dark:text-warning-text" : "text-lg font-semibold text-success-text dark:text-success-text"}>
+                      <span className={isWarning ? "text-lg font-semibold text-[hsl(var(--warning))]" : "text-lg font-semibold text-[hsl(var(--success))]"}>
                         {loading ? "..." : check.value}
                       </span>
                     </div>
@@ -567,11 +567,11 @@ export default function CmsHomePage() {
             </div>
           </div>
 
-          <div className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-3 shadow-sm dark:border-white/10 dark:bg-[hsl(var(--admin-bg-tertiary))]">
+          <div className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-3 shadow-sm">
             <div className="flex items-start justify-between gap-4">
               <div>
                 <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Acceso</p>
-                <h2 className="mt-1 text-xl font-semibold text-[hsl(var(--text-primary))] dark:text-white">Rol editorial</h2>
+                <h2 className="mt-1 text-xl font-semibold text-[hsl(var(--text-primary))]">Rol editorial</h2>
               </div>
               <ShieldCheck className="h-5 w-5 text-[hsl(var(--primary))]" />
             </div>
@@ -585,16 +585,16 @@ export default function CmsHomePage() {
 
             <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2">
               {quickLinks.map(({ label, href, description, icon: Icon }) => (
-                <Link key={href} href={href} className="rounded-lg border border-[hsl(var(--border))] p-3 transition-colors hover:border-[hsl(var(--info)/30%)] dark:border-white/10 dark:hover:border-[hsl(var(--info)/100%)]/50">
+                <Link key={href} href={href} className="rounded-lg border border-[hsl(var(--border))] p-3 transition-colors hover:border-[hsl(var(--info)/30%)]">
                   <div className="flex items-center gap-2">
                     <Icon size={15} className="text-[hsl(var(--primary))]" />
-                    <p className="text-sm font-bold text-[hsl(var(--text-primary))] dark:text-white">{label}</p>
+                    <p className="text-sm font-bold text-[hsl(var(--text-primary))]">{label}</p>
                   </div>
                   <p className="mt-1 text-xs text-[hsl(var(--text-secondary))]">{description}</p>
                 </Link>
               ))}
               {quickLinks.length === 0 && (
-                <div className="rounded-lg border border-dashed border-[hsl(var(--border))] p-4 text-sm text-[hsl(var(--text-secondary))] dark:border-white/10">
+                <div className="rounded-lg border border-dashed border-[hsl(var(--border))] p-4 text-sm text-[hsl(var(--text-secondary))]">
                   No hay modulos de edicion disponibles para tu rol actual.
                 </div>
               )}
@@ -605,17 +605,17 @@ export default function CmsHomePage() {
         {/* Top pages + Recent posts + Activity */}
         <section className="grid grid-cols-1 gap-3 lg:grid-cols-3">
           {/* Top pages */}
-          <div className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-3 shadow-sm dark:border-white/10 dark:bg-[hsl(var(--admin-bg-tertiary))]">
+          <div className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-3 shadow-sm">
             <div className="flex items-center justify-between gap-3">
               <div>
-                <h2 className="text-lg font-semibold text-[hsl(var(--text-primary))] dark:text-white">Páginas más vistas</h2>
+                <h2 className="text-lg font-semibold text-[hsl(var(--text-primary))]">Páginas más vistas</h2>
                 <p className="mt-1 text-sm text-[hsl(var(--text-secondary))]">Últimos 30 días.</p>
               </div>
               <Eye className="h-5 w-5 text-[hsl(var(--primary))]" />
             </div>
             <div className="mt-4 space-y-2 min-h-32">
               {loading ? (
-                Array.from({ length: 5 }).map((_, i) => <div key={`page-skel-${i}`} className="h-12 bg-[hsl(var(--surface-1))] dark:bg-white/5 rounded-lg animate-pulse" />)
+                Array.from({ length: 5 }).map((_, i) => <div key={`page-skel-${i}`} className="h-12 bg-[hsl(var(--surface-1))] rounded-lg animate-pulse" />)
               ) : topPages.length === 0 ? (
                 <div className="h-full flex flex-col items-center justify-center py-6 text-[hsl(var(--text-secondary))] opacity-60">
                   <Eye size={24} className="mb-2" />
@@ -624,13 +624,13 @@ export default function CmsHomePage() {
                 </div>
               ) : (
                 topPages.map((page, idx) => (
-                  <div key={page.slug} className="flex items-center justify-between gap-3 rounded-lg border border-[hsl(var(--border))] p-3 dark:border-white/10 hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5 transition-colors">
+                  <div key={page.slug} className="flex items-center justify-between gap-3 rounded-lg border border-[hsl(var(--border))] p-3 hover:bg-[hsl(var(--surface-1))] transition-colors">
                     <div className="flex items-center gap-3">
-                      <span className="flex h-6 w-6 items-center justify-center rounded bg-[hsl(var(--surface-2))] text-2xs font-bold text-[hsl(var(--text-secondary))] dark:bg-white/10">
+                      <span className="flex h-6 w-6 items-center justify-center rounded bg-[hsl(var(--surface-2))] text-2xs font-bold text-[hsl(var(--text-secondary))]">
                         {idx + 1}
                       </span>
                       <div>
-                        <p className="text-sm font-bold text-[hsl(var(--text-primary))] dark:text-white truncate max-w-[140px]">{page.title}</p>
+                        <p className="text-sm font-bold text-[hsl(var(--text-primary))] truncate max-w-[140px]">{page.title}</p>
                         <p className="text-xs text-[hsl(var(--text-secondary))] font-mono">/{page.slug}</p>
                       </div>
                     </div>
@@ -642,14 +642,14 @@ export default function CmsHomePage() {
           </div>
 
           {/* Recent posts */}
-          <div className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-3 shadow-sm dark:border-white/10 dark:bg-[hsl(var(--admin-bg-tertiary))]">
+          <div className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-3 shadow-sm">
             <div className="flex items-center justify-between gap-3">
               <div>
-                <h2 className="text-lg font-semibold text-[hsl(var(--text-primary))] dark:text-white">Posts recientes</h2>
+                <h2 className="text-lg font-semibold text-[hsl(var(--text-primary))]">Posts recientes</h2>
                 <p className="mt-1 text-sm text-[hsl(var(--text-secondary))]">Últimos publicados.</p>
               </div>
               {canEdit && (
-                <Link href="/plataforma/cms/posts" className="rounded-lg border border-[hsl(var(--border))] px-3 py-2 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:border-[hsl(var(--info)/30%)] hover:text-[hsl(var(--primary))] dark:border-white/10 dark:text-[hsl(var(--text-secondary))]">
+                <Link href="/plataforma/cms/posts" className="rounded-lg border border-[hsl(var(--border))] px-3 py-2 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:border-[hsl(var(--info)/30%)] hover:text-[hsl(var(--primary))]">
                   Ver todo
                 </Link>
               )}
@@ -658,15 +658,15 @@ export default function CmsHomePage() {
               {loading ? (
                 <p className="text-sm text-[hsl(var(--text-secondary))]">Cargando posts...</p>
               ) : recentPosts.length === 0 ? (
-                <p className="rounded-lg border border-dashed border-[hsl(var(--border))] p-4 text-sm text-[hsl(var(--text-secondary))] dark:border-white/10">
+                <p className="rounded-lg border border-dashed border-[hsl(var(--border))] p-4 text-sm text-[hsl(var(--text-secondary))]">
                   Sin posts publicados.
                 </p>
               ) : (
                 recentPosts.map((post) => (
-                  <div key={post.slug} className="rounded-lg border border-[hsl(var(--border))] p-3 dark:border-white/10">
+                  <div key={post.slug} className="rounded-lg border border-[hsl(var(--border))] p-3">
                     <div className="flex items-center justify-between gap-2">
-                      <p className="text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-white truncate">{post.title}</p>
-                      <span className="shrink-0 rounded-full bg-success-soft px-2 py-0.5 text-2xs font-bold text-success-text dark:bg-[hsl(var(--success))]/10 dark:text-success-text">
+                      <p className="text-sm font-semibold text-[hsl(var(--text-primary))] truncate">{post.title}</p>
+                      <span className="shrink-0 rounded-full bg-[hsl(var(--success)/15%)] px-2 py-0.5 text-2xs font-bold text-[hsl(var(--success))]">
                         {post.status}
                       </span>
                     </div>
@@ -682,17 +682,17 @@ export default function CmsHomePage() {
           </div>
 
           {/* Recent activity */}
-          <div className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-3 shadow-sm dark:border-white/10 dark:bg-[hsl(var(--admin-bg-tertiary))]">
+          <div className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-3 shadow-sm">
             <div className="flex items-center justify-between gap-3">
               <div>
-                <h2 className="text-lg font-semibold text-[hsl(var(--text-primary))] dark:text-white">Actividad reciente</h2>
+                <h2 className="text-lg font-semibold text-[hsl(var(--text-primary))]">Actividad reciente</h2>
                 <p className="mt-1 text-sm text-[hsl(var(--text-secondary))]">Últimas acciones en el CMS.</p>
               </div>
               <Clock3 className="h-5 w-5 text-[hsl(var(--primary))]" />
             </div>
             <div className="mt-4 space-y-3 min-h-32">
               {loading ? (
-                Array.from({ length: 4 }).map((_, i) => <div key={`act-skel-${i}`} className="h-14 bg-[hsl(var(--surface-1))] dark:bg-white/5 rounded-lg animate-pulse" />)
+                Array.from({ length: 4 }).map((_, i) => <div key={`act-skel-${i}`} className="h-14 bg-[hsl(var(--surface-1))] rounded-lg animate-pulse" />)
               ) : recentActivity.length === 0 ? (
                 <div className="h-full flex flex-col items-center justify-center py-6 text-[hsl(var(--text-secondary))] opacity-60">
                   <Clock3 size={24} className="mb-2" />
@@ -700,12 +700,12 @@ export default function CmsHomePage() {
                 </div>
               ) : (
                 recentActivity.map((activity, idx) => (
-                  <div key={idx} className="flex items-start gap-3 rounded-lg border border-[hsl(var(--border))] p-3 dark:border-white/10 hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5 transition-colors">
+                  <div key={idx} className="flex items-start gap-3 rounded-lg border border-[hsl(var(--border))] p-3 hover:bg-[hsl(var(--surface-1))] transition-colors">
                     <div className="mt-1 h-2 w-2 shrink-0 rounded-full bg-[hsl(var(--primary))]" />
                     <div className="min-w-0">
-                      <p className="text-sm font-medium text-[hsl(var(--text-primary))] dark:text-white">{activityLabel(activity)}</p>
+                      <p className="text-sm font-medium text-[hsl(var(--text-primary))]">{activityLabel(activity)}</p>
                       {activity.from_status && activity.to_status && (
-                        <p className="mt-0.5 text-xs text-[hsl(var(--text-secondary))] font-mono bg-[hsl(var(--surface-2))] dark:bg-white/5 px-1.5 py-0.5 rounded inline-block">
+                        <p className="mt-0.5 text-xs text-[hsl(var(--text-secondary))] font-mono bg-[hsl(var(--surface-2))] px-1.5 py-0.5 rounded inline-block">
                           {activity.from_status} → {activity.to_status}
                         </p>
                       )}
@@ -720,14 +720,14 @@ export default function CmsHomePage() {
 
         {/* Testimonials + Workflow */}
         <section className="grid grid-cols-1 gap-3 lg:grid-cols-2">
-          <div className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-3 shadow-sm dark:border-white/10 dark:bg-[hsl(var(--admin-bg-tertiary))]">
+          <div className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-3 shadow-sm">
             <div className="flex items-center justify-between gap-3">
               <div>
-                <h2 className="text-lg font-semibold text-[hsl(var(--text-primary))] dark:text-white">Testimonios recientes</h2>
+                <h2 className="text-lg font-semibold text-[hsl(var(--text-primary))]">Testimonios recientes</h2>
                 <p className="mt-1 text-sm text-[hsl(var(--text-secondary))]">Ultimas historias recibidas para revision y publicacion.</p>
               </div>
               {canEdit && (
-                <Link href="/plataforma/cms/testimonials" className="rounded-lg border border-[hsl(var(--border))] px-3 py-2 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:border-[hsl(var(--info)/30%)] hover:text-[hsl(var(--primary))] dark:border-white/10 dark:text-[hsl(var(--text-secondary))]">
+                <Link href="/plataforma/cms/testimonials" className="rounded-lg border border-[hsl(var(--border))] px-3 py-2 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:border-[hsl(var(--info)/30%)] hover:text-[hsl(var(--primary))]">
                   Ver todo
                 </Link>
               )}
@@ -737,19 +737,19 @@ export default function CmsHomePage() {
               {loading ? (
                 <p className="text-sm text-[hsl(var(--text-secondary))]">Cargando historias...</p>
               ) : recentTestimonials.length === 0 ? (
-                <p className="rounded-lg border border-dashed border-[hsl(var(--border))] p-4 text-sm text-[hsl(var(--text-secondary))] dark:border-white/10">
+                <p className="rounded-lg border border-dashed border-[hsl(var(--border))] p-4 text-sm text-[hsl(var(--text-secondary))]">
                   Sin testimonios en la cola.
                 </p>
               ) : (
                 recentTestimonials.map((testimony) => (
-                  <div key={testimony.id} className="rounded-lg border border-[hsl(var(--border))] p-4 dark:border-white/10">
+                  <div key={testimony.id} className="rounded-lg border border-[hsl(var(--border))] p-4">
                     <div className="flex items-center justify-between gap-3">
                       <p className="text-xs font-bold uppercase tracking-wide text-[hsl(var(--primary))]">{testimony.emotion || "Sin categoria"}</p>
-                      <span className={testimony.is_approved ? "rounded-full bg-success-soft px-2 py-1 text-2xs font-bold text-success-text dark:bg-[hsl(var(--success))]/10 dark:text-success-text" : "rounded-full bg-warning-soft px-2 py-1 text-2xs font-bold text-warning-text dark:bg-[hsl(var(--warning))]/10 dark:text-warning-text"}>
+                      <span className={testimony.is_approved ? "rounded-full bg-[hsl(var(--success)/15%)] px-2 py-1 text-2xs font-bold text-[hsl(var(--success))]" : "rounded-full bg-[hsl(var(--warning)/15%)] px-2 py-1 text-2xs font-bold text-[hsl(var(--warning))]"}>
                         {testimony.is_approved ? "Aprobado" : "Pendiente"}
                       </span>
                     </div>
-                    <p className="mt-2 line-clamp-2 text-sm text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">{testimony.content}</p>
+                    <p className="mt-2 line-clamp-2 text-sm text-[hsl(var(--text-secondary))]">{testimony.content}</p>
                     <p className="mt-3 text-xs text-[hsl(var(--text-secondary))]">{formatDate(testimony.created_at, { fallback: "Sin fecha" })}</p>
                   </div>
                 ))
@@ -757,10 +757,10 @@ export default function CmsHomePage() {
             </div>
           </div>
 
-          <div className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-3 shadow-sm dark:border-white/10 dark:bg-[hsl(var(--admin-bg-tertiary))]">
+          <div className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-3 shadow-sm">
             <div className="flex items-center justify-between gap-3">
               <div>
-                <h2 className="text-lg font-semibold text-[hsl(var(--text-primary))] dark:text-white">Ruta de gestion</h2>
+                <h2 className="text-lg font-semibold text-[hsl(var(--text-primary))]">Ruta de gestion</h2>
                 <p className="mt-1 text-sm text-[hsl(var(--text-secondary))]">Secuencia recomendada para publicar cambios del sitio.</p>
               </div>
               <CheckCircle2 className="h-5 w-5 text-success-text" />
@@ -777,13 +777,13 @@ export default function CmsHomePage() {
                   href={step.href}
                   target={step.external ? "_blank" : undefined}
                   rel={step.external ? "noopener noreferrer" : undefined}
-                  className="flex items-start gap-3 rounded-lg border border-[hsl(var(--border))] p-3 transition-colors hover:border-[hsl(var(--info)/30%)] dark:border-white/10 dark:hover:border-[hsl(var(--info)/100%)]/50"
+                  className="flex items-start gap-3 rounded-lg border border-[hsl(var(--border))] p-3 transition-colors hover:border-[hsl(var(--info)/30%)]"
                 >
-                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[hsl(var(--bg-muted))] text-xs font-semibold text-white dark:bg-[hsl(var(--bg-primary))] dark:text-[hsl(var(--text-primary))]">
+                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[hsl(var(--surface-2))] text-xs font-semibold text-[hsl(var(--text-primary))]">
                     {index + 1}
                   </span>
                   <span className="flex-1 min-w-0">
-                    <span className="flex items-center gap-1.5 text-sm font-bold text-[hsl(var(--text-primary))] dark:text-white">
+                    <span className="flex items-center gap-1.5 text-sm font-bold text-[hsl(var(--text-primary))]">
                       {step.label}
                       {step.external && <ExternalLink size={14} className="text-[hsl(var(--text-secondary))]" />}
                     </span>

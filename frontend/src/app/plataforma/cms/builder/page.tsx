@@ -4,24 +4,18 @@ import React, { useEffect, useState, useMemo, useRef, useCallback } from "react"
 import { Puck, Config } from "@puckeditor/core";
 import "@puckeditor/core/dist/index.css";
 import { useSearchParams, useRouter } from "next/navigation";
-import { LayoutPanelTop, ArrowLeft, ArrowUp, ArrowDown, Loader2, Palette, CheckCircle2, AlertTriangle, Save, ImageIcon, Trash2, Plus } from "lucide-react";
+import { LayoutPanelTop, ArrowLeft, Loader2, Palette, CheckCircle2, AlertTriangle, Save } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { canEditCms, canPublishCms } from "@/lib/cms/permissions";
-import { listCmsSections, patchCmsSection, createCmsSection, deleteCmsSection, workflowCmsPage, reorderCmsSections } from "@/lib/cms/v2";
+import { listCmsSections, patchCmsSection, createCmsSection, deleteCmsSection, workflowCmsPage } from "@/lib/cms/v2";
 import { apiFetch } from "@/lib/http";
 import { SITE_KEY } from "@/lib/site-config";
 import type { CmsTheme } from "@/types/cms-v2";
 import { toast } from "sonner";
-import { preserveSelectedMediaId, type SelectedMedia } from "./media-utils";
 import MediaPicker from "@/components/cms/builder/MediaPicker";
 import MediaPickerField, { setMediaPickerTrigger } from "@/components/cms/builder/MediaPickerField";
 import CmsJsonMediaField from "@/components/cms/CmsJsonMediaField";
 import AiField from "@/components/cms/builder/AiField";
-import PublicStrategiesManager from "@/components/cms/builder/PublicStrategiesManager";
-import PublicPastoralManager from "@/components/cms/builder/PublicPastoralManager";
-import PublicCoursesManager from "@/components/cms/builder/PublicCoursesManager";
-import PublicLocationsManager from "@/components/cms/builder/PublicLocationsManager";
-import OptimizedImage from "@/components/ui/OptimizedImage";
 
 export type SaveStatus = "saved" | "dirty" | "saving" | "error";
 
@@ -31,2423 +25,1252 @@ export type SaveStatus = "saved" | "dirty" | "saving" | "error";
 // exposing their complete props as JSON instead of silently dropping them from
 // the editor.
 const JSON_EDITABLE_SECTION_TYPES = [
-  "about",
-  "feed",
-  "team",
-  "events_calendar",
-  "policy_document",
-  "welcome",
-  "footer_config",
-  "mobile_menu_config",
-  "content_blocks",
-  "newsletter",
-  "contact_form",
-  "course_grid",
-  "locations_list",
-  "testimonials_masonry",
+ "about",
+ "feed",
+ "team",
+ "events_calendar",
+ "policy_document",
+ "welcome",
+ "footer_config",
+ "mobile_menu_config",
+ "content_blocks",
+ "newsletter",
+ "contact_form",
+ "course_grid",
+ "locations_list",
+ "testimonials_masonry",
 ] as const;
 
 const NATIVE_PUCK_SECTION_TYPES = new Set([
-  "hero",
-  "rich_text",
-  "cta_banner",
-  "faq",
-  "testimonials",
-  "stats",
-  "gallery",
-  "cards",
+ "hero",
+ "rich_text",
+ "cta_banner",
+ "faq",
+ "testimonials",
+ "stats",
+ "gallery",
+ "cards",
 ]);
 
 function serializeJsonProps(props: Record<string, unknown>): Record<string, unknown> {
-  return {
-    ...props,
-    __cms_json: JSON.stringify(props, null, 2),
-  };
+ return {
+ ...props,
+ __cms_json: JSON.stringify(props, null, 2),
+ };
 }
 
 function deserializePuckProps(props: Record<string, unknown>): Record<string, unknown> {
-  const serialized = props.__cms_json;
-  if (typeof serialized !== "string") {
-    return props;
-  }
-  let parsed: unknown;
-  try {
-    parsed = JSON.parse(serialized);
-  } catch {
-    throw new Error("El contenido JSON de la sección no es válido");
-  }
-  if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
-    throw new Error("El contenido JSON debe ser un objeto");
-  }
-  return parsed as Record<string, unknown>;
+ const serialized = props.__cms_json;
+ if (typeof serialized !== "string") {
+ return props;
+ }
+ let parsed: unknown;
+ try {
+ parsed = JSON.parse(serialized);
+ } catch {
+ throw new Error("El contenido JSON de la sección no es válido");
+ }
+ if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+ throw new Error("El contenido JSON debe ser un objeto");
+ }
+ return parsed as Record<string, unknown>;
 }
 
 function SaveStatusBadge({ status }: { status: SaveStatus }) {
-  switch (status) {
-    case "saving":
-      return (
-        <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-amber-500/10 border border-amber-500/20 text-2xs text-amber-500 font-medium">
-          <Loader2 className="animate-spin" size={12} />
-          <span>Guardando cambios...</span>
-        </div>
-      );
-    case "dirty":
-      return (
-        <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-blue-500/10 border border-blue-500/20 text-2xs text-blue-400 font-medium">
-          <span className="h-2 w-2 rounded-full bg-blue-400 animate-pulse" />
-          <span>Sin guardar</span>
-        </div>
-      );
-    case "error":
-      return (
-        <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-red-500/10 border border-red-500/20 text-2xs text-red-400 font-medium">
-          <AlertTriangle size={12} />
-          <span>Error al guardar</span>
-        </div>
-      );
-    case "saved":
-    default:
-      return (
-        <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-emerald-500/10 border border-emerald-500/20 text-2xs text-emerald-400 font-medium">
-          <CheckCircle2 size={12} />
-          <span>Guardado en borrador</span>
-        </div>
-      );
-  }
+ switch (status) {
+ case "saving":
+ return (
+ <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[hsl(var(--warning-muted))] border border-[hsl(var(--warning)/0.2)] text-2xs text-[hsl(var(--warning))] font-medium">
+ <Loader2 className="animate-spin" size={12} />
+ <span>Guardando cambios...</span>
+ </div>
+ );
+ case "dirty":
+ return (
+ <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[hsl(var(--info-muted))] border border-[hsl(var(--primary)/0.2)] text-2xs text-[hsl(var(--primary))] font-medium">
+ <span className="h-2 w-2 rounded-full bg-[hsl(var(--primary))] animate-pulse" />
+ <span>Sin guardar</span>
+ </div>
+ );
+ case "error":
+ return (
+ <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[hsl(var(--destructive)/0.1)] border border-[hsl(var(--destructive)/0.2)] text-2xs text-[hsl(var(--destructive))] font-medium">
+ <AlertTriangle size={12} />
+ <span>Error al guardar</span>
+ </div>
+ );
+ case "saved":
+ default:
+ return (
+ <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[hsl(var(--success-muted))] border border-[hsl(var(--success)/0.2)] text-2xs text-[hsl(var(--success))] font-medium">
+ <CheckCircle2 size={12} />
+ <span>Guardado en borrador</span>
+ </div>
+ );
+ }
 }
 
 
 export default function PuckBuilderPage() {
-  const searchParams = useSearchParams();
-  const router = useRouter();
-  const { token, user } = useAuth();
-  const canEdit = canEditCms(user?.role);
-  const canPublish = canPublishCms(user?.role);
-
-  const siteKey = searchParams?.get("site") || SITE_KEY;
-  const pageSlug = searchParams?.get("page") || "";
-  const visualMode = searchParams?.get("mode") === "visual";
-  const heroMediaMode = searchParams?.get("mode") === "hero-media";
-
-  // Pages fully managed by platform — block builder access entirely
-  const PLATFORM_MANAGED_SLUGS = new Set(["sermons"]);
-
-  // Pages where only the hero/banner is editable from CMS
-  const PLATFORM_PARTIAL_SLUGS = new Set(["events"]);
-
-  const isPlatformManaged = pageSlug ? PLATFORM_MANAGED_SLUGS.has(pageSlug) : false;
-  const isPlatformPartial = pageSlug ? PLATFORM_PARTIAL_SLUGS.has(pageSlug) : false;
-
-  useEffect(() => {
-    if (isPlatformManaged) {
-      toast.error(`La página "${pageSlug}" es gestionada por la plataforma y no se puede editar desde el CMS.`);
-      router.replace("/plataforma/cms/pages");
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isPlatformManaged, router]);
-
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [initialData, setInitialData] = useState<{ content: any[] }>({ content: [] });
-  const [dbSections, setDbSections] = useState<any[]>([]);
-
-  const [saveStatus, setSaveStatus] = useState<SaveStatus>("saved");
-
-  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
-  const latestDataRef = useRef<{ content: any[] }>({ content: [] });
-  const saveSequenceRef = useRef<number>(0);
-  const latestCompletedSeqRef = useRef<number>(0);
-  const saveQueueRef = useRef<Promise<void>>(Promise.resolve());
-  const isInitialLoadRef = useRef<boolean>(true);
-  const dbSectionsRef = useRef<any[]>([]);
-  const savingRef = useRef<boolean>(false);
-
-  useEffect(() => {
-    dbSectionsRef.current = dbSections;
-  }, [dbSections]);
-
-  useEffect(() => {
-    savingRef.current = saving;
-  }, [saving]);
-  
-  // Theme state
-  const [themeStyles, setThemeStyles] = useState<React.CSSProperties>({});
-  const [themeName, setThemeName] = useState<string>("Por defecto");
-
-  // MediaPicker state
-  const [mediaPickerOpen, setMediaPickerOpen] = useState(false);
-  const mediaPickerCallbackRef = useRef<((url: string) => void) | null>(null);
-  const selectedMediaRef = useRef<SelectedMedia | null>(null);
-  const [mediaPickerValue, setMediaPickerValue] = useState("");
-
-  // Setup global trigger callback for Puck's custom field renderers
-  useEffect(() => {
-    setMediaPickerTrigger((onChange, currentValue) => {
-      setMediaPickerValue(currentValue);
-      mediaPickerCallbackRef.current = onChange;
-      setMediaPickerOpen(true);
-    });
-    return () => {
-      setMediaPickerTrigger(null);
-    };
-  }, []);
-
-  // Load existing sections and site theme from the backend
-  useEffect(() => {
-    if (!token || !pageSlug) return;
-
-    async function fetchData() {
-      try {
-        setLoading(true);
-        const [sections, themeData] = await Promise.all([
-          listCmsSections(siteKey, pageSlug, token),
-          apiFetch<CmsTheme>(`/cms/v2/public/sites/${siteKey}/theme`, { method: "GET", silent: true }).catch(() => null),
-        ]);
-
-        setDbSections(sections || []);
-        dbSectionsRef.current = sections || [];
-        
-        // Convert array of database sections to Puck's data schema
-        const puckContent = (sections || []).map((sec: any) => ({
-          type: sec.type,
-          props: {
-            ...(NATIVE_PUCK_SECTION_TYPES.has(sec.type)
-              ? (sec.props_json || {})
-              : serializeJsonProps(sec.props_json || {})),
-            id: sec.id, // Store database ID in Puck block properties
-            section_key: sec.section_key || sec.type,
-          },
-        }));
-
-        setInitialData({ content: puckContent });
-        latestDataRef.current = { content: puckContent };
-        isInitialLoadRef.current = true;
-
-        if (themeData?.tokens_json) {
-          const vars: Record<string, string> = {};
-          Object.entries(themeData.tokens_json).forEach(([k, v]) => {
-            vars[k.startsWith("--") ? k : `--site-${k}`] = v;
-          });
-          setThemeStyles(vars as React.CSSProperties);
-          setThemeName(themeData.name || "Por defecto");
-        }
-      } catch (err) {
-        toast.error("Error al cargar las secciones o el tema de la página");
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    fetchData();
-  }, [token, siteKey, pageSlug]);
-
-  // Dynamically memoize Puck configuration to inject token closure for the AI text inputs
-  const puckConfig = useMemo<Config>(() => {
-    const genericComponents = Object.fromEntries(
-      JSON_EDITABLE_SECTION_TYPES.map((type) => [
-        type,
-        {
-          label: `Contenido CMS (${type})`,
-          fields: {
-            __cms_json: {
-              type: "custom",
-              label: "Contenido editable (JSON)",
-              render: ({ value, onChange }: any) => (
-                <CmsJsonMediaField
-                  label="Contenido editable (JSON)"
-                  value={value || "{}"}
-                  token={token}
-                  allowThumbnailOverrides={type === "feed"}
-                  onChange={onChange}
-                />
-              ),
-            },
-          },
-          render: ({ __cms_json }: { __cms_json?: string }) => (
-            <section className="rounded-lg border border-dashed border-[var(--site-outline-variant,rgba(255,255,255,0.2))] p-6 my-4">
-              <p className="text-sm font-semibold">Sección {type}</p>
-              <p className="mt-2 text-xs opacity-70">
-                Edita todos los campos de esta sección desde el panel lateral.
-              </p>
-              <pre className="mt-4 max-h-40 overflow-auto whitespace-pre-wrap text-2xs opacity-70">
-                {__cms_json || "{}"}
-              </pre>
-            </section>
-          ),
-        },
-      ]),
-    );
-
-    return {
-      root: {
-        render: ({ children }: any) => (
-          <div 
-            className="p-8 min-h-screen transition-colors duration-200"
-            style={{
-              backgroundColor: "var(--site-background, #001134)",
-              color: "var(--site-on-background, #d9e2ff)",
-              fontFamily: "var(--font-inter, sans-serif)",
-            }}
-          >
-            <div className="max-w-6xl mx-auto space-y-6">
-              {children}
-            </div>
-          </div>
-        )
-      },
-      components: {
-        ...genericComponents,
-        hero: {
-          label: "Banner Héroe (Hero)",
-          fields: {
-            title: {
-              type: "custom",
-              render: ({ value, onChange }: any) => (
-                <AiField label="Título Principal" value={value} onChange={onChange} fieldType="title" token={token} />
-              )
-            },
-            body: {
-              type: "custom",
-              render: ({ value, onChange }: any) => (
-                <AiField label="Cuerpo del Mensaje" value={value} onChange={onChange} isTextArea fieldType="body" token={token} />
-              )
-            },
-            cta_label: {
-              type: "custom",
-              render: ({ value, onChange }: any) => (
-                <AiField label="Texto del Botón" value={value} onChange={onChange} fieldType="cta" placeholder="ej. Comenzar ahora" token={token} />
-              )
-            },
-            cta_href: { type: "text", label: "Enlace del Botón" },
-            bg_image: {
-              type: "custom",
-              render: ({ value, onChange }: any) => (
-                <MediaPickerField label="Imagen de Fondo" value={value} onChange={onChange} />
-              )
-            },
-            slides: {
-              type: "array",
-              label: "Imágenes del carrusel",
-              min: 0,
-              max: 12,
-              getItemSummary: (item: any, idx?: number) =>
-                item?.alt || item?.title || `Imagen #${(idx ?? 0) + 1}`,
-              defaultItemProps: { src: "", alt: "Imagen principal", title: "", caption: "", href: "" },
-              arrayFields: {
-                src: {
-                  type: "custom",
-                  label: "Imagen",
-                  render: ({ value, onChange }: any) => (
-                    <MediaPickerField label="Imagen del slide" value={value} onChange={onChange} />
-                  ),
-                },
-                alt: { type: "text", label: "Texto alternativo" },
-                title: { type: "text", label: "Título opcional" },
-                caption: { type: "text", label: "Descripción opcional" },
-                href: { type: "text", label: "Enlace opcional" },
-              },
-            },
-          },
-          render: ({ title, body, cta_label, cta_href, bg_image, slides }: any) => (
-            <section
-              className="relative py-20 px-6 text-center bg-cover bg-center rounded-lg overflow-hidden my-4 border border-[var(--site-outline-variant,rgba(255,255,255,0.05))]"
-              style={{
-                backgroundImage: bg_image || slides?.[0]?.src
-                  ? `linear-gradient(rgba(0,0,0,0.65), rgba(0,0,0,0.65)), url(${bg_image || slides?.[0]?.src})`
-                  : "var(--site-cta-gradient, linear-gradient(135deg, #004581, #018abd))",
-                minHeight: "380px",
-              }}
-            >
-              <div className="relative z-10 max-w-2xl mx-auto flex flex-col items-center justify-center min-h-[250px]">
-                <h1 
-                  className="text-3xl font-extrabold tracking-tight sm:text-4xl md:text-5xl"
-                  style={{ color: "var(--site-on-hero, #ffffff)", fontFamily: "var(--font-outfit, sans-serif)" }}
-                >
-                  {title || "Título del Héroe"}
-                </h1>
-                <p 
-                  className="mt-4 text-lg max-w-lg"
-                  style={{ color: "var(--site-on-hero, rgba(255,255,255,0.9))" }}
-                >
-                  {body || "Este es el cuerpo del mensaje del banner de la página."}
-                </p>
-                {cta_label && (
-                  <a
-                    href={cta_href || "#"}
-                    className="mt-8 px-6 py-3 text-sm font-semibold rounded-md shadow-md transition-all duration-200 hover:scale-[1.02]"
-                    style={{
-                      backgroundColor: "var(--site-primary, #a5c8ff)",
-                      color: "var(--site-on-primary, #00315e)",
-                      boxShadow: "var(--site-cta-shadow, 0 4px 12px rgba(0,0,0,0.15))",
-                    }}
-                  >
-                    {cta_label}
-                  </a>
-                )}
-              </div>
-            </section>
-          ),
-        },
-        rich_text: {
-          label: "Texto Enriquecido (Rich Text)",
-          fields: {
-            title: {
-              type: "custom",
-              render: ({ value, onChange }: any) => (
-                <AiField label="Título de la Sección" value={value} onChange={onChange} fieldType="title" token={token} />
-              )
-            },
-            body: {
-              type: "custom",
-              render: ({ value, onChange }: any) => (
-                <AiField label="Contenido de Texto" value={value} onChange={onChange} isTextArea fieldType="body" token={token} />
-              )
-            },
-            cta_label: { type: "text", label: "Texto del Enlace" },
-            cta_href: { type: "text", label: "Destino del Enlace" },
-          },
-          render: ({ title, body, cta_label, cta_href }: any) => (
-            <section 
-              className="py-12 px-6 max-w-3xl mx-auto my-4 border rounded-lg shadow-sm"
-              style={{
-                backgroundColor: "var(--site-surface, #001134)",
-                borderColor: "var(--site-outline-variant, rgba(255,255,255,0.1))",
-              }}
-            >
-              {title && (
-                <h2 
-                  className="text-2xl font-bold tracking-tight"
-                  style={{ color: "var(--site-on-surface, #d9e2ff)" }}
-                >
-                  {title}
-                </h2>
-              )}
-              <div 
-                className="mt-4 text-base leading-7 whitespace-pre-wrap"
-                style={{ color: "var(--site-on-surface-variant, #c2c6d1)" }}
-              >
-                {body || "Escribe el contenido aquí..."}
-              </div>
-              {cta_label && (
-                <div className="mt-6">
-                  <a
-                    href={cta_href || "#"}
-                    className="text-sm font-semibold hover:underline flex items-center gap-1"
-                    style={{ color: "var(--site-primary, #a5c8ff)" }}
-                  >
-                    {cta_label} &rarr;
-                  </a>
-                </div>
-              )}
-            </section>
-          ),
-        },
-        cta_banner: {
-          label: "Banner CTA (CTA Banner)",
-          fields: {
-            title: {
-              type: "custom",
-              render: ({ value, onChange }: any) => (
-                <AiField label="Título" value={value} onChange={onChange} fieldType="title" token={token} />
-              )
-            },
-            body: {
-              type: "custom",
-              render: ({ value, onChange }: any) => (
-                <AiField label="Descripción" value={value} onChange={onChange} isTextArea fieldType="description" token={token} />
-              )
-            },
-            cta_label: {
-              type: "custom",
-              render: ({ value, onChange }: any) => (
-                <AiField label="Botón Principal" value={value} onChange={onChange} fieldType="cta" placeholder="ej. Inscribirme" token={token} />
-              )
-            },
-            cta_href: { type: "text", label: "Enlace Botón Principal" },
-            cta_label_2: { type: "text", label: "Botón Secundario" },
-            cta_href_2: { type: "text", label: "Enlace Botón Secundario" },
-          },
-          render: ({ title, body, cta_label, cta_href, cta_label_2, cta_href_2 }: any) => (
-            <section 
-              className="py-12 px-6 border rounded-lg text-center my-4 max-w-4xl mx-auto"
-              style={{
-                backgroundColor: "var(--site-primary-container, #004581)",
-                borderColor: "var(--site-outline-variant, rgba(255,255,255,0.1))",
-              }}
-            >
-              <h2 
-                className="text-2xl font-bold tracking-tight"
-                style={{ color: "var(--site-on-surface, #d9e2ff)" }}
-              >
-                {title || "Llamada a la acción"}
-              </h2>
-              {body && (
-                <p 
-                  className="mt-4 text-base max-w-xl mx-auto"
-                  style={{ color: "var(--site-on-surface-variant, #c2c6d1)" }}
-                >
-                  {body}
-                </p>
-              )}
-              <div className="mt-8 flex justify-center gap-4">
-                {cta_label && (
-                  <a 
-                    href={cta_href || "#"} 
-                    className="px-5 py-2.5 text-sm font-semibold rounded-md shadow transition-all hover:scale-[1.02]"
-                    style={{
-                      backgroundColor: "var(--site-primary, #a5c8ff)",
-                      color: "var(--site-on-primary, #00315e)",
-                    }}
-                  >
-                    {cta_label}
-                  </a>
-                )}
-                {cta_label_2 && (
-                  <a 
-                    href={cta_href_2 || "#"} 
-                    className="px-5 py-2.5 bg-transparent border text-sm font-semibold rounded-md transition-all hover:bg-white/5"
-                    style={{
-                      borderColor: "var(--site-outline, #8c919b)",
-                      color: "var(--site-primary, #a5c8ff)",
-                    }}
-                  >
-                    {cta_label_2}
-                  </a>
-                )}
-              </div>
-            </section>
-          ),
-        },
-        faq: {
-          label: "Preguntas Frecuentes (FAQ)",
-          fields: {
-            title: { type: "text", label: "Título de la Sección" },
-            items: {
-              type: "array",
-              label: "Preguntas",
-              getItemSummary: (item: any) => item.q || "Pregunta vacía",
-              defaultItemProps: { q: "Nueva Pregunta", a: "Respuesta..." },
-              arrayFields: {
-                q: { type: "text", label: "Pregunta" },
-                a: { type: "textarea", label: "Respuesta" },
-              },
-            },
-          },
-          render: ({ title, items }: any) => (
-            <section 
-              className="py-12 px-6 max-w-3xl mx-auto my-4 border rounded-lg"
-              style={{
-                backgroundColor: "var(--site-surface, #001134)",
-                borderColor: "var(--site-outline-variant, rgba(255,255,255,0.1))",
-              }}
-            >
-              {title && (
-                <h2 
-                  className="text-2xl font-bold tracking-tight mb-6"
-                  style={{ color: "var(--site-on-surface, #d9e2ff)" }}
-                >
-                  {title}
-                </h2>
-              )}
-              <div className="space-y-4">
-                {(items || []).map((item: any, idx: number) => (
-                  <div 
-                    key={idx} 
-                    className="border-b pb-4 last:border-0"
-                    style={{ borderColor: "var(--site-outline-variant, rgba(255,255,255,0.1))" }}
-                  >
-                    <h3 
-                      className="text-lg font-semibold"
-                      style={{ color: "var(--site-on-surface, #d9e2ff)" }}
-                    >
-                      {item.q}
-                    </h3>
-                    <p 
-                      className="mt-2 text-base"
-                      style={{ color: "var(--site-on-surface-variant, #c2c6d1)" }}
-                    >
-                      {item.a}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            </section>
-          ),
-        },
-        testimonials: {
-          label: "Testimonios (Testimonials)",
-          fields: {
-            title: { type: "text", label: "Título de la Sección" },
-            items: {
-              type: "array",
-              label: "Testimonios",
-              getItemSummary: (item: any) => item.author || "Autor vacío",
-              defaultItemProps: { author: "Nombre del Autor", role: "Colaborador", content: "El testimonio...", stars: 5 },
-              arrayFields: {
-                author: { type: "text", label: "Autor" },
-                role: { type: "text", label: "Cargo/Rol" },
-                content: { type: "textarea", label: "Testimonio" },
-                stars: { type: "number", label: "Estrellas (1-5)" },
-              },
-            },
-          },
-          render: ({ title, items }: any) => (
-            <section className="py-12 px-6 max-w-4xl mx-auto my-4">
-              {title && (
-                <h2 
-                  className="text-2xl font-bold text-center tracking-tight mb-8"
-                  style={{ color: "var(--site-on-surface, #d9e2ff)" }}
-                >
-                  {title}
-                </h2>
-              )}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {(items || []).map((item: any, idx: number) => (
-                  <div 
-                    key={idx} 
-                    className="p-6 border rounded-lg shadow-sm"
-                    style={{
-                      backgroundColor: "var(--site-surface-container-low, #001944)",
-                      borderColor: "var(--site-outline-variant, rgba(255,255,255,0.1))",
-                    }}
-                  >
-                    <div className="flex gap-1 mb-3 text-amber-400">
-                      {Array.from({ length: Math.min(5, Math.max(1, item.stars || 5)) }).map((_, i) => (
-                        <span key={i}>★</span>
-                      ))}
-                    </div>
-                    <p 
-                      className="text-base italic"
-                      style={{ color: "var(--site-on-surface-variant, #c2c6d1)" }}
-                    >
-                      &quot;{item.content}&quot;
-                    </p>
-                    <div className="mt-4 flex items-center gap-3">
-                      <div>
-                        <h4 
-                          className="text-sm font-bold"
-                          style={{ color: "var(--site-on-surface, #d9e2ff)" }}
-                        >
-                          {item.author}
-                        </h4>
-                        <p 
-                          className="text-xs"
-                          style={{ color: "var(--site-on-surface-variant, #c2c6d1)" }}
-                        >
-                          {item.role}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </section>
-          ),
-        },
-        stats: {
-          label: "Estadísticas (Stats)",
-          fields: {
-            title: { type: "text", label: "Título de la Sección" },
-            items: {
-              type: "array",
-              label: "Estadísticas",
-              getItemSummary: (item: any) => `${item.value || ""} - ${item.label || ""}`,
-              defaultItemProps: { value: "100%", label: "Descripción" },
-              arrayFields: {
-                value: { type: "text", label: "Valor (ej: 15K, 100%)" },
-                label: { type: "text", label: "Etiqueta" },
-              },
-            },
-          },
-          render: ({ title, items }: any) => (
-            <section 
-              className="py-12 px-6 text-center max-w-4xl mx-auto my-4 border rounded-lg"
-              style={{
-                backgroundColor: "var(--site-surface, #001134)",
-                borderColor: "var(--site-outline-variant, rgba(255,255,255,0.1))",
-              }}
-            >
-              {title && (
-                <h2 
-                  className="text-2xl font-bold tracking-tight mb-8"
-                  style={{ color: "var(--site-on-surface, #d9e2ff)" }}
-                >
-                  {title}
-                </h2>
-              )}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-                {(items || []).map((item: any, idx: number) => (
-                  <div key={idx} className="space-y-2">
-                    <p 
-                      className="text-3xl font-extrabold"
-                      style={{ color: "var(--site-primary, #a5c8ff)" }}
-                    >
-                      {item.value}
-                    </p>
-                    <p 
-                      className="text-sm"
-                      style={{ color: "var(--site-on-surface-variant, #c2c6d1)" }}
-                    >
-                      {item.label}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            </section>
-          ),
-        },
-        gallery: {
-          label: "Galería (Gallery)",
-          defaultProps: {
-            title: "Galería de imágenes",
-            items: [
-              { url: "", alt: "Galería 1", caption: "Imagen 1" },
-              { url: "", alt: "Galería 2", caption: "Imagen 2" },
-              { url: "", alt: "Galería 3", caption: "Imagen 3" },
-            ],
-          },
-          fields: {
-            title: {
-              type: "custom",
-              render: ({ value, onChange }: any) => (
-                <AiField label="Título de la Sección" value={value} onChange={onChange} fieldType="title" token={token} />
-              )
-            },
-            body: {
-              type: "custom",
-              render: ({ value, onChange }: any) => (
-                <AiField label="Descripción" value={value} onChange={onChange} isTextArea fieldType="body" token={token} />
-              )
-            },
-            items: {
-              type: "array",
-              label: "Imágenes de la Galería",
-              min: 1,
-              max: 12,
-              getItemSummary: (item: any, idx?: number) =>
-                item?.caption || (item?.alt && item.alt !== "Imagen" ? item.alt : `Imagen #${(idx ?? 0) + 1}`),
-              defaultItemProps: { url: "", alt: "Imagen", caption: "" },
-              arrayFields: {
-                url: {
-                  type: "custom",
-                  label: "Imagen",
-                  render: ({ value, onChange }: any) => (
-                    <MediaPickerField label="Imagen" value={value} onChange={onChange} />
-                  )
-                },
-                alt: { type: "text", label: "Texto Alt" },
-                caption: { type: "text", label: "Leyenda / Copete" },
-              }
-            }
-          },
-          render: ({ title, body, items }: any) => {
-            const itemList = items || [];
-            return (
-              <section 
-                className="py-12 px-6 max-w-5xl mx-auto my-4 text-center border rounded-lg"
-                style={{
-                  backgroundColor: "var(--site-surface, #001134)",
-                  borderColor: "var(--site-outline-variant, rgba(255,255,255,0.1))",
-                }}
-              >
-                {title && (
-                  <h2 
-                    className="text-2xl font-bold tracking-tight mb-2"
-                    style={{ color: "var(--site-on-surface, #d9e2ff)" }}
-                  >
-                    {title}
-                  </h2>
-                )}
-                {body && (
-                  <p 
-                    className="text-base mb-8"
-                    style={{ color: "var(--site-on-surface-variant, #c2c6d1)" }}
-                  >
-                    {body}
-                  </p>
-                )}
-                {itemList.length === 0 ? (
-                  <div 
-                    className="p-8 border-2 border-dashed rounded-lg text-center my-4"
-                    style={{
-                      borderColor: "var(--site-outline-variant, rgba(255,255,255,0.1))",
-                      color: "var(--site-on-surface-variant, #c2c6d1)",
-                    }}
-                  >
-                    <p className="text-sm font-medium">
-                      No hay imágenes agregadas. Añade elementos desde el panel lateral.
-                    </p>
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-                    {itemList.map((item: any, idx: number) => (
-                      <div 
-                        key={idx} 
-                        className="group relative aspect-square overflow-hidden rounded-lg bg-black/10 border flex items-center justify-center"
-                        style={{
-                          borderColor: "var(--site-outline-variant, rgba(255,255,255,0.1))",
-                        }}
-                      >
-                        {item?.url ? (
-                          <img 
-                            src={item.url} 
-                            alt={item.alt || ""} 
-                            className="h-full w-full object-cover transition duration-300 group-hover:scale-105" 
-                          />
-                        ) : (
-                          <div 
-                            className="flex flex-col items-center justify-center p-3 text-center w-full h-full bg-white/5"
-                            style={{ color: "var(--site-on-surface-variant, #c2c6d1)" }}
-                          >
-                            <span className="text-2xs font-semibold px-2.5 py-1 rounded border border-current opacity-70">
-                              Sin imagen
-                            </span>
-                            {item?.alt && item.alt !== "Imagen" && (
-                              <span className="text-3xs mt-1 truncate max-w-[90%] opacity-80">
-                                {item.alt}
-                              </span>
-                            )}
-                          </div>
-                        )}
-                        {item?.caption && (
-                          <div className="absolute inset-x-0 bottom-0 bg-black/60 p-2 text-2xs text-white text-left opacity-0 group-hover:opacity-100 transition-opacity">
-                            {item.caption}
-                          </div>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </section>
-            );
-          }
-        },
-        cards: {
-          label: "Tarjetas (Cards)",
-          defaultProps: {
-            title: "Tarjetas",
-            items: [
-              { title: "Tarjeta 1", body: "Descripción de la tarjeta 1...", cta_label: "Saber más", cta_href: "/", image_url: "" },
-              { title: "Tarjeta 2", body: "Descripción de la tarjeta 2...", cta_label: "Saber más", cta_href: "/", image_url: "" },
-              { title: "Tarjeta 3", body: "Descripción de la tarjeta 3...", cta_label: "Saber más", cta_href: "/", image_url: "" },
-            ],
-          },
-          fields: {
-            title: {
-              type: "custom",
-              render: ({ value, onChange }: any) => (
-                <AiField label="Título de la Sección" value={value} onChange={onChange} fieldType="title" token={token} />
-              )
-            },
-            body: {
-              type: "custom",
-              render: ({ value, onChange }: any) => (
-                <AiField label="Descripción de la Sección" value={value} onChange={onChange} isTextArea fieldType="body" token={token} />
-              )
-            },
-            items: {
-              type: "array",
-              label: "Tarjetas",
-              min: 1,
-              max: 6,
-              getItemSummary: (item: any, idx?: number) =>
-                item?.title || `Tarjeta #${(idx ?? 0) + 1}`,
-              defaultItemProps: { title: "Título de Tarjeta", body: "Descripción corta...", cta_label: "Saber más", cta_href: "/", image_url: "" },
-              arrayFields: {
-                title: {
-                  type: "custom",
-                  label: "Título",
-                  render: ({ value, onChange }: any) => (
-                    <AiField label="Título" value={value} onChange={onChange} fieldType="title" token={token} />
-                  )
-                },
-                body: {
-                  type: "custom",
-                  label: "Descripción",
-                  render: ({ value, onChange }: any) => (
-                    <AiField label="Descripción" value={value} onChange={onChange} isTextArea fieldType="body" token={token} />
-                  )
-                },
-                cta_label: { type: "text", label: "Etiqueta Botón" },
-                cta_href: { type: "text", label: "Enlace Botón" },
-                image_url: {
-                  type: "custom",
-                  label: "Imagen",
-                  render: ({ value, onChange }: any) => (
-                    <MediaPickerField label="Imagen" value={value} onChange={onChange} />
-                  )
-                }
-              }
-            }
-          },
-          render: ({ title, body, items }: any) => {
-            const itemList = items || [];
-            return (
-              <section 
-                className="py-12 px-6 max-w-5xl mx-auto my-4 border rounded-lg"
-                style={{
-                  backgroundColor: "var(--site-surface, #001134)",
-                  borderColor: "var(--site-outline-variant, rgba(255,255,255,0.1))",
-                }}
-              >
-                {title && (
-                  <h2 
-                    className="text-2xl font-bold tracking-tight mb-2 text-center" 
-                    style={{ color: "var(--site-on-surface, #d9e2ff)" }}
-                  >
-                    {title}
-                  </h2>
-                )}
-                {body && (
-                  <p 
-                    className="text-base text-center mb-8" 
-                    style={{ color: "var(--site-on-surface-variant, #c2c6d1)" }}
-                  >
-                    {body}
-                  </p>
-                )}
-                {itemList.length === 0 ? (
-                  <div 
-                    className="p-8 border-2 border-dashed rounded-lg text-center my-4"
-                    style={{
-                      borderColor: "var(--site-outline-variant, rgba(255,255,255,0.1))",
-                      color: "var(--site-on-surface-variant, #c2c6d1)",
-                    }}
-                  >
-                    <p className="text-sm font-medium">
-                      No hay tarjetas agregadas. Añade elementos desde el panel lateral.
-                    </p>
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-                    {itemList.map((item: any, idx: number) => (
-                      <div 
-                        key={idx} 
-                        className="overflow-hidden border rounded-lg flex flex-col shadow-sm"
-                        style={{
-                          backgroundColor: "var(--site-surface-container-low, #001944)",
-                          borderColor: "var(--site-outline-variant, rgba(255,255,255,0.1))",
-                        }}
-                      >
-                        {item?.image_url ? (
-                          <img 
-                            src={item.image_url} 
-                            alt={item.title || ""} 
-                            className="w-full h-48 object-cover" 
-                          />
-                        ) : (
-                          <div 
-                            className="w-full h-48 flex flex-col items-center justify-center bg-white/5 border-b"
-                            style={{ 
-                              borderColor: "var(--site-outline-variant, rgba(255,255,255,0.1))",
-                              color: "var(--site-on-surface-variant, #c2c6d1)",
-                            }}
-                          >
-                            <span className="text-2xs font-semibold px-2.5 py-1 rounded border border-current opacity-70">
-                              Sin imagen
-                            </span>
-                          </div>
-                        )}
-                        <div className="p-5 flex-1 flex flex-col justify-between">
-                          <div>
-                            <h3 
-                              className="text-lg font-bold" 
-                              style={{ color: "var(--site-on-surface, #d9e2ff)" }}
-                            >
-                              {item?.title || `Tarjeta #${idx + 1}`}
-                            </h3>
-                            {item?.body && (
-                              <p 
-                                className="mt-2 text-sm" 
-                                style={{ color: "var(--site-on-surface-variant, #c2c6d1)" }}
-                              >
-                                {item.body}
-                              </p>
-                            )}
-                          </div>
-                          {item?.cta_label && (
-                            <a 
-                              href={item.cta_href || "#"} 
-                              className="mt-4 inline-block text-sm font-semibold hover:underline"
-                              style={{ color: "var(--site-primary, #a5c8ff)" }}
-                            >
-                              {item.cta_label} &rarr;
-                            </a>
-                          )}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </section>
-            );
-          }
-        }
-      },
-    };
-  }, [token]);
-
-  const savePageData = useCallback(
-    async (
-      dataToSave: { content: any[] },
-      options: { isAutoSave: boolean }
-    ) => {
-      if (!token || !pageSlug || !canEdit) {
-        if (!options.isAutoSave) {
-          toast.error("No tienes permisos de edición");
-        }
-        return;
-      }
-
-      const currentSeq = ++saveSequenceRef.current;
-      const previousSave = saveQueueRef.current;
-      const queuedSave = previousSave.then(async () => {
-        // Autosaves are latest-wins. Do not issue any API mutation for a
-        // snapshot that was superseded while an earlier save was in flight.
-        if (options.isAutoSave && currentSeq !== saveSequenceRef.current) {
-          return;
-        }
-
-      if (options.isAutoSave) {
-        setSaveStatus("saving");
-      } else {
-        setSaving(true);
-        savingRef.current = true;
-        setSaveStatus("saving");
-      }
-
-      let draftSaved = false;
-      try {
-        const activeIdsInPuck = new Set<string>();
-        const currentDbSections = dbSectionsRef.current;
-
-        const contentToSave = dataToSave?.content || [];
-        // 1. Process inserts and updates
-        for (let i = 0; i < contentToSave.length; i++) {
-          if (currentSeq !== saveSequenceRef.current) {
-            return;
-          }
-          const item = contentToSave[i];
-          const id = item.props?.id;
-
-          // Clean properties by stripping the editor-only id field. Generic
-          // page sections store their complete editable payload in
-          // ``__cms_json``; restore it to the object expected by the API.
-          const { id: _, ...rawProps } = item.props || {};
-          const deserializedProps = deserializePuckProps(rawProps);
-          const existingSection = currentDbSections.find((s) => s.id === id);
-          // Native Puck blocks expose only their compact field schema. Merge
-          // their edited values over the stored payload so page-specific keys
-          // (eyebrow, title_lead, SEO copy, etc.) are not lost on save.
-          const cleanProps =
-            existingSection && NATIVE_PUCK_SECTION_TYPES.has(item.type)
-              ? { ...(existingSection.props_json || {}), ...deserializedProps }
-              : deserializedProps;
-
-          const sectionKey = (item.props as Record<string, unknown>)?.section_key as string || existingSection?.section_key || item.type;
-          if (cleanProps.title && !cleanProps.title_lead) {
-            cleanProps.title_lead = cleanProps.title;
-          }
-          if (cleanProps.body && !cleanProps.description) {
-            cleanProps.description = cleanProps.body;
-          }
-          if (cleanProps.cta_label && !cleanProps.primary_cta) {
-            cleanProps.primary_cta = cleanProps.cta_label;
-          }
-
-          if (id && existingSection) {
-            // Exists in DB: Update sort_order and props_json
-            activeIdsInPuck.add(id);
-            await patchCmsSection(
-              siteKey,
-              pageSlug,
-              id,
-              { sort_order: i, props_json: cleanProps, section_key: sectionKey },
-              token
-            );
-          } else {
-            // New block: Create in DB
-            const created = await createCmsSection(
-              siteKey,
-              pageSlug,
-              { type: item.type, section_key: sectionKey, sort_order: i, props_json: cleanProps },
-              token
-            );
-            if (created?.id) {
-              activeIdsInPuck.add(created.id);
-              // Patch in-memory id so next edits track it correctly
-              if (item.props) {
-                item.props.id = created.id;
-                item.props.section_key = sectionKey;
-              } else {
-                item.props = { id: created.id, section_key: sectionKey };
-              }
-            }
-          }
-        }
-
-        // 2. Process deletions: Archive database sections missing from Puck
-        const missingFromPuck = currentDbSections.filter((s) => !activeIdsInPuck.has(s.id));
-        for (const sectionToDelete of missingFromPuck) {
-          if (currentSeq !== saveSequenceRef.current) {
-            return;
-          }
-          await deleteCmsSection(siteKey, pageSlug, sectionToDelete.id, token);
-        }
-
-        // Out-of-order sequence check
-        if (currentSeq < latestCompletedSeqRef.current) {
-          return;
-        }
-        latestCompletedSeqRef.current = currentSeq;
-
-        // Reload fresh state from DB
-        const freshSections = await listCmsSections(siteKey, pageSlug, token);
-        const updated = freshSections || [];
-        setDbSections(updated);
-        dbSectionsRef.current = updated;
-        draftSaved = true;
-
-        // A manual save is the explicit publish action in this compact Puck
-        // editor. Auto-save only persists the draft; publishing creates the
-        // immutable snapshot consumed by the public endpoint.
-        if (!options.isAutoSave && canPublish) {
-          await workflowCmsPage(siteKey, pageSlug, "publish", "Publicado desde el editor visual", token);
-        }
-
-        // Check if newer changes arrived while save was in flight
-        if (
-          latestDataRef.current !== dataToSave &&
-          JSON.stringify(latestDataRef.current) !== JSON.stringify(dataToSave)
-        ) {
-          setSaveStatus("dirty");
-        } else {
-          setSaveStatus("saved");
-        }
-
-        if (!options.isAutoSave) {
-          toast.success(
-            canPublish
-              ? "¡Página publicada exitosamente con Puck!"
-              : "Cambios guardados como borrador. Un publicador debe aprobarlos.",
-          );
-        }
-      } catch (err) {
-        setSaveStatus("error");
-        if (!options.isAutoSave) {
-          toast.error(
-            draftSaved
-              ? "Borrador guardado, pero la publicación falló"
-              : "Error al guardar y publicar la página",
-          );
-        } else {
-          toast.error("Error en el auto-guardado", { id: "autosave-err" });
-        }
-      } finally {
-        if (!options.isAutoSave) {
-          setSaving(false);
-          savingRef.current = false;
-        }
-      }
-      });
-      // Keep the queue alive after a handled failure so later saves are not
-      // blocked by a rejected promise.
-      saveQueueRef.current = queuedSave.catch(() => undefined);
-      return queuedSave;
-    },
-    [token, pageSlug, canEdit, canPublish, siteKey]
-  );
-
-  const handlePuckChange = (newData: { content: any[] }) => {
-    const dataWithMediaId = selectedMediaRef.current
-      ? preserveSelectedMediaId(newData, selectedMediaRef.current)
-      : newData;
-    selectedMediaRef.current = null;
-
-    if (isInitialLoadRef.current) {
-      isInitialLoadRef.current = false;
-      latestDataRef.current = dataWithMediaId;
-      return;
-    }
-
-    latestDataRef.current = dataWithMediaId;
-    setSaveStatus("dirty");
-
-    if (debounceTimerRef.current) {
-      clearTimeout(debounceTimerRef.current);
-    }
-
-    debounceTimerRef.current = setTimeout(() => {
-      savePageData(latestDataRef.current, { isAutoSave: true });
-    }, 3000);
-  };
-
-  const handlePublish = useCallback(
-    async (data?: { content: any[] }) => {
-      if (debounceTimerRef.current) {
-        clearTimeout(debounceTimerRef.current);
-        debounceTimerRef.current = null;
-      }
-      const dataToSave = data || latestDataRef.current;
-      await savePageData(dataToSave, { isAutoSave: false });
-    },
-    [savePageData]
-  );
-
-  useEffect(() => {
-    return () => {
-      if (debounceTimerRef.current) {
-        clearTimeout(debounceTimerRef.current);
-      }
-    };
-  }, []);
-
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") {
-        e.preventDefault();
-        if (!savingRef.current) {
-          handlePublish(latestDataRef.current);
-        }
-      }
-    };
-
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [handlePublish]);
-
-  if (!token || !pageSlug) {
-    return (
-      <div className="flex h-screen items-center justify-center p-6 text-center bg-[hsl(var(--bg-primary))]">
-        <div className="space-y-3">
-          <p className="text-sm text-[hsl(var(--text-secondary))]">Selecciona un sitio y página en la lista de páginas para editar.</p>
-          <button
-            onClick={() => router.push("/plataforma/cms/pages")}
-            className="px-4 py-2 bg-primary text-white text-xs font-semibold rounded-md shadow-md hover:bg-primary-hover transition-colors"
-          >
-            Volver a Páginas
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  if (loading) {
-    return (
-      <div className="flex h-screen items-center justify-center bg-[hsl(var(--bg-primary))]">
-        <div className="flex flex-col items-center gap-2">
-          <Loader2 className="animate-spin text-primary" size={32} />
-          <p className="text-sm text-[hsl(var(--text-secondary))]">Cargando lienzo de Puck...</p>
-        </div>
-      </div>
-    );
-  }
-
-  // The public-content editor is the canonical default for every public page.
-  // The visual Puck editor remains available explicitly with mode=visual.
-  if (!visualMode && !heroMediaMode) {
-    return (
-      <PublicContentEditor
-        siteKey={siteKey}
-        pageSlug={pageSlug}
-        sections={dbSections}
-        token={token}
-        canEdit={canEdit}
-        canPublish={canPublish}
-        onBack={() => router.push(`/plataforma/cms/pages?site=${siteKey}`)}
-        onSectionsChange={setDbSections}
-      />
-    );
-  }
-
-  // Home uses the canonical public-content model. Do not expose the retired
-  // generic Puck hero fields (title/body/cta) for this page.
-  const hasCanonicalHomeHero = dbSections.some((section) => {
-    const props = section?.props_json;
-    return section?.section_key === "hero" && props && typeof props === "object" && (
-      "title_lead" in props || "title_accent" in props || "title_tail" in props
-    );
-  });
-
-  if (pageSlug === "home" && hasCanonicalHomeHero && !heroMediaMode) {
-    return (
-      <PublicContentEditor
-        siteKey={siteKey}
-        pageSlug={pageSlug}
-        sections={dbSections}
-        token={token}
-        canEdit={canEdit}
-        canPublish={canPublish}
-        onBack={() => router.push(`/plataforma/cms/pages?site=${siteKey}`)}
-        onSectionsChange={setDbSections}
-      />
-    );
-  }
-
-  if (heroMediaMode) {
-    return (
-      <HeroMediaEditor
-        siteKey={siteKey}
-        pageSlug={pageSlug}
-        sections={dbSections}
-        token={token}
-        canEdit={canEdit}
-        canPublish={canPublish}
-        onBack={() => router.push(`/plataforma/cms/pages?site=${siteKey}`)}
-      />
-    );
-  }
-
-  return (
-    <main aria-label="Editor visual Puck" className="h-screen flex flex-col bg-[hsl(var(--bg-primary))]" style={themeStyles}>
-      {/* Header bar */}
-      <div className="shrink-0 border-b border-[hsl(var(--border))] dark:border-white/[0.05] p-3 flex items-center justify-between bg-white dark:bg-[hsl(var(--surface-2))]">
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => router.push(`/plataforma/cms/pages?site=${siteKey}`)}
-            className="p-2 border border-[hsl(var(--border))] dark:border-white/10 rounded-md hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
-            title="Volver a Páginas"
-          >
-            <ArrowLeft size={16} />
-          </button>
-          <div>
-            <span className="text-3xs uppercase tracking-wider font-semibold text-[hsl(var(--text-secondary))] flex items-center gap-1.5">
-              <LayoutPanelTop size={10} /> Puck Editor
-            </span>
-            <h1 className="text-md font-bold tracking-tight mt-0.5">
-              Editando página: <span className="text-primary">/{pageSlug}</span>
-            </h1>
-          </div>
-        </div>
-        <div className="flex items-center gap-3">
-          <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 bg-primary/10 border border-primary/20 rounded-md text-2xs text-primary font-medium">
-            <Palette size={12} /> Tema: <span className="font-bold">{themeName}</span>
-          </div>
-
-          <SaveStatusBadge status={saveStatus} />
-
-          <button
-            onClick={() => handlePublish(latestDataRef.current)}
-            disabled={saveStatus === "saving" || saving}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-primary text-white text-xs font-semibold rounded-md shadow hover:bg-primary-hover disabled:opacity-50 transition-colors"
-            title="Guardar cambios (Ctrl+S / Cmd+S)"
-          >
-            {saveStatus === "saving" || saving ? (
-              <Loader2 className="animate-spin" size={14} />
-            ) : (
-              <Save size={14} />
-            )}
-            <span>Guardar</span>
-          </button>
-        </div>
-      </div>
-
-      {/* Platform partial notice */}
-      {isPlatformPartial && (
-        <div className="flex items-center gap-3 px-4 py-2.5 bg-amber-500/10 border-b border-amber-500/20 text-amber-700 dark:text-amber-400 text-xs font-medium shrink-0">
-          <span className="text-lg">⚠️</span>
-          <span>
-            <strong>Solo puedes editar el banner (textos e imágenes).</strong>{" "}
-            {pageSlug === "events"
-              ? "Los eventos se gestionan desde el módulo de Evangelismo → Agenda."
-              : "Los cursos se gestionan desde el módulo Academia."}
-          </span>
-        </div>
-      )}
-
-      {/* Editor Frame */}
-      <div className="flex-1 overflow-hidden relative flex flex-col">
-        <div className="flex-1 min-h-0 relative">
-          <Puck
-            config={puckConfig}
-            data={initialData}
-            onChange={handlePuckChange}
-            onPublish={handlePublish}
-            iframe={{ enabled: false }}
-          />
-        </div>
-      </div>
-
-      {/* Panel de estrategias de evangelismo — visible debajo del editor */}
-      {pageSlug === "events" && (
-        <div className="border-t shrink-0 overflow-y-auto max-h-[40vh]">
-          <PublicStrategiesManager token={token} />
-        </div>
-      )}
-
-      {/* Panel de gestión del equipo pastoral — visible debajo del editor */}
-      {pageSlug === "pastors" && (
-        <div className="border-t shrink-0 overflow-y-auto max-h-[50vh]">
-          <PublicPastoralManager token={token} />
-        </div>
-      )}
-
-      {/* Panel de cursos de la academia — visible debajo del editor */}
-      {pageSlug === "courses" && (
-        <div className="border-t shrink-0 overflow-y-auto max-h-[50vh]">
-          <PublicCoursesManager token={token} />
-        </div>
-      )}
-
-      {/* Panel de sedes y mapa — visible debajo del editor */}
-      {(pageSlug === "locations" || pageSlug === "sedes") && (
-        <div className="border-t shrink-0 overflow-y-auto max-h-[50vh]">
-          <PublicLocationsManager token={token} />
-        </div>
-      )}
-
-      {/* Custom MediaPicker Drawer integration */}
-      {mediaPickerOpen && (
-        <MediaPicker
-          open
-          token={token}
-          selectedUrl={mediaPickerValue}
-          onClose={() => setMediaPickerOpen(false)}
-          onSelect={(item) => {
-            const selected: { url?: string; id?: string | number } = typeof item === "string" ? { url: item } : item as { url?: string; id?: string | number };
-            const url = selected.url || "";
-            if (typeof item !== "string" && selected.id !== undefined) {
-              selectedMediaRef.current = { url, media_id: selected.id };
-            }
-            if (mediaPickerCallbackRef.current) {
-              mediaPickerCallbackRef.current(url);
-            }
-            setMediaPickerOpen(false);
-          }}
-        />
-      )}
-    </main>
-  );
-}
-
-export type ContentSection = {
-  id: string;
-  section_key: string;
-  type: string;
-  props_json?: Record<string, unknown> | null;
-  sort_order?: number;
-};
-
-type HeroSlide = {
-  src: string;
-  alt?: string;
-  title?: string;
-  caption?: string;
-  href?: string;
-};
-
-const CONTENT_LABELS: Record<string, string> = {
-  // Encabezados de sección (Card Headers)
-  welcome: "🏠 Bienvenidos a Casa",
-  activities: "📅 Actividades Recientes",
-  newsletter: "📧 Boletín Semanal",
-  discover_cta: "✨ Conocer a Jesús",
-  feed: "📰 Feed principal",
-
-  // Campos estándar
-  eyebrow: "Etiqueta superior",
-  title: "Título",
-  title_lead: "Título · primera línea",
-  title_accent: "Título · énfasis",
-  title_tail: "Título · última línea",
-  description: "Descripción",
-  body: "Contenido",
-  primary_cta: "Botón principal",
-  secondary_cta: "Botón secundario",
-  scroll_indicator: "Indicador de desplazamiento",
-
-  // Campos de presentación / bienvenidos
-  section_title: "Título de la sección",
-  section_description: "Descripción de la sección",
-  featured_card: "Tarjeta destacada",
-  cards: "Tarjetas Bento",
-
-  // Campos de actividades
-  activities_eyebrow: "Etiqueta superior",
-  activities_title: "Título de actividades",
-  activities_view_all: "Texto ver todas",
-  activities_view_all_href: "Enlace ver todas",
-  activities_empty: "Mensaje sin actividades",
-  view_all: "Texto ver todas",
-  view_all_href: "Enlace ver todas",
-  empty: "Mensaje sin actividades",
-
-  // Campos de boletín semanal
-  newsletter_eyebrow: "Etiqueta superior",
-  newsletter_title: "Título del boletín",
-  newsletter_description: "Descripción del boletín",
-  newsletter_placeholder: "Marcador de texto (placeholder)",
-  newsletter_submit: "Texto del botón",
-  newsletter_sending_label: "Texto enviando",
-  newsletter_success_title: "Título de éxito",
-  newsletter_success_desc: "Descripción de éxito",
-  newsletter_success_toast: "Notificación de éxito",
-  newsletter_error_toast: "Notificación de error",
-  placeholder: "Marcador de texto (placeholder)",
-  submit: "Texto del botón",
-  sending_label: "Texto enviando",
-  success_title: "Título de éxito",
-  success_desc: "Descripción de éxito",
-  success_toast: "Notificación de éxito",
-  error_toast: "Notificación de error",
-
-  // Campos de discover_cta
-  cta_label: "Texto del botón",
-  cta_href: "Enlace del botón",
-  secondary_cta_label: "Texto botón secundario",
-  secondary_cta_href: "Enlace botón secundario",
-  bg_style: "Estilo de fondo",
-
-  // Quiénes Somos — Secciones modulares
-  stats: "📊 Estadísticas e Impacto",
-  vision_mision: "🎯 Visión y Misión",
-  founders: "👥 Pastores Fundadores",
-  values: "🌟 Valores Institucionales",
-  quote: "💬 Cita Pastoral Destacada",
-  cta: "🚪 Conectar y Visitar",
-  about: "ℹ️ Quiénes Somos (Consolidado)",
-
-  // Quiénes Somos — Campos individuales
-  vision_badge: "Insignia superior de Visión",
-  vision_title: "Título de Visión",
-  vision_text: "Texto de Visión",
-  vision_image: "Imagen de Visión (Borde Infinito Izquierdo)",
-  mision_badge: "Insignia superior de Misión",
-  mision_title: "Título de Misión",
-  mision_text: "Texto de Misión",
-  mision_image: "Imagen de Misión (Borde Infinito Derecho)",
-  founder_label: "Etiqueta superior de fundadores",
-  founder_title: "Título de fundadores",
-  founder_title_accent: "Énfasis de título",
-  founder_bio: "Biografía de los fundadores (párrafo 1)",
-  founder_bio2: "Biografía de los fundadores (párrafo 2)",
-  founder1_name: "Nombre Pastor Principal",
-  founder1_role: "Cargo Pastor Principal",
-  founder1_image: "Fotografía Pastor Principal",
-  founder2_name: "Nombre Pastor/a Principal",
-  founder2_role: "Cargo Pastor/a Principal",
-  founder2_image: "Fotografía Pastor/a Principal",
-  founder_cta_team: "Texto botón equipo",
-  founder_cta_visit: "Texto botón sedes",
-  values_eyebrow: "Etiqueta superior de valores",
-  valores_title: "Título de valores",
-  valores: "Lista de valores",
-  quote_text: "Texto de la cita",
-  quote_author: "Autor de la cita",
-  quote_subtitle: "Subtítulo de la cita",
-  cta_view_sedes: "Texto botón ver sedes",
-  cta_view_events: "Texto botón ver eventos",
-
-  // Cursos — Secciones modulares y campos
-  courses_title: "Título de la sección de cursos",
-  courses_description: "Descripción de la sección de cursos",
-  featured_badge: "Etiqueta curso destacado",
-  featured_cta: "Texto botón inscripción",
-  featured_image: "Imagen personalizada curso destacado",
-  hero_image_url: "Imagen de portada alternativa",
-  empty_title: "Título cuando no hay cursos",
-  empty_description: "Descripción cuando no hay cursos",
-  library_title: "Título de librería",
-  library_description: "Descripción de librería",
-  not_found_title: "Título de curso no encontrado",
-  load_error_title: "Título de error al cargar",
-  course_tag_fallback: "Etiqueta por defecto",
-};
-
-const HOME_HERO_CONTENT_FIELDS = [
-  "eyebrow",
-  "title_lead",
-  "title_accent",
-  "title_tail",
-  "description",
-  "primary_cta",
-  "secondary_cta",
-];
-
-function contentLabel(key?: string): string {
-  if (!key) return "Sección";
-  return CONTENT_LABELS[key] || key.replaceAll("_", " ").replace(/^./, (letter) => letter.toUpperCase());
-}
-
-type EditablePath = { path: string[]; value: string };
-
-function flattenEditableStrings(value: unknown, path: string[] = []): EditablePath[] {
-  if (typeof value === "string" && !path.some((part) => /(^|_)(href|url|src|image|img)$/i.test(part))) {
-    return [{ path, value }];
-  }
-  if (Array.isArray(value)) {
-    return value.flatMap((item, index) => flattenEditableStrings(item, [...path, String(index)]));
-  }
-  if (value && typeof value === "object") {
-    return Object.entries(value).flatMap(([key, child]) => flattenEditableStrings(child, [...path, key]));
-  }
-  return [];
-}
-
-function setNestedValue(source: Record<string, unknown>, path: string[], value: string): Record<string, unknown> {
-  if (path.length === 0) return source;
-  const next: Record<string, unknown> = Array.isArray(source) ? [...source] as unknown as Record<string, unknown> : { ...source };
-  const [head, ...tail] = path;
-  if (tail.length === 0) {
-    next[head] = value;
-    return next;
-  }
-  const child = next[head];
-  const childRecord = child && typeof child === "object" ? child as Record<string, unknown> : {};
-  next[head] = setNestedValue(childRecord, tail, value);
-  return next;
-}
-
-// ── Agrupación de campos por categoría dentro del editor ─────────────────────
-// Keyed por section_key (no por type) para mayor precisión.
-const SECTION_FIELD_GROUPS: Record<string, Array<{ label: string; emoji: string; prefixes: string[] }>> = {
-  // Secciones modulares de la Home
-  welcome: [
-    { label: "Presentación y Bento", emoji: "🏠", prefixes: ["eyebrow", "section_title", "title", "section_description", "description", "scroll_indicator", "featured_card", "cards"] },
-  ],
-  activities: [
-    { label: "Actividades recientes", emoji: "📅", prefixes: ["eyebrow", "activities_eyebrow", "title", "activities_title", "view_all", "activities_view_all", "view_all_href", "activities_view_all_href", "empty", "activities_empty"] },
-  ],
-  newsletter: [
-    { label: "Boletín semanal", emoji: "📧", prefixes: ["eyebrow", "newsletter_eyebrow", "title", "newsletter_title", "description", "newsletter_description", "placeholder", "newsletter_placeholder", "submit", "newsletter_submit", "sending_label", "newsletter_sending_label", "success_title", "newsletter_success_title", "success_desc", "newsletter_success_desc", "success_toast", "newsletter_success_toast", "error_toast", "newsletter_error_toast"] },
-  ],
-  discover_cta: [
-    { label: "Llamado a la acción", emoji: "✨", prefixes: ["eyebrow", "title", "description", "cta_label", "cta_href", "secondary_cta_label", "secondary_cta_href", "bg_style"] },
-  ],
-
-  // Home — sección feed
-  feed: [
-    { label: "Presentación", emoji: "🏠", prefixes: ["eyebrow", "section_title", "section_description", "scroll_indicator", "featured_card", "cards"] },
-    { label: "Actividades recientes", emoji: "📅", prefixes: ["activities_"] },
-    { label: "Boletín semanal", emoji: "📧", prefixes: ["newsletter_"] },
-  ],
-  // Quiénes Somos — sección monolítica (compatibilidad)
-  about: [
-    { label: "Estadísticas", emoji: "📊", prefixes: ["stats"] },
-    { label: "Visión y Misión", emoji: "🎯", prefixes: ["vision_", "mision_"] },
-    { label: "Pastores Fundadores", emoji: "👥", prefixes: ["founder_", "founder1_", "founder2_"] },
-    { label: "Valores", emoji: "🌟", prefixes: ["valores", "values_"] },
-    { label: "Cita destacada", emoji: "💬", prefixes: ["quote_"] },
-    { label: "Llamado a la acción", emoji: "🚪", prefixes: ["cta_"] },
-  ],
-  // Quiénes Somos — secciones atómicas individuales
-  stats: [
-    { label: "Métricas de Impacto", emoji: "📊", prefixes: ["stats"] },
-  ],
-  vision_mision: [
-    { label: "Visión de la Iglesia", emoji: "👁️", prefixes: ["vision_"] },
-    { label: "Misión de la Iglesia", emoji: "🎯", prefixes: ["mision_"] },
-  ],
-  founders: [
-    { label: "Encabezado y Mensaje", emoji: "📜", prefixes: ["founder_label", "founder_title", "founder_title_accent", "founder_bio", "founder_bio2"] },
-    { label: "Pastor Principal", emoji: "👤", prefixes: ["founder1_"] },
-    { label: "Pastor/a Principal", emoji: "👤", prefixes: ["founder2_"] },
-    { label: "Botones de Acción", emoji: "🔗", prefixes: ["founder_cta_"] },
-  ],
-  values: [
-    { label: "Encabezado de Valores", emoji: "🏷️", prefixes: ["values_eyebrow", "valores_title"] },
-    { label: "Valores Institucionales", emoji: "🌟", prefixes: ["valores"] },
-  ],
-  quote: [
-    { label: "Cita Pastoral", emoji: "💬", prefixes: ["quote_"] },
-  ],
-  cta: [
-    { label: "Llamado a la Acción", emoji: "🚪", prefixes: ["cta_"] },
-  ],
-  // Pastores — sección feed (textos de la lista) → compound key: pastors_feed
-  pastors_feed: [
-    { label: "Encabezado de la lista", emoji: "🏷️", prefixes: ["hero_badge", "hero_title", "hero_description"] },
-    { label: "Textos de interfaz", emoji: "✏️", prefixes: ["loading_label", "empty_title", "card_cta", "principal_label"] },
-  ],
-  // Pastores — sección detail_template
-  detail_template: [
-    { label: "Página de perfil pastoral", emoji: "📄", prefixes: ["not_found_", "role_fallback", "social_follow_label", "back_to_pastors_label"] },
-  ],
-  // Cursos — sección feed (catálogo y textos) → compound key: courses_feed
-  courses_feed: [
-    { label: "Catálogo y Títulos", emoji: "📚", prefixes: ["courses_title", "courses_description", "featured_badge", "featured_cta"] },
-    { label: "Imagen de Portada", emoji: "🖼️", prefixes: ["featured_image", "hero_image_url"] },
-    { label: "Librería y Recursos", emoji: "📖", prefixes: ["library_title", "library_description"] },
-    { label: "Estados Vacíos", emoji: "ℹ️", prefixes: ["empty_title", "empty_description"] },
-  ],
-  // Cursos — sección detail_template → compound key: courses_detail_template
-  courses_detail_template: [
-    { label: "Plantilla de Detalle", emoji: "📄", prefixes: ["not_found_title", "load_error_title", "course_tag_fallback"] },
-  ],
-};
-
-function getFieldGroup(sectionKey: string, fieldKey: string): string | null {
-  const groups = SECTION_FIELD_GROUPS[sectionKey];
-  if (!groups) return null;
-  for (const group of groups) {
-    if (group.prefixes.some((p) => fieldKey === p || fieldKey.startsWith(p))) {
-      return group.label;
-    }
-  }
-  return null;
-}
-
-// Campos de imagen que NO son bg_image/slides pero deben mostrar control de imagen
-const IMAGE_FIELD_SUFFIXES = ["_image", "_photo", "_avatar", "_cover", "_thumbnail", "_banner"];
-const INLINE_IMAGE_KEYS = new Set(["hero_image_url", "featured_image"]);
-function isInlineImageField(key: string): boolean {
-  return INLINE_IMAGE_KEYS.has(key) || IMAGE_FIELD_SUFFIXES.some((suffix) => key.endsWith(suffix));
-}
-
-
-function PublicContentEditor({
-  siteKey,
-  pageSlug,
-  sections,
-  token,
-  canEdit,
-  canPublish,
-  onBack,
-  onSectionsChange,
-}: {
-  siteKey: string;
-  pageSlug: string;
-  sections: ContentSection[];
-  token: string;
-  canEdit: boolean;
-  canPublish: boolean;
-  onBack: () => void;
-  onSectionsChange?: (sections: ContentSection[]) => void;
-}) {
-  const [localSections, setLocalSections] = useState<ContentSection[]>(() =>
-    [...sections].sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0))
-  );
-  const [isReordering, setIsReordering] = useState(false);
-  const isReorderingRef = useRef(false);
-  const [drafts, setDrafts] = useState<Record<string, Record<string, unknown>>>({});
-  const [saving, setSaving] = useState(false);
-  const [publishing, setPublishing] = useState(false);
-
-  useEffect(() => {
-    if (!isReorderingRef.current) {
-      setLocalSections([...sections].sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0)));
-    }
-  }, [sections]);
-
-  useEffect(() => {
-    setDrafts((current) => {
-      const next: Record<string, Record<string, unknown>> = {};
-      for (const section of sections) {
-        next[section.id] = current[section.id] ?? section.props_json ?? {};
-      }
-      return next;
-    });
-  }, [sections]);
-
-  const handleMoveSection = async (index: number, direction: "up" | "down") => {
-    if (!canEdit || isReordering || isReorderingRef.current) return;
-    const targetIndex = direction === "up" ? index - 1 : index + 1;
-    if (index < 0 || index >= localSections.length || targetIndex < 0 || targetIndex >= localSections.length) {
-      return;
-    }
-
-    const previousSections = [...localSections];
-    const nextSections = [...localSections];
-    const [movedItem] = nextSections.splice(index, 1);
-    nextSections.splice(targetIndex, 0, movedItem);
-
-    const updatedSections = nextSections.map((sec, idx) => ({
-      ...sec,
-      sort_order: idx,
-    }));
-
-    setLocalSections(updatedSections);
-    setIsReordering(true);
-    isReorderingRef.current = true;
-
-    try {
-      const items = updatedSections.map((sec, idx) => ({
-        id: sec.id,
-        sort_order: idx,
-      }));
-      await reorderCmsSections(siteKey, pageSlug, items, token);
-      onSectionsChange?.(updatedSections);
-      toast.success(direction === "up" ? "Sección movida hacia arriba" : "Sección movida hacia abajo");
-    } catch {
-      setLocalSections(previousSections);
-      toast.error("Error al reordenar las secciones. Se han restaurado los cambios.");
-    } finally {
-      setIsReordering(false);
-      isReorderingRef.current = false;
-    }
-  };
-
-  const textFields = (section: ContentSection): EditablePath[] => {
-    const visibleEntries = flattenEditableStrings(drafts[section.id] || {})
-      .filter(({ path }) => !(pageSlug === "home" && section.section_key === "hero" && !HOME_HERO_CONTENT_FIELDS.includes(path[0])));
-
-    if (pageSlug === "home" && section.section_key === "hero") {
-      return visibleEntries.sort(
-        ({ path: first }, { path: second }) => HOME_HERO_CONTENT_FIELDS.indexOf(first[0]) - HOME_HERO_CONTENT_FIELDS.indexOf(second[0]),
-      );
-    }
-
-    return visibleEntries.sort(({ path: first }, { path: second }) => (first[0] === "eyebrow" ? -1 : second[0] === "eyebrow" ? 1 : first.join(".").localeCompare(second.join("."))));
-  };
-
-  const saveDraft = async () => {
-    if (!canEdit) return;
-    setSaving(true);
-    try {
-      await Promise.all(localSections.map((section) => patchCmsSection(siteKey, pageSlug, section.id, {
-        props_json: drafts[section.id] || section.props_json || {},
-      }, token)));
-      toast.success("Contenido guardado como borrador");
-    } catch {
-      toast.error("No se pudo guardar el contenido");
-      throw new Error("No se pudo guardar el contenido");
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const publish = async () => {
-    if (!canPublish) return;
-    setPublishing(true);
-    try {
-      await saveDraft();
-      await workflowCmsPage(siteKey, pageSlug, "publish", "Publicado desde Contenido público", token);
-      toast.success("Contenido publicado");
-    } catch {
-      toast.error("No se pudo publicar el contenido");
-    } finally {
-      setPublishing(false);
-    }
-  };
-
-  // ── Inline image editing ───────────────────────────────────────────────────
-  const [mediaOpen, setMediaOpen] = useState(false);
-  const [mediaTarget, setMediaTarget] = useState<{ sectionId: string; field: string; slideIndex?: number } | null>(null);
-
-  const openMediaPicker = (sectionId: string, field: string, slideIndex?: number) => {
-    setMediaTarget({ sectionId, field, slideIndex });
-    setMediaOpen(true);
-  };
-
-  const onMediaSelect = (item: { url: string }) => {
-    if (!mediaTarget) return;
-    const url = item.url || "";
-    const { sectionId, field, slideIndex } = mediaTarget;
-    setDrafts((current) => {
-      let props = { ...(current[sectionId] || {}) };
-      if (field === "bg_image") {
-        props.bg_image = url;
-      } else if (field === "slides" && typeof slideIndex === "number") {
-        const slides = Array.isArray(props.slides) ? [...props.slides as Record<string, unknown>[]] : [];
-        slides[slideIndex] = { ...(slides[slideIndex] as Record<string, unknown> || {}), src: url };
-        props.slides = slides;
-      } else {
-        if (field.startsWith("cards.")) {
-          const defaultCards = [
-            { title: "Primera Escuela Dominical", img: "" },
-            { title: "Segunda Escuela Dominical", img: "" },
-            { title: "FAROS EN CASA", img: "" },
-          ];
-          const existingCards = Array.isArray(props.cards) ? [...props.cards as Record<string, unknown>[]] : [];
-          while (existingCards.length < 3) {
-            existingCards.push(defaultCards[existingCards.length] || { title: `Actividad ${existingCards.length + 1}`, img: "" });
-          }
-          props.cards = existingCards;
-        }
-        // Inline image field (e.g. founder1_image) — field is a dot-path
-        props = setNestedValue(props, field.split("."), url) as Record<string, unknown>;
-      }
-      return { ...current, [sectionId]: props };
-    });
-    setMediaOpen(false);
-    setMediaTarget(null);
-  };
-
-  return (
-    <main className="min-h-screen bg-[hsl(var(--bg-primary))] text-[hsl(var(--text-primary))] dark:bg-[hsl(var(--admin-bg-deep))]">
-      <header className="sticky top-0 z-20 flex flex-wrap items-center justify-between gap-2 border-b border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))]/95 px-3 py-2 backdrop-blur dark:border-white/10 dark:bg-[hsl(var(--surface-2))]/95 sm:gap-4 sm:px-4 sm:py-3">
-        <div className="flex min-w-0 items-center gap-2 sm:gap-3">
-          <button type="button" onClick={onBack} className="shrink-0 rounded-lg border border-[hsl(var(--border))] p-2 hover:bg-[hsl(var(--surface-2))]" aria-label="Volver a páginas"><ArrowLeft size={16} /></button>
-          <div className="min-w-0">
-            <p className="text-2xs font-bold uppercase tracking-[0.16em] text-[hsl(var(--primary))]">Contenido público</p>
-            <h1 className="truncate text-sm font-bold sm:text-lg">/{pageSlug}</h1>
-          </div>
-        </div>
-        <div className="flex shrink-0 gap-2">
-          <button type="button" onClick={saveDraft} disabled={!canEdit || saving || publishing} className="rounded-lg border border-[hsl(var(--border))] px-2 py-1.5 text-xs font-semibold disabled:opacity-50 sm:px-3 sm:py-2">{saving ? "Guardando…" : <span><span className="hidden sm:inline">Guardar </span>Borrador</span>}</button>
-          <button type="button" onClick={publish} disabled={!canPublish || saving || publishing} className="rounded-lg bg-[hsl(var(--primary))] px-2 py-1.5 text-xs font-semibold text-white disabled:opacity-50 sm:px-3 sm:py-2">{publishing ? "Publicando…" : "Publicar"}</button>
-        </div>
-      </header>
-      <div className="mx-auto max-w-4xl space-y-4 px-3 py-4 sm:px-4 sm:py-6">
-        <div className="rounded-xl border border-[hsl(var(--info)/30%)] bg-info-soft/30 px-3 py-2 text-xs text-[hsl(var(--text-secondary))] sm:px-4 sm:py-3 sm:text-sm">
-          Edita los textos e imágenes de cada sección. Guarda como borrador o publica directamente.
-        </div>
-        {localSections.map((section, index) => (
-          <section
-            key={section.id}
-            data-testid={`section-card-${section.id}`}
-            data-section-id={section.id}
-            className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-3 shadow-sm dark:border-white/10 dark:bg-white/[0.03] sm:p-4"
-          >
-            <div className="mb-4 flex items-center justify-between gap-3 border-b border-[hsl(var(--border))] pb-3 dark:border-white/10">
-              <div>
-                <h2 className="font-bold">{section.section_key === "hero" ? "Hero principal" : contentLabel(section.section_key)}</h2>
-                <p className="text-2xs text-[hsl(var(--text-secondary))]">{section.type}</p>
-              </div>
-              <div className="flex items-center gap-2">
-                {section.section_key === "hero" && (
-                  <span className="rounded-full bg-info-soft px-2 py-1 text-2xs font-bold uppercase text-[hsl(var(--primary))]">
-                    Visible al inicio
-                  </span>
-                )}
-                <div className="flex items-center gap-1" data-testid={`reorder-controls-${section.id}`}>
-                  <button
-                    type="button"
-                    onClick={() => handleMoveSection(index, "up")}
-                    disabled={!canEdit || isReordering || index === 0}
-                    aria-label="Mover arriba"
-                    title="Mover arriba"
-                    data-testid={`move-up-${section.id}`}
-                    className="flex h-7 w-7 items-center justify-center rounded-lg border border-[hsl(var(--border))] text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] hover:text-[hsl(var(--text-primary))] disabled:cursor-not-allowed disabled:opacity-30 transition-colors"
-                  >
-                    <ArrowUp size={14} />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleMoveSection(index, "down")}
-                    disabled={!canEdit || isReordering || index === localSections.length - 1}
-                    aria-label="Mover abajo"
-                    title="Mover abajo"
-                    data-testid={`move-down-${section.id}`}
-                    className="flex h-7 w-7 items-center justify-center rounded-lg border border-[hsl(var(--border))] text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] hover:text-[hsl(var(--text-primary))] disabled:cursor-not-allowed disabled:opacity-30 transition-colors"
-                  >
-                    <ArrowDown size={14} />
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            {/* ── Imagen de fondo ─────────────────────────────────────── */}
-            {"bg_image" in (drafts[section.id] || section.props_json || {}) && (
-              <div className="mb-6">
-                <p className="mb-2 text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Imagen de fondo</p>
-                <div className="flex items-center gap-3">
-                  {(drafts[section.id]?.bg_image as string) ? (
-                    <div className="relative h-20 w-32 overflow-hidden rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))]">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={drafts[section.id]?.bg_image as string} alt="Fondo" className="h-full w-full object-cover" />
-                    </div>
-                  ) : (
-                    <div className="flex h-20 w-32 items-center justify-center rounded-lg border-2 border-dashed border-[hsl(var(--border))] bg-[hsl(var(--surface-2))]">
-                      <ImageIcon size={20} className="opacity-40" />
-                    </div>
-                  )}
-                  <div className="flex flex-col gap-2">
-                    <button
-                      type="button"
-                      disabled={!canEdit}
-                      onClick={() => openMediaPicker(section.id, "bg_image")}
-                      className="rounded-lg border border-[hsl(var(--border))] px-3 py-2 text-xs font-semibold hover:bg-[hsl(var(--surface-2))] disabled:opacity-50"
-                    >
-                      <ImageIcon className="mr-1.5 inline" size={13} />
-                      {(drafts[section.id]?.bg_image as string) ? "Cambiar imagen" : "Elegir imagen"}
-                    </button>
-                    {(drafts[section.id]?.bg_image as string) && (
-                      <button
-                        type="button"
-                        disabled={!canEdit}
-                        onClick={() => setDrafts((c) => ({ ...c, [section.id]: { ...c[section.id], bg_image: "" } }))}
-                        className="rounded-lg border border-[hsl(var(--danger)/30%)] px-3 py-2 text-xs font-semibold text-danger-text disabled:opacity-50"
-                      >
-                        <Trash2 className="mr-1.5 inline" size={13} />Quitar imagen
-                      </button>
-                    )}
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* ── Imágenes inline (founder1_image, founder2_image, etc.) ── */}
-            {Object.entries(drafts[section.id] || section.props_json || {})
-              .filter(([key]) => isInlineImageField(key) && key !== "bg_image")
-              .map(([fieldKey, fieldValue]) => (
-                <div key={fieldKey} className="mb-4">
-                  <p className="mb-2 text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{contentLabel(fieldKey)}</p>
-                  <div className="flex items-center gap-3">
-                    {(() => {
-                      const isAvatar = fieldKey.endsWith("_avatar") || fieldKey.includes("founder");
-                      return (fieldValue as string) ? (
-                        <div className={`relative overflow-hidden border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] ${isAvatar ? "h-20 w-20 rounded-full" : "h-20 w-32 rounded-lg"}`}>
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img src={fieldValue as string} alt={fieldKey} className="h-full w-full object-cover" />
-                        </div>
-                      ) : (
-                        <div className={`flex items-center justify-center border-2 border-dashed border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] ${isAvatar ? "h-20 w-20 rounded-full" : "h-20 w-32 rounded-lg"}`}>
-                          <ImageIcon size={18} className="opacity-40" />
-                        </div>
-                      );
-                    })()}
-                    <div className="flex flex-col gap-2">
-                      <button
-                        type="button"
-                        disabled={!canEdit}
-                        onClick={() => openMediaPicker(section.id, fieldKey)}
-                        className="rounded-lg border border-[hsl(var(--border))] px-3 py-2 text-xs font-semibold hover:bg-[hsl(var(--surface-2))] disabled:opacity-50"
-                      >
-                        <ImageIcon className="mr-1.5 inline" size={13} />
-                        {(fieldValue as string) ? "Cambiar foto" : "Elegir foto"}
-                      </button>
-                      {(fieldValue as string) && (
-                        <button
-                          type="button"
-                          disabled={!canEdit}
-                          onClick={() => setDrafts((c) => ({ ...c, [section.id]: { ...c[section.id], [fieldKey]: "" } }))}
-                          className="rounded-lg border border-[hsl(var(--danger)/30%)] px-3 py-2 text-xs font-semibold text-danger-text disabled:opacity-50"
-                        >
-                          <Trash2 className="mr-1.5 inline" size={13} />Quitar foto
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              ))
-            }
-
-            {/* ── Imágenes de tarjetas (feed: Bienvenidos a Casa) ────────── */}
-            {section.type === "feed" && (() => {
-              const props = (drafts[section.id] || section.props_json || {}) as Record<string, unknown>;
-              const featuredCard = (props.featured_card || {}) as Record<string, unknown>;
-              const cards = Array.isArray(props.cards) ? props.cards as Record<string, unknown>[] : [];
-              const allCards = [
-                { label: "Tarjeta destacada (Conocer a Jesús)", path: "featured_card.img", img: featuredCard.img as string },
-                ...cards.map((c, i) => ({ label: (c.title as string) || `Tarjeta ${i + 1}`, path: `cards.${i}.img`, img: c.img as string })),
-              ];
-              return (
-                <div className="mb-6">
-                  <p className="mb-3 text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Imágenes de tarjetas</p>
-                  <div className="grid gap-3 sm:grid-cols-2">
-                    {allCards.map(({ label, path, img }) => (
-                      <div key={path} className="flex items-center gap-3 rounded-lg border border-[hsl(var(--border))] p-3">
-                        <div className="relative h-16 w-24 shrink-0 overflow-hidden rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))]">
-                          {img ? (
-                            // eslint-disable-next-line @next/next/no-img-element
-                            <img src={img} alt={label} className="h-full w-full object-cover" />
-                          ) : (
-                            <div className="flex h-full w-full items-center justify-center"><ImageIcon size={16} className="opacity-40" /></div>
-                          )}
-                        </div>
-                        <div className="flex flex-col gap-1.5">
-                          <p className="text-xs font-semibold">{label}</p>
-                          <button
-                            type="button"
-                            disabled={!canEdit}
-                            onClick={() => openMediaPicker(section.id, path)}
-                            className="rounded-lg border border-[hsl(var(--border))] px-3 py-1.5 text-xs font-semibold hover:bg-[hsl(var(--surface-2))] disabled:opacity-50"
-                          >
-                            <ImageIcon className="mr-1 inline" size={12} />{img ? "Cambiar" : "Elegir imagen"}
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              );
-            })()}
-
-            {/* ── Imágenes de Actividades Recientes ─────────────────────── */}
-            {(section.section_key === "activities" || (pageSlug === "home" && section.type === "events_calendar")) && (() => {
-              const props = (drafts[section.id] || section.props_json || {}) as Record<string, unknown>;
-              const defaultActivities = [
-                { title: "Primera Escuela Dominical", img: "" },
-                { title: "Segunda Escuela Dominical", img: "" },
-                { title: "FAROS EN CASA", img: "" },
-              ];
-              const cards = Array.isArray(props.cards) && props.cards.length > 0 
-                ? (props.cards as Record<string, unknown>[]) 
-                : defaultActivities;
-              const defaultImage = (props.default_image as string) || "";
-
-              return (
-                <div className="mb-6 space-y-4">
-                  <div>
-                    <p className="mb-1 text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
-                      Imágenes de Actividades Recientes
-                    </p>
-                    <p className="text-xs text-[hsl(var(--text-secondary))]">
-                      Asigna imágenes a cada actividad o define una imagen por defecto para las tarjetas.
-                    </p>
-                  </div>
-
-                  {/* Imagen por defecto */}
-                  <div className="flex items-center gap-3 rounded-lg border border-dashed border-[hsl(var(--border))] p-3 bg-[hsl(var(--surface-2))]/30">
-                    <div className="relative h-16 w-24 shrink-0 overflow-hidden rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))]">
-                      {defaultImage ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img src={defaultImage} alt="Imagen por defecto" className="h-full w-full object-cover" />
-                      ) : (
-                        <div className="flex h-full w-full items-center justify-center"><ImageIcon size={16} className="opacity-40" /></div>
-                      )}
-                    </div>
-                    <div className="flex flex-col gap-1.5">
-                      <p className="text-xs font-semibold">Imagen por defecto (para cualquier actividad)</p>
-                      <div className="flex gap-2 items-center">
-                        <button
-                          type="button"
-                          disabled={!canEdit}
-                          onClick={() => openMediaPicker(section.id, "default_image")}
-                          className="rounded-lg border border-[hsl(var(--border))] px-3 py-1.5 text-xs font-semibold hover:bg-[hsl(var(--surface-2))] disabled:opacity-50"
-                        >
-                          <ImageIcon className="mr-1 inline" size={12} />{defaultImage ? "Cambiar" : "Elegir imagen"}
-                        </button>
-                        {defaultImage && (
-                          <button
-                            type="button"
-                            disabled={!canEdit}
-                            onClick={() => {
-                              setDrafts((current) => ({
-                                ...current,
-                                [section.id]: { ...current[section.id], default_image: "" },
-                              }));
-                            }}
-                            className="text-2xs text-danger-text hover:underline"
-                          >
-                            Quitar
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Tarjetas individuales de actividades */}
-                  <div className="grid gap-3 sm:grid-cols-2">
-                    {cards.map((card, i) => {
-                      const path = `cards.${i}.img`;
-                      const img = (card.img as string) || "";
-                      const title = (card.title as string) || `Actividad ${i + 1}`;
-                      return (
-                        <div key={path} className="flex items-center gap-3 rounded-lg border border-[hsl(var(--border))] p-3">
-                          <div className="relative h-16 w-24 shrink-0 overflow-hidden rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))]">
-                            {img ? (
-                              // eslint-disable-next-line @next/next/no-img-element
-                              <img src={img} alt={title} className="h-full w-full object-cover" />
-                            ) : (
-                              <div className="flex h-full w-full items-center justify-center"><ImageIcon size={16} className="opacity-40" /></div>
-                            )}
-                          </div>
-                          <div className="flex flex-col gap-1.5 min-w-0 flex-1">
-                            <p className="text-xs font-semibold truncate" title={title}>
-                              {i + 1}. {title}
-                            </p>
-                            <div className="flex gap-2 items-center">
-                              <button
-                                type="button"
-                                disabled={!canEdit}
-                                onClick={() => openMediaPicker(section.id, path)}
-                                className="rounded-lg border border-[hsl(var(--border))] px-2.5 py-1.5 text-xs font-semibold hover:bg-[hsl(var(--surface-2))] disabled:opacity-50"
-                              >
-                                <ImageIcon className="mr-1 inline" size={12} />{img ? "Cambiar" : "Elegir"}
-                              </button>
-                              {img && (
-                                <button
-                                  type="button"
-                                  disabled={!canEdit}
-                                  onClick={() => {
-                                    setDrafts((current) => {
-                                      const updated = setNestedValue(current[section.id] || {}, path.split("."), "") as Record<string, unknown>;
-                                      return { ...current, [section.id]: updated };
-                                    });
-                                  }}
-                                  className="text-2xs text-danger-text hover:underline"
-                                >
-                                  Quitar
-                                </button>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              );
-            })()}
-
-            {/* ── Carrusel de slides ───────────────────────────────────── */}
-            {Array.isArray((drafts[section.id] || section.props_json || {} as Record<string,unknown>).slides) && (
-              <div className="mb-6">
-                <div className="mb-2 flex items-center justify-between">
-                  <p className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
-                    Imágenes del carrusel ({((drafts[section.id]?.slides as unknown[]) || []).length})
-                  </p>
-                  <button
-                    type="button"
-                    disabled={!canEdit || ((drafts[section.id]?.slides as unknown[]) || []).length >= 12}
-                    onClick={() => setDrafts((c) => ({ ...c, [section.id]: { ...c[section.id], slides: [...(c[section.id]?.slides as unknown[] || []), { src: "", alt: "Imagen del hero", title: "", caption: "", href: "" }] } }))}
-                    className="inline-flex items-center gap-1.5 rounded-lg border border-[hsl(var(--border))] px-3 py-1.5 text-xs font-semibold disabled:opacity-50"
-                  >
-                    <Plus size={13} />Agregar imagen
-                  </button>
-                </div>
-                <div className="space-y-3">
-                  {((drafts[section.id]?.slides || []) as Record<string, unknown>[]).map((slide, index) => (
-                    <div key={index} className="flex items-center gap-3 rounded-lg border border-[hsl(var(--border))] p-3">
-                      <div className="relative h-16 w-24 shrink-0 overflow-hidden rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))]">
-                        {slide.src ? (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img src={slide.src as string} alt={(slide.alt as string) || `Imagen ${index + 1}`} className="h-full w-full object-cover" />
-                        ) : (
-                          <div className="flex h-full w-full items-center justify-center"><ImageIcon size={16} className="opacity-40" /></div>
-                        )}
-                      </div>
-                      <div className="flex flex-1 flex-col gap-1.5">
-                        <div className="flex gap-2">
-                          <button
-                            type="button"
-                            disabled={!canEdit}
-                            onClick={() => openMediaPicker(section.id, "slides", index)}
-                            className="rounded-lg border border-[hsl(var(--border))] px-3 py-1.5 text-xs font-semibold hover:bg-[hsl(var(--surface-2))] disabled:opacity-50"
-                          >
-                            <ImageIcon className="mr-1 inline" size={12} />{slide.src ? "Cambiar" : "Elegir imagen"}
-                          </button>
-                          <button
-                            type="button"
-                            disabled={!canEdit}
-                            onClick={() => setDrafts((c) => ({ ...c, [section.id]: { ...c[section.id], slides: (c[section.id]?.slides as unknown[]).filter((_, i) => i !== index) } }))}
-                            className="rounded-lg border border-[hsl(var(--danger)/30%)] px-3 py-1.5 text-xs font-semibold text-danger-text disabled:opacity-50"
-                          >
-                            <Trash2 className="mr-1 inline" size={12} />Quitar
-                          </button>
-                        </div>
-                        <input
-                          value={(slide.alt as string) || ""}
-                          onChange={(e) => setDrafts((c) => ({ ...c, [section.id]: { ...c[section.id], slides: (c[section.id]?.slides as Record<string,unknown>[]).map((s, i) => i === index ? { ...s, alt: e.target.value } : s) } }))}
-                          disabled={!canEdit}
-                          placeholder="Texto alternativo (accesibilidad)"
-                          className="rounded-lg border border-[hsl(var(--border))] bg-transparent px-3 py-1.5 text-xs disabled:opacity-60"
-                        />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* ── Campos de texto ─────────────────────────────────────── */}
-            {(() => {
-              const fields = textFields(section);
-              // Intentar primero la clave compuesta (pageSlug+section_key) para diferenciar
-              // secciones con el mismo section_key en distintas páginas (ej. feed en home vs pastors).
-              const compoundKey = `${pageSlug}_${section.section_key}`;
-              const groups = SECTION_FIELD_GROUPS[compoundKey] ?? SECTION_FIELD_GROUPS[section.section_key];
-              const groupKey = SECTION_FIELD_GROUPS[compoundKey] ? compoundKey : section.section_key;
-              if (!groups) {
-                // Sin agrupación — render plano
-                return (
-                  <div className="grid gap-4 md:grid-cols-2">
-                    {fields.map(({ path, value }) => {
-                      const key = path[path.length - 1];
-                      const fieldKey = path.join(".");
-                      return (
-                        <label key={fieldKey} className={value.length > 100 || key === "description" || key === "body" ? "md:col-span-2" : ""}>
-                          <span className="mb-1 block text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{contentLabel(key)}</span>
-                          {value.length > 100 || key === "description" || key === "body"
-                            ? <textarea value={value} onChange={(e) => setDrafts((c) => ({ ...c, [section.id]: setNestedValue(c[section.id] || {}, path, e.target.value) }))} rows={4} disabled={!canEdit} className="w-full rounded-lg border border-[hsl(var(--border))] bg-transparent px-3 py-2 text-sm disabled:opacity-60" />
-                            : <input value={value} onChange={(e) => setDrafts((c) => ({ ...c, [section.id]: setNestedValue(c[section.id] || {}, path, e.target.value) }))} disabled={!canEdit} className="w-full rounded-lg border border-[hsl(var(--border))] bg-transparent px-3 py-2 text-sm disabled:opacity-60" />}
-                        </label>
-                      );
-                    })}
-                  </div>
-                );
-              }
-              // Con agrupación — agrupar campos por categoría
-              return (
-                <div className="space-y-6">
-                  {groups.map((group) => {
-                    const groupFields = fields.filter(({ path }) => {
-                      const key = path.join(".");
-                      return group.prefixes.some((p) => key === p || key.startsWith(p));
-                    });
-                    if (groupFields.length === 0) return null;
-                    return (
-                      <div key={group.label}>
-                        <div className="mb-3 flex items-center gap-2 border-b border-[hsl(var(--border))] pb-2">
-                          <span className="text-base">{group.emoji}</span>
-                          <span className="text-xs font-bold uppercase tracking-wider text-[hsl(var(--text-secondary))]">{group.label}</span>
-                        </div>
-                        <div className="grid gap-4 md:grid-cols-2">
-                          {groupFields.map(({ path, value }) => {
-                            const key = path[path.length - 1];
-                            const fieldKey = path.join(".");
-                            return (
-                              <label key={fieldKey} className={value.length > 100 || key === "description" || key === "body" ? "md:col-span-2" : ""}>
-                                <span className="mb-1 block text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{contentLabel(key)}</span>
-                                {value.length > 100 || key === "description" || key === "body"
-                                  ? <textarea value={value} onChange={(e) => setDrafts((c) => ({ ...c, [section.id]: setNestedValue(c[section.id] || {}, path, e.target.value) }))} rows={4} disabled={!canEdit} className="w-full rounded-lg border border-[hsl(var(--border))] bg-transparent px-3 py-2 text-sm disabled:opacity-60" />
-                                  : <input value={value} onChange={(e) => setDrafts((c) => ({ ...c, [section.id]: setNestedValue(c[section.id] || {}, path, e.target.value) }))} disabled={!canEdit} className="w-full rounded-lg border border-[hsl(var(--border))] bg-transparent px-3 py-2 text-sm disabled:opacity-60" />}
-                              </label>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    );
-                  })}
-                  {/* Campos sin grupo asignado */}
-                  {(() => {
-                    const ungrouped = fields.filter(({ path }) => getFieldGroup(groupKey, path.join(".")) === null);
-                    if (ungrouped.length === 0) return null;
-                    return (
-                      <div className="grid gap-4 md:grid-cols-2">
-                        {ungrouped.map(({ path, value }) => {
-                          const key = path[path.length - 1];
-                          const fieldKey = path.join(".");
-                          return (
-                            <label key={fieldKey} className={value.length > 100 || key === "description" || key === "body" ? "md:col-span-2" : ""}>
-                              <span className="mb-1 block text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{contentLabel(key)}</span>
-                              {value.length > 100 || key === "description" || key === "body"
-                                ? <textarea value={value} onChange={(e) => setDrafts((c) => ({ ...c, [section.id]: setNestedValue(c[section.id] || {}, path, e.target.value) }))} rows={4} disabled={!canEdit} className="w-full rounded-lg border border-[hsl(var(--border))] bg-transparent px-3 py-2 text-sm disabled:opacity-60" />
-                                : <input value={value} onChange={(e) => setDrafts((c) => ({ ...c, [section.id]: setNestedValue(c[section.id] || {}, path, e.target.value) }))} disabled={!canEdit} className="w-full rounded-lg border border-[hsl(var(--border))] bg-transparent px-3 py-2 text-sm disabled:opacity-60" />}
-                            </label>
-                          );
-                        })}
-                      </div>
-                    );
-                  })()}
-                </div>
-              );
-            })()}
-          </section>
-        ))}
-      </div>
-
-      {/* Panel de estrategias de evangelismo — solo en /events */}
-      {pageSlug === "events" && (
-        <div className="mx-auto max-w-4xl px-4 pb-8">
-          <PublicStrategiesManager token={token} />
-        </div>
-      )}
-
-      {/* Panel de gestión del equipo pastoral — solo en /pastors */}
-      {pageSlug === "pastors" && (
-        <div className="mx-auto max-w-5xl px-4 pb-8">
-          <PublicPastoralManager token={token} />
-        </div>
-      )}
-
-      {/* Panel de cursos de la academia — solo en /courses */}
-      {pageSlug === "courses" && (
-        <div className="mx-auto max-w-5xl px-4 pb-8">
-          <PublicCoursesManager token={token} />
-        </div>
-      )}
-
-      {/* Panel de sedes y mapa — solo en /locations y /sedes */}
-      {(pageSlug === "locations" || pageSlug === "sedes") && (
-        <div className="mx-auto max-w-5xl px-4 pb-8">
-          <PublicLocationsManager token={token} />
-        </div>
-      )}
-
-      {/* Media picker modal */}
-      {mediaOpen && (
-        <MediaPicker
-          open={mediaOpen}
-          onClose={() => { setMediaOpen(false); setMediaTarget(null); }}
-          onSelect={onMediaSelect}
-          token={token}
-        />
-      )}
-    </main>
-  );
-}
-
-PuckBuilderPage.PublicContentEditor = PublicContentEditor;
-
-function HeroMediaEditor({
-  siteKey,
-  pageSlug,
-  sections,
-  token,
-  canEdit,
-  canPublish,
-  onBack,
-}: {
-  siteKey: string;
-  pageSlug: string;
-  sections: ContentSection[];
-  token: string;
-  canEdit: boolean;
-  canPublish: boolean;
-  onBack: () => void;
-}) {
-  const hero = sections.find((section) => section.section_key === "hero" && section.type === "hero");
-  const [background, setBackground] = useState("");
-  const [slides, setSlides] = useState<HeroSlide[]>([]);
-  const [mediaOpen, setMediaOpen] = useState(false);
-  const [mediaTarget, setMediaTarget] = useState<"background" | number>("background");
-  const [saving, setSaving] = useState(false);
-  const [publishing, setPublishing] = useState(false);
-
-  useEffect(() => {
-    const props = hero?.props_json || {};
-    setBackground(typeof props.bg_image === "string" ? props.bg_image : "");
-    setSlides(Array.isArray(props.slides) ? props.slides.filter((item): item is Record<string, unknown> => Boolean(item) && typeof item === "object").map((item) => ({
-      src: typeof item.src === "string" ? item.src : "",
-      alt: typeof item.alt === "string" ? item.alt : "Imagen del hero",
-      title: typeof item.title === "string" ? item.title : "",
-      caption: typeof item.caption === "string" ? item.caption : "",
-      href: typeof item.href === "string" ? item.href : "",
-    })) : []);
-  }, [hero]);
-
-  const chooseMedia = (target: "background" | number) => {
-    setMediaTarget(target);
-    setMediaOpen(true);
-  };
-
-  const selectMedia = (item: { url?: string }) => {
-    const url = item.url || "";
-    if (mediaTarget === "background") setBackground(url);
-    else setSlides((current) => current.map((slide, index) => index === mediaTarget ? { ...slide, src: url } : slide));
-    setMediaOpen(false);
-  };
-
-  const save = async (publish = false) => {
-    if (!hero || !canEdit) return;
-    if (publish && !canPublish) return;
-    setSaving(!publish);
-    setPublishing(publish);
-    try {
-      await patchCmsSection(siteKey, pageSlug, hero.id, {
-        props_json: { ...(hero.props_json || {}), bg_image: background, slides },
-      }, token);
-      if (publish) {
-        await workflowCmsPage(siteKey, pageSlug, "publish", "Publicado desde Imágenes del hero", token);
-        toast.success("Imágenes del hero publicadas");
-      } else {
-        toast.success("Imágenes del hero guardadas como borrador");
-      }
-    } catch {
-      toast.error(publish ? "No se pudieron publicar las imágenes" : "No se pudieron guardar las imágenes");
-    } finally {
-      setSaving(false);
-      setPublishing(false);
-    }
-  };
-
-  return (
-    <main className="min-h-screen bg-[hsl(var(--bg-primary))] text-[hsl(var(--text-primary))] dark:bg-[hsl(var(--admin-bg-deep))]">
-      <header className="sticky top-0 z-20 flex items-center justify-between gap-4 border-b border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))]/95 px-4 py-3 backdrop-blur dark:border-white/10 dark:bg-[hsl(var(--surface-2))]/95">
-        <div className="flex items-center gap-3"><button type="button" onClick={onBack} className="rounded-lg border border-[hsl(var(--border))] p-2" aria-label="Volver a páginas"><ArrowLeft size={16} /></button><div><p className="text-2xs font-bold uppercase tracking-[0.16em] text-[hsl(var(--primary))]">Media pública</p><h1 className="text-lg font-bold">Imágenes del hero</h1></div></div>
-        <div className="flex gap-2"><button type="button" onClick={() => save()} disabled={!canEdit || saving || publishing} className="rounded-lg border border-[hsl(var(--border))] px-3 py-2 text-xs font-semibold disabled:opacity-50">{saving ? "Guardando…" : "Guardar borrador"}</button><button type="button" onClick={() => save(true)} disabled={!canPublish || saving || publishing} className="rounded-lg bg-[hsl(var(--primary))] px-3 py-2 text-xs font-semibold text-white disabled:opacity-50">{publishing ? "Publicando…" : "Publicar"}</button></div>
-      </header>
-      <div className="mx-auto max-w-5xl space-y-5 px-4 py-6">
-        <div className="rounded-xl border border-[hsl(var(--info)/30%)] bg-info-soft/30 px-4 py-3 text-sm text-[hsl(var(--text-secondary))]">Este editor modifica únicamente la sección Hero de /{pageSlug}. El contenido y las demás secciones permanecen intactos.</div>
-        {!hero ? <div className="rounded-xl border border-[hsl(var(--danger)/30%)] p-6">No se encontró la sección Hero de esta página.</div> : <>
-          <section className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-4 shadow-sm"><h2 className="mb-3 font-bold">Imagen de respaldo</h2><div className="flex flex-col gap-3 sm:flex-row sm:items-center"><div className="relative h-28 w-full overflow-hidden rounded-lg bg-[hsl(var(--surface-2))] sm:w-52"><OptimizedImage src={background} alt="Imagen de respaldo del hero" fill sizes="208px" /></div><div className="min-w-0 flex-1"><p className="mb-2 break-all text-xs text-[hsl(var(--text-secondary))]">{background || "Sin imagen seleccionada"}</p><button type="button" onClick={() => chooseMedia("background")} disabled={!canEdit} className="inline-flex items-center gap-2 rounded-lg bg-[hsl(var(--primary))] px-3 py-2 text-xs font-semibold text-white disabled:opacity-50"><ImageIcon size={14} />Elegir de Media</button></div></div></section>
-          <section className="space-y-3"><div className="flex items-center justify-between"><h2 className="font-bold">Carrusel del hero ({slides.length})</h2><button type="button" onClick={() => setSlides((current) => current.length >= 12 ? current : [...current, { src: "", alt: "Imagen del hero" }])} disabled={!canEdit || slides.length >= 12} className="inline-flex items-center gap-2 rounded-lg border border-[hsl(var(--border))] px-3 py-2 text-xs font-semibold disabled:opacity-50"><Plus size={14} />Agregar imagen</button></div>{slides.map((slide, index) => <article key={`${index}-${slide.src}`} className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-4 shadow-sm"><div className="flex flex-col gap-4 lg:flex-row"><div className="relative h-36 w-full shrink-0 overflow-hidden rounded-lg bg-[hsl(var(--surface-2))] lg:w-64"><OptimizedImage src={slide.src} alt={slide.alt || `Imagen ${index + 1}`} fill sizes="256px" /></div><div className="grid flex-1 gap-3 sm:grid-cols-2"><button type="button" onClick={() => chooseMedia(index)} disabled={!canEdit} className="rounded-lg border border-[hsl(var(--border))] px-3 py-2 text-left text-xs font-semibold disabled:opacity-50"><ImageIcon className="mr-2 inline" size={14} />Elegir imagen desde Media</button><button type="button" onClick={() => setSlides((current) => current.filter((_, itemIndex) => itemIndex !== index))} disabled={!canEdit} className="rounded-lg border border-[hsl(var(--danger)/30%)] px-3 py-2 text-xs font-semibold text-danger-text disabled:opacity-50"><Trash2 className="mr-2 inline" size={14} />Quitar imagen</button>{(["alt", "title", "caption", "href"] as const).map((field) => <label key={field} className={field === "caption" ? "sm:col-span-2" : ""}><span className="mb-1 block text-2xs font-bold uppercase text-[hsl(var(--text-secondary))]">{field === "alt" ? "Texto alternativo" : field === "href" ? "Enlace opcional" : field === "title" ? "Título" : "Descripción"}</span><input value={slide[field] || ""} onChange={(event) => setSlides((current) => current.map((item, itemIndex) => itemIndex === index ? { ...item, [field]: event.target.value } : item))} disabled={!canEdit} className="w-full rounded-lg border border-[hsl(var(--border))] bg-transparent px-3 py-2 text-sm disabled:opacity-60" /></label>)}</div></div></article>)}</section>
-        </>}
-      </div>
-      {mediaOpen && <MediaPicker open token={token} selectedUrl={mediaTarget === "background" ? background : slides[mediaTarget]?.src || ""} onClose={() => setMediaOpen(false)} onSelect={selectMedia} />}
-    </main>
-  );
+ const searchParams = useSearchParams();
+ const router = useRouter();
+ const { token, user } = useAuth();
+ const canEdit = canEditCms(user?.role);
+ const canPublish = canPublishCms(user?.role);
+
+ const siteKey = searchParams?.get("site") || SITE_KEY;
+ const pageSlug = searchParams?.get("page") || "";
+
+ // Pages fully managed by platform — block builder access entirely
+ const PLATFORM_MANAGED_SLUGS = new Set(["sermons"]);
+
+ // Pages where only the hero/banner is editable from CMS
+ const PLATFORM_PARTIAL_SLUGS = new Set(["events", "courses"]);
+
+ const isPlatformManaged = pageSlug ? PLATFORM_MANAGED_SLUGS.has(pageSlug) : false;
+ const isPlatformPartial = pageSlug ? PLATFORM_PARTIAL_SLUGS.has(pageSlug) : false;
+
+ useEffect(() => {
+ if (isPlatformManaged) {
+ toast.error(`La página "${pageSlug}" es gestionada por la plataforma y no se puede editar desde el CMS.`);
+ router.replace("/plataforma/cms/pages");
+ }
+ // eslint-disable-next-line react-hooks/exhaustive-deps
+ }, [isPlatformManaged, router]);
+
+ const [loading, setLoading] = useState(true);
+ const [saving, setSaving] = useState(false);
+ const [initialData, setInitialData] = useState<{ content: any[] }>({ content: [] });
+ const [dbSections, setDbSections] = useState<any[]>([]);
+
+ const [saveStatus, setSaveStatus] = useState<SaveStatus>("saved");
+
+ const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
+ const latestDataRef = useRef<{ content: any[] }>({ content: [] });
+ const saveSequenceRef = useRef<number>(0);
+ const latestCompletedSeqRef = useRef<number>(0);
+ const isInitialLoadRef = useRef<boolean>(true);
+ const dbSectionsRef = useRef<any[]>([]);
+ const savingRef = useRef<boolean>(false);
+
+ useEffect(() => {
+ dbSectionsRef.current = dbSections;
+ }, [dbSections]);
+
+ useEffect(() => {
+ savingRef.current = saving;
+ }, [saving]);
+ 
+ // Theme state
+ const [themeStyles, setThemeStyles] = useState<React.CSSProperties>({});
+ const [themeName, setThemeName] = useState<string>("Por defecto");
+
+ // MediaPicker state
+ const [mediaPickerOpen, setMediaPickerOpen] = useState(false);
+ const mediaPickerCallbackRef = useRef<((url: string) => void) | null>(null);
+ const [mediaPickerValue, setMediaPickerValue] = useState("");
+
+ // Setup global trigger callback for Puck's custom field renderers
+ useEffect(() => {
+ setMediaPickerTrigger((onChange, currentValue) => {
+ setMediaPickerValue(currentValue);
+ mediaPickerCallbackRef.current = onChange;
+ setMediaPickerOpen(true);
+ });
+ return () => {
+ setMediaPickerTrigger(null);
+ };
+ }, []);
+
+ // Load existing sections and site theme from the backend
+ useEffect(() => {
+ if (!token || !pageSlug) return;
+
+ async function fetchData() {
+ try {
+ setLoading(true);
+ const [sections, themeData] = await Promise.all([
+ listCmsSections(siteKey, pageSlug, token),
+ apiFetch<CmsTheme>(`/cms/v2/public/sites/${siteKey}/theme`, { method: "GET", silent: true }).catch(() => null),
+ ]);
+
+ setDbSections(sections || []);
+ dbSectionsRef.current = sections || [];
+ 
+ // Convert array of database sections to Puck's data schema
+ const puckContent = (sections || []).map((sec: any) => ({
+ type: sec.type,
+ props: {
+ ...(NATIVE_PUCK_SECTION_TYPES.has(sec.type)
+ ? (sec.props_json || {})
+ : serializeJsonProps(sec.props_json || {})),
+ id: sec.id, // Store database ID in Puck block properties
+ section_key: sec.section_key || sec.type,
+ },
+ }));
+
+ setInitialData({ content: puckContent });
+ latestDataRef.current = { content: puckContent };
+ isInitialLoadRef.current = true;
+
+ if (themeData?.tokens_json) {
+ const vars: Record<string, string> = {};
+ Object.entries(themeData.tokens_json).forEach(([k, v]) => {
+ vars[k.startsWith("--") ? k : `--site-${k}`] = v;
+ });
+ setThemeStyles(vars as React.CSSProperties);
+ setThemeName(themeData.name || "Por defecto");
+ }
+ } catch (err) {
+ toast.error("Error al cargar las secciones o el tema de la página");
+ } finally {
+ setLoading(false);
+ }
+ }
+
+ fetchData();
+ }, [token, siteKey, pageSlug]);
+
+ // Dynamically memoize Puck configuration to inject token closure for the AI text inputs
+ const puckConfig = useMemo<Config>(() => {
+ const genericComponents = Object.fromEntries(
+ JSON_EDITABLE_SECTION_TYPES.map((type) => [
+ type,
+ {
+ label: `Contenido CMS (${type})`,
+ fields: {
+ __cms_json: {
+ type: "custom",
+ label: "Contenido editable (JSON)",
+ render: ({ value, onChange }: any) => (
+ <CmsJsonMediaField
+ label="Contenido editable (JSON)"
+ value={value || "{}"}
+ token={token}
+ allowThumbnailOverrides={type === "feed"}
+ onChange={onChange}
+ />
+ ),
+ },
+ },
+ render: ({ __cms_json }: { __cms_json?: string }) => (
+ <section className="rounded-lg border border-dashed border-[var(--site-outline-variant,rgba(255,255,255,0.2))] p-6 my-4">
+ <p className="text-sm font-semibold">Sección {type}</p>
+ <p className="mt-2 text-xs opacity-70">
+ Edita todos los campos de esta sección desde el panel lateral.
+ </p>
+ <pre className="mt-4 max-h-40 overflow-auto whitespace-pre-wrap text-2xs opacity-70">
+ {__cms_json || "{}"}
+ </pre>
+ </section>
+ ),
+ },
+ ]),
+ );
+
+ return {
+ root: {
+ render: ({ children }: any) => (
+ <div 
+ className="p-8 min-h-screen transition-colors duration-200"
+ style={{
+ backgroundColor: "var(--site-background, #001134)",
+ color: "var(--site-on-background, #d9e2ff)",
+ fontFamily: "var(--font-inter, sans-serif)",
+ }}
+ >
+ <div className="max-w-6xl mx-auto space-y-6">
+ {children}
+ </div>
+ </div>
+ )
+ },
+ components: {
+ ...genericComponents,
+ hero: {
+ label: "Banner Héroe (Hero)",
+ fields: {
+ title: {
+ type: "custom",
+ render: ({ value, onChange }: any) => (
+ <AiField label="Título Principal" value={value} onChange={onChange} fieldType="title" token={token} />
+ )
+ },
+ body: {
+ type: "custom",
+ render: ({ value, onChange }: any) => (
+ <AiField label="Cuerpo del Mensaje" value={value} onChange={onChange} isTextArea fieldType="body" token={token} />
+ )
+ },
+ cta_label: {
+ type: "custom",
+ render: ({ value, onChange }: any) => (
+ <AiField label="Texto del Botón" value={value} onChange={onChange} fieldType="cta" placeholder="ej. Comenzar ahora" token={token} />
+ )
+ },
+ cta_href: { type: "text", label: "Enlace del Botón" },
+ bg_image: {
+ type: "custom",
+ render: ({ value, onChange }: any) => (
+ <MediaPickerField label="Imagen de Fondo" value={value} onChange={onChange} />
+ )
+ },
+ },
+ render: ({ title, body, cta_label, cta_href, bg_image }: any) => (
+ <section
+ className="relative py-20 px-6 text-center bg-cover bg-center rounded-lg overflow-hidden my-4 border border-[var(--site-outline-variant,rgba(255,255,255,0.05))]"
+ style={{
+ backgroundImage: bg_image 
+ ? `linear-gradient(rgba(0,0,0,0.65), rgba(0,0,0,0.65)), url(${bg_image})` 
+ : "var(--site-cta-gradient, linear-gradient(135deg, #004581, #018abd))",
+ minHeight: "380px",
+ }}
+ >
+ <div className="relative z-10 max-w-2xl mx-auto flex flex-col items-center justify-center min-h-[250px]">
+ <h1 
+ className="text-3xl font-extrabold tracking-tight sm:text-4xl md:text-5xl"
+ style={{ color: "var(--site-on-hero, #ffffff)", fontFamily: "var(--font-outfit, sans-serif)" }}
+ >
+ {title || "Título del Héroe"}
+ </h1>
+ <p 
+ className="mt-4 text-lg max-w-lg"
+ style={{ color: "var(--site-on-hero, rgba(255,255,255,0.9))" }}
+ >
+ {body || "Este es el cuerpo del mensaje del banner de la página."}
+ </p>
+ {cta_label && (
+ <a
+ href={cta_href || "#"}
+ className="mt-8 px-6 py-3 text-sm font-semibold rounded-md shadow-md transition-all duration-200 hover:scale-[1.02]"
+ style={{
+ backgroundColor: "var(--site-primary, #a5c8ff)",
+ color: "var(--site-on-primary, #00315e)",
+ boxShadow: "var(--site-cta-shadow, 0 4px 12px rgba(0,0,0,0.15))",
+ }}
+ >
+ {cta_label}
+ </a>
+ )}
+ </div>
+ </section>
+ ),
+ },
+ rich_text: {
+ label: "Texto Enriquecido (Rich Text)",
+ fields: {
+ title: {
+ type: "custom",
+ render: ({ value, onChange }: any) => (
+ <AiField label="Título de la Sección" value={value} onChange={onChange} fieldType="title" token={token} />
+ )
+ },
+ body: {
+ type: "custom",
+ render: ({ value, onChange }: any) => (
+ <AiField label="Contenido de Texto" value={value} onChange={onChange} isTextArea fieldType="body" token={token} />
+ )
+ },
+ cta_label: { type: "text", label: "Texto del Enlace" },
+ cta_href: { type: "text", label: "Destino del Enlace" },
+ },
+ render: ({ title, body, cta_label, cta_href }: any) => (
+ <section 
+ className="py-12 px-6 max-w-3xl mx-auto my-4 border rounded-lg shadow-sm"
+ style={{
+ backgroundColor: "var(--site-surface, #001134)",
+ borderColor: "var(--site-outline-variant, rgba(255,255,255,0.1))",
+ }}
+ >
+ {title && (
+ <h2 
+ className="text-2xl font-bold tracking-tight"
+ style={{ color: "var(--site-on-surface, #d9e2ff)" }}
+ >
+ {title}
+ </h2>
+ )}
+ <div 
+ className="mt-4 text-base leading-7 whitespace-pre-wrap"
+ style={{ color: "var(--site-on-surface-variant, #c2c6d1)" }}
+ >
+ {body || "Escribe el contenido aquí..."}
+ </div>
+ {cta_label && (
+ <div className="mt-6">
+ <a
+ href={cta_href || "#"}
+ className="text-sm font-semibold hover:underline flex items-center gap-1"
+ style={{ color: "var(--site-primary, #a5c8ff)" }}
+ >
+ {cta_label} &rarr;
+ </a>
+ </div>
+ )}
+ </section>
+ ),
+ },
+ cta_banner: {
+ label: "Banner CTA (CTA Banner)",
+ fields: {
+ title: {
+ type: "custom",
+ render: ({ value, onChange }: any) => (
+ <AiField label="Título" value={value} onChange={onChange} fieldType="title" token={token} />
+ )
+ },
+ body: {
+ type: "custom",
+ render: ({ value, onChange }: any) => (
+ <AiField label="Descripción" value={value} onChange={onChange} isTextArea fieldType="description" token={token} />
+ )
+ },
+ cta_label: {
+ type: "custom",
+ render: ({ value, onChange }: any) => (
+ <AiField label="Botón Principal" value={value} onChange={onChange} fieldType="cta" placeholder="ej. Inscribirme" token={token} />
+ )
+ },
+ cta_href: { type: "text", label: "Enlace Botón Principal" },
+ cta_label_2: { type: "text", label: "Botón Secundario" },
+ cta_href_2: { type: "text", label: "Enlace Botón Secundario" },
+ },
+ render: ({ title, body, cta_label, cta_href, cta_label_2, cta_href_2 }: any) => (
+ <section 
+ className="py-12 px-6 border rounded-lg text-center my-4 max-w-4xl mx-auto"
+ style={{
+ backgroundColor: "var(--site-primary-container, #004581)",
+ borderColor: "var(--site-outline-variant, rgba(255,255,255,0.1))",
+ }}
+ >
+ <h2 
+ className="text-2xl font-bold tracking-tight"
+ style={{ color: "var(--site-on-surface, #d9e2ff)" }}
+ >
+ {title || "Llamada a la acción"}
+ </h2>
+ {body && (
+ <p 
+ className="mt-4 text-base max-w-xl mx-auto"
+ style={{ color: "var(--site-on-surface-variant, #c2c6d1)" }}
+ >
+ {body}
+ </p>
+ )}
+ <div className="mt-8 flex justify-center gap-4">
+ {cta_label && (
+ <a 
+ href={cta_href || "#"} 
+ className="px-5 py-2.5 text-sm font-semibold rounded-md shadow transition-all hover:scale-[1.02]"
+ style={{
+ backgroundColor: "var(--site-primary, #a5c8ff)",
+ color: "var(--site-on-primary, #00315e)",
+ }}
+ >
+ {cta_label}
+ </a>
+ )}
+ {cta_label_2 && (
+ <a 
+ href={cta_href_2 || "#"} 
+ className="px-5 py-2.5 bg-transparent border text-sm font-semibold rounded-md transition-all hover:bg-white/5"
+ style={{
+ borderColor: "var(--site-outline, #8c919b)",
+ color: "var(--site-primary, #a5c8ff)",
+ }}
+ >
+ {cta_label_2}
+ </a>
+ )}
+ </div>
+ </section>
+ ),
+ },
+ faq: {
+ label: "Preguntas Frecuentes (FAQ)",
+ fields: {
+ title: { type: "text", label: "Título de la Sección" },
+ items: {
+ type: "array",
+ label: "Preguntas",
+ getItemSummary: (item: any) => item.q || "Pregunta vacía",
+ defaultItemProps: { q: "Nueva Pregunta", a: "Respuesta..." },
+ arrayFields: {
+ q: { type: "text", label: "Pregunta" },
+ a: { type: "textarea", label: "Respuesta" },
+ },
+ },
+ },
+ render: ({ title, items }: any) => (
+ <section 
+ className="py-12 px-6 max-w-3xl mx-auto my-4 border rounded-lg"
+ style={{
+ backgroundColor: "var(--site-surface, #001134)",
+ borderColor: "var(--site-outline-variant, rgba(255,255,255,0.1))",
+ }}
+ >
+ {title && (
+ <h2 
+ className="text-2xl font-bold tracking-tight mb-6"
+ style={{ color: "var(--site-on-surface, #d9e2ff)" }}
+ >
+ {title}
+ </h2>
+ )}
+ <div className="space-y-4">
+ {(items || []).map((item: any, idx: number) => (
+ <div 
+ key={idx} 
+ className="border-b pb-4 last:border-0"
+ style={{ borderColor: "var(--site-outline-variant, rgba(255,255,255,0.1))" }}
+ >
+ <h3 
+ className="text-lg font-semibold"
+ style={{ color: "var(--site-on-surface, #d9e2ff)" }}
+ >
+ {item.q}
+ </h3>
+ <p 
+ className="mt-2 text-base"
+ style={{ color: "var(--site-on-surface-variant, #c2c6d1)" }}
+ >
+ {item.a}
+ </p>
+ </div>
+ ))}
+ </div>
+ </section>
+ ),
+ },
+ testimonials: {
+ label: "Testimonios (Testimonials)",
+ fields: {
+ title: { type: "text", label: "Título de la Sección" },
+ items: {
+ type: "array",
+ label: "Testimonios",
+ getItemSummary: (item: any) => item.author || "Autor vacío",
+ defaultItemProps: { author: "Nombre del Autor", role: "Colaborador", content: "El testimonio...", stars: 5 },
+ arrayFields: {
+ author: { type: "text", label: "Autor" },
+ role: { type: "text", label: "Cargo/Rol" },
+ content: { type: "textarea", label: "Testimonio" },
+ stars: { type: "number", label: "Estrellas (1-5)" },
+ },
+ },
+ },
+ render: ({ title, items }: any) => (
+ <section className="py-12 px-6 max-w-4xl mx-auto my-4">
+ {title && (
+ <h2 
+ className="text-2xl font-bold text-center tracking-tight mb-8"
+ style={{ color: "var(--site-on-surface, #d9e2ff)" }}
+ >
+ {title}
+ </h2>
+ )}
+ <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+ {(items || []).map((item: any, idx: number) => (
+ <div 
+ key={idx} 
+ className="p-6 border rounded-lg shadow-sm"
+ style={{
+ backgroundColor: "var(--site-surface-container-low, #001944)",
+ borderColor: "var(--site-outline-variant, rgba(255,255,255,0.1))",
+ }}
+ >
+ <div className="flex gap-1 mb-3 text-[hsl(var(--warning))]">
+ {Array.from({ length: Math.min(5, Math.max(1, item.stars || 5)) }).map((_, i) => (
+ <span key={i}>★</span>
+ ))}
+ </div>
+ <p 
+ className="text-base italic"
+ style={{ color: "var(--site-on-surface-variant, #c2c6d1)" }}
+ >
+ &quot;{item.content}&quot;
+ </p>
+ <div className="mt-4 flex items-center gap-3">
+ <div>
+ <h4 
+ className="text-sm font-bold"
+ style={{ color: "var(--site-on-surface, #d9e2ff)" }}
+ >
+ {item.author}
+ </h4>
+ <p 
+ className="text-xs"
+ style={{ color: "var(--site-on-surface-variant, #c2c6d1)" }}
+ >
+ {item.role}
+ </p>
+ </div>
+ </div>
+ </div>
+ ))}
+ </div>
+ </section>
+ ),
+ },
+ stats: {
+ label: "Estadísticas (Stats)",
+ fields: {
+ title: { type: "text", label: "Título de la Sección" },
+ items: {
+ type: "array",
+ label: "Estadísticas",
+ getItemSummary: (item: any) => `${item.value || ""} - ${item.label || ""}`,
+ defaultItemProps: { value: "100%", label: "Descripción" },
+ arrayFields: {
+ value: { type: "text", label: "Valor (ej: 15K, 100%)" },
+ label: { type: "text", label: "Etiqueta" },
+ },
+ },
+ },
+ render: ({ title, items }: any) => (
+ <section 
+ className="py-12 px-6 text-center max-w-4xl mx-auto my-4 border rounded-lg"
+ style={{
+ backgroundColor: "var(--site-surface, #001134)",
+ borderColor: "var(--site-outline-variant, rgba(255,255,255,0.1))",
+ }}
+ >
+ {title && (
+ <h2 
+ className="text-2xl font-bold tracking-tight mb-8"
+ style={{ color: "var(--site-on-surface, #d9e2ff)" }}
+ >
+ {title}
+ </h2>
+ )}
+ <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+ {(items || []).map((item: any, idx: number) => (
+ <div key={idx} className="space-y-2">
+ <p 
+ className="text-3xl font-extrabold"
+ style={{ color: "var(--site-primary, #a5c8ff)" }}
+ >
+ {item.value}
+ </p>
+ <p 
+ className="text-sm"
+ style={{ color: "var(--site-on-surface-variant, #c2c6d1)" }}
+ >
+ {item.label}
+ </p>
+ </div>
+ ))}
+ </div>
+ </section>
+ ),
+ },
+ gallery: {
+ label: "Galería (Gallery)",
+ defaultProps: {
+ title: "Galería de imágenes",
+ items: [
+ { url: "", alt: "Galería 1", caption: "Imagen 1" },
+ { url: "", alt: "Galería 2", caption: "Imagen 2" },
+ { url: "", alt: "Galería 3", caption: "Imagen 3" },
+ ],
+ },
+ fields: {
+ title: {
+ type: "custom",
+ render: ({ value, onChange }: any) => (
+ <AiField label="Título de la Sección" value={value} onChange={onChange} fieldType="title" token={token} />
+ )
+ },
+ body: {
+ type: "custom",
+ render: ({ value, onChange }: any) => (
+ <AiField label="Descripción" value={value} onChange={onChange} isTextArea fieldType="body" token={token} />
+ )
+ },
+ items: {
+ type: "array",
+ label: "Imágenes de la Galería",
+ min: 1,
+ max: 12,
+ getItemSummary: (item: any, idx?: number) =>
+ item?.caption || (item?.alt && item.alt !== "Imagen" ? item.alt : `Imagen #${(idx ?? 0) + 1}`),
+ defaultItemProps: { url: "", alt: "Imagen", caption: "" },
+ arrayFields: {
+ url: {
+ type: "custom",
+ label: "Imagen",
+ render: ({ value, onChange }: any) => (
+ <MediaPickerField label="Imagen" value={value} onChange={onChange} />
+ )
+ },
+ alt: { type: "text", label: "Texto Alt" },
+ caption: { type: "text", label: "Leyenda / Copete" },
+ }
+ }
+ },
+ render: ({ title, body, items }: any) => {
+ const itemList = items || [];
+ return (
+ <section 
+ className="py-12 px-6 max-w-5xl mx-auto my-4 text-center border rounded-lg"
+ style={{
+ backgroundColor: "var(--site-surface, #001134)",
+ borderColor: "var(--site-outline-variant, rgba(255,255,255,0.1))",
+ }}
+ >
+ {title && (
+ <h2 
+ className="text-2xl font-bold tracking-tight mb-2"
+ style={{ color: "var(--site-on-surface, #d9e2ff)" }}
+ >
+ {title}
+ </h2>
+ )}
+ {body && (
+ <p 
+ className="text-base mb-8"
+ style={{ color: "var(--site-on-surface-variant, #c2c6d1)" }}
+ >
+ {body}
+ </p>
+ )}
+ {itemList.length === 0 ? (
+ <div 
+ className="p-8 border-2 border-dashed rounded-lg text-center my-4"
+ style={{
+ borderColor: "var(--site-outline-variant, rgba(255,255,255,0.1))",
+ color: "var(--site-on-surface-variant, #c2c6d1)",
+ }}
+ >
+ <p className="text-sm font-medium">
+ No hay imágenes agregadas. Añade elementos desde el panel lateral.
+ </p>
+ </div>
+ ) : (
+ <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+ {itemList.map((item: any, idx: number) => (
+ <div 
+ key={idx} 
+ className="group relative aspect-square overflow-hidden rounded-lg bg-black/10 border flex items-center justify-center"
+ style={{
+ borderColor: "var(--site-outline-variant, rgba(255,255,255,0.1))",
+ }}
+ >
+ {item?.url ? (
+ <img 
+ src={item.url} 
+ alt={item.alt || ""} 
+ className="h-full w-full object-cover transition duration-300 group-hover:scale-105" 
+ />
+ ) : (
+ <div 
+ className="flex flex-col items-center justify-center p-3 text-center w-full h-full bg-white/5"
+ style={{ color: "var(--site-on-surface-variant, #c2c6d1)" }}
+ >
+ <span className="text-2xs font-semibold px-2.5 py-1 rounded border border-current opacity-70">
+ Sin imagen
+ </span>
+ {item?.alt && item.alt !== "Imagen" && (
+ <span className="text-3xs mt-1 truncate max-w-[90%] opacity-80">
+ {item.alt}
+ </span>
+ )}
+ </div>
+ )}
+ {item?.caption && (
+ <div className="absolute inset-x-0 bottom-0 bg-[hsl(var(--surface-1)/0.9)] p-2 text-2xs text-[hsl(var(--text-primary))] text-left opacity-0 group-hover:opacity-100 transition-opacity">
+ {item.caption}
+ </div>
+ )}
+ </div>
+ ))}
+ </div>
+ )}
+ </section>
+ );
+ }
+ },
+ cards: {
+ label: "Tarjetas (Cards)",
+ defaultProps: {
+ title: "Tarjetas",
+ items: [
+ { title: "Tarjeta 1", body: "Descripción de la tarjeta 1...", cta_label: "Saber más", cta_href: "/", image_url: "" },
+ { title: "Tarjeta 2", body: "Descripción de la tarjeta 2...", cta_label: "Saber más", cta_href: "/", image_url: "" },
+ { title: "Tarjeta 3", body: "Descripción de la tarjeta 3...", cta_label: "Saber más", cta_href: "/", image_url: "" },
+ ],
+ },
+ fields: {
+ title: {
+ type: "custom",
+ render: ({ value, onChange }: any) => (
+ <AiField label="Título de la Sección" value={value} onChange={onChange} fieldType="title" token={token} />
+ )
+ },
+ body: {
+ type: "custom",
+ render: ({ value, onChange }: any) => (
+ <AiField label="Descripción de la Sección" value={value} onChange={onChange} isTextArea fieldType="body" token={token} />
+ )
+ },
+ items: {
+ type: "array",
+ label: "Tarjetas",
+ min: 1,
+ max: 6,
+ getItemSummary: (item: any, idx?: number) =>
+ item?.title || `Tarjeta #${(idx ?? 0) + 1}`,
+ defaultItemProps: { title: "Título de Tarjeta", body: "Descripción corta...", cta_label: "Saber más", cta_href: "/", image_url: "" },
+ arrayFields: {
+ title: {
+ type: "custom",
+ label: "Título",
+ render: ({ value, onChange }: any) => (
+ <AiField label="Título" value={value} onChange={onChange} fieldType="title" token={token} />
+ )
+ },
+ body: {
+ type: "custom",
+ label: "Descripción",
+ render: ({ value, onChange }: any) => (
+ <AiField label="Descripción" value={value} onChange={onChange} isTextArea fieldType="body" token={token} />
+ )
+ },
+ cta_label: { type: "text", label: "Etiqueta Botón" },
+ cta_href: { type: "text", label: "Enlace Botón" },
+ image_url: {
+ type: "custom",
+ label: "Imagen",
+ render: ({ value, onChange }: any) => (
+ <MediaPickerField label="Imagen" value={value} onChange={onChange} />
+ )
+ }
+ }
+ }
+ },
+ render: ({ title, body, items }: any) => {
+ const itemList = items || [];
+ return (
+ <section 
+ className="py-12 px-6 max-w-5xl mx-auto my-4 border rounded-lg"
+ style={{
+ backgroundColor: "var(--site-surface, #001134)",
+ borderColor: "var(--site-outline-variant, rgba(255,255,255,0.1))",
+ }}
+ >
+ {title && (
+ <h2 
+ className="text-2xl font-bold tracking-tight mb-2 text-center" 
+ style={{ color: "var(--site-on-surface, #d9e2ff)" }}
+ >
+ {title}
+ </h2>
+ )}
+ {body && (
+ <p 
+ className="text-base text-center mb-8" 
+ style={{ color: "var(--site-on-surface-variant, #c2c6d1)" }}
+ >
+ {body}
+ </p>
+ )}
+ {itemList.length === 0 ? (
+ <div 
+ className="p-8 border-2 border-dashed rounded-lg text-center my-4"
+ style={{
+ borderColor: "var(--site-outline-variant, rgba(255,255,255,0.1))",
+ color: "var(--site-on-surface-variant, #c2c6d1)",
+ }}
+ >
+ <p className="text-sm font-medium">
+ No hay tarjetas agregadas. Añade elementos desde el panel lateral.
+ </p>
+ </div>
+ ) : (
+ <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+ {itemList.map((item: any, idx: number) => (
+ <div 
+ key={idx} 
+ className="overflow-hidden border rounded-lg flex flex-col shadow-sm"
+ style={{
+ backgroundColor: "var(--site-surface-container-low, #001944)",
+ borderColor: "var(--site-outline-variant, rgba(255,255,255,0.1))",
+ }}
+ >
+ {item?.image_url ? (
+ <img 
+ src={item.image_url} 
+ alt={item.title || ""} 
+ className="w-full h-48 object-cover" 
+ />
+ ) : (
+ <div 
+ className="w-full h-48 flex flex-col items-center justify-center bg-white/5 border-b"
+ style={{ 
+ borderColor: "var(--site-outline-variant, rgba(255,255,255,0.1))",
+ color: "var(--site-on-surface-variant, #c2c6d1)",
+ }}
+ >
+ <span className="text-2xs font-semibold px-2.5 py-1 rounded border border-current opacity-70">
+ Sin imagen
+ </span>
+ </div>
+ )}
+ <div className="p-5 flex-1 flex flex-col justify-between">
+ <div>
+ <h3 
+ className="text-lg font-bold" 
+ style={{ color: "var(--site-on-surface, #d9e2ff)" }}
+ >
+ {item?.title || `Tarjeta #${idx + 1}`}
+ </h3>
+ {item?.body && (
+ <p 
+ className="mt-2 text-sm" 
+ style={{ color: "var(--site-on-surface-variant, #c2c6d1)" }}
+ >
+ {item.body}
+ </p>
+ )}
+ </div>
+ {item?.cta_label && (
+ <a 
+ href={item.cta_href || "#"} 
+ className="mt-4 inline-block text-sm font-semibold hover:underline"
+ style={{ color: "var(--site-primary, #a5c8ff)" }}
+ >
+ {item.cta_label} &rarr;
+ </a>
+ )}
+ </div>
+ </div>
+ ))}
+ </div>
+ )}
+ </section>
+ );
+ }
+ }
+ },
+ };
+ }, [token]);
+
+ const savePageData = useCallback(
+ async (
+ dataToSave: { content: any[] },
+ options: { isAutoSave: boolean }
+ ) => {
+ if (!token || !pageSlug || !canEdit) {
+ if (!options.isAutoSave) {
+ toast.error("No tienes permisos de edición");
+ }
+ return;
+ }
+
+ const currentSeq = ++saveSequenceRef.current;
+ if (options.isAutoSave) {
+ setSaveStatus("saving");
+ } else {
+ setSaving(true);
+ savingRef.current = true;
+ setSaveStatus("saving");
+ }
+
+ let draftSaved = false;
+ try {
+ const activeIdsInPuck = new Set<string>();
+ const currentDbSections = dbSectionsRef.current;
+
+ const contentToSave = dataToSave?.content || [];
+ // 1. Process inserts and updates
+ for (let i = 0; i < contentToSave.length; i++) {
+ const item = contentToSave[i];
+ const id = item.props?.id;
+
+ // Clean properties by stripping the editor-only id field. Generic
+ // page sections store their complete editable payload in
+ // ``__cms_json``; restore it to the object expected by the API.
+ const { id: _, ...rawProps } = item.props || {};
+ const deserializedProps = deserializePuckProps(rawProps);
+ const existingSection = currentDbSections.find((s) => s.id === id);
+ // Native Puck blocks expose only their compact field schema. Merge
+ // their edited values over the stored payload so page-specific keys
+ // (eyebrow, title_lead, SEO copy, etc.) are not lost on save.
+ const cleanProps =
+ existingSection && NATIVE_PUCK_SECTION_TYPES.has(item.type)
+ ? { ...(existingSection.props_json || {}), ...deserializedProps }
+ : deserializedProps;
+
+ const sectionKey = (item.props as Record<string, unknown>)?.section_key as string || existingSection?.section_key || item.type;
+ if (cleanProps.title && !cleanProps.title_lead) {
+ cleanProps.title_lead = cleanProps.title;
+ }
+ if (cleanProps.body && !cleanProps.description) {
+ cleanProps.description = cleanProps.body;
+ }
+ if (cleanProps.cta_label && !cleanProps.primary_cta) {
+ cleanProps.primary_cta = cleanProps.cta_label;
+ }
+
+ if (id && existingSection) {
+ // Exists in DB: Update sort_order and props_json
+ activeIdsInPuck.add(id);
+ await patchCmsSection(
+ siteKey,
+ pageSlug,
+ id,
+ { sort_order: i, props_json: cleanProps, section_key: sectionKey },
+ token
+ );
+ } else {
+ // New block: Create in DB
+ const created = await createCmsSection(
+ siteKey,
+ pageSlug,
+ { type: item.type, section_key: sectionKey, sort_order: i, props_json: cleanProps },
+ token
+ );
+ if (created?.id) {
+ activeIdsInPuck.add(created.id);
+ // Patch in-memory id so next edits track it correctly
+ if (item.props) {
+ item.props.id = created.id;
+ item.props.section_key = sectionKey;
+ } else {
+ item.props = { id: created.id, section_key: sectionKey };
+ }
+ }
+ }
+ }
+
+ // 2. Process deletions: Archive database sections missing from Puck
+ const missingFromPuck = currentDbSections.filter((s) => !activeIdsInPuck.has(s.id));
+ for (const sectionToDelete of missingFromPuck) {
+ await deleteCmsSection(siteKey, pageSlug, sectionToDelete.id, token);
+ }
+
+ // Out-of-order sequence check
+ if (currentSeq < latestCompletedSeqRef.current) {
+ return;
+ }
+ latestCompletedSeqRef.current = currentSeq;
+
+ // Reload fresh state from DB
+ const freshSections = await listCmsSections(siteKey, pageSlug, token);
+ const updated = freshSections || [];
+ setDbSections(updated);
+ dbSectionsRef.current = updated;
+ draftSaved = true;
+
+ // A manual save is the explicit publish action in this compact Puck
+ // editor. Auto-save only persists the draft; publishing creates the
+ // immutable snapshot consumed by the public endpoint.
+ if (!options.isAutoSave && canPublish) {
+ await workflowCmsPage(siteKey, pageSlug, "publish", "Publicado desde el editor visual", token);
+ }
+
+ // Check if newer changes arrived while save was in flight
+ if (
+ latestDataRef.current !== dataToSave &&
+ JSON.stringify(latestDataRef.current) !== JSON.stringify(dataToSave)
+ ) {
+ setSaveStatus("dirty");
+ } else {
+ setSaveStatus("saved");
+ }
+
+ if (!options.isAutoSave) {
+ toast.success(
+ canPublish
+ ? "¡Página publicada exitosamente con Puck!"
+ : "Cambios guardados como borrador. Un publicador debe aprobarlos.",
+ );
+ }
+ } catch (err) {
+ setSaveStatus("error");
+ if (!options.isAutoSave) {
+ toast.error(
+ draftSaved
+ ? "Borrador guardado, pero la publicación falló"
+ : "Error al guardar y publicar la página",
+ );
+ } else {
+ toast.error("Error en el auto-guardado", { id: "autosave-err" });
+ }
+ } finally {
+ if (!options.isAutoSave) {
+ setSaving(false);
+ savingRef.current = false;
+ }
+ }
+ },
+ [token, pageSlug, canEdit, canPublish, siteKey]
+ );
+
+ const handlePuckChange = (newData: { content: any[] }) => {
+ if (isInitialLoadRef.current) {
+ isInitialLoadRef.current = false;
+ latestDataRef.current = newData;
+ return;
+ }
+
+ latestDataRef.current = newData;
+ setSaveStatus("dirty");
+
+ if (debounceTimerRef.current) {
+ clearTimeout(debounceTimerRef.current);
+ }
+
+ debounceTimerRef.current = setTimeout(() => {
+ savePageData(latestDataRef.current, { isAutoSave: true });
+ }, 3000);
+ };
+
+ const handlePublish = useCallback(
+ async (data?: { content: any[] }) => {
+ if (debounceTimerRef.current) {
+ clearTimeout(debounceTimerRef.current);
+ debounceTimerRef.current = null;
+ }
+ const dataToSave = data || latestDataRef.current;
+ await savePageData(dataToSave, { isAutoSave: false });
+ },
+ [savePageData]
+ );
+
+ useEffect(() => {
+ return () => {
+ if (debounceTimerRef.current) {
+ clearTimeout(debounceTimerRef.current);
+ }
+ };
+ }, []);
+
+ useEffect(() => {
+ const handleKeyDown = (e: KeyboardEvent) => {
+ if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") {
+ e.preventDefault();
+ if (!savingRef.current) {
+ handlePublish(latestDataRef.current);
+ }
+ }
+ };
+
+ window.addEventListener("keydown", handleKeyDown);
+ return () => window.removeEventListener("keydown", handleKeyDown);
+ }, [handlePublish]);
+
+ if (!token || !pageSlug) {
+ return (
+ <div className="flex h-screen items-center justify-center p-6 text-center bg-[hsl(var(--bg-primary))]">
+ <div className="space-y-3">
+ <p className="text-sm text-[hsl(var(--text-secondary))]">Selecciona un sitio y página en la lista de páginas para editar.</p>
+ <button
+ onClick={() => router.push("/plataforma/cms/pages")}
+ className="px-4 py-2 bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] text-xs font-semibold rounded-md shadow-md hover:opacity-90 transition-colors"
+ >
+ Volver a Páginas
+ </button>
+ </div>
+ </div>
+ );
+ }
+
+ if (loading) {
+ return (
+ <div className="flex h-screen items-center justify-center bg-[hsl(var(--bg-primary))]">
+ <div className="flex flex-col items-center gap-2">
+ <Loader2 className="animate-spin text-primary" size={32} />
+ <p className="text-sm text-[hsl(var(--text-secondary))]">Cargando lienzo de Puck...</p>
+ </div>
+ </div>
+ );
+ }
+
+ return (
+ <main aria-label="Editor visual Puck" className="h-screen flex flex-col bg-[hsl(var(--bg-primary))]" style={themeStyles}>
+ {/* Header bar */}
+ <div className="shrink-0 border-b border-[hsl(var(--border))] p-3 flex items-center justify-between bg-[hsl(var(--bg-primary))]">
+ <div className="flex items-center gap-3">
+ <button
+ onClick={() => router.push(`/plataforma/cms/pages?site=${siteKey}`)}
+ className="p-2 border border-[hsl(var(--border))] rounded-md hover:bg-[hsl(var(--surface-2))] transition-colors"
+ title="Volver a Páginas"
+ >
+ <ArrowLeft size={16} />
+ </button>
+ <div>
+ <span className="text-3xs uppercase tracking-wider font-semibold text-[hsl(var(--text-secondary))] flex items-center gap-1.5">
+ <LayoutPanelTop size={10} /> Puck Editor
+ </span>
+ <h1 className="text-md font-bold tracking-tight mt-0.5">
+ Editando página: <span className="text-primary">/{pageSlug}</span>
+ </h1>
+ </div>
+ </div>
+ <div className="flex items-center gap-3">
+ <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 bg-primary/10 border border-primary/20 rounded-md text-2xs text-primary font-medium">
+ <Palette size={12} /> Tema: <span className="font-bold">{themeName}</span>
+ </div>
+
+ <SaveStatusBadge status={saveStatus} />
+
+ <button
+ onClick={() => handlePublish(latestDataRef.current)}
+ disabled={saveStatus === "saving" || saving}
+ className="flex items-center gap-1.5 px-3 py-1.5 bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] text-xs font-semibold rounded-md shadow hover:opacity-90 disabled:opacity-50 transition-colors"
+ title="Guardar cambios (Ctrl+S / Cmd+S)"
+ >
+ {saveStatus === "saving" || saving ? (
+ <Loader2 className="animate-spin" size={14} />
+ ) : (
+ <Save size={14} />
+ )}
+ <span>Guardar</span>
+ </button>
+ </div>
+ </div>
+
+ {/* Platform partial notice */}
+ {isPlatformPartial && (
+ <div className="flex items-center gap-3 px-4 py-2.5 bg-[hsl(var(--warning-muted))] border-b border-[hsl(var(--warning)/0.2)] text-[hsl(var(--warning))] text-xs font-medium shrink-0">
+ <span className="text-lg">⚠️</span>
+ <span>
+ <strong>Solo puedes editar el banner (textos e imágenes).</strong>{" "}
+ {pageSlug === "events"
+ ? "Los eventos se gestionan desde el módulo de Evangelismo → Agenda."
+ : "Los cursos se gestionan desde el módulo Academia."}
+ </span>
+ </div>
+ )}
+
+ {/* Editor Frame */}
+ <div className="flex-1 overflow-hidden relative">
+ <Puck
+ config={puckConfig}
+ data={initialData}
+ onChange={handlePuckChange}
+ onPublish={handlePublish}
+ iframe={{ enabled: false }}
+ />
+ </div>
+
+ {/* Custom MediaPicker Drawer integration */}
+ {mediaPickerOpen && (
+ <MediaPicker
+ open
+ token={token}
+ selectedUrl={mediaPickerValue}
+ onClose={() => setMediaPickerOpen(false)}
+ onSelect={(item) => {
+ const url = typeof item === "string" ? item : (item as { url?: string }).url || "";
+ if (mediaPickerCallbackRef.current) {
+ mediaPickerCallbackRef.current(url);
+ }
+ setMediaPickerOpen(false);
+ }}
+ />
+ )}
+ </main>
+ );
 }

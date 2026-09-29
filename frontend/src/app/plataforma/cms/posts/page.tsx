@@ -45,11 +45,11 @@ const RichEditor = dynamic(() => import("@/components/cms/RichEditor"), { ssr: f
 const CMS_POST_VIEWS: ViewType[] = ["grid", "list", "table", "board", "kanban"];
 
 const STATUS_CONFIG: Record<string, { label: string; color: string }> = {
-  published: { label: "Publicado", color: "bg-[hsl(var(--success-muted))] text-success-text dark:bg-[hsl(var(--success))]/20 dark:text-[hsl(var(--success))]" },
-  draft: { label: "Borrador", color: "bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))] dark:bg-white/5 dark:text-[hsl(var(--text-secondary))]" },
-  in_review: { label: "En revisión", color: "bg-[hsl(var(--warning-muted))] text-warning-text dark:bg-[hsl(var(--warning))]/20 dark:text-[hsl(var(--warning))]" },
-  approved: { label: "Aprobado", color: "bg-[hsl(var(--info-muted))] text-info-text dark:bg-[hsl(var(--info))]/20 dark:text-[hsl(var(--info))]" },
-  archived: { label: "Archivado", color: "bg-[hsl(var(--danger-muted))] text-danger-text dark:bg-[hsl(var(--danger))]/10 dark:text-[hsl(var(--danger))]" },
+  published: { label: "Publicado", color: "bg-[hsl(var(--success-muted))] text-success-text" },
+  draft: { label: "Borrador", color: "bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))]" },
+  in_review: { label: "En revisión", color: "bg-[hsl(var(--warning-muted))] text-warning-text" },
+  approved: { label: "Aprobado", color: "bg-[hsl(var(--info-muted))] text-[hsl(var(--primary))]" },
+  archived: { label: "Archivado", color: "bg-[hsl(var(--danger-muted))] text-danger-text" },
 };
 
 import { slugify } from "@/lib/format";
@@ -252,7 +252,7 @@ export default function CmsPostsManagement() {
       {groupedPosts.map((column) => {
         const st = STATUS_CONFIG[column.status] ?? STATUS_CONFIG["draft"];
         return (
-          <section key={column.status} className="rounded-lg bg-[hsl(var(--surface-1))] dark:bg-white/[0.03] border border-[hsl(var(--border))] dark:border-white/10 p-4">
+          <section key={column.status} className="rounded-lg bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] p-4">
             <div className="flex items-center justify-between mb-4">
               <span className={clsx("px-2.5 py-1 rounded-full text-2xs font-semibold uppercase tracking-wide", st.color)}>{st.label}</span>
               <span className="text-2xs font-semibold text-[hsl(var(--text-secondary))]">{column.posts.length}</span>
@@ -262,14 +262,14 @@ export default function CmsPostsManagement() {
                 <button
                   key={post.id}
                   onClick={() => openPost(post)}
-                  className="w-full text-left bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-secondary))] border border-[hsl(var(--border))] dark:border-white/5 rounded-lg p-4 hover:border-[hsl(var(--info)/40%)] hover:shadow-lg transition-all"
+                  className="w-full text-left bg-[hsl(var(--bg-primary))] border border-[hsl(var(--border))] rounded-lg p-4 hover:border-[hsl(var(--info)/40%)] hover:shadow-lg transition-all"
                 >
-                  <p className="text-sm font-bold text-[hsl(var(--text-primary))] dark:text-white truncate">{post.title}</p>
+                  <p className="text-sm font-bold text-[hsl(var(--text-primary))] truncate">{post.title}</p>
                   <p className="text-2xs font-mono text-[hsl(var(--text-secondary))] mt-2 truncate">/{post.slug}</p>
                   {post.categories && post.categories.length > 0 && (
                     <div className="flex flex-wrap gap-1 mt-2">
                       {post.categories.map((cat) => (
-                        <span key={cat.id} className="px-1.5 py-0.5 rounded text-2xs bg-success-soft text-success-text dark:bg-[hsl(var(--success))]/20 dark:text-success-text">
+                        <span key={cat.id} className="px-1.5 py-0.5 rounded text-2xs bg-success-soft text-success-text">
                           {cat.name}
                         </span>
                       ))}
@@ -285,14 +285,14 @@ export default function CmsPostsManagement() {
   );
 
   return (
-    <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-primary))]">
-      <header className="h-8 border-b border-[hsl(var(--border))] dark:border-white/5 flex items-center px-3 gap-3 shrink-0">
+    <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))]">
+      <header className="h-8 border-b border-[hsl(var(--border))] flex items-center px-3 gap-3 shrink-0">
         <div className="flex items-center gap-2 flex-1 min-w-0">
           <FileText size={16} className="text-[hsl(var(--primary))] shrink-0" />
           <h2 className="text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] truncate">
             Posts / Blog
           </h2>
-          <span className="text-2xs font-semibold text-[hsl(var(--text-secondary))] bg-[hsl(var(--surface-2))] dark:bg-white/5 px-2 py-0.5 rounded-full shrink-0">
+          <span className="text-2xs font-semibold text-[hsl(var(--text-secondary))] bg-[hsl(var(--surface-2))] px-2 py-0.5 rounded-full shrink-0">
             {visiblePosts.length}
           </span>
         </div>
@@ -300,7 +300,7 @@ export default function CmsPostsManagement() {
         <select
           value={siteKey}
           onChange={(e) => setSiteKey(e.target.value)}
-          className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-3 py-1.5 text-sm shrink-0"
+          className="rounded-lg border border-[hsl(var(--border))] bg-transparent px-3 py-1.5 text-sm shrink-0"
         >
           {sites.length === 0 && <option value={SITE_KEY}>{SITE_KEY}</option>}
           {sites.map((site) => (
@@ -317,7 +317,7 @@ export default function CmsPostsManagement() {
             placeholder="Buscar posts..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="pl-9 pr-4 py-1.5 bg-[hsl(var(--surface-2))] dark:bg-white/5 border-none rounded-lg text-sm focus:ring-2 focus:ring-[hsl(var(--primary))]/20 w-52 transition-all"
+            className="pl-9 pr-4 py-1.5 bg-[hsl(var(--surface-2))] border-none rounded-lg text-sm focus:ring-2 focus:ring-[hsl(var(--primary))]/20 w-52 transition-all"
           />
         </div>
 
@@ -326,14 +326,14 @@ export default function CmsPostsManagement() {
         <button
           onClick={() => setIsQuickAddOpen((prev) => !prev)}
           disabled={!canEdit}
-          className="bg-[hsl(var(--primary))] text-white px-4 py-1.5 rounded-lg text-xs font-semibold uppercase tracking-wide shadow-xl shadow-[hsl(var(--info)/20%)] hover:bg-[hsl(var(--primary))] active:scale-95 transition-all flex items-center gap-2 disabled:opacity-50 shrink-0"
+          className="bg-[hsl(var(--primary))] text-[hsl(var(--text-primary))] px-4 py-1.5 rounded-lg text-xs font-semibold uppercase tracking-wide shadow-xl shadow-[hsl(var(--info)/20%)] hover:bg-[hsl(var(--primary))] active:scale-95 transition-all flex items-center gap-2 disabled:opacity-50 shrink-0"
         >
           <Plus size={14} /> Nuevo post
         </button>
       </header>
 
       {error && (
-        <div className="mx-3 mt-3 rounded-md border border-[hsl(var(--warning)/25%)] bg-warning-soft p-3 text-warning-text dark:border-[hsl(var(--warning)/100%)]/20 dark:bg-[hsl(var(--warning))]/10 dark:text-[hsl(var(--warning))]">
+        <div className="mx-3 mt-3 rounded-md border border-[hsl(var(--warning)/25%)] bg-warning-soft p-3 text-warning-text">
           <p className="text-xs font-bold uppercase tracking-wide">{error}</p>
         </div>
       )}
@@ -344,10 +344,10 @@ export default function CmsPostsManagement() {
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: "auto", opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
-            className="bg-info-soft dark:bg-[hsl(var(--info))]/10 border-b-2 border-[hsl(var(--info)/30%)] dark:border-[hsl(var(--info)/100%)]/30 overflow-hidden shrink-0"
+            className="bg-[hsl(var(--primary))]/10 border-b-2 border-[hsl(var(--info)/30%)] overflow-hidden shrink-0"
           >
             <form onSubmit={handleCreatePost} className="px-3 py-1.5 flex items-center gap-4">
-              <div className="size-8 rounded-lg bg-[hsl(var(--primary))] text-white flex items-center justify-center shrink-0">
+              <div className="size-8 rounded-lg bg-[hsl(var(--primary))] text-[hsl(var(--text-primary))] flex items-center justify-center shrink-0">
                 <Zap size={16} />
               </div>
               <input
@@ -358,9 +358,9 @@ export default function CmsPostsManagement() {
                 onKeyDown={(e) => e.key === "Escape" && setIsQuickAddOpen(false)}
                 placeholder="Título del nuevo post (Enter para crear)"
                 disabled={!canEdit}
-                className="flex-1 bg-transparent border-none text-sm font-bold text-info-text dark:text-[hsl(var(--info))] placeholder:text-[hsl(var(--primary))] focus:ring-0"
+                className="flex-1 bg-transparent border-none text-sm font-bold text-[hsl(var(--primary))] placeholder:text-[hsl(var(--primary))] focus:ring-0"
               />
-              <button type="submit" disabled={!canEdit} className="bg-[hsl(var(--primary))] text-white px-3 py-1 rounded-lg text-2xs font-semibold uppercase tracking-wide disabled:opacity-50">
+              <button type="submit" disabled={!canEdit} className="bg-[hsl(var(--primary))] text-[hsl(var(--text-primary))] px-3 py-1 rounded-lg text-2xs font-semibold uppercase tracking-wide disabled:opacity-50">
                 Guardar
               </button>
             </form>
@@ -370,12 +370,12 @@ export default function CmsPostsManagement() {
 
       <div className="flex-1 overflow-y-auto custom-scrollbar p-3">
         {loading ? (
-          <div className="space-y-4">{[1, 2, 3].map((i) => <div key={i} className="h-20 bg-[hsl(var(--surface-1))] dark:bg-white/5 rounded-lg animate-pulse" />)}</div>
+          <div className="space-y-4">{[1, 2, 3].map((i) => <div key={i} className="h-20 bg-[hsl(var(--surface-1))] rounded-lg animate-pulse" />)}</div>
         ) : visiblePosts.length === 0 ? (
           <div className="h-full flex flex-col items-center justify-center text-center space-y-4 opacity-50 py-1.5">
-            <div className="size-8 rounded-lg bg-[hsl(var(--surface-2))] dark:bg-white/5 flex items-center justify-center text-[hsl(var(--text-secondary))]"><FileText size={32} /></div>
+            <div className="size-8 rounded-lg bg-[hsl(var(--surface-2))] flex items-center justify-center text-[hsl(var(--text-secondary))]"><FileText size={32} /></div>
             <div>
-              <p className="font-bold text-[hsl(var(--text-primary))] dark:text-white">No hay posts creados</p>
+              <p className="font-bold text-[hsl(var(--text-primary))]">No hay posts creados</p>
               <p className="text-sm text-[hsl(var(--text-secondary))]">Usa la barra superior para crear tu primer post.</p>
             </div>
           </div>
@@ -389,46 +389,46 @@ export default function CmsPostsManagement() {
                   initial={{ opacity: 0, y: 12 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.04 }}
-                  className="group bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-secondary))] rounded-lg border border-[hsl(var(--border))]/70 dark:border-white/5 p-4 shadow-sm hover:shadow-xl hover:border-[hsl(var(--info)/100%)]/30 transition-all duration-200 flex items-center gap-4"
+                  className="group bg-[hsl(var(--bg-primary))] rounded-lg border border-[hsl(var(--border))]/70 p-4 shadow-sm hover:shadow-xl hover:border-[hsl(var(--info)/100%)]/30 transition-all duration-200 flex items-center gap-4"
                 >
                   <button
                     onClick={() => toggleSelect(post.id)}
                     className={clsx(
                       "size-5 rounded-lg border-2 flex items-center justify-center shrink-0 transition-all",
-                      selectedIds.has(post.id) ? "bg-[hsl(var(--primary))] border-[hsl(var(--info)/100%)]" : "border-[hsl(var(--border))] dark:border-white/20 hover:border-[hsl(var(--info)/40%)]"
+                      selectedIds.has(post.id) ? "bg-[hsl(var(--primary))] border-[hsl(var(--info)/100%)]" : "border-[hsl(var(--border))] hover:border-[hsl(var(--info)/40%)]"
                     )}
                   >
-                    {selectedIds.has(post.id) && <Check size={11} className="text-white" strokeWidth={3} />}
+                    {selectedIds.has(post.id) && <Check size={11} className="text-[hsl(var(--text-primary))]" strokeWidth={3} />}
                   </button>
 
                   <div
                     onClick={() => openPost(post)}
-                    className="size-7 rounded-md bg-blue-50 dark:bg-blue-500/10 text-blue-600 flex items-center justify-center shrink-0 cursor-pointer"
+                    className="size-7 rounded-md bg-[hsl(var(--domain-fuchsia)/10%)] text-[hsl(var(--domain-fuchsia)/90%)] flex items-center justify-center shrink-0 cursor-pointer"
                   >
                     <FileText size={20} />
                   </div>
 
                   <div className="flex-1 min-w-0 cursor-pointer" onClick={() => openPost(post)}>
                     <div className="flex items-center gap-2 mb-0.5">
-                      <h3 className="text-base font-semibold text-[hsl(var(--text-primary))] dark:text-white truncate">{post.title}</h3>
+                      <h3 className="text-base font-semibold text-[hsl(var(--text-primary))] truncate">{post.title}</h3>
                       <span className={clsx("px-2 py-0.5 rounded-full text-2xs font-semibold uppercase tracking-wide", st.color)}>{st.label}</span>
                     </div>
                     <div className="flex items-center gap-3">
                       <div className="flex items-center gap-1 text-xs text-[hsl(var(--text-secondary))]"><Globe size={11} /><span>/{post.slug}</span></div>
                       {post.updated_at && <>
-                        <div className="size-1 bg-[hsl(var(--surface-3))] dark:bg-white/10 rounded-full" />
+                        <div className="size-1 bg-[hsl(var(--surface-3))] rounded-full" />
                         <div className="flex items-center gap-1 text-xs text-[hsl(var(--text-secondary))]"><Calendar size={11} /><span>{new Date(post.updated_at).toLocaleDateString()}</span></div>
                       </>}
                       {post.categories && post.categories.length > 0 && <>
-                        <div className="size-1 bg-[hsl(var(--surface-3))] dark:bg-white/10 rounded-full" />
-                        <div className="flex items-center gap-1 text-xs text-success-text dark:text-[hsl(var(--success))]">
+                        <div className="size-1 bg-[hsl(var(--surface-3))] rounded-full" />
+                        <div className="flex items-center gap-1 text-xs text-success-text">
                           <FolderOpen size={11} />
                           {post.categories.map((c) => c.name).join(", ")}
                         </div>
                       </>}
                       {post.tags && post.tags.length > 0 && <>
-                        <div className="size-1 bg-[hsl(var(--surface-3))] dark:bg-white/10 rounded-full" />
-                        <div className="flex items-center gap-1 text-xs text-blue-600 dark:text-blue-400">
+                        <div className="size-1 bg-[hsl(var(--surface-3))] rounded-full" />
+                        <div className="flex items-center gap-1 text-xs text-[hsl(var(--domain-fuchsia)/90%)]">
                           <Tag size={11} />
                           {post.tags.map((t) => t.name).join(", ")}
                         </div>
@@ -441,7 +441,7 @@ export default function CmsPostsManagement() {
                       <button
                         onClick={(e) => { e.stopPropagation(); handleRestorePost(post); }}
                         disabled={!canEdit}
-                        className="p-2 hover:bg-success-soft dark:hover:bg-[hsl(var(--success))]/10 rounded-md text-[hsl(var(--text-secondary))] hover:text-success-text transition-all disabled:opacity-50"
+                        className="p-2 hover:bg-success-soft rounded-md text-[hsl(var(--text-secondary))] hover:text-success-text transition-all disabled:opacity-50"
                         title="Restaurar a borrador"
                       >
                         <RotateCcw size={15} />
@@ -450,7 +450,7 @@ export default function CmsPostsManagement() {
                       <button
                         onClick={(e) => { e.stopPropagation(); handleArchivePost(post); }}
                         disabled={!canEdit}
-                        className="p-2 hover:bg-warning-soft dark:hover:bg-[hsl(var(--warning))]/10 rounded-md text-[hsl(var(--text-secondary))] hover:text-warning-text transition-all disabled:opacity-50"
+                        className="p-2 hover:bg-warning-soft rounded-md text-[hsl(var(--text-secondary))] hover:text-warning-text transition-all disabled:opacity-50"
                         title="Archivar post"
                       >
                         <Archive size={15} />
@@ -464,9 +464,9 @@ export default function CmsPostsManagement() {
         ) : viewType === "board" || viewType === "kanban" ? (
           renderBoard()
         ) : viewType === "table" ? (
-          <div className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 overflow-x-auto">
+          <div className="rounded-lg border border-[hsl(var(--border))] overflow-x-auto">
             <table className="w-full min-w-[480px] text-left">
-              <thead className="bg-[hsl(var(--surface-1))] dark:bg-white/5">
+              <thead className="bg-[hsl(var(--surface-1))]">
                 <tr>
                   <th className="w-10 px-4 py-3">
                     <input
@@ -483,20 +483,20 @@ export default function CmsPostsManagement() {
                   <th className="px-4 py-3 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Acciones</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[hsl(var(--border))] dark:divide-white/5">
+              <tbody className="divide-y divide-[hsl(var(--border))]">
                 {visiblePosts.map((post) => {
                   const st = STATUS_CONFIG[post.status] ?? STATUS_CONFIG["draft"];
                   return (
-                    <tr key={post.id} className="hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/[0.02] group transition-colors">
+                    <tr key={post.id} className="hover:bg-[hsl(var(--surface-1))] group transition-colors">
                       <td className="px-4 py-3">
                         <input type="checkbox" checked={selectedIds.has(post.id)} onChange={() => toggleSelect(post.id)} className="rounded" />
                       </td>
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-3">
-                          <div className="size-8 rounded-md bg-blue-50 dark:bg-blue-900/20 text-blue-600 flex items-center justify-center shrink-0">
+                          <div className="size-8 rounded-md bg-[hsl(var(--domain-fuchsia)/10%)] text-[hsl(var(--domain-fuchsia)/90%)] flex items-center justify-center shrink-0">
                             <FileText size={14} />
                           </div>
-                          <span className="text-sm font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] truncate max-w-[200px]">{post.title}</span>
+                          <span className="text-sm font-bold text-[hsl(var(--text-primary))] truncate max-w-[200px]">{post.title}</span>
                         </div>
                       </td>
                       <td className="px-4 py-3 hidden md:table-cell">
@@ -514,7 +514,7 @@ export default function CmsPostsManagement() {
                         <div className="flex items-center gap-1">
                           <button
                             onClick={() => openPost(post)}
-                            className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-info-soft dark:bg-[hsl(var(--info))]/20 text-[hsl(var(--primary))] text-2xs font-semibold uppercase hover:bg-[hsl(var(--info-muted))] transition-all"
+                            className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-[hsl(var(--primary))]/10 text-[hsl(var(--primary))] text-2xs font-semibold uppercase hover:bg-[hsl(var(--info-muted))] transition-all"
                           >
                             <PenTool size={10} /> Editar
                           </button>
@@ -524,8 +524,8 @@ export default function CmsPostsManagement() {
                             className={clsx(
                               "p-1.5 rounded-lg transition-all opacity-0 group-hover:opacity-100 disabled:opacity-40",
                               post.status === "archived"
-                                ? "hover:bg-success-soft dark:hover:bg-[hsl(var(--success))]/10 text-[hsl(var(--text-secondary))] hover:text-success-text"
-                                : "hover:bg-warning-soft dark:hover:bg-[hsl(var(--warning))]/10 text-[hsl(var(--text-secondary))] hover:text-warning-text"
+                                ? "hover:bg-success-soft text-[hsl(var(--text-secondary))] hover:text-success-text"
+                                : "hover:bg-warning-soft text-[hsl(var(--text-secondary))] hover:text-warning-text"
                             )}
                           >
                             {post.status === "archived" ? <RotateCcw size={13} /> : <Archive size={13} />}
@@ -549,14 +549,14 @@ export default function CmsPostsManagement() {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.025 }}
                   onClick={() => openPost(post)}
-                  className="group bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-secondary))] rounded-lg border border-[hsl(var(--border))]/70 dark:border-white/5 p-4 shadow-sm hover:shadow-xl hover:border-[hsl(var(--info)/100%)]/30 transition-all cursor-pointer flex items-center gap-4"
+                  className="group bg-[hsl(var(--bg-primary))] rounded-lg border border-[hsl(var(--border))]/70 p-4 shadow-sm hover:shadow-xl hover:border-[hsl(var(--info)/100%)]/30 transition-all cursor-pointer flex items-center gap-4"
                 >
-                  <div className="size-6 rounded-md bg-blue-50 dark:bg-blue-500/10 text-blue-600 flex items-center justify-center shrink-0 group-hover:bg-blue-600 group-hover:text-white transition-all">
+                  <div className="size-6 rounded-md bg-[hsl(var(--domain-fuchsia)/10%)] text-[hsl(var(--domain-fuchsia)/90%)] flex items-center justify-center shrink-0 group-hover:bg-[hsl(var(--domain-fuchsia))] group-hover:text-[hsl(var(--text-primary))] transition-all">
                     <FileText size={18} />
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
-                      <h3 className="text-base font-semibold text-[hsl(var(--text-primary))] dark:text-white truncate">{post.title}</h3>
+                      <h3 className="text-base font-semibold text-[hsl(var(--text-primary))] truncate">{post.title}</h3>
                       <span className={clsx("px-2 py-0.5 rounded-full text-2xs font-semibold uppercase tracking-wide", st.color)}>{st.label}</span>
                     </div>
                     <div className="flex items-center gap-3 text-xs text-[hsl(var(--text-secondary))]">
@@ -569,7 +569,7 @@ export default function CmsPostsManagement() {
                   </div>
                   <button
                     onClick={(e) => { e.stopPropagation(); openPost(post); }}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-info-soft dark:bg-[hsl(var(--info))]/20 text-[hsl(var(--primary))] text-2xs font-semibold uppercase tracking-wide hover:bg-[hsl(var(--info-muted))] transition-all"
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-[hsl(var(--primary))]/10 text-[hsl(var(--primary))] text-2xs font-semibold uppercase tracking-wide hover:bg-[hsl(var(--info-muted))] transition-all"
                   >
                     <PenTool size={11} /> Editar
                   </button>
@@ -590,14 +590,14 @@ export default function CmsPostsManagement() {
         {selectedPost && (
           <div className="space-y-4">
             <section className="space-y-3">
-              <div className="flex items-center justify-between pb-2 border-b border-[hsl(var(--border))] dark:border-white/5">
+              <div className="flex items-center justify-between pb-2 border-b border-[hsl(var(--border))]">
                 <label className="text-2xs font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))]">
                   Información básica
                 </label>
                 <button
                   type="button"
                   onClick={() => setIsFullScreen(true)}
-                  className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[hsl(var(--surface-2))] dark:bg-white/5 text-xs text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] transition-all"
+                  className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[hsl(var(--surface-2))] text-xs text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] transition-all"
                   title="Modo pantalla completa (Ctrl+Shift+F)"
                 >
                   <Maximize2 size={14} />
@@ -606,38 +606,38 @@ export default function CmsPostsManagement() {
               </div>
               <div className="space-y-4">
                 <div className="space-y-1.5">
-                  <span className="text-sm font-medium text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">Título</span>
+                  <span className="text-sm font-medium text-[hsl(var(--text-primary))]">Título</span>
                   <input
                     type="text"
                     value={selectedPost.title}
                     onChange={(e) => setSelectedPost({ ...selectedPost, title: e.target.value })}
-                    className="w-full px-3 py-2 text-base bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-secondary))] border border-[hsl(var(--border))] dark:border-white/10 rounded-md"
+                    className="w-full px-3 py-2 text-base bg-[hsl(var(--bg-primary))] border border-[hsl(var(--border))] rounded-md"
                     disabled={!canEdit}
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <span className="text-sm font-medium text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">Slug</span>
+                  <span className="text-sm font-medium text-[hsl(var(--text-primary))]">Slug</span>
                   <input
                     type="text"
                     value={selectedPost.slug}
                     onChange={(e) => setSelectedPost({ ...selectedPost, slug: e.target.value })}
-                    className="w-full px-3 py-2 text-base bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-secondary))] border border-[hsl(var(--border))] dark:border-white/10 rounded-md"
+                    className="w-full px-3 py-2 text-base bg-[hsl(var(--bg-primary))] border border-[hsl(var(--border))] rounded-md"
                     disabled={!canEdit}
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <span className="text-sm font-medium text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">Extracto</span>
+                  <span className="text-sm font-medium text-[hsl(var(--text-primary))]">Extracto</span>
                   <textarea
                     rows={3}
                     value={selectedPost.excerpt || ""}
                     onChange={(e) => setSelectedPost({ ...selectedPost, excerpt: e.target.value })}
-                    className="w-full px-3 py-2 text-base bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-secondary))] border border-[hsl(var(--border))] dark:border-white/10 rounded-md resize-none custom-scrollbar"
+                    className="w-full px-3 py-2 text-base bg-[hsl(var(--bg-primary))] border border-[hsl(var(--border))] rounded-md resize-none custom-scrollbar"
                     disabled={!canEdit}
                     placeholder="Breve resumen del post..."
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <span className="text-sm font-medium text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">Contenido</span>
+                  <span className="text-sm font-medium text-[hsl(var(--text-primary))]">Contenido</span>
                   <RichEditor
                     content={selectedPost.content || ""}
                     onChange={(html) => setSelectedPost({ ...selectedPost, content: html })}
@@ -662,7 +662,7 @@ export default function CmsPostsManagement() {
               </label>
               <div className="space-y-4">
                 <div className="space-y-1.5">
-                  <span className="text-sm font-medium text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">Categorías</span>
+                  <span className="text-sm font-medium text-[hsl(var(--text-primary))]">Categorías</span>
                   <div className="flex flex-wrap gap-2">
                     {categories.map((cat) => {
                       const isSelected = selectedPost.categories?.some((c) => c.id === cat.id);
@@ -681,8 +681,8 @@ export default function CmsPostsManagement() {
                           className={clsx(
                             "px-3 py-1.5 rounded-md text-xs font-medium transition-all disabled:opacity-50",
                             isSelected
-                              ? "bg-[hsl(var(--success-muted))] text-success-text dark:bg-[hsl(var(--success))]/20 dark:text-success-text border border-[hsl(var(--success)/25%)] dark:border-[hsl(var(--success)/100%)]/30"
-                              : "bg-[hsl(var(--surface-2))] dark:bg-white/5 text-[hsl(var(--text-secondary))] border border-[hsl(var(--border))] dark:border-white/10 hover:border-[hsl(var(--success)/30%)]"
+                              ? "bg-[hsl(var(--success-muted))] text-success-text border border-[hsl(var(--success)/25%)]"
+                              : "bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))] border border-[hsl(var(--border))] hover:border-[hsl(var(--success)/30%)]"
                           )}
                         >
                           {cat.name}
@@ -695,7 +695,7 @@ export default function CmsPostsManagement() {
                   )}
                 </div>
                 <div className="space-y-1.5">
-                  <span className="text-sm font-medium text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">Etiquetas</span>
+                  <span className="text-sm font-medium text-[hsl(var(--text-primary))]">Etiquetas</span>
                   <div className="flex flex-wrap gap-2">
                     {tags.map((tag) => {
                       const isSelected = selectedPost.tags?.some((t) => t.id === tag.id);
@@ -714,8 +714,8 @@ export default function CmsPostsManagement() {
                           className={clsx(
                             "px-3 py-1.5 rounded-md text-xs font-medium transition-all disabled:opacity-50",
                             isSelected
-                              ? "bg-blue-100 text-blue-700 dark:bg-blue-900/20 dark:text-blue-300 border border-blue-200 dark:border-blue-500/30"
-                              : "bg-[hsl(var(--surface-2))] dark:bg-white/5 text-[hsl(var(--text-secondary))] border border-[hsl(var(--border))] dark:border-white/10 hover:border-blue-300"
+                              ? "bg-[hsl(var(--domain-fuchsia)/20%)] text-[hsl(var(--domain-fuchsia)/90%)] border border-[hsl(var(--domain-fuchsia)/30%)]"
+                              : "bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))] border border-[hsl(var(--border))] hover:border-[hsl(var(--domain-fuchsia)/100%)]"
                           )}
                         >
                           {tag.name}
@@ -736,12 +736,12 @@ export default function CmsPostsManagement() {
               </label>
               <div className="space-y-4">
                 <div className="space-y-1.5">
-                  <span className="text-sm font-medium text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">Meta descripción</span>
+                  <span className="text-sm font-medium text-[hsl(var(--text-primary))]">Meta descripción</span>
                   <textarea
                     rows={2}
                     value={(selectedPost.seo_json?.meta_description as string) || ""}
                     onChange={(e) => setSelectedPost({ ...selectedPost, seo_json: { ...(selectedPost.seo_json || {}), meta_description: e.target.value } })}
-                    className="w-full px-3 py-2 text-base bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-secondary))] border border-[hsl(var(--border))] dark:border-white/10 rounded-md resize-none custom-scrollbar"
+                    className="w-full px-3 py-2 text-base bg-[hsl(var(--bg-primary))] border border-[hsl(var(--border))] rounded-md resize-none custom-scrollbar"
                     disabled={!canEdit}
                     placeholder="Breve descripción para Google..."
                   />
@@ -749,15 +749,15 @@ export default function CmsPostsManagement() {
               </div>
             </section>
 
-            <div className="pt-6 border-t border-[hsl(var(--border))] dark:border-white/5">
-              <button onClick={() => handleSavePost()} disabled={!canEdit} className="w-full bg-[hsl(var(--primary))] text-white py-3 rounded-md text-xs font-semibold uppercase tracking-wide shadow-xl shadow-[hsl(var(--info)/20%)] hover:bg-[hsl(var(--primary))] active:scale-95 transition-all disabled:opacity-50">
+            <div className="pt-6 border-t border-[hsl(var(--border))]">
+              <button onClick={() => handleSavePost()} disabled={!canEdit} className="w-full bg-[hsl(var(--primary))] text-[hsl(var(--text-primary))] py-3 rounded-md text-xs font-semibold uppercase tracking-wide shadow-xl shadow-[hsl(var(--info)/20%)] hover:bg-[hsl(var(--primary))] active:scale-95 transition-all disabled:opacity-50">
                 Guardar cambios
               </button>
               {selectedPost.status === "archived" ? (
                 <button
                   onClick={() => handleRestorePost(selectedPost)}
                   disabled={!canEdit}
-                  className="mt-3 w-full border border-[hsl(var(--success)/25%)] text-success-text dark:text-success-text py-3 rounded-md text-xs font-semibold uppercase tracking-wide hover:bg-success-soft dark:hover:bg-[hsl(var(--success))]/10 active:scale-95 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                  className="mt-3 w-full border border-[hsl(var(--success)/25%)] text-success-text py-3 rounded-md text-xs font-semibold uppercase tracking-wide hover:bg-success-soft active:scale-95 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
                 >
                   <RotateCcw size={14} /> Restaurar a borrador
                 </button>
@@ -765,7 +765,7 @@ export default function CmsPostsManagement() {
                 <button
                   onClick={() => handleArchivePost(selectedPost)}
                   disabled={!canEdit}
-                  className="mt-3 w-full border border-[hsl(var(--warning)/25%)] text-warning-text dark:text-warning-text py-3 rounded-md text-xs font-semibold uppercase tracking-wide hover:bg-warning-soft dark:hover:bg-[hsl(var(--warning))]/10 active:scale-95 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                  className="mt-3 w-full border border-[hsl(var(--warning)/25%)] text-warning-text py-3 rounded-md text-xs font-semibold uppercase tracking-wide hover:bg-warning-soft active:scale-95 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
                 >
                   <Archive size={14} /> Archivar post
                 </button>
@@ -784,23 +784,23 @@ export default function CmsPostsManagement() {
       >
         {pendingArchivePost && (
           <div className="space-y-4">
-            <div className="rounded-lg border border-[hsl(var(--warning)/25%)] bg-warning-soft p-4 text-warning-text dark:border-[hsl(var(--warning)/100%)]/30 dark:bg-[hsl(var(--warning))]/10 dark:text-[hsl(var(--warning))]">
+            <div className="rounded-lg border border-[hsl(var(--warning)/25%)] bg-warning-soft p-4 text-warning-text">
               <p className="text-sm font-semibold">{pendingArchivePost.title}</p>
-              <p className="mt-2 text-xs leading-5 text-warning-text dark:text-[hsl(var(--warning))]">
+              <p className="mt-2 text-xs leading-5 text-warning-text">
                 El post quedará archivado y podrás restaurarlo después.
               </p>
             </div>
             <div className="flex gap-2">
               <button
                 onClick={() => setPendingArchivePost(null)}
-                className="flex-1 rounded-md border border-[hsl(var(--border))] px-3 py-2 text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] transition-all hover:bg-[hsl(var(--surface-1))] dark:border-white/10 dark:text-[hsl(var(--text-secondary))] dark:hover:bg-white/5"
+                className="flex-1 rounded-md border border-[hsl(var(--border))] px-3 py-2 text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] transition-all hover:bg-[hsl(var(--surface-1))]"
               >
                 Cancelar
               </button>
               <button
                 onClick={confirmArchivePost}
                 disabled={!canEdit}
-                className="flex-1 rounded-md bg-[hsl(var(--warning))] px-3 py-2 text-xs font-semibold uppercase tracking-wide text-white transition-all hover:bg-[hsl(var(--warning))] disabled:opacity-50"
+                className="flex-1 rounded-md bg-[hsl(var(--warning))] px-3 py-2 text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-primary))] transition-all hover:bg-[hsl(var(--warning))] disabled:opacity-50"
               >
                 Archivar
               </button>
@@ -817,23 +817,23 @@ export default function CmsPostsManagement() {
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.98 }}
             transition={{ duration: 0.2 }}
-            className="fixed inset-0 z-[100] bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-primary))] flex flex-col overflow-hidden"
+            className="fixed inset-0 z-[100] bg-[hsl(var(--bg-primary))] flex flex-col overflow-hidden"
             role="dialog"
             aria-modal="true"
             aria-label="Editor de post a pantalla completa"
           >
             {/* Top Bar */}
-            <header className="h-14 border-b border-[hsl(var(--border))] dark:border-white/10 flex items-center justify-between px-6 bg-[hsl(var(--surface-1))] dark:bg-white/[0.02] shrink-0">
+            <header className="h-14 border-b border-[hsl(var(--border))] flex items-center justify-between px-6 bg-[hsl(var(--surface-1))] shrink-0">
               <div className="flex items-center gap-4">
                 <button
                   onClick={() => setIsFullScreen(false)}
-                  className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[hsl(var(--surface-2))] dark:bg-white/5 text-xs font-semibold text-[hsl(var(--text-primary))] dark:text-white hover:bg-[hsl(var(--surface-3))] transition-all"
+                  className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[hsl(var(--surface-2))] text-xs font-semibold text-[hsl(var(--text-primary))] hover:bg-[hsl(var(--surface-3))] transition-all"
                   title="Volver a modo compacto (Ctrl+Shift+F)"
                 >
                   <Minimize2 size={15} />
                   <span>Modo compacto</span>
                 </button>
-                <div className="w-[1px] h-5 bg-[hsl(var(--border))] dark:bg-white/10" />
+                <div className="w-[1px] h-5 bg-[hsl(var(--border))]" />
                 <div className="flex items-center gap-2">
                   <span className={clsx("px-2.5 py-0.5 rounded-full text-2xs font-semibold uppercase tracking-wide", (STATUS_CONFIG[selectedPost.status] || STATUS_CONFIG.draft).color)}>
                     {(STATUS_CONFIG[selectedPost.status] || STATUS_CONFIG.draft).label}
@@ -846,7 +846,7 @@ export default function CmsPostsManagement() {
 
               <div className="flex items-center gap-3">
                 <span className="text-2xs text-[hsl(var(--text-secondary))] hidden md:inline">
-                  <kbd className="px-1.5 py-0.5 bg-[hsl(var(--surface-2))] dark:bg-white/10 rounded border border-[hsl(var(--border))] dark:border-white/10 text-2xs font-mono">
+                  <kbd className="px-1.5 py-0.5 bg-[hsl(var(--surface-2))] rounded border border-[hsl(var(--border))] text-2xs font-mono">
                     Cmd/Ctrl+Shift+F
                   </kbd>{" "}
                   para alternar modo
@@ -854,7 +854,7 @@ export default function CmsPostsManagement() {
                 <button
                   onClick={() => handleSavePost()}
                   disabled={!canEdit}
-                  className="flex items-center gap-2 px-4 py-1.5 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-primary))] dark:text-white hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5 transition-all disabled:opacity-50"
+                  className="flex items-center gap-2 px-4 py-1.5 rounded-lg border border-[hsl(var(--border))] text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-primary))] hover:bg-[hsl(var(--surface-2))] transition-all disabled:opacity-50"
                 >
                   <Save size={14} />
                   <span>Guardar borrador</span>
@@ -862,14 +862,14 @@ export default function CmsPostsManagement() {
                 <button
                   onClick={() => handleSavePost("published")}
                   disabled={!canEdit}
-                  className="flex items-center gap-2 px-4 py-1.5 rounded-lg bg-[hsl(var(--primary))] text-white text-xs font-semibold uppercase tracking-wide shadow-lg shadow-[hsl(var(--info)/20%)] hover:bg-[hsl(var(--primary))] active:scale-95 transition-all disabled:opacity-50"
+                  className="flex items-center gap-2 px-4 py-1.5 rounded-lg bg-[hsl(var(--primary))] text-[hsl(var(--text-primary))] text-xs font-semibold uppercase tracking-wide shadow-lg shadow-[hsl(var(--info)/20%)] hover:bg-[hsl(var(--primary))] active:scale-95 transition-all disabled:opacity-50"
                 >
                   <Globe size={14} />
                   <span>Publicar</span>
                 </button>
                 <button
                   onClick={handleCloseEditor}
-                  className="p-2 text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/10 rounded-lg transition-all"
+                  className="p-2 text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] rounded-lg transition-all"
                   title="Cerrar editor"
                 >
                   <X size={18} />
@@ -882,16 +882,16 @@ export default function CmsPostsManagement() {
               <div className="grid grid-cols-1 lg:grid-cols-[70%_30%] gap-6 max-w-[1600px] mx-auto min-h-full">
                 {/* 70% Left Column */}
                 <div className="flex flex-col space-y-4">
-                  <div className="space-y-2 bg-[hsl(var(--surface-1))] dark:bg-white/[0.02] p-4 rounded-xl border border-[hsl(var(--border))] dark:border-white/10">
+                  <div className="space-y-2 bg-[hsl(var(--surface-1))] p-4 rounded-xl border border-[hsl(var(--border))]">
                     <input
                       type="text"
                       value={selectedPost.title}
                       onChange={(e) => setSelectedPost({ ...selectedPost, title: e.target.value })}
                       placeholder="Título del post..."
-                      className="w-full text-2xl font-bold bg-transparent border-none focus:ring-0 text-[hsl(var(--text-primary))] dark:text-white placeholder:text-[hsl(var(--text-secondary))]/50 px-0"
+                      className="w-full text-2xl font-bold bg-transparent border-none focus:ring-0 text-[hsl(var(--text-primary))] placeholder:text-[hsl(var(--text-secondary))]/50 px-0"
                       disabled={!canEdit}
                     />
-                    <div className="flex items-center gap-2 text-xs font-mono text-[hsl(var(--text-secondary))] pt-2 border-t border-[hsl(var(--border))] dark:border-white/5">
+                    <div className="flex items-center gap-2 text-xs font-mono text-[hsl(var(--text-secondary))] pt-2 border-t border-[hsl(var(--border))]">
                       <span>Slug: /</span>
                       <input
                         type="text"
@@ -917,8 +917,8 @@ export default function CmsPostsManagement() {
                 {/* 30% Right Column */}
                 <div className="space-y-6">
                   {/* Status & Excerpt */}
-                  <div className="bg-[hsl(var(--surface-1))] dark:bg-white/[0.03] p-5 rounded-xl border border-[hsl(var(--border))] dark:border-white/10 space-y-4">
-                    <h4 className="text-2xs font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] border-b pb-2 border-[hsl(var(--border))] dark:border-white/5">
+                  <div className="bg-[hsl(var(--surface-1))] p-5 rounded-xl border border-[hsl(var(--border))] space-y-4">
+                    <h4 className="text-2xs font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] border-b pb-2 border-[hsl(var(--border))]">
                       Publicación & Estado
                     </h4>
 
@@ -927,7 +927,7 @@ export default function CmsPostsManagement() {
                       <select
                         value={selectedPost.status}
                         onChange={(e) => setSelectedPost({ ...selectedPost, status: e.target.value as any })}
-                        className="w-full px-3 py-2 text-xs bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-secondary))] border border-[hsl(var(--border))] dark:border-white/10 rounded-lg text-[hsl(var(--text-primary))] dark:text-white"
+                        className="w-full px-3 py-2 text-xs bg-[hsl(var(--bg-primary))] border border-[hsl(var(--border))] rounded-lg text-[hsl(var(--text-primary))]"
                         disabled={!canEdit}
                       >
                         <option value="draft">Borrador</option>
@@ -945,15 +945,15 @@ export default function CmsPostsManagement() {
                         value={selectedPost.excerpt || ""}
                         onChange={(e) => setSelectedPost({ ...selectedPost, excerpt: e.target.value })}
                         placeholder="Resumen corto para listas y redes sociales..."
-                        className="w-full px-3 py-2 text-xs bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-secondary))] border border-[hsl(var(--border))] dark:border-white/10 rounded-lg text-[hsl(var(--text-primary))] dark:text-white resize-none custom-scrollbar"
+                        className="w-full px-3 py-2 text-xs bg-[hsl(var(--bg-primary))] border border-[hsl(var(--border))] rounded-lg text-[hsl(var(--text-primary))] resize-none custom-scrollbar"
                         disabled={!canEdit}
                       />
                     </div>
                   </div>
 
                   {/* Taxonomies */}
-                  <div className="bg-[hsl(var(--surface-1))] dark:bg-white/[0.03] p-5 rounded-xl border border-[hsl(var(--border))] dark:border-white/10 space-y-4">
-                    <h4 className="text-2xs font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] border-b pb-2 border-[hsl(var(--border))] dark:border-white/5">
+                  <div className="bg-[hsl(var(--surface-1))] p-5 rounded-xl border border-[hsl(var(--border))] space-y-4">
+                    <h4 className="text-2xs font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] border-b pb-2 border-[hsl(var(--border))]">
                       Categorías & Etiquetas
                     </h4>
 
@@ -975,8 +975,8 @@ export default function CmsPostsManagement() {
                               className={clsx(
                                 "px-2.5 py-1 rounded-md text-2xs font-medium transition-all disabled:opacity-50",
                                 isSelected
-                                  ? "bg-[hsl(var(--success-muted))] text-success-text dark:bg-[hsl(var(--success))]/20 dark:text-success-text border border-[hsl(var(--success)/25%)]"
-                                  : "bg-[hsl(var(--surface-2))] dark:bg-white/5 text-[hsl(var(--text-secondary))] border border-[hsl(var(--border))] dark:border-white/10 hover:border-[hsl(var(--success)/30%)]"
+                                  ? "bg-[hsl(var(--success-muted))] text-success-text border border-[hsl(var(--success)/25%)]"
+                                  : "bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))] border border-[hsl(var(--border))] hover:border-[hsl(var(--success)/30%)]"
                               )}
                             >
                               {cat.name}
@@ -1004,8 +1004,8 @@ export default function CmsPostsManagement() {
                               className={clsx(
                                 "px-2.5 py-1 rounded-md text-2xs font-medium transition-all disabled:opacity-50",
                                 isSelected
-                                  ? "bg-blue-100 text-blue-700 dark:text-blue-300 border border-blue-200"
-                                  : "bg-[hsl(var(--surface-2))] dark:bg-white/5 text-[hsl(var(--text-secondary))] border border-[hsl(var(--border))] dark:border-white/10 hover:border-blue-300"
+                                  ? "bg-[hsl(var(--domain-fuchsia)/20%)] text-[hsl(var(--domain-fuchsia)/90%)] border border-[hsl(var(--domain-fuchsia)/30%)]"
+                                  : "bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))] border border-[hsl(var(--border))] hover:border-[hsl(var(--domain-fuchsia)/100%)]"
                               )}
                             >
                               {tag.name}
@@ -1017,8 +1017,8 @@ export default function CmsPostsManagement() {
                   </div>
 
                   {/* Featured Image & SEO */}
-                  <div className="bg-[hsl(var(--surface-1))] dark:bg-white/[0.03] p-5 rounded-xl border border-[hsl(var(--border))] dark:border-white/10 space-y-4">
-                    <h4 className="text-2xs font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] border-b pb-2 border-[hsl(var(--border))] dark:border-white/5">
+                  <div className="bg-[hsl(var(--surface-1))] p-5 rounded-xl border border-[hsl(var(--border))] space-y-4">
+                    <h4 className="text-2xs font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] border-b pb-2 border-[hsl(var(--border))]">
                       Imagen Destacada & SEO
                     </h4>
 
@@ -1042,7 +1042,7 @@ export default function CmsPostsManagement() {
                           })
                         }
                         placeholder="Meta descripción para motores de búsqueda..."
-                        className="w-full px-3 py-2 text-xs bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-secondary))] border border-[hsl(var(--border))] dark:border-white/10 rounded-lg text-[hsl(var(--text-primary))] dark:text-white resize-none custom-scrollbar"
+                        className="w-full px-3 py-2 text-xs bg-[hsl(var(--bg-primary))] border border-[hsl(var(--border))] rounded-lg text-[hsl(var(--text-primary))] resize-none custom-scrollbar"
                         disabled={!canEdit}
                       />
                     </div>

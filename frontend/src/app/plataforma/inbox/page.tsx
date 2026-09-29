@@ -22,12 +22,12 @@ import { NotificationKind, formatNotificationTime } from '@/lib/notifications';
 type InboxFilter = 'all' | 'unread' | 'mention' | 'task' | 'ai';
 
 const TYPE_CONFIG: Record<NotificationKind, { icon: React.ElementType; color: string; bg: string }> = {
-    mention: { icon: AtSign, color: 'text-[hsl(var(--primary))]', bg: 'bg-info-soft dark:bg-[hsl(var(--info))]/20' },
-    comment: { icon: MessageSquare, color: 'text-[hsl(var(--primary))]', bg: 'bg-info-soft dark:bg-[hsl(var(--info))]/20' },
-    task: { icon: CheckCircle2, color: 'text-success-text', bg: 'bg-success-soft dark:bg-[hsl(var(--success))]/20' },
-    system: { icon: Bell, color: 'text-[hsl(var(--text-secondary))]', bg: 'bg-[hsl(var(--surface-2))] dark:bg-white/5' },
-    ai: { icon: Bot, color: 'text-[hsl(var(--primary))]', bg: 'bg-info-soft dark:bg-[hsl(var(--info))]/20' },
-    reminder: { icon: Clock, color: 'text-orange-600', bg: 'bg-orange-50 dark:bg-orange-900/20' },
+    mention: { icon: AtSign, color: 'text-[hsl(var(--primary))]', bg: 'bg-[hsl(var(--info)/15%)]' },
+    comment: { icon: MessageSquare, color: 'text-[hsl(var(--primary))]', bg: 'bg-[hsl(var(--info)/15%)]' },
+    task: { icon: CheckCircle2, color: 'text-[hsl(var(--success))]', bg: 'bg-[hsl(var(--success)/15%)]' },
+    system: { icon: Bell, color: 'text-[hsl(var(--text-secondary))]', bg: 'bg-[hsl(var(--surface-2))]' },
+    ai: { icon: Bot, color: 'text-[hsl(var(--primary))]', bg: 'bg-[hsl(var(--info)/15%)]' },
+    reminder: { icon: Clock, color: 'text-[hsl(var(--warning))]', bg: 'bg-[hsl(var(--warning)/15%)]' },
 };
 
 const FILTER_LABEL: Record<InboxFilter, string> = {
@@ -78,13 +78,13 @@ export default function InboxPage() {
     const unreadCount = notifications.filter((notification) => !notification.read).length;
 
     return (
-        <div className="h-full flex flex-col bg-[hsl(var(--bg-primary))] dark:bg-[#1E1F21] overflow-hidden font-display">
-            <div className="h-8 border-b border-[hsl(var(--border))] dark:border-white/5 flex items-center px-3 gap-3 shrink-0 bg-[hsl(var(--surface-1))]/50 dark:bg-[#1E1F21]">
-                <h1 className="text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] flex items-center gap-2">
+        <div className="h-full flex flex-col bg-[hsl(var(--bg-primary))] overflow-hidden font-display">
+            <div className="h-8 border-b border-[hsl(var(--border))] flex items-center px-3 gap-3 shrink-0 bg-[hsl(var(--surface-1))]/50">
+                <h1 className="text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-primary))] flex items-center gap-2">
                     <Bell size={13} />
                     Bandeja de Entrada
                     {unreadCount > 0 && (
-                        <span className="inline-flex items-center justify-center size-5 rounded-full bg-[hsl(var(--danger))] text-white font-semibold">
+                        <span className="inline-flex items-center justify-center size-5 rounded-full bg-[hsl(var(--danger))] text-[hsl(var(--primary-foreground))] font-semibold">
                             {unreadCount}
                         </span>
                     )}
@@ -98,11 +98,11 @@ export default function InboxPage() {
                         value={search}
                         onChange={(event) => setSearch(event.target.value)}
                         placeholder="Buscar..."
-                        className="pl-8 pr-3 py-1.5 text-xs bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.2] w-48 transition-all"
+                        className="pl-8 pr-3 py-1.5 text-xs bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] rounded-lg outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/20%)] w-48 transition-all text-[hsl(var(--text-primary))] placeholder:text-[hsl(var(--text-secondary))]"
                     />
                 </div>
 
-                <div className="flex rounded-lg overflow-hidden border border-[hsl(var(--border))] dark:border-white/10">
+                <div className="flex rounded-lg overflow-hidden border border-[hsl(var(--border))]">
                     {(['all', 'unread'] as const).map((item) => (
                         <button
                             key={item}
@@ -110,8 +110,8 @@ export default function InboxPage() {
                             className={clsx(
                                 'px-3 py-1.5 text-2xs font-semibold uppercase tracking-wide transition-colors',
                                 filter === item
-                                    ? 'bg-[hsl(var(--primary))] text-white'
-                                    : 'text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] dark:hover:text-[hsl(var(--text-secondary))]',
+                                    ? 'bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))]'
+                                    : 'text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))]',
                             )}
                         >
                             {FILTER_LABEL[item]}
@@ -121,7 +121,7 @@ export default function InboxPage() {
 
                 <button
                     onClick={() => void refresh()}
-                    className="flex items-center gap-1.5 px-3 py-1.5 font-semibold text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] dark:text-[hsl(var(--text-secondary))] dark:hover:text-[hsl(var(--primary))] transition-colors"
+                    className="flex items-center gap-1.5 px-3 py-1.5 font-semibold text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] transition-colors"
                 >
                     <RefreshCw size={12} className={loading ? 'animate-spin' : ''} />
                     Actualizar
@@ -130,7 +130,7 @@ export default function InboxPage() {
                 {unreadCount > 0 && (
                     <button
                         onClick={() => void markAllRead()}
-                        className="flex items-center gap-1.5 px-3 py-1.5 font-semibold text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] dark:text-[hsl(var(--text-secondary))] dark:hover:text-[hsl(var(--primary))] transition-colors"
+                        className="flex items-center gap-1.5 px-3 py-1.5 font-semibold text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] transition-colors"
                     >
                         <Check size={12} />
                         Marcar todo como leido
@@ -138,7 +138,7 @@ export default function InboxPage() {
                 )}
             </div>
 
-            <div className="px-3 py-2 border-b border-[hsl(var(--border))] dark:border-white/5 text-2xs font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))]">
+            <div className="px-3 py-2 border-b border-[hsl(var(--border))] text-2xs font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))]">
                 {FILTER_LABEL[filter]}
             </div>
 
@@ -158,15 +158,15 @@ export default function InboxPage() {
                             animate={{ opacity: 1 }}
                             className="flex flex-col items-center justify-center h-full gap-4 text-center px-4"
                         >
-                            <div className="size-8 rounded-lg bg-[hsl(var(--surface-2))] dark:bg-white/5 flex items-center justify-center">
-                                <Bell size={28} className="text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]" />
+                            <div className="size-8 rounded-lg bg-[hsl(var(--surface-2))] flex items-center justify-center">
+                                <Bell size={28} className="text-[hsl(var(--text-secondary))]" />
                             </div>
                             <p className="text-sm font-bold text-[hsl(var(--text-secondary))]">Sin notificaciones</p>
                             <p className="text-xs text-[hsl(var(--text-secondary))]">Todo limpio por aqui, {displayName}.</p>
                             {error && <p className="text-xs font-semibold text-[hsl(var(--danger))]">{error}</p>}
                         </motion.div>
                     ) : (
-                        <div className="divide-y divide-[hsl(var(--border))] dark:divide-white/[0.03]">
+                        <div className="divide-y divide-[hsl(var(--border))]">
                             {filtered.map((notification, index) => {
                                 const config = TYPE_CONFIG[notification.kind];
                                 const Icon = config.icon;
@@ -181,8 +181,8 @@ export default function InboxPage() {
                                         className={clsx(
                                             'w-full text-left flex items-start gap-4 px-3 py-1.5 group relative transition-colors',
                                             notification.read
-                                                ? 'hover:bg-[hsl(var(--surface-1))]/50 dark:hover:bg-white/[0.02]'
-                                                : 'bg-info-soft/30 dark:bg-[hsl(var(--info))]/[0.04] hover:bg-info-soft/50 dark:hover:bg-[hsl(var(--info))]/[0.07]',
+                                                ? 'hover:bg-[hsl(var(--surface-1))]/50'
+                                                : 'bg-[hsl(var(--info)/8%)] hover:bg-[hsl(var(--info)/12%)]',
                                         )}
                                         onClick={() => void markRead(notification.id)}
                                     >
@@ -200,8 +200,8 @@ export default function InboxPage() {
                                                     className={clsx(
                                                         'text-base font-semibold truncate flex-1',
                                                         notification.read
-                                                            ? 'text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]'
-                                                            : 'text-[hsl(var(--text-primary))] dark:text-white font-bold',
+                                                            ? 'text-[hsl(var(--text-secondary))]'
+                                                            : 'text-[hsl(var(--text-primary))] font-bold',
                                                     )}
                                                 >
                                                     {notification.title}
@@ -210,7 +210,7 @@ export default function InboxPage() {
                                                     {formatNotificationTime(notification.createdAt)}
                                                 </span>
                                             </div>
-                                            <p className="text-sm text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] leading-snug line-clamp-2">
+                                            <p className="text-sm text-[hsl(var(--text-secondary))] leading-snug line-clamp-2">
                                                 {notification.body || 'Sin detalle adicional.'}
                                             </p>
                                             <div className="flex items-center gap-3 mt-2">

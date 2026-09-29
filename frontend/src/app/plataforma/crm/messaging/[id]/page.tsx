@@ -82,10 +82,10 @@ export default function MessagingDetailPage() {
     if (error) {
         return (
             <div className="mx-auto flex max-w-xl flex-col items-center gap-3 p-4 text-center">
-                <p className="font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{error}</p>
+                <p className="font-bold uppercase tracking-wide text-[hsl(var(--muted-foreground))]">{error}</p>
                 <button
                     onClick={() => setReloadKey(key => key + 1)}
-                    className="rounded-md border border-[hsl(var(--border))] px-3 py-1.5 text-xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] transition-colors hover:bg-[hsl(var(--surface-1))] dark:border-white/10 dark:hover:bg-white/5"
+                    className="rounded-md border border-[hsl(var(--border))] px-3 py-1.5 text-xs font-bold uppercase tracking-wide text-[hsl(var(--muted-foreground))] transition-colors hover:bg-[hsl(var(--surface-2))]"
                 >
                     Reintentar
                 </button>
@@ -95,7 +95,7 @@ export default function MessagingDetailPage() {
 
     if (loading) {
         return (
-            <div className="p-4 text-center animate-pulse font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
+            <div className="p-4 text-center animate-pulse font-bold uppercase tracking-wide text-[hsl(var(--muted-foreground))]">
                 Analizando metricas de comunicacion...
             </div>
         );
@@ -104,12 +104,12 @@ export default function MessagingDetailPage() {
     if (!campaign) {
         return (
             <div className="mx-auto flex max-w-xl flex-col items-center gap-3 p-4 text-center">
-                <p className="font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
+                <p className="font-bold uppercase tracking-wide text-[hsl(var(--muted-foreground))]">
                     No se pudo cargar la campaña.
                 </p>
                 <button
                     onClick={() => setReloadKey(key => key + 1)}
-                    className="rounded-md border border-[hsl(var(--border))] px-3 py-1.5 text-xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] transition-colors hover:bg-[hsl(var(--surface-1))] dark:border-white/10 dark:hover:bg-white/5"
+                    className="rounded-md border border-[hsl(var(--border))] px-3 py-1.5 text-xs font-bold uppercase tracking-wide text-[hsl(var(--muted-foreground))] transition-colors hover:bg-[hsl(var(--surface-2))]"
                 >
                     Reintentar
                 </button>
@@ -137,10 +137,10 @@ export default function MessagingDetailPage() {
                             tone={campaign.status === "sent" ? "emerald" : "blue"}
                             label={String(campaign.status || "sent").toUpperCase()}
                         />
-                        <h1 className="text-lg font-bold text-[hsl(var(--text-primary))] dark:text-white tracking-tight uppercase leading-none">
+                        <h1 className="text-lg font-bold text-[hsl(var(--foreground))] tracking-tight uppercase leading-none">
                             {title}
                         </h1>
-                        <div className="flex items-center gap-4 text-sm font-bold text-[hsl(var(--text-secondary))]">
+                        <div className="flex items-center gap-4 text-sm font-bold text-[hsl(var(--muted-foreground))]">
                             <span className="flex items-center gap-2">
                                 <Clock size={18} />
                                 Enviado el {sentAtLabel}
@@ -171,9 +171,9 @@ export default function MessagingDetailPage() {
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
                     <div className="lg:col-span-2 space-y-3">
                         <DSCard>
-                            <h3 className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-3">Contenido del Mensaje</h3>
-                            <div className="p-4 rounded-md bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/5">
-                                <p className="text-sm font-medium text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] leading-relaxed">
+                            <h3 className="text-xs font-bold uppercase tracking-wide text-[hsl(var(--muted-foreground))] mb-3">Contenido del Mensaje</h3>
+                            <div className="p-4 rounded-md bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))]">
+                                <p className="text-sm font-medium text-[hsl(var(--foreground))] leading-relaxed">
                                     {campaign.content || ''}
                                 </p>
                             </div>
@@ -182,13 +182,13 @@ export default function MessagingDetailPage() {
 
                     <aside className="space-y-3">
                         <DSCard>
-                            <h3 className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-3">Estado de Entrega</h3>
+                            <h3 className="text-xs font-bold uppercase tracking-wide text-[hsl(var(--muted-foreground))] mb-3">Estado de Entrega</h3>
                             <div className="space-y-4">
                                 <div className="flex items-center justify-between text-xs font-bold">
-                                    <span className="text-[hsl(var(--text-secondary))]">Completado</span>
+                                    <span className="text-[hsl(var(--muted-foreground))]">Completado</span>
                                     <span className="text-[hsl(var(--success))]">{deliveryRate}%</span>
                                 </div>
-                                <div className="h-2 w-full bg-[hsl(var(--surface-2))] dark:bg-white/5 rounded-full overflow-hidden">
+                                <div className="h-2 w-full bg-[hsl(var(--surface-2))] rounded-full overflow-hidden">
                                     <div className="h-full bg-[hsl(var(--success))] rounded-full" style={{ width: `${deliveryRate}%` }} />
                                 </div>
                             </div>

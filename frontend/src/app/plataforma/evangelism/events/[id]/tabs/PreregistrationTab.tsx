@@ -1,15 +1,16 @@
 "use client";
 
 import React, { useEffect, useState, useCallback } from "react";
-import { apiFetch, ApiError } from "@/lib/http";
+import { apiFetch, apiFetchBlob, ApiError } from "@/lib/http";
 import { toast } from "sonner";
 import {
   Check, Download, FolderOpen, Loader2, Mail, Plus,
-  QrCode, RefreshCw, Send, Trash2, Users, X, Megaphone, Settings2,
+  QrCode, RefreshCw, Send, Trash2, Users, X, Megaphone, Settings2, FileText,
 } from "lucide-react";
 import clsx from "clsx";
-import ConfirmActionDrawer, { type ConfirmActionState } from "@/components/evangelism/ConfirmActionDrawer";
-import WorkspaceDrawer from "@/components/WorkspaceDrawer";
+import SidePanel from "@/components/ui/SidePanel";
+import ConfirmDeleteDrawer from "@/components/ui/ConfirmDeleteDrawer";
+import EventFormStudioDrawer from "../../panels/EventFormStudioDrawer";
 
 type RegistrationStatus =
   | "PENDING"
@@ -41,6 +42,8 @@ type EventRegistrationRow = {
   reminder_sent_count: number;
   last_reminder_sent_at: string | null;
   crm_case_id?: string | null;
+  registration_number?: number | null;
+  registration_code?: string | null;
 };
 
 type RegistrationStats = {
@@ -66,6 +69,7 @@ type PreregConfig = {
   qr_mode: "PER_REGISTRANT" | "PER_EVENT";
   contact_person: string | null;
   settings_json: Record<string, unknown>;
+  form_id?: string | null;
 };
 
 type EventCampaign = {
@@ -133,9 +137,15 @@ export default function PreregistrationTab({ eventId, token }: { eventId: string
   const [search, setSearch] = useState("");
   const [showConfigForm, setShowConfigForm] = useState(false);
   const [showCampaignForm, setShowCampaignForm] = useState(false);
+  const [showFormStudio, setShowFormStudio] = useState(false);
   const [sendingCampaignId, setSendingCampaignId] = useState<string | null>(null);
   const [exportingCsv, setExportingCsv] = useState(false);
-  const [confirmAction, setConfirmAction] = useState<ConfirmActionState>(null);
+  const [confirmState, setConfirmState] = useState<{
+    title: string;
+    description: string;
+    confirmLabel?: string;
+    onConfirm: () => Promise<void>;
+  } | null>(null);
 
   const handleExportCsv = async () => {
     if (!token) return;
@@ -202,14 +212,20 @@ export default function PreregistrationTab({ eventId, token }: { eventId: string
         </div>
         <div className="flex gap-2">
           <button
+            onClick={() => setShowFormStudio(true)}
+            className="px-3 py-2 rounded-md bg-[hsl(var(--primary)/0.12)] hover:bg-[hsl(var(--primary))] text-[hsl(var(--primary))] hover:text-[hsl(var(--primary-foreground))] text-xs font-semibold uppercase tracking-wide transition-all flex items-center gap-2 border border-[hsl(var(--primary)/0.25)]"
+          >
+            <FileText size={14} /> Diseñar Formulario
+          </button>
+          <button
             onClick={() => setShowCampaignForm(true)}
-            className="px-3 py-2 rounded-md bg-[hsl(var(--bg-muted))] hover:bg-[hsl(var(--primary))] text-[hsl(var(--text-secondary))] hover:text-white text-xs font-semibold uppercase tracking-wide transition-all flex items-center gap-2"
+            className="px-3 py-2 rounded-md bg-[hsl(var(--bg-muted))] hover:bg-[hsl(var(--primary))] text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary-foreground))] text-xs font-semibold uppercase tracking-wide transition-all flex items-center gap-2"
           >
             <Megaphone size={14} /> Nueva campaña
           </button>
           <button
             onClick={() => setShowConfigForm(true)}
-            className="px-3 py-2 rounded-md bg-[hsl(var(--bg-muted))] hover:bg-[hsl(var(--primary))] text-[hsl(var(--text-secondary))] hover:text-white text-xs font-semibold uppercase tracking-wide transition-all flex items-center gap-2"
+            className="px-3 py-2 rounded-md bg-[hsl(var(--bg-muted))] hover:bg-[hsl(var(--primary))] text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary-foreground))] text-xs font-semibold uppercase tracking-wide transition-all flex items-center gap-2"
           >
             <Settings2 size={14} /> Configurar
           </button>
@@ -232,22 +248,22 @@ export default function PreregistrationTab({ eventId, token }: { eventId: string
           Al cerrar la asistencia, los confirmados sin check-in se marcan como ausentes y generan seguimiento CRM automaticamente.
         </div>
         <button
-          onClick={() => setConfirmAction({
-            title: "Cerrar asistencia",
-            description: "Los confirmados sin check-in se marcarán como ausentes y generarán seguimiento CRM automáticamente.",
-            confirmLabel: "Cerrar asistencia",
-            destructive: true,
-            onConfirm: async () => {
-              try {
-                await apiFetch(`/evangelism/events/${eventId}/attendance/close`, { method: "POST", token });
-                toast.success("Asistencia cerrada");
-                loadAll();
-              } catch {
-                toast.error("No se pudo cerrar la asistencia");
-                throw new Error("close-failed");
-              }
-            },
-          })}
+          onClick={() => {
+            setConfirmState({
+              title: "¿Cerrar asistencia?",
+              description: "¿Cerrar la asistencia? Los confirmados sin check-in se marcarán como ausentes y generarán seguimiento CRM automáticamente.",
+              confirmLabel: "Cerrar asistencia",
+              onConfirm: async () => {
+                try {
+                  await apiFetch(`/evangelism/events/${eventId}/attendance/close`, { method: "POST", token });
+                  toast.success("Asistencia cerrada");
+                  loadAll();
+                } catch {
+                  toast.error("No se pudo cerrar la asistencia");
+                }
+              },
+            });
+          }}
           className="shrink-0 inline-flex items-center gap-1.5 rounded-md bg-danger-soft px-3 py-1.5 text-sm font-semibold text-danger-text hover:opacity-80 transition-all"
         >
           <Check size={14} /> Cerrar asistencia
@@ -313,28 +329,28 @@ export default function PreregistrationTab({ eventId, token }: { eventId: string
                       }
                     }}
                     disabled={sendingCampaignId !== null}
-                    className="px-3 py-1.5 rounded-md bg-info-soft dark:bg-[hsl(var(--info)/0.2)] text-[hsl(var(--primary))] text-2xs font-semibold uppercase flex items-center gap-1.5 hover:opacity-80 transition-all disabled:opacity-50"
+                    className="px-3 py-1.5 rounded-md bg-[hsl(var(--info-muted))] text-[hsl(var(--info))] text-2xs font-semibold uppercase flex items-center gap-1.5 hover:opacity-80 transition-all disabled:opacity-50"
                   >
                     {sendingCampaignId === c.id ? <Loader2 size={13} className="animate-spin" /> : <Send size={13} />} Enviar
                   </button>
                   <button
-                    onClick={() => setConfirmAction({
-                      title: "Eliminar campaña",
-                      description: `¿Eliminar la campaña "${c.name}"? Esta acción no se puede deshacer.`,
-                      confirmLabel: "Eliminar",
-                      destructive: true,
-                      onConfirm: async () => {
-                        try {
-                          await apiFetch(`/evangelism/events/${eventId}/campaigns/${c.id}`, { method: "DELETE", token, silent: true });
-                          toast.success("Campaña eliminada");
-                          loadAll();
-                        } catch {
-                          toast.error("No se pudo eliminar la campaña");
-                          throw new Error("delete-failed");
-                        }
-                      },
-                    })}
-                    className="p-1.5 rounded-md text-[hsl(var(--text-secondary))] hover:text-danger-text hover:bg-danger-soft transition-all"
+                    onClick={() => {
+                      setConfirmState({
+                        title: "¿Eliminar campaña?",
+                        description: `¿Estás seguro de que deseas eliminar la campaña "${c.name}"? Esta acción no se puede deshacer.`,
+                        confirmLabel: "Eliminar campaña",
+                        onConfirm: async () => {
+                          try {
+                            await apiFetch(`/evangelism/events/${eventId}/campaigns/${c.id}`, { method: "DELETE", token, silent: true });
+                            toast.success("Campaña eliminada");
+                            loadAll();
+                          } catch {
+                            toast.error("No se pudo eliminar la campaña");
+                          }
+                        },
+                      });
+                    }}
+                    className="p-1.5 rounded-md text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--destructive))] hover:bg-[hsl(var(--destructive)/0.08)] transition-all"
                   >
                     <Trash2 size={14} />
                   </button>
@@ -370,7 +386,7 @@ export default function PreregistrationTab({ eventId, token }: { eventId: string
             <button
               onClick={handleExportCsv}
               disabled={exportingCsv}
-              className="px-2.5 py-1.5 rounded-md bg-[hsl(var(--bg-muted))] hover:bg-[hsl(var(--primary))] text-[hsl(var(--text-secondary))] hover:text-white text-2xs font-semibold uppercase flex items-center gap-1.5 transition-all disabled:opacity-50"
+              className="px-2.5 py-1.5 rounded-md bg-[hsl(var(--bg-muted))] hover:bg-[hsl(var(--primary))] text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary-foreground))] text-2xs font-semibold uppercase flex items-center gap-1.5 transition-all disabled:opacity-50"
             >
               {exportingCsv ? <Loader2 size={13} className="animate-spin" /> : <Download size={13} />} CSV
             </button>
@@ -389,6 +405,7 @@ export default function PreregistrationTab({ eventId, token }: { eventId: string
             <thead>
               <tr className="bg-[hsl(var(--bg-muted))]/50 text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
                 <th className="px-4 py-2 text-left">Persona</th>
+                <th className="px-4 py-2 text-left">Pase</th>
                 <th className="px-4 py-2 text-left">Estado</th>
                 <th className="px-4 py-2 text-left">Registro</th>
                 <th className="px-4 py-2 text-left">QR</th>
@@ -412,6 +429,19 @@ export default function PreregistrationTab({ eventId, token }: { eventId: string
                       <div className="text-xs font-medium text-[hsl(var(--text-secondary))]">
                         {r.persona_email || ""}{r.persona_email && r.persona_phone ? " · " : ""}{r.persona_phone || ""}
                       </div>
+                    </td>
+                    <td className="px-4 py-2.5">
+                      {r.registration_code ? (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded font-mono text-2xs font-bold bg-[hsl(var(--primary)/0.12)] text-[hsl(var(--primary))] border border-[hsl(var(--primary)/0.2)]">
+                          {r.registration_code}
+                        </span>
+                      ) : r.registration_number ? (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded font-mono text-2xs font-bold bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))]">
+                          #{String(r.registration_number).padStart(4, "0")}
+                        </span>
+                      ) : (
+                        <span className="text-2xs text-[hsl(var(--text-secondary))]">—</span>
+                      )}
                     </td>
                     <td className="px-4 py-2.5">
                       <span className={clsx("inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-2xs font-semibold uppercase tracking-wide", STATUS_BADGE[r.registration_status])}>
@@ -438,22 +468,45 @@ export default function PreregistrationTab({ eventId, token }: { eventId: string
                     </td>
                     <td className="px-4 py-2.5">
                       <div className="flex items-center gap-1.5">
+                        {r.registration_status !== "CANCELLED" && (
+                          <button
+                            onClick={async () => {
+                              try {
+                                const blob = await apiFetchBlob(`/evangelism/events/${eventId}/registrations/${r.id}/pass`, { token });
+                                const url = window.URL.createObjectURL(blob);
+                                const a = document.createElement("a");
+                                a.href = url;
+                                a.download = `pase_${(r.registration_code || r.id).replace('#', '')}.pdf`;
+                                document.body.appendChild(a);
+                                a.click();
+                                window.URL.revokeObjectURL(url);
+                              } catch {
+                                toast.error("No se pudo descargar el pase digital");
+                              }
+                            }}
+                            className="p-1.5 rounded-md text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] hover:bg-info-soft transition-all"
+                            title="Descargar Pase Digital (PDF)"
+                          >
+                            <Download size={14} />
+                          </button>
+                        )}
                         {r.registration_status === "CONFIRMED" && (
                           <button
-                            onClick={() => setConfirmAction({
-                              title: "Reenviar confirmación",
-                              description: "¿Reenviar el correo de confirmación/QR a esta persona?",
-                              confirmLabel: "Reenviar",
-                              onConfirm: async () => {
-                                try {
-                                  await apiFetch(`/evangelism/events/${eventId}/registrations/${r.id}/resend-confirmation`, { method: "POST", token, silent: true });
-                                  toast.success("Confirmación reenviada");
-                                } catch {
-                                  toast.error("No se pudo reenviar la confirmación");
-                                  throw new Error("resend-failed");
-                                }
-                              },
-                            })}
+                            onClick={() => {
+                              setConfirmState({
+                                title: "¿Reenviar confirmación?",
+                                description: `¿Deseas reenviar el correo de confirmación y el código QR de acceso a ${r.persona_name || "esta persona"}?`,
+                                confirmLabel: "Reenviar",
+                                onConfirm: async () => {
+                                  try {
+                                    await apiFetch(`/evangelism/events/${eventId}/registrations/${r.id}/resend-confirmation`, { method: "POST", token, silent: true });
+                                    toast.success("Confirmación reenviada");
+                                  } catch {
+                                    toast.error("No se pudo reenviar la confirmación");
+                                  }
+                                },
+                              });
+                            }}
                             className="p-1.5 rounded-md text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] hover:bg-info-soft transition-all"
                             title="Reenviar confirmación"
                           >
@@ -471,28 +524,28 @@ export default function PreregistrationTab({ eventId, token }: { eventId: string
                         )}
                         {r.registration_status !== "CANCELLED" && (
                           <button
-                            onClick={() => setConfirmAction({
-                              title: "Cancelar inscripción",
-                              description: `¿Marcar a ${r.persona_name || "esta persona"} como CANCELADO?`,
-                              confirmLabel: "Cancelar inscripción",
-                              destructive: true,
-                              onConfirm: async () => {
-                                try {
-                                  await apiFetch(`/evangelism/events/${eventId}/registrations/${r.id}`, {
-                                    method: "PATCH",
-                                    token,
-                                    body: { registration_status: "CANCELLED" },
-                                    silent: true,
-                                  });
-                                  toast.success("Inscripción cancelada");
-                                  loadAll();
-                                } catch {
-                                  toast.error("No se pudo cancelar la inscripción");
-                                  throw new Error("cancel-failed");
-                                }
-                              },
-                            })}
-                            className="p-1.5 rounded-md text-[hsl(var(--text-secondary))] hover:text-danger-text hover:bg-danger-soft transition-all"
+                            onClick={() => {
+                              setConfirmState({
+                                title: "¿Cancelar inscripción?",
+                                description: `¿Estás seguro de que deseas marcar la inscripción de ${r.persona_name || "esta persona"} como CANCELADO?`,
+                                confirmLabel: "Cancelar inscripción",
+                                onConfirm: async () => {
+                                  try {
+                                    await apiFetch(`/evangelism/events/${eventId}/registrations/${r.id}`, {
+                                      method: "PATCH",
+                                      token,
+                                      body: { registration_status: "CANCELLED" },
+                                      silent: true,
+                                    });
+                                    toast.success("Inscripción cancelada");
+                                    loadAll();
+                                  } catch {
+                                    toast.error("No se pudo cancelar la inscripción");
+                                  }
+                                },
+                              });
+                            }}
+                            className="p-1.5 rounded-md text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--destructive))] hover:bg-[hsl(var(--destructive)/0.08)] transition-all"
                             title="Cancelar inscripción"
                           >
                             <X size={14} />
@@ -512,25 +565,53 @@ export default function PreregistrationTab({ eventId, token }: { eventId: string
         </div>
       </div>
 
-      <ConfigForm
-        isOpen={showConfigForm}
-        eventId={eventId}
-        token={token}
-        config={config}
-        onClose={() => setShowConfigForm(false)}
-        onSaved={() => { setShowConfigForm(false); loadAll(); }}
-      />
+      {showConfigForm && (
+        <ConfigForm
+          eventId={eventId}
+          token={token}
+          config={config}
+          onClose={() => setShowConfigForm(false)}
+          onSaved={() => { setShowConfigForm(false); loadAll(); }}
+          onOpenFormStudio={() => setShowFormStudio(true)}
+        />
+      )}
 
-      <CampaignForm
-        isOpen={showCampaignForm}
-        eventId={eventId}
-        token={token}
-        plantillas={plantillas}
-        onClose={() => setShowCampaignForm(false)}
-        onSaved={() => { setShowCampaignForm(false); loadAll(); }}
-      />
+      {showCampaignForm && (
+        <CampaignForm
+          eventId={eventId}
+          token={token}
+          plantillas={plantillas}
+          onClose={() => setShowCampaignForm(false)}
+          onSaved={() => { setShowCampaignForm(false); loadAll(); }}
+        />
+      )}
 
-      <ConfirmActionDrawer action={confirmAction} onClose={() => setConfirmAction(null)} />
+      {showFormStudio && (
+        <EventFormStudioDrawer
+          isOpen={showFormStudio}
+          onClose={() => setShowFormStudio(false)}
+          eventId={eventId}
+          eventName="Formulario de Pre-registro"
+          token={token}
+          onSaved={() => {
+            loadAll();
+          }}
+        />
+      )}
+
+      <ConfirmDeleteDrawer
+        open={confirmState !== null}
+        onClose={() => setConfirmState(null)}
+        onConfirm={async () => {
+          if (confirmState) {
+            await confirmState.onConfirm();
+            setConfirmState(null);
+          }
+        }}
+        title={confirmState?.title}
+        description={confirmState?.description ?? ""}
+        confirmLabel={confirmState?.confirmLabel}
+      />
     </div>
   );
 }
@@ -557,13 +638,13 @@ function StatCard({ label, value, accent }: { label: string; value: number; acce
   );
 }
 
-function ConfigForm({ isOpen, eventId, token, config, onClose, onSaved }: {
-  isOpen: boolean;
+function ConfigForm({ eventId, token, config, onClose, onSaved, onOpenFormStudio }: {
   eventId: string;
   token: string | null;
   config: PreregConfig | null;
   onClose: () => void;
   onSaved: () => void;
+  onOpenFormStudio?: () => void;
 }) {
   const [form, setForm] = useState<PreregConfig>(() => config ?? {
     requires_registration: true,
@@ -602,100 +683,118 @@ function ConfigForm({ isOpen, eventId, token, config, onClose, onSaved }: {
   };
 
   return (
-    <WorkspaceDrawer
-      isOpen={isOpen}
+    <SidePanel
+      isOpen={true}
       onClose={onClose}
       title="Configuración de pre-registro"
-      actions={
-        <div className="flex justify-end gap-2">
+      subtitle="Parámetros de acceso, aforo y códigos QR"
+      width="w-full sm:w-[500px]"
+    >
+      <div className="space-y-4 p-4">
+        {onOpenFormStudio && (
+          <div className="p-3.5 rounded-xl border border-[hsl(var(--primary)/0.3)] bg-[hsl(var(--primary)/0.05)] flex items-center justify-between gap-3">
+            <div>
+              <div className="text-xs font-bold text-[hsl(var(--text-primary))]">Preguntas del Formulario</div>
+              <div className="text-2xs text-[hsl(var(--text-secondary))]">Diseña las preguntas dinámicas en Form Studio</div>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                onClose();
+                onOpenFormStudio();
+              }}
+              className="px-3 py-1.5 rounded-md bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] text-2xs font-bold uppercase tracking-wider flex items-center gap-1.5 hover:opacity-90 transition-all shrink-0"
+            >
+              <FileText size={13} /> Form Studio
+            </button>
+          </div>
+        )}
+        <ToggleRow
+          label="Habilitar pre-registro"
+          checked={form.requires_registration}
+          onChange={(v) => setForm({ ...form, requires_registration: v })}
+        />
+        <ToggleRow
+          label="Verificación de email"
+          hint="El inscrito debe confirmar su correo antes de recibir el QR"
+          checked={form.requires_email_verification}
+          onChange={(v) => setForm({ ...form, requires_email_verification: v })}
+        />
+        <ToggleRow
+          label="Lista de espera"
+          hint="Cuando el aforo esté lleno, los nuevos quedan en espera"
+          checked={form.waiting_list_enabled}
+          onChange={(v) => setForm({ ...form, waiting_list_enabled: v })}
+        />
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className="space-y-2">
+            <label className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] block">Aforo máximo</label>
+            <input
+              type="number"
+              min={1}
+              value={form.capacity_max ?? ""}
+              onChange={(e) => setForm({ ...form, capacity_max: e.target.value ? Number(e.target.value) : null })}
+              className="w-full px-3 py-2 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] outline-none text-sm font-semibold text-[hsl(var(--text-primary))]"
+              placeholder="Sin límite"
+            />
+          </div>
+          <div className="space-y-2">
+            <label className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] block">Modo QR</label>
+            <select
+              value={form.qr_mode}
+              onChange={(e) => setForm({ ...form, qr_mode: e.target.value as "PER_REGISTRANT" | "PER_EVENT" })}
+              className="w-full px-3 py-2 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] outline-none text-sm font-semibold text-[hsl(var(--text-primary))]"
+            >
+              <option value="PER_REGISTRANT">QR por inscrito</option>
+              <option value="PER_EVENT">QR por evento</option>
+            </select>
+          </div>
+          <div className="space-y-2">
+            <label className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] block">Apertura de registro</label>
+            <input
+              type="datetime-local"
+              value={toLocalInput(form.registration_opens_at)}
+              onChange={(e) => setForm({ ...form, registration_opens_at: e.target.value ? new Date(e.target.value).toISOString() : null })}
+              className="w-full px-3 py-2 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] outline-none text-sm font-semibold text-[hsl(var(--text-primary))]"
+            />
+          </div>
+          <div className="space-y-2">
+            <label className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] block">Cierre de registro</label>
+            <input
+              type="datetime-local"
+              value={toLocalInput(form.registration_closes_at)}
+              onChange={(e) => setForm({ ...form, registration_closes_at: e.target.value ? new Date(e.target.value).toISOString() : null })}
+              className="w-full px-3 py-2 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] outline-none text-sm font-semibold text-[hsl(var(--text-primary))]"
+            />
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <label className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] block">Persona de contacto</label>
+          <input
+            type="text"
+            value={form.contact_person ?? ""}
+            onChange={(e) => setForm({ ...form, contact_person: e.target.value || null })}
+            className="w-full px-3 py-2 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] outline-none text-sm font-semibold text-[hsl(var(--text-primary))]"
+            placeholder="Nombre de quien recibe consultas"
+          />
+        </div>
+
+        <div className="flex justify-end gap-2 pt-4 border-t border-[hsl(var(--border))]">
           <button onClick={onClose} className="px-4 py-2 text-xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] transition-colors">
             Cancelar
           </button>
           <button
             onClick={handleSave}
             disabled={saving}
-            className="px-4 py-2 rounded-md bg-[hsl(var(--primary))] text-white text-xs font-bold uppercase tracking-wide flex items-center gap-2 disabled:opacity-50"
+            className="px-4 py-2 rounded-md bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] text-xs font-bold uppercase tracking-wide flex items-center gap-2 disabled:opacity-50"
           >
             {saving ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />} Guardar
           </button>
         </div>
-      }
-    >
-      <div className="space-y-4">
-          <ToggleRow
-            label="Habilitar pre-registro"
-            checked={form.requires_registration}
-            onChange={(v) => setForm({ ...form, requires_registration: v })}
-          />
-          <ToggleRow
-            label="Verificación de email"
-            hint="El inscrito debe confirmar su correo antes de recibir el QR"
-            checked={form.requires_email_verification}
-            onChange={(v) => setForm({ ...form, requires_email_verification: v })}
-          />
-          <ToggleRow
-            label="Lista de espera"
-            hint="Cuando el aforo esté lleno, los nuevos quedan en espera"
-            checked={form.waiting_list_enabled}
-            onChange={(v) => setForm({ ...form, waiting_list_enabled: v })}
-          />
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div className="space-y-2">
-              <label className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] block">Aforo máximo</label>
-              <input
-                type="number"
-                min={1}
-                value={form.capacity_max ?? ""}
-                onChange={(e) => setForm({ ...form, capacity_max: e.target.value ? Number(e.target.value) : null })}
-                className="w-full px-3 py-2 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] outline-none text-sm font-semibold text-[hsl(var(--text-primary))]"
-                placeholder="Sin límite"
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] block">Modo QR</label>
-              <select
-                value={form.qr_mode}
-                onChange={(e) => setForm({ ...form, qr_mode: e.target.value as "PER_REGISTRANT" | "PER_EVENT" })}
-                className="w-full px-3 py-2 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] outline-none text-sm font-semibold text-[hsl(var(--text-primary))]"
-              >
-                <option value="PER_REGISTRANT">QR por inscrito</option>
-                <option value="PER_EVENT">QR por evento</option>
-              </select>
-            </div>
-            <div className="space-y-2">
-              <label className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] block">Apertura de registro</label>
-              <input
-                type="datetime-local"
-                value={toLocalInput(form.registration_opens_at)}
-                onChange={(e) => setForm({ ...form, registration_opens_at: e.target.value ? new Date(e.target.value).toISOString() : null })}
-                className="w-full px-3 py-2 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] outline-none text-sm font-semibold text-[hsl(var(--text-primary))]"
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] block">Cierre de registro</label>
-              <input
-                type="datetime-local"
-                value={toLocalInput(form.registration_closes_at)}
-                onChange={(e) => setForm({ ...form, registration_closes_at: e.target.value ? new Date(e.target.value).toISOString() : null })}
-                className="w-full px-3 py-2 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] outline-none text-sm font-semibold text-[hsl(var(--text-primary))]"
-              />
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <label className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] block">Persona de contacto</label>
-            <input
-              type="text"
-              value={form.contact_person ?? ""}
-              onChange={(e) => setForm({ ...form, contact_person: e.target.value || null })}
-              className="w-full px-3 py-2 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] outline-none text-sm font-semibold text-[hsl(var(--text-primary))]"
-              placeholder="Nombre de quien recibe consultas"
-            />
-          </div>
-
       </div>
-    </WorkspaceDrawer>
+    </SidePanel>
   );
 }
 
@@ -712,14 +811,13 @@ function ToggleRow({ label, hint, checked, onChange }: {
         {hint && <div className="text-xs font-medium text-[hsl(var(--text-secondary))]">{hint}</div>}
       </div>
       <div className={clsx("relative w-10 h-6 rounded-full transition-all shrink-0", checked ? "bg-[hsl(var(--primary))]" : "bg-[hsl(var(--bg-muted))]")}>
-        <div className={clsx("absolute top-0.5 w-5 h-5 rounded-full bg-white shadow transition-all", checked ? "left-4.5" : "left-0.5")} style={checked ? { left: "18px" } : { left: "2px" }} />
+        <div className={clsx("absolute top-0.5 w-5 h-5 rounded-full bg-[hsl(var(--primary-foreground))] shadow transition-all", checked ? "left-4.5" : "left-0.5")} style={checked ? { left: "18px" } : { left: "2px" }} />
       </div>
     </button>
   );
 }
 
-function CampaignForm({ isOpen, eventId, token, plantillas, onClose, onSaved }: {
-  isOpen: boolean;
+function CampaignForm({ eventId, token, plantillas, onClose, onSaved }: {
   eventId: string;
   token: string | null;
   plantillas: Plantilla[];
@@ -766,117 +864,117 @@ function CampaignForm({ isOpen, eventId, token, plantillas, onClose, onSaved }: 
   };
 
   return (
-    <WorkspaceDrawer
-      isOpen={isOpen}
+    <SidePanel
+      isOpen={true}
       onClose={onClose}
       title="Nueva campaña"
-      actions={
-        <div className="flex justify-end gap-2">
+      subtitle="Programa avisos y recordatorios para los inscritos"
+      width="w-full sm:w-[500px]"
+    >
+      <div className="space-y-4 p-4">
+        <div className="space-y-2">
+          <label className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] block">Nombre *</label>
+          <input
+            value={form.name}
+            onChange={(e) => setForm({ ...form, name: e.target.value })}
+            placeholder="Ej: Recordatorio día del evento"
+            className="w-full px-3 py-2 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] outline-none text-sm font-semibold text-[hsl(var(--text-primary))] placeholder:text-[hsl(var(--text-secondary))]"
+          />
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className="space-y-2">
+            <label className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] block">Canal</label>
+            <select
+              value={form.canal}
+              onChange={(e) => setForm({ ...form, canal: e.target.value as "WHATSAPP" | "EMAIL" | "SMS" })}
+              className="w-full px-3 py-2 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] outline-none text-sm font-semibold text-[hsl(var(--text-primary))]"
+            >
+              <option value="EMAIL">Email</option>
+              <option value="WHATSAPP">WhatsApp</option>
+              <option value="SMS">SMS</option>
+            </select>
+          </div>
+          <div className="space-y-2">
+            <label className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] block">Disparo</label>
+            <select
+              value={form.trigger_type}
+              onChange={(e) => setForm({ ...form, trigger_type: e.target.value as "MANUAL" | "RELATIVE_TO_EVENT" | "RELATIVE_TO_REGISTRATION" })}
+              className="w-full px-3 py-2 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] outline-none text-sm font-semibold text-[hsl(var(--text-primary))]"
+            >
+              <option value="MANUAL">Manual</option>
+              <option value="RELATIVE_TO_EVENT">Antes del evento</option>
+              <option value="RELATIVE_TO_REGISTRATION">Tras inscribirse</option>
+            </select>
+          </div>
+        </div>
+
+        {form.trigger_type !== "MANUAL" && (
+          <div className="space-y-2">
+            <label className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] block">Offset (minutos)</label>
+            <input
+              type="number"
+              value={form.trigger_offset_minutes}
+              onChange={(e) => setForm({ ...form, trigger_offset_minutes: e.target.value })}
+              placeholder="Ej: -1440 = 1 día antes"
+              className="w-full px-3 py-2 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] outline-none text-sm font-semibold text-[hsl(var(--text-primary))] placeholder:text-[hsl(var(--text-secondary))]"
+            />
+          </div>
+        )}
+
+        <div className="space-y-2">
+          <label className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] block">Plantilla de mensaje *</label>
+          <select
+            value={form.plantilla_id}
+            onChange={(e) => setForm({ ...form, plantilla_id: e.target.value })}
+            className="w-full px-3 py-2 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] outline-none text-sm font-semibold text-[hsl(var(--text-primary))]"
+          >
+            {plantillas.map((p) => (
+              <option key={p.id} value={p.id}>{p.nombre}</option>
+            ))}
+          </select>
+        </div>
+
+        <div className="space-y-2">
+          <label className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] block">Audiencia (estados)</label>
+          <div className="flex flex-wrap gap-2">
+            {(["CONFIRMED", "PENDING", "CHECKED_IN", "WAITLIST"] as const).map((s) => (
+              <button
+                key={s}
+                type="button"
+                onClick={() => {
+                  const next = form.target_status.includes(s)
+                    ? form.target_status.filter((x) => x !== s)
+                    : [...form.target_status, s];
+                  setForm({ ...form, target_status: next });
+                }}
+                className={clsx(
+                  "px-2.5 py-1.5 rounded-md text-2xs font-semibold uppercase tracking-wide border transition-all",
+                  form.target_status.includes(s)
+                    ? "bg-info-soft text-[hsl(var(--primary))] border-[hsl(var(--info)/40%)]"
+                    : "border-[hsl(var(--border))] text-[hsl(var(--text-secondary))]"
+                )}
+              >
+                {STATUS_LABEL[s]}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="flex justify-end gap-2 pt-4 border-t border-[hsl(var(--border))]">
           <button onClick={onClose} className="px-4 py-2 text-xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] transition-colors">
             Cancelar
           </button>
           <button
             onClick={handleSave}
             disabled={saving}
-            className="px-4 py-2 rounded-md bg-[hsl(var(--primary))] text-white text-xs font-bold uppercase tracking-wide flex items-center gap-2 disabled:opacity-50"
+            className="px-4 py-2 rounded-md bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] text-xs font-bold uppercase tracking-wide flex items-center gap-2 disabled:opacity-50"
           >
             {saving ? <Loader2 size={14} className="animate-spin" /> : <Plus size={14} />} Crear
           </button>
         </div>
-      }
-    >
-      <div className="space-y-4">
-          <div className="space-y-2">
-            <label className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] block">Nombre *</label>
-            <input
-              value={form.name}
-              onChange={(e) => setForm({ ...form, name: e.target.value })}
-              placeholder="Ej: Recordatorio día del evento"
-              className="w-full px-3 py-2 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] outline-none text-sm font-semibold text-[hsl(var(--text-primary))] placeholder:text-[hsl(var(--text-secondary))]"
-            />
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div className="space-y-2">
-              <label className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] block">Canal</label>
-              <select
-                value={form.canal}
-                onChange={(e) => setForm({ ...form, canal: e.target.value as "WHATSAPP" | "EMAIL" | "SMS" })}
-                className="w-full px-3 py-2 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] outline-none text-sm font-semibold text-[hsl(var(--text-primary))]"
-              >
-                <option value="EMAIL">Email</option>
-                <option value="WHATSAPP">WhatsApp</option>
-                <option value="SMS">SMS</option>
-              </select>
-            </div>
-            <div className="space-y-2">
-              <label className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] block">Disparo</label>
-              <select
-                value={form.trigger_type}
-                onChange={(e) => setForm({ ...form, trigger_type: e.target.value as "MANUAL" | "RELATIVE_TO_EVENT" | "RELATIVE_TO_REGISTRATION" })}
-                className="w-full px-3 py-2 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] outline-none text-sm font-semibold text-[hsl(var(--text-primary))]"
-              >
-                <option value="MANUAL">Manual</option>
-                <option value="RELATIVE_TO_EVENT">Antes del evento</option>
-                <option value="RELATIVE_TO_REGISTRATION">Tras inscribirse</option>
-              </select>
-            </div>
-          </div>
-
-          {form.trigger_type !== "MANUAL" && (
-            <div className="space-y-2">
-              <label className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] block">Offset (minutos)</label>
-              <input
-                type="number"
-                value={form.trigger_offset_minutes}
-                onChange={(e) => setForm({ ...form, trigger_offset_minutes: e.target.value })}
-                placeholder="Ej: -1440 = 1 día antes"
-                className="w-full px-3 py-2 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] outline-none text-sm font-semibold text-[hsl(var(--text-primary))] placeholder:text-[hsl(var(--text-secondary))]"
-              />
-            </div>
-          )}
-
-          <div className="space-y-2">
-            <label className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] block">Plantilla de mensaje *</label>
-            <select
-              value={form.plantilla_id}
-              onChange={(e) => setForm({ ...form, plantilla_id: e.target.value })}
-              className="w-full px-3 py-2 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] outline-none text-sm font-semibold text-[hsl(var(--text-primary))]"
-            >
-              {plantillas.map((p) => (
-                <option key={p.id} value={p.id}>{p.nombre}</option>
-              ))}
-            </select>
-          </div>
-
-          <div className="space-y-2">
-            <label className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] block">Audiencia (estados)</label>
-            <div className="flex flex-wrap gap-2">
-              {(["CONFIRMED", "PENDING", "CHECKED_IN", "WAITLIST"] as const).map((s) => (
-                <button
-                  key={s}
-                  type="button"
-                  onClick={() => {
-                    const next = form.target_status.includes(s)
-                      ? form.target_status.filter((x) => x !== s)
-                      : [...form.target_status, s];
-                    setForm({ ...form, target_status: next });
-                  }}
-                  className={clsx(
-                    "px-2.5 py-1.5 rounded-md text-2xs font-semibold uppercase tracking-wide border transition-all",
-                    form.target_status.includes(s)
-                      ? "bg-info-soft text-[hsl(var(--primary))] border-[hsl(var(--info)/40%)]"
-                      : "border-[hsl(var(--border))] text-[hsl(var(--text-secondary))]"
-                  )}
-                >
-                  {STATUS_LABEL[s]}
-                </button>
-              ))}
-            </div>
-          </div>
-
       </div>
-    </WorkspaceDrawer>
+    </SidePanel>
   );
 }
 

@@ -11,6 +11,7 @@ import type {
 } from '@/app/plataforma/evangelism/types';
 import { ViewType, getStoredView } from '@/components/ViewSwitcher';
 import { type ConfirmActionState } from '@/components/evangelism/ConfirmActionDrawer';
+import type { EventCreateForm } from './panels/EventCreateDrawer';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
 import { useWikiDocument } from '@/hooks/useWikiDocument';
@@ -71,7 +72,7 @@ export function useEventsPage() {
  const [isScanning, setIsScanning] = useState(false);
 
  // Form states
- const [newEvent, setNewEvent] = useState({
+ const [newEvent, setNewEvent] = useState<EventCreateForm>({
  name: '',
  description: '',
  event_type: 'PERMANENT',
@@ -83,7 +84,13 @@ export function useEventsPage() {
  month_day: '',
  fixed_date: '',
  start_time: '',
- end_time: ''
+ end_time: '',
+ requires_registration: false,
+ capacity_max: '',
+ registration_opens_at: '',
+ registration_closes_at: '',
+ waiting_list_enabled: false,
+ qr_mode: 'PER_REGISTRANT',
  });
 
  const [roles, setRoles] = useState<RoleDefinition[]>([]);
@@ -428,6 +435,12 @@ const handleCreateEvent = async (e: React.FormEvent) => {
  day_of_week?: number;
  month_day?: string;
  fixed_date?: string;
+ requires_registration?: boolean;
+ capacity_max?: number | null;
+ registration_opens_at?: string | null;
+ registration_closes_at?: string | null;
+ waiting_list_enabled?: boolean;
+ qr_mode?: string;
  } = {
  name: newEvent.name,
  description: newEvent.description,
@@ -444,12 +457,40 @@ const handleCreateEvent = async (e: React.FormEvent) => {
  if (['ANNUAL', 'MONTHLY'].includes(newEvent.event_type)) payload.month_day = newEvent.month_day;
  if (['ONCE', 'SPECIAL'].includes(newEvent.event_type)) payload.fixed_date = newEvent.fixed_date;
 
+ if (newEvent.requires_registration) {
+ payload.requires_registration = true;
+ if (newEvent.capacity_max) payload.capacity_max = parseInt(String(newEvent.capacity_max), 10);
+ if (newEvent.registration_opens_at) payload.registration_opens_at = new Date(newEvent.registration_opens_at).toISOString();
+ if (newEvent.registration_closes_at) payload.registration_closes_at = new Date(newEvent.registration_closes_at).toISOString();
+ payload.waiting_list_enabled = Boolean(newEvent.waiting_list_enabled);
+ payload.qr_mode = newEvent.qr_mode || 'PER_REGISTRANT';
+ }
+
  try {
  setSavingCreateEvent(true);
  await apiFetch('/evangelism/events/', { method: 'POST', token, silent: true, body: payload });
  addToast("Evento creado con éxito", "success");
  setIsCreateDrawerOpen(false);
- setNewEvent({ name: '', description: '', event_type: 'PERMANENT', target_audience: 'ALL', target_role_id: '', target_role_ids: [], target_persona_ids: [], day_of_week: '0', month_day: '', fixed_date: '', start_time: '', end_time: '' });
+ setNewEvent({
+ name: '',
+ description: '',
+ event_type: 'PERMANENT',
+ target_audience: 'ALL',
+ target_role_id: '',
+ target_role_ids: [],
+ target_persona_ids: [],
+ day_of_week: '0',
+ month_day: '',
+ fixed_date: '',
+ start_time: '',
+ end_time: '',
+ requires_registration: false,
+ capacity_max: '',
+ registration_opens_at: '',
+ registration_closes_at: '',
+ waiting_list_enabled: false,
+ qr_mode: 'PER_REGISTRANT',
+ });
  fetchData();
  } catch (error: unknown) {
  const msg = getErrorMessage(error, "Error de conexión");

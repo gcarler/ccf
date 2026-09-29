@@ -78,15 +78,15 @@ export function GroupMonitoringPanel({
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="rounded-lg border border-[hsl(var(--border-primary))] p-4 bg-[hsl(var(--bg-muted))] dark:bg-black/20">
+        <div className="rounded-lg border border-[hsl(var(--border))] p-4 bg-[hsl(var(--surface-2))]">
           <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Promedio de presencia</p>
           <p className="mt-2 text-lg font-bold text-[hsl(var(--text-primary))]">{houseMonitoring?.average_attendance ?? avgAttendance}</p>
         </div>
-        <div className="rounded-lg border border-[hsl(var(--border-primary))] p-4 bg-[hsl(var(--bg-muted))] dark:bg-black/20">
+        <div className="rounded-lg border border-[hsl(var(--border))] p-4 bg-[hsl(var(--surface-2))]">
           <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Tasa promedio</p>
           <p className="mt-2 text-lg font-bold text-[hsl(var(--text-primary))]">{houseMonitoring?.average_attendance_rate ?? 0}%</p>
         </div>
-        <div className="rounded-lg border border-[hsl(var(--border-primary))] p-4 bg-[hsl(var(--bg-muted))] dark:bg-black/20">
+        <div className="rounded-lg border border-[hsl(var(--border))] p-4 bg-[hsl(var(--surface-2))]">
           <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Alertas activas</p>
           <p className="mt-2 text-lg font-bold text-[hsl(var(--text-primary))]">{alerts.length}</p>
         </div>
@@ -102,7 +102,7 @@ export function GroupMonitoringPanel({
             {trendRows.length === 0 ? (
               <p className="text-sm text-[hsl(var(--text-secondary))]">No hay datos de tendencia todavía.</p>
             ) : trendRows.map((row) => (
-              <div key={row.session_id} className="flex items-center justify-between gap-4 rounded-lg bg-[hsl(var(--bg-muted))] dark:bg-black/20 px-4 py-1.5">
+              <div key={row.session_id} className="flex items-center justify-between gap-4 rounded-lg bg-[hsl(var(--surface-2))] px-4 py-1.5">
                 <div className="min-w-0">
                   <p className="text-sm font-bold text-[hsl(var(--text-primary))] truncate">
                     {new Date(row.session_date + 'T12:00:00').toLocaleDateString('es-CO', { month: 'short', day: 'numeric' })}
@@ -129,13 +129,13 @@ export function GroupMonitoringPanel({
             ) : (
               <>
                 {alerts.map((alert, index) => (
-                  <div key={`${alert.type}-${index}`} className="rounded-lg border border-[hsl(var(--warning)/25%)] dark:border-[hsl(var(--warning)/100%)]/30 bg-warning-soft dark:bg-[hsl(var(--warning))]/10 px-4 py-1.5">
-                    <p className="text-sm font-bold text-warning-text dark:text-[hsl(var(--warning))]">{alert.message}</p>
+                  <div key={`${alert.type}-${index}`} className="rounded-lg border border-[hsl(var(--warning)/0.25)] bg-[hsl(var(--warning)/0.1)] px-4 py-1.5">
+                    <p className="text-sm font-bold text-[hsl(var(--warning))]">{alert.message}</p>
                   </div>
                 ))}
                 {repeatAbsentees.slice(0, 4).map((item) => (
-                  <div key={item.persona_id} className="rounded-lg border border-[hsl(var(--danger)/25%)] dark:border-[hsl(var(--danger)/100%)]/30 bg-danger-soft dark:bg-[hsl(var(--danger))]/10 px-4 py-1.5">
-                    <p className="text-sm font-bold text-danger-text dark:text-[hsl(var(--danger))]">{item.name}</p>
+                  <div key={item.persona_id} className="rounded-lg border border-[hsl(var(--destructive)/0.25)] bg-[hsl(var(--destructive)/0.1)] px-4 py-1.5">
+                    <p className="text-sm font-bold text-[hsl(var(--destructive))]">{item.name}</p>
                     <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--danger))] mt-1">{item.absences} ausencias recurrentes</p>
                   </div>
                 ))}
@@ -161,7 +161,7 @@ export function GroupMonitoringPanel({
             id="session-topic"
             value={reportTopic}
             onChange={(e) => setReportTopic(e.target.value)}
-            className="w-full bg-[hsl(var(--bg-muted))] dark:bg-black/20 border border-[hsl(var(--border-primary))] rounded-lg py-1.5 px-4 text-sm font-bold outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]"
+            className="w-full bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] rounded-lg py-1.5 px-4 text-sm font-bold text-[hsl(var(--foreground))] outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]"
             placeholder="Unidad familiar, fe, oración..."
           />
         </div>
@@ -172,7 +172,7 @@ export function GroupMonitoringPanel({
             id="session-offering"
             value={reportOfferingAmount}
             onChange={(e) => setReportOfferingAmount(e.target.value)}
-            className="w-full bg-[hsl(var(--bg-muted))] dark:bg-black/20 border border-[hsl(var(--border-primary))] rounded-lg py-1.5 px-4 text-sm font-bold outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]"
+            className="w-full bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] rounded-lg py-1.5 px-4 text-sm font-bold text-[hsl(var(--foreground))] outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]"
             placeholder="0"
             min="0"
             step="0.01"
@@ -190,7 +190,7 @@ export function GroupMonitoringPanel({
                   : 'Realizada';
               setReportStatus(nextStatus as 'Realizada' | 'Cancelada' | 'No realizada');
             }}
-            className="w-full bg-[hsl(var(--bg-muted))] dark:bg-black/20 border border-[hsl(var(--border-primary))] rounded-lg py-1.5 px-4 text-sm font-bold outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]"
+            className="w-full bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] rounded-lg py-1.5 px-4 text-sm font-bold text-[hsl(var(--foreground))] outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]"
           >
             <option value="Realizada">Realizada</option>
             <option value="No realizada">No realizada</option>
@@ -203,7 +203,7 @@ export function GroupMonitoringPanel({
             id="session-novelty"
             value={reportNoveltyType}
             onChange={(e) => setReportNoveltyType(e.target.value)}
-            className="w-full bg-[hsl(var(--bg-muted))] dark:bg-black/20 border border-[hsl(var(--border-primary))] rounded-lg py-1.5 px-4 text-sm font-bold outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]"
+            className="w-full bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] rounded-lg py-1.5 px-4 text-sm font-bold text-[hsl(var(--foreground))] outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]"
           >
             <option value="">Sin novedad</option>
             <option value="weather">Clima</option>
@@ -222,7 +222,7 @@ export function GroupMonitoringPanel({
             id="session-novelty-detail"
             value={reportNoveltyDetail}
             onChange={(e) => setReportNoveltyDetail(e.target.value)}
-            className="w-full min-h-24 bg-[hsl(var(--bg-muted))] dark:bg-black/20 border border-[hsl(var(--border-primary))] rounded-lg p-4 text-sm font-medium outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]"
+            className="w-full min-h-24 bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] rounded-lg p-4 text-sm font-medium text-[hsl(var(--foreground))] outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]"
             placeholder="Explica la novedad o la razón del ajuste..."
           />
         </div>
@@ -232,7 +232,7 @@ export function GroupMonitoringPanel({
             id="session-cancellation-reason"
             value={reportCancellationReason}
             onChange={(e) => setReportCancellationReason(e.target.value)}
-            className="w-full min-h-24 bg-[hsl(var(--bg-muted))] dark:bg-black/20 border border-[hsl(var(--border-primary))] rounded-lg p-4 text-sm font-medium outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]"
+            className="w-full min-h-24 bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] rounded-lg p-4 text-sm font-medium text-[hsl(var(--foreground))] outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]"
             placeholder="Si no se realizó, explica la causa..."
           />
         </div>
@@ -244,7 +244,7 @@ export function GroupMonitoringPanel({
           id="session-notes"
           value={reportNotes}
           onChange={(e) => setReportNotes(e.target.value)}
-          className="w-full min-h-28 bg-[hsl(var(--bg-muted))] dark:bg-black/20 border border-[hsl(var(--border-primary))] rounded-lg p-4 text-sm font-medium outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]"
+          className="w-full min-h-28 bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] rounded-lg p-4 text-sm font-medium text-[hsl(var(--foreground))] outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]"
           placeholder="Resumen pastoral, acuerdos, seguimiento..."
         />
       </div>
@@ -258,7 +258,7 @@ export function GroupMonitoringPanel({
           {reportPersonas.map((row) => {
             const attended = row.attended !== false;
             return (
-              <div key={row.persona_id} className="rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-muted))] dark:bg-black/20 p-4 space-y-3">
+              <div key={row.persona_id} className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] p-4 space-y-3">
                 <div className="flex items-center justify-between gap-3">
                   <div className="min-w-0">
                     <p className="text-sm font-bold text-[hsl(var(--text-primary))] truncate">{row.name}</p>
@@ -291,7 +291,7 @@ export function GroupMonitoringPanel({
                         id={`absence-reason-${row.persona_id}`}
                         value={row.absence_reason || 'other'}
                         onChange={(e) => setReportPersonas(prev => prev.map(item => item.persona_id === row.persona_id ? { ...item, absence_reason: e.target.value as AttendanceReason } : item))}
-                        className="w-full bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))] border border-[hsl(var(--border-primary))] rounded-lg py-2.5 px-4 text-sm font-bold outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]"
+                        className="w-full bg-[hsl(var(--surface-1))] border border-[hsl(var(--border-primary))] rounded-lg py-2.5 px-4 text-sm font-bold text-[hsl(var(--foreground))] outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]"
                       >
                         {ATTENDANCE_REASON_OPTIONS.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
                       </select>
@@ -302,7 +302,7 @@ export function GroupMonitoringPanel({
                         id={`absence-detail-${row.persona_id}`}
                         value={row.absence_reason_detail || ''}
                         onChange={(e) => setReportPersonas(prev => prev.map(item => item.persona_id === row.persona_id ? { ...item, absence_reason_detail: e.target.value } : item))}
-                        className="w-full bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))] border border-[hsl(var(--border-primary))] rounded-lg py-2.5 px-4 text-sm font-medium outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]"
+                        className="w-full bg-[hsl(var(--surface-1))] border border-[hsl(var(--border-primary))] rounded-lg py-2.5 px-4 text-sm font-medium text-[hsl(var(--foreground))] outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]"
                         placeholder="Especifica el motivo"
                       />
                     </div>
@@ -316,7 +316,7 @@ export function GroupMonitoringPanel({
 
       <div className="flex justify-end">
         {activeSession?.report_deadline && new Date() > new Date(activeSession.report_deadline) ? (
-          <div className="flex items-center gap-2 text-[hsl(var(--danger))] bg-danger-soft dark:bg-[hsl(var(--danger))]/10 px-4 py-1.5 rounded-lg">
+          <div className="flex items-center gap-2 text-[hsl(var(--destructive))] bg-[hsl(var(--destructive)/0.1)] px-4 py-1.5 rounded-lg">
             <Clock size={16} />
             <span className="text-xs font-semibold uppercase tracking-wide">Plazo de reporte vencido ({new Date(activeSession.report_deadline).toLocaleString()})</span>
           </div>
@@ -324,7 +324,7 @@ export function GroupMonitoringPanel({
           <button
             onClick={onSaveReport}
             disabled={savingReport || !activeSession || !activeSessionEnabled}
-            className="inline-flex items-center gap-2 px-3 py-1.5 bg-[hsl(var(--success))] hover:bg-[hsl(var(--success))] text-white rounded-lg text-xs font-semibold uppercase tracking-wide transition-all shadow-lg shadow-[hsl(var(--success)/20%)] disabled:opacity-50"
+            className="inline-flex items-center gap-2 px-3 py-1.5 bg-[hsl(var(--success))] hover:bg-[hsl(var(--success))] text-[hsl(var(--primary-foreground))] rounded-lg text-xs font-semibold uppercase tracking-wide transition-all shadow-lg shadow-[hsl(var(--success)/20%)] disabled:opacity-50"
           >
             {savingReport ? <Loader2 className="animate-spin" size={14} /> : <CheckCircle2 size={14} />}
             Guardar reporte

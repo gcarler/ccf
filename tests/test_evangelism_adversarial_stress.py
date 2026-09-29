@@ -14,13 +14,17 @@ from __future__ import annotations
 
 import datetime
 import os
+import re
 import uuid
+import pytest
 
 from backend import models
 from backend.models_evangelism import (
     CategoriaEstrategia,
     EstrategiaEvangelismo,
     GrupoEvangelismo,
+    HabilitacionSesionEnum,
+    SesionGrupo,
 )
 from tests.conftest import auth_headers, seed_admin, seed_user_with_role
 
@@ -574,7 +578,7 @@ class TestEvangelismAdversarialEmpirical:
                             if "datetime.utcnow" in line and not line.strip().startswith("#"):
                                 utcnow_matches.append(f"{file_path}:{line_num}: {line.strip()}")
 
-        assert len(utcnow_matches) == 0, "Found forbidden datetime.utcnow calls:\n" + "\n".join(utcnow_matches)
+        assert len(utcnow_matches) == 0, f"Found forbidden datetime.utcnow calls:\n" + "\n".join(utcnow_matches)
 
         # 2. Zero db.delete() in the Evangelismo subsystem
         evangelism_delete_matches = []
@@ -587,4 +591,4 @@ class TestEvangelismAdversarialEmpirical:
                             if "db.delete(" in line and not line.strip().startswith("#"):
                                 evangelism_delete_matches.append(f"{file_path}:{line_num}: {line.strip()}")
 
-        assert len(evangelism_delete_matches) == 0, "Found forbidden db.delete() in evangelismo:\n" + "\n".join(evangelism_delete_matches)
+        assert len(evangelism_delete_matches) == 0, f"Found forbidden db.delete() in evangelismo:\n" + "\n".join(evangelism_delete_matches)

@@ -169,7 +169,7 @@ export default function ProjectChatPanel({ projectId }: ProjectChatPanelProps) {
           {[1, 2, 3].map((i) => (
             <div key={i} className={`flex ${i % 2 === 0 ? "justify-end" : "justify-start"}`}>
               <div className={`rounded-2xl px-4 py-3 w-3/4 animate-pulse ${
-                i % 2 === 0 ? "bg-[hsl(var(--info-muted))]/50 dark:bg-[hsl(var(--info))]/30" : "bg-[hsl(var(--surface-2))] dark:bg-white/5"
+                i % 2 === 0 ? "bg-[hsl(var(--primary)/0.15)]" : "bg-[hsl(var(--surface-2))]"
               }`}>
                 <div className="h-3 rounded bg-current opacity-20 mb-2 w-1/3" />
                 <div className="h-3 rounded bg-current opacity-20 w-2/3" />
@@ -182,15 +182,15 @@ export default function ProjectChatPanel({ projectId }: ProjectChatPanelProps) {
   }
 
   return (
-    <div className="relative flex flex-col flex-1 bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-secondary))]">
+    <div className="relative flex flex-col flex-1 bg-[hsl(var(--surface-1))]">
       {error && (
-        <div className="mx-4 mt-3 rounded-md border border-[hsl(var(--warning)/25%)] bg-warning-soft p-3 text-warning-text dark:border-[hsl(var(--warning)/100%)]/20 dark:bg-[hsl(var(--warning))]/10 dark:text-[hsl(var(--warning))]">
+        <div className="mx-4 mt-3 rounded-md border border-[hsl(var(--warning)/0.3)] bg-[hsl(var(--warning)/0.1)] p-3 text-[hsl(var(--warning))]">
           <p className="text-xs font-bold uppercase tracking-wide">{error}</p>
         </div>
       )}
       {messages.length === 0 ? (
-        <div className="flex-1 flex flex-col items-center justify-center text-[hsl(var(--text-secondary))] gap-3">
-          <div className="size-16 rounded-2xl bg-[hsl(var(--surface-2))] dark:bg-white/5 flex items-center justify-center">
+        <div className="flex-1 flex flex-col items-center justify-center text-[hsl(var(--muted-foreground))] gap-3">
+          <div className="size-16 rounded-2xl bg-[hsl(var(--surface-2))] flex items-center justify-center">
             <MessageSquare className="w-8 h-8 opacity-40" />
           </div>
           <p className="text-sm font-medium">No hay mensajes aún</p>
@@ -204,7 +204,7 @@ export default function ProjectChatPanel({ projectId }: ProjectChatPanelProps) {
                 shouldAutoScroll.current = true;
                 scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
               }}
-              className="absolute bottom-20 left-1/2 -translate-x-1/2 z-10 px-3 py-1.5 rounded-full bg-[hsl(var(--primary))] text-white text-2xs font-bold uppercase tracking-wide shadow-lg hover:scale-105 transition-all"
+              className="absolute bottom-20 left-1/2 -translate-x-1/2 z-10 px-3 py-1.5 rounded-full bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] text-2xs font-bold uppercase tracking-wide shadow-lg hover:scale-105 transition-all"
             >
               Nuevos mensajes ↓
             </button>
@@ -225,8 +225,8 @@ export default function ProjectChatPanel({ projectId }: ProjectChatPanelProps) {
                   <div
                     className={`relative group max-w-[75%] rounded-2xl px-4 py-2.5 ${
                       isOwn
-                        ? "bg-[hsl(var(--primary))] text-white rounded-br-md"
-                        : "bg-[hsl(var(--bg-muted))] dark:bg-[hsl(var(--bg-primary))] text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] rounded-bl-md"
+                        ? "bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] rounded-br-md"
+                        : "bg-[hsl(var(--surface-2))] text-[hsl(var(--foreground))] rounded-bl-md"
                     }`}
                   >
                     {!isOwn && showSender && (
@@ -238,7 +238,7 @@ export default function ProjectChatPanel({ projectId }: ProjectChatPanelProps) {
                     <div className="flex items-center justify-end gap-1.5 mt-1">
                       <span
                         className={`text-2xs ${
-                          isOwn ? "text-[hsl(var(--info))]" : "text-[hsl(var(--text-secondary))]"
+                          isOwn ? "text-[hsl(var(--primary-foreground)/0.8)]" : "text-[hsl(var(--muted-foreground))]"
                         }`}
                       >
                         {formatMessageTime(msg.created_at)}
@@ -246,7 +246,7 @@ export default function ProjectChatPanel({ projectId }: ProjectChatPanelProps) {
                       {isOwn && (
                         <button
                           onClick={() => handleDelete(msg.id, msg.sender_id)}
-                          className="opacity-0 group-hover:opacity-100 transition-opacity hover:text-red-300"
+                          className="opacity-0 group-hover:opacity-100 transition-opacity hover:text-[hsl(var(--destructive))]"
                           title="Eliminar mensaje"
                         >
                           <Trash2 className="w-3 h-3" />
@@ -260,7 +260,7 @@ export default function ProjectChatPanel({ projectId }: ProjectChatPanelProps) {
           </div>
         </>
       )}
-      <div className="border-t border-[hsl(var(--border-primary))] dark:border-[hsl(var(--border))] p-3">
+      <div className="border-t border-[hsl(var(--border))] p-3">
         <div className="flex gap-2 items-end">
           <div className="flex-1 relative">
             <input
@@ -269,19 +269,19 @@ export default function ProjectChatPanel({ projectId }: ProjectChatPanelProps) {
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
               placeholder="Escribe un mensaje..."
-              className="w-full px-4 py-2.5 rounded-xl border border-[hsl(var(--border-primary))] dark:border-[hsl(var(--border))] bg-[hsl(var(--bg-muted))] dark:bg-[hsl(var(--bg-primary))] text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--info)/30%)] focus:border-[hsl(var(--info)/40%)] dark:text-white transition-all pr-10"
+              className="w-full px-4 py-2.5 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] text-sm text-[hsl(var(--foreground))] placeholder:text-[hsl(var(--muted-foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))] transition-all pr-10"
             />
             {input.trim() && (
               <button
                 onClick={handleSend}
-                className="absolute right-1.5 bottom-1.5 p-1.5 rounded-lg bg-[hsl(var(--primary))] text-white hover:opacity-90 transition-opacity"
+                className="absolute right-1.5 bottom-1.5 p-1.5 rounded-lg bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] hover:opacity-90 transition-opacity"
               >
                 <Send className="w-3.5 h-3.5" />
               </button>
             )}
           </div>
         </div>
-        <p className="text-2xs text-[hsl(var(--text-secondary))] text-center mt-1.5 opacity-50">
+        <p className="text-2xs text-[hsl(var(--muted-foreground))] text-center mt-1.5 opacity-50">
           Enter para enviar · Shift+Enter para salto de línea
         </p>
       </div>

@@ -29,13 +29,13 @@ export default function EmailCanvas({ builder }: Props) {
   }, [blocks, addBlock, moveBlock]);
 
   return (
-    <div className="flex-1 overflow-y-auto bg-[hsl(var(--surface-1))] dark:bg-white/[0.02] p-6" onClick={() => selectBlock(null)}>
+    <div className="flex-1 overflow-y-auto bg-[hsl(var(--surface-2))] p-6" onClick={() => selectBlock(null)}>
       <div className="max-w-[600px] mx-auto">
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
           <SortableContext items={blocks.map(b => b.id)} strategy={verticalListSortingStrategy}>
-            <div className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden min-h-[400px]">
+            <div className="bg-[hsl(var(--surface-1))] rounded-xl shadow-lg border border-[hsl(var(--border))] overflow-hidden min-h-[400px]">
               {blocks.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-20 text-gray-400" onClick={(e) => e.stopPropagation()}>
+                <div className="flex flex-col items-center justify-center py-20 text-[hsl(var(--muted-foreground))]" onClick={(e) => e.stopPropagation()}>
                   <Plus size={32} className="mb-3 opacity-50" /><p className="text-sm font-medium">Arrastra bloques aqui</p>
                 </div>
               ) : blocks.map(block => (

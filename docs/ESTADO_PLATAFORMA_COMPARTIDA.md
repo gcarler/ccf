@@ -10,6 +10,12 @@
 - No mezclar cambios de plataforma con features de modulo en el mismo commit si no son inseparables.
 - Todo cambio aqui exige validar impacto en varios modulos criticos.
 
+**Certificación Integral de Plataforma 2026-09-27 (`TKT-PLATFORM-FULL-CERT-01`):**
+- **Veredicto Global:** **100/100 (A+ / CERTIFICADO)**
+- **Reporte Canónico:** [`docs/REPORTE_CERTIFICACION_PLATAFORMA_INTEGRAL_2026-09-27.md`](file:///root/ccf/docs/REPORTE_CERTIFICACION_PLATAFORMA_INTEGRAL_2026-09-27.md)
+- **Suites Verificadas:** Evangelismo (7/7 suites), Proyectos (178 passed), CMS v2 y Aniversario (87 passed), Cross-modular CRM/Academia/Admin (133 passed), Contratos estructurales (46 passed, 1 skipped), Compilación Frontend `tsc --noEmit` (0 errores).
+- **Readiness:** Confirmada para promoción y merge hacia `main`.
+
 ---
 
 ## 1. Leer primero (cualquier agente)

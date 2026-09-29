@@ -3,7 +3,7 @@
 import type { Persona, RoleDefinition } from '@/app/plataforma/evangelism/types';
 import WorkspaceDrawer from '@/components/WorkspaceDrawer';
 import ErrorBoundary from '@/components/ErrorBoundary';
-import { Check } from 'lucide-react';
+import { Check, QrCode } from 'lucide-react';
 import React from 'react';
 import { DSButton, DSInput, DSSelect } from '@/design';
 
@@ -24,6 +24,12 @@ export interface EventCreateForm {
   fixed_date: string;
   start_time: string;
   end_time: string;
+  requires_registration?: boolean;
+  capacity_max?: number | string;
+  registration_opens_at?: string;
+  registration_closes_at?: string;
+  waiting_list_enabled?: boolean;
+  qr_mode?: string;
 }
 
 export interface EventSedeOption {
@@ -93,7 +99,7 @@ export default function EventCreateDrawer({
  form="create-event-form"
  type="submit"
  disabled={saving}
- className="px-3 py-2 bg-[hsl(var(--primary))] text-white rounded-lg text-xs font-semibold uppercase tracking-wide shadow-lg hover:bg-[hsl(var(--primary))] active:scale-95 transition-all flex items-center gap-2 disabled:opacity-60 disabled:active:scale-100"
+ className="px-3 py-2 bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] rounded-lg text-xs font-semibold uppercase tracking-wide shadow-lg hover:bg-[hsl(var(--primary))] active:scale-95 transition-all flex items-center gap-2 disabled:opacity-60 disabled:active:scale-100"
  >
  {saving ? 'Guardando...' : 'Guardar'} <Check size={14} />
  </DSButton>
@@ -108,7 +114,7 @@ export default function EventCreateDrawer({
  required
  value={form.name}
  onChange={e => setForm({ ...form, name: e.target.value })}
- className="w-full px-4 py-1.5 rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-primary))] dark:bg-black/20 focus:ring-2 focus:ring-primary outline-none font-bold text-sm text-[hsl(var(--text-primary))]"
+ className="w-full px-4 py-1.5 rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-primary))] focus:ring-2 focus:ring-[hsl(var(--primary))] outline-none font-bold text-sm text-[hsl(var(--text-primary))]"
  placeholder="Ej: Servicio Dominical"
  />
  </div>
@@ -119,7 +125,7 @@ export default function EventCreateDrawer({
  id="event-sede"
  value={form.sede_id}
  onChange={e => setForm({ ...form, sede_id: e.target.value })}
- className="w-full px-4 py-1.5 rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-primary))] dark:bg-black/20 focus:ring-2 focus:ring-primary outline-none font-bold text-sm text-[hsl(var(--text-primary))] appearance-none"
+ className="w-full px-4 py-1.5 rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-primary))] focus:ring-2 focus:ring-[hsl(var(--primary))] outline-none font-bold text-sm text-[hsl(var(--text-primary))] appearance-none"
  options={[{ value: '', label: 'Universo completo — Todas las sedes' }, ...sedes.map((sede) => ({ value: sede.id, label: sede.name }))]}
  />
  <p className="text-2xs text-[hsl(var(--text-secondary))]">“Todas las sedes” permite registrar personas de toda la base de datos.</p>
@@ -132,7 +138,7 @@ export default function EventCreateDrawer({
  required
  value={form.event_type}
  onChange={e => setForm({ ...form, event_type: e.target.value })}
- className="w-full px-4 py-1.5 rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-primary))] dark:bg-black/20 focus:ring-2 focus:ring-primary outline-none font-bold text-sm text-[hsl(var(--text-primary))] appearance-none"
+ className="w-full px-4 py-1.5 rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-primary))] focus:ring-2 focus:ring-[hsl(var(--primary))] outline-none font-bold text-sm text-[hsl(var(--text-primary))] appearance-none"
  options={[
  { value: 'PERMANENT', label: 'Semanal / Rutinario' },
  { value: 'MONTHLY', label: 'Mensual' },
@@ -158,7 +164,7 @@ export default function EventCreateDrawer({
  target_role_ids: e.target.value === 'ROLE' ? form.target_role_ids : [],
  target_persona_ids: e.target.value === 'MANUAL' ? form.target_persona_ids : [],
  })}
- className="w-full px-4 py-1.5 rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-primary))] dark:bg-black/20 focus:ring-2 focus:ring-primary outline-none font-bold text-sm text-[hsl(var(--text-primary))] appearance-none"
+ className="w-full px-4 py-1.5 rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-primary))] focus:ring-2 focus:ring-[hsl(var(--primary))] outline-none font-bold text-sm text-[hsl(var(--text-primary))] appearance-none"
  options={[
  { value: 'ALL', label: 'Toda la iglesia' },
  { value: 'ROLE', label: 'Uno o varios roles' },
@@ -177,13 +183,13 @@ export default function EventCreateDrawer({
  const selectedValues = Array.from(e.target.selectedOptions).map((option) => option.value);
  setForm({ ...form, target_role_ids: selectedValues, target_role_id: selectedValues[0] || '' });
  }}
- className="min-h-[140px] w-full px-4 py-1.5 rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-primary))] dark:bg-black/20 focus:ring-2 focus:ring-primary outline-none font-bold text-sm text-[hsl(var(--text-primary))] disabled:opacity-50"
+ className="min-h-[140px] w-full px-4 py-1.5 rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-primary))] focus:ring-2 focus:ring-[hsl(var(--primary))] outline-none font-bold text-sm text-[hsl(var(--text-primary))] disabled:opacity-50"
  options={roles.map((role) => ({ value: role.id, label: role.name }))}
  />
  </div>
  </div>
 
- <div className="space-y-3 rounded-md border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-muted))] dark:bg-black/20 p-4">
+ <div className="space-y-3 rounded-md border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-muted))] p-4">
  <div className="flex items-center justify-between gap-3">
  <div>
  <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Plantillas de audiencia</p>
@@ -193,14 +199,14 @@ export default function EventCreateDrawer({
  <DSButton
  type="button"
  onClick={onAddSuggestions}
- className="rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-primary))] px-4 py-2 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] transition-all hover:bg-[hsl(var(--bg-muted))] dark:hover:bg-white/10"
+ className="rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-primary))] px-4 py-2 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] transition-all hover:bg-[hsl(var(--bg-muted))] "
  >
  Sugerencias
  </DSButton>
  <DSButton
  type="button"
  onClick={() => onSavePreset(form)}
- className="rounded-lg bg-[hsl(var(--primary))] px-4 py-2 text-2xs font-semibold uppercase tracking-wide text-white transition-all hover:bg-[hsl(var(--primary))]"
+ className="rounded-lg bg-[hsl(var(--primary))] px-4 py-2 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--primary-foreground))] transition-all hover:bg-[hsl(var(--primary))]"
  >
  Guardar actual
  </DSButton>
@@ -227,7 +233,7 @@ export default function EventCreateDrawer({
  <DSButton
  type="button"
  onClick={() => onApplyPreset(preset.id)}
- className="rounded-lg bg-[hsl(var(--bg-primary))] px-3 py-2 text-2xs font-semibold uppercase tracking-wide text-white transition-all hover:opacity-85 "
+ className="rounded-lg bg-[hsl(var(--bg-primary))] px-3 py-2 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--primary-foreground))] transition-all hover:opacity-85 "
  >
  Aplicar
  </DSButton>
@@ -248,7 +254,7 @@ export default function EventCreateDrawer({
  <div className="space-y-3">
  <div className="flex items-center justify-between gap-3">
   <label htmlFor="event-personas" className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Personas esperadas</label>
- <span className="rounded-full bg-[hsl(var(--info-muted))] dark:bg-[hsl(var(--info)/0.2)] px-3 py-1 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--primary))] dark:text-info">
+ <span className="rounded-full bg-[hsl(var(--info-muted))] px-3 py-1 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--primary))] ">
  {form.target_persona_ids.length} seleccionadas
  </span>
  </div>
@@ -257,9 +263,9 @@ export default function EventCreateDrawer({
  value={manualSearch}
  onChange={e => setManualSearch(e.target.value)}
  placeholder="Buscar por nombre, correo o rol..."
- className="w-full rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-primary))] dark:bg-black/20 px-4 py-1.5 text-sm font-bold text-[hsl(var(--text-primary))] outline-none focus:ring-2 focus:ring-primary"
+ className="w-full rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-primary))] px-4 py-1.5 text-sm font-bold text-[hsl(var(--text-primary))] outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]"
  />
- <div className="max-h-48 space-y-2 overflow-y-auto rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-muted))] dark:bg-black/20 p-3">
+ <div className="max-h-48 space-y-2 overflow-y-auto rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-muted))] p-3">
  {manualPersonas.map((persona) => {
  const isSelected = form.target_persona_ids.includes(persona.id);
  return (
@@ -274,7 +280,7 @@ export default function EventCreateDrawer({
  })}
  className={`flex w-full items-center justify-between rounded-lg border px-4 py-1.5 text-left transition-all ${
  isSelected
- ? 'border-info bg-info-muted dark:border-info dark:bg-[hsl(var(--info)/0.2)]'
+ ? 'border-[hsl(var(--info))] bg-[hsl(var(--info-muted))]'
  : 'border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-primary))] '
  }`}
  >
@@ -282,7 +288,7 @@ export default function EventCreateDrawer({
  <p className="text-sm font-bold text-[hsl(var(--text-primary))]">{persona.nombre_completo}</p>
  <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{persona.church_role || 'Sin rol'}</p>
  </div>
- <span className={`text-2xs font-semibold uppercase tracking-wide ${isSelected ? 'text-[hsl(var(--primary))] dark:text-info' : 'text-[hsl(var(--text-secondary))]'}`}>
+ <span className={`text-2xs font-semibold uppercase tracking-wide ${isSelected ? 'text-[hsl(var(--primary))] ' : 'text-[hsl(var(--text-secondary))]'}`}>
  {isSelected ? 'Incluida' : 'Agregar'}
  </span>
  </DSButton>
@@ -304,7 +310,7 @@ export default function EventCreateDrawer({
  required
  value={form.start_time}
  onChange={e => setForm({ ...form, start_time: e.target.value })}
- className="w-full px-4 py-1.5 rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-primary))] dark:bg-black/20 focus:ring-2 focus:ring-primary outline-none font-bold text-sm text-[hsl(var(--text-primary))]"
+ className="w-full px-4 py-1.5 rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-primary))] focus:ring-2 focus:ring-[hsl(var(--primary))] outline-none font-bold text-sm text-[hsl(var(--text-primary))]"
  />
  </div>
  <div className="space-y-1.5">
@@ -315,7 +321,7 @@ export default function EventCreateDrawer({
  required
  value={form.end_time}
  onChange={e => setForm({ ...form, end_time: e.target.value })}
- className="w-full px-4 py-1.5 rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-primary))] dark:bg-black/20 focus:ring-2 focus:ring-primary outline-none font-bold text-sm text-[hsl(var(--text-primary))]"
+ className="w-full px-4 py-1.5 rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-primary))] focus:ring-2 focus:ring-[hsl(var(--primary))] outline-none font-bold text-sm text-[hsl(var(--text-primary))]"
  />
  </div>
  </div>
@@ -327,7 +333,7 @@ export default function EventCreateDrawer({
  id="event-day-of-week"
  value={form.day_of_week}
  onChange={e => setForm({ ...form, day_of_week: e.target.value })}
- className="w-full px-4 py-1.5 rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-primary))] dark:bg-black/20 focus:ring-2 focus:ring-primary outline-none font-bold text-sm "
+ className="w-full px-4 py-1.5 rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-primary))] focus:ring-2 focus:ring-[hsl(var(--primary))] outline-none font-bold text-sm "
  options={DAY_LABELS.map((d, i) => ({ value: String(i), label: d }))}
  />
  </div>
@@ -341,7 +347,7 @@ export default function EventCreateDrawer({
  type="date"
  value={form.fixed_date}
  onChange={e => setForm({ ...form, fixed_date: e.target.value })}
- className="w-full px-4 py-1.5 rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-primary))] dark:bg-black/20 focus:ring-2 focus:ring-primary outline-none font-bold text-sm "
+ className="w-full px-4 py-1.5 rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-primary))] focus:ring-2 focus:ring-[hsl(var(--primary))] outline-none font-bold text-sm "
  />
  </div>
  )}
@@ -353,11 +359,116 @@ export default function EventCreateDrawer({
  id="event-month-day"
  value={form.month_day}
  onChange={e => setForm({ ...form, month_day: e.target.value })}
- className="w-full px-4 py-1.5 rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-primary))] dark:bg-black/20 focus:ring-2 focus:ring-primary outline-none font-bold text-sm "
+ className="w-full px-4 py-1.5 rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-primary))] focus:ring-2 focus:ring-[hsl(var(--primary))] outline-none font-bold text-sm "
  placeholder="Ej: 15 de cada mes, o 24 Dic"
  />
  </div>
  )}
+
+  {/* Pre-registro y Pase Digital Super-PRO */}
+ <div className="space-y-3 rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--surface-2))] p-4">
+ <div className="flex items-center justify-between gap-3">
+ <div className="flex items-center gap-2">
+ <div className="w-8 h-8 rounded-lg bg-[hsl(var(--primary)/0.1)] text-[hsl(var(--primary))] flex items-center justify-center">
+ <QrCode size={18} />
+ </div>
+ <div>
+ <p className="text-xs font-bold uppercase tracking-wide text-[hsl(var(--text-primary))]">Pre-registro con Código QR</p>
+ <p className="text-2xs text-[hsl(var(--text-secondary))]">Emite pases digitales interactivos con correlativo único</p>
+ </div>
+ </div>
+ <label className="relative inline-flex items-center cursor-pointer">
+ <input
+ type="checkbox"
+ checked={Boolean(form.requires_registration)}
+ onChange={e => setForm({ ...form, requires_registration: e.target.checked })}
+ className="sr-only peer"
+ />
+ <div className="w-11 h-6 bg-[hsl(var(--bg-muted))] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-[hsl(var(--border-primary))] after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[hsl(var(--primary))]"></div>
+ </label>
+ </div>
+
+ {form.requires_registration && (
+ <div className="mt-3 pt-3 border-t border-[hsl(var(--border-primary))] space-y-3 animate-in fade-in slide-in-from-top-2 duration-300">
+ <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+ <div className="space-y-1">
+ <label htmlFor="event-capacity" className="text-2xs font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">
+ Aforo Máximo (Cupos)
+ </label>
+ <DSInput
+ id="event-capacity"
+ type="number"
+ min="1"
+ placeholder="Ilimitado si está vacío"
+ value={form.capacity_max ?? ''}
+ onChange={e => setForm({ ...form, capacity_max: e.target.value })}
+ className="w-full px-3 py-1.5 rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-primary))] text-sm text-[hsl(var(--text-primary))]"
+ />
+ </div>
+ <div className="space-y-1">
+ <label htmlFor="event-qr-mode" className="text-2xs font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">
+ Modo de Pase QR
+ </label>
+ <DSSelect
+ id="event-qr-mode"
+ value={form.qr_mode || 'PER_REGISTRANT'}
+ onChange={e => setForm({ ...form, qr_mode: e.target.value })}
+ className="w-full px-3 py-1.5 rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-primary))] text-sm"
+ options={[
+ { value: 'PER_REGISTRANT', label: 'Un QR por asistente (Recomendado)' },
+ { value: 'PER_EVENT', label: 'Un QR global para el evento' },
+ ]}
+ />
+ </div>
+ </div>
+
+ <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+ <div className="space-y-1">
+ <label htmlFor="event-reg-open" className="text-2xs font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">
+ Apertura Pre-registro
+ </label>
+ <DSInput
+ id="event-reg-open"
+ type="datetime-local"
+ value={form.registration_opens_at ?? ''}
+ onChange={e => setForm({ ...form, registration_opens_at: e.target.value })}
+ className="w-full px-3 py-1.5 rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-primary))] text-xs text-[hsl(var(--text-primary))]"
+ />
+ </div>
+ <div className="space-y-1">
+ <label htmlFor="event-reg-close" className="text-2xs font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">
+ Cierre Pre-registro
+ </label>
+ <DSInput
+ id="event-reg-close"
+ type="datetime-local"
+ value={form.registration_closes_at ?? ''}
+ onChange={e => setForm({ ...form, registration_closes_at: e.target.value })}
+ className="w-full px-3 py-1.5 rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-primary))] text-xs text-[hsl(var(--text-primary))]"
+ />
+ </div>
+ </div>
+
+ <div className="flex items-center justify-between p-2 rounded-lg bg-[hsl(var(--bg-primary))] border border-[hsl(var(--border-primary))]">
+ <div>
+ <p className="text-xs font-semibold text-[hsl(var(--text-primary))]">Lista de Espera Inteligente</p>
+ <p className="text-2xs text-[hsl(var(--text-secondary))]">Si el aforo se llena, permite seguir registrando en cola</p>
+ </div>
+ <input
+ type="checkbox"
+ checked={Boolean(form.waiting_list_enabled)}
+ onChange={e => setForm({ ...form, waiting_list_enabled: e.target.checked })}
+ className="rounded border-[hsl(var(--border-primary))] text-[hsl(var(--primary))] focus:ring-[hsl(var(--primary))]"
+ />
+ </div>
+
+ <div className="p-2.5 rounded-lg bg-[hsl(var(--primary)/0.06)] border border-[hsl(var(--primary)/0.15)] text-2xs text-[hsl(var(--text-secondary))] flex items-center gap-2">
+ <span className="font-semibold text-[hsl(var(--primary))]">💡 Tip:</span>
+ Podrás diseñar preguntas personalizadas con Form Studio en la pestaña Pre-registro del evento.
+ </div>
+ </div>
+ )}
+ </div>
 
  <div className="space-y-1.5">
  <label htmlFor="event-description" className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Descripción</label>
@@ -366,7 +477,7 @@ export default function EventCreateDrawer({
  value={form.description}
  onChange={e => setForm({ ...form, description: e.target.value })}
  rows={3}
- className="w-full px-4 py-1.5 rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-primary))] dark:bg-black/20 focus:ring-2 focus:ring-primary outline-none font-bold text-sm resize-none"
+ className="w-full px-4 py-1.5 rounded-lg border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-primary))] focus:ring-2 focus:ring-[hsl(var(--primary))] outline-none font-bold text-sm resize-none"
  placeholder="Breve descripción del evento..."
  />
  </div>

@@ -39,7 +39,7 @@ export function NewConversationDrawer({
                         onChange={(e) => onQueryChange(e.target.value)}
                         placeholder="Buscar por nombre o email..."
                         aria-label="Buscar usuario para nueva conversación"
-                        className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-white/5 text-sm outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.2] dark:text-white"
+                        className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-sm outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/20%)] text-[hsl(var(--text-primary))] placeholder:text-[hsl(var(--text-secondary))]"
                         autoComplete="off"
                     />
                 </div>
@@ -58,11 +58,11 @@ export function NewConversationDrawer({
                                 onClick={() => onCreate(String(u.id))}
                                 disabled={creating}
                                 aria-label={`Iniciar conversación con ${u.username}`}
-                                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5 transition-colors disabled:opacity-50 text-left"
+                                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-[hsl(var(--surface-2))] transition-colors disabled:opacity-50 text-left"
                             >
                                 <AvatarInitial name={u.name || u.username} />
                                 <div className="flex-1 min-w-0">
-                                    <p className="text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] truncate">{u.name || u.username}</p>
+                                    <p className="text-sm font-semibold text-[hsl(var(--text-primary))] truncate">{u.name || u.username}</p>
                                     <p className="text-xs text-[hsl(var(--text-secondary))] truncate">{u.username ? `@${u.username} · ` : ''}{u.email}</p>
                                 </div>
                                 {creating && <Loader2 size={14} aria-hidden="true" data-testid="creating-conversation-spinner" className="animate-spin text-[hsl(var(--primary))] shrink-0" />}

@@ -53,7 +53,7 @@ export default function StrategyOverviewForm({
   onSave,
 }: OverviewFormProps) {
   return (
-    <div className="bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))] border border-[hsl(var(--border-primary))] rounded-lg p-4 space-y-4">
+    <div className="bg-[hsl(var(--bg-primary))] border border-[hsl(var(--border-primary))] rounded-lg p-4 space-y-4">
       <div>
         <label htmlFor="edit-name" className="block text-2xs font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] mb-1">Nombre</label>
         <input id="edit-name" type="text" value={editName} onChange={e => setEditName(e.target.value)} readOnly={!canManage}
@@ -96,7 +96,7 @@ export default function StrategyOverviewForm({
               <button key={c} onClick={() => canManage && setEditClaseRaiz(c)} disabled={!canManage}
                 className={`flex-1 px-2 py-1.5 text-2xs font-bold rounded-lg transition-all capitalize ${
                 editClaseRaiz === c
-                ? 'bg-[hsl(var(--primary))] text-white shadow-sm'
+                ? 'bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] shadow-sm'
                 : 'bg-[hsl(var(--bg-muted))] text-[hsl(var(--text-secondary))] border border-[hsl(var(--border-primary))]'
                 }`}>
                 {c === 'evento_masivo' ? 'Evento Masivo' : c}
@@ -109,7 +109,7 @@ export default function StrategyOverviewForm({
           <button id="edit-activa" onClick={() => canManage && setEditActiva(!editActiva)} disabled={!canManage}
             className={`w-full px-3 py-2 rounded-lg text-sm font-bold transition-all text-left ${
             editActiva
-            ? 'bg-[hsl(var(--success-muted))] dark:bg-[hsl(var(--success))]/30 text-success-text dark:text-success-text border border-[hsl(var(--success)/25%)] dark:border-[hsl(var(--success)/100%)]'
+            ? 'bg-[hsl(var(--success-muted))] text-[hsl(var(--success))] border border-[hsl(var(--success)/0.3)]'
             : 'bg-[hsl(var(--bg-muted))] text-[hsl(var(--text-secondary))] border border-[hsl(var(--border-primary))]'
             }`}>
             {editActiva ? 'Activa' : 'Inactiva'}
@@ -147,7 +147,7 @@ export default function StrategyOverviewForm({
         <div className="flex items-center justify-end gap-2 pt-2 border-t border-[hsl(var(--border-primary))]">
           <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
           onClick={onSave} disabled={saving}
-          className="inline-flex items-center gap-2 px-4 h-9 rounded-lg bg-[hsl(var(--primary))] text-white text-xs font-semibold hover:bg-[hsl(var(--primary))] disabled:opacity-60 transition-colors">
+          className="inline-flex items-center gap-2 px-4 h-9 rounded-lg bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] text-xs font-semibold hover:bg-[hsl(var(--primary))] disabled:opacity-60 transition-colors">
           <Save size={14} />{saving ? 'Guardando...' : 'Guardar cambios'}
           </motion.button>
         </div>

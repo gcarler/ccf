@@ -84,7 +84,7 @@ export function MessageList({ messages, loading, currentUserId, onLoadOlder, onR
         <div
             ref={scrollRef}
             onScroll={handleScroll}
-            className="flex-1 overflow-y-auto scrollbar-thin p-3 md:p-4 space-y-3 bg-[hsl(var(--surface-1))]/30 dark:bg-[hsl(var(--bg-primary))]"
+            className="flex-1 overflow-y-auto scrollbar-thin p-3 md:p-4 space-y-3 bg-[hsl(var(--surface-1))]/30"
         >
             {loading && messages.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-full gap-3 text-[hsl(var(--text-secondary))]">
@@ -93,8 +93,8 @@ export function MessageList({ messages, loading, currentUserId, onLoadOlder, onR
                 </div>
             ) : messages.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-full gap-3 text-[hsl(var(--text-secondary))]">
-                    <div className="size-10 rounded-xl bg-[hsl(var(--surface-2))] dark:bg-white/5 flex items-center justify-center">
-                        <MessageCircle size={18} className="text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]" />
+                    <div className="size-10 rounded-xl bg-[hsl(var(--surface-2))] flex items-center justify-center">
+                        <MessageCircle size={18} className="text-[hsl(var(--text-secondary))]" />
                     </div>
                     <p className="text-sm font-semibold text-[hsl(var(--text-secondary))]">Sin mensajes aún</p>
                     <p className="text-xs text-[hsl(var(--text-secondary))]">Sé el primero en escribir</p>

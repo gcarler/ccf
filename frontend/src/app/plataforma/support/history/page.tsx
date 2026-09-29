@@ -12,17 +12,17 @@ const HISTORY = [
 ];
 
 const STATUS_CONFIG: Record<string, any> = {
-    closed: { icon: CheckCircle, label: 'Cerrado', color: 'text-success-text', bg: 'bg-success-soft dark:bg-[hsl(var(--success))]/10' },
-    in_progress: { icon: Clock, label: 'En Proceso', color: 'text-[hsl(var(--primary))]', bg: 'bg-info-soft dark:bg-[hsl(var(--info))]/10' },
-    open: { icon: AlertCircle, label: 'Abierto', color: 'text-warning-text', bg: 'bg-warning-soft dark:bg-[hsl(var(--warning))]/10' },
+    closed: { icon: CheckCircle, label: 'Cerrado', color: 'text-[hsl(var(--success))]', bg: 'bg-[hsl(var(--success))]/10' },
+    in_progress: { icon: Clock, label: 'En Proceso', color: 'text-[hsl(var(--primary))]', bg: 'bg-[hsl(var(--info))]/10' },
+    open: { icon: AlertCircle, label: 'Abierto', color: 'text-[hsl(var(--warning))]', bg: 'bg-[hsl(var(--warning))]/10' },
 };
 
 export default function SupportHistoryPage() {
     const [expanded, setExpanded] = useState<string | null>(null);
 
     return (
-        <div className="h-full flex flex-col bg-[hsl(var(--surface-1))] dark:bg-[#0f1117]">
-            <header className="h-8 border-b border-[hsl(var(--border))]/60 dark:border-white/5 flex items-center px-3 gap-3 shrink-0 bg-[hsl(var(--bg-primary))] dark:bg-[#1a1d27]">
+        <div className="h-full flex flex-col bg-[hsl(var(--surface-1))]">
+            <header className="h-8 border-b border-[hsl(var(--border))]/60 flex items-center px-3 gap-3 shrink-0 bg-[hsl(var(--bg-primary))]">
                 <History size={16} className="text-[hsl(var(--text-secondary))]" />
                 <h1 className="text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Historial de Soporte</h1>
                 <span className="ml-auto text-2xs text-[hsl(var(--text-secondary))] font-bold">{HISTORY.length} conversaciones</span>
@@ -47,12 +47,12 @@ export default function SupportHistoryPage() {
                                     initial={{ opacity: 0, y: 10 }}
                                     animate={{ opacity: 1, y: 0 }}
                                     transition={{ delay: i * 0.05 }}
-                                    className="bg-[hsl(var(--bg-primary))] dark:bg-[#1a1d27] rounded-lg border border-[hsl(var(--border))]/60 dark:border-white/5 shadow-sm overflow-hidden"
+                                    className="bg-[hsl(var(--bg-primary))] rounded-lg border border-[hsl(var(--border))]/60 shadow-sm overflow-hidden"
                                 >
                                     {/* Header row */}
                                     <button
                                         onClick={() => setExpanded(isExpanded ? null : item.id)}
-                                        className="w-full flex items-center gap-4 px-3 py-1.5 hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5 transition-all text-left"
+                                        className="w-full flex items-center gap-4 px-3 py-1.5 hover:bg-[hsl(var(--surface-1))] transition-all text-left"
                                     >
                                         <div className={clsx("size-9 rounded-md flex items-center justify-center shrink-0", sc.bg)}>
                                             <Icon size={16} className={sc.color} />
@@ -63,7 +63,7 @@ export default function SupportHistoryPage() {
                                                 <span className="text-2xs text-[hsl(var(--text-secondary))]">·</span>
                                                 <span className="text-2xs text-[hsl(var(--text-secondary))] font-bold">{item.category}</span>
                                             </div>
-                                            <p className="text-base font-semibold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] truncate">{item.title}</p>
+                                            <p className="text-base font-semibold text-[hsl(var(--text-primary))] truncate">{item.title}</p>
                                             <div className="flex items-center gap-3 mt-0.5">
                                                 <span className="flex items-center gap-1 text-2xs text-[hsl(var(--text-secondary))]">
                                                     <Calendar size={9} /> {item.date}
@@ -87,14 +87,14 @@ export default function SupportHistoryPage() {
                                         <motion.div
                                             initial={{ height: 0, opacity: 0 }}
                                             animate={{ height: 'auto', opacity: 1 }}
-                                            className="border-t border-[hsl(var(--border))] dark:border-white/5 px-3 py-1.5 space-y-3"
+                                            className="border-t border-[hsl(var(--border))] px-3 py-1.5 space-y-3"
                                         >
                                             {item.resolution ? (
-                                                <div className="flex items-start gap-3 p-4 bg-success-soft dark:bg-[hsl(var(--success))]/10 rounded-md">
+                                                <div className="flex items-start gap-3 p-4 bg-[hsl(var(--success))]/10 rounded-md">
                                                     <MessageSquare size={14} className="text-[hsl(var(--success))] shrink-0 mt-0.5" />
                                                     <div>
-                                                        <p className="font-semibold text-success-text uppercase tracking-wide mb-1">Resolución</p>
-                                                        <p className="text-sm text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] leading-relaxed">{item.resolution}</p>
+                                                        <p className="font-semibold text-[hsl(var(--success))] uppercase tracking-wide mb-1">Resolución</p>
+                                                        <p className="text-sm text-[hsl(var(--text-secondary))] leading-relaxed">{item.resolution}</p>
                                                     </div>
                                                 </div>
                                             ) : (

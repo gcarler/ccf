@@ -43,39 +43,39 @@ interface TaskEditDrawerProps {
 const PRIORITY_OPTIONS = [
     {
         value: 'urgent', label: PRIORITY_LABELS.urgent,
-        color: 'text-danger-text dark:text-danger', bg: 'bg-danger-soft',
-        border: 'border-danger-muted dark:border-danger/30',
-        dot: 'bg-danger', bar: 'bg-danger',
-        glow: 'shadow-danger',
+        color: 'text-[hsl(var(--danger))]', bg: 'bg-[hsl(var(--danger)/15%)]',
+        border: 'border-[hsl(var(--danger)/30%)]',
+        dot: 'bg-[hsl(var(--danger))]', bar: 'bg-[hsl(var(--danger))]',
+        glow: 'shadow-[hsl(var(--danger)/20%)]',
     },
     {
         value: 'high', label: PRIORITY_LABELS.high,
-        color: 'text-warning-text dark:text-warning', bg: 'bg-warning-soft',
-        border: 'border-warning-muted dark:border-warning/30',
-        dot: 'bg-warning', bar: 'bg-warning',
-        glow: 'shadow-warning',
+        color: 'text-[hsl(var(--warning))]', bg: 'bg-[hsl(var(--warning)/15%)]',
+        border: 'border-[hsl(var(--warning)/30%)]',
+        dot: 'bg-[hsl(var(--warning))]', bar: 'bg-[hsl(var(--warning))]',
+        glow: 'shadow-[hsl(var(--warning)/20%)]',
     },
     {
         value: 'medium', label: PRIORITY_LABELS.medium,
-        color: 'text-warning-text dark:text-warning', bg: 'bg-warning-soft',
-        border: 'border-warning-muted dark:border-warning/30',
-        dot: 'bg-warning', bar: 'bg-warning',
-        glow: 'shadow-warning',
+        color: 'text-[hsl(var(--warning))]', bg: 'bg-[hsl(var(--warning)/10%)]',
+        border: 'border-[hsl(var(--warning)/25%)]',
+        dot: 'bg-[hsl(var(--warning))]', bar: 'bg-[hsl(var(--warning))]',
+        glow: 'shadow-[hsl(var(--warning)/15%)]',
     },
     {
         value: 'low', label: PRIORITY_LABELS.low,
-        color: 'text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]', bg: 'bg-[hsl(var(--surface-2))] dark:bg-[hsl(var(--surface-2))]',
-        border: 'border-[hsl(var(--border))] dark:border-[hsl(var(--border))]',
+        color: 'text-[hsl(var(--text-secondary))]', bg: 'bg-[hsl(var(--surface-2))]',
+        border: 'border-[hsl(var(--border))]',
         dot: 'bg-[hsl(var(--text-secondary))]', bar: 'bg-[hsl(var(--text-secondary))]',
-        glow: 'shadow-[hsl(var(--text-secondary))]/20',
+        glow: 'shadow-[hsl(var(--text-secondary)/20%)]',
     },
 ];
 
 const STATUS_OPTIONS = [
-    { value: 'todo',        label: STATUS_LABELS.todo,        color: 'text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]',   bg: 'bg-[hsl(var(--surface-2))] dark:bg-[hsl(var(--surface-2))]/60',      icon: Circle },
-    { value: 'in_progress', label: STATUS_LABELS.in_progress, color: 'text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))]',     bg: 'bg-info-soft',          icon: Clock },
-    { value: 'review',      label: STATUS_LABELS.review,      color: 'text-warning-text dark:text-warning', bg: 'bg-warning-soft',  icon: Eye },
-    { value: 'completed',   label: STATUS_LABELS.completed,   color: 'text-success-text dark:text-success', bg: 'bg-success-soft',  icon: CheckCircle2 },
+    { value: 'todo',        label: STATUS_LABELS.todo,        color: 'text-[hsl(var(--text-secondary))]',   bg: 'bg-[hsl(var(--surface-2))]',      icon: Circle },
+    { value: 'in_progress', label: STATUS_LABELS.in_progress, color: 'text-[hsl(var(--primary))]',     bg: 'bg-[hsl(var(--info)/15%)]',          icon: Clock },
+    { value: 'review',      label: STATUS_LABELS.review,      color: 'text-[hsl(var(--warning))]', bg: 'bg-[hsl(var(--warning)/15%)]',  icon: Eye },
+    { value: 'completed',   label: STATUS_LABELS.completed,   color: 'text-[hsl(var(--success))]', bg: 'bg-[hsl(var(--success)/15%)]',  icon: CheckCircle2 },
 ];
 
 const XP_MAP: Record<string, number> = { urgent: 100, high: 60, medium: 40, low: 20 };
@@ -239,14 +239,14 @@ export default function TaskEditDrawer({
                         animate={{ x: 0, opacity: 1 }}
                         exit={{ x: '100%', opacity: 0 }}
                         transition={{ type: 'spring', damping: 30, stiffness: 280 }}
-                        className="fixed right-0 top-10 bottom-0 w-full max-w-[460px] z-[101] flex flex-col bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-2))] shadow-[-32px_0_80px_hsl(var(--shadow-floating))] dark:shadow-[-32px_0_80px_hsl(var(--shadow-floating))]"
+                        className="fixed right-0 top-10 bottom-0 w-full max-w-[460px] z-[101] flex flex-col bg-[hsl(var(--surface-1))] border-l border-[hsl(var(--border))] shadow-[-32px_0_80px_hsl(var(--shadow-floating))]"
                         onClick={e => e.stopPropagation()}
                     >
                         {/* Priority accent bar — top */}
                         <div className={clsx('h-[3px] w-full shrink-0', cp.bar)} />
 
                         {/* ── HEADER ── */}
-                        <header className="shrink-0 px-3 pt-3.5 pb-3 border-b border-[hsl(var(--border))] dark:border-[hsl(var(--border))]">
+                        <header className="shrink-0 px-3 pt-3.5 pb-3 border-b border-[hsl(var(--border))]">
                             <div className="flex items-center justify-between mb-3">
 
                                 {/* Left: status + xp */}
@@ -273,7 +273,7 @@ export default function TaskEditDrawer({
                                                     animate={{ opacity: 1, y: 0, scale: 1 }}
                                                     exit={{ opacity: 0, y: -6, scale: 0.96 }}
                                                     transition={{ duration: 0.13 }}
-                                                    className="absolute left-0 top-full mt-2 w-48 bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] dark:border-[hsl(var(--border))] rounded-lg shadow-2xl z-[200] overflow-hidden py-1"
+                                                    className="absolute left-0 top-full mt-2 w-48 bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] rounded-lg shadow-2xl z-[200] overflow-hidden py-1"
                                                 >
                                                     {STATUS_OPTIONS.map(opt => (
                                                         <button key={opt.value}
@@ -282,7 +282,7 @@ export default function TaskEditDrawer({
                                                                 'w-full flex items-center gap-2.5 px-3.5 py-2.5 text-sm font-semibold transition-colors',
                                                                 form.status === opt.value
                                                                     ? `${opt.color} ${opt.bg}`
-                                                                    : 'text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] dark:hover:bg-[hsl(var(--surface-1))]'
+                                                                    : 'text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))]'
                                                             )}
                                                         >
                                                             <opt.icon size={13} strokeWidth={2} />
@@ -296,7 +296,7 @@ export default function TaskEditDrawer({
                                     </div>
 
                                     {/* XP badge */}
-                                    <span className="inline-flex items-center gap-1 px-2 py-1 bg-warning-soft text-warning-text dark:text-warning rounded-lg font-semibold tracking-wide border border-warning-muted dark:border-warning/20">
+                                    <span className="inline-flex items-center gap-1 px-2 py-1 bg-[hsl(var(--warning)/15%)] text-[hsl(var(--warning))] rounded-lg font-semibold tracking-wide border border-[hsl(var(--warning)/30%)]">
                                         <Zap size={9} fill="currentColor" /> +{xp} XP
                                     </span>
                                 </div>
@@ -306,27 +306,27 @@ export default function TaskEditDrawer({
                                     <AnimatePresence mode="wait">
                                         {saving ? (
                                             <motion.div key="saving" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                                                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-[hsl(var(--primary))] bg-info-soft">
+                                                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-[hsl(var(--info))] bg-[hsl(var(--info)/15%)] border border-[hsl(var(--info)/30%)]">
                                                 <Loader2 size={11} className="animate-spin" /> Guardando...
                                             </motion.div>
                                         ) : saved ? (
                                             <motion.div key="saved" initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }}
-                                                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-success-text bg-success-soft dark:text-success">
+                                                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-[hsl(var(--success))] bg-[hsl(var(--success)/15%)] border border-[hsl(var(--success)/30%)]">
                                                 <CheckCheck size={11} /> Guardado
                                             </motion.div>
                                         ) : dirty ? (
                                             <motion.button key="save" initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }}
                                                 onClick={handleSave}
-                                                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-[hsl(var(--primary))] text-white shadow-md shadow-primary active:scale-95 transition-all">
+                                                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] shadow-md shadow-[hsl(var(--primary)/25%)] active:scale-95 transition-all">
                                                 <Save size={11} /> Guardar
                                             </motion.button>
                                         ) : null}
                                     </AnimatePresence>
-                                    <button aria-label="Más opciones" className="p-1.5 rounded-lg text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-secondary))] dark:hover:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-[hsl(var(--surface-2))] transition-all ml-0.5">
+                                    <button aria-label="Más opciones" className="p-1.5 rounded-lg text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] hover:bg-[hsl(var(--surface-2))] transition-all ml-0.5">
                                         <MoreHorizontal size={15} />
                                     </button>
                                     <button onClick={onClose} aria-label="Cerrar"
-                                        className="p-1.5 rounded-lg text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-secondary))] dark:hover:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-[hsl(var(--surface-2))] transition-all">
+                                        className="p-1.5 rounded-lg text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] hover:bg-[hsl(var(--surface-2))] transition-all">
                                         <X size={15} />
                                     </button>
                                 </div>
@@ -339,7 +339,7 @@ export default function TaskEditDrawer({
                                 onChange={e => updateField('title', e.target.value)}
                                 rows={1}
                                 placeholder="Nombre de la tarea..."
-                                className="w-full text-xl font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-primary))] bg-transparent resize-none outline-none leading-snug placeholder:text-[hsl(var(--text-secondary))] dark:placeholder:text-[hsl(var(--text-secondary))] focus:ring-0 -mx-0.5"
+                                className="w-full text-xl font-bold text-[hsl(var(--text-primary))] bg-transparent resize-none outline-none leading-snug placeholder:text-[hsl(var(--text-secondary))] focus:ring-0 -mx-0.5"
                             />
                         </header>
 
@@ -347,7 +347,7 @@ export default function TaskEditDrawer({
                         <div className="flex-1 overflow-y-auto scrollbar-thin">
 
                             {/* ─ META FIELDS ─ */}
-                            <div className="px-3 py-1.5 space-y-3 border-b border-[hsl(var(--border))] dark:border-[hsl(var(--border))]">
+                            <div className="px-3 py-1.5 space-y-3 border-b border-[hsl(var(--border))]">
 
                                 {/* Priority row */}
                                 <MetaRow label="Prioridad">
@@ -370,7 +370,7 @@ export default function TaskEditDrawer({
                                                     animate={{ opacity: 1, y: 0, scale: 1 }}
                                                     exit={{ opacity: 0, y: -6, scale: 0.96 }}
                                                     transition={{ duration: 0.13 }}
-                                                    className="absolute left-0 top-full mt-2 w-44 bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] dark:border-[hsl(var(--border))] rounded-lg shadow-2xl z-[200] overflow-hidden py-1"
+                                                    className="absolute left-0 top-full mt-2 w-44 bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] rounded-lg shadow-2xl z-[200] overflow-hidden py-1"
                                                 >
                                                     {PRIORITY_OPTIONS.map(opt => (
                                                         <button key={opt.value}
@@ -378,8 +378,8 @@ export default function TaskEditDrawer({
                                                             className={clsx(
                                                                 'w-full flex items-center gap-2.5 px-3.5 py-2.5 text-sm font-semibold transition-colors',
 form.priority === opt.value
-                                                                     ? `${opt.color} ${opt.bg}`
-                                                                     : 'text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] dark:hover:bg-[hsl(var(--surface-1))]'
+                                                                    ? `${opt.color} ${opt.bg}`
+                                                                    : 'text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))]'
                                                             )}
                                                         >
                                                             <span className={clsx('size-2 rounded-full shrink-0', opt.dot)} />
@@ -401,24 +401,24 @@ form.priority === opt.value
                                             aria-label="Fecha límite"
                                             value={form.due_date ? form.due_date.split('T')[0] : ''}
                                             onChange={e => updateField('due_date', e.target.value || null)}
-                                            className="h-8 px-3 rounded-lg bg-[hsl(var(--surface-1))] dark:bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] dark:border-[hsl(var(--border))] text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all"
+                                            className="h-8 px-3 rounded-lg bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] text-sm font-semibold text-[hsl(var(--text-primary))] outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/30%)] focus:border-[hsl(var(--primary))] transition-all"
                                         />
                                     </div>
                                 </MetaRow>
 
                                 {/* Project row */}
                                 <MetaRow label="Proyecto" icon={<FolderOpen size={13} className="text-[hsl(var(--text-secondary))]" />}>
-                                    <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[hsl(var(--surface-1))] dark:bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] dark:border-[hsl(var(--border))] max-w-[220px]">
-                                        <span className="text-sm font-semibold text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] truncate">
+                                    <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] max-w-[220px]">
+                                        <span className="text-sm font-semibold text-[hsl(var(--text-secondary))] truncate">
                                             {form.project_title || `Proyecto #${form.project_id}`}
                                         </span>
-                                        <ExternalLink size={11} className="ml-auto text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] shrink-0" />
+                                        <ExternalLink size={11} className="ml-auto text-[hsl(var(--text-secondary))] shrink-0" />
                                     </div>
                                 </MetaRow>
                             </div>
 
                             {/* ─ DESCRIPTION ─ */}
-                            <div className="px-3 py-1.5 border-b border-[hsl(var(--border))] dark:border-[hsl(var(--border))]">
+                            <div className="px-3 py-1.5 border-b border-[hsl(var(--border))]">
                                 <p className="text-2xs font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] mb-2 flex items-center gap-1.5">
                                     <AlignLeft size={11} /> Descripción
                                 </p>
@@ -427,26 +427,26 @@ form.priority === opt.value
                                     onChange={e => updateField('description', e.target.value || null)}
                                     rows={3}
                                     placeholder="Añade contexto o detalles sobre esta tarea..."
-                                    className="w-full px-3 py-2.5 rounded-md bg-[hsl(var(--surface-1))] dark:bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] dark:border-[hsl(var(--border))] text-base font-medium text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] placeholder:text-[hsl(var(--text-secondary))] dark:placeholder:text-[hsl(var(--text-secondary))] outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/50 resize-none transition-all leading-relaxed"
+                                    className="w-full px-3 py-2.5 rounded-md bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] text-base font-medium text-[hsl(var(--text-primary))] placeholder:text-[hsl(var(--text-secondary))] outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/20%)] focus:border-[hsl(var(--primary)/50%)] resize-none transition-all leading-relaxed"
                                 />
                             </div>
 
                             {/* ─ MESH AI ─ */}
-                            <div className="px-3 py-1.5 border-b border-[hsl(var(--border))] dark:border-[hsl(var(--border))]">
-                                <div className="rounded-lg bg-gradient-to-br from-info-muted/80 via-info-muted/40 to-info-muted/20 dark:from-info/10 dark:via-info/5 dark:to-transparent border border-info-muted dark:border-info/20 overflow-hidden">
+                            <div className="px-3 py-1.5 border-b border-[hsl(var(--border))]">
+                                <div className="rounded-lg bg-gradient-to-br from-[hsl(var(--info)/15%)] via-[hsl(var(--info)/8%)] to-transparent border border-[hsl(var(--info)/25%)] overflow-hidden">
                                     {/* AI header */}
-                                    <div className="flex items-center justify-between px-4 py-3 border-b border-primary/20 dark:border-primary/20">
+                                    <div className="flex items-center justify-between px-4 py-3 border-b border-[hsl(var(--info)/20%)]">
                                         <div className="flex items-center gap-2">
                                             <div className="size-6 rounded-lg bg-gradient-to-br from-[hsl(var(--primary))] to-[hsl(var(--info))] flex items-center justify-center shadow-sm">
-                                                <Sparkles size={11} className="text-white" />
+                                                <Sparkles size={11} className="text-[hsl(var(--primary-foreground))]" />
                                             </div>
-                                            <span className="font-semibold text-[hsl(var(--primary))] dark:text-[hsl(var(--info))] tracking-wide uppercase">MESH AI</span>
-                                            <span className="px-1.5 py-0.5 bg-info-muted dark:bg-info/20 text-info-text dark:text-info font-semibold rounded-md uppercase tracking-wider">Beta</span>
+                                            <span className="font-semibold text-[hsl(var(--primary))] tracking-wide uppercase">MESH AI</span>
+                                            <span className="px-1.5 py-0.5 bg-[hsl(var(--info)/15%)] text-[hsl(var(--info))] font-semibold rounded-md uppercase tracking-wider">Beta</span>
                                         </div>
                                         <button
                                             onClick={handleAiSuggest}
                                             disabled={aiLoading}
-                                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gradient-to-r from-[hsl(var(--primary))] to-[hsl(var(--info))] text-white text-2xs font-bold shadow-md shadow-primary hover:opacity-90 active:scale-95 transition-all disabled:opacity-50"
+                                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gradient-to-r from-[hsl(var(--primary))] to-[hsl(var(--info))] text-[hsl(var(--primary-foreground))] text-2xs font-bold shadow-md shadow-[hsl(var(--primary)/25%)] hover:opacity-90 active:scale-95 transition-all disabled:opacity-50"
                                         >
                                             {aiLoading ? <Loader2 size={10} className="animate-spin" /> : <Sparkles size={10} />}
                                             {aiLoading ? 'Analizando...' : 'Sugerir'}
@@ -459,7 +459,7 @@ form.priority === opt.value
                                             {aiSuggestion ? (
                                                 <motion.p key="ai-text"
                                                     initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
-                                                    className="text-base text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] leading-relaxed font-medium italic"
+                                                    className="text-base text-[hsl(var(--text-primary))] leading-relaxed font-medium italic"
                                                 >
                                                     &ldquo;{aiSuggestion}&rdquo;
                                                 </motion.p>
@@ -471,7 +471,7 @@ form.priority === opt.value
                                                 </motion.div>
                                             ) : (
                                                 <motion.p key="ai-placeholder" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                                                    className="text-sm text-info-text/70 dark:text-info/50 font-medium">
+                                                    className="text-sm text-[hsl(var(--text-secondary))] font-medium">
                                                     Haz clic en &quot;Sugerir&quot; para recibir orientación contextual de MESH sobre esta tarea.
                                                 </motion.p>
                                             )}
@@ -498,18 +498,18 @@ form.priority === opt.value
                                             exit={{ opacity: 0, height: 0 }}
                                             className="overflow-hidden mt-3"
                                         >
-                                            <div className="p-4 rounded-lg bg-danger-soft border border-danger-muted dark:border-danger/30 space-y-3">
-                                                <p className="text-sm font-bold text-danger-text dark:text-danger">
+                                            <div className="p-4 rounded-lg bg-[hsl(var(--danger)/15%)] border border-[hsl(var(--danger)/30%)] space-y-3">
+                                                <p className="text-sm font-bold text-[hsl(var(--danger))]">
                                                     ¿Eliminar &ldquo;{form.title.slice(0, 40)}{form.title.length > 40 ? '...' : ''}&rdquo;?
                                                 </p>
-                                                <p className="text-xs text-danger-text/80 dark:text-danger/60">Esta acción no se puede deshacer.</p>
+                                                <p className="text-xs text-[hsl(var(--danger)/80%)]">Esta acción no se puede deshacer.</p>
                                                 <div className="flex gap-2">
                                                     <button onClick={handleDelete}
-                                                        className="flex-1 py-2.5 bg-danger text-white rounded-md text-xs font-bold hover:bg-[hsl(var(--danger)/0.85)] active:scale-95 transition-all shadow-md shadow-danger">
+                                                        className="flex-1 py-2.5 bg-[hsl(var(--danger))] text-[hsl(var(--primary-foreground))] rounded-md text-xs font-bold hover:bg-[hsl(var(--danger)/85%)] active:scale-95 transition-all shadow-md shadow-[hsl(var(--danger)/25%)]">
                                                         Sí, eliminar
                                                     </button>
                                                     <button onClick={() => setShowDeleteConfirm(false)}
-                                                        className="flex-1 py-2.5 bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))] text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] border border-[hsl(var(--border))] dark:border-[hsl(var(--border))] rounded-md text-xs font-bold hover:bg-[hsl(var(--surface-1))] dark:hover:bg-[hsl(var(--surface-1))] transition-all">
+                                                        className="flex-1 py-2.5 bg-[hsl(var(--surface-1))] text-[hsl(var(--text-secondary))] border border-[hsl(var(--border))] rounded-md text-xs font-bold hover:bg-[hsl(var(--surface-2))] transition-all">
                                                         Cancelar
                                                     </button>
                                                 </div>
@@ -522,26 +522,26 @@ form.priority === opt.value
                         </div>
 
                         {/* ── FOOTER ── */}
-                        <footer className="shrink-0 px-3 py-3 border-t border-[hsl(var(--border))] dark:border-[hsl(var(--border))] bg-[hsl(var(--surface-1))]/70 dark:bg-[hsl(var(--surface-1))]/70 flex items-center justify-between">
+                        <footer className="shrink-0 px-3 py-3 border-t border-[hsl(var(--border))] bg-[hsl(var(--surface-1))]/70 flex items-center justify-between">
                             <div className="flex items-center gap-2">
                                 <span className={clsx('size-2 rounded-full shrink-0', cp.dot)} />
-                                <span className="text-xs font-semibold text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">
+                                <span className="text-xs font-semibold text-[hsl(var(--text-secondary))]">
                                     {cp.label}
                                 </span>
-                                <span className="text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-tertiary))]">·</span>
-                                <span className="text-xs font-semibold text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">
+                                <span className="text-[hsl(var(--text-secondary))]">·</span>
+                                <span className="text-xs font-semibold text-[hsl(var(--text-secondary))]">
                                     {cs.label}
                                 </span>
                                 {form.due_date && (
                                     <>
-                                        <span className="text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">·</span>
-                                        <span className="flex items-center gap-1 text-xs font-semibold text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">
+                                        <span className="text-[hsl(var(--text-secondary))]">·</span>
+                                        <span className="flex items-center gap-1 text-xs font-semibold text-[hsl(var(--text-secondary))]">
                                             <CalendarDays size={10} />
                                             {new Date(form.due_date).toLocaleDateString('es-ES', { day: '2-digit', month: 'short' })}
                                         </span>
                                     </>
                                 )}
-                                <span className="ml-1 flex items-center gap-0.5 text-2xs text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] font-mono">
+                                <span className="ml-1 flex items-center gap-0.5 text-2xs text-[hsl(var(--text-secondary))] font-mono">
                                     <Hash size={9} />
                                     {form.id}
                                 </span>
@@ -553,10 +553,10 @@ form.priority === opt.value
                                 className={clsx(
                                     'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all',
                                     dirty
-                                        ? 'bg-[hsl(var(--primary))] text-white shadow-sm shadow-primary active:scale-95'
+                                        ? 'bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] shadow-sm shadow-[hsl(var(--primary)/25%)] active:scale-95'
                                         : saved
-                                        ? 'bg-success-soft text-success-text dark:text-success'
-                                        : 'bg-transparent text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] cursor-default'
+                                        ? 'bg-[hsl(var(--success)/15%)] text-[hsl(var(--success))]'
+                                        : 'bg-transparent text-[hsl(var(--text-secondary))] cursor-default'
                                 )}
                             >
                                 {saving ? <Loader2 size={11} className="animate-spin" /> : saved ? <CheckCheck size={11} /> : <Save size={11} />}
@@ -579,7 +579,7 @@ function MetaRow({ label, icon, children }: { label: string; icon?: React.ReactN
         <div className="flex items-center gap-2">
             <div className="w-[110px] shrink-0 flex items-center gap-1.5">
                 {icon}
-                <span className="text-xs font-semibold text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">{label}</span>
+                <span className="text-xs font-semibold text-[hsl(var(--text-secondary))]">{label}</span>
             </div>
             {children}
         </div>
@@ -593,8 +593,8 @@ function QuickBtn({ icon: Icon, label, onClick, danger = false }: { icon: any; l
             className={clsx(
                 'flex items-center gap-2 px-3 py-2.5 rounded-md text-xs font-semibold border transition-all group hover:-translate-y-[1px] hover:shadow-sm active:scale-95',
                 danger
-                    ? 'text-danger bg-transparent border-danger-muted dark:border-danger/30 hover:bg-danger-soft dark:hover:bg-[hsl(var(--danger)/0.1)]'
-                    : 'text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))] border-[hsl(var(--border))] dark:border-[hsl(var(--border))] hover:bg-[hsl(var(--surface-1))] dark:hover:bg-[hsl(var(--surface-1))] hover:text-[hsl(var(--text-primary))] dark:hover:text-[hsl(var(--text-primary))]'
+                    ? 'text-[hsl(var(--danger))] bg-transparent border-[hsl(var(--danger)/30%)] hover:bg-[hsl(var(--danger)/15%)]'
+                    : 'text-[hsl(var(--text-secondary))] bg-[hsl(var(--surface-1))] border-[hsl(var(--border))] hover:bg-[hsl(var(--surface-2))] hover:text-[hsl(var(--text-primary))]'
             )}
         >
             <Icon size={13} className="transition-transform group-hover:scale-110" />

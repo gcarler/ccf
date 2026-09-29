@@ -9,6 +9,7 @@ seeding, llamada directa al CRUD) podría crear/mutar registros sin
 pasar por el helper API `_get_scoped_*` correspondiente.
 """
 
+from datetime import datetime, timezone
 import logging
 import uuid
 
@@ -16,7 +17,6 @@ from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from backend import models, schemas
-from backend.crud.cms._shared import validate_cms_actor_site
 
 _logger = logging.getLogger(__name__)
 
@@ -30,7 +30,10 @@ _logger = logging.getLogger(__name__)
 
 
 def list_cms_forms(db: Session, site_id: uuid.UUID, *, only_active: bool = False) -> list[models.CmsForm]:
-    query = db.query(models.CmsForm).filter(models.CmsForm.site_id == site_id)
+    query = db.query(models.CmsForm).filter(
+        models.CmsForm.site_id == site_id,
+        models.CmsForm.deleted_at.is_(None),
+    )
     if only_active:
         query = query.filter(models.CmsForm.is_active.is_(True))
     forms = query.order_by(models.CmsForm.created_at.desc()).all()
@@ -46,7 +49,15 @@ def list_cms_forms(db: Session, site_id: uuid.UUID, *, only_active: bool = False
 
 
 def get_cms_form(db: Session, site_id: uuid.UUID, form_id: uuid.UUID) -> models.CmsForm | None:
-    form = db.query(models.CmsForm).filter(models.CmsForm.site_id == site_id, models.CmsForm.id == form_id).first()
+    form = (
+        db.query(models.CmsForm)
+        .filter(
+            models.CmsForm.site_id == site_id,
+            models.CmsForm.id == form_id,
+            models.CmsForm.deleted_at.is_(None),
+        )
+        .first()
+    )
     if form:
         count = (
             db.query(func.count(models.CmsFormSubmission.id))
@@ -59,13 +70,18 @@ def get_cms_form(db: Session, site_id: uuid.UUID, form_id: uuid.UUID) -> models.
 
 
 def get_cms_form_by_id(db: Session, form_id: uuid.UUID) -> models.CmsForm | None:
-    return db.query(models.CmsForm).filter(models.CmsForm.id == form_id).first()
+    return (
+        db.query(models.CmsForm)
+        .filter(
+            models.CmsForm.id == form_id,
+            models.CmsForm.deleted_at.is_(None),
+        )
+        .first()
+    )
 
 
 
-def create_cms_form(db: Session, site_id: uuid.UUID, payload: schemas.CmsFormCreate, *, actor_user_id=None) -> models.CmsForm:
-    if actor_user_id is not None:
-        validate_cms_actor_site(db, actor_user_id, site_id)
+def create_cms_form(db: Session, site_id: uuid.UUID, payload: schemas.CmsFormCreate) -> models.CmsForm:
     row = models.CmsForm(
         site_id=site_id,
         name=payload.name,
@@ -89,9 +105,7 @@ def create_cms_form(db: Session, site_id: uuid.UUID, payload: schemas.CmsFormCre
 
 
 
-def update_cms_form(db: Session, row: models.CmsForm, payload: schemas.CmsFormUpdate, *, actor_user_id=None) -> models.CmsForm:
-    if actor_user_id is not None:
-        validate_cms_actor_site(db, actor_user_id, row.site_id)
+def update_cms_form(db: Session, row: models.CmsForm, payload: schemas.CmsFormUpdate) -> models.CmsForm:
     data = payload.model_dump(exclude_unset=True)
     for field, val in data.items():
         setattr(row, field, val)
@@ -105,10 +119,9 @@ def update_cms_form(db: Session, row: models.CmsForm, payload: schemas.CmsFormUp
 
 
 
-def delete_cms_form(db: Session, row: models.CmsForm, *, actor_user_id=None) -> bool:
-    if actor_user_id is not None:
-        validate_cms_actor_site(db, actor_user_id, row.site_id)
-    db.delete(row)
+def delete_cms_form(db: Session, row: models.CmsForm) -> bool:
+    row.is_active = False
+    row.deleted_at = datetime.now(timezone.utc)
     db.commit()
     return True
 
@@ -141,5 +154,6 @@ def list_cms_form_submissions(
         .all()
     )
     return items, total
+
 
 

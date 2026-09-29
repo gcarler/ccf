@@ -38,14 +38,14 @@ export default function DashboardOverviewClient() {
     });
 
     return (
-        <div className="flex flex-col h-full bg-[hsl(var(--surface-1))] dark:bg-transparent overflow-y-auto p-4 font-sans">
+        <div className="flex flex-col h-full bg-[hsl(var(--surface-1))] overflow-y-auto p-4 font-sans">
             <div className="mb-6">
                 <div className="flex items-center gap-3 mb-1">
-                    <div className="size-10 rounded-xl bg-info-soft dark:bg-[hsl(var(--primary))]/10 flex items-center justify-center">
-                        <LayoutDashboard size={20} className="text-[hsl(var(--primary))] dark:text-[hsl(var(--primary))]" />
+                    <div className="size-10 rounded-xl bg-[hsl(var(--primary)/0.1)] flex items-center justify-center">
+                        <LayoutDashboard size={20} className="text-[hsl(var(--primary))]" />
                     </div>
                     <div>
-                        <h1 className="text-lg font-bold text-[hsl(var(--text-primary))] dark:text-white tracking-tight">
+                        <h1 className="text-lg font-bold text-[hsl(var(--text-primary))] tracking-tight">
                             Centro de Dashboards
                         </h1>
                         <p className="text-xs text-[hsl(var(--text-secondary))]">
@@ -86,7 +86,7 @@ export default function DashboardOverviewClient() {
                                             />
                                         </div>
                                         <div className="flex-1 min-w-0">
-                                            <h3 className="text-base font-bold text-[hsl(var(--text-primary))] dark:text-white group-hover:text-[hsl(var(--primary))] dark:group-hover:text-[hsl(var(--primary))] transition-colors">
+                                            <h3 className="text-base font-bold text-[hsl(var(--text-primary))] group-hover:text-[hsl(var(--primary))] transition-colors">
                                                 {cfg?.label || mod.key}
                                             </h3>
                                             <p className="text-xs text-[hsl(var(--text-secondary))] mt-0.5 line-clamp-2">

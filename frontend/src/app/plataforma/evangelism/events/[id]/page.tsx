@@ -13,6 +13,7 @@ import clsx from "clsx";
 const SessionTab = dynamic(() => import("./tabs/SessionTab"), { ssr: false });
 const AnalyticsTab = dynamic(() => import("./tabs/AnalyticsTab"), { ssr: false });
 const PreregistrationTab = dynamic(() => import("./tabs/PreregistrationTab"), { ssr: false });
+const FollowupTab = dynamic(() => import("./tabs/FollowupTab"), { ssr: false });
 
 type MinistryEventDetail = {
   id: string;
@@ -37,7 +38,7 @@ export default function EventDetailPage() {
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
   const [loadError, setLoadError] = useState(false);
-  const [activeTab, setActiveTab] = useState<'details' | 'session' | 'analytics' | 'preregistration'>('details');
+  const [activeTab, setActiveTab] = useState<'details' | 'session' | 'analytics' | 'preregistration' | 'followup'>('details');
 
   useEffect(() => {
     if (!token || !id) return;
@@ -78,7 +79,7 @@ export default function EventDetailPage() {
             </p>
             <button
               onClick={() => router.push('/plataforma/evangelism/events')}
-              className="mt-4 rounded-md bg-[hsl(var(--primary))] px-4 py-2 text-sm font-semibold text-white"
+              className="mt-4 rounded-md bg-[hsl(var(--primary))] px-4 py-2 text-sm font-semibold text-[hsl(var(--primary-foreground))]"
             >
               Volver a Eventos
             </button>
@@ -99,7 +100,7 @@ export default function EventDetailPage() {
             </p>
             <button
               onClick={() => router.push('/plataforma/evangelism/events')}
-              className="mt-4 rounded-md bg-[hsl(var(--primary))] px-4 py-2 text-sm font-semibold text-white"
+              className="mt-4 rounded-md bg-[hsl(var(--primary))] px-4 py-2 text-sm font-semibold text-[hsl(var(--primary-foreground))]"
             >
               Volver a Eventos
             </button>
@@ -127,14 +128,14 @@ export default function EventDetailPage() {
             </div>
             <div className="flex flex-col items-stretch gap-3">
               <div className="flex flex-wrap justify-end gap-2">
-                <span className="rounded-full border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-muted))] px-3 py-1 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">
+                <span className="rounded-full border border-[hsl(var(--border-primary))] bg-[hsl(var(--bg-muted))] px-3 py-1 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
                   Seguimiento ministerial
                 </span>
                 <span
                   className={`rounded-full px-3 py-1 text-2xs font-semibold uppercase tracking-wide ${
                     activeTab === 'session'
-                      ? "bg-info-soft text-[hsl(var(--primary))] dark:bg-[hsl(var(--info))]/10 dark:text-info-text"
-                      : "bg-[hsl(var(--bg-muted))] text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]"
+                      ? "bg-[hsl(var(--info-muted))] text-[hsl(var(--info))]"
+                      : "bg-[hsl(var(--bg-muted))] text-[hsl(var(--text-secondary))]"
                   }`}
                 >
                   {activeTab === 'session' ? "Sesión activa" : "Evento con seguimiento"}
@@ -143,23 +144,29 @@ export default function EventDetailPage() {
               <div className="flex bg-[hsl(var(--bg-muted))] p-1 rounded-lg">
                 <button
                   onClick={() => setActiveTab('details')}
-                  className={clsx("px-4 py-2.5 rounded-md text-xs font-semibold uppercase tracking-wide transition-all", activeTab === 'details' ? "bg-[hsl(var(--bg-primary))] dark:bg-[var(--admin-bg-secondary)] text-[hsl(var(--primary))] shadow-sm" : "text-[hsl(var(--text-secondary))]")}
+                  className={clsx("px-4 py-2.5 rounded-md text-xs font-semibold uppercase tracking-wide transition-all", activeTab === 'details' ? "bg-[hsl(var(--bg-primary))] text-[hsl(var(--primary))] shadow-sm" : "text-[hsl(var(--text-secondary))]")}
                 >Detalles Generales</button>
                 {canOperateEvents && (
                   <button
                     onClick={() => setActiveTab('session')}
-                    className={clsx("px-4 py-2.5 rounded-md text-xs font-semibold uppercase tracking-wide transition-all", activeTab === 'session' ? "bg-[hsl(var(--bg-primary))] dark:bg-[var(--admin-bg-secondary)] text-[hsl(var(--primary))] shadow-sm" : "text-[hsl(var(--text-secondary))]")}
+                    className={clsx("px-4 py-2.5 rounded-md text-xs font-semibold uppercase tracking-wide transition-all", activeTab === 'session' ? "bg-[hsl(var(--bg-primary))] text-[hsl(var(--primary))] shadow-sm" : "text-[hsl(var(--text-secondary))]")}
                   >Configurar sesión</button>
                 )}
                 <button
                   onClick={() => setActiveTab('analytics')}
-                  className={clsx("px-4 py-2.5 rounded-md text-xs font-semibold uppercase tracking-wide transition-all", activeTab === 'analytics' ? "bg-[hsl(var(--bg-primary))] dark:bg-[var(--admin-bg-secondary)] text-[hsl(var(--primary))] shadow-sm" : "text-[hsl(var(--text-secondary))]")}
+                  className={clsx("px-4 py-2.5 rounded-md text-xs font-semibold uppercase tracking-wide transition-all", activeTab === 'analytics' ? "bg-[hsl(var(--bg-primary))] text-[hsl(var(--primary))] shadow-sm" : "text-[hsl(var(--text-secondary))]")}
                 >Analítica</button>
                 {canOperateEvents && (
                   <button
                     onClick={() => setActiveTab('preregistration')}
-                    className={clsx("px-4 py-2.5 rounded-md text-xs font-semibold uppercase tracking-wide transition-all", activeTab === 'preregistration' ? "bg-[hsl(var(--bg-primary))] dark:bg-[var(--admin-bg-secondary)] text-[hsl(var(--primary))] shadow-sm" : "text-[hsl(var(--text-secondary))]")}
+                    className={clsx("px-4 py-2.5 rounded-md text-xs font-semibold uppercase tracking-wide transition-all", activeTab === 'preregistration' ? "bg-[hsl(var(--bg-primary))] text-[hsl(var(--primary))] shadow-sm" : "text-[hsl(var(--text-secondary))]")}
                   >Pre-registro</button>
+                )}
+                {canOperateEvents && (
+                  <button
+                    onClick={() => setActiveTab('followup')}
+                    className={clsx("px-4 py-2.5 rounded-md text-xs font-semibold uppercase tracking-wide transition-all", activeTab === 'followup' ? "bg-[hsl(var(--bg-primary))] text-[hsl(var(--primary))] shadow-sm" : "text-[hsl(var(--text-secondary))]")}
+                  >Seguimiento</button>
                 )}
               </div>
             </div>
@@ -176,7 +183,7 @@ export default function EventDetailPage() {
               <div className="space-y-3">
                 <DSCard>
                   <h3 className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-4">Acciones</h3>
-                  <button onClick={() => router.push('/plataforma/evangelism/events')} className="w-full py-1.5 bg-info-soft dark:bg-[hsl(var(--info))]/20 text-[hsl(var(--primary))] rounded-md font-bold flex items-center justify-center gap-2">
+                  <button onClick={() => router.push('/plataforma/evangelism/events')} className="w-full py-1.5 bg-[hsl(var(--info-muted))] text-[hsl(var(--info))] rounded-md font-bold flex items-center justify-center gap-2">
                     <ArrowLeft size={16}/> Volver a Eventos
                   </button>
                 </DSCard>
@@ -189,6 +196,8 @@ export default function EventDetailPage() {
           {activeTab === 'session' && canOperateEvents && <SessionTab eventId={id} token={token} eventName={event.name} />}
 
           {activeTab === 'preregistration' && canOperateEvents && <PreregistrationTab eventId={id} token={token} />}
+
+          {activeTab === 'followup' && canOperateEvents && <FollowupTab eventId={id} token={token} eventName={event.name} />}
         </div>
       </main>
     </EvangelismShell>

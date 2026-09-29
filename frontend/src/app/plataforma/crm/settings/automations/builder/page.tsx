@@ -27,6 +27,7 @@ import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
 import { apiFetch } from '@/lib/http';
 import CrmShell from '@/components/crm/CrmShell';
+import ConfirmDeleteDrawer from '@/components/ui/ConfirmDeleteDrawer';
 import { DSSkeleton } from '@/design';
 import type { CrmAutomationEdgeRecord, CrmAutomationRecord } from '@/types/crm';
 
@@ -101,6 +102,7 @@ export default function AutomationBuilderPage() {
     const [edges, setEdges, onEdgesChange] = useEdgesState<CustomEdge>([]);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
+    const [showDeleteNodeConfirm, setShowDeleteNodeConfirm] = useState(false);
 
     // Sidebar state
     const [selectedNode, setSelectedNode] = useState<CustomNode | null>(null);
@@ -131,8 +133,8 @@ export default function AutomationBuilderPage() {
                         automation: aut
                     },
                     style: {
-                        background: aut.is_active ? 'var(--card-bg, #ffffff)' : '#f3f4f6',
-                        color: 'var(--text-primary, #111827)',
+                        background: aut.is_active ? 'hsl(var(--surface-1))' : 'hsl(var(--surface-2))',
+                        color: 'hsl(var(--text-primary))',
                         border: '2px solid ' + (aut.is_active ? 'hsl(var(--primary))' : 'hsl(var(--text-secondary))'),
                         borderRadius: '8px',
                         padding: '12px',
@@ -293,9 +295,8 @@ export default function AutomationBuilderPage() {
     };
 
     // Delete node
-    const handleDeleteNode = async () => {
+    const confirmDeleteNode = async () => {
         if (!selectedNode || !token) return;
-        if (!confirm('¿Estás seguro de que deseas eliminar esta automatización? Esto eliminará también sus conexiones.')) return;
 
         try {
             await apiFetch(`/crm/resources/automations/${selectedNode.id}`, {
@@ -306,6 +307,7 @@ export default function AutomationBuilderPage() {
             setNodes(nds => nds.filter(n => n.id !== selectedNode.id));
             setEdges(eds => eds.filter(e => e.source !== selectedNode.id && e.target !== selectedNode.id));
             setSelectedNode(null);
+            setShowDeleteNodeConfirm(false);
             addToast('Automatización eliminada', 'success');
         } catch {
             addToast('Error al eliminar la automatización', 'error');
@@ -433,14 +435,14 @@ export default function AutomationBuilderPage() {
                 <div className="flex items-center gap-2">
                     <button
                         onClick={() => router.push('/plataforma/crm/messaging/automations')}
-                        className="flex items-center gap-1.5 px-3 py-1.5 border border-[hsl(var(--border))] dark:border-white/10 rounded-md text-xs font-bold uppercase hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5 transition-all text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]"
+                        className="flex items-center gap-1.5 px-3 py-1.5 border border-[hsl(var(--border))] rounded-md text-xs font-bold uppercase hover:bg-[hsl(var(--surface-2))] transition-all text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))]"
                     >
                         <ArrowLeft size={12} /> Volver
                     </button>
                     <button
                         onClick={handleSaveGraph}
                         disabled={saving}
-                        className="flex items-center gap-1.5 bg-[hsl(var(--primary))] text-white px-4 py-1.5 rounded-md text-xs font-bold uppercase hover:bg-[hsl(var(--primary))] shadow-lg shadow-[hsl(var(--primary)/0.2)] transition-all disabled:opacity-50"
+                        className="flex items-center gap-1.5 bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] px-4 py-1.5 rounded-md text-xs font-bold uppercase hover:opacity-90 shadow-md shadow-[hsl(var(--primary)/0.2)] transition-all disabled:opacity-50"
                     >
                         {saving ? 'Guardando...' : <Save size={12} />}
                         Guardar Flujo
@@ -450,7 +452,7 @@ export default function AutomationBuilderPage() {
         >
             <div className="flex-1 flex overflow-hidden h-[calc(100vh-120px)]">
                 {/* Visual Area */}
-                <div className="flex-1 relative h-full bg-[hsl(var(--surface-1))] dark:bg-[hsl(var(--bg-muted))]">
+                <div className="flex-1 relative h-full bg-[hsl(var(--surface-1))]">
                     {loading ? (
                         <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
                             <DSSkeleton className="h-10 w-48 rounded-md" />
@@ -469,13 +471,13 @@ export default function AutomationBuilderPage() {
                             onSelectionChange={onSelectionChange}
                             fitView
                         >
-                            <Background color="#ccc" gap={16} />
+                            <Background color="hsl(var(--border))" gap={16} />
                             <Controls />
                             <MiniMap />
                             <Panel position="top-left">
                                 <button
                                     onClick={handleAddNode}
-                                    className="flex items-center gap-1 bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-2))] text-[hsl(var(--text-primary))] dark:text-white px-3 py-2 border border-[hsl(var(--border))] dark:border-white/10 rounded-md shadow text-xs font-bold uppercase tracking-wide hover:bg-[hsl(var(--surface-1))] dark:hover:bg-[hsl(var(--surface-3))] transition-all"
+                                    className="flex items-center gap-1 bg-[hsl(var(--surface-1))] text-[hsl(var(--text-primary))] px-3 py-2 border border-[hsl(var(--border))] rounded-md shadow-xs text-xs font-bold uppercase tracking-wide hover:bg-[hsl(var(--surface-2))] transition-all"
                                 >
                                     <Plus size={14} /> Añadir Paso
                                 </button>
@@ -485,15 +487,15 @@ export default function AutomationBuilderPage() {
                 </div>
 
                 {/* Right Properties Panel */}
-                <div className="w-80 border-l border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--bg-muted))] flex flex-col overflow-y-auto">
-                    <div className="p-4 border-b border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-[hsl(var(--bg-muted))]/50">
+                <div className="w-80 border-l border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] flex flex-col overflow-y-auto">
+                    <div className="p-4 border-b border-[hsl(var(--border))] bg-[hsl(var(--surface-2))]">
                         <h3 className="font-bold text-xs uppercase tracking-wider text-[hsl(var(--text-secondary))]">Propiedades del Elemento</h3>
                     </div>
 
                     <div className="p-4 flex-1 space-y-4">
                         {selectedNode ? (
                             <div className="space-y-4">
-                                <div className="flex items-center gap-2 text-[hsl(var(--text-primary))] dark:text-white font-bold text-sm">
+                                <div className="flex items-center gap-2 text-[hsl(var(--text-primary))] font-bold text-sm">
                                     <Settings size={16} className="text-[hsl(var(--primary))]" />
                                     <span>Configurar Paso</span>
                                 </div>
@@ -504,7 +506,7 @@ export default function AutomationBuilderPage() {
                                         type="text"
                                         value={selectedNode.data.automation.name}
                                         onChange={e => handleUpdateNodeField('name', e.target.value)}
-                                        className="w-full px-3 py-1.5 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-[hsl(var(--bg-muted))]/50 outline-none text-xs text-[hsl(var(--text-primary))] dark:text-white font-bold"
+                                        className="w-full px-3 py-1.5 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] outline-hidden text-xs text-[hsl(var(--text-primary))] font-bold"
                                     />
                                 </div>
 
@@ -513,7 +515,7 @@ export default function AutomationBuilderPage() {
                                     <select
                                         value={selectedNode.data.automation.trigger_event}
                                         onChange={e => handleUpdateNodeField('trigger_event', e.target.value)}
-                                        className="w-full px-3 py-1.5 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-[hsl(var(--bg-muted))]/50 outline-none text-xs text-[hsl(var(--text-primary))] dark:text-white font-bold"
+                                        className="w-full px-3 py-1.5 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] outline-hidden text-xs text-[hsl(var(--text-primary))] font-bold"
                                     >
                                         {TRIGGERS.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
                                     </select>
@@ -524,7 +526,7 @@ export default function AutomationBuilderPage() {
                                     <select
                                         value={selectedNode.data.automation.action_type}
                                         onChange={e => handleUpdateNodeField('action_type', e.target.value)}
-                                        className="w-full px-3 py-1.5 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-[hsl(var(--bg-muted))]/50 outline-none text-xs text-[hsl(var(--text-primary))] dark:text-white font-bold"
+                                        className="w-full px-3 py-1.5 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] outline-hidden text-xs text-[hsl(var(--text-primary))] font-bold"
                                     >
                                         {ACTIONS.map(a => <option key={a.value} value={a.value}>{a.label}</option>)}
                                     </select>
@@ -540,7 +542,7 @@ export default function AutomationBuilderPage() {
                                         min="0"
                                         value={selectedNode.data.automation.delay_minutes || 0}
                                         onChange={e => handleUpdateNodeField('delay_minutes', parseInt(e.target.value) || 0)}
-                                        className="w-full px-3 py-1.5 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-[hsl(var(--bg-muted))]/50 outline-none text-xs text-[hsl(var(--text-primary))] dark:text-white font-bold"
+                                        className="w-full px-3 py-1.5 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] outline-hidden text-xs text-[hsl(var(--text-primary))] font-bold"
                                     />
                                 </div>
 
@@ -552,7 +554,7 @@ export default function AutomationBuilderPage() {
                                             value={readPayloadText(selectedNode.data.automation.action_payload, 'task_title')}
                                             onChange={e => handleUpdateNodePayload('task_title', e.target.value)}
                                             placeholder="Visitar al nuevo contacto"
-                                            className="w-full px-3 py-1.5 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-[hsl(var(--bg-muted))]/50 outline-none text-xs text-[hsl(var(--text-primary))] dark:text-white font-bold"
+                                            className="w-full px-3 py-1.5 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] outline-hidden text-xs text-[hsl(var(--text-primary))] font-bold"
                                         />
                                     </div>
                                 ) : (
@@ -563,13 +565,13 @@ export default function AutomationBuilderPage() {
                                             onChange={e => handleUpdateNodePayload('message', e.target.value)}
                                             placeholder="Hola {nombre}, ¡bienvenido a nuestra comunidad!"
                                             rows={4}
-                                            className="w-full px-3 py-1.5 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-[hsl(var(--bg-muted))]/50 outline-none text-xs text-[hsl(var(--text-primary))] dark:text-white font-bold resize-none"
+                                            className="w-full px-3 py-1.5 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] outline-hidden text-xs text-[hsl(var(--text-primary))] font-bold resize-none"
                                         />
                                     </div>
                                 )}
 
                                 <div className="flex items-center gap-3 pt-2">
-                                    <label className="flex items-center gap-2 text-xs font-bold text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] cursor-pointer">
+                                    <label className="flex items-center gap-2 text-xs font-bold text-[hsl(var(--text-secondary))] cursor-pointer">
                                         <input
                                             type="checkbox"
                                             checked={selectedNode.data.automation.is_active}
@@ -580,10 +582,10 @@ export default function AutomationBuilderPage() {
                                     </label>
                                 </div>
 
-                                <div className="border-t border-[hsl(var(--border))] dark:border-white/10 pt-4 mt-4">
+                                <div className="border-t border-[hsl(var(--border))] pt-4 mt-4">
                                     <button
-                                        onClick={handleDeleteNode}
-                                        className="w-full flex items-center justify-center gap-2 py-2 bg-[hsl(var(--destructive)/0.08)] dark:bg-[hsl(var(--destructive)/0.2)] border border-[hsl(var(--destructive)/0.2)] dark:border-[hsl(var(--destructive)/0.2)] text-[hsl(var(--destructive))] dark:text-[hsl(var(--destructive))] hover:bg-[hsl(var(--destructive)/0.15)] rounded-md text-xs font-bold uppercase transition-all"
+                                        onClick={() => setShowDeleteNodeConfirm(true)}
+                                        className="w-full flex items-center justify-center gap-2 py-2 bg-[hsl(var(--destructive)/0.08)] border border-[hsl(var(--destructive)/0.2)] text-[hsl(var(--destructive))] hover:bg-[hsl(var(--destructive)/0.15)] rounded-md text-xs font-bold uppercase transition-all"
                                     >
                                         <Trash2 size={14} />
                                         Eliminar Paso
@@ -592,7 +594,7 @@ export default function AutomationBuilderPage() {
                             </div>
                         ) : selectedEdge ? (
                             <div className="space-y-4">
-                                <div className="flex items-center gap-2 text-[hsl(var(--text-primary))] dark:text-white font-bold text-sm">
+                                <div className="flex items-center gap-2 text-[hsl(var(--text-primary))] font-bold text-sm">
                                     <GitBranch size={16} className="text-[hsl(var(--primary))]" />
                                     <span>Configurar Conexión</span>
                                 </div>
@@ -602,7 +604,7 @@ export default function AutomationBuilderPage() {
                                     <select
                                         value={selectedEdge.data?.condition_type || 'always'}
                                         onChange={e => handleUpdateEdgeField('condition_type', e.target.value)}
-                                        className="w-full px-3 py-1.5 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-[hsl(var(--bg-muted))]/50 outline-none text-xs text-[hsl(var(--text-primary))] dark:text-white font-bold"
+                                        className="w-full px-3 py-1.5 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] outline-hidden text-xs text-[hsl(var(--text-primary))] font-bold"
                                     >
                                         {CONDITION_TYPES.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
                                     </select>
@@ -617,7 +619,7 @@ export default function AutomationBuilderPage() {
                                                 value={selectedEdge.data?.condition_key || ''}
                                                 onChange={e => handleUpdateEdgeField('condition_key', e.target.value)}
                                                 placeholder="Ej: stage, delivery_status"
-                                                className="w-full px-3 py-1.5 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-[hsl(var(--bg-muted))]/50 outline-none text-xs text-[hsl(var(--text-primary))] dark:text-white font-bold"
+                                                className="w-full px-3 py-1.5 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] outline-hidden text-xs text-[hsl(var(--text-primary))] font-bold"
                                             />
                                         </div>
 
@@ -628,20 +630,20 @@ export default function AutomationBuilderPage() {
                                                 value={selectedEdge.data?.condition_value || ''}
                                                 onChange={e => handleUpdateEdgeField('condition_value', e.target.value)}
                                                 placeholder="Ej: read, active"
-                                                className="w-full px-3 py-1.5 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-[hsl(var(--bg-muted))]/50 outline-none text-xs text-[hsl(var(--text-primary))] dark:text-white font-bold"
+                                                className="w-full px-3 py-1.5 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] outline-hidden text-xs text-[hsl(var(--text-primary))] font-bold"
                                             />
                                         </div>
                                     </>
                                 )}
 
-                                <div className="border-t border-[hsl(var(--border))] dark:border-white/10 pt-4 mt-4">
+                                <div className="border-t border-[hsl(var(--border))] pt-4 mt-4">
                                     <button
                                         onClick={() => {
                                             setEdges(eds => eds.filter(e => e.id !== selectedEdge.id));
                                             setSelectedEdge(null);
                                             addToast('Conexión eliminada', 'info');
                                         }}
-                                        className="w-full flex items-center justify-center gap-2 py-2 bg-[hsl(var(--destructive)/0.08)] dark:bg-[hsl(var(--destructive)/0.2)] border border-[hsl(var(--destructive)/0.2)] dark:border-[hsl(var(--destructive)/0.2)] text-[hsl(var(--destructive))] dark:text-[hsl(var(--destructive))] hover:bg-[hsl(var(--destructive)/0.15)] rounded-md text-xs font-bold uppercase transition-all"
+                                        className="w-full flex items-center justify-center gap-2 py-2 bg-[hsl(var(--destructive)/0.08)] border border-[hsl(var(--destructive)/0.2)] text-[hsl(var(--destructive))] hover:bg-[hsl(var(--destructive)/0.15)] rounded-md text-xs font-bold uppercase transition-all"
                                     >
                                         <Trash2 size={14} />
                                         Eliminar Conexión
@@ -658,6 +660,19 @@ export default function AutomationBuilderPage() {
                     </div>
                 </div>
             </div>
+
+            <ConfirmDeleteDrawer
+                open={showDeleteNodeConfirm}
+                onClose={() => setShowDeleteNodeConfirm(false)}
+                onConfirm={confirmDeleteNode}
+                title="¿Eliminar paso de automatización?"
+                description={
+                    selectedNode
+                        ? `¿Estás seguro de que deseas eliminar el paso "${selectedNode.data?.label || selectedNode.id}"? Esto eliminará también sus conexiones en el canvas.`
+                        : "¿Estás seguro de que deseas eliminar esta automatización? Esto eliminará también sus conexiones."
+                }
+                confirmLabel="Eliminar paso"
+            />
         </CrmShell>
     );
 }

@@ -1,15 +1,14 @@
 "use client";
 
 import React, { useEffect, useMemo, useState } from "react";
-import { createPortal } from "react-dom";
 import {
   Check,
   FileImage,
-  ImageIcon,
   Search,
   Upload,
-  X,
 } from "lucide-react";
+import clsx from "clsx";
+import SidePanel from "@/components/ui/SidePanel";
 import OptimizedImage from "@/components/ui/OptimizedImage";
 import { apiFetch } from "@/lib/http";
 
@@ -59,26 +58,12 @@ export default function MediaPicker({
     apiFetch<{ items: CmsMediaItem[]; total: number }>("/cms/media", {
       token,
       cache: "no-store",
-      // The picker is the central library selector. Load the full API page
-      // (the endpoint caps this at 500) so migrated public-site assets are
-      // selectable instead of silently stopping at the first 50 items.
       query: { skip: 0, limit: 500 },
     })
       .then((data) => setItems(data?.items || []))
       .catch(() => setItems([]))
       .finally(() => setLoading(false));
   }, [open, token]);
-
-  useEffect(() => {
-    if (!open) return;
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        onClose();
-      }
-    };
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [open, onClose]);
 
   const uploadImage = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -127,58 +112,31 @@ export default function MediaPicker({
     [imageItems, normalizedSearch]
   );
 
-  if (!open || !mounted) return null;
+  if (!mounted) return null;
 
-  return createPortal(
-    <div
-      role="dialog"
-      aria-modal="true"
-      aria-label="Selector de medios"
-      data-testid="media-picker"
-      className="fixed inset-0 z-[99999] bg-[hsl(var(--bg-muted))]/50 backdrop-blur-sm p-4 flex items-center justify-center"
-      onClick={onClose}
+  return (
+    <SidePanel
+      isOpen={open}
+      onClose={onClose}
+      title="Biblioteca CMS"
+      subtitle="Seleccionar imagen"
+      width="w-full max-w-3xl"
     >
-      <div
-        className="w-full max-w-5xl max-h-[86vh] overflow-hidden rounded-lg bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--admin-bg-tertiary))] border border-[hsl(var(--border))] dark:border-white/10 shadow-2xl"
-        onClick={(event) => event.stopPropagation()}
-      >
-        <div className="flex items-center justify-between border-b border-[hsl(var(--border))] dark:border-white/10 px-3 py-1.5">
-          <div className="flex items-center gap-3">
-            <div className="size-10 rounded-md bg-info-soft text-[hsl(var(--primary))] dark:bg-[hsl(var(--info))]/10 dark:text-info-text flex items-center justify-center">
-              <ImageIcon size={18} />
-            </div>
-            <div>
-              <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
-                Biblioteca CMS
-              </p>
-              <h2 className="text-base font-semibold text-[hsl(var(--text-primary))] dark:text-white">
-                Seleccionar imagen
-              </h2>
-            </div>
-          </div>
-          <button
-            aria-label="Cerrar modal"
-            onClick={onClose}
-            className="p-2 rounded-md text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/10"
-          >
-            <X size={18} />
-          </button>
-        </div>
-
-        <div className="flex items-center gap-3 border-b border-[hsl(var(--border))] dark:border-white/10 px-3 py-3">
+      <div data-testid="media-picker" className="space-y-4">
+        <div className="flex items-center gap-3">
           <div className="relative flex-1">
             <Search
               size={14}
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-[hsl(var(--text-secondary))]"
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-[hsl(var(--muted-foreground))]"
             />
             <input
               value={search}
               onChange={(event) => setSearch(event.target.value)}
-              placeholder="Buscar por archivo, alt text o seccion"
-              className="w-full rounded-md border border-[hsl(var(--border))] dark:border-white/10 bg-transparent py-2 pl-9 pr-3 text-sm outline-none focus:border-[hsl(var(--info)/100%)]"
+              placeholder="Buscar por archivo, alt text o sección"
+              className="w-full rounded-md border border-[hsl(var(--border))] bg-transparent py-2 pl-9 pr-3 text-sm text-[hsl(var(--foreground))] placeholder:text-[hsl(var(--muted-foreground))] outline-none focus:border-[hsl(var(--primary))]"
             />
           </div>
-          <label className="inline-flex cursor-pointer items-center gap-2 rounded-md bg-[hsl(var(--primary))] px-4 py-2 text-2xs font-semibold uppercase tracking-wide text-white disabled:opacity-50">
+          <label className="inline-flex cursor-pointer items-center gap-2 rounded-md bg-[hsl(var(--primary))] px-4 py-2 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--primary-foreground))] hover:opacity-90 transition-opacity disabled:opacity-50">
             <Upload size={14} />
             {uploading ? "Subiendo..." : "Subir imagen"}
             <input
@@ -191,31 +149,37 @@ export default function MediaPicker({
           </label>
         </div>
 
-        <div className="max-h-[62vh] overflow-y-auto p-3">
+        <div>
           {loading ? (
-            <div className="py-1.5 text-center text-sm font-bold text-[hsl(var(--text-secondary))]">
+            <div className="py-12 text-center text-sm font-semibold text-[hsl(var(--muted-foreground))]">
               Cargando biblioteca...
             </div>
           ) : filtered.length === 0 ? (
-            <div className="py-1.5 text-center">
-              <FileImage size={34} className="mx-auto text-[hsl(var(--text-secondary))]" />
-              <p className="mt-3 text-sm font-bold text-[hsl(var(--text-secondary))]">
-                No hay imagenes disponibles.
+            <div className="py-12 text-center">
+              <FileImage size={34} className="mx-auto text-[hsl(var(--muted-foreground))]" />
+              <p className="mt-3 text-sm font-semibold text-[hsl(var(--muted-foreground))]">
+                No hay imágenes disponibles.
               </p>
             </div>
           ) : (
-            <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
               {filtered.map((item) => {
                 const isSelected = selectedUrl === item.url;
                 return (
                   <button
                     key={item.id}
+                    type="button"
                     data-testid="media-item-button"
                     aria-pressed={isSelected}
                     onClick={() => onSelect(item)}
-                    className={`group text-left rounded-lg border overflow-hidden bg-[hsl(var(--bg-primary))] dark:bg-white/[0.03] transition-all ${isSelected ? "border-[hsl(var(--info)/100%)] ring-2 ring-[hsl(var(--primary))]/20" : "border-[hsl(var(--border))] dark:border-white/10 hover:border-[hsl(var(--info)/30%)]"}`}
+                    className={clsx(
+                      "group text-left rounded-lg border overflow-hidden bg-[hsl(var(--surface-1))] transition-all",
+                      isSelected
+                        ? "border-[hsl(var(--primary))] ring-2 ring-[hsl(var(--primary))]/20"
+                        : "border-[hsl(var(--border))] hover:border-[hsl(var(--primary))]/40"
+                    )}
                   >
-                    <div className="relative aspect-video bg-[hsl(var(--surface-2))] dark:bg-white/5">
+                    <div className="relative aspect-video bg-[hsl(var(--surface-2))]">
                       <OptimizedImage
                         src={item.url}
                         alt={item.alt_text || item.filename || ""}
@@ -224,16 +188,16 @@ export default function MediaPicker({
                         className="h-full w-full object-cover"
                       />
                       {isSelected && (
-                        <span className="absolute right-2 top-2 size-7 rounded-full bg-[hsl(var(--primary))] text-white flex items-center justify-center shadow-lg">
+                        <span className="absolute right-2 top-2 size-7 rounded-full bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] flex items-center justify-center shadow-lg">
                           <Check size={15} />
                         </span>
                       )}
                     </div>
                     <div className="p-3">
-                      <p className="truncate text-xs font-semibold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">
+                      <p className="truncate text-xs font-semibold text-[hsl(var(--foreground))]">
                         {item.filename || "Imagen CMS"}
                       </p>
-                      <p className="mt-1 truncate text-2xs text-[hsl(var(--text-secondary))]">
+                      <p className="mt-1 truncate text-2xs text-[hsl(var(--muted-foreground))]">
                         {item.alt_text || item.section || "Sin alt text"}
                       </p>
                     </div>
@@ -244,7 +208,6 @@ export default function MediaPicker({
           )}
         </div>
       </div>
-    </div>,
-    document.body
+    </SidePanel>
   );
 }

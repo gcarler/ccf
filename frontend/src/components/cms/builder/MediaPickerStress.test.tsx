@@ -66,8 +66,9 @@ describe("Empirical Stress Suite - M2 MediaPicker & MediaPickerField", () => {
 
   describe("MediaPicker Keyboard Escape Key Listener Cleanup", () => {
     it("attaches keydown listener on mount when open and removes it on unmount", () => {
-      const addEventListenerSpy = vi.spyOn(window, "addEventListener");
-      const removeEventListenerSpy = vi.spyOn(window, "removeEventListener");
+      // SidePanel usa useFocusTrap, que escucha keydown en document.
+      const addEventListenerSpy = vi.spyOn(document, "addEventListener");
+      const removeEventListenerSpy = vi.spyOn(document, "removeEventListener");
       const onClose = vi.fn();
 
       const { unmount } = render(
@@ -77,7 +78,7 @@ describe("Empirical Stress Suite - M2 MediaPicker & MediaPickerField", () => {
       expect(addEventListenerSpy).toHaveBeenCalledWith("keydown", expect.any(Function));
 
       // Pressing Escape should trigger onClose
-      fireEvent.keyDown(window, { key: "Escape" });
+      fireEvent.keyDown(document, { key: "Escape" });
       expect(onClose).toHaveBeenCalledTimes(1);
 
       // Unmount component
@@ -86,7 +87,7 @@ describe("Empirical Stress Suite - M2 MediaPicker & MediaPickerField", () => {
       expect(removeEventListenerSpy).toHaveBeenCalledWith("keydown", expect.any(Function));
 
       // Pressing Escape after unmount should NOT call onClose again
-      fireEvent.keyDown(window, { key: "Escape" });
+      fireEvent.keyDown(document, { key: "Escape" });
       expect(onClose).toHaveBeenCalledTimes(1);
     });
 

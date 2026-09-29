@@ -181,4 +181,6 @@ def test_cleanup_hard_delete_removes_missing_physical_file(db_session, monkeypat
     assert _apply_cleanup_orphan_cms_media(
         db_session, sede_id=sede.id, referenced_media_ids=set(), permanent=True
     ) == 1
-    assert db_session.get(models.CmsMediaItem, row.id) is None
+    assert db_session.query(models.CmsMediaItem).filter(models.CmsMediaItem.id == row.id, models.CmsMediaItem.deleted_at.is_(None)).first() is None
+    db_session.refresh(row)
+    assert row.deleted_at is not None

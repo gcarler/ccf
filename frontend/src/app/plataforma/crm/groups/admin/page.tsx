@@ -170,14 +170,14 @@ export default function GrupoAdmin() {
 
             <main className="space-y-4 pb-4">
                 {error && (
-                    <div className="flex flex-col gap-3 rounded-md border border-[hsl(var(--warning)/25%)] bg-warning-soft p-4 text-warning-text dark:border-[hsl(var(--warning)/100%)]/20 dark:bg-[hsl(var(--warning))]/10 dark:text-[hsl(var(--warning))] md:flex-row md:items-center md:justify-between">
+                    <div className="flex flex-col gap-3 rounded-md border border-[hsl(var(--warning)/0.3)] bg-[hsl(var(--warning)/0.1)] p-4 text-[hsl(var(--warning))] md:flex-row md:items-center md:justify-between">
                         <div>
                             <p className="text-xs font-bold uppercase tracking-wide">No se pudo cargar el módulo</p>
                             <p className="text-xs">{error}</p>
                         </div>
                         <button
                             onClick={() => setReloadKey(key => key + 1)}
-                            className="rounded-md border border-[hsl(var(--warning)/30%)] px-3 py-1.5 text-xs font-bold uppercase tracking-wide hover:bg-[hsl(var(--warning-muted))] dark:border-[hsl(var(--warning)/40%)]/30 dark:hover:bg-[hsl(var(--warning))]/20"
+                            className="rounded-md border border-[hsl(var(--warning)/0.3)] px-3 py-1.5 text-xs font-bold uppercase tracking-wide hover:bg-[hsl(var(--warning)/0.2)]"
                         >
                             Reintentar
                         </button>
@@ -193,20 +193,20 @@ export default function GrupoAdmin() {
                 {loading && !error && (
                     <section className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
                         {[...Array(3)].map((_, i) => (
-                            <div key={i} className="h-40 rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] dark:border-white/10 dark:bg-white/5 animate-pulse p-4 space-y-3">
+                            <div key={i} className="h-40 rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] animate-pulse p-4 space-y-3">
                                 <div className="flex items-start justify-between">
-                                    <div className="size-9 rounded-lg bg-[hsl(var(--surface-2))] dark:bg-white/10" />
-                                    <div className="h-5 w-16 rounded-lg bg-[hsl(var(--surface-2))] dark:bg-white/10" />
+                                    <div className="size-9 rounded-lg bg-[hsl(var(--surface-2))]" />
+                                    <div className="h-5 w-16 rounded-lg bg-[hsl(var(--surface-2))]" />
                                 </div>
-                                <div className="h-4 w-2/3 rounded bg-[hsl(var(--surface-2))] dark:bg-white/10" />
-                                <div className="h-3 w-1/3 rounded bg-[hsl(var(--surface-2))] dark:bg-white/10" />
+                                <div className="h-4 w-2/3 rounded bg-[hsl(var(--surface-2))]" />
+                                <div className="h-3 w-1/3 rounded bg-[hsl(var(--surface-2))]" />
                             </div>
                         ))}
                     </section>
                 )}
 
                 {!loading && !error && grupos.length === 0 && (
-                    <div className="rounded-md border border-dashed border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-6 text-center text-sm text-[hsl(var(--text-secondary))] dark:border-white/10 dark:bg-white/5">
+                    <div className="rounded-md border border-dashed border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-6 text-center text-sm text-[hsl(var(--muted-foreground))]">
                         No hay grupos activos para mostrar.
                     </div>
                 )}
@@ -219,15 +219,15 @@ export default function GrupoAdmin() {
                             initial={{ opacity: 0, y: 16 }}
                             animate={{ opacity: 1, y: 0 }}
                             onClick={() => openReport(grupo)}
-                            className="rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-4 text-left shadow-sm transition-all hover:-translate-y-1 hover:shadow-xl dark:border-white/10 dark:bg-white/5"
+                            className="rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-4 text-left shadow-sm transition-all hover:-translate-y-1 hover:shadow-md"
                         >
                             <div className="mb-3 flex items-start justify-between">
-                                <div className="flex size-9 items-center justify-center rounded-lg bg-info-soft text-[hsl(var(--primary))] dark:bg-[hsl(var(--info))]/20"><Home size={24} /></div>
-                                <span className="rounded-lg bg-success-soft px-2 py-1 text-2xs font-bold uppercase text-success-text dark:bg-[hsl(var(--success))]/20">{grupo.status || "Activo"}</span>
+                                <div className="flex size-9 items-center justify-center rounded-lg bg-[hsl(var(--primary)/0.1)] text-[hsl(var(--primary))]"><Home size={24} /></div>
+                                <span className="rounded-lg bg-[hsl(var(--success)/0.15)] px-2 py-1 text-2xs font-bold uppercase text-[hsl(var(--success))]">{grupo.status || "Activo"}</span>
                             </div>
-                            <h4 className="text-base font-bold uppercase tracking-tight">{grupo.name}</h4>
-                            <p className="mt-2 flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]"><MapPin size={12} /> {grupo.zone || "Sin zona"}</p>
-                            <div className="mt-3 flex items-center gap-2 border-t border-[hsl(var(--border))] pt-6 text-xs font-bold text-[hsl(var(--text-secondary))] dark:border-white/5"><Users size={14} /> {grupo.total_personas || 0} integrantes</div>
+                            <h4 className="text-base font-bold uppercase tracking-tight text-[hsl(var(--foreground))]">{grupo.name}</h4>
+                            <p className="mt-2 flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-[hsl(var(--muted-foreground))]"><MapPin size={12} /> {grupo.zone || "Sin zona"}</p>
+                            <div className="mt-3 flex items-center gap-2 border-t border-[hsl(var(--border))] pt-6 text-xs font-bold text-[hsl(var(--muted-foreground))]"><Users size={14} /> {grupo.total_personas || 0} integrantes</div>
                         </motion.button>
                     ))}
                 </section>
@@ -243,9 +243,9 @@ export default function GrupoAdmin() {
                     ) : (
                         <>
                             <div className="grid grid-cols-2 gap-4">
-                                <Field label="Fecha"><input type="date" required value={reportDate} onChange={(event) => setReportDate(event.target.value)} className="w-full bg-transparent text-sm font-bold outline-none" /></Field>
+                                <Field label="Fecha"><input type="date" required value={reportDate} onChange={(event) => setReportDate(event.target.value)} className="w-full bg-transparent text-sm font-bold outline-none text-[hsl(var(--foreground))]" /></Field>
                                 <Field label="Temporada">
-                                    <select required value={seasonId} onChange={(event) => setSeasonId(event.target.value)} className="w-full bg-transparent text-sm font-bold outline-none">
+                                    <select required value={seasonId} onChange={(event) => setSeasonId(event.target.value)} className="w-full bg-transparent text-sm font-bold outline-none text-[hsl(var(--foreground))]">
                                         <option value="">Selecciona</option>
                                         {seasons.map((season) => <option key={season.id} value={season.id}>{season.name}</option>)}
                                     </select>
@@ -254,13 +254,13 @@ export default function GrupoAdmin() {
 
                             <section className="space-y-4">
                                 <div className="flex items-center justify-between px-2">
-                                    <h5 className="text-xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Asistencia</h5>
+                                    <h5 className="text-xs font-bold uppercase tracking-wide text-[hsl(var(--muted-foreground))]">Asistencia</h5>
                                     <button onClick={() => setSelectedIds(attendees.map((attendee) => attendee.persona_id))} className="text-2xs font-bold uppercase text-[hsl(var(--primary))]">Seleccionar Todos</button>
                                 </div>
                                 <div className="space-y-2">
                                     {attendees.map((attendee) => (
-                                        <label key={attendee.persona_id} className="flex items-center justify-between rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-4 dark:border-white/5 dark:bg-white/5">
-                                            <span className="text-xs font-bold">{attendee.name}</span>
+                                        <label key={attendee.persona_id} className="flex items-center justify-between rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-4">
+                                            <span className="text-xs font-bold text-[hsl(var(--foreground))]">{attendee.name}</span>
                                             <input
                                                 type="checkbox"
                                                 checked={selectedIds.includes(attendee.persona_id)}
@@ -268,11 +268,11 @@ export default function GrupoAdmin() {
                                             />
                                         </label>
                                     ))}
-                                    {attendees.length === 0 && <div className="rounded-lg border border-dashed border-[hsl(var(--border))] p-4 text-center text-sm text-[hsl(var(--text-secondary))] dark:border-white/10">No hay integrantes base asignados.</div>}
+                                    {attendees.length === 0 && <div className="rounded-lg border border-dashed border-[hsl(var(--border))] p-4 text-center text-sm text-[hsl(var(--muted-foreground))]">No hay integrantes base asignados.</div>}
                                 </div>
                             </section>
 
-                            <button onClick={sendReport} disabled={submitting} className="flex w-full items-center justify-center gap-3 rounded-lg bg-[hsl(var(--primary))] py-2 text-xs font-bold uppercase tracking-wide text-white disabled:opacity-50">
+                            <button onClick={sendReport} disabled={submitting} className="flex w-full items-center justify-center gap-3 rounded-lg bg-[hsl(var(--primary))] py-2 text-xs font-bold uppercase tracking-wide text-[hsl(var(--primary-foreground))] disabled:opacity-50">
                                 {submitting ? <Loader2 size={18} className="animate-spin" /> : <Zap size={18} fill="currentColor" />}
                                 Enviar Reporte Semanal
                             </button>
@@ -285,9 +285,9 @@ export default function GrupoAdmin() {
 }
 
 function Stat({ label, value }: { label: string; value: string }) {
-    return <div className="rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-4 shadow-sm dark:border-white/10 dark:bg-white/5"><p className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{label}</p><h4 className="mt-2 text-lg font-bold">{value}</h4></div>;
+    return <div className="rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-4 shadow-sm"><p className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--muted-foreground))]">{label}</p><h4 className="mt-2 text-lg font-bold text-[hsl(var(--foreground))]">{value}</h4></div>;
 }
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
-    return <div className="rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-4 dark:border-white/5 dark:bg-white/5"><p className="mb-1 text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{label}</p>{children}</div>;
+    return <div className="rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-4"><p className="mb-1 text-2xs font-bold uppercase tracking-wide text-[hsl(var(--muted-foreground))]">{label}</p>{children}</div>;
 }

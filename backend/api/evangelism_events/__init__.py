@@ -14,11 +14,17 @@ router = APIRouter(tags=["Evangelismo - Eventos"])
 
 from backend.api.evangelism_events import (
     events_checkin,
+    events_cohorts,
+    events_followup,
     events_main,
     events_participantes,
+    events_post_analytics,
     events_registrations,
 )
 
+router.include_router(events_cohorts.router)
+router.include_router(events_followup.router)
+router.include_router(events_post_analytics.router)
 router.include_router(events_main.router)
 router.include_router(events_participantes.router)
 router.include_router(events_checkin.router)

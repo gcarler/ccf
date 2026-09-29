@@ -104,14 +104,14 @@ export default function AcademyCoursesPage() {
                     <div className="flex items-center gap-2">
                         <button
                             onClick={() => router.push('/plataforma/academy/curriculum')}
-                            className="px-3.5 py-1.5 bg-[hsl(var(--surface-2))] hover:bg-[hsl(var(--surface-3))] dark:bg-white/10 text-[hsl(var(--text-primary))] dark:text-white border border-[hsl(var(--border))] dark:border-white/10 rounded-lg text-xs font-bold uppercase tracking-wider transition-all"
+                            className="px-3.5 py-1.5 bg-[hsl(var(--surface-2))] hover:bg-[hsl(var(--surface-3))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))] rounded-lg text-xs font-bold uppercase tracking-wider transition-all"
                         >
                             Ver Malla Curricular
                         </button>
                         {hasModuleAccess('academy', 'manage') && (
                             <button
                                 onClick={() => router.push('/plataforma/academy/coordination')}
-                                className="px-3.5 py-1.5 bg-[hsl(var(--primary))] text-white rounded-lg text-xs font-bold uppercase tracking-wider shadow-md hover:opacity-90 transition-all flex items-center gap-1.5"
+                                className="px-3.5 py-1.5 bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] rounded-lg text-xs font-bold uppercase tracking-wider shadow-md hover:opacity-90 transition-all flex items-center gap-1.5"
                             >
                                 <ShieldCheck size={14} /> Coordinación
                             </button>
@@ -127,7 +127,7 @@ export default function AcademyCoursesPage() {
                         <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-2xs font-bold uppercase tracking-widest bg-[hsl(var(--primary))]/10 text-[hsl(var(--primary))]">
                             <Sparkles size={13} /> Oferta Formativa Institucional
                         </div>
-                        <h1 className="text-2xl md:text-3xl font-black text-[hsl(var(--text-primary))] dark:text-white tracking-tight">
+                        <h1 className="text-2xl md:text-3xl font-black text-[hsl(var(--foreground))] tracking-tight">
                             Cursos y Programas Académicos
                         </h1>
                         <p className="text-sm text-[hsl(var(--text-secondary))] leading-relaxed">
@@ -138,7 +138,7 @@ export default function AcademyCoursesPage() {
                     {/* Números 3x más grandes, sin recuadros, con efecto hover gradiente */}
                     <div className="flex items-center gap-8 md:gap-12 shrink-0">
                         <div className="group cursor-pointer select-none">
-                            <p className="text-5xl md:text-6xl font-black tracking-tight text-[hsl(var(--text-primary))] dark:text-white group-hover:bg-gradient-to-r group-hover:from-[hsl(var(--primary))] group-hover:via-[hsl(var(--info))] group-hover:to-[hsl(var(--accent))] group-hover:bg-clip-text group-hover:text-transparent group-hover:scale-110 group-hover:drop-shadow-[0_0_15px_rgba(59,130,246,0.5)] transition-all duration-300 origin-left">
+                            <p className="text-5xl md:text-6xl font-black tracking-tight text-[hsl(var(--foreground))] group-hover:bg-gradient-to-r group-hover:from-[hsl(var(--primary))] group-hover:via-[hsl(var(--info))] group-hover:to-[hsl(var(--accent))] group-hover:bg-clip-text group-hover:text-transparent group-hover:scale-110 transition-all duration-300 origin-left">
                                 {courses.length}
                             </p>
                             <p className="text-xs font-bold uppercase tracking-widest text-[hsl(var(--text-secondary))] group-hover:text-[hsl(var(--primary))] transition-colors mt-1">
@@ -146,13 +146,13 @@ export default function AcademyCoursesPage() {
                             </p>
                         </div>
 
-                        <div className="h-14 w-px bg-gradient-to-b from-transparent via-[hsl(var(--border))] dark:via-white/20 to-transparent" />
+                        <div className="h-14 w-px bg-gradient-to-b from-transparent via-[hsl(var(--border))] to-transparent" />
 
                         <div className="group cursor-pointer select-none">
-                            <p className="text-5xl md:text-6xl font-black tracking-tight text-[hsl(var(--text-primary))] dark:text-white group-hover:bg-gradient-to-r group-hover:from-emerald-400 group-hover:via-teal-300 group-hover:to-cyan-400 group-hover:bg-clip-text group-hover:text-transparent group-hover:scale-110 group-hover:drop-shadow-[0_0_15px_rgba(16,185,129,0.5)] transition-all duration-300 origin-left">
+                            <p className="text-5xl md:text-6xl font-black tracking-tight text-[hsl(var(--foreground))] group-hover:bg-gradient-to-r group-hover:from-[hsl(var(--success))] group-hover:to-[hsl(var(--primary))] group-hover:bg-clip-text group-hover:text-transparent group-hover:scale-110 transition-all duration-300 origin-left">
                                 {totalLessons || 168}
                             </p>
-                            <p className="text-xs font-bold uppercase tracking-widest text-[hsl(var(--text-secondary))] group-hover:text-emerald-400 transition-colors mt-1">
+                            <p className="text-xs font-bold uppercase tracking-widest text-[hsl(var(--text-secondary))] group-hover:text-[hsl(var(--success))] transition-colors mt-1">
                                 Total Lecciones
                             </p>
                         </div>
@@ -168,8 +168,8 @@ export default function AcademyCoursesPage() {
                             onClick={() => setSelectedModality('all')}
                             className={`px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all ${
                                 selectedModality === 'all'
-                                    ? 'bg-[hsl(var(--primary))] text-white shadow-sm'
-                                    : 'bg-[hsl(var(--surface-1))] hover:bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))] border border-[hsl(var(--border))] dark:border-white/10'
+                                    ? 'bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] shadow-sm'
+                                    : 'bg-[hsl(var(--surface-1))] hover:bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))] border border-[hsl(var(--border))]'
                             }`}
                         >
                             Todos ({courses.length})
@@ -181,8 +181,8 @@ export default function AcademyCoursesPage() {
                                 onClick={() => setSelectedModality(mod)}
                                 className={`px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all ${
                                     selectedModality === mod
-                                        ? 'bg-[hsl(var(--primary))] text-white shadow-sm'
-                                        : 'bg-[hsl(var(--surface-1))] hover:bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))] border border-[hsl(var(--border))] dark:border-white/10'
+                                        ? 'bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] shadow-sm'
+                                        : 'bg-[hsl(var(--surface-1))] hover:bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))] border border-[hsl(var(--border))]'
                                 }`}
                             >
                                 {mod}
@@ -198,7 +198,7 @@ export default function AcademyCoursesPage() {
                             placeholder="Buscar por nombre o código..."
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            className="w-full pl-9 pr-3 py-2 bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-xl text-xs outline-none focus:border-[hsl(var(--primary))] text-[hsl(var(--text-primary))] dark:text-white transition-colors"
+                            className="w-full pl-9 pr-3 py-2 bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] rounded-xl text-xs outline-none focus:border-[hsl(var(--primary))] text-[hsl(var(--foreground))] transition-colors"
                         />
                     </div>
                 </div>
@@ -207,7 +207,7 @@ export default function AcademyCoursesPage() {
                 {loading ? (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
                         {[1, 2, 3, 4, 5, 6].map((n) => (
-                            <div key={n} className="bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] dark:border-white/10 rounded-2xl p-5 space-y-4 animate-pulse">
+                            <div key={n} className="bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] rounded-2xl p-5 space-y-4 animate-pulse">
                                 <div className="h-4 w-24 bg-[hsl(var(--surface-2))] rounded" />
                                 <div className="h-6 w-3/4 bg-[hsl(var(--surface-2))] rounded" />
                                 <div className="h-12 w-full bg-[hsl(var(--surface-2))] rounded" />
@@ -216,9 +216,9 @@ export default function AcademyCoursesPage() {
                         ))}
                     </div>
                 ) : filteredCourses.length === 0 ? (
-                    <div className="bg-[hsl(var(--surface-1))] border border-dashed border-[hsl(var(--border))] dark:border-white/10 rounded-2xl p-12 text-center space-y-3">
+                    <div className="bg-[hsl(var(--surface-1))] border border-dashed border-[hsl(var(--border))] rounded-2xl p-12 text-center space-y-3">
                         <BookOpen size={40} className="mx-auto text-[hsl(var(--text-secondary))] opacity-50" />
-                        <h3 className="text-base font-bold text-[hsl(var(--text-primary))] dark:text-white">No se encontraron cursos</h3>
+                        <h3 className="text-base font-bold text-[hsl(var(--foreground))]">No se encontraron cursos</h3>
                         <p className="text-xs text-[hsl(var(--text-secondary))] max-w-sm mx-auto">
                             No hay cursos que coincidan con los filtros seleccionados. Intenta con otra palabra clave.
                         </p>
@@ -230,7 +230,7 @@ export default function AcademyCoursesPage() {
                             return (
                                 <div
                                     key={course.id}
-                                    className="bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] dark:border-white/10 hover:border-[hsl(var(--primary))]/50 rounded-2xl p-5 flex flex-col justify-between transition-all duration-200 hover:shadow-xl hover:-translate-y-0.5 group"
+                                    className="bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] hover:border-[hsl(var(--primary))]/50 rounded-2xl p-5 flex flex-col justify-between transition-all duration-200 hover:shadow-xl hover:-translate-y-0.5 group"
                                 >
                                     <div className="space-y-3">
                                         <div className="flex items-center justify-between gap-2">
@@ -238,14 +238,14 @@ export default function AcademyCoursesPage() {
                                                 {course.modality || 'Online'}
                                             </span>
                                             {course.code && (
-                                                <span className="text-2xs font-mono font-bold text-[hsl(var(--text-secondary))] bg-[hsl(var(--surface-2))] dark:bg-white/5 px-2 py-0.5 rounded">
+                                                <span className="text-2xs font-mono font-bold text-[hsl(var(--text-secondary))] bg-[hsl(var(--surface-2))] px-2 py-0.5 rounded">
                                                     {course.code}
                                                 </span>
                                             )}
                                         </div>
 
                                         <div>
-                                            <h3 className="font-bold text-base md:text-lg text-[hsl(var(--text-primary))] dark:text-white group-hover:text-[hsl(var(--primary))] transition-colors line-clamp-1">
+                                            <h3 className="font-bold text-base md:text-lg text-[hsl(var(--foreground))] group-hover:text-[hsl(var(--primary))] transition-colors line-clamp-1">
                                                 {course.title}
                                             </h3>
                                             <p className="text-xs text-[hsl(var(--text-secondary))] line-clamp-2 leading-relaxed mt-1.5">
@@ -253,22 +253,22 @@ export default function AcademyCoursesPage() {
                                             </p>
                                         </div>
 
-                                        <div className="flex items-center gap-4 text-2xs font-semibold text-[hsl(var(--text-secondary))] pt-2 border-t border-[hsl(var(--border))] dark:border-white/5">
+                                        <div className="flex items-center gap-4 text-2xs font-semibold text-[hsl(var(--text-secondary))] pt-2 border-t border-[hsl(var(--border))]">
                                             <span className="flex items-center gap-1">
                                                 <BookOpen size={13} className="text-[hsl(var(--primary))]" /> {lessonCount} Lecciones
                                             </span>
                                             <span className="flex items-center gap-1">
-                                                <Clock size={13} className="text-emerald-500" /> {course.duration_hours || 12} Horas
+                                                <Clock size={13} className="text-[hsl(var(--success))]" /> {course.duration_hours || 12} Horas
                                             </span>
                                         </div>
                                     </div>
 
                                     {/* Botones de Acción */}
-                                    <div className="pt-4 mt-4 border-t border-[hsl(var(--border))] dark:border-white/5 flex flex-col sm:flex-row gap-2">
+                                    <div className="pt-4 mt-4 border-t border-[hsl(var(--border))] flex flex-col sm:flex-row gap-2">
                                         <button
                                             type="button"
                                             onClick={() => router.push(`/plataforma/academy/course/${course.id}`)}
-                                            className="flex-1 py-2.5 px-3 bg-[hsl(var(--primary))] hover:opacity-90 text-white rounded-xl text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-all shadow-md active:scale-95"
+                                            className="flex-1 py-2.5 px-3 bg-[hsl(var(--primary))] hover:opacity-90 text-[hsl(var(--primary-foreground))] rounded-xl text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-all shadow-md active:scale-95"
                                         >
                                             <PlayCircle size={15} /> Entrar al Aula
                                         </button>
@@ -277,7 +277,7 @@ export default function AcademyCoursesPage() {
                                             <button
                                                 type="button"
                                                 onClick={() => router.push(`/plataforma/academy/courses/${course.id}/lessons`)}
-                                                className="py-2.5 px-3 bg-[hsl(var(--surface-2))] hover:bg-[hsl(var(--surface-3))] dark:bg-white/10 text-[hsl(var(--text-primary))] dark:text-white border border-[hsl(var(--border))] dark:border-white/10 rounded-xl text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all"
+                                                className="py-2.5 px-3 bg-[hsl(var(--surface-2))] hover:bg-[hsl(var(--surface-3))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))] rounded-xl text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all"
                                                 title="Administrar Lecciones"
                                             >
                                                 <Settings size={14} /> Lecciones

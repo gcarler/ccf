@@ -18,8 +18,8 @@ vi.mock("sonner", () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
 
 vi.mock("@/components/ui/SidePanel", () => ({
   __esModule: true,
-  default: ({ isOpen, children }: { isOpen: boolean; children?: React.ReactNode }) =>
-    isOpen ? <div role="dialog" aria-label="side-panel">{children}</div> : null,
+  default: ({ isOpen, title, children }: { isOpen: boolean; title?: string; children?: React.ReactNode }) =>
+    isOpen ? <div role="dialog" aria-label={title ?? "side-panel"}>{children}</div> : null,
 }));
 
 vi.mock("@/components/ViewSwitcher", () => ({
@@ -161,13 +161,15 @@ describe("CmsPagesManagement", () => {
     );
   });
 
-  it("archiva una página tras confirmar el modal", async () => {
+  it("archiva una página tras confirmar el drawer", async () => {
     vi.mocked(listCmsPages).mockResolvedValue([page]);
     render(<CmsPagesManagement />);
     await waitFor(() => expect(screen.getByText("Inicio")).toBeInTheDocument());
 
     fireEvent.click(screen.getByTitle("Archivar pagina"));
-    expect(screen.getByText("¿Archivar página?")).toBeInTheDocument();
+    await waitFor(() =>
+      expect(screen.getByRole("dialog", { name: "Archivar página" })).toBeInTheDocument(),
+    );
 
     const confirm = screen.getAllByRole("button", { name: /^archivar$/i }).at(-1);
     expect(confirm).toBeDefined();
@@ -218,7 +220,9 @@ describe("CmsPagesManagement", () => {
     fireEvent.click(checkboxes[2]);
 
     fireEvent.click(screen.getByRole("button", { name: /archivar seleccion/i }));
-    expect(screen.getByText("¿Archivar 2 páginas?")).toBeInTheDocument();
+    await waitFor(() =>
+      expect(screen.getByRole("dialog", { name: "Archivar 2 páginas" })).toBeInTheDocument(),
+    );
 
     fireEvent.click(screen.getByRole("button", { name: /archivar todas/i }));
 

@@ -105,7 +105,7 @@ export default function LeadDetailPage() {
 
                         <DSCard>
                             <h3 className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-4">Notas de Seguimiento</h3>
-                            <p className="text-sm text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] leading-relaxed italic">
+                            <p className="text-sm text-[hsl(var(--muted-foreground))] leading-relaxed italic">
                                 &quot;{String(lead.notes || 'Sin notas adicionales.')}&quot;
                             </p>
                         </DSCard>
@@ -114,7 +114,7 @@ export default function LeadDetailPage() {
                             <h3 className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Historial de Interacciones</h3>
                             <div className="space-y-3">
                                 {history.map(item => (
-                                    <div key={item.id} className="p-4 rounded-lg bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/5 flex items-center justify-between">
+                                    <div key={item.id} className="p-4 rounded-lg bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] flex items-center justify-between">
                                         <div className="flex items-center gap-4">
                                             <div className="size-8 rounded-full bg-[hsl(var(--primary))/10] flex items-center justify-center text-[hsl(var(--primary))]">
                                                 <Clock size={14} />
@@ -148,15 +148,15 @@ export default function LeadDetailPage() {
                                     })()}
                                 </div>
 
-                                <div className="h-px bg-[hsl(var(--surface-2))] dark:bg-white/5" />
+                                <div className="h-px bg-[hsl(var(--surface-2))]" />
 
-                                <button className="w-full py-1.5 bg-[hsl(var(--primary))] text-white rounded-md text-2xs font-bold uppercase tracking-wide shadow-lg shadow-[hsl(var(--info)/20%)] hover:scale-105 transition-all">
+                                <button className="w-full py-1.5 bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] rounded-md text-2xs font-bold uppercase tracking-wide shadow-lg shadow-[hsl(var(--primary)/0.2)] hover:scale-105 transition-all">
                                     Mover a Siguiente Etapa
                                 </button>
                             </div>
                         </DSCard>
 
-                        <div className="p-4 bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-1))] rounded-md border border-[hsl(var(--border-primary))] text-[hsl(var(--text-primary))] space-y-4">
+                        <div className="p-4 bg-[hsl(var(--surface-1))] rounded-md border border-[hsl(var(--border))] text-[hsl(var(--foreground))] space-y-4">
                             <div className="flex items-center gap-2 text-2xs font-bold uppercase tracking-wide text-[hsl(var(--secondary))]">
                                 <MessageSquare size={14} /> Optimus Brain
                             </div>

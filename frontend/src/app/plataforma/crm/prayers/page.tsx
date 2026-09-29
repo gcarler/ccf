@@ -147,11 +147,11 @@ export default function PrayerSupportCenter() {
             size: 250,
             cell: ({ row }) => (
                 <div className="flex items-center gap-3">
-                    <div className="size-8 rounded-md bg-[hsl(var(--destructive))] flex items-center justify-center text-white text-2xs font-bold shadow-lg shadow-[hsl(var(--destructive)/0.2)]">
+                    <div className="size-8 rounded-md bg-[hsl(var(--destructive))] flex items-center justify-center text-[hsl(var(--destructive-foreground))] text-2xs font-bold shadow-lg shadow-[hsl(var(--destructive)/0.2)]">
                         {(row.original.name ?? '?').substring(0, 1)}
                     </div>
                     <div>
-                        <p className="text-xs font-bold text-[hsl(var(--text-primary))] dark:text-white leading-tight">{row.original.name ?? 'Anónimo'}</p>
+                        <p className="text-xs font-bold text-[hsl(var(--text-primary))] leading-tight">{row.original.name ?? 'Anónimo'}</p>
                         <p className="text-2xs text-[hsl(var(--text-secondary))] font-medium uppercase tracking-wide">{row.original.time}</p>
                     </div>
                 </div>
@@ -161,7 +161,7 @@ export default function PrayerSupportCenter() {
             accessorKey: 'request',
             header: 'Petición',
             size: 400,
-            cell: info => <p className="text-xs text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] line-clamp-1 italic font-medium">&quot;{info.getValue() as string}&quot;</p>
+            cell: info => <p className="text-xs text-[hsl(var(--text-secondary))] line-clamp-1 italic font-medium">&quot;{info.getValue() as string}&quot;</p>
         },
         {
             accessorKey: 'status',
@@ -243,7 +243,7 @@ export default function PrayerSupportCenter() {
             rightActions={canEditCrm ? (
                 <button
                     onClick={() => setIsCreateDrawerOpen(true)}
-                    className="flex items-center gap-2 px-4 py-1.5 bg-[hsl(var(--destructive))] text-white rounded-lg text-xs font-bold uppercase tracking-wide shadow-xl shadow-[hsl(var(--destructive)/0.2)] active:scale-95 transition-all"
+                    className="flex items-center gap-2 px-4 py-1.5 bg-[hsl(var(--destructive))] text-[hsl(var(--destructive-foreground))] rounded-lg text-xs font-bold uppercase tracking-wide shadow-xl shadow-[hsl(var(--destructive)/0.2)] active:scale-95 transition-all"
                 >
                     <Plus size={14} /> Nueva Petición
                 </button>
@@ -252,16 +252,16 @@ export default function PrayerSupportCenter() {
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_hsl(var(--destructive)/0.05)_0%,_transparent_50%)] pointer-events-none" />
 
             {requestsError && (
-                <div className="mx-4 mt-4 rounded-lg border border-[hsl(var(--warning)/0.6)] bg-[hsl(var(--warning-muted))] dark:bg-[hsl(var(--warning)/0.1)] dark:border-[hsl(var(--warning)/0.3)] p-3 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                <div className="mx-4 mt-4 rounded-lg border border-[hsl(var(--warning)/0.3)] bg-[hsl(var(--warning)/0.1)] p-3 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
                     <div className="min-w-0">
-                        <p className="text-xs font-bold uppercase tracking-wide text-[hsl(var(--warning))] dark:text-[hsl(var(--warning))]">
+                        <p className="text-xs font-bold uppercase tracking-wide text-[hsl(var(--warning))]">
                             No se pudo cargar el muro de intercesión
                         </p>
-                        <p className="text-sm text-[hsl(var(--warning)/0.8)] dark:text-[hsl(var(--warning)/0.8)] mt-1 break-words">{requestsError}</p>
+                        <p className="text-sm text-[hsl(var(--warning)/0.8)] mt-1 break-words">{requestsError}</p>
                     </div>
                     <button
                         onClick={() => fetchRequests()}
-                        className="shrink-0 px-3 py-2 rounded-lg bg-[hsl(var(--primary))] text-white text-2xs font-bold uppercase tracking-wide shadow-lg shadow-[hsl(var(--primary)/0.2)] hover:opacity-90 transition-all"
+                        className="shrink-0 px-3 py-2 rounded-lg bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] text-2xs font-bold uppercase tracking-wide shadow-lg shadow-[hsl(var(--primary)/0.2)] hover:opacity-90 transition-all"
                     >
                         Reintentar
                     </button>
@@ -270,28 +270,28 @@ export default function PrayerSupportCenter() {
 
             {/* Prayer Dashboard Hero */}
             <section className="p-4 lg:p-3">
-                    <div className="bg-gradient-to-br from-[hsl(var(--destructive))] to-[hsl(var(--destructive))] rounded-lg p-3 text-white shadow-2xl relative overflow-hidden group border border-white/10">
+                    <div className="bg-gradient-to-br from-[hsl(var(--destructive))] to-[hsl(var(--destructive))] rounded-lg p-3 text-[hsl(var(--destructive-foreground))] shadow-2xl relative overflow-hidden group border border-[hsl(var(--border))]">
                         <div className="absolute top-0 right-0 p-3 opacity-10 group-hover:scale-110 transition-transform duration-1000"><Flame size={160} /></div>
                         <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center gap-3">
                             <div className="space-y-4 flex-1 max-w-2xl">
-                                <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-white/10 backdrop-blur-xl border border-white/20 rounded-full text-2xs font-bold uppercase tracking-wide">
+                                <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-[hsl(var(--surface-1)/0.2)] backdrop-blur-xl border border-[hsl(var(--border))] rounded-full text-2xs font-bold uppercase tracking-wide">
                                     <Sparkles size={14} className="animate-pulse" /> Centro de Intercesión CCF
                                 </div>
                                 <h2 className="text-lg lg:text-xl font-bold tracking-tighter leading-none">
-                                    Uniendo fuerzas en <span className="text-[hsl(var(--destructive)/0.5)] italic">oración.</span>
+                                    Uniendo fuerzas en <span className="text-[hsl(var(--destructive-foreground)/0.7)] italic">oración.</span>
                                 </h2>
                             </div>
                             {/* Dynamic stats */}
                             <div className="grid grid-cols-2 gap-4 shrink-0">
                                 {[
-                                    { label: 'Activas', val: stats.active, bg: 'bg-white/10' },
+                                    { label: 'Activas', val: stats.active, bg: 'bg-[hsl(var(--surface-1)/0.2)]' },
                                     { label: 'Contestadas', val: stats.answered, bg: 'bg-[hsl(var(--success)/0.2)]' },
                                     { label: 'Urgentes', val: stats.urgent, bg: 'bg-[hsl(var(--destructive)/0.4)]' },
-                                    { label: 'Total', val: stats.total, bg: 'bg-white/5' },
+                                    { label: 'Total', val: stats.total, bg: 'bg-[hsl(var(--surface-1)/0.1)]' },
                                 ].map(s => (
-                                    <div key={s.label} className={`${s.bg} rounded-lg p-4 text-center backdrop-blur-sm border border-white/10`}>
+                                    <div key={s.label} className={`${s.bg} rounded-lg p-4 text-center backdrop-blur-sm border border-[hsl(var(--border))]`}>
                                         <p className="text-lg font-bold">{s.val}</p>
-                                        <p className="text-2xs font-bold uppercase tracking-wide text-white/70">{s.label}</p>
+                                        <p className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--destructive-foreground)/0.8)]">{s.label}</p>
                                     </div>
                                 ))}
                             </div>
@@ -299,8 +299,8 @@ export default function PrayerSupportCenter() {
                     </div>
                 </section>
 
-                <div className="flex-1 flex flex-col bg-[hsl(var(--surface-1))] dark:bg-black/20 rounded-t-lg border-t border-[hsl(var(--border))] dark:border-white/5 overflow-hidden">
-                    <div className="px-3 py-2 border-b border-[hsl(var(--border))] dark:border-white/5 flex items-center justify-between">
+                <div className="flex-1 flex flex-col bg-[hsl(var(--surface-1))] rounded-t-lg border-t border-[hsl(var(--border))] overflow-hidden">
+                    <div className="px-3 py-2 border-b border-[hsl(var(--border))] flex items-center justify-between">
                         <h3 className="text-sm font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide flex items-center gap-2">
                             <div className="size-2 rounded-full bg-[hsl(var(--destructive))] shadow-[0_0_10px_hsl(var(--destructive)/0.5)]" />
                             Peticiones Activas
@@ -308,7 +308,7 @@ export default function PrayerSupportCenter() {
                         {stats.urgent > 0 && (
                             <div className="flex items-center gap-2 text-2xs font-bold uppercase text-[hsl(var(--text-secondary))]">
                                 <span>Urgente</span>
-                                <div className="size-5 rounded-full bg-[hsl(var(--destructive))] text-white flex items-center justify-center text-2xs font-bold shadow-lg shadow-[hsl(var(--destructive)/0.3)]">{stats.urgent}</div>
+                                <div className="size-5 rounded-full bg-[hsl(var(--destructive))] text-[hsl(var(--destructive-foreground))] flex items-center justify-center text-2xs font-bold shadow-lg shadow-[hsl(var(--destructive)/0.3)]">{stats.urgent}</div>
                             </div>
                         )}
                     </div>
@@ -324,20 +324,20 @@ export default function PrayerSupportCenter() {
                             stickyHeader
                             cursorPointer
                             emptyMessage="No se encontraron resultados."
-                            className="flex-1 min-w-[620px] md:min-w-[800px] bg-[hsl(var(--bg-primary))]"
+                            className="flex-1 min-w-[620px] md:min-w-[800px] bg-[hsl(var(--surface-1))]"
                         />
                     ) : viewType === 'list' || viewType === 'grid' ? (
                         <div className="p-4 grid grid-cols-1 md:grid-cols-2 gap-4">
                             {filtered.map(req => (
-                                <button key={req.id} onClick={() => handleOpenRequest(req)} className="text-left rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-white/5 p-4 hover:border-[hsl(var(--destructive)/0.3)] dark:hover:border-[hsl(var(--destructive)/0.7)] transition-all">
+                                <button key={req.id} onClick={() => handleOpenRequest(req)} className="text-left rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-4 hover:border-[hsl(var(--destructive)/0.5)] transition-all">
                                     <div className="flex items-start justify-between gap-3">
                                         <div>
-                                            <p className="text-sm font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">{req.name}</p>
+                                            <p className="text-sm font-bold text-[hsl(var(--text-primary))]">{req.name}</p>
                                             <p className="text-2xs text-[hsl(var(--text-secondary))] uppercase tracking-wide">{req.category}</p>
                                         </div>
                                         {req.is_urgent && <span className="px-2 py-0.5 rounded-full bg-[hsl(var(--destructive)/0.08)] text-[hsl(var(--destructive))] text-2xs font-bold uppercase">Urgente</span>}
                                     </div>
-                                    <p className="mt-2 text-xs text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] line-clamp-2">{req.request}</p>
+                                    <p className="mt-2 text-xs text-[hsl(var(--text-secondary))] line-clamp-2">{req.request}</p>
                                 </button>
                             ))}
                             {!requestsError && filtered.length === 0 && <div className="col-span-full py-2 text-center text-[hsl(var(--text-secondary))] text-sm">Sin peticiones</div>}
@@ -345,15 +345,15 @@ export default function PrayerSupportCenter() {
                     ) : viewType === 'board' || viewType === 'kanban' ? (
                         <div className="p-4 grid grid-cols-1 lg:grid-cols-4 gap-4">
                             {statusColumns.map(col => (
-                                <div key={col.status} className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-white/[0.03] p-3">
+                                <div key={col.status} className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-3">
                                     <div className="mb-3 flex items-center justify-between">
                                         <p className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{col.label}</p>
                                         <span className="text-2xs font-bold text-[hsl(var(--text-secondary))]">{col.items.length}</span>
                                     </div>
                                     <div className="space-y-2">
                                         {col.items.map(req => (
-                                            <button key={req.id} onClick={() => handleOpenRequest(req)} className="w-full text-left rounded-md border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-white/5 p-3">
-                                                <p className="text-xs font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">{req.name}</p>
+                                            <button key={req.id} onClick={() => handleOpenRequest(req)} className="w-full text-left rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] p-3">
+                                                <p className="text-xs font-bold text-[hsl(var(--text-primary))]">{req.name}</p>
                                                 <p className="text-2xs text-[hsl(var(--text-secondary))] line-clamp-2">{req.request}</p>
                                             </button>
                                         ))}
@@ -366,12 +366,12 @@ export default function PrayerSupportCenter() {
                             {!requestsError && groupedByDate.length === 0 ? (
                                 <div className="py-2 text-center text-[hsl(var(--text-secondary))] text-sm">Sin actividad</div>
                             ) : groupedByDate.map(([key, payload]) => (
-                                <div key={key} className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-white/5 p-4">
+                                <div key={key} className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-4">
                                     <p className="mb-3 text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{payload.label}</p>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                         {payload.items.map(req => (
-                                            <button key={req.id} onClick={() => handleOpenRequest(req)} className="rounded-md border border-[hsl(var(--border))] dark:border-white/10 p-3 text-left">
-                                                <p className="text-sm font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">{req.name}</p>
+                                            <button key={req.id} onClick={() => handleOpenRequest(req)} className="rounded-md border border-[hsl(var(--border))] p-3 text-left">
+                                                <p className="text-sm font-bold text-[hsl(var(--text-primary))]">{req.name}</p>
                                                 <p className="text-2xs text-[hsl(var(--text-secondary))]">{req.category}</p>
                                             </button>
                                         ))}
@@ -381,15 +381,15 @@ export default function PrayerSupportCenter() {
                         </div>
                     ) : viewType === 'gantt' ? (
                         <div className="p-4">
-                            <div className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-white/5 p-4 space-y-3">
+                            <div className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-4 space-y-3">
                                 <p className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Avance de intercesión</p>
                                 {filtered.map(req => (
                                     <div key={req.id} className="space-y-1">
                                         <div className="flex items-center justify-between text-xs">
-                                            <span className="font-bold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">{req.name}</span>
+                                            <span className="font-bold text-[hsl(var(--text-primary))]">{req.name}</span>
                                             <span className="font-bold text-[hsl(var(--text-secondary))]">{PRAYER_PROGRESS[req.status] ?? 0}%</span>
                                         </div>
-                                        <div className="h-2 rounded-full bg-[hsl(var(--surface-2))] dark:bg-white/10 overflow-hidden">
+                                        <div className="h-2 rounded-full bg-[hsl(var(--surface-2))] overflow-hidden">
                                             <div className="h-full bg-[hsl(var(--destructive))]" style={{ width: `${PRAYER_PROGRESS[req.status] ?? 0}%` }} />
                                         </div>
                                     </div>
@@ -398,13 +398,13 @@ export default function PrayerSupportCenter() {
                         </div>
                     ) : viewType === 'wiki' ? (
                         <div className="p-4">
-                            <div className="rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-white/5 p-4 space-y-3">
+                            <div className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-4 space-y-3">
                                 <p className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Wiki de intercesión</p>
                                 <textarea
                                     value={wikiNotes}
                                     onChange={(e) => setWikiNotes(e.target.value)}
                                     placeholder="Documenta protocolos de atención, escalamiento por urgencia y guías pastorales..."
-                                    className="w-full min-h-[320px] rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-black/20 p-4 text-sm font-medium text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] outline-none focus:ring-2 focus:ring-[hsl(var(--destructive))/0.2]"
+                                    className="w-full min-h-[320px] rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-4 text-sm font-medium text-[hsl(var(--text-primary))] outline-none focus:ring-2 focus:ring-[hsl(var(--destructive))/0.2]"
                                 />
                             </div>
                         </div>
@@ -441,7 +441,7 @@ export default function PrayerSupportCenter() {
                         {canEditCrm && (
                             <button
                                 onClick={() => selectedRequest && updateRequestStatus(selectedRequest.id, 'answered')}
-                                className="px-4 py-2 bg-[hsl(var(--success))] text-white rounded-lg text-xs font-bold shadow-lg shadow-[hsl(var(--success)/0.2)]"
+                                className="px-4 py-2 bg-[hsl(var(--success))] text-[hsl(var(--primary-foreground))] rounded-lg text-xs font-bold shadow-lg shadow-[hsl(var(--success)/0.2)]"
                             >
                                 Marcar Contestada
                             </button>
@@ -450,29 +450,29 @@ export default function PrayerSupportCenter() {
                 }
             >
                 <div className="space-y-3 animate-fade-in">
-                    <section className="p-4 bg-[hsl(var(--surface-1))] dark:bg-black/20 rounded-md border border-[hsl(var(--border))] dark:border-white/5 relative">
+                    <section className="p-4 bg-[hsl(var(--surface-1))] rounded-md border border-[hsl(var(--border))] relative">
                         <Quote className="absolute top-4 left-4 size-8 text-[hsl(var(--destructive)/0.1)]" />
-                        <p className="text-base text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] font-medium leading-relaxed italic relative z-10 pt-3">
+                        <p className="text-base text-[hsl(var(--text-primary))] font-medium leading-relaxed italic relative z-10 pt-3">
                             &ldquo;{selectedRequest?.request}&rdquo;
                         </p>
                     </section>
 
                     <section className="grid grid-cols-2 gap-4">
-                        <div className="p-4 bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/5 rounded-lg">
+                        <div className="p-4 bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] rounded-lg">
                             <p className="text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide mb-1">Impacto</p>
-                            <p className="text-sm font-bold text-[hsl(var(--text-primary))] dark:text-white uppercase">{selectedRequest?.is_urgent ? 'ALTA PRIORIDAD' : 'Normal'}</p>
+                            <p className="text-sm font-bold text-[hsl(var(--text-primary))] uppercase">{selectedRequest?.is_urgent ? 'ALTA PRIORIDAD' : 'Normal'}</p>
                         </div>
-                        <div className="p-4 bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/5 rounded-lg">
+                        <div className="p-4 bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] rounded-lg">
                             <p className="text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide mb-1">Recibido</p>
-                            <p className="text-sm font-bold text-[hsl(var(--text-primary))] dark:text-white uppercase">{selectedRequest?.time}</p>
+                            <p className="text-sm font-bold text-[hsl(var(--text-primary))] uppercase">{selectedRequest?.time}</p>
                         </div>
-                        <div className="p-4 bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/5 rounded-lg">
+                        <div className="p-4 bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] rounded-lg">
                             <p className="text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide mb-1">Estado</p>
-                            <p className="text-sm font-bold text-[hsl(var(--text-primary))] dark:text-white uppercase">{selectedRequest?.status}</p>
+                            <p className="text-sm font-bold text-[hsl(var(--text-primary))] uppercase">{selectedRequest?.status}</p>
                         </div>
-                        <div className="p-4 bg-[hsl(var(--surface-1))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/5 rounded-lg">
+                        <div className="p-4 bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] rounded-lg">
                             <p className="text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide mb-1">Categoría</p>
-                            <p className="text-sm font-bold text-[hsl(var(--text-primary))] dark:text-white uppercase">{selectedRequest?.category}</p>
+                            <p className="text-sm font-bold text-[hsl(var(--text-primary))] uppercase">{selectedRequest?.category}</p>
                         </div>
                     </section>
 
@@ -490,7 +490,7 @@ export default function PrayerSupportCenter() {
                                             "flex-1 py-1.5 rounded-md text-2xs font-bold uppercase tracking-wide transition-all border",
                                             selectedRequest?.status === opt.value
                                                 ? `${opt.bg} ${opt.text} border-current`
-                                                : 'bg-[hsl(var(--surface-1))] dark:bg-white/5 text-[hsl(var(--text-secondary))] border-transparent hover:border-[hsl(var(--border))]'
+                                                : 'bg-[hsl(var(--surface-1))] text-[hsl(var(--text-secondary))] border-transparent hover:border-[hsl(var(--border))]'
                                         )}
                                     >
                                         {opt.label}
@@ -520,7 +520,7 @@ export default function PrayerSupportCenter() {
                                 form="create-prayer-form"
                                 type="submit"
                                 disabled={isSaving}
-                                className="px-3 py-2 bg-[hsl(var(--destructive))] text-white rounded-lg text-xs font-bold uppercase tracking-wide shadow-lg shadow-[hsl(var(--destructive)/0.2)] hover:bg-[hsl(var(--destructive))] active:scale-95 transition-all flex items-center gap-2"
+                                className="px-3 py-2 bg-[hsl(var(--destructive))] text-[hsl(var(--destructive-foreground))] rounded-lg text-xs font-bold uppercase tracking-wide shadow-lg shadow-[hsl(var(--destructive)/0.2)] hover:opacity-90 active:scale-95 transition-all flex items-center gap-2"
                             >
                                 {isSaving ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
                                 Registrar
@@ -537,7 +537,7 @@ export default function PrayerSupportCenter() {
                             value={newPrayer.name}
                             onChange={e => setNewPrayer({ ...newPrayer, name: e.target.value })}
                             placeholder="Nombre o 'Anónimo'"
-                            className="w-full px-4 py-1.5 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-black/20 outline-none focus:ring-2 focus:ring-[hsl(var(--destructive))/0.2] font-bold text-sm dark:text-white"
+                            className="w-full px-4 py-1.5 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] outline-none focus:ring-2 focus:ring-[hsl(var(--destructive))/0.2] font-bold text-sm text-[hsl(var(--text-primary))]"
                         />
                     </div>
                     <div className="space-y-2">
@@ -549,7 +549,7 @@ export default function PrayerSupportCenter() {
                             onChange={e => setNewPrayer({ ...newPrayer, request: e.target.value })}
                             placeholder="Describe la petición de oración..."
                             rows={5}
-                            className="w-full px-4 py-1.5 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-black/20 outline-none focus:ring-2 focus:ring-[hsl(var(--destructive))/0.2] font-bold text-sm dark:text-white resize-none"
+                            className="w-full px-4 py-1.5 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] outline-none focus:ring-2 focus:ring-[hsl(var(--destructive))/0.2] font-bold text-sm text-[hsl(var(--text-primary))] resize-none"
                         />
                     </div>
                     <div className="grid grid-cols-2 gap-4">
@@ -559,7 +559,7 @@ export default function PrayerSupportCenter() {
                                 disabled={!canEditCrm}
                                 value={newPrayer.category}
                                 onChange={e => setNewPrayer({ ...newPrayer, category: e.target.value })}
-                                className="w-full px-4 py-1.5 rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-[hsl(var(--surface-1))] dark:bg-black/20 outline-none focus:ring-2 focus:ring-[hsl(var(--destructive))/0.2] font-bold text-sm dark:text-white appearance-none"
+                                className="w-full px-4 py-1.5 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] outline-none focus:ring-2 focus:ring-[hsl(var(--destructive))/0.2] font-bold text-sm text-[hsl(var(--text-primary))] appearance-none"
                             >
                                 {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
                             </select>
@@ -573,8 +573,8 @@ export default function PrayerSupportCenter() {
                                 className={clsx(
                                     "w-full px-4 py-1.5 rounded-lg border font-bold text-sm transition-all disabled:opacity-50",
                                     newPrayer.is_urgent
-                                        ? "bg-[hsl(var(--destructive)/0.08)] dark:bg-[hsl(var(--destructive)/0.2)] border-[hsl(var(--danger)/30%)] dark:border-[hsl(var(--danger)/100%)] text-[hsl(var(--destructive))]"
-                                        : "bg-[hsl(var(--surface-1))] dark:bg-black/20 border-[hsl(var(--border))] dark:border-white/10 text-[hsl(var(--text-secondary))]"
+                                        ? "bg-[hsl(var(--destructive)/0.1)] border-[hsl(var(--destructive)/0.4)] text-[hsl(var(--destructive))]"
+                                        : "bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] text-[hsl(var(--text-secondary))]"
                                 )}
                             >
                                 {newPrayer.is_urgent ? '🔴 URGENTE' : 'Normal'}

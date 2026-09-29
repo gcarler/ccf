@@ -44,7 +44,7 @@ export default function ProjectCard({ project, index, onUpdate, onDelete }: Proj
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: index * 0.04, duration: 0.3 }}
-            className="group relative bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-2))] rounded-lg border border-[hsl(var(--border))]/70 dark:border-white/5 p-3 shadow-sm hover:shadow-lg dark:hover:shadow-black/30 transition-all duration-300 cursor-pointer overflow-hidden"
+            className="group relative bg-[hsl(var(--surface-1))] rounded-lg border border-[hsl(var(--border))] p-3 shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer overflow-hidden"
             style={{ '--card-color': color } as CSSProperties}
         >
             {/* Color accent bar top */}
@@ -55,7 +55,7 @@ export default function ProjectCard({ project, index, onUpdate, onDelete }: Proj
                 {/* Header row */}
                 <div className="flex items-start justify-between gap-3">
                     <label
-                        className="size-6 rounded-md flex items-center justify-center text-white font-black text-lg shadow-lg transition-transform group-hover:scale-105 shrink-0 cursor-pointer overflow-hidden"
+                        className="size-6 rounded-md flex items-center justify-center text-[hsl(var(--primary-foreground))] font-black text-lg shadow-lg transition-transform group-hover:scale-105 shrink-0 cursor-pointer overflow-hidden"
                         style={{ backgroundColor: color }}
                         title="Cambiar color"
                     >
@@ -81,7 +81,7 @@ export default function ProjectCard({ project, index, onUpdate, onDelete }: Proj
 
                 {/* Title + description */}
                 <div>
-                    <h3 className="text-sm font-bold text-[hsl(var(--text-primary))] dark:text-white leading-snug">
+                    <h3 className="text-sm font-bold text-[hsl(var(--foreground))] leading-snug">
                         <InlineTextInput
                             value={project.title || ''}
                             onChange={(v) => onUpdate?.(project.id, { title: v })}
@@ -92,7 +92,7 @@ export default function ProjectCard({ project, index, onUpdate, onDelete }: Proj
                         value={project.description || ''}
                         onChange={(v) => onUpdate?.(project.id, { description: v })}
                         placeholder="Agregar descripción"
-                        className="text-sm text-[hsl(var(--text-secondary))] font-medium mt-1 min-h-[32px]"
+                        className="text-sm text-[hsl(var(--muted-foreground))] font-medium mt-1 min-h-[32px]"
                         inputClassName="text-sm"
                     />
                 </div>
@@ -100,7 +100,7 @@ export default function ProjectCard({ project, index, onUpdate, onDelete }: Proj
                 {/* Task stats */}
                 {tasks.length > 0 && (
                     <div className="flex items-center gap-3 text-xs font-medium">
-                        <span className="flex items-center gap-1 text-success-text dark:text-[hsl(var(--success))]">
+                        <span className="flex items-center gap-1 text-[hsl(var(--success))]">
                             <span className="size-1.5 rounded-full bg-[hsl(var(--success))] inline-block" />
                             {completed} completadas
                         </span>
@@ -110,17 +110,17 @@ export default function ProjectCard({ project, index, onUpdate, onDelete }: Proj
                                 {inProgress} en curso
                             </span>
                         )}
-                        <span className="text-[hsl(var(--text-secondary))] ml-auto">{tasks.length} tareas</span>
+                        <span className="text-[hsl(var(--muted-foreground))] ml-auto">{tasks.length} tareas</span>
                     </div>
                 )}
 
                 {/* Progress bar */}
                 <div className="space-y-1.5">
-                    <div className="flex items-center justify-between text-2xs font-bold text-[hsl(var(--text-secondary))]">
+                    <div className="flex items-center justify-between text-2xs font-bold text-[hsl(var(--muted-foreground))]">
                         <span>Progreso</span>
                         <span style={{ color }}>{progress}%</span>
                     </div>
-                    <div className="h-1.5 w-full bg-[hsl(var(--surface-2))] dark:bg-white/5 rounded-full overflow-hidden">
+                    <div className="h-1.5 w-full bg-[hsl(var(--surface-2))] rounded-full overflow-hidden">
                         <motion.div
                             initial={{ width: 0 }}
                             animate={{ width: `${progress}%` }}
@@ -141,7 +141,7 @@ export default function ProjectCard({ project, index, onUpdate, onDelete }: Proj
                             />
                         </span>
                         {project.created_at && (
-                            <span className="text-2xs text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] shrink-0">
+                            <span className="text-2xs text-[hsl(var(--muted-foreground))] shrink-0">
                                 {new Date(project.created_at).toLocaleDateString('es-PE', { month: 'short', year: 'numeric' })}
                             </span>
                         )}
@@ -154,7 +154,7 @@ export default function ProjectCard({ project, index, onUpdate, onDelete }: Proj
                                     e.stopPropagation();
                                     onDelete?.(project.id);
                                 }}
-                                className="p-1.5 rounded-lg text-[hsl(var(--danger))] hover:bg-danger-soft dark:hover:bg-[hsl(var(--danger))]/10 transition-colors"
+                                className="p-1.5 rounded-lg text-[hsl(var(--destructive))] hover:bg-[hsl(var(--destructive)/0.1)] transition-colors"
                                 title="Eliminar proyecto"
                             >
                                 <Trash2 size={14} />
@@ -162,7 +162,7 @@ export default function ProjectCard({ project, index, onUpdate, onDelete }: Proj
                         )}
                         <ArrowUpRight
                             size={16}
-                            className="text-[hsl(var(--text-secondary))] group-hover:text-[hsl(var(--text-secondary))] dark:group-hover:text-[hsl(var(--text-secondary))] transition-colors"
+                            className="text-[hsl(var(--muted-foreground))] group-hover:text-[hsl(var(--foreground))] transition-colors"
                         />
                     </div>
                 </div>

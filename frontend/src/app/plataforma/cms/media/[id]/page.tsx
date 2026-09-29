@@ -18,6 +18,7 @@ import {
     Crop
 } from 'lucide-react';
 import CmsImageEditorModal from '@/components/cms/CmsImageEditorModal';
+import SidePanel from '@/components/ui/SidePanel';
 import WorkspaceToolbar from '@/components/WorkspaceToolbar';
 import { useAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/lib/http';
@@ -148,7 +149,7 @@ export default function CmsMediaDetailPage() {
     if (!item) return <div className="p-4 text-center font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Recurso multimedia no encontrado.</div>;
 
     return (
-        <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--bg-primary))] overflow-hidden">
+        <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] overflow-hidden">
             <WorkspaceToolbar
                 breadcrumbs={[
                     { label: 'CMS', icon: Layout, href: '/plataforma/cms' },
@@ -158,17 +159,17 @@ export default function CmsMediaDetailPage() {
                 rightActions={
                     <div className="flex items-center gap-3">
                         {item.mime_type?.includes('image') && (
-                            <button onClick={() => setIsEditorOpen(true)} title="Editor de imagen (Crop/Recorte, Rotate/Rotación, Canvas, Brightness/Brillo, Flip/Voltear)" className="px-3 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-md text-2xs font-semibold uppercase tracking-wide flex items-center gap-2 shadow-lg transition-all">
+                            <button onClick={() => setIsEditorOpen(true)} title="Editor de imagen (Crop/Recorte, Rotate/Rotación, Canvas, Brightness/Brillo, Flip/Voltear)" className="px-3 py-2 bg-[hsl(var(--primary))] hover:opacity-90 text-[hsl(var(--primary-foreground))] rounded-md text-2xs font-semibold uppercase tracking-wide flex items-center gap-2 shadow-lg transition-all">
                                 <Crop size={14} /> Editar imagen
                             </button>
                         )}
-                        <button onClick={toggleArchiveItem} className={`p-2 rounded-md transition-all ${item.status === 'archived' ? 'text-success-text hover:bg-[hsl(var(--success))]/10' : 'text-warning-text hover:bg-[hsl(var(--warning))]/10'}`}>
+                        <button onClick={toggleArchiveItem} className={`p-2 rounded-md transition-all ${item.status === 'archived' ? 'text-[hsl(var(--success))] hover:bg-[hsl(var(--success)/10%)]' : 'text-[hsl(var(--warning))] hover:bg-[hsl(var(--warning)/10%)]'}`}>
                             {item.status === 'archived' ? <RotateCcw size={20} /> : <Archive size={20} />}
                         </button>
-                        <button onClick={requestPermanentDelete} className="p-2 rounded-md text-red-500 hover:bg-red-500/10 transition-all" title="Eliminar permanentemente">
+                        <button onClick={requestPermanentDelete} className="p-2 rounded-md text-[hsl(var(--destructive))] hover:bg-[hsl(var(--destructive)/10%)] transition-all" title="Eliminar permanentemente">
                             <Trash2 size={20} />
                         </button>
-                        <button onClick={saveMetadata} disabled={saving} className="px-3 py-2 bg-[hsl(var(--primary))] text-white rounded-md text-2xs font-semibold uppercase tracking-wide shadow-lg shadow-[hsl(var(--info)/20%)] hover:scale-105 transition-all flex items-center gap-2 disabled:opacity-50">
+                        <button onClick={saveMetadata} disabled={saving} className="px-3 py-2 bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] rounded-md text-2xs font-semibold uppercase tracking-wide shadow-lg shadow-[hsl(var(--info)/20%)] hover:opacity-90 transition-all flex items-center gap-2 disabled:opacity-50">
                             <Save size={14} /> {saving ? 'Guardando...' : 'Guardar Cambios'}
                         </button>
                     </div>
@@ -176,9 +177,9 @@ export default function CmsMediaDetailPage() {
             />
 
             <main className="flex-1 overflow-y-auto p-4 lg:p-4">
- <div className="w-full grid grid-cols-1 lg:grid-cols-2 gap-3">
+                <div className="w-full grid grid-cols-1 lg:grid-cols-2 gap-3">
                     <div className="space-y-3">
-                        <div className="aspect-video rounded-lg bg-[hsl(var(--bg-muted))] overflow-hidden border border-[hsl(var(--border))] dark:border-white/10 shadow-2xl relative group">
+                        <div className="aspect-video rounded-lg bg-[hsl(var(--bg-muted))] overflow-hidden border border-[hsl(var(--border))] shadow-2xl relative group">
                             {item.mime_type?.startsWith('image/') ? (
                                 <OptimizedImage
                                     src={item.url}
@@ -188,7 +189,7 @@ export default function CmsMediaDetailPage() {
                                     className="w-full h-full object-contain"
                                 />
                             ) : item.mime_type?.startsWith('video/') ? (
-                                <video controls className="w-full h-full bg-black">
+                                <video controls className="w-full h-full bg-[hsl(var(--surface-3))]">
                                     <source src={item.url} type={item.mime_type} />
                                 </video>
                             ) : item.mime_type?.startsWith('audio/') ? (
@@ -200,8 +201,8 @@ export default function CmsMediaDetailPage() {
                                     Sin vista previa
                                 </div>
                             )}
-                            <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                                <button className="p-4 bg-white/20 backdrop-blur-xl rounded-full text-white hover:scale-110 transition-transform">
+                            <div className="absolute inset-0 bg-[hsl(var(--bg-primary)/80%)] backdrop-blur-xs opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                <button className="p-4 bg-[hsl(var(--surface-2))] rounded-full text-[hsl(var(--text-primary))] hover:scale-110 transition-transform">
                                     <Maximize2 size={24} />
                                 </button>
                             </div>
@@ -209,14 +210,14 @@ export default function CmsMediaDetailPage() {
 
                         <div className="flex flex-wrap gap-3">
                             {item.mime_type?.includes('image') && (
-                                <button onClick={() => setIsEditorOpen(true)} title="Recorte/Crop, Rotación/Rotate, Canvas, Brillo/Brightness, Voltear/Flip" className="flex-1 min-w-[140px] py-3 bg-blue-600 text-white rounded-lg text-2xs font-semibold uppercase tracking-wide flex items-center justify-center gap-2 hover:bg-blue-500 transition-all shadow">
+                                <button onClick={() => setIsEditorOpen(true)} title="Recorte/Crop, Rotación/Rotate, Canvas, Brillo/Brightness, Voltear/Flip" className="flex-1 min-w-[140px] py-3 bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] rounded-lg text-2xs font-semibold uppercase tracking-wide flex items-center justify-center gap-2 hover:opacity-90 transition-all shadow">
                                     <Crop size={14} /> Editar Imagen
                                 </button>
                             )}
-                            <button onClick={() => item?.url && window.open(item.url, '_blank')} className="flex-1 min-w-[140px] py-3 bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg text-2xs font-semibold uppercase tracking-wide flex items-center justify-center gap-2 hover:bg-[hsl(var(--surface-1))] transition-all">
+                            <button onClick={() => item?.url && window.open(item.url, '_blank')} className="flex-1 min-w-[140px] py-3 bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] rounded-lg text-2xs font-semibold uppercase tracking-wide flex items-center justify-center gap-2 hover:bg-[hsl(var(--surface-2))] transition-all">
                                 <Download size={14} /> Descargar Original
                             </button>
-                            <button onClick={copyUrl} className="flex-1 min-w-[140px] py-3 bg-[hsl(var(--bg-primary))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 rounded-lg text-2xs font-semibold uppercase tracking-wide flex items-center justify-center gap-2 hover:bg-[hsl(var(--surface-1))] transition-all">
+                            <button onClick={copyUrl} className="flex-1 min-w-[140px] py-3 bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] rounded-lg text-2xs font-semibold uppercase tracking-wide flex items-center justify-center gap-2 hover:bg-[hsl(var(--surface-2))] transition-all">
                                 <Link2 size={14} /> Copiar URL
                             </button>
                         </div>
@@ -225,11 +226,11 @@ export default function CmsMediaDetailPage() {
                     <div className="space-y-3">
                         <section className="space-y-4">
                             <div className="space-y-2">
-                                <label className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">TÃ­tulo del Recurso</label>
+                                <label className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Título del Recurso</label>
                                 <input
                                     value={item.alt_text || ''}
                                     onChange={(e) => setItem({ ...item, alt_text: e.target.value })}
-                                    className="w-full bg-transparent border-b border-[hsl(var(--border))] dark:border-white/10 py-2 text-xl font-semibold outline-none focus:border-[hsl(var(--info)/100%)] transition-all"
+                                    className="w-full bg-transparent border-b border-[hsl(var(--border))] py-2 text-xl font-semibold outline-none focus:border-[hsl(var(--primary))] transition-all"
                                 />
                             </div>
                             <div className="space-y-2">
@@ -237,7 +238,7 @@ export default function CmsMediaDetailPage() {
                                 <input
                                     value={item.section || 'general'}
                                     onChange={(e) => setItem({ ...item, section: e.target.value })}
-                                    className="w-full bg-transparent border-b border-[hsl(var(--border))] dark:border-white/10 py-2 text-sm font-bold outline-none focus:border-[hsl(var(--info)/100%)] transition-all"
+                                    className="w-full bg-transparent border-b border-[hsl(var(--border))] py-2 text-sm font-bold outline-none focus:border-[hsl(var(--primary))] transition-all"
                                 />
                             </div>
                         </section>
@@ -265,19 +266,19 @@ export default function CmsMediaDetailPage() {
                         </DSCard>
 
                         <DSCard>
-                            <h3 className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-3">Etiquetas y OrganizaciÃ³n</h3>
+                            <h3 className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-3">Etiquetas y Organización</h3>
                             <div className="space-y-4">
                                 <input
                                     value={tagsText}
                                     onChange={(e) => setTagsText(e.target.value)}
                                     placeholder="hero, comunidad, campana"
-                                    className="w-full rounded-lg border border-[hsl(var(--border))] dark:border-white/10 bg-transparent px-4 py-3 text-sm font-bold outline-none focus:border-[hsl(var(--info)/100%)]"
+                                    className="w-full rounded-lg border border-[hsl(var(--border))] bg-transparent px-4 py-3 text-sm font-bold outline-none focus:border-[hsl(var(--primary))]"
                                 />
                                 <div className="flex flex-wrap gap-2">
                                     {tagsText.split(',').map((tag: string) => tag.trim()).filter(Boolean).map((tag: string) => (
                                         <DSBadge key={tag} tone="blue" label={`#${tag}`} />
                                     ))}
-                                    <button className="size-6 rounded-lg border border-dashed border-[hsl(var(--border))] flex items-center justify-center text-[hsl(var(--text-secondary))] hover:border-[hsl(var(--info)/100%)] hover:text-[hsl(var(--primary))] transition-all">
+                                    <button className="size-6 rounded-lg border border-dashed border-[hsl(var(--border))] flex items-center justify-center text-[hsl(var(--text-secondary))] hover:border-[hsl(var(--primary))] hover:text-[hsl(var(--primary))] transition-all">
                                         <Plus size={12} />
                                     </button>
                                 </div>
@@ -286,32 +287,35 @@ export default function CmsMediaDetailPage() {
                     </div>
                 </div>
             </main>
-            {pendingDelete && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-                    <div className="w-full max-w-md rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-6 shadow-xl dark:border-white/10 dark:bg-[hsl(var(--admin-bg-tertiary))]">
-                        <h3 className="text-lg font-bold text-[hsl(var(--text-primary))] dark:text-white">
-                            ¿Eliminar permanentemente este archivo?
-                        </h3>
-                        <p className="mt-2 text-sm text-[hsl(var(--text-secondary))]">
-                            Se borrará el archivo y no se podrá recuperar.
-                        </p>
-                        <div className="mt-6 flex justify-end gap-3">
-                            <button
-                                onClick={() => setPendingDelete(false)}
-                                className="rounded-md border border-[hsl(var(--border))] px-4 py-2 text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] dark:border-white/10"
-                            >
-                                Cancelar
-                            </button>
-                            <button
-                                onClick={permanentDelete}
-                                className="rounded-md bg-red-600 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-white hover:bg-red-700"
-                            >
-                                Eliminar
-                            </button>
-                        </div>
+            {/* SidePanel: Confirm Permanent Delete Drawer */}
+            <SidePanel
+                isOpen={pendingDelete}
+                onClose={() => setPendingDelete(false)}
+                title="Eliminar permanentemente"
+                width="w-[420px]"
+            >
+                <div className="p-4 space-y-4">
+                    <p className="text-sm text-[hsl(var(--text-secondary))]">
+                        Se borrará el archivo permanentemente y no se podrá recuperar.
+                    </p>
+                    <div className="flex gap-3 justify-end pt-4 border-t border-[hsl(var(--border))]">
+                        <button
+                            type="button"
+                            onClick={() => setPendingDelete(false)}
+                            className="px-4 py-2 rounded-lg text-sm font-semibold text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] transition-colors"
+                        >
+                            Cancelar
+                        </button>
+                        <button
+                            type="button"
+                            onClick={permanentDelete}
+                            className="px-4 py-2 rounded-lg text-sm font-semibold bg-[hsl(var(--destructive))] text-[hsl(var(--destructive-foreground))] hover:opacity-90 transition-colors"
+                        >
+                            Eliminar
+                        </button>
                     </div>
                 </div>
-            )}
+            </SidePanel>
             {isEditorOpen && item && (
                 <CmsImageEditorModal
                     item={item}

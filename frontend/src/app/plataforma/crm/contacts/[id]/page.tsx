@@ -47,12 +47,12 @@ const STAGE_LABELS: Record<string, string> = {
 };
 
 const STAGE_BADGES: Record<string, string> = {
-    new: 'bg-[hsl(var(--surface-2))] text-[hsl(var(--text-primary))] border-[hsl(var(--border))] dark:bg-white/5 dark:text-[hsl(var(--text-secondary))] dark:border-white/10',
-    call: 'bg-warning-soft text-warning-text border-[hsl(var(--warning)/25%)] dark:bg-[hsl(var(--warning))]/10 dark:text-warning-text dark:border-[hsl(var(--warning)/100%)]/20',
-    visit: 'bg-info-soft text-info-text border-[hsl(var(--info)/25%)] dark:bg-[hsl(var(--info))]/10 dark:text-info-text dark:border-[hsl(var(--info)/100%)]/20',
-    discipleship: 'bg-info-soft text-info-text border-[hsl(var(--info)/25%)] dark:bg-[hsl(var(--info))]/10 dark:text-info-text dark:border-[hsl(var(--info)/100%)]/20',
-    consolidated: 'bg-success-soft text-success-text border-[hsl(var(--success)/25%)] dark:bg-[hsl(var(--success))]/10 dark:text-success-text dark:border-[hsl(var(--success)/100%)]/20',
-    lost: 'bg-danger-soft text-danger-text border-[hsl(var(--danger)/25%)] dark:bg-[hsl(var(--danger))]/10 dark:text-danger-text dark:border-[hsl(var(--danger)/100%)]/20',
+    new: 'bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))] border-[hsl(var(--border))]',
+    call: 'bg-[hsl(var(--warning)/0.1)] text-[hsl(var(--warning))] border-[hsl(var(--warning)/0.25)]',
+    visit: 'bg-[hsl(var(--primary)/0.1)] text-[hsl(var(--primary))] border-[hsl(var(--primary)/0.25)]',
+    discipleship: 'bg-[hsl(var(--primary)/0.1)] text-[hsl(var(--primary))] border-[hsl(var(--primary)/0.25)]',
+    consolidated: 'bg-[hsl(var(--success)/0.1)] text-[hsl(var(--success))] border-[hsl(var(--success)/0.25)]',
+    lost: 'bg-[hsl(var(--destructive)/0.1)] text-[hsl(var(--destructive))] border-[hsl(var(--destructive)/0.25)]',
 };
 
 function formatDate(value?: string | null) {
@@ -269,7 +269,7 @@ export default function LeadDetail() {
                 <p className="font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{error}</p>
                 <button
                     onClick={() => setReloadKey(key => key + 1)}
-                    className="rounded-md border border-[hsl(var(--border))] px-3 py-1.5 text-xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] transition-colors hover:bg-[hsl(var(--surface-1))] dark:border-white/10 dark:hover:bg-white/5"
+                    className="rounded-md border border-[hsl(var(--border))] px-3 py-1.5 text-xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] transition-colors hover:bg-[hsl(var(--surface-1))]"
                 >
                     Reintentar
                 </button>
@@ -295,7 +295,7 @@ export default function LeadDetail() {
             rightActions={canEditCrm ? (
                 <button
                     onClick={() => setIsCallDrawerOpen(true)}
-                    className="inline-flex h-8 items-center gap-2 rounded-md bg-[hsl(var(--primary))] px-3 text-xs font-bold uppercase tracking-wide text-white shadow-sm transition-all active:scale-95"
+                    className="inline-flex h-8 items-center gap-2 rounded-md bg-[hsl(var(--primary))] px-3 text-xs font-bold uppercase tracking-wide text-[hsl(var(--primary-foreground))] shadow-sm transition-all active:scale-95"
                 >
                     <Plus size={14} />
                     Interacción
@@ -303,22 +303,22 @@ export default function LeadDetail() {
             ) : undefined}
         >
             <div className="mx-auto flex w-full max-w-6xl flex-col gap-4">
-                <section className="rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-4 shadow-sm dark:border-white/10 dark:bg-white/[0.03]">
+                <section className="rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-4 shadow-sm">
                     <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                         <div className="flex min-w-0 items-start gap-4">
-                            <div className="flex size-12 shrink-0 items-center justify-center rounded-md bg-[hsl(var(--primary))] text-sm font-bold text-white">
+                            <div className="flex size-12 shrink-0 items-center justify-center rounded-md bg-[hsl(var(--primary))] text-sm font-bold text-[hsl(var(--primary-foreground))]">
                                 {initials || '?'}
                             </div>
                             <div className="min-w-0">
                                 <div className="flex flex-wrap items-center gap-2">
-                                    <h1 className="truncate text-xl font-bold tracking-tight text-[hsl(var(--text-primary))] dark:text-white">
+                                    <h1 className="truncate text-xl font-bold tracking-tight text-[hsl(var(--text-primary))]">
                                         {lead?.nombre_completo || 'Contacto sin nombre'}
                                     </h1>
                                     <span className={clsx('rounded-full border px-2.5 py-1 text-2xs font-bold uppercase tracking-wide', STAGE_BADGES[stage])}>
                                         {STAGE_LABELS[stage] ?? stage}
                                     </span>
                                 </div>
-                                <div className="mt-2 flex flex-wrap gap-3 text-xs font-medium text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">
+                                <div className="mt-2 flex flex-wrap gap-3 text-xs font-medium text-[hsl(var(--text-secondary))]">
                                     <span className="inline-flex items-center gap-1.5"><Phone size={13} />{lead?.telefono || lead?.phone || 'Sin teléfono'}</span>
                                     <span className="inline-flex items-center gap-1.5"><Clock size={13} />Registrado {lead?.created_at ? new Date(lead.created_at).toLocaleDateString('es-CO') : 'sin fecha'}</span>
                                     <span className="inline-flex items-center gap-1.5"><Link2 size={13} />{lead?.source || 'Origen general'}</span>
@@ -329,7 +329,7 @@ export default function LeadDetail() {
                         <div className="flex flex-wrap gap-2">
                             <button
                                 onClick={() => router.push('/plataforma/crm/pipeline')}
-                                className="inline-flex h-8 items-center gap-2 rounded-md border border-[hsl(var(--border))] px-3 text-xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] transition-colors hover:bg-[hsl(var(--surface-1))] dark:border-white/10 dark:text-[hsl(var(--text-secondary))] dark:hover:bg-white/5"
+                                className="inline-flex h-8 items-center gap-2 rounded-md border border-[hsl(var(--border))] px-3 text-xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] transition-colors hover:bg-[hsl(var(--surface-1))]"
                             >
                                 <Link2 size={14} />
                                 Pipeline
@@ -339,20 +339,20 @@ export default function LeadDetail() {
                                     <button
                                         onClick={() => setIsStageOpen(value => !value)}
                                         disabled={isSavingStage}
-                                        className="inline-flex h-8 items-center gap-2 rounded-md border border-[hsl(var(--border))] px-3 text-xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] transition-colors hover:bg-[hsl(var(--surface-1))] disabled:opacity-60 dark:border-white/10 dark:text-[hsl(var(--text-secondary))] dark:hover:bg-white/5"
+                                        className="inline-flex h-8 items-center gap-2 rounded-md border border-[hsl(var(--border))] px-3 text-xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] transition-colors hover:bg-[hsl(var(--surface-1))] disabled:opacity-60"
                                     >
                                         {isSavingStage ? <Loader2 size={14} className="animate-spin" /> : <ChevronDown size={14} />}
                                         Cambiar etapa
                                     </button>
                                     {isStageOpen && (
-                                        <div className="absolute right-0 top-9 z-50 w-48 overflow-hidden rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] shadow-xl dark:border-white/10 dark:bg-[hsl(var(--surface-1))]">
+                                        <div className="absolute right-0 top-9 z-50 w-48 overflow-hidden rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] shadow-xl">
                                             {STAGES.map(item => (
                                                 <button
                                                     key={item}
                                                     onClick={() => handleStageChange(item)}
                                                     className={clsx(
-                                                        'flex w-full items-center justify-between px-3 py-2 text-left text-xs font-bold uppercase tracking-wide transition-colors hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5',
-                                                        stage === item ? 'text-[hsl(var(--primary))]' : 'text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]'
+                                                        'flex w-full items-center justify-between px-3 py-2 text-left text-xs font-bold uppercase tracking-wide transition-colors hover:bg-[hsl(var(--surface-2))]',
+                                                        stage === item ? 'text-[hsl(var(--primary))]' : 'text-[hsl(var(--text-secondary))]'
                                                     )}
                                                 >
                                                     {STAGE_LABELS[item]}
@@ -373,13 +373,13 @@ export default function LeadDetail() {
                         { label: 'Llamadas', value: callLogs.filter(log => log.outcome !== 'Nota').length, icon: Phone },
                         { label: 'Motivos de oración', value: callLogs.filter(log => log.prayer_requests).length, icon: Heart },
                     ].map(stat => (
-                        <div key={stat.label} className="rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-3 dark:border-white/10 dark:bg-white/[0.03]">
+                        <div key={stat.label} className="rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-3">
                             <div className="flex items-center justify-between">
                                 <div>
                                     <p className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{stat.label}</p>
-                                    <p className="mt-1 text-2xl font-bold text-[hsl(var(--text-primary))] dark:text-white">{stat.value}</p>
+                                    <p className="mt-1 text-2xl font-bold text-[hsl(var(--text-primary))]">{stat.value}</p>
                                 </div>
-                                <div className="flex size-9 items-center justify-center rounded-md bg-[hsl(var(--surface-2))] text-[hsl(var(--primary))] dark:bg-white/5">
+                                <div className="flex size-9 items-center justify-center rounded-md bg-[hsl(var(--surface-2))] text-[hsl(var(--primary))]">
                                     <stat.icon size={17} />
                                 </div>
                             </div>
@@ -387,8 +387,8 @@ export default function LeadDetail() {
                     ))}
                 </section>
 
-                <section className="rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] dark:border-white/10 dark:bg-white/[0.03]">
-                    <div className="flex border-b border-[hsl(var(--border))] px-3 dark:border-white/10">
+                <section className="rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))]">
+                    <div className="flex border-b border-[hsl(var(--border))] px-3">
                         {[
                             { id: 'history', label: 'Historial de contacto' },
                             { id: 'notes', label: 'Notas e interacción' },
@@ -400,7 +400,7 @@ export default function LeadDetail() {
                                     'relative px-3 py-3 text-xs font-bold uppercase tracking-wide transition-colors',
                                     activeTab === tab.id
                                         ? 'text-[hsl(var(--primary))]'
-                                        : 'text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] dark:hover:text-[hsl(var(--text-secondary))]'
+                                        : 'text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))]'
                                 )}
                             >
                                 {tab.label}
@@ -410,7 +410,7 @@ export default function LeadDetail() {
                     </div>
 
                     {activeTab === 'notes' && (
-                        <div className="border-b border-[hsl(var(--border))] p-4 dark:border-white/10">
+                        <div className="border-b border-[hsl(var(--border))] p-4">
                             <form onSubmit={handleSaveNote} className="space-y-3">
                                 <label className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Nueva nota</label>
                                 <textarea
@@ -418,13 +418,13 @@ export default function LeadDetail() {
                                     onChange={event => setNoteText(event.target.value)}
                                     rows={3}
                                     placeholder="Registra observaciones, acuerdos o próximos pasos..."
-                                    className="w-full resize-none rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] px-3 py-2 text-sm font-medium text-[hsl(var(--text-primary))] outline-none transition-all placeholder:text-[hsl(var(--text-secondary))] focus:border-[hsl(var(--primary))] focus:ring-2 focus:ring-[hsl(var(--primary))]/10 dark:border-white/10 dark:bg-black/20 dark:text-[hsl(var(--text-secondary))]"
+                                    className="w-full resize-none rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] px-3 py-2 text-sm font-medium text-[hsl(var(--text-primary))] outline-none transition-all placeholder:text-[hsl(var(--text-secondary))] focus:border-[hsl(var(--primary))] focus:ring-2 focus:ring-[hsl(var(--primary))]/10"
                                 />
                                 <div className="flex justify-end">
                                     <button
                                         type="submit"
                                         disabled={isSavingNote || !noteText.trim()}
-                                        className="inline-flex h-8 items-center gap-2 rounded-md bg-[hsl(var(--primary))] px-3 text-xs font-bold uppercase tracking-wide text-white shadow-sm transition-all disabled:opacity-50 active:scale-95"
+                                        className="inline-flex h-8 items-center gap-2 rounded-md bg-[hsl(var(--primary))] px-3 text-xs font-bold uppercase tracking-wide text-[hsl(var(--primary-foreground))] shadow-sm transition-all disabled:opacity-50 active:scale-95"
                                     >
                                         {isSavingNote ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
                                         Guardar nota
@@ -438,8 +438,8 @@ export default function LeadDetail() {
                         {(activeTab === 'history' ? timeline : noteRows).length > 0 ? (
                             <div className="space-y-3">
                                 {(activeTab === 'history' ? timeline : noteRows).map(item => (
-                                    <div key={item.id} className="flex gap-3 rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-3 dark:border-white/10 dark:bg-black/10">
-                                        <div className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-md bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))] dark:bg-white/5 dark:text-[hsl(var(--text-secondary))]">
+                                    <div key={item.id} className="flex gap-3 rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] p-3">
+                                        <div className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-md bg-[hsl(var(--surface-1))] text-[hsl(var(--text-secondary))]">
                                             {item.type === 'call' && <Phone size={15} />}
                                             {item.type === 'note' && <MessageSquare size={15} />}
                                             {item.type === 'counseling' && <Heart size={15} />}
@@ -447,15 +447,15 @@ export default function LeadDetail() {
                                         </div>
                                         <div className="min-w-0 flex-1">
                                             <div className="flex flex-wrap items-start justify-between gap-2">
-                                                <h3 className="text-sm font-bold text-[hsl(var(--text-primary))] dark:text-white">{item.title}</h3>
+                                                <h3 className="text-sm font-bold text-[hsl(var(--text-primary))]">{item.title}</h3>
                                                 <span className="inline-flex items-center gap-1 text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
                                                     <Calendar size={11} />
                                                     {formatDate(item.time)}
                                                 </span>
                                             </div>
-                                            <p className="mt-1 whitespace-pre-line text-xs leading-relaxed text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">{item.message}</p>
+                                            <p className="mt-1 whitespace-pre-line text-xs leading-relaxed text-[hsl(var(--text-secondary))]">{item.message}</p>
                                             {item.prayer && (
-                                                <div className="mt-3 rounded-md border border-[hsl(var(--success)/25%)] bg-success-soft p-3 text-xs text-success-text dark:border-[hsl(var(--success)/100%)]/20 dark:bg-[hsl(var(--success))]/10 dark:text-[hsl(var(--success))]">
+                                                <div className="mt-3 rounded-md border border-[hsl(var(--success)/0.25)] bg-[hsl(var(--success)/0.1)] p-3 text-xs text-[hsl(var(--success))]">
                                                     <p className="mb-1 flex items-center gap-1.5 text-2xs font-bold uppercase tracking-wide">
                                                         <Heart size={11} />
                                                         Motivo de oración
@@ -469,7 +469,7 @@ export default function LeadDetail() {
                             </div>
                         ) : (
                             <div className="py-10 text-center">
-                                <History size={34} className="mx-auto text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]" />
+                                <History size={34} className="mx-auto text-[hsl(var(--text-secondary))]" />
                                 <p className="mt-3 text-xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Sin registros todavía</p>
                             </div>
                         )}
@@ -491,7 +491,7 @@ export default function LeadDetail() {
                             form="call-form"
                             type="submit"
                             disabled={isSavingCall}
-                            className="inline-flex items-center gap-2 rounded-md bg-[hsl(var(--primary))] px-3 py-2 text-xs font-bold uppercase tracking-wide text-white shadow-sm transition-all disabled:opacity-60 active:scale-95"
+                            className="inline-flex items-center gap-2 rounded-md bg-[hsl(var(--primary))] px-3 py-2 text-xs font-bold uppercase tracking-wide text-[hsl(var(--primary-foreground))] shadow-sm transition-all disabled:opacity-60 active:scale-95"
                         >
                             {isSavingCall ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
                             Registrar
@@ -505,7 +505,7 @@ export default function LeadDetail() {
                         <select
                             value={callForm.outcome}
                             onChange={event => setCallForm({ ...callForm, outcome: event.target.value })}
-                            className="w-full rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] px-3 py-2 text-sm font-bold text-[hsl(var(--text-primary))] outline-none focus:border-[hsl(var(--primary))] focus:ring-2 focus:ring-[hsl(var(--primary))]/10 dark:border-white/10 dark:bg-black/20 dark:text-white"
+                            className="w-full rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] px-3 py-2 text-sm font-bold text-[hsl(var(--text-primary))] outline-none focus:border-[hsl(var(--primary))] focus:ring-2 focus:ring-[hsl(var(--primary))]/10"
                         >
                             {['Exitoso', 'Sin respuesta', 'Buzón de voz', 'Número equivocado', 'Reagendar', 'Nota'].map(option => (
                                 <option key={option} value={option}>{option}</option>
@@ -519,7 +519,7 @@ export default function LeadDetail() {
                             onChange={event => setCallForm({ ...callForm, notes: event.target.value })}
                             placeholder="Observaciones, acuerdos, próximos pasos..."
                             rows={4}
-                            className="w-full resize-none rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] px-3 py-2 text-sm font-medium text-[hsl(var(--text-primary))] outline-none focus:border-[hsl(var(--primary))] focus:ring-2 focus:ring-[hsl(var(--primary))]/10 dark:border-white/10 dark:bg-black/20 dark:text-white"
+                            className="w-full resize-none rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] px-3 py-2 text-sm font-medium text-[hsl(var(--text-primary))] outline-none focus:border-[hsl(var(--primary))] focus:ring-2 focus:ring-[hsl(var(--primary))]/10"
                         />
                     </div>
                     <div className="space-y-2">
@@ -529,7 +529,7 @@ export default function LeadDetail() {
                             onChange={event => setCallForm({ ...callForm, prayer_requests: event.target.value })}
                             placeholder="Opcional"
                             rows={2}
-                            className="w-full resize-none rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] px-3 py-2 text-sm font-medium text-[hsl(var(--text-primary))] outline-none focus:border-[hsl(var(--primary))] focus:ring-2 focus:ring-[hsl(var(--primary))]/10 dark:border-white/10 dark:bg-black/20 dark:text-white"
+                            className="w-full resize-none rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] px-3 py-2 text-sm font-medium text-[hsl(var(--text-primary))] outline-none focus:border-[hsl(var(--primary))] focus:ring-2 focus:ring-[hsl(var(--primary))]/10"
                         />
                     </div>
                 </form>

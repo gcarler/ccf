@@ -9,6 +9,9 @@ import warnings
 # ``Settings.environment`` field. Keep this aligned so the validator's
 # sqlite/permissive-off branch fires (``env in {local,test,testing,ci}``).
 os.environ.setdefault("ENVIRONMENT", "test")
+import sys
+if "duckdb" not in sys.modules:
+    sys.modules["duckdb"] = None
 
 import anyio.to_thread as _anyio_to_thread
 import httpx

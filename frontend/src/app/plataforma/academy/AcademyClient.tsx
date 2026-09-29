@@ -78,9 +78,6 @@ export default function AcademyClient() {
         } catch (err: unknown) {
             // AbortError es esperado al desmontar; no se muestra al usuario.
             if (err instanceof DOMException && err.name === 'AbortError') return;
-            // I-06 (cierre 2026-07-24): error extraction type-safe sin cast frágil.
-            // ``err instanceof Error`` cubre ``Error`` estándar; el shape HTTP
-            // ``{detail: string}`` del backend se extrae con ``in`` narrowing.
             let message = 'Error al cargar métricas de la Academia';
             if (err instanceof Error && err.message) {
                 message = err.message;
@@ -114,7 +111,7 @@ export default function AcademyClient() {
 
     if (error && !dashboard) {
         return (
-            <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] p-4">
+            <div className="flex flex-col h-full bg-[hsl(var(--surface-1))] p-4">
                 <EmptyState
                     title="No pudimos cargar el dashboard"
                     description={error}
@@ -128,7 +125,7 @@ export default function AcademyClient() {
 
     if (!dashboard) {
         return (
-            <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] p-4">
+            <div className="flex flex-col h-full bg-[hsl(var(--surface-1))] p-4">
                 <EmptyState
                     title="Sin métricas disponibles"
                     description="Cuando haya cursos publicados verás aquí las estadísticas."
@@ -158,14 +155,14 @@ export default function AcademyClient() {
     };
 
     return (
-        <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))] overflow-hidden">
+        <div className="flex flex-col h-full bg-[hsl(var(--surface-1))] overflow-hidden">
             <WorkspaceToolbar
                 breadcrumbs={[
                     { label: 'Academia', icon: GraduationCap },
                     { label: 'Dashboard Inteligente', icon: TrendingUp },
                 ]}
                 rightActions={
-                    <button onClick={() => router.push('/plataforma/academy/curriculum')} className="px-4 py-2 bg-[hsl(var(--primary))] text-white rounded-md text-2xs font-semibold uppercase tracking-wide shadow-lg shadow-[hsl(var(--info)/20%)] hover:scale-105 transition-all">
+                    <button onClick={() => router.push('/plataforma/academy/curriculum')} className="px-4 py-2 bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] rounded-md text-2xs font-semibold uppercase tracking-wide shadow-lg shadow-[hsl(var(--info)/20%)] hover:scale-105 transition-all">
                         Ver Malla Curricular
                     </button>
                 }
@@ -174,18 +171,18 @@ export default function AcademyClient() {
             <main className="flex-1 overflow-y-auto p-4 lg:p-3 space-y-5">
                 {/* Onboarding para Nuevos Estudiantes / Buscadores con 0 cursos */}
                 {!hasModuleAccess('academy', 'manage') && dashboard.total_courses === 0 && (
-                    <section className="bg-gradient-to-br from-blue-950/40 via-blue-900/20 to-[hsl(var(--surface-1))] border border-blue-500/30 rounded-2xl p-6 shadow-xl space-y-5">
-                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-white/10 pb-4">
+                    <section className="bg-gradient-to-br from-[hsl(var(--primary)/0.2)] via-[hsl(var(--surface-2))] to-[hsl(var(--surface-1))] border border-[hsl(var(--primary)/0.3)] rounded-2xl p-6 shadow-xl space-y-5">
+                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[hsl(var(--border))] pb-4">
                             <div className="flex items-center gap-3.5">
-                                <div className="size-12 rounded-xl bg-blue-500/20 text-blue-400 flex items-center justify-center shadow-inner">
+                                <div className="size-12 rounded-xl bg-[hsl(var(--primary)/0.2)] text-[hsl(var(--primary))] flex items-center justify-center shadow-inner">
                                     <Sparkles size={26} />
                                 </div>
                                 <div>
-                                    <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-2xs font-bold uppercase tracking-wider bg-emerald-500/20 text-emerald-400 mb-1 border border-emerald-500/30">
+                                    <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-2xs font-bold uppercase tracking-wider bg-[hsl(var(--success)/0.2)] text-[hsl(var(--success))] mb-1 border border-[hsl(var(--success)/0.3)]">
                                         <CheckCircle2 size={12} /> Acceso Gratuito Habilitado
                                     </div>
-                                    <h2 className="text-xl font-black text-white">¡Bienvenido a tu Formación Ministerial CCF!</h2>
-                                    <p className="text-xs text-blue-200/80">Selecciona el curso en el que deseas comenzar tu crecimiento hoy mismo:</p>
+                                    <h2 className="text-xl font-black text-[hsl(var(--foreground))]">¡Bienvenido a tu Formación Ministerial CCF!</h2>
+                                    <p className="text-xs text-[hsl(var(--muted-foreground))]">Selecciona el curso en el que deseas comenzar tu crecimiento hoy mismo:</p>
                                 </div>
                             </div>
                         </div>
@@ -194,18 +191,18 @@ export default function AcademyClient() {
                             {availableCourses.map((course) => (
                                 <div
                                     key={course.id}
-                                    className="bg-[hsl(var(--surface-2))] dark:bg-white/5 border border-[hsl(var(--border))] dark:border-white/10 hover:border-blue-500/50 rounded-xl p-4 flex flex-col justify-between transition-all hover:shadow-lg hover:scale-[1.01] group"
+                                    className="bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] hover:border-[hsl(var(--primary)/0.5)] rounded-xl p-4 flex flex-col justify-between transition-all hover:shadow-lg hover:scale-[1.01] group"
                                 >
                                     <div className="space-y-2">
                                         <div className="flex items-center justify-between gap-2">
-                                            <span className="text-2xs font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-400 border border-blue-500/30">
+                                            <span className="text-2xs font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-[hsl(var(--primary)/0.2)] text-[hsl(var(--primary))] border border-[hsl(var(--primary)/0.3)]">
                                                 {course.modality || 'Gratuito'}
                                             </span>
                                             <span className="text-2xs text-[hsl(var(--text-secondary))] font-medium flex items-center gap-1">
                                                 <BookOpen size={12} /> {course.duration_hours || 8} hrs
                                             </span>
                                         </div>
-                                        <h3 className="font-bold text-[hsl(var(--text-primary))] dark:text-white text-base group-hover:text-blue-400 transition-colors line-clamp-1">
+                                        <h3 className="font-bold text-[hsl(var(--foreground))] text-base group-hover:text-[hsl(var(--primary))] transition-colors line-clamp-1">
                                             {course.title}
                                         </h3>
                                         <p className="text-xs text-[hsl(var(--text-secondary))] line-clamp-2 leading-relaxed">
@@ -213,12 +210,12 @@ export default function AcademyClient() {
                                         </p>
                                     </div>
 
-                                    <div className="pt-4 mt-2 border-t border-white/5">
+                                    <div className="pt-4 mt-2 border-t border-[hsl(var(--border))]">
                                         <button
                                             type="button"
                                             onClick={() => handleEnroll(course.id, course.title)}
                                             disabled={enrollingId === course.id}
-                                            className="w-full py-2.5 px-3 bg-blue-600 hover:bg-blue-500 disabled:bg-blue-800 text-white rounded-lg text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-all shadow-md active:scale-95"
+                                            className="w-full py-2.5 px-3 bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary)/0.9)] disabled:opacity-50 text-[hsl(var(--primary-foreground))] rounded-lg text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-all shadow-md active:scale-95"
                                         >
                                             {enrollingId === course.id ? 'Matriculando...' : 'Comenzar Ahora →'}
                                         </button>
@@ -234,21 +231,21 @@ export default function AcademyClient() {
                     {dashboard.cards.map((card, idx) => {
                         const gradients = [
                             'group-hover:from-[hsl(var(--primary))] group-hover:via-[hsl(var(--info))] group-hover:to-[hsl(var(--accent))]',
-                            'group-hover:from-emerald-400 group-hover:via-teal-300 group-hover:to-cyan-400',
-                            'group-hover:from-amber-400 group-hover:via-orange-400 group-hover:to-pink-400',
+                            'group-hover:from-[hsl(var(--success))] group-hover:via-[hsl(var(--info))] group-hover:to-[hsl(var(--primary))]',
+                            'group-hover:from-[hsl(var(--warning))] group-hover:via-[hsl(var(--accent))] group-hover:to-[hsl(var(--primary))]',
                             'group-hover:from-[hsl(var(--warning))] group-hover:via-[hsl(var(--accent))] group-hover:to-[hsl(var(--danger))]'
                         ];
                         const grad = gradients[idx % gradients.length];
                         return (
                             <div key={card.title} className="group cursor-pointer select-none space-y-1">
-                                <p className={`text-4xl md:text-5xl lg:text-6xl font-black tracking-tight text-[hsl(var(--text-primary))] dark:text-white ${grad} group-hover:bg-gradient-to-r group-hover:bg-clip-text group-hover:text-transparent group-hover:scale-105 group-hover:drop-shadow-[0_0_18px_rgba(99,102,241,0.35)] transition-all duration-300 origin-left`}>
+                                <p className={`text-4xl md:text-5xl lg:text-6xl font-black tracking-tight text-[hsl(var(--foreground))] ${grad} group-hover:bg-gradient-to-r group-hover:bg-clip-text group-hover:text-transparent group-hover:scale-105 group-hover:drop-shadow-[0_0_18px_rgba(99,102,241,0.35)] transition-all duration-300 origin-left`}>
                                     {card.value}
                                 </p>
-                                <p className="text-xs font-bold uppercase tracking-wider text-[hsl(var(--text-secondary))] group-hover:text-[hsl(var(--text-primary))] dark:group-hover:text-white transition-colors">
+                                <p className="text-xs font-bold uppercase tracking-wider text-[hsl(var(--muted-foreground))] group-hover:text-[hsl(var(--foreground))] transition-colors">
                                     {card.title}
                                 </p>
                                 {card.trend !== undefined && (
-                                    <p className="text-2xs font-semibold text-emerald-500 flex items-center gap-1">
+                                    <p className="text-2xs font-semibold text-[hsl(var(--success))] flex items-center gap-1">
                                         ↑ {card.trend}% crecimiento
                                     </p>
                                 )}
@@ -264,7 +261,7 @@ export default function AcademyClient() {
                             <div className="flex items-center justify-between mb-3">
                                 <div>
                                     <h3 className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-1">Tendencia de Crecimiento</h3>
-                                    <p className="text-xl font-bold text-white italic">Inscripciones Mensuales</p>
+                                    <p className="text-xl font-bold text-[hsl(var(--foreground))] italic">Inscripciones Mensuales</p>
                                 </div>
                                 <div className="size-10 rounded-md bg-[hsl(var(--info))]/10 flex items-center justify-center text-[hsl(var(--primary))]">
                                     <TrendingUp size={20} />
@@ -287,7 +284,7 @@ export default function AcademyClient() {
                                     <div key={course.title} className="flex items-center justify-between group">
                                         <div className="flex items-center gap-3">
                                             <div className="size-2 rounded-full bg-[hsl(var(--primary))]" />
-                                            <span className="text-xs font-bold text-[hsl(var(--text-secondary))] group-hover:text-white transition-colors">{course.title}</span>
+                                            <span className="text-xs font-bold text-[hsl(var(--text-secondary))] group-hover:text-[hsl(var(--foreground))] transition-colors">{course.title}</span>
                                         </div>
                                         <span className="font-semibold text-[hsl(var(--text-secondary))]">{course.count} Est.</span>
                                     </div>

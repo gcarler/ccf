@@ -23,6 +23,7 @@ from backend.core.permissions import (
     require_evangelism_manage,
     require_evangelism_read,
 )
+from backend.core.tenant import require_user_sede_id
 from backend.crud._utils import _utcnow
 
 router = APIRouter()
@@ -115,15 +116,11 @@ def register_bulk_attendance(
         raise HTTPException(status_code=400, detail="persona_ids must be a list")
 
     event = require_event_access(db, current_user, event_id)
+    user_sede = require_user_sede_id(db, current_user)
     if str(event.status or "").upper() == "CANCELLED":
         raise HTTPException(
             status_code=409,
             detail="No se puede registrar asistencia en eventos cancelados",
-        )
-    if event.attendance_closed_at is not None:
-        raise HTTPException(
-            status_code=409,
-            detail="La asistencia de este evento ya fue cerrada",
         )
 
     normalized_persona_ids: list[str] = []
@@ -148,7 +145,7 @@ def register_bulk_attendance(
             for row in db.query(models.Persona.id)
             .filter(
                 models.Persona.id.in_(normalized_persona_uuids),
-                models.Persona.sede_id == event.sede_id,
+                models.Persona.sede_id == user_sede,
             )
             .all()
         }
@@ -184,11 +181,6 @@ def register_bulk_attendance(
             row.scanned_at = now
             row.check_in_at = now
             row.check_out_at = None
-            if row.deleted_at is not None:
-                # Reactivar fila soft-deleted: la UniqueConstraint
-                # (event_id, session_date, persona_id) no considera deleted_at,
-                # así que se reutiliza la fila en lugar de insertar un duplicado.
-                row.deleted_at = None
             if not was_attended:
                 marked_present_count += 1
         else:
@@ -207,9 +199,6 @@ def register_bulk_attendance(
 
     for row in existing_rows:
         if row.persona_id in selected_persona_uuids:
-            continue
-        if row.deleted_at is not None:
-            # Fila soft-deleted no seleccionada: no revivirla como ausente.
             continue
         if row.attended or row.status != "absent":
             row.attended = False
@@ -276,10 +265,6 @@ def get_event_session_detail(
 
     attendee_list = []
     for att in attendances_db:
-        # Los registros ausentes se mantienen para el historial, pero no
-        # deben aparecer en la lista de asistentes que consume el frontend.
-        if not att.attended:
-            continue
         persona = att.persona
         if not persona:
             continue

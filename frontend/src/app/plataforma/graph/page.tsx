@@ -83,7 +83,7 @@ export default function KnowledgeGraphPage() {
 
   return (
     <WorkspaceLayout sidebarTitle="Análisis" sidebarSections={sidebarSections}>
-      <div className="flex h-full flex-col overflow-hidden bg-[hsl(var(--bg-primary))] font-display dark:bg-[#0f1114]">
+      <div className="flex h-full flex-col overflow-hidden bg-[hsl(var(--bg-primary))] font-display">
       <WorkspaceToolbar
         breadcrumbs={[{ label: "Insights", icon: Network }, { label: "Knowledge Graph", icon: Network }]}
         viewType={viewType}
@@ -92,15 +92,15 @@ export default function KnowledgeGraphPage() {
       />
       <main className="relative flex flex-1 flex-col gap-3 overflow-hidden p-3 p-4">
         <header className="space-y-2">
-          <h1 className="text-xl font-bold tracking-tight text-[hsl(var(--text-primary))] dark:text-white">Knowledge Graph</h1>
-          <p className="max-w-3xl text-sm text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">Vista interactiva con pan/zoom, busqueda de nodos y filtros por tipo para insights de CRM, Academy y Projects.</p>
+          <h1 className="text-xl font-bold tracking-tight text-[hsl(var(--text-primary))]">Knowledge Graph</h1>
+          <p className="max-w-3xl text-sm text-[hsl(var(--text-secondary))]">Vista interactiva con pan/zoom, búsqueda de nodos y filtros por tipo para insights de CRM, Academy y Projects.</p>
         </header>
 
         {viewType === "list" && (
           <section className="space-y-4 overflow-y-auto">
             {filtered.nodes.map((node) => (
-              <article key={node.id} className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-3 dark:border-white/10 dark:bg-white/5">
-                <h3 className="font-bold text-[hsl(var(--text-primary))] dark:text-white">{node.label}</h3>
+              <article key={node.id} className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-3">
+                <h3 className="font-bold text-[hsl(var(--text-primary))]">{node.label}</h3>
                 <p className="mt-1 text-sm text-[hsl(var(--text-secondary))]">{node.type}</p>
               </article>
             ))}
@@ -108,15 +108,15 @@ export default function KnowledgeGraphPage() {
         )}
 
         {viewType === "table" && (
-          <section className="overflow-hidden rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] dark:border-white/10 dark:bg-white/5">
+          <section className="overflow-hidden rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))]">
             <table className="w-full text-left">
-              <thead className="bg-[hsl(var(--surface-1))] text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] dark:bg-white/5">
+              <thead className="bg-[hsl(var(--surface-2))] text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
                 <tr><th className="px-3 py-1.5">Nodo</th><th className="px-3 py-1.5">Tipo</th><th className="px-3 py-1.5">Conexiones</th></tr>
               </thead>
               <tbody>
                 {filtered.nodes.map((node) => (
-                  <tr key={node.id} className="border-t border-[hsl(var(--border))] dark:border-white/5">
-                    <td className="px-3 py-1.5 font-bold text-[hsl(var(--text-primary))] dark:text-white">{node.label}</td>
+                  <tr key={node.id} className="border-t border-[hsl(var(--border))]">
+                    <td className="px-3 py-1.5 font-bold text-[hsl(var(--text-primary))]">{node.label}</td>
                     <td className="px-3 py-1.5 text-[hsl(var(--text-secondary))]">{node.type}</td>
                     <td className="px-3 py-1.5 text-[hsl(var(--text-secondary))]">{filtered.edges.filter((edge) => edge.from === node.id || edge.to === node.id).length}</td>
                   </tr>
@@ -136,13 +136,13 @@ export default function KnowledgeGraphPage() {
                   value={query}
                   onChange={(event) => setQuery(event.target.value)}
                   placeholder="Buscar nodo por nombre, id o detalle..."
-                  className="h-10 w-full rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] pl-9 pr-3 text-sm outline-none ring-[hsl(var(--primary))]/20 transition focus:ring-4 dark:border-white/10 dark:bg-white/5"
+                  className="h-10 w-full rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] pl-9 pr-3 text-sm outline-none ring-[hsl(var(--primary))]/20 transition focus:ring-4 text-[hsl(var(--text-primary))] placeholder:text-[hsl(var(--text-secondary))]"
                 />
               </div>
 
               <button
                 onClick={refresh}
-                className="inline-flex h-10 items-center gap-2 rounded-md border border-[hsl(var(--border))] px-3 text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] transition hover:bg-[hsl(var(--surface-2))] dark:border-white/10 dark:hover:bg-white/10"
+                className="inline-flex h-10 items-center gap-2 rounded-md border border-[hsl(var(--border))] px-3 text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] transition hover:bg-[hsl(var(--surface-2))]"
               >
                 <RefreshCw size={14} /> Refrescar
               </button>
@@ -155,7 +155,7 @@ export default function KnowledgeGraphPage() {
               </div>
             </div>
 
-            <div className="h-[60vh] overflow-hidden rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] dark:border-white/10 dark:bg-black/20">
+            <div className="h-[60vh] overflow-hidden rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))]">
               {configLoading ? (
                 <div className="grid h-full place-items-center">
                   <DSSkeleton className="h-[60%] w-[90%] rounded-lg" />
@@ -198,23 +198,23 @@ export default function KnowledgeGraphPage() {
             </div>
           </div>
 
-          <aside className="space-y-3 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-4 dark:border-white/10 dark:bg-white/5">
+          <aside className="space-y-3 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-4">
             <h2 className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Panel de Nodo</h2>
             {selectedNode ? (
               <>
-                <div className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-4 dark:border-white/10 dark:bg-black/20">
+                <div className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] p-4">
                   <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{selectedNode.type}</p>
-                  <h3 className="mt-1 text-lg font-bold text-[hsl(var(--text-primary))] dark:text-white">{selectedNode.label}</h3>
-                  <p className="mt-1 text-xs text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]">{selectedNode.detail || "Sin detalle"}</p>
+                  <h3 className="mt-1 text-lg font-bold text-[hsl(var(--text-primary))]">{selectedNode.label}</h3>
+                  <p className="mt-1 text-xs text-[hsl(var(--text-secondary))]">{selectedNode.detail || "Sin detalle"}</p>
                 </div>
                 {selectedNode.meta ? (
-                  <div className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] p-4 dark:border-white/10 dark:bg-black/20">
+                  <div className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] p-4">
                     <h4 className="mb-2 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Metadata</h4>
                     <dl className="space-y-2">
                       {Object.entries(selectedNode.meta).map(([key, value]) => (
                         <div key={key} className="flex items-center justify-between gap-3 text-xs">
                           <dt className="font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{key}</dt>
-                          <dd className="max-w-[170px] truncate font-semibold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">{String(value)}</dd>
+                          <dd className="max-w-[170px] truncate font-semibold text-[hsl(var(--text-primary))]">{String(value)}</dd>
                         </div>
                       ))}
                     </dl>
@@ -225,7 +225,7 @@ export default function KnowledgeGraphPage() {
               <p className="text-sm text-[hsl(var(--text-secondary))]">Selecciona un nodo para ver su detalle y metadata.</p>
             )}
 
-            <div className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-4 dark:border-white/10 dark:bg-black/20">
+            <div className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] p-4">
               <h4 className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Resumen</h4>
               <div className="mt-2 grid grid-cols-2 gap-2 text-sm">
                 <SummaryBox label="Nodos" value={String(filtered.nodes.length)} />
@@ -247,8 +247,8 @@ function TypeChip({ label, active, onClick }: { label: string; active: boolean; 
       onClick={onClick}
       className={`rounded-full px-3 py-1 text-2xs font-semibold uppercase tracking-wide transition ${
         active
-          ? "bg-[hsl(var(--primary))] text-white"
-          : "border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:border-white/10 dark:bg-white/5"
+          ? "bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))]"
+          : "border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))]"
       }`}
     >
       {label}
@@ -258,9 +258,9 @@ function TypeChip({ label, active, onClick }: { label: string; active: boolean; 
 
 function SummaryBox({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] px-3 py-2 text-center dark:border-white/10 dark:bg-white/5">
+    <div className="rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] px-3 py-2 text-center">
       <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{label}</p>
-      <p className="text-lg font-bold text-[hsl(var(--text-primary))] dark:text-white">{value}</p>
+      <p className="text-lg font-bold text-[hsl(var(--text-primary))]">{value}</p>
     </div>
   );
 }

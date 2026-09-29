@@ -64,7 +64,7 @@ function PersonaSelect({ personas, value, onChange, label, multi = false }: Pers
         </div>
       ) : value ? (
         <div className="flex items-center justify-between px-4 py-1.5 bg-info-soft border border-info-muted rounded-lg mb-2">
-          <span className="text-sm font-bold text-info-text dark:text-info">
+          <span className="text-sm font-bold text-[hsl(var(--info))]">
             {(() => {
               const m = personas.find((x) => x.id === value);
               return m ? m.nombre_completo : 'Cargando...';
@@ -84,16 +84,16 @@ function PersonaSelect({ personas, value, onChange, label, multi = false }: Pers
               onChange={(e) => { setSearch(e.target.value); setOpen(true); }}
               onFocus={() => setOpen(true)}
               placeholder="Buscar persona..."
-              className="w-full pl-9 pr-4 py-1.5 bg-[hsl(var(--bg-muted))] dark:bg-black/20 border border-[hsl(var(--border-primary))] rounded-lg text-sm outline-none focus:ring-2 focus:ring-primary"
+              className="w-full pl-9 pr-4 py-1.5 bg-[hsl(var(--bg-muted))] border border-[hsl(var(--border-primary))] rounded-lg text-sm outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]"
             />
           </div>
           {open && search && (
-            <div className="absolute z-20 top-full left-0 right-0 mt-2 bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-card))] border border-[hsl(var(--border-primary))] rounded-lg shadow-xl max-h-60 overflow-y-auto">
+            <div className="absolute z-20 top-full left-0 right-0 mt-2 bg-[hsl(var(--bg-primary))] border border-[hsl(var(--border-primary))] rounded-lg shadow-xl max-h-60 overflow-y-auto">
               {filtered.map((m: Persona) => (
                 <button
                   key={m.id}
                   onClick={() => handleSelect(m)}
-                  className="w-full text-left px-4 py-1.5 hover:bg-[hsl(var(--bg-muted))] dark:hover:bg-white/5 border-b border-[hsl(var(--border-primary))] flex flex-col"
+                  className="w-full text-left px-4 py-1.5 hover:bg-[hsl(var(--bg-muted))] border-b border-[hsl(var(--border-primary))] flex flex-col"
                 >
                   <span className="text-sm font-bold text-[hsl(var(--text-primary))]">{m.nombre_completo}</span>
                   <span className="text-2xs uppercase font-bold tracking-wide text-[hsl(var(--text-secondary))]">{m.church_role || 'Persona'}</span>
@@ -267,21 +267,21 @@ export default function SessionTab({ eventId, token, eventName }: SessionTabProp
               type="date"
               value={sessionDate}
               onChange={(e) => setSessionDate(e.target.value)}
-              className="w-full bg-[hsl(var(--bg-muted))] dark:bg-black/20 border border-[hsl(var(--border-primary))] rounded-lg py-1.5 pl-11 pr-4 text-sm font-bold outline-none focus:ring-2 focus:ring-primary"
+              className="w-full bg-[hsl(var(--bg-muted))] border border-[hsl(var(--border-primary))] rounded-lg py-1.5 pl-11 pr-4 text-sm font-bold outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]"
             />
           </div>
         </div>
         <div className="flex items-center gap-4">
           <button
             onClick={() => setIsVisitorDrawerOpen(true)}
-            className="px-3 py-1.5 bg-success text-white rounded-lg text-2xs font-semibold uppercase tracking-wide shadow-lg shadow-success hover:scale-105 transition-all flex items-center gap-2"
+            className="px-3 py-1.5 bg-[hsl(var(--success))] text-[hsl(var(--primary-foreground))] rounded-lg text-2xs font-semibold uppercase tracking-wide shadow-sm hover:scale-105 transition-all flex items-center gap-2"
           >
             <UserPlus size={16}/> Registrar visitante
           </button>
           <button
             onClick={saveSession}
             disabled={savingSession || !sessionDate}
-            className="px-3 py-1.5 bg-[hsl(var(--primary))] text-white rounded-lg text-2xs font-semibold uppercase tracking-wide shadow-lg shadow-primary hover:scale-105 transition-all flex items-center gap-2 disabled:opacity-60 disabled:hover:scale-100"
+            className="px-3 py-1.5 bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] rounded-lg text-2xs font-semibold uppercase tracking-wide shadow-sm hover:scale-105 transition-all flex items-center gap-2 disabled:opacity-60 disabled:hover:scale-100"
           >
             <Save size={16}/> {savingSession ? 'Guardando...' : 'Guardar agenda'}
           </button>
@@ -289,7 +289,7 @@ export default function SessionTab({ eventId, token, eventName }: SessionTabProp
       </div>
 
       {hasUnsavedSessionChanges && (
-        <div className="px-3 py-2 bg-warning-soft border border-warning-muted rounded-lg text-xs font-semibold text-warning-text dark:text-warning flex items-center gap-2">
+        <div className="px-3 py-2 bg-[hsl(var(--warning-muted))] border border-[hsl(var(--warning)/0.3)] rounded-lg text-xs font-semibold text-[hsl(var(--warning))] flex items-center gap-2">
           <span className="size-2 rounded-full bg-warning animate-pulse" />
           Tienes cambios sin guardar en la agenda
         </div>
@@ -359,8 +359,8 @@ export default function SessionTab({ eventId, token, eventName }: SessionTabProp
               {(sessionData?.total_absentees ?? 0) > 0 && (
                 <div className="mt-3 p-4 rounded-lg bg-warning-soft border border-warning-muted flex items-center justify-between gap-4">
                   <div>
-                    <p className="text-xs font-semibold uppercase tracking-wide text-warning-text dark:text-warning">Inasistentes</p>
-                    <p className="text-lg font-bold text-warning-text dark:text-warning mt-0.5">{sessionData?.total_absentees}</p>
+                    <p className="text-xs font-semibold uppercase tracking-wide text-[hsl(var(--warning))]">Inasistentes</p>
+                    <p className="text-lg font-bold text-[hsl(var(--warning))] mt-0.5">{sessionData?.total_absentees}</p>
                     {sessionData?.absentees_truncated && (
                       <p className="text-2xs text-warning-text/70 mt-1">Mostrando {sessionData?.absentees?.length} de {sessionData?.total_absentees}. Descarga el CSV para verlos todos.</p>
                     )}
@@ -368,7 +368,7 @@ export default function SessionTab({ eventId, token, eventName }: SessionTabProp
                   <button
                     onClick={handleExportCsv}
                     disabled={exportingCsv}
-                    className="shrink-0 px-4 py-2 bg-warning hover:opacity-90 text-white rounded-md text-2xs font-semibold uppercase tracking-wide transition-all flex items-center gap-2 disabled:opacity-60"
+                    className="shrink-0 px-4 py-2 bg-[hsl(var(--warning))] hover:opacity-90 text-[hsl(var(--primary-foreground))] rounded-md text-2xs font-semibold uppercase tracking-wide transition-all flex items-center gap-2 disabled:opacity-60"
                   >
                     <Download size={12} /> {exportingCsv ? 'Exportando...' : 'Exportar Lista'}
                   </button>
@@ -386,7 +386,7 @@ export default function SessionTab({ eventId, token, eventName }: SessionTabProp
                       <p className="text-sm text-[hsl(var(--text-secondary))]">Sin registros de asistentes.</p>
                     ) : (
                       sessionData!.attendees.map((att) => (
-                        <div key={`${att.persona_id}-${att.role}`} className="flex items-center justify-between gap-3 rounded-md bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-card))] border border-[hsl(var(--border-primary))] px-3 py-2">
+                        <div key={`${att.persona_id}-${att.role}`} className="flex items-center justify-between gap-3 rounded-md bg-[hsl(var(--bg-primary))] border border-[hsl(var(--border-primary))] px-3 py-2">
                           <div className="min-w-0">
                             <p className="text-sm font-bold text-[hsl(var(--text-primary))] truncate">{att.name}</p>
                             <p className="text-2xs uppercase font-bold tracking-wide text-[hsl(var(--text-secondary))]">{att.role}</p>
@@ -410,7 +410,7 @@ export default function SessionTab({ eventId, token, eventName }: SessionTabProp
                       <p className="text-sm text-[hsl(var(--text-secondary))]">No hay ausentes en esta sesión.</p>
                     ) : (
                       sessionData!.absentees.map((att) => (
-                        <div key={`${att.persona_id}-${att.role}`} className="flex items-center justify-between gap-3 rounded-md bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-card))] border border-[hsl(var(--border-primary))] px-3 py-2">
+                        <div key={`${att.persona_id}-${att.role}`} className="flex items-center justify-between gap-3 rounded-md bg-[hsl(var(--bg-primary))] border border-[hsl(var(--border-primary))] px-3 py-2">
                           <div className="min-w-0">
                             <p className="text-sm font-bold text-[hsl(var(--text-primary))] truncate">{att.name}</p>
                             <p className="text-2xs uppercase font-bold tracking-wide text-[hsl(var(--text-secondary))]">{att.role}</p>
@@ -438,7 +438,7 @@ export default function SessionTab({ eventId, token, eventName }: SessionTabProp
             <button type="button" disabled={savingVisitor} onClick={() => setIsVisitorDrawerOpen(false)} className="px-4 py-2 text-xs font-bold text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] transition-colors disabled:opacity-60">
               Cancelar
             </button>
-            <button type="button" onClick={handleAddVisitor} disabled={savingVisitor || !visitorForm.first_name || !visitorForm.last_name} className="flex items-center gap-2 px-3 py-2 bg-[hsl(var(--primary))] text-white rounded-lg text-xs font-semibold uppercase tracking-wide shadow-lg shadow-primary hover:bg-[hsl(var(--primary))] transition-all disabled:opacity-60">
+            <button type="button" onClick={handleAddVisitor} disabled={savingVisitor || !visitorForm.first_name || !visitorForm.last_name} className="flex items-center gap-2 px-3 py-2 bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] rounded-lg text-xs font-semibold uppercase tracking-wide shadow-sm hover:bg-[hsl(var(--primary))] transition-all disabled:opacity-60">
               <CheckCircle2 size={16} /> {savingVisitor ? 'Guardando...' : 'Registrar visitante'}
             </button>
           </>
@@ -448,20 +448,20 @@ export default function SessionTab({ eventId, token, eventName }: SessionTabProp
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
               <label className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] block">Nombre</label>
-              <input required disabled={savingVisitor} value={visitorForm.first_name} onChange={e => setVisitorForm({...visitorForm, first_name: e.target.value})} className="w-full px-4 py-1.5 bg-[hsl(var(--bg-muted))] dark:bg-black/20 border border-[hsl(var(--border-primary))] rounded-md text-sm font-bold outline-none focus:ring-2 focus:ring-primary disabled:opacity-60" placeholder="Juan" />
+              <input required disabled={savingVisitor} value={visitorForm.first_name} onChange={e => setVisitorForm({...visitorForm, first_name: e.target.value})} className="w-full px-4 py-1.5 bg-[hsl(var(--bg-muted))] border border-[hsl(var(--border-primary))] rounded-md text-sm font-bold outline-none focus:ring-2 focus:ring-[hsl(var(--primary))] disabled:opacity-60" placeholder="Juan" />
             </div>
             <div className="space-y-1.5">
               <label className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] block">Apellido</label>
-              <input required value={visitorForm.last_name} onChange={e => setVisitorForm({...visitorForm, last_name: e.target.value})} className="w-full px-4 py-1.5 bg-[hsl(var(--bg-muted))] dark:bg-black/20 border border-[hsl(var(--border-primary))] rounded-md text-sm font-bold outline-none focus:ring-2 focus:ring-primary" placeholder="Pérez" />
+              <input required value={visitorForm.last_name} onChange={e => setVisitorForm({...visitorForm, last_name: e.target.value})} className="w-full px-4 py-1.5 bg-[hsl(var(--bg-muted))] border border-[hsl(var(--border-primary))] rounded-md text-sm font-bold outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]" placeholder="Pérez" />
             </div>
           </div>
           <div className="space-y-1.5">
               <label className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] block">Teléfono (WhatsApp)</label>
-            <input disabled={savingVisitor} value={visitorForm.phone} onChange={e => setVisitorForm({...visitorForm, phone: e.target.value})} className="w-full px-4 py-1.5 bg-[hsl(var(--bg-muted))] dark:bg-black/20 border border-[hsl(var(--border-primary))] rounded-md text-sm font-bold outline-none focus:ring-2 focus:ring-primary disabled:opacity-60" placeholder="+57 300 000 0000" />
+            <input disabled={savingVisitor} value={visitorForm.phone} onChange={e => setVisitorForm({...visitorForm, phone: e.target.value})} className="w-full px-4 py-1.5 bg-[hsl(var(--bg-muted))] border border-[hsl(var(--border-primary))] rounded-md text-sm font-bold outline-none focus:ring-2 focus:ring-[hsl(var(--primary))] disabled:opacity-60" placeholder="+57 300 000 0000" />
           </div>
           <div className="space-y-1.5">
             <label className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] block">Correo electrónico (opcional)</label>
-            <input type="email" disabled={savingVisitor} value={visitorForm.email} onChange={e => setVisitorForm({...visitorForm, email: e.target.value})} className="w-full px-4 py-1.5 bg-[hsl(var(--bg-muted))] dark:bg-black/20 border border-[hsl(var(--border-primary))] rounded-md text-sm font-bold outline-none focus:ring-2 focus:ring-primary disabled:opacity-60" placeholder="correo@ejemplo.com" />
+            <input type="email" disabled={savingVisitor} value={visitorForm.email} onChange={e => setVisitorForm({...visitorForm, email: e.target.value})} className="w-full px-4 py-1.5 bg-[hsl(var(--bg-muted))] border border-[hsl(var(--border-primary))] rounded-md text-sm font-bold outline-none focus:ring-2 focus:ring-[hsl(var(--primary))] disabled:opacity-60" placeholder="correo@ejemplo.com" />
           </div>
         </div>
       </WorkspaceDrawer>
