@@ -498,7 +498,6 @@ def send_to_tmux(event: dict) -> tuple[bool, str]:
     commands = (
         ["tmux", "set-buffer", "-b", buffer_name, "--", event["message"]],
         ["tmux", "paste-buffer", "-b", buffer_name, "-d", "-t", pane_id],
-        ["tmux", "send-keys", "-t", pane_id, "C-m"],
     )
     for command in commands:
         try:
@@ -507,6 +506,9 @@ def send_to_tmux(event: dict) -> tuple[bool, str]:
             return False, str(exc)
         if result.returncode != 0:
             return False, result.stderr.strip() or f"tmux exit={result.returncode}"
+    time.sleep(0.25)
+    for enter_key in ("C-m", "Enter"):
+        subprocess.run(["tmux", "send-keys", "-t", pane_id, enter_key], capture_output=True, text=True, timeout=5, check=False)
     return True, ""
 
 
