@@ -38,7 +38,7 @@ const ROUTE_META_MAP: Record<string, { slug: string; fallbackTitle: string }> = 
     "/eventos":         { slug: "events", fallbackTitle: "Eventos y Calendario | Comunidad Cristiana El Faro (CCF)" },
     "/predicas":        { slug: "sermons", fallbackTitle: "Prédicas" },
     "/cursos":          { slug: "courses", fallbackTitle: "Cursos" },
-    "/sedes":           { slug: "locations", fallbackTitle: "Sedes" },
+    "/sedes":           { slug: "locations", fallbackTitle: "Nuestras Sedes | Comunidad Cristiana El Faro (CCF)" },
     "/boletin":         { slug: "newsletter", fallbackTitle: "Boletín" },
     "/testimonios":     { slug: "testimonials", fallbackTitle: "Testimonios" },
     "/privacy":         { slug: "privacy", fallbackTitle: "Privacidad" },
