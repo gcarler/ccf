@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from 'react';
+import Link from 'next/link';
 import {
     Award,
     Crown,
@@ -13,7 +14,10 @@ import {
     User,
     Settings,
     Loader2,
-    AlertCircle
+    AlertCircle,
+    Instagram,
+    Facebook,
+    Twitter
 } from 'lucide-react';
 import WorkspaceLayout from '@/components/WorkspaceLayout';
 import { useAuth } from '@/context/AuthContext';
@@ -45,6 +49,10 @@ interface PersonaInfo {
     church_role: string | null;
     spiritual_status: string | null;
     registration_date: string | null;
+    bio_short?: string | null;
+    social_instagram?: string | null;
+    social_facebook?: string | null;
+    social_twitter?: string | null;
 }
 
 interface LevelInfo {
@@ -56,12 +64,23 @@ interface LevelInfo {
 }
 
 interface ProfileData {
-    persona: PersonaInfo;
-    positions: Position[];
-    skills: string[];
-    badges: Badge[];
-    xp: number;
-    level: LevelInfo;
+    persona?: PersonaInfo;
+    id?: string | null;
+    first_name?: string;
+    last_name?: string;
+    nombre_completo?: string;
+    church_role?: string | null;
+    spiritual_status?: string | null;
+    registration_date?: string | null;
+    bio_short?: string | null;
+    social_instagram?: string | null;
+    social_facebook?: string | null;
+    social_twitter?: string | null;
+    positions?: Position[];
+    skills?: string[];
+    badges?: Badge[];
+    xp?: number;
+    level?: LevelInfo;
 }
 
 const BADGE_ICONS: Record<string, React.ComponentType<any>> = {
@@ -127,7 +146,29 @@ export default function MinistryProfilePage() {
         );
     }
 
-    const { persona, positions, skills, badges, xp, level } = profile;
+    const persona: PersonaInfo = profile.persona || {
+        id: profile.id ?? null,
+        first_name: profile.first_name,
+        last_name: profile.last_name,
+        nombre_completo: profile.nombre_completo,
+        church_role: profile.church_role ?? null,
+        spiritual_status: profile.spiritual_status ?? null,
+        registration_date: profile.registration_date ?? null,
+        bio_short: profile.bio_short ?? null,
+        social_instagram: profile.social_instagram ?? null,
+        social_facebook: profile.social_facebook ?? null,
+        social_twitter: profile.social_twitter ?? null,
+    };
+    const bioShort = persona.bio_short ?? profile.bio_short;
+    const socialInstagram = persona.social_instagram ?? profile.social_instagram;
+    const socialFacebook = persona.social_facebook ?? profile.social_facebook;
+    const socialTwitter = persona.social_twitter ?? profile.social_twitter;
+    const positions = profile.positions || [];
+    const skills = profile.skills || [];
+    const badges = profile.badges || [];
+    const xp = profile.xp || 0;
+    const level = profile.level || { title: 'Servidor', min_xp: 0, icon_key: null, next_title: null, next_min_xp: 1000 };
+
     const initials = (persona.nombre_completo?.charAt(0) ?? persona.first_name?.charAt(0) ?? '').toUpperCase();
     const fullName = persona.nombre_completo || `${persona.first_name ?? ''} ${persona.last_name ?? ''}`.trim() || 'Persona';
     const statusLabel = persona.spiritual_status || persona.church_role || 'Persona';
@@ -160,26 +201,84 @@ export default function MinistryProfilePage() {
                     </p>
                 </div>
 
-                <button className="px-3 py-3 bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] hover:bg-[hsl(var(--surface-3))] text-[hsl(var(--text-primary))] text-2xs font-semibold uppercase tracking-wide rounded-lg transition-all flex items-center gap-2">
+                <Link
+                    href="/plataforma/account"
+                    className="px-3 py-2 bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] hover:bg-[hsl(var(--surface-3))] text-[hsl(var(--text-primary))] text-2xs font-semibold uppercase tracking-wide rounded-lg transition-all flex items-center gap-2 shrink-0"
+                >
                     <Edit3 size={16} /> Editar Perfil
-                </button>
+                </Link>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
                 <div className="lg:col-span-2 space-y-3">
                     <div className="bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] p-4 rounded-lg space-y-3">
-                        <div className="flex items-center gap-3">
-                            <div className="w-24 h-24 bg-gradient-to-br from-[hsl(var(--warning))] to-[hsl(var(--primary))] rounded-lg flex items-center justify-center text-[hsl(var(--primary-foreground))] text-3xl font-bold shadow-2xl">
-                                {initials || '?'}
-                            </div>
-                            <div className="space-y-1">
-                                <h2 className="text-xl font-bold text-[hsl(var(--text-primary))] tracking-tight uppercase italic">{fullName}</h2>
-                                <div className="flex items-center gap-2 text-2xs text-[hsl(var(--text-secondary))] font-semibold uppercase tracking-wide">
-                                    <Shield size={12} className="text-[hsl(var(--warning))]" /> {statusLabel}
-                                    {sinceYear && <><span className="opacity-20">•</span> Desde {sinceYear}</>}
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                            <div className="flex items-center gap-3">
+                                <div className="w-20 h-20 sm:w-24 sm:h-24 bg-gradient-to-br from-[hsl(var(--warning))] to-[hsl(var(--primary))] rounded-lg flex items-center justify-center text-[hsl(var(--primary-foreground))] text-3xl font-bold shadow-2xl shrink-0">
+                                    {initials || '?'}
+                                </div>
+                                <div className="space-y-1">
+                                    <h2 className="text-xl font-bold text-[hsl(var(--text-primary))] tracking-tight uppercase italic">{fullName}</h2>
+                                    <div className="flex items-center gap-2 text-2xs text-[hsl(var(--text-secondary))] font-semibold uppercase tracking-wide">
+                                        <Shield size={12} className="text-[hsl(var(--warning))]" /> {statusLabel}
+                                        {sinceYear && <><span className="opacity-20">•</span> Desde {sinceYear}</>}
+                                    </div>
+                                    {/* Redes Sociales Pastorales */}
+                                    {(socialInstagram || socialFacebook || socialTwitter) && (
+                                        <div className="flex items-center gap-2 pt-1.5">
+                                            {socialInstagram && (
+                                                <a
+                                                    href={socialInstagram}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="p-1.5 rounded-md bg-[hsl(var(--surface-2))] hover:bg-[hsl(var(--surface-3))] text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] border border-[hsl(var(--border))] transition-colors"
+                                                    title="Instagram"
+                                                    aria-label="Instagram"
+                                                >
+                                                    <Instagram size={14} />
+                                                </a>
+                                            )}
+                                            {socialFacebook && (
+                                                <a
+                                                    href={socialFacebook}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="p-1.5 rounded-md bg-[hsl(var(--surface-2))] hover:bg-[hsl(var(--surface-3))] text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] border border-[hsl(var(--border))] transition-colors"
+                                                    title="Facebook"
+                                                    aria-label="Facebook"
+                                                >
+                                                    <Facebook size={14} />
+                                                </a>
+                                            )}
+                                            {socialTwitter && (
+                                                <a
+                                                    href={socialTwitter}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="p-1.5 rounded-md bg-[hsl(var(--surface-2))] hover:bg-[hsl(var(--surface-3))] text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] border border-[hsl(var(--border))] transition-colors"
+                                                    title="X (Twitter)"
+                                                    aria-label="X (Twitter)"
+                                                >
+                                                    <Twitter size={14} />
+                                                </a>
+                                            )}
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         </div>
+
+                        {/* Biografía Breve Ministerial */}
+                        {bioShort && (
+                            <div className="p-3.5 rounded-lg bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] space-y-1">
+                                <span className="text-2xs font-semibold text-[hsl(var(--warning))] uppercase tracking-wide flex items-center gap-1.5">
+                                    <Crown size={12} /> Biografía Ministerial
+                                </span>
+                                <p className="text-xs text-[hsl(var(--text-secondary))] leading-relaxed font-medium">
+                                    {bioShort}
+                                </p>
+                            </div>
+                        )}
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-8 border-t border-[hsl(var(--border))]">
                             <div className="space-y-4">

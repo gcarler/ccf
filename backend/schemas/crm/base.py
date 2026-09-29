@@ -551,6 +551,10 @@ class PersonaResponse(BaseModel):
     volunteer_commitment: float = 0.0
     mesh_insight: Optional[PersonaMeshInsight] = None
     current_mentorship: Optional[PersonaMentorshipResponse] = None
+    bio_short: Optional[str] = None
+    social_instagram: Optional[str] = None
+    social_facebook: Optional[str] = None
+    social_twitter: Optional[str] = None
 
 
 class PersonaPageResponse(BaseModel):
@@ -741,6 +745,10 @@ class PersonaUpdate(BaseModel):
     church_join_date: Optional[date] = None
     colombian_department_id: Optional[UUID] = None
     city: Optional[str] = None
+    bio_short: Optional[str] = None
+    social_instagram: Optional[str] = None
+    social_facebook: Optional[str] = None
+    social_twitter: Optional[str] = None
 
 
 class PersonaSelfProfileUpdate(BaseModel):
@@ -758,6 +766,10 @@ class PersonaSelfProfileUpdate(BaseModel):
     address: Optional[str] = None
     birthday: Optional[date] = None
     city: Optional[str] = None
+    bio_short: Optional[str] = None
+    social_instagram: Optional[str] = None
+    social_facebook: Optional[str] = None
+    social_twitter: Optional[str] = None
 
 
 # ── PERSONA (reemplaza Persona — UUID PK) ────────────────────

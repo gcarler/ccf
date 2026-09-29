@@ -116,7 +116,20 @@ def update_my_profile(
     if not persona_id:
         raise HTTPException(status_code=404, detail="No tienes un perfil personal vinculado")
 
-    persona = crud.update_persona(db, persona_id, schemas.PersonaUpdate(**payload.model_dump(exclude_unset=True)))
+    raw_data = payload.model_dump(exclude_unset=True)
+
+    from backend.crud.cms.pastoral import _normalize_social_url
+
+    if "social_instagram" in raw_data:
+        raw_data["social_instagram"] = _normalize_social_url(raw_data["social_instagram"], "instagram")
+    if "social_facebook" in raw_data:
+        raw_data["social_facebook"] = _normalize_social_url(raw_data["social_facebook"], "facebook")
+    if "social_twitter" in raw_data:
+        raw_data["social_twitter"] = _normalize_social_url(raw_data["social_twitter"], "twitter")
+    if "bio_short" in raw_data and raw_data["bio_short"] is not None:
+        raw_data["bio_short"] = raw_data["bio_short"].strip() or None
+
+    persona = crud.update_persona(db, persona_id, schemas.PersonaUpdate(**raw_data))
     if not persona:
         raise HTTPException(status_code=404, detail="Persona no encontrada")
     return persona

@@ -8,7 +8,7 @@ import { useToast } from '@/context/ToastContext';
 import {
     User, Mail, Shield, Palette, Bell, Save, Camera, ChevronRight, UserCircle,
     Fingerprint, Moon, Sun, Monitor, Globe, Lock, ShieldCheck, Smartphone, Layout,
-    Sparkles, LogOut, Settings as SettingsIcon, Zap, Crown
+    Sparkles, LogOut, Settings as SettingsIcon, Zap, Crown, Share2, Instagram, Facebook, Twitter
 } from 'lucide-react';
 import WorkspaceToolbar from '@/components/WorkspaceToolbar';
 import type { ViewType } from '@/components/ViewSwitcher';
@@ -30,6 +30,10 @@ export default function AccountSettingsPage() {
         firstName: '',
         lastName: '',
         phone: '',
+        bioShort: '',
+        socialInstagram: '',
+        socialFacebook: '',
+        socialTwitter: '',
     });
     const [passwordForm, setPasswordForm] = useState({
         current: '',
@@ -58,6 +62,10 @@ export default function AccountSettingsPage() {
                     firstName: profile.first_name ?? f.firstName,
                     lastName: profile.last_name ?? f.lastName,
                     phone: profile.phone ?? profile.mobile_phone ?? f.phone,
+                    bioShort: profile.bio_short ?? f.bioShort,
+                    socialInstagram: profile.social_instagram ?? f.socialInstagram,
+                    socialFacebook: profile.social_facebook ?? f.socialFacebook,
+                    socialTwitter: profile.social_twitter ?? f.socialTwitter,
                 }));
             } catch {
                 // Perfil ministerial no bloquea el perfil personal.
@@ -81,10 +89,14 @@ export default function AccountSettingsPage() {
             if (formValues.username !== user?.username) authBody.username = formValues.username;
             if (formValues.email !== user?.email) authBody.email = formValues.email;
 
-            const profileBody: Record<string, string> = {};
+            const profileBody: Record<string, any> = {};
             if (formValues.firstName) profileBody.first_name = formValues.firstName;
             if (formValues.lastName) profileBody.last_name = formValues.lastName;
             if (formValues.phone) profileBody.phone = formValues.phone;
+            profileBody.bio_short = formValues.bioShort || null;
+            profileBody.social_instagram = formValues.socialInstagram || null;
+            profileBody.social_facebook = formValues.socialFacebook || null;
+            profileBody.social_twitter = formValues.socialTwitter || null;
 
             if (Object.keys(authBody).length === 0 && Object.keys(profileBody).length === 0) {
                 addToast("No hay cambios para guardar", "info");
@@ -269,6 +281,50 @@ export default function AccountSettingsPage() {
                                             <InputField label="Correo Electrónico" icon={Mail} value={formValues.email} onChange={(v: string) => setFormValues(f => ({...f, email: v}))} />
                                             <InputField label="Nombre Completo" value={formValues.firstName} placeholder="Ingresa tu nombre..." onChange={(v: string) => setFormValues(f => ({...f, firstName: v}))} />
                                             <InputField label="Teléfono de Contacto" icon={Smartphone} value={formValues.phone} placeholder="+1 234 567 890" onChange={(v: string) => setFormValues(f => ({...f, phone: v}))} />
+                                        </div>
+                                    </section>
+
+                                    <section className="space-y-3">
+                                        <div className="flex items-center gap-2 px-4">
+                                            <Share2 size={16} className="text-[hsl(var(--primary))]" />
+                                            <h4 className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">
+                                                Redes Sociales y Presencia Ministerial
+                                            </h4>
+                                        </div>
+                                        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                                            <InputField
+                                                label="Instagram"
+                                                icon={Instagram}
+                                                value={formValues.socialInstagram}
+                                                placeholder="@usuario o URL"
+                                                onChange={(v: string) => setFormValues(f => ({...f, socialInstagram: v}))}
+                                            />
+                                            <InputField
+                                                label="Facebook"
+                                                icon={Facebook}
+                                                value={formValues.socialFacebook}
+                                                placeholder="@usuario o URL"
+                                                onChange={(v: string) => setFormValues(f => ({...f, socialFacebook: v}))}
+                                            />
+                                            <InputField
+                                                label="X (Twitter)"
+                                                icon={Twitter}
+                                                value={formValues.socialTwitter}
+                                                placeholder="@usuario o URL"
+                                                onChange={(v: string) => setFormValues(f => ({...f, socialTwitter: v}))}
+                                            />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide ml-2 leading-none block">
+                                                Biografía Breve
+                                            </label>
+                                            <textarea
+                                                value={formValues.bioShort}
+                                                placeholder="Breve reseña sobre tu ministerio, rol pastoral y llamado..."
+                                                rows={3}
+                                                onChange={(e) => setFormValues(f => ({...f, bioShort: e.target.value}))}
+                                                className="w-full bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] rounded-lg p-3 text-sm font-medium text-[hsl(var(--text-primary))] focus:ring-4 focus:ring-[hsl(var(--primary))]/10 focus:border-[hsl(var(--primary))] outline-none transition-all resize-none"
+                                            />
                                         </div>
                                     </section>
 
