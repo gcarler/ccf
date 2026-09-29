@@ -10,7 +10,6 @@ import {
   Phone,
   Search,
   MapPin,
-  ExternalLink,
   Copy,
   Check,
   Building2,
@@ -71,13 +70,12 @@ export default function SedesPage() {
       : "Buscar ciudad, barrio o sede...";
 
   const rawLocations = (locationsContent?.parsed ?? locationsContent) as unknown;
-  const parsedLocations: LocationItem[] = Array.isArray(rawLocations)
-    ? (rawLocations as LocationItem[])
-    : Array.isArray((rawLocations as Record<string, unknown>)?.items)
-    ? ((rawLocations as Record<string, unknown>).items as LocationItem[])
-    : [];
-
   const locations: LocationItem[] = useMemo(() => {
+    const parsedLocations: LocationItem[] = Array.isArray(rawLocations)
+      ? (rawLocations as LocationItem[])
+      : Array.isArray((rawLocations as Record<string, unknown>)?.items)
+      ? ((rawLocations as Record<string, unknown>).items as LocationItem[])
+      : [];
     return parsedLocations.map((loc, i) => {
       const schedule =
         loc.schedule ||
@@ -104,7 +102,7 @@ export default function SedesPage() {
         mapEmbedUrl,
       };
     });
-  }, [parsedLocations]);
+  }, [rawLocations]);
 
   const [selected, setSelected] = useState<LocationItem | null>(null);
   const [search, setSearch] = useState("");

@@ -1,14 +1,10 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
   AlertCircle,
-  Calendar,
   CheckCircle2,
   Clock,
-  ExternalLink,
-  Filter,
-  Flame,
   Layers,
   Mail,
   MapPin,
@@ -40,7 +36,7 @@ interface FollowupTabProps {
   eventName: string;
 }
 
-export default function FollowupTab({ eventId, token, eventName }: FollowupTabProps) {
+export default function FollowupTab({ eventId, token }: FollowupTabProps) {
   const [overview, setOverview] = useState<FollowupOverviewData | null>(null);
   const [attendees, setAttendees] = useState<FollowupAttendeeItem[]>([]);
   const [mentors, setMentors] = useState<AvailableMentorItem[]>([]);
@@ -64,7 +60,7 @@ export default function FollowupTab({ eventId, token, eventName }: FollowupTabPr
   const [responseNotes, setResponseNotes] = useState<string>("");
   const [responseChannel, setResponseChannel] = useState<string>("WHATSAPP");
 
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     if (!token) return;
     setLoading(true);
     try {
@@ -76,19 +72,19 @@ export default function FollowupTab({ eventId, token, eventName }: FollowupTabPr
       setOverview(overviewData);
       setAttendees(attendeesData);
       setMentors(mentorsData);
-    } catch (err: any) {
+    } catch (err: unknown) {
       setFeedbackMessage({
         type: "error",
-        text: err?.message || "Error al cargar la información de seguimiento post-evento.",
+        text: err instanceof Error ? err.message : "Error al cargar la información de seguimiento post-evento.",
       });
     } finally {
       setLoading(false);
     }
-  };
+  }, [eventId, token]);
 
   useEffect(() => {
     loadData();
-  }, [eventId, token]);
+  }, [loadData]);
 
   // Ejecución masiva de asignación inteligente con balanceo de carga
   const handleAutoAssign = async () => {

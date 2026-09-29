@@ -233,7 +233,7 @@ export default function PublicLocationsManager({
     const targetSort = target.sort_order ?? targetIndex * 10;
 
     let newCurrentSort = targetSort;
-    let newTargetSort = currentSort;
+    const newTargetSort = currentSort;
     if (newCurrentSort === newTargetSort) {
       newCurrentSort = direction === "up" ? targetSort - 1 : targetSort + 1;
     }

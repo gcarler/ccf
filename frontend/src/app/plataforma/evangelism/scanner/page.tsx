@@ -3,9 +3,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   QrCode,
-  ShieldCheck,
-  ShieldAlert,
-  Zap,
   RefreshCcw,
   UserCheck,
   Users,
@@ -201,7 +198,6 @@ export default function GatekeeperScannerPage() {
 
   // Cámara
   const videoRef = useRef<HTMLVideoElement | null>(null);
-  const [cameraActive, setCameraActive] = useState<boolean>(false);
 
   // Drawer de asistentes
   const [drawerOpen, setDrawerOpen] = useState<boolean>(false);
@@ -309,14 +305,10 @@ export default function GatekeeperScannerPage() {
             videoRef.current.srcObject = s;
             videoRef.current.play().catch(() => {});
           }
-          setCameraActive(true);
         })
         .catch(() => {
-          setCameraActive(false);
           toast.info('No se detectó cámara física. Usando modo de entrada rápida.');
         });
-    } else {
-      setCameraActive(false);
     }
 
     return () => {
@@ -462,13 +454,13 @@ export default function GatekeeperScannerPage() {
     }
   };
 
-  const dismissFeedback = () => {
+  const dismissFeedback = useCallback(() => {
     if (feedbackTimerRef.current) {
       clearTimeout(feedbackTimerRef.current);
     }
     setScanFeedback(null);
     refocusInput();
-  };
+  }, [refocusInput]);
 
   // ── Teclas rápidas globales (Enter / Escape / Barra espaciadora) ───────────
   useEffect(() => {
@@ -482,7 +474,7 @@ export default function GatekeeperScannerPage() {
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [scanFeedback]);
+  }, [scanFeedback, dismissFeedback]);
 
   // ── Cargar lista de asistentes para el Drawer ─────────────────────────────
   const openAttendeesDrawer = async () => {

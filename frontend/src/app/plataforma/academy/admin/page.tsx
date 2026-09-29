@@ -13,7 +13,7 @@ import {
 } from '@/types/academy';
 import WorkspaceToolbar from '@/components/WorkspaceToolbar';
 import EmptyState from '@/components/ui/EmptyState';
-import { DSSkeleton, DSBadge, DSCard } from '@/design';
+import { DSSkeleton } from '@/design';
 import ProgramDrawer from '@/components/academy/ProgramDrawer';
 import GradingSchemeDrawer from '@/components/academy/GradingSchemeDrawer';
 import AcademicPeriodDrawer from '@/components/academy/AcademicPeriodDrawer';
@@ -29,14 +29,8 @@ import {
   Users,
   Plus,
   Sliders,
-  CheckCircle2,
-  Clock,
-  Sparkles,
-  Layers,
   Edit2,
-  Trash2,
   Search,
-  Check,
   UserCheck,
   UserPlus,
   Lock,
