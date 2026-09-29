@@ -21,6 +21,7 @@ COMMON_PREFIXES = (
 
 MODULE_PREFIXES: dict[str, tuple[str, ...]] = {
     "platform": (
+        "ecosystem.config.cjs",
         "backend/core/",
         "backend/models_kernel.py",
         "backend/models_auth.py",

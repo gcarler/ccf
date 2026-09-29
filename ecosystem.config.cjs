@@ -5,6 +5,7 @@
 //   - ccf-frontend-staging  (Next.js start    :3000)
 //   - seaweedfs             (S3 compatible    :8333)
 //   - fcc-server            (free-claude-code auxiliary)
+//   - ccf-agent-bridge      (cola y avisos de agentes; una sola instancia)
 //
 // Defensas anti-loop EADDRINUSE (causa raíz de los 1277 restarts históricos):
 //   - restart_delay          : pausa entre reintentos (sin backoff cero)
@@ -90,6 +91,26 @@ module.exports = {
       max_restarts: 5,
       min_uptime: "10s",
       restart_delay: 2000,
+      exp_backoff_restart_delay: 1000,
+      kill_timeout: 8000,
+    },
+
+    // ── Puente de agentes (SQLite + tmux) ────────────────────
+    // Activar solo después de detener el daemon legacy; dos dispatchers
+    // simultáneos aumentarían los avisos duplicados durante la migración.
+    {
+      name: "ccf-agent-bridge",
+      cwd: "/root/ccf",
+      script: "/root/ccf/scripts/ccf_agent_bridge.py",
+      interpreter: "/usr/bin/python3",
+      args: "daemon --interval 1",
+      instances: 1,
+      exec_mode: "fork",
+      autorestart: true,
+      max_memory_restart: "256M",
+      max_restarts: 10,
+      min_uptime: "10s",
+      restart_delay: 1000,
       exp_backoff_restart_delay: 1000,
       kill_timeout: 8000,
     },

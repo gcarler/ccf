@@ -30,6 +30,11 @@ COMMIT_RE = re.compile(r"^[0-9a-f]{40}$")
 ACTOR_RE = re.compile(r"^[a-zA-Z0-9_-]{2,40}$")
 TASK_ID_RE = re.compile(r"^[a-zA-Z0-9][a-zA-Z0-9_-]{1,100}$")
 CLAIM_LEASE_SECONDS = 60
+ACK_TIMEOUT_SECONDS = 120
+MAX_DELIVERY_ATTEMPTS = 6
+HEARTBEAT_INTERVAL_SECONDS = 5
+HEARTBEAT_STALE_SECONDS = 20
+RETRY_DELAYS_SECONDS = (5, 15, 45, 120, 300)
 TMUX_AGENT_COMMANDS = {"agy": "agy", "agy2": "agy", "codex": "codex", "freebuff": "node"}
 
 
@@ -39,6 +44,10 @@ class BridgeError(Exception):
 
 def utc_now() -> str:
     return datetime.now(timezone.utc).isoformat()
+
+
+def after_seconds(seconds: int) -> str:
+    return (datetime.now(timezone.utc) + timedelta(seconds=seconds)).isoformat()
 
 
 def read_json(path: Path) -> dict:
@@ -104,6 +113,8 @@ class Bridge:
                     worktree TEXT NOT NULL,
                     baseline_sha TEXT,
                     status TEXT NOT NULL,
+                    priority INTEGER NOT NULL DEFAULT 0,
+                    activation_error TEXT,
                     revision INTEGER NOT NULL DEFAULT 0,
                     legacy INTEGER NOT NULL DEFAULT 0,
                     created_at TEXT NOT NULL,
@@ -146,6 +157,7 @@ class Bridge:
                     acked_at TEXT,
                     claim_token TEXT,
                     claimed_at TEXT,
+                    next_attempt_at TEXT,
                     last_error TEXT
                 );
                 CREATE TABLE IF NOT EXISTS transitions (
@@ -181,15 +193,23 @@ class Bridge:
                 conn.execute("ALTER TABLE tasks ADD COLUMN dependencies_json TEXT NOT NULL DEFAULT '[]'")
             if "baseline_sha" not in task_columns:
                 conn.execute("ALTER TABLE tasks ADD COLUMN baseline_sha TEXT")
+            if "priority" not in task_columns:
+                conn.execute("ALTER TABLE tasks ADD COLUMN priority INTEGER NOT NULL DEFAULT 0")
+            if "activation_error" not in task_columns:
+                conn.execute("ALTER TABLE tasks ADD COLUMN activation_error TEXT")
             event_columns = {row[1] for row in conn.execute("PRAGMA table_info(events)")}
             if "claim_token" not in event_columns:
                 conn.execute("ALTER TABLE events ADD COLUMN claim_token TEXT")
             if "claimed_at" not in event_columns:
                 conn.execute("ALTER TABLE events ADD COLUMN claimed_at TEXT")
+            if "next_attempt_at" not in event_columns:
+                conn.execute("ALTER TABLE events ADD COLUMN next_attempt_at TEXT")
             conn.execute("CREATE INDEX IF NOT EXISTS ix_bridge_events_status_created ON events(status,created_at,id)")
             conn.execute("CREATE INDEX IF NOT EXISTS ix_bridge_events_status_claimed ON events(status,claimed_at)")
+            conn.execute("CREATE INDEX IF NOT EXISTS ix_bridge_events_status_due ON events(status,next_attempt_at,created_at)")
             conn.execute("CREATE INDEX IF NOT EXISTS ix_bridge_tasks_owner_status ON tasks(owner,status)")
             conn.execute("CREATE INDEX IF NOT EXISTS ix_bridge_tasks_worktree_status ON tasks(worktree,status)")
+            conn.execute("CREATE INDEX IF NOT EXISTS ix_bridge_tasks_queue ON tasks(status,priority,created_at,id)")
             conn.execute("CREATE INDEX IF NOT EXISTS ix_bridge_operations_task ON operations(task_id,id)")
         self._import_legacy_once()
 
@@ -330,9 +350,9 @@ class Bridge:
                 raise BridgeError(f"El archivo declarado no fue modificado por el commit: {file}")
         return sha
 
-    def assign(self, task_id: str, module: str, title: str, description: str, owner: str,
-               reviewer: str, criteria: list[str], depends_on: list[str] | None = None,
-               worktree: str | None = None, coordinator: str | None = None) -> str:
+    def _task_spec(self, task_id: str, title: str, description: str, owner: str,
+                   reviewer: str, criteria: list[str], worktree: str | None,
+                   coordinator: str | None) -> tuple[str, str, str, Path]:
         owner, reviewer = self._actor(owner), self._actor(reviewer)
         if not coordinator:
             raise BridgeError("La asignación exige un coordinador explícito")
@@ -354,30 +374,84 @@ class Bridge:
         )
         if git_check.returncode != 0 or Path(git_check.stdout.strip()).resolve() != worktree_path:
             raise BridgeError(f"La ruta no es raíz de un worktree Git: {worktree_path}")
+        return owner, reviewer, coordinator, worktree_path
+
+    @staticmethod
+    def _head(worktree_path: Path) -> str:
         baseline = subprocess.run(
             ["git", "-C", str(worktree_path), "rev-parse", "HEAD"], capture_output=True, text=True, check=False,
         )
         if baseline.returncode != 0 or not COMMIT_RE.fullmatch(baseline.stdout.strip()):
             raise BridgeError("No se pudo fijar el HEAD base del ticket")
+        return baseline.stdout.strip()
+
+    @staticmethod
+    def _active_conflicts(conn: sqlite3.Connection, owner: str, worktree_path: Path) -> tuple[str | None, str | None]:
+        active = conn.execute(
+            f"SELECT id FROM tasks WHERE owner=? AND status IN ({','.join('?' for _ in OPEN_STATUSES)}) LIMIT 1",
+            (owner, *OPEN_STATUSES),
+        ).fetchone()
+        workspace_owner = conn.execute(
+            f"SELECT id FROM tasks WHERE worktree=? AND status IN ({','.join('?' for _ in OPEN_STATUSES)}) LIMIT 1",
+            (str(worktree_path), *OPEN_STATUSES),
+        ).fetchone()
+        return (active["id"] if active else None, workspace_owner["id"] if workspace_owner else None)
+
+    @staticmethod
+    def _assignment_event(conn: sqlite3.Connection, task_id: str, owner: str, worktree_path: Path) -> str:
+        return Bridge._queue(
+            conn, task_id, owner, "TASK_ASSIGNED",
+            f"Nueva tarea. Worktree: {worktree_path}. "
+            f"Leer: python3 /root/ccf/scripts/ccf_agent_bridge.py get-task --id {task_id}. "
+            f"Entregar: submit --id {task_id} --actor {owner} --commit <SHA40> --files <rutas> "
+            "--check '<verificación>' --notes '<resumen>'",
+        )
+
+    def _escalate_dead_event(self, conn: sqlite3.Connection, event_id: str, task_id: str,
+                             target: str, kind: str) -> None:
+        if kind == "BRIDGE_ALERT" or conn.execute(
+            "SELECT 1 FROM operations WHERE event_id=? AND kind='DEAD_LETTER_ALERT' LIMIT 1",
+            (event_id,),
+        ).fetchone():
+            return
+        task = self._task(conn, task_id)
+        coordinator = task["coordinator"] or task["reviewer"]
+        if coordinator == target:
+            coordinator = next(agent for agent in TMUX_AGENT_COMMANDS if agent != target)
+        alert_id = self._queue(
+            conn, task_id, coordinator, "BRIDGE_ALERT",
+            f"El aviso {event_id} ({kind}) agotó sus reintentos. Revisar status y get-history --id {task_id}.",
+            task["revision"],
+        )
+        self._operation(conn, "DEAD_LETTER_ALERT", "bridge", f"alert={alert_id}",
+                        task_id=task_id, event_id=event_id)
+
+    def escalate_dead_letters(self) -> None:
+        with self.transaction() as conn:
+            dead = conn.execute(
+                "SELECT id,task_id,target,kind FROM events WHERE status='DEAD' ORDER BY created_at,id"
+            ).fetchall()
+            for event in dead:
+                self._escalate_dead_event(conn, event["id"], event["task_id"],
+                                          event["target"], event["kind"])
+
+    def assign(self, task_id: str, module: str, title: str, description: str, owner: str,
+               reviewer: str, criteria: list[str], depends_on: list[str] | None = None,
+               worktree: str | None = None, coordinator: str | None = None) -> str:
+        owner, reviewer, coordinator, worktree_path = self._task_spec(
+            task_id, title, description, owner, reviewer, criteria, worktree, coordinator,
+        )
+        baseline = self._head(worktree_path)
         with self.transaction() as conn:
             if conn.execute("SELECT 1 FROM meta WHERE key='paused' AND value='1'").fetchone():
                 raise BridgeError("El puente está pausado; no admite nuevas asignaciones")
             if conn.execute("SELECT 1 FROM tasks WHERE id=?", (task_id,)).fetchone():
                 raise BridgeError(f"El ID {task_id} ya existe")
-            active = conn.execute(
-                f"SELECT id FROM tasks WHERE owner=? AND status IN ({','.join('?' for _ in OPEN_STATUSES)}) LIMIT 1",
-                (owner, *OPEN_STATUSES),
-            ).fetchone()
+            active, workspace_owner = self._active_conflicts(conn, owner, worktree_path)
             if active:
-                raise BridgeError(f"{owner} ya tiene la tarea activa {active['id']}")
-            workspace_owner = conn.execute(
-                f"SELECT id,owner FROM tasks WHERE worktree=? AND status IN ({','.join('?' for _ in OPEN_STATUSES)}) LIMIT 1",
-                (str(worktree_path), *OPEN_STATUSES),
-            ).fetchone()
+                raise BridgeError(f"{owner} ya tiene la tarea activa {active}")
             if workspace_owner:
-                raise BridgeError(
-                    f"El worktree {worktree_path} está ocupado por {workspace_owner['owner']} ({workspace_owner['id']})"
-                )
+                raise BridgeError(f"El worktree {worktree_path} está ocupado por {workspace_owner}")
             for dependency in depends_on or []:
                 dep = self._task(conn, dependency)
                 if dep["status"] != "DONE":
@@ -389,14 +463,85 @@ class Bridge:
                 "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
                 (task_id, module, title, description, json.dumps(criteria), owner, reviewer, coordinator,
                  json.dumps(depends_on or []),
-                 str(worktree_path), baseline.stdout.strip(), "ASSIGNED", 0, 0, now, now),
+                 str(worktree_path), baseline, "ASSIGNED", 0, 0, now, now),
             )
             self._transition(conn, task_id, None, "ASSIGNED", coordinator, "Task assigned")
-            return self._queue(conn, task_id, owner, "TASK_ASSIGNED",
-                               f"Nueva tarea. Worktree: {worktree_path}. "
-                               f"Leer: python3 /root/ccf/scripts/ccf_agent_bridge.py get-task --id {task_id}. "
-                               f"Entregar: submit --id {task_id} --actor {owner} --commit <SHA40> --files <rutas> "
-                               "--check '<verificación>' --notes '<resumen>'")
+            return self._assignment_event(conn, task_id, owner, worktree_path)
+
+    def enqueue(self, task_id: str, module: str, title: str, description: str, owner: str,
+                reviewer: str, criteria: list[str], depends_on: list[str] | None = None,
+                worktree: str | None = None, coordinator: str | None = None, priority: int = 0) -> None:
+        owner, reviewer, coordinator, worktree_path = self._task_spec(
+            task_id, title, description, owner, reviewer, criteria, worktree, coordinator,
+        )
+        if not 0 <= priority <= 100:
+            raise BridgeError("La prioridad debe estar entre 0 y 100")
+        dependencies = depends_on or []
+        if len(set(dependencies)) != len(dependencies) or task_id in dependencies:
+            raise BridgeError("Dependencias repetidas o autorreferencia")
+        with self.transaction() as conn:
+            if conn.execute("SELECT 1 FROM meta WHERE key='paused' AND value='1'").fetchone():
+                raise BridgeError("El puente está pausado; no admite nuevas tareas en cola")
+            if conn.execute("SELECT 1 FROM tasks WHERE id=?", (task_id,)).fetchone():
+                raise BridgeError(f"El ID {task_id} ya existe")
+            for dependency in dependencies:
+                self._task(conn, dependency)
+            now = utc_now()
+            conn.execute(
+                "INSERT INTO tasks "
+                "(id,module,title,description,criteria_json,owner,reviewer,coordinator,dependencies_json,worktree,"
+                "status,priority,revision,legacy,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+                (task_id, module, title, description, json.dumps(criteria), owner, reviewer, coordinator,
+                 json.dumps(dependencies), str(worktree_path), "QUEUED", priority, 0, 0, now, now),
+            )
+            self._transition(conn, task_id, None, "QUEUED", coordinator, "Task enqueued")
+            self._operation(conn, "ENQUEUED", coordinator, f"priority={priority}", task_id=task_id)
+
+    def activate_ready(self) -> list[str]:
+        """Activate ready queued tasks atomically, respecting owner and worktree ownership."""
+        activated: list[str] = []
+        with self.transaction() as conn:
+            if conn.execute("SELECT 1 FROM meta WHERE key='paused' AND value='1'").fetchone():
+                return activated
+            queued = conn.execute(
+                "SELECT * FROM tasks WHERE status='QUEUED' ORDER BY priority DESC,created_at,id"
+            ).fetchall()
+            for task in queued:
+                dependency_rows = [self._task(conn, dependency)
+                                   for dependency in json.loads(task["dependencies_json"])]
+                terminal_dependencies = [row["id"] for row in dependency_rows
+                                         if row["status"] in {"CANCELLED"}]
+                if terminal_dependencies:
+                    message = f"Dependencias canceladas: {', '.join(terminal_dependencies)}"
+                    if task["activation_error"] != message:
+                        conn.execute("UPDATE tasks SET activation_error=?,updated_at=? WHERE id=?",
+                                     (message, utc_now(), task["id"]))
+                        self._operation(conn, "ACTIVATION_BLOCKED", "bridge", message, task_id=task["id"])
+                    continue
+                if any(row["status"] != "DONE" for row in dependency_rows):
+                    continue
+                worktree_path = Path(task["worktree"])
+                if any(self._active_conflicts(conn, task["owner"], worktree_path)):
+                    continue
+                try:
+                    if not worktree_path.is_dir() or subprocess.run(
+                        ["git", "-C", str(worktree_path), "rev-parse", "--show-toplevel"],
+                        capture_output=True, text=True, check=False,
+                    ).stdout.strip() != str(worktree_path):
+                        raise BridgeError("Worktree no disponible o ya no es la raíz Git asignada")
+                    baseline = self._head(worktree_path)
+                except BridgeError as exc:
+                    if task["activation_error"] != str(exc):
+                        conn.execute("UPDATE tasks SET activation_error=?,updated_at=? WHERE id=?",
+                                     (str(exc), utc_now(), task["id"]))
+                        self._operation(conn, "ACTIVATION_BLOCKED", "bridge", str(exc), task_id=task["id"])
+                    continue
+                conn.execute("UPDATE tasks SET baseline_sha=?,activation_error=NULL WHERE id=?", (baseline, task["id"]))
+                self._transition(conn, task["id"], "QUEUED", "ASSIGNED", "bridge", "Dependencies complete; slot available")
+                event_id = self._assignment_event(conn, task["id"], task["owner"], worktree_path)
+                self._operation(conn, "AUTO_ASSIGNED", "bridge", f"event={event_id}", task_id=task["id"])
+                activated.append(task["id"])
+        return activated
 
     def acknowledge(self, event_id: str, actor: str) -> None:
         actor = self._actor(actor)
@@ -408,9 +553,12 @@ class Bridge:
                 raise BridgeError("Este evento corresponde a otro agente")
             if event["status"] == "ACKED":
                 return
-            if event["status"] not in ("SENT", "SENDING"):
+            if event["status"] not in ("SENT", "SENDING") and not event["sent_at"]:
                 raise BridgeError("El evento todavía no fue enviado; no se puede confirmar")
-            conn.execute("UPDATE events SET status='ACKED', acked_at=? WHERE id=?", (utc_now(), event_id))
+            conn.execute(
+                "UPDATE events SET status='ACKED', acked_at=?,next_attempt_at=NULL,claim_token=NULL,claimed_at=NULL "
+                "WHERE id=?", (utc_now(), event_id),
+            )
             self._operation(conn, "ACK", actor, task_id=event["task_id"], event_id=event_id)
             task = self._task(conn, event["task_id"])
             if event["kind"] == "TASK_ASSIGNED" and task["status"] == "ASSIGNED":
@@ -499,7 +647,7 @@ class Bridge:
             if actor != closer:
                 raise BridgeError(f"Solo {closer} puede cerrar esta tarea")
             if cancel:
-                if task["status"] not in OPEN_STATUSES:
+                if task["status"] not in (*OPEN_STATUSES, "QUEUED"):
                     raise BridgeError(f"No se puede cancelar desde {task['status']}")
                 new_status = "CANCELLED"
             else:
@@ -557,18 +705,80 @@ class Bridge:
             paused = conn.execute("SELECT value FROM meta WHERE key='paused'").fetchone()
             events = conn.execute("SELECT status,COUNT(*) AS count FROM events GROUP BY status").fetchall()
             attention = conn.execute(
-                "SELECT id,task_id,target,kind,status,created_at,sent_at,last_error FROM events "
-                "WHERE status IN ('SENT','FAILED','SENDING') ORDER BY created_at LIMIT 20"
+                "SELECT id,task_id,target,kind,status,attempts,created_at,sent_at,claimed_at,next_attempt_at,last_error "
+                "FROM events WHERE status IN ('SENT','FAILED','SENDING','DEAD') ORDER BY created_at LIMIT 20"
             ).fetchall()
+            queued = conn.execute(
+                "SELECT id,owner,reviewer,coordinator,worktree,priority,dependencies_json,activation_error,created_at "
+                "FROM tasks WHERE status='QUEUED' ORDER BY priority DESC,created_at,id LIMIT 50"
+            ).fetchall()
+            heartbeat = conn.execute("SELECT value FROM meta WHERE key='daemon_heartbeat'").fetchone()
+            heartbeat_at = json.loads(heartbeat["value"])["at"] if heartbeat else None
+            heartbeat_age = ((datetime.now(timezone.utc) - datetime.fromisoformat(heartbeat_at)).total_seconds()
+                             if heartbeat_at else None)
+            queued_details: list[dict] = []
+            for row in queued:
+                item = dict(row)
+                dependencies = json.loads(item.pop("dependencies_json"))
+                item["depends_on"] = dependencies
+                reasons = []
+                owner_conflict, worktree_conflict = self._active_conflicts(
+                    conn, item["owner"], Path(item["worktree"]),
+                )
+                if owner_conflict:
+                    reasons.append("owner_busy")
+                if worktree_conflict:
+                    reasons.append("worktree_busy")
+                waiting = [dependency for dependency in dependencies
+                           if self._task(conn, dependency)["status"] != "DONE"]
+                if waiting:
+                    reasons.append("dependencies_waiting:" + ",".join(waiting))
+                if item["activation_error"]:
+                    reasons.append(item["activation_error"])
+                item["blocked_by"] = reasons
+                queued_details.append(item)
             return {
                 "paused": bool(paused and paused[0] == "1"),
                 "active_tasks": self.active_tasks(),
+                "queued_tasks": queued_details,
                 "events": {row["status"]: row["count"] for row in events},
                 "events_needing_attention": [dict(row) for row in attention],
+                "daemon": {
+                    "state": "HEALTHY" if heartbeat_age is not None and heartbeat_age <= HEARTBEAT_STALE_SECONDS
+                    else "STALE" if heartbeat_age is not None else "NOT_STARTED",
+                    "heartbeat_at": heartbeat_at,
+                    "heartbeat_age_seconds": round(heartbeat_age, 1) if heartbeat_age is not None else None,
+                    "instance_id": json.loads(heartbeat["value"])["instance_id"] if heartbeat else None,
+                },
                 "recent_operations": [dict(row) for row in conn.execute(
                     "SELECT id,task_id,event_id,kind,actor,detail,created_at FROM operations ORDER BY id DESC LIMIT 20"
                 ).fetchall()],
             }
+
+    def health(self) -> dict:
+        status = self.status()
+        ack_cutoff = (datetime.now(timezone.utc) - timedelta(seconds=ACK_TIMEOUT_SECONDS)).isoformat()
+        lease_cutoff = (datetime.now(timezone.utc) - timedelta(seconds=CLAIM_LEASE_SECONDS)).isoformat()
+        with closing(self.connect()) as conn:
+            overdue = conn.execute(
+                "SELECT COUNT(*) FROM events WHERE "
+                "(status='SENT' AND sent_at<=?) OR "
+                "(status='SENDING' AND (claimed_at IS NULL OR claimed_at<=?))",
+                (ack_cutoff, lease_cutoff),
+            ).fetchone()[0]
+        issues = []
+        if status["daemon"]["state"] != "HEALTHY":
+            issues.append(f"daemon_{status['daemon']['state'].lower()}")
+        if status["events"].get("DEAD", 0):
+            issues.append("dead_letters")
+        if status["events"].get("FAILED", 0):
+            issues.append("delivery_failures_retrying")
+        if overdue:
+            issues.append("delivery_or_ack_overdue")
+        return {"state": "HEALTHY" if not issues else "DEGRADED", "issues": issues,
+                "daemon": status["daemon"], "events": status["events"],
+                "attention": status["events_needing_attention"],
+                "queued": len(status["queued_tasks"])}
 
     def history(self, task_id: str) -> list[dict]:
         with closing(self.connect()) as conn:
@@ -584,29 +794,79 @@ class Bridge:
                 "SELECT * FROM events WHERE status='PENDING' ORDER BY created_at, id"
             ).fetchall()]
 
+    def heartbeat(self, instance_id: str) -> None:
+        with self.transaction() as conn:
+            payload = json.dumps({"at": utc_now(), "instance_id": instance_id, "pid": os.getpid()})
+            conn.execute(
+                "INSERT INTO meta (key,value) VALUES ('daemon_heartbeat',?) "
+                "ON CONFLICT(key) DO UPDATE SET value=excluded.value", (payload,),
+            )
+
     def claim_pending(self) -> dict | None:
         """Claim an event with a lease; expired claims can be delivered again."""
         with self.transaction() as conn:
+            now = utc_now()
             cutoff = (datetime.now(timezone.utc) - timedelta(seconds=CLAIM_LEASE_SECONDS)).isoformat()
             expired = conn.execute(
-                "SELECT id,task_id FROM events WHERE status='SENDING' AND (claimed_at IS NULL OR claimed_at<?)",
+                "SELECT id,task_id,attempts FROM events WHERE status='SENDING' AND (claimed_at IS NULL OR claimed_at<?)",
                 (cutoff,),
             ).fetchall()
             for stale in expired:
+                if stale["attempts"] >= MAX_DELIVERY_ATTEMPTS:
+                    conn.execute(
+                        "UPDATE events SET status='DEAD',claim_token=NULL,claimed_at=NULL,next_attempt_at=NULL,"
+                        "last_error='Delivery lease expired; retry limit reached' WHERE id=?", (stale["id"],),
+                    )
+                    self._operation(conn, "DEAD_LETTER", "bridge", "lease expired",
+                                    task_id=stale["task_id"], event_id=stale["id"])
+                    event = conn.execute("SELECT target,kind FROM events WHERE id=?", (stale["id"],)).fetchone()
+                    self._escalate_dead_event(conn, stale["id"], stale["task_id"],
+                                              event["target"], event["kind"])
+                    continue
                 conn.execute(
-                    "UPDATE events SET status='PENDING', claim_token=NULL, claimed_at=NULL, "
-                    "last_error='Delivery lease expired; retrying' WHERE id=?", (stale["id"],),
+                    "UPDATE events SET status='PENDING',claim_token=NULL,claimed_at=NULL,next_attempt_at=?,"
+                    "last_error='Delivery lease expired; retrying' WHERE id=?", (now, stale["id"]),
                 )
                 self._operation(conn, "LEASE_EXPIRED", "bridge", task_id=stale["task_id"], event_id=stale["id"])
+            overdue = conn.execute(
+                "SELECT id,task_id,attempts FROM events WHERE status='SENT' AND "
+                "(next_attempt_at IS NOT NULL AND next_attempt_at<=? OR "
+                "next_attempt_at IS NULL AND sent_at<=?)",
+                (now, (datetime.now(timezone.utc) - timedelta(seconds=ACK_TIMEOUT_SECONDS)).isoformat()),
+            ).fetchall()
+            for stale in overdue:
+                if stale["attempts"] >= MAX_DELIVERY_ATTEMPTS:
+                    conn.execute(
+                        "UPDATE events SET status='DEAD',next_attempt_at=NULL,last_error='ACK timeout; retry limit reached' "
+                        "WHERE id=?", (stale["id"],),
+                    )
+                    self._operation(conn, "DEAD_LETTER", "bridge", "ACK timeout",
+                                    task_id=stale["task_id"], event_id=stale["id"])
+                    event = conn.execute("SELECT target,kind FROM events WHERE id=?", (stale["id"],)).fetchone()
+                    self._escalate_dead_event(conn, stale["id"], stale["task_id"],
+                                              event["target"], event["kind"])
+                else:
+                    conn.execute(
+                        "UPDATE events SET status='PENDING',next_attempt_at=?,last_error='ACK timeout; resending' "
+                        "WHERE id=?", (now, stale["id"]),
+                    )
+                    self._operation(conn, "ACK_TIMEOUT", "bridge", task_id=stale["task_id"], event_id=stale["id"])
             row = conn.execute(
-                "SELECT * FROM events WHERE status='PENDING' ORDER BY created_at, id LIMIT 1"
+                "SELECT * FROM events WHERE status IN ('PENDING','FAILED') AND "
+                "(next_attempt_at IS NULL OR next_attempt_at<=?) ORDER BY created_at,id LIMIT 1", (now,),
             ).fetchone()
             if not row:
                 return None
+            if row["attempts"] >= MAX_DELIVERY_ATTEMPTS:
+                conn.execute("UPDATE events SET status='DEAD',next_attempt_at=NULL WHERE id=?", (row["id"],))
+                self._operation(conn, "DEAD_LETTER", "bridge", "retry limit reached",
+                                task_id=row["task_id"], event_id=row["id"])
+                self._escalate_dead_event(conn, row["id"], row["task_id"], row["target"], row["kind"])
+                return None
             token = uuid.uuid4().hex
             conn.execute(
-                "UPDATE events SET status='SENDING', claim_token=?, claimed_at=?, attempts=attempts+1 WHERE id=?",
-                (token, utc_now(), row["id"]),
+                "UPDATE events SET status='SENDING',claim_token=?,claimed_at=?,next_attempt_at=NULL,attempts=attempts+1 "
+                "WHERE id=?", (token, now, row["id"]),
             )
             self._operation(conn, "DISPATCH_CLAIM", "bridge", f"attempt={row['attempts'] + 1}",
                             task_id=row["task_id"], event_id=row["id"])
@@ -616,28 +876,43 @@ class Bridge:
 
     def record_dispatch(self, event_id: str, claim_token: str, success: bool, error: str = "") -> None:
         with self.transaction() as conn:
-            row = conn.execute("SELECT task_id,status,claim_token FROM events WHERE id=?", (event_id,)).fetchone()
+            row = conn.execute(
+                "SELECT task_id,status,claim_token,attempts,target,kind FROM events WHERE id=?", (event_id,),
+            ).fetchone()
             if not row or row["status"] != "SENDING" or row["claim_token"] != claim_token:
                 return
+            exhausted = not success and row["attempts"] >= MAX_DELIVERY_ATTEMPTS
+            next_attempt = (after_seconds(ACK_TIMEOUT_SECONDS) if success else
+                            after_seconds(RETRY_DELAYS_SECONDS[min(row["attempts"] - 1, len(RETRY_DELAYS_SECONDS) - 1)])
+                            if not exhausted else None)
             conn.execute(
-                "UPDATE events SET status=?, claim_token=NULL, claimed_at=NULL, sent_at=?, last_error=? WHERE id=?",
-                ("SENT" if success else "FAILED", utc_now() if success else None, error or None, event_id),
+                "UPDATE events SET status=?,claim_token=NULL,claimed_at=NULL,"
+                "sent_at=CASE WHEN ? THEN ? ELSE sent_at END,next_attempt_at=?,last_error=? WHERE id=?",
+                ("SENT" if success else "DEAD" if exhausted else "FAILED", success,
+                 utc_now() if success else None, next_attempt, error or None, event_id),
             )
             self._operation(conn, "DISPATCH_SENT" if success else "DISPATCH_FAILED", "bridge", error,
                             task_id=row["task_id"], event_id=event_id)
+            if exhausted:
+                self._operation(conn, "DEAD_LETTER", "bridge", error,
+                                task_id=row["task_id"], event_id=event_id)
+                self._escalate_dead_event(conn, event_id, row["task_id"], row["target"], row["kind"])
 
     def retry_event(self, event_id: str, actor: str) -> None:
         actor = self._actor(actor)
         with self.transaction() as conn:
             row = conn.execute("SELECT task_id,target,status,last_error FROM events WHERE id=?", (event_id,)).fetchone()
-            if not row or row["status"] not in ("FAILED", "SENT"):
-                raise BridgeError("Solo se puede reenviar un evento FAILED o SENT sin ACK")
+            if not row or row["status"] not in ("FAILED", "SENT", "DEAD"):
+                raise BridgeError("Solo se puede reenviar un evento FAILED o SENT sin ACK, o DEAD")
             task = self._task(conn, row["task_id"])
             if actor not in {row["target"], task["coordinator"] or task["reviewer"], "agy"}:
                 raise BridgeError("Solo el destinatario o coordinador puede reintentar este evento")
             self._operation(conn, "RETRY", actor, f"previous={row['status']}; error={row['last_error'] or ''}",
                             task_id=row["task_id"], event_id=event_id)
-            conn.execute("UPDATE events SET status='PENDING', last_error=NULL WHERE id=?", (event_id,))
+            conn.execute(
+                "UPDATE events SET status='PENDING',attempts=0,next_attempt_at=NULL,last_error=NULL WHERE id=?",
+                (event_id,),
+            )
 
 
 def send_to_tmux(event: dict) -> tuple[bool, str]:
@@ -680,11 +955,20 @@ def send_to_tmux(event: dict) -> tuple[bool, str]:
 
 
 def daemon(bridge: Bridge, interval: float = 1.0, once: bool = False) -> None:
+    instance_id = uuid.uuid4().hex
+    last_heartbeat = 0.0
     while True:
+        if time.monotonic() - last_heartbeat >= HEARTBEAT_INTERVAL_SECONDS or once:
+            bridge.heartbeat(instance_id)
+            last_heartbeat = time.monotonic()
+        bridge.activate_ready()
+        bridge.escalate_dead_letters()
         while event := bridge.claim_pending():
             success, error = send_to_tmux(event)
             bridge.record_dispatch(event["id"], event["claim_token"], success, error)
             print(f"{utc_now()} {event['id']} {event['target']} {'SENT' if success else 'FAILED'} {error}", flush=True)
+            bridge.heartbeat(instance_id)
+            last_heartbeat = time.monotonic()
         if once:
             return
         time.sleep(max(interval, 0.2))
@@ -702,15 +986,18 @@ def _resolve_id(bridge: Bridge, task_id: str | None) -> str:
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Puente CCF por ticket, con ACK y auditoría independiente")
     sub = parser.add_subparsers(dest="command", required=True)
-    p = sub.add_parser("assign")
-    for arg in ("id", "module", "title", "desc"):
-        p.add_argument(f"--{arg}", required=True)
-    p.add_argument("--owner", default="agy2")
-    p.add_argument("--reviewer", required=True)
-    p.add_argument("--actor", required=True, help="Coordinador distinto del owner y reviewer")
-    p.add_argument("--worktree", help="Raíz Git exclusiva para este ticket; por defecto, el repo actual")
-    p.add_argument("--criteria", required=True)
-    p.add_argument("--depends-on", action="append", default=[])
+    for name in ("assign", "enqueue"):
+        p = sub.add_parser(name)
+        for arg in ("id", "module", "title", "desc"):
+            p.add_argument(f"--{arg}", required=True)
+        p.add_argument("--owner", default="agy2")
+        p.add_argument("--reviewer", required=True)
+        p.add_argument("--actor", required=True, help="Coordinador distinto del owner y reviewer")
+        p.add_argument("--worktree", help="Raíz Git exclusiva para este ticket; por defecto, el repo actual")
+        p.add_argument("--criteria", required=True)
+        p.add_argument("--depends-on", action="append", default=[])
+        if name == "enqueue":
+            p.add_argument("--priority", type=int, default=0, help="0-100; mayor prioridad primero")
     p = sub.add_parser("submit")
     for arg in ("id", "actor", "commit", "notes", "files"):
         p.add_argument(f"--{arg}", required=True)
@@ -735,6 +1022,8 @@ def build_parser() -> argparse.ArgumentParser:
     for name in ("get-task", "get-submission", "get-audit"):
         sub.add_parser(name).add_argument("--id")
     sub.add_parser("status")
+    sub.add_parser("health").add_argument("--json", action="store_true", help="Emitir resultado JSON (formato predeterminado)")
+    sub.add_parser("activate-ready")
     for name in ("pause", "resume"):
         sub.add_parser(name).add_argument("--actor", required=True)
     p = sub.add_parser("retry")
@@ -758,6 +1047,11 @@ def main(argv: list[str] | None = None) -> int:
                                   args.reviewer, [v.strip() for v in args.criteria.split(";") if v.strip()],
                                   args.depends_on, args.worktree, args.actor)
             result: object = {"task_id": args.id, "event_id": event, "status": "ASSIGNED"}
+        elif command == "enqueue":
+            bridge.enqueue(args.id, args.module, args.title, args.desc, args.owner,
+                           args.reviewer, [v.strip() for v in args.criteria.split(";") if v.strip()],
+                           args.depends_on, args.worktree, args.actor, args.priority)
+            result = {"task_id": args.id, "status": "QUEUED"}
         elif command == "submit":
             event = bridge.submit(args.id, args.actor, args.commit, args.notes,
                                   [v.strip() for v in args.files.split(",") if v.strip()], args.check)
@@ -777,11 +1071,15 @@ def main(argv: list[str] | None = None) -> int:
             result = {"event_id": args.event, "status": "PENDING"}
         elif command == "get-history":
             result = bridge.history(args.id)
+        elif command == "activate-ready":
+            result = {"activated_tasks": bridge.activate_ready()}
         elif command in ("pause", "resume"):
             bridge.pause(args.actor, paused=command == "pause")
             result = bridge.status()
         elif command == "status" or command == "init":
             result = bridge.status()
+        elif command == "health":
+            result = bridge.health()
         elif command == "get-task":
             result = bridge.task(_resolve_id(bridge, args.id))
         elif command == "get-submission":
@@ -794,7 +1092,7 @@ def main(argv: list[str] | None = None) -> int:
         else:
             raise BridgeError(f"Comando no reconocido: {command}")
         print(json.dumps(result, ensure_ascii=False, indent=2))
-        return 0
+        return 3 if command == "health" and result["state"] != "HEALTHY" else 0
     except BridgeError as exc:
         print(f"[bridge-error] {exc}", file=sys.stderr)
         return 2

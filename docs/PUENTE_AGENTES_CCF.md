@@ -28,6 +28,9 @@ recibir asignaciones.
 Si la auditoría falla: `AWAITING_AUDIT → REVISION_REQUIRED → AWAITING_AUDIT`.
 `CANCELLED` cierra un ticket duplicado o abandonado con motivo registrado.
 `approve` nunca crea la siguiente tarea. `close` da el cierre terminal.
+`enqueue` guarda tareas `QUEUED` sin reservar agente ni worktree; el daemon las
+activa por prioridad/FIFO cuando sus dependencias estén `DONE` y el desarrollador
+y el worktree estén libres. `assign` conserva la asignación inmediata.
 
 ## Uso
 
@@ -70,6 +73,7 @@ ejecutar sus propias verificaciones antes de aprobar.
 
 ```bash
 python3 scripts/ccf_agent_bridge.py status
+python3 scripts/ccf_agent_bridge.py health --json
 python3 scripts/ccf_agent_bridge.py get-task --id TKT-123
 python3 scripts/ccf_agent_bridge.py get-submission --id TKT-123
 python3 scripts/ccf_agent_bridge.py get-history --id TKT-123
@@ -77,11 +81,26 @@ python3 scripts/ccf_agent_bridge.py pause --actor agy
 python3 scripts/ccf_agent_bridge.py resume --actor agy
 python3 scripts/ccf_agent_bridge.py retry --event <EVENT_ID> --actor agy
 python3 scripts/ccf_agent_bridge.py daemon --interval 1
+python3 scripts/ccf_agent_bridge.py enqueue --id TKT-124 --module academy \
+  --title "Vista de resultados" --desc "Implementar la pantalla acordada" \
+  --actor agy --owner agy2 --reviewer codex --worktree /root/ccf-academy \
+  --depends-on TKT-123 --priority 20 --criteria "contrato API;tsc limpio"
 ```
 
-El daemon es transporte, no autoridad. Un envío fallido queda `FAILED` y se
-reintenta explícitamente; un envío interrumpido en `SENDING` se recupera
-automáticamente tras 60 segundos. Cada intento tiene un token de propiedad:
+El daemon tiene un heartbeat cada cinco segundos; `health --json` informa
+`HEALTHY` o `DEGRADED` y devuelve un código distinto de cero si el proceso no
+latea, hay errores de entrega, avisos agotados o ACK/leases vencidos. PM2
+supervisa el proceso y lo reinicia si cae. El daemon es transporte y activador
+de cola, no autoridad de auditoría. `SENT` significa que tmux aceptó el aviso,
+no que el modelo lo leyó. Si no llega ACK en 120 segundos, se reenvía el mismo
+evento; un ACK tardío sigue siendo válido e idempotente. Una entrega fallida
+reintenta automáticamente con esperas de 5, 15, 45, 120 y 300 segundos, hasta
+seis intentos. Al agotarse, el evento pasa a `DEAD` y se crea una sola alerta
+`BRIDGE_ALERT` al coordinador; las alertas no se escalan recursivamente. El
+coordinador puede inspeccionar y reintentar eventos `DEAD` con `retry`.
+
+Un envío interrumpido en `SENDING` recupera automáticamente la entrega al
+vencer el lease de 60 segundos. Cada intento tiene un token de propiedad:
 un dispatcher anterior no puede registrar el resultado de un intento nuevo.
 El transporte es *al menos una vez*: tras una caída puede llegar un aviso
 duplicado, pero comparte ID y el ACK es idempotente. Un envío sin ACK queda
@@ -104,7 +123,9 @@ del sistema y a la base SQLite**. La aprobación de seguridad fuerte requeriría
 usuarios de sistema separados o un servicio autenticado con secretos aislados.
 `agy` es además el operador de la pausa global; ese privilegio no se hereda
 automáticamente de ser coordinador de un ticket. Las dependencias se conservan
-en `get-task` y solo se asigna si ya están en `DONE`.
+en `get-task`; `assign` exige que estén en `DONE`, y `enqueue` espera su
+finalización. `status` expone cada tarea en cola y su razón de bloqueo para que
+el orden de activación sea auditable.
 Los tickets anteriores a esta versión conservan su cierre histórico por el
 revisor y no tienen HEAD base; los nuevos aplican las reglas reforzadas.
 

@@ -9,7 +9,7 @@ from pathlib import Path
 
 import pytest
 
-from scripts.ccf_agent_bridge import Bridge, BridgeError, send_to_tmux
+from scripts.ccf_agent_bridge import Bridge, BridgeError, build_parser, send_to_tmux
 
 
 def make_repo(path: Path) -> str:
@@ -127,6 +127,115 @@ def test_failed_transport_is_visible_and_retryable(bridge: tuple[Bridge, str]) -
     assert store.status()["events"]["ACKED"] == 1
 
 
+def test_delivery_failure_retries_automatically_after_backoff(bridge, monkeypatch):
+    store, _ = bridge
+    import scripts.ccf_agent_bridge as bridge_module
+
+    monkeypatch.setattr(bridge_module, "RETRY_DELAYS_SECONDS", (0,))
+    event_id = store.assign("TKT-RETRY", "academy", "Reintento", "Entrega", "agy2", "codex",
+                            ["criterio"], coordinator="freebuff")
+    first = store.claim_pending()
+    assert first is not None
+    store.record_dispatch(event_id, first["claim_token"], False, "tmux unavailable")
+    second = store.claim_pending()
+    assert second is not None and second["id"] == event_id
+    assert second["attempts"] == 1
+    store.record_dispatch(event_id, second["claim_token"], True)
+    with store.transaction() as conn:
+        conn.execute("UPDATE events SET next_attempt_at='2000-01-01T00:00:00+00:00' WHERE id=?", (event_id,))
+    assert store.claim_pending() is not None
+
+
+def test_ack_timeout_resends_same_event_and_late_ack_is_idempotent(bridge):
+    store, _ = bridge
+    event_id = store.assign("TKT-ACK-TIMEOUT", "academy", "ACK", "Reentrega", "agy2", "codex",
+                            ["criterio"], coordinator="freebuff")
+    first = store.claim_pending()
+    assert first is not None
+    store.record_dispatch(event_id, first["claim_token"], True)
+    with store.transaction() as conn:
+        conn.execute("UPDATE events SET next_attempt_at='2000-01-01T00:00:00+00:00' WHERE id=?", (event_id,))
+    second = store.claim_pending()
+    assert second is not None and second["id"] == event_id
+    store.acknowledge(event_id, "agy2")
+    store.record_dispatch(event_id, second["claim_token"], True)
+    assert store.status()["events"]["ACKED"] == 1
+
+
+def test_queue_activates_dependencies_when_owner_and_worktree_free(bridge):
+    store, _ = bridge
+    store.assign("TKT-DEP", "academy", "Base", "Prerequisito", "agy2", "codex",
+                 ["criterio"], coordinator="freebuff")
+    store.enqueue("TKT-QUEUED", "academy", "Dependiente", "Se activa sola", "agy2", "codex",
+                  ["criterio"], ["TKT-DEP"], coordinator="freebuff", priority=10)
+    assert store.task("TKT-QUEUED")["status"] == "QUEUED"
+    assert store.activate_ready() == []
+    dependency_event = store.pending_events()[0]["id"]
+    delivered(store, dependency_event, "agy2")
+    sha = make_work_commit(store.repo_root)
+    submission = store.submit("TKT-DEP", "agy2", sha, "Listo", ["evidence.txt"], ["pass"])
+    delivered(store, submission, "codex")
+    approved = store.review("TKT-DEP", "codex", True, 100, "", "verificado")
+    delivered(store, approved, "agy2")
+    store.close("TKT-DEP", "freebuff", "Completado")
+    assert store.activate_ready() == ["TKT-QUEUED"]
+    assert store.task("TKT-QUEUED")["status"] == "ASSIGNED"
+
+
+def test_queue_reports_cancelled_dependency_and_pause_rejects_enqueue(bridge):
+    store, _ = bridge
+    store.assign("TKT-CANCEL-DEP", "academy", "Base", "Cancelar", "agy2", "codex",
+                 ["criterio"], coordinator="freebuff")
+    store.close("TKT-CANCEL-DEP", "freebuff", "Ya no requerida", cancel=True)
+    store.enqueue("TKT-BLOCKED", "academy", "Dependiente", "Esperar", "agy2", "codex",
+                  ["criterio"], ["TKT-CANCEL-DEP"], coordinator="freebuff")
+    assert store.activate_ready() == []
+    assert "canceladas" in store.status()["queued_tasks"][0]["activation_error"]
+    store.pause("agy", True)
+    with pytest.raises(BridgeError, match="pausado"):
+        store.enqueue("TKT-PAUSED", "academy", "Pausada", "No encolar", "agy2", "codex",
+                      ["criterio"], coordinator="freebuff")
+
+
+def test_dead_letter_escalates_once_to_coordinator(bridge, monkeypatch):
+    store, _ = bridge
+    import scripts.ccf_agent_bridge as bridge_module
+
+    monkeypatch.setattr(bridge_module, "MAX_DELIVERY_ATTEMPTS", 1)
+    event_id = store.assign("TKT-DEAD", "academy", "Escalamiento", "Reintentos", "agy2", "codex",
+                            ["criterio"], coordinator="freebuff")
+    claim = store.claim_pending()
+    assert claim is not None
+    store.record_dispatch(event_id, claim["claim_token"], False, "tmux offline")
+    assert store.status()["events"]["DEAD"] == 1
+    alerts = [event for event in store.pending_events() if event["kind"] == "BRIDGE_ALERT"]
+    assert len(alerts) == 1 and alerts[0]["target"] == "freebuff"
+    alert_claim = store.claim_pending()
+    assert alert_claim is not None and alert_claim["id"] == alerts[0]["id"]
+    store.record_dispatch(alert_claim["id"], alert_claim["claim_token"], False, "coordinator unavailable")
+    store.escalate_dead_letters()
+    with store.connect() as conn:
+        assert conn.execute("SELECT COUNT(*) FROM events WHERE kind='BRIDGE_ALERT'").fetchone()[0] == 1
+
+
+def test_daemon_heartbeat_and_health_json_argument(bridge):
+    store, _ = bridge
+    assert store.health()["state"] == "DEGRADED"
+    store.heartbeat("test-instance")
+    assert store.health()["state"] == "HEALTHY"
+    assert store.status()["daemon"]["instance_id"] == "test-instance"
+    assert build_parser().parse_args(["health", "--json"]).command == "health"
+
+    event_id = store.assign("TKT-HEALTH", "academy", "Salud", "ACK vencido", "agy2", "codex",
+                            ["criterio"], coordinator="freebuff")
+    claim = store.claim_pending()
+    assert claim is not None
+    store.record_dispatch(event_id, claim["claim_token"], True)
+    with store.transaction() as conn:
+        conn.execute("UPDATE events SET sent_at='2000-01-01T00:00:00+00:00' WHERE id=?", (event_id,))
+    assert "delivery_or_ack_overdue" in store.health()["issues"]
+
+
 def test_one_dispatcher_claims_each_event(bridge: tuple[Bridge, str]) -> None:
     store, _ = bridge
     event = store.assign("TKT-Q", "academy", "Cola", "Sin duplicar envío", "agy2", "agy", ["criterio"], coordinator="freebuff")
@@ -200,11 +309,16 @@ def test_parallel_schema_upgrade_is_serialized(bridge: tuple[Bridge, str]) -> No
         conn.execute("DROP INDEX ix_bridge_events_status_created")
         conn.execute("DROP INDEX ix_bridge_tasks_owner_status")
         conn.execute("DROP INDEX ix_bridge_tasks_worktree_status")
+        conn.execute("DROP INDEX ix_bridge_events_status_due")
+        conn.execute("DROP INDEX ix_bridge_tasks_queue")
         conn.execute("ALTER TABLE tasks DROP COLUMN coordinator")
         conn.execute("ALTER TABLE tasks DROP COLUMN dependencies_json")
         conn.execute("ALTER TABLE tasks DROP COLUMN baseline_sha")
+        conn.execute("ALTER TABLE tasks DROP COLUMN priority")
+        conn.execute("ALTER TABLE tasks DROP COLUMN activation_error")
         conn.execute("ALTER TABLE events DROP COLUMN claim_token")
         conn.execute("ALTER TABLE events DROP COLUMN claimed_at")
+        conn.execute("ALTER TABLE events DROP COLUMN next_attempt_at")
     def open_bridge(_: int) -> Bridge:
         return Bridge(data_dir=store.data_dir, repo_root=store.repo_root)
     with ThreadPoolExecutor(max_workers=4) as pool:
@@ -212,8 +326,11 @@ def test_parallel_schema_upgrade_is_serialized(bridge: tuple[Bridge, str]) -> No
     assert len(opened) == 8
     with store.connect() as conn:
         assert conn.execute("PRAGMA integrity_check").fetchone()[0] == "ok"
-        assert {"coordinator", "dependencies_json", "baseline_sha"}.issubset(
+        assert {"coordinator", "dependencies_json", "baseline_sha", "priority", "activation_error"}.issubset(
             {row[1] for row in conn.execute("PRAGMA table_info(tasks)")}
+        )
+        assert {"claim_token", "claimed_at", "next_attempt_at"}.issubset(
+            {row[1] for row in conn.execute("PRAGMA table_info(events)")}
         )
 
 
