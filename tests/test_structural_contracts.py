@@ -33,8 +33,40 @@ FORBIDDEN_ROOT_PREFIXES = (
 )
 
 
+class _EffectiveRoute:
+    def __init__(self, path, route):
+        self.path = path
+        self._route = route
+        self.endpoint = getattr(route, "endpoint", None)
+        self.dependant = getattr(route, "dependant", None)
+        self.methods = getattr(route, "methods", set())
+        self.name = getattr(route, "name", "")
+
+
+def _get_all_app_routes(application=app):
+    results = []
+
+    def _collect(routes, prefix=""):
+        for r in routes:
+            if type(r).__name__ == "_IncludedRouter":
+                p = getattr(r.include_context, "prefix", "") or ""
+                _collect(r.original_router.routes, prefix + p)
+            elif hasattr(r, "routes"):
+                p = getattr(r, "path", "") or ""
+                _collect(r.routes, prefix + p)
+            else:
+                p = getattr(r, "path", None)
+                if p is not None:
+                    results.append(_EffectiveRoute(prefix + p, r))
+                else:
+                    results.append(r)
+
+    _collect(application.routes)
+    return results
+
+
 def test_all_application_routes_stay_under_api_tree_or_explicit_exceptions():
-    paths = {route.path for route in app.routes if getattr(route, "path", None)}
+    paths = {route.path for route in _get_all_app_routes() if getattr(route, "path", None)}
 
     invalid_paths = sorted(
         path
@@ -127,7 +159,7 @@ def test_docker_compose_requires_mandatory_secrets_and_canonical_environment_key
 def test_routes_do_not_collide_by_method_and_normalized_path():
     seen: dict[tuple[str, tuple[str, ...]], list[str]] = {}
 
-    for route in app.routes:
+    for route in _get_all_app_routes():
         path = getattr(route, "path", None)
         methods = tuple(sorted(getattr(route, "methods", []) or []))
         endpoint = getattr(route, "endpoint", None)
@@ -136,7 +168,9 @@ def test_routes_do_not_collide_by_method_and_normalized_path():
 
         normalized_path = re.sub(r"\{[^}]+\}", "{}", path)
         key = (normalized_path, methods)
-        seen.setdefault(key, []).append(f"{path} -> {endpoint.__module__}.{endpoint.__name__}")
+        endpoint_name = getattr(endpoint, "__name__", type(endpoint).__name__)
+        endpoint_module = getattr(endpoint, "__module__", type(endpoint).__module__)
+        seen.setdefault(key, []).append(f"{path} -> {endpoint_module}.{endpoint_name}")
 
     collisions = {f"{methods} {path}": owners for (path, methods), owners in seen.items() if len(owners) > 1}
 
@@ -156,7 +190,7 @@ def test_domain_modules_expose_only_expected_canonical_prefixes():
     }
 
     violations: dict[str, list[str]] = {}
-    for route in app.routes:
+    for route in _get_all_app_routes():
         path = getattr(route, "path", None)
         endpoint = getattr(route, "endpoint", None)
         if not path or endpoint is None:
@@ -190,7 +224,7 @@ def _dependency_names(route):
 def test_dashboard_routes_require_authenticated_user():
     protected = {
         route.path: _dependency_names(route)
-        for route in app.routes
+        for route in _get_all_app_routes()
         if getattr(route, "path", "") in {"/api/dashboard/{module}", "/api/dashboard/modules/list"}
     }
 
@@ -214,7 +248,7 @@ def test_internal_routes_do_not_accept_client_sede_id_query():
     }
     violations = []
 
-    for route in app.routes:
+    for route in _get_all_app_routes():
         endpoint = getattr(route, "endpoint", None)
         if endpoint is None or endpoint.__module__ not in checked_modules:
             continue
@@ -698,7 +732,7 @@ def test_academy_has_one_runtime_contract_and_model_tree():
 
     academy_routes = {
         route.path
-        for route in app.routes
+        for route in _get_all_app_routes()
         if getattr(getattr(route, "endpoint", None), "__module__", "") == "backend.api.academy"
     }
     assert academy_routes
@@ -762,7 +796,7 @@ def test_crm_and_agenda_have_one_runtime_contract_each():
     ]
     assert [path.relative_to(root).as_posix() for path in removed_files if path.exists()] == []
 
-    application_paths = {route.path for route in app.routes if getattr(route, "path", None)}
+    application_paths = {route.path for route in _get_all_app_routes() if getattr(route, "path", None)}
     assert not any(path.startswith("/api/v2/") for path in application_paths)
     assert any(path.startswith("/api/crm/") for path in application_paths)
     assert any(path.startswith("/api/agenda/") for path in application_paths)
@@ -777,7 +811,7 @@ def test_auth_has_one_role_owner_and_no_removed_runtime_modules():
     ]
     assert [path.relative_to(root).as_posix() for path in removed_files if path.exists()] == []
 
-    application_paths = {route.path for route in app.routes if getattr(route, "path", None)}
+    application_paths = {route.path for route in _get_all_app_routes() if getattr(route, "path", None)}
     forbidden_kernel_role_mutations = {
         path
         for path in application_paths

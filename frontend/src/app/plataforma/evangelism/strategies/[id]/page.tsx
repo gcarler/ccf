@@ -104,7 +104,6 @@ export default function StrategyDetailPage() {
   updateGroupPersonaRole,
   removePersonaFromGroup,
   handleCreateSession,
-  openMassAttendance,
   openGroupAttendance,
   openAttendanceDrawer,
   handleSaveAttendance,
@@ -306,7 +305,7 @@ export default function StrategyDetailPage() {
   </ErrorBoundary>
   )}
 
-  {viewType === 'dashboard' && activeTab === 'sessions' && strategy.typology !== 'evento_masivo' && (
+  {viewType === 'dashboard' && activeTab === 'sessions' && (
   <SessionsSection
     strategy={strategy}
     id={id}
@@ -352,7 +351,6 @@ export default function StrategyDetailPage() {
     attendanceByGroup={attendanceByGroup}
     formatDate={formatDate}
     onOpenGroupDrawer={openGroupDrawer}
-    onOpenMassAttendance={openMassAttendance}
     onOpenPersona={openPersonaDrawer}
     onRequestDeleteGroup={requestDeleteGroup}
     onOpenGroupAttendance={openGroupAttendance}

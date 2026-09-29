@@ -26,8 +26,8 @@ export interface AgendaFormState {
   start_at: string;
   end_at: string;
   location: string;
-  recurrence: AgendaRecurrencePreset;
-  recurrence_until: string;
+  recurrence?: AgendaRecurrencePreset;
+  recurrence_until?: string;
 }
 
 const PRESET_BY_RULE: Record<string, AgendaRecurrencePreset> = {

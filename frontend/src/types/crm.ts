@@ -403,6 +403,8 @@ export interface CrmAnalyticsSummary {
   events_this_month: number;
   total_groups: number;
   total_families: number;
+  cases_by_stage: Record<string, number>;
+  total_cases: number;
 }
 
 export function normalizePersonas(payload: any[]): CrmPersona[] {
