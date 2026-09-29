@@ -32,6 +32,17 @@ def test_structural_accepts_shared_platform_files():
     assert ownership_violations("feature/modulo-estructural", files) == []
 
 
+def test_bridge_is_owned_by_platform_not_cms():
+    files = [
+        "RUNBOOK_PUENTE_AGY.md",
+        "docs/PUENTE_AGENTES_CCF.md",
+        "scripts/ccf_agent_bridge.py",
+        "tests/test_ccf_agent_bridge.py",
+    ]
+    assert ownership_violations("feature/platform-bridge-reliability-20260929", files) == []
+    assert ownership_violations("feature/cms-bridge-reliability-20260929", files) == files[:2] + files[3:]
+
+
 def test_module_suffixes_preserve_thematic_branches():
     assert module_for_branch("feature/evangelism-audit") == "evangelism"
     assert module_for_branch("feat/cms-nosotros-stats") == "cms"
