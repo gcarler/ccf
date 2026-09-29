@@ -16,10 +16,11 @@ import sqlite3
 import subprocess
 import sys
 import time
+import unicodedata
 import uuid
 from contextlib import closing, contextmanager
-from datetime import datetime, timezone
-from pathlib import Path
+from datetime import datetime, timedelta, timezone
+from pathlib import Path, PurePosixPath
 from typing import Iterator
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
@@ -27,6 +28,9 @@ DEFAULT_BRIDGE_DIR = REPO_ROOT / ".bridge"
 OPEN_STATUSES = ("ASSIGNED", "WORKING", "AWAITING_AUDIT", "REVISION_REQUIRED", "APPROVED")
 COMMIT_RE = re.compile(r"^[0-9a-f]{40}$")
 ACTOR_RE = re.compile(r"^[a-zA-Z0-9_-]{2,40}$")
+TASK_ID_RE = re.compile(r"^[a-zA-Z0-9][a-zA-Z0-9_-]{1,100}$")
+CLAIM_LEASE_SECONDS = 60
+TMUX_AGENT_COMMANDS = {"agy": "agy", "agy2": "agy", "codex": "codex", "freebuff": "node"}
 
 
 class BridgeError(Exception):
@@ -39,16 +43,29 @@ def utc_now() -> str:
 
 def read_json(path: Path) -> dict:
     try:
-        return json.loads(path.read_text(encoding="utf-8")) if path.exists() else {}
-    except (OSError, ValueError):
-        return {}
+        if not path.exists():
+            return {}
+        data = json.loads(path.read_text(encoding="utf-8"))
+        if not isinstance(data, dict):
+            raise BridgeError(f"Snapshot JSON inválido: {path}")
+        return data
+    except (OSError, ValueError) as exc:
+        raise BridgeError(f"No se pudo importar el snapshot JSON {path}: {exc}") from exc
 
 
 class Bridge:
     def __init__(self, data_dir: Path | None = None, repo_root: Path | None = None):
         self.data_dir = data_dir or Path(os.environ.get("CCF_BRIDGE_DIR", DEFAULT_BRIDGE_DIR))
         self.repo_root = repo_root or REPO_ROOT
-        self.data_dir.mkdir(parents=True, exist_ok=True)
+        canonical_dir = (self.repo_root / ".bridge").resolve()
+        if self.data_dir.name not in {".bridge", "bridge"} or self.data_dir.is_symlink() or self.data_dir.resolve() in {
+            Path("/"), Path("/root"), self.repo_root.resolve(),
+        }:
+            raise BridgeError("El directorio del puente debe ser propio y no un symlink ni una raíz amplia")
+        existed = self.data_dir.exists()
+        self.data_dir.mkdir(mode=0o700, parents=True, exist_ok=True)
+        if not existed or self.data_dir.resolve() == canonical_dir:
+            os.chmod(self.data_dir, 0o700)
         self.db_path = self.data_dir / "bridge.sqlite3"
         self._init_db()
 
@@ -61,8 +78,10 @@ class Bridge:
 
     def _init_db(self) -> None:
         with closing(self.connect()) as conn, conn:
+            os.chmod(self.db_path, 0o600)
             conn.execute("PRAGMA journal_mode=WAL")
-            conn.executescript("""
+            conn.execute("BEGIN IMMEDIATE")
+            schema = """
                 CREATE TABLE IF NOT EXISTS tasks (
                     id TEXT PRIMARY KEY,
                     module TEXT NOT NULL,
@@ -71,7 +90,10 @@ class Bridge:
                     criteria_json TEXT NOT NULL,
                     owner TEXT NOT NULL,
                     reviewer TEXT NOT NULL,
+                    coordinator TEXT,
+                    dependencies_json TEXT NOT NULL DEFAULT '[]',
                     worktree TEXT NOT NULL,
+                    baseline_sha TEXT,
                     status TEXT NOT NULL,
                     revision INTEGER NOT NULL DEFAULT 0,
                     legacy INTEGER NOT NULL DEFAULT 0,
@@ -113,6 +135,8 @@ class Bridge:
                     created_at TEXT NOT NULL,
                     sent_at TEXT,
                     acked_at TEXT,
+                    claim_token TEXT,
+                    claimed_at TEXT,
                     last_error TEXT
                 );
                 CREATE TABLE IF NOT EXISTS transitions (
@@ -124,12 +148,40 @@ class Bridge:
                     detail TEXT NOT NULL,
                     created_at TEXT NOT NULL
                 );
+                CREATE TABLE IF NOT EXISTS operations (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    task_id TEXT REFERENCES tasks(id),
+                    event_id TEXT REFERENCES events(id),
+                    kind TEXT NOT NULL,
+                    actor TEXT NOT NULL,
+                    detail TEXT NOT NULL,
+                    created_at TEXT NOT NULL
+                );
                 CREATE TABLE IF NOT EXISTS meta (key TEXT PRIMARY KEY, value TEXT NOT NULL);
-            """)
+            """
+            for statement in schema.split(";"):
+                if statement.strip():
+                    conn.execute(statement)
             task_columns = {row[1] for row in conn.execute("PRAGMA table_info(tasks)")}
             if "worktree" not in task_columns:
                 conn.execute("ALTER TABLE tasks ADD COLUMN worktree TEXT")
                 conn.execute("UPDATE tasks SET worktree=? WHERE worktree IS NULL", (str(self.repo_root.resolve()),))
+            if "coordinator" not in task_columns:
+                conn.execute("ALTER TABLE tasks ADD COLUMN coordinator TEXT")
+            if "dependencies_json" not in task_columns:
+                conn.execute("ALTER TABLE tasks ADD COLUMN dependencies_json TEXT NOT NULL DEFAULT '[]'")
+            if "baseline_sha" not in task_columns:
+                conn.execute("ALTER TABLE tasks ADD COLUMN baseline_sha TEXT")
+            event_columns = {row[1] for row in conn.execute("PRAGMA table_info(events)")}
+            if "claim_token" not in event_columns:
+                conn.execute("ALTER TABLE events ADD COLUMN claim_token TEXT")
+            if "claimed_at" not in event_columns:
+                conn.execute("ALTER TABLE events ADD COLUMN claimed_at TEXT")
+            conn.execute("CREATE INDEX IF NOT EXISTS ix_bridge_events_status_created ON events(status,created_at,id)")
+            conn.execute("CREATE INDEX IF NOT EXISTS ix_bridge_events_status_claimed ON events(status,claimed_at)")
+            conn.execute("CREATE INDEX IF NOT EXISTS ix_bridge_tasks_owner_status ON tasks(owner,status)")
+            conn.execute("CREATE INDEX IF NOT EXISTS ix_bridge_tasks_worktree_status ON tasks(worktree,status)")
+            conn.execute("CREATE INDEX IF NOT EXISTS ix_bridge_operations_task ON operations(task_id,id)")
         self._import_legacy_once()
 
     @contextmanager
@@ -206,12 +258,26 @@ class Bridge:
         )
 
     @staticmethod
+    def _operation(conn: sqlite3.Connection, kind: str, actor: str, detail: str = "",
+                   task_id: str | None = None, event_id: str | None = None) -> None:
+        safe_detail = "".join(" " if unicodedata.category(char) in {"Cc", "Cf", "Zl", "Zp"} else char
+                              for char in detail)[:500]
+        conn.execute(
+            "INSERT INTO operations (task_id,event_id,kind,actor,detail,created_at) VALUES (?,?,?,?,?,?)",
+            (task_id, event_id, kind, actor, safe_detail, utc_now()),
+        )
+
+    @staticmethod
     def _queue(conn: sqlite3.Connection, task_id: str, target: str, kind: str, text: str,
                revision: int = 0) -> str:
         event_id = uuid.uuid4().hex
-        message = (
+        raw_message = (
             f"[CCF-BRIDGE] {kind} {task_id}: {text} | "
             f"ack: python3 /root/ccf/scripts/ccf_agent_bridge.py ack --event {event_id} --actor {target}"
+        )
+        message = "# " + "".join(
+            " " if unicodedata.category(char) in {"Cc", "Cf", "Zl", "Zp"} else char
+            for char in raw_message
         )
         conn.execute(
             "INSERT INTO events (id,task_id,revision,target,kind,message,created_at) VALUES (?,?,?,?,?,?,?)",
@@ -219,26 +285,57 @@ class Bridge:
         )
         return event_id
 
-    def verify_commit(self, sha: str) -> str:
+    def verify_commit(self, sha: str, worktree: Path, baseline: str | None, files: list[str]) -> str:
         sha = sha.lower()
         if not COMMIT_RE.fullmatch(sha):
             raise BridgeError("--commit exige SHA completo de 40 caracteres")
         result = subprocess.run(
-            ["git", "-C", str(self.repo_root), "cat-file", "-t", sha],
+            ["git", "-C", str(worktree), "cat-file", "-t", sha],
             capture_output=True, text=True, check=False,
         )
         if result.returncode != 0 or result.stdout.strip() != "commit":
             raise BridgeError(f"El commit {sha} no existe en este repositorio")
+        tip = subprocess.run(
+            ["git", "-C", str(worktree), "rev-parse", "HEAD"], capture_output=True, text=True, check=False,
+        )
+        if tip.returncode != 0 or tip.stdout.strip() != sha:
+            raise BridgeError("El commit entregado debe ser el HEAD actual del worktree asignado")
+        if subprocess.run(
+            ["git", "-C", str(worktree), "merge-base", "--is-ancestor", sha, "HEAD"], check=False,
+        ).returncode != 0:
+            raise BridgeError("El commit no pertenece a la rama actual del worktree asignado")
+        if baseline and (sha == baseline or subprocess.run(
+            ["git", "-C", str(worktree), "merge-base", "--is-ancestor", baseline, sha], check=False,
+        ).returncode != 0):
+            raise BridgeError("El commit debe ser posterior al HEAD registrado al asignar el ticket")
+        changed = subprocess.run(
+            ["git", "-C", str(worktree), "diff-tree", "--root", "--first-parent", "--no-commit-id", "--name-only", "-r", sha],
+            capture_output=True, text=True, check=False,
+        )
+        if changed.returncode != 0:
+            raise BridgeError("No se pudieron comprobar los archivos del commit")
+        changed_files = set(changed.stdout.splitlines())
+        for file in files:
+            path = PurePosixPath(file)
+            if path.is_absolute() or ".." in path.parts or str(path) != file or file not in changed_files:
+                raise BridgeError(f"El archivo declarado no fue modificado por el commit: {file}")
         return sha
 
     def assign(self, task_id: str, module: str, title: str, description: str, owner: str,
                reviewer: str, criteria: list[str], depends_on: list[str] | None = None,
-               worktree: str | None = None) -> str:
+               worktree: str | None = None, coordinator: str | None = None) -> str:
         owner, reviewer = self._actor(owner), self._actor(reviewer)
-        if owner == reviewer:
-            raise BridgeError("El desarrollador y el auditor deben ser distintos")
-        if not task_id.strip() or not title.strip() or not description.strip():
+        if not coordinator:
+            raise BridgeError("La asignación exige un coordinador explícito")
+        coordinator = self._actor(coordinator)
+        if len({owner, reviewer, coordinator}) != 3:
+            raise BridgeError("Coordinador, desarrollador y auditor deben ser distintos")
+        if owner not in TMUX_AGENT_COMMANDS or reviewer not in TMUX_AGENT_COMMANDS:
+            raise BridgeError("Desarrollador o auditor sin sesión de agente configurada para tmux")
+        if not TASK_ID_RE.fullmatch(task_id) or not title.strip() or not description.strip():
             raise BridgeError("ID, título y descripción son obligatorios")
+        if not criteria or any(not criterion.strip() for criterion in criteria):
+            raise BridgeError("La asignación exige criterios de aceptación verificables")
         worktree_path = Path(worktree or self.repo_root).resolve()
         if not worktree_path.is_dir():
             raise BridgeError(f"Worktree inexistente: {worktree_path}")
@@ -248,6 +345,11 @@ class Bridge:
         )
         if git_check.returncode != 0 or Path(git_check.stdout.strip()).resolve() != worktree_path:
             raise BridgeError(f"La ruta no es raíz de un worktree Git: {worktree_path}")
+        baseline = subprocess.run(
+            ["git", "-C", str(worktree_path), "rev-parse", "HEAD"], capture_output=True, text=True, check=False,
+        )
+        if baseline.returncode != 0 or not COMMIT_RE.fullmatch(baseline.stdout.strip()):
+            raise BridgeError("No se pudo fijar el HEAD base del ticket")
         with self.transaction() as conn:
             if conn.execute("SELECT 1 FROM meta WHERE key='paused' AND value='1'").fetchone():
                 raise BridgeError("El puente está pausado; no admite nuevas asignaciones")
@@ -274,14 +376,15 @@ class Bridge:
             now = utc_now()
             conn.execute(
                 "INSERT INTO tasks "
-                "(id,module,title,description,criteria_json,owner,reviewer,worktree,status,revision,legacy,created_at,updated_at) "
-                "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)",
-                (task_id, module, title, description, json.dumps(criteria), owner, reviewer,
-                 str(worktree_path), "ASSIGNED", 0, 0, now, now),
+                "(id,module,title,description,criteria_json,owner,reviewer,coordinator,dependencies_json,worktree,baseline_sha,status,revision,legacy,created_at,updated_at) "
+                "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+                (task_id, module, title, description, json.dumps(criteria), owner, reviewer, coordinator,
+                 json.dumps(depends_on or []),
+                 str(worktree_path), baseline.stdout.strip(), "ASSIGNED", 0, 0, now, now),
             )
-            self._transition(conn, task_id, None, "ASSIGNED", reviewer, "Task assigned")
+            self._transition(conn, task_id, None, "ASSIGNED", coordinator, "Task assigned")
             return self._queue(conn, task_id, owner, "TASK_ASSIGNED",
-                               f"{title}. Worktree: {worktree_path}. "
+                               f"Nueva tarea. Worktree: {worktree_path}. "
                                f"Leer: python3 /root/ccf/scripts/ccf_agent_bridge.py get-task --id {task_id}. "
                                f"Entregar: submit --id {task_id} --actor {owner} --commit <SHA40> --files <rutas> "
                                "--check '<verificación>' --notes '<resumen>'")
@@ -296,9 +399,10 @@ class Bridge:
                 raise BridgeError("Este evento corresponde a otro agente")
             if event["status"] == "ACKED":
                 return
-            if event["status"] != "SENT":
+            if event["status"] not in ("SENT", "SENDING"):
                 raise BridgeError("El evento todavía no fue enviado; no se puede confirmar")
             conn.execute("UPDATE events SET status='ACKED', acked_at=? WHERE id=?", (utc_now(), event_id))
+            self._operation(conn, "ACK", actor, task_id=event["task_id"], event_id=event_id)
             task = self._task(conn, event["task_id"])
             if event["kind"] == "TASK_ASSIGNED" and task["status"] == "ASSIGNED":
                 self._transition(conn, task["id"], "ASSIGNED", "WORKING", actor, "Assignment acknowledged")
@@ -306,7 +410,6 @@ class Bridge:
     def submit(self, task_id: str, actor: str, commit: str, notes: str,
                files: list[str], checks: list[str]) -> str:
         actor = self._actor(actor)
-        sha = self.verify_commit(commit)
         if not notes.strip() or not files or not checks:
             raise BridgeError("La entrega exige notas, archivos y al menos un check")
         with self.transaction() as conn:
@@ -315,6 +418,12 @@ class Bridge:
                 raise BridgeError(f"Solo {task['owner']} puede entregar esta tarea")
             if task["status"] not in ("WORKING", "REVISION_REQUIRED"):
                 raise BridgeError(f"No se puede entregar desde {task['status']}; confirme primero la asignación")
+            sha = self.verify_commit(commit, Path(task["worktree"]), task["baseline_sha"], files)
+            previous = conn.execute(
+                "SELECT commit_sha FROM submissions WHERE task_id=? ORDER BY revision DESC LIMIT 1", (task_id,),
+            ).fetchone()
+            if previous and previous["commit_sha"] == sha:
+                raise BridgeError("Una revisión rechazada exige un commit nuevo")
             if not task["legacy"]:
                 received = conn.execute(
                     "SELECT 1 FROM events WHERE task_id=? AND kind='TASK_ASSIGNED' AND status='ACKED'",
@@ -368,7 +477,7 @@ class Bridge:
             )
             self._transition(conn, task_id, task["status"], new_status, actor, evidence or findings)
             return self._queue(conn, task_id, task["owner"], new_status,
-                               f"{findings or evidence}. Ver: python3 /root/ccf/scripts/ccf_agent_bridge.py get-audit --id {task_id}",
+                               f"Dictamen disponible. Ver: python3 /root/ccf/scripts/ccf_agent_bridge.py get-audit --id {task_id}",
                                task["revision"])
 
     def close(self, task_id: str, actor: str, resolution: str, cancel: bool = False) -> None:
@@ -377,8 +486,9 @@ class Bridge:
             raise BridgeError("El cierre exige una razón o evidencia de integración")
         with self.transaction() as conn:
             task = self._task(conn, task_id)
-            if actor != task["reviewer"]:
-                raise BridgeError(f"Solo {task['reviewer']} puede cerrar esta tarea")
+            closer = task["coordinator"] or task["reviewer"]
+            if actor != closer:
+                raise BridgeError(f"Solo {closer} puede cerrar esta tarea")
             if cancel:
                 if task["status"] not in OPEN_STATUSES:
                     raise BridgeError(f"No se puede cancelar desde {task['status']}")
@@ -386,9 +496,14 @@ class Bridge:
             else:
                 if task["status"] != "APPROVED":
                     raise BridgeError("Solo una tarea APPROVED puede pasar a DONE")
+                if task["coordinator"] and not conn.execute(
+                    "SELECT 1 FROM events WHERE task_id=? AND revision=? AND kind='APPROVED' AND status='ACKED'",
+                    (task_id, task["revision"]),
+                ).fetchone():
+                    raise BridgeError("El desarrollador debe confirmar el dictamen antes del cierre")
                 new_status = "DONE"
             self._transition(conn, task_id, task["status"], new_status, actor, resolution.strip())
-            self._queue(conn, task_id, task["owner"], "TASK_CLOSED", f"{new_status}: {resolution.strip()}",
+            self._queue(conn, task_id, task["owner"], "TASK_CLOSED", f"{new_status}; consulta get-task --id {task_id}",
                         task["revision"])
 
     def pause(self, actor: str, paused: bool) -> None:
@@ -397,18 +512,20 @@ class Bridge:
         with self.transaction() as conn:
             conn.execute("INSERT INTO meta (key,value) VALUES ('paused',?) ON CONFLICT(key) DO UPDATE SET value=excluded.value",
                          ("1" if paused else "0",))
+            self._operation(conn, "PAUSE" if paused else "RESUME", actor)
 
     def task(self, task_id: str) -> dict:
         with closing(self.connect()) as conn:
             row = self._task(conn, task_id)
             result = dict(row)
             result["acceptance_criteria"] = json.loads(result.pop("criteria_json"))
+            result["depends_on"] = json.loads(result.pop("dependencies_json"))
             return result
 
     def active_tasks(self) -> list[dict]:
         with closing(self.connect()) as conn:
             rows = conn.execute(
-                f"SELECT id,owner,reviewer,worktree,status,revision,updated_at FROM tasks "
+                f"SELECT id,owner,reviewer,coordinator,worktree,status,revision,updated_at FROM tasks "
                 f"WHERE status IN ({','.join('?' for _ in OPEN_STATUSES)}) ORDER BY updated_at DESC",
                 OPEN_STATUSES,
             ).fetchall()
@@ -439,7 +556,18 @@ class Bridge:
                 "active_tasks": self.active_tasks(),
                 "events": {row["status"]: row["count"] for row in events},
                 "events_needing_attention": [dict(row) for row in attention],
+                "recent_operations": [dict(row) for row in conn.execute(
+                    "SELECT id,task_id,event_id,kind,actor,detail,created_at FROM operations ORDER BY id DESC LIMIT 20"
+                ).fetchall()],
             }
+
+    def history(self, task_id: str) -> list[dict]:
+        with closing(self.connect()) as conn:
+            self._task(conn, task_id)
+            return [dict(row) for row in conn.execute(
+                "SELECT id,task_id,event_id,kind,actor,detail,created_at FROM operations "
+                "WHERE task_id=? ORDER BY id", (task_id,),
+            ).fetchall()]
 
     def pending_events(self) -> list[dict]:
         with closing(self.connect()) as conn:
@@ -448,41 +576,73 @@ class Bridge:
             ).fetchall()]
 
     def claim_pending(self) -> dict | None:
-        """Only one daemon may own an event at a time."""
+        """Claim an event with a lease; expired claims can be delivered again."""
         with self.transaction() as conn:
+            cutoff = (datetime.now(timezone.utc) - timedelta(seconds=CLAIM_LEASE_SECONDS)).isoformat()
+            expired = conn.execute(
+                "SELECT id,task_id FROM events WHERE status='SENDING' AND (claimed_at IS NULL OR claimed_at<?)",
+                (cutoff,),
+            ).fetchall()
+            for stale in expired:
+                conn.execute(
+                    "UPDATE events SET status='PENDING', claim_token=NULL, claimed_at=NULL, "
+                    "last_error='Delivery lease expired; retrying' WHERE id=?", (stale["id"],),
+                )
+                self._operation(conn, "LEASE_EXPIRED", "bridge", task_id=stale["task_id"], event_id=stale["id"])
             row = conn.execute(
                 "SELECT * FROM events WHERE status='PENDING' ORDER BY created_at, id LIMIT 1"
             ).fetchone()
             if not row:
                 return None
-            conn.execute("UPDATE events SET status='SENDING' WHERE id=?", (row["id"],))
-            return dict(row)
+            token = uuid.uuid4().hex
+            conn.execute(
+                "UPDATE events SET status='SENDING', claim_token=?, claimed_at=?, attempts=attempts+1 WHERE id=?",
+                (token, utc_now(), row["id"]),
+            )
+            self._operation(conn, "DISPATCH_CLAIM", "bridge", f"attempt={row['attempts'] + 1}",
+                            task_id=row["task_id"], event_id=row["id"])
+            result = dict(row)
+            result["claim_token"] = token
+            return result
 
-    def record_dispatch(self, event_id: str, success: bool, error: str = "") -> None:
+    def record_dispatch(self, event_id: str, claim_token: str, success: bool, error: str = "") -> None:
         with self.transaction() as conn:
-            row = conn.execute("SELECT status FROM events WHERE id=?", (event_id,)).fetchone()
-            if not row or row["status"] != "SENDING":
+            row = conn.execute("SELECT task_id,status,claim_token FROM events WHERE id=?", (event_id,)).fetchone()
+            if not row or row["status"] != "SENDING" or row["claim_token"] != claim_token:
                 return
             conn.execute(
-                "UPDATE events SET status=?, attempts=attempts+1, sent_at=?, last_error=? WHERE id=?",
+                "UPDATE events SET status=?, claim_token=NULL, claimed_at=NULL, sent_at=?, last_error=? WHERE id=?",
                 ("SENT" if success else "FAILED", utc_now() if success else None, error or None, event_id),
             )
+            self._operation(conn, "DISPATCH_SENT" if success else "DISPATCH_FAILED", "bridge", error,
+                            task_id=row["task_id"], event_id=event_id)
 
-    def retry_event(self, event_id: str) -> None:
+    def retry_event(self, event_id: str, actor: str) -> None:
+        actor = self._actor(actor)
         with self.transaction() as conn:
-            row = conn.execute("SELECT status FROM events WHERE id=?", (event_id,)).fetchone()
-            if not row or row["status"] not in ("FAILED", "SENT", "SENDING"):
-                raise BridgeError("Solo se puede reenviar un evento FAILED, SENDING o SENT sin ACK")
+            row = conn.execute("SELECT task_id,target,status,last_error FROM events WHERE id=?", (event_id,)).fetchone()
+            if not row or row["status"] not in ("FAILED", "SENT"):
+                raise BridgeError("Solo se puede reenviar un evento FAILED o SENT sin ACK")
+            task = self._task(conn, row["task_id"])
+            if actor not in {row["target"], task["coordinator"] or task["reviewer"], "agy"}:
+                raise BridgeError("Solo el destinatario o coordinador puede reintentar este evento")
+            self._operation(conn, "RETRY", actor, f"previous={row['status']}; error={row['last_error'] or ''}",
+                            task_id=row["task_id"], event_id=event_id)
             conn.execute("UPDATE events SET status='PENDING', last_error=NULL WHERE id=?", (event_id,))
 
 
 def send_to_tmux(event: dict) -> tuple[bool, str]:
     target = event["target"]
-    if not ACTOR_RE.fullmatch(target):
+    expected_command = TMUX_AGENT_COMMANDS.get(target)
+    if not ACTOR_RE.fullmatch(target) or not expected_command:
         return False, "Sesión tmux inválida"
+    if not event["message"].startswith("# [CCF-BRIDGE]") or any(
+        unicodedata.category(char) in {"Cc", "Cf", "Zl", "Zp"} for char in event["message"]
+    ):
+        return False, "Mensaje del puente inseguro para tmux"
     try:
         panes = subprocess.run(
-            ["tmux", "list-panes", "-t", target, "-F", "#{pane_id} #{pane_active}"],
+            ["tmux", "list-panes", "-t", target, "-F", "#{pane_id} #{pane_active} #{pane_current_command}"],
             capture_output=True, text=True, timeout=5, check=False,
         )
     except (OSError, subprocess.TimeoutExpired) as exc:
@@ -490,10 +650,10 @@ def send_to_tmux(event: dict) -> tuple[bool, str]:
     if panes.returncode != 0:
         return False, panes.stderr.strip() or "Sesión tmux no disponible"
     pane_rows = [line.split() for line in panes.stdout.splitlines() if line.strip()]
-    active = next((row[0] for row in pane_rows if len(row) == 2 and row[1] == "1"), None)
-    pane_id = active or (pane_rows[0][0] if pane_rows else None)
+    active = next((row[0] for row in pane_rows if len(row) == 3 and row[1] == "1" and row[2] == expected_command), None)
+    pane_id = active
     if not pane_id:
-        return False, "La sesión tmux no tiene panel activo"
+        return False, "La sesión tmux no tiene panel activo del agente esperado"
     buffer_name = f"ccf_{event['id'][:24]}"
     commands = (
         ["tmux", "set-buffer", "-b", buffer_name, "--", event["message"]],
@@ -514,7 +674,7 @@ def daemon(bridge: Bridge, interval: float = 1.0, once: bool = False) -> None:
     while True:
         while event := bridge.claim_pending():
             success, error = send_to_tmux(event)
-            bridge.record_dispatch(event["id"], success, error)
+            bridge.record_dispatch(event["id"], event["claim_token"], success, error)
             print(f"{utc_now()} {event['id']} {event['target']} {'SENT' if success else 'FAILED'} {error}", flush=True)
         if once:
             return
@@ -537,9 +697,10 @@ def build_parser() -> argparse.ArgumentParser:
     for arg in ("id", "module", "title", "desc"):
         p.add_argument(f"--{arg}", required=True)
     p.add_argument("--owner", default="agy2")
-    p.add_argument("--reviewer", default="agy")
+    p.add_argument("--reviewer", required=True)
+    p.add_argument("--actor", required=True, help="Coordinador distinto del owner y reviewer")
     p.add_argument("--worktree", help="Raíz Git exclusiva para este ticket; por defecto, el repo actual")
-    p.add_argument("--criteria", default="")
+    p.add_argument("--criteria", required=True)
     p.add_argument("--depends-on", action="append", default=[])
     p = sub.add_parser("submit")
     for arg in ("id", "actor", "commit", "notes", "files"):
@@ -567,7 +728,10 @@ def build_parser() -> argparse.ArgumentParser:
     sub.add_parser("status")
     for name in ("pause", "resume"):
         sub.add_parser(name).add_argument("--actor", required=True)
-    sub.add_parser("retry").add_argument("--event", required=True)
+    p = sub.add_parser("retry")
+    p.add_argument("--event", required=True)
+    p.add_argument("--actor", required=True)
+    sub.add_parser("get-history").add_argument("--id", required=True)
     p = sub.add_parser("daemon")
     p.add_argument("--interval", "--poll-interval", type=float, default=1.0)
     p.add_argument("--once", action="store_true")
@@ -577,13 +741,13 @@ def build_parser() -> argparse.ArgumentParser:
 
 def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
-    bridge = Bridge()
     try:
+        bridge = Bridge()
         command = args.command
         if command == "assign":
             event = bridge.assign(args.id, args.module, args.title, args.desc, args.owner,
                                   args.reviewer, [v.strip() for v in args.criteria.split(";") if v.strip()],
-                                  args.depends_on, args.worktree)
+                                  args.depends_on, args.worktree, args.actor)
             result: object = {"task_id": args.id, "event_id": event, "status": "ASSIGNED"}
         elif command == "submit":
             event = bridge.submit(args.id, args.actor, args.commit, args.notes,
@@ -600,8 +764,10 @@ def main(argv: list[str] | None = None) -> int:
             bridge.acknowledge(args.event, args.actor)
             result = {"event_id": args.event, "status": "ACKED"}
         elif command == "retry":
-            bridge.retry_event(args.event)
+            bridge.retry_event(args.event, args.actor)
             result = {"event_id": args.event, "status": "PENDING"}
+        elif command == "get-history":
+            result = bridge.history(args.id)
         elif command in ("pause", "resume"):
             bridge.pause(args.actor, paused=command == "pause")
             result = bridge.status()

@@ -5,7 +5,8 @@ Este archivo se conserva para los operadores que usaban el runbook anterior.
 
 El puente mantiene una tarea por desarrollador en `.bridge/bridge.sqlite3`.
 La entrega requiere ID de ticket, SHA completo, archivos y verificaciones.
-El auditor independiente confirma cada entrega antes de dictaminar; `approve`
+El auditor independiente confirma cada entrega antes de dictaminar; el
+coordinador, distinto del auditor y del desarrollador, asigna y cierra. `approve`
 no asigna otra tarea y `close` termina el ciclo en `DONE`.
 
 Comando de estado:
