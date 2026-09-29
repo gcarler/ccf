@@ -7,7 +7,7 @@ import { DSCard } from '@/design';
 import { DSCommandEntry } from '@/design';
 import { DSInput } from '@/design';
 import { DSMetric } from '@/design';
-import { DSModal } from '@/design';
+import SidePanel from '@/components/ui/SidePanel';
 import { DSSectionHeader } from '@/design';
 import { DSSelect } from '@/design';
 import { DSSkeleton } from '@/design';
@@ -18,7 +18,7 @@ import { toast } from '@/design';
 
 export default function CmsUiKitPage() {
   const [activeChip, setActiveChip] = useState("all");
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("tab1");
 
   return (
@@ -236,30 +236,31 @@ export default function CmsUiKitPage() {
           </DSCard>
         </section>
 
-        {/* --- Modal --- */}
+        {/* --- Drawer / SidePanel (Zero-Modals Canónico) --- */}
         <section className="space-y-3">
-          <DSSectionHeader title="Modal" description="Diálogos modales con backdrop." />
+          <DSSectionHeader title="Drawer / SidePanel (Zero-Modals)" description="Paneles laterales deslizantes estándar para flujos de creación, edición y detalle en plataforma." />
           <DSCard className="p-3">
-            <DSButton onClick={() => setIsModalOpen(true)}>Abrir Modal</DSButton>
-            <DSModal
-              open={isModalOpen}
-              onClose={() => setIsModalOpen(false)}
-              title="Ejemplo de Modal"
+            <DSButton onClick={() => setIsDrawerOpen(true)}>Abrir Drawer Lateral</DSButton>
+            <SidePanel
+              isOpen={isDrawerOpen}
+              onClose={() => setIsDrawerOpen(false)}
+              title="Ejemplo de Drawer Lateral"
+              subtitle="Patrón canónico de interacción lateral (Zero Modals)"
             >
-              <div className="space-y-3">
+              <div className="p-4 space-y-4">
                 <p className="text-sm text-[hsl(var(--text-secondary))]">
-                  Este es un modal de ejemplo con contenido básico.
+                  Este es un panel lateral deslizante (SidePanel / Drawer) que cumple con la regla de arquitectura Zero-Modals de la plataforma CCF.
                 </p>
-                <div className="flex justify-end gap-2">
-                  <DSButton variant="ghost" onClick={() => setIsModalOpen(false)}>
+                <div className="flex justify-end gap-2 pt-4 border-t border-[hsl(var(--border))]">
+                  <DSButton variant="ghost" onClick={() => setIsDrawerOpen(false)}>
                     Cancelar
                   </DSButton>
-                  <DSButton onClick={() => setIsModalOpen(false)}>
+                  <DSButton onClick={() => setIsDrawerOpen(false)}>
                     Aceptar
                   </DSButton>
                 </div>
               </div>
-            </DSModal>
+            </SidePanel>
           </DSCard>
         </section>
 
