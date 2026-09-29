@@ -1,800 +1,799 @@
 "use client";
 
 import { useMemo, useState, useEffect } from "react";
-
+import Link from "next/link";
+import Image from "next/image";
+import {
+  Calendar as CalendarIcon,
+  Clock,
+  MapPin,
+  Users,
+  Download,
+  ChevronLeft,
+  ChevronRight,
+  Sparkles,
+  Heart,
+  Share2,
+  CheckCircle2,
+  CalendarDays,
+  BookmarkPlus,
+} from "lucide-react";
+import { toast } from "sonner";
 
 import PublicHeroWithSlides from "@/components/public/PublicHeroWithSlides";
 import { useCmsV2Page } from "@/hooks/useCmsV2Page";
-import { Bell, ChevronLeft, ChevronRight, MapPin, Star } from "lucide-react";
-import Image from "next/image";
-import { toast } from "sonner";
+import PublicEventRegisterDrawer, {
+  type PublicMeetingEvent,
+} from "@/components/public/PublicEventRegisterDrawer";
 
-interface PublicEventItem {
-    title?: string;
-    date?: string;
-    location?: string;
-    excerpt?: string;
-    category?: string;
-    featured?: boolean;
-    status?: string;
-    img?: string;
-}
-
-interface CalendarDay {
-    n: number;
-    prev: boolean;
-    event?: boolean;
-}
-
-function formatMonthDay(date?: string) {
-    if (!date) return { month: "", day: "" };
-    const parts = date.trim().split(/\s+/);
-    return {
-        day: parts[0] ?? "",
-        month: parts[2] ?? "",
-    };
+interface CalendarDayInfo {
+  dayNumber: number;
+  date: Date;
+  isCurrentMonth: boolean;
+  isToday: boolean;
+  events: PublicMeetingEvent[];
 }
 
 export default function EventosPage() {
-    const heroPage = useCmsV2Page('events');
-    const heroContent = heroPage?.blocks?.hero;
-    const feedContent = heroPage?.blocks?.feed;
-    const eventsContent = feedContent;
-    const [activeFilter, setActiveFilter] = useState("Todos");
-    const [calendarView, setCalendarView] = useState<"Semanal" | "Mensual" | "Anual">("Mensual");
-    const today = useMemo(() => new Date(), []);
-    const [currentMonth, setCurrentMonth] = useState(today.getMonth());
-    const [currentYear, setCurrentYear] = useState(today.getFullYear());
+  // Set explicit SEO document title
+  useEffect(() => {
+    document.title = "Eventos y Calendario | Comunidad Cristiana El Faro (CCF)";
+  }, []);
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const [publicStrategies, setPublicStrategies] = useState<any[]>([]);
-    
-    useEffect(() => {
-        fetch("/api/evangelism/public/upcoming-events")
-            .then(res => res.json())
-            .then(data => {
-                if (Array.isArray(data)) setPublicStrategies(data);
-            })
-            .catch(console.error);
-    }, []);
+  const heroPage = useCmsV2Page("events");
+  const heroContent = heroPage?.blocks?.hero as Record<string, unknown> | undefined;
 
-    const heroEyebrow = typeof heroContent?.eyebrow === "string" ? heroContent.eyebrow : "";
-    const heroTitle = typeof heroContent?.title === "string" ? heroContent.title : "";
-    const heroDescription = typeof heroContent?.description === "string" ? heroContent.description : "";
-    const feed = eventsContent?.parsed && typeof eventsContent.parsed === "object" && !Array.isArray(eventsContent.parsed)
-        ? eventsContent.parsed as Record<string, unknown>
-        : {};
-    const categoryFilters = Array.isArray(feed.filters) ? (feed.filters as string[]) : [];
-    const filtersTitle = typeof feed.filters_title === "string" ? feed.filters_title : "";
-    const syncCalendarCta = typeof feed.sync_calendar_cta === "string" ? feed.sync_calendar_cta : "";
-    const syncCalendarToast = typeof feed.sync_calendar_toast === "string" ? feed.sync_calendar_toast : "";
-    const notificationsTitle = typeof feed.notifications_title === "string" ? feed.notifications_title : "";
-    const notificationsDesc = typeof feed.notifications_desc === "string" ? feed.notifications_desc : "";
-    const notificationsToast = typeof feed.notifications_toast === "string" ? feed.notifications_toast : "";
-    const highlightsTitle = typeof feed.highlights_title === "string" ? feed.highlights_title : "";
-    const highlightsEmpty = typeof feed.highlights_empty === "string" ? feed.highlights_empty : "";
-    const noUpcomingLabel = typeof feed.no_upcoming_label === "string" ? feed.no_upcoming_label : "";
-    const noLocation = typeof feed.no_location === "string" ? feed.no_location : "";
-    const emptyTitle = typeof feed.empty_title === "string" ? feed.empty_title : "";
-    const emptyDescription = typeof feed.empty_description === "string" ? feed.empty_description : "";
-    const upcomingLabel = typeof feed.upcoming_label === "string" ? feed.upcoming_label : "";
-    const calendarTitle = typeof feed.calendar_title === "string" ? feed.calendar_title : "";
-    const calendarDescription = typeof feed.calendar_description === "string" ? feed.calendar_description : "";
-    const todayLabel = typeof feed.today_label === "string" ? feed.today_label : "";
-    const noEventsTitle = typeof feed.no_events_title === "string" ? feed.no_events_title : "";
-    const noEventsDescription = typeof feed.no_events_description === "string" ? feed.no_events_description : "";
-    const featuredLabel = typeof feed.featured_label === "string" ? feed.featured_label : "";
+  const [publicMeetings, setPublicMeetings] = useState<PublicMeetingEvent[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [activeCategory, setActiveCategory] = useState<string>("Todas");
 
-    const hasHero = Boolean(heroTitle || heroDescription || heroEyebrow);
+  // Calendar State
+  const today = useMemo(() => new Date(), []);
+  const [currentMonth, setCurrentMonth] = useState(today.getMonth());
+  const [currentYear, setCurrentYear] = useState(today.getFullYear());
+  const [selectedDay, setSelectedDay] = useState<Date>(today);
 
-    const parsedEvents = useMemo(() => {
-        const raw = eventsContent?.parsed ?? heroPage?.blocks?.events?.parsed ?? heroPage?.blocks?.events;
-        const list = Array.isArray(raw)
-            ? raw
-            : Array.isArray((raw as Record<string, unknown>)?.items)
-            ? (raw as Record<string, unknown>).items
-            : [];
-        return (list as PublicEventItem[]).filter((event) => event.status !== "archived");
-    }, [eventsContent, heroPage]);
+  // Drawer State
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [selectedEventForDrawer, setSelectedEventForDrawer] = useState<PublicMeetingEvent | null>(null);
 
-    const heroSlides = useMemo(() => {
-        const eventSlides = parsedEvents
-            .filter((event) => Boolean(event.img))
-            .slice(0, 4)
-            .map((event) => ({
-                src: String(event.img),
-                alt: event.title || "Evento",
-                title: event.title || undefined,
-                caption: event.location || event.category || undefined,
-            }));
-        if (eventSlides.length > 0) return eventSlides;
-        if (Array.isArray(heroContent?.slides) && (heroContent.slides as unknown[]).length > 0) {
-            return (heroContent.slides as Array<{ src?: string; alt?: string; title?: string; caption?: string }>)
-                .filter((s) => s && typeof s.src === "string")
-                .map((s) => ({
-                    src: s.src!,
-                    alt: s.alt || heroTitle || "Evento",
-                    title: s.title,
-                    caption: s.caption,
-                }));
+  // Fetch enriched public events from backend
+  useEffect(() => {
+    setLoading(true);
+    fetch("/api/evangelism/public/upcoming-events")
+      .then((res) => {
+        if (!res.ok) throw new Error("Error al obtener eventos");
+        return res.json();
+      })
+      .then((data: PublicMeetingEvent[]) => {
+        if (Array.isArray(data)) {
+          setPublicMeetings(data);
         }
-        return [];
-    }, [parsedEvents, heroContent, heroTitle]);
+      })
+      .catch((err) => {
+        console.error("Error fetching public upcoming events:", err);
+      })
+      .finally(() => {
+        setLoading(false);
+      });
+  }, []);
 
-    const filteredEvents = useMemo(() => {
-        if (activeFilter === "Todos") return parsedEvents;
-        return parsedEvents.filter((e) => e.category === activeFilter);
-    }, [parsedEvents, activeFilter]);
+  // Hero section contents
+  const heroEyebrow =
+    typeof heroContent?.eyebrow === "string" && heroContent.eyebrow
+      ? heroContent.eyebrow
+      : "Comunidad Cristiana El Faro";
+  const heroTitle =
+    typeof heroContent?.title === "string" && heroContent.title
+      ? heroContent.title
+      : "Reuniones Semanales y Próximos Eventos";
+  const heroDescription =
+    typeof heroContent?.description === "string" && heroContent.description
+      ? heroContent.description
+      : "Te invitamos a ser parte de nuestra familia de fe. Conoce nuestros horarios de adoración, grupos en hogares y encuentros especiales para toda la familia.";
 
-    const featuredEvent = filteredEvents.find((event) => event.featured) || filteredEvents[0];
-    const upcomingEvent = filteredEvents[1];
-    const upcomingCards = filteredEvents;
-    const hasEvents = filteredEvents.length > 0;
-
-    const defaultMonthNames = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
-    const rawMonthNames = Array.isArray(feed.month_names) ? (feed.month_names as unknown[]) : null;
-    const monthNames = rawMonthNames && rawMonthNames.length === 12 && rawMonthNames.every((m) => typeof m === "string" && (m as string).trim())
-        ? (rawMonthNames as string[])
-        : defaultMonthNames;
-    const weekViewLabel = typeof feed.week_view_label === "string" && feed.week_view_label ? feed.week_view_label : "Semanal";
-    const monthViewLabel = typeof feed.month_view_label === "string" && feed.month_view_label ? feed.month_view_label : "Mensual";
-    const yearViewLabel = typeof feed.year_view_label === "string" && feed.year_view_label ? feed.year_view_label : "Anual";
-    const viewLabels = { Semanal: weekViewLabel, Mensual: monthViewLabel, Anual: yearViewLabel } as const;
-
-    // Build dynamic calendar from events
-    const eventDays = useMemo(() => {
-        const days = new Set<number>();
-        filteredEvents.forEach((e) => {
-            if (e.date) {
-                const match = e.date.match(/(\d{1,2})\s/);
-                if (match) days.add(parseInt(match[1], 10));
-            }
-        });
-        return days;
-    }, [filteredEvents]);
-
-    const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
-    const firstDayOfWeek = new Date(currentYear, currentMonth, 1).getDay();
-    const prevMonthDays = new Date(currentYear, currentMonth, 0).getDate();
-    const isCurrentMonth = currentMonth === today.getMonth() && currentYear === today.getFullYear();
-
-    const calendarDays: CalendarDay[] = [
-        ...Array.from({ length: firstDayOfWeek }, (_, i) => ({
-            n: prevMonthDays - firstDayOfWeek + i + 1,
-            prev: true,
-        })),
-        ...Array.from({ length: daysInMonth }, (_, i) => ({
-            n: i + 1,
-            prev: false,
-            event: eventDays.has(i + 1),
-        })),
+  const heroSlides = useMemo(() => {
+    return [
+      {
+        src: "/images/events/escuela-dominical.jpg",
+        alt: "Culto y Escuela Dominical",
+        title: "Escuela Dominical y Culto de Adoración",
+        caption: "Cada domingo en Sede Norte y sedes filiales",
+      },
+      {
+        src: "/images/events/faros-en-casa.jpg",
+        alt: "Faros en Casa",
+        title: "Faros en Casa: Grupos de Hogar",
+        caption: "Cada miércoles a las 19:30 hrs",
+      },
     ];
+  }, []);
 
-    return (
-        <main className="pt-[88px] pb-4 overflow-hidden">
-            {hasHero && (
-                <PublicHeroWithSlides
-                    eyebrow={heroEyebrow}
-                    title={heroTitle}
-                    description={heroDescription}
-                    slides={heroSlides}
-                />
-            )}
+  // Categories list
+  const categories = useMemo(() => {
+    const set = new Set<string>();
+    publicMeetings.forEach((m) => {
+      if (m.categoria_pastoral) set.add(m.categoria_pastoral);
+    });
+    return ["Todas", ...Array.from(set)];
+  }, [publicMeetings]);
 
-            {publicStrategies.length > 0 && (
-                <section className="ccf-container mb-12">
-                    <h2 className="text-2xl font-bold mb-6" style={{ color: "var(--site-on-surface)" }}>
-                        Próximas Estrategias de Evangelismo
-                    </h2>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5">
-                        {publicStrategies.map(st => (
-                            <div key={st.id} className="p-5 rounded-xl border transition-all hover:scale-[1.02]" style={{ borderColor: "var(--site-outline-variant)", background: "var(--site-surface-1)" }}>
-                                <div className="w-10 h-10 rounded-full flex items-center justify-center mb-4" style={{ background: "var(--site-primary-container)", color: "var(--site-on-primary-container)" }}>
-                                    <Star size={20} />
-                                </div>
-                                <h3 className="font-bold text-lg mb-1" style={{ color: "var(--site-on-surface)" }}>{st.nombre}</h3>
-                                <p className="text-sm font-medium mb-3 uppercase tracking-wider" style={{ color: "var(--site-primary)" }}>{st.typology?.replace('_', ' ')}</p>
-                                <div className="flex items-center gap-2 text-sm" style={{ color: "var(--site-on-surface-variant)" }}>
-                                    <MapPin size={16} />
-                                    <span>
-                                        {new Date(st.next_datetime).toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
-                                        {' a las '}{st.hora_reunion}
-                                    </span>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                </section>
-            )}
+  // Filtered meetings
+  const filteredMeetings = useMemo(() => {
+    if (activeCategory === "Todas") return publicMeetings;
+    return publicMeetings.filter((m) => m.categoria_pastoral === activeCategory);
+  }, [publicMeetings, activeCategory]);
 
-            {(hasEvents || categoryFilters.length > 0) && (
-                <section className="ccf-container grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5 md:gap-6 mb-16">
-                    {featuredEvent && (
-                        <div
-                            className="sm:col-span-2 md:col-span-2 relative min-h-[300px] md:h-[440px] rounded-lg overflow-hidden group"
-                            style={{ background: "var(--site-surface-container)" }}
-                        >
-                    {featuredEvent?.img ? (
-                        <Image
-                            src={featuredEvent.img}
-                            alt={featuredEvent.title || "Evento destacado"}
-                            fill
-                            className="object-cover transition-transform duration-700 group-hover:scale-105"
-                            style={{ opacity: 0.5 }}
-                        />
-                    ) : (
-                        <div
-                            className="absolute inset-0"
-                            style={{
-                                background:
-                                    "linear-gradient(135deg, var(--site-primary-container), var(--site-surface-container-high))",
-                            }}
-                        />
-                    )}
-                    <div
-                        className="absolute inset-0"
-                        style={{
-                            background:
-                                "linear-gradient(to top, var(--site-surface-container-lowest) 0%, transparent 60%)",
-                        }}
-                    />
-                    {featuredEvent ? (
-                        <div className="absolute bottom-0 p-4 w-full">
-                            <div className="flex items-center gap-2 mb-4">
-                                {featuredLabel && (
-                                    <span
-                                        className="px-3 py-1 rounded-full font-semibold tracking-wide uppercase"
-                                        style={{
-                                            background: "var(--site-primary-container)",
-                                            color: "var(--site-primary)",
-                                        }}
-                                    >
-                                        {featuredLabel}
-                                    </span>
-                                )}
-                                {featuredEvent.date ? (
-                                    <span
-                                        className="text-xs font-bold"
-                                        style={{ color: "var(--site-on-surface-variant)" }}
-                                    >
-                                        {featuredEvent.date}
-                                    </span>
-                                ) : null}
-                            </div>
-                            {featuredEvent.title && (
-                                <h2
-                                    className="text-xl font-bold mb-4"
-                                    style={{ color: "var(--site-on-surface)" }}
-                                >
-                                    {featuredEvent.title}
-                                </h2>
-                            )}
-                            <div className="flex items-center gap-3">
-                                {featuredEvent.location && (
-                                    <span
-                                        className="flex items-center gap-2 text-sm font-bold"
-                                        style={{ color: "var(--site-primary)" }}
-                                    >
-                                        <MapPin size={16} /> {featuredEvent.location}
-                                    </span>
-                                )}
-                            </div>
-                        </div>
-                    ) : (
-                        (emptyTitle || emptyDescription) && (
-                            <div className="absolute inset-0 flex items-center justify-center p-4">
-                                <div
-                                    className="max-w-md rounded-lg p-4 text-center"
-                                    style={{ background: "var(--site-overlay-bg)", backdropFilter: "blur(12px)" }}
-                                >
-                                    {emptyTitle && (
-                                        <h2
-                                            className="text-xl font-bold mb-3"
-                                            style={{ color: "var(--site-on-surface)" }}
-                                        >
-                                            {emptyTitle}
-                                        </h2>
-                                    )}
-                                    {emptyDescription && (
-                                        <p
-                                            className="text-sm"
-                                            style={{ color: "var(--site-on-surface-variant)" }}
-                                        >
-                                            {emptyDescription}
-                                        </p>
-                                    )}
-                                </div>
-                            </div>
-                        )
-                    )}
-                </div>
-                    )}
+  // Calendar logic: synchronize real weekly church meetings
+  // Wednesdays = Faros en Casa (19:30)
+  // Sundays = Primera Escuela Dominical (06:00), Segunda Escuela Dominical (21:00)
+  const getEventsForDate = (date: Date): PublicMeetingEvent[] => {
+    const dayOfWeek = date.getDay(); // 0 = Domingo, 3 = Miércoles
+    const ymd = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(
+      date.getDate()
+    ).padStart(2, "0")}`;
 
-                <div
-                    className="rounded-lg p-4 flex flex-col justify-between"
-                    style={{ background: "var(--site-surface-container-low)" }}
+    const matching: PublicMeetingEvent[] = [];
+
+    publicMeetings.forEach((m) => {
+      // Check explicit next_date match
+      if (m.next_date === ymd) {
+        matching.push(m);
+        return;
+      }
+
+      // Check recurring day of week match
+      const dia = (m.dia_reunion || "").toLowerCase();
+      if (dayOfWeek === 3 && (dia.includes("miér") || dia.includes("mier"))) {
+        matching.push(m);
+      } else if (dayOfWeek === 0 && dia.includes("dom")) {
+        matching.push(m);
+      }
+    });
+
+    return matching;
+  };
+
+  // Build calendar matrix
+  const calendarMatrix = useMemo(() => {
+    const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+    const firstDayOfWeek = new Date(currentYear, currentMonth, 1).getDay(); // 0=Dom..6=Sab
+    const prevMonthDays = new Date(currentYear, currentMonth, 0).getDate();
+
+    const days: CalendarDayInfo[] = [];
+
+    // Previous month tail days
+    for (let i = 0; i < firstDayOfWeek; i++) {
+      const dNum = prevMonthDays - firstDayOfWeek + i + 1;
+      const d = new Date(currentYear, currentMonth - 1, dNum);
+      days.push({
+        dayNumber: dNum,
+        date: d,
+        isCurrentMonth: false,
+        isToday: false,
+        events: getEventsForDate(d),
+      });
+    }
+
+    // Current month days
+    for (let i = 1; i <= daysInMonth; i++) {
+      const d = new Date(currentYear, currentMonth, i);
+      const isToday =
+        d.getDate() === today.getDate() &&
+        d.getMonth() === today.getMonth() &&
+        d.getFullYear() === today.getFullYear();
+
+      days.push({
+        dayNumber: i,
+        date: d,
+        isCurrentMonth: true,
+        isToday,
+        events: getEventsForDate(d),
+      });
+    }
+
+    return days;
+  }, [currentMonth, currentYear, today, publicMeetings]);
+
+  const monthNames = [
+    "Enero",
+    "Febrero",
+    "Marzo",
+    "Abril",
+    "Mayo",
+    "Junio",
+    "Julio",
+    "Agosto",
+    "Septiembre",
+    "Octubre",
+    "Noviembre",
+    "Diciembre",
+  ];
+
+  // Selected day events
+  const selectedDayEvents = useMemo(() => {
+    return getEventsForDate(selectedDay);
+  }, [selectedDay, publicMeetings]);
+
+  // Open Drawer handler
+  const handleOpenDrawer = (meeting: PublicMeetingEvent) => {
+    setSelectedEventForDrawer(meeting);
+    setDrawerOpen(true);
+  };
+
+  // Download complete full calendar .ics
+  const handleDownloadFullCalendarIcs = () => {
+    const nowIso = new Date().toISOString().replace(/[-:]/g, "").split(".")[0] + "Z";
+    const eventsIcs = publicMeetings
+      .map((m, idx) => {
+        const startIso = m.next_datetime ? new Date(m.next_datetime) : new Date();
+        const endIso = new Date(startIso.getTime() + 90 * 60 * 1000);
+        const formatD = (d: Date) => d.toISOString().replace(/[-:]/g, "").split(".")[0] + "Z";
+
+        return [
+          "BEGIN:VEVENT",
+          `UID:ccf-event-${m.id || idx}-${idx}@ccf.org`,
+          `DTSTAMP:${nowIso}`,
+          `DTSTART:${formatD(startIso)}`,
+          `DTEND:${formatD(endIso)}`,
+          `SUMMARY:${m.nombre} - Comunidad Cristiana El Faro`,
+          `DESCRIPTION:${m.descripcion || "Reunión semanal en Comunidad Cristiana El Faro."}`,
+          `LOCATION:${m.lugar || "Comunidad Cristiana El Faro"}`,
+          "STATUS:CONFIRMED",
+          "END:VEVENT",
+        ].join("\r\n");
+      })
+      .join("\r\n");
+
+    const fullIcs = [
+      "BEGIN:VCALENDAR",
+      "VERSION:2.0",
+      "PRODID:-//Comunidad Cristiana El Faro//Calendario Oficial//ES",
+      "CALSCALE:GREGORIAN",
+      "METHOD:PUBLISH",
+      eventsIcs,
+      "END:VCALENDAR",
+    ].join("\r\n");
+
+    const blob = new Blob([fullIcs], { type: "text/calendar;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `calendario-reuniones-ccf.ics`;
+    link.click();
+    URL.revokeObjectURL(url);
+    toast.success("Calendario de reuniones descargado con éxito.");
+  };
+
+  return (
+    <main className="pt-[88px] pb-16 overflow-hidden min-h-screen">
+      <title>Eventos y Calendario | Comunidad Cristiana El Faro (CCF)</title>
+      <meta
+        name="description"
+        content="Conoce los horarios de nuestras reuniones semanales, cultos dominicales, grupos de hogar y próximos eventos en Comunidad Cristiana El Faro."
+      />
+      {/* 1. Hero Section con Slides */}
+      <PublicHeroWithSlides
+        eyebrow={heroEyebrow}
+        title={heroTitle}
+        description={heroDescription}
+        slides={heroSlides}
+      />
+
+      {/* 2. Sección de Reuniones Semanales (Tarjetas Enriquecidas) */}
+      <section className="ccf-container my-12">
+        <div className="flex flex-col md:flex-row md:items-end justify-between mb-8 gap-4">
+          <div>
+            <div className="flex items-center gap-2 mb-2">
+              <Sparkles size={18} style={{ color: "var(--site-primary, #2563eb)" }} />
+              <span
+                className="text-xs font-bold uppercase tracking-wider"
+                style={{ color: "var(--site-primary, #2563eb)" }}
+              >
+                Vida Congregacional
+              </span>
+            </div>
+            <h2 className="text-2xl sm:text-3xl font-bold tracking-tight" style={{ color: "var(--site-on-surface, #1e1f21)" }}>
+              Nuestras Reuniones Semanales
+            </h2>
+            <p className="text-sm mt-1 max-w-xl" style={{ color: "var(--site-on-surface-variant, #64748b)" }}>
+              Encuentra un horario y un lugar para adorar a Dios y compartir en comunión. Todas nuestras sedes y hogares están abiertos para ti.
+            </p>
+          </div>
+
+          {/* Categorías Filter */}
+          {categories.length > 2 && (
+            <div
+              className="inline-flex p-1 rounded-xl overflow-x-auto max-w-full"
+              style={{ background: "var(--site-surface-container, rgba(0,0,0,0.04))" }}
+            >
+              {categories.map((cat) => (
+                <button
+                  key={cat}
+                  onClick={() => setActiveCategory(cat)}
+                  className="px-3.5 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all"
+                  style={
+                    activeCategory === cat
+                      ? {
+                          background: "var(--site-primary, #2563eb)",
+                          color: "var(--site-on-primary, #ffffff)",
+                          boxShadow: "0 2px 6px rgba(0,0,0,0.08)",
+                        }
+                      : { color: "var(--site-on-surface-variant, #64748b)" }
+                  }
                 >
-                    {categoryFilters.length > 0 && (
-                        <div>
-                            {filtersTitle && (
-                                <h3
-                                    className="text-xl font-bold mb-3"
-                                    style={{ color: "var(--site-on-surface)" }}
-                                >
-                                    {filtersTitle}
-                                </h3>
-                            )}
-                            <div className="space-y-2">
-                                {categoryFilters.map((cat) => (
-                                    <button
-                                        key={cat}
-                                        onClick={() => setActiveFilter(cat)}
-                                        className="w-full px-4 py-1.5 rounded-md flex items-center justify-between text-sm font-bold transition-all text-left"
-                                        style={{
-                                            background:
-                                                activeFilter === cat
-                                                    ? "var(--site-primary-container)"
-                                                    : "var(--site-surface-container)",
-                                            color:
-                                                activeFilter === cat
-                                                    ? "var(--site-primary)"
-                                                    : "var(--site-on-surface-variant)",
-                                        }}
-                                    >
-                                        {cat}
-                                        {activeFilter === cat ? (
-                                            <Star size={14} style={{ color: "var(--site-primary)" }} />
-                                        ) : null}
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
-                    )}
-                    <div
-                        className="mt-3 pt-6"
-                        style={{ borderTop: "1px solid var(--site-outline-variant)" }}
-                    >
-                        {upcomingLabel && (
-                            <p
-                                className="text-2xs font-semibold uppercase tracking-wide mb-3"
-                                style={{ color: "var(--site-on-surface-variant)" }}
-                            >
-                                {upcomingLabel}
-                            </p>
-                        )}
-                        {upcomingEvent ? (
-                            <div className="flex items-center gap-4">
-                                {upcomingEvent.date && (
-                                    <div
-                                        className="w-12 h-8 rounded-lg flex items-center justify-center font-black text-lg shrink-0"
-                                        style={{
-                                            background: "var(--site-primary-container)",
-                                            color: "var(--site-primary)",
-                                        }}
-                                    >
-                                        {upcomingEvent.date}
-                                    </div>
-                                )}
-                                <div>
-                                    {upcomingEvent.title && (
-                                        <p
-                                            className="text-sm font-semibold"
-                                            style={{ color: "var(--site-on-surface)" }}
-                                        >
-                                            {upcomingEvent.title}
-                                        </p>
-                                    )}
-                                    <p
-                                        className="text-xs italic"
-                                        style={{ color: "var(--site-on-surface-variant)" }}
-                                    >
-                                        {upcomingEvent.location || noLocation}
-                                    </p>
-                                </div>
-                            </div>
-                        ) : (
-                            noUpcomingLabel && (
-                                <p className="text-sm" style={{ color: "var(--site-on-surface-variant)" }}>
-                                    {noUpcomingLabel}
-                                </p>
-                            )
-                        )}
-                    </div>
-                </div>
-            </section>
-            )}
+                  {cat}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
 
-            {hasEvents && (
-                <div className="ccf-container grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5 md:gap-6 mb-20">
-                    {upcomingCards.map((event) => {
-                        const { month, day } = formatMonthDay(event.date);
-                        return (
-                            <article
-                                key={`${event.title || "event"}-${event.date || "date"}`}
-                                className="rounded-lg overflow-hidden group transition-transform hover:-translate-y-1"
-                                style={{ background: "var(--site-surface-container-low)" }}
-                            >
-                                <div className="h-52 relative overflow-hidden">
-                                    {event.img ? (
-                                        <Image
-                                            src={event.img}
-                                            alt={event.title || ""}
-                                            fill
-                                            className="object-cover transition-transform duration-500 group-hover:scale-110"
-                                        />
-                                    ) : (
-                                        <div
-                                            className="absolute inset-0"
-                                            style={{
-                                                background:
-                                                    "linear-gradient(135deg, var(--site-primary-container), var(--site-surface-container-high))",
-                                            }}
-                                        />
-                                    )}
-                                    {(month || day) && (
-                                        <div
-                                            className="absolute top-4 right-4 p-3 rounded-lg text-center min-w-[64px]"
-                                            style={{
-                                                background: "var(--site-date-badge-bg)",
-                                                backdropFilter: "blur(12px)",
-                                            }}
-                                        >
-                                            {month && (
-                                                <p
-                                                    className="text-2xs font-semibold uppercase tracking-wider"
-                                                    style={{ color: "var(--site-on-surface-variant)" }}
-                                                >
-                                                    {month}
-                                                </p>
-                                            )}
-                                            {day && (
-                                                <p
-                                                    className="text-xl font-bold"
-                                                    style={{ color: "var(--site-primary)" }}
-                                                >
-                                                    {day}
-                                                </p>
-                                            )}
-                                        </div>
-                                    )}
-                                </div>
-                                <div className="p-8">
-                                    {event.category && (
-                                        <span
-                                            className="text-2xs font-semibold uppercase tracking-wide mb-2 block"
-                                            style={{ color: "var(--site-secondary)" }}
-                                        >
-                                            {event.category}
-                                        </span>
-                                    )}
-                                    {event.title && (
-                                        <h4
-                                            className="font-black text-lg mb-3 group-hover:opacity-80 transition-opacity"
-                                            style={{ color: "var(--site-on-surface)" }}
-                                        >
-                                            {event.title}
-                                        </h4>
-                                    )}
-                                    {(event.excerpt || event.location) && (
-                                        <p
-                                            className="text-sm leading-relaxed line-clamp-2"
-                                            style={{ color: "var(--site-on-surface-variant)" }}
-                                        >
-                                            {event.excerpt || event.location}
-                                        </p>
-                                    )}
-                                </div>
-                            </article>
-                        );
-                    })}
-                </div>
-            )}
-            {!hasEvents && (noEventsTitle || noEventsDescription) && (
-                <div className="ccf-container grid grid-cols-1 mb-20">
-                    <div
-                        className="rounded-lg p-4 text-center"
-                        style={{ background: "var(--site-surface-container-low)" }}
-                    >
-                        {noEventsTitle && (
-                            <h3
-                                className="text-lg font-bold mb-2"
-                                style={{ color: "var(--site-on-surface)" }}
-                            >
-                                {noEventsTitle}
-                            </h3>
-                        )}
-                        {noEventsDescription && (
-                            <p className="text-sm" style={{ color: "var(--site-on-surface-variant)" }}>
-                                {noEventsDescription}
-                            </p>
-                        )}
-                    </div>
-                </div>
-            )}
+        {/* Tarjetas de Eventos */}
+        {filteredMeetings.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredMeetings.map((meeting) => {
+              const nextDateObj = meeting.next_datetime ? new Date(meeting.next_datetime) : null;
+              const dayStr = nextDateObj ? nextDateObj.getDate() : meeting.dia_reunion?.substring(0, 3) || "CCF";
+              const monthStr = nextDateObj
+                ? nextDateObj.toLocaleDateString("es-ES", { month: "short" })
+                : "SEM";
 
-            {(calendarTitle || calendarDescription) && (
-                <section className="ccf-section-tight ccf-container">
-                    <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4">
-                        <div>
-                            {calendarTitle && (
-                                <h2
-                                    className="text-xl font-bold tracking-tight"
-                                    style={{ color: "var(--site-on-surface)" }}
-                                >
-                                    {calendarTitle}
-                                </h2>
-                            )}
-                            {calendarDescription && (
-                                <p
-                                    className="text-sm mt-1"
-                                    style={{ color: "var(--site-on-surface-variant)" }}
-                                >
-                                    {calendarDescription}
-                                </p>
-                            )}
+              return (
+                <article
+                  key={meeting.id}
+                  className="rounded-2xl border overflow-hidden flex flex-col justify-between transition-all duration-300 hover:shadow-xl hover:-translate-y-1 group"
+                  style={{
+                    background: "var(--site-surface-1, #ffffff)",
+                    borderColor: "var(--site-outline-variant, rgba(0,0,0,0.08))",
+                  }}
+                >
+                  {/* Imagen y Badge */}
+                  <div className="relative h-48 w-full overflow-hidden">
+                    <div
+                      className="absolute inset-0 z-0 bg-cover bg-center transition-transform duration-500 group-hover:scale-105"
+                      style={{
+                        backgroundImage: `url(${meeting.imagen_url || "/images/events/reunion-general.jpg"})`,
+                        backgroundColor: "var(--site-surface-container-high, #cbd5e1)",
+                      }}
+                    />
+                    <div
+                      className="absolute inset-0 z-10"
+                      style={{
+                        background:
+                          "linear-gradient(to top, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0.1) 60%, transparent 100%)",
+                      }}
+                    />
+
+                    {/* Badge Fecha */}
+                    <div
+                      className="absolute top-4 right-4 z-20 px-3 py-1.5 rounded-xl text-center shadow-lg backdrop-blur-md"
+                      style={{
+                        background: "rgba(255, 255, 255, 0.92)",
+                        color: "#1e1f21",
+                        border: "1px solid rgba(255,255,255,0.4)",
+                      }}
+                    >
+                      <span className="block text-2xs font-extrabold uppercase tracking-wider text-primary" style={{ color: "var(--site-primary, #2563eb)" }}>
+                        {monthStr}
+                      </span>
+                      <span className="block text-lg font-black leading-none">{dayStr}</span>
+                    </div>
+
+                    {/* Categoría Pill */}
+                    <div className="absolute bottom-3 left-4 z-20">
+                      <span
+                        className="px-2.5 py-1 rounded-md text-2xs font-bold uppercase tracking-wider shadow-sm"
+                        style={{
+                          background: "var(--site-primary, #2563eb)",
+                          color: "var(--site-on-primary, #ffffff)",
+                        }}
+                      >
+                        {meeting.categoria_pastoral || "Reunión CCF"}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Contenido Pastoral */}
+                  <div className="p-6 flex-1 flex flex-col justify-between space-y-4">
+                    <div className="space-y-2">
+                      <h3
+                        className="text-xl font-bold tracking-tight group-hover:text-primary transition-colors"
+                        style={{ color: "var(--site-on-surface, #1e1f21)" }}
+                      >
+                        {meeting.nombre}
+                      </h3>
+                      <p
+                        className="text-sm leading-relaxed line-clamp-2"
+                        style={{ color: "var(--site-on-surface-variant, #64748b)" }}
+                      >
+                        {meeting.descripcion}
+                      </p>
+                    </div>
+
+                    {/* Metadatos Horario y Sede */}
+                    <div
+                      className="pt-4 border-t space-y-2.5 text-xs font-medium"
+                      style={{ borderColor: "var(--site-outline-variant, rgba(0,0,0,0.06))" }}
+                    >
+                      {meeting.dia_reunion && (
+                        <div className="flex items-center gap-2" style={{ color: "var(--site-on-surface-variant, #475569)" }}>
+                          <Clock size={15} style={{ color: "var(--site-primary, #2563eb)" }} />
+                          <span>
+                            Todos los <strong>{meeting.dia_reunion}s</strong>
+                            {meeting.hora_reunion ? ` a las ${meeting.hora_reunion} hrs` : ""}
+                          </span>
                         </div>
-                        <div
-                            className="inline-flex p-1 rounded-lg"
-                            style={{ background: "var(--site-surface-container-high)" }}
+                      )}
+
+                      <div className="flex items-center gap-2" style={{ color: "var(--site-on-surface-variant, #475569)" }}>
+                        <MapPin size={15} style={{ color: "var(--site-primary, #2563eb)" }} />
+                        <span>
+                          {meeting.lugar || "Comunidad Cristiana El Faro"}
+                          {meeting.sede && (
+                            <Link
+                              href="/sedes"
+                              className="ml-1.5 underline font-semibold"
+                              style={{ color: "var(--site-primary, #2563eb)" }}
+                            >
+                              (Ver sede)
+                            </Link>
+                          )}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Botón de Acción Inscribirme / Asistir */}
+                    <button
+                      onClick={() => handleOpenDrawer(meeting)}
+                      className="w-full mt-2 py-2.5 px-4 rounded-xl font-bold text-xs uppercase tracking-wider shadow-sm transition-all flex items-center justify-center gap-2 hover:opacity-95 hover:scale-[1.01]"
+                      style={{
+                        background: "var(--site-primary, #2563eb)",
+                        color: "var(--site-on-primary, #ffffff)",
+                      }}
+                    >
+                      <BookmarkPlus size={15} />
+                      <span>Inscribirme / Asistir</span>
+                    </button>
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+        ) : loading ? (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {[1, 2, 3].map((n) => (
+              <div
+                key={n}
+                className="h-80 rounded-2xl animate-pulse"
+                style={{ background: "var(--site-surface-container, rgba(0,0,0,0.05))" }}
+              />
+            ))}
+          </div>
+        ) : (
+          <div
+            className="p-8 rounded-2xl text-center border space-y-2"
+            style={{
+              background: "var(--site-surface-container-low, #f8f9fb)",
+              borderColor: "var(--site-outline-variant, rgba(0,0,0,0.08))",
+            }}
+          >
+            <CalendarDays size={40} className="mx-auto text-primary" style={{ color: "var(--site-primary, #2563eb)" }} />
+            <h3 className="font-bold text-lg" style={{ color: "var(--site-on-surface, #1e1f21)" }}>
+              No hay reuniones para este filtro
+            </h3>
+            <p className="text-sm" style={{ color: "var(--site-on-surface-variant, #64748b)" }}>
+              Selecciona otra categoría o explora el calendario para conocer todos los horarios.
+            </p>
+          </div>
+        )}
+      </section>
+
+      {/* 3. Calendario Mensual Interactivo Sincronizado */}
+      <section className="ccf-container my-16">
+        <div className="p-6 md:p-8 rounded-3xl border shadow-sm" style={{ background: "var(--site-surface-1, #ffffff)", borderColor: "var(--site-outline-variant, rgba(0,0,0,0.08))" }}>
+          <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
+            <div>
+              <div className="flex items-center gap-2 mb-1.5">
+                <CalendarIcon size={18} style={{ color: "var(--site-primary, #2563eb)" }} />
+                <span className="text-xs font-bold uppercase tracking-wider" style={{ color: "var(--site-primary, #2563eb)" }}>
+                  Planifica tu Semana
+                </span>
+              </div>
+              <h2 className="text-2xl md:text-3xl font-bold tracking-tight" style={{ color: "var(--site-on-surface, #1e1f21)" }}>
+                Calendario de Reuniones y Servicios
+              </h2>
+              <p className="text-sm mt-1" style={{ color: "var(--site-on-surface-variant, #64748b)" }}>
+                Haz clic en cualquier día para consultar las reuniones programadas o sincroniza el calendario completo.
+              </p>
+            </div>
+
+            <button
+              onClick={handleDownloadFullCalendarIcs}
+              className="py-2.5 px-4 rounded-xl border text-xs font-bold uppercase tracking-wider flex items-center gap-2 transition-all hover:scale-105 shrink-0"
+              style={{
+                borderColor: "var(--site-primary, #2563eb)",
+                color: "var(--site-primary, #2563eb)",
+                background: "var(--site-primary-container, rgba(37,99,235,0.06))",
+              }}
+            >
+              <Download size={15} />
+              <span>Sincronizar Calendario (.ics)</span>
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            {/* Grilla Calendario */}
+            <div className="lg:col-span-8 space-y-4">
+              {/* Barra de Navegación de Mes */}
+              <div
+                className="flex items-center justify-between p-3 rounded-xl border"
+                style={{
+                  background: "var(--site-surface-container-low, #f8f9fb)",
+                  borderColor: "var(--site-outline-variant, rgba(0,0,0,0.06))",
+                }}
+              >
+                <div className="flex items-center gap-3">
+                  <h3 className="text-lg font-bold" style={{ color: "var(--site-on-surface, #1e1f21)" }}>
+                    {monthNames[currentMonth]} {currentYear}
+                  </h3>
+                  <div className="flex gap-1">
+                    <button
+                      onClick={() => {
+                        if (currentMonth === 0) {
+                          setCurrentMonth(11);
+                          setCurrentYear((y) => y - 1);
+                        } else {
+                          setCurrentMonth((m) => m - 1);
+                        }
+                      }}
+                      className="p-1.5 rounded-lg border transition-colors hover:scale-105"
+                      style={{
+                        background: "var(--site-surface-1, #ffffff)",
+                        borderColor: "var(--site-outline-variant, rgba(0,0,0,0.1))",
+                      }}
+                      aria-label="Mes anterior"
+                    >
+                      <ChevronLeft size={16} />
+                    </button>
+                    <button
+                      onClick={() => {
+                        if (currentMonth === 11) {
+                          setCurrentMonth(0);
+                          setCurrentYear((y) => y + 1);
+                        } else {
+                          setCurrentMonth((m) => m + 1);
+                        }
+                      }}
+                      className="p-1.5 rounded-lg border transition-colors hover:scale-105"
+                      style={{
+                        background: "var(--site-surface-1, #ffffff)",
+                        borderColor: "var(--site-outline-variant, rgba(0,0,0,0.1))",
+                      }}
+                      aria-label="Mes siguiente"
+                    >
+                      <ChevronRight size={16} />
+                    </button>
+                  </div>
+                </div>
+
+                <button
+                  onClick={() => {
+                    setCurrentMonth(today.getMonth());
+                    setCurrentYear(today.getFullYear());
+                    setSelectedDay(today);
+                  }}
+                  className="text-xs font-bold uppercase tracking-wider px-3 py-1.5 rounded-lg transition-colors hover:bg-black/5"
+                  style={{ color: "var(--site-primary, #2563eb)" }}
+                >
+                  Hoy
+                </button>
+              </div>
+
+              {/* Días de la semana */}
+              <div className="grid grid-cols-7 gap-1 text-center font-bold text-xs uppercase tracking-wider py-1" style={{ color: "var(--site-on-surface-variant, #64748b)" }}>
+                <div>Dom</div>
+                <div>Lun</div>
+                <div>Mar</div>
+                <div>Mié</div>
+                <div>Jue</div>
+                <div>Vie</div>
+                <div>Sáb</div>
+              </div>
+
+              {/* Matriz de Días */}
+              <div className="grid grid-cols-7 gap-1.5 sm:gap-2">
+                {calendarMatrix.map((item, idx) => {
+                  const isSelected =
+                    item.date.getDate() === selectedDay.getDate() &&
+                    item.date.getMonth() === selectedDay.getMonth() &&
+                    item.date.getFullYear() === selectedDay.getFullYear();
+                  const hasEvents = item.events.length > 0;
+
+                  return (
+                    <button
+                      key={idx}
+                      onClick={() => setSelectedDay(item.date)}
+                      className={`min-h-[64px] sm:min-h-[76px] p-2 rounded-xl flex flex-col justify-between items-start text-left transition-all border ${
+                        isSelected
+                          ? "ring-2 ring-primary shadow-md scale-[1.02]"
+                          : "hover:border-primary/50"
+                      }`}
+                      style={{
+                        background: isSelected
+                          ? "var(--site-primary-container, rgba(37,99,235,0.12))"
+                          : item.isCurrentMonth
+                          ? "var(--site-surface-container-lowest, #ffffff)"
+                          : "var(--site-surface-container, rgba(0,0,0,0.02))",
+                        borderColor: isSelected
+                          ? "var(--site-primary, #2563eb)"
+                          : "var(--site-outline-variant, rgba(0,0,0,0.08))",
+                        opacity: item.isCurrentMonth ? 1 : 0.4,
+                      }}
+                    >
+                      <div className="w-full flex items-center justify-between">
+                        <span
+                          className={`text-xs sm:text-sm font-bold rounded-full w-6 h-6 flex items-center justify-center ${
+                            item.isToday
+                              ? "bg-primary text-white shadow-sm"
+                              : ""
+                          }`}
+                          style={
+                            item.isToday
+                              ? {
+                                  background: "var(--site-primary, #2563eb)",
+                                  color: "var(--site-on-primary, #ffffff)",
+                                }
+                              : { color: "var(--site-on-surface, #1e1f21)" }
+                          }
                         >
-                            {(["Semanal", "Mensual", "Anual"] as const).map((value) => (
-                                <button
-                                    key={value}
-                                    onClick={() => setCalendarView(value)}
-                                    className="px-3 py-2 rounded-lg text-xs font-bold tracking-wide uppercase transition-all"
-                                    style={
-                                        calendarView === value
-                                            ? {
-                                                  background: "var(--site-primary)",
-                                                  color: "var(--site-on-primary)",
-                                              }
-                                            : { color: "var(--site-on-surface-variant)" }
-                                    }
-                                >
-                                    {viewLabels[value]}
-                                </button>
-                            ))}
-                        </div>
-                    </div>
+                          {item.dayNumber}
+                        </span>
+                        {hasEvents && (
+                          <span
+                            className="w-2 h-2 rounded-full"
+                            style={{ background: "var(--site-primary, #2563eb)" }}
+                          />
+                        )}
+                      </div>
 
-                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-3">
-                        <div
-                            className="lg:col-span-8 rounded-lg p-3 md:p-4"
+                      {hasEvents && (
+                        <div className="w-full mt-1 hidden sm:block">
+                          <span
+                            className="block text-3xs font-semibold truncate rounded px-1 py-0.5"
                             style={{
-                                background: "var(--site-surface-container-low)",
-                                border: "1px solid var(--site-outline-variant)",
+                              background: "var(--site-primary-container, rgba(37,99,235,0.15))",
+                              color: "var(--site-primary, #2563eb)",
                             }}
+                          >
+                            {item.events[0]?.nombre}
+                          </span>
+                          {item.events.length > 1 && (
+                            <span className="block text-3xs font-bold text-muted-foreground mt-0.5" style={{ color: "var(--site-on-surface-variant, #64748b)" }}>
+                              +{item.events.length - 1} más
+                            </span>
+                          )}
+                        </div>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Panel de Detalle del Día Seleccionado */}
+            <div
+              className="lg:col-span-4 p-5 rounded-2xl border flex flex-col justify-between space-y-4"
+              style={{
+                background: "var(--site-surface-container-low, #f8f9fb)",
+                borderColor: "var(--site-outline-variant, rgba(0,0,0,0.08))",
+              }}
+            >
+              <div className="space-y-4">
+                <div className="border-b pb-3" style={{ borderColor: "var(--site-outline-variant, rgba(0,0,0,0.08))" }}>
+                  <span className="text-2xs font-extrabold uppercase tracking-wider" style={{ color: "var(--site-primary, #2563eb)" }}>
+                    Reuniones Programadas
+                  </span>
+                  <h3 className="text-lg font-bold capitalize mt-0.5" style={{ color: "var(--site-on-surface, #1e1f21)" }}>
+                    {selectedDay.toLocaleDateString("es-ES", {
+                      weekday: "long",
+                      day: "numeric",
+                      month: "long",
+                      year: "numeric",
+                    })}
+                  </h3>
+                </div>
+
+                {selectedDayEvents.length > 0 ? (
+                  <div className="space-y-3">
+                    {selectedDayEvents.map((evt) => (
+                      <div
+                        key={evt.id}
+                        className="p-3.5 rounded-xl border space-y-2 transition-all hover:shadow-sm"
+                        style={{
+                          background: "var(--site-surface-1, #ffffff)",
+                          borderColor: "var(--site-outline-variant, rgba(0,0,0,0.08))",
+                        }}
+                      >
+                        <div className="flex items-center justify-between">
+                          <span
+                            className="text-2xs font-bold uppercase tracking-wider px-2 py-0.5 rounded"
+                            style={{
+                              background: "var(--site-primary-container, rgba(37,99,235,0.1))",
+                              color: "var(--site-primary, #2563eb)",
+                            }}
+                          >
+                            {evt.categoria_pastoral || "Reunión"}
+                          </span>
+                          {evt.hora_reunion && (
+                            <span className="text-xs font-bold" style={{ color: "var(--site-on-surface, #1e1f21)" }}>
+                              {evt.hora_reunion} hrs
+                            </span>
+                          )}
+                        </div>
+                        <h4 className="font-bold text-sm" style={{ color: "var(--site-on-surface, #1e1f21)" }}>
+                          {evt.nombre}
+                        </h4>
+                        {evt.lugar && (
+                          <p className="text-xs flex items-center gap-1.5" style={{ color: "var(--site-on-surface-variant, #64748b)" }}>
+                            <MapPin size={13} style={{ color: "var(--site-primary, #2563eb)" }} />
+                            <span>{evt.lugar}</span>
+                          </p>
+                        )}
+                        <button
+                          onClick={() => handleOpenDrawer(evt)}
+                          className="w-full mt-2 py-1.5 px-3 rounded-lg text-xs font-bold tracking-wider uppercase transition-all flex items-center justify-center gap-1.5 hover:opacity-90"
+                          style={{
+                            background: "var(--site-primary, #2563eb)",
+                            color: "var(--site-on-primary, #ffffff)",
+                          }}
                         >
-                            <div className="flex items-center justify-between mb-3">
-                                <div className="flex items-center gap-4">
-                                    <h3
-                                        className="text-lg font-bold"
-                                        style={{ color: "var(--site-on-surface)" }}
-                                    >
-                                        {monthNames[currentMonth]} {currentYear}
-                                    </h3>
-                                    <div className="flex gap-1">
-                                        <button
-                                            onClick={() => {
-                                                if (currentMonth === 0) { setCurrentMonth(11); setCurrentYear((y) => y - 1); }
-                                                else setCurrentMonth((m) => m - 1);
-                                            }}
-                                            className="w-8 h-8 rounded-md flex items-center justify-center transition-colors hover:scale-110"
-                                            style={{
-                                                background: "var(--site-surface-container)",
-                                                color: "var(--site-on-surface)",
-                                            }}
-                                        >
-                                            <ChevronLeft size={16} />
-                                        </button>
-                                        <button
-                                            onClick={() => {
-                                                if (currentMonth === 11) { setCurrentMonth(0); setCurrentYear((y) => y + 1); }
-                                                else setCurrentMonth((m) => m + 1);
-                                            }}
-                                            className="w-8 h-8 rounded-md flex items-center justify-center transition-colors hover:scale-110"
-                                            style={{
-                                                background: "var(--site-surface-container)",
-                                                color: "var(--site-on-surface)",
-                                            }}
-                                        >
-                                            <ChevronRight size={16} />
-                                        </button>
-                                    </div>
-                                </div>
-                                {todayLabel && (
-                                    <button
-                                        onClick={() => { setCurrentMonth(new Date().getMonth()); setCurrentYear(new Date().getFullYear()); }}
-                                        className="text-xs font-semibold uppercase tracking-wide"
-                                        style={{ color: "var(--site-primary)" }}
-                                    >
-                                        {todayLabel}
-                                    </button>
-                                )}
-                            </div>
+                          <BookmarkPlus size={14} />
+                          <span>Asistir a esta reunión</span>
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="py-8 text-center space-y-3">
+                    <Heart size={32} className="mx-auto text-muted-foreground opacity-40" />
+                    <p className="text-sm font-semibold" style={{ color: "var(--site-on-surface, #1e1f21)" }}>
+                      Sin reuniones generales este día
+                    </p>
+                    <p className="text-xs leading-relaxed max-w-xs mx-auto" style={{ color: "var(--site-on-surface-variant, #64748b)" }}>
+                      Te invitamos a acompañarnos en nuestros <strong>Faros en Casa</strong> los miércoles o en nuestras <strong>Escuelas Dominicales</strong> los domingos.
+                    </p>
+                  </div>
+                )}
+              </div>
 
-                            <div className="grid grid-cols-7 gap-1 mb-2">
-                                {[["D","Dom"], ["L","Lun"], ["M","Mar"], ["X","Mie"], ["J","Jue"], ["V","Vie"], ["S","Sab"]].map(([short, full]) => (
-                                    <div
-                                        key={full}
-                                        className="text-center py-2 text-2xs sm:text-2xs font-semibold uppercase tracking-wide"
-                                        style={{ color: "var(--site-on-surface-variant)" }}
-                                    >
-                                        <span className="sm:hidden">{short}</span>
-                                        <span className="hidden sm:inline">{full}</span>
-                                    </div>
-                                ))}
-                            </div>
+              {/* Tips de Bienvenida */}
+              <div
+                className="p-3.5 rounded-xl border text-xs space-y-1.5"
+                style={{
+                  background: "var(--site-primary-container, rgba(37,99,235,0.06))",
+                  borderColor: "var(--site-primary, rgba(37,99,235,0.2))",
+                }}
+              >
+                <div className="flex items-center gap-1.5 font-bold" style={{ color: "var(--site-primary, #2563eb)" }}>
+                  <CheckCircle2 size={15} />
+                  <span>¿Primera vez en CCF?</span>
+                </div>
+                <p style={{ color: "var(--site-on-surface-variant, #475569)" }}>
+                  Nuestras puertas están siempre abiertas. Contamos con atención para niños, jóvenes y traducción en nuestras sedes.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
 
-                            <div className="grid grid-cols-7 gap-1">
-                                {calendarDays.map((day, index) => (
-                                    <div
-                                        key={index}
-                                        className="aspect-square p-1 flex flex-col items-center justify-between rounded-md cursor-pointer transition-all hover:scale-105"
-                                        style={
-                                            day.n === today.getDate() && !day.prev && isCurrentMonth
-                                                ? {
-                                                      background: "var(--site-card-highlight)",
-                                                      border: "2px solid var(--site-primary)",
-                                                  }
-                                                : day.prev
-                                                ? { opacity: 0.2 }
-                                                : { background: "transparent" }
-                                        }
-                                    >
-                                        <span
-                                            className="text-sm font-bold"
-                                            style={{
-                                                color:
-                                                    day.n === today.getDate() && !day.prev && isCurrentMonth
-                                                        ? "var(--site-primary)"
-                                                        : "var(--site-on-surface)",
-                                            }}
-                                        >
-                                            {day.n}
-                                        </span>
-                                        {day.event ? (
-                                            <div
-                                                className="w-1.5 h-1.5 rounded-full"
-                                                style={{ background: "var(--site-primary)" }}
-                                            />
-                                        ) : null}
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-
-                        <div className="lg:col-span-4 space-y-5">
-                            {(highlightsTitle || hasEvents || syncCalendarCta) && (
-                                <div
-                                    className="rounded-lg p-4"
-                                    style={{
-                                        background: "var(--site-surface-container-low)",
-                                        border: "1px solid var(--site-outline-variant)",
-                                    }}
-                                >
-                                    {highlightsTitle && (
-                                        <h3
-                                            className="text-xl font-bold mb-3 flex items-center gap-2"
-                                            style={{ color: "var(--site-on-surface)" }}
-                                        >
-                                            <Star size={18} style={{ color: "var(--site-primary)" }} />
-                                            {highlightsTitle}
-                                        </h3>
-                                    )}
-                                    <div className="space-y-5">
-                                        {hasEvents ? (
-                                            parsedEvents.slice(0, 3).map((event) => (
-                                                <div
-                                                    key={`${event.title || "event"}-${event.date || "date"}`}
-                                                    className="flex gap-3 group cursor-pointer"
-                                                >
-                                                    <div
-                                                        className="w-2 shrink-0 rounded-full mt-1"
-                                                        style={{ background: "var(--site-primary)", minHeight: "12px" }}
-                                                    />
-                                                    <div>
-                                                        <p
-                                                            className="text-2xs font-semibold uppercase tracking-wide mb-0.5"
-                                                            style={{ color: "var(--site-primary)" }}
-                                                        >
-                                                            {event.category}
-                                                            {event.date ? ` • ${event.date}` : ""}
-                                                        </p>
-                                                        {event.title && (
-                                                            <h4
-                                                                className="text-sm font-semibold group-hover:opacity-70 transition-opacity"
-                                                                style={{ color: "var(--site-on-surface)" }}
-                                                            >
-                                                                {event.title}
-                                                            </h4>
-                                                        )}
-                                                        {(event.excerpt || event.location) && (
-                                                            <p
-                                                                className="text-xs line-clamp-1"
-                                                                style={{ color: "var(--site-on-surface-variant)" }}
-                                                            >
-                                                                {event.excerpt || event.location}
-                                                            </p>
-                                                        )}
-                                                    </div>
-                                                </div>
-                                            ))
-                                        ) : (
-                                            highlightsEmpty && (
-                                                <p className="text-sm" style={{ color: "var(--site-on-surface-variant)" }}>
-                                                    {highlightsEmpty}
-                                                </p>
-                                            )
-                                        )}
-                                    </div>
-                                    {syncCalendarCta && (
-                                        <button
-                                            onClick={() => {
-                                                const ics = "BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:-//CCF//ES\n" +
-                                                    filteredEvents.map((e) => `BEGIN:VEVENT\nSUMMARY:${e.title || "Evento"}\nDESCRIPTION:${e.excerpt || ""}\nEND:VEVENT`).join("\n") +
-                                                    "\nEND:VCALENDAR";
-                                                const blob = new Blob([ics], { type: "text/calendar" });
-                                                const url = URL.createObjectURL(blob);
-                                                const a = document.createElement("a");
-                                                a.href = url; a.download = `eventos.ics`; a.click();
-                                                URL.revokeObjectURL(url);
-                                                toast.success(syncCalendarToast);
-                                            }}
-                                            className="w-full mt-3 py-1.5 rounded-md text-xs font-semibold uppercase tracking-wide border transition-all hover:scale-105"
-                                            style={{
-                                                borderColor: "var(--site-primary)",
-                                                color: "var(--site-primary)",
-                                            }}
-                                        >
-                                            {syncCalendarCta}
-                                        </button>
-                                    )}
-                                </div>
-                            )}
-
-                            {(notificationsTitle || notificationsDesc) && (
-                                <div
-                                    onClick={() => toast.info(notificationsToast)}
-                                    className="rounded-lg p-3 flex items-center gap-4 cursor-pointer transition-all hover:scale-[1.02]"
-                                    style={{
-                                        background: "var(--site-primary-container)",
-                                        border: "1px solid var(--site-outline-variant)",
-                                    }}
-                                >
-                                    <div
-                                        className="w-12 h-8 rounded-lg flex items-center justify-center shrink-0"
-                                        style={{
-                                            background: "var(--site-primary)",
-                                            color: "var(--site-on-primary)",
-                                        }}
-                                    >
-                                        <Bell size={20} />
-                                    </div>
-                                    <div>
-                                        {notificationsTitle && (
-                                            <h4
-                                                className="font-black text-sm"
-                                                style={{ color: "var(--site-on-surface)" }}
-                                            >
-                                                {notificationsTitle}
-                                            </h4>
-                                        )}
-                                        {notificationsDesc && (
-                                            <p
-                                                className="text-xs"
-                                                style={{ color: "var(--site-on-surface-variant)" }}
-                                            >
-                                                {notificationsDesc}
-                                            </p>
-                                        )}
-                                    </div>
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                </section>
-            )}
-        </main>
-    );
+      {/* 4. Drawer Canónico de Registro y Asistencia (0 modales) */}
+      <PublicEventRegisterDrawer
+        isOpen={drawerOpen}
+        onClose={() => setDrawerOpen(false)}
+        event={selectedEventForDrawer}
+      />
+    </main>
+  );
 }
