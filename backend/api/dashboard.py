@@ -6,8 +6,9 @@ Soporta filtros por sede_id y parámetros específicos de cada módulo.
 
 from __future__ import annotations
 
+from datetime import datetime, timezone
 from inspect import signature
-from typing import Optional
+from typing import Any, Dict, Optional
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -50,6 +51,48 @@ MODULE_REGISTRY = {
     "projects": (get_projects_dashboard, ProjectsDashboard, "Proyectos"),
     "admin": (get_admin_dashboard, AdminGlobalDashboard, "Admin"),
 }
+
+# Módulos incluidos en /overview: KPIs ligeros y siempre scoped por sede.
+# ``cms`` se excluye por coste (SEO trend on-the-fly O(N) sin cron) y
+# ``admin`` porque es un dashboard privilegiado con gate de permisos
+# propio, no un dashboard operativo por sede.
+OVERVIEW_MODULES = ("crm", "academy", "evangelism", "finance", "agenda", "projects")
+
+
+@router.get("/overview")
+def get_overview_dashboard(
+    db: Session = Depends(get_db),
+    current_user=Depends(require_active_user),
+):
+    """KPIs agregados de los módulos activos en una sola llamada (Axioma 3).
+
+    El ``sede_id`` se resuelve SIEMPRE del actor autenticado
+    (``require_user_sede_id``), nunca del cliente. Cada módulo se
+    calcula de forma aislada: si uno falla, el resto sigue respondiendo
+    y el error se reporta en ``errors`` sin tumbar la petición.
+    """
+    sede_id = require_user_sede_id(db, current_user)
+    generated_at = datetime.now(timezone.utc).isoformat()
+
+    modules: Dict[str, Any] = {}
+    errors: Dict[str, str] = {}
+    for key in OVERVIEW_MODULES:
+        fn, _schema_cls, _label = MODULE_REGISTRY[key]
+        kwargs: Dict[str, Any] = {}
+        if "sede_id" in signature(fn).parameters:
+            kwargs["sede_id"] = sede_id
+        try:
+            modules[key] = fn(db, **kwargs)
+        except Exception as exc:  # noqa: BLE001 — overview nunca tumba por un módulo
+            errors[key] = str(exc)
+
+    return {
+        "sede_id": str(sede_id),
+        "modules": modules,
+        "errors": errors,
+        "generated_at": generated_at,
+        "last_updated": generated_at,
+    }
 
 
 @router.get("/{module}")
