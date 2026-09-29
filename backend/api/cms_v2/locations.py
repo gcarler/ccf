@@ -16,10 +16,11 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from backend import models, models_ops, schemas
-from backend.api.cms_v2._shared import CMS_EDITOR_ROLES, _assert_role
+from backend.api.cms_v2._shared import CMS_EDITOR_ROLES, PUBLIC_CMS_RATE_LIMIT, _assert_role
 from backend.core.audit import record_admin_action
 from backend.core.database import get_db
 from backend.core.permissions import require_module_access
+from backend.core.rate_limit import rate_limiter
 
 logger = logging.getLogger(__name__)
 
@@ -296,6 +297,60 @@ def cms_location_update(
         is_active=bool(loc.is_active),
         sort_order=getattr(loc, "sort_order", 0) or 0,
     )
+
+
+# ────────────────────────────────────────────────────────────────────────────
+# Endpoint público (portal /sedes) — sin autenticación
+# ────────────────────────────────────────────────────────────────────────────
+
+
+@router.get(
+    "/public/locations",
+    response_model=List[schemas.CmsLocationPublicRead],
+    dependencies=[Depends(rate_limiter(limit=PUBLIC_CMS_RATE_LIMIT, window_seconds=60))],
+)
+def public_locations_list(db: Session = Depends(get_db)) -> List[schemas.CmsLocationPublicRead]:
+    """Listado público de sedes activas para el portal (/sedes).
+
+    Solo expone sedes activas y no eliminadas, ordenadas por ``sort_order``,
+    priorizando la sede principal. Contrato alineado con los ítems que el
+    CRUD admin sincroniza a la sección ``feed`` del CMS: el portal puede
+    consumir este endpoint JSON directo o el feed sincronizado.
+    """
+    locations = (
+        db.query(models_ops.ChurchLocation)
+        .filter(
+            models_ops.ChurchLocation.deleted_at.is_(None),
+            models_ops.ChurchLocation.is_active.is_(True),
+        )
+        .order_by(
+            models_ops.ChurchLocation.sort_order.asc(),
+            models_ops.ChurchLocation.is_main.desc(),
+            models_ops.ChurchLocation.name.asc(),
+        )
+        .all()
+    )
+    return [
+        schemas.CmsLocationPublicRead(
+            id=str(loc.id),
+            name=loc.name,
+            address=loc.address or "",
+            city=loc.city or "",
+            phone=loc.phone or "",
+            pastor=loc.pastor_name or "",
+            schedule=loc.schedule or "",
+            midweek=loc.midweek or "",
+            image=loc.image_url,
+            maps_url=loc.maps_url,
+            map_embed_url=loc.map_embed_url,
+            lat=loc.latitude,
+            lng=loc.longitude,
+            is_main=bool(loc.is_main),
+            location_type=loc.location_type or "Central",
+            sort_order=getattr(loc, "sort_order", 0) or 0,
+        )
+        for loc in locations
+    ]
 
 
 @router.delete("/cms/locations/{location_id}", status_code=204)

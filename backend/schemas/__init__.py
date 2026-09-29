@@ -168,6 +168,7 @@ from backend.schemas.cms import (
     CmsFormSubmissionRead,
     CmsFormUpdate,
     CmsLocationCreate,
+    CmsLocationPublicRead,
     CmsLocationRead,
     CmsLocationUpdate,
     CmsMediaCreate,
