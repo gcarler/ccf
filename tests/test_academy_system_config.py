@@ -2190,3 +2190,162 @@ def test_054_workload_prediction_overload_detection(client, db_session):
     assert overloaded_weeks[0]["evaluations_count"] >= 2
     assert any("Sobrecarga detectada" in rec for rec in data["recommendations"])
 
+
+# ---------------------------------------------------------------------------
+# Hito 8: Tests 055 a 060 — Analítica Institucional y Salud de Cohortes
+# ---------------------------------------------------------------------------
+
+def test_055_institutional_summary_kpis(client, db_session):
+    """Test institutional analytics summary returns all required global KPIs."""
+    admin, _, _ = seed_admin(db_session)
+    headers = auth_headers(client, email=admin.email, password="testpass123")
+
+    r = client.get("/api/academy/analytics/institutional-summary", headers=headers)
+    assert r.status_code == 200, r.text
+    data = r.json()
+    assert "total_students" in data
+    assert "retention_projected_rate" in data
+    assert "socratic_pass_rate" in data
+    assert "wellness_health_index" in data
+    assert "active_study_groups" in data
+    assert "generated_at" in data
+    assert 0.0 <= data["retention_projected_rate"] <= 100.0
+    assert 0.0 <= data["socratic_pass_rate"] <= 100.0
+    assert 0.0 <= data["wellness_health_index"] <= 100.0
+
+
+def test_056_institutional_summary_filter_by_sede(client, db_session):
+    """Test institutional analytics summary filtering by sede."""
+    admin, _, _ = seed_admin(db_session)
+    headers = auth_headers(client, email=admin.email, password="testpass123")
+
+    sede = models.Sede(nombre=f"Sede Analitica {uuid.uuid4().hex[:4]}", ciudad="Barranquilla")
+    db_session.add(sede)
+    db_session.commit()
+
+    r = client.get(f"/api/academy/analytics/institutional-summary?sede_id={sede.id}", headers=headers)
+    assert r.status_code == 200, r.text
+    data = r.json()
+    assert data["sede_id"] == str(sede.id)
+    assert data["active_study_groups"] == 0
+
+
+def test_057_cohort_health_metrics(client, db_session):
+    """Test cohort health diagnosis metrics for an active academic offering."""
+    admin, _, _ = seed_admin(db_session)
+    headers = auth_headers(client, email=admin.email, password="testpass123")
+
+    prog_r = client.post("/api/academy/admin/programs", json={
+        "name": "Prog Health", "code": f"PH-{uuid.uuid4().hex[:6]}", "program_type": "curso_libre", "has_teachers": True, "teachers_can_grade": True
+    }, headers=headers)
+    prog_id = prog_r.json()["id"]
+    plan_r = client.post("/api/academy/admin/study-plans", json={"program_id": prog_id, "name": "Plan Health", "code": f"PLH-{uuid.uuid4().hex[:4]}"}, headers=headers)
+    plan_id = plan_r.json()["id"]
+    sub_r = client.post(f"/api/academy/admin/study-plans/{plan_id}/subjects", json={"name": "Materia Salud", "code": f"SH-{uuid.uuid4().hex[:4]}", "credits": 3, "order_index": 1}, headers=headers)
+    sub_id = sub_r.json()["id"]
+    per_r = client.post("/api/academy/admin/periods", json={"name": "Period Health", "code": f"PERH-{uuid.uuid4().hex[:4]}", "start_date": "2026-01-01", "end_date": "2026-12-31"}, headers=headers)
+    per_id = per_r.json()["id"]
+    sch_r = client.post("/api/academy/admin/grading-schemes", json={"name": f"SchemeH-{uuid.uuid4().hex[:4]}", "scale_max": 100.0, "passing_grade": 70.0, "cuts": [{"name": "C1", "weight_percent": 100.0, "order_index": 1}]}, headers=headers)
+    sch_id = sch_r.json()["id"]
+    off_r = client.post("/api/academy/admin/offerings", json={"academic_period_id": per_id, "subject_id": sub_id, "grading_scheme_id": sch_id, "quota_max": 20}, headers=headers)
+    off_id = off_r.json()["id"]
+
+    r = client.get(f"/api/academy/analytics/cohort-health/{off_id}", headers=headers)
+    assert r.status_code == 200, r.text
+    data = r.json()
+    assert data["offering_id"] == off_id
+    assert data["subject_name"] == "Materia Salud"
+    assert data["enrolled_students_count"] == 0
+    assert data["health_status"] == "healthy"
+    assert len(data["recommendations"]) >= 1
+
+
+def test_058_cohort_health_lowest_mastery_nodes(client, db_session):
+    """Test that cohort health properly identifies knowledge nodes with lowest mastery."""
+    admin, _, _ = seed_admin(db_session)
+    headers = auth_headers(client, email=admin.email, password="testpass123")
+
+    prog_r = client.post("/api/academy/admin/programs", json={
+        "name": "Prog Mastery", "code": f"PM-{uuid.uuid4().hex[:6]}", "program_type": "curso_libre", "has_teachers": True, "teachers_can_grade": True
+    }, headers=headers)
+    prog_id = prog_r.json()["id"]
+    plan_r = client.post("/api/academy/admin/study-plans", json={"program_id": prog_id, "name": "Plan M", "code": f"PLM-{uuid.uuid4().hex[:4]}"}, headers=headers)
+    plan_id = plan_r.json()["id"]
+    sub_r = client.post(f"/api/academy/admin/study-plans/{plan_id}/subjects", json={"name": "Materia M", "code": f"SM-{uuid.uuid4().hex[:4]}", "credits": 3, "order_index": 1}, headers=headers)
+    sub_id = sub_r.json()["id"]
+    per_r = client.post("/api/academy/admin/periods", json={"name": "Period M", "code": f"PERM-{uuid.uuid4().hex[:4]}", "start_date": "2026-01-01", "end_date": "2026-12-31"}, headers=headers)
+    per_id = per_r.json()["id"]
+    sch_r = client.post("/api/academy/admin/grading-schemes", json={"name": f"SchemeM-{uuid.uuid4().hex[:4]}", "scale_max": 100.0, "passing_grade": 70.0, "cuts": [{"name": "C1", "weight_percent": 100.0, "order_index": 1}]}, headers=headers)
+    sch_id = sch_r.json()["id"]
+    off_r = client.post("/api/academy/admin/offerings", json={"academic_period_id": per_id, "subject_id": sub_id, "grading_scheme_id": sch_id, "quota_max": 20}, headers=headers)
+    off_id = off_r.json()["id"]
+
+    # Create 2 knowledge nodes directly via ORM
+    node1 = models.AcademyKnowledgeNode(offering_id=uuid.UUID(off_id), title="Hermeneutica Basica", node_type="concept")
+    node2 = models.AcademyKnowledgeNode(offering_id=uuid.UUID(off_id), title="Teologia Avanzada", node_type="concept")
+    db_session.add_all([node1, node2])
+    db_session.commit()
+
+    # Seed student progress
+    p1 = models.AcademyStudentNodeProgress(student_id=admin.id, node_id=node1.id, mastery_score=35.0)
+    p2 = models.AcademyStudentNodeProgress(student_id=admin.id, node_id=node2.id, mastery_score=95.0)
+    db_session.add_all([p1, p2])
+    db_session.commit()
+
+    r = client.get(f"/api/academy/analytics/cohort-health/{off_id}", headers=headers)
+    assert r.status_code == 200
+    data = r.json()
+    assert len(data["lowest_mastery_nodes"]) >= 2
+    # First node should have lower mastery
+    assert data["lowest_mastery_nodes"][0]["average_mastery"] <= data["lowest_mastery_nodes"][-1]["average_mastery"]
+
+
+def test_059_cohort_health_wellness_alerts(client, db_session):
+    """Test that active wellness signals for an offering trigger needs_attention/at_risk status."""
+    admin, _, _ = seed_admin(db_session)
+    headers = auth_headers(client, email=admin.email, password="testpass123")
+
+    prog_r = client.post("/api/academy/admin/programs", json={
+        "name": "Prog Alert", "code": f"PA-{uuid.uuid4().hex[:6]}", "program_type": "curso_libre", "has_teachers": True, "teachers_can_grade": True
+    }, headers=headers)
+    prog_id = prog_r.json()["id"]
+    plan_r = client.post("/api/academy/admin/study-plans", json={"program_id": prog_id, "name": "Plan A", "code": f"PLA-{uuid.uuid4().hex[:4]}"}, headers=headers)
+    plan_id = plan_r.json()["id"]
+    sub_r = client.post(f"/api/academy/admin/study-plans/{plan_id}/subjects", json={"name": "Materia A", "code": f"SA-{uuid.uuid4().hex[:4]}", "credits": 3, "order_index": 1}, headers=headers)
+    sub_id = sub_r.json()["id"]
+    per_r = client.post("/api/academy/admin/periods", json={"name": "Period A", "code": f"PERA-{uuid.uuid4().hex[:4]}", "start_date": "2026-01-01", "end_date": "2026-12-31"}, headers=headers)
+    per_id = per_r.json()["id"]
+    sch_r = client.post("/api/academy/admin/grading-schemes", json={"name": f"SchemeA-{uuid.uuid4().hex[:4]}", "scale_max": 100.0, "passing_grade": 70.0, "cuts": [{"name": "C1", "weight_percent": 100.0, "order_index": 1}]}, headers=headers)
+    sch_id = sch_r.json()["id"]
+    off_r = client.post("/api/academy/admin/offerings", json={"academic_period_id": per_id, "subject_id": sub_id, "grading_scheme_id": sch_id, "quota_max": 20}, headers=headers)
+    off_id = off_r.json()["id"]
+
+    # Create 3 active wellness signals for this offering
+    for i in range(3):
+        sig = models.AcademyWellnessSignal(
+            student_id=admin.id,
+            offering_id=uuid.UUID(off_id),
+            signal_type="stress_indicator",
+            severity="high",
+            is_resolved=False,
+        )
+        db_session.add(sig)
+    db_session.commit()
+
+    r = client.get(f"/api/academy/analytics/cohort-health/{off_id}", headers=headers)
+    assert r.status_code == 200
+    data = r.json()
+    assert data["active_alerts_count"] == 3
+    assert data["health_status"] == "at_risk"
+    assert any("riesgo" in rec.lower() for rec in data["recommendations"])
+
+
+def test_060_cohort_health_nonexistent_offering(client, db_session):
+    """Test that requesting cohort health for a nonexistent offering returns 404."""
+    admin, _, _ = seed_admin(db_session)
+    headers = auth_headers(client, email=admin.email, password="testpass123")
+
+    fake_id = uuid.uuid4()
+    r = client.get(f"/api/academy/analytics/cohort-health/{fake_id}", headers=headers)
+    assert r.status_code == 404
+

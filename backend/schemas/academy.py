@@ -1711,3 +1711,43 @@ class MentorshipMenteeRead(BaseModel):
 
     model_config = ConfigDict(from_attributes=True)
 
+
+# ---------------------------------------------------------------------------
+# Hito 8: Analítica Institucional y Salud de Cohortes
+# ---------------------------------------------------------------------------
+
+class InstitutionalSummaryKPIs(BaseModel):
+    sede_id: Optional[UUID] = None
+    total_students: int
+    retention_projected_rate: float
+    socratic_pass_rate: float
+    wellness_health_index: float
+    active_study_groups: int
+    total_offerings: int = 0
+    active_mentorships: int = 0
+    total_achievements_awarded: int = 0
+    generated_at: datetime
+
+
+class KnowledgeNodeMasteryBrief(BaseModel):
+    node_id: UUID
+    title: str
+    code: Optional[str] = None
+    average_mastery: float
+    evaluated_students_count: int
+
+
+class CohortHealthResponse(BaseModel):
+    offering_id: UUID
+    subject_name: str
+    period_code: str
+    sede_id: Optional[UUID] = None
+    enrolled_students_count: int
+    average_grade: float
+    completion_rate: float
+    lowest_mastery_nodes: List[KnowledgeNodeMasteryBrief] = Field(default_factory=list)
+    active_alerts_count: int
+    active_alerts: List[Dict[str, Any]] = Field(default_factory=list)
+    health_status: str  # 'healthy', 'needs_attention', 'at_risk'
+    recommendations: List[str] = Field(default_factory=list)
+
