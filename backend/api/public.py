@@ -616,6 +616,17 @@ def _settings_public_base_url() -> str:
         return "https://ccf.co"
 
 
+def _is_uuid_like(value: str) -> bool:
+    """True si ``value`` es un UUID canónico (36 chars con guiones, parseable)."""
+    if not value or len(value) != 36:
+        return False
+    try:
+        uuid.UUID(value)
+        return True
+    except (ValueError, TypeError):
+        return False
+
+
 def _reg_error_to_http(exc: RegistrationError) -> HTTPException:
     return HTTPException(status_code=exc.status_code, detail={"code": exc.code, "detail": exc.detail})
 
@@ -946,6 +957,18 @@ def public_event_qr_png(
 
     event = _public_event_or_404(db, event_id)
     reg = find_by_qr_token(db, token)
+    if reg is None or reg.event_id != event.id:
+        # Pases PDF: token = reg.id cuando no hay QR hash-bound persistido.
+        if _is_uuid_like(token):
+            reg = (
+                db.query(models.EventRegistration)
+                .filter(
+                    models.EventRegistration.id == token,
+                    models.EventRegistration.event_id == event.id,
+                    models.EventRegistration.deleted_at.is_(None),
+                )
+                .first()
+            )
     if not reg or reg.event_id != event.id:
         raise HTTPException(status_code=404, detail="Ticket no encontrado")
     if reg.registration_status not in {"CONFIRMED", "CHECKED_IN"}:
@@ -1002,9 +1025,26 @@ def public_event_ticket(
     El QR nunca se busca por el token plano (no se persiste): se deriva el
     sha256 del secret y se busca por ``qr_token_hash`` (plan §4.3). Devuelve
     la inscripción con su rol contextual, sin re-exponer tokens internos.
+
+    Pases PDF (TKT-EVT-AUDIT-QR-PREINSCRIPCION-01): cuando ``reg.qr_token`` es
+    NULL el QR codifica ``token=<reg.id>``; se resuelve la inscripción por id
+    (UUIDv4 no adivinable, acotado al evento) solo para tickets confirmados —
+    sin romper la búsqueda hash-bound, que sigue teniendo prioridad.
     """
     event = _public_event_or_404(db, event_id)
     reg = find_by_qr_token(db, token)
+    if reg is None or reg.event_id != event.id:
+        if _is_uuid_like(token):
+            candidate = (
+                db.query(models.EventRegistration)
+                .filter(
+                    models.EventRegistration.id == token,
+                    models.EventRegistration.event_id == event.id,
+                    models.EventRegistration.deleted_at.is_(None),
+                )
+                .first()
+            )
+            reg = candidate
     if not reg or reg.event_id != event.id:
         raise HTTPException(status_code=404, detail="Ticket no encontrado")
     if reg.registration_status not in {"CONFIRMED", "CHECKED_IN"}:

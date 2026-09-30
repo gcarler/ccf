@@ -251,6 +251,12 @@ def get_event_session_detail(
         .filter(
             models.EventAttendance.event_id == event_id,
             models.EventAttendance.session_date == session_date,
+            # TKT-EVT-AUDIT-QR-PREINSCRIPCION-01: la lista de presentes de la
+            # sesión solo incluye asistencias reales — los registros marcados
+            # como ausentes (attended=False / status='absent', p.ej. por el
+            # bulk del maestro de asistencia) NO se muestran como presentes.
+            models.EventAttendance.attended.is_(True),
+            models.EventAttendance.status != "absent",
         )
         .all()
     )

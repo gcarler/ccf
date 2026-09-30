@@ -3,8 +3,10 @@ from __future__ import annotations
 import datetime
 import hashlib
 import logging
+import re
 import secrets
 from typing import Optional
+from urllib.parse import unquote
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Request
@@ -45,7 +47,10 @@ def fast_checkin_visitor(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_evangelism_edit),
 ):
-    require_event_access(db, current_user, event_id)
+    # Blindaje (TKT-EVT-AUDIT-QR-PREINSCRIPCION-01): capturar el evento que
+    # retorna el guard — antes se descartaba y el enroll de seguimiento
+    # posterior fallaba siempre con NameError (F821) silenciado por el try/except.
+    event = require_event_access(db, current_user, event_id)
     user_sede_id = require_user_sede_id(db, current_user)
 
     try:
@@ -194,6 +199,69 @@ def _qr_token_secret_hash(qr_token: str) -> str:
     return hashlib.sha256(secret.encode()).hexdigest()
 
 
+def _resolve_scanned_token(raw_token: str) -> str:
+    """Normaliza el payload crudo de un escáner (pistola/cámara) al token canónico.
+
+    Interoperabilidad QR check-in (TKT-EVT-AUDIT-QR-PREINSCRIPCION-01): los
+    escáneres físicos entregan la URL completa codificada en el QR (p.ej.
+    ``https://ccf.co/public/events/<event>/qr?token=CCF-EVT-...&cancel=...``).
+    Extrae el parámetro ``token=`` o, en su defecto, el payload ``CCF-EVT-`` /
+    ``CCF-PER-`` embebido, para que el check-in no falle con
+    "Prefijo de QR desconocido". Un token canónico pasa intacto.
+    """
+    token = (raw_token or "").strip()
+    if not token or token.startswith(("CCF-EVT-", "CCF-PER-")):
+        return token
+    query_match = re.search(r"(?:[?&]|^)token=([^&\s]+)", token)
+    if query_match:
+        return unquote(query_match.group(1)).strip()
+    embedded = re.search(r"(CCF-(?:EVT|PER)-[A-Za-z0-9\-]+)", token)
+    if embedded:
+        return embedded.group(1)
+    return token
+
+
+def _looks_like_uuid(value: str) -> bool:
+    if not value or len(value) != 36:
+        return False
+    try:
+        UUID(value)
+        return True
+    except (ValueError, TypeError):
+        return False
+
+
+def _resolve_registration_by_id(
+    db: Session,
+    event_id: UUID,
+    payload_str: str,
+) -> Optional[models.EventRegistration]:
+    """Resuelve la inscripción por ``reg.id`` (formato ``{reg_uuid}[-{secret}]``).
+
+    Resolución segura para pases PDF / tickets cuando ``qr_token`` plano no se
+    persistió en DB: el id de inscripción es UUIDv4 no adivinable y queda
+    acotado al evento de la sesión. El estado (CONFIRMED/CHECKED_IN) y la
+    expiración se validan aguas abajo con el mismo contrato del canal
+    hash-bound; si la inscripción tiene ``qr_token_hash`` ese hash sigue
+    mandando (la búsqueda hash-bound nunca se rompe).
+    """
+    if not payload_str or len(payload_str) < 36:
+        return None
+    try:
+        reg_uuid = UUID(payload_str[:36])
+    except (ValueError, TypeError):
+        return None
+    return (
+        db.query(models.EventRegistration)
+        .filter(
+            models.EventRegistration.id == reg_uuid,
+            models.EventRegistration.event_id == event_id,
+            models.EventRegistration.deleted_at.is_(None),
+        )
+        .first()
+    )
+
+
 def _parse_evt_qr_payload(payload_str: str):
     """Parsea ``{event_uuid}-{persona_uuid}-{secret}`` de un QR ``CCF-EVT-``.
 
@@ -305,33 +373,45 @@ def unified_checkin(
     qr_kind: Optional[str] = None
 
     if payload.qr_token:
-        token = payload.qr_token.strip()
+        token = _resolve_scanned_token(payload.qr_token)
         if token.startswith("CCF-EVT-"):
             qr_kind = "CCF-EVT"
             source = "qr_event_registration"
             payload_str = token.removeprefix("CCF-EVT-")
             parsed = _parse_evt_qr_payload(payload_str)
+            resolved_by_id = False
             if parsed is None:
-                raise HTTPException(status_code=400, detail="QR malformado")
-            event_uuid, persona_uuid = parsed
-
-            reg = (
-                db.query(models.EventRegistration)
-                .filter(
-                    models.EventRegistration.event_id == event_uuid,
-                    models.EventRegistration.persona_id == persona_uuid,
-                    models.EventRegistration.deleted_at.is_(None),
+                # Pases PDF / tickets sin QR hash-bound: el payload refiere la
+                # inscripción por reg.id ({reg_uuid}-{secret}) — resolución
+                # segura acotada al evento de la sesión.
+                reg = _resolve_registration_by_id(db, event.id, payload_str)
+                resolved_by_id = reg is not None
+                if reg is None:
+                    raise HTTPException(status_code=400, detail="QR malformado")
+            else:
+                event_uuid, persona_uuid = parsed
+                reg = (
+                    db.query(models.EventRegistration)
+                    .filter(
+                        models.EventRegistration.event_id == event_uuid,
+                        models.EventRegistration.persona_id == persona_uuid,
+                        models.EventRegistration.deleted_at.is_(None),
+                    )
+                    .first()
                 )
-                .first()
-            )
             if not reg:
                 raise HTTPException(status_code=404, detail="Inscripción no encontrada")
-            # Validar solo contra el hash persistido (fix seguridad #2 + timing attack #12):
-            # el token plano nunca se persiste; comparaci\u00f3n de hashes con
-            # secrets.compare_digest evita timing attacks.
-            token_hash = _qr_token_secret_hash(token)
-            if not token_hash or not secrets.compare_digest(str(reg.qr_token_hash or ""), token_hash):
-                raise HTTPException(status_code=403, detail="QR inv\u00e1lido")
+            # Validar solo contra el hash persistido (fix seguridad #2 + timing
+            # attack #12): el token plano nunca se persiste; comparación de
+            # hashes con secrets.compare_digest evita timing attacks.
+            if reg.qr_token_hash:
+                token_hash = _qr_token_secret_hash(token)
+                if not token_hash or not secrets.compare_digest(str(reg.qr_token_hash), token_hash):
+                    raise HTTPException(status_code=403, detail="QR inválido")
+            elif not resolved_by_id:
+                # La inscripción nunca emitió QR (p.ej. PENDING): todo token
+                # CCF-EVT- presentado es fabricado → rechazo estricto.
+                raise HTTPException(status_code=403, detail="QR inválido")
             if reg.registration_status not in {"CONFIRMED", "CHECKED_IN"}:
                 raise HTTPException(
                     status_code=409,
@@ -368,6 +448,23 @@ def unified_checkin(
             computed = hashlib.sha256(secret.encode()).hexdigest()
             if not secrets.compare_digest(computed, persona.scanner_token_hash):
                 raise HTTPException(status_code=403, detail="Token de seguridad inválido")
+        elif _looks_like_uuid(token):
+            # Interop pases PDF / ticket público: el QR codifica la URL con
+            # ``token=<reg.id>`` (el token plano nunca se persiste en DB).
+            qr_kind = "REG_ID"
+            source = "qr_registration_id"
+            reg = _resolve_registration_by_id(db, event.id, token)
+            if not reg:
+                raise HTTPException(status_code=404, detail="Inscripción no encontrada")
+            if reg.registration_status not in {"CONFIRMED", "CHECKED_IN"}:
+                raise HTTPException(
+                    status_code=409,
+                    detail=f"Inscripción no confirmada (estado: {reg.registration_status})",
+                )
+            if is_qr_token_expired(reg):
+                raise HTTPException(status_code=410, detail="El QR expiró")
+            registration = reg
+            persona = reg.persona
         else:
             raise HTTPException(status_code=400, detail="Prefijo de QR desconocido")
 
@@ -441,7 +538,7 @@ def unified_checkin(
     )
     is_duplicate = bool(existing_attendance)
 
-    if qr_kind == "CCF-EVT" and registration:
+    if qr_kind in {"CCF-EVT", "REG_ID"} and registration:
         if (
             registration.check_in_at is not None
             or is_duplicate
@@ -593,16 +690,24 @@ def ccf_evt_checkin(
     except ValueError:
         raise HTTPException(status_code=400, detail="Formato de fecha inválido, esperado YYYY-MM-DD")
 
-    token = (payload.qr_token or "").strip()
+    token = _resolve_scanned_token(payload.qr_token)
     if not token.startswith("CCF-EVT-"):
         raise HTTPException(status_code=400, detail="Se requiere un QR de inscripción CCF-EVT-")
     payload_str = token.removeprefix("CCF-EVT-")
     parsed = _parse_evt_qr_payload(payload_str)
+    resolved_by_id = False
     if parsed is None:
-        raise HTTPException(status_code=400, detail="QR malformado")
-    event_uuid, persona_uuid = parsed
-    if event_uuid != event.id:
-        raise HTTPException(status_code=404, detail="El QR no corresponde a este evento")
+        # Pases PDF: payload {reg_uuid}-{secret} (69 chars) no parsea posicional
+        # como {event}-{persona}; resolver la inscripción por reg.id.
+        reg = _resolve_registration_by_id(db, event.id, payload_str)
+        resolved_by_id = reg is not None
+        if reg is None:
+            raise HTTPException(status_code=400, detail="QR malformado")
+        persona_uuid = reg.persona_id
+    else:
+        event_uuid, persona_uuid = parsed
+        if event_uuid != event.id:
+            raise HTTPException(status_code=404, detail="El QR no corresponde a este evento")
 
     reg = (
         db.query(models.EventRegistration)
@@ -617,8 +722,12 @@ def ccf_evt_checkin(
         raise HTTPException(status_code=404, detail="Inscripción no encontrada")
 
     # Validar solo contra el hash persistido (fix seguridad #2 + timing attack #12).
-    token_hash = _qr_token_secret_hash(token)
-    if not token_hash or not secrets.compare_digest(str(reg.qr_token_hash or ""), token_hash):
+    if reg.qr_token_hash:
+        token_hash = _qr_token_secret_hash(token)
+        if not token_hash or not secrets.compare_digest(str(reg.qr_token_hash), token_hash):
+            raise HTTPException(status_code=403, detail="QR inválido")
+    elif not resolved_by_id:
+        # La inscripción nunca emitió QR: todo token CCF-EVT- es fabricado.
         raise HTTPException(status_code=403, detail="QR inválido")
     if reg.registration_status not in {"CONFIRMED", "CHECKED_IN"}:
         raise HTTPException(
@@ -842,20 +951,30 @@ def unified_checkout(
         if not persona:
             raise HTTPException(status_code=404, detail="Persona no encontrada")
     elif payload.qr_token:
-        token = payload.qr_token.strip()
+        token = _resolve_scanned_token(payload.qr_token)
         if token.startswith("CCF-EVT-"):
             payload_str = token.removeprefix("CCF-EVT-")
             parsed = _parse_evt_qr_payload(payload_str)
             if parsed is None:
-                raise HTTPException(status_code=400, detail="QR malformado")
-            _event_uuid, persona_uuid = parsed
-            persona = db.query(models.Persona).filter(models.Persona.id == persona_uuid).first()
+                reg = _resolve_registration_by_id(db, event.id, payload_str)
+                if reg is None:
+                    raise HTTPException(status_code=400, detail="QR malformado")
+                persona = reg.persona
+            else:
+                _event_uuid, persona_uuid = parsed
+                persona = db.query(models.Persona).filter(models.Persona.id == persona_uuid).first()
         elif token.startswith("CCF-PER-"):
             payload_str = token.removeprefix("CCF-PER-")
             parsed = _parse_per_qr_payload(payload_str)
             if parsed is None:
                 raise HTTPException(status_code=400, detail="QR malformado")
             persona = db.query(models.Persona).filter(models.Persona.id == parsed).first()
+        elif _looks_like_uuid(token):
+            # Pase PDF: token = reg.id → resolver la persona vía la inscripción.
+            persona = db.query(models.Persona).filter(models.Persona.id == token).first()
+            if persona is None:
+                reg = _resolve_registration_by_id(db, event.id, token)
+                persona = reg.persona if reg else None
         if not persona:
             raise HTTPException(status_code=404, detail="Persona no encontrada")
 

@@ -12,8 +12,8 @@ from typing import Optional
 
 import qrcode
 from reportlab.lib import colors
-from reportlab.lib.units import mm
 from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
+from reportlab.lib.units import mm
 from reportlab.platypus import (
     HRFlowable,
     Image,
@@ -169,7 +169,17 @@ def generate_event_pass_pdf(
     story.append(Spacer(1, 3 * mm))
 
     # 5. Código QR Interactivo
-    qr_payload = f"{base_url}/public/events/{event.id}/qr?token={reg.qr_token or reg.id}"
+    # TKT-EVT-AUDIT-QR-PREINSCRIPCION-01: el token plano nunca se persiste en DB
+    # (qr_token queda NULL), así que el pase NO puede codificar un token que no
+    # existe. El QR codifica la URL del ticket público resoluble por ``reg.id``
+    # (UUIDv4 no adivinable) cuando no hay token; con token persistido se mantiene
+    # el formato hash-bound canónico. El check-in extrae ``token=`` de la URL
+    # escaneada (interop escáner) y resuelve la inscripción de forma segura.
+    if reg.qr_token:
+        qr_token_value = reg.qr_token
+    else:
+        qr_token_value = str(reg.id)
+    qr_payload = f"{base_url}/public/events/{event.id}/qr?token={qr_token_value}"
     qr = qrcode.QRCode(
         version=1,
         error_correction=qrcode.constants.ERROR_CORRECT_M,
