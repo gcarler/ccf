@@ -111,6 +111,9 @@ export default function TaskDetailPanel({
     const [starred, setStarred] = useState(false);
     const [saving, setSaving] = useState(false);
     const [uploading, setUploading] = useState(false);
+    // QA-003: input de adjuntos compartido — el clip del header dispara la misma
+    // selección de archivos que el botón 'Adjuntar' de TaskAttachmentSection.
+    const attachmentInputRef = useRef<HTMLInputElement>(null);
     const [supplies, setSupplies] = useState<TaskSupplyRecord[]>(task?.supplies ?? []);
     const [deletingAttachmentId, setDeletingAttachmentId] = useState<string | null>(null);
     const [confirmAction, setConfirmAction] = useState<ConfirmActionState>(null);
@@ -379,7 +382,7 @@ export default function TaskDetailPanel({
                     onTitleChange={setTitle}
                     onSave={handleSave}
                     onStatusCycle={handleStatusCycle}
-                    onFileClick={() => {}}
+                    onFileClick={() => attachmentInputRef.current?.click()}
                     onStarToggle={handleStarToggle}
                     onExpandToggle={() => {
                         const maxW = Math.floor(window.innerWidth * MAX_RATIO);
@@ -424,6 +427,7 @@ export default function TaskDetailPanel({
                         onUpload={(updated) => onUpdate?.(updated)}
                         onDelete={handleDeleteAttachment}
                         onUploadingChange={setUploading}
+                        externalInputRef={attachmentInputRef}
                     />
 
                     <TaskSupplySection

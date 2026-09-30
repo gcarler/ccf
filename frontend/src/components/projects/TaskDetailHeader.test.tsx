@@ -49,6 +49,56 @@ describe('TaskDetailHeader', () => {
     expect(screen.getByText('En Progreso')).toBeInTheDocument();
   });
 
+  it('el botón clip (onFileClick) dispara la selección de archivos (QA-003)', () => {
+    const onFileClick = vi.fn();
+    render(
+      <TaskDetailHeader
+        task={task}
+        projectTitle="CCF App"
+        title="Tarea"
+        saving={false}
+        uploading={false}
+        starred={false}
+        error={null}
+        onClose={vi.fn()}
+        onTitleChange={vi.fn()}
+        onSave={vi.fn()}
+        onStatusCycle={vi.fn()}
+        onFileClick={onFileClick}
+        onStarToggle={vi.fn()}
+        onExpandToggle={vi.fn()}
+        onDeleteTask={vi.fn()}
+      />
+    );
+    const clipBtn = screen.getByTitle('Adjuntar archivo');
+    fireEvent.click(clipBtn);
+    expect(onFileClick).toHaveBeenCalledTimes(1);
+  });
+
+  it('el clip se deshabilita y muestra spinner mientras uploading=true', () => {
+    const onFileClick = vi.fn();
+    render(
+      <TaskDetailHeader
+        task={task}
+        projectTitle="CCF App"
+        title="Tarea"
+        saving={false}
+        uploading={true}
+        starred={false}
+        error={null}
+        onClose={vi.fn()}
+        onTitleChange={vi.fn()}
+        onSave={vi.fn()}
+        onStatusCycle={vi.fn()}
+        onFileClick={onFileClick}
+        onStarToggle={vi.fn()}
+        onExpandToggle={vi.fn()}
+        onDeleteTask={vi.fn()}
+      />
+    );
+    expect(screen.getByTitle('Subiendo archivo')).toBeDisabled();
+  });
+
   it('calls onClose when close button clicked', () => {
     const onClose = vi.fn();
     render(
