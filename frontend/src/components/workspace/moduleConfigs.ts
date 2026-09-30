@@ -504,4 +504,20 @@ export const MODULE_CONFIGS: Record<string, ModuleConfig> = {
       },
     ],
   },
+  surveys: {
+    title: 'Encuestas',
+    sections: [
+      {
+        title: 'Gestión',
+        items: [
+          {
+            id: 'surveys-list',
+            label: 'Todas las Encuestas',
+            href: '/plataforma/surveys',
+            icon: FileText,
+          },
+        ],
+      },
+    ],
+  },
 };
