@@ -44,6 +44,35 @@ Si falla el proceso nuevo, pausarlo o detenerlo antes de arrancar el adaptador
 heredado. SQLite conserva tickets y eventos; no restaurar un respaldo sobre
 trabajo posterior sin reconciliarlo. El transporte es *al menos una vez*, por
 lo que un relevo entre envío y ACK puede repetir un aviso con el mismo ID.
+
+## Restauración manual de respaldo
+
+La restauración es una operación de recuperación, no una reversión rutinaria:
+puede descartar tareas o eventos posteriores al respaldo. Requiere aprobación
+del operador responsable y reconciliar primero el trabajo posterior.
+
+1. Pausar asignaciones (`pause --actor agy`) y detener tanto
+   `ccf-agent-bridge` como el daemon heredado. Confirmar que no hay procesos del
+   puente escribiendo en SQLite. No copiar ni reemplazar la base mientras haya
+   un proceso activo.
+2. Elegir explícitamente un archivo de `.bridge/backups/` y validar su
+   integridad:
+
+   ```bash
+   python3 -c 'import sqlite3,sys; c=sqlite3.connect(sys.argv[1]); print(c.execute("PRAGMA integrity_check").fetchone()[0]); c.close()' \
+     .bridge/backups/<archivo-elegido.sqlite3>
+   ```
+
+   El resultado debe ser `ok`. Si no lo es, no restaurarlo.
+3. Con todos los procesos detenidos, conservar la base actual con nombre
+   fechado y revisar que no queden archivos `bridge.sqlite3-wal` o
+   `bridge.sqlite3-shm`. Si queda un WAL, no continuar: reabrir/cerrar SQLite
+   limpiamente o pedir asistencia para no perder transacciones confirmadas.
+4. Instalar el respaldo validado como `.bridge/bridge.sqlite3`, con modo
+   `0600`, y repetir `PRAGMA integrity_check` sobre esa ruta. Mantener la copia
+   previa hasta verificar `health --json`, `status`, la cola y una entrega/ACK
+   controlada. Solo entonces reanudar el servicio y las asignaciones.
+
 La salud del proceso y la entrega de eventos son dimensiones diferentes:
 PM2 reinicia caídas, mientras `health` expone retrasos, fallos y tickets
 estancados que requieren intervención humana.
