@@ -11,8 +11,13 @@ Además: idempotencia por email, estado por email/phone, ventana de registro.
 
 El check-in (casos 5-6) y las campañas (caso 8) pertenecen a Fases 4-5.
 
-Notas del contrato:
-- Los errores de negocio devuelven ``{"code": ..., "detail": ...}`` en ``detail``.
+Notas del contrato (TKT-EVT-AUDIT-QR-PREINSCRIPCION-01):
+- Los errores de negocio devuelven el cuerpo canónico plano
+  ``{"code": ..., "detail": ...}``: el handler global de HTTPException
+  (``app.py``) aplana ``detail={"code", "detail"}`` en el body (con clave
+  ``detail`` string). Único caso de ``detail`` anidado: el 409
+  ``duplicate_access`` del gatekeeper anti-fraude de check-in, que viaja
+  como dict en ``detail`` (first_checkin_at, checked_by_name, etc.).
 - El token de cancelación (``CCF-CXL-``) vive en ``extras["_cancel_token"]`` y
   no se expone en la respuesta (los extras con prefijo ``_`` se ocultan).
 - El verify token no se devuelve por API: se envía por email. Para testear
@@ -154,7 +159,7 @@ class TestPublicRegister:
 
         resp = _register(client, evt.id)
         assert resp.status_code == 403
-        assert resp.json()["detail"]["code"] == "NOT_REGISTRATION_EVENT"
+        assert resp.json()["code"] == "NOT_REGISTRATION_EVENT"
 
     def test_idempotent_same_email(self, client, db_session, sede):
         """Re-registro con el mismo email → misma inscripción (sin duplicados)."""
@@ -230,7 +235,7 @@ class TestPublicRegister:
         assert _register(client, evt.id, email="uno@example.com", phone="3000000001").status_code == 200
         resp = _register(client, evt.id, email="dos@example.com", phone="3000000002")
         assert resp.status_code == 409
-        assert resp.json()["detail"]["code"] == "EVENT_FULL"
+        assert resp.json()["code"] == "EVENT_FULL"
 
     def test_pending_requires_email_verification(self, client, db_session, sede):
         """Caso 2: con verificación email → PENDING (sin QR)."""
@@ -261,7 +266,7 @@ class TestPublicRegister:
         # para NOT_YET_OPEN (temporal).
         resp = _register(client, evt.id)
         assert resp.status_code == 410
-        assert resp.json()["detail"]["code"] == "REGISTRATION_CLOSED"
+        assert resp.json()["code"] == "REGISTRATION_CLOSED"
 
     def test_missing_event_404(self, client):
         resp = _register(client, uuid.uuid4())
@@ -504,7 +509,13 @@ class TestUnifiedCheckin:
         assert attendance.attended is True
 
     def test_checkin_duplicate(self, checkin_ctx, client, db_session):
-        """Caso 6: check-in duplicado → is_duplicate=True."""
+        """Caso 6: check-in duplicado → 409 duplicate_access (gatekeeper anti-fraude).
+
+        TKT-EVT-AUDIT-QR-PREINSCRIPCION-01: el reingreso se BLOQUEA con
+        HTTP 409 y ``detail`` dict ``status='duplicate_access'`` (con el
+        primer check-in y el operador que lo registró) — el contrato del
+        gatekeeper previene fraude de doble acceso.
+        """
         evt = _make_event(db_session, checkin_ctx["sede"], requires_registration=True)
         db_session.commit()
         reg_data = _register(client, evt.id).json()
@@ -514,10 +525,19 @@ class TestUnifiedCheckin:
         assert qr is not None and qr.startswith("CCF-EVT-")
 
         r1 = self._checkin(checkin_ctx, evt.id, {"qr_token": qr})
-        r2 = self._checkin(checkin_ctx, evt.id, {"qr_token": qr})
         assert r1.json()["is_duplicate"] is False
-        assert r2.status_code == 200
-        assert r2.json()["is_duplicate"] is True
+        r2 = self._checkin(checkin_ctx, evt.id, {"qr_token": qr})
+        assert r2.status_code == 409, r2.text
+        # El gatekeeper inyecta el payload 'duplicate_access' en el TOP-LEVEL del
+        # body (el handler global añade 'detail' string con el mensaje).
+        body = r2.json()
+        assert body["status"] == "duplicate_access"
+        assert body["persona_id"] == reg_data["persona_id"]
+        assert body["registration_code"].startswith("#CCF-EVT-")
+        assert body["first_checkin_at"]
+        # La DB no cambia: sigue un único check-in registrado.
+        reg = _reg_row(db_session, reg_id)
+        assert reg.registration_status == "CHECKED_IN"
 
     def test_checkin_pending_rejected(self, checkin_ctx, client, db_session):
         """Inscripción PENDING (email sin verificar) no puede hacer check-in."""
@@ -534,6 +554,138 @@ class TestUnifiedCheckin:
         fake_qr = f"CCF-EVT-{evt.id}-{reg.persona_id}-{'f' * 32}"
         resp = self._checkin(checkin_ctx, evt.id, {"qr_token": fake_qr})
         assert resp.status_code == 403
+
+
+class TKT_EVT_AUDIT_INTEROP_BASE:
+    """Marcador de suite para la auditoría TKT-EVT-AUDIT-QR-PREINSCRIPCION-01."""
+
+
+class TestCheckinInterop(TKT_EVT_AUDIT_INTEROP_BASE):
+    """Interop QR check-in (TKT-EVT-AUDIT-QR-PREINSCRIPCION-01).
+
+    Cubre: (1) URLs escaneadas por pistola/cámara con ``token=``; (2) pases
+    PDF/tickets resueltos por ``reg.id`` cuando ``qr_token`` nunca se
+    persistió en DB (hash-bound intacto); (3) tokens fabricados rechazados.
+    """
+
+    def _checkin(self, ctx, event_id, payload):
+        return ctx["client"].post(
+            f"/api/evangelism/events/{event_id}/sessions/2026-12-24/checkin",
+            json=payload,
+            headers=ctx["headers"],
+        )
+
+    def test_checkin_with_scanned_url_token(self, checkin_ctx, client, db_session):
+        """QR escaneado como URL completa (pistola/cámara) → extrae ``token=``."""
+        evt = _make_event(db_session, checkin_ctx["sede"], requires_registration=True)
+        db_session.commit()
+        reg_data = _register(client, evt.id).json()
+        qr = reg_data["qr_token"]
+        scanned_url = f"https://ccf.co/public/events/{evt.id}/qr?token={qr}&cancel=CCF-CXL-fake"
+
+        resp = self._checkin(checkin_ctx, evt.id, {"qr_token": scanned_url})
+        assert resp.status_code == 200, resp.text
+        assert resp.json()["status"] == "success"
+        assert resp.json()["qr_kind"] == "CCF-EVT"
+
+    def test_checkin_with_embedded_token_in_url(self, checkin_ctx, client, db_session):
+        """URL sin ``token=`` explícito pero con CCF-EVT- embebido → extrae el payload."""
+        evt = _make_event(db_session, checkin_ctx["sede"], requires_registration=True)
+        db_session.commit()
+        qr = _register(client, evt.id).json()["qr_token"]
+        weird_scan = f"SCAN>>{qr}<<EOF"
+
+        resp = self._checkin(checkin_ctx, evt.id, {"qr_token": weird_scan})
+        assert resp.status_code == 200, resp.text
+
+    def test_checkin_pass_pdf_resolves_by_reg_id(self, checkin_ctx, client, db_session):
+        """Pase PDF: token = reg.id (sin QR hash-bound en DB) → check-in OK."""
+        evt = _make_event(db_session, checkin_ctx["sede"], requires_registration=True)
+        db_session.commit()
+        reg_id = _register(client, evt.id).json()["id"]
+        reg = _reg_row(db_session, reg_id)
+        assert reg.qr_token is None  # el token plano nunca se persiste
+
+        resp = self._checkin(checkin_ctx, evt.id, {"qr_token": str(reg.id)})
+        assert resp.status_code == 200, resp.text
+        data = resp.json()
+        assert data["status"] == "success"
+        assert data["qr_kind"] == "REG_ID"
+        assert data["registration_id"] == reg_id
+
+    def test_checkin_reg_id_unknown_404(self, checkin_ctx, client, db_session):
+        """UUID de inscripción inexistente (pero válido) → 404."""
+        evt = _make_event(db_session, checkin_ctx["sede"], requires_registration=True)
+        db_session.commit()
+        _register(client, evt.id)
+
+        resp = self._checkin(checkin_ctx, evt.id, {"qr_token": str(uuid.uuid4())})
+        assert resp.status_code == 404
+
+    def test_checkin_reg_id_cross_event_404(self, checkin_ctx, client, db_session):
+        """reg.id de OTRO evento no resuelve (acotado al evento de la sesión)."""
+        evt_a = _make_event(db_session, checkin_ctx["sede"], requires_registration=True)
+        evt_b = _make_event(db_session, checkin_ctx["sede"], requires_registration=True)
+        db_session.commit()
+        reg_id = _register(client, evt_a.id).json()["id"]
+
+        resp = self._checkin(checkin_ctx, evt_b.id, {"qr_token": reg_id})
+        assert resp.status_code == 404
+
+    def test_checkin_reg_id_cancelled_gone(self, checkin_ctx, client, db_session):
+        """reg.id de inscripción CANCELLED no admite check-in (soft-delete → 404)."""
+        evt = _make_event(db_session, checkin_ctx["sede"], requires_registration=True)
+        db_session.commit()
+        reg_data = _register(client, evt.id).json()
+        client.post(f"{BASE}/{evt.id}/cancel", json={"cancel_token": reg_data["cancel_token"]})
+
+        resp = self._checkin(checkin_ctx, evt.id, {"qr_token": reg_data["id"]})
+        assert resp.status_code == 404
+
+
+class TestPublicTicketByRegId(TKT_EVT_AUDIT_INTEROP_BASE):
+    """Resolución pública por reg.id para pases PDF sin 404 (Fix 2 del ticket)."""
+
+    def test_ticket_by_reg_id_200(self, client, db_session, sede):
+        evt = _make_event(db_session, sede, requires_registration=True)
+        db_session.commit()
+        reg_id = _register(client, evt.id).json()["id"]
+
+        resp = client.get(f"{BASE}/{evt.id}/ticket", params={"token": reg_id})
+        assert resp.status_code == 200, resp.text
+        assert resp.json()["id"] == reg_id
+        assert resp.json()["registration_status"] == "CONFIRMED"
+
+    def test_ticket_by_reg_id_other_event_404(self, client, db_session, sede):
+        evt_a = _make_event(db_session, sede, requires_registration=True)
+        evt_b = _make_event(db_session, sede, requires_registration=True)
+        db_session.commit()
+        reg_id = _register(client, evt_a.id).json()["id"]
+
+        resp = client.get(f"{BASE}/{evt_b.id}/ticket", params={"token": reg_id})
+        assert resp.status_code == 404
+
+    def test_ticket_by_reg_id_cancelled_gone(self, client, db_session, sede):
+        """reg.id de inscripción CANCELLED (soft-delete) → 404 (no revela estado)."""
+        evt = _make_event(db_session, sede, requires_registration=True)
+        db_session.commit()
+        reg_data = _register(client, evt.id).json()
+        client.post(f"{BASE}/{evt.id}/cancel", json={"cancel_token": reg_data["cancel_token"]})
+
+        resp = client.get(f"{BASE}/{evt.id}/ticket", params={"token": reg_data["id"]})
+        assert resp.status_code == 404
+
+    def test_pass_pdf_download_by_reg_id(self, client, db_session, sede):
+        """El pase PDF (qr token=reg.id) descarga 200 con Content-Disposition."""
+        evt = _make_event(db_session, sede, requires_registration=True)
+        db_session.commit()
+        reg_id = _register(client, evt.id).json()["id"]
+
+        resp = client.get(f"{BASE}/{evt.id}/registrations/{reg_id}/pass")
+        assert resp.status_code == 200, resp.text
+        assert resp.headers["content-type"].startswith("application/pdf")
+        assert "pase-CCF-EVT-" in resp.headers.get("content-disposition", "")
+        assert resp.content[:5] == b"%PDF-"
 
 
 # ── Form Builder dinámico (plan §5.4) ────────────────────────────────────────
@@ -625,8 +777,8 @@ class TestPublicRegisterFormBuilder:
             },
         )
         assert resp.status_code == 422, resp.text
-        assert resp.json()["detail"]["code"] == "REQUIRED_FIELD"
-        assert resp.json()["detail"]["field_id"] == "iglesia"
+        assert resp.json()["code"] == "REQUIRED_FIELD"
+        assert resp.json()["field_id"] == "iglesia"
 
         # No se creó la inscripción
         count = db_session.query(models.EventRegistration).filter(
@@ -653,7 +805,7 @@ class TestPublicRegisterFormBuilder:
             },
         )
         assert resp.status_code == 404, resp.text
-        assert resp.json()["detail"]["code"] == "FORM_NOT_FOUND"
+        assert resp.json()["code"] == "FORM_NOT_FOUND"
 
     def test_register_with_form_id_form_inactive_returns_404(self, client, db_session, sede):
         """``CmsForm`` inactivo (is_active=False) → 404 FORM_NOT_FOUND."""
@@ -671,7 +823,7 @@ class TestPublicRegisterFormBuilder:
             },
         )
         assert resp.status_code == 404, resp.text
-        assert resp.json()["detail"]["code"] == "FORM_NOT_FOUND"
+        assert resp.json()["code"] == "FORM_NOT_FOUND"
 
     def test_register_with_form_id_captcha_enabled_no_token_returns_400(self, client, db_session, sede):
         """Form con captcha_enabled=True y sin captcha_token → 400 CAPTCHA_REQUIRED."""
@@ -690,7 +842,7 @@ class TestPublicRegisterFormBuilder:
             },
         )
         assert resp.status_code == 400, resp.text
-        assert resp.json()["detail"]["code"] == "CAPTCHA_REQUIRED"
+        assert resp.json()["code"] == "CAPTCHA_REQUIRED"
 
     def test_register_without_form_id_ignores_form_data(self, client, db_session, sede):
         """Evento sin ``form_id`` → ``form_data`` se ignora (backward-compat con preregistro fijo)."""
