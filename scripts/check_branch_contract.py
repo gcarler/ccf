@@ -154,6 +154,7 @@ BRANCH_MODULE_ALIASES = {
     "feature/events-evangelism": "evangelism",
     "fix/color-palette-regression": "frontend",
     "fix/public-legacy-redirects": "cms",
+    "fix/persona-select-search-20260930": "platform",
 }
 
 BRANCH_FAMILIES = ("feature", "feat", "fix", "refactor", "test")
