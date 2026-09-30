@@ -32,10 +32,9 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)) + "/..")
 os.chdir(os.path.dirname(os.path.abspath(__file__)) + "/..")
 
+from backend import models, schemas
 from backend.core.database import SessionLocal
 from backend.core.security import get_password_hash
-from backend import schemas
-from backend import models
 from backend.models import *  # noqa: F401
 from backend.models_auth import RolPlataforma as _RolPlataforma
 from backend.models_crm import Persona  # explicit for safety alongside wildcard
@@ -44,12 +43,12 @@ from backend.models_projects import (
     Project,
     ProjectActivityLog,
     ProjectAttachment,
+    ProjectAutomationRule,
     ProjectComment,
     ProjectDocument,
     ProjectMilestone,
     ProjectPhase,
     ProjectTask,
-    ProjectAutomationRule,
 )
 
 db = SessionLocal()
@@ -519,9 +518,11 @@ section("9. PRUEBA DE API (ENDPOINTS)")
 
 import httpx
 
+API_BASE = (os.environ.get("QUALITY_API_URL") or "http://127.0.0.1:8000").rstrip("/")
+
 # Login como GESTOR de prueba (endpoint v3) — credenciales conocidas del script
 login_resp = httpx.post(
-    "http://127.0.0.1:8000/api/v3/auth/login",
+    f"{API_BASE}/api/v3/auth/login",
     json={
         "email": "prueba3@ccf.test",
         "password": "prueba123",
@@ -535,7 +536,7 @@ if login_resp.status_code == 200:
     ok("Login GESTOR de prueba exitoso")
 
     # GET /projects
-    resp = httpx.get("http://127.0.0.1:8000/api/projects", headers=headers, timeout=20.0)
+    resp = httpx.get(f"{API_BASE}/api/projects", headers=headers, timeout=20.0)
     if resp.status_code == 200:
         projects = resp.json()
         found = [p for p in projects if str(p["id"]) == str(project.id)]
@@ -547,7 +548,7 @@ if login_resp.status_code == 200:
         fail(f"GET /projects → HTTP {resp.status_code}")
 
     # GET /projects/{id}
-    resp = httpx.get(f"http://127.0.0.1:8000/api/projects/{project.id}", headers=headers, timeout=20.0)
+    resp = httpx.get(f"{API_BASE}/api/projects/{project.id}", headers=headers, timeout=20.0)
     if resp.status_code == 200:
         data = resp.json()
         ok(f"GET /projects/{project.id} → '{data.get('title')}' ({len(data.get('tasks', []))} tareas)")
@@ -555,7 +556,7 @@ if login_resp.status_code == 200:
         fail(f"GET /projects/{project.id} → HTTP {resp.status_code}")
 
     # GET /projects/{id}/tasks
-    resp = httpx.get(f"http://127.0.0.1:8000/api/projects/{project.id}/tasks", headers=headers, timeout=20.0)
+    resp = httpx.get(f"{API_BASE}/api/projects/{project.id}/tasks", headers=headers, timeout=20.0)
     if resp.status_code == 200:
         tasks = resp.json()
         ok(f"GET /projects/{project.id}/tasks → {len(tasks)} tareas")
@@ -563,7 +564,7 @@ if login_resp.status_code == 200:
         fail(f"GET /projects/{project.id}/tasks → HTTP {resp.status_code}")
 
     # GET /projects/comments?project_id={id}
-    resp = httpx.get(f"http://127.0.0.1:8000/api/projects/comments?project_id={project.id}", headers=headers, timeout=20.0)
+    resp = httpx.get(f"{API_BASE}/api/projects/comments?project_id={project.id}", headers=headers, timeout=20.0)
     if resp.status_code == 200:
         comments = resp.json()
         ok(f"GET /projects/comments?project_id={project.id} → {len(comments)} comentarios")
@@ -571,7 +572,7 @@ if login_resp.status_code == 200:
         fail(f"GET /projects/comments?project_id={project.id} → HTTP {resp.status_code}")
 
     # GET /projects/{id}/milestones
-    resp = httpx.get(f"http://127.0.0.1:8000/api/projects/{project.id}/milestones", headers=headers, timeout=20.0)
+    resp = httpx.get(f"{API_BASE}/api/projects/{project.id}/milestones", headers=headers, timeout=20.0)
     if resp.status_code == 200:
         mss = resp.json()
         ok(f"GET /projects/{project.id}/milestones → {len(mss)} milestones")
@@ -579,7 +580,7 @@ if login_resp.status_code == 200:
         fail(f"GET /projects/{project.id}/milestones → HTTP {resp.status_code}")
 
     # GET /projects/{id}/wiki
-    resp = httpx.get(f"http://127.0.0.1:8000/api/projects/{project.id}/wiki", headers=headers, timeout=20.0)
+    resp = httpx.get(f"{API_BASE}/api/projects/{project.id}/wiki", headers=headers, timeout=20.0)
     if resp.status_code == 200:
         wiki_data = resp.json()
         ok(f"GET /projects/{project.id}/wiki → '{wiki_data.get('title')}'")
@@ -588,7 +589,7 @@ if login_resp.status_code == 200:
 
     # POST new comment as test (create a new comment via API)
     resp = httpx.post(
-        f"http://127.0.0.1:8000/api/projects/{project.id}/comments",
+        f"{API_BASE}/api/projects/{project.id}/comments",
         headers={**headers, "Content-Type": "application/json"},
         json={"content": "Comentario creado vía API para validar el endpoint.", "task_id": None},
         timeout=20.0,
@@ -600,7 +601,7 @@ if login_resp.status_code == 200:
 
     # Login como usuario_prueba_2 (docente, tiene acceso a projects) y verificar que ve el proyecto
     login_u2 = httpx.post(
-        "http://127.0.0.1:8000/api/v3/auth/login",
+        f"{API_BASE}/api/v3/auth/login",
         json={
             "email": "prueba2@ccf.test",
             "password": "prueba123",
@@ -619,7 +620,7 @@ if login_resp.status_code == 200:
         headers_u2 = {"Authorization": f"Bearer {token_u2}"}
         ok("Autenticación usuario_prueba_2 (docente) verificada")
 
-        resp = httpx.get("http://127.0.0.1:8000/api/projects", headers=headers_u2, timeout=20.0)
+        resp = httpx.get(f"{API_BASE}/api/projects", headers=headers_u2, timeout=20.0)
         if resp.status_code == 200:
             projs = resp.json()
             found = [p for p in projs if str(p["id"]) == str(project.id)]
@@ -631,7 +632,7 @@ if login_resp.status_code == 200:
             fail(f"usuario_prueba_2 GET /projects → HTTP {resp.status_code}")
 
         # Ver tareas asignadas a u2
-        resp = httpx.get("http://127.0.0.1:8000/api/projects/tasks", headers=headers_u2, timeout=20.0)
+        resp = httpx.get(f"{API_BASE}/api/projects/tasks", headers=headers_u2, timeout=20.0)
         if resp.status_code == 200:
             my_tasks = resp.json()
             ok(f"usuario_prueba_2 tiene {len(my_tasks)} tarea(s) asignada(s)")
@@ -642,7 +643,7 @@ if login_resp.status_code == 200:
 
     # Verificar que usuario_prueba_1 (miembro sin permiso projects) NO tiene acceso a projects (expected: 403)
     login_u1b = httpx.post(
-        "http://127.0.0.1:8000/api/v3/auth/login",
+        f"{API_BASE}/api/v3/auth/login",
         json={
             "email": "prueba1@ccf.test",
             "password": "prueba123",
@@ -659,7 +660,7 @@ if login_resp.status_code == 200:
 
         headers_u1b = {"Authorization": f"Bearer {token_u1b}"}
         try:
-            resp = httpx.get("http://127.0.0.1:8000/api/projects", headers=headers_u1b, timeout=15.0)
+            resp = httpx.get(f"{API_BASE}/api/projects", headers=headers_u1b, timeout=15.0)
             if resp.status_code == 403:
                 ok("usuario_prueba_1 (estudiante) bloqueado de projects — correcto (403)")
             else:
@@ -1193,7 +1194,7 @@ if deleted_ok:
         fail(f"Recálculo fallido tras eliminación: {time_summary_after_del}")
 
     logs_after_del = crud_projects.get_project_time_logs(db, project.id)
-    if not any(str(l.id) == str(log2.id) for l in logs_after_del):
+    if not any(str(log_item.id) == str(log2.id) for log_item in logs_after_del):
         ok("El registro eliminado no aparece en las consultas activas (Aislamiento Soft-Delete)")
     else:
         fail("El registro eliminado sigue apareciendo en get_project_time_logs")
@@ -1626,7 +1627,7 @@ csv_expenses = crud_projects.generate_project_expenses_csv(db, project.id, user_
 if isinstance(csv_expenses, str) and csv_expenses.startswith("\ufeff") and "Monto" in csv_expenses and "Categoría" in csv_expenses:
     exp_lines = csv_expenses.strip().split("\r\n") if "\r\n" in csv_expenses else csv_expenses.strip().split("\n")
     ok(f"Exportación CSV de gastos verificada: {len(exp_lines) - 1} partidas exportadas con BOM UTF-8")
-    if any("Madera y pintura" in l or "Instalación" in l for l in exp_lines):
+    if any("Madera y pintura" in line or "Instalación" in line for line in exp_lines):
         ok("Partidas presupuestarias verificadas en el archivo CSV de gastos")
     else:
         fail("Partidas de prueba no encontradas en CSV de gastos")
@@ -1634,7 +1635,7 @@ else:
     fail("Error generando CSV de gastos")
 
 # 5. Validación de Aislamiento Multi-Tenant (Axioma 3)
-import uuid as _uuid
+import uuid as _uuid  # noqa: E402, I001
 foreign_sede_id = _uuid.uuid4()
 foreign_report = crud_projects.get_project_executive_report_data(db, project.id, user_sede_id=foreign_sede_id)
 if foreign_report is None:
