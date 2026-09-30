@@ -107,8 +107,9 @@ seis intentos. Al agotarse, el evento pasa a `DEAD` y se crea una sola alerta
 coordinador puede inspeccionar y reintentar eventos `DEAD` con `retry`. El
 coordinador, desarrollador y auditor deben ser nombres de agentes con un panel
 tmux registrado. `daemon --once` ejecuta un ciclo manual y no escribe un
-heartbeat que simule un servicio continuo. El daemon crea un respaldo SQLite
-consistente al iniciar y luego cada 24 horas. Conserva los 14 respaldos más
+heartbeat que simule un servicio continuo. El daemon comprueba el respaldo al
+iniciar y crea uno si el último tiene 24 horas o más; luego repite esa
+comprobación cada 60 segundos. Conserva los 14 respaldos más
 recientes en `.bridge/backups/` con permisos `0700`/`0600`; `health --json`
 marca la base degradada si no existe un respaldo reciente. `backup` crea uno
 manualmente y verifica `integrity_check`; la recuperación se prueba abriendo
