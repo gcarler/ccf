@@ -1,19 +1,16 @@
 "use client";
 
-import { useMemo, useState, useEffect } from "react";
+import { useCallback, useMemo, useState, useEffect } from "react";
 import Link from "next/link";
-import Image from "next/image";
 import {
   Calendar as CalendarIcon,
   Clock,
   MapPin,
-  Users,
   Download,
   ChevronLeft,
   ChevronRight,
   Sparkles,
   Heart,
-  Share2,
   CheckCircle2,
   CalendarDays,
   BookmarkPlus,
@@ -124,7 +121,7 @@ export default function EventosPage() {
   // Calendar logic: synchronize real weekly church meetings
   // Wednesdays = Faros en Casa (19:30)
   // Sundays = Primera Escuela Dominical (06:00), Segunda Escuela Dominical (21:00)
-  const getEventsForDate = (date: Date): PublicMeetingEvent[] => {
+  const getEventsForDate = useCallback((date: Date): PublicMeetingEvent[] => {
     const dayOfWeek = date.getDay(); // 0 = Domingo, 3 = Miércoles
     const ymd = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(
       date.getDate()
@@ -149,7 +146,7 @@ export default function EventosPage() {
     });
 
     return matching;
-  };
+  }, [publicMeetings]);
 
   // Build calendar matrix
   const calendarMatrix = useMemo(() => {
@@ -190,7 +187,7 @@ export default function EventosPage() {
     }
 
     return days;
-  }, [currentMonth, currentYear, today, publicMeetings]);
+  }, [currentMonth, currentYear, today, getEventsForDate]);
 
   const monthNames = [
     "Enero",
@@ -210,7 +207,7 @@ export default function EventosPage() {
   // Selected day events
   const selectedDayEvents = useMemo(() => {
     return getEventsForDate(selectedDay);
-  }, [selectedDay, publicMeetings]);
+  }, [selectedDay, getEventsForDate]);
 
   // Open Drawer handler
   const handleOpenDrawer = (meeting: PublicMeetingEvent) => {

@@ -19,7 +19,6 @@ import {
   Clock,
   Sparkles,
   HeartPulse,
-  Brain,
   ShieldAlert,
   CheckCircle2,
   RefreshCw,
@@ -54,7 +53,6 @@ export default function DocentePortalPage() {
   // Direct Tab: Copiloto inline forms state
   const [copilotTopic, setCopilotTopic] = useState('');
   const [copilotRubricTitle, setCopilotRubricTitle] = useState('');
-  const [copilotCompetencies, setCopilotCompetencies] = useState('');
 
   const fetchMyOfferings = useCallback(async () => {
     if (!token) return;

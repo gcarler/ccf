@@ -6,10 +6,8 @@ import {
   Clock,
   Home,
   Navigation,
-  Phone,
   Search,
   MapPin,
-  ExternalLink,
   Copy,
   Check,
   Building2,
@@ -210,13 +208,12 @@ export default function SedesPage() {
       : "Buscar por sector, barrio o sede en Cartagena...";
 
   const rawLocations = (locationsContent?.parsed ?? locationsContent) as unknown;
-  const parsedLocations: LocationItem[] = Array.isArray(rawLocations)
-    ? (rawLocations as LocationItem[])
-    : Array.isArray((rawLocations as Record<string, unknown>)?.items)
-    ? ((rawLocations as Record<string, unknown>).items as LocationItem[])
-    : [];
-
   const locations: LocationItem[] = useMemo(() => {
+    const parsedLocations: LocationItem[] = Array.isArray(rawLocations)
+      ? (rawLocations as LocationItem[])
+      : Array.isArray((rawLocations as Record<string, unknown>)?.items)
+      ? ((rawLocations as Record<string, unknown>).items as LocationItem[])
+      : [];
     const sourceList = parsedLocations.length > 0 ? parsedLocations : CANONICAL_CARTAGENA_SEDES;
 
     return sourceList.map((loc, i) => {
@@ -270,7 +267,7 @@ export default function SedesPage() {
         mapsUrl,
       };
     });
-  }, [parsedLocations]);
+  }, [rawLocations]);
 
   // States
   const [selected, setSelected] = useState<LocationItem | null>(null);

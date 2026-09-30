@@ -10,14 +10,11 @@ import {
   Sparkles,
   MessageCircle,
   Share2,
-  Copy,
   Check,
   ExternalLink,
-  ChevronRight,
   Instagram,
   Facebook,
   Twitter,
-  Heart,
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";

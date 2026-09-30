@@ -5,7 +5,7 @@ import { RightPanel } from '@/components/ui/RightPanel';
 import { apiFetch } from '@/lib/http';
 import { toast } from 'sonner';
 import { AcademicProgram, ProgramType } from '@/types/academy';
-import { GraduationCap, Loader2, Save, X } from 'lucide-react';
+import { GraduationCap, Loader2, Save } from 'lucide-react';
 import clsx from 'clsx';
 
 interface ProgramDrawerProps {

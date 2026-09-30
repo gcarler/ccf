@@ -1,33 +1,24 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import {
-  Award,
-  BookOpen,
   Calendar,
   CheckCircle2,
   ChevronRight,
   Download,
-  Flame,
-  Globe2,
   HeartHandshake,
-  Layers,
-  LineChart,
   MapPin,
   RefreshCw,
   ShieldCheck,
   Sparkles,
   TrendingUp,
-  UserCheck,
   Users,
-  Droplets,
 } from "lucide-react";
 import { apiFetch, apiFetchBlob } from "@/lib/http";
 import EvangelismShell from "@/components/evangelism/EvangelismShell";
 import WorkspaceDrawer from "@/components/WorkspaceDrawer";
 import type {
   AttendeeSpiritualJourneyData,
-  EventCohortAttendeeItem,
   EventCohortRetentionData,
   MinistryEvent,
   MultiSedeCohortAnalysisData,
@@ -52,7 +43,7 @@ export default function CohortsRetentionPage() {
   const [journeyData, setJourneyData] = useState<AttendeeSpiritualJourneyData | null>(null);
   const [loadingJourney, setLoadingJourney] = useState(false);
 
-  const loadGlobalData = async () => {
+  const loadGlobalData = useCallback(async () => {
     setLoading(true);
     try {
       const [sedesRes, matrixRes, evsRes] = await Promise.all([
@@ -64,19 +55,19 @@ export default function CohortsRetentionPage() {
       setMatrixData(matrixRes);
       const evList = Array.isArray(evsRes) ? evsRes : [];
       setEventsList(evList);
-      if (evList.length > 0 && !selectedEventId) {
-        setSelectedEventId(evList[0].id);
+      if (evList.length > 0) {
+        setSelectedEventId((current) => current || evList[0].id);
       }
     } catch {
       // Manejo silencioso con degradación elegante
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     loadGlobalData();
-  }, []);
+  }, [loadGlobalData]);
 
   // Cargar cohorte de evento específico al cambiar de selección
   useEffect(() => {
