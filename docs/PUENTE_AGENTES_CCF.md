@@ -117,6 +117,12 @@ la copia con SQLite Backup API antes de reanudar el dispatcher. Estas copias
 permanecen en el mismo volumen del host: protegen frente a corrupción lógica,
 pero no frente a pérdida del disco/host ni sustituyen la réplica externa del
 respaldo de producción.
+`health --json` comprueba `integrity_check` completo del respaldo en cada
+consulta, con coste proporcional al tamaño de la copia. Los eventos y registros
+de auditoría no tienen purga automática; antes de aumentar volumen o frecuencia
+de monitoreo se deben definir umbrales de espacio, archivado externo y una
+política de retención revisable. SQLite/WAL aquí es local a un host, no una
+solución multi-host.
 Una tarea activa sin transición durante siete días aparece en `stalled_tasks`,
 degrada `health` y genera una sola alerta al coordinador para ese periodo de
 inactividad; una transición posterior reinicia el plazo.
