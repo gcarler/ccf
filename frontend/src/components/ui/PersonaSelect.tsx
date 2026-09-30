@@ -1,11 +1,11 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { apiFetch } from "@/lib/http";
-import { Check, ChevronDown, User as UserIcon, Search, Shield } from "lucide-react";
+import { Check, ChevronDown, User as UserIcon, Search, Shield, Loader2 } from "lucide-react";
 
-interface PersonaOption {
+export interface PersonaOption {
     id: string;
     first_name?: string;
     last_name?: string;
@@ -14,7 +14,7 @@ interface PersonaOption {
     spiritual_status?: string;
 }
 
-interface PersonaSelectProps {
+export interface PersonaSelectProps {
     value: string | null;
     onChange: (personaId: string | null) => void;
     placeholder?: string;
@@ -22,7 +22,7 @@ interface PersonaSelectProps {
     showMetadata?: boolean;
 }
 
-function displayName(p: PersonaOption): string {
+export function displayName(p: PersonaOption): string {
     if (p.nombre_completo) return p.nombre_completo;
     return [p.first_name, p.last_name].filter(Boolean).join(" ") || "Sin nombre";
 }
@@ -37,16 +37,100 @@ export default function PersonaSelect({
     const { token } = useAuth();
     const [open, setOpen] = useState(false);
     const [personas, setPersonas] = useState<PersonaOption[]>([]);
+    const [selectedPersona, setSelectedPersona] = useState<PersonaOption | null>(null);
     const [search, setSearch] = useState("");
+    const [debouncedSearch, setDebouncedSearch] = useState("");
+    const [loading, setLoading] = useState(false);
     const ref = useRef<HTMLDivElement>(null);
+    const inputRef = useRef<HTMLInputElement>(null);
 
+    // Debounce de 300ms para la búsqueda reactiva
     useEffect(() => {
-        if (!token || personas.length > 0) return;
-        apiFetch<PersonaOption[]>("/crm/personas", { token })
-            .then((data) => setPersonas(Array.isArray(data) ? data : []))
-            .catch((err) => { console.error("[PersonaSelect] Failed to load personas:", err); });
-    }, [token, personas.length]);
+        const handler = setTimeout(() => {
+            setDebouncedSearch(search);
+        }, 300);
+        return () => clearTimeout(handler);
+    }, [search]);
 
+    // Búsqueda server-side reactiva con debouncedSearch
+    useEffect(() => {
+        if (!token) return;
+
+        let active = true;
+        setLoading(true);
+
+        const query = debouncedSearch.trim();
+        const endpoint = query
+            ? `/crm/personas?search=${encodeURIComponent(query)}&limit=50`
+            : `/crm/personas?limit=50`;
+
+        apiFetch<PersonaOption[]>(endpoint, { token })
+            .then((data) => {
+                if (!active) return;
+                const list = Array.isArray(data) ? data : [];
+                setPersonas(list);
+
+                // Si hay un value seleccionado y está en la lista obtenida, sincronizar selectedPersona
+                if (value) {
+                    const match = list.find((p) => p.id === value);
+                    if (match) {
+                        setSelectedPersona(match);
+                    }
+                }
+            })
+            .catch((err) => {
+                console.error("[PersonaSelect] Error cargando personas:", err);
+            })
+            .finally(() => {
+                if (active) {
+                    setLoading(false);
+                }
+            });
+
+        return () => {
+            active = false;
+        };
+    }, [token, debouncedSearch, value]);
+
+    // Preservar / consultar la persona seleccionada por ID si no está en la lista actual
+    useEffect(() => {
+        if (!value) {
+            setSelectedPersona(null);
+            return;
+        }
+
+        // Si ya tenemos la persona seleccionada con ese id, no re-consultar
+        if (selectedPersona && selectedPersona.id === value) {
+            return;
+        }
+
+        // Si está en la lista actual de personas cargadas, usarla
+        const found = personas.find((p) => p.id === value);
+        if (found) {
+            setSelectedPersona(found);
+            return;
+        }
+
+        // Si no está en personas y tenemos token, consultar /crm/personas/{value}
+        if (!token) return;
+
+        let active = true;
+        apiFetch<PersonaOption>(`/crm/personas/${value}`, { token })
+            .then((data) => {
+                if (active && data && data.id) {
+                    setSelectedPersona(data);
+                }
+            })
+            .catch((err) => {
+                console.error("[PersonaSelect] Error al consultar persona por id:", err);
+            });
+
+        return () => {
+            active = false;
+        };
+    }, [value, personas, selectedPersona, token]);
+
+    // Manejo de clic fuera para cerrar el menú desplegable
     useEffect(() => {
         function handleClickOutside(e: MouseEvent) {
             if (ref.current && !ref.current.contains(e.target as Node)) {
@@ -57,34 +141,55 @@ export default function PersonaSelect({
         return () => document.removeEventListener("mousedown", handleClickOutside);
     }, []);
 
-    const selected = personas.find((p) => p.id === value);
+    // Autofocus en el input al abrir el dropdown
+    useEffect(() => {
+        if (open) {
+            inputRef.current?.focus();
+        }
+    }, [open]);
 
-    const filtered = search.trim()
-        ? personas.filter((p) => {
-              const name = displayName(p).toLowerCase();
-              const q = search.toLowerCase();
-              return name.includes(q) || (p.church_role ?? "").toLowerCase().includes(q);
-          })
-        : personas;
+    // La persona seleccionada para mostrar en el botón
+    const currentSelected = selectedPersona || personas.find((p) => p.id === value);
+
+    const handleSelect = useCallback(
+        (persona: PersonaOption) => {
+            setSelectedPersona(persona);
+            onChange(persona.id);
+            setOpen(false);
+            setSearch("");
+        },
+        [onChange]
+    );
+
+    const handleClear = useCallback(() => {
+        setSelectedPersona(null);
+        onChange(null);
+        setOpen(false);
+        setSearch("");
+    }, [onChange]);
 
     return (
         <div ref={ref} className={`relative ${className}`}>
             <button
                 type="button"
                 onClick={() => setOpen(!open)}
-                className="w-full flex items-center gap-2 rounded-md border border-[hsl(var(--border))] dark:border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] dark:bg-[hsl(var(--surface-2))] px-3 py-2 text-sm font-medium text-left hover:border-[hsl(var(--primary)_/_0.6)] dark:hover:border-[hsl(var(--primary)_/_0.5)] transition-colors"
+                className="w-full flex items-center gap-2 rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] px-3 py-2 text-sm font-medium text-left hover:border-[hsl(var(--primary)_/_0.6)] transition-colors"
+                aria-haspopup="listbox"
+                aria-expanded={open}
             >
-                {selected ? (
+                {currentSelected ? (
                     <>
-                        <div className="size-6 rounded-full bg-[hsl(var(--primary)_/_0.12)] dark:bg-[hsl(var(--primary)_/_0.25)] flex items-center justify-center shrink-0">
+                        <div className="size-6 rounded-full bg-[hsl(var(--primary)_/_0.12)] flex items-center justify-center shrink-0">
                             <UserIcon size={12} className="text-[hsl(var(--primary))]" />
                         </div>
                         <div className="min-w-0 flex-1">
-                            <p className="text-xs font-semibold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-primary))] truncate">
-                                {displayName(selected)}
+                            <p className="text-xs font-semibold text-[hsl(var(--text-primary))] truncate">
+                                {displayName(currentSelected)}
                             </p>
-                            {showMetadata && selected.church_role && (
-                                <p className="text-2xs text-[hsl(var(--text-secondary))] truncate">{selected.church_role}</p>
+                            {showMetadata && currentSelected.church_role && (
+                                <p className="text-2xs text-[hsl(var(--text-secondary))] truncate">
+                                    {currentSelected.church_role}
+                                </p>
                             )}
                         </div>
                     </>
@@ -93,69 +198,83 @@ export default function PersonaSelect({
                 )}
                 <ChevronDown
                     size={14}
-                    className={`ml-auto shrink-0 text-[hsl(var(--text-secondary))] transition-transform ${open ? "rotate-180" : ""}`}
+                    className={`ml-auto shrink-0 text-[hsl(var(--text-secondary))] transition-transform ${
+                        open ? "rotate-180" : ""
+                    }`}
                 />
             </button>
 
             {open && (
-                <div className="absolute z-50 mt-1 w-full rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] shadow-xl max-h-72 overflow-hidden">
-                    <div className="p-2 border-b border-[hsl(var(--border))] dark:border-[hsl(var(--border))]">
-                        <div className="flex items-center gap-2 rounded-md bg-[hsl(var(--surface-2))] dark:bg-[hsl(var(--surface-2))] px-2 py-1.5">
-                            <Search size={12} className="text-[hsl(var(--text-secondary))] shrink-0" />
+                <div
+                    className="absolute z-50 mt-1 w-full rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] shadow-xl max-h-72 overflow-hidden"
+                    role="listbox"
+                >
+                    <div className="p-2 border-b border-[hsl(var(--border))]">
+                        <div className="flex items-center gap-2 rounded-md bg-[hsl(var(--surface-2))] px-2 py-1.5">
+                            {loading ? (
+                                <Loader2
+                                    size={12}
+                                    className="animate-spin text-[hsl(var(--primary))] shrink-0"
+                                    data-testid="persona-search-spinner"
+                                />
+                            ) : (
+                                <Search size={12} className="text-[hsl(var(--text-secondary))] shrink-0" />
+                            )}
                             <input
+                                ref={inputRef}
                                 value={search}
                                 onChange={(e) => setSearch(e.target.value)}
                                 placeholder="Buscar persona..."
-                                className="bg-transparent text-xs font-medium outline-none w-full text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-primary))] placeholder:text-[hsl(var(--text-secondary))]"
+                                className="bg-transparent text-xs font-medium outline-none w-full text-[hsl(var(--text-primary))] placeholder:text-[hsl(var(--text-secondary))]"
+                                aria-label="Buscar persona"
                             />
                         </div>
                     </div>
                     <div className="overflow-y-auto max-h-56">
                         <button
                             type="button"
-                            onClick={() => {
-                                onChange(null);
-                                setOpen(false);
-                                setSearch("");
-                            }}
-                            className="w-full flex items-center gap-2 px-3 py-2 text-xs text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] dark:hover:bg-[hsl(var(--surface-2))] transition-colors text-left"
+                            onClick={handleClear}
+                            className="w-full flex items-center gap-2 px-3 py-2 text-xs text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] transition-colors text-left"
+                            role="option"
+                            aria-selected={value === null}
                         >
-                            <div className="size-6 rounded-full bg-[hsl(var(--surface-2))] dark:bg-[hsl(var(--surface-2))] flex items-center justify-center">
+                            <div className="size-6 rounded-full bg-[hsl(var(--surface-2))] flex items-center justify-center">
                                 <UserIcon size={12} className="text-[hsl(var(--text-secondary))]" />
                             </div>
                             Sin asignar
                             {value === null && <Check size={12} className="ml-auto text-[hsl(var(--primary))]" />}
                         </button>
-                        {filtered.map((persona) => (
-                            <button
-                                key={persona.id}
-                                type="button"
-                                onClick={() => {
-                                    onChange(persona.id);
-                                    setOpen(false);
-                                    setSearch("");
-                                }}
-                                className="w-full flex items-center gap-2 px-3 py-2 text-xs hover:bg-[hsl(var(--surface-1))] dark:hover:bg-[hsl(var(--surface-2))] transition-colors text-left"
-                            >
-                                <div className="size-6 rounded-full bg-[hsl(var(--primary)_/_0.12)] dark:bg-[hsl(var(--primary)_/_0.25)] flex items-center justify-center shrink-0">
-                                    <UserIcon size={12} className="text-[hsl(var(--primary))]" />
-                                </div>
-                                <div className="min-w-0 flex-1">
-                                    <p className="text-xs font-semibold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-primary))] truncate">
-                                        {displayName(persona)}
-                                    </p>
-                                    {showMetadata && persona.church_role && (
-                                        <p className="text-2xs text-[hsl(var(--text-secondary))] truncate flex items-center gap-1">
-                                            <Shield size={8} /> {persona.church_role}
+                        {personas.map((persona) => {
+                            const isSelected = persona.id === value;
+                            return (
+                                <button
+                                    key={persona.id}
+                                    type="button"
+                                    onClick={() => handleSelect(persona)}
+                                    className="w-full flex items-center gap-2 px-3 py-2 text-xs hover:bg-[hsl(var(--surface-1))] transition-colors text-left"
+                                    role="option"
+                                    aria-selected={isSelected}
+                                >
+                                    <div className="size-6 rounded-full bg-[hsl(var(--primary)_/_0.12)] flex items-center justify-center shrink-0">
+                                        <UserIcon size={12} className="text-[hsl(var(--primary))]" />
+                                    </div>
+                                    <div className="min-w-0 flex-1">
+                                        <p className="text-xs font-semibold text-[hsl(var(--text-primary))] truncate">
+                                            {displayName(persona)}
                                         </p>
+                                        {showMetadata && persona.church_role && (
+                                            <p className="text-2xs text-[hsl(var(--text-secondary))] truncate flex items-center gap-1">
+                                                <Shield size={8} /> {persona.church_role}
+                                            </p>
+                                        )}
+                                    </div>
+                                    {isSelected && (
+                                        <Check size={12} className="ml-auto shrink-0 text-[hsl(var(--primary))]" />
                                     )}
-                                </div>
-                                {persona.id === value && (
-                                    <Check size={12} className="ml-auto shrink-0 text-[hsl(var(--primary))]" />
-                                )}
-                            </button>
-                        ))}
-                        {filtered.length === 0 && (
+                                </button>
+                            );
+                        })}
+                        {!loading && personas.length === 0 && (
                             <p className="px-3 py-4 text-center text-2xs text-[hsl(var(--text-secondary))]">
                                 No se encontraron personas
                             </p>
