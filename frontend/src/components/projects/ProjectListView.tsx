@@ -41,10 +41,19 @@ interface Props {
 }
 
 // ─── Quick Comment Popover ────────────────────────────────────────────────────
-function CommentPopover({ onClose }: { onClose: () => void }) {
+interface CommentPopoverProps {
+    onClose: () => void;
+    placement?: 'bottom' | 'top';
+}
+
+function CommentPopover({ onClose, placement = 'bottom' }: CommentPopoverProps) {
     const [text, setText] = useState('');
     return (
-        <div className="absolute right-0 top-full mt-1 w-80 bg-[hsl(var(--surface-1))] rounded-lg shadow-xl border border-[hsl(var(--border))] z-[500] overflow-hidden">
+        <div
+            data-testid="quick-comment-popover"
+            data-placement={placement}
+            className="w-80 bg-[hsl(var(--surface-1))] rounded-lg shadow-xl border border-[hsl(var(--border))] z-[600] overflow-hidden"
+        >
             {/* Header */}
             <div className="flex items-center justify-between px-3 py-2 border-b border-[hsl(var(--border))]">
                 <span className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--muted-foreground))]">Comentario rápido</span>
@@ -111,7 +120,32 @@ function TaskRow({
 }) {
     const { openLayer, setRightMode } = useSidebarLayers();
     const [commentOpen, setCommentOpen] = useState(false);
+    const [commentPlacement, setCommentPlacement] = useState<'bottom' | 'top'>('bottom');
     const commentRef = useRef<HTMLDivElement>(null);
+
+    const updateCommentPlacement = useCallback(() => {
+        if (!commentRef.current) return;
+        const rect = commentRef.current.getBoundingClientRect();
+        const POPOVER_APPROX_HEIGHT = 220;
+        const spaceBelow = window.innerHeight - rect.bottom;
+        if (spaceBelow < POPOVER_APPROX_HEIGHT && rect.top > spaceBelow) {
+            setCommentPlacement('top');
+        } else {
+            setCommentPlacement('bottom');
+        }
+    }, []);
+
+    // Recalcular posicionamiento y registrar listeners al abrir el popover
+    useEffect(() => {
+        if (!commentOpen) return;
+        updateCommentPlacement();
+        window.addEventListener('resize', updateCommentPlacement);
+        window.addEventListener('scroll', updateCommentPlacement, true);
+        return () => {
+            window.removeEventListener('resize', updateCommentPlacement);
+            window.removeEventListener('scroll', updateCommentPlacement, true);
+        };
+    }, [commentOpen, updateCommentPlacement]);
 
     const status = task.status ?? 'todo';
     const priority = task.priority ?? 'medium';
@@ -131,19 +165,22 @@ function TaskRow({
     }, [commentOpen]);
 
     const handleCommentClick = () => {
-        // Optimistic: open inline popover AND trigger the RightPanel
-        setCommentOpen(v => !v);
         if (!commentOpen) {
+            updateCommentPlacement();
             setRightMode('push');
             openLayer('RIGHT');
         }
+        setCommentOpen(v => !v);
     };
 
     return (
         <motion.div
             initial={{ opacity: 0, y: 4 }}
             animate={{ opacity: 1, y: 0 }}
-            className="flex items-center group border-b border-[hsl(var(--border))] hover:bg-[hsl(var(--surface-1))] transition-colors relative min-h-[40px]"
+            className={clsx(
+                'flex items-center group border-b border-[hsl(var(--border))] hover:bg-[hsl(var(--surface-1))] transition-colors relative min-h-[40px]',
+                commentOpen ? 'z-30' : 'z-0'
+            )}
         >
             {/* Checkbox */}
             <div className="w-8 flex-shrink-0 flex items-center justify-center pl-2">                    <button
@@ -209,7 +246,10 @@ function TaskRow({
             </div>
 
             {/* ── COMENTARIOS ──────────── */}
-            <div className="w-24 flex-shrink-0 flex items-center justify-center px-1 relative" ref={commentRef}>
+            <div
+                className={clsx('w-24 flex-shrink-0 flex items-center justify-center px-1 relative', commentOpen && 'z-50')}
+                ref={commentRef}
+            >
                 <button
                     onClick={handleCommentClick}
                     className={clsx(
@@ -225,13 +265,19 @@ function TaskRow({
                 <AnimatePresence>
                     {commentOpen && (
                         <motion.div
-                            initial={{ opacity: 0, scale: 0.96, y: -4 }}
+                            initial={{ opacity: 0, scale: 0.96, y: commentPlacement === 'top' ? 4 : -4 }}
                             animate={{ opacity: 1, scale: 1, y: 0 }}
-                            exit={{ opacity: 0, scale: 0.96, y: -4 }}
+                            exit={{ opacity: 0, scale: 0.96, y: commentPlacement === 'top' ? 4 : -4 }}
                             transition={{ duration: 0.1 }}
-                            className="absolute right-0 top-full mt-1"
+                            className={clsx(
+                                'absolute right-0 z-[600]',
+                                commentPlacement === 'top' ? 'bottom-full mb-1' : 'top-full mt-1'
+                            )}
                         >
-                            <CommentPopover onClose={() => setCommentOpen(false)} />
+                            <CommentPopover
+                                onClose={() => setCommentOpen(false)}
+                                placement={commentPlacement}
+                            />
                         </motion.div>
                     )}
                 </AnimatePresence>
@@ -319,7 +365,7 @@ function StatusGroup({
                         animate={{ height: 'auto', opacity: 1 }}
                         exit={{ height: 0, opacity: 0 }}
                         transition={{ duration: 0.18 }}
-                        className="overflow-hidden"
+                        className={collapsed ? "overflow-hidden" : "overflow-visible"}
                     >
                         {/* Column Headers */}
                         <div className="flex items-center border-b border-[hsl(var(--border))] bg-[hsl(var(--surface-1))]">
