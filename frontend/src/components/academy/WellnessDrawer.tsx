@@ -2,12 +2,9 @@
 
 import React, { useCallback, useEffect, useState } from 'react';
 import {
-  AlertCircle,
-  AlertTriangle,
   CheckCircle2,
   Clock,
   HeartPulse,
-  Info,
   Loader2,
   RefreshCw,
   Search,
