@@ -3,16 +3,17 @@
 import { useRef } from 'react';
 import { apiFetch } from '@/lib/http';
 import type { ProjectTaskRecord } from '@/types/projects';
-import { Loader2, Paperclip, Trash2 } from 'lucide-react';
+import { Loader2, Paperclip, Trash2, Upload } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function TaskAttachmentSection({
     task,
-    uploading: _uploading,
+    uploading,
     deletingAttachmentId,
     onUpload,
     onDelete,
     onUploadingChange,
+    externalInputRef,
 }: {
     task: ProjectTaskRecord;
     uploading: boolean;
@@ -20,8 +21,11 @@ export default function TaskAttachmentSection({
     onUpload: (updated: ProjectTaskRecord) => void;
     onDelete: (attachmentId: string) => void;
     onUploadingChange: (v: boolean) => void;
+    /** Ref compartida con TaskDetailPanel para que el clip del header dispare la selección. */
+    externalInputRef?: React.RefObject<HTMLInputElement>;
 }) {
-    const fileInputRef = useRef<HTMLInputElement>(null);
+    const internalInputRef = useRef<HTMLInputElement>(null);
+    const fileInputRef = externalInputRef ?? internalInputRef;
     const attachments = task.attachments ?? [];
 
     const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -40,6 +44,7 @@ export default function TaskAttachmentSection({
         }
 
         onUploadingChange(true);
+        let uploadedCount = 0;
         for (const file of Array.from(files)) {
             try {
                 const formData = new FormData();
@@ -49,14 +54,18 @@ export default function TaskAttachmentSection({
                     token: null, // token passed via apiFetch interceptor
                     body: formData,
                 });
+                uploadedCount += 1;
                 onUpload({ ...task, ...(updated || {}) });
             } catch {
-                toast.error('Error al subir archivo');
+                toast.error(`Error al subir "${file.name}"`);
             }
         }
         onUploadingChange(false);
+        if (uploadedCount > 0) toast.success(uploadedCount === 1 ? 'Archivo adjuntado' : `${uploadedCount} archivos adjuntados`);
         if (fileInputRef.current) fileInputRef.current.value = '';
     };
+
+    const triggerFileSelection = () => fileInputRef.current?.click();
 
     return (
         <section className="px-4 py-3 border-b border-[hsl(var(--border))]">
@@ -67,6 +76,17 @@ export default function TaskAttachmentSection({
                         {attachments.length}
                     </span>
                 </p>
+                {/* QA-003: botón explícito de carga — abre el selector de archivos nativo. */}
+                <button
+                    type="button"
+                    onClick={triggerFileSelection}
+                    disabled={uploading}
+                    title={uploading ? 'Subiendo archivo…' : 'Adjuntar archivo'}
+                    className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-2xs font-bold uppercase tracking-wide text-[hsl(var(--primary))] bg-[hsl(var(--primary)/0.1)] hover:bg-[hsl(var(--primary)/0.15)] transition-colors disabled:cursor-wait disabled:opacity-60"
+                >
+                    {uploading ? <Loader2 size={11} className="animate-spin" /> : <Upload size={11} />}
+                    {uploading ? 'Subiendo…' : 'Adjuntar'}
+                </button>
             </div>
 
             {attachments.length === 0 ? (
@@ -116,7 +136,14 @@ export default function TaskAttachmentSection({
                 </div>
             )}
 
-            <input ref={fileInputRef} type="file" multiple className="hidden" onChange={handleFileUpload} />
+            <input
+                ref={fileInputRef}
+                type="file"
+                multiple
+                className="hidden"
+                onChange={handleFileUpload}
+                aria-label="Adjuntar archivos a la tarea"
+            />
         </section>
     );
 }
