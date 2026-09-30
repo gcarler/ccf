@@ -27,6 +27,13 @@ export const WithDate: Story = {
   },
 };
 
+export const WithSyncedIsoValue: Story = {
+  args: {
+    value: '2026-07-25T00:00:00Z',
+    onChange: (v) => console.log('Date selected:', v),
+  },
+};
+
 export const Overdue: Story = {
   args: {
     value: '2026-07-20',

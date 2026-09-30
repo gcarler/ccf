@@ -19,12 +19,42 @@ function getFirstDay(year: number, month: number) {
   return new Date(year, month, 1).getDay();
 }
 
+function parseDateValue(value: string | null | undefined): Date | null {
+  if (!value) return null;
+
+  // Due dates are calendar days, not instants. Preserve the written date part
+  // from ISO timestamps instead of letting UTC/local conversion shift a day.
+  const dateParts = value.trim().match(/^(\d{4})-(\d{2})-(\d{2})(?:$|[T\s].*)/);
+  if (dateParts) {
+    const year = Number(dateParts[1]);
+    const month = Number(dateParts[2]);
+    const day = Number(dateParts[3]);
+    const hasTime = value.trim().length > 10;
+    if (hasTime && Number.isNaN(new Date(value).getTime())) return null;
+    const localDate = new Date(year, month - 1, day);
+    if (
+      localDate.getFullYear() !== year ||
+      localDate.getMonth() !== month - 1 ||
+      localDate.getDate() !== day
+    ) {
+      return null;
+    }
+    return localDate;
+  }
+
+  const instant = new Date(value);
+  if (Number.isNaN(instant.getTime())) return null;
+  return new Date(instant.getFullYear(), instant.getMonth(), instant.getDate());
+}
+
+function getLocalDayNumber(date: Date): number {
+  return Math.floor(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()) / 86400000);
+}
+
 function formatRelative(date: Date): string {
   const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const d = new Date(date);
-  d.setHours(0, 0, 0, 0);
-  const diff = Math.round((d.getTime() - today.getTime()) / 86400000);
+  const diff = getLocalDayNumber(date) - getLocalDayNumber(today);
+  const d = new Date(date.getFullYear(), date.getMonth(), date.getDate());
   if (diff === 0) return "Hoy";
   if (diff === 1) return "Mañana";
   if (diff === -1) return "Ayer";
@@ -50,9 +80,11 @@ export function InlineDatePicker({ value, onChange, disabled }: InlineDatePicker
   const [open, setOpen] = useState(false);
   const today = new Date();
   today.setHours(0, 0, 0, 0);
-  const parsed = value ? new Date(value + "T00:00:00") : null;
-  const safeYear = parsed && !isNaN(parsed.getTime()) ? parsed.getFullYear() : today.getFullYear();
-  const safeMonth = parsed && !isNaN(parsed.getTime()) ? parsed.getMonth() : today.getMonth();
+  const parsed = parseDateValue(value);
+  const parsedDayNumber = parsed ? getLocalDayNumber(parsed) : null;
+  const todayDayNumber = getLocalDayNumber(today);
+  const safeYear = parsed ? parsed.getFullYear() : today.getFullYear();
+  const safeMonth = parsed ? parsed.getMonth() : today.getMonth();
   const [viewYear, setViewYear] = useState(safeYear);
   const [viewMonth, setViewMonth] = useState(safeMonth);
 
@@ -68,8 +100,8 @@ export function InlineDatePicker({ value, onChange, disabled }: InlineDatePicker
   // background refresh arrives.
   useEffect(() => {
     if (!value || userTouchedViewRef.current) return;
-    const d = new Date(value + "T00:00:00");
-    if (!isNaN(d.getTime())) {
+    const d = parseDateValue(value);
+    if (d) {
       setViewYear(d.getFullYear());
       setViewMonth(d.getMonth());
     }
@@ -91,9 +123,9 @@ export function InlineDatePicker({ value, onChange, disabled }: InlineDatePicker
     setViewYear(y);
   };
 
-  const isOverdue = parsed && !isNaN(parsed.getTime()) && parsed < today;
-  const isToday2 = parsed && !isNaN(parsed.getTime()) && parsed.toDateString() === today.toDateString();
-  const label = parsed && !isNaN(parsed.getTime()) ? formatRelative(parsed) : null;
+  const isOverdue = parsedDayNumber !== null && parsedDayNumber < todayDayNumber;
+  const isToday2 = parsedDayNumber !== null && parsedDayNumber === todayDayNumber;
+  const label = parsed ? formatRelative(parsed) : null;
 
   const rawFD = getFirstDay(viewYear, viewMonth);
   const firstDay = isNaN(rawFD) ? 0 : Math.max(0, Math.min(6, rawFD));
@@ -141,6 +173,7 @@ export function InlineDatePicker({ value, onChange, disabled }: InlineDatePicker
         >
           <div className="flex items-center justify-between mb-3">
             <button
+              aria-label="Mes anterior"
               onClick={() => stepMonth(-1)}
               className="p-1 rounded-lg hover:bg-[hsl(var(--surface-2))] dark:hover:bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))]"
             >
@@ -150,6 +183,7 @@ export function InlineDatePicker({ value, onChange, disabled }: InlineDatePicker
               {MONTHS_ES[viewMonth]} {viewYear}
             </span>
             <button
+              aria-label="Mes siguiente"
               onClick={() => stepMonth(1)}
               className="p-1 rounded-lg hover:bg-[hsl(var(--surface-2))] dark:hover:bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))]"
             >
@@ -167,9 +201,10 @@ export function InlineDatePicker({ value, onChange, disabled }: InlineDatePicker
             {cells.map((day, i) => {
               if (!day) return <div key={`e-${i}`} />;
               const cd = new Date(viewYear, viewMonth, day);
-              const isSelected = parsed && !isNaN(parsed.getTime()) && cd.toDateString() === parsed.toDateString();
-              const isTodayCell = cd.toDateString() === today.toDateString();
-              const isPast = cd < today && !isTodayCell;
+              const dayNumber = getLocalDayNumber(cd);
+              const isSelected = parsedDayNumber !== null && dayNumber === parsedDayNumber;
+              const isTodayCell = dayNumber === todayDayNumber;
+              const isPast = dayNumber < todayDayNumber && !isTodayCell;
               return (
                 <button
                   key={day}
