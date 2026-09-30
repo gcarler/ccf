@@ -49,8 +49,10 @@ def run_migrations_offline() -> None:
 
 
 def run_migrations_online() -> None:
+    section = dict(config.get_section(config.config_ini_section, {}) or {})
+    section["sqlalchemy.url"] = config.get_main_option("sqlalchemy.url")
     connectable = engine_from_config(
-        config.get_section(config.config_ini_section, {}),
+        section,
         prefix="sqlalchemy.",
         poolclass=pool.NullPool,
     )
@@ -66,6 +68,7 @@ def run_migrations_online() -> None:
 
         with context.begin_transaction():
             context.run_migrations()
+        connection.commit()
 
 
 def _ensure_version_table_capacity(connection) -> None:

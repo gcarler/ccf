@@ -293,11 +293,15 @@ from backend.models_projects import (
     Project,
     ProjectActivityLog,
     ProjectAttachment,
+    ProjectAutomationRule,
     ProjectBaseline,
     ProjectComment,
     ProjectDocument,
     ProjectExpense,
+    ProjectFile,
     ProjectInboxState,
+    ProjectIndicator,
+    ProjectIndicatorRecord,
     ProjectKPI,
     ProjectMember,
     ProjectMilestone,
@@ -307,12 +311,16 @@ from backend.models_projects import (
     ProjectTaskDependency,
     ProjectTemplate,
     ProjectTimeLog,
-    ProjectAutomationRule,
-    ProjectIndicator,
-    ProjectIndicatorRecord,
     ProjectUserFavorite,
-    ProjectFile,
     ProjectWhiteboard,
     TaskSupply,
+)
+
+# Surveys / Encuestas Dinámicas
+from backend.models_surveys import (  # noqa: F401
+    EncuestaFormulario,
+    EncuestaPregunta,
+    EncuestaRespuestaDetalle,
+    EncuestaRespuestaEnvio,
 )
 from backend.models_wiki import WikiPage, WikiPageVersion  # noqa: F401

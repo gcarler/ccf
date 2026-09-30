@@ -41,6 +41,7 @@ from backend.api import (
     spiritual_life,
     support,
     support_kb,
+    surveys,
     system,
     tables,
     wiki,
@@ -101,6 +102,8 @@ ROUTER_REGISTRY = [
     (enterprise_cms.router, "/api", ["Enterprise CMS"]),
     (wiki.router, "/api", ["wiki"]),
     (comments.router, "/api/comments", ["comments"]),
+    (surveys.router, "/api", ["surveys"]),
+    (surveys.public_router, "/api/public", ["surveys_public"]),
 ]
 
 
