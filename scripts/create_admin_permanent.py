@@ -30,16 +30,20 @@ from sqlalchemy.orm import sessionmaker
 # Credenciales desde el entorno (NUNCA hardcodear la password de producción).
 # Uso: ADMIN_EMAIL=... ADMIN_PASSWORD=... python scripts/create_admin_permanent.py
 EMAIL = os.getenv("ADMIN_EMAIL", "admin@ccf.com")
+USERNAME = os.getenv("ADMIN_USERNAME", EMAIL.split("@")[0])
 PASSWORD = os.getenv("ADMIN_PASSWORD", "")
 if not PASSWORD:
     raise SystemExit(
         "ERROR: ADMIN_PASSWORD no está definida en el entorno. "
         "Ejecuta: ADMIN_PASSWORD='...' python scripts/create_admin_permanent.py"
     )
-FIRST_NAME = "Administrador"
-LAST_NAME = "CCF"
+FIRST_NAME = os.getenv("ADMIN_FIRST_NAME", "Administrador")
+LAST_NAME = os.getenv("ADMIN_LAST_NAME", "CCF")
 
-DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://ccf_admin:ccf_password_secret_123@localhost:5432/ccf_db")
+DATABASE_URL = os.getenv(
+    "DATABASE_URL",
+    "postgresql://ccf_admin:ccf_password_secret_123@localhost:5432/ccf_recovery_20260823",
+)
 engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
@@ -154,9 +158,9 @@ def main():
             db.execute(
                 text("""
                 INSERT INTO auth_users (id, sede_id, username, email, password_hash, rol_plataforma_id, is_active, is_email_verified, failed_login_attempts, is_mfa_enabled, xp, created_at)
-                VALUES (:id, :sede, 'admin', :email, :h, :rol, true, true, 0, false, 0, :now)
+                VALUES (:id, :sede, :username, :email, :h, :rol, true, true, 0, false, 0, :now)
             """),
-                {"id": user_id, "sede": sede_id, "email": EMAIL, "h": h, "rol": rol_id, "now": now},
+                {"id": user_id, "sede": sede_id, "username": USERNAME, "email": EMAIL, "h": h, "rol": rol_id, "now": now},
             )
             db.commit()
             print(f"✅ User creado: {user_id}")
