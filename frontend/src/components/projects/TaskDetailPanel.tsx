@@ -296,6 +296,21 @@ export default function TaskDetailPanel({
         catch { setError('No se pudo reasignar la tarea.'); }
     };
 
+    const handleDueDateChange = async (newDueDate: string | null) => {
+        if (!task || !requireAuth('Debes iniciar sesión para actualizar la fecha límite.')) return;
+        onUpdate?.({ ...task, due_date: newDueDate });
+        try {
+            await apiFetch(`/projects/tasks/${task.id}`, {
+                method: 'PATCH',
+                token,
+                body: { due_date: newDueDate },
+            });
+            onActivityCreated?.();
+        } catch {
+            setError('No se pudo actualizar la fecha límite de la tarea.');
+        }
+    };
+
     const handleNodeCycle = async () => {
         if (!task || !requireAuth('Debes iniciar sesión para cambiar el nodo de la tarea.')) return;
         const currentNode = task.node ?? null;
@@ -399,6 +414,7 @@ export default function TaskDetailPanel({
                         labels={labels}
                         onLabelsChange={setLabels}
                         onAssigneeChange={handleAssigneeChange}
+                        onDueDateChange={handleDueDateChange}
                         onPriorityCycle={handlePriorityCycle}
                         onNodeCycle={handleNodeCycle}
                         priority={priority}

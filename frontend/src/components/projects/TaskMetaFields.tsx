@@ -3,16 +3,29 @@
 import PersonaSelect from '@/components/ui/PersonaSelect';
 import MetaRow from '@/components/ui/MetaRow';
 import TaskLabelManager from './TaskLabelManager';
+import { InlineDatePicker } from '@/components/ui/inline-editors/InlineDatePicker';
 import type { ProjectTaskRecord } from '@/types/projects';
 import { getNodeOption } from '@/lib/projects/constants';
 import { Boxes, CalendarDays, Flag, Tag, UserRound } from 'lucide-react';
 import clsx from 'clsx';
+
+function formatCalendarDate(value: string): string {
+    const match = value.match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (match) {
+        const [, year, month, day] = match;
+        const d = new Date(Number(year), Number(month) - 1, Number(day));
+        return d.toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' });
+    }
+    const d = new Date(value);
+    return isNaN(d.getTime()) ? value : d.toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' });
+}
 
 export default function TaskMetaFields({
     task,
     labels,
     onLabelsChange,
     onAssigneeChange,
+    onDueDateChange,
     onPriorityCycle,
     onNodeCycle,
     priority,
@@ -22,6 +35,7 @@ export default function TaskMetaFields({
     labels: string[];
     onLabelsChange: (labels: string[]) => void;
     onAssigneeChange: (id: string | null) => void;
+    onDueDateChange?: (date: string | null) => void;
     onPriorityCycle: () => void;
     onNodeCycle: () => void;
     priority: { color: string; dot: string; label: string };
@@ -41,12 +55,19 @@ export default function TaskMetaFields({
             </MetaRow>
 
             <MetaRow icon={<CalendarDays size={13} className="text-[hsl(var(--muted-foreground))]" />} label="Fecha límite">
-                <button className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-sm font-medium text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--surface-2))] border border-transparent hover:border-[hsl(var(--border))] transition-all">
-                    {task.due_date
-                        ? new Date(task.due_date).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' })
-                        : 'Sin fecha límite'
-                    }
-                </button>
+                {onDueDateChange ? (
+                    <InlineDatePicker
+                        value={task.due_date}
+                        onChange={onDueDateChange}
+                    />
+                ) : (
+                    <span className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-sm font-medium text-[hsl(var(--muted-foreground))]">
+                        {task.due_date
+                            ? formatCalendarDate(task.due_date)
+                            : 'Sin fecha límite'
+                        }
+                    </span>
+                )}
             </MetaRow>
 
             <MetaRow icon={<Flag size={13} className="text-[hsl(var(--muted-foreground))]" />} label="Prioridad">
