@@ -540,3 +540,113 @@ def messaging_send(
         actor_user_id=str(actor_user_id),
     )
     return entry
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 4. WEB PUSH NOTIFICATIONS (VAPID RFC 8292)
+# ─────────────────────────────────────────────────────────────────────────────
+
+
+class PushSubscriptionKeys(BaseModel):
+    p256dh: str
+    auth: str
+
+
+class PushSubscriptionPayload(BaseModel):
+    endpoint: str
+    keys: PushSubscriptionKeys
+    device_name: Optional[str] = None
+
+
+class PushUnsubscribePayload(BaseModel):
+    endpoint: str
+
+
+class PushTestPayload(BaseModel):
+    title: Optional[str] = "Notificación de Prueba CCF"
+    body: Optional[str] = "Las notificaciones push web están activas y configuradas correctamente."
+    url: Optional[str] = "/plataforma/messages"
+
+
+@router.get("/messaging/push/vapid-public-key", response_model=dict)
+def get_push_vapid_public_key():
+    """Retorna la clave pública VAPID del servidor de aplicaciones."""
+    from backend.services.web_push import get_vapid_public_key
+
+    return {"public_key": get_vapid_public_key()}
+
+
+@router.post("/messaging/push/subscribe", response_model=dict)
+def subscribe_push(
+    payload: PushSubscriptionPayload,
+    current_user: models.User = Depends(require_module_access("messaging", "read")),
+):
+    """Registra una suscripción Web Push para el usuario autenticado."""
+    from backend.services.web_push import store
+
+    sub = store.subscribe(
+        user_id=str(current_user.id),
+        endpoint=payload.endpoint,
+        p256dh=payload.keys.p256dh,
+        auth=payload.keys.auth,
+        device_name=payload.device_name,
+    )
+    return {
+        "status": "success",
+        "subscribed": True,
+        "subscription_id": sub["id"],
+    }
+
+
+@router.post("/messaging/push/unsubscribe", response_model=dict)
+def unsubscribe_push(
+    payload: PushUnsubscribePayload,
+    current_user: models.User = Depends(require_module_access("messaging", "read")),
+):
+    """Elimina una suscripción Web Push existente del usuario autenticado."""
+    from backend.services.web_push import store
+
+    success = store.unsubscribe(
+        user_id=str(current_user.id),
+        endpoint=payload.endpoint,
+    )
+    return {
+        "status": "success",
+        "unsubscribed": success,
+    }
+
+
+@router.get("/messaging/push/subscriptions", response_model=dict)
+def list_push_subscriptions(
+    current_user: models.User = Depends(require_module_access("messaging", "read")),
+):
+    """Lista las suscripciones activas del usuario autenticado."""
+    from backend.services.web_push import store
+
+    subs = store.get_user_subscriptions(str(current_user.id))
+    return {
+        "subscriptions": subs,
+        "count": len(subs),
+    }
+
+
+@router.post("/messaging/push/test", response_model=dict)
+def test_push_notification(
+    payload: Optional[PushTestPayload] = None,
+    current_user: models.User = Depends(require_module_access("messaging", "read")),
+):
+    """Envía una notificación de prueba a todos los dispositivos registrados del usuario."""
+    from backend.services.web_push import broadcast_to_user
+
+    p = payload or PushTestPayload()
+    sent_count = broadcast_to_user(
+        user_id=str(current_user.id),
+        title=p.title or "Notificación de Prueba CCF",
+        body=p.body or "Las notificaciones push web están activas y configuradas correctamente.",
+        url=p.url or "/plataforma/messages",
+    )
+    return {
+        "status": "success",
+        "sent_count": sent_count,
+    }
+

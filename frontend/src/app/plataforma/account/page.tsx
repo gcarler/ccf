@@ -17,6 +17,7 @@ import clsx from 'clsx';
 import WorkspaceLayout from '@/components/WorkspaceLayout';
 import { apiFetch } from '@/lib/http';
 import TwoFactorDrawer from '@/components/admin/TwoFactorDrawer';
+import PushNotificationManager from '@/components/messaging/PushNotificationManager';
 
 export default function AccountSettingsPage() {
     const { user, logout, refresh } = useAuth();
@@ -474,6 +475,15 @@ export default function AccountSettingsPage() {
                                             <ChevronRight size={20} className="text-[hsl(var(--text-secondary))] group-hover:translate-x-1 transition-transform" />
                                         </div>
                                     </div>
+                                </motion.div>
+                            )}
+
+                            {activeTab === 'notifications' && (
+                                <motion.div
+                                    key="notifications" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}
+                                    className="space-y-4"
+                                >
+                                    <PushNotificationManager />
                                 </motion.div>
                             )}
                         </AnimatePresence>

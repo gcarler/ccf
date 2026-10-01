@@ -48,6 +48,7 @@ archive/
 backend-dev.log
 backend/*.db
 backend/.env
+backend/data/*.json
 ccf_api_8000.log
 ccf_run_8000.log
 env/
