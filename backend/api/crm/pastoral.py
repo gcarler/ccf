@@ -29,6 +29,10 @@ from backend.api.crm._shared import (
     persona_query,
     utc_now,
 )
+from backend.api.crm.counseling_crypto import (
+    encrypt_counseling_notes,
+    mask_or_decrypt_counseling_notes,
+)
 from backend.core.database import get_db
 from backend.core.permissions import normalize_role, require_module_access
 from backend.core.rate_limit import rate_limiter
@@ -1107,13 +1111,16 @@ def get_counseling_detail(
         .order_by(models.CounselingTicket.created_at.desc(), models.CounselingTicket.id.desc())
         .all()
     )
+    notes_val = mask_or_decrypt_counseling_notes(db, current_user, ticket)
     return {
         "id": ticket.id,
         "persona_id": ticket.persona_id,
         "persona_name": _persona_full_name(ticket.persona),
+        "pastor_id": ticket.pastor_id,
         "topic": ticket.subject,
         "summary": ticket.subject,
-        "notes": ticket.notes,
+        "notes": notes_val,
+        "notas": notes_val,
         "status": ticket.status,
         "priority_level": ticket.priority_level,
         "history": [
@@ -1436,21 +1443,26 @@ def list_counseling_tickets(
         count_q = count_q.filter(models.CounselingTicket.status == status)
     total = count_q.scalar()
     tickets = crud.get_counseling_tickets(db, status=status, sede_id=user_sede, skip=skip, limit=limit)
-    return {
-        "items": [
+    items = []
+    for t in tickets:
+        notes_val = mask_or_decrypt_counseling_notes(db, current_user, t)
+        items.append(
             {
                 "id": t.id,
                 "persona_id": t.persona_id,
                 "persona_name": _persona_full_name(t.persona) if t.persona else "",
+                "pastor_id": t.pastor_id,
                 "topic": t.subject,
                 "summary": t.subject,
-                "notes": t.notes,
+                "notes": notes_val,
+                "notas": notes_val,
                 "status": t.status,
                 "priority_level": t.priority_level or "medium",
                 "created_at": t.created_at.isoformat() if t.created_at else None,
             }
-            for t in tickets
-        ],
+        )
+    return {
+        "items": items,
         "total": total,
     }
 
@@ -1486,13 +1498,16 @@ def create_counseling_ticket(
             # valor canónico UUID en la fila persistida).
             payload.pastor_id = resolved_pastor_id
     ticket = crud.create_counseling_ticket(db, payload)
+    notes_val = mask_or_decrypt_counseling_notes(db, current_user, ticket)
     return {
         "id": ticket.id,
         "persona_id": ticket.persona_id,
         "persona_name": _persona_full_name(ticket.persona) if ticket.persona else "",
+        "pastor_id": ticket.pastor_id,
         "topic": ticket.subject,
         "summary": ticket.subject,
-        "notes": ticket.notes,
+        "notes": notes_val,
+        "notas": notes_val,
         "status": ticket.status,
         "priority_level": ticket.priority_level or "medium",
         "created_at": ticket.created_at.isoformat() if ticket.created_at else None,
@@ -1517,19 +1532,24 @@ def get_counseling_by_lead(
     )
     q = _scope_by_user_sede_via_persona(db, current_user, q)
     tickets = q.order_by(models.CounselingTicket.created_at.desc()).all()
-    return [
-        {
-            "id": t.id,
-            "persona_id": t.persona_id,
-            "persona_name": _persona_full_name(t.persona) if t.persona else "",
-            "topic": t.subject,
-            "summary": t.subject,
-            "notes": t.notes,
-            "status": t.status,
-            "created_at": t.created_at.isoformat() if t.created_at else None,
-        }
-        for t in tickets
-    ]
+    items = []
+    for t in tickets:
+        notes_val = mask_or_decrypt_counseling_notes(db, current_user, t)
+        items.append(
+            {
+                "id": t.id,
+                "persona_id": t.persona_id,
+                "persona_name": _persona_full_name(t.persona) if t.persona else "",
+                "pastor_id": t.pastor_id,
+                "topic": t.subject,
+                "summary": t.subject,
+                "notes": notes_val,
+                "notas": notes_val,
+                "status": t.status,
+                "created_at": t.created_at.isoformat() if t.created_at else None,
+            }
+        )
+    return items
 
 
 @router.patch("/counseling/{ticket_id}", response_model=dict)
@@ -1554,24 +1574,31 @@ def update_counseling_ticket(
         resolved_pastor_id = _resolve_pastor_identity(db, current_user, data["pastor_id"])
         ticket.pastor_id = resolved_pastor_id
 
-    for field in ("status", "notes", "priority_level"):
+    if "notas" in data and "notes" not in data:
+        data["notes"] = data.pop("notas")
+
+    for field in ("status", "priority_level"):
         if field in data:
-            setattr(
-                ticket,
-                field if field != "priority_level" else "priority_level",
-                data[field],
-            )
+            setattr(ticket, field, data[field])
+
+    if "notes" in data:
+        ticket.notes = encrypt_counseling_notes(data["notes"])
+
     if "subject" in data:
         ticket.subject = data["subject"]
+
     db.commit()
     db.refresh(ticket)
+    notes_val = mask_or_decrypt_counseling_notes(db, current_user, ticket)
     return {
         "id": ticket.id,
         "persona_id": ticket.persona_id,
         "persona_name": _persona_full_name(ticket.persona) if ticket.persona else "",
+        "pastor_id": ticket.pastor_id,
         "topic": ticket.subject,
         "status": ticket.status,
-        "notes": ticket.notes,
+        "notes": notes_val,
+        "notas": notes_val,
         "created_at": ticket.created_at.isoformat() if ticket.created_at else None,
     }
 

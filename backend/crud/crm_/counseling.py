@@ -36,8 +36,8 @@ def get_counseling_tickets(
     for t in tickets:
         if t.notes:
             try:
-                t.notes = decrypt_data(t.notes)
-            except Exception as exc:  # pragma: no cover - decrypt best-effort
+                t.__dict__["notes"] = decrypt_data(t.notes)
+            except Exception as exc:  # pragma: no cover
                 logger.warning("counseling: failed to decrypt notes for ticket %s: %s", t.id, exc)
 
     return tickets
@@ -50,7 +50,7 @@ def create_counseling_ticket(db: Session, payload: schemas.CounselingTicketCreat
         data = payload.model_dump()
         pastor_identity = data.pop("pastor_id", None)
         data["pastor_id"] = resolve_persona_id_from_identity(db, pastor_identity)
-        raw_notes = data.get("notes", "")
+        raw_notes = data.get("notes") or data.get("notas") or ""
 
         data["priority_level"] = analyze_pastoral_priority(raw_notes)
         score, label = analyze_pastoral_sentiment(raw_notes)
@@ -64,11 +64,11 @@ def create_counseling_ticket(db: Session, payload: schemas.CounselingTicketCreat
         db.add(row)
         db.commit()
         db.refresh(row)
-
-        try:
-            row.notes = decrypt_data(row.notes)
-        except Exception as exc:  # pragma: no cover - decrypt best-effort
-            logger.warning("counseling: failed to decrypt notes for ticket %s: %s", row.id, exc)
+        if row and row.notes:
+            try:
+                row.__dict__["notes"] = decrypt_data(row.notes)
+            except Exception as exc:  # pragma: no cover
+                logger.warning("counseling: failed to decrypt notes for ticket %s: %s", row.id, exc)
         return row
     except Exception as e:
         db.rollback()
@@ -86,8 +86,8 @@ def get_counseling_ticket(db: Session, ticket_id: UUID) -> Optional[models.Couns
     )
     if row and row.notes:
         try:
-            row.notes = decrypt_data(row.notes)
-        except Exception as exc:  # pragma: no cover - decrypt best-effort
+            row.__dict__["notes"] = decrypt_data(row.notes)
+        except Exception as exc:  # pragma: no cover
             logger.warning("counseling: failed to decrypt notes for ticket %s: %s", row.id, exc)
     return row
 
@@ -109,6 +109,8 @@ def update_counseling_ticket(
     if "pastor_id" in data:
         pastor_identity = data.pop("pastor_id")
         row.pastor_id = resolve_persona_id_from_identity(db, pastor_identity)
+    if "notas" in data and "notes" not in data:
+        data["notes"] = data.pop("notas")
     for key, value in data.items():
         if key == "notes" and value:
             setattr(row, key, encrypt_data(value))
@@ -116,10 +118,10 @@ def update_counseling_ticket(
             setattr(row, key, value)
     db.commit()
     db.refresh(row)
-    if row.notes:
+    if row and row.notes:
         try:
-            row.notes = decrypt_data(row.notes)
-        except Exception as exc:  # pragma: no cover - decrypt best-effort
+            row.__dict__["notes"] = decrypt_data(row.notes)
+        except Exception as exc:  # pragma: no cover
             logger.warning("counseling: failed to decrypt notes for ticket %s: %s", row.id, exc)
     return row
 

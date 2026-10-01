@@ -171,7 +171,16 @@ class CounselingTicketBase(BaseModel):
     persona_id: UUID
     subject: str
     notes: Optional[str] = None
+    notas: Optional[str] = None
     status: str = "open"
+
+    @model_validator(mode="after")
+    def sync_notes_notas(self):
+        if self.notes is not None and self.notas is None:
+            self.notas = self.notes
+        elif self.notas is not None and self.notes is None:
+            self.notes = self.notas
+        return self
 
 
 class CounselingTicketCreate(CounselingTicketBase):
@@ -186,12 +195,21 @@ class CounselingTicketUpdate(BaseModel):
 
     subject: Optional[str] = None
     notes: Optional[str] = None
+    notas: Optional[str] = None
     status: Optional[str] = None
     priority_level: Optional[str] = None
     sentiment_score: Optional[float] = None
     sentiment_label: Optional[str] = None
     pastor_id: Optional[UUID] = None
     include_details: Optional[bool] = None
+
+    @model_validator(mode="after")
+    def sync_notes_notas(self):
+        if self.notes is not None and self.notas is None:
+            self.notas = self.notes
+        elif self.notas is not None and self.notes is None:
+            self.notes = self.notas
+        return self
 
 
 class CounselingTicket(CounselingTicketBase):
@@ -209,7 +227,12 @@ class CounselingTicket(CounselingTicketBase):
 
         role = user_role_context.get()
         if role and not is_crm_privileged(role):
-            self.notes = "[RESTRINGIDO - SOLO PASTORES/ADMIN]"
+            self.notes = "Contenido confidencial protegido"
+            self.notas = "Contenido confidencial protegido"
+        elif self.notes and not self.notas:
+            self.notas = self.notes
+        elif self.notas and not self.notes:
+            self.notes = self.notas
         return self
 
 

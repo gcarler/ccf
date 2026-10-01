@@ -10,7 +10,7 @@ from sqlalchemy import Index, text
 from sqlalchemy import func as _func
 from sqlalchemy.dialects.postgresql import ARRAY
 from sqlalchemy.ext.hybrid import hybrid_property
-from sqlalchemy.orm import validates
+from sqlalchemy.orm import synonym, validates
 
 from backend.models_shared import *  # noqa: F403 — re-exports SQLAlchemy primitives (Base, Column, UUID, etc.) used throughout this module
 from backend.models_shared import _utcnow
@@ -364,6 +364,14 @@ class CounselingTicket(Base):
 
     persona = relationship("Persona", foreign_keys=[persona_id])
     pastor = relationship("Persona", foreign_keys=[pastor_id])
+
+    notas = synonym("notes")
+
+    @validates("notes")
+    def _validate_encrypt_notes(self, key, value):
+        from backend.api.crm.counseling_crypto import encrypt_counseling_notes
+
+        return encrypt_counseling_notes(value)
 
 
 class PrayerRequest(Base):
