@@ -906,9 +906,48 @@ def list_expense_reports(
     return q.offset(skip).limit(limit).all()
 
 
+class ExpenseRejectPayload(schemas.BaseModel):
+    reason: str
+    notes: Optional[str] = None
+
+
+class ExpenseActionPayload(schemas.BaseModel):
+    notes: Optional[str] = None
+
+
+class ExpenseDisbursePayload(schemas.BaseModel):
+    method: str = "transfer"  # transfer, cash (sin pasarelas de pago externas)
+    reference: Optional[str] = None
+    notes: Optional[str] = None
+
+
+def _record_expense_transition(
+    report: models.ExpenseReport,
+    from_status: str,
+    to_status: str,
+    actor_id: Any,
+    actor_name: str,
+    notes: Optional[str] = None,
+):
+    history = list(report.approval_history or [])
+    history.append({
+        "id": str(_uuid.uuid4()),
+        "from_status": from_status,
+        "to_status": to_status,
+        "actor_id": str(actor_id),
+        "actor_name": actor_name,
+        "notes": notes,
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+    })
+    report.approval_history = history
+    report.approval_step = to_status
+    report.status = to_status
+
+
 @router.post("/expense-reports/{report_id}/submit")
 def submit_expense_report(
     report_id: str,
+    payload: Optional[ExpenseActionPayload] = None,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("finance", "edit")),
 ):
@@ -923,19 +962,65 @@ def submit_expense_report(
         raise HTTPException(status_code=400, detail="Only draft reports can be submitted")
     if report.employee_id != current_user.id:
         raise HTTPException(status_code=403, detail="You can only submit your own reports")
-    report.status = "submitted"
+
+    note_text = payload.notes if payload and hasattr(payload, "notes") and payload.notes else "Enviado a revisión de pastor de sede"
+    _record_expense_transition(
+        report=report,
+        from_status="draft",
+        to_status="pastor_review",
+        actor_id=current_user.id,
+        actor_name=getattr(current_user, "username", "Usuario"),
+        notes=note_text,
+    )
     report.submitted_at = _utcnow()
     db.commit()
-    logger.info("Expense report submitted: id=%s by user=%s", report_id, current_user.id)
-    return {"status": "submitted"}
+    logger.info("Expense report submitted for pastor review: id=%s by user=%s", report_id, current_user.id)
+    return {"status": "pastor_review", "approval_step": "pastor_review"}
 
 
+@router.post("/expense-reports/{report_id}/pastor-approve")
+def pastor_approve_expense_report(
+    report_id: str,
+    payload: Optional[ExpenseActionPayload] = None,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("finance", "manage")),
+):
+    """Nivel 1: El pastor de sede revisa y avala el gasto local."""
+    sede_id = _finance_sede_scope(db, current_user)
+    q = db.query(models.ExpenseReport).filter(models.ExpenseReport.id == report_id)
+    if sede_id:
+        q = q.filter(models.ExpenseReport.sede_id == sede_id)
+    report = q.first()
+    if not report:
+        raise HTTPException(status_code=404, detail="Report not found")
+    if report.status not in ("pastor_review", "submitted"):
+        raise HTTPException(status_code=400, detail="Report is not awaiting pastor review")
+    if str(report.employee_id) == str(current_user.id):
+        raise HTTPException(status_code=403, detail="Cannot approve your own report (segregation of duties)")
+
+    note_text = payload.notes if payload and payload.notes else "Avalado por pastor de sede"
+    _record_expense_transition(
+        report=report,
+        from_status=report.status,
+        to_status="central_authorization",
+        actor_id=current_user.id,
+        actor_name=getattr(current_user, "username", "Pastor de Sede"),
+        notes=note_text,
+    )
+    db.commit()
+    logger.info("Expense report endorsed by pastor: id=%s by user=%s", report_id, current_user.id)
+    return {"status": "central_authorization", "approval_step": "central_authorization"}
+
+
+@router.post("/expense-reports/{report_id}/central-approve")
 @router.post("/expense-reports/{report_id}/approve")
 def approve_expense_report(
     report_id: str,
+    payload: Optional[ExpenseActionPayload] = None,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("finance", "manage")),
 ):
+    """Nivel 2: Administración central autoriza el gasto avalado."""
     sede_id = _finance_sede_scope(db, current_user)
     q = db.query(models.ExpenseReport).filter(models.ExpenseReport.id == report_id)
     if sede_id:
@@ -943,47 +1028,45 @@ def approve_expense_report(
     report = q.first()
     if not report:
         raise HTTPException(status_code=404, detail="Report not found")
-    if report.status != "submitted":
-        raise HTTPException(status_code=400, detail="Only submitted reports can be approved")
+    if report.status not in ("central_authorization", "pastor_review", "submitted"):
+        raise HTTPException(status_code=400, detail="Only submitted or reviewed reports can be approved")
     if str(report.employee_id) == str(current_user.id):
         raise HTTPException(status_code=403, detail="Cannot approve your own report (segregation of duties)")
-    report.status = "approved"
+
+    note_text = payload.notes if payload and payload.notes else "Autorizado por administración central"
+    _record_expense_transition(
+        report=report,
+        from_status=report.status,
+        to_status="approved",
+        actor_id=current_user.id,
+        actor_name=getattr(current_user, "username", "Administración Central"),
+        notes=note_text,
+    )
     report.approved_by_id = current_user.id
     report.approved_at = _utcnow()
     db.commit()
-    logger.info("Expense report approved: id=%s by user=%s", report_id, current_user.id)
-    return {"status": "approved"}
+    logger.info("Expense report approved centrally: id=%s by user=%s", report_id, current_user.id)
+    return {"status": "approved", "approval_step": "approved"}
 
 
-@router.post("/expense-reports/{report_id}/reject")
-def reject_expense_report(
-    report_id: str,
-    db: Session = Depends(get_db),
-    current_user: models.User = Depends(require_module_access("finance", "manage")),
-):
-    sede_id = _finance_sede_scope(db, current_user)
-    q = db.query(models.ExpenseReport).filter(models.ExpenseReport.id == report_id)
-    if sede_id:
-        q = q.filter(models.ExpenseReport.sede_id == sede_id)
-    report = q.first()
-    if not report:
-        raise HTTPException(status_code=404, detail="Report not found")
-    if report.status not in ("submitted",):
-        raise HTTPException(status_code=400, detail="Cannot reject this report")
-    report.status = "rejected"
-    db.commit()
-    logger.info("Expense report rejected: id=%s by user=%s", report_id, current_user.id)
-    return {"status": "rejected"}
-
-
+@router.post("/expense-reports/{report_id}/disburse")
 @router.post("/expense-reports/{report_id}/reimburse")
 def reimburse_expense_report(
     report_id: str,
-    method: str = "transfer",
-    reference: Optional[str] = None,
+    payload: Optional[ExpenseDisbursePayload] = None,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("finance", "manage")),
 ):
+    """Nivel 3: Desembolso y rendición interna de fondos (SIN pasarelas de pago externas)."""
+    p = payload or ExpenseDisbursePayload()
+    method = (p.method or "transfer").lower()
+    # Regla mandatoria: Cero pasarelas de pago externas
+    if method in ("stripe", "wompi", "mercadopago", "paypal"):
+        raise HTTPException(
+            status_code=400,
+            detail="Pasarelas de pago externas no permitidas para gastos internos de sede",
+        )
+
     sede_id = _finance_sede_scope(db, current_user)
     q = db.query(models.ExpenseReport).filter(models.ExpenseReport.id == report_id)
     if sede_id:
@@ -992,14 +1075,79 @@ def reimburse_expense_report(
     if not report:
         raise HTTPException(status_code=404, detail="Report not found")
     if report.status != "approved":
-        raise HTTPException(status_code=400, detail="Only approved reports can be reimbursed")
-    report.status = "reimbursed"
+        raise HTTPException(status_code=400, detail="Only approved reports can be disbursed")
+
     report.reimbursement_method = method
-    report.reimbursement_reference = reference
+    report.reimbursement_reference = p.reference
     report.reimbursed_at = _utcnow()
+    _record_expense_transition(
+        report=report,
+        from_status="approved",
+        to_status="disbursed",
+        actor_id=current_user.id,
+        actor_name=getattr(current_user, "username", "Finanzas"),
+        notes=f"Desembolsado vía {method}. Ref: {p.reference or 'N/A'}",
+    )
     db.commit()
-    logger.info("Expense report reimbursed: id=%s by user=%s", report_id, current_user.id)
-    return {"status": "reimbursed"}
+    logger.info("Expense report disbursed: id=%s by user=%s method=%s", report_id, current_user.id, method)
+    return {"status": "disbursed", "approval_step": "disbursed"}
+
+
+@router.post("/expense-reports/{report_id}/reject")
+def reject_expense_report(
+    report_id: str,
+    payload: Optional[ExpenseRejectPayload] = None,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("finance", "manage")),
+):
+    """Rechaza una solicitud de gasto en cualquier etapa con motivo explícito."""
+    sede_id = _finance_sede_scope(db, current_user)
+    q = db.query(models.ExpenseReport).filter(models.ExpenseReport.id == report_id)
+    if sede_id:
+        q = q.filter(models.ExpenseReport.sede_id == sede_id)
+    report = q.first()
+    if not report:
+        raise HTTPException(status_code=404, detail="Report not found")
+    if report.status in ("disbursed", "reimbursed", "rejected"):
+        raise HTTPException(status_code=400, detail="Cannot reject an already closed or rejected report")
+
+    reason = payload.reason if payload and payload.reason else "Rechazado durante revisión"
+    report.rejection_reason = reason
+    _record_expense_transition(
+        report=report,
+        from_status=report.status,
+        to_status="rejected",
+        actor_id=current_user.id,
+        actor_name=getattr(current_user, "username", "Revisor"),
+        notes=reason,
+    )
+    db.commit()
+    logger.info("Expense report rejected: id=%s by user=%s reason=%s", report_id, current_user.id, reason)
+    return {"status": "rejected", "rejection_reason": reason}
+
+
+@router.get("/expense-reports/{report_id}/audit-trail")
+def get_expense_report_audit_trail(
+    report_id: str,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("finance", "read")),
+):
+    """Retorna la traza de auditoría de transiciones y estados del informe de gasto."""
+    sede_id = _finance_sede_scope(db, current_user)
+    q = db.query(models.ExpenseReport).filter(models.ExpenseReport.id == report_id)
+    if sede_id:
+        q = q.filter(models.ExpenseReport.sede_id == sede_id)
+    report = q.first()
+    if not report:
+        raise HTTPException(status_code=404, detail="Report not found")
+
+    return {
+        "report_id": str(report.id),
+        "status": report.status,
+        "approval_step": report.approval_step or report.status,
+        "rejection_reason": report.rejection_reason,
+        "approval_history": report.approval_history or [],
+    }
 
 
 # ═══════════════════════════════════════════════════════════════════════════════

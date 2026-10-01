@@ -421,6 +421,9 @@ class ExpenseReportOut(BaseModel):
     total_amount: Decimal
     currency: str
     status: str
+    approval_step: Optional[str] = "draft"
+    approval_history: Optional[List[Dict[str, Any]]] = None
+    rejection_reason: Optional[str] = None
     submitted_at: Optional[datetime]
     approved_by_id: Optional[UUID]
     approved_at: Optional[datetime]

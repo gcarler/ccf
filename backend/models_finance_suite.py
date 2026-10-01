@@ -318,7 +318,10 @@ class ExpenseReport(Base):
     description = Column(Text, nullable=True)
     total_amount = Column(Numeric(14, 2), default=0)
     currency = Column(String(10), default="COP")
-    status = Column(String(20), default="draft", index=True)  # draft, submitted, approved, rejected, reimbursed
+    status = Column(String(30), default="draft", index=True)  # draft, pastor_review, central_authorization, approved, rejected, disbursed, reimbursed
+    approval_step = Column(String(30), default="draft", index=True)
+    approval_history = Column(JSON, default=list)
+    rejection_reason = Column(Text, nullable=True)
     submitted_at = Column(DateTime(timezone=True), nullable=True)
     approved_by_id = Column(UUID(as_uuid=True), ForeignKey("personas.id"), nullable=True)
     approved_at = Column(DateTime(timezone=True), nullable=True)
