@@ -43,12 +43,39 @@ import { Toaster } from "sonner";
 import SiteBrandAssets from "@/components/SiteBrandAssets";
 import { PopupManager } from "@/components/cms/PopupManager";
 
-const _siteName = process.env.NEXT_PUBLIC_SITE_NAME ?? "Mi Comunidad";
+const _siteName = process.env.NEXT_PUBLIC_SITE_NAME ?? "Comunidad Cristiana El Faro";
+const _siteUrl = process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_APP_URL || "https://ministerioselfaro.org";
 
 export const metadata: Metadata = {
-    title: `${_siteName} | Plataforma`,
+    metadataBase: new URL(_siteUrl),
+    title: {
+        default: `${_siteName} | Plataforma`,
+        template: `%s | ${_siteName}`,
+    },
     description: "Plataforma académica y de gestión para comunidades de fe",
     manifest: "/manifest.json",
+    openGraph: {
+        title: `${_siteName} | Plataforma`,
+        description: "Plataforma académica y de gestión para comunidades de fe",
+        url: _siteUrl,
+        siteName: _siteName,
+        locale: "es_CO",
+        type: "website",
+        images: [
+            {
+                url: "/images/locations/sede-central.jpg",
+                width: 1200,
+                height: 630,
+                alt: _siteName,
+            },
+        ],
+    },
+    twitter: {
+        card: "summary_large_image",
+        title: `${_siteName} | Plataforma`,
+        description: "Plataforma académica y de gestión para comunidades de fe",
+        images: ["/images/locations/sede-central.jpg"],
+    },
     appleWebApp: {
         capable: true,
         statusBarStyle: "default",
