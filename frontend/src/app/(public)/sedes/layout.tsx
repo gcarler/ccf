@@ -1,15 +1,19 @@
 import { Metadata } from "next";
+import { SITE_URL } from "@/lib/site-config";
+
+const siteName = "Comunidad Cristiana El Faro (CCF)";
+const siteUrl = SITE_URL || "https://ministerioselfaro.org";
 
 export const metadata: Metadata = {
-  title: "Nuestras Sedes | Comunidad Cristiana El Faro (CCF)",
+  title: `Nuestras Sedes | ${siteName}`,
   description:
     "Encuentra la sede de Comunidad Cristiana El Faro más cercana a ti. Horarios de cultos, grupos de hogar, FaroKids y atención pastoral en Barranquilla, Cartagena, Soledad y transmisión online.",
   openGraph: {
-    title: "Nuestras Sedes | Comunidad Cristiana El Faro (CCF)",
+    title: `Nuestras Sedes | ${siteName}`,
     description:
       "Conoce nuestras sedes y puntos de reunión. Adora a Dios con nosotros y encuentra una familia de fe.",
-    url: "https://ccf.org/sedes",
-    siteName: "Comunidad Cristiana El Faro (CCF)",
+    url: `${siteUrl}/sedes`,
+    siteName,
     images: [
       {
         url: "/images/locations/sede-central.jpg",
@@ -23,7 +27,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Nuestras Sedes | Comunidad Cristiana El Faro (CCF)",
+    title: `Nuestras Sedes | ${siteName}`,
     description:
       "Encuentra la sede de Comunidad Cristiana El Faro más cercana a ti. Horarios de cultos y atención pastoral.",
     images: ["/images/locations/sede-central.jpg"],

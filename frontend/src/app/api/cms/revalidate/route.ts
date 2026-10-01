@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { revalidatePath, revalidateTag } from "next/cache";
 
 const REVALIDATE_SECRET = process.env.CMS_REVALIDATE_SECRET || process.env.INTERNAL_API_SECRET || "ccf-cms-isr-revalidate-secret-token";
+const API_BASE = (process.env.API_BASE_URL || process.env.E2E_API_URL || "http://127.0.0.1:8000/api").replace(/\/$/, "");
 
 export async function POST(req: NextRequest) {
   try {
@@ -12,12 +13,29 @@ export async function POST(req: NextRequest) {
 
     const providedSecret = secretHeader || secretQuery || (authHeader?.startsWith("Bearer ") ? authHeader.substring(7) : null);
 
-    // Permitir si coincide el secret o si no hay secret configurado en entorno de desarrollo
-    if (providedSecret !== REVALIDATE_SECRET && process.env.NODE_ENV === "production" && process.env.CMS_REVALIDATE_SECRET) {
-      return NextResponse.json(
-        { success: false, message: "Token de revalidación inválido o no autorizado" },
-        { status: 401 }
-      );
+    // Autorización: secret de servicio (backend/CI) o sesión de plataforma
+    // válida verificada contra el backend (GET /v3/auth/sessions). En
+    // producción el acceso anónimo queda denegado (401).
+    const secretMatch = providedSecret !== null && providedSecret === REVALIDATE_SECRET;
+    if (!secretMatch) {
+      let authenticated = false;
+      if (authHeader) {
+        try {
+          const probe = await fetch(`${API_BASE}/v3/auth/sessions`, {
+            headers: { authorization: authHeader, accept: "application/json" },
+            cache: "no-store",
+          });
+          authenticated = probe.ok;
+        } catch {
+          authenticated = false;
+        }
+      }
+      if (!authenticated) {
+        return NextResponse.json(
+          { success: false, message: "Token de revalidación inválido o no autorizado" },
+          { status: 401 }
+        );
+      }
     }
 
     const body = await req.json().catch(() => ({}));
@@ -43,6 +61,10 @@ export async function POST(req: NextRequest) {
     if (tag) {
       revalidateTag(tag);
     }
+
+    // Fallback canónico: la portada pública se revalida junto con el objetivo
+    // para que la tarjeta OpenGraph por defecto quede fresca al compartir.
+    revalidatePath("/");
 
     return NextResponse.json({
       success: true,

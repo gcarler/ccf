@@ -10,6 +10,7 @@ import { canEditCms, canPublishCms } from "@/lib/cms/permissions";
 import { listCmsSections, patchCmsSection, createCmsSection, deleteCmsSection, workflowCmsPage } from "@/lib/cms/v2";
 import { apiFetch } from "@/lib/http";
 import { SITE_KEY } from "@/lib/site-config";
+import { triggerCmsRevalidation } from "@/lib/cms/revalidate";
 import type { CmsTheme } from "@/types/cms-v2";
 import { toast } from "sonner";
 import MediaPicker from "@/components/cms/builder/MediaPicker";
@@ -1067,6 +1068,9 @@ export default function PuckBuilderPage() {
  // immutable snapshot consumed by the public endpoint.
  if (!options.isAutoSave && canPublish) {
  await workflowCmsPage(siteKey, pageSlug, "publish", "Publicado desde el editor visual", token);
+ // Revalidación ISR bajo demanda: refresco instantáneo del sitio público
+ // sin reiniciar el servidor (TKT-CMS-METADATA-ISR-01).
+ void triggerCmsRevalidation({ path: `/${pageSlug}` });
  }
 
  // Check if newer changes arrived while save was in flight
