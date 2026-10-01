@@ -215,7 +215,7 @@ export default function StudentProfilePage() {
                                              aria-valuemin={0}
                                              aria-valuemax={100}
                                              aria-label="Progreso total del programa pastoral"
-                                             initial={{ width: 0 }} animate={{ width: `${profile?.total_progress ?? 0}%` }} className="h-full bg-gradient-to-r from-[hsl(var(--info))] to-[hsl(var(--info))] rounded-full shadow-[0_0_10px_rgba(37,99,235,0.4)]"
+                                             initial={{ width: 0 }} animate={{ width: `${profile?.total_progress ?? 0}%` }} className="h-full bg-gradient-to-r from-[hsl(var(--info))] to-[hsl(var(--info))] rounded-full shadow-[0_0_10px_hsl(var(--info)/40%)]"
                                          />
                                      </div>
                                  </div>
@@ -385,7 +385,7 @@ function StatBox({ icon: Icon, label, value, color }: StatBoxProps) {
 }
 
 function ProgressPill({ label, value, tone }: { label: string; value: number; tone: 'primary' | 'emerald' }) {
-    const bg = tone === 'primary' ? 'from-[hsl(var(--info))] to-[hsl(var(--info))] shadow-[0_0_10px_rgba(37,99,235,0.4)]' : 'from-[hsl(var(--success))] to-[hsl(var(--domain-teal))] shadow-[0_0_10px_rgba(16,185,129,0.4)]';
+    const bg = tone === 'primary' ? 'from-[hsl(var(--info))] to-[hsl(var(--info))] shadow-[0_0_10px_hsl(var(--info)/40%)]' : 'from-[hsl(var(--success))] to-[hsl(var(--domain-teal))] shadow-[0_0_10px_hsl(var(--success)/40%)]';
     return (
         <div className="w-full">
             <div className="flex items-center justify-between text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-1.5">

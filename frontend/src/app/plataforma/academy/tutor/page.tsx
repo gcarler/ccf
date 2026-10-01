@@ -5,8 +5,11 @@ import { Award, BookOpen, Brain, RefreshCw, Sparkles } from 'lucide-react';
 import clsx from 'clsx';
 import { DSButton, DSSkeleton } from '@/design';
 import EmptyState from '@/components/ui/EmptyState';
-import SocraticChatDrawer from '@/components/academy/SocraticChatDrawer';
-import SocraticDefenseDrawer from '@/components/academy/SocraticDefenseDrawer';
+import dynamic from 'next/dynamic';
+
+// Drawers cargados bajo demanda: reducen el JS del bundle inicial.
+const SocraticChatDrawer = dynamic(() => import('@/components/academy/SocraticChatDrawer'), { ssr: false });
+const SocraticDefenseDrawer = dynamic(() => import('@/components/academy/SocraticDefenseDrawer'), { ssr: false });
 import { useAuth } from '@/context/AuthContext';
 import { apiFetch, extractErrorMessage } from '@/lib/http';
 import { toast } from 'sonner';

@@ -8,9 +8,12 @@ import { PeriodOffering, WellnessSignal } from '@/types/academy';
 import WorkspaceToolbar from '@/components/WorkspaceToolbar';
 import EmptyState from '@/components/ui/EmptyState';
 import { DSButton, DSSkeleton } from '@/design';
-import OfferingGradesDrawer from '@/components/academy/OfferingGradesDrawer';
-import WellnessDrawer from '@/components/academy/WellnessDrawer';
-import CopilotDrawer from '@/components/academy/CopilotDrawer';
+import dynamic from 'next/dynamic';
+
+// Drawers cargados bajo demanda: reducen el JS del bundle inicial.
+const OfferingGradesDrawer = dynamic(() => import('@/components/academy/OfferingGradesDrawer'), { ssr: false });
+const WellnessDrawer = dynamic(() => import('@/components/academy/WellnessDrawer'), { ssr: false });
+const CopilotDrawer = dynamic(() => import('@/components/academy/CopilotDrawer'), { ssr: false });
 import {
   GraduationCap,
   Award,
@@ -19,7 +22,6 @@ import {
   Clock,
   Sparkles,
   HeartPulse,
-  Brain,
   ShieldAlert,
   CheckCircle2,
   RefreshCw,
@@ -54,7 +56,6 @@ export default function DocentePortalPage() {
   // Direct Tab: Copiloto inline forms state
   const [copilotTopic, setCopilotTopic] = useState('');
   const [copilotRubricTitle, setCopilotRubricTitle] = useState('');
-  const [copilotCompetencies, setCopilotCompetencies] = useState('');
 
   const fetchMyOfferings = useCallback(async () => {
     if (!token) return;

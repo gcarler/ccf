@@ -14,9 +14,12 @@ import {
 import clsx from 'clsx';
 import { DSButton, DSSkeleton } from '@/design';
 import EmptyState from '@/components/ui/EmptyState';
-import NodeCreateDrawer from '@/components/academy/NodeCreateDrawer';
-import LearningPathDrawer from '@/components/academy/LearningPathDrawer';
-import SocraticChatDrawer from '@/components/academy/SocraticChatDrawer';
+import dynamic from 'next/dynamic';
+
+// Drawers cargados bajo demanda: reducen el JS del bundle inicial.
+const NodeCreateDrawer = dynamic(() => import('@/components/academy/NodeCreateDrawer'), { ssr: false });
+const LearningPathDrawer = dynamic(() => import('@/components/academy/LearningPathDrawer'), { ssr: false });
+const SocraticChatDrawer = dynamic(() => import('@/components/academy/SocraticChatDrawer'), { ssr: false });
 import { useAuth } from '@/context/AuthContext';
 import { apiFetch, extractErrorMessage } from '@/lib/http';
 import { toast } from 'sonner';
