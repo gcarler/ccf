@@ -801,7 +801,7 @@ function SendDrawer({
             setSearching(true);
             try {
                 const data = await apiFetch<{ id: string; nombre_completo?: string; first_name?: string; last_name?: string }[]>(
-                    `/crm/personas?q=${encodeURIComponent(search)}&limit=10`, { token }
+                    `/crm/personas?search=${encodeURIComponent(search)}&limit=10`, { token }
                 );
                 setResults((data ?? []).map(p => ({
                     id: p.id,

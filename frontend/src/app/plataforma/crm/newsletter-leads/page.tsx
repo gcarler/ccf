@@ -8,6 +8,7 @@ import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
 import { useWikiDocument } from '@/hooks/useWikiDocument';
 import { apiFetch } from '@/lib/http';
+import { parseCrmLeadDateKey, formatCrmLeadCalendarDate } from '@/components/crm/crmDates';
 import clsx from 'clsx';
 import {
 BookOpen,
@@ -365,14 +366,14 @@ export default function NewsletterLeadsPage() {
                             {(() => {
                                 const grouped: Record<string, NewsletterLead[]> = {};
                                 for (const lead of filteredLeads) {
-                                    const date = lead.created_at ? new Date(lead.created_at).toISOString().slice(0, 10) : 'unknown';
+                                    const date = parseCrmLeadDateKey(lead.created_at);
                                     if (!grouped[date]) grouped[date] = [];
                                     grouped[date].push(lead);
                                 }
                                 return Object.entries(grouped).sort((a, b) => b[0].localeCompare(a[0])).map(([dateKey, items]) => (
                                     <div key={dateKey} className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-4">
                                         <p className="mb-3 text-2xs font-bold uppercase tracking-wide text-[hsl(var(--muted-foreground))]">
-                                            {dateKey === 'unknown' ? 'Sin fecha' : new Date(dateKey + 'T00:00:00').toLocaleDateString('es-CO', { day: '2-digit', month: 'long', year: 'numeric' })}
+                                            {formatCrmLeadCalendarDate(dateKey)}
                                             <span className="ml-2 text-[hsl(var(--muted-foreground))]">({items.length})</span>
                                         </p>
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-2">

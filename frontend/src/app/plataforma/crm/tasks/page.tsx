@@ -28,6 +28,7 @@ import { useRegisterCommands } from '@/context/CommandCenterContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import clsx from 'clsx';
 import CrmOperationalDataView from '@/components/crm/CrmOperationalDataView';
+import { parseCrmDateKey, formatCrmCalendarDate } from '@/components/crm/crmDates';
 import { ConsolidationTask } from '@/types/crm';
 
 const STATUS_PROGRESS: Record<string, number> = { urgent: 15, pending: 35, in_progress: 70, done: 100 };
@@ -140,9 +141,8 @@ export default function CrmTasksPage() {
     const dueBuckets = useMemo(() => {
         const map: Record<string, ConsolidationTask[]> = {};
         for (const task of tasks) {
-            if (!task.due_date) continue;
-            const date = new Date(task.due_date);
-            const key = date.toISOString().slice(0, 10);
+            const key = parseCrmDateKey(task.due_date);
+            if (!key) continue;
             if (!map[key]) map[key] = [];
             map[key].push(task);
         }
@@ -373,7 +373,7 @@ export default function CrmTasksPage() {
                             <div className="py-1.5 text-center text-[hsl(var(--muted-foreground))] font-bold uppercase text-sm">Sin tareas con fecha</div>
                         ) : dueBuckets.map(([isoDate, bucket]) => (
                             <div key={isoDate} className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-4">
-                                <p className="mb-3 text-2xs font-bold uppercase tracking-wide text-[hsl(var(--muted-foreground))]">{new Date(`${isoDate}T00:00:00`).toLocaleDateString()}</p>
+                                <p className="mb-3 text-2xs font-bold uppercase tracking-wide text-[hsl(var(--muted-foreground))]">{formatCrmCalendarDate(isoDate)}</p>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                     {bucket.map(task => (
                                         <button key={task.id} onClick={() => { setSelectedTask(task); setIsDetailOpen(true); }} className="rounded-md border border-[hsl(var(--border))] px-3 py-2 text-left hover:border-[hsl(var(--primary)/0.3)] transition-all">
