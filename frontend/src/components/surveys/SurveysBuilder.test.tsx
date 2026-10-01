@@ -64,6 +64,7 @@ describe('QuestionEditorCard (Google Forms Parity Drag & Drop)', () => {
             <QuestionEditorCard
                 pregunta={mockPregunta}
                 index={0}
+                availableQuestions={[mockPregunta]}
                 isSelected={true}
                 onSelect={() => {}}
                 onChange={() => {}}
@@ -84,6 +85,7 @@ describe('QuestionEditorCard (Google Forms Parity Drag & Drop)', () => {
             <QuestionEditorCard
                 pregunta={mockPregunta}
                 index={0}
+                availableQuestions={[mockPregunta]}
                 isSelected={true}
                 onSelect={() => {}}
                 onChange={handleChange}
@@ -97,6 +99,64 @@ describe('QuestionEditorCard (Google Forms Parity Drag & Drop)', () => {
         expect(handleChange).toHaveBeenCalledWith(
             expect.objectContaining({ titulo: 'Nuevo Título de Pregunta' })
         );
+    });
+
+    it('permite configurar visibilidad condicionada a una respuesta anterior', () => {
+        const source: EncuestaPregunta = {
+            ...mockPregunta,
+            id: 'q-source',
+            titulo: '¿Necesitas apoyo?',
+            orden: 0,
+            opciones: [{ id: 'yes', label: 'Sí' }, { id: 'no', label: 'No' }],
+        };
+        const dependent = { ...mockPregunta, id: 'q-dependent', orden: 1, configuracion: {} };
+        const handleChange = vi.fn();
+        render(
+            <QuestionEditorCard
+                pregunta={dependent}
+                index={1}
+                availableQuestions={[source, dependent]}
+                isSelected={false}
+                onSelect={() => {}}
+                onChange={handleChange}
+                onDuplicate={() => {}}
+                onDelete={() => {}}
+            />
+        );
+
+        fireEvent.change(screen.getByRole('combobox', { name: `Pregunta que controla ${dependent.titulo}` }), { target: { value: source.id } });
+        expect(handleChange).toHaveBeenCalledWith(expect.objectContaining({
+            configuracion: { visible_if: { pregunta_id: source.id, operador: 'igual_a', opcion_id: 'yes' } },
+        }));
+    });
+
+    it('permite dirigir una opción a una sección concreta', () => {
+        const section: EncuestaPregunta = {
+            ...mockPregunta,
+            id: 'section-next',
+            titulo: 'Sección siguiente',
+            tipo_pregunta: 'SECCION_SALTO',
+            orden: 1,
+            opciones: [],
+        };
+        const handleChange = vi.fn();
+        render(
+            <QuestionEditorCard
+                pregunta={mockPregunta}
+                index={0}
+                availableQuestions={[mockPregunta, section]}
+                isSelected={false}
+                onSelect={() => {}}
+                onChange={handleChange}
+                onDuplicate={() => {}}
+                onDelete={() => {}}
+            />
+        );
+
+        fireEvent.change(screen.getByRole('combobox', { name: 'Destino de Alabanza' }), { target: { value: section.id } });
+        expect(handleChange).toHaveBeenCalledWith(expect.objectContaining({
+            opciones: expect.arrayContaining([expect.objectContaining({ id: 'opt-1', salto_seccion_id: section.id })]),
+        }));
     });
 
     it('renderiza campos numéricos cuando es de tipo ESCALA_LINEAL', () => {
@@ -113,6 +173,7 @@ describe('QuestionEditorCard (Google Forms Parity Drag & Drop)', () => {
             <QuestionEditorCard
                 pregunta={scalePregunta}
                 index={1}
+                availableQuestions={[mockPregunta, scalePregunta]}
                 isSelected={false}
                 onSelect={() => {}}
                 onChange={() => {}}

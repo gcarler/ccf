@@ -291,10 +291,11 @@ export default function FormBuilderTab({ survey, onSurveyUpdated }: FormBuilderT
                     <SortableContext items={preguntas.map((q) => q.id)} strategy={verticalListSortingStrategy}>
                         <div className="flex flex-col gap-4">
                             {preguntas.map((pregunta, index) => (
-                                <QuestionEditorCard
-                                    key={pregunta.id}
-                                    pregunta={pregunta}
-                                    index={index}
+                            <QuestionEditorCard
+                                key={pregunta.id}
+                                pregunta={pregunta}
+                                index={index}
+                                availableQuestions={preguntas}
                                     isSelected={selectedQuestionId === pregunta.id}
                                     onSelect={() => setSelectedQuestionId(pregunta.id)}
                                     onChange={handleUpdateQuestion}

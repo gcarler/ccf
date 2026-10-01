@@ -87,6 +87,68 @@ describe('SurveyPublicRenderer — carga', () => {
 });
 
 describe('SurveyPublicRenderer — flujo y envío', () => {
+  it('muestra preguntas dependientes reactivamente y valida solo las visibles', async () => {
+    const source = makeQuestion({
+      titulo: '¿Necesitas apoyo?',
+      tipo_pregunta: SurveyQuestionType.OPCION_MULTIPLE,
+      opciones: [
+        { id: 'yes', label: 'Sí', salto_seccion_id: null, es_otro: false },
+        { id: 'no', label: 'No', salto_seccion_id: null, es_otro: false },
+      ],
+    });
+    const detail = makeQuestion({
+      titulo: '¿Qué apoyo necesitas?',
+      es_requerida: true,
+      configuracion: { visible_if: { pregunta_id: source.id, operador: 'igual_a', opcion_id: 'yes' } },
+    });
+    apiFetchMock.mockResolvedValueOnce(makeSurvey({ preguntas: [source, detail] }));
+    render(<SurveyPublicRenderer surveyId={surveyId} />);
+    await screen.findByRole('heading', { name: 'Encuesta de Satisfacción' });
+
+    expect(screen.queryByLabelText(detail.titulo)).not.toBeInTheDocument();
+    const send = screen.getByRole('button', { name: /enviar respuestas/i });
+    expect(send).toBeEnabled();
+
+    fireEvent.click(screen.getByRole('radio', { name: 'Sí' }));
+    expect(screen.getByLabelText(detail.titulo)).toBeInTheDocument();
+    expect(send).toBeDisabled();
+
+    fireEvent.click(screen.getByRole('radio', { name: 'No' }));
+    expect(screen.queryByLabelText(detail.titulo)).not.toBeInTheDocument();
+    expect(send).toBeEnabled();
+
+    apiFetchMock.mockResolvedValueOnce({
+      status: 'success',
+      envio_id: 'conditional-1',
+      mensaje_confirmacion: '¡Gracias por tu tiempo!',
+      redirigir_url: null,
+    });
+    fireEvent.click(send);
+    await screen.findByText('¡Gracias por tu tiempo!');
+    const [, submitOptions] = apiFetchMock.mock.calls.at(-1) as [string, { body: { respuestas: Array<{ pregunta_id: string }> } }];
+    expect(submitOptions.body.respuestas.map((answer) => answer.pregunta_id)).toEqual([source.id]);
+  });
+
+  it('omite secciones saltadas por una opción, incluso si contienen preguntas obligatorias', async () => {
+    const source = makeQuestion({
+      titulo: '¿Deseas continuar?',
+      tipo_pregunta: SurveyQuestionType.OPCION_MULTIPLE,
+      opciones: [{ id: 'finish', label: 'Terminar aquí', salto_seccion_id: '__submit__' }],
+    });
+    const section = makeQuestion({ tipo_pregunta: SurveyQuestionType.SECCION_SALTO, titulo: 'Detalle adicional' });
+    const skippedRequired = makeQuestion({ titulo: 'Detalle obligatorio', es_requerida: true });
+    apiFetchMock.mockResolvedValueOnce(makeSurvey({ preguntas: [source, section, skippedRequired] }));
+    render(<SurveyPublicRenderer surveyId={surveyId} />);
+    await screen.findByRole('heading', { name: 'Encuesta de Satisfacción' });
+
+    fireEvent.click(screen.getByRole('radio', { name: 'Terminar aquí' }));
+    fireEvent.click(screen.getByRole('button', { name: /siguiente/i }));
+    await screen.findByText('¡Gracias por tu tiempo!');
+
+    const [, submitOptions] = apiFetchMock.mock.calls.at(-1) as [string, { body: { respuestas: Array<{ pregunta_id: string }> } }];
+    expect(submitOptions.body.respuestas.map((answer) => answer.pregunta_id)).toEqual([source.id]);
+  });
+
   it('bloquea avance con obligatoria vacía y envía al completar', async () => {
     const q = makeQuestion({ titulo: 'Ciudad', es_requerida: true });
     apiFetchMock.mockResolvedValueOnce(makeSurvey({ preguntas: [q] }));

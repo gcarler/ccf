@@ -12,6 +12,7 @@ import {
   buildSubmitPayload,
   fileAllowed,
   fileExtension,
+  getVisibleQuestions,
   initValues,
   isAnswerEmpty,
   missingRequiredInSection,
@@ -157,6 +158,40 @@ describe('buildSectionsFromQuestions', () => {
       makeQuestion(),
     ]);
     expect(sections).toHaveLength(1);
+  });
+});
+
+describe('lógica condicional de visibilidad', () => {
+  it('evalúa respuestas seleccionadas y oculta dependencias encadenadas si su origen no está visible', () => {
+    const source = makeQuestion({
+      tipo_pregunta: SurveyQuestionType.OPCION_MULTIPLE,
+      opciones: [{ id: 'yes', label: 'Sí', salto_seccion_id: null, es_otro: false }],
+    });
+    const dependent = makeQuestion({
+      configuracion: { visible_if: { pregunta_id: source.id, operador: 'igual_a', opcion_id: 'yes' } },
+    });
+    const chained = makeQuestion({
+      configuracion: { visible_if: { pregunta_id: dependent.id, operador: 'igual_a', opcion_id: 'yes' } },
+    });
+    const questions = [source, dependent, chained];
+    const values = initValues(questions);
+
+    expect(getVisibleQuestions(questions, values).map((question) => question.id)).toEqual([source.id]);
+    values[source.id] = { kind: 'choice', optionId: 'yes' };
+    expect(getVisibleQuestions(questions, values).map((question) => question.id)).toEqual([source.id, dependent.id]);
+  });
+
+  it('omite preguntas ocultas del payload de envío', () => {
+    const source = makeQuestion({
+      tipo_pregunta: SurveyQuestionType.OPCION_MULTIPLE,
+      opciones: [{ id: 'yes', label: 'Sí', salto_seccion_id: null, es_otro: false }],
+    });
+    const dependent = makeQuestion({
+      configuracion: { visible_if: { pregunta_id: source.id, operador: 'igual_a', opcion_id: 'yes' } },
+    });
+    const values = initValues([source, dependent]);
+    const payload = buildSubmitPayload([source, dependent], values);
+    expect(payload.respuestas.map((answer) => answer.pregunta_id)).toEqual([source.id]);
   });
 });
 

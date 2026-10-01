@@ -103,6 +103,52 @@ export function initValues(questions: SurveyQuestion[]): QuestionValues {
   return values;
 }
 
+interface VisibilityCondition {
+  pregunta_id: string;
+  operador: 'igual_a' | 'distinto_de';
+  opcion_id: string;
+}
+
+function getVisibilityCondition(question: SurveyQuestion): VisibilityCondition | null {
+  const raw = question.configuracion?.visible_if;
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null;
+  const condition = raw as Record<string, unknown>;
+  if (
+    typeof condition.pregunta_id !== 'string' ||
+    typeof condition.opcion_id !== 'string' ||
+    (condition.operador !== 'igual_a' && condition.operador !== 'distinto_de')
+  ) return null;
+  return condition as unknown as VisibilityCondition;
+}
+
+/** Evalúa condiciones encadenadas y falla cerrado ante referencias cíclicas. */
+export function isQuestionVisible(
+  question: SurveyQuestion,
+  questions: SurveyQuestion[],
+  values: QuestionValues,
+  evaluating = new Set<string>(),
+): boolean {
+  const condition = getVisibilityCondition(question);
+  if (!condition) return true;
+  if (evaluating.has(question.id)) return false;
+  const source = questions.find((candidate) => candidate.id === condition.pregunta_id);
+  if (!source || source.id === question.id) return false;
+
+  const nextEvaluating = new Set(evaluating);
+  nextEvaluating.add(question.id);
+  if (!isQuestionVisible(source, questions, values, nextEvaluating)) return false;
+
+  const answer = values[source.id];
+  const selectedOption = answer?.kind === 'choice' ? answer.optionId : null;
+  return condition.operador === 'igual_a'
+    ? selectedOption === condition.opcion_id
+    : selectedOption !== null && selectedOption !== condition.opcion_id;
+}
+
+export function getVisibleQuestions(questions: SurveyQuestion[], values: QuestionValues): SurveyQuestion[] {
+  return questions.filter((question) => isQuestionVisible(question, questions, values));
+}
+
 /** True si la respuesta está vacía (independiente del tipo). */
 export function isAnswerEmpty(value: QuestionValue | undefined): boolean {
   if (!value) return true;
@@ -319,7 +365,8 @@ export function buildSubmitPayload(
   values: QuestionValues,
   contact?: { email: string | null; nombre: string | null },
 ): SurveySubmitPayloadTypes {
-  const respuestas = questions
+  const visibleQuestions = getVisibleQuestions(questions, values);
+  const respuestas = visibleQuestions
     .filter((q) => q.tipo_pregunta !== SurveyQuestionType.SECCION_SALTO)
     .map((q) => normalizeAnswerItem(q, values[q.id]));
   return {

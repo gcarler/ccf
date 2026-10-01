@@ -22,6 +22,8 @@ import {
   buildSectionsFromQuestions,
   buildSubmitPayload,
   initValues,
+  getVisibleQuestions,
+  isQuestionVisible,
   missingRequiredInSection,
   missingRequiredQuestions,
   resolveNextSection,
@@ -48,6 +50,7 @@ export default function SurveyPublicRenderer({ surveyId }: SurveyPublicRendererP
   const [survey, setSurvey] = useState<SurveyPublicDefinition | null>(null);
 
   const [sectionIndex, setSectionIndex] = useState(0);
+  const [visitedSections, setVisitedSections] = useState<Set<number>>(() => new Set([0]));
   const [values, setValues] = useState<QuestionValues>({});
   const [attemptedAdvance, setAttemptedAdvance] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -65,6 +68,7 @@ export default function SurveyPublicRenderer({ surveyId }: SurveyPublicRendererP
       setSurvey(data);
       setValues(initValues(data.preguntas || []));
       setSectionIndex(0);
+      setVisitedSections(new Set([0]));
       setAttemptedAdvance(false);
       setState('ready');
     } catch (err) {
@@ -92,12 +96,21 @@ export default function SurveyPublicRenderer({ surveyId }: SurveyPublicRendererP
   const questions = useMemo<SurveyQuestion[]>(() => survey?.preguntas ?? [], [survey]);
   const sections = useMemo<SurveyQuestion[][]>(() => buildSectionsFromQuestions(questions), [questions]);
   const currentSection = useMemo<SurveyQuestion[]>(() => sections[sectionIndex] ?? [], [sections, sectionIndex]);
-  const progress = useMemo(() => surveyProgress(questions, values), [questions, values]);
-  const missingInSection = useMemo(
-    () => missingRequiredInSection(currentSection, values),
-    [currentSection, values],
+  const activeQuestions = useMemo(
+    () => questions.filter((question) => visitedSections.has(sections.findIndex((section) => section.some((item) => item.id === question.id)))),
+    [questions, sections, visitedSections],
   );
-  const missingTotal = useMemo(() => missingRequiredQuestions(questions, values), [questions, values]);
+  const activeVisibleQuestions = useMemo(() => getVisibleQuestions(activeQuestions, values), [activeQuestions, values]);
+  const visibleCurrentSection = useMemo(
+    () => currentSection.filter((question) => question.tipo_pregunta === SurveyQuestionType.SECCION_SALTO || isQuestionVisible(question, questions, values)),
+    [currentSection, questions, values],
+  );
+  const progress = useMemo(() => surveyProgress(activeVisibleQuestions, values), [activeVisibleQuestions, values]);
+  const missingInSection = useMemo(
+    () => missingRequiredInSection(visibleCurrentSection, values),
+    [visibleCurrentSection, values],
+  );
+  const missingTotal = useMemo(() => missingRequiredQuestions(activeVisibleQuestions, values), [activeVisibleQuestions, values]);
   const isLastSection = sectionIndex >= sections.length - 1;
   const submitBlocked = missingTotal.length > 0;
 
@@ -117,9 +130,27 @@ export default function SurveyPublicRenderer({ surveyId }: SurveyPublicRendererP
   };
 
   const goToSection = (target: number) => {
-    const bounded = Math.max(0, Math.min(target, Math.max(sections.length - 1, 0)));
+    const bounded = Math.max(0, Math.min(target, sections.length));
     setSectionIndex(bounded);
+    setVisitedSections((previous) => new Set([...previous, bounded]));
     setAttemptedAdvance(false);
+  };
+
+  const goToPreviousSection = () => {
+    const previous = [...visitedSections]
+      .filter((index) => index < sectionIndex)
+      .sort((left, right) => right - left)[0] ?? 0;
+    setSectionIndex(previous);
+    setVisitedSections((indices) => new Set([...indices].filter((index) => index <= previous)));
+    setAttemptedAdvance(false);
+  };
+
+  const getNextVisibleSection = (target: number): number => {
+    for (let index = Math.max(0, target); index < sections.length; index += 1) {
+      const answerable = sections[index].filter((question) => question.tipo_pregunta !== SurveyQuestionType.SECCION_SALTO);
+      if (answerable.length === 0 || answerable.some((question) => isQuestionVisible(question, questions, values))) return index;
+    }
+    return sections.length;
   };
 
   const handleNext = () => {
@@ -128,7 +159,12 @@ export default function SurveyPublicRenderer({ surveyId }: SurveyPublicRendererP
       toast.error('Completa las preguntas obligatorias para continuar.');
       return;
     }
-    goToSection(resolveNextSection(sections, sectionIndex, values));
+    const nextSection = getNextVisibleSection(resolveNextSection(sections, sectionIndex, values));
+    if (nextSection >= sections.length) {
+      void handleSubmit();
+      return;
+    }
+    goToSection(nextSection);
   };
 
   const handleUpload = async (_question: SurveyQuestion, file: File): Promise<SurveyFileUploadResult> => {
@@ -140,7 +176,7 @@ export default function SurveyPublicRenderer({ surveyId }: SurveyPublicRendererP
     });
   };
 
-  const handleSubmit = async () => {
+  async function handleSubmit() {
     if (submitBlocked) {
       setAttemptedAdvance(true);
       toast.error('Faltan preguntas obligatorias por responder.');
@@ -148,7 +184,7 @@ export default function SurveyPublicRenderer({ surveyId }: SurveyPublicRendererP
     }
     setIsSubmitting(true);
     try {
-      const payload = buildSubmitPayload(questions, values, { email: null, nombre: null });
+      const payload = buildSubmitPayload(activeQuestions, values, { email: null, nombre: null });
       const result = await apiFetch<SurveySubmitResponse>(
         `/public/surveys/${encodeURIComponent(surveyId)}/submit`,
         { method: 'POST', body: payload },
@@ -173,12 +209,13 @@ export default function SurveyPublicRenderer({ surveyId }: SurveyPublicRendererP
     } finally {
       setIsSubmitting(false);
     }
-  };
+  }
 
   const handleRespondAgain = () => {
     if (!survey) return;
     setValues(initValues(survey.preguntas || []));
     setSectionIndex(0);
+    setVisitedSections(new Set([0]));
     setAttemptedAdvance(false);
     setSubmitResult(null);
     setState('ready');
@@ -264,7 +301,7 @@ export default function SurveyPublicRenderer({ surveyId }: SurveyPublicRendererP
           </p>
         ) : null}
 
-        {currentSection.map((question) =>
+        {visibleCurrentSection.map((question) =>
           question.tipo_pregunta === SurveyQuestionType.SECCION_SALTO ? (
             <QuestionRenderer
               key={question.id}
@@ -296,7 +333,7 @@ export default function SurveyPublicRenderer({ surveyId }: SurveyPublicRendererP
               : null
           }
           isSubmitting={isSubmitting}
-          onPrevious={() => goToSection(sectionIndex - 1)}
+          onPrevious={goToPreviousSection}
           onNext={handleNext}
           onSubmit={() => void handleSubmit()}
         />

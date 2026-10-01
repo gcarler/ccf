@@ -25,6 +25,13 @@ export interface PreguntaOpcion {
     es_otro?: boolean;
 }
 
+/** Condición de visibilidad guardada dentro de EncuestaPregunta.configuracion. */
+export interface CondicionVisibilidadPregunta {
+    pregunta_id: string;
+    operador: "igual_a" | "distinto_de";
+    opcion_id: string;
+}
+
 export interface PreguntaMatrizItem {
     id: string;
     label: string;

@@ -26,6 +26,7 @@ import { EncuestaPregunta, TipoPregunta, PreguntaOpcion, PreguntaMatrizItem } fr
 interface QuestionEditorCardProps {
     pregunta: EncuestaPregunta;
     index: number;
+    availableQuestions: EncuestaPregunta[];
     isSelected: boolean;
     onSelect: () => void;
     onChange: (updated: EncuestaPregunta) => void;
@@ -51,6 +52,7 @@ const TIPO_PREGUNTA_CONFIG: Record<TipoPregunta, { label: string; icon: React.El
 export default function QuestionEditorCard({
     pregunta,
     index,
+    availableQuestions,
     isSelected,
     onSelect,
     onChange,
@@ -180,6 +182,43 @@ export default function QuestionEditorCard({
     };
 
     const isSection = pregunta.tipo_pregunta === 'SECCION_SALTO';
+    const conditionalSources = availableQuestions.filter((candidate) =>
+        candidate.orden < pregunta.orden &&
+        ['OPCION_MULTIPLE', 'DESPLEGABLE'].includes(candidate.tipo_pregunta) &&
+        candidate.opciones.length > 0
+    );
+    const visibleIfRaw = pregunta.configuracion?.visible_if;
+    const visibleIf = visibleIfRaw && typeof visibleIfRaw === 'object' && !Array.isArray(visibleIfRaw)
+        ? visibleIfRaw as { pregunta_id?: string; operador?: 'igual_a' | 'distinto_de'; opcion_id?: string }
+        : null;
+    const conditionSource = conditionalSources.find((candidate) => candidate.id === visibleIf?.pregunta_id);
+    const targetSections = availableQuestions.filter((candidate) =>
+        candidate.tipo_pregunta === 'SECCION_SALTO' && candidate.id !== pregunta.id
+    );
+
+    const updateCondition = (next: typeof visibleIf) => {
+        const configuracion = { ...pregunta.configuracion };
+        if (next) configuracion.visible_if = next;
+        else delete configuracion.visible_if;
+        onChange({ ...pregunta, configuracion });
+    };
+
+    const updateOptionJump = (optionId: string, targetId: string) => {
+        onChange({
+            ...pregunta,
+            opciones: pregunta.opciones.map((option) => option.id === optionId
+                ? { ...option, salto_seccion_id: targetId || null }
+                : option),
+        });
+    };
+
+    const updateSectionJump = (targetId: string) => {
+        const sectionOption = pregunta.opciones[0] ?? { id: `section-${pregunta.id}`, label: '' };
+        onChange({
+            ...pregunta,
+            opciones: [{ ...sectionOption, salto_seccion_id: targetId || null }, ...pregunta.opciones.slice(1)],
+        });
+    };
 
     return (
         <div
@@ -257,6 +296,76 @@ export default function QuestionEditorCard({
                     />
                 </div>
 
+                {!isSection && conditionalSources.length > 0 && (
+                    <fieldset className="mb-4 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))]/40 p-3">
+                        <legend className="px-1 text-xs font-semibold text-[hsl(var(--text-primary))]">Visibilidad condicional</legend>
+                        <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+                            <label className="text-xs text-[hsl(var(--text-secondary))]">
+                                Mostrar cuando
+                                <select
+                                    aria-label={`Pregunta que controla ${pregunta.titulo}`}
+                                    value={visibleIf?.pregunta_id ?? ''}
+                                    onChange={(event) => {
+                                        const source = conditionalSources.find((candidate) => candidate.id === event.target.value);
+                                        const firstOption = source?.opciones[0];
+                                        updateCondition(source && firstOption ? {
+                                            pregunta_id: source.id,
+                                            operador: 'igual_a',
+                                            opcion_id: firstOption.id,
+                                        } : null);
+                                    }}
+                                    className="mt-1 w-full rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] px-2 py-1.5 text-xs text-[hsl(var(--text-primary))]"
+                                >
+                                    <option value="">Siempre visible</option>
+                                    {conditionalSources.map((source) => <option key={source.id} value={source.id}>{source.titulo || `Pregunta ${source.orden + 1}`}</option>)}
+                                </select>
+                            </label>
+                            <label className="text-xs text-[hsl(var(--text-secondary))]">
+                                Operador
+                                <select
+                                    aria-label={`Operador condicional para ${pregunta.titulo}`}
+                                    value={visibleIf?.operador ?? 'igual_a'}
+                                    disabled={!conditionSource}
+                                    onChange={(event) => updateCondition(visibleIf ? { ...visibleIf, operador: event.target.value as 'igual_a' | 'distinto_de' } : null)}
+                                    className="mt-1 w-full rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] px-2 py-1.5 text-xs text-[hsl(var(--text-primary))] disabled:opacity-50"
+                                >
+                                    <option value="igual_a">es igual a</option>
+                                    <option value="distinto_de">es diferente de</option>
+                                </select>
+                            </label>
+                            <label className="text-xs text-[hsl(var(--text-secondary))]">
+                                Respuesta
+                                <select
+                                    aria-label={`Respuesta condicional para ${pregunta.titulo}`}
+                                    value={visibleIf?.opcion_id ?? ''}
+                                    disabled={!conditionSource}
+                                    onChange={(event) => updateCondition(visibleIf ? { ...visibleIf, opcion_id: event.target.value } : null)}
+                                    className="mt-1 w-full rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] px-2 py-1.5 text-xs text-[hsl(var(--text-primary))] disabled:opacity-50"
+                                >
+                                    {(conditionSource?.opciones ?? []).map((option) => <option key={option.id} value={option.id}>{option.label}</option>)}
+                                </select>
+                            </label>
+                        </div>
+                        {visibleIf && <button type="button" onClick={() => updateCondition(null)} className="mt-2 text-xs text-[hsl(var(--destructive))]">Quitar condición</button>}
+                    </fieldset>
+                )}
+
+                {isSection && targetSections.length > 0 && (
+                    <label className="mb-4 flex flex-col gap-1 text-xs text-[hsl(var(--text-secondary))]">
+                        Al terminar esta sección, continuar con
+                        <select
+                            aria-label={`Destino al terminar ${pregunta.titulo}`}
+                            value={pregunta.opciones[0]?.salto_seccion_id ?? ''}
+                            onChange={(event) => updateSectionJump(event.target.value)}
+                            className="w-full max-w-md rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] px-2 py-1.5 text-xs text-[hsl(var(--text-primary))]"
+                        >
+                            <option value="">La siguiente sección</option>
+                            {targetSections.map((section) => <option key={section.id} value={section.id}>{section.titulo || `Sección ${section.orden + 1}`}</option>)}
+                            <option value="__submit__">Finalizar encuesta</option>
+                        </select>
+                    </label>
+                )}
+
                 {/* Contenido Contextual según Tipo de Pregunta */}
                 <div className="py-2 mb-4 border-t border-[hsl(var(--border))]/50 pt-3">
                     {/* 1. TEXTO CORTO */}
@@ -296,6 +405,18 @@ export default function QuestionEditorCard({
                                         placeholder={`Opción ${optIdx + 1}`}
                                         className="flex-1 text-xs px-2.5 py-1.5 rounded border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-[hsl(var(--text-primary))] focus:outline-none focus:ring-1 focus:ring-[hsl(var(--primary))]"
                                     />
+                                    {pregunta.tipo_pregunta === 'OPCION_MULTIPLE' && availableQuestions.some((candidate) => candidate.tipo_pregunta === 'SECCION_SALTO') && (
+                                        <select
+                                            aria-label={`Destino de ${opt.label}`}
+                                            value={opt.salto_seccion_id ?? ''}
+                                            onChange={(event) => updateOptionJump(opt.id, event.target.value)}
+                                            className="max-w-44 rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] px-2 py-1 text-[11px] text-[hsl(var(--text-secondary))]"
+                                        >
+                                            <option value="">Continuar normalmente</option>
+                                            {availableQuestions.filter((candidate) => candidate.tipo_pregunta === 'SECCION_SALTO').map((section) => <option key={section.id} value={section.id}>Ir a: {section.titulo || `Sección ${section.orden + 1}`}</option>)}
+                                            <option value="__submit__">Finalizar encuesta</option>
+                                        </select>
+                                    )}
                                     {(pregunta.opciones?.length || 0) > 1 && (
                                         <button
                                             type="button"
