@@ -8,7 +8,7 @@ from typing import Optional
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Request
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
@@ -33,6 +33,59 @@ class VisitorCreate(BaseModel):
     last_name: str
     phone: Optional[str] = None
     email: Optional[str] = None
+
+
+class CheckinBatchItem(BaseModel):
+    """Elemento individual de un check-in en lote (sincronización offline).
+
+    TKT-EVANGELISM-OFFLINE-SYNC-01: la cola offline del Scanner QR acumula
+    credenciales escaneadas sin conexión y las sincroniza en lote. Cada item
+    solo admite identidad por QR (``qr_token``) o constatación manual
+    (``persona_id``); los walk-ins exigen interacción del operador y no se
+    aceptan en modo offline.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    qr_token: Optional[str] = None
+    persona_id: Optional[UUID] = None
+
+    @model_validator(mode="after")
+    def _require_qr_or_persona(self):
+        has_qr = bool(self.qr_token and self.qr_token.strip())
+        has_persona = self.persona_id is not None
+        if not (has_qr or has_persona):
+            raise ValueError("Cada item requiere qr_token o persona_id")
+        return self
+
+
+class CheckinBatchPayload(BaseModel):
+    """Lote de check-ins diferidos desde la cola offline del Scanner QR.
+
+    Deduplicación por identidad del participante en tres capas:
+    1. Cola local (hash de identidad en el cliente, ``offlineQueue.ts``).
+    2. Este modelo, que descarta tokens/UUIDs repetidos dentro del lote.
+    3. El endpoint, idempotente contra ``EventAttendance`` ya registrada.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    items: list[CheckinBatchItem] = Field(..., min_length=1, max_length=200)
+
+    @model_validator(mode="after")
+    def _dedupe_items(self):
+        seen: set = set()
+        unique_items: list[CheckinBatchItem] = []
+        for item in self.items:
+            key = ("qr", item.qr_token.strip()) if item.qr_token else ("pid", str(item.persona_id))
+            if key in seen:
+                continue
+            seen.add(key)
+            unique_items.append(item)
+        if not unique_items:
+            raise ValueError("El lote no contiene items válidos")
+        object.__setattr__(self, "items", unique_items)
+        return self
 
 
 @router.post("/events/{event_id}/sessions/{session_date}/visitors")
@@ -877,4 +930,250 @@ def unified_checkout(
         "status": "success",
         "persona_id": str(persona.id),
         "check_out_at": attendance.check_out_at.isoformat(),
+    }
+
+
+# =============================================================================
+# CHECK-IN EN LOTE (sincronización diferida offline, TKT-EVANGELISM-OFFLINE-SYNC-01)
+# =============================================================================
+
+
+def _resolve_batch_persona_by_qr(
+    db: Session,
+    token: str,
+    event: models.CrmEvent,
+    current_user: models.User,
+) -> tuple[Optional[models.Persona], Optional[models.EventRegistration], str]:
+    """Resuelve la persona detrás de un QR para el lote offline.
+
+    Reusa los mismos invariantes del check-in individual: hash persistido +
+    ``secrets.compare_digest`` (sin timing attacks), expiry y estados válidos.
+    Los códigos de error se propagan como excepciones para que el caller
+    decida si aborta el lote (4xx estructural) o marca el item como error.
+    """
+    if token.startswith("CCF-EVT-"):
+        payload_str = token.removeprefix("CCF-EVT-")
+        parsed = _parse_evt_qr_payload(payload_str)
+        if parsed is None:
+            raise HTTPException(status_code=400, detail="QR malformado")
+        event_uuid, persona_uuid = parsed
+        if event_uuid != event.id:
+            raise HTTPException(status_code=404, detail="El QR no corresponde a este evento")
+        reg = (
+            db.query(models.EventRegistration)
+            .filter(
+                models.EventRegistration.event_id == event.id,
+                models.EventRegistration.persona_id == persona_uuid,
+                models.EventRegistration.deleted_at.is_(None),
+            )
+            .first()
+        )
+        if not reg:
+            raise HTTPException(status_code=404, detail="Inscripción no encontrada")
+        token_hash = _qr_token_secret_hash(token)
+        if not token_hash or not secrets.compare_digest(str(reg.qr_token_hash or ""), token_hash):
+            raise HTTPException(status_code=403, detail="QR inválido")
+        if reg.registration_status not in {"CONFIRMED", "CHECKED_IN"}:
+            raise HTTPException(
+                status_code=409,
+                detail=f"Inscripción no confirmada (estado: {reg.registration_status})",
+            )
+        if is_qr_token_expired(reg):
+            raise HTTPException(status_code=410, detail="El QR expiró")
+        persona = reg.persona or db.query(models.Persona).filter(models.Persona.id == persona_uuid).first()
+        if not persona:
+            raise HTTPException(status_code=404, detail="Persona no encontrada")
+        return persona, reg, "qr_event_registration"
+
+    if token.startswith("CCF-PER-"):
+        from backend.api.evangelism import _get_scoped_scanner_persona
+
+        payload_str = token.removeprefix("CCF-PER-")
+        parsed = _parse_per_qr_payload(payload_str)
+        if parsed is None:
+            raise HTTPException(status_code=400, detail="QR malformado")
+        persona = _get_scoped_scanner_persona(parsed, db, current_user)
+        if not persona.scanner_token_hash:
+            raise HTTPException(status_code=403, detail="La persona no tiene token activo")
+        expires_at = persona.scanner_token_expires_at
+        if expires_at:
+            if expires_at.tzinfo is None:
+                expires_at = expires_at.replace(tzinfo=datetime.timezone.utc)
+            if expires_at < _utcnow():
+                raise HTTPException(status_code=403, detail="Token expirado")
+        secret = payload_str.rsplit("-", 1)[1] if "-" in payload_str else ""
+        computed = hashlib.sha256(secret.encode()).hexdigest()
+        if not secrets.compare_digest(computed, persona.scanner_token_hash):
+            raise HTTPException(status_code=403, detail="Token de seguridad inválido")
+        return persona, None, "qr_persona"
+
+    raise HTTPException(status_code=400, detail="Prefijo de QR desconocido")
+
+
+@academy_limiter.limit("30/minute")
+@router.post("/events/{event_id}/sessions/{session_date}/checkin-batch", response_model=dict)
+def checkin_batch(
+    request: Request,
+    event_id: UUID,
+    session_date: str,
+    payload: CheckinBatchPayload,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_evangelism_edit),
+):
+    """Sincroniza en lote la cola offline del Scanner QR (Gatekeeper).
+
+    Contrato TKT-EVANGELISM-OFFLINE-SYNC-01:
+    - Idempotente: los items cuya asistencia ya existe se reportan como
+      ``duplicate`` (HTTP 200, nunca duplican filas; la UNIQUE
+      ``uq_event_attendance`` respalda la garantía ante carreras).
+    - Los items con QR inválido/no encontrado se reportan como ``error``
+      sin abortar el resto del lote.
+    - Un fallo estructural (permisos, evento cancelado, fecha inválida)
+      aborta con 4xx como en el check-in individual.
+    """
+    event = require_event_access(db, current_user, event_id)
+
+    if str(event.status or "").upper() in {"CANCELLED", "CANCELED"}:
+        raise HTTPException(status_code=409, detail="No se puede hacer check-in en eventos cancelados")
+
+    try:
+        session_day = datetime.datetime.strptime(session_date, "%Y-%m-%d").date()
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Formato de fecha inválido, esperado YYYY-MM-DD")
+
+    results: list[dict] = []
+    synced = duplicates = errors = 0
+    now_utc = datetime.datetime.now(datetime.timezone.utc)
+    touched_registrations: list[models.EventRegistration] = []
+
+    for index, item in enumerate(payload.items):
+        persona: Optional[models.Persona] = None
+        registration: Optional[models.EventRegistration] = None
+        source = "manual_persona_id"
+        try:
+            if item.qr_token:
+                persona, registration, source = _resolve_batch_persona_by_qr(
+                    db, item.qr_token.strip(), event, current_user
+                )
+            elif item.persona_id:
+                user_sede_id = require_user_sede_id(db, current_user)
+                persona = (
+                    db.query(models.Persona)
+                    .filter(
+                        models.Persona.id == item.persona_id,
+                        models.Persona.sede_id == user_sede_id,
+                    )
+                    .first()
+                )
+                if not persona:
+                    raise HTTPException(status_code=404, detail="Persona no encontrada")
+
+            if persona is None:  # defensive: schema garantiza qr_token o persona_id
+                raise HTTPException(status_code=422, detail="Item sin identidad válida")
+
+            existing_attendance = (
+                db.query(models.EventAttendance)
+                .filter(
+                    models.EventAttendance.event_id == event.id,
+                    models.EventAttendance.session_date == session_day,
+                    models.EventAttendance.persona_id == persona.id,
+                    models.EventAttendance.attended.is_(True),
+                )
+                .first()
+            )
+
+            if existing_attendance:
+                duplicates += 1
+                results.append(
+                    {
+                        "index": index,
+                        "status": "duplicate",
+                        "persona_id": str(persona.id),
+                        "persona_name": persona.nombre_completo,
+                        "check_in_at": (
+                            existing_attendance.check_in_at.isoformat()
+                            if existing_attendance.check_in_at
+                            else None
+                        ),
+                    }
+                )
+                continue
+
+            attendance, _created = _upsert_attendance(
+                db,
+                event.id,
+                session_day,
+                persona.id,
+                source=source,
+                role_at_event=registration.participant_role_code if registration else None,
+            )
+            attendance.check_in_at = now_utc
+            attendance.scanned_at = now_utc
+
+            if registration:
+                registration.registration_status = "CHECKED_IN"
+                registration.check_in_at = now_utc
+                registration.checked_in_by = current_user.id
+                touched_registrations.append(registration)
+
+            synced += 1
+            results.append(
+                {
+                    "index": index,
+                    "status": "synced",
+                    "persona_id": str(persona.id),
+                    "persona_name": persona.nombre_completo,
+                    "check_in_at": attendance.check_in_at.isoformat(),
+                }
+            )
+        except HTTPException as exc:
+            errors += 1
+            results.append(
+                {
+                    "index": index,
+                    "status": "error",
+                    "detail": exc.detail if isinstance(exc.detail, str) else "Error de validación del item",
+                    "code": exc.status_code,
+                }
+            )
+
+    db.commit()
+    record_admin_action(
+        db,
+        current_user,
+        action="event_checkin_batch",
+        resource_type="event",
+        resource_id=str(event_id),
+        metadata={
+            "synced": synced,
+            "duplicates": duplicates,
+            "errors": errors,
+            "batch_size": len(payload.items),
+        },
+    )
+
+    attendance_count = (
+        db.query(models.EventAttendance)
+        .filter(
+            models.EventAttendance.event_id == event.id,
+            models.EventAttendance.session_date == session_day,
+            models.EventAttendance.attended.is_(True),
+        )
+        .count()
+    )
+    capacity = event.capacity_max or 0
+    percentage = round((attendance_count / capacity * 100), 1) if capacity > 0 else 0.0
+
+    return {
+        "status": "success",
+        "message": f"Lote procesado: {synced} sincronizados, {duplicates} duplicados, {errors} errores",
+        "synced": synced,
+        "duplicates": duplicates,
+        "errors": errors,
+        "results": results,
+        "occupancy": {
+            "count": attendance_count,
+            "capacity_max": capacity,
+            "percentage": percentage,
+        },
     }

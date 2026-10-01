@@ -3,9 +3,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   QrCode,
-  ShieldCheck,
-  ShieldAlert,
-  Zap,
   RefreshCcw,
   UserCheck,
   Users,
@@ -20,6 +17,8 @@ import {
   Lock,
   ChevronDown,
   Eye,
+  CloudOff,
+  CloudUpload,
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { apiFetch, ApiError } from '@/lib/http';
@@ -29,6 +28,12 @@ import AdminHero from '@/components/admin/AdminHero';
 import WorkspaceDrawer from '@/components/WorkspaceDrawer';
 import type { MinistryEvent } from '@/app/plataforma/evangelism/types';
 import { participantRoleLabel } from '@/app/plataforma/evangelism/types';
+import {
+  enqueueOfflineCheckin,
+  getPendingCheckins,
+  syncOfflineQueue,
+  type StoredCheckin,
+} from './offlineQueue';
 
 // =============================================================================
 // WEB AUDIO API FEEDBACK SYNTHESIZER
@@ -134,7 +139,7 @@ interface OccupancyData {
 }
 
 interface ScanFeedbackState {
-  type: 'authorized' | 'duplicate' | 'invalid';
+  type: 'authorized' | 'duplicate' | 'invalid' | 'offline';
   title: string;
   personaName?: string;
   registrationCode?: string;
@@ -186,6 +191,11 @@ export default function GatekeeperScannerPage() {
   const [events, setEvents] = useState<MinistryEvent[]>([]);
   const [selectedEventId, setSelectedEventId] = useState<string>('');
   const [loadingEvents, setLoadingEvents] = useState<boolean>(true);
+
+  // Cola offline (TKT-EVANGELISM-OFFLINE-SYNC-01)
+  const [isOffline, setIsOffline] = useState<boolean>(false);
+  const [pendingQueue, setPendingQueue] = useState<StoredCheckin[]>([]);
+  const [isSyncing, setIsSyncing] = useState<boolean>(false);
   const [occupancy, setOccupancy] = useState<OccupancyData>({
     checked_in_count: 0,
     capacity_max: 0,
@@ -203,7 +213,7 @@ export default function GatekeeperScannerPage() {
 
   // Cámara
   const videoRef = useRef<HTMLVideoElement | null>(null);
-  const [cameraActive, setCameraActive] = useState<boolean>(false);
+  const [, setCameraActive] = useState<boolean>(false);
 
   // Drawer de asistentes
   const [drawerOpen, setDrawerOpen] = useState<boolean>(false);
@@ -293,6 +303,63 @@ export default function GatekeeperScannerPage() {
     }
   }, [selectedEventId, fetchOccupancy]);
 
+  // ── Offline: detectar conectividad y reflejar la cola persistida ───────────
+  useEffect(() => {
+    const updateOnlineStatus = () => {
+      setIsOffline(!navigator.onLine);
+    };
+    updateOnlineStatus();
+    window.addEventListener('online', updateOnlineStatus);
+    window.addEventListener('offline', updateOnlineStatus);
+    return () => {
+      window.removeEventListener('online', updateOnlineStatus);
+      window.removeEventListener('offline', updateOnlineStatus);
+    };
+  }, []);
+
+  useEffect(() => {
+    setPendingQueue(getPendingCheckins());
+  }, []);
+
+  const runOfflineSync = useCallback(async () => {
+    if (isSyncing) return;
+    if (getPendingCheckins().length === 0) {
+      setPendingQueue([]);
+      return;
+    }
+    setIsSyncing(true);
+    try {
+      const result = await syncOfflineQueue({ authToken });
+      setPendingQueue(getPendingCheckins());
+      if (result.attempted > 0) {
+        if (result.networkError) {
+          toast.error(
+            `Sincronización interrumpida: ${result.remaining} check-ins siguen en cola`,
+          );
+        } else {
+          toast.success(
+            `Sincronización offline: ${result.synced} nuevos, ${result.duplicates} duplicados, ${result.errors} errores`,
+          );
+          fetchOccupancy(selectedEventId);
+        }
+      }
+    } finally {
+      setIsSyncing(false);
+    }
+  }, [authToken, fetchOccupancy, isSyncing, selectedEventId]);
+
+  const runOfflineSyncRef = useRef(runOfflineSync);
+  useEffect(() => {
+    runOfflineSyncRef.current = runOfflineSync;
+  });
+
+  // Al recuperar conectividad, sincronizar en lote la cola pendiente.
+  useEffect(() => {
+    if (!isOffline) {
+      void runOfflineSyncRef.current();
+    }
+  }, [isOffline]);
+
   // ── Manejo de cámara en modo 'camera' ─────────────────────────────────────
   useEffect(() => {
     let stream: MediaStream | null = null;
@@ -341,9 +408,10 @@ export default function GatekeeperScannerPage() {
     setProcessing(true);
     setBarcodeInput('');
 
+    let targetEventId = selectedEventId;
+    const todayUtc = new Date().toISOString().slice(0, 10);
+
     try {
-      let targetEventId = selectedEventId;
-      const todayUtc = new Date().toISOString().slice(0, 10);
 
       // Si el QR es de tipo CCF-EVT-, podemos extraer el eventId embebido
       if (token.startsWith('CCF-EVT-')) {
@@ -409,6 +477,31 @@ export default function GatekeeperScannerPage() {
       const apiErr = err instanceof ApiError ? err : null;
       const detailObj = apiErr && typeof apiErr.detail === 'object' && apiErr.detail !== null ? (apiErr.detail as Record<string, unknown>) : null;
 
+      // ── OFFLINE (Cola diferida, TKT-EVANGELISM-OFFLINE-SYNC-01) ───────────
+      // Fallo de red real (status 0): encolar para sincronización diferida.
+      // Los 4xx estructurales (QR inválido, duplicado, permisos) NO se encolan.
+      if (apiErr && apiErr.status === 0 && targetEventId) {
+        const enqueued = await enqueueOfflineCheckin({
+          eventId: targetEventId,
+          sessionDate: todayUtc,
+          qrToken: token,
+        });
+        if (soundEnabled) playInvalidSound();
+        setPendingQueue(getPendingCheckins());
+        setScanFeedback({
+          type: 'offline',
+          title: enqueued.accepted ? 'SIN CONEXIÓN - CHECK-IN EN COLA' : 'SIN CONEXIÓN - YA ESTÁ EN COLA',
+          message: enqueued.accepted
+            ? 'El registro quedó guardado en este dispositivo y se sincronizará automáticamente al recuperar la conexión. La puerta no se detiene.'
+            : 'Esta credencial ya estaba pendiente en la cola offline de este dispositivo.',
+        });
+        feedbackTimerRef.current = setTimeout(() => {
+          setScanFeedback(null);
+          refocusInput();
+        }, 3500);
+        return;
+      }
+
       // ── DUPLICADO / DENEGADO (Rojo + Alarma Sonora) ──────────────────────
       const isDuplicate =
         (apiErr && apiErr.status === 409) &&
@@ -464,13 +557,13 @@ export default function GatekeeperScannerPage() {
     }
   };
 
-  const dismissFeedback = () => {
+  const dismissFeedback = useCallback(() => {
     if (feedbackTimerRef.current) {
       clearTimeout(feedbackTimerRef.current);
     }
     setScanFeedback(null);
     refocusInput();
-  };
+  }, [refocusInput]);
 
   // ── Teclas rápidas globales (Enter / Escape / Barra espaciadora) ───────────
   useEffect(() => {
@@ -484,7 +577,7 @@ export default function GatekeeperScannerPage() {
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [scanFeedback]);
+  }, [scanFeedback, dismissFeedback]);
 
   // ── Cargar lista de asistentes para el Drawer ─────────────────────────────
   const openAttendeesDrawer = async () => {
@@ -554,6 +647,32 @@ export default function GatekeeperScannerPage() {
       />
 
       <div className="w-full max-w-5xl mx-auto px-4 py-6 space-y-6">
+        {/* BANNER: Check-ins pendientes en cola (offline → sync batch) */}
+        {pendingQueue.length > 0 && (
+          <div className="flex items-center justify-between gap-3 rounded-xl border border-[hsl(var(--warning))]/40 bg-[hsl(var(--warning))]/10 px-4 py-3">
+            <div className="flex items-center gap-2">
+              <CloudOff size={16} className="text-[hsl(var(--warning))]" />
+              <div>
+                <p className="text-xs font-bold uppercase tracking-wider text-[hsl(var(--warning))]">
+                  Check-ins pendientes en cola ({pendingQueue.length})
+                </p>
+                <p className="text-2xs text-[hsl(var(--muted-foreground))]">
+                  {isOffline
+                    ? 'Se sincronizarán automáticamente al recuperar la conexión.'
+                    : 'Listos para sincronizar con el servidor.'}
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={() => void runOfflineSync()}
+              disabled={isSyncing || isOffline}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] px-3 py-1.5 text-xs font-semibold text-[hsl(var(--foreground))] transition-colors hover:bg-[hsl(var(--surface-3))] disabled:opacity-50"
+            >
+              {isSyncing ? <RefreshCcw size={14} className="animate-spin" /> : <CloudUpload size={14} />}
+              <span>{isSyncing ? 'Sincronizando...' : 'Sincronizar ahora'}</span>
+            </button>
+          </div>
+        )}
         {/* ========================================================================= */}
         {/* PANEL SUPERIOR: SELECTOR DE EVENTO ACTIVO + MONITOR DE AFORO EN VIVO      */}
         {/* ========================================================================= */}
@@ -758,8 +877,17 @@ export default function GatekeeperScannerPage() {
           {/* Footer de estado del sistema */}
           <div className="mt-4 flex items-center gap-4 text-2xs text-[hsl(var(--muted-foreground))] border-t border-[hsl(var(--border))] pt-3 w-full justify-between">
             <span className="flex items-center gap-1.5">
-              <span className="size-2 rounded-full bg-[hsl(var(--success))]"></span>
-              Gatekeeper 2.0 Operativo
+              {isOffline ? (
+                <>
+                  <CloudOff size={12} className="text-[hsl(var(--warning))]" />
+                  <span className="font-semibold uppercase text-[hsl(var(--warning))]">Sin conexión — encolando</span>
+                </>
+              ) : (
+                <>
+                  <span className="size-2 rounded-full bg-[hsl(var(--success))]"></span>
+                  Gatekeeper 2.0 Operativo
+                </>
+              )}
             </span>
             <span className="font-mono">Invariante: Previene Fraude y Reingreso</span>
           </div>
@@ -814,6 +942,11 @@ export default function GatekeeperScannerPage() {
               {scanFeedback.type === 'invalid' && (
                 <div className="p-6 rounded-full bg-[hsl(var(--warning))]/15 text-[hsl(var(--warning))] shadow-lg">
                   <AlertCircle size={96} />
+                </div>
+              )}
+              {scanFeedback.type === 'offline' && (
+                <div className="p-6 rounded-full bg-[hsl(var(--warning))]/15 text-[hsl(var(--warning))] shadow-lg">
+                  <CloudOff size={96} />
                 </div>
               )}
             </div>
