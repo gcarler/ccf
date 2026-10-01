@@ -169,12 +169,14 @@ const nextConfig = {
     },
     async rewrites() {
         const target = apiProxyTarget || 'http://backend:8000';
-        return [
-            {
-                source: '/api/:path*',
-                destination: `${target}/api/:path*`
-            }
-        ];
+        return {
+            fallback: [
+                {
+                    source: '/api/:path*',
+                    destination: `${target}/api/:path*`,
+                },
+            ],
+        };
     },
     webpack(config, { isServer }) {
         config.resolve.alias = {
