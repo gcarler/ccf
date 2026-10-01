@@ -95,7 +95,7 @@ export default function GradingSchemeDrawer({
     setCuts(updated);
   };
 
-  const handleCutChange = (index: number, field: keyof GradingSchemeCut, value: any) => {
+  const handleCutChange = (index: number, field: 'name' | 'weight_percent', value: string | number) => {
     const updated = [...cuts];
     updated[index] = { ...updated[index], [field]: value };
     setCuts(updated);

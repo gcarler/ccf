@@ -150,7 +150,7 @@ export default function AssessmentDrawer({ assessmentId, enrollmentId, token, on
                                     aria-valuemax={questions.length}
                                     aria-label="Progreso de la evaluación"
                                     initial={{ width: 0 }} animate={{ width: `${(currentStep / questions.length) * 100}%` }}
-                                    className="h-full bg-[hsl(var(--primary))] shadow-[0_0_10px_rgba(37,99,235,0.5)]"
+                                    className="h-full bg-[hsl(var(--primary))] shadow-[0_0_10px_hsl(var(--primary)/50%)]"
                                 />
                             </div>
                         )}

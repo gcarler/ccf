@@ -238,7 +238,7 @@ export default function AcademyClient() {
                         const grad = gradients[idx % gradients.length];
                         return (
                             <div key={card.title} className="group cursor-pointer select-none space-y-1">
-                                <p className={`text-4xl md:text-5xl lg:text-6xl font-black tracking-tight text-[hsl(var(--foreground))] ${grad} group-hover:bg-gradient-to-r group-hover:bg-clip-text group-hover:text-transparent group-hover:scale-105 group-hover:drop-shadow-[0_0_18px_rgba(99,102,241,0.35)] transition-all duration-300 origin-left`}>
+                                <p className={`text-4xl md:text-5xl lg:text-6xl font-black tracking-tight text-[hsl(var(--foreground))] ${grad} group-hover:bg-gradient-to-r group-hover:bg-clip-text group-hover:text-transparent group-hover:scale-105 group-hover:drop-shadow-[0_0_18px_hsl(var(--primary)/35%)] transition-all duration-300 origin-left`}>
                                     {card.value}
                                 </p>
                                 <p className="text-xs font-bold uppercase tracking-wider text-[hsl(var(--muted-foreground))] group-hover:text-[hsl(var(--foreground))] transition-colors">
