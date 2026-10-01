@@ -6,11 +6,40 @@ import clsx from "clsx";
 import { Check, Loader2, Search, User, X } from "lucide-react";
 import { apiFetch } from "@/lib/http";
 import { useAuth } from "@/context/AuthContext";
+import { toast } from "sonner";
 
 interface UserRecord {
   id: string;
   username: string;
   email?: string;
+}
+
+interface PersonaApiRecord {
+  id: string | number;
+  nombre_completo?: string | null;
+  first_name?: string | null;
+  last_name?: string | null;
+  username?: string | null;
+  email?: string | null;
+  user?: {
+    id?: string | number;
+    username?: string | null;
+    email?: string | null;
+  } | null;
+}
+
+function toUserRecord(persona: PersonaApiRecord): UserRecord {
+  const fullName = [persona.first_name, persona.last_name].filter(Boolean).join(" ");
+  return {
+    id: String(persona.user?.id ?? persona.id),
+    username:
+      persona.nombre_completo ||
+      fullName ||
+      persona.user?.username ||
+      persona.username ||
+      `#${persona.id}`,
+    email: persona.user?.email ?? persona.email ?? undefined,
+  };
 }
 
 interface InlineUserPickerProps {
@@ -40,10 +69,11 @@ export function InlineUserPicker({ value, onChange, disabled }: InlineUserPicker
 
   useEffect(() => {
     if (!value) {
+      lastFetchedValueRef.current = null;
       if (displayNameRef.current !== null) setDisplayName(null);
       return;
     }
-    const found = users.find((u) => u.id === value);
+    const found = users.find(u => u.id === value);
     if (found) {
       if (found.username !== displayNameRef.current) setDisplayName(found.username);
       lastFetchedValueRef.current = value;
@@ -52,10 +82,10 @@ export function InlineUserPicker({ value, onChange, disabled }: InlineUserPicker
     if (lastFetchedValueRef.current === value) return;
     lastFetchedValueRef.current = value;
     let canceled = false;
-    apiFetch<any>(`/crm/personas/${encodeURIComponent(value)}`, { method: "GET", token: token ?? undefined })
-      .then((m: any) => {
+    apiFetch<PersonaApiRecord>(`/crm/personas/${encodeURIComponent(value)}`, { method: "GET", token: token ?? undefined })
+      .then(persona => {
         if (canceled) return;
-        const name = m?.nombre_completo || m?.user?.username || m?.username || null;
+        const name = toUserRecord(persona).username;
         if (name && name !== displayNameRef.current) setDisplayName(name);
       })
       .catch(() => {
@@ -67,32 +97,50 @@ export function InlineUserPicker({ value, onChange, disabled }: InlineUserPicker
   }, [value, users, token]);
 
   useEffect(() => {
-    if (!open) return;
+    if (!open) {
+      setLoading(false);
+      return;
+    }
+
+    let canceled = false;
+    const controller = new AbortController();
     setLoading(true);
     const trimmed = query.trim();
-    const qs = trimmed ? `?q=${encodeURIComponent(trimmed)}&limit=50` : "?limit=50";
-    apiFetch<any[]>(`/crm/personas/${qs}`, { method: "GET", token: token ?? undefined })
-      .then((data) => {
-        const list: UserRecord[] = Array.isArray(data)
-          ? data.map((m: any) => ({
-              id: String(m.user?.id ?? m.id),
-              username: m.nombre_completo || m.user?.username || m.username || `#${m.id}`,
-              email: m.user?.email ?? m.email,
-            }))
-          : [];
-        setUsers(list);
-        if (value) {
-          const found = list.find((u) => u.id === value);
-          if (found) setDisplayName(found.username);
-        }
+    const timeoutId = setTimeout(() => {
+      apiFetch<PersonaApiRecord[]>("/crm/personas", {
+        method: "GET",
+        token: token ?? undefined,
+        query: { search: trimmed || undefined, limit: 50 },
+        signal: controller.signal,
       })
-      .catch(() => setUsers([]))
-      .finally(() => setLoading(false));
-  }, [open, query, token, value]);
+        .then(data => {
+          if (canceled) return;
+          const list: UserRecord[] = Array.isArray(data)
+            ? data.map(toUserRecord)
+            : [];
+          setUsers(list);
+          if (value) {
+            const found = list.find(u => u.id === value);
+            if (found) setDisplayName(found.username);
+          }
+        })
+        .catch(() => {
+          if (!canceled && !controller.signal.aborted) {
+            setUsers([]);
+            toast.error("No se pudieron cargar las personas.");
+          }
+        })
+        .finally(() => {
+          if (!canceled) setLoading(false);
+        });
+    }, 300);
 
-  const filtered = query
-    ? users.filter((u) => u.username.toLowerCase().includes(query.toLowerCase()))
-    : users;
+    return () => {
+      canceled = true;
+      clearTimeout(timeoutId);
+      controller.abort();
+    };
+  }, [open, query, token, value]);
 
   const initials = displayName?.slice(0, 2).toUpperCase() || "";
 
@@ -105,14 +153,14 @@ export function InlineUserPicker({ value, onChange, disabled }: InlineUserPicker
           className={clsx(
             "group flex items-center justify-center min-w-[40px] min-h-[40px] rounded-lg transition-all",
             "hover:bg-[hsl(var(--surface-2))] dark:hover:bg-[hsl(var(--surface-2))]",
-            open && "bg-info-soft ring-1 ring-info/30",
+            open && "bg-[hsl(var(--surface-2))] ring-1 ring-[hsl(var(--primary))]/30",
             disabled && "opacity-50 cursor-not-allowed"
           )}
           title={displayName ? `Asignado a ${displayName}` : "Asignar persona"}
           aria-label="Selector de persona asignada"
         >
           {value ? (
-            <div className="size-6 rounded-full bg-gradient-to-br from-primary to-info flex items-center justify-center font-semibold text-white shrink-0 shadow-sm text-2xs">
+            <div className="size-6 rounded-full bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] flex items-center justify-center font-semibold shrink-0 shadow-sm text-2xs">
               {initials}
             </div>
           ) : (
@@ -139,34 +187,34 @@ export function InlineUserPicker({ value, onChange, disabled }: InlineUserPicker
               className="flex-1 text-sm text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] bg-transparent outline-none placeholder:text-[hsl(var(--text-secondary))]"
             />
             {query && (
-              <button onClick={() => setQuery("")}>
+              <button aria-label="Limpiar búsqueda" onClick={() => setQuery("")}>
                 <X size={12} className="text-[hsl(var(--text-secondary))]" />
               </button>
             )}
           </div>
           <div className="max-h-[200px] overflow-y-auto py-1">
+            {value && (
+              <button
+                onClick={() => {
+                  onChange(null, null);
+                  setDisplayName(null);
+                  setOpen(false);
+                }}
+                className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-[hsl(var(--destructive))]/10 text-[hsl(var(--destructive))] transition-colors"
+              >
+                <X size={12} />
+                <span className="text-xs font-bold">Quitar asignación</span>
+              </button>
+            )}
             {loading ? (
-              <div className="flex items-center justify-center py-1.5">
+              <div className="flex items-center justify-center py-1.5" role="status" aria-label="Buscando personas">
                 <Loader2 size={16} className="text-[hsl(var(--primary))] animate-spin" />
               </div>
-            ) : filtered.length === 0 ? (
+            ) : users.length === 0 ? (
               <p className="text-xs text-[hsl(var(--text-secondary))] text-center py-1.5">Sin resultados</p>
             ) : (
               <>
-                {value && (
-                  <button
-                    onClick={() => {
-                      onChange(null, null);
-                      setDisplayName(null);
-                      setOpen(false);
-                    }}
-                    className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-[hsl(var(--danger-muted))] dark:hover:bg-[hsl(var(--danger)/0.1)] text-danger transition-colors"
-                  >
-                    <X size={12} />
-                    <span className="text-xs font-bold">Quitar asignación</span>
-                  </button>
-                )}
-                {filtered.map((u) => (
+                {users.map((u) => (
                   <button
                     key={u.id}
                     onClick={() => {
@@ -177,11 +225,11 @@ export function InlineUserPicker({ value, onChange, disabled }: InlineUserPicker
                     className={clsx(
                       "w-full flex items-center gap-2.5 px-3 py-2 transition-colors",
                       u.id === value
-                        ? "bg-info-soft text-info-text"
+                        ? "bg-[hsl(var(--primary))]/10 text-[hsl(var(--primary))]"
                         : "hover:bg-[hsl(var(--surface-1))] dark:hover:bg-[hsl(var(--surface-2))]"
                     )}
                   >
-                    <div className="size-6 rounded-full bg-info-soft flex items-center justify-center font-semibold text-info-text shrink-0 text-2xs">
+                    <div className="size-6 rounded-full bg-[hsl(var(--surface-2))] flex items-center justify-center font-semibold text-[hsl(var(--text-primary))] shrink-0 text-2xs">
                       {u.username.charAt(0).toUpperCase()}
                     </div>
                     <div className="flex-1 text-left">
