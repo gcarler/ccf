@@ -132,6 +132,7 @@ MODULE_PREFIXES: dict[str, tuple[str, ...]] = {
         "backend/crud/agenda",
         "backend/models_agenda",
         "backend/schemas/agenda",
+        "backend/services/agenda",
         "frontend/src/app/plataforma/agenda/",
         "frontend/src/components/agenda/",
         "frontend/tests/e2e/agenda/",

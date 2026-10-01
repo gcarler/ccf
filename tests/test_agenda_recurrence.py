@@ -454,3 +454,176 @@ def test_occurrence_start_for_and_add_exception_unit(db_session):
 
     assert add_exception(row, "2026-09-21") == ["2026-09-14", "2026-09-21"]
     assert add_exception(row, "2026-09-21") == ["2026-09-14", "2026-09-21"]  # idempotente
+
+
+# ── Detección y bloqueo de colisiones de salones / espacios ──────────────
+
+
+def _create_resource(client, headers, name="Salón Principal", resource_type="AUDITORIO"):
+    res = client.post(
+        "/api/agenda/resources",
+        json={"name": name, "resource_type": resource_type, "capacity": 100, "is_active": True},
+        headers=headers,
+    )
+    assert res.status_code == 201
+    return res.json()
+
+
+def test_space_collision_point_events_409(client, db_session):
+    admin, _, _ = seed_admin(db_session)
+    headers = auth_headers(client, email=admin.email)
+    room = _create_resource(client, headers, "Salón 1")
+
+    # Evento 1 en Salón 1 de 10:00 a 11:30
+    e1 = _create(
+        client,
+        headers,
+        title="Clase Discipulado",
+        start_at="2026-10-10T10:00:00Z",
+        end_at="2026-10-10T11:30:00Z",
+        room_id=room["id"],
+        recurrence_rule=None,
+    )
+    assert e1["room_id"] == room["id"]
+
+    # Evento 2 solapado en Salón 1 de 11:00 a 12:00 -> 409 Conflict
+    res_conflict = client.post(
+        "/api/agenda/events",
+        json=_base_payload(
+            title="Ensayo Grupo",
+            start_at="2026-10-10T11:00:00Z",
+            end_at="2026-10-10T12:00:00Z",
+            room_id=room["id"],
+            recurrence_rule=None,
+        ),
+        headers=headers,
+    )
+    assert res_conflict.status_code == 409
+    data = res_conflict.json()
+    assert data.get("conflict") is True
+    assert data.get("conflict_event_id") == e1["id"]
+    assert data.get("conflict_event_title") == "Clase Discipulado"
+
+
+def test_space_collision_different_rooms_allowed(client, db_session):
+    admin, _, _ = seed_admin(db_session)
+    headers = auth_headers(client, email=admin.email)
+    room1 = _create_resource(client, headers, "Salón A")
+    room2 = _create_resource(client, headers, "Salón B")
+
+    _create(
+        client,
+        headers,
+        title="Evento A",
+        start_at="2026-10-10T10:00:00Z",
+        end_at="2026-10-10T11:00:00Z",
+        room_id=room1["id"],
+        recurrence_rule=None,
+    )
+    # Mismo horario en salón diferente -> permitido (201)
+    e2 = _create(
+        client,
+        headers,
+        title="Evento B",
+        start_at="2026-10-10T10:00:00Z",
+        end_at="2026-10-10T11:00:00Z",
+        room_id=room2["id"],
+        recurrence_rule=None,
+    )
+    assert e2["room_id"] == room2["id"]
+
+
+def test_space_collision_recurring_series_detection(client, db_session):
+    admin, _, _ = seed_admin(db_session)
+    headers = auth_headers(client, email=admin.email)
+    room = _create_resource(client, headers, "Auditorio Central")
+
+    # Serie semanal los lunes: 2026-09-07, 2026-09-14, 2026-09-21... de 19:00 a 20:00
+    series = _create(
+        client,
+        headers,
+        title="Culto Semanal",
+        start_at="2026-09-07T19:00:00Z",
+        end_at="2026-09-07T20:00:00Z",
+        room_id=room["id"],
+        recurrence_rule="RRULE:FREQ=WEEKLY;BYDAY=MO",
+    )
+
+    # Evento puntual que choca con la segunda ocurrencia (lunes 2026-09-14 de 19:30 a 20:30)
+    res_conflict = client.post(
+        "/api/agenda/events",
+        json=_base_payload(
+            title="Reunión Especial",
+            start_at="2026-09-14T19:30:00Z",
+            end_at="2026-09-14T20:30:00Z",
+            room_id=room["id"],
+            recurrence_rule=None,
+        ),
+        headers=headers,
+    )
+    assert res_conflict.status_code == 409
+    data = res_conflict.json()
+    assert data.get("conflict") is True
+    assert data.get("conflict_event_id") == series["id"]
+
+
+def test_space_collision_respects_recurrence_exceptions(client, db_session):
+    admin, _, _ = seed_admin(db_session)
+    headers = auth_headers(client, email=admin.email)
+    room = _create_resource(client, headers, "Salón Capilla")
+
+    # Serie semanal los lunes, pero con 2026-09-14 como excepción
+    _create(
+        client,
+        headers,
+        title="Oración Semanal",
+        start_at="2026-09-07T18:00:00Z",
+        end_at="2026-09-07T19:00:00Z",
+        room_id=room["id"],
+        recurrence_rule="RRULE:FREQ=WEEKLY;BYDAY=MO",
+        recurrence_exceptions=["2026-09-14"],
+    )
+
+    # En la fecha exceptuada (2026-09-14), el espacio está libre -> 201
+    free_event = _create(
+        client,
+        headers,
+        title="Taller Libre",
+        start_at="2026-09-14T18:00:00Z",
+        end_at="2026-09-14T19:00:00Z",
+        room_id=room["id"],
+        recurrence_rule=None,
+    )
+    assert free_event["room_id"] == room["id"]
+
+
+def test_space_collision_self_update_excluded(client, db_session):
+    admin, _, _ = seed_admin(db_session)
+    headers = auth_headers(client, email=admin.email)
+    room = _create_resource(client, headers, "Salón 3")
+
+    e1 = _create(
+        client,
+        headers,
+        title="Conferencia Matutina",
+        start_at="2026-10-15T09:00:00Z",
+        end_at="2026-10-15T10:00:00Z",
+        room_id=room["id"],
+        recurrence_rule=None,
+    )
+
+    # Actualizar el título o descripción del propio evento en el mismo salón y horario -> 200 OK
+    put_res = client.put(
+        f"/api/agenda/events/{e1['id']}",
+        json=_base_payload(
+            title="Conferencia Matutina Ampliada",
+            start_at="2026-10-15T09:00:00Z",
+            end_at="2026-10-15T10:00:00Z",
+            room_id=room["id"],
+            recurrence_rule=None,
+        ),
+        headers=headers,
+    )
+    assert put_res.status_code == 200
+    assert put_res.json()["title"] == "Conferencia Matutina Ampliada"
+

@@ -15,6 +15,8 @@ class AgendaEventCreate(BaseModel):
     start_at: datetime
     end_at: datetime | None = None
     location: str | None = None
+    room_id: UUID | None = None
+    location_id: UUID | None = None
     is_all_day: bool = True
     color_hex: str | None = Field(default=None, max_length=10)
     url_conferencia: str | None = Field(default=None, max_length=255)
@@ -30,9 +32,13 @@ class AgendaEventCreate(BaseModel):
         return validate_rrule(value) if value else value
 
     @model_validator(mode="after")
-    def validate_range(self):
+    def validate_range_and_room(self):
         if self.end_at and self.end_at < self.start_at:
             raise ValueError("end_at must be greater than or equal to start_at")
+        if self.room_id and not self.location_id:
+            self.location_id = self.room_id
+        elif self.location_id and not self.room_id:
+            self.room_id = self.location_id
         return self
 
 

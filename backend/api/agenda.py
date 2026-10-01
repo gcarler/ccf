@@ -26,6 +26,7 @@ from backend.schemas.agenda import (
 )
 from backend.services.agenda_recurrence import (
     add_exception,
+    check_space_collision,
     expand_event,
     occurrence_start_for,
 )
@@ -75,6 +76,11 @@ def _serialize_event(
     is_occurrence = occurrence_start is not None
     raw_rule = (row.regla_recurrencia or "").strip()
     recurrence_id = f"{row.id}:{occurrence_start.date().isoformat()}" if is_occurrence else None
+    active_reservation = next(
+        (r for r in getattr(row, "reservas", []) if getattr(r, "deleted_at", None) is None),
+        None,
+    )
+    room_id = getattr(active_reservation, "recurso_id", None)
     return {
         "id": row.id,
         "title": row.titulo,
@@ -82,6 +88,8 @@ def _serialize_event(
         "start_at": occurrence_start or row.fecha_inicio,
         "end_at": occurrence_end or row.fecha_fin,
         "location": row.ubicacion_texto,
+        "room_id": room_id,
+        "location_id": room_id,
         "is_all_day": row.todo_el_dia,
         "created_by_persona_id": row.organizador_persona_id,
         "created_at": row.created_at,
@@ -202,7 +210,37 @@ def create_event(
     db: Session = Depends(get_db),
     current_user: models.User = AgendaEditor,
 ):
-    row = crud.create_event(db, _event_payload(payload, _sede_id(db, current_user), current_user.id))
+    sede_id = _sede_id(db, current_user)
+    target_room_id = payload.room_id or payload.location_id
+    if target_room_id:
+        resource = crud.get_resource(db, target_room_id, sede_id)
+        if not resource or not resource.activo:
+            raise HTTPException(status_code=404, detail="Salón o espacio físico no encontrado o inactivo")
+        conflict = check_space_collision(
+            db=db,
+            sede_id=sede_id,
+            room_id=target_room_id,
+            start_at=payload.start_at,
+            end_at=payload.end_at or payload.start_at,
+            recurrence_rule=payload.recurrence_rule,
+            recurrence_until=payload.recurrence_until,
+            recurrence_exceptions=payload.recurrence_exceptions,
+        )
+        if conflict:
+            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=conflict)
+
+    row = crud.create_event(db, _event_payload(payload, sede_id, current_user.id))
+    if target_room_id:
+        crud.create_reservation(
+            db,
+            {
+                "evento_id": row.id,
+                "recurso_id": target_room_id,
+                "bloqueo_inicio": payload.start_at,
+                "bloqueo_fin": payload.end_at or payload.start_at,
+            },
+        )
+        db.refresh(row)
     return _serialize_event(row)
 
 
@@ -244,10 +282,30 @@ def update_event(
     row = crud.get_event(db, event_id, sede_id)
     if not row:
         raise HTTPException(status_code=404, detail="Evento no encontrado")
+
+    target_room_id = payload.room_id or payload.location_id
+    if target_room_id:
+        resource = crud.get_resource(db, target_room_id, sede_id)
+        if not resource or not resource.activo:
+            raise HTTPException(status_code=404, detail="Salón o espacio físico no encontrado o inactivo")
+
     if occurrence_date:
         # Edición por ocurrencia (v2): la fecha se excluye de la serie y los
         # datos editados se materializan como evento puntual independiente.
         _require_series_occurrence(row, occurrence_date)
+        if target_room_id:
+            conflict = check_space_collision(
+                db=db,
+                sede_id=sede_id,
+                room_id=target_room_id,
+                start_at=payload.start_at,
+                end_at=payload.end_at or payload.start_at,
+                recurrence_rule=None,
+                exclude_event_id=row.id,
+            )
+            if conflict:
+                raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=conflict)
+
         crud.update_event(db, row, {"excepciones_recurrencia": add_exception(row, occurrence_date)})
         data = _event_payload(payload, sede_id, row.organizador_persona_id)
         data["regla_recurrencia"] = None
@@ -255,7 +313,47 @@ def update_event(
         data["excepciones_recurrencia"] = []
         data["entidad_origen_id"] = f"serie:{row.id}:{occurrence_date}"
         standalone = crud.create_event(db, data)
+        if target_room_id:
+            crud.create_reservation(
+                db,
+                {
+                    "evento_id": standalone.id,
+                    "recurso_id": target_room_id,
+                    "bloqueo_inicio": payload.start_at,
+                    "bloqueo_fin": payload.end_at or payload.start_at,
+                },
+            )
+            db.refresh(standalone)
         return _serialize_event(standalone)
+
+    # Edición normal
+    effective_rule = payload.recurrence_rule
+    effective_until = payload.recurrence_until
+    effective_exceptions = payload.recurrence_exceptions
+    if payload.recurrence_rule is None:
+        effective_rule = row.regla_recurrencia
+        effective_until = row.fecha_limite_recurrencia
+        effective_exceptions = row.excepciones_recurrencia
+    elif payload.recurrence_rule == "":
+        effective_rule = None
+        effective_until = None
+        effective_exceptions = []
+
+    if target_room_id:
+        conflict = check_space_collision(
+            db=db,
+            sede_id=sede_id,
+            room_id=target_room_id,
+            start_at=payload.start_at,
+            end_at=payload.end_at or payload.start_at,
+            recurrence_rule=effective_rule,
+            recurrence_until=effective_until,
+            recurrence_exceptions=effective_exceptions,
+            exclude_event_id=row.id,
+        )
+        if conflict:
+            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=conflict)
+
     data = _event_payload(payload, sede_id, row.organizador_persona_id)
     if payload.recurrence_rule is None:
         # PUT sin campo de recurrencia: preserva la serie existente en vez de
@@ -269,6 +367,32 @@ def update_event(
         data["fecha_limite_recurrencia"] = None
         data["excepciones_recurrencia"] = []
     row = crud.update_event(db, row, data)
+
+    # Sincronizar reservas del recurso
+    existing_reservations = crud.list_reservations(db, row.id)
+    if target_room_id:
+        active_res = next((r for r in existing_reservations if r.deleted_at is None), None)
+        if active_res:
+            crud.update_reservation(
+                db,
+                active_res,
+                {
+                    "recurso_id": target_room_id,
+                    "bloqueo_inicio": payload.start_at,
+                    "bloqueo_fin": payload.end_at or payload.start_at,
+                },
+            )
+        else:
+            crud.create_reservation(
+                db,
+                {
+                    "evento_id": row.id,
+                    "recurso_id": target_room_id,
+                    "bloqueo_inicio": payload.start_at,
+                    "bloqueo_fin": payload.end_at or payload.start_at,
+                },
+            )
+    db.refresh(row)
     return _serialize_event(row)
 
 
@@ -458,10 +582,22 @@ def create_reservation(
     db: Session = Depends(get_db),
     current_user: models.User = AgendaEditor,
 ):
-    _validate_reservation_scope(db, payload, _sede_id(db, current_user))
-    conflict = crud.check_reservation_conflict(db, payload.resource_id, payload.starts_at, payload.ends_at)
+    sede_id = _sede_id(db, current_user)
+    _validate_reservation_scope(db, payload, sede_id)
+    event = crud.get_event(db, payload.event_id, sede_id)
+    conflict = check_space_collision(
+        db=db,
+        sede_id=sede_id,
+        room_id=payload.resource_id,
+        start_at=payload.starts_at,
+        end_at=payload.ends_at,
+        recurrence_rule=event.regla_recurrencia if event else None,
+        recurrence_until=event.fecha_limite_recurrencia if event else None,
+        recurrence_exceptions=event.excepciones_recurrencia if event else None,
+        exclude_event_id=payload.event_id,
+    )
     if conflict:
-        raise HTTPException(status_code=409, detail="El recurso ya está reservado en ese horario")
+        raise HTTPException(status_code=409, detail=conflict)
     row = crud.create_reservation(
         db,
         {
@@ -486,15 +622,20 @@ def update_reservation(
     if not row or not crud.get_event(db, row.evento_id, sede_id):
         raise HTTPException(status_code=404, detail="Reserva no encontrada")
     _validate_reservation_scope(db, payload, sede_id)
-    conflict = crud.check_reservation_conflict(
-        db,
-        payload.resource_id,
-        payload.starts_at,
-        payload.ends_at,
-        exclude_reservation_id=reservation_id,
+    event = crud.get_event(db, payload.event_id, sede_id)
+    conflict = check_space_collision(
+        db=db,
+        sede_id=sede_id,
+        room_id=payload.resource_id,
+        start_at=payload.starts_at,
+        end_at=payload.ends_at,
+        recurrence_rule=event.regla_recurrencia if event else None,
+        recurrence_until=event.fecha_limite_recurrencia if event else None,
+        recurrence_exceptions=event.excepciones_recurrencia if event else None,
+        exclude_event_id=row.evento_id,
     )
     if conflict:
-        raise HTTPException(status_code=409, detail="El recurso ya está reservado en ese horario")
+        raise HTTPException(status_code=409, detail=conflict)
     row = crud.update_reservation(
         db,
         row,

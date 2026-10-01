@@ -21,9 +21,13 @@ from __future__ import annotations
 
 import logging
 from datetime import date, datetime, timedelta, timezone
-from typing import Iterable
+from typing import TYPE_CHECKING, Iterable
+from uuid import UUID
 
 from dateutil.rrule import rrulestr
+
+if TYPE_CHECKING:
+    from sqlalchemy.orm import Session
 
 logger = logging.getLogger(__name__)
 
@@ -170,3 +174,122 @@ def add_exception(row, occurrence_date: str) -> list[str]:
     exceptions = {str(day)[:10] for day in (row.excepciones_recurrencia or [])}
     exceptions.add(target)
     return sorted(exceptions)
+
+
+def check_space_collision(
+    db: Session,
+    sede_id: UUID,
+    room_id: UUID,
+    start_at: datetime,
+    end_at: datetime,
+    recurrence_rule: str | None = None,
+    recurrence_until: datetime | None = None,
+    recurrence_exceptions: list[str] | None = None,
+    exclude_event_id: UUID | None = None,
+) -> dict | None:
+    """Detecta colisiones de reserva para un salón / espacio físico en la misma sede.
+
+    Evalúa tanto eventos únicos como series recurrentes (RFC 5545), respetando
+    excepciones de recurrencia y asegurando que las reservas físicas no se solapen.
+    Devuelve un diccionario con el detalle del evento en conflicto si hay colisión,
+    o None si el espacio físico se encuentra disponible.
+    """
+    from backend.models_agenda import EventoAgenda, ReservaRecurso
+
+    start_utc = _as_utc(start_at)
+    end_utc = _as_utc(end_at or start_at)
+    if end_utc <= start_utc:
+        end_utc = start_utc + timedelta(hours=1)
+
+    # 1. Expandir ocurrencias del evento propuesto
+    mock_event = type(
+        "ProposedEvent",
+        (),
+        {
+            "id": None,
+            "fecha_inicio": start_utc,
+            "fecha_fin": end_utc,
+            "regla_recurrencia": recurrence_rule,
+            "fecha_limite_recurrencia": recurrence_until,
+            "excepciones_recurrencia": recurrence_exceptions or [],
+        },
+    )()
+
+    if recurrence_rule and recurrence_rule.strip():
+        window_start = start_utc
+        window_end = _as_utc(recurrence_until) if recurrence_until else start_utc + timedelta(days=365)
+        proposed_occurrences = expand_event(mock_event, window_start, window_end)
+        if not proposed_occurrences:
+            exc_days = {str(d)[:10] for d in (recurrence_exceptions or [])}
+            if start_utc.date().isoformat() not in exc_days:
+                proposed_occurrences = [(start_utc, end_utc)]
+    else:
+        proposed_occurrences = [(start_utc, end_utc)]
+
+    if not proposed_occurrences:
+        return None
+
+    global_min_start = min(occ[0] for occ in proposed_occurrences)
+    global_max_end = max(occ[1] for occ in proposed_occurrences)
+
+    # 2. Consultar eventos y reservas existentes para room_id en la misma sede
+    query = (
+        db.query(ReservaRecurso)
+        .join(EventoAgenda, ReservaRecurso.evento_id == EventoAgenda.id)
+        .filter(
+            ReservaRecurso.recurso_id == room_id,
+            ReservaRecurso.deleted_at.is_(None),
+            EventoAgenda.sede_id == sede_id,
+            EventoAgenda.deleted_at.is_(None),
+            EventoAgenda.estado != "CANCELADO",
+        )
+    )
+    if exclude_event_id is not None:
+        query = query.filter(ReservaRecurso.evento_id != exclude_event_id)
+
+    reservations = query.all()
+
+    # 3. Evaluar colisiones contra cada reserva / evento activo
+    for res in reservations:
+        event = res.evento
+        if not event or event.deleted_at is not None or event.estado == "CANCELADO":
+            continue
+
+        if event.regla_recurrencia and event.regla_recurrencia.strip():
+            cand_occurrences = expand_event(event, global_min_start, global_max_end)
+            for cand_start, cand_end in cand_occurrences:
+                for prop_start, prop_end in proposed_occurrences:
+                    if prop_start < cand_end and prop_end > cand_start:
+                        return {
+                            "conflict": True,
+                            "conflict_event_id": str(event.id),
+                            "conflict_event_title": event.titulo,
+                            "conflict_start": cand_start.isoformat(),
+                            "conflict_end": cand_end.isoformat(),
+                            "room_id": str(room_id),
+                            "message": (
+                                f"Conflicto de reserva: el espacio ya está reservado por el evento "
+                                f"'{event.titulo}' ({cand_start.strftime('%Y-%m-%d %H:%M')} - "
+                                f"{cand_end.strftime('%H:%M')} UTC)"
+                            ),
+                        }
+        else:
+            cand_start = _as_utc(res.bloqueo_inicio or event.fecha_inicio)
+            cand_end = _as_utc(res.bloqueo_fin or event.fecha_fin or cand_start)
+            for prop_start, prop_end in proposed_occurrences:
+                if prop_start < cand_end and prop_end > cand_start:
+                    return {
+                        "conflict": True,
+                        "conflict_event_id": str(event.id),
+                        "conflict_event_title": event.titulo,
+                        "conflict_start": cand_start.isoformat(),
+                        "conflict_end": cand_end.isoformat(),
+                        "room_id": str(room_id),
+                        "message": (
+                            f"Conflicto de reserva: el espacio ya está reservado por el evento "
+                            f"'{event.titulo}' ({cand_start.strftime('%Y-%m-%d %H:%M')} - "
+                            f"{cand_end.strftime('%H:%M')} UTC)"
+                        ),
+                    }
+
+    return None
