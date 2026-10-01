@@ -73,6 +73,10 @@ class Usuario(Base):
         uselist=False,
     )
 
+    totp_secret = synonym("mfa_secret")
+    is_totp_enabled = synonym("is_mfa_enabled")
+    totp_backup_codes = synonym("mfa_backup_codes")
+
 
 # ==========================================
 # 3. ROLES MODULARES GRANULARES

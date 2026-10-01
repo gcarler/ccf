@@ -16,6 +16,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import clsx from 'clsx';
 import WorkspaceLayout from '@/components/WorkspaceLayout';
 import { apiFetch } from '@/lib/http';
+import TwoFactorDrawer from '@/components/admin/TwoFactorDrawer';
 
 export default function AccountSettingsPage() {
     const { user, logout, refresh } = useAuth();
@@ -23,6 +24,8 @@ export default function AccountSettingsPage() {
     const [activeTab, setActiveTab] = useState<'profile' | 'security' | 'appearance' | 'notifications'>('profile');
     const [isSaving, setIsSaving] = useState(false);
     const [isChangingPassword, setIsChangingPassword] = useState(false);
+    const [is2FADrawerOpen, setIs2FADrawerOpen] = useState(false);
+    const [is2FAEnabled, setIs2FAEnabled] = useState(false);
     const [viewType, setViewType] = useState<ViewType>('grid');
     const [formValues, setFormValues] = useState({
         username: user?.username || '',
@@ -74,6 +77,16 @@ export default function AccountSettingsPage() {
         loadPersonaProfile();
         return () => { cancelled = true; };
     }, [user?.id]);
+
+    useEffect(() => {
+        let cancelled = false;
+        apiFetch<{ is_mfa_enabled: boolean }>('/v3/auth/2fa/status')
+            .then(res => {
+                if (!cancelled && res) setIs2FAEnabled(Boolean(res.is_mfa_enabled));
+            })
+            .catch(() => {});
+        return () => { cancelled = true; };
+    }, []);
 
     const tabs = [
         { id: 'profile', label: 'Mi Perfil', icon: UserCircle },
@@ -399,17 +412,40 @@ export default function AccountSettingsPage() {
                                         </div>
                                     </div>
 
-                                    <div className="p-4 bg-[hsl(var(--info-muted))] rounded-lg border border-[hsl(var(--border))] flex flex-col md:flex-row items-center justify-between gap-3 group">
+                                    <div className="p-4 bg-[hsl(var(--surface-2))] rounded-lg border border-[hsl(var(--border))] flex flex-col md:flex-row items-center justify-between gap-4 group">
                                         <div className="flex items-center gap-3">
-                                            <div className="size-8 rounded-lg bg-[hsl(var(--surface-1))] flex items-center justify-center text-[hsl(var(--primary))] shadow-sm group-hover:scale-110 transition-transform"><Fingerprint size={32} /></div>
+                                            <div className="size-10 rounded-lg bg-[hsl(var(--surface-1))] flex items-center justify-center text-[hsl(var(--primary))] shadow-sm group-hover:scale-105 transition-transform">
+                                                <Fingerprint size={24} />
+                                            </div>
                                             <div>
-                                                <h4 className="text-xl font-bold tracking-tight">Doble Factor (2FA)</h4>
-                                                <p className="text-[hsl(var(--text-secondary))] text-sm font-medium">Recomendado para cuentas administrativas y docentes.</p>
+                                                <div className="flex items-center gap-2">
+                                                    <h4 className="text-base font-bold tracking-tight">Doble Factor (2FA)</h4>
+                                                    {is2FAEnabled && (
+                                                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-2xs font-bold uppercase tracking-wider bg-[hsl(var(--primary))/0.15] text-[hsl(var(--primary))]">
+                                                            <ShieldCheck size={12} />
+                                                            Activado
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                <p className="text-[hsl(var(--text-secondary))] text-xs font-medium mt-0.5">
+                                                    {is2FAEnabled
+                                                        ? "Protección TOTP activa. Requiere código para iniciar sesión y cambiar contraseña."
+                                                        : "Recomendado para cuentas administrativas y docentes. Agrega seguridad con Google Authenticator."}
+                                                </p>
                                             </div>
                                         </div>
-                                        <div className="h-8 w-14 bg-[hsl(var(--surface-3))] rounded-full relative cursor-pointer group-hover:bg-[hsl(var(--primary))/0.2] transition-all p-1">
-                                            <div className="size-6 bg-[hsl(var(--surface-1))] rounded-full shadow-lg" />
-                                        </div>
+                                        <button
+                                            type="button"
+                                            onClick={() => setIs2FADrawerOpen(true)}
+                                            className={clsx(
+                                                "px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all shadow-sm shrink-0",
+                                                is2FAEnabled
+                                                    ? "bg-[hsl(var(--surface-1))] text-[hsl(var(--text-primary))] border border-[hsl(var(--border))] hover:bg-[hsl(var(--surface-3))]"
+                                                    : "bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] hover:opacity-90 active:scale-95"
+                                            )}
+                                        >
+                                            {is2FAEnabled ? "Gestionar 2FA" : "Configurar 2FA"}
+                                        </button>
                                     </div>
                                 </motion.div>
                             )}
@@ -446,6 +482,11 @@ export default function AccountSettingsPage() {
             </div>
             )}
         </div>
+        <TwoFactorDrawer
+            isOpen={is2FADrawerOpen}
+            onClose={() => setIs2FADrawerOpen(false)}
+            onStatusChange={setIs2FAEnabled}
+        />
         </WorkspaceLayout>
     );
 }

@@ -157,6 +157,7 @@ def _resolve_google_redirect_uri(request: Request | None = None) -> str:
 class LoginRequest(BaseModel):
     email: str
     password: str
+    totp_code: Optional[str] = None
 
 
 class InitPasswordRequest(BaseModel):
@@ -168,6 +169,7 @@ class InitPasswordRequest(BaseModel):
 class ChangePasswordRequest(BaseModel):
     current_password: str
     new_password: str = Field(..., min_length=8)
+    totp_code: Optional[str] = None
 
 
 class VerifyEmailRequest(BaseModel):
@@ -520,6 +522,31 @@ def login(
     user.locked_until = None
     db.commit()
 
+    # 2FA Check if user has MFA enabled
+    if user.is_mfa_enabled and user.mfa_secret:
+        totp_code = getattr(payload, "totp_code", None)
+        if not totp_code:
+            _log_security(db, user.id, "LOGIN_REQUIERE_2FA", ip=ip, ua=ua)
+            raise HTTPException(
+                status_code=401,
+                detail="2FA_REQUIRED",
+                headers={"X-Requires-2FA": "true"},
+            )
+        from backend.core.totp import verify_and_consume_backup_code, verify_totp_code
+
+        is_valid_totp = verify_totp_code(user.mfa_secret, totp_code, tolerance=1)
+        if not is_valid_totp:
+            backup_codes = list(user.mfa_backup_codes or [])
+            matched_backup, remaining = verify_and_consume_backup_code(backup_codes, totp_code)
+            if matched_backup:
+                user.mfa_backup_codes = remaining
+                db.commit()
+            else:
+                user.failed_login_attempts += 1
+                db.commit()
+                _log_security(db, user.id, "LOGIN_FALLIDO_2FA", ip=ip, ua=ua)
+                raise HTTPException(status_code=401, detail="Código 2FA incorrecto")
+
     # Get platform role
     platform_role_name = user.rol_plataforma.nombre if user.rol_plataforma else "MIEMBRO"
 
@@ -627,6 +654,22 @@ def change_password(
 
     if not verify_password(payload.current_password, user.password_hash):
         raise HTTPException(status_code=400, detail="Contraseña actual incorrecta")
+
+    # 2FA Check on critical security mutation
+    if user.is_mfa_enabled and user.mfa_secret:
+        totp_code = getattr(payload, "totp_code", None)
+        if not totp_code:
+            raise HTTPException(status_code=403, detail="2FA_REQUIRED")
+        from backend.core.totp import verify_and_consume_backup_code, verify_totp_code
+
+        if not verify_totp_code(user.mfa_secret, totp_code, tolerance=1):
+            backup_codes = list(user.mfa_backup_codes or [])
+            matched, remaining = verify_and_consume_backup_code(backup_codes, totp_code)
+            if matched:
+                user.mfa_backup_codes = remaining
+                db.commit()
+            else:
+                raise HTTPException(status_code=403, detail="Código 2FA incorrecto")
 
     hashed = get_password_hash(payload.new_password)
     user.password_hash = hashed
@@ -1212,5 +1255,161 @@ def send_verification_email(
     return {"status": "success", "message": "Correo de verificación enviado"}
 
 
-# ─── Include this in the main app router ────────────────────────────
-# app.include_router(auth_v3_router)
+# ═══════════════════════════════════════════════════════════════════════
+# 10. TWO-FACTOR AUTHENTICATION (2FA TOTP RFC 6238)
+# ═══════════════════════════════════════════════════════════════════════
+
+
+class TwoFactorSetupResponse(BaseModel):
+    secret: str
+    otpauth_uri: str
+    is_mfa_enabled: bool
+    backup_codes: list[str] = Field(default_factory=list)
+
+
+class TwoFactorVerifyRequest(BaseModel):
+    code: str
+
+
+class TwoFactorVerifyResponse(BaseModel):
+    verified: bool
+    is_mfa_enabled: bool
+    backup_codes: list[str] = Field(default_factory=list)
+
+
+class TwoFactorDisableRequest(BaseModel):
+    code: str
+    password: Optional[str] = None
+
+
+@router.get("/2fa/status", response_model=dict)
+def get_2fa_status(
+    current_user: Usuario = Depends(require_auth_dep),
+):
+    """Retorna el estado de 2FA del usuario actual."""
+    return {
+        "is_mfa_enabled": bool(current_user.is_mfa_enabled),
+        "has_secret": bool(current_user.mfa_secret),
+        "backup_codes_count": len(current_user.mfa_backup_codes or []),
+    }
+
+
+@router.post("/2fa/setup", response_model=TwoFactorSetupResponse)
+def setup_2fa(
+    db: Session = Depends(get_db),
+    current_user: Usuario = Depends(require_auth_dep),
+):
+    """Inicia la configuración de 2FA generando un nuevo secreto y URI otpauth."""
+    from backend.core.totp import generate_backup_codes, generate_totp_secret, generate_totp_uri
+
+    user = current_user
+    secret = generate_totp_secret()
+    user.mfa_secret = secret
+    backup_codes = generate_backup_codes()
+    user.mfa_backup_codes = backup_codes
+    db.commit()
+    db.refresh(user)
+
+    account_name = user.email or user.username or str(user.id)
+    otpauth_uri = generate_totp_uri(secret, account_name=account_name, issuer="CCF Plataforma")
+
+    return {
+        "secret": secret,
+        "otpauth_uri": otpauth_uri,
+        "is_mfa_enabled": bool(user.is_mfa_enabled),
+        "backup_codes": backup_codes,
+    }
+
+
+@router.post("/2fa/verify", response_model=TwoFactorVerifyResponse)
+def verify_2fa(
+    payload: TwoFactorVerifyRequest,
+    request: Request,
+    db: Session = Depends(get_db),
+    current_user: Usuario = Depends(require_auth_dep),
+):
+    """Verifica un código de 6 dígitos. Si es válido y estaba pendiente, activa 2FA."""
+    from backend.core.totp import verify_and_consume_backup_code, verify_totp_code
+
+    user = current_user
+    if not user.mfa_secret:
+        raise HTTPException(status_code=400, detail="Debe iniciar el setup de 2FA primero")
+
+    is_valid = verify_totp_code(user.mfa_secret, payload.code, tolerance=1)
+    if not is_valid:
+        backup_codes = list(user.mfa_backup_codes or [])
+        matched, remaining = verify_and_consume_backup_code(backup_codes, payload.code)
+        if matched:
+            user.mfa_backup_codes = remaining
+            db.commit()
+            return {
+                "verified": True,
+                "is_mfa_enabled": bool(user.is_mfa_enabled),
+                "backup_codes": [],
+            }
+        raise HTTPException(status_code=400, detail="Código 2FA inválido o expirado")
+
+    generated_backups = list(user.mfa_backup_codes or [])
+    if not user.is_mfa_enabled:
+        user.is_mfa_enabled = True
+        if not generated_backups:
+            from backend.core.totp import generate_backup_codes
+
+            generated_backups = generate_backup_codes()
+            user.mfa_backup_codes = generated_backups
+        _log_security(
+            db,
+            user.id,
+            "2FA_ACTIVADO",
+            ip=request.client.host if request.client else None,
+            ua=request.headers.get("user-agent"),
+        )
+
+    db.commit()
+    db.refresh(user)
+
+    return {
+        "verified": True,
+        "is_mfa_enabled": bool(user.is_mfa_enabled),
+        "backup_codes": generated_backups,
+    }
+
+
+@router.post("/2fa/disable", response_model=dict)
+def disable_2fa(
+    payload: TwoFactorDisableRequest,
+    request: Request,
+    db: Session = Depends(get_db),
+    current_user: Usuario = Depends(require_auth_dep),
+):
+    """Desactiva 2FA previa validación de código de seguridad (TOTP o backup code)."""
+    from backend.core.totp import verify_and_consume_backup_code, verify_totp_code
+
+    user = current_user
+    if not user.is_mfa_enabled or not user.mfa_secret:
+        return {"status": "success", "message": "2FA no estaba activo"}
+
+    if payload.password and user.password_hash:
+        if not verify_password(payload.password, user.password_hash):
+            raise HTTPException(status_code=400, detail="Contraseña incorrecta")
+
+    is_valid = verify_totp_code(user.mfa_secret, payload.code, tolerance=1)
+    if not is_valid:
+        backup_codes = list(user.mfa_backup_codes or [])
+        matched, _ = verify_and_consume_backup_code(backup_codes, payload.code)
+        if not matched:
+            raise HTTPException(status_code=400, detail="Código 2FA requerido para desactivar la protección")
+
+    user.is_mfa_enabled = False
+    user.mfa_secret = None
+    user.mfa_backup_codes = []
+    _log_security(
+        db,
+        user.id,
+        "2FA_DESACTIVADO",
+        ip=request.client.host if request.client else None,
+        ua=request.headers.get("user-agent"),
+    )
+    db.commit()
+
+    return {"status": "success", "message": "2FA desactivado exitosamente"}
