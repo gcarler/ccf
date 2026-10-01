@@ -21,14 +21,6 @@ import { apiFetch } from "@/lib/http";
 import { useAuth } from "@/context/AuthContext";
 import { toast } from "sonner";
 
-interface AutomationRule {
-  id: string;
-  name: string;
-  trigger_type: string;
-  action_type?: string | null;
-  is_active: boolean;
-  last_run?: string | null;
-}
 
 const TRIGGER_META: Record<
   string,
@@ -77,12 +69,15 @@ function getTriggerMeta(triggerType: string) {
   );
 }
 
+import { AutomationRuleDrawer, type AutomationRule } from "./AutomationRuleDrawer";
+
 export default function AutomationsPage() {
   const { token, loading: authLoading } = useAuth();
   const [rules, setRules] = useState<AutomationRule[]>([]);
   const [loading, setLoading] = useState(true);
-  const [creating, setCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [editingRule, setEditingRule] = useState<AutomationRule | null>(null);
 
   useEffect(() => {
     if (authLoading) return;
@@ -108,7 +103,7 @@ export default function AutomationsPage() {
         signal,
       });
       setRules(data?.items ?? []);
-    } catch (err) {
+    } catch {
       setRules([]);
       setError('No se pudieron cargar las automatizaciones.');
       toast.error("Error loading automations:");
@@ -131,34 +126,31 @@ export default function AutomationsPage() {
       setRules((prev) =>
         prev.map((r) => (r.id === id ? { ...r, is_active: !active } : r))
       );
-    } catch (err) {
+    } catch {
       toast.error("Error toggling automation:");
     }
   };
 
-  const handleCreate = async () => {
-    if (!token) {
-      setError('Debes iniciar sesión para crear automatizaciones.');
-      return;
-    }
-    setCreating(true);
-    try {
-      const newRule = await apiFetch<AutomationRule>("/admin/automations", {
-        method: "POST",
-        token,
-        body: {
-          name: "Nueva Regla",
-          trigger_type: "manual",
-          action_type: "notification",
-          is_active: true,
-        },
-      });
-      setRules((prev) => [newRule, ...prev]);
-    } catch (err) {
-      toast.error("Error creating automation:");
-    } finally {
-      setCreating(false);
-    }
+  const handleOpenCreate = () => {
+    setEditingRule(null);
+    setIsDrawerOpen(true);
+  };
+
+  const handleOpenEdit = (rule: AutomationRule) => {
+    setEditingRule(rule);
+    setIsDrawerOpen(true);
+  };
+
+  const handleRuleSaved = (saved: AutomationRule) => {
+    setRules((prev) => {
+      const idx = prev.findIndex((r) => r.id === saved.id);
+      if (idx >= 0) {
+        const copy = [...prev];
+        copy[idx] = saved;
+        return copy;
+      }
+      return [saved, ...prev];
+    });
   };
 
   return (
@@ -194,16 +186,10 @@ export default function AutomationsPage() {
               </p>
             </div>
             <button
-              onClick={handleCreate}
-              disabled={creating}
-              className="flex items-center gap-2 px-4 py-1.5 bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] rounded-lg text-xs font-semibold uppercase tracking-wide shadow-xl hover:bg-[hsl(var(--primary))]/90 active:scale-95 transition-all disabled:opacity-60"
+              onClick={handleOpenCreate}
+              className="flex items-center gap-2 px-4 py-1.5 bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] rounded-lg text-xs font-semibold uppercase tracking-wide shadow-xl hover:bg-[hsl(var(--primary))]/90 active:scale-95 transition-all"
             >
-              {creating ? (
-                <Loader2 size={13} className="animate-spin" />
-              ) : (
-                <Plus size={13} />
-              )}{" "}
-              Nueva Regla
+              <Plus size={13} /> Nueva Regla
             </button>
           </div>
 
@@ -280,7 +266,10 @@ export default function AutomationsPage() {
                     </div>
 
                     <div className="pt-3 border-t border-[hsl(var(--border))] flex items-center justify-between">
-                      <button className="text-2xs font-semibold uppercase text-[hsl(var(--primary))] tracking-wide flex items-center gap-1.5 hover:underline">
+                      <button
+                        onClick={() => handleOpenEdit(rule)}
+                        className="text-2xs font-semibold uppercase text-[hsl(var(--primary))] tracking-wide flex items-center gap-1.5 hover:underline"
+                      >
                         Configurar lógica <ArrowRight size={11} />
                       </button>
                       {!rule.is_active && (
@@ -298,7 +287,7 @@ export default function AutomationsPage() {
                 initial={{ opacity: 0, y: 16 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: rules.length * 0.07 }}
-                onClick={handleCreate}
+                onClick={handleOpenCreate}
                 className="flex flex-col items-center justify-center p-3 rounded-lg border-2 border-dashed border-[hsl(var(--border))] text-center gap-2 group cursor-pointer hover:border-[hsl(var(--primary))] hover:bg-[hsl(var(--surface-2))] transition-all min-h-[100px]"
               >
                 <div className="size-10 rounded-md bg-[hsl(var(--surface-1))] shadow-sm border border-[hsl(var(--border))] flex items-center justify-center text-[hsl(var(--muted-foreground))] group-hover:text-[hsl(var(--primary))] group-hover:border-[hsl(var(--primary))] transition-all">
@@ -309,13 +298,21 @@ export default function AutomationsPage() {
                     Crear Regla
                   </h4>
                   <p className="text-2xs font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wide mt-0.5">
-                    Expandir Inteligencia
+                    Constructor Trigger → Action
                   </p>
                 </div>
               </motion.div>
             </div>
           ) : null}
         </div>
+
+        {/* Drawer Lateral Deslizante */}
+        <AutomationRuleDrawer
+          isOpen={isDrawerOpen}
+          onClose={() => setIsDrawerOpen(false)}
+          rule={editingRule}
+          onSaved={handleRuleSaved}
+        />
       </div>
     </ProjectsShell>
   );
