@@ -10,15 +10,12 @@ import {
   Sparkles,
   MessageCircle,
   Share2,
-  Copy,
   Check,
   ExternalLink,
-  ChevronRight,
   Instagram,
   Facebook,
   Twitter,
-  Heart,
-} from "lucide-react";
+  } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { toast } from "sonner";

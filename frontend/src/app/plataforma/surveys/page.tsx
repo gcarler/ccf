@@ -5,13 +5,10 @@ import { useRouter } from 'next/navigation';
 import {
     Plus,
     Search,
-    Filter,
     BarChart3,
     FileText,
     ExternalLink,
-    MoreVertical,
     Trash2,
-    Calendar,
     Users,
     CheckCircle2,
     AlertCircle,
@@ -73,7 +70,7 @@ export default function SurveysManagementPage() {
         if (!surveyToDelete) return;
         setIsDeleting(true);
         try {
-            await apiFetch(`/api/surveys/${surveyToDelete.id}`, {
+            await apiFetch(`/surveys/${surveyToDelete.id}`, {
                 method: 'DELETE',
             });
             toast.success('Encuesta eliminada correctamente');

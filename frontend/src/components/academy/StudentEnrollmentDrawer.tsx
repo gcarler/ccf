@@ -33,7 +33,7 @@ export default function StudentEnrollmentDrawer({
     setLoading(true);
     try {
       const data = await apiFetch<StudentEnrollment[]>(
-        `/api/academy/admin/offerings/${offering.id}/students`,
+        `/academy/admin/offerings/${offering.id}/students`,
         { token }
       );
       setEnrollments(data || []);
@@ -57,7 +57,7 @@ export default function StudentEnrollmentDrawer({
 
     setEnrolling(true);
     try {
-      await apiFetch(`/api/academy/admin/offerings/${offering.id}/students`, {
+      await apiFetch(`/academy/admin/offerings/${offering.id}/students`, {
         method: 'POST',
         token,
         body: JSON.stringify({ persona_id: personaIdInput.trim() }),
@@ -78,7 +78,7 @@ export default function StudentEnrollmentDrawer({
     if (!offering || !token) return;
     setRemovingId(personaId);
     try {
-      await apiFetch(`/api/academy/admin/offerings/${offering.id}/students/${personaId}`, {
+      await apiFetch(`/academy/admin/offerings/${offering.id}/students/${personaId}`, {
         method: 'DELETE',
         token,
       });

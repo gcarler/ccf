@@ -1,7 +1,7 @@
 "use client";
 
 import React, { FormEvent, useCallback, useEffect, useState } from 'react';
-import { Award, Brain, CheckCircle2, Loader2, Send, Sparkles } from 'lucide-react';
+import { Brain, CheckCircle2, Loader2, Send } from 'lucide-react';
 import { DSButton, DSSkeleton } from '@/design';
 import { RightPanel } from '@/components/ui/RightPanel';
 import { apiFetch, extractErrorMessage } from '@/lib/http';

@@ -36,8 +36,8 @@ export default function TemplatesPage() {
     try {
       setLoading(true);
       const [catsRes, plantsRes] = await Promise.all([
-        apiFetch<Categoria[]>("/api/crm/resources/categorias"),
-        apiFetch<Plantilla[]>("/api/crm/resources/plantillas")
+        apiFetch<Categoria[]>("/crm/resources/categorias"),
+        apiFetch<Plantilla[]>("/crm/resources/plantillas")
       ]);
       setCategorias(catsRes);
       setPlantillas(plantsRes);
@@ -58,12 +58,12 @@ export default function TemplatesPage() {
     try {
       let createdPlantilla;
       if (formData.id) {
-        createdPlantilla = await apiFetch<Plantilla>(`/api/crm/resources/plantillas/${formData.id}`, {
+        createdPlantilla = await apiFetch<Plantilla>(`/crm/resources/plantillas/${formData.id}`, {
           method: "PATCH",
           body: JSON.stringify(formData)
         });
       } else {
-        createdPlantilla = await apiFetch<Plantilla>("/api/crm/resources/plantillas", {
+        createdPlantilla = await apiFetch<Plantilla>("/crm/resources/plantillas", {
           method: "POST",
           body: JSON.stringify(formData)
         });
@@ -74,7 +74,7 @@ export default function TemplatesPage() {
         formDataUpload.append("file", selectedFile);
         formDataUpload.append("nombre_recurso", "Adjunto Principal");
 
-        await apiFetch(`/api/crm/resources/plantillas/${createdPlantilla.id}/adjuntos`, {
+        await apiFetch(`/crm/resources/plantillas/${createdPlantilla.id}/adjuntos`, {
           method: "POST",
           headers: {}, // FormData headers are automatically set by browser
           body: formDataUpload

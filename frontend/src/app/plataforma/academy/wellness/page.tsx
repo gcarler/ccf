@@ -9,14 +9,10 @@ import { DSSkeleton } from '@/design';
 import {
   HeartPulse,
   GraduationCap,
-  ShieldCheck,
-  AlertTriangle,
   CheckCircle2,
   Bell,
   Sparkles,
-  BookOpen,
-  LifeBuoy,
-} from 'lucide-react';
+  } from 'lucide-react';
 import type { StudentRiskProfile, WellnessAlert } from '@/types/academy';
 import clsx from 'clsx';
 

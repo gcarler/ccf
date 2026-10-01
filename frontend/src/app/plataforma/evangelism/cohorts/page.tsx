@@ -1,33 +1,24 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
-  Award,
-  BookOpen,
   Calendar,
   CheckCircle2,
   ChevronRight,
   Download,
-  Flame,
-  Globe2,
   HeartHandshake,
-  Layers,
-  LineChart,
   MapPin,
   RefreshCw,
   ShieldCheck,
   Sparkles,
   TrendingUp,
-  UserCheck,
   Users,
-  Droplets,
-} from "lucide-react";
+  } from "lucide-react";
 import { apiFetch, apiFetchBlob } from "@/lib/http";
 import EvangelismShell from "@/components/evangelism/EvangelismShell";
 import WorkspaceDrawer from "@/components/WorkspaceDrawer";
 import type {
   AttendeeSpiritualJourneyData,
-  EventCohortAttendeeItem,
   EventCohortRetentionData,
   MinistryEvent,
   MultiSedeCohortAnalysisData,
@@ -75,7 +66,9 @@ export default function CohortsRetentionPage() {
   };
 
   useEffect(() => {
+    // Carga inicial única; la recarga manual vía loadGlobalData es intencional (botón de refresh).
     loadGlobalData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Cargar cohorte de evento específico al cambiar de selección

@@ -85,7 +85,7 @@ export default function WorkspaceDrawer({
                         style={{
                             width: isExpanded || (typeof window !== 'undefined' && window.innerWidth < 640) ? '100vw' : width,
                             top: 'var(--workspace-header-height, 2.5rem)',
-                            height: 'calc(100dvh - var(--workspace-header-height, 2.5rem))',
+                            bottom: 0,
                         }}
                         role="complementary"
                         aria-label={title}

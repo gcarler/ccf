@@ -175,7 +175,7 @@ export default function CreateSurveyDrawer({ isOpen, onClose, onCreated }: Creat
                 preguntas: template.preguntas,
             };
 
-            const data = await apiFetch<any>('/api/surveys', {
+            const data = await apiFetch<any>('/surveys', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload),

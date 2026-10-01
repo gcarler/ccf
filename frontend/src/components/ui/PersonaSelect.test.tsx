@@ -104,7 +104,7 @@ describe('PersonaSelect (Reactive Server-side Search QA-002)', () => {
     });
 
     it('displays subtle loading spinner inside search input while fetching', async () => {
-        let resolveSearch: (val: any) => void = () => {};
+        let resolveSearch: (val: unknown) => void = () => {};
         const searchPromise = new Promise((resolve) => {
             resolveSearch = resolve;
         });

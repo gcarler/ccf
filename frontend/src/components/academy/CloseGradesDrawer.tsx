@@ -31,7 +31,7 @@ export default function CloseGradesDrawer({
     setLoading(true);
     try {
       const data = await apiFetch<OfferingGradesDetail>(
-        `/api/academy/admin/offerings/${offering.id}/grades`,
+        `/academy/admin/offerings/${offering.id}/grades`,
         { token }
       );
       setGradesDetail(data);
@@ -66,7 +66,7 @@ export default function CloseGradesDrawer({
     if (!offering || !token) return;
     setClosing(true);
     try {
-      await apiFetch(`/api/academy/admin/offerings/${offering.id}/close-grades`, {
+      await apiFetch(`/academy/admin/offerings/${offering.id}/close-grades`, {
         method: 'POST',
         token,
       });

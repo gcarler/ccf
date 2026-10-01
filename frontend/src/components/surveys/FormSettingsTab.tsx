@@ -2,17 +2,14 @@
 
 import React, { useState } from 'react';
 import {
-    Save,
     Share2,
     Copy,
     Check,
     Globe,
-    Lock,
     Clock,
     Shield,
     MessageSquare,
-    Link as LinkIcon,
-    Loader2,
+    Link as Loader2,
 } from 'lucide-react';
 import { EncuestaFormulario, EstadoFormulario } from '@/types/surveys';
 import { apiFetch } from '@/lib/http';
@@ -29,7 +26,7 @@ export default function FormSettingsTab({ survey, onSurveyUpdated }: FormSetting
     const [limitarUnaRespuesta, setLimitarUnaRespuesta] = useState(survey.limitar_una_respuesta || false);
     const [requiereAutenticacion, setRequiereAutenticacion] = useState(survey.requiere_autenticacion || false);
     const [mostrarBarraProgreso, setMostrarBarraProgreso] = useState(survey.mostrar_barra_progreso ?? true);
-    const [permitirEditar, setPermitirEditar] = useState(survey.permitir_editar_respuesta || false);
+    const [permitirEditar] = useState(survey.permitir_editar_respuesta || false);
     const [mensajeConfirmacion, setMensajeConfirmacion] = useState(
         survey.mensaje_confirmacion || '¡Tu respuesta ha sido registrada exitosamente!'
     );
@@ -76,7 +73,7 @@ export default function FormSettingsTab({ survey, onSurveyUpdated }: FormSetting
                 fecha_cierre: fechaCierre ? new Date(fechaCierre).toISOString() : null,
             };
 
-            const updated = await apiFetch<EncuestaFormulario>(`/api/surveys/${survey.id}`, {
+            const updated = await apiFetch<EncuestaFormulario>(`/surveys/${survey.id}`, {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload),

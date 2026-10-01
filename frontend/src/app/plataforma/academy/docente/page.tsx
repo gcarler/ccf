@@ -19,7 +19,6 @@ import {
   Clock,
   Sparkles,
   HeartPulse,
-  Brain,
   ShieldAlert,
   CheckCircle2,
   RefreshCw,
@@ -54,13 +53,12 @@ export default function DocentePortalPage() {
   // Direct Tab: Copiloto inline forms state
   const [copilotTopic, setCopilotTopic] = useState('');
   const [copilotRubricTitle, setCopilotRubricTitle] = useState('');
-  const [copilotCompetencies, setCopilotCompetencies] = useState('');
 
   const fetchMyOfferings = useCallback(async () => {
     if (!token) return;
     setLoading(true);
     try {
-      const data = await apiFetch<PeriodOffering[]>('/api/academy/docente/my-offerings', {
+      const data = await apiFetch<PeriodOffering[]>('/academy/docente/my-offerings', {
         token,
         cache: 'no-store',
       });
@@ -81,7 +79,7 @@ export default function DocentePortalPage() {
     setLoadingSignals(true);
     try {
       const data = await apiFetch<WellnessSignal[]>(
-        `/api/academy/wellness/${offeringId}/signals`,
+        `/academy/wellness/${offeringId}/signals`,
         { token, cache: 'no-store' }
       );
       setTabSignals(Array.isArray(data) ? data : []);
@@ -109,7 +107,7 @@ export default function DocentePortalPage() {
     setDetectingSignals(true);
     try {
       const res = await apiFetch<{ detected_count: number; summary: string }>(
-        '/api/academy/wellness/detect',
+        '/academy/wellness/detect',
         {
           token,
           method: 'POST',
@@ -129,7 +127,7 @@ export default function DocentePortalPage() {
     if (!token) return;
     setResolvingSignalId(id);
     try {
-      await apiFetch<WellnessSignal>(`/api/academy/wellness/signals/${id}/resolve`, {
+      await apiFetch<WellnessSignal>(`/academy/wellness/signals/${id}/resolve`, {
         token,
         method: 'POST',
       });

@@ -3,12 +3,9 @@
 import React, { useEffect, useMemo, useState } from "react";
 import {
   AlertTriangle,
-  ArrowRight,
-  Calendar,
   CheckCircle2,
   Clock,
   Download,
-  ExternalLink,
   Layers,
   Mail,
   Phone,
@@ -17,9 +14,7 @@ import {
   Sparkles,
   TrendingUp,
   UserCheck,
-  UserX,
-  Users,
-} from "lucide-react";
+  } from "lucide-react";
 import { apiFetch, apiFetchBlob } from "@/lib/http";
 import { toast } from "sonner";
 import WorkspaceDrawer from "@/components/WorkspaceDrawer";

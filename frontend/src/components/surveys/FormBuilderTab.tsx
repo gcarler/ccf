@@ -147,7 +147,7 @@ export default function FormBuilderTab({ survey, onSurveyUpdated }: FormBuilderT
         setIsSaving(true);
         try {
             // 1. Guardar metadatos del formulario vía PATCH
-            const updatedSurveyData = await apiFetch<EncuestaFormulario>(`/api/surveys/${survey.id}`, {
+            const updatedSurveyData = await apiFetch<EncuestaFormulario>(`/surveys/${survey.id}`, {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -180,7 +180,7 @@ export default function FormBuilderTab({ survey, onSurveyUpdated }: FormBuilderT
                 configuracion: q.configuracion || {},
             }));
 
-            const updatedQuestions = await apiFetch<EncuestaPregunta[]>(`/api/surveys/${survey.id}/questions`, {
+            const updatedQuestions = await apiFetch<EncuestaPregunta[]>(`/surveys/${survey.id}/questions`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ preguntas: formattedPreguntas }),

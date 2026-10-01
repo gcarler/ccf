@@ -8,10 +8,6 @@ import {
     BarChart3,
     Settings,
     Eye,
-    CheckCircle2,
-    Clock,
-    AlertCircle,
-    Archive,
     Loader2,
 } from 'lucide-react';
 import WorkspaceLayout from '@/components/WorkspaceLayout';
@@ -48,7 +44,7 @@ export default function SurveyDetailPage({ params }: SurveyDetailPageProps) {
     const loadSurvey = useCallback(async () => {
         setIsLoading(true);
         try {
-            const data = await apiFetch<EncuestaFormulario>(`/api/surveys/${surveyId}`);
+            const data = await apiFetch<EncuestaFormulario>(`/surveys/${surveyId}`);
             setSurvey(data);
         } catch (err: unknown) {
             console.error('Error cargando encuesta:', err);

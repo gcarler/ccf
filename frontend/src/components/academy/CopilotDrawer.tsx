@@ -2,22 +2,17 @@
 
 import React, { useState } from 'react';
 import {
-  Award,
   BarChart3,
-  BookOpen,
   Brain,
   CheckCircle2,
   Clock,
   FileSpreadsheet,
-  FileText,
   Lightbulb,
   ListChecks,
   Loader2,
-  Send,
   Sparkles,
   TrendingUp,
-  Users,
-} from 'lucide-react';
+  } from 'lucide-react';
 import { DSButton, DSSkeleton } from '@/design';
 import { RightPanel } from '@/components/ui/RightPanel';
 import { apiFetch, extractErrorMessage } from '@/lib/http';

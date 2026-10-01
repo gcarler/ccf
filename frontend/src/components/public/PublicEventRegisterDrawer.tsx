@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Calendar, Clock, MapPin, Users, HeartHandshake, CheckCircle2, Download, Loader2 } from "lucide-react";
+import { X, Calendar, Clock, MapPin, HeartHandshake, CheckCircle2, Download, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
 import { apiFetch } from "@/lib/http";

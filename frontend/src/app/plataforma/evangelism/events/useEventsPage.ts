@@ -18,7 +18,7 @@ import { useWikiDocument } from '@/hooks/useWikiDocument';
 import { apiFetch } from '@/lib/http';
 import { parseAndValidateTime } from '@/lib/time';
 import { useSearchParams } from 'next/navigation';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { formatLocalDate, getErrorMessage } from '../utils';
 
@@ -113,7 +113,7 @@ export function useEventsPage() {
  const abort = new AbortController();
  if (token) {
   apiFetch<RoleDefinition[]>('/evangelism/roles', { token, silent: true, signal: abort.signal }).then(setRoles).catch(() => {});
-  apiFetch<Array<{ id: string; name: string }>>('/evangelism/events/sedes', { token, silent: true, signal: abort.signal }).then(setSedes).catch(() => {});
+  apiFetch<Array<{ id: string; name: string }>>('/evangelism/sedes', { token, silent: true, signal: abort.signal }).then(setSedes).catch(() => {});
  }
  return () => abort.abort();
  }, [token]);
@@ -534,7 +534,7 @@ const handleCreateEvent = async (e: React.FormEvent) => {
  setIsQrDrawerOpen(true);
  };
 
-const openAttendance = (ev: MinistryEvent) => {
+const openAttendance = useCallback((ev: MinistryEvent) => {
  if (!canEditEvents) return;
  setSelectedEvent(normalizeMinistryEvent(ev));
  setIsAttendanceDrawerOpen(true);
@@ -546,7 +546,7 @@ const openAttendance = (ev: MinistryEvent) => {
  setAttendanceSearch('');
  setAttendanceRoleFilter('ALL');
  setAttendanceStatusFilter('ALL');
- };
+ }, [canEditEvents]);
 
  useEffect(() => {
   if (!requestedEventId || !canEditEvents || autoOpenedEventRef.current === requestedEventId) return;
@@ -554,7 +554,7 @@ const openAttendance = (ev: MinistryEvent) => {
   if (!event) return;
   autoOpenedEventRef.current = requestedEventId;
   openAttendance(event);
- }, [canEditEvents, events, requestedEventId]);
+ }, [canEditEvents, events, requestedEventId, openAttendance]);
 
  useEffect(() => {
  if (!token || !selectedEvent || !isAttendanceDrawerOpen || !attendanceDate) return;

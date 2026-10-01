@@ -4,8 +4,8 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { RightPanel } from '@/components/ui/RightPanel';
 import { apiFetch } from '@/lib/http';
 import { toast } from 'sonner';
-import { OfferingGradesDetail, StudentSubjectRecord } from '@/types/academy';
-import { Award, Save, Loader2, UserCheck, AlertTriangle } from 'lucide-react';
+import { OfferingGradesDetail } from '@/types/academy';
+import { Award, Save, Loader2, UserCheck } from 'lucide-react';
 import clsx from 'clsx';
 
 interface OfferingGradesDrawerProps {

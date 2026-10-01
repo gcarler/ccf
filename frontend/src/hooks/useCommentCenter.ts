@@ -49,7 +49,7 @@ export function useCommentCenter({ tab, typeFilter, limit = 50 }: UseCommentCent
       if (typeFilter !== "all") {
         query.type = typeFilter;
       }
-      const data = await apiFetch<CommentCenterItem[]>(`/api/comments/me/${tab}`, {
+      const data = await apiFetch<CommentCenterItem[]>(`/comments/me/${tab}`, {
         query,
       });
       setItems(data);

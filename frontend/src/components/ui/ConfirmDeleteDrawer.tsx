@@ -3,7 +3,6 @@
 import React, { useState } from 'react';
 import { AlertTriangle, Trash2 } from 'lucide-react';
 import { RightPanel } from '@/components/ui/RightPanel';
-import { DSButton } from '@/design';
 
 export interface ConfirmDeleteDrawerProps {
   open: boolean;

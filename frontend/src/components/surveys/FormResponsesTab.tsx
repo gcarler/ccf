@@ -32,7 +32,7 @@ export default function FormResponsesTab({ survey }: FormResponsesTabProps) {
     const [analytics, setAnalytics] = useState<EncuestaAnalyticsSummary | null>(null);
     const [tableData, setTableData] = useState<EncuestaRespuestasTableResponse | null>(null);
     const [isLoading, setIsLoading] = useState(true);
-    const [page, setPage] = useState(0);
+    const [page] = useState(0);
     const pageSize = 20;
 
     // Drawer de detalle individual
@@ -42,7 +42,7 @@ export default function FormResponsesTab({ survey }: FormResponsesTabProps) {
 
     const loadAnalytics = useCallback(async () => {
         try {
-            const data = await apiFetch<EncuestaAnalyticsSummary>(`/api/surveys/${survey.id}/analytics/summary`);
+            const data = await apiFetch<EncuestaAnalyticsSummary>(`/surveys/${survey.id}/analytics/summary`);
             setAnalytics(data);
         } catch (err: unknown) {
             console.error('Error cargando analítica:', err);
@@ -52,7 +52,7 @@ export default function FormResponsesTab({ survey }: FormResponsesTabProps) {
     const loadTable = useCallback(async (skipCount: number) => {
         try {
             const data = await apiFetch<EncuestaRespuestasTableResponse>(
-                `/api/surveys/${survey.id}/responses/table?skip=${skipCount}&limit=${pageSize}`
+                `/surveys/${survey.id}/responses/table?skip=${skipCount}&limit=${pageSize}`
             );
             setTableData(data);
         } catch (err: unknown) {
@@ -75,7 +75,7 @@ export default function FormResponsesTab({ survey }: FormResponsesTabProps) {
         setIsLoadingIndividual(true);
         try {
             const data = await apiFetch<EncuestaRespuestaIndividual>(
-                `/api/surveys/${survey.id}/responses/individual/${envioId}`
+                `/surveys/${survey.id}/responses/individual/${envioId}`
             );
             setIndividualResponse(data);
         } catch (err: unknown) {

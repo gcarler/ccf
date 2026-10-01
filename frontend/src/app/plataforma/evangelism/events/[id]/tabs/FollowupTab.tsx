@@ -3,12 +3,8 @@
 import React, { useEffect, useMemo, useState } from "react";
 import {
   AlertCircle,
-  Calendar,
   CheckCircle2,
   Clock,
-  ExternalLink,
-  Filter,
-  Flame,
   Layers,
   Mail,
   MapPin,
@@ -40,7 +36,7 @@ interface FollowupTabProps {
   eventName: string;
 }
 
-export default function FollowupTab({ eventId, token, eventName }: FollowupTabProps) {
+export default function FollowupTab({ eventId, token, eventName: _eventName }: FollowupTabProps) {
   const [overview, setOverview] = useState<FollowupOverviewData | null>(null);
   const [attendees, setAttendees] = useState<FollowupAttendeeItem[]>([]);
   const [mentors, setMentors] = useState<AvailableMentorItem[]>([]);
@@ -88,6 +84,8 @@ export default function FollowupTab({ eventId, token, eventName }: FollowupTabPr
 
   useEffect(() => {
     loadData();
+    // Carga inicial por evento; loadData se define estable y se invoca al montar/cambiar evento.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [eventId, token]);
 
   // Ejecución masiva de asignación inteligente con balanceo de carga
