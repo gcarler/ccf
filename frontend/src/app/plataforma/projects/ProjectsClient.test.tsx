@@ -1,10 +1,12 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React from 'react';
-import { render, act } from '@testing-library/react';
+import { render, act, fireEvent, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 import ProjectsClient from './ProjectsClient';
 import { createMockProject } from '@/test-utils/factories';
 import { PROJECTS_LIST_ANCHOR } from './projectsLinks';
+
+const { apiFetchMock } = vi.hoisted(() => ({ apiFetchMock: vi.fn() }));
 
 // Captura el onAnimationComplete del motion.div para dispararlo en el test
 // (reemplaza el flujo real de AnimatePresence mode="wait" + animación de entrada).
@@ -38,7 +40,7 @@ vi.mock('next/dynamic', () => ({
 }));
 
 vi.mock('@/context/AuthContext', () => ({
-  useAuth: () => ({ token: 'test-token' }),
+  useAuth: () => ({ token: 'test-token', loading: false }),
 }));
 
 vi.mock('@/context/CommandCenterContext', () => ({
@@ -50,7 +52,7 @@ vi.mock('@/hooks/useProjects', () => ({
 }));
 
 vi.mock('@/lib/http', () => ({
-  apiFetch: vi.fn().mockResolvedValue({ cards: [], workload_distribution: [], delayed_tasks_count: 0 }),
+  apiFetch: apiFetchMock,
 }));
 
 vi.mock('@/design', () => ({
@@ -82,6 +84,44 @@ describe('ProjectsClient scroll-to-list (fix carrera 100ms vs ~300ms)', () => {
   beforeEach(() => {
     capturedAnimationComplete = null;
     vi.clearAllMocks();
+    apiFetchMock.mockImplementation((path: string) =>
+      path === '/projects'
+        ? Promise.resolve([])
+        : Promise.resolve({ cards: [], workload_distribution: [], delayed_tasks_count: 0 }),
+    );
+  });
+
+  it('muestra skeleton antes de resolver la carga inicial de proyectos', async () => {
+    let resolveProjects: ((projects: never[]) => void) | undefined;
+    apiFetchMock.mockImplementation((path: string) =>
+      path === '/projects'
+        ? new Promise((resolve) => { resolveProjects = resolve; })
+        : Promise.resolve({ cards: [], workload_distribution: [], delayed_tasks_count: 0 }),
+    );
+
+    render(<ProjectsClient initialProjects={[]} />);
+    expect(screen.getByRole('status', { name: 'Cargando proyectos' })).toBeTruthy();
+
+    await act(async () => resolveProjects?.([]));
+    await waitFor(() => expect(screen.getByText('No hay proyectos')).toBeTruthy());
+  });
+
+  it('permite reintentar la carga inicial cuando falla', async () => {
+    let projectRequests = 0;
+    apiFetchMock.mockImplementation((path: string) => {
+      if (path !== '/projects') {
+        return Promise.resolve({ cards: [], workload_distribution: [], delayed_tasks_count: 0 });
+      }
+      projectRequests += 1;
+      return projectRequests === 1 ? Promise.reject(new Error('offline')) : Promise.resolve([]);
+    });
+
+    render(<ProjectsClient initialProjects={[]} />);
+    const retryButton = await screen.findByRole('button', { name: 'Reintentar' });
+    fireEvent.click(retryButton);
+
+    await waitFor(() => expect(screen.getByText('No hay proyectos')).toBeTruthy());
+    expect(projectRequests).toBe(2);
   });
 
   it('dispara scrollIntoView cuando viewType=list y el anchor está montado', async () => {

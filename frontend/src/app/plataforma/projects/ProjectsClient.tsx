@@ -49,10 +49,13 @@ interface ProjectsClientProps {
 }
 
 export default function ProjectsClient({ initialProjects, initialViewType = 'grid' }: ProjectsClientProps) {
-    const { token } = useAuth();
+    const { token, loading: authLoading } = useAuth();
     const router = useRouter();
     const searchParams = useSearchParams();
     const [projects, setProjects] = useState<ProjectRecord[]>(initialProjects);
+    const [isLoadingProjects, setIsLoadingProjects] = useState(initialProjects.length === 0);
+    const [projectsLoadError, setProjectsLoadError] = useState(false);
+    const [projectLoadAttempt, setProjectLoadAttempt] = useState(0);
     const [dashboard, setDashboard] = useState<{
         cards?: Array<{ title: string; value: string; trend?: string | null; tone?: string | null; icon?: string | null }>;
         workload_distribution?: Array<{ label: string; value: number }>;
@@ -71,17 +74,32 @@ export default function ProjectsClient({ initialProjects, initialViewType = 'gri
     // JWT lives in sessionStorage (client-only), so initialProjects is
     // often []. This useEffect fetches the real list client-side.
     useEffect(() => {
-        if (!token) return;
+        if (authLoading) return;
+        if (!token) {
+            setIsLoadingProjects(false);
+            return;
+        }
+        let isCurrentRequest = true;
         const loadProjects = async () => {
+            setIsLoadingProjects(true);
+            setProjectsLoadError(false);
             try {
                 const data = await apiFetch<ProjectRecord[]>('/projects', { token, cache: 'no-store' });
-                if (Array.isArray(data)) setProjects(data);
-            } catch (err) {
-                // Keep SSR data if the client fetch fails (graceful degradation)
+                if (isCurrentRequest && Array.isArray(data)) setProjects(data);
+            } catch {
+                if (isCurrentRequest) {
+                    setProjectsLoadError(true);
+                    toast.error('No se pudieron cargar los proyectos. Inténtalo de nuevo.');
+                }
+            } finally {
+                if (isCurrentRequest) setIsLoadingProjects(false);
             }
         };
-        loadProjects();
-    }, [token]);
+        void loadProjects();
+        return () => {
+            isCurrentRequest = false;
+        };
+    }, [token, authLoading, projectLoadAttempt]);
 
     useEffect(() => {
         if (!token) return;
@@ -235,6 +253,35 @@ export default function ProjectsClient({ initialProjects, initialViewType = 'gri
     );
 
     const renderView = () => {
+        if (isLoadingProjects && projects.length === 0) {
+            return (
+                <div role="status" aria-label="Cargando proyectos" className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                    {Array.from({ length: 6 }, (_, index) => (
+                        <div key={index} aria-hidden="true" className="h-40 animate-pulse rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))]" />
+                    ))}
+                </div>
+            );
+        }
+
+        if (projectsLoadError && projects.length === 0) {
+            return (
+                <div role="alert" className="flex flex-col items-center gap-3 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] px-6 py-12 text-center">
+                    <Folder size={40} className="text-[hsl(var(--muted-foreground))]" aria-hidden="true" />
+                    <div>
+                        <h2 className="text-base font-semibold text-[hsl(var(--text-primary))]">No pudimos cargar tus proyectos</h2>
+                        <p className="mt-1 text-sm text-[hsl(var(--muted-foreground))]">Revisa tu conexión e inténtalo nuevamente.</p>
+                    </div>
+                    <button
+                        type="button"
+                        onClick={() => setProjectLoadAttempt((attempt) => attempt + 1)}
+                        className="rounded-lg bg-[hsl(var(--primary))] px-4 py-2 text-sm font-semibold text-[hsl(var(--primary-foreground))] transition-opacity hover:opacity-90"
+                    >
+                        Reintentar
+                    </button>
+                </div>
+            );
+        }
+
         if (filtered.length === 0) {
             // Wrap the empty state inside the anchor container for the list
             // view so that the #projects-dashboard hash target always exists
