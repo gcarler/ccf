@@ -137,6 +137,13 @@ class ProjectTaskBase(BaseModel):
     labels: List[str] = Field(default_factory=list)
     attachments: List[ProjectAttachment] = Field(default_factory=list)
 
+    @field_validator("attachments", mode="before")
+    @classmethod
+    def _exclude_soft_deleted_attachments(cls, value: Any) -> Any:
+        if isinstance(value, (list, tuple)):
+            return [item for item in value if getattr(item, "deleted_at", None) is None]
+        return value
+
     @field_validator("title", mode="before")
     @classmethod
     def _title_no_blank(cls, v: Any) -> Any:

@@ -126,9 +126,14 @@ class TestProjectsCRUD:
 
     def test_get_project_by_id(self, client, db_session):
         """GET /api/projects/{id} returns the project with tasks and milestones."""
+        from datetime import datetime, timezone
+
         _, _, sede = seed_admin(db_session)
         data = setup_project_with_all_relations(db_session)
         attachment = create_attachment_factory(db_session, data["tasks"][0].id, filename="detalle.pdf")
+        deleted_attachment = create_attachment_factory(db_session, data["tasks"][0].id, filename="archivado.pdf")
+        deleted_attachment.deleted_at = datetime.now(timezone.utc)
+        db_session.commit()
         headers = auth_headers(client)
         project_id = str(data["project"].id)
 
@@ -142,6 +147,7 @@ class TestProjectsCRUD:
         assert any(
             item["id"] == str(attachment.id) and item["filename"] == "detalle.pdf" for item in first_task["attachments"]
         )
+        assert all(item["filename"] != "archivado.pdf" for item in first_task["attachments"])
 
     def test_get_project_not_found(self, client, db_session):
         """GET /api/projects/{nonexistent} returns 404."""
@@ -1784,3 +1790,21 @@ class TestUUIDEdgeCases:
         # Verify gone
         resp = client.get("/api/projects", headers=headers)
         assert resp.json() == []
+
+
+class TestProjectAutomationIsolation:
+    def test_evaluate_rejects_task_from_another_project(self, client, db_session):
+        """An editor cannot trigger an automation against a foreign project task."""
+        seed_admin(db_session)
+        project_a = create_project_factory(db_session, title="Proyecto A")
+        project_b = create_project_factory(db_session, title="Proyecto B")
+        foreign_task = create_task_factory(db_session, project_b.id, title="Tarea ajena")
+        headers = auth_headers(client)
+
+        response = client.post(
+            f"/api/projects/{project_a.id}/automations/evaluate",
+            json={"trigger_event": "task_completed", "task_id": str(foreign_task.id)},
+            headers=headers,
+        )
+
+        assert response.status_code == 404

@@ -2442,6 +2442,26 @@ def delete_project_automation_rule(
     return True
 
 
+def _assert_automation_assignee_in_sede(
+    db: Session,
+    assignee_id: UUID | str,
+    user_sede_id: Optional[UUID | str],
+) -> None:
+    """Prevent automation rules from creating cross-sede task assignments."""
+    if user_sede_id is None:
+        return
+    persona = (
+        db.query(models.Persona)
+        .filter(
+            models.Persona.id == _to_uuid(assignee_id),
+            models.Persona.sede_id == _to_uuid(user_sede_id),
+        )
+        .first()
+    )
+    if not persona:
+        raise ValueError("Automation assignee not found in actor sede")
+
+
 def evaluate_project_automations(
     db: Session,
     project_id: UUID | str,
@@ -2485,7 +2505,11 @@ def evaluate_project_automations(
     if task_id:
         task = (
             db.query(models.ProjectTask)
-            .filter(models.ProjectTask.id == _to_uuid(task_id), models.ProjectTask.deleted_at.is_(None))
+            .filter(
+                models.ProjectTask.id == _to_uuid(task_id),
+                models.ProjectTask.project_id == _to_uuid(project_id),
+                models.ProjectTask.deleted_at.is_(None),
+            )
             .first()
         )
 
@@ -2494,18 +2518,18 @@ def evaluate_project_automations(
         # 1. Comprobar condiciones
         matches = True
         if "priority" in cond and cond["priority"]:
-            task_priority = effective_context.get("priority") or getattr(task, "priority", None)
+            task_priority = getattr(task, "priority", None) if task else effective_context.get("priority")
             if task_priority != cond["priority"]:
                 matches = False
 
         if matches and "status" in cond and cond["status"]:
-            task_status = effective_context.get("status") or getattr(task, "status", None)
+            task_status = getattr(task, "status", None) if task else effective_context.get("status")
             if task_status != cond["status"]:
                 matches = False
 
         if matches and ("phase_name" in cond or "node" in cond):
             required_node = cond.get("phase_name") or cond.get("node")
-            task_node = effective_context.get("phase_name") or effective_context.get("node") or getattr(task, "node", None)
+            task_node = getattr(task, "node", None) if task else (effective_context.get("phase_name") or effective_context.get("node"))
             if task_node != required_node:
                 matches = False
 
@@ -2540,6 +2564,7 @@ def evaluate_project_automations(
             elif action == "reassign_task" and task:
                 new_assignee = act_data.get("assignee_id")
                 if new_assignee:
+                    _assert_automation_assignee_in_sede(db, new_assignee, user_sede_id)
                     task.assignee_id = _to_uuid(new_assignee)
                     task.updated_at = datetime.now(timezone.utc)
                     activity = models.ProjectActivityLog(
@@ -2574,6 +2599,9 @@ def evaluate_project_automations(
                 offset_days = int(act_data.get("duration_days", 3))
                 start_d = datetime.now(timezone.utc)
                 due_d = start_d + timedelta(days=offset_days)
+                followup_assignee_id = act_data.get("assignee_id")
+                if followup_assignee_id:
+                    _assert_automation_assignee_in_sede(db, followup_assignee_id, user_sede_id)
                 new_task = models.ProjectTask(
                     project_id=_to_uuid(project_id),
                     title=title,
@@ -2583,7 +2611,7 @@ def evaluate_project_automations(
                     start_date=start_d,
                     due_date=due_d,
                     node=act_data.get("phase_name") or act_data.get("node"),
-                    assignee_id=_to_uuid(act_data.get("assignee_id")) if act_data.get("assignee_id") else None,
+                    assignee_id=_to_uuid(followup_assignee_id) if followup_assignee_id else None,
                     created_at=datetime.now(timezone.utc),
                     updated_at=datetime.now(timezone.utc),
                 )
@@ -4041,8 +4069,6 @@ def get_project_files_summary(
         "by_category": by_category,
         "files": files,
     }
-
-
 
 
 

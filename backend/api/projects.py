@@ -734,31 +734,9 @@ def _normalize_task_enums(task: models.ProjectTask) -> None:
         task.status = _COMPAT_STATUS_MAP[task.status]
 
 
-def _serialize_attachment(attachment: models.ProjectAttachment) -> dict:
-    return {
-        "id": attachment.id,
-        "task_id": attachment.task_id,
-        "filename": attachment.filename,
-        "file_url": attachment.file_url,
-        "file_type": attachment.file_type,
-        "file_size": attachment.file_size,
-        "created_at": attachment.created_at,
-    }
-
-
-def _serialize_task_attachments(task: models.ProjectTask) -> models.ProjectTask:
-    task.__dict__["attachments"] = [
-        _serialize_attachment(attachment)
-        for attachment in (task.attachments or [])
-        if getattr(attachment, "deleted_at", None) is None
-    ]
-    return task
-
-
 def _prepare_task_for_response(task: models.ProjectTask) -> models.ProjectTask:
     _normalize_task_enums(task)
     _normalize_dates(task)
-    _serialize_task_attachments(task)
     if hasattr(task, "supplies") and task.supplies:
         task.supplies = [s for s in task.supplies if s.deleted_at is None]
     if hasattr(task, "subtasks") and task.subtasks:
@@ -2391,7 +2369,7 @@ async def upload_task_attachment(
     )
     db.commit()
     db.refresh(task)
-    return _serialize_task_attachments(task)
+    return task
 
 
 @router.delete("/{project_id}/tasks/{task_id}/attachments/{attachment_id}", response_model=dict)
@@ -4279,6 +4257,17 @@ def evaluate_project_automations_endpoint(
 
     context = payload.context_data or {}
     if payload.task_id:
+        task = (
+            db.query(models.ProjectTask)
+            .filter(
+                models.ProjectTask.id == _to_uuid(payload.task_id),
+                models.ProjectTask.project_id == _to_uuid(project_id),
+                models.ProjectTask.deleted_at.is_(None),
+            )
+            .first()
+        )
+        if not task:
+            raise HTTPException(status_code=404, detail="Task not found")
         context["task_id"] = str(payload.task_id)
 
     results = crud.evaluate_project_automations(
@@ -5057,9 +5046,6 @@ def delete_project_file_endpoint(
         f"Archivo '{file_id}' eliminado de la bóveda documental",
     )
     return {"deleted": True, "file_id": file_id}
-
-
-
 
 
 
