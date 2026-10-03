@@ -59,6 +59,7 @@ import TaskEditDrawer from '@/components/ui/TaskEditDrawer';
 | `DSToolbarChip` | Filtros tipo chip | [Story](../../design/components/DSToolbarChip.stories.tsx) |
 | `DSTooltip` | Tooltips con Radix | [Story](../../design/components/DSTooltip.stories.tsx) |
 | `DSToast` | Notificaciones toast | [Story](../../design/components/DSToast.stories.tsx) |
+| `DSTypography` | Primitivo tipográfico (familia, tamaño, peso, tracking) | [Story](../../design/components/DSTypography.stories.tsx) |
 
 ### Tokens de Diseño
 
@@ -67,7 +68,7 @@ Definidos en `tokens.ts`:
 - **colors**: primary, emerald, amber, blue, slate, danger
 - **radii**: sm (4px), md (6px), lg (8px), xl (12px), pill (9999px)
 - **shadows**: soft, card, dropdown, inner
-- **typography**: Roboto / Open Sans / Inter (vía `next/font/google`, ver `layout.tsx` y `globals.css`), 6 tamaños (11-18px), 5 pesos
+- **typography**: familias semánticas Outfit (display/headline), Inter (body/label) y JetBrains Mono (mono), vía `next/font/google` (ver `layout.tsx` y `globals.css`); escala de 10 tamaños (`--text-2xs` 10px → `--text-4xl` 32px), 5 pesos (`--weight-*`), 5 tracking (`--tracking-*`) y 4 line-heights (`--leading-*`). `DSTypography` consume estos tokens directamente (tamaños vía `text-*` de `tailwind.config.ts` y tracking vía `tracking-[var(--tracking-*)]`).
 - **spacing**: xs (4px), sm (6px), md (8px), lg (12px), xl (16px)
 - **motion**: 3 duraciones, 2 easing curves
 
@@ -151,6 +152,37 @@ toast.success('Guardado correctamente');
 toast.error('Error al guardar');
 ```
 
+### Tipografía
+```tsx
+import { DSTypography } from '@/design';
+
+<DSTypography as="h2" family="headline" size="xl" weight="semibold" tracking="tight">
+  Título de página
+</DSTypography>
+<DSTypography family="label" size="2xs" weight="bold" tracking="widest" uppercase>
+  Etiqueta de sección
+</DSTypography>
+```
+
+## Librería de Badges del Módulo de Proyectos
+
+El módulo de Proyectos consume badges canónicos (en `components/projects/badges.tsx`)
+construidos sobre las configs visuales compartidas de `@/lib/projects/constants`:
+
+| Badge | Uso |
+|-------|-----|
+| `TaskStatusBadge` | Estado de tarea (canónico o slug de fase dinámica, con `dotStyle`) |
+| `TaskPriorityBadge` | Prioridad de tarea (`low` → `urgent`) |
+| `ProjectStatusBadge` | Estado de proyecto (enum de 5 valores, soporta label custom) |
+| `TaskNodeBadge` | Nodo operativo de la tarea (F2) |
+
+```tsx
+import { TaskStatusBadge, ProjectStatusBadge } from '@/components/projects/badges';
+
+<TaskStatusBadge value={task.status} />
+<ProjectStatusBadge value={project.status} label="En Marcha" />
+```
+
 ## Storybook
 
 Para ver todos los componentes documentados:
@@ -160,8 +192,9 @@ npm run storybook
 ```
 
 Storybook contiene historias para:
-- **Design/**: 17 componentes del sistema de diseño
+- **Design/**: 18 componentes del sistema de diseño (incluye el specímen de tipografía)
 - **UI/**: 22 componentes de la biblioteca de componentes
+- **Projects/**: badges, tarjetas Kanban, timeline de actividad, árbol de rutas, metadatos de tarea y secciones de detalle
 - **Example/**: Componentes básicos de ejemplo (Button, Header, Page)
 
 ## Mejores Prácticas

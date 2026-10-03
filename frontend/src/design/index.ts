@@ -16,3 +16,4 @@ export * from './components/DSTabs';
 export * from './components/DSToolbarChip';
 export * from './components/DSTooltip';
 export * from './components/DSToast';
+export * from './components/DSTypography';
