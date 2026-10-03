@@ -8,20 +8,7 @@ import { useAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/lib/http';
 import type { ProjectTaskRecord, ProjectUserFavorite } from '@/types/projects';
 import { getStatusOption, getPriorityOption } from '@/lib/projects/constants';
-
-const STATUS_CLS: Record<string, string> = {
-    completed:   'bg-[hsl(var(--success)/0.1)] border-[hsl(var(--success)/0.2)] text-[hsl(var(--success))]',
-    in_progress: 'bg-[hsl(var(--info)/0.1)] border-[hsl(var(--info)/0.2)] text-[hsl(var(--info))]',
-    review:      'bg-[hsl(var(--warning)/0.1)] border-[hsl(var(--warning)/0.2)] text-[hsl(var(--warning))]',
-    todo:        'bg-[hsl(var(--surface-2))] border-[hsl(var(--border))] text-[hsl(var(--muted-foreground))]',
-};
-
-const PRIORITY_CLS: Record<string, string> = {
-    urgent: 'text-[hsl(var(--destructive))]',
-    high:   'text-[hsl(var(--warning))]',
-    medium: 'text-[hsl(var(--primary))]',
-    low:    'text-[hsl(var(--muted-foreground))]',
-};
+import { TaskStatusBadge, TaskPriorityBadge } from './badges';
 
 function TitleRenderer({ value, data }: { value: string; data: { id?: string; status?: string } }) {
     const st = data?.status === 'completed';
@@ -38,12 +25,12 @@ function TitleRenderer({ value, data }: { value: string; data: { id?: string; st
 
 function StatusRenderer({ value }: { value: string }) {
     const opt = getStatusOption(value?.toLowerCase());
-    return <span className={clsx('px-2.5 py-0.5 rounded-lg text-2xs font-semibold uppercase tracking-wide border', STATUS_CLS[opt.value])}>{opt.label}</span>;
+    return <TaskStatusBadge value={value} className="max-w-full" title={opt.label} />;
 }
 
 function PriorityRenderer({ value }: { value: string }) {
     const opt = getPriorityOption(value?.toLowerCase());
-    return <span className={clsx('text-xs font-bold uppercase tracking-wide', PRIORITY_CLS[opt.value])}>⚑ {opt.label}</span>;
+    return <TaskPriorityBadge value={value} className="max-w-full" title={opt.label} />;
 }
 
 function AssigneeRenderer({ value }: { value: string | null | undefined }) {
