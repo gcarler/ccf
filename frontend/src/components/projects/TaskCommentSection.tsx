@@ -3,7 +3,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import { apiFetch } from '@/lib/http';
 import type { ProjectTaskRecord, ProjectCommentItem, ProjectCommentAttachment } from '@/types/projects';
-import { ChevronDown, Loader2, MessageSquare, Pin, Send, Trash2 } from 'lucide-react';
+import { Loader2, MessageSquare, Pin, Send, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import clsx from 'clsx';
 
@@ -190,21 +190,25 @@ export default function TaskCommentSection({
                                 )}
                                 <div className="ml-auto flex items-center gap-1">
                                     <button
+                                        type="button"
                                         onClick={() => handleTogglePin(c)}
                                         title={c.is_pinned ? "Desfijar comentario" : "Fijar comentario al inicio"}
+                                        aria-label={`${c.is_pinned ? 'Desfijar' : 'Fijar'} comentario de ${c.author}`}
                                         className={clsx(
-                                            'transition-opacity transition-colors p-1 rounded hover:bg-[hsl(var(--surface-2))]',
+                                            'transition-opacity transition-colors p-1 rounded hover:bg-[hsl(var(--surface-2))] opacity-100 md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100',
                                             c.is_pinned
-                                                ? 'text-[hsl(var(--warning))] opacity-100'
-                                                : 'opacity-0 group-hover:opacity-100 text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--warning))]'
+                                                ? 'text-[hsl(var(--warning))]'
+                                                : 'text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--warning))]'
                                         )}
                                     >
                                         <Pin size={12} className={c.is_pinned ? 'fill-current rotate-45' : ''} />
                                     </button>
                                     <button
+                                        type="button"
                                         onClick={() => onDeleteComment(c.id)}
                                         title="Eliminar comentario"
-                                        className="opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--destructive))] hover:bg-[hsl(var(--destructive)/0.1)]"
+                                        aria-label={`Eliminar comentario de ${c.author}`}
+                                        className="opacity-100 md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100 transition-opacity p-1 rounded text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--destructive))] hover:bg-[hsl(var(--destructive)/0.1)]"
                                     >
                                         <Trash2 size={12} />
                                     </button>
@@ -227,13 +231,16 @@ export default function TaskCommentSection({
                         value={commentInput}
                         onChange={e => setCommentInput(e.target.value)}
                         onKeyDown={e => e.key === 'Enter' && !e.shiftKey && handleSendComment()}
+                        aria-label="Escribe un comentario"
                         placeholder="Menciona @Dzin para crear, encontrar y preguntar..."
                         className="flex-1 text-sm bg-transparent outline-none text-[hsl(var(--foreground))] placeholder:text-[hsl(var(--muted-foreground))]"
                     />
                     {commentInput.trim() && (
                         <button
+                            type="button"
                             onClick={handleSendComment}
                             disabled={sendingComment}
+                            aria-label={sendingComment ? 'Enviando comentario' : 'Enviar comentario'}
                             className="text-[hsl(var(--primary))] hover:text-[hsl(var(--primary))] transition-colors"
                         >
                             {sendingComment ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
@@ -242,12 +249,6 @@ export default function TaskCommentSection({
                 </div>
             </div>
 
-            <div className="flex items-center gap-2 mt-2 pl-8">
-                <button className="flex items-center gap-1 px-2 py-0.5 rounded-md text-2xs font-semibold text-[hsl(var(--primary))] bg-[hsl(var(--primary)/0.1)] border border-[hsl(var(--primary)/0.2)]">
-                    <MessageSquare size={9} /> Comentario
-                    <ChevronDown size={9} />
-                </button>
-            </div>
         </section>
     );
 }
