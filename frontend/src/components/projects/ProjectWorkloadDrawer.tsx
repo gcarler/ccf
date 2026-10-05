@@ -19,24 +19,24 @@ interface ProjectWorkloadDrawerProps {
 const CAPACITY_CONFIG = {
   overloaded: {
     label: "Sobrecargado",
-    color: "hsl(var(--destructive))",
-    bg: "hsl(var(--destructive) / 0.12)",
+    color: "hsl(var(--danger-text))",
+    bg: "hsl(var(--danger-muted))",
     border: "hsl(var(--destructive) / 0.35)",
     barColor: "hsl(var(--destructive))",
     icon: AlertOctagon,
   },
   balanced: {
     label: "Balanceado",
-    color: "hsl(var(--primary))",
-    bg: "hsl(var(--primary) / 0.12)",
-    border: "hsl(var(--primary) / 0.35)",
-    barColor: "hsl(var(--primary))",
+    color: "hsl(var(--info-text))",
+    bg: "hsl(var(--info-muted))",
+    border: "hsl(var(--info) / 0.35)",
+    barColor: "hsl(var(--info))",
     icon: Scale,
   },
   available: {
     label: "Disponible",
-    color: "hsl(var(--success))",
-    bg: "hsl(var(--success) / 0.12)",
+    color: "hsl(var(--success-text))",
+    bg: "hsl(var(--success-muted))",
     border: "hsl(var(--success) / 0.35)",
     barColor: "hsl(var(--success))",
     icon: CheckCircle2,
@@ -138,7 +138,7 @@ export function ProjectWorkloadDrawer({
       onClose={onClose}
       title="Capacidad de Equipo y Carga de Trabajo"
       description="Monitoreo de saturación operativa, balanceo de tareas y prevención de sobrecarga en el equipo ministerial."
-      width="max-w-3xl"
+      width="w-screen max-w-3xl"
     >
       <div className="space-y-6 pb-12">
         {/* RESUMEN DE CAPACIDAD */}
@@ -150,14 +150,14 @@ export function ProjectWorkloadDrawer({
               borderColor: "hsl(var(--border))",
             }}
           >
-            <div className="flex items-center justify-between text-xs text-[hsl(var(--text-secondary))] font-medium">
+            <div className="flex items-center justify-between text-xs text-[hsl(var(--text-primary))] font-medium">
               <span>Equipo Ministerial</span>
               <Users className="w-4 h-4 opacity-70" />
             </div>
             <div className="text-2xl font-bold mt-2 text-[hsl(var(--text-primary))]">
               {summary?.total_members ?? "—"}
             </div>
-            <div className="text-[11px] text-[hsl(var(--text-secondary))] mt-1">
+            <div className="text-[11px] text-[hsl(var(--text-primary))] mt-1">
               {summary?.total_active_tasks ?? "—"} tareas en curso
             </div>
           </div>
@@ -165,18 +165,18 @@ export function ProjectWorkloadDrawer({
           <div
             className="p-3.5 rounded-xl border flex flex-col justify-between"
             style={{
-              backgroundColor: "hsl(var(--destructive) / 0.08)",
+              backgroundColor: "hsl(var(--danger-muted))",
               borderColor: "hsl(var(--destructive) / 0.25)",
             }}
           >
-            <div className="flex items-center justify-between text-xs font-semibold" style={{ color: "hsl(var(--destructive))" }}>
+            <div className="flex items-center justify-between text-xs font-semibold" style={{ color: "hsl(var(--danger-text))" }}>
               <span>Sobrecargados</span>
               <AlertOctagon className="w-4 h-4" />
             </div>
-            <div className="text-2xl font-bold mt-2" style={{ color: "hsl(var(--destructive))" }}>
+            <div className="text-2xl font-bold mt-2" style={{ color: "hsl(var(--danger-text))" }}>
               {summary?.overloaded_members_count ?? "—"}
             </div>
-            <div className="text-[11px] font-medium mt-1" style={{ color: "hsl(var(--destructive) / 0.8)" }}>
+            <div className="text-[11px] font-medium mt-1" style={{ color: "hsl(var(--danger-text))" }}>
               Requieren balanceo
             </div>
           </div>
@@ -184,18 +184,18 @@ export function ProjectWorkloadDrawer({
           <div
             className="p-3.5 rounded-xl border flex flex-col justify-between"
             style={{
-              backgroundColor: "hsl(var(--primary) / 0.08)",
+              backgroundColor: "hsl(var(--info-muted))",
               borderColor: "hsl(var(--primary) / 0.25)",
             }}
           >
-            <div className="flex items-center justify-between text-xs font-semibold" style={{ color: "hsl(var(--primary))" }}>
+            <div className="flex items-center justify-between text-xs font-semibold" style={{ color: "hsl(var(--info-text))" }}>
               <span>Balanceados</span>
               <Scale className="w-4 h-4" />
             </div>
-            <div className="text-2xl font-bold mt-2" style={{ color: "hsl(var(--primary))" }}>
+            <div className="text-2xl font-bold mt-2" style={{ color: "hsl(var(--info-text))" }}>
               {summary?.balanced_members_count ?? "—"}
             </div>
-            <div className="text-[11px] font-medium mt-1" style={{ color: "hsl(var(--primary) / 0.8)" }}>
+            <div className="text-[11px] font-medium mt-1" style={{ color: "hsl(var(--info-text))" }}>
               Régimen óptimo
             </div>
           </div>
@@ -203,18 +203,18 @@ export function ProjectWorkloadDrawer({
           <div
             className="p-3.5 rounded-xl border flex flex-col justify-between"
             style={{
-              backgroundColor: "hsl(var(--success) / 0.08)",
+              backgroundColor: "hsl(var(--success-muted))",
               borderColor: "hsl(var(--success) / 0.25)",
             }}
           >
-            <div className="flex items-center justify-between text-xs font-semibold" style={{ color: "hsl(var(--success))" }}>
+            <div className="flex items-center justify-between text-xs font-semibold" style={{ color: "hsl(var(--success-text))" }}>
               <span>Disponibles</span>
               <CheckCircle2 className="w-4 h-4" />
             </div>
-            <div className="text-2xl font-bold mt-2" style={{ color: "hsl(var(--success))" }}>
+            <div className="text-2xl font-bold mt-2" style={{ color: "hsl(var(--success-text))" }}>
               {summary?.available_members_count ?? "—"}
             </div>
-            <div className="text-[11px] font-medium mt-1" style={{ color: "hsl(var(--success) / 0.8)" }}>
+            <div className="text-[11px] font-medium mt-1" style={{ color: "hsl(var(--success-text))" }}>
               Capacidad libre
             </div>
           </div>
@@ -235,7 +235,7 @@ export function ProjectWorkloadDrawer({
                 <span className="text-xs font-bold block" style={{ color: "hsl(var(--warning))" }}>
                   {summary?.unassigned_tasks_count} tarea(s) sin responsable asignado
                 </span>
-                <span className="text-[11px] text-[hsl(var(--text-secondary))]">
+                <span className="text-[11px] text-[hsl(var(--text-primary))]">
                   Asigna estas tareas a miembros con disponibilidad para mantener el ritmo del proyecto.
                 </span>
               </div>
@@ -245,7 +245,7 @@ export function ProjectWorkloadDrawer({
 
         {/* LISTADO DE MIEMBROS Y MATRIZ DE SATURACIÓN */}
         <div className="space-y-4">
-          <div className="flex items-center justify-between text-xs font-medium text-[hsl(var(--text-secondary))]">
+          <div className="flex items-center justify-between text-xs font-medium text-[hsl(var(--text-primary))]">
             <span>Distribución de Carga por Responsable ({summary ? summary.members.length : "—"})</span>
             <span>Escala estándar: 5 tareas activas = 100% de carga</span>
           </div>
@@ -293,7 +293,7 @@ export function ProjectWorkloadDrawer({
                 borderColor: "hsl(var(--border))",
               }}
             >
-              <Users className="w-8 h-8 mx-auto mb-2 opacity-40 text-[hsl(var(--text-secondary))]" />
+              <Users className="w-8 h-8 mx-auto mb-2 opacity-60 text-[hsl(var(--text-primary))]" />
               <p className="text-sm font-medium text-[hsl(var(--text-primary))]">
                 No hay miembros ni tareas en este proyecto
               </p>
@@ -328,7 +328,7 @@ export function ProjectWorkloadDrawer({
                               ? "hsl(var(--surface-3))"
                               : "hsl(var(--primary) / 0.15)",
                             color: isUnassigned
-                              ? "hsl(var(--text-secondary))"
+                              ? "hsl(var(--text-primary))"
                               : "hsl(var(--primary))",
                           }}
                         >
@@ -369,7 +369,7 @@ export function ProjectWorkloadDrawer({
                             )}
                           </div>
 
-                          <div className="text-[11px] text-[hsl(var(--text-secondary))] flex items-center gap-3 mt-0.5 flex-wrap">
+                          <div className="text-[11px] text-[hsl(var(--text-primary))] flex items-center gap-3 mt-0.5 flex-wrap">
                             <span>
                               <strong>{member.active_tasks}</strong> activas
                             </span>
@@ -380,7 +380,7 @@ export function ProjectWorkloadDrawer({
                                 <span>•</span>
                                 <span
                                   className="font-bold inline-flex items-center gap-0.5"
-                                  style={{ color: "hsl(var(--destructive))" }}
+                                  style={{ color: "hsl(var(--danger-text))" }}
                                 >
                                   <Clock className="w-3 h-3" />
                                   {member.overdue_tasks} vencida(s)
@@ -395,7 +395,7 @@ export function ProjectWorkloadDrawer({
                       <button
                         type="button"
                         onClick={() => toggleExpand(memberKey)}
-                        className="p-1.5 rounded-lg border text-[hsl(var(--text-secondary))] hover:opacity-100 transition-colors flex items-center gap-1 text-xs"
+                        className="p-1.5 rounded-lg border text-[hsl(var(--text-primary))] hover:opacity-100 transition-colors flex items-center gap-1 text-xs"
                         style={{
                           backgroundColor: "hsl(var(--surface-2))",
                           borderColor: "hsl(var(--border))",
@@ -412,7 +412,7 @@ export function ProjectWorkloadDrawer({
                     {!isUnassigned && (
                       <div className="space-y-1">
                         <div className="flex items-center justify-between text-[11px]">
-                          <span className="text-[hsl(var(--text-secondary))] font-medium">Nivel de Carga</span>
+                          <span className="text-[hsl(var(--text-primary))] font-medium">Nivel de Carga</span>
                           <span className="font-bold" style={{ color: capCfg.color }}>
                             {member.workload_percent}%
                           </span>
@@ -443,8 +443,8 @@ export function ProjectWorkloadDrawer({
                         <span
                           className="px-2 py-0.5 rounded-md font-semibold"
                           style={{
-                            backgroundColor: "hsl(var(--destructive) / 0.12)",
-                            color: "hsl(var(--destructive))",
+                            backgroundColor: "hsl(var(--danger-muted))",
+                            color: "hsl(var(--danger-text))",
                           }}
                         >
                           {member.urgent_tasks} urgentes
@@ -466,7 +466,7 @@ export function ProjectWorkloadDrawer({
                           className="px-2 py-0.5 rounded-md"
                           style={{
                             backgroundColor: "hsl(var(--surface-2))",
-                            color: "hsl(var(--text-secondary))",
+                            color: "hsl(var(--text-primary))",
                           }}
                         >
                           {member.medium_tasks} medias
@@ -477,7 +477,7 @@ export function ProjectWorkloadDrawer({
                           className="px-2 py-0.5 rounded-md"
                           style={{
                             backgroundColor: "hsl(var(--surface-2))",
-                            color: "hsl(var(--text-secondary))",
+                            color: "hsl(var(--text-primary))",
                           }}
                         >
                           {member.low_tasks} bajas
@@ -496,7 +496,7 @@ export function ProjectWorkloadDrawer({
                       }}
                     >
                       {member.tasks.length === 0 ? (
-                        <p className="text-xs text-[hsl(var(--text-secondary))] italic text-center py-2">
+                        <p className="text-xs text-[hsl(var(--text-primary))] italic text-center py-2">
                           Sin tareas asignadas actualmente.
                         </p>
                       ) : (
@@ -532,15 +532,15 @@ export function ProjectWorkloadDrawer({
                                   <span
                                     className="text-[10px] font-bold px-1.5 py-0.2 rounded"
                                     style={{
-                                      backgroundColor: "hsl(var(--destructive) / 0.15)",
-                                      color: "hsl(var(--destructive))",
+                                      backgroundColor: "hsl(var(--danger-muted))",
+                                      color: "hsl(var(--danger-text))",
                                     }}
                                   >
                                     Vencida
                                   </span>
                                 )}
                               </div>
-                              <div className="text-[10px] text-[hsl(var(--text-secondary))] flex items-center gap-2">
+                              <div className="text-[10px] text-[hsl(var(--text-primary))] flex items-center gap-2">
                                 <span>Estado: {task.status}</span>
                                 <span>•</span>
                                 <span>Prioridad: {task.priority}</span>
@@ -583,7 +583,7 @@ export function ProjectWorkloadDrawer({
                                 <button
                                   type="button"
                                   onClick={() => onOpenTask(task.id)}
-                                  className="p-1 rounded text-[hsl(var(--text-secondary))] hover:opacity-100 transition-colors"
+                                  className="p-1 rounded text-[hsl(var(--text-primary))] hover:opacity-100 transition-colors"
                                   title="Ver detalle de la tarea"
                                   aria-label={`Ver detalle de la tarea ${task.title}`}
                                 >
