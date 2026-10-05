@@ -2513,7 +2513,61 @@ def evaluate_project_automations(
             .first()
         )
 
+    supported_actions = {
+        "notify_assignee",
+        "reassign_task",
+        "change_phase",
+        "create_followup_task",
+        "set_priority",
+    }
+    supported_priorities = {"low", "medium", "high", "urgent"}
+    task_required_actions = {"reassign_task", "change_phase", "set_priority"}
     for rule in rules:
+        action = rule.action_type
+        validation_data = rule.action_data or {}
+        configuration_error = None
+        if not isinstance(validation_data, dict):
+            configuration_error = "Los datos de configuración de la acción no son válidos."
+        elif action not in supported_actions:
+            configuration_error = f"Acción no soportada: {action}"
+        elif action == "reassign_task" and not validation_data.get("assignee_id"):
+            configuration_error = "La acción requiere assignee_id."
+        elif action == "change_phase" and not any(
+            isinstance(target, str) and target.strip()
+            for target in (validation_data.get("phase_name"), validation_data.get("node"))
+        ):
+            configuration_error = "La acción requiere phase_name o node."
+        elif action == "set_priority" and (
+            not isinstance(validation_data.get("priority", "high"), str)
+            or validation_data.get("priority", "high") not in supported_priorities
+        ):
+            configuration_error = "La prioridad de destino no es válida."
+        elif action == "create_followup_task" and (
+            not isinstance(validation_data.get("priority", "medium"), str)
+            or validation_data.get("priority", "medium") not in supported_priorities
+        ):
+            configuration_error = "La prioridad de la tarea de seguimiento no es válida."
+
+        if configuration_error:
+            results.append({
+                "rule_id": str(rule.id),
+                "rule_name": rule.name,
+                "action_type": action,
+                "status": "failed",
+                "details": configuration_error,
+            })
+            continue
+
+        if action in task_required_actions and task is None:
+            results.append({
+                "rule_id": str(rule.id),
+                "rule_name": rule.name,
+                "action_type": action,
+                "status": "failed",
+                "details": "Esta acción requiere una tarea activa del proyecto.",
+            })
+            continue
+
         cond = rule.condition_data or {}
         # 1. Comprobar condiciones
         matches = True
