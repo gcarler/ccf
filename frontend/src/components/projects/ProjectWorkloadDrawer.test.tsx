@@ -125,6 +125,23 @@ describe("ProjectWorkloadDrawer", () => {
     ));
   });
 
+  it("shows the unassigned state as the current assignee instead of the placeholder", async () => {
+    const unassignedSummary = {
+      ...summary,
+      unassigned_tasks_count: 1,
+      members: [{ ...summary.members[0], persona_id: null, name: "Sin Asignar" }],
+    };
+    mocks.apiFetch.mockResolvedValue(unassignedSummary);
+
+    render(<ProjectWorkloadDrawer projectId="project-1" isOpen onClose={vi.fn()} />);
+
+    const reassignment = await screen.findByRole("combobox", {
+      name: "Reasignar Preparar materiales a otro colaborador",
+    });
+    expect(reassignment).toHaveValue("__unassigned__");
+    expect(reassignment).toHaveDisplayValue("Sin Asignar");
+  });
+
   it("renders a true empty state when the project has no workload members", async () => {
     mocks.apiFetch.mockResolvedValue({ ...summary, total_members: 0, members: [] });
 

@@ -552,7 +552,7 @@ export function ProjectWorkloadDrawer({
                               <select
                                 disabled={reassigningTaskId === task.id}
                                 aria-label={`Reasignar ${task.title} a otro colaborador`}
-                                value={member.persona_id || ""}
+                                value={member.persona_id ?? "__unassigned__"}
                                 onChange={(e) => {
                                   const selectedPersonaId = e.target.value;
                                   handleReassign(
