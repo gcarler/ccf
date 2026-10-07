@@ -60,10 +60,15 @@ export interface ProjectRecord {
   color?: string | null;
   icon?: string | null;
   owner_id?: string | null;
+  start_date?: string | null;
+  target_date?: string | null;
   created_at: string;
   updated_at?: string | null;
   tasks?: ProjectTaskRecord[];
   milestones?: ProjectMilestoneRecord[];
+  task_count?: number;
+  completed_task_count?: number;
+  in_progress_task_count?: number;
   progress_percent?: number;
   comments_count?: number;
   progress_mode?: 'auto_tasks' | 'milestones' | 'manual';
@@ -79,6 +84,32 @@ export interface ProjectRecord {
   risks?: ProjectRisk[];
   risks_summary?: ProjectRiskSummary;
   workload_summary?: ProjectWorkloadSummary;
+}
+
+export interface ProjectPageResponse {
+  items: ProjectRecord[];
+  total: number;
+  skip: number;
+  limit: number;
+}
+
+export interface ProjectSummaryRecord extends ProjectRecord {
+  task_count: number;
+  completed_task_count: number;
+  in_progress_task_count: number;
+  progress_percent: number;
+  health_status: 'on_track' | 'at_risk' | 'off_track' | 'completed';
+}
+
+export interface ProjectSummaryPageResponse extends Omit<ProjectPageResponse, 'items'> {
+  items: ProjectSummaryRecord[];
+}
+
+export interface ProjectTaskPageResponse {
+  items: ProjectTaskRecord[];
+  total: number;
+  skip: number;
+  limit: number;
 }
 
 export interface ProjectWorkloadTaskItem {
@@ -187,6 +218,7 @@ export interface ProjectAttachment {
 export interface ProjectTaskRecord {
   id: string;
   project_id: string;
+  project_title?: string | null;
   title: string;
   description?: string | null;
   created_at?: string;
@@ -508,9 +540,9 @@ export interface ProjectAutomationRule {
   name: string;
   description?: string | null;
   trigger_event: string;
-  condition_data: Record<string, any>;
+  condition_data: Record<string, unknown>;
   action_type: string;
-  action_data: Record<string, any>;
+  action_data: Record<string, unknown>;
   is_active: boolean;
   execution_count: number;
   last_triggered_at?: string | null;
@@ -526,9 +558,9 @@ export interface ProjectAutomationRuleCreate {
   name: string;
   description?: string | null;
   trigger_event: string;
-  condition_data?: Record<string, any>;
+  condition_data?: Record<string, unknown>;
   action_type: string;
-  action_data?: Record<string, any>;
+  action_data?: Record<string, unknown>;
   is_active?: boolean;
   sede_id?: string | null;
 }
@@ -537,9 +569,9 @@ export interface ProjectAutomationRuleUpdate {
   name?: string;
   description?: string | null;
   trigger_event?: string;
-  condition_data?: Record<string, any>;
+  condition_data?: Record<string, unknown>;
   action_type?: string;
-  action_data?: Record<string, any>;
+  action_data?: Record<string, unknown>;
   is_active?: boolean;
 }
 
@@ -631,6 +663,8 @@ export interface ProjectExecutiveReportData {
     total_tasks: number;
     completed_tasks: number;
     progress_percent: number;
+    start_date?: string | null;
+    end_date?: string | null;
   }>;
   generated_at: string;
   organization: string;
@@ -718,7 +752,7 @@ export interface ProjectIndicator {
   frequency: string;
   period_targets: Record<string, number>;
   crema_score?: number | null;
-  crema_evaluation: CremaValidationResult | Record<string, any>;
+  crema_evaluation: CremaValidationResult | Record<string, unknown>;
   created_by?: string | null;
   creator_name?: string | null;
   sede_id?: string | null;
@@ -742,7 +776,7 @@ export interface ProjectIndicatorCreate {
   frequency?: string;
   period_targets?: Record<string, number>;
   crema_score?: number;
-  crema_evaluation?: Record<string, any>;
+  crema_evaluation?: CremaValidationResult | Record<string, unknown>;
 }
 
 export interface ProjectIndicatorUpdate {
@@ -795,8 +829,3 @@ export interface ProjectFilesSummary {
   by_category: Record<string, number>;
   files: ProjectFileRecord[];
 }
-
-
-
-
-
