@@ -10,13 +10,13 @@ Targets:
 4. DELETE own message: 200. DELETE another user's message without a
    privileged role: 403. — Locks behavior.
 5. Soft-deleted messages must NOT appear in subsequent listings. — Locks.
-6. When POST returns, the asyncio broadcast task is *not* awaited but is
-   scheduled (`asyncio.ensure_future`). We assert the message row exists
-   without blocking on the broadcast. — Locks the side-effect contract.
+6. The POST dispatches a JSON-safe project-room broadcast through a proper
+   ASGI background task after the message commits. — Locks live delivery.
 """
 
 from __future__ import annotations
 
+import json
 import uuid as _uuid
 
 from backend.models_crm import ChatMessage
@@ -219,28 +219,55 @@ class TestChatPaginationCursor:
 
 
 class TestChatAsynclyBroadcast:
-    """The POST handler schedules a websocket broadcast.
+    """The POST handler schedules a JSON-safe WebSocket broadcast after commit."""
 
-    We assert that broadcast_event is called (or scheduled) and that the
-    request completes WITHOUT awaiting it. If the service becomes
-    synchronous (e.g., added await()), the response time would jump.
-    """
-
-    def test_post_message_returns_immediately(self, client, db_session):
-        """POST /messages is non-blocking even if broadcast is slow."""
-        import time as _time
+    def test_post_message_persists_successfully(self, client, db_session, monkeypatch):
+        import backend.api.projects as projects_api
 
         _, persona, sede = seed_admin(db_session)
         proj = create_project_factory(db_session, owner_id=persona.id)
         headers = auth_headers(client)
+        broadcasts = []
 
-        t0 = _time.perf_counter()
+        async def record_broadcast(event, *, room):
+            broadcasts.append((event, room))
+
+        monkeypatch.setattr(projects_api.manager, "broadcast_event", record_broadcast)
         resp = client.post(
             f"/api/projects/{proj.id}/messages",
             json={"content": "fast post"},
             headers=headers,
         )
-        elapsed = _time.perf_counter() - t0
-        # Generous bound — if we see > 2s the broadcast became blocking
-        assert elapsed < 2.0, f"POST /messages took {elapsed:.2f}s — broadcast is likely blocking the response"
         assert resp.status_code == 201
+        assert len(broadcasts) == 1
+
+    def test_post_schedules_json_safe_broadcast_for_project_room(self, client, db_session, monkeypatch):
+        import backend.api.projects as projects_api
+
+        _, persona, _ = seed_admin(db_session)
+        project = create_project_factory(db_session, owner_id=persona.id)
+        headers = auth_headers(client)
+        broadcasts = []
+
+        async def capture_broadcast(event, *, room):
+            # The production WebSocket manager serializes this payload with json.dumps.
+            json.dumps(event)
+            broadcasts.append((event, room))
+
+        monkeypatch.setattr(projects_api.manager, "broadcast_event", capture_broadcast)
+
+        response = client.post(
+            f"/api/projects/{project.id}/messages",
+            json={"content": "Mensaje en vivo"},
+            headers=headers,
+        )
+
+        assert response.status_code == 201, response.text
+        assert len(broadcasts) == 1
+        event, room = broadcasts[0]
+        assert room == f"project_{project.id}"
+        assert event["event"] == "project_message"
+        assert event["project_id"] == str(project.id)
+        assert event["message"]["content"] == "Mensaje en vivo"
+        assert isinstance(event["message"]["id"], str)
+        assert isinstance(event["message"]["sender_id"], str)
