@@ -139,6 +139,8 @@ class Assessment(BaseModel):
     description: Optional[str] = None
     min_score: float = 70
     weight: float = 1.0
+    max_attempts: Optional[int] = 3
+    cooldown_minutes: Optional[int] = 60
     questions: List[AssessmentQuestion] = Field(default_factory=list)
     model_config = orm_config
 
@@ -543,6 +545,34 @@ class LessonProgressResponse(BaseModel):
     is_completed: bool = False
 
 
+class VideoPositionUpdate(BaseModel):
+    """Endpoint de registro de posición de video multidispositivo (TKT-ACADEMY-EVAL-RETRY-POLICIES-01)."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    position_seconds: int = Field(ge=0, description="Posición actual del video en segundos")
+    total_seconds: Optional[int] = Field(default=None, ge=1, description="Duración total del video en segundos")
+    progress_percent: Optional[float] = Field(default=None, ge=0, le=100, description="Porcentaje de avance opcional")
+
+
+class AssessmentAttemptStatusResponse(BaseModel):
+    """Estado de intentos y cooldown para evaluaciones (TKT-ACADEMY-EVAL-RETRY-POLICIES-01)."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    assessment_id: UUID
+    max_attempts: Optional[int] = None
+    attempts_count: int = 0
+    attempts_remaining: Optional[int] = None
+    cooldown_minutes: int = 0
+    in_cooldown: bool = False
+    cooldown_remaining_seconds: int = 0
+    cooldown_until: Optional[datetime] = None
+    can_attempt: bool = True
+    last_attempt_score: Optional[float] = None
+    passed: bool = False
+
+
 class CoursePayload(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -629,6 +659,8 @@ class AssessmentPayload(BaseModel):
     title: str = Field(max_length=200)
     description: str | None = None
     passing_score: float = Field(default=70, ge=0, le=100)
+    max_attempts: int | None = Field(default=3, ge=1)
+    cooldown_minutes: int | None = Field(default=60, ge=0)
     questions: list[AssessmentQuestionPayload] = Field(default_factory=list)
 
 
@@ -637,6 +669,8 @@ class AssessmentUpdate(BaseModel):
 
     title: str | None = Field(default=None, max_length=200)
     passing_score: float | None = Field(default=None, ge=0, le=100)
+    max_attempts: int | None = Field(default=None, ge=1)
+    cooldown_minutes: int | None = Field(default=None, ge=0)
 
 
 class GradeSubmissionPayload(BaseModel):
