@@ -32,7 +32,7 @@ export const DEFAULT_PROJECT_COLOR = PROJECT_COLOR_OPTIONS[0].value;
 
 /**
  * Render only browser-native six-digit hex values from persisted project data.
- * Unknown legacy/API values fall back to the curated project color so they
+ * Unknown external/API values fall back to the curated project color so they
  * cannot corrupt inline styles or the native color input's controlled value.
  */
 export function normalizeProjectColor(value: string | null | undefined): string {

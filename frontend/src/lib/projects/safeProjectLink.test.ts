@@ -4,7 +4,7 @@ import { getSafeProjectLink } from './safeProjectLink';
 describe('getSafeProjectLink', () => {
   it.each([
     ['HTTPS receipt', 'https://files.example.org/receipt.pdf', 'https://files.example.org/receipt.pdf'],
-    ['HTTP legacy receipt', 'http://files.example.org/receipt.pdf', 'http://files.example.org/receipt.pdf'],
+    ['HTTP plain receipt', 'http://files.example.org/receipt.pdf', 'http://files.example.org/receipt.pdf'],
     ['project file path', '/api/static/projects/receipt.pdf', '/api/static/projects/receipt.pdf'],
   ])('preserves allowed %s links', (_label, input, expected) => {
     expect(getSafeProjectLink(input)).toBe(expected);

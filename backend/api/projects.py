@@ -137,7 +137,7 @@ def list_all_my_tasks(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("projects", "read")),
 ):
-    """Obtiene todas las tareas asignadas; mantiene el contrato array legacy.
+    """Obtiene todas las tareas asignadas; mantiene el contrato array previo.
 
     Axioma 3 — strict scope: solo se devuelven tareas de proyectos en la
     ``sede_id`` del actor. Superadmin (sin sede) ve todo.
@@ -179,7 +179,7 @@ def list_my_tasks_page(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("projects", "read")),
 ):
-    """Bounded page for the Projects task workspace; legacy array route remains."""
+    """Bounded page for the Projects task workspace; array route remains."""
     persona_id = get_user_persona_id(db, current_user.id)
     if not persona_id:
         return {"items": [], "total": 0, "skip": offset, "limit": limit}
@@ -961,7 +961,7 @@ def list_projects_page(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("projects", "read")),
 ):
-    """Paginated listing for interactive screens; legacy ``/projects`` stays compatible."""
+    """Paginated listing for interactive screens; standard ``/projects`` stays compatible."""
     user_sede = get_user_sede_id(db, current_user.id)
     projects, total = crud.get_projects_page(
         db,

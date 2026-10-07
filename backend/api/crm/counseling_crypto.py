@@ -47,7 +47,7 @@ def encrypt_counseling_notes(notes: str | None) -> str | None:
 
 
 def decrypt_counseling_notes(notes: str | None) -> str | None:
-    """Desencripta notas de consejería si están cifradas; si es texto plano legacy, lo retorna tal cual."""
+    """Desencripta notas de consejería si están cifradas; si es texto plano sin cifrar, lo retorna tal cual."""
     if notes is None or notes == "":
         return notes
     if is_fernet_encrypted(notes):

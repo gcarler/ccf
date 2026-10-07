@@ -71,7 +71,7 @@ async function getAllPages<T>(
   return rows;
 }
 
-/** Load every project without relying on the legacy unbounded list endpoint. */
+/** Load every project without relying on an unbounded list endpoint. */
 export async function getAllProjects(
   token: string,
   options: { cache?: RequestCache; signal?: AbortSignal } = {},
