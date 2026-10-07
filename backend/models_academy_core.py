@@ -122,6 +122,8 @@ class Assessment(Base):
     passing_score = Column(Float, nullable=False, default=70)
     weight = Column(Numeric(5, 2), default=1.0)
     is_published = Column(Boolean, default=False, nullable=False)
+    max_attempts = Column(Integer, nullable=True, default=3)
+    cooldown_minutes = Column(Integer, nullable=True, default=60)
     created_at = Column(DateTime(timezone=True), default=_utcnow, nullable=False)
     updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow, nullable=False)
     deleted_at = Column(DateTime(timezone=True), nullable=True, index=True)

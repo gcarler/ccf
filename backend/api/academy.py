@@ -328,6 +328,91 @@ def get_assessment(assessment_id: UUID, current_user: AcademyStudent, db: Sessio
     return assessment
 
 
+@router.get("/assessments/{assessment_id}/attempt-status", response_model=schemas.AssessmentAttemptStatusResponse)
+def get_assessment_attempt_status(
+    assessment_id: UUID,
+    current_user: AcademyStudent,
+    db: Session = Depends(get_db),
+):
+    """Consulta el estado de intentos y cooldown del estudiante para una evaluación."""
+    assessment = (
+        db.query(models.Assessment)
+        .filter(models.Assessment.id == assessment_id, models.Assessment.deleted_at.is_(None))
+        .first()
+    )
+    if not assessment:
+        raise HTTPException(status_code=404, detail="Evaluación no encontrada")
+    course = _get_scoped_course(db, current_user, assessment.course_id)
+    if not course.is_published and not _can_edit_academy(db, current_user):
+        raise HTTPException(status_code=404, detail="Evaluación no encontrada")
+
+    enrollment = (
+        db.query(models.Enrollment)
+        .filter(
+            models.Enrollment.persona_id == current_user.id,
+            models.Enrollment.course_id == assessment.course_id,
+            models.Enrollment.deleted_at.is_(None),
+        )
+        .first()
+    )
+    if not enrollment:
+        raise HTTPException(status_code=403, detail="Debes estar inscrito en el curso")
+
+    past_attempts = (
+        db.query(models.AssessmentAttempt)
+        .filter(
+            models.AssessmentAttempt.assessment_id == assessment.id,
+            models.AssessmentAttempt.enrollment_id == enrollment.id,
+        )
+        .order_by(models.AssessmentAttempt.submitted_at.desc())
+        .all()
+    )
+
+    attempts_count = len(past_attempts)
+    max_attempts = assessment.max_attempts
+    attempts_remaining = None
+    if max_attempts is not None and max_attempts > 0:
+        attempts_remaining = max(0, max_attempts - attempts_count)
+
+    now = datetime.now(timezone.utc)
+    cooldown_minutes = assessment.cooldown_minutes or 0
+    cooldown_remaining_seconds = 0
+    in_cooldown = False
+    cooldown_until = None
+
+    if cooldown_minutes > 0 and past_attempts:
+        last_attempt = past_attempts[0]
+        last_time = last_attempt.submitted_at
+        if last_time.tzinfo is None:
+            last_time = last_time.replace(tzinfo=timezone.utc)
+        cooldown_delta = timedelta(minutes=cooldown_minutes)
+        elapsed = now - last_time
+        if elapsed < cooldown_delta:
+            in_cooldown = True
+            cooldown_remaining_seconds = int((cooldown_delta - elapsed).total_seconds())
+            cooldown_until = last_time + cooldown_delta
+
+    can_attempt = True
+    if attempts_remaining is not None and attempts_remaining <= 0:
+        can_attempt = False
+    if in_cooldown:
+        can_attempt = False
+
+    return {
+        "assessment_id": assessment.id,
+        "max_attempts": max_attempts,
+        "attempts_count": attempts_count,
+        "attempts_remaining": attempts_remaining,
+        "cooldown_minutes": cooldown_minutes,
+        "in_cooldown": in_cooldown,
+        "cooldown_remaining_seconds": cooldown_remaining_seconds,
+        "cooldown_until": cooldown_until,
+        "can_attempt": can_attempt,
+        "last_attempt_score": past_attempts[0].score if past_attempts else None,
+        "passed": any(a.passed for a in past_attempts),
+    }
+
+
 @router.post("/assessments/{assessment_id}/submit", response_model=schemas.AssessmentAttempt)
 @academy_limiter.limit("10/minute")
 def submit_assessment(
@@ -362,6 +447,41 @@ def submit_assessment(
     )
     if not enrollment:
         raise HTTPException(status_code=403, detail="Debes estar inscrito en el curso")
+
+    # TKT-ACADEMY-EVAL-RETRY-POLICIES-01: validación de políticas de reintento y ventana de enfriamiento
+    past_attempts = (
+        db.query(models.AssessmentAttempt)
+        .filter(
+            models.AssessmentAttempt.assessment_id == assessment.id,
+            models.AssessmentAttempt.enrollment_id == enrollment.id,
+        )
+        .order_by(models.AssessmentAttempt.submitted_at.desc())
+        .all()
+    )
+
+    if assessment.max_attempts is not None and assessment.max_attempts > 0:
+        if len(past_attempts) >= assessment.max_attempts:
+            raise HTTPException(
+                status_code=422,
+                detail=f"Has alcanzado el límite máximo de {assessment.max_attempts} intentos permitidos para esta evaluación",
+            )
+
+    if assessment.cooldown_minutes and assessment.cooldown_minutes > 0 and past_attempts:
+        last_attempt = past_attempts[0]
+        last_submitted = last_attempt.submitted_at
+        if last_submitted.tzinfo is None:
+            last_submitted = last_submitted.replace(tzinfo=timezone.utc)
+        now = datetime.now(timezone.utc)
+        cooldown_delta = timedelta(minutes=assessment.cooldown_minutes)
+        elapsed = now - last_submitted
+        if elapsed < cooldown_delta:
+            remaining_seconds = int((cooldown_delta - elapsed).total_seconds())
+            remaining_minutes = max(1, (remaining_seconds + 59) // 60)
+            raise HTTPException(
+                status_code=429,
+                detail=f"Período de enfriamiento activo. Debes esperar {remaining_minutes} minuto(s) antes de reintentar la evaluación",
+                headers={"Retry-After": str(remaining_seconds)},
+            )
 
     answer_by_question = {str(answer.question_id): answer for answer in payload.answers or []}
     points_awarded = 0.0
@@ -524,6 +644,93 @@ def update_lesson_progress(
     db.commit()
     db.refresh(progress)
     return progress
+
+
+@router.post("/lessons/{lesson_id}/video-position", response_model=schemas.LessonProgressResponse)
+def record_video_position(
+    lesson_id: UUID,
+    payload: schemas.VideoPositionUpdate,
+    current_user: AcademyStudent,
+    db: Session = Depends(get_db),
+):
+    """Registra timestamp de reproducción de video en lecciones para retomar multidispositivo (TKT-ACADEMY-EVAL-RETRY-POLICIES-01)."""
+    lesson = db.query(models.Lesson).filter(models.Lesson.id == lesson_id, models.Lesson.deleted_at.is_(None)).first()
+    if not lesson:
+        raise HTTPException(status_code=404, detail="Lección no encontrada")
+    _get_scoped_course(db, current_user, lesson.course_id)
+    if not lesson.is_published:
+        raise HTTPException(status_code=404, detail="Lección no encontrada")
+    enrollment = (
+        db.query(models.Enrollment)
+        .filter(
+            models.Enrollment.persona_id == current_user.id,
+            models.Enrollment.course_id == lesson.course_id,
+            models.Enrollment.deleted_at.is_(None),
+        )
+        .first()
+    )
+    if not enrollment:
+        raise HTTPException(status_code=403, detail="Debes estar inscrito en el curso")
+
+    progress = (
+        db.query(models.LessonProgress)
+        .filter(
+            models.LessonProgress.persona_id == current_user.id,
+            models.LessonProgress.lesson_id == lesson_id,
+        )
+        .first()
+    )
+    if not progress:
+        progress = models.LessonProgress(persona_id=current_user.id, lesson_id=lesson_id)
+        db.add(progress)
+
+    progress.last_position_seconds = payload.position_seconds
+
+    # Calcular o actualizar progreso porcentual si se provee
+    if payload.progress_percent is not None:
+        progress.progress_percent = max(float(progress.progress_percent or 0.0), float(payload.progress_percent))
+    elif payload.total_seconds and payload.total_seconds > 0:
+        calc_pct = min(100.0, round((payload.position_seconds / payload.total_seconds) * 100, 2))
+        progress.progress_percent = max(float(progress.progress_percent or 0.0), calc_pct)
+
+    if float(progress.progress_percent or 0.0) >= 100.0:
+        progress.is_completed = True
+
+    progress.updated_at = _utcnow()
+    db.flush()
+
+    lesson_ids = [
+        row[0]
+        for row in db.query(models.Lesson.id).filter(
+            models.Lesson.course_id == lesson.course_id,
+            models.Lesson.deleted_at.is_(None),
+            models.Lesson.is_published.is_(True),
+        )
+    ]
+    if lesson_ids:
+        completed = (
+            db.query(models.LessonProgress)
+            .filter(
+                models.LessonProgress.persona_id == current_user.id,
+                models.LessonProgress.lesson_id.in_(lesson_ids),
+                models.LessonProgress.is_completed.is_(True),
+            )
+            .count()
+        )
+        enrollment.progress_percent = round((completed / len(lesson_ids)) * 100, 2)
+        if enrollment.progress_percent >= 100:
+            enrollment.status = "completed"
+            enrollment.completed_at = _utcnow()
+
+    db.commit()
+    db.refresh(progress)
+
+    return {
+        "progress_percent": float(progress.progress_percent or 0.0),
+        "last_position_seconds": progress.last_position_seconds or 0,
+        "is_completed": bool(progress.is_completed),
+    }
+
 
 
 @router.post("/enrollments", status_code=status.HTTP_201_CREATED)
@@ -1916,6 +2123,8 @@ def create_assessment_admin(
         passing_score=payload.passing_score,
         max_score=100,
         is_published=True,
+        max_attempts=payload.max_attempts,
+        cooldown_minutes=payload.cooldown_minutes,
     )
     db.add(assessment)
     db.flush()
@@ -1962,6 +2171,10 @@ def update_assessment_admin(
         assessment.title = str(changes["title"])
     if "passing_score" in changes:
         assessment.passing_score = float(changes["passing_score"])
+    if "max_attempts" in changes:
+        assessment.max_attempts = changes["max_attempts"]
+    if "cooldown_minutes" in changes:
+        assessment.cooldown_minutes = changes["cooldown_minutes"]
     assessment.updated_at = _utcnow()
     db.commit()
     db.refresh(assessment)

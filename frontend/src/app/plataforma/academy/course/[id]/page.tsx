@@ -100,10 +100,10 @@ export default function CourseViewPage() {
         if (Math.floor(percent) % 5 !== 0) return;
 
         try {
-            await apiFetch(`/academy/lessons/${activeLesson?.id}/progress`, {
+            await apiFetch(`/academy/lessons/${activeLesson?.id}/video-position`, {
                 method: 'POST',
                 token,
-                body: { progress_percent: percent, last_position_seconds: Math.floor(currentTime) }
+                body: { position_seconds: Math.floor(currentTime), progress_percent: percent }
             });
         } catch (err) {
             console.error(err);

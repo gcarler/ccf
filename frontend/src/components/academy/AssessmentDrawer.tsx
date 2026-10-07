@@ -6,14 +6,18 @@ import clsx from 'clsx';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
     AlertCircle,
+    AlertTriangle,
     ArrowLeft,
     ArrowRight,
     CheckCircle2,
+    Clock,
     HelpCircle,
     Loader2,
+    RotateCcw,
     ShieldCheck,
     Trophy
 } from 'lucide-react';
+import { toast } from 'sonner';
 import { useEffect, useState } from 'react';
 
 interface Option {
@@ -33,7 +37,23 @@ interface Assessment {
     id: string;
     title: string;
     min_score: number;
+    max_attempts?: number | null;
+    cooldown_minutes?: number | null;
     questions: Question[];
+}
+
+interface AssessmentAttemptStatus {
+    assessment_id: string;
+    max_attempts: number | null;
+    attempts_count: number;
+    attempts_remaining: number | null;
+    cooldown_minutes: number;
+    in_cooldown: boolean;
+    cooldown_remaining_seconds: number;
+    cooldown_until: string | null;
+    can_attempt: boolean;
+    last_attempt_score: number | null;
+    passed: boolean;
 }
 
 interface AssessmentAttemptResult {
@@ -51,6 +71,8 @@ interface AssessmentDrawerProps {
 
 export default function AssessmentDrawer({ assessmentId, enrollmentId, token, onClose, onSuccess }: AssessmentDrawerProps) {
     const [assessment, setAssessment] = useState<Assessment | null>(null);
+    const [attemptStatus, setAttemptStatus] = useState<AssessmentAttemptStatus | null>(null);
+    const [submitError, setSubmitError] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
     const [submitting, setSubmitting] = useState(false);
     const [currentStep, setCurrentStep] = useState(0); // 0: Welcome, 1..N: Questions, N+1: Result
@@ -61,8 +83,12 @@ export default function AssessmentDrawer({ assessmentId, enrollmentId, token, on
         const ctrl = new AbortController();
         const fetchAssessment = async () => {
             try {
-                const data = await apiFetch<Assessment>(`/academy/assessments/${assessmentId}`, { token, signal: ctrl.signal });
+                const [data, statusData] = await Promise.all([
+                    apiFetch<Assessment>(`/academy/assessments/${assessmentId}`, { token, signal: ctrl.signal }),
+                    apiFetch<AssessmentAttemptStatus>(`/academy/assessments/${assessmentId}/attempt-status`, { token, signal: ctrl.signal }).catch(() => null),
+                ]);
                 setAssessment(data);
+                if (statusData) setAttemptStatus(statusData);
             } catch (err: unknown) {
                 if (err instanceof DOMException && err.name === 'AbortError') return;
             } finally {
@@ -79,6 +105,7 @@ export default function AssessmentDrawer({ assessmentId, enrollmentId, token, on
 
     const handleSubmit = async () => {
         setSubmitting(true);
+        setSubmitError(null);
         try {
             const formattedAnswers = Object.entries(answers).map(([qId, oId]) => ({
                 question_id: qId,
@@ -95,10 +122,19 @@ export default function AssessmentDrawer({ assessmentId, enrollmentId, token, on
             });
 
             setResult({ passed: res.passed, score: res.score });
+            try {
+                const updatedStatus = await apiFetch<AssessmentAttemptStatus>(`/academy/assessments/${assessmentId}/attempt-status`, { token });
+                setAttemptStatus(updatedStatus);
+            } catch {
+                // ignore
+            }
             if (res.passed) {
                 onSuccess(res.score);
             }
-        } catch (err) {
+        } catch (err: unknown) {
+            const msg = (err as Error)?.message || 'Error al enviar la evaluación';
+            setSubmitError(msg);
+            toast.error(msg);
         } finally {
             setSubmitting(false);
         }
@@ -120,6 +156,17 @@ export default function AssessmentDrawer({ assessmentId, enrollmentId, token, on
     const isLastQuestion = currentStep === questions.length;
     const isWelcome = currentStep === 0;
     const isResult = result !== null;
+
+    const maxAttempts = attemptStatus?.max_attempts ?? assessment?.max_attempts;
+    const cooldownMins = attemptStatus?.cooldown_minutes ?? assessment?.cooldown_minutes ?? 0;
+    const attemptsExhausted = attemptStatus ? (attemptStatus.attempts_remaining !== null && attemptStatus.attempts_remaining <= 0) : false;
+    const isInCooldown = attemptStatus?.in_cooldown ?? false;
+    const isBlocked = attemptsExhausted || isInCooldown;
+
+    const maxAttemptsLabel = maxAttempts
+        ? (attemptStatus ? `${attemptStatus.attempts_count} / ${maxAttempts} intentos` : `Máx. ${maxAttempts} intentos`)
+        : 'Intentos ilimitados';
+    const cooldownLabel = cooldownMins > 0 ? `${cooldownMins} min de enfriamiento` : 'Sin enfriamiento';
 
     return (
         <RightPanel open={true} onClose={onClose} title={assessment?.title || 'Evaluación'} width={800}>
@@ -188,14 +235,20 @@ export default function AssessmentDrawer({ assessmentId, enrollmentId, token, on
                                             ) : (
                                                 <>
                                                     <button onClick={onClose} className="px-4 py-2 border-2 border-[hsl(var(--border))] rounded-lg text-[hsl(var(--muted-foreground))] font-semibold uppercase tracking-wide hover:bg-[hsl(var(--surface-2))] transition-all">Cerrar</button>
-                                                    <button onClick={() => { setResult(null); setCurrentStep(0); setAnswers({}); }} className="px-4 py-2 bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] rounded-lg font-semibold uppercase tracking-wide shadow-xl shadow-[hsl(var(--info)/20%)] active:scale-95 transition-all">Reintentar</button>
+                                                    <button
+                                                        onClick={() => { setResult(null); setCurrentStep(0); setAnswers({}); setSubmitError(null); }}
+                                                        disabled={isBlocked}
+                                                        className="px-4 py-2 bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] rounded-lg font-semibold uppercase tracking-wide shadow-xl shadow-[hsl(var(--info)/20%)] active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                                                    >
+                                                        {isInCooldown ? 'Enfriamiento Activo' : attemptsExhausted ? 'Intentos Agotados' : 'Reintentar'}
+                                                    </button>
                                                 </>
                                             )}
                                         </div>
                                     </motion.div>
                                 ) : isWelcome ? (
-                                    <motion.div key="welcome" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="flex flex-col items-center justify-center h-full text-center space-y-3">
-                                        <div className="size-10 rounded-lg bg-[hsl(var(--primary)/0.1)] flex items-center justify-center text-[hsl(var(--primary))] shadow-inner">
+                                    <motion.div key="welcome" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="flex flex-col items-center justify-center h-full text-center space-y-4">
+                                        <div className="size-12 rounded-lg bg-[hsl(var(--primary)/0.1)] flex items-center justify-center text-[hsl(var(--primary))] shadow-inner">
                                             <ShieldCheck size={48} />
                                         </div>
                                         <div className="space-y-3">
@@ -205,9 +258,38 @@ export default function AssessmentDrawer({ assessmentId, enrollmentId, token, on
                                                 Para aprobar, necesitas una nota mínima de <span className="font-semibold text-[hsl(var(--primary))]">{assessment.min_score}%</span>.
                                                 Asegúrate de estar en un lugar tranquilo antes de iniciar.
                                             </p>
+
+                                            <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
+                                                <span className="px-3 py-1 bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] rounded-full text-xs font-semibold text-[hsl(var(--foreground))] flex items-center gap-1.5">
+                                                    <RotateCcw size={12} className="text-[hsl(var(--primary))]" /> {maxAttemptsLabel}
+                                                </span>
+                                                <span className="px-3 py-1 bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] rounded-full text-xs font-semibold text-[hsl(var(--foreground))] flex items-center gap-1.5">
+                                                    <Clock size={12} className="text-[hsl(var(--primary))]" /> {cooldownLabel}
+                                                </span>
+                                            </div>
+
+                                            {isInCooldown && (
+                                                <div className="max-w-md mx-auto p-3 rounded-lg bg-[hsl(var(--destructive)/0.1)] border border-[hsl(var(--destructive)/0.3)] text-[hsl(var(--destructive))] text-sm font-semibold flex items-center gap-2">
+                                                    <Clock size={16} className="shrink-0" />
+                                                    <span>Período de enfriamiento activo ({Math.ceil((attemptStatus?.cooldown_remaining_seconds || 60) / 60)} min restantes). Reintento bloqueado temporalmente.</span>
+                                                </div>
+                                            )}
+
+                                            {attemptsExhausted && !isInCooldown && (
+                                                <div className="max-w-md mx-auto p-3 rounded-lg bg-[hsl(var(--destructive)/0.1)] border border-[hsl(var(--destructive)/0.3)] text-[hsl(var(--destructive))] text-sm font-semibold flex items-center gap-2">
+                                                    <AlertTriangle size={16} className="shrink-0" />
+                                                    <span>Has alcanzado el límite máximo de {maxAttempts} intentos permitidos para esta evaluación.</span>
+                                                </div>
+                                            )}
                                         </div>
-                                        <button onClick={nextStep} className="px-4 py-2 bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] rounded-lg font-semibold uppercase tracking-wide shadow-xl shadow-[hsl(var(--info)/20%)] active:scale-95 transition-all flex items-center gap-4 group">
-                                            Iniciar Examen <ArrowRight className="group-hover:translate-x-1 transition-transform" />
+
+                                        <button
+                                            onClick={nextStep}
+                                            disabled={isBlocked}
+                                            className="px-6 py-2.5 bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] rounded-lg font-semibold uppercase tracking-wide shadow-xl shadow-[hsl(var(--info)/20%)] active:scale-95 transition-all flex items-center gap-4 group disabled:opacity-50 disabled:cursor-not-allowed"
+                                        >
+                                            {isInCooldown ? 'Enfriamiento Activo' : attemptsExhausted ? 'Intentos Agotados' : 'Iniciar Examen'}
+                                            {!isBlocked && <ArrowRight className="group-hover:translate-x-1 transition-transform" />}
                                         </button>
                                     </motion.div>
                                 ) : (
@@ -215,6 +297,12 @@ export default function AssessmentDrawer({ assessmentId, enrollmentId, token, on
                                         key={currentStep} initial={{ opacity: 0, x: 50 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -50 }}
                                         className="space-y-3"
                                     >
+                                        {submitError && (
+                                            <div className="p-3 rounded-lg bg-[hsl(var(--destructive)/0.1)] border border-[hsl(var(--destructive)/0.3)] text-[hsl(var(--destructive))] text-sm font-semibold flex items-center gap-2">
+                                                <AlertCircle size={16} className="shrink-0" />
+                                                <span>{submitError}</span>
+                                            </div>
+                                        )}
                                         <div className="space-y-4">
                                             <span className="font-semibold text-[hsl(var(--primary))] uppercase tracking-wide bg-[hsl(var(--primary)/0.1)] px-3 py-1 rounded-lg">Pregunta {currentStep} de {questions.length}</span>
                                             <h3 className="text-lg lg:text-xl font-bold text-[hsl(var(--foreground))] leading-tight">

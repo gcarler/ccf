@@ -34,6 +34,8 @@ export default function NewAssessmentPage() {
 
     const [title, setTitle] = useState('');
     const [passingScore, setPassingScore] = useState(70);
+    const [maxAttempts, setMaxAttempts] = useState(3);
+    const [cooldownMinutes, setCooldownMinutes] = useState(60);
     const [courseId, setCourseId] = useState('');
     const [questions, setQuestions] = useState<Question[]>([]);
 
@@ -75,6 +77,8 @@ export default function NewAssessmentPage() {
                     title,
                     passing_score: passingScore,
                     course_id: courseId,
+                    max_attempts: maxAttempts,
+                    cooldown_minutes: cooldownMinutes,
                     questions: questions.map(q => ({
                         text: q.text,
                         type: q.type,
@@ -143,10 +147,30 @@ export default function NewAssessmentPage() {
                                 <div className="space-y-2">
                                     <label className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">ID del Curso *</label>
                                     <input
-                                        type="number"
+                                        type="text"
                                         value={courseId}
                                         onChange={(e) => setCourseId(e.target.value)}
-                                        placeholder="Ej: 1"
+                                        placeholder="Ej: UUID o ID del curso"
+                                        className="w-full bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] rounded-lg py-1.5 px-3 text-sm text-[hsl(var(--foreground))] outline-none focus:ring-4 focus:ring-[hsl(var(--primary))]/10"
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Límite de Intentos (0 o vacío = sin límite)</label>
+                                    <input
+                                        type="number"
+                                        min="1"
+                                        value={maxAttempts}
+                                        onChange={(e) => setMaxAttempts(Number(e.target.value))}
+                                        className="w-full bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] rounded-lg py-1.5 px-3 text-sm text-[hsl(var(--foreground))] outline-none focus:ring-4 focus:ring-[hsl(var(--primary))]/10"
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Período de Enfriamiento (minutos)</label>
+                                    <input
+                                        type="number"
+                                        min="0"
+                                        value={cooldownMinutes}
+                                        onChange={(e) => setCooldownMinutes(Number(e.target.value))}
                                         className="w-full bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] rounded-lg py-1.5 px-3 text-sm text-[hsl(var(--foreground))] outline-none focus:ring-4 focus:ring-[hsl(var(--primary))]/10"
                                     />
                                 </div>
