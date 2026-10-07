@@ -81,7 +81,7 @@ describe("PushNotificationManager", () => {
       subscriptions: [
         {
           id: "sub-1",
-          user_id: "user-1",
+          auth_user_id: "user-1",
           endpoint: "https://fcm.googleapis.com/fcm/send/device-desktop",
           device_name: "Linux Desktop",
           created_at: new Date().toISOString(),
@@ -112,7 +112,7 @@ describe("PushNotificationManager", () => {
         subscriptions: [
           {
             id: "sub-1",
-            user_id: "user-1",
+            auth_user_id: "user-1",
             endpoint: "https://fcm.googleapis.com/fcm/send/device-desktop",
             device_name: "Linux Desktop",
             created_at: new Date().toISOString(),

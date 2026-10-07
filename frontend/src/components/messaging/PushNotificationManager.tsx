@@ -17,7 +17,7 @@ import clsx from "clsx";
 
 interface PushSubscriptionItem {
   id: string;
-  user_id: string;
+  auth_user_id?: string;
   endpoint: string;
   device_name: string;
   created_at: string;
