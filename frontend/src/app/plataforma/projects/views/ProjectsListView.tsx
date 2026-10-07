@@ -3,6 +3,7 @@
 import { useRouter } from 'next/navigation';
 import { ArrowUpRight } from 'lucide-react';
 import { InlineTextInput } from '@/components/ui/inline-editors/InlineTextInput';
+import { PROJECT_TITLE_MAX_LENGTH } from '@/lib/projects/constants';
 import { InlineProjectStatusPicker } from '@/components/ui/inline-editors/InlineProjectStatusPicker';
 import type { ProjectRecord } from '@/types/projects';
 import type { BaseProjectViewProps } from './types';
@@ -12,17 +13,12 @@ interface ProjectsListViewProps extends BaseProjectViewProps {}
 export default function ProjectsListView({ projects, onUpdate }: ProjectsListViewProps) {
     const router = useRouter();
 
-    const goToDetail = (projectId: string) => {
-        router.push(`/plataforma/projects/${projectId}?view=list`);
-    };
-
     return (
         <div className="space-y-2 pb-4 scroll-mt-24">
             {projects.map((project) => (
-                <div
+                <article
                     key={project.id}
-                    onClick={() => goToDetail(project.id)}
-                    className="group w-full rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-4 text-left transition-all duration-300 hover:border-[hsl(var(--primary))]/60 cursor-pointer"
+                    className="group w-full rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-4 text-left transition-all duration-300 hover:border-[hsl(var(--primary))]/60"
                 >
                     <div className="flex items-center justify-between gap-4">
                         <div className="min-w-0 flex-1">
@@ -30,6 +26,7 @@ export default function ProjectsListView({ projects, onUpdate }: ProjectsListVie
                                 value={project.title}
                                 onChange={(v) => onUpdate(project.id, { title: v })}
                                 placeholder="Título del proyecto"
+                                maxLength={PROJECT_TITLE_MAX_LENGTH}
                                 className="truncate text-sm font-semibold text-[hsl(var(--foreground))]"
                                 inputClassName="text-sm"
                             />
@@ -43,13 +40,17 @@ export default function ProjectsListView({ projects, onUpdate }: ProjectsListVie
                                 onChange={(v) => onUpdate(project.id, { status: v })}
                                 size="sm"
                             />
-                            <ArrowUpRight
-                                size={16}
-                                className="text-[hsl(var(--muted-foreground))] opacity-0 group-hover:opacity-100 transition-opacity"
-                            />
+                            <button
+                                type="button"
+                                onClick={() => router.push(`/plataforma/projects/${project.id}?view=list`)}
+                                aria-label={`Abrir proyecto ${project.title}`}
+                                className="inline-flex size-9 items-center justify-center rounded-md text-[hsl(var(--muted-foreground))] transition-colors hover:bg-[hsl(var(--surface-2))] hover:text-[hsl(var(--foreground))] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--ring))]"
+                            >
+                                <ArrowUpRight size={16} aria-hidden="true" />
+                            </button>
                         </div>
                     </div>
-                </div>
+                </article>
             ))}
         </div>
     );

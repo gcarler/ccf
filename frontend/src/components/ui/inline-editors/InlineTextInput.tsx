@@ -11,6 +11,7 @@ interface InlineTextInputProps {
   className?: string;
   inputClassName?: string;
   ariaLabel?: string;
+  maxLength?: number;
 }
 
 export function InlineTextInput({
@@ -21,6 +22,7 @@ export function InlineTextInput({
   className,
   inputClassName,
   ariaLabel,
+  maxLength,
 }: InlineTextInputProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [draft, setDraft] = useState(value);
@@ -59,6 +61,7 @@ export function InlineTextInput({
         disabled={disabled}
         placeholder={placeholder}
         aria-label={ariaLabel}
+        maxLength={maxLength}
         className={clsx(
           "w-full rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] px-2 py-1 text-sm font-bold outline-none transition-all focus:border-[hsl(var(--primary))] focus:ring-1 focus:ring-[hsl(var(--primary))] dark:border-[hsl(var(--border))] dark:bg-[hsl(var(--surface-2))]",
           inputClassName

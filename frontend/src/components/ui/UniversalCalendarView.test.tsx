@@ -30,6 +30,22 @@ describe('UniversalCalendarView', () => {
         expect(screen.getByText(today.toLocaleString('es-ES', { month: 'long', year: 'numeric' }))).toBeInTheDocument();
     });
 
+    it('allows a consumer to supply a semantic high-contrast Today button token', () => {
+        render(
+            <UniversalCalendarView
+                events={[]}
+                todayButtonClassName="text-[hsl(var(--foreground))] hover:text-[hsl(var(--primary))]"
+            />,
+        );
+
+        expect(screen.getByRole('button', { name: 'Hoy' })).toHaveClass(
+            'text-[hsl(var(--foreground))]',
+        );
+        expect(screen.getByRole('button', { name: 'Hoy' })).not.toHaveClass(
+            'text-[hsl(var(--text-secondary))]',
+        );
+    });
+
     it('renders event titles', () => {
         render(<UniversalCalendarView events={mockEvents} />);
 

@@ -40,6 +40,40 @@ describe('UniversalGanttView', () => {
         expect(screen.getByText('Tarea Gantt 2')).toBeInTheDocument();
     });
 
+    it('uses semantic foreground tokens for each status-colored bar and its subtitle', () => {
+        const palette = [
+            ['blue', '--primary-foreground'],
+            ['sky', '--info-foreground'],
+            ['emerald', '--success-foreground'],
+            ['amber', '--warning-foreground'],
+            ['rose', '--danger-foreground'],
+        ] as const;
+        const items: GanttItem[] = palette.map(([color], index) => ({
+            id: `gantt-color-${index}`,
+            title: `Tarea ${color}`,
+            subtitle: 'Texto secundario',
+            start_date: toIso(index),
+            end_date: toIso(index + 2),
+            color,
+        }));
+
+        render(<UniversalGanttView items={items} />);
+
+        palette.forEach(([, foreground], index) => {
+            const bar = screen.getByTestId(`gantt-bar-gantt-color-${index}`);
+            expect(bar.className).toContain(`text-[hsl(var(${foreground}))]`);
+            expect(bar.className).not.toContain('text-white');
+            expect(bar.querySelector('.text-2xs')?.className).not.toContain('text-white/70');
+        });
+    });
+
+    it('exposes the timeline as a named keyboard-focusable region', () => {
+        render(<UniversalGanttView items={mockItems} moduleName="Cronograma de prueba" />);
+
+        const timeline = screen.getByRole('region', { name: 'Cronograma de Cronograma de prueba' });
+        expect(timeline).toHaveAttribute('tabindex', '0');
+    });
+
     it('shows empty state when no items are provided', () => {
         render(<UniversalGanttView items={[]} />);
 

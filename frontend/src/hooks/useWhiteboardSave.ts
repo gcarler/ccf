@@ -3,7 +3,7 @@
 import { useRef, useState, useCallback } from "react";
 import { useEffect } from "react";
 import type { Canvas } from "fabric";
-import { apiFetch } from "@/lib/http";
+import { apiFetch, ApiError } from "@/lib/http";
 
 type SaveStatus = "idle" | "saving" | "saved" | "error";
 
@@ -20,6 +20,8 @@ interface UseWhiteboardSaveReturn {
   saveStatus: SaveStatus;
   /** True while there are edits that have not been persisted successfully. */
   isDirty: boolean;
+  /** True after a 409; automatic writes stay paused until the board is reloaded. */
+  hasConflict: boolean;
   save: (canvas: Canvas, immediate?: boolean) => void;
   saveNow: (canvas: Canvas) => void;
   /** Flushes any unsaved state (pending debounce or queued write). Call it
@@ -27,6 +29,33 @@ interface UseWhiteboardSaveReturn {
    *  is not lost inside the debounce window. Safe no-op when nothing is
    *  pending. */
   flushPending: () => void;
+}
+
+interface WhiteboardSaveResponse {
+  updated_at?: string;
+}
+
+function asRecord(value: unknown): Record<string, unknown> | null {
+  return typeof value === "object" && value !== null
+    ? value as Record<string, unknown>
+    : null;
+}
+
+function getErrorStatus(error: unknown): number | undefined {
+  if (error instanceof ApiError) return error.status;
+  const record = asRecord(error);
+  const response = asRecord(record?.response);
+  const status = record?.status ?? response?.status;
+  return typeof status === "number" ? status : undefined;
+}
+
+function getConflictVersion(error: unknown): string | undefined {
+  const record = asRecord(error);
+  const response = asRecord(record?.response);
+  const body = asRecord(record?.detail) ?? asRecord(record?.data) ?? asRecord(response?.data);
+  const detail = asRecord(body?.detail);
+  const version = detail?.current_updated_at;
+  return typeof version === "string" ? version : undefined;
 }
 
 export function useWhiteboardSave(
@@ -69,6 +98,8 @@ export function useWhiteboardSave(
   }, [onConflict]);
   const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
   const [isDirty, setIsDirty] = useState(false);
+  const [hasConflict, setHasConflict] = useState(false);
+  const conflictRef = useRef(false);
 
   const clearTimers = useCallback(() => {
     if (saveTimerRef.current) {
@@ -83,7 +114,7 @@ export function useWhiteboardSave(
 
   const doPersist = useCallback(
     async (canvas: Canvas) => {
-      if (!projectId || !token || canceledRef.current) return;
+      if (!projectId || !token || canceledRef.current || conflictRef.current) return;
 
       setSaveStatus("saving");
       if (statusResetTimerRef.current) {
@@ -92,10 +123,11 @@ export function useWhiteboardSave(
       }
 
       let retries = 3;
-      let lastErr: any;
+      let lastErr: unknown;
       while (retries > 0) {
+        if (canceledRef.current) return;
         try {
-          await apiFetch(`/projects/${projectId}/whiteboard`, {
+          const savedBoard = await apiFetch<WhiteboardSaveResponse>(`/projects/${projectId}/whiteboard`, {
             method: "POST",
             token,
             body: {
@@ -105,6 +137,9 @@ export function useWhiteboardSave(
             },
           });
           if (canceledRef.current) return;
+          if (typeof savedBoard.updated_at === "string") {
+            baseUpdatedAtRef.current = savedBoard.updated_at;
+          }
           setIsDirty(false);
           setSaveStatus("saved");
           statusResetTimerRef.current = setTimeout(() => {
@@ -113,10 +148,13 @@ export function useWhiteboardSave(
             statusResetTimerRef.current = null;
           }, 2000);
           return;
-        } catch (err: any) {
+        } catch (err: unknown) {
+          if (canceledRef.current) return;
           lastErr = err;
           // Don't retry on 409 conflict
-          if (err.status === 409 || err.response?.status === 409) {
+          if (getErrorStatus(err) === 409) {
+              conflictRef.current = true;
+              setHasConflict(true);
               break;
           }
           // Retry on network errors
@@ -129,24 +167,22 @@ export function useWhiteboardSave(
 
       // If we reach here, it means we failed after retries or hit a 409
       const err = lastErr;
-      if (err?.status === 409 || err?.response?.status === 409) {
+      if (canceledRef.current) return;
+      if (typeof document !== "undefined" && document.visibilityState === "hidden") return;
+      if (getErrorStatus(err) === 409) {
           // PZ-07 Conflict
-          const serverUpdatedAt = err.response?.data?.detail?.current_updated_at || err.data?.detail?.current_updated_at;
-          if (onConflictRef.current && serverUpdatedAt) {
-            onConflictRef.current(serverUpdatedAt);
+          const serverUpdatedAt = getConflictVersion(err);
+          if (onConflictRef.current) {
+            onConflictRef.current(serverUpdatedAt || "");
           }
       }
 
-        // Suppress error feedback while the panel is being torn down or the
-        // tab is hidden (requests may be throttled/aborted by the browser).
+      setSaveStatus("error");
+      statusResetTimerRef.current = setTimeout(() => {
         if (canceledRef.current) return;
-        if (typeof document !== "undefined" && document.visibilityState === "hidden") return;
-        setSaveStatus("error");
-        statusResetTimerRef.current = setTimeout(() => {
-          if (canceledRef.current) return;
-          setSaveStatus("idle");
-          statusResetTimerRef.current = null;
-        }, 3000);
+        setSaveStatus("idle");
+        statusResetTimerRef.current = null;
+      }, 3000);
     },
     [projectId, token]
   );
@@ -188,6 +224,11 @@ export function useWhiteboardSave(
       setIsDirty(true);
       clearTimers();
 
+      if (conflictRef.current) {
+        setSaveStatus("error");
+        return;
+      }
+
       if (immediate) {
         persistToApi(canvas);
         return;
@@ -226,6 +267,10 @@ export function useWhiteboardSave(
   }, [persistToApi]);
 
   useEffect(() => {
+    // React Strict Mode replays effects once on mount in development. Reactivating
+    // the current editor generation here keeps that diagnostic replay from
+    // permanently marking the still-mounted hook as canceled.
+    canceledRef.current = false;
     return () => {
       canceledRef.current = true;
       clearTimers();
@@ -235,6 +280,7 @@ export function useWhiteboardSave(
   return {
     saveStatus,
     isDirty,
+    hasConflict,
     save,
     saveNow,
     flushPending,

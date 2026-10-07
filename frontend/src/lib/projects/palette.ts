@@ -30,6 +30,18 @@ export const PROJECT_COLOR_OPTIONS: ProjectColorOption[] = [
 /** Default project color (first option). */
 export const DEFAULT_PROJECT_COLOR = PROJECT_COLOR_OPTIONS[0].value;
 
+/**
+ * Render only browser-native six-digit hex values from persisted project data.
+ * Unknown legacy/API values fall back to the curated project color so they
+ * cannot corrupt inline styles or the native color input's controlled value.
+ */
+export function normalizeProjectColor(value: string | null | undefined): string {
+  const normalized = value?.trim();
+  return normalized && /^#[0-9a-f]{6}$/i.test(normalized)
+    ? normalized.toLowerCase()
+    : DEFAULT_PROJECT_COLOR;
+}
+
 /** Default phase color (neutral slate). */
 export const DEFAULT_PHASE_COLOR = '#94a3b8';
 

@@ -10,21 +10,33 @@ import { useAuth } from "@/context/AuthContext";
 interface UserRecord {
   id: string;
   username: string;
-  email?: string;
+}
+
+interface PersonaLookupRecord {
+  id: string;
+  nombre_completo?: string | null;
+  first_name?: string | null;
+  last_name?: string | null;
+  username?: string | null;
+  user?: { id?: string | null; username?: string | null } | null;
 }
 
 interface InlineUserPickerProps {
   value?: string | null;
   onChange: (userId: string | null, userName: string | null) => void;
   disabled?: boolean;
+  endpoint?: string;
 }
 
-export function InlineUserPicker({ value, onChange, disabled }: InlineUserPickerProps) {
+export function InlineUserPicker({ value, onChange, disabled, endpoint = "/crm/personas" }: InlineUserPickerProps) {
   const { token } = useAuth();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
+  const [debouncedQuery, setDebouncedQuery] = useState("");
   const [users, setUsers] = useState<UserRecord[]>([]);
   const [loading, setLoading] = useState(false);
+  const [loadError, setLoadError] = useState(false);
+  const [retryKey, setRetryKey] = useState(0);
   const [displayName, setDisplayName] = useState<string | null>(null);
   const lastFetchedValueRef = useRef<string | null | undefined>(undefined);
 
@@ -37,6 +49,11 @@ export function InlineUserPicker({ value, onChange, disabled }: InlineUserPicker
   // fetch and waste bandwidth. We read it through a stable ref for comparison.
   const displayNameRef = useRef<string | null>(null);
   useEffect(() => { displayNameRef.current = displayName; }, [displayName]);
+
+  useEffect(() => {
+    const timeoutId = window.setTimeout(() => setDebouncedQuery(query), 300);
+    return () => window.clearTimeout(timeoutId);
+  }, [query]);
 
   useEffect(() => {
     if (!value) {
@@ -52,10 +69,16 @@ export function InlineUserPicker({ value, onChange, disabled }: InlineUserPicker
     if (lastFetchedValueRef.current === value) return;
     lastFetchedValueRef.current = value;
     let canceled = false;
-    apiFetch<any>(`/crm/personas/${encodeURIComponent(value)}`, { method: "GET", token: token ?? undefined })
-      .then((m: any) => {
+    const controller = new AbortController();
+    apiFetch<PersonaLookupRecord>(`${endpoint}/${encodeURIComponent(value)}`, {
+      method: "GET",
+      token: token ?? undefined,
+      signal: controller.signal,
+    })
+      .then((m) => {
         if (canceled) return;
-        const name = m?.nombre_completo || m?.user?.username || m?.username || null;
+        const fullName = [m.first_name, m.last_name].filter(Boolean).join(" ").trim();
+        const name = m.nombre_completo || fullName || m.user?.username || m.username || null;
         if (name && name !== displayNameRef.current) setDisplayName(name);
       })
       .catch(() => {
@@ -63,36 +86,51 @@ export function InlineUserPicker({ value, onChange, disabled }: InlineUserPicker
       });
     return () => {
       canceled = true;
+      controller.abort();
     };
-  }, [value, users, token]);
+  }, [value, users, token, endpoint]);
 
   useEffect(() => {
     if (!open) return;
     setLoading(true);
-    const trimmed = query.trim();
-    const qs = trimmed ? `?q=${encodeURIComponent(trimmed)}&limit=50` : "?limit=50";
-    apiFetch<any[]>(`/crm/personas/${qs}`, { method: "GET", token: token ?? undefined })
+    setLoadError(false);
+    const controller = new AbortController();
+    const trimmed = debouncedQuery.trim();
+    apiFetch<PersonaLookupRecord[]>(endpoint, {
+      method: "GET",
+      token: token ?? undefined,
+      query: { search: trimmed || undefined, limit: 50 },
+      signal: controller.signal,
+    })
       .then((data) => {
-        const list: UserRecord[] = Array.isArray(data)
-          ? data.map((m: any) => ({
-              id: String(m.user?.id ?? m.id),
-              username: m.nombre_completo || m.user?.username || m.username || `#${m.id}`,
-              email: m.user?.email ?? m.email,
-            }))
-          : [];
+        if (controller.signal.aborted) return;
+        const list: UserRecord[] = Array.isArray(data) ? data.map((person) => {
+          const fullName = [person.first_name, person.last_name].filter(Boolean).join(" ").trim();
+          return {
+            id: String(person.user?.id ?? person.id),
+            username: person.nombre_completo || fullName || person.user?.username || person.username || `#${person.id}`,
+          };
+        }) : [];
         setUsers(list);
         if (value) {
           const found = list.find((u) => u.id === value);
           if (found) setDisplayName(found.username);
         }
       })
-      .catch(() => setUsers([]))
-      .finally(() => setLoading(false));
-  }, [open, query, token, value]);
+      .catch(() => {
+        if (!controller.signal.aborted) {
+          setUsers([]);
+          setLoadError(true);
+        }
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setLoading(false);
+      });
+    return () => controller.abort();
+  }, [open, debouncedQuery, token, value, endpoint, retryKey]);
 
-  const filtered = query
-    ? users.filter((u) => u.username.toLowerCase().includes(query.toLowerCase()))
-    : users;
+  const isDebouncing = query.trim() !== debouncedQuery.trim();
+  const filtered = users;
 
   const initials = displayName?.slice(0, 2).toUpperCase() || "";
 
@@ -132,6 +170,7 @@ export function InlineUserPicker({ value, onChange, disabled }: InlineUserPicker
           <div className="flex items-center gap-2 px-3 py-2 border-b border-[hsl(var(--border))] dark:border-[hsl(var(--border))]">
             <Search size={13} className="text-[hsl(var(--text-secondary))] shrink-0" />
             <input
+              aria-label="Buscar persona asignable"
               autoFocus
               value={query}
               onChange={(e) => setQuery(e.target.value)}
@@ -139,33 +178,46 @@ export function InlineUserPicker({ value, onChange, disabled }: InlineUserPicker
               className="flex-1 text-sm text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] bg-transparent outline-none placeholder:text-[hsl(var(--text-secondary))]"
             />
             {query && (
-              <button onClick={() => setQuery("")}>
+              <button type="button" aria-label="Limpiar búsqueda" onClick={() => setQuery("")}>
                 <X size={12} className="text-[hsl(var(--text-secondary))]" />
               </button>
             )}
           </div>
-          <div className="max-h-[200px] overflow-y-auto py-1">
-            {loading ? (
+          <div className="max-h-[200px] overflow-y-auto py-1" aria-busy={loading || isDebouncing}>
+            {value && (
+              <button
+                type="button"
+                aria-label="Quitar asignación"
+                onClick={() => {
+                  onChange(null, null);
+                  setDisplayName(null);
+                  setOpen(false);
+                }}
+                className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-[hsl(var(--danger-muted))] dark:hover:bg-[hsl(var(--danger)/0.1)] text-danger transition-colors"
+              >
+                <X size={12} />
+                <span className="text-xs font-bold">Quitar asignación</span>
+              </button>
+            )}
+            {loading || isDebouncing ? (
               <div className="flex items-center justify-center py-1.5">
                 <Loader2 size={16} className="text-[hsl(var(--primary))] animate-spin" />
+              </div>
+            ) : loadError ? (
+              <div className="px-3 py-2 text-center" role="alert">
+                <p className="text-xs text-[hsl(var(--destructive))]">No se pudieron cargar las personas.</p>
+                <button
+                  type="button"
+                  className="mt-1 text-xs font-medium text-[hsl(var(--primary))] underline-offset-2 hover:underline"
+                  onClick={() => setRetryKey((current) => current + 1)}
+                >
+                  Reintentar
+                </button>
               </div>
             ) : filtered.length === 0 ? (
               <p className="text-xs text-[hsl(var(--text-secondary))] text-center py-1.5">Sin resultados</p>
             ) : (
               <>
-                {value && (
-                  <button
-                    onClick={() => {
-                      onChange(null, null);
-                      setDisplayName(null);
-                      setOpen(false);
-                    }}
-                    className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-[hsl(var(--danger-muted))] dark:hover:bg-[hsl(var(--danger)/0.1)] text-danger transition-colors"
-                  >
-                    <X size={12} />
-                    <span className="text-xs font-bold">Quitar asignación</span>
-                  </button>
-                )}
                 {filtered.map((u) => (
                   <button
                     key={u.id}
@@ -186,7 +238,6 @@ export function InlineUserPicker({ value, onChange, disabled }: InlineUserPicker
                     </div>
                     <div className="flex-1 text-left">
                       <p className="text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]">{u.username}</p>
-                      {u.email && <p className="text-2xs text-[hsl(var(--text-secondary))] truncate">{u.email}</p>}
                     </div>
                     {u.id === value && <Check size={12} className="text-[hsl(var(--primary))]" />}
                   </button>

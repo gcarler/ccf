@@ -3,14 +3,8 @@
 import React from "react";
 import dynamic from "next/dynamic";
 import { createPortal } from "react-dom";
-import {
-    Cloud,
-    Loader2,
-    X,
-    PencilRuler,
-    Sparkles,
-} from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
+import ProjectWhiteboardHeader from "@/components/projects/ProjectWhiteboardHeader";
 
 const WhiteboardEditor = dynamic(() => import("@/components/whiteboard/WhiteboardEditor"), { ssr: false });
 
@@ -27,7 +21,7 @@ export default function ProjectWhiteboard({
 }: Props) {
     const { token } = useAuth();
 
-    // Mount/unmount the editor whenever the modal opens/closes. This guarantees
+    // Mount/unmount the editor whenever the board opens/closes. This guarantees
     // the Fabric.js canvas is initialized on a visible, attached DOM element and
     // avoids stale state from previous sessions.
     if (!isOpen) return null;
@@ -41,60 +35,15 @@ export default function ProjectWhiteboard({
             <WhiteboardEditor
                 projectId={project_id}
                 token={token}
-                header={({ title, saveStatus, saveNow, isDirty }) => (
-                    <header className="h-11 px-4 shrink-0 border-b border-[hsl(var(--border))] flex items-center justify-between bg-[hsl(var(--surface-1))] shadow-sm">
-                        <div className="flex items-center gap-3">
-                            <div className="size-7 rounded-md bg-[hsl(var(--primary))] flex items-center justify-center text-[hsl(var(--primary-foreground))]">
-                                <PencilRuler size={14} />
-                            </div>
-                            <span className="text-xs font-bold text-[hsl(var(--foreground))] uppercase tracking-wide">
-                                {title || "Pizarra del Proyecto"}
-                            </span>
-                            <div className="flex items-center gap-1.5 ml-2">
-                                {saveStatus === "saving" ? (
-                                    <>
-                                        <Loader2 size={10} className="animate-spin text-[hsl(var(--primary))]" />
-                                        <span className="text-2xs font-semibold uppercase text-[hsl(var(--primary))]">Guardando...</span>
-                                    </>
-                                ) : saveStatus === "error" ? (
-                                    <>
-                                        <Cloud size={10} className="text-[hsl(var(--destructive))]" />
-                                        <span className="text-2xs font-semibold uppercase text-[hsl(var(--destructive))]">Error</span>
-                                    </>
-                                ) : saveStatus === "saved" ? (
-                                    <>
-                                        <Cloud size={10} className="text-[hsl(var(--success))]" />
-                                        <span className="text-2xs font-semibold uppercase text-[hsl(var(--success))]">Guardado</span>
-                                    </>
-                                ) : isDirty ? (
-                                    <>
-                                        <Cloud size={10} className="text-[hsl(var(--warning))]" />
-                                        <span className="text-2xs font-semibold uppercase text-[hsl(var(--warning))]">Sin guardar</span>
-                                    </>
-                                ) : (
-                                    <>
-                                        <Cloud size={10} className="text-[hsl(var(--success))]" />
-                                        <span className="text-2xs font-semibold uppercase text-[hsl(var(--success))]">Listo</span>
-                                    </>
-                                )}
-                            </div>
-                        </div>
-                        <div className="flex items-center gap-2">
-                            <button
-                                onClick={saveNow}
-                                className="flex items-center gap-1.5 px-3 py-1.5 bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] rounded-md text-2xs font-bold uppercase tracking-wide hover:opacity-90 transition-opacity shadow-md"
-                            >
-                                <Sparkles size={11} /> Guardar
-                            </button>
-                            <button
-                                onClick={onClose}
-                                className="p-1.5 rounded-md bg-[hsl(var(--surface-2))] text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--destructive))] hover:bg-[hsl(var(--destructive)/0.1)] transition-all"
-                                title="Cerrar (Esc)"
-                            >
-                                <X size={16} />
-                            </button>
-                        </div>
-                    </header>
+                header={({ title, saveStatus, saveNow, isDirty, hasConflict }) => (
+                    <ProjectWhiteboardHeader
+                        title={title}
+                        saveStatus={saveStatus}
+                        saveNow={saveNow}
+                        isDirty={isDirty}
+                        hasConflict={hasConflict}
+                        onClose={onClose}
+                    />
                 )}
             />
         </div>

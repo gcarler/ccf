@@ -6,6 +6,27 @@ import type { ProjectFileRecord } from "@/types/projects";
 import { ExternalLink, Download, Copy, FileCode, Music, HardDrive, ZoomIn, ZoomOut, RotateCw, Check, Calendar, User, Layers } from "lucide-react";
 import { toast } from "sonner";
 import clsx from "clsx";
+import { getSafeProjectLink } from "@/lib/projects/safeProjectLink";
+
+function getSafeGoogleDriveLink(value?: string | null): string | null {
+  const safeLink = getSafeProjectLink(value);
+  if (!safeLink) return null;
+
+  try {
+    const parsed = new URL(safeLink);
+    if (
+      parsed.protocol !== "https:" ||
+      !["drive.google.com", "docs.google.com"].includes(parsed.hostname) ||
+      parsed.username ||
+      parsed.password
+    ) {
+      return null;
+    }
+    return safeLink;
+  } catch {
+    return null;
+  }
+}
 
 interface ProjectFileViewerDrawerProps {
   file: ProjectFileRecord | null;
@@ -26,8 +47,14 @@ export function ProjectFileViewerDrawer({
   if (!file) return null;
 
   const handleCopyLink = async () => {
+    const safeFileUrl = getSafeProjectLink(file.file_url);
+    if (!safeFileUrl) {
+      toast.error("No se puede copiar un enlace no seguro");
+      return;
+    }
+
     try {
-      await navigator.clipboard.writeText(file.file_url);
+      await navigator.clipboard.writeText(safeFileUrl);
       setCopied(true);
       toast.success("Enlace copiado al portapapeles");
       setTimeout(() => setCopied(false), 2000);
@@ -36,10 +63,34 @@ export function ProjectFileViewerDrawer({
     }
   };
 
-  const isGoogleDrive =
-    file.file_source === "drive" ||
-    (file.file_url && file.file_url.includes("drive.google.com")) ||
-    (file.file_url && file.file_url.includes("docs.google.com"));
+  const safeFileUrl = getSafeProjectLink(file.file_url);
+  const safeDriveFileUrl = getSafeGoogleDriveLink(file.file_url);
+  const safeDriveEmbedUrl = getSafeGoogleDriveLink(file.embed_url);
+  const isGoogleDrive = file.file_source === "drive" && Boolean(safeDriveFileUrl);
+  const safeEmbedUrl = isGoogleDrive
+    ? safeDriveEmbedUrl ?? safeDriveFileUrl
+    : null;
+
+  if (
+    !safeFileUrl ||
+    (file.file_source === "drive" && !safeDriveFileUrl)
+  ) {
+    return (
+      <RightPanel
+        open={isOpen}
+        onClose={onClose}
+        title="Visor Universal Embebido"
+        width={880}
+      >
+        <div
+          role="alert"
+          className="m-5 rounded-lg border border-[hsl(var(--destructive))] bg-[hsl(var(--destructive))]/10 p-4 text-sm text-[hsl(var(--destructive))]"
+        >
+          El enlace de este archivo no es seguro y se bloqueó su apertura.
+        </div>
+      </RightPanel>
+    );
+  }
 
   const isPdf =
     file.file_type?.toLowerCase() === "application/pdf" ||
@@ -75,17 +126,17 @@ export function ProjectFileViewerDrawer({
       case "dropbox":
         return {
           label: "Dropbox",
-          color: "bg-[hsl(var(--surface-3))] text-[hsl(var(--foreground))] border-[hsl(var(--border))]",
+          color: "bg-[hsl(var(--surface-3))] text-[hsl(var(--text-primary))] border-[hsl(var(--border))]",
         };
       case "onedrive":
         return {
           label: "OneDrive",
-          color: "bg-[hsl(var(--surface-3))] text-[hsl(var(--foreground))] border-[hsl(var(--border))]",
+          color: "bg-[hsl(var(--surface-3))] text-[hsl(var(--text-primary))] border-[hsl(var(--border))]",
         };
       default:
         return {
           label: "Local",
-          color: "bg-[hsl(var(--surface-2))] text-[hsl(var(--muted-foreground))] border-[hsl(var(--border))]",
+          color: "bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))] border-[hsl(var(--border))]",
         };
     }
   };
@@ -99,7 +150,7 @@ export function ProjectFileViewerDrawer({
       title="Visor Universal Embebido"
       width={880}
     >
-      <div className="flex flex-col h-full bg-[hsl(var(--surface-1))] text-[hsl(var(--foreground))]">
+      <div className="flex flex-col h-full bg-[hsl(var(--surface-1))] text-[hsl(var(--text-primary))]">
         {/* Cabecera del Visor */}
         <div className="px-5 py-3.5 border-b border-[hsl(var(--border))] bg-[hsl(var(--surface-2))]/60 flex flex-col gap-2">
           <div className="flex items-start justify-between gap-3">
@@ -113,16 +164,16 @@ export function ProjectFileViewerDrawer({
                 >
                   {sourceBadge.label}
                 </span>
-                <span className="text-3xs font-semibold px-2 py-0.5 rounded-full bg-[hsl(var(--surface-1))] text-[hsl(var(--muted-foreground))] border border-[hsl(var(--border))]">
+                <span className="text-3xs font-semibold px-2 py-0.5 rounded-full bg-[hsl(var(--surface-1))] text-[hsl(var(--text-secondary))] border border-[hsl(var(--border))]">
                   {file.category || "general"}
                 </span>
                 {file.file_type && (
-                  <span className="text-3xs font-mono text-[hsl(var(--muted-foreground))]">
+                  <span className="text-3xs font-mono text-[hsl(var(--text-secondary))]">
                     {file.file_type}
                   </span>
                 )}
               </div>
-              <h2 className="text-sm font-bold truncate text-[hsl(var(--foreground))]">
+              <h2 className="text-sm font-bold truncate text-[hsl(var(--text-primary))]">
                 {file.name}
               </h2>
             </div>
@@ -132,7 +183,7 @@ export function ProjectFileViewerDrawer({
               <button
                 onClick={handleCopyLink}
                 title="Copiar enlace"
-                className="p-1.5 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] hover:bg-[hsl(var(--surface-3))] text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] transition-colors"
+                className="p-1.5 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] hover:bg-[hsl(var(--surface-3))] text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] transition-colors"
               >
                 {copied ? (
                   <Check size={14} className="text-[hsl(var(--success))]" />
@@ -142,11 +193,11 @@ export function ProjectFileViewerDrawer({
               </button>
 
               <a
-                href={file.file_url}
+                href={safeFileUrl}
                 target="_blank"
                 rel="noopener noreferrer"
                 title="Abrir en pestaña nueva"
-                className="p-1.5 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] hover:bg-[hsl(var(--surface-3))] text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] transition-colors flex items-center gap-1 text-2xs font-semibold"
+                className="p-1.5 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] hover:bg-[hsl(var(--surface-3))] text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] transition-colors flex items-center gap-1 text-2xs font-semibold"
               >
                 <ExternalLink size={14} />
                 <span className="hidden sm:inline">Abrir</span>
@@ -154,10 +205,10 @@ export function ProjectFileViewerDrawer({
 
               {file.file_source === "local" && (
                 <a
-                  href={file.file_url}
+                  href={safeFileUrl}
                   download={file.name}
                   title="Descargar archivo"
-                  className="p-1.5 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] hover:bg-[hsl(var(--surface-3))] text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] transition-colors flex items-center gap-1 text-2xs font-semibold"
+                  className="p-1.5 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] hover:bg-[hsl(var(--surface-3))] text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] transition-colors flex items-center gap-1 text-2xs font-semibold"
                 >
                   <Download size={14} />
                   <span className="hidden sm:inline">Descargar</span>
@@ -167,7 +218,7 @@ export function ProjectFileViewerDrawer({
           </div>
 
           {/* Metadatos secundarios */}
-          <div className="flex items-center gap-4 text-3xs text-[hsl(var(--muted-foreground))] flex-wrap pt-0.5">
+          <div className="flex items-center gap-4 text-3xs text-[hsl(var(--text-secondary))] flex-wrap pt-0.5">
             <span className="flex items-center gap-1">
               <HardDrive size={11} /> {formatFileSize(file.file_size)}
             </span>
@@ -202,19 +253,19 @@ export function ProjectFileViewerDrawer({
               {iframeLoading && (
                 <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-[hsl(var(--surface-1))] gap-3">
                   <div className="w-7 h-7 border-2 border-[hsl(var(--primary))] border-t-transparent rounded-full animate-spin" />
-                  <p className="text-2xs font-medium text-[hsl(var(--muted-foreground))]">
+                  <p className="text-2xs font-medium text-[hsl(var(--text-secondary))]">
                     Cargando visor interactivo de Google Drive...
                   </p>
                 </div>
               )}
               <iframe
-                src={file.embed_url || file.file_url}
+                src={safeEmbedUrl ?? safeFileUrl}
                 title={file.name}
                 className="w-full h-full border-0"
                 sandbox="allow-scripts allow-same-origin allow-popups allow-forms"
                 onLoad={() => setIframeLoading(false)}
               />
-              <div className="px-3 py-1.5 bg-[hsl(var(--surface-1))] border-t border-[hsl(var(--border))] flex items-center justify-between text-3xs text-[hsl(var(--muted-foreground))]">
+              <div className="px-3 py-1.5 bg-[hsl(var(--surface-1))] border-t border-[hsl(var(--border))] flex items-center justify-between text-3xs text-[hsl(var(--text-secondary))]">
                 <span>Google Workspace Live Viewer</span>
                 <span className="italic">
                   Requiere permisos de acceso en Google Drive si no es público
@@ -227,14 +278,14 @@ export function ProjectFileViewerDrawer({
           {!isGoogleDrive && isPdf && (
             <div className="w-full h-full flex flex-col rounded-lg overflow-hidden border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] shadow-sm">
               <iframe
-                src={`${file.file_url}#toolbar=1&navpanes=0`}
+                src={`${safeFileUrl}#toolbar=1&navpanes=0`}
                 title={file.name}
                 className="w-full h-full border-0"
               />
-              <div className="px-3 py-1.5 bg-[hsl(var(--surface-1))] border-t border-[hsl(var(--border))] flex items-center justify-between text-3xs text-[hsl(var(--muted-foreground))]">
+              <div className="px-3 py-1.5 bg-[hsl(var(--surface-1))] border-t border-[hsl(var(--border))] flex items-center justify-between text-3xs text-[hsl(var(--text-secondary))]">
                 <span>Visor de Documento PDF</span>
                 <a
-                  href={file.file_url}
+                  href={safeFileUrl}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-[hsl(var(--primary))] hover:underline flex items-center gap-1"
@@ -252,17 +303,17 @@ export function ProjectFileViewerDrawer({
               <div className="flex items-center gap-2 bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] px-3 py-1.5 rounded-full shadow-sm">
                 <button
                   onClick={() => setImageZoom((prev) => Math.max(0.25, prev - 0.25))}
-                  className="p-1 hover:bg-[hsl(var(--surface-2))] rounded text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))]"
+                  className="p-1 hover:bg-[hsl(var(--surface-2))] rounded text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))]"
                   title="Alejar"
                 >
                   <ZoomOut size={15} />
                 </button>
-                <span className="text-3xs font-mono font-bold w-12 text-center text-[hsl(var(--foreground))]">
+                <span className="text-3xs font-mono font-bold w-12 text-center text-[hsl(var(--text-primary))]">
                   {Math.round(imageZoom * 100)}%
                 </span>
                 <button
                   onClick={() => setImageZoom((prev) => Math.min(4, prev + 0.25))}
-                  className="p-1 hover:bg-[hsl(var(--surface-2))] rounded text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))]"
+                  className="p-1 hover:bg-[hsl(var(--surface-2))] rounded text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))]"
                   title="Acercar"
                 >
                   <ZoomIn size={15} />
@@ -270,7 +321,7 @@ export function ProjectFileViewerDrawer({
                 <div className="w-px h-3.5 bg-[hsl(var(--border))] mx-1" />
                 <button
                   onClick={() => setImageRotation((prev) => (prev + 90) % 360)}
-                  className="p-1 hover:bg-[hsl(var(--surface-2))] rounded text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))]"
+                  className="p-1 hover:bg-[hsl(var(--surface-2))] rounded text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))]"
                   title="Rotar 90°"
                 >
                   <RotateCw size={15} />
@@ -280,7 +331,7 @@ export function ProjectFileViewerDrawer({
                     setImageZoom(1);
                     setImageRotation(0);
                   }}
-                  className="text-3xs px-2 py-0.5 rounded bg-[hsl(var(--surface-2))] hover:bg-[hsl(var(--surface-3))] font-medium text-[hsl(var(--foreground))]"
+                  className="text-3xs px-2 py-0.5 rounded bg-[hsl(var(--surface-2))] hover:bg-[hsl(var(--surface-3))] font-medium text-[hsl(var(--text-primary))]"
                 >
                   Reiniciar
                 </button>
@@ -290,7 +341,7 @@ export function ProjectFileViewerDrawer({
               <div className="flex-1 w-full flex items-center justify-center overflow-auto p-4">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
-                  src={file.file_url}
+                  src={safeFileUrl}
                   alt={file.name}
                   style={{
                     transform: `scale(${imageZoom}) rotate(${imageRotation}deg)`,
@@ -300,7 +351,7 @@ export function ProjectFileViewerDrawer({
                 />
               </div>
 
-              <div className="text-3xs text-[hsl(var(--muted-foreground))]">
+              <div className="text-3xs text-[hsl(var(--text-secondary))]">
                 Usa los controles para ampliar y rotar la fotografía
               </div>
             </div>
@@ -313,14 +364,14 @@ export function ProjectFileViewerDrawer({
                 <Music size={32} />
               </div>
               <div>
-                <h3 className="text-sm font-bold text-[hsl(var(--foreground))]">
+                <h3 className="text-sm font-bold text-[hsl(var(--text-primary))]">
                   {file.name}
                 </h3>
-                <p className="text-3xs text-[hsl(var(--muted-foreground))]">
+                <p className="text-3xs text-[hsl(var(--text-secondary))]">
                   Archivo de audio de proyecto
                 </p>
               </div>
-              <audio controls className="w-full mt-2" src={file.file_url}>
+              <audio controls className="w-full mt-2" src={safeFileUrl}>
                 Tu navegador no soporta el elemento de audio.
               </audio>
             </div>
@@ -331,12 +382,12 @@ export function ProjectFileViewerDrawer({
             <div className="w-full max-w-2xl bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] rounded-xl shadow-md overflow-hidden flex flex-col">
               <video
                 controls
-                className="w-full max-h-[65vh] bg-black"
-                src={file.file_url}
+                className="w-full max-h-[65vh] bg-[hsl(var(--surface-2))]"
+                src={safeFileUrl}
               >
                 Tu navegador no soporta el elemento de video.
               </video>
-              <div className="p-3 bg-[hsl(var(--surface-2))]/60 border-t border-[hsl(var(--border))] text-3xs text-[hsl(var(--muted-foreground))] flex justify-between">
+              <div className="p-3 bg-[hsl(var(--surface-2))]/60 border-t border-[hsl(var(--border))] text-3xs text-[hsl(var(--text-secondary))] flex justify-between">
                 <span>{file.name}</span>
                 <span>{formatFileSize(file.file_size)}</span>
               </div>
@@ -346,33 +397,33 @@ export function ProjectFileViewerDrawer({
           {/* Caso 6: Formato no visualizable directamente */}
           {!isGoogleDrive && !isPdf && !isImage && !isAudio && !isVideo && (
             <div className="max-w-md p-8 bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] rounded-xl shadow-md flex flex-col items-center gap-4 text-center">
-              <div className="w-16 h-16 rounded-full bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] text-[hsl(var(--muted-foreground))] flex items-center justify-center">
+              <div className="w-16 h-16 rounded-full bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] text-[hsl(var(--text-secondary))] flex items-center justify-center">
                 <FileCode size={32} />
               </div>
               <div className="space-y-1">
-                <h3 className="text-sm font-bold text-[hsl(var(--foreground))]">
+                <h3 className="text-sm font-bold text-[hsl(var(--text-primary))]">
                   {file.name}
                 </h3>
-                <p className="text-2xs text-[hsl(var(--muted-foreground))]">
+                <p className="text-2xs text-[hsl(var(--text-secondary))]">
                   Este formato de archivo no cuenta con previsualización embebida interactiva.
                 </p>
-                <p className="text-3xs font-mono text-[hsl(var(--muted-foreground))]">
+                <p className="text-3xs font-mono text-[hsl(var(--text-secondary))]">
                   Tamaño: {formatFileSize(file.file_size)}
                 </p>
               </div>
               <div className="flex items-center gap-3 pt-2">
                 <a
-                  href={file.file_url}
+                  href={safeFileUrl}
                   download={file.name}
                   className="px-4 py-2 bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] rounded-lg text-xs font-bold uppercase tracking-wider flex items-center gap-2 shadow hover:opacity-90 transition-all"
                 >
                   <Download size={14} /> Descargar archivo
                 </a>
                 <a
-                  href={file.file_url}
+                  href={safeFileUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="px-4 py-2 bg-[hsl(var(--surface-2))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))] rounded-lg text-xs font-bold uppercase tracking-wider flex items-center gap-2 hover:bg-[hsl(var(--surface-3))] transition-all"
+                  className="px-4 py-2 bg-[hsl(var(--surface-2))] text-[hsl(var(--text-primary))] border border-[hsl(var(--border))] rounded-lg text-xs font-bold uppercase tracking-wider flex items-center gap-2 hover:bg-[hsl(var(--surface-3))] transition-all"
                 >
                   <ExternalLink size={14} /> Abrir enlace
                 </a>

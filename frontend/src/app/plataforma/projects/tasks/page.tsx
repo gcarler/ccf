@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/lib/http';
 import ProjectsShell from '@/components/projects/ProjectsShell';
@@ -9,8 +9,8 @@ import UniversalCalendarView from '@/components/ui/UniversalCalendarView';
 import UniversalGanttView from '@/components/ui/UniversalGanttView';
 import UniversalWikiView from '@/components/ui/UniversalWikiView';
 import { STATUS_LABELS, getValidStatus, type TaskStatus } from '@/lib/projects/constants';
+import { getAllAssignedProjectTasks, getAllProjects } from '@/lib/projects/api';
 import { DSSkeleton } from '@/design';
-import type { ProjectRecord } from '@/types/projects';
 import { CheckCircle2, FolderOpen, Layout } from 'lucide-react';
 import clsx from 'clsx';
 import { toast } from 'sonner';
@@ -30,6 +30,20 @@ const STATUS_FLOW: TaskStatus[] = ['todo', 'in_progress', 'review', 'completed']
 // typecheck because the state union is narrower than `string`.
 const STATUS_FILTERS: TaskStatusFilter[] = ['all', 'todo', 'in_progress', 'review', 'completed', 'overdue'];
 const PROJECT_TASK_VIEWS: ViewType[] = ['list', 'table', 'grid', 'board', 'kanban', 'calendar', 'gantt', 'wiki'];
+const PROJECT_TASK_VIEW_OPTIONS: { value: ViewType; label: string }[] = [
+    { value: 'list', label: 'Lista' },
+    { value: 'table', label: 'Tabla' },
+    { value: 'grid', label: 'Tarjetas' },
+    { value: 'board', label: 'Tablero' },
+    { value: 'kanban', label: 'Kanban' },
+    { value: 'calendar', label: 'Calendario' },
+    { value: 'gantt', label: 'Gantt' },
+    { value: 'wiki', label: 'Wiki' },
+];
+
+function normalizeSearchText(value: string): string {
+    return value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase().trim();
+}
 
 function formatStatusFilter(value: TaskStatusFilter): string {
     if (value === 'all') return 'Todas';
@@ -45,11 +59,19 @@ export default function ProjectsTasksPage() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [status, setStatus] = useState<TaskStatusFilter>('all');
+    const [search, setSearch] = useState('');
     const [viewType, setViewType] = useState<ViewType>('list');
+    const [loadAttempt, setLoadAttempt] = useState(0);
+    const loadedTaskScope = useRef<TaskScope>(taskScope);
+    const taskRequestSequence = useRef(0);
 
     useEffect(() => {
+        const requestId = ++taskRequestSequence.current;
+        const controller = new AbortController();
         const load = async () => {
+            setLoading(true);
             if (!token) {
+                if (requestId !== taskRequestSequence.current) return;
                 setLoading(false);
                 setTasks([]);
                 setError('Debes iniciar sesión para ver las tareas de proyecto.');
@@ -58,23 +80,30 @@ export default function ProjectsTasksPage() {
             try {
                 setError(null);
                 if (taskScope === 'all') {
-                    const projects = await apiFetch<ProjectRecord[]>('/projects', { token, cache: 'no-store' });
-                    setTasks(flattenProjectTasks(Array.isArray(projects) ? projects : []));
+                    const projects = await getAllProjects(token, { cache: 'no-store', signal: controller.signal });
+                    if (requestId !== taskRequestSequence.current) return;
+                    setTasks(flattenProjectTasks(projects));
                 } else {
-                    const data = await apiFetch<any[]>('/projects/tasks', { token, cache: 'no-store' });
-                    setTasks(Array.isArray(data) ? data.map((row) => normalizeTaskRow(row)) : []);
+                    const data = await getAllAssignedProjectTasks(token, { cache: 'no-store', signal: controller.signal });
+                    if (requestId !== taskRequestSequence.current) return;
+                    setTasks(data.map((row) => normalizeTaskRow(row)));
                 }
-            } catch (error) {
-                setTasks([]);
+                loadedTaskScope.current = taskScope;
+            } catch {
+                if (controller.signal.aborted || requestId !== taskRequestSequence.current) return;
+                if (loadedTaskScope.current !== taskScope) setTasks([]);
                 setError('No se pudieron cargar las tareas de proyecto.');
-                toast.error("Error inesperado");
                 toast.error('Error al cargar tareas');
             } finally {
-                setLoading(false);
+                if (!controller.signal.aborted && requestId === taskRequestSequence.current) setLoading(false);
             }
         };
         if (!authLoading) load();
-    }, [authLoading, taskScope, token]);
+        return () => {
+            controller.abort();
+            if (taskRequestSequence.current === requestId) taskRequestSequence.current += 1;
+        };
+    }, [authLoading, loadAttempt, taskScope, token]);
 
     useEffect(() => {
         const view = searchParams?.get('view');
@@ -86,10 +115,20 @@ export default function ProjectsTasksPage() {
     }, [searchParams]);
 
     const filtered = useMemo(() => {
-        if (status === 'all') return tasks;
-        if (status === 'overdue') return tasks.filter((task) => isTaskOverdue(task));
-        return tasks.filter((task) => task.status === status);
-    }, [tasks, status]);
+        const terms = normalizeSearchText(search).split(/\s+/).filter(Boolean);
+        return tasks.filter((task) => {
+            const matchesStatus = status === 'all'
+                || (status === 'overdue' ? isTaskOverdue(task) : task.status === status);
+            if (!matchesStatus || terms.length === 0) return matchesStatus;
+            const searchableText = normalizeSearchText([
+                task.title,
+                task.project_title ?? '',
+                task.status,
+                task.priority ?? '',
+            ].join(' '));
+            return terms.every((term) => searchableText.includes(term));
+        });
+    }, [tasks, status, search]);
 
     const groupedTasks = STATUS_FLOW.map((value) => ({
         id: value,
@@ -124,8 +163,7 @@ export default function ProjectsTasksPage() {
                 body: { status: nextStatus },
             });
             setTasks((prev) => prev.map((row) => (row.id === task.id ? updated : row)));
-        } catch (error) {
-            toast.error("Error inesperado");
+        } catch {
             toast.error('Error al cambiar estado de tarea');
         }
     };
@@ -136,12 +174,47 @@ export default function ProjectsTasksPage() {
             viewType={viewType}
             onViewChange={setViewType}
             viewOptions={PROJECT_TASK_VIEWS}
+            onSearch={setSearch}
+            searchValue={search}
         >
             {error && (
-                <div className="mx-4 mt-4 rounded-md border border-[hsl(var(--warning)/0.3)] bg-[hsl(var(--warning)/0.1)] p-3 text-[hsl(var(--warning))]">
-                    <p className="text-xs font-bold uppercase tracking-wide">{error}</p>
+                <div role="alert" className="mx-4 mt-4 flex flex-wrap items-center justify-between gap-3 rounded-md border border-[hsl(var(--warning)/0.3)] bg-[hsl(var(--warning)/0.1)] p-3 text-[hsl(var(--warning))]">
+                    <p className="text-xs font-bold uppercase tracking-wide">{error} {tasks.length > 0 ? 'Se conservan los resultados anteriores.' : ''}</p>
+                    <button
+                        type="button"
+                        onClick={() => setLoadAttempt((attempt) => attempt + 1)}
+                        disabled={loading}
+                        className="rounded-md border border-[hsl(var(--warning)/0.4)] px-3 py-1.5 text-xs font-semibold transition-colors hover:bg-[hsl(var(--warning)/0.1)] disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                        Reintentar
+                    </button>
                 </div>
             )}
+
+            <div className="grid grid-cols-1 gap-2 border-b border-[hsl(var(--border))] px-3 py-3 sm:hidden">
+                <label className="sr-only" htmlFor="projects-mobile-view">Vista de tareas</label>
+                <select
+                    id="projects-mobile-view"
+                    aria-label="Vista de tareas"
+                    value={viewType}
+                    onChange={(event) => setViewType(event.target.value as ViewType)}
+                    className="h-10 w-full rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] px-3 text-sm text-[hsl(var(--foreground))]"
+                >
+                    {PROJECT_TASK_VIEW_OPTIONS.map((option) => (
+                        <option key={option.value} value={option.value}>{option.label}</option>
+                    ))}
+                </select>
+                <label className="sr-only" htmlFor="projects-mobile-search">Buscar tareas</label>
+                <input
+                    id="projects-mobile-search"
+                    type="search"
+                    aria-label="Buscar tareas"
+                    value={search}
+                    onChange={(event) => setSearch(event.target.value)}
+                    placeholder="Buscar tareas..."
+                    className="h-10 w-full rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] px-3 text-sm text-[hsl(var(--foreground))] placeholder:text-[hsl(var(--muted-foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]/30"
+                />
+            </div>
 
             <div className="px-3 py-3 border-b border-[hsl(var(--border))] flex flex-wrap gap-2">
                 {STATUS_FILTERS.map((value) => (
@@ -160,7 +233,7 @@ export default function ProjectsTasksPage() {
                 ))}
             </div>
 
-            <main className="flex-1 overflow-y-auto p-4">
+            <section aria-label="Resultados de tareas" className="flex-1 overflow-y-auto p-4">
                 {loading ? (
                     <div className="space-y-3">{[1, 2, 3, 4].map((idx) => <DSSkeleton key={idx} rounded="lg" className="h-20" />)}</div>
                 ) : !error && filtered.length === 0 ? (
@@ -253,7 +326,7 @@ export default function ProjectsTasksPage() {
                         ))}
                     </div>
                 )}
-            </main>
+            </section>
         </ProjectsShell>
     );
 }

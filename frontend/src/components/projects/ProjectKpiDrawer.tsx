@@ -8,6 +8,7 @@ import { apiFetch } from "@/lib/http";
 import type { ProjectKPI } from "@/types/projects";
 import { Target, Plus, Trash2, TrendingUp, CheckCircle2, AlertTriangle, AlertOctagon, Calendar, Save, X, Sparkles } from "lucide-react";
 import clsx from "clsx";
+import ConfirmActionDrawer, { type ConfirmActionState } from "@/components/ConfirmActionDrawer";
 
 interface ProjectKpiDrawerProps {
   projectId: string;
@@ -37,6 +38,7 @@ export function ProjectKpiDrawer({
   const [saving, setSaving] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
   const [, setEditingId] = useState<string | null>(null);
+  const [confirmAction, setConfirmAction] = useState<ConfirmActionState>(null);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -173,7 +175,18 @@ export function ProjectKpiDrawer({
         description: "No se pudo eliminar el indicador.",
         variant: "destructive",
       });
+      throw new Error("No se pudo eliminar el indicador.");
     }
+  };
+
+  const requestDeleteKpi = (kpi: ProjectKPI) => {
+    setConfirmAction({
+      title: "Eliminar indicador",
+      description: `¿Confirmas eliminar el KPI “${kpi.title}” del proyecto? Se quitará del seguimiento de metas e informes.`,
+      destructive: true,
+      confirmLabel: "Eliminar indicador",
+      onConfirm: () => handleDeleteKpi(kpi.id),
+    });
   };
 
   const getStatusBadge = (current: number, target: number) => {
@@ -221,7 +234,7 @@ export function ProjectKpiDrawer({
       onClose={onClose}
       width={440}
     >
-      <div className="flex flex-col h-full space-y-4 p-4 text-[hsl(var(--foreground))]">
+      <div className="flex flex-col h-full space-y-4 p-4 text-[hsl(var(--text-primary))]">
         {/* Header Summary */}
         <div className="flex items-center justify-between p-3 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] shadow-sm">
           <div className="flex items-center gap-2.5">
@@ -229,10 +242,10 @@ export function ProjectKpiDrawer({
               <Target size={20} />
             </div>
             <div>
-              <h4 className="text-xs font-bold uppercase tracking-wider text-[hsl(var(--foreground))]">
+              <h4 className="text-xs font-bold uppercase tracking-wider text-[hsl(var(--text-primary))]">
                 Metas Operativas
               </h4>
-              <p className="text-2xs text-[hsl(var(--muted-foreground))]">
+              <p className="text-2xs text-[hsl(var(--text-secondary))]">
                 {kpis.length} {kpis.length === 1 ? "indicador activo" : "indicadores activos"}
               </p>
             </div>
@@ -260,14 +273,14 @@ export function ProjectKpiDrawer({
               <button
                 type="button"
                 onClick={() => setIsCreating(false)}
-                className="p-1 rounded text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--surface-3))]"
+                className="p-1 rounded text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-3))]"
               >
                 <X size={14} />
               </button>
             </div>
 
             <div className="space-y-1">
-              <label className="text-2xs font-bold uppercase text-[hsl(var(--muted-foreground))]">
+              <label className="text-2xs font-bold uppercase text-[hsl(var(--text-secondary))]">
                 Título del Indicador *
               </label>
               <input
@@ -276,13 +289,13 @@ export function ProjectKpiDrawer({
                 value={formData.title}
                 onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                 placeholder="Ej. Tasa de conversión, Familias alcanzadas..."
-                className="w-full px-2.5 py-1.5 text-xs rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-[hsl(var(--foreground))] focus:outline-none focus:ring-1 focus:ring-[hsl(var(--primary))]"
+                className="w-full px-2.5 py-1.5 text-xs rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-[hsl(var(--text-primary))] focus:outline-none focus:ring-1 focus:ring-[hsl(var(--primary))]"
               />
             </div>
 
             <div className="grid grid-cols-3 gap-2">
               <div className="space-y-1">
-                <label className="text-2xs font-bold uppercase text-[hsl(var(--muted-foreground))]">
+                <label className="text-2xs font-bold uppercase text-[hsl(var(--text-secondary))]">
                   Meta *
                 </label>
                 <input
@@ -291,11 +304,11 @@ export function ProjectKpiDrawer({
                   required
                   value={formData.target_value}
                   onChange={(e) => setFormData({ ...formData, target_value: Number(e.target.value) })}
-                  className="w-full px-2.5 py-1.5 text-xs rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-[hsl(var(--foreground))] focus:outline-none focus:ring-1 focus:ring-[hsl(var(--primary))]"
+                  className="w-full px-2.5 py-1.5 text-xs rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-[hsl(var(--text-primary))] focus:outline-none focus:ring-1 focus:ring-[hsl(var(--primary))]"
                 />
               </div>
               <div className="space-y-1">
-                <label className="text-2xs font-bold uppercase text-[hsl(var(--muted-foreground))]">
+                <label className="text-2xs font-bold uppercase text-[hsl(var(--text-secondary))]">
                   Actual
                 </label>
                 <input
@@ -303,11 +316,11 @@ export function ProjectKpiDrawer({
                   step="any"
                   value={formData.current_value}
                   onChange={(e) => setFormData({ ...formData, current_value: Number(e.target.value) })}
-                  className="w-full px-2.5 py-1.5 text-xs rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-[hsl(var(--foreground))] focus:outline-none focus:ring-1 focus:ring-[hsl(var(--primary))]"
+                  className="w-full px-2.5 py-1.5 text-xs rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-[hsl(var(--text-primary))] focus:outline-none focus:ring-1 focus:ring-[hsl(var(--primary))]"
                 />
               </div>
               <div className="space-y-1">
-                <label className="text-2xs font-bold uppercase text-[hsl(var(--muted-foreground))]">
+                <label className="text-2xs font-bold uppercase text-[hsl(var(--text-secondary))]">
                   Unidad
                 </label>
                 <input
@@ -315,20 +328,20 @@ export function ProjectKpiDrawer({
                   value={formData.unit}
                   onChange={(e) => setFormData({ ...formData, unit: e.target.value })}
                   placeholder="%, pers, $"
-                  className="w-full px-2.5 py-1.5 text-xs rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-[hsl(var(--foreground))] focus:outline-none focus:ring-1 focus:ring-[hsl(var(--primary))]"
+                  className="w-full px-2.5 py-1.5 text-xs rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-[hsl(var(--text-primary))] focus:outline-none focus:ring-1 focus:ring-[hsl(var(--primary))]"
                 />
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-2">
               <div className="space-y-1">
-                <label className="text-2xs font-bold uppercase text-[hsl(var(--muted-foreground))]">
+                <label className="text-2xs font-bold uppercase text-[hsl(var(--text-secondary))]">
                   Categoría
                 </label>
                 <select
                   value={formData.category}
                   onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                  className="w-full px-2.5 py-1.5 text-xs rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-[hsl(var(--foreground))] focus:outline-none focus:ring-1 focus:ring-[hsl(var(--primary))]"
+                  className="w-full px-2.5 py-1.5 text-xs rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-[hsl(var(--text-primary))] focus:outline-none focus:ring-1 focus:ring-[hsl(var(--primary))]"
                 >
                   {CATEGORIES.map((cat) => (
                     <option key={cat.id} value={cat.id}>
@@ -338,14 +351,14 @@ export function ProjectKpiDrawer({
                 </select>
               </div>
               <div className="space-y-1">
-                <label className="text-2xs font-bold uppercase text-[hsl(var(--muted-foreground))]">
+                <label className="text-2xs font-bold uppercase text-[hsl(var(--text-secondary))]">
                   Fecha Límite
                 </label>
                 <input
                   type="date"
                   value={formData.due_date}
                   onChange={(e) => setFormData({ ...formData, due_date: e.target.value })}
-                  className="w-full px-2.5 py-1.5 text-xs rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-[hsl(var(--foreground))] focus:outline-none focus:ring-1 focus:ring-[hsl(var(--primary))]"
+                  className="w-full px-2.5 py-1.5 text-xs rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-[hsl(var(--text-primary))] focus:outline-none focus:ring-1 focus:ring-[hsl(var(--primary))]"
                 />
               </div>
             </div>
@@ -354,7 +367,7 @@ export function ProjectKpiDrawer({
               <button
                 type="button"
                 onClick={() => setIsCreating(false)}
-                className="px-3 py-1.5 text-2xs font-bold uppercase tracking-wider rounded-lg border border-[hsl(var(--border))] text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--surface-3))]"
+                className="px-3 py-1.5 text-2xs font-bold uppercase tracking-wider rounded-lg border border-[hsl(var(--border))] text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-3))]"
               >
                 Cancelar
               </button>
@@ -382,11 +395,11 @@ export function ProjectKpiDrawer({
             </div>
           ) : kpis.length === 0 ? (
             <div className="flex flex-col items-center justify-center p-8 text-center border border-dashed border-[hsl(var(--border))] rounded-xl bg-[hsl(var(--surface-2))]/50">
-              <Target size={36} className="text-[hsl(var(--muted-foreground))]/50 mb-2" />
-              <p className="text-xs font-bold uppercase tracking-wider text-[hsl(var(--foreground))]">
+              <Target size={36} className="text-[hsl(var(--text-secondary))]/50 mb-2" />
+              <p className="text-xs font-bold uppercase tracking-wider text-[hsl(var(--text-primary))]">
                 Sin indicadores configurados
               </p>
-              <p className="text-2xs text-[hsl(var(--muted-foreground))] mt-1 max-w-xs">
+              <p className="text-2xs text-[hsl(var(--text-secondary))] mt-1 max-w-xs">
                 Establece metas cuantitativas (asistencia, presupuesto, cobertura) para monitorear el impacto del proyecto.
               </p>
             </div>
@@ -406,7 +419,7 @@ export function ProjectKpiDrawer({
                   <div className="flex items-start justify-between gap-2">
                     <div className="space-y-0.5">
                       <div className="flex items-center gap-2">
-                        <span className="px-1.5 py-0.5 rounded text-3xs font-black uppercase tracking-wider bg-[hsl(var(--surface-3))] text-[hsl(var(--muted-foreground))]">
+                        <span className="px-1.5 py-0.5 rounded text-3xs font-black uppercase tracking-wider bg-[hsl(var(--surface-3))] text-[hsl(var(--text-secondary))]">
                           {CATEGORIES.find((c) => c.id === kpi.category)?.label || kpi.category}
                         </span>
                         <span
@@ -419,14 +432,15 @@ export function ProjectKpiDrawer({
                           <StatusIcon size={11} /> {status.label}
                         </span>
                       </div>
-                      <h4 className="text-xs font-bold text-[hsl(var(--foreground))] pt-1">
+                      <h4 className="text-xs font-bold text-[hsl(var(--text-primary))] pt-1">
                         {kpi.title}
                       </h4>
                     </div>
 
                     <button
-                      onClick={() => handleDeleteKpi(kpi.id)}
-                      className="p-1 rounded text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--destructive))] hover:bg-[hsl(var(--destructive))]/10 transition-colors"
+                      onClick={() => requestDeleteKpi(kpi)}
+                      aria-label={`Eliminar KPI ${kpi.title}`}
+                      className="p-1 rounded text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--destructive))] hover:bg-[hsl(var(--destructive))]/10 transition-colors"
                       title="Eliminar KPI"
                     >
                       <Trash2 size={13} />
@@ -434,7 +448,7 @@ export function ProjectKpiDrawer({
                   </div>
 
                   {kpi.description && (
-                    <p className="text-2xs text-[hsl(var(--muted-foreground))] line-clamp-2">
+                    <p className="text-2xs text-[hsl(var(--text-secondary))] line-clamp-2">
                       {kpi.description}
                     </p>
                   )}
@@ -442,9 +456,9 @@ export function ProjectKpiDrawer({
                   {/* Progress values and bar */}
                   <div className="space-y-1 pt-1">
                     <div className="flex items-center justify-between text-2xs">
-                      <span className="font-bold text-[hsl(var(--foreground))]">
+                      <span className="font-bold text-[hsl(var(--text-primary))]">
                         {kpi.current_value.toLocaleString()} / {kpi.target_value.toLocaleString()}{" "}
-                        <span className="text-[hsl(var(--muted-foreground))] font-normal">
+                        <span className="text-[hsl(var(--text-secondary))] font-normal">
                           {kpi.unit}
                         </span>
                       </span>
@@ -466,13 +480,13 @@ export function ProjectKpiDrawer({
                     <div className="flex items-center gap-1">
                       <button
                         onClick={() => handleUpdateValue(kpi, kpi.current_value - 1)}
-                        className="px-2 py-0.5 rounded text-3xs font-bold border border-[hsl(var(--border))] text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--surface-3))] active:scale-95"
+                        className="px-2 py-0.5 rounded text-3xs font-bold border border-[hsl(var(--border))] text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-3))] active:scale-95"
                       >
                         -1
                       </button>
                       <button
                         onClick={() => handleUpdateValue(kpi, kpi.current_value + 1)}
-                        className="px-2 py-0.5 rounded text-3xs font-bold border border-[hsl(var(--border))] text-[hsl(var(--foreground))] hover:bg-[hsl(var(--surface-3))] active:scale-95"
+                        className="px-2 py-0.5 rounded text-3xs font-bold border border-[hsl(var(--border))] text-[hsl(var(--text-primary))] hover:bg-[hsl(var(--surface-3))] active:scale-95"
                       >
                         +1
                       </button>
@@ -485,7 +499,7 @@ export function ProjectKpiDrawer({
                     </div>
 
                     {kpi.due_date && (
-                      <span className="text-3xs text-[hsl(var(--muted-foreground))] flex items-center gap-1">
+                      <span className="text-3xs text-[hsl(var(--text-secondary))] flex items-center gap-1">
                         <Calendar size={11} />
                         {new Date(kpi.due_date).toLocaleDateString("es-ES", {
                           day: "numeric",
@@ -500,7 +514,7 @@ export function ProjectKpiDrawer({
           )}
         </div>
       </div>
+      <ConfirmActionDrawer action={confirmAction} onClose={() => setConfirmAction(null)} />
     </RightPanel>
   );
 }
-

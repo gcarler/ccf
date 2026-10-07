@@ -28,6 +28,7 @@ describe('RightPanel', () => {
     );
     expect(screen.getByText('Panel de prueba')).toBeInTheDocument();
     expect(screen.getByTestId('content')).toBeInTheDocument();
+    expect(screen.getByText('Panel de prueba')).toHaveClass('text-[hsl(var(--foreground))]');
   });
 
   it('calls onClose when the close button is clicked', () => {

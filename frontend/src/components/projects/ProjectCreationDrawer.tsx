@@ -15,6 +15,7 @@ import clsx from 'clsx';
 import WorkspaceDrawer from '@/components/WorkspaceDrawer';
 import PersonaSelect from '@/components/ui/PersonaSelect';
 import { PROJECT_COLOR_OPTIONS } from '@/lib/projects/palette';
+import { PROJECT_TITLE_MAX_LENGTH } from '@/lib/projects/constants';
 
 interface Props {
     isOpen: boolean;
@@ -110,12 +111,14 @@ export default function ProjectCreationDrawer({ isOpen, onClose, onSubmit, defau
             <form onSubmit={handleSubmit(handleFormSubmit)} className="mt-3 space-y-4">
                 {/* Título */}
                 <div className="space-y-1.5">
-                    <label className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--muted-foreground))] flex items-center gap-2">
+                    <label htmlFor="project-title" className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--muted-foreground))] flex items-center gap-2">
                         <Type size={12} /> Título del proyecto
                     </label>
                     <input
+                        id="project-title"
                         autoFocus
-                        {...register('title', { required: true })}
+                        {...register('title', { required: true, maxLength: PROJECT_TITLE_MAX_LENGTH })}
+                        maxLength={PROJECT_TITLE_MAX_LENGTH}
                         placeholder="Ej: Escuela de Liderazgo 2026"
                         className="w-full bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] rounded-md px-3 py-2 text-sm font-medium outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))] transition-all text-[hsl(var(--foreground))] placeholder:text-[hsl(var(--muted-foreground))]"
                     />
@@ -123,10 +126,11 @@ export default function ProjectCreationDrawer({ isOpen, onClose, onSubmit, defau
 
                 {/* Descripción */}
                 <div className="space-y-1.5">
-                    <label className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--muted-foreground))] flex items-center gap-2">
+                    <label htmlFor="project-description" className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--muted-foreground))] flex items-center gap-2">
                         <AlignLeft size={12} /> Descripción (opcional)
                     </label>
                     <textarea
+                        id="project-description"
                         {...register('description')}
                         placeholder="Objetivo, alcance o notas iniciales…"
                         rows={4}
@@ -135,16 +139,17 @@ export default function ProjectCreationDrawer({ isOpen, onClose, onSubmit, defau
                 </div>
 
                 {/* Estado inicial */}
-                <div className="space-y-2">
-                    <label className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--muted-foreground))] flex items-center gap-2">
+                <div role="group" aria-labelledby="project-status-label" className="space-y-2">
+                    <span id="project-status-label" className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--muted-foreground))] flex items-center gap-2">
                         <Sparkles size={12} /> Estado inicial
-                    </label>
+                    </span>
                     <div className="grid grid-cols-2 gap-2">
                         {STATUS_OPTIONS.map((option) => (
                             <button
                                 key={option.value}
                                 type="button"
                                 onClick={() => setValue('status', option.value)}
+                                aria-pressed={status === option.value}
                                 className={clsx(
                                     'py-2 px-3 rounded-md flex items-center justify-center gap-2 border text-xs font-bold uppercase tracking-wide transition-all',
                                     status === option.value
@@ -162,16 +167,18 @@ export default function ProjectCreationDrawer({ isOpen, onClose, onSubmit, defau
                 </div>
 
                 {/* Color semilla */}
-                <div className="space-y-2">
-                    <label className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--muted-foreground))] flex items-center gap-2">
+                <div role="group" aria-labelledby="project-color-label" className="space-y-2">
+                    <span id="project-color-label" className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--muted-foreground))] flex items-center gap-2">
                         <Palette size={12} /> Color del proyecto
-                    </label>
+                    </span>
                     <div className="grid grid-cols-5 gap-2">
                         {PROJECT_COLOR_OPTIONS.map((option) => (
                             <button
                                 key={option.value}
                                 type="button"
                                 onClick={() => setValue('color', option.value)}
+                                aria-label={`Color ${option.label}`}
+                                aria-pressed={color === option.value}
                                 title={option.label}
                                 className={clsx(
                                     'h-10 rounded-md border-2 transition-all flex items-center justify-center',
@@ -190,10 +197,10 @@ export default function ProjectCreationDrawer({ isOpen, onClose, onSubmit, defau
                 </div>
 
                 {/* Responsable */}
-                <div className="space-y-1.5">
-                    <label className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--muted-foreground))] flex items-center gap-2">
+                <div role="group" aria-labelledby="project-owner-label" className="space-y-1.5">
+                    <span id="project-owner-label" className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--muted-foreground))] flex items-center gap-2">
                         <User size={12} /> Asignar responsable
-                    </label>
+                    </span>
                     <PersonaSelect
                         value={ownerId}
                         onChange={(v) => setValue('owner_id', v)}

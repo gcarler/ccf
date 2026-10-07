@@ -31,6 +31,8 @@ export function useFocusTrap<T extends HTMLElement>(
 ) {
   const triggerRef = useRef<HTMLElement | null>(null);
   const wasActiveRef = useRef(false);
+  const onEscapeRef = useRef(onEscape);
+  onEscapeRef.current = onEscape;
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -38,7 +40,7 @@ export function useFocusTrap<T extends HTMLElement>(
 
       if (e.key === 'Escape') {
         e.preventDefault();
-        onEscape?.();
+        onEscapeRef.current?.();
         return;
       }
 
@@ -46,7 +48,7 @@ export function useFocusTrap<T extends HTMLElement>(
 
       const focusable = Array.from(
         container.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTORS)
-      ).filter((el) => el.offsetParent !== null);
+      ).filter(el => el.offsetParent !== null);
 
       if (focusable.length === 0) {
         e.preventDefault();
@@ -71,24 +73,25 @@ export function useFocusTrap<T extends HTMLElement>(
     };
 
     if (active) {
-      triggerRef.current = document.activeElement as HTMLElement | null;
+      if (!wasActiveRef.current) {
+        triggerRef.current = document.activeElement as HTMLElement | null;
+        wasActiveRef.current = true;
+        // Move focus only on activation, not when handler dependencies change.
+        const container = containerRef.current;
+        if (container) {
+          const focusable = Array.from(
+            container.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTORS)
+          ).filter(el => el.offsetParent !== null);
+          focusable[0]?.focus();
+        }
+      }
+
       document.addEventListener('keydown', handleKeyDown);
 
       if (lockBodyScroll) {
         document.body.style.overflow = 'hidden';
       }
-
-      // Move focus to the first focusable element inside the container
-      const container = containerRef.current;
-      if (container) {
-        const focusable = Array.from(
-          container.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTORS)
-        ).filter((el) => el.offsetParent !== null);
-        focusable[0]?.focus();
-      }
     }
-
-    wasActiveRef.current = active;
 
     return () => {
       document.removeEventListener('keydown', handleKeyDown);
@@ -96,7 +99,7 @@ export function useFocusTrap<T extends HTMLElement>(
         document.body.style.overflow = '';
       }
     };
-  }, [active, onEscape, lockBodyScroll, containerRef]);
+  }, [active, lockBodyScroll, containerRef]);
 
   // Restore focus to the trigger when the trap deactivates
   useEffect(() => {

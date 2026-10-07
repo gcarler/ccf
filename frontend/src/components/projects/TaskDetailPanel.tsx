@@ -115,9 +115,46 @@ export default function TaskDetailPanel({
     // selección de archivos que el botón 'Adjuntar' de TaskAttachmentSection.
     const attachmentInputRef = useRef<HTMLInputElement>(null);
     const [supplies, setSupplies] = useState<TaskSupplyRecord[]>(task?.supplies ?? []);
+    const [deletingSupplyId, setDeletingSupplyId] = useState<string | null>(null);
     const [deletingAttachmentId, setDeletingAttachmentId] = useState<string | null>(null);
     const [confirmAction, setConfirmAction] = useState<ConfirmActionState>(null);
     const [error, setError] = useState<string | null>(null);
+    const panelRef = useRef<HTMLElement>(null);
+    const previousFocusRef = useRef<HTMLElement | null>(null);
+    const panelOpen = Boolean(task) && !authLoading;
+
+    useEffect(() => {
+        if (!panelOpen) return;
+
+        previousFocusRef.current = document.activeElement instanceof HTMLElement
+            ? document.activeElement
+            : null;
+        panelRef.current?.focus();
+
+        return () => {
+            const previousFocus = previousFocusRef.current;
+            previousFocusRef.current = null;
+            if (previousFocus?.isConnected) previousFocus.focus();
+        };
+    }, [panelOpen]);
+
+    useEffect(() => {
+        if (!panelOpen) return;
+
+        const handleKeyDown = (event: KeyboardEvent) => {
+            if (event.key === 'Escape') {
+                event.preventDefault();
+                if (confirmAction) {
+                    setConfirmAction(null);
+                    return;
+                }
+                onClose();
+            }
+        };
+
+        document.addEventListener('keydown', handleKeyDown);
+        return () => document.removeEventListener('keydown', handleKeyDown);
+    }, [confirmAction, onClose, panelOpen]);
 
     const requireAuth = useCallback((message: string) => {
         if (authLoading) return false;
@@ -188,14 +225,40 @@ export default function TaskDetailPanel({
 
     const handleDeleteActivity = async (activityId: string) => {
         if (!task || !requireAuth('Debes iniciar sesión para eliminar actividades.')) return;
-        setActivities(prev => {
-            const filterOut = (items: Activity[]): Activity[] =>
-                items.filter(a => a.id !== activityId).map(a => a.children ? { ...a, children: filterOut(a.children) } : a);
-            return filterOut(prev);
-        });
         try {
             await apiFetch(`/projects/${task.project_id}/tasks/${task.id}/subtasks/${activityId}`, { method: 'DELETE', token });
-        } catch { setError('No se pudo eliminar la actividad.'); }
+            setActivities(prev => {
+                const filterOut = (items: Activity[]): Activity[] =>
+                    items.filter(activity => activity.id !== activityId).map(activity =>
+                        activity.children ? { ...activity, children: filterOut(activity.children) } : activity,
+                    );
+                return filterOut(prev);
+            });
+        } catch {
+            setError('No se pudo eliminar la actividad.');
+            toast.error('No se pudo eliminar la actividad.');
+            throw new Error('No se pudo eliminar la actividad.');
+        }
+    };
+
+    const requestDeleteActivity = (activityId: string) => {
+        const findActivity = (items: Activity[]): Activity | undefined => {
+            for (const activity of items) {
+                if (activity.id === activityId) return activity;
+                const child = activity.children ? findActivity(activity.children) : undefined;
+                if (child) return child;
+            }
+            return undefined;
+        };
+        const activity = findActivity(activities);
+        if (!activity) return;
+        setConfirmAction({
+            title: 'Eliminar actividad',
+            description: `¿Seguro que deseas eliminar “${activity.title}” y sus sub-actividades? Esta acción no se puede deshacer.`,
+            destructive: true,
+            confirmLabel: 'Eliminar',
+            onConfirm: () => handleDeleteActivity(activityId),
+        });
     };
 
     // ── Sync on task change ─────────────────────────────────────
@@ -305,13 +368,62 @@ export default function TaskDetailPanel({
         catch { setError('No se pudo actualizar el nodo de la tarea.'); }
     };
 
-    const handleDeleteTask = async () => {
+    const confirmDeleteTask = async () => {
         if (!task || !requireAuth('Debes iniciar sesión para eliminar la tarea.')) return;
         try {
             await apiFetch(`/projects/${task.project_id}/tasks/${task.id}`, { method: 'DELETE', token });
             onDelete?.(task.id);
             onClose();
-        } catch { setError('No se pudo eliminar la tarea.'); }
+        } catch {
+            setError('No se pudo eliminar la tarea.');
+            toast.error('No se pudo eliminar la tarea.');
+            throw new Error('No se pudo eliminar la tarea.');
+        }
+    };
+
+    const handleDeleteTask = () => {
+        if (!task) return;
+        setConfirmAction({
+            title: 'Eliminar tarea',
+            description: `¿Seguro que deseas eliminar “${task.title}”? Esta acción no se puede deshacer.`,
+            destructive: true,
+            confirmLabel: 'Eliminar',
+                        onConfirm: confirmDeleteTask,
+        });
+    };
+
+    const handleDeleteSupply = async (supplyId: string) => {
+        if (!task || !requireAuth('Debes iniciar sesión para eliminar insumos.')) return;
+        setDeletingSupplyId(supplyId);
+        setError(null);
+        try {
+            await apiFetch(`/projects/${task.project_id}/tasks/${task.id}/supplies/${supplyId}`, {
+                method: 'DELETE',
+                token,
+            });
+            const nextSupplies = supplies.filter(supply => supply.id !== supplyId);
+            setSupplies(nextSupplies);
+            onUpdate?.({ ...task, supplies: nextSupplies });
+            onActivityCreated?.();
+        } catch {
+            setError('No se pudo eliminar el insumo.');
+            toast.error('No se pudo eliminar el insumo.');
+            throw new Error('No se pudo eliminar el insumo.');
+        } finally {
+            setDeletingSupplyId(null);
+        }
+    };
+
+    const requestDeleteSupply = (supplyId: string) => {
+        const supply = supplies.find(item => item.id === supplyId);
+        if (!supply) return;
+        setConfirmAction({
+            title: 'Eliminar insumo',
+            description: `¿Seguro que deseas eliminar “${supply.item_name}”? Esta acción no se puede deshacer.`,
+            destructive: true,
+            confirmLabel: 'Eliminar',
+            onConfirm: () => handleDeleteSupply(supplyId),
+        });
     };
 
     const handleDeleteComment = async (commentId: string) => {
@@ -325,13 +437,16 @@ export default function TaskDetailPanel({
                 try {
                     await apiFetch(`/projects/comments/${commentId}`, { method: 'DELETE', token });
                     onActivityCreated?.();
-                } catch { setError('No se pudo eliminar el comentario.'); }
-                setConfirmAction(null);
+                } catch {
+                    setError('No se pudo eliminar el comentario.');
+                    toast.error('No se pudo eliminar el comentario.');
+                    throw new Error('No se pudo eliminar el comentario.');
+                }
             },
         });
     };
 
-    const handleDeleteAttachment = async (attachmentId: string) => {
+    const confirmDeleteAttachment = async (attachmentId: string) => {
         if (!task || !requireAuth('Debes iniciar sesión para eliminar archivos adjuntos.')) return;
         setDeletingAttachmentId(attachmentId);
         try {
@@ -339,8 +454,24 @@ export default function TaskDetailPanel({
             const nextAttachments = (task.attachments ?? []).filter(a => a.id !== attachmentId);
             onUpdate?.({ ...task, attachments: nextAttachments });
             onActivityCreated?.();
-        } catch { setError('No se pudo eliminar el archivo adjunto.'); }
+        } catch {
+            setError('No se pudo eliminar el archivo adjunto.');
+            toast.error('No se pudo eliminar el archivo adjunto.');
+            throw new Error('No se pudo eliminar el archivo adjunto.');
+        }
         finally { setDeletingAttachmentId(null); }
+    };
+
+    const handleDeleteAttachment = (attachmentId: string) => {
+        const attachment = task?.attachments?.find(item => item.id === attachmentId);
+        if (!task || !attachment) return;
+        setConfirmAction({
+            title: 'Eliminar archivo adjunto',
+            description: `¿Seguro que deseas eliminar “${attachment.filename}”? Esta acción no se puede deshacer.`,
+            destructive: true,
+            confirmLabel: 'Eliminar',
+            onConfirm: () => confirmDeleteAttachment(attachmentId),
+        });
     };
 
     if (!task) return null;
@@ -351,6 +482,7 @@ export default function TaskDetailPanel({
     return (
         <AnimatePresence>
             <motion.aside
+                ref={panelRef}
                 key="task-detail-panel"
                 initial={{ x: width, opacity: 0 }}
                 animate={{ x: 0, opacity: 1 }}
@@ -359,6 +491,7 @@ export default function TaskDetailPanel({
                 style={{ width, minWidth: `min(${MIN_WIDTH}px, 100%)`, maxWidth: '100%' }}
                 role="complementary"
                 aria-label="Detalle de tarea"
+                tabIndex={-1}
                 className="relative h-full flex flex-col bg-[hsl(var(--surface-1))] border-l border-[hsl(var(--border))] shadow-2xl overflow-hidden"
             >
                 {/* Resize handle */}
@@ -434,6 +567,8 @@ export default function TaskDetailPanel({
                         task={task}
                         supplies={supplies}
                         onSuppliesChange={(next) => { setSupplies(next); onUpdate?.({ ...task, supplies: next }); }}
+                        deletingSupplyId={deletingSupplyId}
+                        onDeleteRequest={requestDeleteSupply}
                         token={token}
                         onActivityCreated={onActivityCreated}
                     />
@@ -452,7 +587,7 @@ export default function TaskDetailPanel({
                         onToggle={handleToggle}
                         onAddChild={handleAddChild}
                         onUpdateTitle={handleUpdateTitle}
-                        onDelete={handleDeleteActivity}
+                        onDelete={requestDeleteActivity}
                     />
 
                     {token && (

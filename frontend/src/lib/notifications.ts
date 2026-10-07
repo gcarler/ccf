@@ -5,6 +5,7 @@ export interface BackendNotification {
     persona_id?: string;
     title: string;
     content?: string | null;
+    target_url?: string | null;
     is_read: boolean;
     created_at: string;
 }
@@ -17,6 +18,18 @@ export interface UiNotification {
     createdAt: string;
     kind: NotificationKind;
     module: string;
+    targetUrl: string | null;
+}
+
+export function safeNotificationTargetUrl(value?: string | null): string | null {
+    if (!value || value.length > 512 || value.includes('\\') || /[\u0000-\u001f\u007f]/.test(value)) return null;
+    if (!value.startsWith('/plataforma/') || value.startsWith('//')) return null;
+    try {
+        const parsed = new URL(value, 'https://ccf.invalid');
+        return parsed.origin === 'https://ccf.invalid' ? value : null;
+    } catch {
+        return null;
+    }
 }
 
 const KIND_MODULE: Record<NotificationKind, string> = {
@@ -48,6 +61,7 @@ export function toUiNotification(notification: BackendNotification): UiNotificat
         createdAt: notification.created_at,
         kind,
         module: KIND_MODULE[kind],
+        targetUrl: safeNotificationTargetUrl(notification.target_url),
     };
 }
 

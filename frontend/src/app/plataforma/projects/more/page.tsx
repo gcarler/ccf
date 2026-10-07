@@ -4,6 +4,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/lib/http';
 import ProjectsShell from '@/components/projects/ProjectsShell';
+import ProjectsLoadError from '@/components/projects/ProjectsLoadError';
 import type { ViewType } from '@/components/ViewSwitcher';
 import UniversalCalendarView from '@/components/ui/UniversalCalendarView';
 import UniversalGanttView from '@/components/ui/UniversalGanttView';
@@ -12,6 +13,7 @@ import type { ProjectPortfolioSummaryRow, ProjectWorkloadSummaryRow, ProjectReco
 import { BarChart3, Layout, MoreHorizontal } from 'lucide-react';
 import { DSSkeleton } from '@/design';
 import { toast } from 'sonner';
+import { getAllProjects } from '@/lib/projects/api';
 
 function taskColor(task: ProjectTaskRecord, todayKey: string): 'blue' | 'emerald' | 'amber' | 'rose' | 'sky' {
     if (task.status === 'completed') return 'emerald';
@@ -30,6 +32,8 @@ export default function ProjectsMorePage() {
     const [projects, setProjects] = useState<ProjectRecord[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [loadFailed, setLoadFailed] = useState(false);
+    const [loadAttempt, setLoadAttempt] = useState(0);
     const [viewType, setViewType] = useState<ViewType>('grid');
 
     useEffect(() => {
@@ -40,14 +44,17 @@ export default function ProjectsMorePage() {
                 setWorkload([]);
                 setProjects([]);
                 setError('Debes iniciar sesión para ver el resumen de proyectos.');
+                setLoadFailed(false);
                 return;
             }
+            setLoading(true);
             try {
                 setError(null);
+                setLoadFailed(false);
                 const [summaryRows, workloadRows, projectRows] = await Promise.all([
                     apiFetch<ProjectPortfolioSummaryRow[]>('/projects/summary', { token, cache: 'no-store' }),
                     apiFetch<ProjectWorkloadSummaryRow[]>('/projects/workload', { token, cache: 'no-store' }),
-                    apiFetch<ProjectRecord[]>('/projects', { token, cache: 'no-store' }).catch(() => []),
+                    getAllProjects(token, { cache: 'no-store' }),
                 ]);
                 setSummary(Array.isArray(summaryRows) ? summaryRows : []);
                 setWorkload(Array.isArray(workloadRows) ? workloadRows : []);
@@ -57,14 +64,14 @@ export default function ProjectsMorePage() {
                 setWorkload([]);
                 setProjects([]);
                 setError('No se pudo cargar el resumen de proyectos.');
-                toast.error("Error inesperado");
+                setLoadFailed(true);
                 toast.error('Error al cargar resumen');
             } finally {
                 setLoading(false);
             }
         };
         if (!authLoading) load();
-    }, [authLoading, token]);
+    }, [authLoading, token, loadAttempt]);
 
     const metrics = useMemo(() => {
         const totals = summary.reduce(
@@ -138,9 +145,12 @@ export default function ProjectsMorePage() {
         >
             <main className="flex-1 overflow-y-auto p-3">
                 {error && (
-                    <div className="mb-3 rounded-lg border border-[hsl(var(--warning)/0.3)] bg-[hsl(var(--warning)/0.1)] p-3 text-[hsl(var(--warning))]">
-                        <p className="text-xs font-bold uppercase tracking-wide">{error}</p>
-                    </div>
+                    <ProjectsLoadError
+                        message={error}
+                        onRetry={loadFailed ? () => setLoadAttempt((attempt) => attempt + 1) : undefined}
+                        retrying={loading && loadFailed}
+                        className="mb-3"
+                    />
                 )}
                 {loading ? (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">{[1, 2, 3].map((idx) => <DSSkeleton key={idx} className="h-32 rounded-lg" />)}</div>

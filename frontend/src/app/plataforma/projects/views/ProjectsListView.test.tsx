@@ -4,8 +4,10 @@ import { describe, it, expect, vi } from 'vitest';
 import ProjectsListView from './ProjectsListView';
 import { createMockProject } from '@/test-utils/factories';
 
+const { pushMock } = vi.hoisted(() => ({ pushMock: vi.fn() }));
+
 vi.mock('next/navigation', () => ({
-    useRouter: () => ({ push: vi.fn() }),
+    useRouter: () => ({ push: pushMock }),
 }));
 
 const projects = [
@@ -32,6 +34,17 @@ const projects = [
 ];
 
 describe('ProjectsListView', () => {
+    it('provides an explicit accessible detail action without making inline controls navigate', () => {
+        pushMock.mockClear();
+        render(<ProjectsListView projects={projects} onUpdate={vi.fn()} />);
+
+        fireEvent.click(screen.getByText('Campamento Juventud'));
+        expect(pushMock).not.toHaveBeenCalled();
+
+        fireEvent.click(screen.getByRole('button', { name: 'Abrir proyecto Campamento Juventud' }));
+        expect(pushMock).toHaveBeenCalledWith('/plataforma/projects/p1?view=list');
+    });
+
     it('renders project titles and descriptions', () => {
         render(<ProjectsListView projects={projects} onUpdate={vi.fn()} />);
         expect(screen.getByText('Campamento Juventud')).toBeInTheDocument();
@@ -40,6 +53,7 @@ describe('ProjectsListView', () => {
     });
 
     it('calls onUpdate when a project title is edited', () => {
+        pushMock.mockClear();
         const onUpdate = vi.fn();
         render(<ProjectsListView projects={projects} onUpdate={onUpdate} />);
         const title = screen.getByText('Campamento Juventud');
@@ -48,5 +62,6 @@ describe('ProjectsListView', () => {
         fireEvent.change(input, { target: { value: 'Campamento Juventud 2026' } });
         fireEvent.blur(input);
         expect(onUpdate).toHaveBeenCalledWith('p1', { title: 'Campamento Juventud 2026' });
+        expect(pushMock).not.toHaveBeenCalled();
     });
 });

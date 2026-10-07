@@ -47,6 +47,7 @@ interface PhaseSeed {
 interface PageDataSnapshotShape {
   phases: PhaseDef[];
   projectId: string | null;
+  loadWarning: string | null;
 }
 
 import { apiFetch } from "@/lib/http";
@@ -60,6 +61,7 @@ function Snapshot({ data }: { data: PageDataSnapshotShape }) {
       <span data-testid="project-id">{data.projectId ?? ""}</span>
       <span data-testid="phases-slugs" data-slugs={data.phases.map((p) => p.slug).join(",")} />
       <span data-testid="phases-len" data-len={String(data.phases.length)} />
+      <span data-testid="load-warning">{data.loadWarning}</span>
     </div>
   );
 }
@@ -70,7 +72,7 @@ function Harness() {
     <>
       {/* El id real lo mutamos via reload key en cada test */}
       <button type="button" onClick={() => pageData.reloadProject()}>reload</button>
-      <Snapshot data={{ phases: pageData.phases, projectId: pageData.project?.id ?? null }} />
+      <Snapshot data={{ phases: pageData.phases, projectId: pageData.project?.id ?? null, loadWarning: pageData.loadWarning }} />
     </>
   );
 }
@@ -142,5 +144,22 @@ describe("useProjectPageData — phase sync reset (PEND-QUALITY-PHASE-SYNC-001)"
     expect(screen.getByTestId("phases-len").getAttribute("data-len")).toBe("0");
     expect(screen.getByTestId("phases-slugs").getAttribute("data-slugs")).toBe("");
     expect(phasesCalls).toBeGreaterThanOrEqual(2);
+  });
+
+  it("reports partial task loading failure without discarding the project", async () => {
+    vi.mocked(apiFetch).mockImplementation(async (url: string) => {
+      if (url === "/projects/__placeholder__") {
+        return { id: "__placeholder__", title: "Proyecto A" };
+      }
+      if (url === "/projects/__placeholder__/tasks") throw new Error("offline");
+      return [];
+    });
+
+    render(<Harness />);
+
+    expect(await screen.findByTestId("project-id")).toHaveTextContent("__placeholder__");
+    expect(await screen.findByTestId("load-warning")).toHaveTextContent(
+      "No se pudieron cargar las tareas. Reintenta para consultar toda la información del proyecto.",
+    );
   });
 });

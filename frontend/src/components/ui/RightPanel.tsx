@@ -109,7 +109,7 @@ function RightPanel({
             {/* Panel header */}
             <div className="shrink-0 px-4 py-2.5 border-b border-[hsl(var(--border))] dark:border-[hsl(var(--border))] flex items-start justify-between gap-2">
                 <div className="min-w-0">
-                    <div className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
+                    <div className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--foreground))]">
                         {title}
                     </div>
                     {subtitle && (
@@ -118,7 +118,7 @@ function RightPanel({
                         </div>
                     )}
                     {description && (
-                        <div className="mt-0.5 text-2xs text-[hsl(var(--text-secondary))] opacity-80 leading-snug">
+                        <div className="mt-0.5 text-2xs text-[hsl(var(--foreground))] leading-snug">
                             {description}
                         </div>
                     )}

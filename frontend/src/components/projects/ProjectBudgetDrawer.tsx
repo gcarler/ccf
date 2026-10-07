@@ -1,10 +1,12 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useId, useRef } from "react";
 import { RightPanel } from "@/components/ui/RightPanel";
+import ConfirmActionDrawer, { type ConfirmActionState } from "@/components/ConfirmActionDrawer";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/context/ToastContext";
 import { apiFetch } from "@/lib/http";
+import { getSafeProjectLink } from "@/lib/projects/safeProjectLink";
 import type { ProjectExpense, ProjectBudgetSummary } from "@/types/projects";
 import {
   Wallet,
@@ -44,7 +46,7 @@ const EXPENSE_CATEGORIES = [
 const STATUS_CONFIG = {
   planned: {
     label: "Planificado",
-    color: "hsl(var(--text-muted))",
+    color: "hsl(var(--text-secondary))",
     bg: "hsl(var(--surface-2))",
     border: "hsl(var(--border))",
     icon: Clock,
@@ -74,13 +76,17 @@ export function ProjectBudgetDrawer({
 }: ProjectBudgetDrawerProps) {
   const { token } = useAuth();
   const { addToast } = useToast();
+  const fieldId = useId();
+  const requestSequence = useRef(0);
 
   const [expenses, setExpenses] = useState<ProjectExpense[]>([]);
   const [summary, setSummary] = useState<ProjectBudgetSummary | null>(null);
   const [loading, setLoading] = useState(false);
+  const [loadError, setLoadError] = useState(false);
   const [saving, setSaving] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [confirmAction, setConfirmAction] = useState<ConfirmActionState>(null);
 
   // Filtros
   const [filterStatus, setFilterStatus] = useState<string>("all");
@@ -104,28 +110,38 @@ export function ProjectBudgetDrawer({
   });
 
   const fetchData = useCallback(async () => {
+    const requestId = ++requestSequence.current;
     if (!projectId || !token) return;
     setLoading(true);
+    setLoadError(false);
     try {
       const [expData, sumData] = await Promise.all([
         apiFetch<ProjectExpense[]>(`/projects/${projectId}/expenses`, { token }),
         apiFetch<ProjectBudgetSummary>(`/projects/${projectId}/budget-summary`, { token }),
       ]);
+      if (requestId !== requestSequence.current) return;
       setExpenses(expData || []);
       setSummary(sumData);
     } catch {
+      if (requestId !== requestSequence.current) return;
+      setLoadError(true);
       addToast("Error al cargar la información presupuestaria", "error");
     } finally {
-      setLoading(false);
+      if (requestId === requestSequence.current) setLoading(false);
     }
   }, [projectId, token, addToast]);
 
   useEffect(() => {
     if (isOpen) {
-      fetchData();
+      setExpenses([]);
+      setSummary(null);
+      void fetchData();
       setIsCreating(false);
       setEditingId(null);
     }
+    return () => {
+      requestSequence.current += 1;
+    };
   }, [isOpen, fetchData]);
 
   const handleCreateOrUpdate = async (e: React.FormEvent) => {
@@ -206,11 +222,22 @@ export function ProjectBudgetDrawer({
         token,
       });
       addToast("Partida eliminada", "info");
-      fetchData();
+      await fetchData();
       onBudgetUpdated?.();
-    } catch {
+    } catch (error) {
       addToast("Error al eliminar la partida", "error");
+      throw error;
     }
+  };
+
+  const requestDelete = (expense: ProjectExpense) => {
+    setConfirmAction({
+      title: "Eliminar partida de gasto",
+      description: `¿Seguro que deseas eliminar “${expense.description || expense.category}”? Esta acción es lógica y la partida dejará de contar en el presupuesto.`,
+      confirmLabel: "Eliminar",
+      destructive: true,
+      onConfirm: () => handleDelete(expense.id),
+    });
   };
 
   const handleStatusChange = async (expenseId: string, newStatus: "planned" | "committed" | "paid") => {
@@ -249,7 +276,7 @@ export function ProjectBudgetDrawer({
       title="Control Presupuestario y Partidas de Gasto"
       className="w-full max-w-2xl"
     >
-      <div className="flex flex-col gap-5 p-6 text-sm" style={{ color: "hsl(var(--text-1))" }}>
+      <div className="flex flex-col gap-5 p-6 text-sm" style={{ color: "hsl(var(--text-primary))" }}>
         {/* KPI CARDS & RESUMEN FINANCIERO */}
         <div
           className="rounded-xl p-5 border"
@@ -271,25 +298,25 @@ export function ProjectBudgetDrawer({
 
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-4">
             <div className="flex flex-col">
-              <span className="text-xs" style={{ color: "hsl(var(--text-muted))" }}>Asignado</span>
+              <span className="text-xs" style={{ color: "hsl(var(--text-secondary))" }}>Asignado</span>
               <span className="text-base font-bold">
                 ${(summary?.budget_allocated ?? budgetAllocated ?? 0).toLocaleString("es-CO")}
               </span>
             </div>
             <div className="flex flex-col">
-              <span className="text-xs" style={{ color: "hsl(var(--text-muted))" }}>Desembolsado</span>
+              <span className="text-xs" style={{ color: "hsl(var(--text-secondary))" }}>Desembolsado</span>
               <span className="text-base font-bold" style={{ color: "hsl(var(--success))" }}>
                 ${(summary?.paid_amount ?? 0).toLocaleString("es-CO")}
               </span>
             </div>
             <div className="flex flex-col">
-              <span className="text-xs" style={{ color: "hsl(var(--text-muted))" }}>Comprometido</span>
+              <span className="text-xs" style={{ color: "hsl(var(--text-secondary))" }}>Comprometido</span>
               <span className="text-base font-bold" style={{ color: "hsl(var(--warning))" }}>
                 ${(summary?.committed_amount ?? 0).toLocaleString("es-CO")}
               </span>
             </div>
             <div className="flex flex-col">
-              <span className="text-xs" style={{ color: "hsl(var(--text-muted))" }}>Disponible</span>
+              <span className="text-xs" style={{ color: "hsl(var(--text-secondary))" }}>Disponible</span>
               <span className="text-base font-bold" style={{ color: "hsl(var(--primary))" }}>
                 ${(summary?.remaining_budget ?? 0).toLocaleString("es-CO")}
               </span>
@@ -365,7 +392,8 @@ export function ProjectBudgetDrawer({
                   setEditingId(null);
                 }}
                 className="p-1 rounded-md cursor-pointer hover:opacity-80"
-                style={{ color: "hsl(var(--text-muted))" }}
+                style={{ color: "hsl(var(--text-secondary))" }}
+                aria-label="Cerrar formulario de gasto"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -373,8 +401,9 @@ export function ProjectBudgetDrawer({
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs font-medium mb-1">Monto ($)*</label>
+                <label htmlFor={`${fieldId}-amount`} className="block text-xs font-medium mb-1">Monto ($)*</label>
                 <input
+                  id={`${fieldId}-amount`}
                   type="number"
                   step="0.01"
                   min="0"
@@ -385,22 +414,23 @@ export function ProjectBudgetDrawer({
                   style={{
                     backgroundColor: "hsl(var(--surface-2))",
                     borderColor: "hsl(var(--border))",
-                    color: "hsl(var(--text-1))",
+                    color: "hsl(var(--text-primary))",
                   }}
                   placeholder="0.00"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-medium mb-1">Categoría*</label>
+                <label htmlFor={`${fieldId}-category`} className="block text-xs font-medium mb-1">Categoría*</label>
                 <select
+                  id={`${fieldId}-category`}
                   value={formData.category}
                   onChange={(e) => setFormData({ ...formData, category: e.target.value })}
                   className="w-full px-3 py-2 rounded-lg border text-sm outline-none"
                   style={{
                     backgroundColor: "hsl(var(--surface-2))",
                     borderColor: "hsl(var(--border))",
-                    color: "hsl(var(--text-1))",
+                    color: "hsl(var(--text-primary))",
                   }}
                 >
                   {EXPENSE_CATEGORIES.map((cat) => (
@@ -412,8 +442,9 @@ export function ProjectBudgetDrawer({
               </div>
 
               <div>
-                <label className="block text-xs font-medium mb-1">Estado de Pago</label>
+                <label htmlFor={`${fieldId}-status`} className="block text-xs font-medium mb-1">Estado de Pago</label>
                 <select
+                  id={`${fieldId}-status`}
                   value={formData.status}
                   onChange={(e) =>
                     setFormData({ ...formData, status: e.target.value as "planned" | "committed" | "paid" })
@@ -422,7 +453,7 @@ export function ProjectBudgetDrawer({
                   style={{
                     backgroundColor: "hsl(var(--surface-2))",
                     borderColor: "hsl(var(--border))",
-                    color: "hsl(var(--text-1))",
+                    color: "hsl(var(--text-primary))",
                   }}
                 >
                   <option value="planned">Planificado</option>
@@ -432,8 +463,9 @@ export function ProjectBudgetDrawer({
               </div>
 
               <div>
-                <label className="block text-xs font-medium mb-1">Fecha</label>
+                <label htmlFor={`${fieldId}-date`} className="block text-xs font-medium mb-1">Fecha</label>
                 <input
+                  id={`${fieldId}-date`}
                   type="date"
                   value={formData.date}
                   onChange={(e) => setFormData({ ...formData, date: e.target.value })}
@@ -441,15 +473,16 @@ export function ProjectBudgetDrawer({
                   style={{
                     backgroundColor: "hsl(var(--surface-2))",
                     borderColor: "hsl(var(--border))",
-                    color: "hsl(var(--text-1))",
+                    color: "hsl(var(--text-primary))",
                   }}
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-xs font-medium mb-1">Descripción / Concepto</label>
+              <label htmlFor={`${fieldId}-description`} className="block text-xs font-medium mb-1">Descripción / Concepto</label>
               <input
+                id={`${fieldId}-description`}
                 type="text"
                 value={formData.description}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
@@ -457,15 +490,16 @@ export function ProjectBudgetDrawer({
                 style={{
                   backgroundColor: "hsl(var(--surface-2))",
                   borderColor: "hsl(var(--border))",
-                  color: "hsl(var(--text-1))",
+                  color: "hsl(var(--text-primary))",
                 }}
                 placeholder="Ej. Factura #1234 - Compra de pintura y brochas"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-medium mb-1">URL de Factura / Comprobante (Opcional)</label>
+              <label htmlFor={`${fieldId}-receipt-url`} className="block text-xs font-medium mb-1">URL de Factura / Comprobante (Opcional)</label>
               <input
+                id={`${fieldId}-receipt-url`}
                 type="url"
                 value={formData.receipt_url}
                 onChange={(e) => setFormData({ ...formData, receipt_url: e.target.value })}
@@ -473,7 +507,7 @@ export function ProjectBudgetDrawer({
                 style={{
                   backgroundColor: "hsl(var(--surface-2))",
                   borderColor: "hsl(var(--border))",
-                  color: "hsl(var(--text-1))",
+                  color: "hsl(var(--text-primary))",
                 }}
                 placeholder="https://almacenamiento.ccf.org/recibos/..."
               />
@@ -513,8 +547,9 @@ export function ProjectBudgetDrawer({
         {/* FILTROS */}
         <div className="flex flex-wrap items-center gap-2">
           <div className="flex items-center gap-1">
-            <span className="text-xs" style={{ color: "hsl(var(--text-muted))" }}>Estado:</span>
+            <span className="text-xs" style={{ color: "hsl(var(--text-secondary))" }}>Estado:</span>
             <select
+              aria-label="Filtrar partidas por estado"
               value={filterStatus}
               onChange={(e) => setFilterStatus(e.target.value)}
               className="px-2.5 py-1 rounded-lg border text-xs outline-none"
@@ -531,8 +566,9 @@ export function ProjectBudgetDrawer({
           </div>
 
           <div className="flex items-center gap-1">
-            <span className="text-xs" style={{ color: "hsl(var(--text-muted))" }}>Categoría:</span>
+            <span className="text-xs" style={{ color: "hsl(var(--text-secondary))" }}>Categoría:</span>
             <select
+              aria-label="Filtrar partidas por categoría"
               value={filterCategory}
               onChange={(e) => setFilterCategory(e.target.value)}
               className="px-2.5 py-1 rounded-lg border text-xs outline-none"
@@ -553,17 +589,49 @@ export function ProjectBudgetDrawer({
 
         {/* LISTADO DE GASTOS */}
         <div className="flex flex-col gap-2.5">
-          {loading ? (
-            <div className="p-8 text-center" style={{ color: "hsl(var(--text-muted))" }}>
-              Cargando partidas presupuestarias...
+          {loadError && !loading && (
+            <div
+              role="alert"
+              className="flex flex-wrap items-center justify-between gap-3 rounded-xl border p-4"
+              style={{
+                backgroundColor: "hsl(var(--surface-1))",
+                borderColor: "hsl(var(--border))",
+                color: "hsl(var(--text-primary))",
+              }}
+            >
+              <span>No se pudo cargar la información presupuestaria.</span>
+              <button
+                type="button"
+                onClick={fetchData}
+                className="rounded-lg border px-3 py-1.5 font-medium"
+                style={{
+                  backgroundColor: "hsl(var(--surface-2))",
+                  borderColor: "hsl(var(--border))",
+                  color: "hsl(var(--primary))",
+                }}
+              >
+                Reintentar carga presupuestaria
+              </button>
             </div>
-          ) : filteredExpenses.length === 0 ? (
+          )}
+          {loading ? (
+            <div role="status" aria-label="Cargando partidas presupuestarias" className="flex flex-col gap-2.5">
+              {[0, 1, 2].map((item) => (
+                <div
+                  key={item}
+                  aria-hidden="true"
+                  className="h-20 animate-pulse rounded-xl border"
+                  style={{ backgroundColor: "hsl(var(--surface-2))", borderColor: "hsl(var(--border))" }}
+                />
+              ))}
+            </div>
+          ) : loadError && filteredExpenses.length === 0 ? null : filteredExpenses.length === 0 ? (
             <div
               className="p-8 text-center rounded-xl border flex flex-col items-center gap-2"
               style={{
                 backgroundColor: "hsl(var(--surface-1))",
                 borderColor: "hsl(var(--border))",
-                color: "hsl(var(--text-muted))",
+                color: "hsl(var(--text-secondary))",
               }}
             >
               <DollarSign className="w-8 h-8 opacity-40" />
@@ -575,6 +643,7 @@ export function ProjectBudgetDrawer({
               const StatusIcon = st.icon;
               const catLabel =
                 EXPENSE_CATEGORIES.find((c) => c.id === exp.category)?.label || exp.category;
+              const receiptUrl = getSafeProjectLink(exp.receipt_url);
 
               return (
                 <div
@@ -606,13 +675,13 @@ export function ProjectBudgetDrawer({
                           className="px-2 py-0.5 rounded-full text-xs"
                           style={{
                             backgroundColor: "hsl(var(--surface-2))",
-                            color: "hsl(var(--text-muted))",
+                            color: "hsl(var(--text-secondary))",
                           }}
                         >
                           {catLabel}
                         </span>
                       </div>
-                      <p className="text-xs" style={{ color: "hsl(var(--text-2))" }}>
+                      <p className="text-xs" style={{ color: "hsl(var(--text-secondary))" }}>
                         {exp.description || "Sin descripción"}
                       </p>
                     </div>
@@ -621,16 +690,18 @@ export function ProjectBudgetDrawer({
                       <button
                         onClick={() => handleEdit(exp)}
                         className="p-1.5 rounded-md cursor-pointer hover:opacity-80 transition-opacity"
-                        style={{ color: "hsl(var(--text-muted))" }}
+                        style={{ color: "hsl(var(--text-secondary))" }}
                         title="Editar"
+                        aria-label={`Editar gasto: ${exp.description || catLabel}`}
                       >
                         <Edit2 className="w-4 h-4" />
                       </button>
                       <button
-                        onClick={() => handleDelete(exp.id)}
+                        onClick={() => requestDelete(exp)}
                         className="p-1.5 rounded-md cursor-pointer hover:opacity-80 transition-opacity"
                         style={{ color: "hsl(var(--destructive))" }}
                         title="Eliminar"
+                        aria-label={`Eliminar gasto: ${exp.description || catLabel}`}
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
@@ -639,7 +710,7 @@ export function ProjectBudgetDrawer({
 
                   <div
                     className="flex items-center justify-between pt-2 border-t text-xs flex-wrap gap-2"
-                    style={{ borderColor: "hsl(var(--border))", color: "hsl(var(--text-muted))" }}
+                    style={{ borderColor: "hsl(var(--border))", color: "hsl(var(--text-secondary))" }}
                   >
                     <div className="flex items-center gap-3">
                       <span className="inline-flex items-center gap-1">
@@ -652,9 +723,9 @@ export function ProjectBudgetDrawer({
                     </div>
 
                     <div className="flex items-center gap-2">
-                      {exp.receipt_url && (
+                      {receiptUrl && (
                         <a
-                          href={exp.receipt_url}
+                          href={receiptUrl}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="inline-flex items-center gap-1 underline"
@@ -699,6 +770,7 @@ export function ProjectBudgetDrawer({
           )}
         </div>
       </div>
+      <ConfirmActionDrawer action={confirmAction} onClose={() => setConfirmAction(null)} />
     </RightPanel>
   );
 }

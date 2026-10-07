@@ -13,8 +13,11 @@ export default function ProjectsGanttView({ projects, onItemClick }: ProjectsGan
     const items = useMemo(
         () =>
             projects.map((project) => {
-                const start = project.created_at || new Date().toISOString();
-                const end = project.updated_at || start;
+                // Schedule dates are the source of truth. For projects created
+                // before those fields existed, use creation time as a stable
+                // estimated start; edits must never move the timeline.
+                const start = project.start_date || project.target_date || project.created_at;
+                const end = project.target_date || project.start_date || start;
                 const tasks = Array.isArray(project.tasks) ? project.tasks : [];
                 const done = tasks.filter((task) =>
                     ['completed'].includes((task.status || '').toLowerCase())
@@ -26,7 +29,7 @@ export default function ProjectsGanttView({ projects, onItemClick }: ProjectsGan
                     start_date: start.slice(0, 10),
                     end_date: end.slice(0, 10),
                     color: project.status === 'completed' ? ('emerald' as const) : ('blue' as const),
-                    progress: tasks.length ? Math.round((done / tasks.length) * 100) : project.progress_percent ?? 0,
+                    progress: project.progress_percent ?? (tasks.length ? Math.round((done / tasks.length) * 100) : 0),
                 };
             }),
         [projects]

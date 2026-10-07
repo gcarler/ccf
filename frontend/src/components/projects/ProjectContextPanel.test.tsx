@@ -20,13 +20,13 @@ vi.mock("@/context/AuthContext", () => ({
 
 const socketMock = vi.hoisted(() => ({
   onEvent: null as ((payload: unknown) => void) | null,
-  calls: [] as Array<{ enabled?: boolean; rooms?: string[] }>,
+  calls: [] as Array<{ enabled?: boolean; rooms?: string[]; token?: string | null }>,
 }));
 
 vi.mock("@/hooks/useWorkspaceSocket", () => ({
-  useWorkspaceSocket: (options: { enabled?: boolean; rooms?: string[]; onEvent?: (payload: unknown) => void }) => {
+  useWorkspaceSocket: (options: { enabled?: boolean; rooms?: string[]; token?: string | null; onEvent?: (payload: unknown) => void }) => {
     socketMock.onEvent = options.onEvent ?? null;
-    socketMock.calls.push({ enabled: options.enabled, rooms: options.rooms });
+    socketMock.calls.push({ enabled: options.enabled, rooms: options.rooms, token: options.token });
     return { status: options.enabled ? "open" : "idle" };
   },
 }));
@@ -118,7 +118,7 @@ describe("ProjectContextPanel", () => {
   it("renders the default chat tab and keeps the inbox socket disabled in Chat", () => {
     renderPanel();
 
-    expect(socketMock.calls.at(-1)).toEqual({ enabled: false, rooms: ["project_project-1"] });
+    expect(socketMock.calls.at(-1)).toEqual({ enabled: false, rooms: ["project_project-1"], token: "token-1" });
     expect(screen.getByRole("complementary", { name: "Contexto del proyecto" })).toBeInTheDocument();
     expect(screen.getByText("Proyecto CCF")).toBeInTheDocument();
     expect(screen.getByText("1 abiertas")).toBeInTheDocument();
@@ -178,7 +178,7 @@ describe("ProjectContextPanel", () => {
     renderPanel();
 
     await user.click(screen.getByRole("tab", { name: /Inbox/ }));
-    expect(socketMock.calls.at(-1)).toEqual({ enabled: true, rooms: ["project_project-1"] });
+    expect(socketMock.calls.at(-1)).toEqual({ enabled: true, rooms: ["project_project-1"], token: "token-1" });
 
     socketMock.onEvent?.({
       event: "project_message",

@@ -6,7 +6,7 @@ import { CheckSquare, Type, AlignLeft, Flag, Loader2, User, Boxes } from 'lucide
 import PersonaSelect from '@/components/ui/PersonaSelect';
 import clsx from 'clsx';
 import WorkspaceDrawer from '@/components/WorkspaceDrawer';
-import { PRIORITY_LABELS, NODE_OPTIONS } from '@/lib/projects/constants';
+import { PRIORITY_LABELS, NODE_OPTIONS, TASK_TITLE_MAX_LENGTH } from '@/lib/projects/constants';
 
 interface Props {
     isOpen: boolean;
@@ -24,7 +24,7 @@ interface FormValues {
 }
 
 const PRIORITIES = [
-    { value: 'urgent', label: PRIORITY_LABELS.urgent, color: 'bg-[hsl(var(--danger))]', iconColor: 'text-[hsl(var(--danger))]' },
+    { value: 'urgent', label: PRIORITY_LABELS.urgent, color: 'bg-[hsl(var(--destructive))]', iconColor: 'text-[hsl(var(--destructive))]' },
     { value: 'high', label: PRIORITY_LABELS.high, color: 'bg-[hsl(var(--warning))]', iconColor: 'text-[hsl(var(--warning))]' },
     { value: 'medium', label: PRIORITY_LABELS.medium, color: 'bg-[hsl(var(--primary))]', iconColor: 'text-[hsl(var(--primary))]' },
     { value: 'low', label: PRIORITY_LABELS.low, color: 'bg-[hsl(var(--surface-2))]', iconColor: 'text-[hsl(var(--text-secondary))]' }
@@ -83,22 +83,25 @@ export default function TaskCreationDrawer({ isOpen, defaultStatus = 'todo', onC
         >
             <form onSubmit={handleSubmit(onFormSubmit)} className="mt-3 space-y-4">
                 <div className="space-y-1.5">
-                    <label className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--muted-foreground))] flex items-center gap-2">
+                    <label htmlFor="task-title" className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--muted-foreground))] flex items-center gap-2">
                         <Type size={12} /> Título de la tarea
                     </label>
                     <input
+                        id="task-title"
                         autoFocus
-                        {...register('title', { required: true })}
+                        {...register('title', { required: true, maxLength: TASK_TITLE_MAX_LENGTH })}
+                        maxLength={TASK_TITLE_MAX_LENGTH}
                         placeholder="Ej: Revisión de Mezcla de Audio"
                         className="w-full bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] rounded-md px-3 py-2 text-sm font-medium outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]/20 transition-all text-[hsl(var(--foreground))]"
                     />
                 </div>
 
                 <div className="space-y-1.5">
-                    <label className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--muted-foreground))] flex items-center gap-2">
+                    <label htmlFor="task-description" className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--muted-foreground))] flex items-center gap-2">
                         <AlignLeft size={12} /> Descripción (Opcional)
                     </label>
                     <textarea
+                        id="task-description"
                         {...register('description')}
                         placeholder="Detalles adicionales, links, etc..."
                         rows={5}
@@ -106,16 +109,17 @@ export default function TaskCreationDrawer({ isOpen, defaultStatus = 'todo', onC
                     />
                 </div>
 
-                <div className="space-y-2">
-                    <label className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--muted-foreground))] flex items-center gap-2">
+                <div role="group" aria-labelledby="task-priority-label" className="space-y-2">
+                    <span id="task-priority-label" className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--muted-foreground))] flex items-center gap-2">
                         <Flag size={12} /> Nivel de Prioridad
-                    </label>
+                    </span>
                     <div className="grid grid-cols-2 gap-2">
                         {PRIORITIES.map((p) => (
                             <button
                                 key={p.value}
                                 type="button"
                                 onClick={() => setValue('priority', p.value)}
+                                aria-pressed={priority === p.value}
                                 className={clsx(
                                     "py-2 px-3 rounded-md flex items-center justify-center gap-2 border text-xs font-bold uppercase tracking-wide transition-all",
                                     priority === p.value
@@ -130,16 +134,17 @@ export default function TaskCreationDrawer({ isOpen, defaultStatus = 'todo', onC
                     </div>
                 </div>
 
-                <div className="space-y-2">
-                    <label className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--muted-foreground))] flex items-center gap-2">
+                <div role="group" aria-labelledby="task-node-label" className="space-y-2">
+                    <span id="task-node-label" className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--muted-foreground))] flex items-center gap-2">
                         <Boxes size={12} /> Nodo Operativo
-                    </label>
+                    </span>
                     <div className="grid grid-cols-2 gap-2">
                         {NODE_OPTIONS.map((n) => (
                             <button
                                 key={n.value}
                                 type="button"
                                 onClick={() => setValue('node', node === n.value ? null : n.value)}
+                                aria-pressed={node === n.value}
                                 className={clsx(
                                     "py-2 px-3 rounded-md flex items-center justify-center gap-2 border text-xs font-bold uppercase tracking-wide transition-all",
                                     node === n.value
@@ -156,6 +161,7 @@ export default function TaskCreationDrawer({ isOpen, defaultStatus = 'todo', onC
                     <button
                         type="button"
                         onClick={() => setValue('node', null)}
+                        aria-pressed={node === null}
                         className={clsx(
                             "text-2xs font-semibold uppercase tracking-wide transition-colors",
                             node === null ? "text-[hsl(var(--primary))]" : "text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))]"
@@ -165,10 +171,10 @@ export default function TaskCreationDrawer({ isOpen, defaultStatus = 'todo', onC
                     </button>
                 </div>
 
-                <div className="space-y-1.5">
-                    <label className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] flex items-center gap-2">
+                <div role="group" aria-labelledby="task-assignee-label" className="space-y-1.5">
+                    <span id="task-assignee-label" className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] flex items-center gap-2">
                         <User size={12} /> Asignar a
-                    </label>
+                    </span>
                     <PersonaSelect
                         value={assigneeId}
                         onChange={(v) => setValue('assignee_id', v)}

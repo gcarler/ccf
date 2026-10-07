@@ -1,6 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { axe } from 'jest-axe';
 import { ProjectKanbanBoard } from './ProjectKanbanBoard';
 import { createMockProject, createMockTask } from '@/test-utils/factories';
 import type { PhaseDef } from '@/context/ProjectUpdateContext';
@@ -9,6 +10,8 @@ import type { PhaseDef } from '@/context/ProjectUpdateContext';
 vi.mock('@/context/AuthContext', () => ({
     useAuth: () => ({ token: 'mock-token', loading: false, user: null, isAuthenticated: true, login: vi.fn(), logout: vi.fn(), refreshUser: vi.fn() }),
 }));
+
+vi.mock('@/lib/http', () => ({ apiFetch: vi.fn().mockResolvedValue([]) }));
 
 const updateTask = vi.fn();
 const deleteTask = vi.fn();
@@ -64,13 +67,30 @@ describe('ProjectKanbanBoard', () => {
         expect(screen.getByText('No hay columnas para mostrar')).toBeInTheDocument();
     });
 
-    it('calls onOpenTask when a task card is clicked', async () => {
+    it('has no critical accessibility violations with draggable task cards', async () => {
+        const { container } = render(
+            <ProjectKanbanBoard project={mockProject} tasks={mockTasks} phases={mockPhases} onOpenTask={vi.fn()} onAddTask={vi.fn()} />
+        );
+
+        expect((await axe(container)).violations).toEqual([]);
+    });
+
+    it('opens task details through an explicit accessible action', async () => {
         const onOpenTask = vi.fn();
         render(<ProjectKanbanBoard project={mockProject} tasks={mockTasks} phases={mockPhases} onOpenTask={onOpenTask} onAddTask={vi.fn()} />);
 
-        // Click on the task card wrapper to avoid InlineTextInput button
-        const card = screen.getByTestId('task-card-task-1');
-        await userEvent.click(card);
+        await userEvent.click(screen.getByRole('button', { name: 'Abrir detalle de tarea Tarea Todo' }));
         expect(onOpenTask).toHaveBeenCalledWith(expect.objectContaining({ id: 'task-1' }));
+    });
+
+    it('does not open task details when editing or using inline metadata controls', async () => {
+        const onOpenTask = vi.fn();
+        render(<ProjectKanbanBoard project={mockProject} tasks={mockTasks} phases={mockPhases} onOpenTask={onOpenTask} onAddTask={vi.fn()} />);
+
+        await userEvent.click(screen.getByText('Tarea Todo'));
+        await userEvent.click(screen.getAllByRole('button', { name: 'Seleccionar fecha límite' })[0]);
+        await userEvent.click(screen.getAllByRole('button', { name: 'Cambiar prioridad' })[0]);
+
+        expect(onOpenTask).not.toHaveBeenCalled();
     });
 });

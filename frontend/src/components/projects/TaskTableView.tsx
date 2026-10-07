@@ -4,7 +4,7 @@
 import '@/lib/agGrid';
 import { useAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/lib/http';
-import { DEFAULT_TASK_PRIORITY, getStatusOption, getPriorityOption, STATUS_OPTIONS, PRIORITY_OPTIONS } from '@/lib/projects/constants';
+import { DEFAULT_TASK_PRIORITY, getStatusOption, getPriorityOption, PROJECT_ASSIGNEE_CANDIDATES_ENDPOINT, STATUS_OPTIONS, PRIORITY_OPTIONS } from '@/lib/projects/constants';
 import type { ProjectTaskRecord, ProjectUserFavorite } from '@/types/projects';
 import { InlineStatusPicker, InlinePriorityPicker, InlineDatePicker, InlineUserPicker } from '@/components/ui/inline-editors';
 import { useProjectTasks } from '@/hooks/useProjectTasks';
@@ -45,6 +45,7 @@ const FlagIcon = ({ fill, size = 14 }: { fill: string; size?: number }) => (
 function TitleRenderer(params: ICellRendererParams) {
     if (params.data?.__isGroup) return null;
     const task = params.data as ProjectTaskRecord;
+    const context = params.context as { onOpenTask?: (task: ProjectTaskRecord) => void } | undefined;
     return (
         <div className="flex items-center gap-2 h-full w-full text-left group">
             <div className={clsx('size-4 rounded-full border-2 flex items-center justify-center flex-shrink-0',
@@ -55,10 +56,21 @@ function TitleRenderer(params: ICellRendererParams) {
                 {task.title}
             </span>
             {(task.comments_count ?? 0) > 0 && (
-                <span className="ml-auto flex items-center gap-0.5 text-[hsl(var(--muted-foreground))] shrink-0">
+                <span className="ml-auto flex items-center gap-0.5 text-[hsl(var(--text-secondary))] shrink-0">
                     <MessageSquare size={11} /><span className="text-2xs">{task.comments_count}</span>
                 </span>
             )}
+            <button
+                type="button"
+                onClick={(event) => {
+                    event.stopPropagation();
+                    context?.onOpenTask?.(task);
+                }}
+                aria-label={`Abrir detalle de tarea ${task.title}`}
+                className="inline-flex size-8 items-center justify-center rounded-md text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] hover:text-[hsl(var(--primary))] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--primary))]"
+            >
+                <Eye size={14} aria-hidden="true" />
+            </button>
         </div>
     );
 }
@@ -88,7 +100,7 @@ function AssigneeRenderer(params: ICellRendererParams) {
     if (params.data?.__isGroup) return null;
     const { applyChangeRef } = params.context ?? {};
     const task = params.data as ProjectTaskRecord;
-    return <InlineUserPicker value={task.assignee_id} onChange={(id, name) => applyChangeRef?.current?.(task.id, 'assignee_id', id, { assignee_name: name })} />;
+    return <InlineUserPicker endpoint={PROJECT_ASSIGNEE_CANDIDATES_ENDPOINT} value={task.assignee_id} onChange={(id, name) => applyChangeRef?.current?.(task.id, 'assignee_id', id, { assignee_name: name })} />;
 }
 
 // ─── Props / Types ─────────────────────────────────────────────────────────────
@@ -187,6 +199,7 @@ export default function TaskTableView({ projectId, tasks, onOpenTask, onAddTask,
     // Trigger title edit on double click for the title column
     const handleCellDoubleClicked = useCallback((e: CellDoubleClickedEvent) => {
         if (e.colDef.field === 'title' && !e.data?.__isGroup) {
+            if (e.event?.target instanceof Element && e.event.target.closest('button')) return;
             e.event?.stopPropagation?.();
             if (e.rowIndex != null) e.api.startEditingCell({ rowIndex: e.rowIndex, colKey: 'title' });
         }
@@ -248,8 +261,8 @@ export default function TaskTableView({ projectId, tasks, onOpenTask, onAddTask,
         return (
             <div className="flex items-center gap-2.5 px-4 h-full bg-[hsl(var(--surface-1))] border-b border-[hsl(var(--border))]">
                 {dot && <span className={clsx('size-2 rounded-full flex-shrink-0', dot)} />}
-                <span className="text-xs font-bold uppercase tracking-wider text-[hsl(var(--muted-foreground))]">{label}</span>
-                <span className="text-2xs font-semibold text-[hsl(var(--muted-foreground))] bg-[hsl(var(--surface-3))] rounded-full px-2 py-0.5">{groupRow.__groupCount}</span>
+                <span className="text-xs font-bold uppercase tracking-wider text-[hsl(var(--text-secondary))]">{label}</span>
+                <span className="text-2xs font-semibold text-[hsl(var(--text-secondary))] bg-[hsl(var(--surface-3))] rounded-full px-2 py-0.5">{groupRow.__groupCount}</span>
                 <button onClick={() => setQuickAddGroup(groupRow.__groupKey)}
                     className="ml-auto flex items-center gap-1 text-2xs font-semibold text-[hsl(var(--primary))] hover:text-[hsl(var(--primary)/0.8)] transition-colors">
                     <Plus size={11} /> Agregar
@@ -278,10 +291,10 @@ export default function TaskTableView({ projectId, tasks, onOpenTask, onAddTask,
     };
 
     return (
-        <div className="flex min-w-0 flex-col h-full bg-[hsl(var(--background))] font-sans overflow-hidden">
+        <div className="flex min-w-0 flex-col h-full bg-[hsl(var(--surface-1))] font-sans overflow-hidden">
 
             {error && (
-                <div className="mx-3 mt-3 rounded-md border border-[hsl(var(--warning)/0.3)] bg-[hsl(var(--warning)/0.1)] p-3 text-[hsl(var(--warning))]">
+                <div className="mx-3 mt-3 rounded-md border border-[hsl(var(--warning)/0.3)] bg-[hsl(var(--warning-muted))] p-3 text-[hsl(var(--warning-text))]">
                     <p className="text-xs font-bold uppercase tracking-wide">{error}</p>
                 </div>
             )}
@@ -292,19 +305,19 @@ export default function TaskTableView({ projectId, tasks, onOpenTask, onAddTask,
                 {/* Column visibility */}
                 <Popover.Root open={cfgOpen} onOpenChange={setCfgOpen}>
                     <Popover.Trigger asChild>
-                        <button className={clsx('flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold transition-all', cfgOpen ? 'bg-[hsl(var(--primary)/0.1)] text-[hsl(var(--primary))]' : 'text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] hover:bg-[hsl(var(--surface-2))]')}>
+                        <button className={clsx('flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold transition-all', cfgOpen ? 'bg-[hsl(var(--primary)/0.1)] text-[hsl(var(--primary))]' : 'text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] hover:bg-[hsl(var(--surface-2))]')}>
                             <Settings2 size={12} /> Columnas
                         </button>
                     </Popover.Trigger>
                     <Popover.Portal>
                         <Popover.Content sideOffset={6} align="start" className="z-[500] w-52 bg-[hsl(var(--surface-1))] rounded-md shadow-2xl border border-[hsl(var(--border))] p-2">
-                            <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--muted-foreground))] px-2 py-1.5">Columnas visibles</p>
+                            <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] px-2 py-1.5">Columnas visibles</p>
                             {ALL_COLUMNS.map(col => (
                                 <button key={col.id} onClick={() => setVisibleCols(prev => { const n = new Set(prev); if (n.has(col.id)) { if (col.id !== 'title') n.delete(col.id); } else n.add(col.id); return n; })}
                                     className="w-full flex items-center gap-2.5 px-2 py-1.5 rounded-lg hover:bg-[hsl(var(--surface-2))] transition-colors">
-                                    {visibleCols.has(col.id) ? <Eye size={13} className="text-[hsl(var(--primary))] shrink-0" /> : <EyeOff size={13} className="text-[hsl(var(--muted-foreground))] shrink-0" />}
-                                    <span className={clsx('text-sm font-medium flex-1 text-left', visibleCols.has(col.id) ? 'text-[hsl(var(--foreground))]' : 'text-[hsl(var(--muted-foreground))]')}>{col.label}</span>
-                                    {col.id === 'title' && <span className="text-2xs text-[hsl(var(--muted-foreground))]">fijo</span>}
+                                    {visibleCols.has(col.id) ? <Eye size={13} className="text-[hsl(var(--primary))] shrink-0" /> : <EyeOff size={13} className="text-[hsl(var(--text-secondary))] shrink-0" />}
+                                    <span className={clsx('text-sm font-medium flex-1 text-left', visibleCols.has(col.id) ? 'text-[hsl(var(--text-primary))]' : 'text-[hsl(var(--text-secondary))]')}>{col.label}</span>
+                                    {col.id === 'title' && <span className="text-2xs text-[hsl(var(--text-secondary))]">fijo</span>}
                                 </button>
                             ))}
                         </Popover.Content>
@@ -316,17 +329,17 @@ export default function TaskTableView({ projectId, tasks, onOpenTask, onAddTask,
                 {/* Group by */}
                 <Popover.Root open={groupOpen} onOpenChange={setGroupOpen}>
                     <Popover.Trigger asChild>
-                        <button className={clsx('flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold transition-all', groupBy !== 'status' ? 'bg-[hsl(var(--primary)/0.1)] text-[hsl(var(--primary))]' : 'text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] hover:bg-[hsl(var(--surface-2))]')}>
+                        <button className={clsx('flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold transition-all', groupBy !== 'status' ? 'bg-[hsl(var(--primary)/0.1)] text-[hsl(var(--primary))]' : 'text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] hover:bg-[hsl(var(--surface-2))]')}>
                             <Layers size={12} /> Agrupar{groupBy !== 'none' ? `: ${groupBy === 'status' ? 'Estado' : 'Prioridad'}` : ''}
                         </button>
                     </Popover.Trigger>
                     <Popover.Portal>
                         <Popover.Content sideOffset={6} align="start" className="z-[500] w-52 bg-[hsl(var(--surface-1))] rounded-md shadow-2xl border border-[hsl(var(--border))] p-1.5">
-                            <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--muted-foreground))] px-2 pt-1 pb-2">Agrupar por</p>
+                            <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] px-2 pt-1 pb-2">Agrupar por</p>
                             {([['status','Estado'],['priority','Prioridad'],['none','Sin agrupación']] as const).map(([k, lbl]) => (
                                 <button key={k} onClick={() => { setGroupBy(k); setGroupOpen(false); }}
                                     className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg hover:bg-[hsl(var(--surface-2))] transition-colors">
-                                    <span className="text-sm font-semibold text-[hsl(var(--foreground))] flex-1 text-left">{lbl}</span>
+                                    <span className="text-sm font-semibold text-[hsl(var(--text-primary))] flex-1 text-left">{lbl}</span>
                                     {groupBy === k && <Check size={12} className="text-[hsl(var(--primary))]" />}
                                 </button>
                             ))}
@@ -337,13 +350,13 @@ export default function TaskTableView({ projectId, tasks, onOpenTask, onAddTask,
                 {/* Filter */}
                 <Popover.Root open={filterOpen} onOpenChange={setFilterOpen}>
                     <Popover.Trigger asChild>
-                        <button className={clsx('flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold transition-all', activeFilters.length > 0 ? 'bg-[hsl(var(--primary)/0.1)] text-[hsl(var(--primary))]' : 'text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] hover:bg-[hsl(var(--surface-2))]')}>
+                        <button className={clsx('flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold transition-all', activeFilters.length > 0 ? 'bg-[hsl(var(--primary)/0.1)] text-[hsl(var(--primary))]' : 'text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] hover:bg-[hsl(var(--surface-2))]')}>
                             <Filter size={12} /> Filtrar{activeFilters.length > 0 ? ` (${activeFilters.length})` : ''}
                         </button>
                     </Popover.Trigger>
                     <Popover.Portal>
                         <Popover.Content sideOffset={6} align="start" className="z-[500] w-64 bg-[hsl(var(--surface-1))] rounded-md shadow-2xl border border-[hsl(var(--border))] p-2">
-                            <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--muted-foreground))] px-2 py-1.5">Por Estado</p>
+                            <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] px-2 py-1.5">Por Estado</p>
                             <div className="flex flex-wrap gap-1.5 px-2 pb-2">
                                 {STATUS_OPTIONS.map(s => {
                                     const active = activeFilters.some(f => f.field === 'status' && f.value === s.value);
@@ -353,7 +366,7 @@ export default function TaskTableView({ projectId, tasks, onOpenTask, onAddTask,
                                     </button>;
                                 })}
                             </div>
-                            <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--muted-foreground))] px-2 py-1.5 border-t border-[hsl(var(--border))]">Por Prioridad</p>
+                            <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] px-2 py-1.5 border-t border-[hsl(var(--border))]">Por Prioridad</p>
                             <div className="flex flex-wrap gap-1.5 px-2 pb-2">
                                 {PRIORITY_OPTIONS.map(p => {
                                     const active = activeFilters.some(f => f.field === 'priority' && f.value === p.value);
@@ -375,19 +388,19 @@ export default function TaskTableView({ projectId, tasks, onOpenTask, onAddTask,
                     className={clsx(
                         'flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold transition-all border',
                         onlyFavorites
-                            ? 'bg-[hsl(var(--warning)/0.15)] text-[hsl(var(--warning))] border-[hsl(var(--warning)/0.3)] shadow-xs'
-                            : 'text-[hsl(var(--muted-foreground))] border-[hsl(var(--border))] hover:bg-[hsl(var(--surface-2))] hover:text-[hsl(var(--foreground))]'
+                            ? 'bg-[hsl(var(--warning-muted))] text-[hsl(var(--warning-text))] border-[hsl(var(--warning)/0.3)] shadow-xs'
+                            : 'text-[hsl(var(--text-secondary))] border-[hsl(var(--border))] hover:bg-[hsl(var(--surface-2))] hover:text-[hsl(var(--text-primary))]'
                     )}
                     title="Filtrar por tareas favoritas"
                 >
-                    <Star size={12} className={clsx(onlyFavorites ? 'fill-current text-[hsl(var(--warning))]' : '')} />
+                    <Star size={12} className={clsx(onlyFavorites ? 'fill-current text-[hsl(var(--warning-text))]' : '')} />
                     <span>Solo Mis Favoritas</span>
                     {favoriteTaskIds.size > 0 && (
                         <span className={clsx(
                             'px-1.5 py-0.2 rounded-full text-3xs font-bold',
                             onlyFavorites
-                                ? 'bg-[hsl(var(--warning))] text-[hsl(var(--background))]'
-                                : 'bg-[hsl(var(--surface-3))] text-[hsl(var(--muted-foreground))]'
+                                ? 'bg-[hsl(var(--warning-muted))] text-[hsl(var(--warning-text))]'
+                                : 'bg-[hsl(var(--surface-3))] text-[hsl(var(--text-secondary))]'
                         )}>
                             {favoriteTaskIds.size}
                         </span>
@@ -411,7 +424,7 @@ export default function TaskTableView({ projectId, tasks, onOpenTask, onAddTask,
                 {quickAddGroup && (
                     <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }}
                         className="shrink-0 flex min-w-0 items-center gap-3 px-4 py-2.5 bg-[hsl(var(--primary)/0.05)] border-b border-[hsl(var(--border))]">
-                        <Circle size={15} className="text-[hsl(var(--muted-foreground))] shrink-0" />
+                        <Circle size={15} className="text-[hsl(var(--text-secondary))] shrink-0" />
                         <input
                             autoFocus
                             value={quickAddTitle}
@@ -421,10 +434,10 @@ export default function TaskTableView({ projectId, tasks, onOpenTask, onAddTask,
                                 if (e.key === 'Escape') { setQuickAddGroup(null); setQuickAddTitle(''); }
                             }}
                             placeholder="Nombre de la tarea... (Enter para crear)"
-                            className="flex-1 text-base font-medium text-[hsl(var(--foreground))] bg-transparent outline-none placeholder:text-[hsl(var(--muted-foreground))]"
+                            className="flex-1 text-base font-medium text-[hsl(var(--text-primary))] bg-transparent outline-none placeholder:text-[hsl(var(--text-secondary))]"
                         />
                         <button onClick={() => quickAddTitle.trim() && handleQuickAdd(quickAddGroup, quickAddTitle.trim())} className="px-3 py-1 bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] text-xs font-bold rounded-lg hover:bg-[hsl(var(--primary))] transition-colors shrink-0">Crear</button>
-                        <button onClick={() => { setQuickAddGroup(null); setQuickAddTitle(''); }} className="p-1.5 text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] hover:bg-[hsl(var(--surface-2))] rounded-lg transition-colors"><X size={13} /></button>
+                        <button onClick={() => { setQuickAddGroup(null); setQuickAddTitle(''); }} className="p-1.5 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] hover:bg-[hsl(var(--surface-2))] rounded-lg transition-colors"><X size={13} /></button>
                     </motion.div>
                 )}
             </AnimatePresence>
@@ -432,8 +445,8 @@ export default function TaskTableView({ projectId, tasks, onOpenTask, onAddTask,
             {/* Grid */}
             <div className="flex-1 min-w-0 min-h-0">
                 {tasks.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center h-full gap-3 text-[hsl(var(--muted-foreground))]">
-                        <Circle size={28} className="text-[hsl(var(--muted-foreground))]" />
+                    <div className="flex flex-col items-center justify-center h-full gap-3 text-[hsl(var(--text-secondary))]">
+                        <Circle size={28} className="text-[hsl(var(--text-secondary))]" />
                         <p className="text-sm font-medium">Sin tareas en este proyecto</p>
                         <button onClick={() => onAddTask('todo')} className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary)/0.85)] text-[hsl(var(--primary-foreground))] transition-colors">
                             <Plus size={13} /> Crear primera tarea
@@ -450,7 +463,6 @@ export default function TaskTableView({ projectId, tasks, onOpenTask, onAddTask,
                         getRowHeight={getRowHeight}
                         isFullWidthRow={groupBy !== 'none' ? isFullWidthRow : undefined}
                         fullWidthCellRenderer={groupBy !== 'none' ? fullWidthCellRenderer : undefined}
-                        onRowDoubleClicked={(e) => { if (e.data && !('__isGroup' in e.data)) onOpenTask(e.data as ProjectTaskRecord); }}
                         onCellDoubleClicked={handleCellDoubleClicked}
                         onCellValueChanged={(e) => {
                             if (e.colDef.field === 'title' && e.data && !('__isGroup' in e.data)) {

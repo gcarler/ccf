@@ -28,11 +28,19 @@ export interface UniversalGanttViewProps {
 }
 
 const COLORS = {
-    blue: 'bg-[hsl(var(--primary))] shadow-[hsl(var(--primary))/0.2]',
-    sky: 'bg-[hsl(var(--info))] shadow-[hsl(var(--info))/0.2]',
-    emerald: 'bg-[hsl(var(--success))] shadow-[hsl(var(--success))/0.2]',
-    amber: 'bg-[hsl(var(--warning))] shadow-[hsl(var(--warning))/0.2]',
-    rose: 'bg-[hsl(var(--danger))] shadow-[hsl(var(--danger))/0.2]',
+    blue: 'bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] shadow-[hsl(var(--primary))/0.2]',
+    sky: 'bg-[hsl(var(--info))] text-[hsl(var(--info-foreground))] shadow-[hsl(var(--info))/0.2]',
+    emerald: 'bg-[hsl(var(--success))] text-[hsl(var(--success-foreground))] shadow-[hsl(var(--success))/0.2]',
+    amber: 'bg-[hsl(var(--warning))] text-[hsl(var(--warning-foreground))] shadow-[hsl(var(--warning))/0.2]',
+    rose: 'bg-[hsl(var(--danger))] text-[hsl(var(--danger-foreground))] shadow-[hsl(var(--danger))/0.2]',
+};
+
+const FOREGROUND_TINTS = {
+    blue: { icon: 'bg-[hsl(var(--primary-foreground))]/20', ring: 'border-[hsl(var(--primary-foreground))]/20', handle: 'hover:bg-[hsl(var(--primary-foreground))]/20', grip: 'bg-[hsl(var(--primary-foreground))]/50' },
+    sky: { icon: 'bg-[hsl(var(--info-foreground))]/20', ring: 'border-[hsl(var(--info-foreground))]/20', handle: 'hover:bg-[hsl(var(--info-foreground))]/20', grip: 'bg-[hsl(var(--info-foreground))]/50' },
+    emerald: { icon: 'bg-[hsl(var(--success-foreground))]/20', ring: 'border-[hsl(var(--success-foreground))]/20', handle: 'hover:bg-[hsl(var(--success-foreground))]/20', grip: 'bg-[hsl(var(--success-foreground))]/50' },
+    amber: { icon: 'bg-[hsl(var(--warning-foreground))]/20', ring: 'border-[hsl(var(--warning-foreground))]/20', handle: 'hover:bg-[hsl(var(--warning-foreground))]/20', grip: 'bg-[hsl(var(--warning-foreground))]/50' },
+    rose: { icon: 'bg-[hsl(var(--danger-foreground))]/20', ring: 'border-[hsl(var(--danger-foreground))]/20', handle: 'hover:bg-[hsl(var(--danger-foreground))]/20', grip: 'bg-[hsl(var(--danger-foreground))]/50' },
 };
 
 const toDateKey = (date: Date) => {
@@ -122,17 +130,17 @@ function GanttBarItem({ item, pos, width, pxPerDay, idx, onClick, onMove, onResi
                 )}
             >
                 <div className="flex items-center gap-3 overflow-hidden pointer-events-none">
-                    <div className="size-8 rounded-md bg-white/20 flex items-center justify-center text-white shrink-0"><Clock size={16} /></div>
+                    <div className={clsx("size-8 rounded-md flex items-center justify-center shrink-0", FOREGROUND_TINTS[item.color || 'blue'].icon)}><Clock size={16} /></div>
                     <div className="overflow-hidden">
-                        <p className="font-semibold text-white uppercase tracking-tight truncate leading-none mb-1">{item.title}</p>
-                        {item.subtitle && <p className="text-2xs text-white/70 uppercase font-bold tracking-wide truncate">{item.subtitle}</p>}
+                        <p className="font-semibold uppercase tracking-tight truncate leading-none mb-1">{item.title}</p>
+                        {item.subtitle && <p className="text-2xs uppercase font-bold tracking-wide truncate">{item.subtitle}</p>}
                     </div>
                 </div>
                 {item.progress !== undefined && (
-                    <div className="flex items-center gap-3 text-white/90 pointer-events-none mr-2">
+                    <div className="flex items-center gap-3 pointer-events-none mr-2">
                         <span className="font-semibold">{item.progress}%</span>
-                        <div className="size-6 rounded-full border-2 border-white/20 flex items-center justify-center">
-                            <div className="size-1.5 rounded-full bg-[hsl(var(--bg-primary))] animate-pulse" />
+                        <div className={clsx("size-6 rounded-full border-2 flex items-center justify-center", FOREGROUND_TINTS[item.color || 'blue'].ring)}>
+                            <div className="size-1.5 rounded-full bg-current animate-pulse" />
                         </div>
                     </div>
                 )}
@@ -143,9 +151,9 @@ function GanttBarItem({ item, pos, width, pxPerDay, idx, onClick, onMove, onResi
                     onPointerDown={(e) => handlePointerDown(e, 'resize')}
                     onPointerMove={handlePointerMove}
                     onPointerUp={handlePointerUp}
-                    className="absolute top-0 bottom-0 cursor-ew-resize flex items-center justify-center opacity-0 group-hover:opacity-100 hover:bg-white/20 rounded-r-lg transition-colors z-50"
+                    className={clsx("absolute top-0 bottom-0 cursor-ew-resize flex items-center justify-center opacity-0 group-hover:opacity-100 rounded-r-lg transition-colors z-50", FOREGROUND_TINTS[item.color || 'blue'].handle)}
                 >
-                    <div className="w-1 h-4 bg-white/50 rounded-full pointer-events-none" />
+                    <div className={clsx("w-1 h-4 rounded-full pointer-events-none", FOREGROUND_TINTS[item.color || 'blue'].grip)} />
                 </div>
             )}
         </>
@@ -242,7 +250,10 @@ export default function UniversalGanttView({ items, moduleName = "Módulo", onIt
                 {/* Timeline Header */}
                 <div
                     ref={scrollContainerRef}
-                    className="flex-1 overflow-x-auto scroll-smooth scrollbar-none relative"
+                    role="region"
+                    aria-label={`Cronograma de ${moduleName}`}
+                    tabIndex={0}
+                    className="flex-1 overflow-x-auto scroll-smooth scrollbar-none relative focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[hsl(var(--ring))]"
                 >
                     <div className="min-w-max h-full flex flex-col">
                         {/* Days scale */}
@@ -252,7 +263,7 @@ export default function UniversalGanttView({ items, moduleName = "Módulo", onIt
                                     "p-3 flex flex-col gap-1 border-r border-[hsl(var(--border))] dark:border-[hsl(var(--border))]",
                                     day.toDateString() === today.toDateString() ? "bg-info-soft dark:bg-[hsl(var(--info)/0.05)] text-[hsl(var(--primary))]" : "text-[hsl(var(--text-secondary))]"
                                 )} style={{ width: pxPerDay }}>
-                                    <span className="text-2xs font-semibold uppercase tracking-tighter opacity-60">
+                                    <span className="text-2xs font-semibold uppercase tracking-tighter text-[hsl(var(--muted-foreground))]">
                                         {day.toLocaleDateString('es-ES', { weekday: 'long' })}
                                     </span>
                                     <span className="text-lg font-bold tracking-tighter italic leading-none">
@@ -320,7 +331,7 @@ export default function UniversalGanttView({ items, moduleName = "Módulo", onIt
                     </div>
                     <div className="flex items-center gap-2">
                         <div className="size-2 rounded-full bg-[hsl(var(--success))] shadow-lg shadow-[hsl(var(--success))/0.2]" />
-                        <span className="font-semibold text-[hsl(var(--success))] uppercase tracking-wide">Ejecución Exitosa</span>
+                        <span className="font-semibold text-[hsl(var(--success-text))] dark:text-[hsl(var(--success-text))] uppercase tracking-wide">Ejecución Exitosa</span>
                     </div>
                 </div>
                 <button className="flex items-center gap-2 font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide hover:text-[hsl(var(--primary))] transition-colors">

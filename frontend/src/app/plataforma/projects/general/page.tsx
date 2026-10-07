@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/lib/http';
 import ProjectsShell from '@/components/projects/ProjectsShell';
+import ProjectsLoadError from '@/components/projects/ProjectsLoadError';
 import type { ViewType } from '@/components/ViewSwitcher';
 import UniversalCalendarView from '@/components/ui/UniversalCalendarView';
 import UniversalGanttView from '@/components/ui/UniversalGanttView';
@@ -12,6 +13,7 @@ import type { ProjectActivityItem, ProjectRecord } from '@/types/projects';
 import { Hash, Layout } from 'lucide-react';
 import { DSSkeleton } from '@/design';
 import { toast } from 'sonner';
+import { getAllProjects } from '@/lib/projects/api';
 
 const GENERAL_VIEWS: ViewType[] = ['list', 'table', 'grid', 'board', 'kanban', 'calendar', 'gantt', 'wiki'];
 
@@ -21,6 +23,8 @@ export default function ProjectsGeneralPage() {
     const [projects, setProjects] = useState<ProjectRecord[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [loadFailed, setLoadFailed] = useState(false);
+    const [loadAttempt, setLoadAttempt] = useState(0);
     const [projectId, setProjectId] = useState<string | ''>('');
     const [content, setContent] = useState('');
     const [saving, setSaving] = useState(false);
@@ -32,13 +36,16 @@ export default function ProjectsGeneralPage() {
             setActivities([]);
             setProjects([]);
             setError('Debes iniciar sesión para ver el canal general de proyectos.');
+            setLoadFailed(false);
             return;
         }
+        setLoading(true);
         try {
             setError(null);
+            setLoadFailed(false);
             const [activityRows, projectRows] = await Promise.all([
                 apiFetch<ProjectActivityItem[]>('/projects/activities?limit=20', { token, cache: 'no-store' }),
-                apiFetch<ProjectRecord[]>('/projects?limit=100', { token, cache: 'no-store' }),
+                getAllProjects(token, { cache: 'no-store' }),
             ]);
             setActivities(Array.isArray(activityRows) ? activityRows : []);
             const projectsList = Array.isArray(projectRows) ? projectRows : [];
@@ -48,7 +55,7 @@ export default function ProjectsGeneralPage() {
             setActivities([]);
             setProjects([]);
             setError('No se pudo cargar el canal general de proyectos.');
-            toast.error("Error inesperado");
+            setLoadFailed(true);
             toast.error('Error al cargar el canal general');
         } finally {
             setLoading(false);
@@ -58,7 +65,7 @@ export default function ProjectsGeneralPage() {
     useEffect(() => {
         if (!authLoading) load();
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [authLoading, token]);
+    }, [authLoading, token, loadAttempt]);
 
     const postMessage = async () => {
         if (!token || !projectId || !content.trim()) return;
@@ -72,7 +79,6 @@ export default function ProjectsGeneralPage() {
             setContent('');
             await load();
         } catch (error) {
-            toast.error("Error inesperado");
             toast.error('Error al publicar en el canal');
         } finally {
             setSaving(false);
@@ -94,15 +100,19 @@ export default function ProjectsGeneralPage() {
             viewOptions={GENERAL_VIEWS}
         >
             {error && (
-                <div className="mx-4 mt-4 rounded-md border border-[hsl(var(--warning)/0.3)] bg-[hsl(var(--warning)/0.1)] p-3 text-[hsl(var(--warning))]">
-                    <p className="text-xs font-bold uppercase tracking-wide">{error}</p>
-                </div>
+                <ProjectsLoadError
+                    message={error}
+                    onRetry={loadFailed ? () => setLoadAttempt((attempt) => attempt + 1) : undefined}
+                    className="mx-4 mt-4"
+                />
             )}
             <main className="flex-1 overflow-y-auto p-4">
                 <section className="rounded-lg border border-[hsl(var(--border))] p-3 bg-[hsl(var(--surface-1))] mb-3">
                     <p className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--muted-foreground))] mb-2">Publicar en canal</p>
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-2">
+                        <label htmlFor="general-channel-project" className="sr-only">Proyecto del canal</label>
                         <select
+                            id="general-channel-project"
                             value={projectId}
                             onChange={(event) => setProjectId(event.target.value)}
                             className="rounded-md border border-[hsl(var(--border))] px-3 py-2 bg-[hsl(var(--surface-1))]"
@@ -111,7 +121,9 @@ export default function ProjectsGeneralPage() {
                                 <option key={project.id} value={project.id}>{project.title}</option>
                             ))}
                         </select>
+                        <label htmlFor="general-channel-content" className="sr-only">Actualización para el canal</label>
                         <input
+                            id="general-channel-content"
                             value={content}
                             onChange={(event) => setContent(event.target.value)}
                             placeholder="Escribe una actualización para el canal general..."

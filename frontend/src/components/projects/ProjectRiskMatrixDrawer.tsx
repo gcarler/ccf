@@ -1,11 +1,12 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { RightPanel } from "@/components/ui/RightPanel";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/context/ToastContext";
 import { apiFetch } from "@/lib/http";
 import type { ProjectRisk, ProjectRiskSummary } from "@/types/projects";
+import PersonaSelect from "@/components/ui/PersonaSelect";
 import {
   ShieldAlert,
   Plus,
@@ -22,6 +23,8 @@ import {
   Layers,
 } from "lucide-react";
 import clsx from "clsx";
+import { PROJECT_TITLE_MAX_LENGTH } from "@/lib/projects/constants";
+import ConfirmActionDrawer, { type ConfirmActionState } from "@/components/ConfirmActionDrawer";
 
 interface ProjectRiskMatrixDrawerProps {
   projectId: string;
@@ -45,32 +48,32 @@ const SEVERITY_LEVELS = {
     label: "Crítico",
     min: 15,
     max: 25,
-    color: "hsl(var(--destructive))",
-    bg: "hsl(var(--destructive) / 0.12)",
-    border: "hsl(var(--destructive) / 0.35)",
+    color: "hsl(var(--primary-foreground))",
+    bg: "hsl(var(--destructive))",
+    border: "hsl(var(--destructive))",
   },
   high: {
     label: "Alto",
     min: 10,
     max: 14,
-    color: "hsl(28 90% 55%)",
-    bg: "hsl(28 90% 55% / 0.12)",
-    border: "hsl(28 90% 55% / 0.35)",
+    color: "hsl(var(--warning-text))",
+    bg: "hsl(var(--warning-muted))",
+    border: "hsl(var(--warning) / 0.35)",
   },
   medium: {
     label: "Medio",
     min: 5,
     max: 9,
-    color: "hsl(var(--warning))",
-    bg: "hsl(var(--warning) / 0.12)",
+    color: "hsl(var(--warning-text))",
+    bg: "hsl(var(--warning-muted))",
     border: "hsl(var(--warning) / 0.35)",
   },
   low: {
     label: "Bajo",
     min: 1,
     max: 4,
-    color: "hsl(var(--success))",
-    bg: "hsl(var(--success) / 0.12)",
+    color: "hsl(var(--success-text))",
+    bg: "hsl(var(--success-muted))",
     border: "hsl(var(--success) / 0.35)",
   },
 };
@@ -78,23 +81,23 @@ const SEVERITY_LEVELS = {
 const STATUS_CONFIG = {
   active: {
     label: "Activo / Latente",
-    color: "hsl(var(--warning))",
-    bg: "hsl(var(--warning) / 0.12)",
+    color: "hsl(var(--warning-text))",
+    bg: "hsl(var(--warning-muted))",
     border: "hsl(var(--warning) / 0.3)",
     icon: Clock,
   },
   mitigated: {
     label: "Mitigado / Controlado",
-    color: "hsl(var(--success))",
-    bg: "hsl(var(--success) / 0.12)",
+    color: "hsl(var(--success-text))",
+    bg: "hsl(var(--success-muted))",
     border: "hsl(var(--success) / 0.3)",
     icon: CheckCircle2,
   },
   occurred: {
     label: "Ocurrido / Materializado",
-    color: "hsl(var(--destructive))",
-    bg: "hsl(var(--destructive) / 0.12)",
-    border: "hsl(var(--destructive) / 0.3)",
+    color: "hsl(var(--primary-foreground))",
+    bg: "hsl(var(--destructive))",
+    border: "hsl(var(--destructive))",
     icon: Flame,
   },
 };
@@ -111,8 +114,10 @@ export function ProjectRiskMatrixDrawer({
   const [risks, setRisks] = useState<ProjectRisk[]>([]);
   const [summary, setSummary] = useState<ProjectRiskSummary | null>(null);
   const [loading, setLoading] = useState(false);
+  const [loadError, setLoadError] = useState(false);
   const [saving, setSaving] = useState(false);
   const [convertingId, setConvertingId] = useState<string | null>(null);
+  const [confirmAction, setConfirmAction] = useState<ConfirmActionState>(null);
   const [isCreating, setIsCreating] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [selectedCell, setSelectedCell] = useState<{ p: number; i: number } | null>(null);
@@ -120,6 +125,7 @@ export function ProjectRiskMatrixDrawer({
   // Filtros
   const [filterStatus, setFilterStatus] = useState<string>("all");
   const [filterCategory, setFilterCategory] = useState<string>("all");
+  const requestSequence = useRef(0);
 
   // Formulario
   const [formData, setFormData] = useState<{
@@ -129,6 +135,7 @@ export function ProjectRiskMatrixDrawer({
     impact: number;
     mitigation_plan: string;
     contingency_plan: string;
+    owner_id: string | null;
     status: "active" | "mitigated" | "occurred";
   }>({
     title: "",
@@ -137,33 +144,45 @@ export function ProjectRiskMatrixDrawer({
     impact: 3,
     mitigation_plan: "",
     contingency_plan: "",
+    owner_id: null,
     status: "active",
   });
 
   const fetchData = useCallback(async () => {
     if (!projectId || !token) return;
+    const requestId = ++requestSequence.current;
     setLoading(true);
+    setLoadError(false);
     try {
       const [risksData, sumData] = await Promise.all([
         apiFetch<ProjectRisk[]>(`/projects/${projectId}/risks`, { token }),
         apiFetch<ProjectRiskSummary>(`/projects/${projectId}/risks-summary`, { token }),
       ]);
+      if (requestId !== requestSequence.current) return;
       setRisks(risksData || []);
       setSummary(sumData);
     } catch {
-      addToast("Error al cargar la matriz de riesgos", "error");
+      if (requestId === requestSequence.current) {
+        setLoadError(true);
+        addToast("Error al cargar la matriz de riesgos", "error");
+      }
     } finally {
-      setLoading(false);
+      if (requestId === requestSequence.current) setLoading(false);
     }
   }, [projectId, token, addToast]);
 
   useEffect(() => {
     if (isOpen) {
+      setRisks([]);
+      setSummary(null);
       fetchData();
       setIsCreating(false);
       setEditingId(null);
       setSelectedCell(null);
     }
+    return () => {
+      requestSequence.current += 1;
+    };
   }, [isOpen, fetchData]);
 
   const liveSeverity = formData.probability * formData.impact;
@@ -195,6 +214,7 @@ export function ProjectRiskMatrixDrawer({
             impact: Number(formData.impact),
             mitigation_plan: formData.mitigation_plan || null,
             contingency_plan: formData.contingency_plan || null,
+            owner_id: formData.owner_id,
             status: formData.status,
           }),
         });
@@ -210,6 +230,7 @@ export function ProjectRiskMatrixDrawer({
             impact: Number(formData.impact),
             mitigation_plan: formData.mitigation_plan || null,
             contingency_plan: formData.contingency_plan || null,
+            owner_id: formData.owner_id,
             status: formData.status,
           }),
         });
@@ -237,6 +258,7 @@ export function ProjectRiskMatrixDrawer({
       impact: risk.impact || 3,
       mitigation_plan: risk.mitigation_plan || "",
       contingency_plan: risk.contingency_plan || "",
+      owner_id: risk.owner_id ?? null,
       status: risk.status || "active",
     });
   };
@@ -252,7 +274,18 @@ export function ProjectRiskMatrixDrawer({
       onRiskUpdated?.();
     } catch {
       addToast("Error al eliminar el riesgo", "error");
+      throw new Error("Error al eliminar el riesgo");
     }
+  };
+
+  const requestDelete = (risk: ProjectRisk) => {
+    setConfirmAction({
+      title: "Eliminar riesgo",
+      description: `¿Confirmas retirar “${risk.title}” de la matriz RAID? Se quitará de los reportes y del seguimiento de riesgos.`,
+      destructive: true,
+      confirmLabel: "Eliminar riesgo",
+      onConfirm: () => handleDelete(risk.id),
+    });
   };
 
   const handleConvertToTask = async (riskId: string) => {
@@ -280,6 +313,7 @@ export function ProjectRiskMatrixDrawer({
       impact: 3,
       mitigation_plan: "",
       contingency_plan: "",
+      owner_id: null,
       status: "active",
     });
   };
@@ -310,15 +344,15 @@ export function ProjectRiskMatrixDrawer({
               borderColor: "hsl(var(--border))",
             }}
           >
-            <div className="flex items-center justify-between text-xs text-muted font-medium">
+            <div className="flex items-center justify-between text-xs text-[hsl(var(--text-primary))] font-medium">
               <span>Total Registrados</span>
               <Layers className="w-4 h-4 opacity-70" />
             </div>
-            <div className="text-2xl font-bold mt-2" style={{ color: "hsl(var(--text-main))" }}>
-              {summary?.total_risks ?? risks.length}
+            <div className="text-2xl font-bold mt-2" style={{ color: "hsl(var(--text-primary))" }}>
+              {loading || loadError ? "—" : summary?.total_risks ?? risks.length}
             </div>
-            <div className="text-[11px] text-muted mt-1">
-              {summary?.active_risks ?? 0} activos / latentes
+            <div className="text-[11px] text-[hsl(var(--text-primary))] mt-1">
+              {loading || loadError ? "Datos no disponibles" : `${summary?.active_risks ?? 0} activos / latentes`}
             </div>
           </div>
 
@@ -329,14 +363,14 @@ export function ProjectRiskMatrixDrawer({
               borderColor: "hsl(var(--destructive) / 0.25)",
             }}
           >
-            <div className="flex items-center justify-between text-xs font-semibold" style={{ color: "hsl(var(--destructive))" }}>
+            <div className="flex items-center justify-between text-xs font-semibold" style={{ color: "hsl(var(--text-primary))" }}>
               <span>Críticos (15-25)</span>
-              <ShieldAlert className="w-4 h-4" />
+              <ShieldAlert className="w-4 h-4" style={{ color: "hsl(var(--destructive))" }} />
             </div>
-            <div className="text-2xl font-bold mt-2" style={{ color: "hsl(var(--destructive))" }}>
-              {summary?.critical_count ?? 0}
+            <div className="text-2xl font-bold mt-2" style={{ color: "hsl(var(--text-primary))" }}>
+              {loading || loadError ? "—" : summary?.critical_count ?? 0}
             </div>
-            <div className="text-[11px] font-medium mt-1" style={{ color: "hsl(var(--destructive) / 0.8)" }}>
+            <div className="text-[11px] font-medium mt-1" style={{ color: "hsl(var(--text-primary))" }}>
               Atención prioritaria
             </div>
           </div>
@@ -344,18 +378,18 @@ export function ProjectRiskMatrixDrawer({
           <div
             className="p-3.5 rounded-xl border flex flex-col justify-between"
             style={{
-              backgroundColor: "hsl(28 90% 55% / 0.08)",
-              borderColor: "hsl(28 90% 55% / 0.25)",
+              backgroundColor: "hsl(var(--warning-muted))",
+              borderColor: "hsl(var(--warning) / 0.25)",
             }}
           >
-            <div className="flex items-center justify-between text-xs font-semibold" style={{ color: "hsl(28 90% 55%)" }}>
+            <div className="flex items-center justify-between text-xs font-semibold" style={{ color: "hsl(var(--warning-text))" }}>
               <span>Altos (10-14)</span>
-              <AlertTriangle className="w-4 h-4" />
+              <AlertTriangle className="w-4 h-4" style={{ color: "hsl(var(--warning))" }} />
             </div>
-            <div className="text-2xl font-bold mt-2" style={{ color: "hsl(28 90% 55%)" }}>
-              {summary?.high_count ?? 0}
+            <div className="text-2xl font-bold mt-2" style={{ color: "hsl(var(--warning-text))" }}>
+              {loading || loadError ? "—" : summary?.high_count ?? 0}
             </div>
-            <div className="text-[11px] font-medium mt-1" style={{ color: "hsl(28 90% 55% / 0.8)" }}>
+            <div className="text-[11px] font-medium mt-1" style={{ color: "hsl(var(--warning-text))" }}>
               Mitigación en curso
             </div>
           </div>
@@ -363,18 +397,18 @@ export function ProjectRiskMatrixDrawer({
           <div
             className="p-3.5 rounded-xl border flex flex-col justify-between"
             style={{
-              backgroundColor: "hsl(var(--success) / 0.08)",
+              backgroundColor: "hsl(var(--success-muted))",
               borderColor: "hsl(var(--success) / 0.25)",
             }}
           >
-            <div className="flex items-center justify-between text-xs font-semibold" style={{ color: "hsl(var(--success))" }}>
+            <div className="flex items-center justify-between text-xs font-semibold" style={{ color: "hsl(var(--success-text))" }}>
               <span>Mitigados</span>
               <CheckCircle2 className="w-4 h-4" />
             </div>
-            <div className="text-2xl font-bold mt-2" style={{ color: "hsl(var(--success))" }}>
-              {summary?.mitigated_risks ?? 0}
+            <div className="text-2xl font-bold mt-2" style={{ color: "hsl(var(--success-text))" }}>
+              {loading || loadError ? "—" : summary?.mitigated_risks ?? 0}
             </div>
-            <div className="text-[11px] font-medium mt-1" style={{ color: "hsl(var(--success) / 0.8)" }}>
+            <div className="text-[11px] font-medium mt-1" style={{ color: "hsl(var(--success-text))" }}>
               Bajo control
             </div>
           </div>
@@ -391,7 +425,7 @@ export function ProjectRiskMatrixDrawer({
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
               <Activity className="w-4 h-4" style={{ color: "hsl(var(--primary))" }} />
-              <h3 className="text-sm font-semibold" style={{ color: "hsl(var(--text-main))" }}>
+              <h3 className="text-sm font-semibold" style={{ color: "hsl(var(--text-primary))" }}>
                 Matriz de Calor de Severidad (5×5)
               </h3>
             </div>
@@ -402,7 +436,7 @@ export function ProjectRiskMatrixDrawer({
                 style={{
                   backgroundColor: "hsl(var(--surface-2))",
                   borderColor: "hsl(var(--border))",
-                  color: "hsl(var(--text-muted))",
+                  color: "hsl(var(--text-secondary))",
                 }}
               >
                 <span>Filtro P{selectedCell.p}×I{selectedCell.i} activo</span>
@@ -411,7 +445,7 @@ export function ProjectRiskMatrixDrawer({
             )}
           </div>
 
-          <div className="text-[11px] text-muted mb-2 flex items-center justify-between">
+          <div className="text-[11px] text-[hsl(var(--text-primary))] mb-2 flex items-center justify-between">
             <span>Eje Vertical: Probabilidad (1=Muy Baja → 5=Muy Alta)</span>
             <span>Eje Horizontal: Impacto (1=Leve → 5=Catastrófico)</span>
           </div>
@@ -455,7 +489,7 @@ export function ProjectRiskMatrixDrawer({
                     </span>
                     <span
                       className="text-xs font-bold leading-tight mt-0.5"
-                      style={{ color: count > 0 ? meta.color : "hsl(var(--text-muted))" }}
+                      style={{ color: count > 0 ? meta.color : "hsl(var(--text-secondary))" }}
                     >
                       {count > 0 ? `${count}` : score}
                     </span>
@@ -476,13 +510,14 @@ export function ProjectRiskMatrixDrawer({
         <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
           <div className="flex items-center gap-2 flex-wrap">
             <select
+              aria-label="Filtrar riesgos por estado"
               value={filterStatus}
               onChange={(e) => setFilterStatus(e.target.value)}
               className="text-xs px-2.5 py-1.5 rounded-lg border focus:outline-none"
               style={{
                 backgroundColor: "hsl(var(--surface-2))",
                 borderColor: "hsl(var(--border))",
-                color: "hsl(var(--text-main))",
+                color: "hsl(var(--text-primary))",
               }}
             >
               <option value="all">Todos los estados</option>
@@ -492,13 +527,14 @@ export function ProjectRiskMatrixDrawer({
             </select>
 
             <select
+              aria-label="Filtrar riesgos por categoría"
               value={filterCategory}
               onChange={(e) => setFilterCategory(e.target.value)}
               className="text-xs px-2.5 py-1.5 rounded-lg border focus:outline-none"
               style={{
                 backgroundColor: "hsl(var(--surface-2))",
                 borderColor: "hsl(var(--border))",
-                color: "hsl(var(--text-main))",
+                color: "hsl(var(--text-primary))",
               }}
             >
               <option value="all">Todas las categorías</option>
@@ -542,55 +578,70 @@ export function ProjectRiskMatrixDrawer({
             <div className="flex items-center justify-between border-b pb-2" style={{ borderColor: "hsl(var(--border))" }}>
               <div className="flex items-center gap-2">
                 <ShieldAlert className="w-4 h-4" style={{ color: "hsl(var(--primary))" }} />
-                <h4 className="text-sm font-semibold" style={{ color: "hsl(var(--text-main))" }}>
+                <h4 className="text-sm font-semibold" style={{ color: "hsl(var(--text-primary))" }}>
                   {editingId ? "Editar Riesgo de la Matriz" : "Registrar Nuevo Riesgo"}
                 </h4>
               </div>
               <button
                 type="button"
+                aria-label="Cerrar formulario de riesgo"
                 onClick={() => {
                   setIsCreating(false);
                   setEditingId(null);
                   resetForm();
                 }}
-                className="text-muted hover:opacity-80"
+                className="text-[hsl(var(--text-secondary))] hover:opacity-80"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div role="group" aria-labelledby="risk-owner-label" className="sm:col-span-2 space-y-1.5">
+                <span id="risk-owner-label" className="block text-xs font-medium" style={{ color: "hsl(var(--text-primary))" }}>
+                  Responsable del riesgo
+                </span>
+                <PersonaSelect
+                  value={formData.owner_id}
+                  onChange={(ownerId) => setFormData((current) => ({ ...current, owner_id: ownerId }))}
+                  placeholder="Sin responsable asignado"
+                />
+              </div>
+
               <div className="sm:col-span-2">
-                <label className="block text-xs font-medium mb-1" style={{ color: "hsl(var(--text-main))" }}>
+                <label htmlFor="risk-title" className="block text-xs font-medium mb-1" style={{ color: "hsl(var(--text-primary))" }}>
                   Título / Amenaza Identificada *
                 </label>
                 <input
+                  id="risk-title"
                   type="text"
                   required
                   placeholder="ej. Fallo en el servidor de backups o retraso de materiales"
                   value={formData.title}
                   onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                  maxLength={PROJECT_TITLE_MAX_LENGTH}
                   className="w-full text-xs px-3 py-2 rounded-lg border focus:outline-none"
                   style={{
                     backgroundColor: "hsl(var(--surface-1))",
                     borderColor: "hsl(var(--border))",
-                    color: "hsl(var(--text-main))",
+                    color: "hsl(var(--text-primary))",
                   }}
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-medium mb-1" style={{ color: "hsl(var(--text-main))" }}>
+                <label htmlFor="risk-category" className="block text-xs font-medium mb-1" style={{ color: "hsl(var(--text-primary))" }}>
                   Categoría
                 </label>
                 <select
+                  id="risk-category"
                   value={formData.category}
                   onChange={(e) => setFormData({ ...formData, category: e.target.value })}
                   className="w-full text-xs px-3 py-2 rounded-lg border focus:outline-none"
                   style={{
                     backgroundColor: "hsl(var(--surface-1))",
                     borderColor: "hsl(var(--border))",
-                    color: "hsl(var(--text-main))",
+                    color: "hsl(var(--text-primary))",
                   }}
                 >
                   {RISK_CATEGORIES.map((c) => (
@@ -602,10 +653,11 @@ export function ProjectRiskMatrixDrawer({
               </div>
 
               <div>
-                <label className="block text-xs font-medium mb-1" style={{ color: "hsl(var(--text-main))" }}>
+                <label htmlFor="risk-status" className="block text-xs font-medium mb-1" style={{ color: "hsl(var(--text-primary))" }}>
                   Estado
                 </label>
                 <select
+                  id="risk-status"
                   value={formData.status}
                   onChange={(e) =>
                     setFormData({ ...formData, status: e.target.value as "active" | "mitigated" | "occurred" })
@@ -614,7 +666,7 @@ export function ProjectRiskMatrixDrawer({
                   style={{
                     backgroundColor: "hsl(var(--surface-1))",
                     borderColor: "hsl(var(--border))",
-                    color: "hsl(var(--text-main))",
+                    color: "hsl(var(--text-primary))",
                   }}
                 >
                   <option value="active">Activo / Latente</option>
@@ -624,17 +676,18 @@ export function ProjectRiskMatrixDrawer({
               </div>
 
               <div>
-                <label className="block text-xs font-medium mb-1" style={{ color: "hsl(var(--text-main))" }}>
+                <label htmlFor="risk-probability" className="block text-xs font-medium mb-1" style={{ color: "hsl(var(--text-primary))" }}>
                   Probabilidad (1 a 5)
                 </label>
                 <select
+                  id="risk-probability"
                   value={formData.probability}
                   onChange={(e) => setFormData({ ...formData, probability: Number(e.target.value) })}
                   className="w-full text-xs px-3 py-2 rounded-lg border focus:outline-none"
                   style={{
                     backgroundColor: "hsl(var(--surface-1))",
                     borderColor: "hsl(var(--border))",
-                    color: "hsl(var(--text-main))",
+                    color: "hsl(var(--text-primary))",
                   }}
                 >
                   <option value={1}>1 - Muy Baja (&lt;10%)</option>
@@ -646,17 +699,18 @@ export function ProjectRiskMatrixDrawer({
               </div>
 
               <div>
-                <label className="block text-xs font-medium mb-1" style={{ color: "hsl(var(--text-main))" }}>
+                <label htmlFor="risk-impact" className="block text-xs font-medium mb-1" style={{ color: "hsl(var(--text-primary))" }}>
                   Impacto (1 a 5)
                 </label>
                 <select
+                  id="risk-impact"
                   value={formData.impact}
                   onChange={(e) => setFormData({ ...formData, impact: Number(e.target.value) })}
                   className="w-full text-xs px-3 py-2 rounded-lg border focus:outline-none"
                   style={{
                     backgroundColor: "hsl(var(--surface-1))",
                     borderColor: "hsl(var(--border))",
-                    color: "hsl(var(--text-main))",
+                    color: "hsl(var(--text-primary))",
                   }}
                 >
                   <option value={1}>1 - Leve / Despreciable</option>
@@ -695,10 +749,11 @@ export function ProjectRiskMatrixDrawer({
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs font-medium mb-1" style={{ color: "hsl(var(--text-main))" }}>
+                <label htmlFor="risk-mitigation-plan" className="block text-xs font-medium mb-1" style={{ color: "hsl(var(--text-primary))" }}>
                   Plan de Mitigación (Prevención)
                 </label>
                 <textarea
+                  id="risk-mitigation-plan"
                   rows={2}
                   placeholder="Acciones preventivas para evitar o reducir el riesgo..."
                   value={formData.mitigation_plan}
@@ -707,16 +762,17 @@ export function ProjectRiskMatrixDrawer({
                   style={{
                     backgroundColor: "hsl(var(--surface-1))",
                     borderColor: "hsl(var(--border))",
-                    color: "hsl(var(--text-main))",
+                    color: "hsl(var(--text-primary))",
                   }}
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-medium mb-1" style={{ color: "hsl(var(--text-main))" }}>
+                <label htmlFor="risk-contingency-plan" className="block text-xs font-medium mb-1" style={{ color: "hsl(var(--text-primary))" }}>
                   Plan de Contingencia (Reacción)
                 </label>
                 <textarea
+                  id="risk-contingency-plan"
                   rows={2}
                   placeholder="Qué hacer inmediatamente si el riesgo se materializa..."
                   value={formData.contingency_plan}
@@ -725,7 +781,7 @@ export function ProjectRiskMatrixDrawer({
                   style={{
                     backgroundColor: "hsl(var(--surface-1))",
                     borderColor: "hsl(var(--border))",
-                    color: "hsl(var(--text-main))",
+                    color: "hsl(var(--text-primary))",
                   }}
                 />
               </div>
@@ -743,7 +799,7 @@ export function ProjectRiskMatrixDrawer({
                 style={{
                   backgroundColor: "hsl(var(--surface-1))",
                   borderColor: "hsl(var(--border))",
-                  color: "hsl(var(--text-muted))",
+                  color: "hsl(var(--text-secondary))",
                 }}
               >
                 Cancelar
@@ -766,7 +822,7 @@ export function ProjectRiskMatrixDrawer({
 
         {/* LISTADO DE RIESGOS */}
         <div className="space-y-3">
-          <div className="flex items-center justify-between text-xs font-medium" style={{ color: "hsl(var(--text-muted))" }}>
+          <div className="flex items-center justify-between text-xs font-medium" style={{ color: "hsl(var(--text-secondary))" }}>
             <span>Riesgos Encontrados ({filteredRisks.length})</span>
             {selectedCell && (
               <span>
@@ -785,6 +841,24 @@ export function ProjectRiskMatrixDrawer({
                 />
               ))}
             </div>
+          ) : loadError ? (
+            <div
+              role="alert"
+              className="p-6 text-center rounded-xl border space-y-3"
+              style={{ backgroundColor: "hsl(var(--surface-1))", borderColor: "hsl(var(--border))" }}
+            >
+              <p className="text-sm font-medium" style={{ color: "hsl(var(--text-primary))" }}>
+                No se pudo cargar la matriz de riesgos.
+              </p>
+              <button
+                type="button"
+                onClick={() => void fetchData()}
+                className="rounded-md border px-3 py-1.5 text-xs font-medium"
+                style={{ borderColor: "hsl(var(--border))", color: "hsl(var(--primary))" }}
+              >
+                Reintentar carga
+              </button>
+            </div>
           ) : filteredRisks.length === 0 ? (
             <div
               className="p-8 text-center rounded-xl border"
@@ -793,11 +867,11 @@ export function ProjectRiskMatrixDrawer({
                 borderColor: "hsl(var(--border))",
               }}
             >
-              <ShieldAlert className="w-8 h-8 mx-auto mb-2 opacity-40" style={{ color: "hsl(var(--text-muted))" }} />
-              <p className="text-sm font-medium" style={{ color: "hsl(var(--text-main))" }}>
+              <ShieldAlert className="w-8 h-8 mx-auto mb-2 opacity-40" style={{ color: "hsl(var(--text-secondary))" }} />
+              <p className="text-sm font-medium" style={{ color: "hsl(var(--text-primary))" }}>
                 No hay riesgos registrados con estos filtros
               </p>
-              <p className="text-xs text-muted mt-1">
+              <p className="text-xs text-[hsl(var(--text-secondary))] mt-1">
                 La matriz RAID ayuda a anticipar contingencias y proteger el proyecto.
               </p>
             </div>
@@ -849,14 +923,14 @@ export function ProjectRiskMatrixDrawer({
                         </span>
 
                         <span
-                          className="text-[11px] px-2 py-0.5 rounded-md text-muted"
+                          className="text-[11px] px-2 py-0.5 rounded-md text-[hsl(var(--text-secondary))]"
                           style={{ backgroundColor: "hsl(var(--surface-2))" }}
                         >
                           {RISK_CATEGORIES.find((c) => c.id === risk.category)?.label || risk.category}
                         </span>
                       </div>
 
-                      <h4 className="text-sm font-semibold mt-1" style={{ color: "hsl(var(--text-main))" }}>
+                      <h4 className="text-sm font-semibold mt-1" style={{ color: "hsl(var(--text-primary))" }}>
                         {risk.title}
                       </h4>
                     </div>
@@ -864,14 +938,15 @@ export function ProjectRiskMatrixDrawer({
                     <div className="flex items-center gap-1">
                       <button
                         onClick={() => handleEdit(risk)}
-                        className="p-1.5 rounded-lg text-muted hover:opacity-100 transition-colors"
+                        className="p-1.5 rounded-lg text-[hsl(var(--text-secondary))] hover:opacity-100 transition-colors"
                         style={{ backgroundColor: "hsl(var(--surface-2))" }}
                         title="Editar riesgo"
                       >
                         <Edit2 className="w-3.5 h-3.5" />
                       </button>
                       <button
-                        onClick={() => handleDelete(risk.id)}
+                        onClick={() => requestDelete(risk)}
+                        aria-label={`Eliminar riesgo ${risk.title}`}
                         className="p-1.5 rounded-lg hover:opacity-100 transition-colors"
                         style={{
                           backgroundColor: "hsl(var(--destructive) / 0.1)",
@@ -894,10 +969,10 @@ export function ProjectRiskMatrixDrawer({
                           borderColor: "hsl(var(--border))",
                         }}
                       >
-                        <span className="font-semibold block text-[11px] mb-0.5 text-muted">
+                        <span className="font-semibold block text-[11px] mb-0.5 text-[hsl(var(--text-secondary))]">
                           Plan de Mitigación:
                         </span>
-                        <p style={{ color: "hsl(var(--text-main))" }}>{risk.mitigation_plan}</p>
+                        <p style={{ color: "hsl(var(--text-primary))" }}>{risk.mitigation_plan}</p>
                       </div>
                     )}
 
@@ -909,16 +984,16 @@ export function ProjectRiskMatrixDrawer({
                           borderColor: "hsl(var(--border))",
                         }}
                       >
-                        <span className="font-semibold block text-[11px] mb-0.5 text-muted">
+                        <span className="font-semibold block text-[11px] mb-0.5 text-[hsl(var(--text-secondary))]">
                           Plan de Contingencia:
                         </span>
-                        <p style={{ color: "hsl(var(--text-main))" }}>{risk.contingency_plan}</p>
+                        <p style={{ color: "hsl(var(--text-primary))" }}>{risk.contingency_plan}</p>
                       </div>
                     )}
                   </div>
 
                   {/* ACCIÓN DE CONVERSIÓN A TAREA */}
-                  <div className="flex items-center justify-between pt-1 border-t text-[11px] text-muted" style={{ borderColor: "hsl(var(--border))" }}>
+                  <div className="flex items-center justify-between pt-1 border-t text-[11px] text-[hsl(var(--text-secondary))]" style={{ borderColor: "hsl(var(--border))" }}>
                     <span>
                       P: <strong>{risk.probability}/5</strong> | I: <strong>{risk.impact}/5</strong>
                       {risk.owner_name && ` • Resp: ${risk.owner_name}`}
@@ -951,6 +1026,7 @@ export function ProjectRiskMatrixDrawer({
           )}
         </div>
       </div>
+      <ConfirmActionDrawer action={confirmAction} onClose={() => setConfirmAction(null)} />
     </RightPanel>
   );
 }

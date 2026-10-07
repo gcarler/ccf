@@ -29,9 +29,9 @@ import type { ProjectStatus } from '@/lib/projects/constants';
 const PROJECT_STATUS_BADGE: Record<ProjectStatus, string> = {
     planning: 'bg-[hsl(var(--warning-muted))] text-[hsl(var(--warning-text))] border-[hsl(var(--warning)/0.3)] dark:bg-[hsl(var(--warning)/0.2)] dark:text-[hsl(var(--warning))]',
     active:   'bg-[hsl(var(--info-muted))] text-[hsl(var(--info-text))] border-[hsl(var(--info)/0.3)] dark:bg-[hsl(var(--info)/0.2)] dark:text-[hsl(var(--info))]',
-    on_hold:  'bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))] border-[hsl(var(--border))] dark:bg-white/5 dark:border-white/10',
+    on_hold:  'bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))] border-[hsl(var(--border))] dark:bg-[hsl(var(--surface-2))] dark:border-[hsl(var(--border))]',
     completed: 'bg-[hsl(var(--success-muted))] text-[hsl(var(--success-text))] border-[hsl(var(--success)/0.3)] dark:bg-[hsl(var(--success)/0.2)] dark:text-[hsl(var(--success))]',
-    archived: 'bg-[hsl(var(--surface-3))] text-[hsl(var(--muted-foreground))] border-[hsl(var(--border))] dark:bg-white/5 dark:border-white/10',
+    archived: 'bg-[hsl(var(--surface-3))] text-[hsl(var(--muted-foreground))] border-[hsl(var(--border))] dark:bg-[hsl(var(--surface-3))] dark:border-[hsl(var(--border))]',
 };
 
 const BASE_BADGE_CLS =

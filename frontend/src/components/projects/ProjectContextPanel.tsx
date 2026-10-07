@@ -46,6 +46,7 @@ export default function ProjectContextPanel({ className, defaultTab = "chat", on
   useWorkspaceSocket({
     rooms: project?.id ? [`project_${project.id}`] : [],
     enabled: Boolean(token && project?.id && activeTab === "inbox"),
+    token,
     onEvent: handleInboxSocketEvent,
   });
   const globalUnread = notifications.filter((notification) => !notification.read).length;

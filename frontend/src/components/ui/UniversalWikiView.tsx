@@ -182,7 +182,7 @@ export default function UniversalWikiView({ moduleName, storageKey, onSave }: Wi
                             aria-label="Vista previa"
                             title={viewMode === 'edit' ? 'Vista previa' : 'Editar'}
                             onClick={() => setViewMode(m => m === 'edit' ? 'preview' : 'edit')}
-                            className="px-3 py-2 bg-[hsl(var(--surface-2))] dark:bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))] rounded-lg text-2xs font-semibold uppercase tracking-wide flex items-center gap-2 hover:opacity-80 transition-all"
+                            className="px-3 py-2 bg-[hsl(var(--surface-2))] dark:bg-[hsl(var(--surface-2))] text-[hsl(var(--foreground))] rounded-lg text-2xs font-semibold uppercase tracking-wide flex items-center gap-2 hover:opacity-80 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--ring))]"
                         >
                             <Eye size={14} />
                             {viewMode === 'edit' ? 'Vista previa' : 'Editar'}

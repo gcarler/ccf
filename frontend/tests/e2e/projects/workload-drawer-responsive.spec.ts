@@ -69,6 +69,36 @@ const riskSummary = {
   by_category: {},
 };
 
+const executiveReport = {
+  project: {
+    id: projectId,
+    title: project.title,
+    description: project.description,
+    status: project.status,
+    priority: 'medium',
+    progress_percentage: 35,
+    budget_allocated: 0,
+    budget_spent: 0,
+    owner_name: 'Sin responsable',
+  },
+  tasks_metrics: { total: 1, completed: 0, in_progress: 1, todo: 0, blocked: 0, completion_rate: 0 },
+  financial_kpis: {
+    project_id: projectId,
+    budget_allocated: 0,
+    budget_spent: 0,
+    remaining_budget: 0,
+    burn_rate_percent: 0,
+    total_expenses_count: 0,
+    by_category: {},
+  },
+  raid_kpis: { total_risks: 0, critical_count: 0, high_count: 0, medium_count: 0, low_count: 0, risks: [] },
+  cpm_metrics: { project_id: projectId, total_duration_days: 0, critical_tasks_count: 0, critical_path_task_ids: [], tasks: [] },
+  time_metrics: { total_hours: 0, billable_hours: 0, non_billable_hours: 0, total_logs: 0, by_task: [], by_member: [] },
+  phases: [],
+  generated_at: '2026-10-05T10:00:00Z',
+  organization: 'CCF',
+};
+
 async function expectNoSeriousAccessibilityViolations(page: Page, selector: string) {
   const results = await new AxeBuilder({ page })
     .include(selector)
@@ -171,6 +201,8 @@ test('ProjectWorkloadDrawer fits mobile viewport and remains accessible with rea
         health_score: 100,
         health_label: 'óptima',
       };
+    } else if (pathname === `/api/projects/${projectId}/export/executive-data`) {
+      body = executiveReport;
     } else if (pathname.endsWith('/workspace/config')) {
       body = {};
     }
@@ -217,6 +249,35 @@ test('ProjectWorkloadDrawer fits mobile viewport and remains accessible with rea
 
   await page.keyboard.press('Escape');
   await expect(drawer).toHaveCount(0);
+
+  await page.getByRole('button', { name: 'Abrir acciones del proyecto' }).click();
+  await page.getByRole('dialog', { name: 'Acciones del proyecto' }).getByRole('button', { name: 'Reportes' }).click();
+
+  const reportName = 'Reportes y Exportación Ejecutiva';
+  const reportDrawer = page.getByRole('dialog', { name: reportName });
+  const reportSelector = `[role="dialog"][aria-label="${reportName}"]`;
+  await expect(reportDrawer.getByText('Distribución de Horas y Esfuerzo')).toBeVisible();
+  await expect(reportDrawer).toHaveCSS('transform', 'none');
+
+  const reportGeometry = await reportDrawer.evaluate((element) => {
+    const rect = element.getBoundingClientRect();
+    return {
+      left: rect.left,
+      right: rect.right,
+      scrollWidth: element.scrollWidth,
+      clientWidth: element.clientWidth,
+      viewportWidth: document.documentElement.clientWidth,
+      documentWidth: document.documentElement.scrollWidth,
+    };
+  });
+  expect(reportGeometry.left).toBeGreaterThanOrEqual(0);
+  expect(reportGeometry.right).toBeLessThanOrEqual(reportGeometry.viewportWidth + 1);
+  expect(reportGeometry.scrollWidth).toBeLessThanOrEqual(reportGeometry.clientWidth + 1);
+  expect(reportGeometry.documentWidth).toBeLessThanOrEqual(reportGeometry.viewportWidth + 1);
+  await expectNoSeriousAccessibilityViolations(page, reportSelector);
+
+  await page.keyboard.press('Escape');
+  await expect(reportDrawer).toHaveCount(0);
   expect(mutationRequests).toEqual([]);
   expect(pageErrors).toEqual([]);
 });

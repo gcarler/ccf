@@ -17,6 +17,8 @@ import PersonaSelect from '@/components/ui/PersonaSelect';
 import { useSidebarLayers } from '@/context/SidebarLayerContext';
 import { toast } from 'sonner';
 import type { ProjectRecord } from '@/types/projects';
+import { getAllProjects } from '@/lib/projects/api';
+import ConfirmActionDrawer, { type ConfirmActionState } from '@/components/ConfirmActionDrawer';
 
 interface TeamPersona {
     persona_id: string;
@@ -53,6 +55,7 @@ export default function TeamPage() {
     const [viewMode, setViewMode] = useState<'workload' | 'members'>('workload');
     const [selectedProjectId, setSelectedProjectId] = useState('');
     const [removingId, setRemovingId] = useState<string | null>(null);
+    const [confirmAction, setConfirmAction] = useState<ConfirmActionState>(null);
 
     useEffect(() => {
         if (!layers.RIGHT && selectedPersona) setSelectedPersona(null);
@@ -76,8 +79,8 @@ export default function TeamPage() {
             })
             .finally(() => setLoading(false));
         // Cargar la lista de proyectos para el selector de vista de miembros.
-        apiFetch<ProjectRecord[]>('/projects', { token })
-            .then(data => setProjects(Array.isArray(data) ? data : []))
+        getAllProjects(token)
+            .then(data => setProjects(data))
             .catch(() => setProjects([]));
     }, [authLoading, token]);
 
@@ -124,7 +127,7 @@ export default function TeamPage() {
     };
 
     const handleRemoveMember = async (projectId: string, personaId: string) => {
-        if (!token) return;
+        if (!token) throw new Error('No hay una sesión activa.');
         setRemovingId(personaId);
         try {
             await apiFetch(`/projects/${projectId}/team/${personaId}`, { method: 'DELETE', token });
@@ -135,9 +138,21 @@ export default function TeamPage() {
             toast.success('Integrante removido del equipo');
         } catch {
             toast.error('No se pudo remover al integrante');
+            throw new Error('No se pudo remover al integrante');
         } finally {
             setRemovingId(null);
         }
+    };
+
+    const requestRemoveMember = (projectId: string, member: ProjectMemberItem) => {
+        const memberName = member.persona_name?.trim() || 'este integrante';
+        setConfirmAction({
+            title: 'Remover integrante del proyecto',
+            description: `¿Confirmas remover a ${memberName}? La persona dejará de participar en este proyecto.`,
+            confirmLabel: 'Remover integrante',
+            destructive: true,
+            onConfirm: () => handleRemoveMember(projectId, member.persona_id),
+        });
     };
 
     return (
@@ -160,7 +175,7 @@ export default function TeamPage() {
                                 'px-3 py-1 rounded-full text-2xs font-bold uppercase tracking-wide border transition-colors',
                                 viewMode === 'workload'
                                     ? 'bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] border-[hsl(var(--primary))]'
-                                    : 'border-[hsl(var(--border))] text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--surface-1))]'
+                                    : 'border-[hsl(var(--border))] text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))]'
                             )}
                         >
                             Carga global
@@ -171,7 +186,7 @@ export default function TeamPage() {
                                 'px-3 py-1 rounded-full text-2xs font-bold uppercase tracking-wide border transition-colors',
                                 viewMode === 'members'
                                     ? 'bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] border-[hsl(var(--primary))]'
-                                    : 'border-[hsl(var(--border))] text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--surface-1))]'
+                                    : 'border-[hsl(var(--border))] text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))]'
                             )}
                         >
                             Integrantes por proyecto
@@ -180,7 +195,7 @@ export default function TeamPage() {
                             <select
                                 value={selectedProjectId}
                                 onChange={(e) => setSelectedProjectId(e.target.value)}
-                                className="bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] rounded-md px-3 py-1.5 text-sm font-medium outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] transition-all text-[hsl(var(--foreground))]"
+                                className="bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] rounded-md px-3 py-1.5 text-sm font-medium outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] transition-all text-[hsl(var(--text-primary))]"
                             >
                                 {projects.length === 0 && <option value="">Sin proyectos</option>}
                                 {projects.map((p) => (
@@ -199,10 +214,10 @@ export default function TeamPage() {
                                 </div>
                                 <span className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--primary))]">Recursos Humanos</span>
                             </div>
-                            <h1 className="text-xl font-bold tracking-tight text-[hsl(var(--foreground))] leading-none">
+                            <h1 className="text-xl font-bold tracking-tight text-[hsl(var(--text-primary))] leading-none">
                                 {viewMode === 'workload' ? 'Equipo del Proyecto' : 'Integrantes del Proyecto'}
                             </h1>
-                            <p className="text-sm text-[hsl(var(--muted-foreground))] mt-0.5 font-medium">
+                            <p className="text-sm text-[hsl(var(--text-secondary))] mt-0.5 font-medium">
                                 {viewMode === 'workload'
                                     ? 'Disponibilidad y saturación del equipo ministerial en tiempo real.'
                                     : 'Personas asignadas al proyecto seleccionado.'}
@@ -211,7 +226,7 @@ export default function TeamPage() {
                         <div className="flex items-center gap-3">
                             {viewMode === 'workload' && !loading && team.length > 0 && (
                                 <div className="px-4 py-2 bg-[hsl(var(--surface-1))] rounded-md border border-[hsl(var(--border))] shadow-sm text-center">
-                                    <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--muted-foreground))]">Cap. Prom.</p>
+                                    <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Cap. Prom.</p>
                                     <p className="text-sm font-semibold text-[hsl(var(--primary))]">
                                         {Math.round(team.reduce((a, m) => a + m.capacity_percent, 0) / team.length)}%
                                     </p>
@@ -219,7 +234,7 @@ export default function TeamPage() {
                             )}
                             {viewMode === 'members' && selectedProjectId && (members[selectedProjectId]?.length ?? 0) > 0 && (
                                 <div className="px-4 py-2 bg-[hsl(var(--surface-1))] rounded-md border border-[hsl(var(--border))] shadow-sm text-center">
-                                    <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--muted-foreground))]">Integrantes</p>
+                                    <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Integrantes</p>
                                     <p className="text-sm font-semibold text-[hsl(var(--primary))]">
                                         {members[selectedProjectId].length}
                                     </p>
@@ -268,30 +283,31 @@ export default function TeamPage() {
                                         <div className="absolute top-0 left-0 right-0 h-[3px] bg-[hsl(var(--primary))]" />
                                         <div className="flex items-start justify-between mb-3">
                                             <div className="flex items-center gap-3">
-                                                <div className="size-8 rounded-md bg-[hsl(var(--surface-2))] flex items-center justify-center text-[hsl(var(--muted-foreground))] shadow-sm font-bold text-xs">
+                                                <div className="size-8 rounded-md bg-[hsl(var(--surface-2))] flex items-center justify-center text-[hsl(var(--text-secondary))] shadow-sm font-bold text-xs">
                                                     {(member.persona_name ?? member.persona_id).substring(0, 2).toUpperCase()}
                                                 </div>
                                                 <div>
-                                                    <p className="text-base font-medium text-[hsl(var(--foreground))] leading-none">
+                                                    <p className="text-base font-medium text-[hsl(var(--text-primary))] leading-none">
                                                         {member.persona_name ?? 'Sin nombre'}
                                                     </p>
-                                                    <span className="text-2xs font-semibold uppercase tracking-wide mt-0.5 block text-[hsl(var(--muted-foreground))]">
+                                                    <span className="text-2xs font-semibold uppercase tracking-wide mt-0.5 block text-[hsl(var(--text-secondary))]">
                                                         {member.role}
                                                     </span>
                                                 </div>
                                             </div>
                                         </div>
                                         <div className="p-2 bg-[hsl(var(--surface-2))] rounded-md mb-3">
-                                            <p className="text-2xs font-bold uppercase text-[hsl(var(--muted-foreground))] mb-0.5">Invitado</p>
-                                            <p className="text-sm font-medium text-[hsl(var(--foreground))]">
+                                            <p className="text-2xs font-bold uppercase text-[hsl(var(--text-secondary))] mb-0.5">Invitado</p>
+                                            <p className="text-sm font-medium text-[hsl(var(--text-primary))]">
                                                 {member.invited_at
                                                     ? new Date(member.invited_at).toLocaleDateString('es', { day: 'numeric', month: 'short', year: 'numeric' })
                                                     : '—'}
                                             </p>
                                         </div>
                                         <button
-                                            onClick={() => handleRemoveMember(selectedProjectId, member.persona_id)}
+                                            onClick={() => requestRemoveMember(selectedProjectId, member)}
                                             disabled={removingId === member.persona_id}
+                                            aria-label={`Remover ${member.persona_name ?? 'integrante'} del proyecto`}
                                             className="w-full py-1.5 text-2xs font-bold uppercase tracking-wide text-[hsl(var(--destructive))] border border-[hsl(var(--destructive)/0.3)] rounded-md hover:bg-[hsl(var(--destructive)/0.1)] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1.5"
                                         >
                                             {removingId === member.persona_id ? <Loader2 className="animate-spin" size={12} /> : <UserMinus size={12} />}
@@ -329,14 +345,14 @@ export default function TeamPage() {
 
                                         <div className="flex items-start justify-between mb-3">
                                             <div className="flex items-center gap-3">
-                                                <div className="size-8 rounded-md bg-[hsl(var(--surface-2))] flex items-center justify-center text-[hsl(var(--muted-foreground))] group-hover:bg-[hsl(var(--primary))] group-hover:text-[hsl(var(--primary-foreground))] transition-all shadow-sm font-bold text-xs">
+                                                <div className="size-8 rounded-md bg-[hsl(var(--surface-2))] flex items-center justify-center text-[hsl(var(--text-secondary))] group-hover:bg-[hsl(var(--primary))] group-hover:text-[hsl(var(--primary-foreground))] transition-all shadow-sm font-bold text-xs">
                                                     {persona.name.substring(0, 2).toUpperCase()}
                                                 </div>
                                                 <div>
-                                                    <p className="text-base font-medium text-[hsl(var(--foreground))] leading-none">{persona.name}</p>
+                                                    <p className="text-base font-medium text-[hsl(var(--text-primary))] leading-none">{persona.name}</p>
                                                     <span className={clsx(
                                                         "text-2xs font-semibold uppercase tracking-wide mt-0.5 block",
-                                                        isOverloaded ? "text-[hsl(var(--destructive))]" : "text-[hsl(var(--muted-foreground))]"
+                                                        isOverloaded ? "text-[hsl(var(--destructive))]" : "text-[hsl(var(--text-secondary))]"
                                                     )}>{persona.load_status}</span>
                                                 </div>
                                             </div>
@@ -345,12 +361,12 @@ export default function TeamPage() {
 
                                         <div className="grid grid-cols-2 gap-2 mb-3">
                                             <div className="p-2 bg-[hsl(var(--surface-2))] rounded-md">
-                                                <p className="text-2xs font-bold uppercase text-[hsl(var(--muted-foreground))] mb-0.5">Activas</p>
-                                                <p className="text-lg font-bold text-[hsl(var(--foreground))]">{persona.open}</p>
+                                                <p className="text-2xs font-bold uppercase text-[hsl(var(--text-secondary))] mb-0.5">Activas</p>
+                                                <p className="text-lg font-bold text-[hsl(var(--text-primary))]">{persona.open}</p>
                                             </div>
                                             <div className="p-2 bg-[hsl(var(--surface-2))] rounded-md">
-                                                <p className="text-2xs font-bold uppercase text-[hsl(var(--muted-foreground))] mb-0.5">Criticas</p>
-                                                <p className={clsx("text-lg font-bold", persona.critical > 0 ? "text-[hsl(var(--destructive))]" : "text-[hsl(var(--foreground))]")}>
+                                                <p className="text-2xs font-bold uppercase text-[hsl(var(--text-secondary))] mb-0.5">Criticas</p>
+                                                <p className={clsx("text-lg font-bold", persona.critical > 0 ? "text-[hsl(var(--destructive))]" : "text-[hsl(var(--text-primary))]")}>
                                                     {persona.critical}
                                                 </p>
                                             </div>
@@ -358,7 +374,7 @@ export default function TeamPage() {
 
                                         <div className="space-y-1.5">
                                             <div className="flex items-center justify-between text-2xs font-semibold uppercase tracking-wide">
-                                                <span className="text-[hsl(var(--muted-foreground))]">Saturación</span>
+                                                <span className="text-[hsl(var(--text-secondary))]">Saturación</span>
                                                 <span className={isOverloaded ? "text-[hsl(var(--destructive))]" : "text-[hsl(var(--primary))]"}>{persona.capacity_percent}%</span>
                                             </div>
                                             <div className="h-1.5 w-full bg-[hsl(var(--surface-2))] rounded-full overflow-hidden">
@@ -391,7 +407,7 @@ export default function TeamPage() {
                                 {selectedPersona.name.substring(0, 2).toUpperCase()}
                             </div>
                             <div>
-                                <h3 className="text-sm font-medium text-[hsl(var(--foreground))]">{selectedPersona.name}</h3>
+                                <h3 className="text-sm font-medium text-[hsl(var(--text-primary))]">{selectedPersona.name}</h3>
                                 <span className={clsx(
                                     "text-2xs font-semibold uppercase tracking-wide",
                                     selectedPersona.load_status === 'sobrecargado' ? "text-[hsl(var(--destructive))]" : "text-[hsl(var(--success,var(--primary)))]"
@@ -407,7 +423,7 @@ export default function TeamPage() {
                                 { label: 'Estado', value: selectedPersona.load_status === 'disponible' ? 'Disponible' : 'Ocupado', color: 'text-[hsl(var(--success,var(--primary)))]' },
                             ].map(item => (
                                 <div key={item.label} className="bg-[hsl(var(--surface-1))] rounded-md p-2 border border-[hsl(var(--border))]">
-                                    <p className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--muted-foreground))]">{item.label}</p>
+                                    <p className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{item.label}</p>
                                     <p className={clsx("text-lg font-bold mt-0.5", item.color)}>{item.value}</p>
                                 </div>
                             ))}
@@ -415,7 +431,7 @@ export default function TeamPage() {
 
                         <button
                             onClick={() => closeLayer('RIGHT')}
-                            className="w-full py-2 border border-[hsl(var(--border))] rounded-md text-xs font-bold uppercase tracking-wide text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--surface-2))] transition-all"
+                            className="w-full py-2 border border-[hsl(var(--border))] rounded-md text-xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] transition-all"
                         >
                             Cerrar
                         </button>
@@ -431,18 +447,18 @@ export default function TeamPage() {
                 onClose={() => setShowInvite(false)}
             >
                 <div className="p-3 space-y-4">
-                    <p className="text-sm text-[hsl(var(--muted-foreground))] leading-relaxed">
+                    <p className="text-sm text-[hsl(var(--text-secondary))] leading-relaxed">
                         Agrega una persona de la sede al equipo de un proyecto para que colabore y aparezca en la carga de trabajo.
                     </p>
 
                     <div className="space-y-1.5">
-                        <label className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--muted-foreground))]">
+                        <label className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
                             Proyecto
                         </label>
                         <select
                             value={inviteProjectId}
                             onChange={(e) => setInviteProjectId(e.target.value)}
-                            className="w-full bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] rounded-md px-3 py-2 text-sm font-medium outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] transition-all text-[hsl(var(--foreground))]"
+                            className="w-full bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] rounded-md px-3 py-2 text-sm font-medium outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] transition-all text-[hsl(var(--text-primary))]"
                         >
                             {projects.length === 0 && <option value="">Sin proyectos disponibles</option>}
                             {projects.map((p) => (
@@ -452,7 +468,7 @@ export default function TeamPage() {
                     </div>
 
                     <div className="space-y-1.5">
-                        <label className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--muted-foreground))]">
+                        <label className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
                             Persona
                         </label>
                         <PersonaSelect
@@ -464,14 +480,14 @@ export default function TeamPage() {
 
                     {inviteProjectId && (members[inviteProjectId]?.length ?? 0) > 0 && (
                         <div className="space-y-1.5">
-                            <p className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--muted-foreground))]">
+                            <p className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
                                 Ya en el equipo ({members[inviteProjectId].length})
                             </p>
                             <ul className="space-y-1">
                                 {members[inviteProjectId].map((m) => (
-                                    <li key={m.id} className="flex items-center justify-between px-2.5 py-1.5 rounded-md bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] text-sm font-medium text-[hsl(var(--foreground))]">
+                                    <li key={m.id} className="flex items-center justify-between px-2.5 py-1.5 rounded-md bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] text-sm font-medium text-[hsl(var(--text-primary))]">
                                         <span>{m.persona_name ?? m.persona_id}</span>
-                                        <span className="text-2xs uppercase tracking-wide text-[hsl(var(--muted-foreground))]">{m.role}</span>
+                                        <span className="text-2xs uppercase tracking-wide text-[hsl(var(--text-secondary))]">{m.role}</span>
                                     </li>
                                 ))}
                             </ul>
@@ -488,6 +504,7 @@ export default function TeamPage() {
                     </button>
                 </div>
             </RightPanel>
+            <ConfirmActionDrawer action={confirmAction} onClose={() => setConfirmAction(null)} />
         </ProjectsShell>
     );
 }

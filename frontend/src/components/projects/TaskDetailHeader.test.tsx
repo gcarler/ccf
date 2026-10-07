@@ -1,6 +1,7 @@
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
+import { axe } from 'jest-axe';
 import TaskDetailHeader from './TaskDetailHeader';
 import type { ProjectTaskRecord } from '@/types/projects';
 
@@ -47,6 +48,34 @@ describe('TaskDetailHeader', () => {
     expect(screen.getByText('CCF App')).toBeInTheDocument();
     expect(screen.getAllByText('Diseñar interfaz').length).toBeGreaterThanOrEqual(1);
     expect(screen.getByText('En Progreso')).toBeInTheDocument();
+  });
+
+  it('expone nombres accesibles para las acciones y el título editable', async () => {
+    const { container } = render(
+      <TaskDetailHeader
+        task={task}
+        projectTitle="CCF App"
+        title="Diseñar interfaz"
+        saving={false}
+        uploading={false}
+        starred={false}
+        error={null}
+        onClose={vi.fn()}
+        onTitleChange={vi.fn()}
+        onSave={vi.fn()}
+        onStatusCycle={vi.fn()}
+        onFileClick={vi.fn()}
+        onStarToggle={vi.fn()}
+        onExpandToggle={vi.fn()}
+        onDeleteTask={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByRole('button', { name: 'Cerrar detalle de tarea' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Marcar tarea como favorita' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Cambiar estado de la tarea. Estado actual: En Progreso' })).toBeInTheDocument();
+    expect(screen.getByRole('textbox', { name: 'Título de la tarea' })).toBeInTheDocument();
+    expect((await axe(container)).violations).toEqual([]);
   });
 
   it('el botón clip (onFileClick) dispara la selección de archivos (QA-003)', () => {

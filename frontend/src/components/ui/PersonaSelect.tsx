@@ -43,6 +43,7 @@ export default function PersonaSelect({
     const [loading, setLoading] = useState(false);
     const ref = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLInputElement>(null);
+    const triggerRef = useRef<HTMLButtonElement>(null);
 
     // Debounce de 300ms para la búsqueda reactiva
     useEffect(() => {
@@ -154,9 +155,10 @@ export default function PersonaSelect({
     const handleSelect = useCallback(
         (persona: PersonaOption) => {
             setSelectedPersona(persona);
-            onChange(persona.id);
-            setOpen(false);
-            setSearch("");
+        onChange(persona.id);
+        setOpen(false);
+        setSearch("");
+        triggerRef.current?.focus();
         },
         [onChange]
     );
@@ -166,16 +168,19 @@ export default function PersonaSelect({
         onChange(null);
         setOpen(false);
         setSearch("");
+        triggerRef.current?.focus();
     }, [onChange]);
 
     return (
         <div ref={ref} className={`relative ${className}`}>
             <button
+                ref={triggerRef}
                 type="button"
                 onClick={() => setOpen(!open)}
                 className="w-full flex items-center gap-2 rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] px-3 py-2 text-sm font-medium text-left hover:border-[hsl(var(--primary)_/_0.6)] transition-colors"
                 aria-haspopup="listbox"
                 aria-expanded={open}
+                aria-controls={open ? "persona-select-options" : undefined}
             >
                 {currentSelected ? (
                     <>
@@ -194,7 +199,7 @@ export default function PersonaSelect({
                         </div>
                     </>
                 ) : (
-                    <span className="text-xs text-[hsl(var(--text-secondary))]">{placeholder}</span>
+                    <span className="text-xs text-[hsl(var(--foreground))]">{placeholder}</span>
                 )}
                 <ChevronDown
                     size={14}
@@ -207,7 +212,14 @@ export default function PersonaSelect({
             {open && (
                 <div
                     className="absolute z-50 mt-1 w-full rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] shadow-xl max-h-72 overflow-hidden"
-                    role="listbox"
+                    onKeyDown={(event) => {
+                        if (event.key === "Escape") {
+                            event.preventDefault();
+                            event.stopPropagation();
+                            setOpen(false);
+                            triggerRef.current?.focus();
+                        }
+                    }}
                 >
                     <div className="p-2 border-b border-[hsl(var(--border))]">
                         <div className="flex items-center gap-2 rounded-md bg-[hsl(var(--surface-2))] px-2 py-1.5">
@@ -230,7 +242,7 @@ export default function PersonaSelect({
                             />
                         </div>
                     </div>
-                    <div className="overflow-y-auto max-h-56">
+                    <div id="persona-select-options" className="overflow-y-auto max-h-56" role="listbox" aria-label="Personas disponibles">
                         <button
                             type="button"
                             onClick={handleClear}
@@ -274,12 +286,12 @@ export default function PersonaSelect({
                                 </button>
                             );
                         })}
-                        {!loading && personas.length === 0 && (
-                            <p className="px-3 py-4 text-center text-2xs text-[hsl(var(--text-secondary))]">
-                                No se encontraron personas
-                            </p>
-                        )}
                     </div>
+                    {!loading && personas.length === 0 && (
+                        <p role="status" className="px-3 py-4 text-center text-2xs text-[hsl(var(--text-secondary))]">
+                            No se encontraron personas
+                        </p>
+                    )}
                 </div>
             )}
         </div>

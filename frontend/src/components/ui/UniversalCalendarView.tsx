@@ -25,6 +25,7 @@ interface UniversalCalendarViewProps {
     onEventMove?: (event: CalendarEvent, date: Date) => void;
     onCreate?: () => void;
     title?: string;
+    todayButtonClassName?: string;
 }
 
 const COLORS: any = {
@@ -44,7 +45,7 @@ function toDateKey(date: Date) {
     return `${year}-${month}-${day}`;
 }
 
-export default function UniversalCalendarView({ events, onDateClick, onEventClick, onEventMove, onCreate, title = "Calendario Maestro" }: UniversalCalendarViewProps) {
+export default function UniversalCalendarView({ events, onDateClick, onEventClick, onEventMove, onCreate, title = "Calendario Maestro", todayButtonClassName }: UniversalCalendarViewProps) {
     const [currentDate, setCurrentDate] = useState(new Date());
     const [draggedEvent, setDraggedEvent] = useState<CalendarEvent | null>(null);
     const [dragOverDay, setDragOverDay] = useState<Date | null>(null);
@@ -95,7 +96,7 @@ export default function UniversalCalendarView({ events, onDateClick, onEventClic
                 <div className="flex items-center gap-4">
                     <div className="flex bg-[hsl(var(--surface-2))] dark:bg-[hsl(var(--surface-2))] p-1.5 rounded-lg gap-1">
                         <button onClick={prevMonth} aria-label="Mes anterior" className="p-3 bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-2))] rounded-md text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] transition-all shadow-sm"><ChevronLeft size={18} /></button>
-                        <button onClick={() => setCurrentDate(new Date())} className="px-3 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] transition-colors">Hoy</button>
+                        <button onClick={() => setCurrentDate(new Date())} className={clsx("px-3 text-2xs font-semibold uppercase tracking-wide transition-colors", todayButtonClassName ?? "text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))]")}>Hoy</button>
                         <button onClick={nextMonth} aria-label="Mes siguiente" className="p-3 bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-2))] rounded-md text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] transition-all shadow-sm"><ChevronRight size={18} /></button>
                     </div>
                     {onCreate && (

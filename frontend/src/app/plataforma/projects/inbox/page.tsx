@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/lib/http';
 import ProjectsShell from '@/components/projects/ProjectsShell';
+import ProjectsLoadError from '@/components/projects/ProjectsLoadError';
 import type { ViewType } from '@/components/ViewSwitcher';
 import UniversalCalendarView from '@/components/ui/UniversalCalendarView';
 import UniversalGanttView from '@/components/ui/UniversalGanttView';
@@ -25,6 +26,8 @@ export default function ProjectsInboxPage() {
     const [messages, setMessages] = useState<ProjectInboxItem[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [loadFailed, setLoadFailed] = useState(false);
+    const [loadAttempt, setLoadAttempt] = useState(0);
     const [resolvingId, setResolvingId] = useState<string | null>(null);
     const [filter, setFilter] = useState<'all' | 'mentions' | 'unread'>('all');
     const [viewType, setViewType] = useState<ViewType>('list');
@@ -35,22 +38,25 @@ export default function ProjectsInboxPage() {
                 setLoading(false);
                 setMessages([]);
                 setError('Debes iniciar sesión para ver el inbox de proyectos.');
+                setLoadFailed(false);
                 return;
             }
+            setLoading(true);
             try {
                 setError(null);
+                setLoadFailed(false);
                 const data = await apiFetch<ProjectInboxItem[]>('/projects/inbox', { token, cache: 'no-store' });
                 setMessages(Array.isArray(data) ? data : []);
             } catch (err) {
                 setMessages([]);
                 setError('No se pudo cargar el inbox de proyectos.');
-                toast.error("Error inesperado");
+                setLoadFailed(true);
                 toast.error('Error al cargar inbox');
             }
             finally { setLoading(false); }
         };
         if (!authLoading) fetchInbox();
-    }, [authLoading, token]);
+    }, [authLoading, token, loadAttempt]);
 
     const filteredMessages = messages.filter((msg) => {
         if (filter === 'unread') return !msg.is_read;
@@ -82,7 +88,6 @@ export default function ProjectsInboxPage() {
             });
             setMessages((prev) => prev.map((row) => (row.id === msg.id ? { ...row, is_read: true } : row)));
         } catch (err) {
-            toast.error("Error inesperado");
             toast.error('Error al resolver elemento');
         } finally {
             setResolvingId(null);
@@ -103,9 +108,11 @@ export default function ProjectsInboxPage() {
             viewOptions={['list', 'table', 'grid', 'board', 'kanban', 'calendar', 'gantt', 'wiki']}
         >
             {error && (
-                <div className="mx-4 mt-4 rounded-md border border-[hsl(var(--warning)/0.3)] bg-[hsl(var(--warning)/0.1)] p-3 text-[hsl(var(--warning))]">
-                    <p className="text-xs font-bold uppercase tracking-wide">{error}</p>
-                </div>
+                <ProjectsLoadError
+                    message={error}
+                    onRetry={loadFailed ? () => setLoadAttempt((attempt) => attempt + 1) : undefined}
+                    className="mx-4 mt-4"
+                />
             )}
             <div className="flex px-3 py-1.5 border-b border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] shrink-0">
                 <Tab active={filter === 'all'} onClick={() => setFilter('all')} label="Todo" />
@@ -144,7 +151,7 @@ export default function ProjectsInboxPage() {
                             <motion.div
                                 key={msg.id} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: idx * 0.05 }}
                                 className={clsx(
-                                    "p-4 flex gap-4 hover:bg-[hsl(var(--surface-2))] transition-all cursor-pointer group relative",
+                                    "p-4 flex gap-4 hover:bg-[hsl(var(--surface-2))] transition-all group relative",
                                     !msg.is_read && "bg-[hsl(var(--primary)/0.05)]"
                                 )}
                             >
@@ -166,7 +173,7 @@ export default function ProjectsInboxPage() {
                                         <span className="text-2xs font-bold text-[hsl(var(--muted-foreground))]">{formatRelative(msg.created_at)}</span>
                                     </div>
                                     <p className="text-sm text-[hsl(var(--muted-foreground))] leading-relaxed font-medium">{msg.content}</p>
-                                    <div className="pt-3 flex items-center gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <div className="pt-3 flex items-center gap-3 opacity-100 md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100 transition-opacity">
                                         <button
                                             onClick={() => handleRespond(msg)}
                                             className="px-3 py-1 bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] rounded-lg text-2xs font-semibold uppercase text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--surface-2))] transition-colors"

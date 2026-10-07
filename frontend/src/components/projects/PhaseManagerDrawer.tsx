@@ -5,9 +5,10 @@ import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
 import { apiFetch } from '@/lib/http';
 import { PHASE_COLOR_OPTIONS, DEFAULT_PHASE_COLOR } from '@/lib/projects/palette';
-import { GripVertical, Plus, Save, Trash2 } from 'lucide-react';
+import { Plus, Save, Trash2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useProjectUpdate, type PhaseDef } from '@/context/ProjectUpdateContext';
+import ConfirmActionDrawer, { type ConfirmActionState } from '@/components/ConfirmActionDrawer';
 
 interface Props {
     projectId: string;
@@ -43,6 +44,7 @@ export function PhaseManagerDrawer({ projectId, onClose }: Props) {
     );
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [confirmAction, setConfirmAction] = useState<ConfirmActionState>(null);
 
     // Restore draft from a previous abandoned session, if any. A draft is only
     // considered valid if its length matches the current phase count; otherwise
@@ -124,8 +126,29 @@ export function PhaseManagerDrawer({ projectId, onClose }: Props) {
             addToast('Debe haber al menos una fase', 'error');
             return;
         }
-        const next = items.filter((_, i) => i !== index);
-        setItems(next);
+        const phase = items[index];
+        if (!phase) return;
+        const linkedTaskCount = (ctxTasks ?? []).filter(
+            task => (task.status ?? '').toLowerCase() === phase.slug.toLowerCase(),
+        ).length;
+        if (linkedTaskCount > 0) {
+            const message = linkedTaskCount === 1
+                ? 'Mueve la tarea de esta fase antes de eliminarla.'
+                : `Mueve las ${linkedTaskCount} tareas de esta fase antes de eliminarla.`;
+            setError(message);
+            addToast(message, 'error');
+            return;
+        }
+        setConfirmAction({
+            title: 'Eliminar fase del borrador',
+            description: `¿Confirmas quitar “${phase.name}” del borrador de fases? Esta fase aún no se eliminará del proyecto hasta que guardes los cambios.`,
+            destructive: true,
+            confirmLabel: 'Eliminar fase',
+            onConfirm: () => {
+                setItems(current => current.filter(item => item.slug !== phase.slug));
+                setConfirmAction(null);
+            },
+        });
     };
 
     /**
@@ -239,17 +262,12 @@ export function PhaseManagerDrawer({ projectId, onClose }: Props) {
                         >
                             {/* Reorder buttons */}
                             <div className="flex flex-col gap-0.5 shrink-0">
-                                <button onClick={() => handleMoveUp(i)} disabled={i === 0} className="size-4 flex items-center justify-center text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] disabled:opacity-20 disabled:cursor-not-allowed">
+                                <button type="button" onClick={() => handleMoveUp(i)} disabled={i === 0} aria-label={`Mover fase ${phase.name} arriba`} className="size-4 flex items-center justify-center text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] disabled:opacity-20 disabled:cursor-not-allowed">
                                     <span className="font-semibold leading-none">▲</span>
                                 </button>
-                                <button onClick={() => handleMoveDown(i)} disabled={i === items.length - 1} className="size-4 flex items-center justify-center text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] disabled:opacity-20 disabled:cursor-not-allowed">
+                                <button type="button" onClick={() => handleMoveDown(i)} disabled={i === items.length - 1} aria-label={`Mover fase ${phase.name} abajo`} className="size-4 flex items-center justify-center text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] disabled:opacity-20 disabled:cursor-not-allowed">
                                     <span className="font-semibold leading-none">▼</span>
                                 </button>
-                            </div>
-
-                            {/* Drag handle */}
-                            <div className="opacity-0 group-hover:opacity-40 cursor-grab text-[hsl(var(--muted-foreground))] shrink-0">
-                                <GripVertical size={14} />
                             </div>
 
                             {/* Color picker trigger */}
@@ -259,7 +277,7 @@ export function PhaseManagerDrawer({ projectId, onClose }: Props) {
                                     value={phase.color}
                                     onChange={e => handleChangeColor(i, e.target.value)}
                                     className="absolute inset-0 opacity-0 cursor-pointer"
-                                    aria-label="Color de fase"
+                                    aria-label={`Color de fase ${phase.name}`}
                                 >
                                     {PHASE_COLOR_OPTIONS.map((option) => (
                                         <option key={option.value} value={option.value}>{option.label}</option>
@@ -272,6 +290,7 @@ export function PhaseManagerDrawer({ projectId, onClose }: Props) {
                                 type="text"
                                 value={phase.name}
                                 onChange={e => handleRename(i, e.target.value)}
+                                aria-label={`Nombre de fase ${phase.name}`}
                                 className="flex-1 text-base font-bold bg-transparent outline-none text-[hsl(var(--foreground))] placeholder:text-[hsl(var(--muted-foreground))] border-b border-transparent focus:border-[hsl(var(--primary))] transition-all"
                             />
 
@@ -281,9 +300,11 @@ export function PhaseManagerDrawer({ projectId, onClose }: Props) {
                             </code>
 
                             {/* Delete */}
-                            <button
-                                onClick={() => handleRemove(i)}
-                                className="size-7 rounded-lg flex items-center justify-center text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--destructive))] hover:bg-[hsl(var(--destructive)/0.1)] opacity-0 group-hover:opacity-100 transition-all shrink-0"
+                                <button
+                                    type="button"
+                                    onClick={() => handleRemove(i)}
+                                    aria-label={`Eliminar fase ${phase.name}`}
+                                    className="size-7 rounded-lg flex items-center justify-center text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--destructive))] hover:bg-[hsl(var(--destructive)/0.1)] opacity-100 md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100 transition-all shrink-0"
                             >
                                 <Trash2 size={12} />
                             </button>
@@ -321,6 +342,7 @@ export function PhaseManagerDrawer({ projectId, onClose }: Props) {
                     </button>
                 </div>
             </div>
+            <ConfirmActionDrawer action={confirmAction} onClose={() => setConfirmAction(null)} />
         </RightPanel>
     );
 }

@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from "react";
 import { apiFetch } from "@/lib/http";
+import ConfirmActionDrawer, { type ConfirmActionState } from "@/components/ConfirmActionDrawer";
 import type { ProjectTaskRecord, ProjectTimeLog, ProjectTimeLogCreate } from "@/types/projects";
 import { Clock, Plus, Trash2, ChevronUp } from "lucide-react";
 
@@ -23,10 +24,13 @@ export default function TaskTimeTrackingSection({
   const [description, setDescription] = useState("");
   const [isBillable, setIsBillable] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [deletingLogId, setDeletingLogId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [confirmAction, setConfirmAction] = useState<ConfirmActionState>(null);
 
   const fetchLogs = useCallback(async () => {
     if (!token || !task.id || !task.project_id) return;
+    setError(null);
     setLoading(true);
     try {
       const data = await apiFetch<ProjectTimeLog[]>(
@@ -35,7 +39,7 @@ export default function TaskTimeTrackingSection({
       );
       setLogs(Array.isArray(data) ? data : []);
     } catch {
-      // Fallback silencioso
+      setError("No se pudieron cargar los registros de tiempo.");
     } finally {
       setLoading(false);
     }
@@ -81,6 +85,8 @@ export default function TaskTimeTrackingSection({
 
   const handleDeleteLog = async (logId: string) => {
     if (!token) return;
+    setDeletingLogId(logId);
+    setError(null);
     try {
       await apiFetch(`/projects/${task.project_id}/time-logs/${logId}`, {
         method: "DELETE",
@@ -89,16 +95,29 @@ export default function TaskTimeTrackingSection({
       fetchLogs();
       onActivityCreated?.();
     } catch {
-      // Error silencioso
+      setError("No se pudo eliminar el registro de tiempo.");
+      throw new Error("No se pudo eliminar el registro de tiempo.");
+    } finally {
+      setDeletingLogId(null);
     }
+  };
+
+  const requestDeleteLog = (log: ProjectTimeLog) => {
+    setConfirmAction({
+      title: "Eliminar registro de tiempo",
+      description: `Se eliminarán las ${log.hours.toFixed(2)} horas registradas${log.description ? ` para «${log.description}»` : ""}. Esta acción lo quitará del historial de la tarea.`,
+      confirmLabel: "Eliminar registro",
+      destructive: true,
+      onConfirm: () => handleDeleteLog(log.id),
+    });
   };
 
   const totalHours = logs.reduce((acc, l) => acc + (l.hours || 0), 0);
 
   return (
-    <section className="px-4 py-3 border-b border-[hsl(var(--border))]">
+    <section aria-labelledby="task-time-tracking-heading" className="px-4 py-3 border-b border-[hsl(var(--border))]">
       <div className="flex items-center justify-between mb-2">
-        <p className="text-2xs font-semibold uppercase tracking-wider text-[hsl(var(--muted-foreground))] flex items-center gap-1.5">
+        <h3 id="task-time-tracking-heading" className="text-2xs font-semibold uppercase tracking-wider text-[hsl(var(--muted-foreground))] flex items-center gap-1.5">
           <Clock size={11} /> Tiempo Dedicado
           {totalHours > 0 && (
             <span
@@ -111,11 +130,14 @@ export default function TaskTimeTrackingSection({
               {totalHours.toFixed(2)}h
             </span>
           )}
-        </p>
+        </h3>
 
         <button
           type="button"
           onClick={() => setShowAddForm((v) => !v)}
+          aria-expanded={showAddForm}
+          aria-controls="task-time-log-form"
+          aria-label={showAddForm ? "Cancelar registro de horas" : "Registrar horas"}
           className="text-2xs font-bold uppercase tracking-wide flex items-center gap-1 transition-all opacity-80 hover:opacity-100"
           style={{ color: "hsl(var(--primary))" }}
         >
@@ -131,9 +153,16 @@ export default function TaskTimeTrackingSection({
         </button>
       </div>
 
+      {error && !showAddForm && (
+        <p role="alert" className="mb-2 text-3xs" style={{ color: "hsl(var(--destructive))" }}>
+          {error}
+        </p>
+      )}
+
       {/* Mini formulario de registro rápido */}
       {showAddForm && (
         <form
+          id="task-time-log-form"
           onSubmit={handleCreateLog}
           className="p-3 mb-3 rounded-lg border text-xs space-y-2.5"
           style={{
@@ -143,10 +172,11 @@ export default function TaskTimeTrackingSection({
         >
           <div className="grid grid-cols-2 gap-2">
             <div>
-              <label className="block text-3xs font-semibold mb-1" style={{ color: "hsl(var(--text-muted))" }}>
+              <label htmlFor="task-time-log-hours" className="block text-3xs font-semibold mb-1" style={{ color: "hsl(var(--text-secondary))" }}>
                 Horas dedicadas *
               </label>
               <input
+                id="task-time-log-hours"
                 type="number"
                 step="0.25"
                 min="0.1"
@@ -164,21 +194,23 @@ export default function TaskTimeTrackingSection({
             <div className="flex items-end pb-1.5">
               <label className="flex items-center gap-1.5 cursor-pointer text-3xs font-medium">
                 <input
+                  id="task-time-log-billable"
                   type="checkbox"
                   checked={isBillable}
                   onChange={(e) => setIsBillable(e.target.checked)}
                   style={{ accentColor: "hsl(var(--primary))" }}
                 />
-                Facturable
+                <span>Facturable</span>
               </label>
             </div>
           </div>
 
           <div>
-            <label className="block text-3xs font-semibold mb-1" style={{ color: "hsl(var(--text-muted))" }}>
+            <label htmlFor="task-time-log-description" className="block text-3xs font-semibold mb-1" style={{ color: "hsl(var(--text-secondary))" }}>
               Descripción de lo realizado
             </label>
             <input
+              id="task-time-log-description"
               type="text"
               placeholder="Detalle breve del trabajo..."
               value={description}
@@ -193,7 +225,7 @@ export default function TaskTimeTrackingSection({
           </div>
 
           {error && (
-            <p className="text-3xs" style={{ color: "hsl(var(--destructive))" }}>
+            <p role="alert" className="text-3xs" style={{ color: "hsl(var(--destructive))" }}>
               {error}
             </p>
           )}
@@ -203,20 +235,21 @@ export default function TaskTimeTrackingSection({
               type="button"
               onClick={() => setShowAddForm(false)}
               className="px-2.5 py-1 rounded text-2xs font-semibold"
-              style={{ color: "hsl(var(--text-muted))" }}
+              style={{ color: "hsl(var(--text-secondary))" }}
             >
               Cancelar
             </button>
             <button
               type="submit"
               disabled={saving}
+              aria-busy={saving}
               className="px-3 py-1 rounded text-2xs font-bold shadow-sm transition-all"
               style={{
                 backgroundColor: "hsl(var(--primary))",
                 color: "hsl(var(--primary-foreground))",
               }}
             >
-              {saving ? "Guardando..." : "Guardar Registro"}
+              {saving ? "Guardando…" : "Guardar Registro"}
             </button>
           </div>
         </form>
@@ -224,7 +257,7 @@ export default function TaskTimeTrackingSection({
 
       {/* Lista de registros en esta tarea */}
       {loading ? (
-        <div className="py-2 text-center text-3xs" style={{ color: "hsl(var(--text-muted))" }}>
+        <div role="status" aria-live="polite" className="py-2 text-center text-3xs" style={{ color: "hsl(var(--text-secondary))" }}>
           Cargando registros...
         </div>
       ) : logs.length === 0 ? (
@@ -255,7 +288,7 @@ export default function TaskTimeTrackingSection({
                         : "hsl(var(--surface-1))",
                       color: log.is_billable
                         ? "hsl(var(--success))"
-                        : "hsl(var(--text-muted))",
+                        : "hsl(var(--text-secondary))",
                     }}
                   >
                     {log.is_billable ? "Facturable" : "No fact."}
@@ -278,10 +311,12 @@ export default function TaskTimeTrackingSection({
                 </span>
                 <button
                   type="button"
-                  onClick={() => handleDeleteLog(log.id)}
+                  onClick={() => requestDeleteLog(log)}
+                  disabled={deletingLogId === log.id}
+                  aria-label={`Eliminar registro de ${log.hours.toFixed(2)} horas${log.description ? `: ${log.description}` : ""}`}
+                  aria-busy={deletingLogId === log.id}
                   className="opacity-50 hover:opacity-100 transition-opacity"
                   style={{ color: "hsl(var(--destructive))" }}
-                  title="Eliminar"
                 >
                   <Trash2 size={12} />
                 </button>
@@ -290,6 +325,7 @@ export default function TaskTimeTrackingSection({
           ))}
         </div>
       )}
+      <ConfirmActionDrawer action={confirmAction} onClose={() => setConfirmAction(null)} />
     </section>
   );
 }

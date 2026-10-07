@@ -56,4 +56,18 @@ describe('InlineTextInput component', () => {
     expect(onChangeMock).not.toHaveBeenCalled();
     expect(screen.getByText('Texto Original')).toBeInTheDocument();
   });
+
+  it('applies an optional maximum length to the inline editor', () => {
+    render(
+      <InlineTextInput
+        value="Proyecto"
+        onChange={vi.fn()}
+        maxLength={200}
+      />
+    );
+
+    fireEvent.click(screen.getByText('Proyecto'));
+
+    expect(screen.getByRole('textbox')).toHaveAttribute('maxLength', '200');
+  });
 });

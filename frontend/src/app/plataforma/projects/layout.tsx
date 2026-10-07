@@ -2,25 +2,24 @@ import React from 'react';
 import { cookies } from 'next/headers';
 import ProjectsLayoutClient from './ProjectsLayoutClient';
 import { serverApiFetch } from '@/lib/serverApi';
-import type { ProjectRecord } from '@/types/projects';
+import type { ProjectSummaryPageResponse } from '@/types/projects';
 
 export const dynamic = 'force-dynamic';
 
 export default async function ProjectsLayout({ children }: { children: React.ReactNode }) {
-    let initialProjects: ProjectRecord[] = [];
+    let initialProjectPage: ProjectSummaryPageResponse | null = null;
     const cookieStore = await cookies();
 
     if (cookieStore.has('mesh_access')) {
         try {
-            const data = await serverApiFetch<ProjectRecord[]>('/projects');
-            initialProjects = Array.isArray(data) ? data : [];
+            initialProjectPage = await serverApiFetch<ProjectSummaryPageResponse>('/projects/summary-page?offset=0&limit=100');
         } catch (error) {
             console.error('[ProjectsLayout] Failed to load projects for sidebar', error);
         }
     }
 
     return (
-        <ProjectsLayoutClient initialProjects={initialProjects}>
+        <ProjectsLayoutClient initialProjectPage={initialProjectPage}>
             {children}
         </ProjectsLayoutClient>
     );

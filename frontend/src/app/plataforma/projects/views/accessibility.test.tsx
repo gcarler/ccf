@@ -6,11 +6,13 @@ import { axe } from 'jest-axe';
 vi.mock('@/context/AuthContext', () => ({
     useAuth: () => ({ user: { id: 'u1', role: 'admin' }, hasPermission: () => true, loading: false }),
 }));
+vi.mock('@/lib/http', () => ({ apiFetch: vi.fn().mockResolvedValue([]) }));
 vi.mock('next/navigation', () => ({
     useRouter: () => ({ push: vi.fn() }),
 }));
 import ProjectsGridView from './ProjectsGridView';
 import ProjectsListView from './ProjectsListView';
+import ProjectsTableView from './ProjectsTableView';
 import ProjectsBoardView from './ProjectsBoardView';
 import { createMockProject } from '@/test-utils/factories';
 
@@ -36,6 +38,12 @@ describe('Projects views accessibility', () => {
 
     it('ProjectsListView has no critical a11y violations', async () => {
         const { container } = render(<ProjectsListView projects={projects} onUpdate={() => {}} />);
+        const results = await axe(container);
+        expect(results.violations).toEqual([]);
+    });
+
+    it('ProjectsTableView has no critical a11y violations', async () => {
+        const { container } = render(<ProjectsTableView projects={projects} onUpdate={() => {}} />);
         const results = await axe(container);
         expect(results.violations).toEqual([]);
     });

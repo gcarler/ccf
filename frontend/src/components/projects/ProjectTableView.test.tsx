@@ -11,6 +11,8 @@ vi.mock('@/context/AuthContext', () => ({
   useAuth: () => ({ token: 'test-token', user: null, loading: false, isAuthenticated: true }),
 }));
 
+vi.mock('@/lib/http', () => ({ apiFetch: vi.fn().mockResolvedValue([]) }));
+
 const tasks = [
   createMockTask({
     id: '1',

@@ -36,6 +36,7 @@ export default function WorkspaceLayout({
     sidebarSections: manualSections,
     allowedRoles,
     allowedPermissions,
+    hideWorkspaceHeader = false,
     depth = 1,
     onBack,
     customSidebar,
@@ -47,6 +48,7 @@ export default function WorkspaceLayout({
             manualSections={manualSections}
             allowedRoles={allowedRoles}
             allowedPermissions={allowedPermissions}
+            hideWorkspaceHeader={hideWorkspaceHeader}
             depth={depth}
             onBack={onBack}
             customSidebar={customSidebar}
@@ -62,7 +64,7 @@ export default function WorkspaceLayout({
 // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function WorkspaceLayoutInner({
     children, manualTitle, manualSections,
-    allowedRoles, allowedPermissions, depth, onBack, customSidebar,
+    allowedRoles, allowedPermissions, hideWorkspaceHeader, depth, onBack, customSidebar,
     // Toolbar props
     breadcrumbs, viewType, setViewType, availableViews,
     rightActions, leftActions, onSearch, onFilter, onColumns, onGroup, onMore, onAdd, onAddOption
@@ -81,7 +83,9 @@ function WorkspaceLayoutInner({
     const [workspaceHeaderHeight, setWorkspaceHeaderHeight] = useState(40);
 
     useEffect(() => {
-        const header = workspaceHeaderRef.current;
+        const header = hideWorkspaceHeader
+            ? document.querySelector<HTMLElement>('.workspace-content [data-workspace-toolbar]')
+            : workspaceHeaderRef.current;
         if (!header) return;
 
         const syncHeaderHeight = () => {
@@ -92,7 +96,7 @@ function WorkspaceLayoutInner({
         const observer = new ResizeObserver(syncHeaderHeight);
         observer.observe(header);
         return () => observer.disconnect();
-    }, []);
+    }, [hideWorkspaceHeader, pathname]);
 
     // â”€â”€ Layer state â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     const { layers, openLayer, closeLayer } = useSidebarLayers();
@@ -405,7 +409,7 @@ function WorkspaceLayoutInner({
                 <UniversalCreationDrawer isOpen={isModalOpen} onClose={closeModal} initialType={defaultType} />
 
                 {/* ── UNIFIED TOOLBAR / HEADER (100% WIDTH) ── */}
-                <div ref={workspaceHeaderRef} className="w-full shrink-0 z-[60]">
+                {!hideWorkspaceHeader && <div ref={workspaceHeaderRef} className="w-full shrink-0 z-[60]">
                     {breadcrumbs ? (
                         <WorkspaceToolbar
                             breadcrumbs={breadcrumbs}
@@ -463,7 +467,7 @@ function WorkspaceLayoutInner({
                             {defaultRightActions}
                         </header>
                     )}
-                </div>
+                </div>}
 
                 <div className="flex flex-1 min-h-0 w-full overflow-hidden">
                     <AnimatePresence mode="popLayout">

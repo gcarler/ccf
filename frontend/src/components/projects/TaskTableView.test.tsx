@@ -1,6 +1,7 @@
 import { forwardRef } from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { axe } from 'jest-axe';
 import { createMockTask } from '@/test-utils/factories';
 
 vi.mock('@/lib/agGrid', () => ({}));
@@ -9,6 +10,8 @@ vi.mock('ag-grid-react', async () => import('../../__mocks__/ag-grid-react'));
 vi.mock('@/context/AuthContext', () => ({
   useAuth: () => ({ token: 'test-token', user: null, loading: false, isAuthenticated: true }),
 }));
+
+vi.mock('@/lib/http', () => ({ apiFetch: vi.fn().mockResolvedValue([]) }));
 
 vi.mock('@/hooks/useProjectTasks', () => ({
   useProjectTasks: () => ({
@@ -63,6 +66,23 @@ describe('TaskTableView', () => {
     localStorage.clear();
   });
 
+  it('uses declared semantic surface tokens and warning contrast in the favorites filter', () => {
+    const { container } = render(
+      <TaskTableView projectId="p1" tasks={tasks} onOpenTask={() => {}} onAddTask={() => {}} />,
+    );
+    const root = container.querySelector('div.flex.min-w-0.flex-col.h-full');
+
+    expect(root).not.toBeNull();
+    expect(root).toHaveClass('bg-[hsl(var(--surface-1))]');
+    expect(root?.innerHTML).not.toMatch(/--(?:foreground|muted-foreground|background)\b/);
+    expect(root?.innerHTML).toContain('--text-primary');
+    expect(root?.innerHTML).toContain('--text-secondary');
+    const favoritesFilter = screen.getByRole('button', { name: /Solo Mis Favoritas/ });
+    fireEvent.click(favoritesFilter);
+    expect(favoritesFilter).toHaveClass('bg-[hsl(var(--warning-muted))]');
+    expect(favoritesFilter).toHaveClass('text-[hsl(var(--warning-text))]');
+  });
+
   it('renders task rows', () => {
     render(
       <TaskTableView
@@ -77,7 +97,7 @@ describe('TaskTableView', () => {
     expect(screen.getByText('high')).toBeInTheDocument();
   });
 
-  it('calls onOpenTask when a row is clicked', () => {
+  it('opens task details through an explicit accessible action', () => {
     const handleOpenTask = vi.fn();
     render(
       <TaskTableView
@@ -87,8 +107,30 @@ describe('TaskTableView', () => {
         onAddTask={() => {}}
       />
     );
-    fireEvent.doubleClick(screen.getByText('Tarea de prueba'));
+    fireEvent.click(screen.getByRole('button', { name: 'Abrir detalle de tarea Tarea de prueba' }));
     expect(handleOpenTask).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not open details by double-clicking a task title', () => {
+    const handleOpenTask = vi.fn();
+    render(
+      <TaskTableView
+        projectId="p1"
+        tasks={tasks}
+        onOpenTask={handleOpenTask}
+        onAddTask={() => {}}
+      />
+    );
+
+    fireEvent.doubleClick(screen.getByText('Tarea de prueba'));
+    expect(handleOpenTask).not.toHaveBeenCalled();
+  });
+
+  it('has no critical accessibility violations in the rendered task table', async () => {
+    const { container } = render(
+      <TaskTableView projectId="p1" tasks={tasks} onOpenTask={() => {}} onAddTask={() => {}} />
+    );
+    expect((await axe(container)).violations).toEqual([]);
   });
 
   it('calls onAddTask when the add button is clicked', () => {

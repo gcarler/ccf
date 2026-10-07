@@ -4,6 +4,12 @@
 import type { CSSProperties } from 'react';
 import type { PhaseDef } from '@/context/ProjectUpdateContext';
 
+// Keep in sync with the VARCHAR(200) Project/ProjectTask columns and the
+// matching backend request schemas.
+export const PROJECT_TITLE_MAX_LENGTH = 200;
+export const TASK_TITLE_MAX_LENGTH = 200;
+export const PROJECT_ASSIGNEE_CANDIDATES_ENDPOINT = '/projects/assignee-candidates';
+
 export const TASK_STATUSES = ['todo', 'in_progress', 'review', 'completed'] as const;
 export type TaskStatus = (typeof TASK_STATUSES)[number];
 
@@ -29,7 +35,7 @@ export interface NodeOption {
 }
 
 export const NODE_OPTIONS: readonly NodeOption[] = [
-    { value: 'nutrition', label: 'Nodo de Nutrición', short: 'Nutrición', dot: 'bg-orange-500', color: 'bg-orange-500' },
+    { value: 'nutrition', label: 'Nodo de Nutrición', short: 'Nutrición', dot: 'bg-[hsl(var(--warning))]', color: 'bg-[hsl(var(--warning))]' },
     { value: 'digital', label: 'Nodo Digital', short: 'Digital', dot: 'bg-[hsl(var(--primary))]', color: 'bg-[hsl(var(--primary))]' },
 ] as const;
 
@@ -44,6 +50,28 @@ export function getNodeLabel(val: string | null | undefined): string {
 
 export const DEFAULT_TASK_STATUS: TaskStatus = 'todo';
 export const DEFAULT_TASK_PRIORITY: TaskPriority = 'medium';
+
+/** Wire-compatibility aliases mirrored from backend/api/projects.py. */
+export const TASK_STATUS_COMPATIBILITY_MAP: Readonly<Record<string, TaskStatus>> = {
+    done: 'completed',
+    blocked: 'todo',
+    pending: 'todo',
+};
+export const TASK_PRIORITY_COMPATIBILITY_MAP: Readonly<Record<string, TaskPriority>> = {
+    normal: 'medium',
+};
+
+/** Normalize status aliases while preserving custom phase slugs. */
+export function normalizeTaskStatus(value: string | null | undefined): string {
+    if (!value) return DEFAULT_TASK_STATUS;
+    return TASK_STATUS_COMPATIBILITY_MAP[value] ?? value;
+}
+
+/** Normalize priority aliases without discarding unknown values. */
+export function normalizeTaskPriority(value: string | null | undefined): string {
+    if (!value) return DEFAULT_TASK_PRIORITY;
+    return TASK_PRIORITY_COMPATIBILITY_MAP[value] ?? value;
+}
 
 export const STATUS_LABELS: Record<TaskStatus, string> = {
     todo: 'Pendiente',
@@ -75,8 +103,8 @@ export interface StatusOption {
 }
 
 export const STATUS_OPTIONS: readonly StatusOption[] = [
-    { value: 'todo',        label: 'Pendiente',   dot: 'bg-[hsl(var(--surface-2))]',   bg: 'bg-[hsl(var(--surface-2))] dark:bg-white/5',           text: 'text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))]',    border: 'border-[hsl(var(--border))] dark:border-white/10' },
-    { value: 'in_progress', label: 'En Progreso', dot: 'bg-[hsl(var(--primary))]',    bg: 'bg-[hsl(var(--info-muted))] dark:bg-[hsl(var(--info))]/20',         text: 'text-[hsl(var(--primary))] dark:text-info-text',        border: 'border-[hsl(var(--info)/25%)] dark:border-[hsl(var(--info)/100%)]/30' },
+    { value: 'todo',        label: 'Pendiente',   dot: 'bg-[hsl(var(--surface-2))]',   bg: 'bg-[hsl(var(--surface-2))] dark:bg-[hsl(var(--surface-2))]', text: 'text-[hsl(var(--text-secondary))]', border: 'border-[hsl(var(--border))]' },
+    { value: 'in_progress', label: 'En Progreso', dot: 'bg-[hsl(var(--primary))]',    bg: 'bg-[hsl(var(--info-muted))] dark:bg-[hsl(var(--info))]/20',         text: 'text-[hsl(var(--info-text))]',        border: 'border-[hsl(var(--info)/25%)] dark:border-[hsl(var(--info)/100%)]/30' },
     { value: 'review',      label: 'En Revisión', dot: 'bg-[hsl(var(--warning))]',   bg: 'bg-[hsl(var(--warning-muted))] dark:bg-[hsl(var(--warning))]/20',    text: 'text-warning-text dark:text-warning-text',  border: 'border-[hsl(var(--warning)/25%)] dark:border-[hsl(var(--warning)/100%)]/30' },
     { value: 'completed',   label: 'Completado',  dot: 'bg-[hsl(var(--success))]', bg: 'bg-[hsl(var(--success-muted))] dark:bg-[hsl(var(--success))]/20',  text: 'text-success-text dark:text-success-text', border: 'border-[hsl(var(--success)/25%)] dark:border-[hsl(var(--success)/100%)]/30' },
 ] as const;
@@ -90,9 +118,9 @@ export function getStatusOption(val: string): StatusOption {
 // and ListView grouping must reflect those instead of the 4 canonical slugs.
 // Mirrors the backend `_assert_status_in_project_phases` fallback semantics:
 // empty phases → canonical STATUS_OPTIONS.
-const PHASE_NEUTRAL_BG = 'bg-[hsl(var(--surface-2))] dark:bg-white/5';
+const PHASE_NEUTRAL_BG = 'bg-[hsl(var(--surface-2))]';
 const PHASE_NEUTRAL_TEXT = 'text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))]';
-const PHASE_NEUTRAL_BORDER = 'border-[hsl(var(--border))] dark:border-white/10';
+const PHASE_NEUTRAL_BORDER = 'border-[hsl(var(--border))]';
 
 export function buildStatusOptions(phases?: readonly PhaseDef[] | null): readonly StatusOption[] {
     if (!phases || phases.length === 0) return STATUS_OPTIONS;
@@ -117,10 +145,10 @@ export interface PriorityOption {
 }
 
 export const PRIORITY_OPTIONS: readonly PriorityOption[] = [
-    { value: 'low',    label: 'Baja',    color: 'text-[hsl(var(--text-secondary))]',  fill: 'hsl(var(--text-secondary))', dot: 'bg-slate-500' },
-    { value: 'medium', label: 'Media',   color: 'text-[hsl(var(--primary))]',         fill: 'hsl(var(--primary))',        dot: 'bg-[hsl(var(--primary))]' },
-    { value: 'high',   label: 'Alta',    color: 'text-orange-600',                    fill: 'hsl(var(--warning))',        dot: 'bg-orange-500' },
-    { value: 'urgent', label: 'Urgente', color: 'text-danger-text',                   fill: 'hsl(var(--destructive))',    dot: 'bg-[hsl(var(--danger))]' },
+    { value: 'low',    label: 'Baja',    color: 'text-[hsl(var(--text-secondary))]',  fill: 'hsl(var(--text-secondary))', dot: 'bg-[hsl(var(--muted-foreground))]' },
+    { value: 'medium', label: 'Media',   color: 'text-[hsl(var(--info-text))]',       fill: 'hsl(var(--primary))',        dot: 'bg-[hsl(var(--primary))]' },
+    { value: 'high',   label: 'Alta',    color: 'text-[hsl(var(--warning))]',          fill: 'hsl(var(--warning))',        dot: 'bg-[hsl(var(--warning))]' },
+    { value: 'urgent', label: 'Urgente', color: 'text-[hsl(var(--destructive))]',      fill: 'hsl(var(--destructive))',    dot: 'bg-[hsl(var(--destructive))]' },
 ] as const;
 
 export function getPriorityOption(val: string): PriorityOption {
@@ -129,7 +157,7 @@ export function getPriorityOption(val: string): PriorityOption {
 
 // ─── Group pill styles for status headers ─────────────────────────────────────
 export const STATUS_GROUP_PILL: Record<TaskStatus, string> = {
-    todo:        'bg-[hsl(var(--surface-3))] text-[hsl(var(--text-secondary))] dark:bg-white/10 dark:text-[hsl(var(--text-secondary))]',
+    todo:        'bg-[hsl(var(--surface-3))] text-[hsl(var(--text-secondary))] dark:bg-[hsl(var(--surface-3))] dark:text-[hsl(var(--text-secondary))]',
     in_progress: 'bg-[hsl(var(--info-muted))] text-[hsl(var(--primary))] dark:bg-[hsl(var(--info))]/20 dark:text-info-text',
     review:      'bg-[hsl(var(--warning-muted))] text-warning-text dark:bg-[hsl(var(--warning))]/30 dark:text-[hsl(var(--warning))]',
     completed:   'bg-[hsl(var(--success-muted))] text-success-text dark:bg-[hsl(var(--success))]/30 dark:text-[hsl(var(--success))]',
@@ -137,12 +165,14 @@ export const STATUS_GROUP_PILL: Record<TaskStatus, string> = {
 
 /** Return a valid TaskStatus or the default fallback. */
 export function getValidStatus(value: string | null | undefined): TaskStatus {
-    return TASK_STATUSES.includes(value as TaskStatus) ? (value as TaskStatus) : DEFAULT_TASK_STATUS;
+    const normalized = normalizeTaskStatus(value);
+    return TASK_STATUSES.includes(normalized as TaskStatus) ? (normalized as TaskStatus) : DEFAULT_TASK_STATUS;
 }
 
 /** Return a valid TaskPriority or the default fallback. */
 export function getValidPriority(value: string | null | undefined): TaskPriority {
-    return TASK_PRIORITIES.includes(value as TaskPriority) ? (value as TaskPriority) : DEFAULT_TASK_PRIORITY;
+    const normalized = normalizeTaskPriority(value);
+    return TASK_PRIORITIES.includes(normalized as TaskPriority) ? (normalized as TaskPriority) : DEFAULT_TASK_PRIORITY;
 }
 
 // --- Project-level status (5 canonical values, mirrored from the backend

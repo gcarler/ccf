@@ -18,6 +18,20 @@ interface ProjectReportDrawerProps {
 
 type TabType = "preview" | "export" | "settings";
 
+const REPORT_SECTIONS = {
+  generalInfo: true,
+  financials: true,
+  risks: true,
+  cpm: true,
+  timeTracking: true,
+  phases: true,
+} as const;
+type ReportSectionKey = keyof typeof REPORT_SECTIONS;
+
+function getErrorMessage(error: unknown, fallback: string): string {
+  return error instanceof Error && error.message ? error.message : fallback;
+}
+
 export function ProjectReportDrawer({
   projectId,
   isOpen,
@@ -33,14 +47,7 @@ export function ProjectReportDrawer({
   const [exporting, setExporting] = useState<string | null>(null);
 
   // Configuración de secciones a incluir en el informe
-  const [includeSections, setIncludeSections] = useState({
-    generalInfo: true,
-    financials: true,
-    risks: true,
-    cpm: true,
-    timeTracking: true,
-    phases: true,
-  });
+  const [includeSections, setIncludeSections] = useState({ ...REPORT_SECTIONS });
 
   const loadReportData = useCallback(async () => {
     if (!projectId || !token) return;
@@ -51,10 +58,10 @@ export function ProjectReportDrawer({
         { token }
       );
       setData(res);
-    } catch (err: any) {
+    } catch (err: unknown) {
       addToast({
         title: "Error al cargar reporte",
-        description: err.message || "No se pudieron obtener los datos ejecutivos",
+        description: getErrorMessage(err, "No se pudieron obtener los datos ejecutivos"),
         type: "error",
       });
     } finally {
@@ -94,10 +101,10 @@ export function ProjectReportDrawer({
         description: `Se ha descargado el archivo '${filename}' exitosamente.`,
         type: "success",
       });
-    } catch (err: any) {
+    } catch (err: unknown) {
       addToast({
         title: "Error en la exportación",
-        description: err.message || "No se pudo generar el archivo solicitado",
+        description: getErrorMessage(err, "No se pudo generar el archivo solicitado"),
         type: "error",
       });
     } finally {
@@ -120,25 +127,9 @@ export function ProjectReportDrawer({
     <RightPanel
       isOpen={isOpen}
       onClose={onClose}
-      title={
-        <div className="flex items-center gap-2">
-          <div
-            className="w-7 h-7 rounded-lg flex items-center justify-center border"
-            style={{
-              backgroundColor: "hsl(var(--primary) / 0.12)",
-              borderColor: "hsl(var(--primary) / 0.3)",
-              color: "hsl(var(--primary))",
-            }}
-          >
-            <FileText className="w-4 h-4" />
-          </div>
-          <span className="font-semibold text-base" style={{ color: "hsl(var(--foreground))" }}>
-            Reportes y Exportación Ejecutiva
-          </span>
-        </div>
-      }
+      title="Reportes y Exportación Ejecutiva"
       subtitle={
-        <span className="text-xs" style={{ color: "hsl(var(--muted-foreground))" }}>
+        <span className="text-xs" style={{ color: "hsl(var(--text-secondary))" }}>
           {projectTitle || proj?.title || "Proyecto"} • Membrete Oficial CCF & Excel CSV
         </span>
       }
@@ -166,7 +157,7 @@ export function ProjectReportDrawer({
                       borderColor: "hsl(var(--primary) / 0.35)",
                       color: "hsl(var(--primary))",
                     }
-                  : { color: "hsl(var(--muted-foreground))" }
+                  : { color: "hsl(var(--text-secondary))" }
               }
             >
               <FileText className="w-3.5 h-3.5" />
@@ -188,7 +179,7 @@ export function ProjectReportDrawer({
                       borderColor: "hsl(var(--primary) / 0.35)",
                       color: "hsl(var(--primary))",
                     }
-                  : { color: "hsl(var(--muted-foreground))" }
+                  : { color: "hsl(var(--text-secondary))" }
               }
             >
               <Download className="w-3.5 h-3.5" />
@@ -210,7 +201,7 @@ export function ProjectReportDrawer({
                       borderColor: "hsl(var(--primary) / 0.35)",
                       color: "hsl(var(--primary))",
                     }
-                  : { color: "hsl(var(--muted-foreground))" }
+                  : { color: "hsl(var(--text-secondary))" }
               }
             >
               <Sliders className="w-3.5 h-3.5" />
@@ -225,7 +216,7 @@ export function ProjectReportDrawer({
               className="p-1.5 rounded-lg border transition-all hover:bg-[hsl(var(--surface-2))]"
               style={{
                 borderColor: "hsl(var(--border))",
-                color: "hsl(var(--muted-foreground))",
+                color: "hsl(var(--text-secondary))",
               }}
               title="Refrescar datos del reporte"
             >
@@ -237,7 +228,7 @@ export function ProjectReportDrawer({
               className="px-2.5 py-1.5 rounded-lg text-xs font-medium border flex items-center gap-1.5 transition-all hover:bg-[hsl(var(--surface-2))]"
               style={{
                 borderColor: "hsl(var(--border))",
-                color: "hsl(var(--foreground))",
+                color: "hsl(var(--text-primary))",
               }}
             >
               <Printer className="w-3.5 h-3.5" />
@@ -253,7 +244,7 @@ export function ProjectReportDrawer({
               className="w-8 h-8 animate-spin"
               style={{ color: "hsl(var(--primary))" }}
             />
-            <p className="text-sm font-medium" style={{ color: "hsl(var(--muted-foreground))" }}>
+            <p className="text-sm font-medium" style={{ color: "hsl(var(--text-secondary))" }}>
               Consolidando métricas e indicadores ejecutivos del proyecto...
             </p>
           </div>
@@ -266,15 +257,20 @@ export function ProjectReportDrawer({
             }}
           >
             <AlertTriangle className="w-8 h-8 text-[hsl(var(--warning))]" />
-            <h4 className="font-semibold text-sm" style={{ color: "hsl(var(--foreground))" }}>
+            <h4 className="font-semibold text-sm" style={{ color: "hsl(var(--text-primary))" }}>
               No se pudieron cargar los datos del informe
             </h4>
-            <p className="text-xs max-w-sm" style={{ color: "hsl(var(--muted-foreground))" }}>
+            <p className="text-xs max-w-sm" style={{ color: "hsl(var(--text-secondary))" }}>
               Verifique que el proyecto exista y que tenga permisos de lectura asignados.
             </p>
           </div>
         ) : (
-          <div className="flex-1 overflow-y-auto pr-1 space-y-4">
+          <div
+            className="flex-1 overflow-y-auto pr-1 space-y-4"
+            role="region"
+            aria-label="Contenido de la vista previa del informe"
+            tabIndex={0}
+          >
             {/* 1. PESTAÑA: PREVISUALIZACIÓN EJECUTIVA */}
             {activeTab === "preview" && (
               <div className="space-y-4">
@@ -282,7 +278,7 @@ export function ProjectReportDrawer({
                 <div
                   className="p-4 rounded-xl border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-sm"
                   style={{
-                    backgroundColor: "hsl(var(--card))",
+                    backgroundColor: "hsl(var(--surface-1))",
                     borderColor: "hsl(var(--border))",
                   }}
                 >
@@ -291,32 +287,32 @@ export function ProjectReportDrawer({
                       className="text-[10px] font-bold tracking-wider uppercase px-2 py-0.5 rounded-full inline-block"
                       style={{
                         backgroundColor: "hsl(var(--primary) / 0.15)",
-                        color: "hsl(var(--primary))",
+                        color: "hsl(var(--text-primary))",
                       }}
                     >
                       Comunidad Cristiana El Faro • Dirección de Proyectos
                     </span>
                     <h2
                       className="text-lg font-bold tracking-tight"
-                      style={{ color: "hsl(var(--foreground))" }}
+                      style={{ color: "hsl(var(--text-primary))" }}
                     >
                       {proj?.title}
                     </h2>
-                    <p className="text-xs" style={{ color: "hsl(var(--muted-foreground))" }}>
+                    <p className="text-xs" style={{ color: "hsl(var(--text-secondary))" }}>
                       {proj?.description}
                     </p>
                   </div>
 
                   <div className="text-right sm:border-l sm:pl-4 space-y-0.5 shrink-0" style={{ borderColor: "hsl(var(--border))" }}>
-                    <div className="text-[10px] uppercase font-semibold" style={{ color: "hsl(var(--muted-foreground))" }}>
+                    <div className="text-[10px] uppercase font-semibold" style={{ color: "hsl(var(--text-secondary))" }}>
                       Estado / Salud
                     </div>
                     <div className="text-xs font-bold capitalize flex items-center sm:justify-end gap-1.5" style={{ color: "hsl(var(--primary))" }}>
                       <span className="w-2 h-2 rounded-full bg-[hsl(var(--success))] inline-block" />
                       {proj?.status} • {proj?.health_override || "Normal"}
                     </div>
-                    <div className="text-[10px]" style={{ color: "hsl(var(--muted-foreground))" }}>
-                      Líder: <span className="font-medium text-[hsl(var(--foreground))]">{proj?.owner_name}</span>
+                    <div className="text-[10px]" style={{ color: "hsl(var(--text-secondary))" }}>
+                      Líder: <span className="font-medium text-[hsl(var(--text-primary))]">{proj?.owner_name}</span>
                     </div>
                   </div>
                 </div>
@@ -331,15 +327,15 @@ export function ProjectReportDrawer({
                       borderColor: "hsl(var(--border))",
                     }}
                   >
-                    <div className="flex items-center justify-between text-xs" style={{ color: "hsl(var(--muted-foreground))" }}>
+                    <div className="flex items-center justify-between text-xs" style={{ color: "hsl(var(--text-secondary))" }}>
                       <span>Avance</span>
                       <TrendingUp className="w-3.5 h-3.5" style={{ color: "hsl(var(--primary))" }} />
                     </div>
                     <div className="mt-1">
-                      <div className="text-lg font-bold" style={{ color: "hsl(var(--foreground))" }}>
+                      <div className="text-lg font-bold" style={{ color: "hsl(var(--text-primary))" }}>
                         {tasksMet?.completion_rate}%
                       </div>
-                      <div className="text-[10px]" style={{ color: "hsl(var(--muted-foreground))" }}>
+                      <div className="text-[10px]" style={{ color: "hsl(var(--text-secondary))" }}>
                         {tasksMet?.completed} de {tasksMet?.total} tareas
                       </div>
                     </div>
@@ -353,15 +349,15 @@ export function ProjectReportDrawer({
                       borderColor: "hsl(var(--border))",
                     }}
                   >
-                    <div className="flex items-center justify-between text-xs" style={{ color: "hsl(var(--muted-foreground))" }}>
+                    <div className="flex items-center justify-between text-xs" style={{ color: "hsl(var(--text-secondary))" }}>
                       <span>Gastado</span>
                       <DollarSign className="w-3.5 h-3.5 text-[hsl(var(--success))]" />
                     </div>
                     <div className="mt-1">
-                      <div className="text-lg font-bold" style={{ color: "hsl(var(--foreground))" }}>
+                      <div className="text-lg font-bold" style={{ color: "hsl(var(--text-primary))" }}>
                         ${finKpi?.budget_spent.toLocaleString()}
                       </div>
-                      <div className="text-[10px]" style={{ color: "hsl(var(--muted-foreground))" }}>
+                      <div className="text-[10px]" style={{ color: "hsl(var(--text-secondary))" }}>
                         de ${finKpi?.budget_allocated.toLocaleString()} ({finKpi?.burn_rate_percent}%)
                       </div>
                     </div>
@@ -375,7 +371,7 @@ export function ProjectReportDrawer({
                       borderColor: "hsl(var(--border))",
                     }}
                   >
-                    <div className="flex items-center justify-between text-xs" style={{ color: "hsl(var(--muted-foreground))" }}>
+                    <div className="flex items-center justify-between text-xs" style={{ color: "hsl(var(--text-secondary))" }}>
                       <span>Riesgos</span>
                       <ShieldAlert className="w-3.5 h-3.5 text-[hsl(var(--destructive))]" />
                     </div>
@@ -383,7 +379,7 @@ export function ProjectReportDrawer({
                       <div className="text-lg font-bold text-[hsl(var(--destructive))]">
                         {raidKpi?.critical_count}
                       </div>
-                      <div className="text-[10px]" style={{ color: "hsl(var(--muted-foreground))" }}>
+                      <div className="text-[10px]" style={{ color: "hsl(var(--text-secondary))" }}>
                         críticos de {raidKpi?.total_risks} totales
                       </div>
                     </div>
@@ -397,7 +393,7 @@ export function ProjectReportDrawer({
                       borderColor: "hsl(var(--border))",
                     }}
                   >
-                    <div className="flex items-center justify-between text-xs" style={{ color: "hsl(var(--muted-foreground))" }}>
+                    <div className="flex items-center justify-between text-xs" style={{ color: "hsl(var(--text-secondary))" }}>
                       <span>Ruta CPM</span>
                       <Activity className="w-3.5 h-3.5 text-[hsl(var(--primary))]" />
                     </div>
@@ -405,7 +401,7 @@ export function ProjectReportDrawer({
                       <div className="text-lg font-bold text-[hsl(var(--primary))]">
                         {cpmMet?.total_duration_days}d
                       </div>
-                      <div className="text-[10px]" style={{ color: "hsl(var(--muted-foreground))" }}>
+                      <div className="text-[10px]" style={{ color: "hsl(var(--text-secondary))" }}>
                         {cpmMet?.critical_tasks_count} tareas críticas
                       </div>
                     </div>
@@ -419,15 +415,15 @@ export function ProjectReportDrawer({
                       borderColor: "hsl(var(--border))",
                     }}
                   >
-                    <div className="flex items-center justify-between text-xs" style={{ color: "hsl(var(--muted-foreground))" }}>
+                    <div className="flex items-center justify-between text-xs" style={{ color: "hsl(var(--text-secondary))" }}>
                       <span>Horas</span>
                       <Clock className="w-3.5 h-3.5 text-[hsl(var(--warning))]" />
                     </div>
                     <div className="mt-1">
-                      <div className="text-lg font-bold" style={{ color: "hsl(var(--foreground))" }}>
+                      <div className="text-lg font-bold" style={{ color: "hsl(var(--text-primary))" }}>
                         {timeMet?.total_hours}h
                       </div>
-                      <div className="text-[10px]" style={{ color: "hsl(var(--muted-foreground))" }}>
+                      <div className="text-[10px]" style={{ color: "hsl(var(--text-secondary))" }}>
                         {timeMet?.billable_hours}h facturables
                       </div>
                     </div>
@@ -439,18 +435,18 @@ export function ProjectReportDrawer({
                   <div
                     className="p-4 rounded-xl border space-y-3"
                     style={{
-                      backgroundColor: "hsl(var(--card))",
+                      backgroundColor: "hsl(var(--surface-1))",
                       borderColor: "hsl(var(--border))",
                     }}
                   >
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <DollarSign className="w-4 h-4 text-[hsl(var(--success))]" />
-                        <h3 className="text-sm font-semibold" style={{ color: "hsl(var(--foreground))" }}>
+                        <h3 className="text-sm font-semibold" style={{ color: "hsl(var(--text-primary))" }}>
                           Control Presupuestario y Quema de Fondos
                         </h3>
                       </div>
-                      <span className="text-xs font-semibold text-[hsl(var(--success))]">
+                      <span className="text-xs font-semibold text-[hsl(var(--success-text))]">
                         Remanente: ${finKpi?.remaining_budget.toLocaleString()}
                       </span>
                     </div>
@@ -464,7 +460,7 @@ export function ProjectReportDrawer({
                           }}
                         />
                       </div>
-                      <div className="flex justify-between text-[11px]" style={{ color: "hsl(var(--muted-foreground))" }}>
+                      <div className="flex justify-between text-[11px]" style={{ color: "hsl(var(--text-secondary))" }}>
                         <span>Ejecutado: ${finKpi?.budget_spent.toLocaleString()} ({finKpi?.burn_rate_percent}%)</span>
                         <span>Asignado Total: ${finKpi?.budget_allocated.toLocaleString()}</span>
                       </div>
@@ -479,7 +475,7 @@ export function ProjectReportDrawer({
                             style={{
                               backgroundColor: "hsl(var(--surface-1))",
                               borderColor: "hsl(var(--border))",
-                              color: "hsl(var(--foreground))",
+                              color: "hsl(var(--text-primary))",
                             }}
                           >
                             <span className="capitalize">{cat}:</span> ${Number(amount).toLocaleString()}
@@ -495,18 +491,18 @@ export function ProjectReportDrawer({
                   <div
                     className="p-4 rounded-xl border space-y-3"
                     style={{
-                      backgroundColor: "hsl(var(--card))",
+                      backgroundColor: "hsl(var(--surface-1))",
                       borderColor: "hsl(var(--border))",
                     }}
                   >
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <ShieldAlert className="w-4 h-4 text-[hsl(var(--destructive))]" />
-                        <h3 className="text-sm font-semibold" style={{ color: "hsl(var(--foreground))" }}>
+                        <h3 className="text-sm font-semibold" style={{ color: "hsl(var(--text-primary))" }}>
                           Matriz RAID — Riesgos Principales
                         </h3>
                       </div>
-                      <span className="text-xs" style={{ color: "hsl(var(--muted-foreground))" }}>
+                      <span className="text-xs" style={{ color: "hsl(var(--text-secondary))" }}>
                         {raidKpi?.total_risks} riesgos registrados
                       </span>
                     </div>
@@ -518,10 +514,10 @@ export function ProjectReportDrawer({
                           return (
                             <div key={r.id} className="py-2 flex items-start justify-between gap-2 text-xs">
                               <div>
-                                <span className="font-medium" style={{ color: "hsl(var(--foreground))" }}>
+                                <span className="font-medium" style={{ color: "hsl(var(--text-primary))" }}>
                                   {r.title}
                                 </span>
-                                <p className="text-[11px] mt-0.5" style={{ color: "hsl(var(--muted-foreground))" }}>
+                                <p className="text-[11px] mt-0.5" style={{ color: "hsl(var(--text-secondary))" }}>
                                   Mitigación: {r.mitigation_plan || "En evaluación"}
                                 </p>
                               </div>
@@ -542,7 +538,7 @@ export function ProjectReportDrawer({
                         })}
                       </div>
                     ) : (
-                      <p className="text-xs italic" style={{ color: "hsl(var(--muted-foreground))" }}>
+                      <p className="text-xs italic" style={{ color: "hsl(var(--text-secondary))" }}>
                         No hay riesgos registrados en el proyecto.
                       </p>
                     )}
@@ -554,14 +550,14 @@ export function ProjectReportDrawer({
                   <div
                     className="p-4 rounded-xl border space-y-3"
                     style={{
-                      backgroundColor: "hsl(var(--card))",
+                      backgroundColor: "hsl(var(--surface-1))",
                       borderColor: "hsl(var(--border))",
                     }}
                   >
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <Activity className="w-4 h-4 text-[hsl(var(--primary))]" />
-                        <h3 className="text-sm font-semibold" style={{ color: "hsl(var(--foreground))" }}>
+                        <h3 className="text-sm font-semibold" style={{ color: "hsl(var(--text-primary))" }}>
                           Ruta Crítica (CPM) y Cronograma
                         </h3>
                       </div>
@@ -570,7 +566,7 @@ export function ProjectReportDrawer({
                       </span>
                     </div>
 
-                    <p className="text-xs" style={{ color: "hsl(var(--muted-foreground))" }}>
+                    <p className="text-xs" style={{ color: "hsl(var(--text-secondary))" }}>
                       Tareas determinantes sin holgura (retrasar cualquiera de estas tareas retrasa la fecha de entrega):
                     </p>
 
@@ -587,7 +583,7 @@ export function ProjectReportDrawer({
                                 borderColor: "hsl(var(--border))",
                               }}
                             >
-                              <span className="font-medium" style={{ color: "hsl(var(--foreground))" }}>
+                              <span className="font-medium" style={{ color: "hsl(var(--text-primary))" }}>
                                 {t.title}
                               </span>
                               <span className="text-[11px] text-[hsl(var(--primary))] font-semibold">
@@ -596,7 +592,7 @@ export function ProjectReportDrawer({
                             </div>
                           ))
                       ) : (
-                        <p className="text-xs italic" style={{ color: "hsl(var(--muted-foreground))" }}>
+                        <p className="text-xs italic" style={{ color: "hsl(var(--text-secondary))" }}>
                           No se han detectado tareas críticas o dependencias encadenadas.
                         </p>
                       )}
@@ -609,14 +605,14 @@ export function ProjectReportDrawer({
                   <div
                     className="p-4 rounded-xl border space-y-3"
                     style={{
-                      backgroundColor: "hsl(var(--card))",
+                      backgroundColor: "hsl(var(--surface-1))",
                       borderColor: "hsl(var(--border))",
                     }}
                   >
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <Clock className="w-4 h-4 text-[hsl(var(--warning))]" />
-                        <h3 className="text-sm font-semibold" style={{ color: "hsl(var(--foreground))" }}>
+                        <h3 className="text-sm font-semibold" style={{ color: "hsl(var(--text-primary))" }}>
                           Distribución de Horas y Esfuerzo
                         </h3>
                       </div>
@@ -636,17 +632,17 @@ export function ProjectReportDrawer({
                               borderColor: "hsl(var(--border))",
                             }}
                           >
-                            <span className="font-medium" style={{ color: "hsl(var(--foreground))" }}>
+                            <span className="font-medium" style={{ color: "hsl(var(--text-primary))" }}>
                               {m.persona_name}
                             </span>
-                            <span className="text-[11px]" style={{ color: "hsl(var(--muted-foreground))" }}>
+                            <span className="text-[11px]" style={{ color: "hsl(var(--text-secondary))" }}>
                               <b>{m.total_hours}h</b> ({m.billable_hours}h fact.)
                             </span>
                           </div>
                         ))}
                       </div>
                     ) : (
-                      <p className="text-xs italic" style={{ color: "hsl(var(--muted-foreground))" }}>
+                      <p className="text-xs italic" style={{ color: "hsl(var(--text-secondary))" }}>
                         Sin registros de tiempo para este proyecto.
                       </p>
                     )}
@@ -661,14 +657,14 @@ export function ProjectReportDrawer({
                 <div
                   className="p-4 rounded-xl border space-y-1"
                   style={{
-                    backgroundColor: "hsl(var(--card))",
+                    backgroundColor: "hsl(var(--surface-1))",
                     borderColor: "hsl(var(--border))",
                   }}
                 >
-                  <h3 className="text-sm font-semibold" style={{ color: "hsl(var(--foreground))" }}>
+                  <h3 className="text-sm font-semibold" style={{ color: "hsl(var(--text-primary))" }}>
                     Instrumentos de Exportación Disponibles
                   </h3>
-                  <p className="text-xs" style={{ color: "hsl(var(--muted-foreground))" }}>
+                  <p className="text-xs" style={{ color: "hsl(var(--text-secondary))" }}>
                     Descargue directamente los paquetes oficiales de auditoría y análisis en PDF y CSV (compatibles con Excel).
                   </p>
                 </div>
@@ -694,10 +690,10 @@ export function ProjectReportDrawer({
                         <FileText className="w-5 h-5" />
                       </div>
                       <div>
-                        <h4 className="text-sm font-semibold" style={{ color: "hsl(var(--foreground))" }}>
+                        <h4 className="text-sm font-semibold" style={{ color: "hsl(var(--text-primary))" }}>
                           Informe Ejecutivo Completo (PDF Membretado)
                         </h4>
-                        <p className="text-xs mt-0.5" style={{ color: "hsl(var(--muted-foreground))" }}>
+                        <p className="text-xs mt-0.5" style={{ color: "hsl(var(--text-secondary))" }}>
                           Documento formal con membrete CCF, ficha técnica, KPIs de presupuesto, matriz RAID, ruta crítica y desglose de horas.
                         </p>
                       </div>
@@ -712,7 +708,7 @@ export function ProjectReportDrawer({
                         )
                       }
                       disabled={exporting === "pdf"}
-                      className="w-full sm:w-auto px-4 py-2 rounded-lg text-xs font-semibold text-white shadow-sm flex items-center justify-center gap-2 transition-all"
+                      className="w-full sm:w-auto px-4 py-2 rounded-lg text-xs font-semibold text-[hsl(var(--primary-foreground))] shadow-sm flex items-center justify-center gap-2 transition-all"
                       style={{ backgroundColor: "hsl(var(--primary))" }}
                     >
                       {exporting === "pdf" ? (
@@ -744,10 +740,10 @@ export function ProjectReportDrawer({
                         <FileSpreadsheet className="w-5 h-5" />
                       </div>
                       <div>
-                        <h4 className="text-sm font-semibold" style={{ color: "hsl(var(--foreground))" }}>
+                        <h4 className="text-sm font-semibold" style={{ color: "hsl(var(--text-primary))" }}>
                           Cronograma y Tareas (Excel / CSV)
                         </h4>
-                        <p className="text-xs mt-0.5" style={{ color: "hsl(var(--muted-foreground))" }}>
+                        <p className="text-xs mt-0.5" style={{ color: "hsl(var(--text-secondary))" }}>
                           Tabla completa de tareas con fechas de inicio/fin, responsables, prioridades, estados y códigos de fase.
                         </p>
                       </div>
@@ -793,10 +789,10 @@ export function ProjectReportDrawer({
                         <DollarSign className="w-5 h-5" />
                       </div>
                       <div>
-                        <h4 className="text-sm font-semibold" style={{ color: "hsl(var(--foreground))" }}>
+                        <h4 className="text-sm font-semibold" style={{ color: "hsl(var(--text-primary))" }}>
                           Libro Mayor de Gastos y Desembolsos (CSV)
                         </h4>
-                        <p className="text-xs mt-0.5" style={{ color: "hsl(var(--muted-foreground))" }}>
+                        <p className="text-xs mt-0.5" style={{ color: "hsl(var(--text-secondary))" }}>
                           Partidas financieras con montos, fechas, categorías, estados (planned/committed/paid) y enlaces a comprobantes.
                         </p>
                       </div>
@@ -836,26 +832,26 @@ export function ProjectReportDrawer({
                 <div
                   className="p-4 rounded-xl border space-y-1"
                   style={{
-                    backgroundColor: "hsl(var(--card))",
+                    backgroundColor: "hsl(var(--surface-1))",
                     borderColor: "hsl(var(--border))",
                   }}
                 >
-                  <h3 className="text-sm font-semibold" style={{ color: "hsl(var(--foreground))" }}>
+                  <h3 className="text-sm font-semibold" style={{ color: "hsl(var(--text-primary))" }}>
                     Configuración de Visibilidad del Informe
                   </h3>
-                  <p className="text-xs" style={{ color: "hsl(var(--muted-foreground))" }}>
+                  <p className="text-xs" style={{ color: "hsl(var(--text-secondary))" }}>
                     Seleccione los módulos que desea incluir en la vista ejecutiva y en las impresiones directas.
                   </p>
                 </div>
 
                 <div className="space-y-2">
-                  {[
+                  {([
                     { key: "financials", label: "Módulo Financiero y Desglose Presupuestario", desc: "Incluye asignaciones, gastos pagados, saldo remanente y categorías" },
                     { key: "risks", label: "Matriz RAID de Riesgos e Incidencias", desc: "Incluye matriz de severidad 5x5 y planes de mitigación de riesgos críticos" },
                     { key: "cpm", label: "Ruta Crítica CPM y Cronograma de Holgura Cero", desc: "Incluye análisis de cadena determinante y duración total en días" },
                     { key: "timeTracking", label: "Hojas de Horas y Control de Esfuerzo", desc: "Incluye total de horas facturables y participación por colaborador" },
-                  ].map((s) => {
-                    const isChecked = (includeSections as any)[s.key];
+                  ] satisfies Array<{ key: ReportSectionKey; label: string; desc: string }>).map((s) => {
+                    const isChecked = includeSections[s.key];
                     return (
                       <div
                         key={s.key}
@@ -869,14 +865,14 @@ export function ProjectReportDrawer({
                           "p-3 rounded-xl border flex items-center justify-between cursor-pointer transition-all",
                           isChecked
                             ? "bg-[hsl(var(--surface-1))] border-[hsl(var(--primary))]"
-                            : "bg-[hsl(var(--card))] border-[hsl(var(--border))]"
+                            : "bg-[hsl(var(--surface-1))] border-[hsl(var(--border))]"
                         )}
                       >
                         <div className="space-y-0.5">
-                          <h4 className="text-xs font-semibold" style={{ color: "hsl(var(--foreground))" }}>
+                          <h4 className="text-xs font-semibold" style={{ color: "hsl(var(--text-primary))" }}>
                             {s.label}
                           </h4>
-                          <p className="text-[11px]" style={{ color: "hsl(var(--muted-foreground))" }}>
+                          <p className="text-[11px]" style={{ color: "hsl(var(--text-secondary))" }}>
                             {s.desc}
                           </p>
                         </div>
@@ -885,7 +881,7 @@ export function ProjectReportDrawer({
                           className={clsx(
                             "w-5 h-5 rounded-md border flex items-center justify-center transition-all",
                             isChecked
-                              ? "bg-[hsl(var(--primary))] border-[hsl(var(--primary))] text-white"
+                              ? "bg-[hsl(var(--primary))] border-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))]"
                               : "border-[hsl(var(--border))] bg-[hsl(var(--surface-2))]"
                           )}
                         >

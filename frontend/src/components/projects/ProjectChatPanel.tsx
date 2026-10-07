@@ -7,6 +7,7 @@ import { useWorkspaceSocket } from "@/hooks/useWorkspaceSocket";
 import type { WsEvent } from "@/types/directMessages";
 import { Send, Trash2, MessageSquare } from "lucide-react";
 import { toast } from "sonner";
+import ConfirmActionDrawer, { type ConfirmActionState } from "@/components/ConfirmActionDrawer";
 
 interface ChatMessage {
   id: string;
@@ -42,6 +43,7 @@ export default function ProjectChatPanel({ projectId }: ProjectChatPanelProps) {
   const [loading, setLoading] = useState(true);
   const [isNearBottom, setIsNearBottom] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [confirmAction, setConfirmAction] = useState<ConfirmActionState>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const userId = user?.id;
   const shouldAutoScroll = useRef(true);
@@ -120,6 +122,7 @@ export default function ProjectChatPanel({ projectId }: ProjectChatPanelProps) {
   useWorkspaceSocket({
     rooms: [`project_${projectId}`],
     enabled: !!token,
+    token,
     onEvent: handleSocketEvent,
   });
 
@@ -159,7 +162,18 @@ export default function ProjectChatPanel({ projectId }: ProjectChatPanelProps) {
       setMessages((prev) => prev.filter((m) => m.id !== msgId));
     } catch (err) {
       toast.error("Failed to delete message");
+      throw new Error("Failed to delete message");
     }
+  };
+
+  const requestDelete = (message: ChatMessage) => {
+    setConfirmAction({
+      title: "Eliminar mensaje",
+      description: `¿Confirmas quitar tu mensaje “${message.content}” del historial del chat? Los demás participantes dejarán de verlo.`,
+      destructive: true,
+      confirmLabel: "Eliminar mensaje",
+      onConfirm: () => handleDelete(message.id, message.sender_id),
+    });
   };
 
   if (loading) {
@@ -245,8 +259,10 @@ export default function ProjectChatPanel({ projectId }: ProjectChatPanelProps) {
                       </span>
                       {isOwn && (
                         <button
-                          onClick={() => handleDelete(msg.id, msg.sender_id)}
-                          className="opacity-0 group-hover:opacity-100 transition-opacity hover:text-[hsl(var(--destructive))]"
+                          type="button"
+                          onClick={() => requestDelete(msg)}
+                          aria-label={`Eliminar mi mensaje: ${msg.content}`}
+                          className="opacity-100 md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100 transition-opacity hover:text-[hsl(var(--destructive))]"
                           title="Eliminar mensaje"
                         >
                           <Trash2 className="w-3 h-3" />
@@ -269,11 +285,14 @@ export default function ProjectChatPanel({ projectId }: ProjectChatPanelProps) {
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
               placeholder="Escribe un mensaje..."
+              aria-label="Escribir mensaje en el chat del proyecto"
               className="w-full px-4 py-2.5 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] text-sm text-[hsl(var(--foreground))] placeholder:text-[hsl(var(--muted-foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))] transition-all pr-10"
             />
             {input.trim() && (
               <button
+                type="button"
                 onClick={handleSend}
+                aria-label="Enviar mensaje"
                 className="absolute right-1.5 bottom-1.5 p-1.5 rounded-lg bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] hover:opacity-90 transition-opacity"
               >
                 <Send className="w-3.5 h-3.5" />
@@ -281,10 +300,11 @@ export default function ProjectChatPanel({ projectId }: ProjectChatPanelProps) {
             )}
           </div>
         </div>
-        <p className="text-2xs text-[hsl(var(--muted-foreground))] text-center mt-1.5 opacity-50">
-          Enter para enviar · Shift+Enter para salto de línea
-        </p>
+      <p className="text-2xs text-[hsl(var(--muted-foreground))] text-center mt-1.5 opacity-50">
+        Enter para enviar · Shift+Enter para salto de línea
+      </p>
       </div>
+      <ConfirmActionDrawer action={confirmAction} onClose={() => setConfirmAction(null)} />
     </div>
   );
 }

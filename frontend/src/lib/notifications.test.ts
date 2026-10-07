@@ -94,6 +94,13 @@ describe("notifications — toUiNotification", () => {
     const out = toUiNotification({ ...base, is_read: true });
     expect(out.read).toBe(true);
   });
+  it("preserves only same-origin authenticated notification targets", () => {
+    expect(toUiNotification({ ...base, target_url: "/plataforma/projects/project-1?task=task-1" }).targetUrl)
+      .toBe("/plataforma/projects/project-1?task=task-1");
+    expect(toUiNotification({ ...base, target_url: "https://evil.example/phishing" }).targetUrl).toBeNull();
+    expect(toUiNotification({ ...base, target_url: "//evil.example/phishing" }).targetUrl).toBeNull();
+    expect(toUiNotification({ ...base, target_url: "/\\\\evil.example" }).targetUrl).toBeNull();
+  });
   it.each([
     ["mention", "Colaboracion"],
     ["comment", "Comentarios"],

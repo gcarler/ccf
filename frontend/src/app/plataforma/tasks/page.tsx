@@ -11,8 +11,10 @@ import TaskEditDrawer, { TaskDetail } from "@/components/ui/TaskEditDrawer";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/context/ToastContext";
 import { apiFetch } from "@/lib/http";
+import { getAllAssignedProjectTasks } from "@/lib/projects/api";
 import { PROJECTS_LIST_ROUTE } from "@/app/plataforma/projects/projectsLinks";
 import type { ViewType } from "@/components/ViewSwitcher";
+import type { ProjectTaskRecord } from "@/types/projects";
 
 interface Task {
   id: string;
@@ -51,16 +53,16 @@ function priorityConfig(task: Task) {
   return PRIORITY_CONFIG[priorityKey(task)] || PRIORITY_CONFIG.low;
 }
 
-function normalizeTask(row: any): Task {
+function normalizeTask(row: ProjectTaskRecord | TaskDetail): Task {
   return {
-    id: String(row.id),
-    title: String(row.title || "Tarea sin titulo"),
-    status: String(row.status || "todo"),
+    id: row.id,
+    title: row.title || "Tarea sin titulo",
+    status: row.status || "todo",
     priority: row.priority || "low",
     due_date: row.due_date || null,
-    project_id: String(row.project_id || ""),
-    project_title: row.project_title || row.project?.title || undefined,
-    assignee_id: row.assignee_id ? String(row.assignee_id) : null,
+    project_id: row.project_id,
+    project_title: row.project_title || undefined,
+    assignee_id: "assignee_id" in row && row.assignee_id ? row.assignee_id : null,
   };
 }
 
@@ -82,10 +84,8 @@ export default function UserTasksPage() {
     }
     setLoading(true);
     try {
-      const data = await apiFetch<any[]>("/projects/tasks", { token, cache: "no-store" });
-      const activeTasks = Array.isArray(data)
-        ? data.map(normalizeTask).filter(task => task.status !== "done")
-        : [];
+      const data = await getAllAssignedProjectTasks(token, { cache: "no-store" });
+      const activeTasks = data.map(normalizeTask).filter(task => task.status !== "done");
       activeTasks.sort((a, b) => {
         const order = ["urgent", "high", "medium", "low"];
         return order.indexOf(priorityKey(a)) - order.indexOf(priorityKey(b));
@@ -94,6 +94,7 @@ export default function UserTasksPage() {
     } catch (error) {
       console.error("[Tasks] fetch failed", error);
       setTasks([]);
+      addToast("No se pudieron cargar las tareas asignadas", "error");
     } finally {
       setLoading(false);
     }
