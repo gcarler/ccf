@@ -22,6 +22,8 @@ import {
   STATUS_GROUP_PILL,
   getValidStatus,
   getValidPriority,
+  normalizeTaskStatus,
+  normalizeTaskPriority,
   PROJECT_STATUSES,
   DEFAULT_PROJECT_STATUS,
   PROJECT_STATUS_LABELS,
@@ -124,12 +126,23 @@ describe("projects/constants — opciones visuales (NODE/STATUS/PRIORITY_OPTIONS
     expect(NODE_OPTIONS[0].value).toBe("nutrition");
     expect(NODE_OPTIONS[0].short).toBe("Nutrición");
     expect(NODE_OPTIONS[1].value).toBe("digital");
+    NODE_OPTIONS.forEach((option) => {
+      expect(option.dot).toMatch(/hsl\(var\(--/);
+      expect(option.color).toMatch(/hsl\(var\(--/);
+    });
   });
   it("STATUS_OPTIONS tiene 4 entradas, una por TaskStatus", () => {
     expect(STATUS_OPTIONS.length).toBe(TASK_STATUSES.length);
     TASK_STATUSES.forEach((s) => {
       expect(STATUS_OPTIONS.find((o) => o.value === s)).toBeDefined();
     });
+  });
+  it("los estados neutrales usan tokens de superficie/borde en ambos temas", () => {
+    const todo = STATUS_OPTIONS.find((option) => option.value === "todo");
+    expect(todo?.bg).toContain("hsl(var(--surface-2))");
+    expect(todo?.border).toContain("hsl(var(--border))");
+    expect(STATUS_GROUP_PILL.todo).toContain("hsl(var(--surface-3))");
+    expect([todo?.bg, todo?.border, STATUS_GROUP_PILL.todo].join(" ")).not.toMatch(/(?:bg|border)-white\//);
   });
   it("PRIORITY_OPTIONS tiene 4 entradas, una por TaskPriority", () => {
     expect(PRIORITY_OPTIONS.length).toBe(TASK_PRIORITIES.length);
@@ -139,6 +152,11 @@ describe("projects/constants — opciones visuales (NODE/STATUS/PRIORITY_OPTIONS
     expect(PRIORITY_OPTIONS[0].value).toBe("low");
     expect(PRIORITY_OPTIONS[1].value).toBe("medium");
     expect(PRIORITY_OPTIONS[1].fill).toContain("primary");
+    PRIORITY_OPTIONS.forEach((option) => {
+      expect(option.color).toMatch(/hsl\(var\(--/);
+      expect(option.dot).toMatch(/hsl\(var\(--/);
+      expect(option.fill).toMatch(/hsl\(var\(--/);
+    });
   });
 });
 
@@ -265,6 +283,26 @@ describe("projects/constants — getValidPriority (fallback DEFAULT_TASK_PRIORIT
   });
   it("undefined → 'medium'", () => {
     expect(getValidPriority(undefined)).toBe(DEFAULT_TASK_PRIORITY);
+  });
+});
+
+describe("projects/constants — aliases de compatibilidad de tareas", () => {
+  it.each([
+    ["done", "completed"],
+    ["blocked", "todo"],
+    ["pending", "todo"],
+  ])("normaliza estado %s → %s", (input, expected) => {
+    expect(normalizeTaskStatus(input)).toBe(expected);
+    expect(getValidStatus(input)).toBe(expected);
+  });
+
+  it("normaliza prioridad normal a medium", () => {
+    expect(normalizeTaskPriority("normal")).toBe("medium");
+    expect(getValidPriority("normal")).toBe("medium");
+  });
+
+  it("preserva slugs de fase personalizados al normalizar estado", () => {
+    expect(normalizeTaskStatus("awaiting_approval")).toBe("awaiting_approval");
   });
 });
 

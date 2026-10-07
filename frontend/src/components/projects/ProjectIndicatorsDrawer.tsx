@@ -5,6 +5,7 @@ import { RightPanel } from "@/components/ui/RightPanel";
 import ConfirmDeleteDrawer from "@/components/ui/ConfirmDeleteDrawer";
 import { useAuth } from "@/context/AuthContext";
 import { apiFetch } from "@/lib/http";
+import { getSafeProjectLink } from "@/lib/projects/safeProjectLink";
 import type {
   ProjectIndicator,
   ProjectIndicatorRecord,
@@ -14,6 +15,25 @@ import type {
   MgaIndicatorLevel,
   MgaCalculationType,
 } from "@/types/projects";
+import { getIndicatorSpiStatus } from "@/lib/projects/indicators";
+
+function isCremaValidationResult(value: unknown): value is CremaValidationResult {
+  if (!value || typeof value !== "object") return false;
+  const result = value as Record<string, unknown>;
+  if (
+    typeof result.score !== "number" ||
+    typeof result.status !== "string" ||
+    typeof result.summary !== "string" ||
+    !result.criteria || typeof result.criteria !== "object" || Array.isArray(result.criteria)
+  ) return false;
+
+  return Object.values(result.criteria).every((criterion) => {
+    if (!criterion || typeof criterion !== "object") return false;
+    const detail = criterion as Record<string, unknown>;
+    return typeof detail.score === "number" && typeof detail.passed === "boolean" &&
+      Array.isArray(detail.recommendations) && detail.recommendations.every((item) => typeof item === "string");
+  });
+}
 import { BarChart3, TrendingUp, Plus, Trash2, Edit2, CheckCircle2, AlertTriangle, Clock, ExternalLink, Save, Check, RotateCw, Sparkles, Award, Layers, FileCheck2, Activity, History, Sliders } from "lucide-react";
 import clsx from "clsx";
 import { toast } from "sonner";
@@ -59,6 +79,8 @@ export function ProjectIndicatorsDrawer({
 
   const [activeTab, setActiveTab] = useState<"list" | "form" | "record">("list");
   const [loading, setLoading] = useState(false);
+  const [loadError, setLoadError] = useState(false);
+  const [hasLoadedIndicators, setHasLoadedIndicators] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [validatingCrema, setValidatingCrema] = useState(false);
   const [indicators, setIndicators] = useState<ProjectIndicator[]>([]);
@@ -95,10 +117,12 @@ export function ProjectIndicatorsDrawer({
         `/projects/${projectId}/advanced-indicators`,
         { token }
       );
-      if (Array.isArray(data)) {
-        setIndicators(data);
-      }
+      if (!Array.isArray(data)) throw new Error("Respuesta de indicadores inválida");
+      setIndicators(data);
+      setLoadError(false);
+      setHasLoadedIndicators(true);
     } catch {
+      setLoadError(true);
       toast.error("Error al cargar indicadores MGA del proyecto");
     } finally {
       setLoading(false);
@@ -170,8 +194,8 @@ export function ProjectIndicatorsDrawer({
     setBaselineValue(String(ind.baseline_value || 0));
     setTargetValue(String(ind.target_value || 0));
     setFrequency(ind.frequency || "mensual");
-    if (ind.crema_evaluation && typeof ind.crema_evaluation === "object" && "criteria" in ind.crema_evaluation) {
-      setCremaResult(ind.crema_evaluation as CremaValidationResult);
+    if (isCremaValidationResult(ind.crema_evaluation)) {
+      setCremaResult(ind.crema_evaluation);
     } else {
       setCremaResult(null);
     }
@@ -244,6 +268,7 @@ export function ProjectIndicatorsDrawer({
       onIndicatorUpdated?.();
     } catch {
       toast.error("Error al eliminar indicador");
+      throw new Error("Error al eliminar indicador");
     }
   };
 
@@ -342,46 +367,48 @@ export function ProjectIndicatorsDrawer({
       title="Indicadores MGA & Semáforo CREMA"
       width={780}
     >
-      <div className="flex flex-col h-full bg-[hsl(var(--surface-1))] text-[hsl(var(--foreground))]">
+      <div className="flex flex-col h-full bg-[hsl(var(--surface-1))] text-[hsl(var(--text-primary))]">
         {/* Encabezado y Navegación de Pestañas */}
         <div className="px-5 pt-3 pb-3 border-b border-[hsl(var(--border))] space-y-3 bg-[hsl(var(--surface-2))]/50">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-sm font-bold flex items-center gap-2">
-                <BarChart3 size={18} className="text-[hsl(var(--primary))]" />
-                Metodología General Ajustada (MGA) & CREMA
-              </h2>
-              <p className="text-3xs text-[hsl(var(--muted-foreground))]">
-                Monitoreo riguroso de eficacia, productos y semáforo SPI de avance periódico
-              </p>
+          {hasLoadedIndicators && !loadError && (
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-sm font-bold flex items-center gap-2">
+                  <BarChart3 size={18} className="text-[hsl(var(--primary))]" />
+                  Metodología General Ajustada (MGA) & CREMA
+                </h2>
+                <p className="text-3xs text-[hsl(var(--text-secondary))]">
+                  Monitoreo riguroso de eficacia, productos y semáforo SPI de avance periódico
+                </p>
+              </div>
+              <div className="flex items-center gap-1.5 bg-[hsl(var(--surface-1))] p-1 rounded-lg border border-[hsl(var(--border))]">
+                <span className="text-3xs font-semibold px-2 text-[hsl(var(--text-secondary))]">
+                  Calidad CREMA:
+                </span>
+                <span
+                  className={clsx(
+                    "text-2xs font-extrabold px-2 py-0.5 rounded",
+                    spiStats.avgCrema >= 85
+                      ? "bg-[hsl(var(--success))]/15 text-[hsl(var(--success))]"
+                      : spiStats.avgCrema >= 70
+                      ? "bg-[hsl(var(--primary))]/15 text-[hsl(var(--primary))]"
+                      : "bg-[hsl(var(--warning))]/15 text-[hsl(var(--warning))]"
+                  )}
+                >
+                  {spiStats.avgCrema}/100
+                </span>
+              </div>
             </div>
-            <div className="flex items-center gap-1.5 bg-[hsl(var(--surface-1))] p-1 rounded-lg border border-[hsl(var(--border))]">
-              <span className="text-3xs font-semibold px-2 text-[hsl(var(--muted-foreground))]">
-                Calidad CREMA:
-              </span>
-              <span
-                className={clsx(
-                  "text-2xs font-extrabold px-2 py-0.5 rounded",
-                  spiStats.avgCrema >= 85
-                    ? "bg-[hsl(var(--success))]/15 text-[hsl(var(--success))]"
-                    : spiStats.avgCrema >= 70
-                    ? "bg-[hsl(var(--primary))]/15 text-[hsl(var(--primary))]"
-                    : "bg-[hsl(var(--warning))]/15 text-[hsl(var(--warning))]"
-                )}
-              >
-                {spiStats.avgCrema}/100
-              </span>
-            </div>
-          </div>
+          )}
 
           {/* Resumen Semáforo SPI Superior */}
-          <div className="grid grid-cols-4 gap-2 pt-1">
+          {hasLoadedIndicators && !loadError && <div className="grid grid-cols-4 gap-2 pt-1">
             <div className="p-2 rounded-lg bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] flex items-center gap-2">
               <div className="p-1.5 rounded-md bg-[hsl(var(--primary))]/10 text-[hsl(var(--primary))]">
                 <Activity size={16} />
               </div>
               <div>
-                <p className="text-3xs text-[hsl(var(--muted-foreground))] uppercase font-semibold">Total Ind.</p>
+                <p className="text-3xs text-[hsl(var(--text-secondary))] uppercase font-semibold">Total Ind.</p>
                 <p className="text-xs font-black">{indicators.length}</p>
               </div>
             </div>
@@ -391,7 +418,7 @@ export function ProjectIndicatorsDrawer({
                 <CheckCircle2 size={16} />
               </div>
               <div>
-                <p className="text-3xs text-[hsl(var(--muted-foreground))] uppercase font-semibold">SPI ≥ 1.0 (Óptimo)</p>
+                <p className="text-3xs text-[hsl(var(--text-secondary))] uppercase font-semibold">SPI ≥ 1.0 (Óptimo)</p>
                 <p className="text-xs font-black text-[hsl(var(--success))]">{spiStats.optimal}</p>
               </div>
             </div>
@@ -401,7 +428,7 @@ export function ProjectIndicatorsDrawer({
                 <AlertTriangle size={16} />
               </div>
               <div>
-                <p className="text-3xs text-[hsl(var(--muted-foreground))] uppercase font-semibold">SPI 0.8-0.99</p>
+                <p className="text-3xs text-[hsl(var(--text-secondary))] uppercase font-semibold">SPI 0.8-0.99</p>
                 <p className="text-xs font-black text-[hsl(var(--warning))]">{spiStats.warning}</p>
               </div>
             </div>
@@ -411,11 +438,11 @@ export function ProjectIndicatorsDrawer({
                 <TrendingUp size={16} className="rotate-180" />
               </div>
               <div>
-                <p className="text-3xs text-[hsl(var(--muted-foreground))] uppercase font-semibold">SPI &lt; 0.80 (Riesgo)</p>
+                <p className="text-3xs text-[hsl(var(--text-secondary))] uppercase font-semibold">SPI &lt; 0.80 (Riesgo)</p>
                 <p className="text-xs font-black text-[hsl(var(--destructive))]">{spiStats.critical}</p>
               </div>
             </div>
-          </div>
+          </div>}
 
           {/* Selector de Pestañas */}
           <div className="flex items-center gap-2 pt-1">
@@ -428,7 +455,7 @@ export function ProjectIndicatorsDrawer({
                 "px-3 py-1.5 rounded-md text-2xs font-bold uppercase tracking-wider transition-all flex items-center gap-1.5",
                 activeTab === "list"
                   ? "bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] shadow-sm"
-                  : "bg-[hsl(var(--surface-1))] text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--surface-3))] border border-[hsl(var(--border))]"
+                  : "bg-[hsl(var(--surface-1))] text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-3))] border border-[hsl(var(--border))]"
               )}
             >
               <BarChart3 size={13} /> Matriz MGA ({indicators.length})
@@ -442,7 +469,7 @@ export function ProjectIndicatorsDrawer({
                 "px-3 py-1.5 rounded-md text-2xs font-bold uppercase tracking-wider transition-all flex items-center gap-1.5",
                 activeTab === "form"
                   ? "bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] shadow-sm"
-                  : "bg-[hsl(var(--surface-1))] text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--surface-3))] border border-[hsl(var(--border))]"
+                  : "bg-[hsl(var(--surface-1))] text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-3))] border border-[hsl(var(--border))]"
               )}
             >
               <Plus size={13} /> {editingId ? "Editar Indicador" : "Nuevo Indicador & Asistente CREMA"}
@@ -454,7 +481,7 @@ export function ProjectIndicatorsDrawer({
                   "px-3 py-1.5 rounded-md text-2xs font-bold uppercase tracking-wider transition-all flex items-center gap-1.5",
                   activeTab === "record"
                     ? "bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] shadow-sm"
-                    : "bg-[hsl(var(--surface-1))] text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--surface-3))] border border-[hsl(var(--border))]"
+                    : "bg-[hsl(var(--surface-1))] text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-3))] border border-[hsl(var(--border))]"
                 )}
               >
                 <Clock size={13} /> Reportar Medición SPI
@@ -471,7 +498,7 @@ export function ProjectIndicatorsDrawer({
               {/* Filtro por Nivel MGA */}
               <div className="flex items-center justify-between gap-2 overflow-x-auto pb-1">
                 <div className="flex items-center gap-1.5 text-2xs">
-                  <span className="text-[hsl(var(--muted-foreground))] font-semibold flex items-center gap-1">
+                  <span className="text-[hsl(var(--text-secondary))] font-semibold flex items-center gap-1">
                     <Sliders size={12} /> Nivel:
                   </span>
                   <button
@@ -480,7 +507,7 @@ export function ProjectIndicatorsDrawer({
                       "px-2.5 py-1 rounded-md text-3xs font-bold uppercase transition-all",
                       selectedLevelFilter === "ALL"
                         ? "bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))]"
-                        : "bg-[hsl(var(--surface-2))] text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--surface-3))]"
+                        : "bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-3))]"
                     )}
                   >
                     Todos ({indicators.length})
@@ -495,7 +522,7 @@ export function ProjectIndicatorsDrawer({
                           "px-2 py-1 rounded-md text-3xs font-semibold whitespace-nowrap transition-all",
                           selectedLevelFilter === lvl.id
                             ? "bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))]"
-                            : "bg-[hsl(var(--surface-2))] text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--surface-3))]"
+                            : "bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-3))]"
                         )}
                       >
                         {lvl.label.split("/")[0]} ({count})
@@ -505,7 +532,8 @@ export function ProjectIndicatorsDrawer({
                 </div>
                 <button
                   onClick={() => loadIndicators()}
-                  className="p-1.5 rounded-md hover:bg-[hsl(var(--surface-2))] text-[hsl(var(--muted-foreground))] transition-colors"
+                  aria-label="Recargar indicadores"
+                  className="p-1.5 rounded-md hover:bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))] transition-colors"
                   title="Recargar indicadores"
                 >
                   <RotateCw size={14} className={clsx(loading && "animate-spin")} />
@@ -513,9 +541,20 @@ export function ProjectIndicatorsDrawer({
               </div>
 
               {loading ? (
-                <div className="py-12 flex flex-col items-center justify-center gap-2 text-[hsl(var(--muted-foreground))]">
+                <div className="py-12 flex flex-col items-center justify-center gap-2 text-[hsl(var(--text-secondary))]">
                   <RotateCw size={24} className="animate-spin text-[hsl(var(--primary))]" />
                   <p className="text-xs font-semibold">Cargando indicadores y cálculo de SPI...</p>
+                </div>
+              ) : loadError ? (
+                <div role="alert" className="py-10 px-4 rounded-xl border border-[hsl(var(--destructive))]/30 bg-[hsl(var(--destructive))]/5 flex flex-col items-center justify-center text-center gap-3">
+                  <p className="text-xs font-semibold">No se pudieron cargar los indicadores. Tus datos no se han confirmado como vacíos.</p>
+                  <button
+                    type="button"
+                    onClick={() => void loadIndicators()}
+                    className="px-3 py-1.5 rounded-lg bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] text-2xs font-bold"
+                  >
+                    Reintentar
+                  </button>
                 </div>
               ) : filteredIndicators.length === 0 ? (
                 <div className="py-12 px-4 rounded-xl border border-dashed border-[hsl(var(--border))] bg-[hsl(var(--surface-2))]/40 flex flex-col items-center justify-center text-center gap-3">
@@ -524,7 +563,7 @@ export function ProjectIndicatorsDrawer({
                   </div>
                   <div className="max-w-xs">
                     <h3 className="text-xs font-bold">No hay indicadores en este nivel</h3>
-                    <p className="text-3xs text-[hsl(var(--muted-foreground))] mt-1">
+                    <p className="text-3xs text-[hsl(var(--text-secondary))] mt-1">
                       Cree indicadores de resultado o producto con la metodología MGA y califíquelos con el Asistente CREMA.
                     </p>
                   </div>
@@ -544,7 +583,7 @@ export function ProjectIndicatorsDrawer({
                     const isExpanded = expandedIndicatorId === ind.id;
                     const spi = ind.last_spi;
                     const progress =
-                      ind.target_value > 0
+                                        ind.target_value > 0
                         ? Math.min(100, Math.round((ind.current_value / ind.target_value) * 100))
                         : 0;
 
@@ -557,13 +596,13 @@ export function ProjectIndicatorsDrawer({
                           {/* Fila Superior: Código, Nivel MGA y Score CREMA */}
                           <div className="flex items-center justify-between gap-2">
                             <div className="flex items-center gap-2 flex-wrap">
-                              <span className="font-mono text-3xs font-extrabold px-2 py-0.5 rounded bg-[hsl(var(--surface-3))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))]">
+                              <span className="font-mono text-3xs font-extrabold px-2 py-0.5 rounded bg-[hsl(var(--surface-3))] text-[hsl(var(--text-primary))] border border-[hsl(var(--border))]">
                                 {ind.code || "IND"}
                               </span>
                               <span className="text-3xs font-bold px-2 py-0.5 rounded bg-[hsl(var(--primary))]/10 text-[hsl(var(--primary))] border border-[hsl(var(--primary))]/20">
                                 {ind.level}
                               </span>
-                              <span className="text-3xs text-[hsl(var(--muted-foreground))] flex items-center gap-1">
+                              <span className="text-3xs text-[hsl(var(--text-secondary))] flex items-center gap-1">
                                 <Clock size={11} /> {ind.frequency}
                               </span>
                             </div>
@@ -590,7 +629,7 @@ export function ProjectIndicatorsDrawer({
                                 className={clsx(
                                   "text-3xs font-black px-2 py-0.5 rounded-full flex items-center gap-1 border",
                                   spi === null || spi === undefined
-                                    ? "bg-[hsl(var(--surface-3))] border-[hsl(var(--border))] text-[hsl(var(--muted-foreground))]"
+                                    ? "bg-[hsl(var(--surface-3))] border-[hsl(var(--border))] text-[hsl(var(--text-secondary))]"
                                     : spi >= 1.0
                                     ? "bg-[hsl(var(--success))]/20 border-[hsl(var(--success))]/40 text-[hsl(var(--success))]"
                                     : spi >= 0.8
@@ -621,9 +660,9 @@ export function ProjectIndicatorsDrawer({
 
                           {/* Título y Descripción */}
                           <div>
-                            <h4 className="text-xs font-bold text-[hsl(var(--foreground))]">{ind.name}</h4>
+                            <h4 className="text-xs font-bold text-[hsl(var(--text-primary))]">{ind.name}</h4>
                             {ind.description && (
-                              <p className="text-3xs text-[hsl(var(--muted-foreground))] mt-0.5 line-clamp-2">
+                              <p className="text-3xs text-[hsl(var(--text-secondary))] mt-0.5 line-clamp-2">
                                 {ind.description}
                               </p>
                             )}
@@ -632,15 +671,15 @@ export function ProjectIndicatorsDrawer({
                           {/* Barra de Progreso y Metas */}
                           <div className="space-y-1.5 pt-1">
                             <div className="flex items-center justify-between text-3xs font-semibold">
-                              <span className="text-[hsl(var(--muted-foreground))]">
+                              <span className="text-[hsl(var(--text-secondary))]">
                                 Avance Actual:{" "}
-                                <strong className="text-[hsl(var(--foreground))]">
+                                <strong className="text-[hsl(var(--text-primary))]">
                                   {ind.current_value} {ind.unit_of_measure}
                                 </strong>
                               </span>
                               <span>
                                 Meta:{" "}
-                                <strong className="text-[hsl(var(--foreground))]">
+                                <strong className="text-[hsl(var(--text-primary))]">
                                   {ind.target_value} {ind.unit_of_measure}
                                 </strong>{" "}
                                 ({progress}%)
@@ -674,7 +713,7 @@ export function ProjectIndicatorsDrawer({
                                 onClick={() =>
                                   setExpandedIndicatorId(isExpanded ? null : ind.id)
                                 }
-                                className="px-2.5 py-1 rounded-md bg-[hsl(var(--surface-1))] text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] text-3xs font-semibold border border-[hsl(var(--border))] transition-all flex items-center gap-1"
+                                className="px-2.5 py-1 rounded-md bg-[hsl(var(--surface-1))] text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] text-3xs font-semibold border border-[hsl(var(--border))] transition-all flex items-center gap-1"
                               >
                                 <History size={11} /> Historial ({ind.records_count || 0})
                               </button>
@@ -683,14 +722,14 @@ export function ProjectIndicatorsDrawer({
                             <div className="flex items-center gap-1">
                               <button
                                 onClick={() => handleEditClick(ind)}
-                                className="p-1 rounded hover:bg-[hsl(var(--surface-3))] text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))]"
+                                className="p-1 rounded hover:bg-[hsl(var(--surface-3))] text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))]"
                                 title="Editar indicador"
                               >
                                 <Edit2 size={13} />
                               </button>
                               <button
                                 onClick={() => setIndicatorToDelete(ind.id)}
-                                className="p-1 rounded hover:bg-[hsl(var(--destructive))]/15 text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--destructive))]"
+                                className="p-1 rounded hover:bg-[hsl(var(--destructive))]/15 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--destructive))]"
                                 title="Eliminar indicador"
                               >
                                 <Trash2 size={13} />
@@ -703,45 +742,47 @@ export function ProjectIndicatorsDrawer({
                         {isExpanded && (
                           <div className="px-4 pb-4 pt-2 bg-[hsl(var(--surface-1))] border-t border-[hsl(var(--border))] space-y-2">
                             <div className="flex items-center justify-between">
-                              <h5 className="text-3xs font-bold uppercase tracking-wider text-[hsl(var(--muted-foreground))] flex items-center gap-1">
+                              <h5 className="text-3xs font-bold uppercase tracking-wider text-[hsl(var(--text-secondary))] flex items-center gap-1">
                                 <History size={12} /> Registro de Mediciones Periódicas (SPI)
                               </h5>
-                              <span className="text-3xs text-[hsl(var(--muted-foreground))]">
+                              <span className="text-3xs text-[hsl(var(--text-secondary))]">
                                 Responsable: {ind.creator_name || "Sistema"}
                               </span>
                             </div>
 
                             {(!ind.records || ind.records.length === 0) ? (
-                              <p className="text-3xs text-[hsl(var(--muted-foreground))] py-2 italic text-center">
+                              <p className="text-3xs text-[hsl(var(--text-secondary))] py-2 italic text-center">
                                 No hay mediciones periódicas reportadas aún para este indicador.
                               </p>
                             ) : (
                               <div className="space-y-1.5">
-                                {ind.records.map((rec) => (
+                                {ind.records.map((rec) => {
+                                  const evidenceUrl = getSafeProjectLink(rec.evidence_url);
+                                  return (
                                   <div
                                     key={rec.id}
                                     className="p-2 rounded-lg bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] flex items-center justify-between text-3xs"
                                   >
                                     <div className="flex items-center gap-2">
-                                      <span className="font-bold text-[hsl(var(--foreground))] px-1.5 py-0.5 rounded bg-[hsl(var(--surface-3))] border border-[hsl(var(--border))]">
+                                      <span className="font-bold text-[hsl(var(--text-primary))] px-1.5 py-0.5 rounded bg-[hsl(var(--surface-3))] border border-[hsl(var(--border))]">
                                         {rec.period}
                                       </span>
-                                      <span className="text-[hsl(var(--muted-foreground))]">
+                                      <span className="text-[hsl(var(--text-secondary))]">
                                         Meta: {rec.target_value} | Real:{" "}
-                                        <strong className="text-[hsl(var(--foreground))]">
+                                        <strong className="text-[hsl(var(--text-primary))]">
                                           {rec.actual_value}
                                         </strong>
                                       </span>
                                       {rec.notes && (
-                                        <span className="text-[hsl(var(--muted-foreground))] truncate max-w-xs">
+                                        <span className="text-[hsl(var(--text-secondary))] truncate max-w-xs">
                                           — {rec.notes}
                                         </span>
                                       )}
                                     </div>
                                     <div className="flex items-center gap-2">
-                                      {rec.evidence_url && (
+                                      {evidenceUrl && (
                                         <a
-                                          href={rec.evidence_url}
+                                          href={evidenceUrl}
                                           target="_blank"
                                           rel="noreferrer"
                                           className="text-[hsl(var(--primary))] hover:underline flex items-center gap-0.5"
@@ -752,18 +793,21 @@ export function ProjectIndicatorsDrawer({
                                       <span
                                         className={clsx(
                                           "px-2 py-0.5 rounded font-black",
-                                          (rec.spi || 1) >= 1.0
+                                          getIndicatorSpiStatus(rec.spi) === "optimal"
                                             ? "bg-[hsl(var(--success))]/15 text-[hsl(var(--success))]"
-                                            : (rec.spi || 1) >= 0.8
+                                            : getIndicatorSpiStatus(rec.spi) === "warning"
                                             ? "bg-[hsl(var(--warning))]/15 text-[hsl(var(--warning))]"
-                                            : "bg-[hsl(var(--destructive))]/15 text-[hsl(var(--destructive))]"
+                                            : getIndicatorSpiStatus(rec.spi) === "critical"
+                                            ? "bg-[hsl(var(--destructive))]/15 text-[hsl(var(--destructive))]"
+                                            : "bg-[hsl(var(--surface-3))] text-[hsl(var(--text-secondary))]"
                                         )}
                                       >
-                                        SPI: {(rec.spi || 1).toFixed(2)}
+                                        SPI: {rec.spi === null || rec.spi === undefined ? "—" : rec.spi.toFixed(2)}
                                       </span>
                                     </div>
                                   </div>
-                                ))}
+                                  );
+                                })}
                               </div>
                             )}
                           </div>
@@ -781,7 +825,7 @@ export function ProjectIndicatorsDrawer({
             <form onSubmit={handleSaveIndicator} className="space-y-4">
               <div className="p-4 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))]/60 space-y-3">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-xs font-bold flex items-center gap-1.5 text-[hsl(var(--foreground))]">
+                  <h3 className="text-xs font-bold flex items-center gap-1.5 text-[hsl(var(--text-primary))]">
                     <Layers size={14} className="text-[hsl(var(--primary))]" />
                     {editingId ? "Editar Indicador MGA" : "Definición Metodológica del Indicador MGA"}
                   </h3>
@@ -798,7 +842,7 @@ export function ProjectIndicatorsDrawer({
 
                 <div className="grid grid-cols-3 gap-3">
                   <div className="col-span-1 space-y-1">
-                    <label className="text-3xs font-bold uppercase tracking-wider text-[hsl(var(--muted-foreground))]">
+                    <label className="text-3xs font-bold uppercase tracking-wider text-[hsl(var(--text-secondary))]">
                       Código (Opcional)
                     </label>
                     <input
@@ -811,7 +855,7 @@ export function ProjectIndicatorsDrawer({
                   </div>
 
                   <div className="col-span-2 space-y-1">
-                    <label className="text-3xs font-bold uppercase tracking-wider text-[hsl(var(--muted-foreground))]">
+                    <label className="text-3xs font-bold uppercase tracking-wider text-[hsl(var(--text-secondary))]">
                       Nombre del Indicador *
                     </label>
                     <input
@@ -826,7 +870,7 @@ export function ProjectIndicatorsDrawer({
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-3xs font-bold uppercase tracking-wider text-[hsl(var(--muted-foreground))]">
+                  <label className="text-3xs font-bold uppercase tracking-wider text-[hsl(var(--text-secondary))]">
                     Descripción / Justificación Metodológica
                   </label>
                   <textarea
@@ -840,7 +884,7 @@ export function ProjectIndicatorsDrawer({
 
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1">
-                    <label className="text-3xs font-bold uppercase tracking-wider text-[hsl(var(--muted-foreground))]">
+                    <label className="text-3xs font-bold uppercase tracking-wider text-[hsl(var(--text-secondary))]">
                       Nivel MGA Canónico *
                     </label>
                     <select
@@ -857,7 +901,7 @@ export function ProjectIndicatorsDrawer({
                   </div>
 
                   <div className="space-y-1">
-                    <label className="text-3xs font-bold uppercase tracking-wider text-[hsl(var(--muted-foreground))]">
+                    <label className="text-3xs font-bold uppercase tracking-wider text-[hsl(var(--text-secondary))]">
                       Tipo de Cálculo MGA *
                     </label>
                     <select
@@ -878,7 +922,7 @@ export function ProjectIndicatorsDrawer({
 
                 <div className="grid grid-cols-4 gap-3">
                   <div className="space-y-1">
-                    <label className="text-3xs font-bold uppercase tracking-wider text-[hsl(var(--muted-foreground))]">
+                    <label className="text-3xs font-bold uppercase tracking-wider text-[hsl(var(--text-secondary))]">
                       Unidad Medida *
                     </label>
                     <input
@@ -891,7 +935,7 @@ export function ProjectIndicatorsDrawer({
                   </div>
 
                   <div className="space-y-1">
-                    <label className="text-3xs font-bold uppercase tracking-wider text-[hsl(var(--muted-foreground))]">
+                    <label className="text-3xs font-bold uppercase tracking-wider text-[hsl(var(--text-secondary))]">
                       Línea Base
                     </label>
                     <input
@@ -904,7 +948,7 @@ export function ProjectIndicatorsDrawer({
                   </div>
 
                   <div className="space-y-1">
-                    <label className="text-3xs font-bold uppercase tracking-wider text-[hsl(var(--muted-foreground))]">
+                    <label className="text-3xs font-bold uppercase tracking-wider text-[hsl(var(--text-secondary))]">
                       Meta Proyecto *
                     </label>
                     <input
@@ -918,7 +962,7 @@ export function ProjectIndicatorsDrawer({
                   </div>
 
                   <div className="space-y-1">
-                    <label className="text-3xs font-bold uppercase tracking-wider text-[hsl(var(--muted-foreground))]">
+                    <label className="text-3xs font-bold uppercase tracking-wider text-[hsl(var(--text-secondary))]">
                       Periodicidad *
                     </label>
                     <select
@@ -942,12 +986,12 @@ export function ProjectIndicatorsDrawer({
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <Award size={18} className="text-[hsl(var(--primary))]" />
-                      <h4 className="text-xs font-bold text-[hsl(var(--foreground))]">
+                      <h4 className="text-xs font-bold text-[hsl(var(--text-primary))]">
                         Diagnóstico Metodológico CREMA (MGA / BID)
                       </h4>
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className="text-3xs font-bold uppercase text-[hsl(var(--muted-foreground))]">
+                      <span className="text-3xs font-bold uppercase text-[hsl(var(--text-secondary))]">
                         Estado:
                       </span>
                       <span
@@ -965,7 +1009,7 @@ export function ProjectIndicatorsDrawer({
                     </div>
                   </div>
 
-                  <p className="text-3xs text-[hsl(var(--foreground))]/80">{cremaResult.summary}</p>
+                  <p className="text-3xs text-[hsl(var(--text-primary))]/80">{cremaResult.summary}</p>
 
                   {/* Tarjetas de los 5 criterios C, R, E, M, A */}
                   <div className="grid grid-cols-5 gap-2 pt-1">
@@ -987,7 +1031,7 @@ export function ProjectIndicatorsDrawer({
                             <AlertTriangle size={12} className="text-[hsl(var(--warning))]" />
                           )}
                         </div>
-                        <p className="text-3xs font-semibold text-[hsl(var(--muted-foreground))] truncate">
+                        <p className="text-3xs font-semibold text-[hsl(var(--text-secondary))] truncate">
                           {detail.name || key}
                         </p>
                         {detail.recommendations && detail.recommendations.length > 0 && (
@@ -1009,7 +1053,7 @@ export function ProjectIndicatorsDrawer({
                     resetForm();
                     setActiveTab("list");
                   }}
-                  className="px-3 py-1.5 rounded-lg border border-[hsl(var(--border))] text-2xs font-semibold text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--surface-2))]"
+                  className="px-3 py-1.5 rounded-lg border border-[hsl(var(--border))] text-2xs font-semibold text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))]"
                 >
                   Cancelar
                 </button>
@@ -1030,7 +1074,7 @@ export function ProjectIndicatorsDrawer({
             <form onSubmit={handleSaveRecord} className="space-y-4">
               <div className="p-4 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))]/60 space-y-3">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-xs font-bold flex items-center gap-1.5 text-[hsl(var(--foreground))]">
+                  <h3 className="text-xs font-bold flex items-center gap-1.5 text-[hsl(var(--text-primary))]">
                     <Clock size={14} className="text-[hsl(var(--primary))]" />
                     Reportar Medición Periódica & Cálculo SPI
                   </h3>
@@ -1040,9 +1084,9 @@ export function ProjectIndicatorsDrawer({
                 </div>
 
                 <div className="p-3 rounded-lg bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] space-y-1">
-                  <p className="text-3xs text-[hsl(var(--muted-foreground))] uppercase font-semibold">Indicador:</p>
+                  <p className="text-3xs text-[hsl(var(--text-secondary))] uppercase font-semibold">Indicador:</p>
                   <p className="text-xs font-bold">{targetIndicator.name}</p>
-                  <p className="text-3xs text-[hsl(var(--muted-foreground))]">
+                  <p className="text-3xs text-[hsl(var(--text-secondary))]">
                     Unidad: <strong>{targetIndicator.unit_of_measure}</strong> | Meta Global:{" "}
                     <strong>{targetIndicator.target_value}</strong>
                   </p>
@@ -1050,7 +1094,7 @@ export function ProjectIndicatorsDrawer({
 
                 <div className="grid grid-cols-3 gap-3">
                   <div className="space-y-1">
-                    <label className="text-3xs font-bold uppercase tracking-wider text-[hsl(var(--muted-foreground))]">
+                    <label className="text-3xs font-bold uppercase tracking-wider text-[hsl(var(--text-secondary))]">
                       Período *
                     </label>
                     <input
@@ -1064,7 +1108,7 @@ export function ProjectIndicatorsDrawer({
                   </div>
 
                   <div className="space-y-1">
-                    <label className="text-3xs font-bold uppercase tracking-wider text-[hsl(var(--muted-foreground))]">
+                    <label className="text-3xs font-bold uppercase tracking-wider text-[hsl(var(--text-secondary))]">
                       Meta del Período *
                     </label>
                     <input
@@ -1078,7 +1122,7 @@ export function ProjectIndicatorsDrawer({
                   </div>
 
                   <div className="space-y-1">
-                    <label className="text-3xs font-bold uppercase tracking-wider text-[hsl(var(--muted-foreground))]">
+                    <label className="text-3xs font-bold uppercase tracking-wider text-[hsl(var(--text-secondary))]">
                       Valor Real Alcanzado *
                     </label>
                     <input
@@ -1122,7 +1166,7 @@ export function ProjectIndicatorsDrawer({
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-3xs font-bold uppercase tracking-wider text-[hsl(var(--muted-foreground))]">
+                  <label className="text-3xs font-bold uppercase tracking-wider text-[hsl(var(--text-secondary))]">
                     URL de Evidencia o Respaldo (Google Drive, Acta, etc.)
                   </label>
                   <input
@@ -1135,7 +1179,7 @@ export function ProjectIndicatorsDrawer({
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-3xs font-bold uppercase tracking-wider text-[hsl(var(--muted-foreground))]">
+                  <label className="text-3xs font-bold uppercase tracking-wider text-[hsl(var(--text-secondary))]">
                     Observaciones y Justificación Cualitativa
                   </label>
                   <textarea
@@ -1156,7 +1200,7 @@ export function ProjectIndicatorsDrawer({
                     setActiveTab("list");
                     setTargetIndicator(null);
                   }}
-                  className="px-3 py-1.5 rounded-lg border border-[hsl(var(--border))] text-2xs font-semibold text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--surface-2))]"
+                  className="px-3 py-1.5 rounded-lg border border-[hsl(var(--border))] text-2xs font-semibold text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))]"
                 >
                   Cancelar
                 </button>

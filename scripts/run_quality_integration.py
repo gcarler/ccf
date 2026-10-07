@@ -23,6 +23,7 @@ import urllib.request
 from pathlib import Path
 
 from sqlalchemy import create_engine, inspect, text
+from sqlalchemy.engine import make_url
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:
@@ -90,6 +91,10 @@ def main() -> int:
         return 2
 
     child_env = environment.child_environment()
+    if args.suite == "projects":
+        database_name = make_url(environment.database_url).database
+        if database_name:
+            child_env["PROJECTS_QUALITY_TARGET_DATABASE"] = database_name
     if args.test_database_url:
         child_env["TEST_DATABASE_URL"] = args.test_database_url
 

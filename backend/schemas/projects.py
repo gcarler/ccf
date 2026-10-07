@@ -3,11 +3,12 @@ from __future__ import annotations
 import uuid
 from datetime import datetime, timezone
 from typing import Annotated, Any, List, Literal, Optional
+from urllib.parse import urlsplit
 from uuid import UUID
 
 from pydantic import BaseModel, BeforeValidator, ConfigDict, Field, field_validator, model_validator
 
-from backend.schemas._common import orm_config
+from backend.schemas._common import AwareDateTime, orm_config
 
 
 def coerce_uuid_to_str(v: Any) -> str:
@@ -17,6 +18,31 @@ def coerce_uuid_to_str(v: Any) -> str:
 
 
 UUIDStr = Annotated[str, BeforeValidator(coerce_uuid_to_str)]
+
+
+def _validate_project_link_url(value: Optional[str]) -> Optional[str]:
+    """Allow navigable URLs/paths while rejecting scriptable and ambiguous schemes."""
+    if value is None:
+        return None
+    normalized = value.strip()
+    if not normalized:
+        return None
+    if "\\" in normalized or any(ord(char) < 0x20 or ord(char) == 0x7F for char in normalized):
+        raise ValueError("El enlace contiene caracteres no permitidos")
+    try:
+        parsed = urlsplit(normalized)
+        if parsed.scheme:
+            if parsed.scheme.lower() not in {"http", "https"} or not parsed.hostname:
+                raise ValueError("El enlace debe usar HTTP o HTTPS")
+            if parsed.username is not None or parsed.password is not None:
+                raise ValueError("El enlace no puede incluir credenciales")
+        elif parsed.netloc or normalized.startswith("//"):
+            raise ValueError("No se permiten enlaces de red relativos")
+    except ValueError as exc:
+        if str(exc).startswith(("El enlace", "No se permiten")):
+            raise
+        raise ValueError("El enlace no tiene un formato válido") from exc
+    return normalized
 
 
 class TaskSupplyBase(BaseModel):
@@ -48,6 +74,8 @@ class ProjectPhaseSchema(BaseModel):
     slug: str
     color: str = "#94a3b8"
     order_index: int = 0
+    start_date: Optional[datetime] = None
+    end_date: Optional[datetime] = None
     model_config = orm_config
 
 
@@ -55,6 +83,14 @@ class ProjectPhaseInput(BaseModel):
     name: str = Field(..., min_length=1, max_length=50)
     slug: str = Field(..., min_length=1, max_length=20)
     color: str = "#94a3b8"
+    start_date: Optional[datetime] = None
+    end_date: Optional[datetime] = None
+
+    @model_validator(mode="after")
+    def _validate_phase_dates(self) -> ProjectPhaseInput:
+        if self.start_date and self.end_date and self.start_date > self.end_date:
+            raise ValueError("start_date no puede ser posterior a end_date de la fase")
+        return self
 
 
 class ProjectAttachment(BaseModel):
@@ -109,6 +145,11 @@ ProjectStatus = Annotated[
     BeforeValidator(_normalize_project_status_value),
 ]
 
+# Match persisted VARCHAR limits so oversized inputs fail validation (422)
+# rather than at flush time as an internal server error.
+PROJECT_TITLE_MAX_LENGTH = 200
+TASK_TITLE_MAX_LENGTH = 200
+
 
 def _strip_str_or_passthrough(v: Any) -> Any:
     """Strip whitespace from required task title before validation.
@@ -126,7 +167,7 @@ def _strip_str_or_passthrough(v: Any) -> Any:
 
 
 class ProjectTaskBase(BaseModel):
-    title: str = Field(..., min_length=1, max_length=500)
+    title: str = Field(..., min_length=1, max_length=TASK_TITLE_MAX_LENGTH)
     description: Optional[str] = None
     status: str = "todo"
     priority: ProjectPriority = "medium"
@@ -136,6 +177,13 @@ class ProjectTaskBase(BaseModel):
     node: Optional[str] = Field(default=None, max_length=50)
     labels: List[str] = Field(default_factory=list)
     attachments: List[ProjectAttachment] = Field(default_factory=list)
+
+    @field_validator("attachments", mode="before")
+    @classmethod
+    def _exclude_soft_deleted_attachments(cls, value: Any) -> Any:
+        if isinstance(value, (list, tuple)):
+            return [item for item in value if getattr(item, "deleted_at", None) is None]
+        return value
 
     @field_validator("title", mode="before")
     @classmethod
@@ -147,6 +195,12 @@ class ProjectTaskBase(BaseModel):
     def _node_strip(cls, v: Any) -> Any:
         return v.strip() if isinstance(v, str) and v.strip() else (None if isinstance(v, str) else v)
 
+    @model_validator(mode="after")
+    def _validate_dates(self) -> ProjectTaskBase:
+        if self.start_date and self.due_date and self.start_date > self.due_date:
+            raise ValueError("start_date no puede ser posterior a due_date")
+        return self
+
 
 class ProjectTaskCreate(ProjectTaskBase):
     project_id: Optional[UUIDStr] = None
@@ -154,7 +208,7 @@ class ProjectTaskCreate(ProjectTaskBase):
 
 
 class ProjectTaskUpdate(BaseModel):
-    title: Optional[str] = Field(default=None, min_length=1, max_length=500)
+    title: Optional[str] = Field(default=None, min_length=1, max_length=TASK_TITLE_MAX_LENGTH)
     description: Optional[str] = None
     status: Optional[str] = None
     priority: Optional[ProjectPriority] = None
@@ -170,6 +224,12 @@ class ProjectTaskUpdate(BaseModel):
     def _title_no_blank(cls, v: Any) -> Any:
         return _strip_str_or_passthrough(v)
 
+    @model_validator(mode="after")
+    def _validate_dates(self) -> ProjectTaskUpdate:
+        if self.start_date and self.due_date and self.start_date > self.due_date:
+            raise ValueError("start_date no puede ser posterior a due_date")
+        return self
+
 
 class ProjectTask(ProjectTaskBase):
     id: UUIDStr
@@ -179,6 +239,10 @@ class ProjectTask(ProjectTaskBase):
     supplies: List[TaskSupply] = Field(default_factory=list)
     subtasks: List["ProjectTask"] = Field(default_factory=list)
     model_config = orm_config
+
+
+class ProjectTaskPageItem(ProjectTask):
+    project_title: Optional[str] = None
 
 
 class ProjectKPIBase(BaseModel):
@@ -252,6 +316,11 @@ class ProjectExpenseBase(BaseModel):
 class ProjectExpenseCreate(ProjectExpenseBase):
     amount: float = Field(..., ge=0)
 
+    @field_validator("receipt_url")
+    @classmethod
+    def validate_receipt_url(cls, value: Optional[str]) -> Optional[str]:
+        return _validate_project_link_url(value)
+
 
 class ProjectExpenseUpdate(BaseModel):
     category: Optional[str] = Field(default=None, max_length=50)
@@ -260,6 +329,11 @@ class ProjectExpenseUpdate(BaseModel):
     date: Optional[datetime] = None
     receipt_url: Optional[str] = Field(default=None, max_length=500)
     status: Optional[Literal["planned", "committed", "paid"]] = None
+
+    @field_validator("receipt_url")
+    @classmethod
+    def validate_receipt_url(cls, value: Optional[str]) -> Optional[str]:
+        return _validate_project_link_url(value)
 
 
 class ProjectExpense(ProjectExpenseBase):
@@ -287,7 +361,7 @@ class ProjectBudgetSummary(BaseModel):
 
 
 class ProjectRiskBase(BaseModel):
-    title: str = Field(..., min_length=1, max_length=255)
+    title: str = Field(..., min_length=1, max_length=PROJECT_TITLE_MAX_LENGTH)
     category: str = Field(default="tecnico", max_length=50)
     probability: int = Field(default=3, ge=1, le=5)
     impact: int = Field(default=3, ge=1, le=5)
@@ -307,7 +381,7 @@ class ProjectRiskCreate(ProjectRiskBase):
 
 
 class ProjectRiskUpdate(BaseModel):
-    title: Optional[str] = Field(default=None, min_length=1, max_length=255)
+    title: Optional[str] = Field(default=None, min_length=1, max_length=PROJECT_TITLE_MAX_LENGTH)
     category: Optional[str] = Field(default=None, max_length=50)
     probability: Optional[int] = Field(default=None, ge=1, le=5)
     impact: Optional[int] = Field(default=None, ge=1, le=5)
@@ -507,7 +581,9 @@ class ProjectTimeLogBase(BaseModel):
 
 
 class ProjectTimeLogCreate(ProjectTimeLogBase):
-    pass
+    # Optional attribution to another same-sede persona; the endpoint
+    # validates tenant ownership before persisting the work log.
+    persona_id: Optional[UUIDStr] = None
 
 
 class ProjectTimeLog(ProjectTimeLogBase):
@@ -552,12 +628,95 @@ class ProjectTimeTrackingSummary(BaseModel):
     model_config = orm_config
 
 
+class ProjectExecutiveReportProject(BaseModel):
+    id: UUIDStr
+    title: str
+    description: str
+    status: str
+    priority: str
+    health_override: Optional[str] = None
+    progress_mode: Optional[str] = None
+    progress_percentage: float
+    budget_allocated: float
+    budget_spent: float
+    start_date: Optional[datetime] = None
+    target_date: Optional[datetime] = None
+    owner_name: str
+    sede_id: Optional[UUIDStr] = None
+    created_at: Optional[datetime] = None
+
+
+class ProjectExecutiveTasksMetrics(BaseModel):
+    total: int
+    completed: int
+    in_progress: int
+    todo: int
+    blocked: int
+    completion_rate: float
+
+
+class ProjectExecutiveRiskItem(BaseModel):
+    id: UUIDStr
+    title: str
+    category: str
+    probability: int
+    impact: int
+    severity: int
+    status: str
+    mitigation_plan: Optional[str] = None
+
+
+class ProjectExecutiveRiskMatrixCell(BaseModel):
+    probability: int
+    impact: int
+    severity_score: int
+    count: int
+    risk_ids: List[UUIDStr] = Field(default_factory=list)
+    active_count: int
+
+
+class ProjectExecutiveRiskKpis(BaseModel):
+    project_id: UUIDStr
+    total_risks: int
+    active_risks: int
+    mitigated_risks: int
+    occurred_risks: int
+    critical_count: int
+    high_count: int
+    medium_count: int
+    low_count: int
+    matrix_5x5: List[ProjectExecutiveRiskMatrixCell] = Field(default_factory=list)
+    by_category: dict[str, int] = Field(default_factory=dict)
+    risks: List[ProjectExecutiveRiskItem] = Field(default_factory=list)
+
+
+class ProjectExecutivePhaseItem(BaseModel):
+    id: UUIDStr
+    name: str
+    order_index: int
+    total_tasks: int
+    completed_tasks: int
+    progress_percent: float
+
+
+class ProjectExecutiveReportData(BaseModel):
+    project: ProjectExecutiveReportProject
+    tasks_metrics: ProjectExecutiveTasksMetrics
+    financial_kpis: ProjectBudgetSummary
+    raid_kpis: ProjectExecutiveRiskKpis
+    cpm_metrics: ProjectCriticalPathSummary
+    time_metrics: ProjectTimeTrackingSummary
+    phases: List[ProjectExecutivePhaseItem] = Field(default_factory=list)
+    generated_at: datetime
+    organization: str
+
+
 
 
 
 
 class ProjectBase(BaseModel):
-    title: str = Field(..., min_length=1, max_length=500)
+    title: str = Field(..., min_length=1, max_length=PROJECT_TITLE_MAX_LENGTH)
     description: Optional[str] = None
     status: ProjectStatus = "planning"
     owner_id: Optional[UUIDStr] = None
@@ -582,7 +741,7 @@ class ProjectCreate(ProjectBase):
 
 
 class ProjectUpdate(BaseModel):
-    title: Optional[str] = Field(default=None, min_length=1, max_length=500)
+    title: Optional[str] = Field(default=None, min_length=1, max_length=PROJECT_TITLE_MAX_LENGTH)
 
     @field_validator("title", mode="before")
     @classmethod
@@ -604,14 +763,14 @@ class ProjectUpdate(BaseModel):
 
 
 class ProjectMilestoneBase(BaseModel):
-    title: str
+    title: str = Field(..., max_length=PROJECT_TITLE_MAX_LENGTH)
     description: Optional[str] = None
     target_date: Optional[datetime] = None
     is_completed: Optional[bool] = False
 
 
 class ProjectMilestoneUpdate(BaseModel):
-    title: Optional[str] = None
+    title: Optional[str] = Field(default=None, max_length=PROJECT_TITLE_MAX_LENGTH)
     description: Optional[str] = None
     target_date: Optional[datetime] = None
     is_completed: Optional[bool] = None
@@ -652,6 +811,21 @@ class Project(ProjectBase):
     health_status: Literal["on_track", "at_risk", "off_track", "completed"] = "on_track"
     model_config = ConfigDict(from_attributes=True, populate_by_name=True)
 
+    @field_validator("tasks", "milestones", mode="before")
+    @classmethod
+    def _exclude_soft_deleted_children(cls, value: Any) -> Any:
+        if not isinstance(value, (list, tuple)):
+            return value
+        return [
+            item
+            for item in value
+            if (
+                item.get("deleted_at") is None
+                if isinstance(item, dict)
+                else getattr(item, "deleted_at", None) is None
+            )
+        ]
+
     @classmethod
     def model_validate(cls, obj, **kwargs):
         # Map ORM activity_logs relationship -> activities field
@@ -662,13 +836,13 @@ class Project(ProjectBase):
         # Calculate progress depending on progress_mode
         if instance.progress_mode == "manual":
             instance.progress_percent = max(0, min(100, round(instance.manual_progress or 0.0)))
-        elif instance.progress_mode == "milestones" and hasattr(obj, "milestones") and obj.milestones:
-            total_m = len(obj.milestones)
-            done_m = sum(1 for m in obj.milestones if getattr(m, "is_completed", False))
+        elif instance.progress_mode == "milestones" and instance.milestones:
+            total_m = len(instance.milestones)
+            done_m = sum(1 for milestone in instance.milestones if milestone.is_completed)
             instance.progress_percent = round((done_m / total_m) * 100) if total_m else 0
-        elif hasattr(obj, "tasks") and obj.tasks:
-            done = sum(1 for t in obj.tasks if getattr(t, "status", "") == "completed")
-            instance.progress_percent = round((done / len(obj.tasks)) * 100)
+        elif instance.tasks:
+            done = sum(1 for task in instance.tasks if task.status == "completed")
+            instance.progress_percent = round((done / len(instance.tasks)) * 100)
         else:
             instance.progress_percent = 0
 
@@ -680,11 +854,10 @@ class Project(ProjectBase):
         else:
             # Automatic health derived from overdue tasks or status
             now_dt = datetime.now(timezone.utc)
-            tasks_list = getattr(obj, "tasks", []) or []
             overdue_count = 0
-            for t in tasks_list:
-                d_date = getattr(t, "due_date", None)
-                t_status = getattr(t, "status", "")
+            for task in instance.tasks:
+                d_date = task.due_date
+                t_status = task.status
                 if t_status != "completed" and d_date:
                     # Compare timezone-aware
                     d_dt = d_date if hasattr(d_date, "tzinfo") and d_date.tzinfo else d_date.replace(tzinfo=timezone.utc)
@@ -699,6 +872,28 @@ class Project(ProjectBase):
                 instance.health_status = "on_track"
 
         return instance
+
+
+class ProjectSummary(ProjectBase):
+    """Small project collection item; never serializes child relationships."""
+
+    id: UUIDStr
+    created_at: AwareDateTime
+    updated_at: Optional[AwareDateTime] = None
+    task_count: int = 0
+    completed_task_count: int = 0
+    in_progress_task_count: int = 0
+    progress_percent: int = 0
+    health_status: Literal["on_track", "at_risk", "off_track", "completed"] = "on_track"
+    model_config = orm_config
+
+
+class ProjectAssigneeCandidate(BaseModel):
+    """Minimal same-sede identity used by the Projects assignment picker."""
+
+    id: UUIDStr
+    nombre_completo: str
+    model_config = orm_config
 
 
 class ProjectInboxItem(BaseModel):
@@ -794,13 +989,13 @@ class ProjectDocument(BaseModel):
 
 
 class ProjectDocumentCreate(BaseModel):
-    title: str
+    title: str = Field(..., max_length=PROJECT_TITLE_MAX_LENGTH)
     content: Optional[str] = ""
     project_id: UUIDStr
 
 
 class ProjectDocumentUpdate(BaseModel):
-    title: Optional[str] = None
+    title: Optional[str] = Field(default=None, max_length=PROJECT_TITLE_MAX_LENGTH)
     content: Optional[str] = None
 
 
@@ -820,7 +1015,7 @@ class ProjectWhiteboard(BaseModel):
 
 
 class ProjectWhiteboardUpdate(BaseModel):
-    title: Optional[str] = None
+    title: Optional[str] = Field(default=None, max_length=PROJECT_TITLE_MAX_LENGTH)
     elements_json: Optional[str] = None
     thumbnail_url: Optional[str] = None
     # Control de concurrencia optimista (PZ-07): el cliente envía el
@@ -929,7 +1124,7 @@ class TemplatePhaseItem(BaseModel):
 
 
 class TemplateTaskItem(BaseModel):
-    title: str = Field(..., min_length=1, max_length=500)
+    title: str = Field(..., min_length=1, max_length=TASK_TITLE_MAX_LENGTH)
     description: Optional[str] = None
     priority: str = "medium"
     phase_index: Optional[int] = None
@@ -979,7 +1174,7 @@ class ProjectTemplate(ProjectTemplateBase):
 
 
 class InstantiateProjectFromTemplate(BaseModel):
-    title: str = Field(..., min_length=1, max_length=500)
+    title: str = Field(..., min_length=1, max_length=PROJECT_TITLE_MAX_LENGTH)
     description: Optional[str] = None
     start_date: Optional[datetime] = None
     budget_allocated: Optional[float] = None
@@ -1037,6 +1232,7 @@ class EvaluateAutomationPayload(BaseModel):
     trigger_event: str
     task_id: Optional[UUIDStr] = None
     context_data: Optional[dict] = Field(default_factory=dict)
+    dry_run: bool = True
 
     def __init__(self, **data):
         if "context" in data and "context_data" not in data:
@@ -1066,6 +1262,11 @@ class ProjectIndicatorRecordBase(BaseModel):
 
 class ProjectIndicatorRecordCreate(ProjectIndicatorRecordBase):
     indicator_id: Optional[UUIDStr] = None
+
+    @field_validator("evidence_url")
+    @classmethod
+    def validate_evidence_url(cls, value: Optional[str]) -> Optional[str]:
+        return _validate_project_link_url(value)
 
 
 class ProjectIndicatorRecord(ProjectIndicatorRecordBase):

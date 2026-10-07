@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useId } from "react";
 import { RightPanel } from "@/components/ui/RightPanel";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/context/ToastContext";
@@ -24,10 +24,13 @@ export function ProjectBaselineDrawer({
 }: Props) {
   const { token } = useAuth();
   const { addToast } = useToast();
+  const formId = useId();
 
   const [loading, setLoading] = useState(false);
   const [latestBaseline, setLatestBaseline] = useState<ProjectBaseline | null>(null);
   const [baselinesHistory, setBaselinesHistory] = useState<ProjectBaseline[]>([]);
+  const [latestLoadError, setLatestLoadError] = useState(false);
+  const [historyLoadError, setHistoryLoadError] = useState(false);
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [baselineName, setBaselineName] = useState("");
   const [baselineDescription, setBaselineDescription] = useState("");
@@ -37,18 +40,33 @@ export function ProjectBaselineDrawer({
     if (!projectId || !token) return;
     try {
       setLoading(true);
-      const [latest, list] = await Promise.all([
-        apiFetch<ProjectBaseline>(`/projects/${projectId}/baseline`, { token }).catch(() => null),
-        apiFetch<ProjectBaseline[]>(`/projects/${projectId}/baselines`, { token }).catch(() => []),
+      setLatestLoadError(false);
+      setHistoryLoadError(false);
+      const [latestResult, historyResult] = await Promise.allSettled([
+        apiFetch<ProjectBaseline | null>(`/projects/${projectId}/baseline`, { token }),
+        apiFetch<ProjectBaseline[]>(`/projects/${projectId}/baselines`, { token }),
       ]);
-      setLatestBaseline(latest);
-      setBaselinesHistory(Array.isArray(list) ? list : []);
-    } catch {
-      // fallback silencioso
+      if (latestResult.status === "fulfilled") {
+        setLatestBaseline(latestResult.value);
+      } else {
+        setLatestLoadError(true);
+      }
+      if (historyResult.status === "fulfilled") {
+        setBaselinesHistory(Array.isArray(historyResult.value) ? historyResult.value : []);
+      } else {
+        setHistoryLoadError(true);
+      }
+      if (latestResult.status === "rejected" || historyResult.status === "rejected") {
+        addToast({
+          title: "No se pudo actualizar el historial de línea base",
+          description: "Parte de la información no está disponible. Reintenta la consulta.",
+          variant: "destructive",
+        });
+      }
     } finally {
       setLoading(false);
     }
-  }, [projectId, token]);
+  }, [addToast, projectId, token]);
 
   useEffect(() => {
     if (isOpen) {
@@ -109,6 +127,30 @@ export function ProjectBaselineDrawer({
       width={520}
     >
       <div className="flex flex-col h-full space-y-5 p-5 text-[hsl(var(--foreground))] overflow-y-auto">
+        {(latestLoadError || historyLoadError) && (
+          <div
+            className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[hsl(var(--destructive))]/40 bg-[hsl(var(--destructive))]/10 p-3"
+            role="alert"
+            aria-live="assertive"
+          >
+            <p className="text-xs text-[hsl(var(--destructive))]">
+              {latestLoadError && historyLoadError
+                ? "No se pudo consultar la línea base ni su historial."
+                : latestLoadError
+                  ? "No se pudo confirmar si existe una línea base."
+                  : "No se pudo cargar el historial de líneas base."}
+            </p>
+            <button
+              type="button"
+              onClick={() => void fetchBaselineData()}
+              disabled={loading}
+              className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] px-3 py-1.5 text-2xs font-bold text-[hsl(var(--foreground))] hover:bg-[hsl(var(--surface-3))] disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {loading ? "Consultando..." : "Reintentar carga"}
+            </button>
+          </div>
+        )}
+
         {/* Banner de Concepto */}
         <div className="p-4 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] flex items-start gap-3 shadow-xs">
           <div className="p-2.5 rounded-lg bg-[hsl(var(--primary))]/10 text-[hsl(var(--primary))] shrink-0">
@@ -169,8 +211,16 @@ export function ProjectBaselineDrawer({
               </div>
             </div>
           </div>
-        ) : (
-          !loading && (
+        ) : loading ? (
+          <div
+            className="space-y-3 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))]/50 p-5"
+            role="status"
+            aria-label="Cargando línea base"
+          >
+            <div className="h-4 w-2/5 animate-pulse rounded bg-[hsl(var(--surface-3))]" />
+            <div className="h-3 w-4/5 animate-pulse rounded bg-[hsl(var(--surface-3))]" />
+          </div>
+        ) : !latestLoadError ? (
             <div className="p-5 text-center rounded-xl border border-dashed border-[hsl(var(--border))] bg-[hsl(var(--surface-2))]/50 space-y-2">
               <Clock className="mx-auto text-[hsl(var(--muted-foreground))]" size={28} />
               <p className="text-xs font-bold text-[hsl(var(--foreground))]">Sin Línea Base Registrada</p>
@@ -178,8 +228,7 @@ export function ProjectBaselineDrawer({
                 No has congelado aún una versión planificada del cronograma para este proyecto.
               </p>
             </div>
-          )
-        )}
+        ) : null}
 
         {/* Botón / Formulario para Congelar Nueva Línea Base */}
         {!showCreateForm ? (
@@ -208,10 +257,11 @@ export function ProjectBaselineDrawer({
             </div>
 
             <div className="space-y-1">
-              <label className="text-2xs font-bold uppercase tracking-wider text-[hsl(var(--muted-foreground))]">
+              <label htmlFor={`${formId}-name`} className="text-2xs font-bold uppercase tracking-wider text-[hsl(var(--muted-foreground))]">
                 Nombre de la Línea Base
               </label>
               <input
+                id={`${formId}-name`}
                 type="text"
                 value={baselineName}
                 onChange={(e) => setBaselineName(e.target.value)}
@@ -221,10 +271,11 @@ export function ProjectBaselineDrawer({
             </div>
 
             <div className="space-y-1">
-              <label className="text-2xs font-bold uppercase tracking-wider text-[hsl(var(--muted-foreground))]">
+              <label htmlFor={`${formId}-description`} className="text-2xs font-bold uppercase tracking-wider text-[hsl(var(--muted-foreground))]">
                 Descripción / Motivo del Congelamiento (Opcional)
               </label>
               <textarea
+                id={`${formId}-description`}
                 value={baselineDescription}
                 onChange={(e) => setBaselineDescription(e.target.value)}
                 placeholder="Ej: Aprobación del comité ministerial para inicio de obra..."
@@ -310,6 +361,12 @@ export function ProjectBaselineDrawer({
         )}
 
         {/* Historial de Instantáneas Anteriores */}
+        {historyLoadError && baselinesHistory.length === 0 && (
+          <p className="text-2xs text-[hsl(var(--destructive))]" role="status">
+            El historial no está disponible hasta que se recupere la consulta.
+          </p>
+        )}
+
         {baselinesHistory.length > 1 && (
           <div className="pt-3 border-t border-[hsl(var(--border))] space-y-2.5">
             <h4 className="text-xs font-bold uppercase tracking-wider text-[hsl(var(--muted-foreground))] flex items-center gap-1.5">

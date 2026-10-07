@@ -1,122 +1,135 @@
-import { act, fireEvent, render, screen } from "@testing-library/react";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { useAuth } from "@/context/AuthContext";
-import { apiFetch } from "@/lib/http";
-import { InlineUserPicker } from "./InlineUserPicker";
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { InlineUserPicker } from './InlineUserPicker';
+import * as AuthContext from '@/context/AuthContext';
+import * as HttpModule from '@/lib/http';
 
-vi.mock("@/context/AuthContext", () => ({
-  useAuth: vi.fn(),
-}));
+const mockApiFetch = vi.spyOn(HttpModule, 'apiFetch');
 
-vi.mock("@/lib/http", () => ({
-  apiFetch: vi.fn(),
-}));
-
-const mockApiFetch = vi.mocked(apiFetch);
-const mockUseAuth = vi.mocked(useAuth);
-
-const laury = {
-  id: "persona-laury",
-  nombre_completo: "Laury Méndez",
-  first_name: "Laury",
-  last_name: "Méndez",
-  email: "laury@example.com",
-};
-
-async function advanceDebounce() {
-  await act(async () => {
-    vi.advanceTimersByTime(300);
-    await Promise.resolve();
-    await Promise.resolve();
-  });
-}
-
-async function flushRequest() {
-  await act(async () => {
-    await Promise.resolve();
-    await Promise.resolve();
-  });
-}
-
-describe("InlineUserPicker", () => {
+describe('InlineUserPicker', () => {
   beforeEach(() => {
-    vi.useFakeTimers();
-    mockApiFetch.mockReset();
+    vi.clearAllMocks();
     mockApiFetch.mockResolvedValue([]);
-    mockUseAuth.mockReturnValue({ token: "test-token" } as ReturnType<typeof useAuth>);
+    vi.spyOn(AuthContext, 'useAuth').mockReturnValue({
+      token: 'test-token',
+    } as Partial<AuthContext.AuthContextType> as AuthContext.AuthContextType);
   });
 
-  afterEach(() => {
-    vi.useRealTimers();
-  });
-
-  it("debounces server search for 300ms and uses the CRM search contract", async () => {
-    render(<InlineUserPicker value={null} onChange={vi.fn()} />);
-    fireEvent.click(screen.getByRole("button", { name: "Selector de persona asignada" }));
-    await advanceDebounce();
-
-    expect(mockApiFetch).toHaveBeenCalledWith("/crm/personas", {
-      method: "GET",
-      token: "test-token",
-      query: { search: undefined, limit: 50 },
-      signal: expect.any(AbortSignal),
+  it('uses the supplied Projects endpoint and server-side search parameter', async () => {
+    mockApiFetch.mockImplementation(async (_endpoint, options) => {
+      if (options?.query?.search === 'Lucía') {
+        return [{ id: 'persona-uuid', nombre_completo: 'Lucía Ramírez' }] as never;
+      }
+      return [] as never;
     });
-
-    const input = screen.getByPlaceholderText("Buscar usuario...");
-    fireEvent.change(input, { target: { value: "Laury Méndez & Ana" } });
-    vi.advanceTimersByTime(299);
-    expect(mockApiFetch).toHaveBeenCalledTimes(1);
-
-    await advanceDebounce();
-    expect(mockApiFetch).toHaveBeenLastCalledWith("/crm/personas", {
-      method: "GET",
-      token: "test-token",
-      query: { search: "Laury Méndez & Ana", limit: 50 },
-      signal: expect.any(AbortSignal),
-    });
-  });
-
-  it("selects a persona and reports its canonical id and display name", async () => {
-    mockApiFetch.mockResolvedValueOnce([laury]);
     const onChange = vi.fn();
-    render(<InlineUserPicker value={null} onChange={onChange} />);
 
-    fireEvent.click(screen.getByRole("button", { name: "Selector de persona asignada" }));
-    await advanceDebounce();
-    fireEvent.click(screen.getByRole("button", { name: /Laury Méndez/ }));
+    render(
+      <InlineUserPicker
+        endpoint="/projects/assignee-candidates"
+        value={null}
+        onChange={onChange}
+      />
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Selector de persona asignada' }));
+    const input = await screen.findByRole('textbox', { name: 'Buscar persona asignable' });
+    fireEvent.change(input, { target: { value: 'Lucía' } });
 
-    expect(onChange).toHaveBeenCalledWith("persona-laury", "Laury Méndez");
+    const candidate = await screen.findByRole('button', { name: /Lucía Ramírez/ }, { timeout: 2000 });
+
+    expect(mockApiFetch).toHaveBeenCalledWith(
+      '/projects/assignee-candidates',
+      expect.objectContaining({
+        token: 'test-token',
+        query: { search: 'Lucía', limit: 50 },
+      })
+    );
+    expect(mockApiFetch).not.toHaveBeenCalledWith(
+      expect.any(String),
+      expect.objectContaining({ query: expect.objectContaining({ q: 'Lucía' }) })
+    );
+    fireEvent.click(candidate);
+    expect(onChange).toHaveBeenCalledWith('persona-uuid', 'Lucía Ramírez');
   });
 
-  it("allows removing an assignment even when the current search has no results", async () => {
-    mockApiFetch.mockResolvedValueOnce(laury).mockResolvedValueOnce([]);
-    const onChange = vi.fn();
-    render(<InlineUserPicker value="persona-laury" onChange={onChange} />);
+  it('recovers from candidate search failure with an explicit retry', async () => {
+    mockApiFetch
+      .mockRejectedValueOnce(new Error('Offline'))
+      .mockResolvedValueOnce([{ id: 'persona-uuid', nombre_completo: 'Lucía Ramírez' }] as never);
 
-    fireEvent.click(screen.getByRole("button", { name: "Selector de persona asignada" }));
-    await advanceDebounce();
-    fireEvent.change(screen.getByPlaceholderText("Buscar usuario..."), {
-      target: { value: "sin coincidencias" },
+    render(
+      <InlineUserPicker
+        endpoint="/projects/assignee-candidates"
+        value={null}
+        onChange={vi.fn()}
+      />
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Selector de persona asignada' }));
+
+    const retry = await screen.findByRole('button', { name: 'Reintentar' });
+    fireEvent.click(retry);
+
+    expect(await screen.findByRole('button', { name: /Lucía Ramírez/ })).toBeInTheDocument();
+  });
+
+  it('shows an empty state when the server returns no matching candidates', async () => {
+    render(
+      <InlineUserPicker
+        endpoint="/projects/assignee-candidates"
+        value={null}
+        onChange={vi.fn()}
+      />
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Selector de persona asignada' }));
+
+    expect(await screen.findByText('Sin resultados')).toBeInTheDocument();
+  });
+
+  it('keeps the clear-assignment action available when search has no results', async () => {
+    mockApiFetch.mockImplementation(async (endpoint) => {
+      if (endpoint.endsWith('/persona-uuid')) {
+        return { id: 'persona-uuid', nombre_completo: 'Lucía Ramírez' } as never;
+      }
+      return [] as never;
     });
-    await advanceDebounce();
+    const onChange = vi.fn();
 
-    fireEvent.click(screen.getByRole("button", { name: "Quitar asignación" }));
+    render(
+      <InlineUserPicker
+        endpoint="/projects/assignee-candidates"
+        value="persona-uuid"
+        onChange={onChange}
+      />
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Selector de persona asignada' }));
+
+    const clearButton = await screen.findByRole('button', { name: 'Quitar asignación' });
+    expect(screen.getByText('Sin resultados')).toBeInTheDocument();
+    fireEvent.click(clearButton);
+
     expect(onChange).toHaveBeenCalledWith(null, null);
   });
 
-  it("preserves the assigned person's name when the selected record is outside the search result", async () => {
-    mockApiFetch.mockResolvedValueOnce(laury).mockResolvedValueOnce([]);
-    render(<InlineUserPicker value="persona-laury" onChange={vi.fn()} />);
-
-    await flushRequest();
-    expect(screen.getByTitle("Asignado a Laury Méndez")).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "Selector de persona asignada" }));
-    await advanceDebounce();
-    fireEvent.change(screen.getByPlaceholderText("Buscar usuario..."), {
-      target: { value: "otra búsqueda" },
+  it('resolves a selected persona through the supplied scoped endpoint', async () => {
+    mockApiFetch.mockImplementation(async (endpoint) => {
+      if (endpoint === '/projects/assignee-candidates/persona-uuid') {
+        return { id: 'persona-uuid', nombre_completo: 'Lucía Ramírez' } as never;
+      }
+      return [] as never;
     });
-    await advanceDebounce();
 
-    expect(screen.getByTitle("Asignado a Laury Méndez")).toBeInTheDocument();
+    render(
+      <InlineUserPicker
+        endpoint="/projects/assignee-candidates"
+        value="persona-uuid"
+        onChange={vi.fn()}
+      />
+    );
+
+    await waitFor(() => expect(screen.getByTitle('Asignado a Lucía Ramírez')).toBeInTheDocument());
+    expect(mockApiFetch).toHaveBeenCalledWith(
+      '/projects/assignee-candidates/persona-uuid',
+      expect.objectContaining({ method: 'GET', token: 'test-token' })
+    );
   });
 });

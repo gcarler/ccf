@@ -1,5 +1,6 @@
 "use client";
 
+import dynamic from 'next/dynamic';
 import {
     Calendar,
     PencilRuler,
@@ -7,18 +8,34 @@ import {
     Trash2,
 } from 'lucide-react';
 import { useProjectUpdate } from '@/context/ProjectUpdateContext';
-import TaskTableView from '@/components/projects/TaskTableView';
-import ProjectListView from '@/components/projects/ProjectListView';
-import ProjectCalendarView from '@/components/projects/ProjectCalendarView';
-import ProjectGanttView from '@/components/projects/ProjectGanttView';
-
-import ProjectWikiEditor from '@/components/projects/ProjectWikiEditor';
-import ProjectChatPanel from '@/components/projects/ProjectChatPanel';
-import { ProjectKanbanBoard } from '@/components/projects/ProjectKanbanBoard';
-import { ProjectMasterView } from '@/components/projects/ProjectMasterView';
-import ProjectActivityFeed from '@/components/projects/ProjectActivityFeed';
 import type { ViewType } from '@/components/ViewSwitcher';
 import type { ProjectTaskRecord } from '@/types/projects';
+
+function ProjectViewLoading() {
+    return (
+        <div
+            className="min-h-48 h-full w-full animate-pulse rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))]"
+            role="status"
+            aria-label="Cargando vista del proyecto"
+        />
+    );
+}
+
+const TaskTableView = dynamic(() => import('@/components/projects/TaskTableView'), { loading: ProjectViewLoading });
+const ProjectListView = dynamic(() => import('@/components/projects/ProjectListView'), { loading: ProjectViewLoading });
+const ProjectCalendarView = dynamic(() => import('@/components/projects/ProjectCalendarView'), { loading: ProjectViewLoading });
+const ProjectGanttView = dynamic(() => import('@/components/projects/ProjectGanttView'), { loading: ProjectViewLoading });
+const ProjectWikiEditor = dynamic(() => import('@/components/projects/ProjectWikiEditor'), { loading: ProjectViewLoading });
+const ProjectChatPanel = dynamic(() => import('@/components/projects/ProjectChatPanel'), { loading: ProjectViewLoading });
+const ProjectKanbanBoard = dynamic(
+    () => import('@/components/projects/ProjectKanbanBoard').then((module) => module.ProjectKanbanBoard),
+    { loading: ProjectViewLoading },
+);
+const ProjectMasterView = dynamic(
+    () => import('@/components/projects/ProjectMasterView').then((module) => module.ProjectMasterView),
+    { loading: ProjectViewLoading },
+);
+const ProjectActivityFeed = dynamic(() => import('@/components/projects/ProjectActivityFeed'), { loading: ProjectViewLoading });
 
 interface ProjectViewsContentProps {
     viewType: ViewType;

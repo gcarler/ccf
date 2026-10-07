@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import asyncio
 import json
 import logging
 import uuid
@@ -10,6 +9,7 @@ from uuid import UUID
 
 from fastapi import (
     APIRouter,
+    BackgroundTasks,
     Depends,
     File,
     Form,
@@ -22,8 +22,9 @@ from fastapi import (
     WebSocketDisconnect,
     status,
 )
+from fastapi.responses import JSONResponse
 from jose import jwt as _jwt
-from sqlalchemy import Integer, and_, cast, func
+from sqlalchemy import Integer, and_, cast, func, or_
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, selectinload
 
@@ -120,7 +121,7 @@ def _notify_comment_mentions(
         author_id=comment.author_id,
         title=f"Te mencionaron en un comentario{task_title}",
         content=f"{comment.content[:120]}{'...' if len(comment.content) > 120 else ''}",
-        url=f"/plataforma/proyectos/{project_id}{'/tareas/' + str(task_id) if task_id else ''}",
+        url=f"/plataforma/projects/{project_id}?task={task_id}" if task_id else f"/plataforma/projects/{project_id}",
         sede_id=user_sede,
     )
 
@@ -136,7 +137,7 @@ def list_all_my_tasks(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("projects", "read")),
 ):
-    """Obtiene todas las tareas asignadas al usuario actual de todos los proyectos.
+    """Obtiene todas las tareas asignadas; mantiene el contrato array legacy.
 
     Axioma 3 — strict scope: solo se devuelven tareas de proyectos en la
     ``sede_id`` del actor. Superadmin (sin sede) ve todo.
@@ -151,14 +152,51 @@ def list_all_my_tasks(
         .filter(
             models.ProjectTask.assignee_id == persona_id,
             models.ProjectTask.deleted_at.is_(None),
+            models.Project.deleted_at.is_(None),
         )
     )
-    if user_sede:
+    if user_sede is not None:
         q = q.filter(models.Project.sede_id == user_sede)
-    tasks = q.all()
+    tasks = (
+        q.options(
+            selectinload(models.ProjectTask.project),
+            selectinload(models.ProjectTask.supplies),
+            selectinload(models.ProjectTask.attachments),
+            selectinload(models.ProjectTask.subtasks),
+        )
+        .order_by(models.ProjectTask.created_at.desc(), models.ProjectTask.id.desc())
+        .all()
+    )
     for t in tasks:
         _prepare_task_for_response(t)
     return tasks
+
+
+@router.get("/tasks/page", response_model=schemas.PaginatedResponse[schemas.ProjectTaskPageItem])
+def list_my_tasks_page(
+    offset: int = Query(0, ge=0),
+    limit: int = Query(50, ge=1, le=100),
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("projects", "read")),
+):
+    """Bounded page for the Projects task workspace; legacy array route remains."""
+    persona_id = get_user_persona_id(db, current_user.id)
+    if not persona_id:
+        return {"items": [], "total": 0, "skip": offset, "limit": limit}
+    user_sede = get_user_sede_id(db, current_user.id)
+    tasks, total = crud.get_assigned_project_tasks_page(
+        db,
+        persona_id=persona_id,
+        sede_id=user_sede,
+        offset=offset,
+        limit=limit,
+    )
+    items = []
+    for task in tasks:
+        _prepare_task_for_response(task)
+        item = schemas.ProjectTaskPageItem.model_validate(task)
+        items.append(item.model_copy(update={"project_title": task.project.title if task.project else None}))
+    return {"items": items, "total": total, "skip": offset, "limit": limit}
 
 
 def _utcnow() -> datetime:
@@ -209,6 +247,10 @@ def _ensure_project(db: Session, project_id: str, user_sede=None) -> models.Proj
         user_sede: Actor's sede. ``None`` ⇒ superadmin path, no scope
             filter is applied.
     """
+    target_uuid = _to_uuid(project_id)
+    if not isinstance(target_uuid, uuid.UUID):
+        raise HTTPException(status_code=404, detail="Project not found")
+
     project = (
         db.query(models.Project)
         .options(
@@ -220,7 +262,7 @@ def _ensure_project(db: Session, project_id: str, user_sede=None) -> models.Proj
             selectinload(models.Project.kpis),
             selectinload(models.Project.dependencies),
         )
-        .filter(models.Project.id == _to_uuid(project_id), models.Project.deleted_at.is_(None))
+        .filter(models.Project.id == target_uuid, models.Project.deleted_at.is_(None))
         .first()
     )
     if not project:
@@ -279,6 +321,21 @@ def _ensure_milestone_in_project(db: Session, project_id: str, milestone_id: str
     if not milestone:
         raise HTTPException(status_code=404, detail="Milestone not found in project")
     return milestone
+
+
+def _ensure_phase_in_project(db: Session, project_id: str, phase_id: str) -> models.ProjectPhase:
+    phase = (
+        db.query(models.ProjectPhase)
+        .filter(
+            models.ProjectPhase.id == _to_uuid(phase_id),
+            models.ProjectPhase.project_id == _to_uuid(project_id),
+            models.ProjectPhase.deleted_at.is_(None),
+        )
+        .first()
+    )
+    if not phase:
+        raise HTTPException(status_code=404, detail="Phase not found in project")
+    return phase
 
 
 def _ensure_attachment_in_task(
@@ -497,10 +554,13 @@ def require_project_access(min_level: str = "read"):
         if user_sede is not None and (project_id or task_id):
             target_project_id = None
             if task_id:
+                task_uuid = _to_uuid(task_id)
+                if not isinstance(task_uuid, uuid.UUID):
+                    raise HTTPException(status_code=404, detail="Task not found")
                 task_row = (
                     db.query(models.ProjectTask.project_id)
                     .filter(
-                        models.ProjectTask.id == _to_uuid(task_id),
+                        models.ProjectTask.id == task_uuid,
                         models.ProjectTask.deleted_at.is_(None),
                     )
                     .first()
@@ -513,10 +573,13 @@ def require_project_access(min_level: str = "read"):
                 # where the URL says it is.
                 if project_id:
                     path_project_uuid = _to_uuid(project_id)
-                    if str(target_project_id) != str(path_project_uuid):
+                    if not isinstance(path_project_uuid, uuid.UUID) or str(target_project_id) != str(path_project_uuid):
                         raise HTTPException(status_code=404, detail="Task not found in project")
             elif project_id:
-                target_project_id = _to_uuid(project_id)
+                project_uuid = _to_uuid(project_id)
+                if not isinstance(project_uuid, uuid.UUID):
+                    raise HTTPException(status_code=404, detail="Project not found")
+                target_project_id = project_uuid
 
             if target_project_id is not None:
                 project_sede = (
@@ -705,6 +768,13 @@ def _validate_whiteboard_json(elements_json: str) -> None:
         _items_are_objects(parsed["objects"])
 
 
+def _whiteboard_utc(value: datetime) -> datetime:
+    """Normaliza timestamps de versión (SQLite puede devolverlos sin tzinfo)."""
+    if value.tzinfo is None:
+        return value.replace(tzinfo=timezone.utc)
+    return value.astimezone(timezone.utc)
+
+
 # Canonical 4-phase set used when a project has no active Phase rows
 # configured (most often in tests that bypass ``create_default_phases``).
 # This is intentionally a tight allow-list, not a free-string fallback.
@@ -734,31 +804,9 @@ def _normalize_task_enums(task: models.ProjectTask) -> None:
         task.status = _COMPAT_STATUS_MAP[task.status]
 
 
-def _serialize_attachment(attachment: models.ProjectAttachment) -> dict:
-    return {
-        "id": attachment.id,
-        "task_id": attachment.task_id,
-        "filename": attachment.filename,
-        "file_url": attachment.file_url,
-        "file_type": attachment.file_type,
-        "file_size": attachment.file_size,
-        "created_at": attachment.created_at,
-    }
-
-
-def _serialize_task_attachments(task: models.ProjectTask) -> models.ProjectTask:
-    task.__dict__["attachments"] = [
-        _serialize_attachment(attachment)
-        for attachment in (task.attachments or [])
-        if getattr(attachment, "deleted_at", None) is None
-    ]
-    return task
-
-
 def _prepare_task_for_response(task: models.ProjectTask) -> models.ProjectTask:
     _normalize_task_enums(task)
     _normalize_dates(task)
-    _serialize_task_attachments(task)
     if hasattr(task, "supplies") and task.supplies:
         task.supplies = [s for s in task.supplies if s.deleted_at is None]
     if hasattr(task, "subtasks") and task.subtasks:
@@ -792,6 +840,7 @@ def _normalize_dates(obj):
         "target_date",
         "due_date",
         "start_date",
+        "end_date",
         "updated_at",
         "last_edited_at",
     ]:
@@ -818,6 +867,61 @@ def _normalize_dates(obj):
     return obj
 
 
+@router.get("/assignee-candidates", response_model=List[schemas.ProjectAssigneeCandidate])
+def list_project_assignee_candidates(
+    search: Optional[str] = Query(None, max_length=100),
+    limit: int = Query(50, ge=1, le=50),
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("projects", "read")),
+):
+    """Return minimal candidate data scoped to the authenticated Projects tenant."""
+    user_sede = get_user_sede_id(db, current_user.id)
+    if not user_sede:
+        raise HTTPException(status_code=409, detail="El usuario no tiene una sede asignada")
+
+    sede_uuid = UUID(str(user_sede))
+    query = db.query(models.Persona).filter(models.Persona.sede_id == sede_uuid)
+    search_term = (search or "").strip()
+    if search_term:
+        pattern = f"%{search_term}%"
+        query = query.filter(
+            or_(
+                models.Persona.first_name.ilike(pattern),
+                models.Persona.last_name.ilike(pattern),
+                models.Persona.nombre_completo.ilike(pattern),
+            )
+        )
+
+    candidates = query.order_by(
+        models.Persona.first_name.asc(), models.Persona.last_name.asc(), models.Persona.id.asc()
+    ).limit(limit).all()
+    return [
+        schemas.ProjectAssigneeCandidate(id=person.id, nombre_completo=person.nombre_completo)
+        for person in candidates
+    ]
+
+
+@router.get("/assignee-candidates/{persona_id}", response_model=schemas.ProjectAssigneeCandidate)
+def get_project_assignee_candidate(
+    persona_id: UUID,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("projects", "read")),
+):
+    """Resolve a selected assignment name without requiring CRM access."""
+    user_sede = get_user_sede_id(db, current_user.id)
+    if not user_sede:
+        raise HTTPException(status_code=409, detail="El usuario no tiene una sede asignada")
+
+    person = (
+        db.query(models.Persona)
+        .filter(models.Persona.id == persona_id, models.Persona.sede_id == UUID(str(user_sede)))
+        .first()
+    )
+    if not person:
+        raise HTTPException(status_code=404, detail="Persona no encontrada")
+    return schemas.ProjectAssigneeCandidate(id=person.id, nombre_completo=person.nombre_completo)
+
+
 @router.get("", response_model=List[schemas.Project])
 def list_projects(
     status_filter: Optional[str] = Query(None, alias="status"),
@@ -841,10 +945,104 @@ def list_projects(
     if owner_id:
         query = query.filter(models.Project.owner_id == owner_id)
 
-    projects = query.order_by(models.Project.created_at.desc()).all()
+    projects = query.order_by(models.Project.created_at.desc(), models.Project.id.desc()).all()
     for p in projects:
         _prepare_project_for_response(p)
     return projects
+
+
+@router.get("/page", response_model=schemas.PaginatedResponse[schemas.Project])
+def list_projects_page(
+    status_filter: Optional[str] = Query(None, alias="status"),
+    owner_id: Optional[UUID] = None,
+    search: Optional[str] = Query(None, max_length=200),
+    offset: int = Query(0, ge=0),
+    limit: int = Query(50, ge=1, le=100),
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("projects", "read")),
+):
+    """Paginated listing for interactive screens; legacy ``/projects`` stays compatible."""
+    user_sede = get_user_sede_id(db, current_user.id)
+    projects, total = crud.get_projects_page(
+        db,
+        offset=offset,
+        limit=limit,
+        sede_id=user_sede,
+        status_filter=status_filter,
+        owner_id=owner_id,
+        search=search,
+    )
+    for project in projects:
+        _prepare_project_for_response(project)
+    return {"items": projects, "total": total, "skip": offset, "limit": limit}
+
+
+@router.get("/summary-page", response_model=schemas.PaginatedResponse[schemas.ProjectSummary])
+def list_project_summaries_page(
+    status_filter: Optional[str] = Query(None, alias="status"),
+    owner_id: Optional[UUID] = None,
+    search: Optional[str] = Query(None, max_length=200),
+    offset: int = Query(0, ge=0),
+    limit: int = Query(50, ge=1, le=100),
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("projects", "read")),
+):
+    """Bounded collection for overview screens; returns aggregates, not child graphs."""
+    user_sede = get_user_sede_id(db, current_user.id)
+    rows, total = crud.get_project_summaries_page(
+        db,
+        offset=offset,
+        limit=limit,
+        sede_id=user_sede,
+        status_filter=status_filter,
+        owner_id=owner_id,
+        search=search,
+    )
+    items = []
+    for row in rows:
+        project = row["project"]
+        item = schemas.ProjectSummary.model_validate({
+            "id": project.id,
+            "title": project.title,
+            "description": project.description,
+            "status": project.status,
+            "owner_id": project.owner_id,
+            "color": project.color,
+            "icon": project.icon,
+            "start_date": project.start_date,
+            "target_date": project.target_date,
+            "progress_mode": project.progress_mode,
+            "manual_progress": project.manual_progress,
+            "budget_allocated": project.budget_allocated,
+            "budget_spent": project.budget_spent,
+            "health_override": project.health_override,
+            "created_at": project.created_at,
+            "updated_at": project.updated_at,
+            "task_count": row["task_count"],
+            "completed_task_count": row["completed_task_count"],
+            "in_progress_task_count": row["in_progress_task_count"],
+        })
+        if item.status == "completed":
+            item.health_status = "completed"
+        elif item.health_override:
+            item.health_status = item.health_override
+        elif row["overdue_task_count"] >= 2:
+            item.health_status = "off_track"
+        elif row["overdue_task_count"] == 1:
+            item.health_status = "at_risk"
+        else:
+            item.health_status = "on_track"
+
+        if item.progress_mode == "manual":
+            item.progress_percent = max(0, min(100, round(item.manual_progress or 0)))
+        elif item.progress_mode == "milestones" and row["milestone_count"]:
+            item.progress_percent = round(
+                row["completed_milestone_count"] / row["milestone_count"] * 100
+            )
+        elif item.task_count:
+            item.progress_percent = round(item.completed_task_count / item.task_count * 100)
+        items.append(item)
+    return {"items": items, "total": total, "skip": offset, "limit": limit}
 
 
 @router.post("", response_model=schemas.Project, status_code=status.HTTP_201_CREATED)
@@ -855,9 +1053,32 @@ def create_project(
 ):
     owner_persona_id = get_user_persona_id(db, current_user.id)
     user_sede = get_user_sede_id(db, current_user.id)
-    db_project = crud.create_project(db, project, owner_persona_id=owner_persona_id, sede_id=user_sede)
-
-    crud.create_default_phases(db, db_project.id)
+    if not user_sede:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="El usuario autenticado no tiene una sede asignada para crear proyectos",
+        )
+    requested_owner_id = project.owner_id or owner_persona_id
+    if requested_owner_id is None:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Asigna un responsable o vincula el usuario autenticado a una persona antes de crear el proyecto",
+        )
+    _assert_assignee_in_sede(db, requested_owner_id, user_sede)
+    try:
+        db_project = crud.create_project(
+            db,
+            project,
+            owner_persona_id=requested_owner_id,
+            sede_id=user_sede,
+            commit=False,
+        )
+        crud.create_default_phases(db, db_project.id, commit=False)
+        db.commit()
+        db.refresh(db_project)
+    except Exception:
+        db.rollback()
+        raise
 
     if owner_persona_id:
         crud.create_activity_log(
@@ -926,8 +1147,20 @@ def set_project_phases(
                 detail=f"No se puede eliminar la fase '{next(iter(removed))}': tiene {has_tasks} tarea(s) asignada(s). Mueve las tareas primero.",
             )
 
-    phase_dicts = [{"name": p.name, "slug": p.slug, "color": p.color, "order_index": i} for i, p in enumerate(phases)]
+    phase_dicts = [
+        {
+            "name": p.name,
+            "slug": p.slug,
+            "color": p.color,
+            "order_index": i,
+            "start_date": getattr(p, "start_date", None),
+            "end_date": getattr(p, "end_date", None),
+        }
+        for i, p in enumerate(phases)
+    ]
     created = crud.set_project_phases(db, _to_uuid(project_id), phase_dicts)
+    for ph in created:
+        _normalize_dates(ph)
     return created
 
 
@@ -1021,6 +1254,8 @@ def create_project_task(
 ):
     user_sede = get_user_sede_id(db, current_user.id)
     _ensure_project(db, project_id, user_sede=user_sede)
+    if task.parent_id:
+        _ensure_task_in_project(db, project_id, str(task.parent_id))
     # Race-condition fix: acquire a row lock on the parent project so the
     # subsequent MAX(order_index) + INSERT is serialized across concurrent
     # task creations. On PostgreSQL this is a real SELECT ... FOR UPDATE;
@@ -1030,6 +1265,17 @@ def create_project_task(
     _normalize_task_payload(payload)
     _assert_status_in_project_phases(db, project_id, payload.get("status"))
     _assert_assignee_in_sede(db, payload.get("assignee_id"), user_sede)
+    try:
+        crud.validate_task_dates_within_phase(
+            db,
+            project_id,
+            status_slug=payload.get("status"),
+            node=payload.get("node"),
+            start_date=payload.get("start_date"),
+            due_date=payload.get("due_date"),
+        )
+    except (crud.TaskDateOutOfBoundsError, ValueError) as exc:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(exc)) from exc
     max_order = (
         db.query(func.max(models.ProjectTask.order_index))
         .filter(models.ProjectTask.project_id == _to_uuid(project_id))
@@ -1431,10 +1677,38 @@ def update_task(
         _assert_status_in_project_phases(db, task.project_id, update_data["status"])
     if "assignee_id" in update_data:
         _assert_assignee_in_sede(db, update_data["assignee_id"], user_sede)
+
+    effective_status = update_data.get("status", task.status)
+    effective_node = update_data.get("node", getattr(task, "node", None))
+    effective_start = update_data.get("start_date", task.start_date)
+    effective_due = update_data.get("due_date", task.due_date)
+    try:
+        crud.validate_task_dates_within_phase(
+            db,
+            task.project_id,
+            status_slug=effective_status,
+            node=effective_node,
+            start_date=effective_start,
+            due_date=effective_due,
+            task_id=task.id,
+        )
+    except (crud.TaskDateOutOfBoundsError, ValueError) as exc:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(exc)) from exc
+
     previous_assignee_id = getattr(task, "assignee_id", None)
+    previous_values = {key: getattr(task, key, None) for key in update_data}
     for key, value in update_data.items():
         setattr(task, key, value)
     _normalize_task_enums(task)
+    changed_fields = [key for key in update_data if previous_values[key] != getattr(task, key, None)]
+    if changed_fields:
+        _log_project_activity(
+            db,
+            str(task.project_id),
+            current_user.id,
+            "task_updated",
+            f"Tarea '{task.title}' actualizada: {', '.join(changed_fields)}",
+        )
     task.updated_at = _utcnow()
     db.commit()
     db.refresh(task)
@@ -1788,6 +2062,7 @@ def create_project_template_endpoint(
             template_in=payload,
             creator_persona_id=creator_persona_id,
             sede_id=user_sede,
+            can_manage_global=_has_role_based_project_access(db, current_user, "manage"),
         )
         _normalize_dates(template)
         return template
@@ -1832,6 +2107,7 @@ def update_project_template_endpoint(
         template_id=_to_uuid(template_id),
         template_in=payload,
         sede_id=user_sede,
+        can_manage_global=_has_role_based_project_access(db, current_user, "manage"),
     )
     if not template:
         raise HTTPException(status_code=404, detail="Plantilla no encontrada")
@@ -1850,7 +2126,12 @@ def delete_project_template_endpoint(
 ):
     """Elimina (soft-delete) una plantilla de proyecto."""
     user_sede = get_user_sede_id(db, current_user.id)
-    deleted = crud.delete_project_template(db, _to_uuid(template_id), sede_id=user_sede)
+    deleted = crud.delete_project_template(
+        db,
+        _to_uuid(template_id),
+        sede_id=user_sede,
+        can_manage_global=_has_role_based_project_access(db, current_user, "manage"),
+    )
     if not deleted:
         raise HTTPException(status_code=404, detail="Plantilla no encontrada")
     return {"ok": True, "message": "Plantilla eliminada correctamente"}
@@ -1877,14 +2158,16 @@ def instantiate_project_from_template_endpoint(
     """Instancia atómicamente un nuevo proyecto a partir de una plantilla."""
     user_sede = get_user_sede_id(db, current_user.id)
     if not user_sede:
-        first_sede = db.query(models.ChurchLocation).filter(models.ChurchLocation.deleted_at.is_(None)).first()
-        user_sede = first_sede.id if first_sede else None
-        if not user_sede:
-            raise HTTPException(status_code=409, detail="No se pudo determinar sede para instanciar el proyecto")
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="El usuario autenticado no tiene una sede asignada para instanciar proyectos",
+        )
 
     creator_persona_id = get_user_persona_id(db, current_user.id)
     if not creator_persona_id:
         raise HTTPException(status_code=401, detail="No se pudo determinar la persona autenticada")
+    requested_owner_id = payload.owner_id or creator_persona_id
+    _assert_assignee_in_sede(db, requested_owner_id, user_sede)
 
     try:
         project = crud.create_project_from_template(
@@ -2134,8 +2417,32 @@ def update_project_whiteboard(
     # que una pizarra borrada debe restaurarse (deleted_at = NULL) en lugar de
     # dejar un hueco invisible que sigue aceptando 200 sin aparecer en GET.
     board = (
-        db.query(models.ProjectWhiteboard).filter(models.ProjectWhiteboard.project_id == _to_uuid(project_id)).first()
+        db.query(models.ProjectWhiteboard)
+        .filter(models.ProjectWhiteboard.project_id == _to_uuid(project_id))
+        .with_for_update()
+        .first()
     )
+
+    if payload.base_updated_at is not None:
+        current_updated_at = _whiteboard_utc(board.updated_at) if board and board.updated_at else None
+        requested_updated_at = _whiteboard_utc(payload.base_updated_at)
+        if (
+            board is None
+            or board.deleted_at is not None
+            or current_updated_at is None
+            or requested_updated_at != current_updated_at
+        ):
+            current_version = current_updated_at.isoformat() if current_updated_at else None
+            return JSONResponse(
+                status_code=status.HTTP_409_CONFLICT,
+                content={
+                    "detail": {
+                        "code": "whiteboard_conflict",
+                        "message": "La pizarra cambió desde que la cargaste. Recárgala antes de volver a guardar.",
+                        "current_updated_at": current_version,
+                    }
+                },
+            )
     title = payload.title or "Pizarra Estrategica"
     elements = payload.elements_json or "[]"
 
@@ -2173,6 +2480,7 @@ def delete_project_whiteboard(
     )
     if board:
         board.deleted_at = datetime.now(timezone.utc)
+        board.updated_at = datetime.now(timezone.utc)
         db.commit()
     return None
 
@@ -2303,14 +2611,15 @@ async def whiteboard_collab_ws(websocket: WebSocket, project_id: str):
                 await websocket.close(code=4004, reason="Project not found")
                 return
 
-        # Acceso de lectura: rol (projects:read) O asignación (owner/assignee).
-        if not _has_role_based_project_access(_db, _user, "read"):
-            persona_id = _get_persona_id_for_user(_db, _user.id)
-            if not persona_id or not (
-                _is_project_owner(_db, project_id, persona_id) or _is_assigned_to_project(_db, project_id, persona_id)
-            ):
-                await websocket.close(code=4003, reason="Insufficient permissions")
-                return
+        # Alinea lectura/escritura con require_project_access: el rol concede
+        # el nivel correspondiente y owner/assignee conserva el acceso asignado.
+        persona_id = _get_persona_id_for_user(_db, _user.id)
+        is_assigned = bool(persona_id and _is_assigned_to_project(_db, project_id, persona_id))
+        can_read = _has_role_based_project_access(_db, _user, "read") or is_assigned
+        can_write = _has_role_based_project_access(_db, _user, "edit") or is_assigned
+        if not can_read:
+            await websocket.close(code=4003, reason="Insufficient permissions")
+            return
     finally:
         _db.close()
 
@@ -2340,6 +2649,9 @@ async def whiteboard_collab_ws(websocket: WebSocket, project_id: str):
                 # override aquí permitiría suplantar la identidad de otra
                 # pestaña y hacer que ignore nuestros updates.
                 continue
+            if msg_type in ("object_modified", "object_added", "object_removed") and not can_write:
+                await websocket.close(code=4003, reason="Insufficient permissions")
+                return
             if msg_type in ("cursor", "object_modified", "object_added", "object_removed"):
                 out = dict(message)
                 out["sender_id"] = sender_id
@@ -2391,7 +2703,7 @@ async def upload_task_attachment(
     )
     db.commit()
     db.refresh(task)
-    return _serialize_task_attachments(task)
+    return task
 
 
 @router.delete("/{project_id}/tasks/{task_id}/attachments/{attachment_id}", response_model=dict)
@@ -2438,6 +2750,24 @@ def update_project_task(
     # via PATCH body {} and assign tasks across tenant boundaries.
     if "assignee_id" in update_data:
         _assert_assignee_in_sede(db, update_data.get("assignee_id"), user_sede)
+
+    effective_status = update_data.get("status", task.status)
+    effective_node = update_data.get("node", getattr(task, "node", None))
+    effective_start = update_data.get("start_date", task.start_date)
+    effective_due = update_data.get("due_date", task.due_date)
+    try:
+        crud.validate_task_dates_within_phase(
+            db,
+            project_id,
+            status_slug=effective_status,
+            node=effective_node,
+            start_date=effective_start,
+            due_date=effective_due,
+            task_id=task.id,
+        )
+    except (crud.TaskDateOutOfBoundsError, ValueError) as exc:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(exc)) from exc
+
     previous_assignee_id = getattr(task, "assignee_id", None)
     changed_fields = []
 
@@ -2713,6 +3043,8 @@ def create_comment(
     task_id = payload.task_id
     user_sede = get_user_sede_id(db, current_user.id)
     _ensure_project(db, project_id, user_sede=user_sede)
+    if task_id:
+        _ensure_task_in_project(db, project_id, task_id)
     author_persona_id = get_user_persona_id(db, current_user.id)
     resolved_mentions = resolve_mentions(
         db,
@@ -2727,9 +3059,10 @@ def create_comment(
         author_id=author_persona_id,
         content=content,
         attachments=[a.model_dump() for a in (payload.attachments or [])],
-        mentions=resolved_mentions,
+        mentions=[str(mention_id) for mention_id in resolved_mentions],
     )
     db.add(comment)
+    _notify_comment_mentions(db, comment, project_id, task_id, user_sede)
     _log_project_activity(
         db,
         project_id,
@@ -2739,7 +3072,6 @@ def create_comment(
     )
     db.commit()
     db.refresh(comment)
-    _notify_comment_mentions(db, comment, project_id, task_id, user_sede)
     persona = (
         db.query(models.Persona).filter(models.Persona.id == comment.author_id).first() if comment.author_id else None
     )
@@ -2763,6 +3095,8 @@ def create_project_comment(
     """
     user_sede = get_user_sede_id(db, current_user.id)
     _ensure_project(db, project_id, user_sede=user_sede)
+    if payload.task_id:
+        _ensure_task_in_project(db, project_id, payload.task_id)
     author_persona_id = get_user_persona_id(db, current_user.id)
     resolved_mentions = resolve_mentions(
         db,
@@ -2777,9 +3111,10 @@ def create_project_comment(
         author_id=author_persona_id,
         content=payload.content,
         attachments=[a.model_dump() for a in (payload.attachments or [])],
-        mentions=resolved_mentions,
+        mentions=[str(mention_id) for mention_id in resolved_mentions],
     )
     db.add(comment)
+    _notify_comment_mentions(db, comment, project_id, payload.task_id, user_sede)
     _log_project_activity(
         db,
         project_id,
@@ -2789,7 +3124,6 @@ def create_project_comment(
     )
     db.commit()
     db.refresh(comment)
-    _notify_comment_mentions(db, comment, project_id, payload.task_id, user_sede)
     persona = (
         db.query(models.Persona).filter(models.Persona.id == comment.author_id).first() if comment.author_id else None
     )
@@ -2895,6 +3229,8 @@ def update_project(
     user_sede = get_user_sede_id(db, current_user.id)
     project = _ensure_project(db, project_id, user_sede=user_sede)
     update_data = payload.model_dump(exclude_unset=True)
+    if "owner_id" in update_data:
+        _assert_assignee_in_sede(db, update_data["owner_id"], user_sede)
     changed_fields = []
     for key, value in update_data.items():
         old_value = getattr(project, key, None)
@@ -2922,15 +3258,19 @@ def delete_project(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_staff_or_admin),
 ):
-    """Elimina (soft delete) un proyecto y todos sus datos relacionados.
+    """Marca el proyecto como eliminado sin purgar físicamente sus relaciones.
+
+    Solo se actualiza ``Project.deleted_at``; tareas, hitos y demás registros
+    relacionados se conservan en la base de datos y dejan de estar disponibles
+    en las consultas activas que primero validan el proyecto.
 
     **Política confirmada** (``PEND-QUALITY-RBAC-ASYM-001`` — cierre
     2026-07-16): ``DELETE /projects/{id}`` requiere ``academy:manage``
     v\u00eda ``require_staff_or_admin``, NO ``projects:edit`` como su primo
     ``PATCH /projects/{id}``. La asimetr\u00eda se mantiene como pol\u00edtica
-    deliberada porque un borrado de proyecto arrastra tareas, hitos,
-    wiki, pizarra, comentarios y bit\u00e1cora ministerial — es una
-    operaci\u00f3n destructiva de m\u00f3dulo, no de proyecto.
+    deliberada porque la retirada de un proyecto afecta la disponibilidad
+    operacional de tareas, hitos, wiki, pizarra, comentarios y bit\u00e1cora
+    ministerial — es una operaci\u00f3n de alcance de m\u00f3dulo, no de proyecto.
 
     * Editor (con ``projects:edit``) pasa ``PATCH`` pero recibe **403** en
       ``DELETE``.  Esto queda congelado por
@@ -3080,12 +3420,13 @@ def list_project_messages(
 def send_project_message(
     project_id: str,
     payload: schemas.ProjectMessageCreate,
+    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("projects", "edit")),
 ):
     """Send a message to the project chat room."""
     user_sede = get_user_sede_id(db, current_user.id)
-    _ensure_project(db, project_id, user_sede=user_sede)
+    project = _ensure_project(db, project_id, user_sede=user_sede)
     persona = _resolve_persona(db, current_user.id)
     if not persona:
         raise HTTPException(status_code=404, detail="Persona not found")
@@ -3097,28 +3438,26 @@ def send_project_message(
     db.add(msg)
     db.commit()
     db.refresh(msg)
-    # Broadcast via WebSocket (safe no-op if no event loop available)
-    try:
-        loop = asyncio.get_event_loop()
-        if loop.is_running():
-            asyncio.ensure_future(
-                manager.broadcast_event(
-                    {
-                        "event": "project_message",
-                        "project_id": project_id,
-                        "message": {
-                            "id": msg.id,
-                            "sender_id": msg.sender_id,
-                            "sender_name": _author_name(persona),
-                            "content": msg.content,
-                            "created_at": str(msg.created_at),
-                        },
-                    },
-                    room=f"project_{project_id}",
-                )
-            )
-    except RuntimeError as e:
-        logger.error(f"WebSocket broadcast failed: {e}")
+    # Starlette executes async background tasks on the ASGI event loop after
+    # sending the response. Calling get_event_loop() here is unsafe because
+    # synchronous endpoints run in worker threads and JSON encoding also
+    # rejects raw UUID objects.
+    background_tasks.add_task(
+        manager.broadcast_event,
+        {
+            "event": "project_message",
+            "project_id": str(project.id),
+            "message": {
+                "id": str(msg.id),
+                "sender_id": str(msg.sender_id),
+                "sender_name": _author_name(persona),
+                "content": msg.content,
+                "created_at": msg.created_at.isoformat(),
+                "is_read": False,
+            },
+        },
+        room=f"project_{project.id}",
+    )
 
     return schemas.ProjectMessageItem(
         id=msg.id,
@@ -3426,8 +3765,28 @@ def create_task_dependency(
     user_sede = get_user_sede_id(db, current_user.id)
     _ensure_project(db, project_id, user_sede=user_sede)
     if str(payload.predecessor_id) == str(payload.successor_id):
-        raise HTTPException(status_code=400, detail="Una tarea no puede depender de sí misma (ciclo detectado)")
-    dep = crud.create_task_dependency(db, _to_uuid(project_id), payload)
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Una tarea no puede depender de sí misma (ciclo detectado)",
+        )
+    _ensure_task_in_project(db, project_id, str(payload.predecessor_id))
+    _ensure_task_in_project(db, project_id, str(payload.successor_id))
+    try:
+        dep = crud.create_task_dependency(db, _to_uuid(project_id), payload)
+    except crud.CircularDependencyError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=str(exc),
+        ) from exc
+    except ValueError as exc:
+        msg = str(exc)
+        if "circular" in msg.lower() or "ciclo" in msg.lower():
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail=msg,
+            ) from exc
+        # Defensa adicional ante cambios concurrentes entre la validación y el insert.
+        raise HTTPException(status_code=404, detail="Dependency tasks not found in project") from exc
     _normalize_dates(dep)
     return dep
 
@@ -3653,7 +4012,8 @@ def create_project_risk(
 ):
     """Registra un nuevo riesgo en la matriz RAID del proyecto."""
     user_sede = get_user_sede_id(db, current_user.id)
-    _ensure_project(db, project_id, user_sede=user_sede)
+    project = _ensure_project(db, project_id, user_sede=user_sede)
+    _assert_assignee_in_sede(db, payload.owner_id, project.sede_id)
     risk = crud.create_project_risk(
         db,
         project_id=_to_uuid(project_id),
@@ -3706,7 +4066,8 @@ def update_project_risk(
 ):
     """Actualiza la probabilidad, impacto, estado o planes de mitigación de un riesgo."""
     user_sede = get_user_sede_id(db, current_user.id)
-    _ensure_project(db, project_id, user_sede=user_sede)
+    project = _ensure_project(db, project_id, user_sede=user_sede)
+    _assert_assignee_in_sede(db, payload.owner_id, project.sede_id)
     risk = crud.update_project_risk(
         db,
         project_id=_to_uuid(project_id),
@@ -3920,7 +4281,7 @@ def create_project_baseline_endpoint(
 ):
     """Congela el cronograma planificado del proyecto en una nueva instantánea de línea base."""
     user_sede = get_user_sede_id(db, current_user.id)
-    project = _ensure_project(db, project_id, user_sede=user_sede)
+    _ensure_project(db, project_id, user_sede=user_sede)
     try:
         baseline = crud.create_project_baseline(
             db,
@@ -4000,8 +4361,8 @@ def list_project_time_logs(
         task_id=_to_uuid(task_id) if task_id else None,
         persona_id=_to_uuid(persona_id) if persona_id else None,
     )
-    for l in logs:
-        _normalize_dates(l)
+    for time_log in logs:
+        _normalize_dates(time_log)
     return logs
 
 
@@ -4017,7 +4378,7 @@ def create_project_time_log(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("projects", "edit")),
 ):
-    """Registra una entrada de tiempo manual o desde el cronómetro interactivo."""
+    """Registra tiempo para el actor o para otra persona de la misma sede."""
     user_sede = get_user_sede_id(db, current_user.id)
     _ensure_project(db, project_id, user_sede=user_sede)
     if payload.task_id:
@@ -4027,6 +4388,7 @@ def create_project_time_log(
     persona_id = payload.persona_id or actor_persona_id
     if not persona_id:
         raise HTTPException(status_code=400, detail="No se pudo determinar la persona asociada al registro")
+    _assert_assignee_in_sede(db, persona_id, user_sede)
 
     try:
         time_log = crud.create_project_time_log(
@@ -4094,8 +4456,8 @@ def list_task_time_logs(
     _ensure_project(db, project_id, user_sede=user_sede)
     _ensure_task_in_project(db, project_id, task_id)
     logs = crud.get_project_time_logs(db, _to_uuid(project_id), task_id=_to_uuid(task_id))
-    for l in logs:
-        _normalize_dates(l)
+    for time_log in logs:
+        _normalize_dates(time_log)
     return logs
 
 
@@ -4161,10 +4523,11 @@ def create_project_automation(
 ):
     """Crea una nueva regla de automatización reactiva para el proyecto."""
     user_sede = get_user_sede_id(db, current_user.id)
-    _ensure_project(db, project_id, user_sede=user_sede)
+    project = _ensure_project(db, project_id, user_sede=user_sede)
 
-    # Forzar project_id y sede_id de forma canónica
+    # Los dos campos de alcance se derivan del recurso autenticado, no del body.
     payload.project_id = str(_to_uuid(project_id))
+    payload.sede_id = str(project.sede_id) if project.sede_id is not None else None
     rule = crud.create_project_automation_rule(
         db,
         payload,
@@ -4219,10 +4582,23 @@ def update_project_automation(
     user_sede = get_user_sede_id(db, current_user.id)
     _ensure_project(db, project_id, user_sede=user_sede)
     rule = crud.get_project_automation_rule(db, _to_uuid(rule_id), user_sede_id=user_sede)
-    if not rule or (rule.project_id and str(rule.project_id) != str(_to_uuid(project_id))):
+    can_manage_global = _has_role_based_project_access(db, current_user, "manage")
+    if (
+        not rule
+        or (rule.project_id is not None and str(rule.project_id) != str(_to_uuid(project_id)))
+        or (rule.project_id is None and not can_manage_global)
+    ):
         raise HTTPException(status_code=404, detail="Regla de automatización no encontrada")
 
-    updated = crud.update_project_automation_rule(db, _to_uuid(rule_id), payload, user_sede_id=user_sede)
+    updated = crud.update_project_automation_rule(
+        db,
+        _to_uuid(rule_id),
+        payload,
+        user_sede_id=user_sede,
+        can_manage_global=can_manage_global,
+    )
+    if not updated:
+        raise HTTPException(status_code=404, detail="Regla de automatización no encontrada")
     _log_project_activity(
         db,
         project_id,
@@ -4248,10 +4624,22 @@ def delete_project_automation(
     user_sede = get_user_sede_id(db, current_user.id)
     _ensure_project(db, project_id, user_sede=user_sede)
     rule = crud.get_project_automation_rule(db, _to_uuid(rule_id), user_sede_id=user_sede)
-    if not rule or (rule.project_id and str(rule.project_id) != str(_to_uuid(project_id))):
+    can_manage_global = _has_role_based_project_access(db, current_user, "manage")
+    if (
+        not rule
+        or (rule.project_id is not None and str(rule.project_id) != str(_to_uuid(project_id)))
+        or (rule.project_id is None and not can_manage_global)
+    ):
         raise HTTPException(status_code=404, detail="Regla de automatización no encontrada")
 
-    crud.delete_project_automation_rule(db, _to_uuid(rule_id), user_sede_id=user_sede)
+    deleted = crud.delete_project_automation_rule(
+        db,
+        _to_uuid(rule_id),
+        user_sede_id=user_sede,
+        can_manage_global=can_manage_global,
+    )
+    if not deleted:
+        raise HTTPException(status_code=404, detail="Regla de automatización no encontrada")
     _log_project_activity(
         db,
         project_id,
@@ -4273,13 +4661,30 @@ def evaluate_project_automations_endpoint(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("projects", "edit")),
 ):
-    """Evalúa manualmente o prueba los disparadores de automatización para un proyecto."""
+    """Previsualiza reglas; ejecutar efectos requiere enviar ``dry_run=false`` explícitamente."""
     user_sede = get_user_sede_id(db, current_user.id)
     _ensure_project(db, project_id, user_sede=user_sede)
+    if not payload.dry_run and not _has_role_based_project_access(db, current_user, "manage"):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="projects:manage is required to execute automation effects",
+        )
 
-    context = payload.context_data or {}
-    if payload.task_id:
-        context["task_id"] = str(payload.task_id)
+    context = dict(payload.context_data or {})
+    requested_task_id = payload.task_id or context.get("task_id")
+    if requested_task_id:
+        task = (
+            db.query(models.ProjectTask)
+            .filter(
+                models.ProjectTask.id == _to_uuid(requested_task_id),
+                models.ProjectTask.project_id == _to_uuid(project_id),
+                models.ProjectTask.deleted_at.is_(None),
+            )
+            .first()
+        )
+        if not task:
+            raise HTTPException(status_code=404, detail="Task not found")
+        context["task_id"] = str(task.id)
 
     results = crud.evaluate_project_automations(
         db,
@@ -4288,6 +4693,7 @@ def evaluate_project_automations_endpoint(
         context=context,
         actor_persona_id=current_user.id,
         user_sede_id=user_sede,
+        dry_run=payload.dry_run,
     )
     return results
 
@@ -4298,6 +4704,7 @@ def evaluate_project_automations_endpoint(
 
 @router.get(
     "/{project_id}/export/executive-data",
+    response_model=schemas.ProjectExecutiveReportData,
     tags=["Projects Reports & Exports Super-PRO"],
 )
 def get_project_executive_data_endpoint(
@@ -4386,7 +4793,7 @@ def export_project_tasks_csv_endpoint(
         project_id,
         current_user.id,
         "tasks_csv_exported",
-        f"Exportación de tareas CSV completada",
+        "Exportación de tareas CSV completada",
     )
 
     return Response(
@@ -4424,7 +4831,7 @@ def export_project_expenses_csv_endpoint(
         project_id,
         current_user.id,
         "expenses_csv_exported",
-        f"Exportación de libro mayor de gastos CSV completada",
+        "Exportación de libro mayor de gastos CSV completada",
     )
 
     return Response(
@@ -4555,6 +4962,7 @@ def update_project_indicator_endpoint(
         payload,
         user_id=persona_id,
         sede_id=user_sede,
+        project_id=_to_uuid(project_id),
     )
     if not updated:
         raise HTTPException(status_code=404, detail="Indicador no encontrado")
@@ -4591,6 +4999,7 @@ def delete_project_indicator_endpoint(
         _to_uuid(indicator_id),
         user_id=persona_id,
         sede_id=user_sede,
+        project_id=_to_uuid(project_id),
     )
     if not success:
         raise HTTPException(status_code=404, detail="Indicador no encontrado")
@@ -4600,7 +5009,7 @@ def delete_project_indicator_endpoint(
         project_id,
         current_user.id,
         "indicator_deleted",
-        f"Indicador eliminado",
+        "Indicador eliminado",
     )
 
     return {"ok": True, "message": "Indicador eliminado exitosamente", "id": indicator_id}
@@ -4644,6 +5053,13 @@ def create_project_indicator_record_endpoint(
 
     persona_id = _get_persona_id_for_user(db, current_user.id)
     payload.indicator_id = str(_to_uuid(indicator_id))
+    if not crud.get_project_indicator(
+        db,
+        _to_uuid(indicator_id),
+        project_id=_to_uuid(project_id),
+        sede_id=user_sede,
+    ):
+        raise HTTPException(status_code=404, detail="Indicador no encontrado")
 
     try:
         record = crud.create_project_indicator_record(
@@ -4652,6 +5068,7 @@ def create_project_indicator_record_endpoint(
             payload,
             reported_by=persona_id,
             sede_id=user_sede,
+            project_id=_to_uuid(project_id),
         )
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -4684,11 +5101,21 @@ def list_project_indicator_records_endpoint(
     _ensure_project(db, project_id, user_sede=user_sede)
 
     try:
+        if not crud.get_project_indicator(
+            db,
+            _to_uuid(indicator_id),
+            project_id=_to_uuid(project_id),
+            sede_id=user_sede,
+        ):
+            raise HTTPException(status_code=404, detail="Indicador no encontrado")
         records = crud.get_project_indicator_records(
             db,
             _to_uuid(indicator_id),
             sede_id=user_sede,
+            project_id=_to_uuid(project_id),
         )
+    except HTTPException:
+        raise
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
@@ -4867,6 +5294,10 @@ async def upload_project_file_endpoint(
     """Sube un archivo local a la bóveda documental del proyecto."""
     user_sede = get_user_sede_id(db, current_user.id)
     _ensure_project(db, project_id, user_sede=user_sede)
+    if task_id:
+        _ensure_task_in_project(db, project_id, task_id)
+    if phase_id:
+        _ensure_phase_in_project(db, project_id, phase_id)
 
     filename = sanitize_filename(file.filename or "archivo")
     contents = await file.read()
@@ -4922,6 +5353,10 @@ def link_project_drive_file_endpoint(
     """Vincula un documento o recurso de Google Drive a la bóveda del proyecto."""
     user_sede = get_user_sede_id(db, current_user.id)
     _ensure_project(db, project_id, user_sede=user_sede)
+    if payload.task_id:
+        _ensure_task_in_project(db, project_id, payload.task_id)
+    if payload.phase_id:
+        _ensure_phase_in_project(db, project_id, payload.phase_id)
 
     persona_id = _get_persona_id_for_user(db, current_user.id)
 
@@ -4969,6 +5404,10 @@ def list_project_files_endpoint(
     """Obtiene el listado de archivos de la bóveda documental del proyecto."""
     user_sede = get_user_sede_id(db, current_user.id)
     _ensure_project(db, project_id, user_sede=user_sede)
+    if task_id:
+        _ensure_task_in_project(db, project_id, task_id)
+    if phase_id:
+        _ensure_phase_in_project(db, project_id, phase_id)
 
     try:
         files = crud.get_project_files(
@@ -5057,13 +5496,3 @@ def delete_project_file_endpoint(
         f"Archivo '{file_id}' eliminado de la bóveda documental",
     )
     return {"deleted": True, "file_id": file_id}
-
-
-
-
-
-
-
-
-
-

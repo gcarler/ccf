@@ -62,6 +62,7 @@ frontend/.eslintcache
 frontend/.lighthouseci/
 frontend/.next/
 frontend/.next-dev/
+frontend/.next-e2e-dev/
 frontend/.next-command.lock/
 frontend/.next.backup-*/
 frontend/.next-bak*/

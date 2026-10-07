@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { RightPanel } from "@/components/ui/RightPanel";
+import ConfirmActionDrawer, { type ConfirmActionState } from "@/components/ConfirmActionDrawer";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/context/ToastContext";
 import { apiFetch } from "@/lib/http";
@@ -38,6 +39,7 @@ export function ProjectTimeTrackingDrawer({
   const [summary, setSummary] = useState<ProjectTimeTrackingSummary | null>(null);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [confirmAction, setConfirmAction] = useState<ConfirmActionState>(null);
 
   // ── Filtros ──
   const [filterBillable, setFilterBillable] = useState<string>("all");
@@ -205,11 +207,22 @@ export function ProjectTimeTrackingDrawer({
         token,
       });
       addToast("Registro de tiempo eliminado", "info");
-      fetchData();
+      await fetchData();
       onTimeLogged?.();
-    } catch {
+    } catch (error) {
       addToast("Error al eliminar el registro", "error");
+      throw error;
     }
+  };
+
+  const requestDeleteLog = (log: ProjectTimeLog) => {
+    setConfirmAction({
+      title: "Eliminar registro de tiempo",
+      description: `¿Seguro que deseas eliminar el registro de ${log.hours.toFixed(2)} horas${log.description ? ` (“${log.description}”)` : ""}? Se quitará del total del proyecto.`,
+      confirmLabel: "Eliminar",
+      destructive: true,
+      onConfirm: () => handleDeleteLog(log.id),
+    });
   };
 
   const filteredLogs = logs.filter((l) => {
@@ -234,7 +247,7 @@ export function ProjectTimeTrackingDrawer({
       title="Registro de Tiempo y Hojas de Horas"
       className="w-full max-w-2xl"
     >
-      <div className="flex flex-col gap-5 p-6 text-sm" style={{ color: "hsl(var(--text-1))" }}>
+      <div className="flex flex-col gap-5 p-6 text-sm" style={{ color: "hsl(var(--text-primary))" }}>
         {/* KPI CARDS & RESUMEN DE TIEMPO */}
         <div
           className="rounded-xl p-5 border"
@@ -262,25 +275,25 @@ export function ProjectTimeTrackingDrawer({
 
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-4">
             <div className="flex flex-col">
-              <span className="text-xs" style={{ color: "hsl(var(--text-muted))" }}>Total Horas</span>
+              <span className="text-xs" style={{ color: "hsl(var(--text-secondary))" }}>Total Horas</span>
               <span className="text-lg font-bold" style={{ color: "hsl(var(--primary))" }}>
                 {(summary?.total_hours ?? 0).toFixed(2)}h
               </span>
             </div>
             <div className="flex flex-col">
-              <span className="text-xs" style={{ color: "hsl(var(--text-muted))" }}>Facturables</span>
+              <span className="text-xs" style={{ color: "hsl(var(--text-secondary))" }}>Facturables</span>
               <span className="text-lg font-bold" style={{ color: "hsl(var(--success))" }}>
                 {(summary?.billable_hours ?? 0).toFixed(2)}h
               </span>
             </div>
             <div className="flex flex-col">
-              <span className="text-xs" style={{ color: "hsl(var(--text-muted))" }}>No Facturables</span>
+              <span className="text-xs" style={{ color: "hsl(var(--text-secondary))" }}>No Facturables</span>
               <span className="text-lg font-bold" style={{ color: "hsl(var(--warning))" }}>
                 {(summary?.non_billable_hours ?? 0).toFixed(2)}h
               </span>
             </div>
             <div className="flex flex-col">
-              <span className="text-xs" style={{ color: "hsl(var(--text-muted))" }}>Registros</span>
+              <span className="text-xs" style={{ color: "hsl(var(--text-secondary))" }}>Registros</span>
               <span className="text-lg font-bold">
                 {summary?.total_logs ?? 0}
               </span>
@@ -323,7 +336,7 @@ export function ProjectTimeTrackingDrawer({
             )}
             style={{
               backgroundColor: activeTab === "stopwatch" ? "hsl(var(--surface-1))" : "transparent",
-              color: activeTab === "stopwatch" ? "hsl(var(--primary))" : "hsl(var(--text-muted))",
+              color: activeTab === "stopwatch" ? "hsl(var(--primary))" : "hsl(var(--text-secondary))",
             }}
           >
             <Clock className="w-4 h-4" />
@@ -340,7 +353,7 @@ export function ProjectTimeTrackingDrawer({
             )}
             style={{
               backgroundColor: activeTab === "manual" ? "hsl(var(--surface-1))" : "transparent",
-              color: activeTab === "manual" ? "hsl(var(--primary))" : "hsl(var(--text-muted))",
+              color: activeTab === "manual" ? "hsl(var(--primary))" : "hsl(var(--text-secondary))",
             }}
           >
             <Plus className="w-4 h-4" />
@@ -357,7 +370,7 @@ export function ProjectTimeTrackingDrawer({
             )}
             style={{
               backgroundColor: activeTab === "logs" ? "hsl(var(--surface-1))" : "transparent",
-              color: activeTab === "logs" ? "hsl(var(--primary))" : "hsl(var(--text-muted))",
+              color: activeTab === "logs" ? "hsl(var(--primary))" : "hsl(var(--text-secondary))",
             }}
           >
             <Layers className="w-4 h-4" />
@@ -385,10 +398,10 @@ export function ProjectTimeTrackingDrawer({
                     ? "hsl(var(--success))"
                     : timerSeconds > 0
                     ? "hsl(var(--warning))"
-                    : "hsl(var(--text-muted))",
+                    : "hsl(var(--text-secondary))",
                 }}
               />
-              <span className="text-xs uppercase font-bold tracking-widest" style={{ color: "hsl(var(--text-muted))" }}>
+              <span className="text-xs uppercase font-bold tracking-widest" style={{ color: "hsl(var(--text-secondary))" }}>
                 {timerRunning ? "Registrando tiempo activo" : timerSeconds > 0 ? "Pausa" : "Listo para iniciar"}
               </span>
             </div>
@@ -443,7 +456,7 @@ export function ProjectTimeTrackingDrawer({
                 style={{
                   backgroundColor: "hsl(var(--surface-2))",
                   borderColor: "hsl(var(--border))",
-                  color: "hsl(var(--text-muted))",
+                  color: "hsl(var(--text-secondary))",
                 }}
                 title="Reiniciar a 0"
               >
@@ -471,7 +484,7 @@ export function ProjectTimeTrackingDrawer({
               style={{ borderColor: "hsl(var(--border))" }}
             >
               <div>
-                <label className="block text-xs font-semibold mb-1" style={{ color: "hsl(var(--text-muted))" }}>
+                <label className="block text-xs font-semibold mb-1" style={{ color: "hsl(var(--text-secondary))" }}>
                   Tarea Asociada (opcional)
                 </label>
                 <select
@@ -494,7 +507,7 @@ export function ProjectTimeTrackingDrawer({
               </div>
 
               <div>
-                <label className="block text-xs font-semibold mb-1" style={{ color: "hsl(var(--text-muted))" }}>
+                <label className="block text-xs font-semibold mb-1" style={{ color: "hsl(var(--text-secondary))" }}>
                   Descripción de la Actividad
                 </label>
                 <input
@@ -544,7 +557,7 @@ export function ProjectTimeTrackingDrawer({
             </div>
 
             <div>
-              <label className="block text-xs font-semibold mb-1" style={{ color: "hsl(var(--text-muted))" }}>
+              <label className="block text-xs font-semibold mb-1" style={{ color: "hsl(var(--text-secondary))" }}>
                 Tarea Asociada
               </label>
               <select
@@ -568,7 +581,7 @@ export function ProjectTimeTrackingDrawer({
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs font-semibold mb-1" style={{ color: "hsl(var(--text-muted))" }}>
+                <label className="block text-xs font-semibold mb-1" style={{ color: "hsl(var(--text-secondary))" }}>
                   Horas Dedicadas * (ej. 1.5)
                 </label>
                 <input
@@ -588,7 +601,7 @@ export function ProjectTimeTrackingDrawer({
               </div>
 
               <div>
-                <label className="block text-xs font-semibold mb-1" style={{ color: "hsl(var(--text-muted))" }}>
+                <label className="block text-xs font-semibold mb-1" style={{ color: "hsl(var(--text-secondary))" }}>
                   Fecha de Ejecución *
                 </label>
                 <input
@@ -607,7 +620,7 @@ export function ProjectTimeTrackingDrawer({
             </div>
 
             <div>
-              <label className="block text-xs font-semibold mb-1" style={{ color: "hsl(var(--text-muted))" }}>
+              <label className="block text-xs font-semibold mb-1" style={{ color: "hsl(var(--text-secondary))" }}>
                 Descripción del Trabajo Realizado
               </label>
               <textarea
@@ -665,7 +678,7 @@ export function ProjectTimeTrackingDrawer({
                   borderColor: "hsl(var(--border))",
                 }}
               >
-                <span className="text-xs font-bold uppercase tracking-wider block" style={{ color: "hsl(var(--text-muted))" }}>
+                <span className="text-xs font-bold uppercase tracking-wider block" style={{ color: "hsl(var(--text-secondary))" }}>
                   Distribución de Horas por Colaborador
                 </span>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
@@ -694,7 +707,7 @@ export function ProjectTimeTrackingDrawer({
                           }}
                         />
                       </div>
-                      <div className="flex justify-between text-3xs" style={{ color: "hsl(var(--text-muted))" }}>
+                      <div className="flex justify-between text-3xs" style={{ color: "hsl(var(--text-secondary))" }}>
                         <span>{m.logs_count} registro(s)</span>
                         <span style={{ color: "hsl(var(--success))" }}>{m.billable_hours.toFixed(2)}h fact.</span>
                       </div>
@@ -707,7 +720,7 @@ export function ProjectTimeTrackingDrawer({
             {/* FILTROS DEL HISTORIAL */}
             <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
               <div className="flex items-center gap-2">
-                <ListFilter className="w-4 h-4" style={{ color: "hsl(var(--text-muted))" }} />
+                <ListFilter className="w-4 h-4" style={{ color: "hsl(var(--text-secondary))" }} />
                 <select
                   value={filterBillable}
                   onChange={(e) => setFilterBillable(e.target.value)}
@@ -743,14 +756,14 @@ export function ProjectTimeTrackingDrawer({
                 </select>
               </div>
 
-              <span className="text-xs" style={{ color: "hsl(var(--text-muted))" }}>
+              <span className="text-xs" style={{ color: "hsl(var(--text-secondary))" }}>
                 Mostrando {filteredLogs.length} de {logs.length}
               </span>
             </div>
 
             {/* LISTA DE REGISTROS */}
             {loading ? (
-              <div className="py-8 text-center text-xs" style={{ color: "hsl(var(--text-muted))" }}>
+              <div className="py-8 text-center text-xs" style={{ color: "hsl(var(--text-secondary))" }}>
                 Cargando registros de tiempo...
               </div>
             ) : filteredLogs.length === 0 ? (
@@ -759,7 +772,7 @@ export function ProjectTimeTrackingDrawer({
                 style={{
                   backgroundColor: "hsl(var(--surface-1))",
                   borderColor: "hsl(var(--border))",
-                  color: "hsl(var(--text-muted))",
+                  color: "hsl(var(--text-secondary))",
                 }}
               >
                 <Clock className="w-8 h-8 mx-auto opacity-40" />
@@ -790,12 +803,12 @@ export function ProjectTimeTrackingDrawer({
                               : "hsl(var(--surface-2))",
                             color: log.is_billable
                               ? "hsl(var(--success))"
-                              : "hsl(var(--text-muted))",
+                              : "hsl(var(--text-secondary))",
                           }}
                         >
                           {log.is_billable ? "Facturable" : "No Facturable"}
                         </span>
-                        <span className="text-3xs" style={{ color: "hsl(var(--text-muted))" }}>
+                        <span className="text-3xs" style={{ color: "hsl(var(--text-secondary))" }}>
                           {log.date ? new Date(log.date).toLocaleDateString("es-CO") : ""}
                         </span>
                       </div>
@@ -804,7 +817,7 @@ export function ProjectTimeTrackingDrawer({
                         {log.description || "Sin descripción"}
                       </p>
 
-                      <div className="flex items-center gap-1.5 text-3xs" style={{ color: "hsl(var(--text-muted))" }}>
+                      <div className="flex items-center gap-1.5 text-3xs" style={{ color: "hsl(var(--text-secondary))" }}>
                         <CheckSquare className="w-3 h-3" />
                         <span className="truncate">{log.task_title || "General del Proyecto"}</span>
                       </div>
@@ -823,13 +836,14 @@ export function ProjectTimeTrackingDrawer({
 
                       <button
                         type="button"
-                        onClick={() => handleDeleteLog(log.id)}
+                        onClick={() => requestDeleteLog(log)}
                         className="p-1.5 rounded-lg border transition-all hover:opacity-100 opacity-60"
                         style={{
                           borderColor: "hsl(var(--border))",
                           color: "hsl(var(--destructive))",
                         }}
                         title="Eliminar registro"
+                        aria-label={`Eliminar registro de ${log.hours.toFixed(2)} horas${log.description ? `: ${log.description}` : ""}`}
                       >
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
@@ -841,6 +855,7 @@ export function ProjectTimeTrackingDrawer({
           </div>
         )}
       </div>
+      <ConfirmActionDrawer action={confirmAction} onClose={() => setConfirmAction(null)} />
     </RightPanel>
   );
 }

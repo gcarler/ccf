@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState, useCallback, useMemo } from "react";
+import React, { useEffect, useState, useCallback, useMemo, useRef } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
@@ -26,32 +26,57 @@ export default function ProjectIndicatorsPage() {
   const { token } = useAuth();
 
   const [loading, setLoading] = useState(true);
-  const [projectTitle, setProjectTitle] = useState("");
+  const [loadError, setLoadError] = useState(false);
+  const [hasLoadedIndicators, setHasLoadedIndicators] = useState(false);
+  const [projectTitle, setProjectTitle] = useState("Proyecto");
   const [indicators, setIndicators] = useState<ProjectIndicator[]>([]);
   const [selectedLevelFilter, setSelectedLevelFilter] = useState<string>("ALL");
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const activeLoadController = useRef<AbortController | null>(null);
+  const loadedProjectId = useRef<string | null>(null);
 
   const loadData = useCallback(async () => {
     if (!token || !projectId) return;
+    activeLoadController.current?.abort();
+    const controller = new AbortController();
+    activeLoadController.current = controller;
+    if (loadedProjectId.current !== projectId) {
+      setProjectTitle("Proyecto");
+      setIndicators([]);
+      setHasLoadedIndicators(false);
+      setLoadError(false);
+    }
     setLoading(true);
     try {
       const [projData, indData] = await Promise.all([
-        apiFetch<{ title: string }>(`/projects/${projectId}`, { token }).catch(() => ({ title: "Proyecto" })),
-        apiFetch<ProjectIndicator[]>(`/projects/${projectId}/advanced-indicators`, { token }),
+        apiFetch<{ title: string }>(`/projects/${projectId}`, { token, signal: controller.signal }).catch(() => ({ title: "Proyecto" })),
+        apiFetch<ProjectIndicator[]>(`/projects/${projectId}/advanced-indicators`, { token, signal: controller.signal }),
       ]);
+      if (activeLoadController.current !== controller) return;
       setProjectTitle(projData?.title || "Proyecto");
-      if (Array.isArray(indData)) {
-        setIndicators(indData);
-      }
+      if (!Array.isArray(indData)) throw new Error("Respuesta de indicadores inválida");
+      setIndicators(indData);
+      setLoadError(false);
+      setHasLoadedIndicators(true);
+      loadedProjectId.current = projectId;
     } catch {
+      if (activeLoadController.current !== controller) return;
+      setLoadError(true);
       toast.error("Error al cargar indicadores MGA");
     } finally {
-      setLoading(false);
+      if (activeLoadController.current === controller) {
+        activeLoadController.current = null;
+        setLoading(false);
+      }
     }
   }, [projectId, token]);
 
   useEffect(() => {
     void loadData();
+    return () => {
+      activeLoadController.current?.abort();
+      activeLoadController.current = null;
+    };
   }, [loadData]);
 
   const filteredIndicators = useMemo(() => {
@@ -83,20 +108,20 @@ export default function ProjectIndicatorsPage() {
   }, [indicators]);
 
   return (
-    <div className="flex flex-col h-full bg-[hsl(var(--surface-1))] text-[hsl(var(--foreground))] overflow-y-auto">
+    <div className="flex flex-col h-full bg-[hsl(var(--surface-1))] text-[hsl(var(--text-primary))] overflow-y-auto">
       {/* Header Superior y Breadcrumb */}
-      <div className="px-6 py-4 border-b border-[hsl(var(--border))] bg-[hsl(var(--surface-2))]/60 sticky top-0 z-10 backdrop-blur-md">
+      <div data-workspace-toolbar className="px-6 py-4 border-b border-[hsl(var(--border))] bg-[hsl(var(--surface-2))]/60 sticky top-0 z-10 backdrop-blur-md">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Link
               href={`/plataforma/projects/${projectId}`}
-              className="p-2 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] hover:bg-[hsl(var(--surface-3))] text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] transition-all flex items-center justify-center"
+              className="p-2 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] hover:bg-[hsl(var(--surface-3))] text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] transition-all flex items-center justify-center"
               title="Volver al proyecto"
             >
               <ChevronLeft size={16} />
             </Link>
             <div>
-              <div className="flex items-center gap-2 text-3xs text-[hsl(var(--muted-foreground))] uppercase font-bold tracking-wider">
+              <div className="flex items-center gap-2 text-3xs text-[hsl(var(--text-secondary))] uppercase font-bold tracking-wider">
                 <Link href="/plataforma/projects" className="hover:text-[hsl(var(--primary))] transition-colors">
                   Proyectos
                 </Link>
@@ -105,7 +130,7 @@ export default function ProjectIndicatorsPage() {
                   {projectTitle}
                 </Link>
                 <span>/</span>
-                <span className="text-[hsl(var(--foreground))]">Indicadores MGA & CREMA</span>
+                <span className="text-[hsl(var(--text-primary))]">Indicadores MGA & CREMA</span>
               </div>
               <h1 className="text-lg font-black tracking-tight flex items-center gap-2 mt-0.5">
                 <BarChart3 size={20} className="text-[hsl(var(--primary))]" />
@@ -117,7 +142,8 @@ export default function ProjectIndicatorsPage() {
           <div className="flex items-center gap-2">
             <button
               onClick={() => loadData()}
-              className="p-2 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--surface-2))] transition-colors"
+              aria-label="Recargar datos de indicadores"
+              className="p-2 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] transition-colors"
               title="Recargar datos"
             >
               <RotateCw size={15} className={clsx(loading && "animate-spin")} />
@@ -134,16 +160,16 @@ export default function ProjectIndicatorsPage() {
 
       <div className="p-6 space-y-6 max-w-7xl mx-auto w-full">
         {/* Tarjetas Analíticas del Semáforo SPI Superior */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {hasLoadedIndicators && !loadError && <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <div className="p-4 rounded-xl bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] shadow-sm space-y-1">
             <div className="flex items-center justify-between">
-              <span className="text-3xs font-extrabold uppercase tracking-wider text-[hsl(var(--muted-foreground))]">
+              <span className="text-3xs font-extrabold uppercase tracking-wider text-[hsl(var(--text-secondary))]">
                 Total Indicadores
               </span>
               <Activity size={18} className="text-[hsl(var(--primary))]" />
             </div>
-            <p className="text-2xl font-black text-[hsl(var(--foreground))]">{indicators.length}</p>
-            <p className="text-3xs text-[hsl(var(--muted-foreground))]">Metodología MGA vinculada</p>
+            <p className="text-2xl font-black text-[hsl(var(--text-primary))]">{indicators.length}</p>
+            <p className="text-3xs text-[hsl(var(--text-secondary))]">Metodología MGA vinculada</p>
           </div>
 
           <div className="p-4 rounded-xl bg-[hsl(var(--surface-2))] border border-[hsl(var(--success))]/30 shadow-sm space-y-1">
@@ -154,7 +180,7 @@ export default function ProjectIndicatorsPage() {
               <CheckCircle2 size={18} className="text-[hsl(var(--success))]" />
             </div>
             <p className="text-2xl font-black text-[hsl(var(--success))]">{spiStats.optimal}</p>
-            <p className="text-3xs text-[hsl(var(--muted-foreground))]">Cumpliendo o superando metas</p>
+            <p className="text-3xs text-[hsl(var(--text-secondary))]">Cumpliendo o superando metas</p>
           </div>
 
           <div className="p-4 rounded-xl bg-[hsl(var(--surface-2))] border border-[hsl(var(--warning))]/30 shadow-sm space-y-1">
@@ -165,7 +191,7 @@ export default function ProjectIndicatorsPage() {
               <AlertTriangle size={18} className="text-[hsl(var(--warning))]" />
             </div>
             <p className="text-2xl font-black text-[hsl(var(--warning))]">{spiStats.warning}</p>
-            <p className="text-3xs text-[hsl(var(--muted-foreground))]">Desviación moderada de avance</p>
+            <p className="text-3xs text-[hsl(var(--text-secondary))]">Desviación moderada de avance</p>
           </div>
 
           <div className="p-4 rounded-xl bg-[hsl(var(--surface-2))] border border-[hsl(var(--destructive))]/30 shadow-sm space-y-1">
@@ -176,14 +202,14 @@ export default function ProjectIndicatorsPage() {
               <TrendingUp size={18} className="rotate-180 text-[hsl(var(--destructive))]" />
             </div>
             <p className="text-2xl font-black text-[hsl(var(--destructive))]">{spiStats.critical}</p>
-            <p className="text-3xs text-[hsl(var(--muted-foreground))]">Subejecución o retraso crítico</p>
+            <p className="text-3xs text-[hsl(var(--text-secondary))]">Subejecución o retraso crítico</p>
           </div>
-        </div>
+        </div>}
 
         {/* Barra de Filtros por Nivel MGA */}
-        <div className="flex items-center justify-between gap-3 border-b border-[hsl(var(--border))] pb-3 overflow-x-auto">
+        {hasLoadedIndicators && !loadError && <div className="flex items-center justify-between gap-3 border-b border-[hsl(var(--border))] pb-3 overflow-x-auto">
           <div className="flex items-center gap-1.5 text-2xs">
-            <span className="font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider text-3xs flex items-center gap-1">
+            <span className="font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wider text-3xs flex items-center gap-1">
               <Sliders size={12} /> Niveles:
             </span>
             <button
@@ -192,7 +218,7 @@ export default function ProjectIndicatorsPage() {
                 "px-3 py-1.5 rounded-lg text-2xs font-bold uppercase transition-all",
                 selectedLevelFilter === "ALL"
                   ? "bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] shadow-sm"
-                  : "bg-[hsl(var(--surface-2))] text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--surface-3))]"
+                  : "bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-3))]"
               )}
             >
               Todos ({indicators.length})
@@ -207,7 +233,7 @@ export default function ProjectIndicatorsPage() {
                     "px-3 py-1.5 rounded-lg text-2xs font-semibold whitespace-nowrap transition-all",
                     selectedLevelFilter === lvl.id
                       ? "bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] shadow-sm"
-                      : "bg-[hsl(var(--surface-2))] text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--surface-3))]"
+                      : "bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-3))]"
                   )}
                 >
                   {lvl.label} ({count})
@@ -217,20 +243,31 @@ export default function ProjectIndicatorsPage() {
           </div>
 
           <div className="flex items-center gap-2">
-            <span className="text-3xs font-semibold text-[hsl(var(--muted-foreground))]">
+            <span className="text-3xs font-semibold text-[hsl(var(--text-secondary))]">
               Sello Metodológico:
             </span>
             <span className="text-2xs font-black px-2 py-0.5 rounded bg-[hsl(var(--primary))]/15 text-[hsl(var(--primary))] border border-[hsl(var(--primary))]/20">
               Score CREMA Promedio: {spiStats.avgCrema}/100
             </span>
           </div>
-        </div>
+        </div>}
 
         {/* Lista de Tarjetas de Indicadores */}
         {loading ? (
-          <div className="py-20 flex flex-col items-center justify-center gap-3 text-[hsl(var(--muted-foreground))]">
+          <div className="py-20 flex flex-col items-center justify-center gap-3 text-[hsl(var(--text-secondary))]">
             <RotateCw size={28} className="animate-spin text-[hsl(var(--primary))]" />
             <p className="text-xs font-semibold">Cargando tablero MGA y mediciones periódicas...</p>
+          </div>
+        ) : loadError ? (
+          <div role="alert" className="py-16 px-4 rounded-2xl border border-[hsl(var(--destructive))]/30 bg-[hsl(var(--destructive))]/5 flex flex-col items-center justify-center text-center gap-3">
+            <p className="text-sm font-semibold">No se pudieron cargar los indicadores. No podemos confirmar que el proyecto esté vacío.</p>
+            <button
+              type="button"
+              onClick={() => void loadData()}
+              className="px-4 py-2 rounded-lg bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] text-2xs font-bold"
+            >
+              Reintentar
+            </button>
           </div>
         ) : filteredIndicators.length === 0 ? (
           <div className="py-16 px-4 rounded-2xl border border-dashed border-[hsl(var(--border))] bg-[hsl(var(--surface-2))]/30 flex flex-col items-center justify-center text-center gap-3">
@@ -238,8 +275,8 @@ export default function ProjectIndicatorsPage() {
               <BarChart3 size={36} />
             </div>
             <div className="max-w-md">
-              <h3 className="text-sm font-bold text-[hsl(var(--foreground))]">Sin indicadores configurados</h3>
-              <p className="text-3xs text-[hsl(var(--muted-foreground))] mt-1">
+              <h3 className="text-sm font-bold text-[hsl(var(--text-primary))]">Sin indicadores configurados</h3>
+              <p className="text-3xs text-[hsl(var(--text-secondary))] mt-1">
                 Configure indicadores MGA de eficacia o producto utilizando el Asistente Inteligente CREMA para garantizar cumplimiento con los lineamientos del DNP y BID.
               </p>
             </div>
@@ -267,13 +304,13 @@ export default function ProjectIndicatorsPage() {
                   <div className="space-y-3">
                     <div className="flex items-center justify-between gap-2">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <span className="font-mono text-3xs font-extrabold px-2 py-0.5 rounded bg-[hsl(var(--surface-3))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))]">
+                        <span className="font-mono text-3xs font-extrabold px-2 py-0.5 rounded bg-[hsl(var(--surface-3))] text-[hsl(var(--text-primary))] border border-[hsl(var(--border))]">
                           {ind.code || "IND"}
                         </span>
                         <span className="text-3xs font-bold px-2 py-0.5 rounded bg-[hsl(var(--primary))]/10 text-[hsl(var(--primary))] border border-[hsl(var(--primary))]/20">
                           {ind.level}
                         </span>
-                        <span className="text-3xs text-[hsl(var(--muted-foreground))] flex items-center gap-1">
+                        <span className="text-3xs text-[hsl(var(--text-secondary))] flex items-center gap-1">
                           <Clock size={11} /> {ind.frequency}
                         </span>
                       </div>
@@ -298,7 +335,7 @@ export default function ProjectIndicatorsPage() {
                           className={clsx(
                             "text-3xs font-black px-2.5 py-0.5 rounded-full border flex items-center gap-1",
                             spi === null || spi === undefined
-                              ? "bg-[hsl(var(--surface-3))] border-[hsl(var(--border))] text-[hsl(var(--muted-foreground))]"
+                              ? "bg-[hsl(var(--surface-3))] border-[hsl(var(--border))] text-[hsl(var(--text-secondary))]"
                               : spi >= 1.0
                               ? "bg-[hsl(var(--success))]/20 border-[hsl(var(--success))]/40 text-[hsl(var(--success))]"
                               : spi >= 0.8
@@ -328,9 +365,9 @@ export default function ProjectIndicatorsPage() {
                     </div>
 
                     <div>
-                      <h3 className="text-sm font-bold text-[hsl(var(--foreground))]">{ind.name}</h3>
+                      <h3 className="text-sm font-bold text-[hsl(var(--text-primary))]">{ind.name}</h3>
                       {ind.description && (
-                        <p className="text-3xs text-[hsl(var(--muted-foreground))] mt-1 line-clamp-2">
+                        <p className="text-3xs text-[hsl(var(--text-secondary))] mt-1 line-clamp-2">
                           {ind.description}
                         </p>
                       )}
@@ -339,15 +376,15 @@ export default function ProjectIndicatorsPage() {
                     {/* Barra de Progreso y Metas */}
                     <div className="space-y-1.5 pt-2">
                       <div className="flex items-center justify-between text-3xs font-semibold">
-                        <span className="text-[hsl(var(--muted-foreground))]">
+                        <span className="text-[hsl(var(--text-secondary))]">
                           Avance Actual:{" "}
-                          <strong className="text-[hsl(var(--foreground))]">
+                          <strong className="text-[hsl(var(--text-primary))]">
                             {ind.current_value} {ind.unit_of_measure}
                           </strong>
                         </span>
                         <span>
                           Meta:{" "}
-                          <strong className="text-[hsl(var(--foreground))]">
+                          <strong className="text-[hsl(var(--text-primary))]">
                             {ind.target_value} {ind.unit_of_measure}
                           </strong>{" "}
                           ({progress}%)
@@ -369,7 +406,7 @@ export default function ProjectIndicatorsPage() {
                     </div>
                   </div>
 
-                  <div className="pt-3 border-t border-[hsl(var(--border))] flex items-center justify-between text-3xs text-[hsl(var(--muted-foreground))]">
+                  <div className="pt-3 border-t border-[hsl(var(--border))] flex items-center justify-between text-3xs text-[hsl(var(--text-secondary))]">
                     <span>
                       Mediciones: <strong>{ind.records_count || 0}</strong> | Creador: {ind.creator_name || "Usuario"}
                     </span>

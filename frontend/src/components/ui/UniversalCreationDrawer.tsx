@@ -13,6 +13,7 @@ import clsx from 'clsx';
 import { useAuth } from '@/context/AuthContext';
 import { useCreation } from '@/context/CreationContext';
 import { apiFetch } from '@/lib/http';
+import { getAllProjects } from '@/lib/projects/api';
 import { createCmsPage } from '@/lib/cms/v2';
 import { SITE_KEY } from '@/lib/site-config';
 import { toast } from 'sonner';
@@ -191,7 +192,7 @@ export default function UniversalCreationDrawer({ isOpen, onClose, initialType =
     const fetchProjects = async (preset?: CreationPreset) => {
         if (!token) return;
         try {
-            const data = await apiFetch<ProjectRecord[]>('/projects', { token });
+            const data = await getAllProjects(token);
             setProjects(data);
             const general = data.find((project) => /proyecto general|general/i.test(project.title));
             setGeneralProjectId(general?.id ?? null);

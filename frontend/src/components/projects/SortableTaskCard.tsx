@@ -1,10 +1,11 @@
 "use client";
 
-import { useState, MouseEvent } from 'react';
+import { useState } from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { MessageSquare, GripVertical, MoreHorizontal, Trash2, Eye } from 'lucide-react';
 import { InlinePriorityPicker, InlineDatePicker, InlineUserPicker, InlineTextInput } from '@/components/ui/inline-editors';
+import { PROJECT_ASSIGNEE_CANDIDATES_ENDPOINT, TASK_TITLE_MAX_LENGTH } from '@/lib/projects/constants';
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import ConfirmActionDrawer, { type ConfirmActionState } from '@/components/ConfirmActionDrawer';
 import clsx from 'clsx';
@@ -49,8 +50,7 @@ export function SortableTaskCard({ task, onOpen, onUpdate, onDelete }: Props) {
     const dueDateStr = task.due_date || undefined;
     const commentCount = task.comments_count ?? 0;
 
-    const handleDelete = (e: MouseEvent) => {
-        e.stopPropagation();
+    const handleDelete = () => {
         setMenuOpen(false);
         const label = task.title || 'esta tarea';
         setConfirmDelete({
@@ -65,13 +65,12 @@ export function SortableTaskCard({ task, onOpen, onUpdate, onDelete }: Props) {
     };
 
     return (
-        <div
+        <article
             ref={setNodeRef}
             data-testid={`task-card-${task.id}`}
             style={style}
-            onClick={() => onOpen(task)}
             className={clsx(
-                'bg-[hsl(var(--surface-1))] rounded-md shadow-sm border cursor-pointer',
+                'bg-[hsl(var(--surface-1))] rounded-md shadow-sm border',
                 'hover:shadow-md hover:border-[hsl(var(--primary))]',
                 'transition-all duration-150 group/card relative overflow-hidden',
                 isDragging
@@ -89,7 +88,7 @@ export function SortableTaskCard({ task, onOpen, onUpdate, onDelete }: Props) {
                         type="button"
                         {...attributes}
                         {...listeners}
-                        aria-label="Arrastrar tarea"
+                        aria-label={`Arrastrar tarea ${task.title}`}
                         className="mt-0.5 opacity-0 group-hover/card:opacity-40 hover:opacity-100 cursor-grab active:cursor-grabbing transition-opacity shrink-0 p-0.5 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--primary))] focus-visible:ring-offset-2"
                         onClick={e => e.stopPropagation()}
                     >
@@ -103,6 +102,8 @@ export function SortableTaskCard({ task, onOpen, onUpdate, onDelete }: Props) {
                             value={task.title}
                             onChange={(v) => onUpdate?.(String(task.id), { title: v })}
                             placeholder="Título de la tarea"
+                            ariaLabel={`Título de la tarea ${task.title}`}
+                            maxLength={TASK_TITLE_MAX_LENGTH}
                             className="text-base font-semibold text-[hsl(var(--foreground))] leading-snug line-clamp-2"
                             inputClassName="text-base"
                         />
@@ -133,9 +134,18 @@ export function SortableTaskCard({ task, onOpen, onUpdate, onDelete }: Props) {
                             </span>
                         )}
                         <InlineUserPicker
+                            endpoint={PROJECT_ASSIGNEE_CANDIDATES_ENDPOINT}
                             value={task.assignee_id ?? null}
                             onChange={(userId) => onUpdate?.(String(task.id), { assignee_id: userId })}
                         />
+                        <button
+                            type="button"
+                            onClick={() => onOpen(task)}
+                            aria-label={`Abrir detalle de tarea ${task.title}`}
+                            className="size-8 rounded-lg flex items-center justify-center text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--primary))] hover:bg-[hsl(var(--surface-2))] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--primary))] focus-visible:ring-offset-2"
+                        >
+                            <Eye size={14} aria-hidden="true" />
+                        </button>
                         <DropdownMenu.Root open={menuOpen} onOpenChange={setMenuOpen}>
                             <DropdownMenu.Trigger asChild>
                                 <button
@@ -152,12 +162,6 @@ export function SortableTaskCard({ task, onOpen, onUpdate, onDelete }: Props) {
                                     sideOffset={4}
                                     className="z-[500] min-w-[160px] bg-[hsl(var(--surface-1))] rounded-md shadow-2xl border border-[hsl(var(--border))] p-1"
                                 >
-                                    <DropdownMenu.Item
-                                        onClick={(e) => { e.stopPropagation(); onOpen(task); setMenuOpen(false); }}
-                                        className="flex items-center gap-2 px-2.5 py-2 text-sm font-semibold text-[hsl(var(--foreground))] hover:bg-[hsl(var(--surface-2))] rounded-lg cursor-pointer outline-none"
-                                    >
-                                        <Eye size={13} /> Ver detalle
-                                    </DropdownMenu.Item>
                                     {onDelete && (
                                         <>
                                             <DropdownMenu.Separator className="h-px bg-[hsl(var(--border))] my-1" />
@@ -176,6 +180,6 @@ export function SortableTaskCard({ task, onOpen, onUpdate, onDelete }: Props) {
                 </div>
             </div>
             <ConfirmActionDrawer action={confirmDelete} onClose={() => setConfirmDelete(null)} />
-        </div>
+        </article>
     );
 }

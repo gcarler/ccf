@@ -4,6 +4,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/lib/http';
 import ProjectsShell from '@/components/projects/ProjectsShell';
+import ProjectsLoadError from '@/components/projects/ProjectsLoadError';
 import type { ViewType } from '@/components/ViewSwitcher';
 import UniversalCalendarView from '@/components/ui/UniversalCalendarView';
 import UniversalGanttView from '@/components/ui/UniversalGanttView';
@@ -13,6 +14,7 @@ import { Layout, MessageCircle } from 'lucide-react';
 import { DSSkeleton } from '@/design';
 import clsx from 'clsx';
 import { toast } from 'sonner';
+import { getAllProjects } from '@/lib/projects/api';
 
 const COMMENT_VIEWS: ViewType[] = ['list', 'table', 'grid', 'board', 'kanban', 'calendar', 'gantt', 'wiki'];
 
@@ -22,6 +24,8 @@ export default function ProjectsCommentsPage() {
     const [projects, setProjects] = useState<ProjectRecord[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [loadFailed, setLoadFailed] = useState(false);
+    const [loadAttempt, setLoadAttempt] = useState(0);
     const [saving, setSaving] = useState(false);
     const [projectId, setProjectId] = useState<string | ''>('');
     const [content, setContent] = useState('');
@@ -33,13 +37,16 @@ export default function ProjectsCommentsPage() {
             setComments([]);
             setProjects([]);
             setError('Debes iniciar sesión para ver los comentarios de proyectos.');
+            setLoadFailed(false);
             return;
         }
+        setLoading(true);
         try {
             setError(null);
+            setLoadFailed(false);
             const [commentRows, projectRows] = await Promise.all([
                 apiFetch<ProjectCommentItem[]>('/projects/comments?unresolved_only=true&limit=120', { token, cache: 'no-store' }),
-                apiFetch<ProjectRecord[]>('/projects?limit=200', { token, cache: 'no-store' }),
+                getAllProjects(token, { cache: 'no-store' }),
             ]);
             setComments(Array.isArray(commentRows) ? commentRows : []);
             const projectList = Array.isArray(projectRows) ? projectRows : [];
@@ -51,7 +58,7 @@ export default function ProjectsCommentsPage() {
             setComments([]);
             setProjects([]);
             setError('No se pudieron cargar los comentarios de proyectos.');
-            toast.error("Error inesperado");
+            setLoadFailed(true);
             toast.error('Error al cargar comentarios');
         } finally {
             setLoading(false);
@@ -61,7 +68,7 @@ export default function ProjectsCommentsPage() {
     useEffect(() => {
         if (!authLoading) loadData();
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [authLoading, token]);
+    }, [authLoading, token, loadAttempt]);
 
     const grouped = useMemo(() => {
         return comments.reduce<Record<string, ProjectCommentItem[]>>((acc, comment) => {
@@ -85,7 +92,6 @@ export default function ProjectsCommentsPage() {
             setComments((prev) => [created, ...prev]);
             setContent('');
         } catch (error) {
-            toast.error("Error inesperado");
             toast.error('Error al publicar comentario');
         } finally {
             setSaving(false);
@@ -102,7 +108,7 @@ export default function ProjectsCommentsPage() {
             });
             setComments((prev) => prev.map((row) => (row.id === updated.id ? updated : row)));
         } catch (error) {
-            toast.error("Error inesperado");
+            toast.error('No se pudo resolver el comentario.');
         }
     };
 
@@ -114,15 +120,19 @@ export default function ProjectsCommentsPage() {
             viewOptions={COMMENT_VIEWS}
         >
             {error && (
-                <div className="mx-4 mt-4 rounded-md border border-[hsl(var(--warning)/0.3)] bg-[hsl(var(--warning)/0.1)] p-3 text-[hsl(var(--warning))]">
-                    <p className="text-xs font-bold uppercase tracking-wide">{error}</p>
-                </div>
+                <ProjectsLoadError
+                    message={error}
+                    onRetry={loadFailed ? () => setLoadAttempt((attempt) => attempt + 1) : undefined}
+                    className="mx-4 mt-4"
+                />
             )}
             <main className="flex-1 overflow-y-auto p-4 space-y-3">
                 <section className="rounded-lg border border-[hsl(var(--border))] p-3 bg-[hsl(var(--surface-1))]">
                     <h2 className="text-sm font-bold uppercase tracking-wide text-[hsl(var(--muted-foreground))] mb-2">Nuevo comentario</h2>
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+                        <label htmlFor="project-comment-project" className="sr-only">Proyecto del comentario</label>
                         <select
+                            id="project-comment-project"
                             value={projectId}
                             onChange={(event) => setProjectId(event.target.value)}
                             className="md:col-span-1 rounded-md border border-[hsl(var(--border))] px-3 py-2 bg-[hsl(var(--surface-1))]"
@@ -131,7 +141,9 @@ export default function ProjectsCommentsPage() {
                                 <option key={project.id} value={project.id}>{project.title}</option>
                             ))}
                         </select>
+                        <label htmlFor="project-comment-content" className="sr-only">Comentario</label>
                         <input
+                            id="project-comment-content"
                             value={content}
                             onChange={(event) => setContent(event.target.value)}
                             placeholder="Escribe un comentario para el proyecto..."

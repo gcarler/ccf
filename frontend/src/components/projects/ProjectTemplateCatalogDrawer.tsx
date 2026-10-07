@@ -9,6 +9,8 @@ import { apiFetch } from "@/lib/http";
 import type { ProjectTemplate, InstantiateProjectFromTemplate, SaveProjectAsTemplate, ProjectRecord } from "@/types/projects";
 import { BookTemplate, FolderPlus, Copy, Layers, Search, CheckCircle2, ChevronRight, ChevronDown, Sparkles, BookmarkPlus, Trash2, Globe, Lock } from "lucide-react";
 import clsx from "clsx";
+import { PROJECT_TITLE_MAX_LENGTH } from "@/lib/projects/constants";
+import ConfirmActionDrawer, { type ConfirmActionState } from "@/components/ConfirmActionDrawer";
 
 interface ProjectTemplateCatalogDrawerProps {
   isOpen: boolean;
@@ -43,6 +45,7 @@ export function ProjectTemplateCatalogDrawer({
   const [loading, setLoading] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState<ProjectTemplate | null>(null);
   const [expandedPreviewId, setExpandedPreviewId] = useState<string | null>(null);
+  const [confirmAction, setConfirmAction] = useState<ConfirmActionState>(null);
 
   // Filtros
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
@@ -190,7 +193,18 @@ export function ProjectTemplateCatalogDrawer({
       }
     } catch {
       addToast("Error al eliminar la plantilla", "error");
+      throw new Error("Error al eliminar la plantilla");
     }
+  };
+
+  const requestDeleteTemplate = (template: ProjectTemplate) => {
+    setConfirmAction({
+      title: "Eliminar plantilla",
+      description: `¿Confirmas eliminar “${template.name}” del catálogo? Los proyectos ya creados con esta plantilla no se modifican.`,
+      destructive: true,
+      confirmLabel: "Eliminar plantilla",
+      onConfirm: () => handleDeleteTemplate(template.id),
+    });
   };
 
   return (
@@ -200,7 +214,7 @@ export function ProjectTemplateCatalogDrawer({
       title="Catálogo de Plantillas Reutilizables de Proyectos"
       className="w-full max-w-2xl"
     >
-      <div className="flex flex-col gap-5 p-6 text-sm" style={{ color: "hsl(var(--text-1))" }}>
+      <div className="flex flex-col gap-5 p-6 text-sm" style={{ color: "hsl(var(--text-primary))" }}>
         {/* NAVEGACIÓN ENTRE PESTAÑAS */}
         <div
           className="flex items-center gap-1 p-1 rounded-xl border"
@@ -218,7 +232,7 @@ export function ProjectTemplateCatalogDrawer({
             )}
             style={{
               backgroundColor: activeTab === "catalog" ? "hsl(var(--surface-1))" : "transparent",
-              color: activeTab === "catalog" ? "hsl(var(--primary))" : "hsl(var(--text-muted))",
+              color: activeTab === "catalog" ? "hsl(var(--primary))" : "hsl(var(--text-secondary))",
             }}
           >
             <BookTemplate className="w-4 h-4" />
@@ -235,7 +249,7 @@ export function ProjectTemplateCatalogDrawer({
               )}
               style={{
                 backgroundColor: activeTab === "instantiate" ? "hsl(var(--surface-1))" : "transparent",
-                color: activeTab === "instantiate" ? "hsl(var(--primary))" : "hsl(var(--text-muted))",
+                color: activeTab === "instantiate" ? "hsl(var(--primary))" : "hsl(var(--text-secondary))",
               }}
             >
               <FolderPlus className="w-4 h-4" />
@@ -253,7 +267,7 @@ export function ProjectTemplateCatalogDrawer({
               )}
               style={{
                 backgroundColor: activeTab === "save_current" ? "hsl(var(--surface-1))" : "transparent",
-                color: activeTab === "save_current" ? "hsl(var(--primary))" : "hsl(var(--text-muted))",
+                color: activeTab === "save_current" ? "hsl(var(--primary))" : "hsl(var(--text-secondary))",
               }}
             >
               <BookmarkPlus className="w-4 h-4" />
@@ -309,7 +323,7 @@ export function ProjectTemplateCatalogDrawer({
                       color:
                         selectedCategory === cat.id
                           ? "hsl(var(--primary))"
-                          : "hsl(var(--text-muted))",
+                          : "hsl(var(--text-secondary))",
                     }}
                   >
                     {cat.label}
@@ -320,7 +334,7 @@ export function ProjectTemplateCatalogDrawer({
 
             {/* Listado de Plantillas */}
             {loading ? (
-              <div className="py-12 text-center text-xs" style={{ color: "hsl(var(--text-muted))" }}>
+              <div className="py-12 text-center text-xs" style={{ color: "hsl(var(--text-secondary))" }}>
                 Cargando plantillas ministeriales...
               </div>
             ) : templates.length === 0 ? (
@@ -329,7 +343,7 @@ export function ProjectTemplateCatalogDrawer({
                 style={{
                   backgroundColor: "hsl(var(--surface-1))",
                   borderColor: "hsl(var(--border))",
-                  color: "hsl(var(--text-muted))",
+                  color: "hsl(var(--text-secondary))",
                 }}
               >
                 <BookTemplate className="w-10 h-10 mx-auto opacity-30" />
@@ -381,7 +395,7 @@ export function ProjectTemplateCatalogDrawer({
                             )}
                           </div>
                           {tpl.description && (
-                            <p className="text-xs line-clamp-2" style={{ color: "hsl(var(--text-muted))" }}>
+                            <p className="text-xs line-clamp-2" style={{ color: "hsl(var(--text-secondary))" }}>
                               {tpl.description}
                             </p>
                           )}
@@ -390,7 +404,8 @@ export function ProjectTemplateCatalogDrawer({
                         <div className="flex items-center gap-2">
                           <button
                             type="button"
-                            onClick={() => handleDeleteTemplate(tpl.id)}
+                            onClick={() => requestDeleteTemplate(tpl)}
+                            aria-label={`Eliminar plantilla ${tpl.name}`}
                             className="p-1.5 rounded-lg border opacity-40 hover:opacity-100 transition-opacity"
                             style={{
                               borderColor: "hsl(var(--border))",
@@ -412,15 +427,15 @@ export function ProjectTemplateCatalogDrawer({
                         }}
                       >
                         <div>
-                          <span className="text-3xs block" style={{ color: "hsl(var(--text-muted))" }}>Fases</span>
+                          <span className="text-3xs block" style={{ color: "hsl(var(--text-secondary))" }}>Fases</span>
                           <span className="font-bold">{phases.length}</span>
                         </div>
                         <div>
-                          <span className="text-3xs block" style={{ color: "hsl(var(--text-muted))" }}>Tareas</span>
+                          <span className="text-3xs block" style={{ color: "hsl(var(--text-secondary))" }}>Tareas</span>
                           <span className="font-bold">{tasks.length}</span>
                         </div>
                         <div>
-                          <span className="text-3xs block" style={{ color: "hsl(var(--text-muted))" }}>Presupuesto</span>
+                          <span className="text-3xs block" style={{ color: "hsl(var(--text-secondary))" }}>Presupuesto</span>
                           <span className="font-bold font-mono" style={{ color: "hsl(var(--primary))" }}>
                             ${(tpl.default_budget || 0).toLocaleString("es-CO")}
                           </span>
@@ -433,7 +448,7 @@ export function ProjectTemplateCatalogDrawer({
                           type="button"
                           onClick={() => setExpandedPreviewId(isExpanded ? null : tpl.id)}
                           className="text-xs font-semibold flex items-center gap-1 opacity-70 hover:opacity-100 transition-opacity"
-                          style={{ color: "hsl(var(--text-1))" }}
+                          style={{ color: "hsl(var(--text-primary))" }}
                         >
                           {isExpanded ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />}
                           {isExpanded ? "Ocultar estructura" : "Ver estructura"}
@@ -462,7 +477,7 @@ export function ProjectTemplateCatalogDrawer({
                             borderColor: "hsl(var(--border))",
                           }}
                         >
-                          <span className="font-bold text-3xs uppercase tracking-wider block" style={{ color: "hsl(var(--text-muted))" }}>
+                          <span className="font-bold text-3xs uppercase tracking-wider block" style={{ color: "hsl(var(--text-secondary))" }}>
                             Estructura de la Plantilla ({phases.length} fases, {tasks.length} tareas)
                           </span>
 
@@ -494,14 +509,14 @@ export function ProjectTemplateCatalogDrawer({
                                             <span className="truncate max-w-[220px]">
                                               • {t.title}
                                             </span>
-                                            <span style={{ color: "hsl(var(--text-muted))" }}>
+                                            <span style={{ color: "hsl(var(--text-secondary))" }}>
                                               {t.duration_days}d (+{t.day_offset}d)
                                             </span>
                                           </div>
                                         ))}
                                       </div>
                                     ) : (
-                                      <p className="pl-4 text-3xs italic" style={{ color: "hsl(var(--text-muted))" }}>
+                                      <p className="pl-4 text-3xs italic" style={{ color: "hsl(var(--text-secondary))" }}>
                                         Sin tareas específicas
                                       </p>
                                     )}
@@ -521,14 +536,14 @@ export function ProjectTemplateCatalogDrawer({
                                   }}
                                 >
                                   <span>• {t.title}</span>
-                                  <span style={{ color: "hsl(var(--text-muted))" }}>
+                                  <span style={{ color: "hsl(var(--text-secondary))" }}>
                                     {t.duration_days}d
                                   </span>
                                 </div>
                               ))}
                             </div>
                           ) : (
-                            <p className="text-3xs italic" style={{ color: "hsl(var(--text-muted))" }}>
+                            <p className="text-3xs italic" style={{ color: "hsl(var(--text-secondary))" }}>
                               Plantilla sin fases ni tareas predefinidas.
                             </p>
                           )}
@@ -557,7 +572,7 @@ export function ProjectTemplateCatalogDrawer({
                 <FolderPlus className="w-5 h-5" style={{ color: "hsl(var(--primary))" }} />
                 <div>
                   <h3 className="font-bold text-sm">Instanciar Nuevo Proyecto</h3>
-                  <span className="text-3xs" style={{ color: "hsl(var(--text-muted))" }}>
+                  <span className="text-3xs" style={{ color: "hsl(var(--text-secondary))" }}>
                     Basado en: {selectedTemplate.name}
                   </span>
                 </div>
@@ -566,14 +581,14 @@ export function ProjectTemplateCatalogDrawer({
                 type="button"
                 onClick={() => setActiveTab("catalog")}
                 className="text-xs font-semibold hover:underline"
-                style={{ color: "hsl(var(--text-muted))" }}
+                style={{ color: "hsl(var(--text-secondary))" }}
               >
                 Volver
               </button>
             </div>
 
             <div>
-              <label className="block text-xs font-semibold mb-1" style={{ color: "hsl(var(--text-muted))" }}>
+              <label className="block text-xs font-semibold mb-1" style={{ color: "hsl(var(--text-secondary))" }}>
                 Título del Nuevo Proyecto *
               </label>
               <input
@@ -581,6 +596,7 @@ export function ProjectTemplateCatalogDrawer({
                 required
                 value={instantiateTitle}
                 onChange={(e) => setInstantiateTitle(e.target.value)}
+                maxLength={PROJECT_TITLE_MAX_LENGTH}
                 className="w-full py-2 px-3 rounded-lg border text-sm"
                 style={{
                   backgroundColor: "hsl(var(--surface-2))",
@@ -592,7 +608,7 @@ export function ProjectTemplateCatalogDrawer({
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs font-semibold mb-1" style={{ color: "hsl(var(--text-muted))" }}>
+                <label className="block text-xs font-semibold mb-1" style={{ color: "hsl(var(--text-secondary))" }}>
                   Fecha de Inicio *
                 </label>
                 <input
@@ -610,7 +626,7 @@ export function ProjectTemplateCatalogDrawer({
               </div>
 
               <div>
-                <label className="block text-xs font-semibold mb-1" style={{ color: "hsl(var(--text-muted))" }}>
+                <label className="block text-xs font-semibold mb-1" style={{ color: "hsl(var(--text-secondary))" }}>
                   Presupuesto Asignado ($ COP)
                 </label>
                 <input
@@ -630,7 +646,7 @@ export function ProjectTemplateCatalogDrawer({
             </div>
 
             <div>
-              <label className="block text-xs font-semibold mb-1" style={{ color: "hsl(var(--text-muted))" }}>
+              <label className="block text-xs font-semibold mb-1" style={{ color: "hsl(var(--text-secondary))" }}>
                 Descripción o Justificación del Proyecto
               </label>
               <textarea
@@ -656,13 +672,13 @@ export function ProjectTemplateCatalogDrawer({
               <span className="font-bold block" style={{ color: "hsl(var(--primary))" }}>
                 ¿Qué se creará automáticamente?
               </span>
-              <p className="text-3xs" style={{ color: "hsl(var(--text-muted))" }}>
+              <p className="text-3xs" style={{ color: "hsl(var(--text-secondary))" }}>
                 • {selectedTemplate.structure?.phases?.length || 0} fase(s) organizadas.
               </p>
-              <p className="text-3xs" style={{ color: "hsl(var(--text-muted))" }}>
+              <p className="text-3xs" style={{ color: "hsl(var(--text-secondary))" }}>
                 • {selectedTemplate.structure?.tasks?.length || 0} tarea(s) con cronograma relativo calculado desde la fecha de inicio.
               </p>
-              <p className="text-3xs" style={{ color: "hsl(var(--text-muted))" }}>
+              <p className="text-3xs" style={{ color: "hsl(var(--text-secondary))" }}>
                 • Control presupuestario y asignación de sede multi-tenant segura.
               </p>
             </div>
@@ -696,14 +712,14 @@ export function ProjectTemplateCatalogDrawer({
               <BookmarkPlus className="w-5 h-5" style={{ color: "hsl(var(--primary))" }} />
               <div>
                 <h3 className="font-bold text-sm">Guardar Proyecto Activo como Plantilla</h3>
-                <span className="text-3xs" style={{ color: "hsl(var(--text-muted))" }}>
+                <span className="text-3xs" style={{ color: "hsl(var(--text-secondary))" }}>
                   Captura las fases y tareas actuales para estandarizarlas
                 </span>
               </div>
             </div>
 
             <div>
-              <label className="block text-xs font-semibold mb-1" style={{ color: "hsl(var(--text-muted))" }}>
+              <label className="block text-xs font-semibold mb-1" style={{ color: "hsl(var(--text-secondary))" }}>
                 Nombre de la Plantilla *
               </label>
               <input
@@ -721,7 +737,7 @@ export function ProjectTemplateCatalogDrawer({
             </div>
 
             <div>
-              <label className="block text-xs font-semibold mb-1" style={{ color: "hsl(var(--text-muted))" }}>
+              <label className="block text-xs font-semibold mb-1" style={{ color: "hsl(var(--text-secondary))" }}>
                 Categoría *
               </label>
               <select
@@ -743,7 +759,7 @@ export function ProjectTemplateCatalogDrawer({
             </div>
 
             <div>
-              <label className="block text-xs font-semibold mb-1" style={{ color: "hsl(var(--text-muted))" }}>
+              <label className="block text-xs font-semibold mb-1" style={{ color: "hsl(var(--text-secondary))" }}>
                 Descripción de la Plantilla
               </label>
               <textarea
@@ -789,6 +805,7 @@ export function ProjectTemplateCatalogDrawer({
           </form>
         )}
       </div>
+      <ConfirmActionDrawer action={confirmAction} onClose={() => setConfirmAction(null)} />
     </RightPanel>
   );
 }

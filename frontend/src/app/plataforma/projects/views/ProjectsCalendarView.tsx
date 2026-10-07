@@ -12,18 +12,23 @@ interface ProjectsCalendarViewProps {
 export default function ProjectsCalendarView({ projects, onEventClick }: ProjectsCalendarViewProps) {
     const events = useMemo(
         () =>
-            projects.map((project) => ({
-                id: project.id,
-                title: project.title,
-                date: (project.updated_at || project.created_at || new Date().toISOString()).slice(0, 10),
-                color:
-                    project.status === 'completed'
-                        ? ('emerald' as const)
-                        : project.status === 'on_hold'
-                        ? ('amber' as const)
-                        : ('blue' as const),
-                location: project.description || undefined,
-            })),
+            projects.flatMap((project) => {
+                const scheduledDate = project.target_date || project.start_date;
+                if (!scheduledDate) return [];
+                const milestoneLabel = project.target_date ? 'Entrega' : 'Inicio';
+                return [{
+                    id: project.id,
+                    title: `${project.title} · ${milestoneLabel}`,
+                    date: scheduledDate.slice(0, 10),
+                    color:
+                        project.status === 'completed'
+                            ? ('emerald' as const)
+                            : project.status === 'on_hold'
+                            ? ('amber' as const)
+                            : ('blue' as const),
+                    location: project.description || undefined,
+                }];
+            }),
         [projects]
     );
 
@@ -33,6 +38,7 @@ export default function ProjectsCalendarView({ projects, onEventClick }: Project
                 events={events}
                 title="Calendario de proyectos"
                 onEventClick={onEventClick}
+                todayButtonClassName="text-[hsl(var(--foreground))] hover:text-[hsl(var(--primary))]"
             />
         </div>
     );

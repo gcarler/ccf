@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import uuid
 from typing import TYPE_CHECKING, Any, List
+from urllib.parse import urlsplit
 
 from backend.models_shared import _utcnow
 
@@ -22,6 +23,16 @@ def _to_uuid(val: Any) -> uuid.UUID | None:
         return None
 
 
+def _safe_target_url(value: str | None) -> str | None:
+    """Keep notification destinations on authenticated, same-origin routes."""
+    if not value or len(value) > 512 or "\\" in value or any(ord(char) < 32 for char in value):
+        return None
+    parsed = urlsplit(value)
+    if parsed.scheme or parsed.netloc or not parsed.path.startswith("/plataforma/"):
+        return None
+    return value
+
+
 def create_notification(
     db: "Session",
     *,
@@ -29,6 +40,7 @@ def create_notification(
     title: str,
     content: str,
     sede_id: uuid.UUID | str | Any | None = None,
+    target_url: str | None = None,
 ) -> None:
     """Helper canónico para crear una NotificacionUsuario.
 
@@ -42,12 +54,15 @@ def create_notification(
     sede_uuid = _to_uuid(sede_id)
     if not user_uuid:
         return
+    if not db.query(models.User.id).filter(models.User.id == user_uuid).first():
+        return
     db.add(
         models.NotificacionUsuario(
             user_id=user_uuid,
             sede_id=sede_uuid,
             title=title,
             content=content,
+            target_url=_safe_target_url(target_url),
             is_read=False,
             created_at=_utcnow(),
         )
@@ -88,7 +103,8 @@ def notify_mention(
         create_notification(
             db,
             user_id=user_uuid,
-            sede_id=sede_uuid,
             title=title,
             content=content,
+            sede_id=sede_uuid,
+            target_url=url,
         )

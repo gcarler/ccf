@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useMemo, useRef, useCallback } from "react";
+import React, { useState, useEffect, useMemo, useRef, useCallback, useId } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/context/ToastContext";
 import { useProjectUpdate } from "@/context/ProjectUpdateContext";
@@ -14,6 +14,7 @@ import type {
 } from "@/types/projects";
 import { RightPanel } from "@/components/ui/RightPanel";
 import { ProjectBaselineDrawer } from "@/components/projects/ProjectBaselineDrawer";
+import ConfirmActionDrawer, { type ConfirmActionState } from "@/components/ConfirmActionDrawer";
 import { Calendar, ChevronLeft, ChevronRight, ChevronDown, Layers, Link2, Plus, Milestone, Clock, Zap, Sliders } from "lucide-react";
 import clsx from "clsx";
 
@@ -27,6 +28,38 @@ interface Props {
 }
 
 type ZoomLevel = "day" | "week" | "month";
+type DependencyType = ProjectTaskDependency["dependency_type"];
+
+const DEPENDENCY_TYPE_COPY: Record<DependencyType, { label: string; description: string }> = {
+  FS: {
+    label: "Fin a inicio (FS)",
+    description: "La tarea sucesora puede iniciar cuando finalice la predecesora.",
+  },
+  SS: {
+    label: "Inicio a inicio (SS)",
+    description: "La tarea sucesora puede iniciar cuando comience la predecesora.",
+  },
+  FF: {
+    label: "Fin a fin (FF)",
+    description: "La tarea sucesora puede finalizar cuando finalice la predecesora.",
+  },
+  SF: {
+    label: "Inicio a fin (SF)",
+    description: "La tarea sucesora puede finalizar cuando comience la predecesora.",
+  },
+};
+
+export function parseDependencyType(value: string): DependencyType | null {
+  switch (value) {
+    case "FS":
+    case "SS":
+    case "FF":
+    case "SF":
+      return value;
+    default:
+      return null;
+  }
+}
 
 const ZOOM_CONFIG = {
   day: { colWidth: 44, daysPerCol: 1, label: "Día" },
@@ -58,6 +91,7 @@ export default function ProjectGanttView({
   const ctx = useProjectUpdate();
 
   const projectId = propProjectId || ctx.project?.id || "";
+  const dependencyFormId = useId();
   const tasks = useMemo(() => propTasks || ctx.tasks || [], [propTasks, ctx.tasks]);
   const phases = useMemo(() => propPhases || ctx.phases || [], [propPhases, ctx.phases]);
   const milestones: ProjectMilestoneRecord[] = ctx.project?.milestones || [];
@@ -69,22 +103,29 @@ export default function ProjectGanttView({
 
   // Dependencies
   const [dependencies, setDependencies] = useState<ProjectTaskDependency[]>([]);
-  const [, setLoadingDeps] = useState(false);
+  const [loadingDeps, setLoadingDeps] = useState(false);
+  const [dependenciesError, setDependenciesError] = useState(false);
   const [showDepDrawer, setShowDepDrawer] = useState(false);
   const [depFormData, setDepFormData] = useState({
     predecessor_id: "",
     successor_id: "",
-    dependency_type: "FS" as "FS" | "SS" | "FF",
+    dependency_type: "FS" as DependencyType,
     lag_days: 0,
   });
   const [savingDep, setSavingDep] = useState(false);
   const [hoveredDepId, setHoveredDepId] = useState<string | null>(null);
+  const [confirmDependencyAction, setConfirmDependencyAction] = useState<ConfirmActionState>(null);
 
   // Critical Path & Baseline (Super-PRO Fase 4)
   const [showCriticalPath, setShowCriticalPath] = useState(false);
   const [criticalPathData, setCriticalPathData] = useState<ProjectCriticalPathSummary | null>(null);
+  const [loadingCriticalPath, setLoadingCriticalPath] = useState(false);
+  const [criticalPathError, setCriticalPathError] = useState(false);
   const [showBaseline, setShowBaseline] = useState(false);
   const [latestBaseline, setLatestBaseline] = useState<ProjectBaseline | null>(null);
+  const [baselineLoaded, setBaselineLoaded] = useState(false);
+  const [loadingBaseline, setLoadingBaseline] = useState(false);
+  const [baselineError, setBaselineError] = useState(false);
   const [showBaselineDrawer, setShowBaselineDrawer] = useState(false);
 
   // Time window state (base view date)
@@ -101,40 +142,65 @@ export default function ProjectGanttView({
     if (!projectId || !token) return;
     try {
       setLoadingDeps(true);
+      setDependenciesError(false);
       const data = await apiFetch<ProjectTaskDependency[]>(`/projects/${projectId}/dependencies`, { token });
       setDependencies(Array.isArray(data) ? data : []);
     } catch {
       setDependencies([]);
+      setDependenciesError(true);
+      addToast({
+        title: "No se pudieron cargar las dependencias",
+        description: "El cronograma puede estar incompleto. Reintenta la carga para ver los enlaces entre tareas.",
+        variant: "destructive",
+      });
     } finally {
       setLoadingDeps(false);
     }
-  }, [projectId, token]);
+  }, [addToast, projectId, token]);
 
   const fetchCriticalPath = useCallback(async () => {
     if (!projectId || !token) return;
     try {
+      setLoadingCriticalPath(true);
+      setCriticalPathError(false);
       const data = await apiFetch<ProjectCriticalPathSummary>(`/projects/${projectId}/critical-path`, { token });
       setCriticalPathData(data);
     } catch {
-      // fallback silencioso
+      setCriticalPathData(null);
+      setCriticalPathError(true);
+      addToast({
+        title: "No se pudo calcular la ruta crítica",
+        description: "No podemos confirmar qué tareas afectan la fecha final. Reintenta el cálculo.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoadingCriticalPath(false);
     }
-  }, [projectId, token]);
+  }, [addToast, projectId, token]);
 
   const fetchBaselineData = useCallback(async () => {
     if (!projectId || !token) return;
     try {
+      setLoadingBaseline(true);
+      setBaselineError(false);
       const data = await apiFetch<ProjectBaseline>(`/projects/${projectId}/baseline`, { token });
       setLatestBaseline(data);
+      setBaselineLoaded(true);
     } catch {
-      // fallback silencioso
+      setBaselineError(true);
+      addToast({
+        title: "No se pudo consultar la línea base",
+        description: "No podemos confirmar si hay una instantánea del cronograma. Reintenta la consulta.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoadingBaseline(false);
     }
-  }, [projectId, token]);
+  }, [addToast, projectId, token]);
 
   useEffect(() => {
     fetchDependencies();
-    fetchCriticalPath();
-    fetchBaselineData();
-  }, [fetchDependencies, fetchCriticalPath, fetchBaselineData]);
+  }, [fetchDependencies]);
 
   const criticalPathTaskIds = useMemo(() => {
     return new Set(criticalPathData?.critical_path_task_ids || []);
@@ -227,7 +293,7 @@ export default function ProjectGanttView({
 
     const otherTasks = tasks.filter((t) => !phases.some((p) => p.slug === t.status));
     if (otherTasks.length > 0) {
-      groups.push({ phase: { slug: "other", name: "Otras Tareas", color: "hsl(var(--muted))" }, tasks: otherTasks });
+      groups.push({ phase: { slug: "other", name: "Otras Tareas", color: "hsl(var(--surface-3))" }, tasks: otherTasks });
     }
 
     return groups;
@@ -288,7 +354,7 @@ export default function ProjectGanttView({
 
       addToast({
         title: "Dependencia conectada",
-        description: "Se vinculó la relación Finish-to-Start entre las tareas.",
+        description: `Se vinculó ${DEPENDENCY_TYPE_COPY[depFormData.dependency_type].label} entre las tareas.`,
         variant: "success",
       });
 
@@ -331,7 +397,21 @@ export default function ProjectGanttView({
         description: "No se pudo remover la dependencia.",
         variant: "destructive",
       });
+      throw new Error("No se pudo remover la dependencia.");
     }
+  };
+
+  const requestDeleteDependency = (dependency: ProjectTaskDependency) => {
+    const predecessor = tasks.find((task) => task.id === dependency.predecessor_id);
+    const successor = tasks.find((task) => task.id === dependency.successor_id);
+    if (!predecessor || !successor) return;
+    setConfirmDependencyAction({
+      title: "Eliminar dependencia",
+      description: `¿Confirmas quitar la relación ${DEPENDENCY_TYPE_COPY[dependency.dependency_type].label} entre “${predecessor.title}” y “${successor.title}”? El cronograma dejará de considerar este vínculo.`,
+      destructive: true,
+      confirmLabel: "Eliminar dependencia",
+      onConfirm: () => handleDeleteDependency(dependency.id),
+    });
   };
 
   const togglePhaseCollapse = (slug: string) => {
@@ -352,7 +432,7 @@ export default function ProjectGanttView({
   const todayX = getXForDate(toDateKey(new Date()));
 
   return (
-    <div className="flex flex-col h-full bg-[hsl(var(--surface-1))] text-[hsl(var(--foreground))] rounded-xl border border-[hsl(var(--border))] overflow-hidden shadow-sm">
+    <div className="flex flex-col h-full bg-[hsl(var(--surface-1))] text-[hsl(var(--text-primary))] rounded-xl border border-[hsl(var(--border))] overflow-hidden shadow-sm">
       {/* 1. Header Toolbar */}
       <div className="flex flex-wrap items-center justify-between gap-3 p-3 border-b border-[hsl(var(--border))] bg-[hsl(var(--surface-2))]">
         <div className="flex items-center gap-2">
@@ -360,17 +440,39 @@ export default function ProjectGanttView({
             <Calendar size={18} />
           </div>
           <div>
-            <h3 className="text-xs font-bold uppercase tracking-wider text-[hsl(var(--foreground))]">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-[hsl(var(--text-primary))]">
               Gantt PRO & Cronograma
             </h3>
-            <span className="text-3xs text-[hsl(var(--muted-foreground))]">
-              {tasks.length} tareas · {dependencies.length} dependencias FS · {milestones.length} hitos
+            <span
+              className={clsx(
+                "text-3xs",
+                dependenciesError ? "text-[hsl(var(--destructive))]" : "text-[hsl(var(--text-primary))]",
+              )}
+              role={dependenciesError ? "alert" : "status"}
+              aria-live={dependenciesError ? "assertive" : "polite"}
+            >
+              {dependenciesError
+                ? "No se pudieron cargar los enlaces del cronograma."
+                : loadingDeps
+                  ? "Cargando dependencias..."
+                  : `${tasks.length} tareas · ${dependencies.length} dependencias · ${milestones.length} hitos`}
             </span>
           </div>
         </div>
 
         {/* View Controls */}
-        <div className="flex items-center gap-2">
+        <div className="flex w-full min-w-0 flex-wrap items-center gap-2 lg:w-auto">
+          {dependenciesError && (
+            <button
+              type="button"
+              onClick={() => void fetchDependencies()}
+              disabled={loadingDeps}
+              aria-label="Reintentar carga de dependencias"
+              className="px-2.5 py-1.5 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-2xs font-bold text-[hsl(var(--text-primary))] hover:bg-[hsl(var(--surface-3))] disabled:opacity-50"
+            >
+              {loadingDeps ? "Reintentando..." : "Reintentar"}
+            </button>
+          )}
           {/* Zoom controls */}
           <div className="flex items-center rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-0.5 text-2xs font-bold uppercase">
             {(["day", "week", "month"] as ZoomLevel[]).map((z) => (
@@ -381,7 +483,7 @@ export default function ProjectGanttView({
                   "px-2.5 py-1 rounded-md transition-all",
                   zoom === z
                     ? "bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] shadow-xs"
-                    : "text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))]"
+                    : "text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))]"
                 )}
               >
                 {ZOOM_CONFIG[z].label}
@@ -396,7 +498,7 @@ export default function ProjectGanttView({
               "px-2.5 py-1.5 rounded-lg border text-2xs font-bold uppercase tracking-wide flex items-center gap-1.5 transition-all",
               groupByPhases
                 ? "bg-[hsl(var(--primary))]/10 border-[hsl(var(--primary))]/30 text-[hsl(var(--primary))]"
-                : "border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-[hsl(var(--muted-foreground))]"
+                : "border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-[hsl(var(--text-secondary))]"
             )}
           >
             <Layers size={13} /> WBS Fases
@@ -406,7 +508,7 @@ export default function ProjectGanttView({
           <div className="flex items-center gap-1">
             <button
               onClick={() => shiftTimeWindow(-1)}
-              className="p-1.5 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] hover:bg-[hsl(var(--surface-3))] text-[hsl(var(--muted-foreground))]"
+              className="p-1.5 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] hover:bg-[hsl(var(--surface-3))] text-[hsl(var(--text-secondary))]"
               title="Atrás"
             >
               <ChevronLeft size={14} />
@@ -419,7 +521,7 @@ export default function ProjectGanttView({
             </button>
             <button
               onClick={() => shiftTimeWindow(1)}
-              className="p-1.5 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] hover:bg-[hsl(var(--surface-3))] text-[hsl(var(--muted-foreground))]"
+              className="p-1.5 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] hover:bg-[hsl(var(--surface-3))] text-[hsl(var(--text-secondary))]"
               title="Adelante"
             >
               <ChevronRight size={14} />
@@ -428,38 +530,90 @@ export default function ProjectGanttView({
 
           {/* Critical Path Toggle (Super-PRO Fase 4) */}
           <button
-            onClick={() => setShowCriticalPath(!showCriticalPath)}
+            type="button"
+            onClick={() => {
+              if (criticalPathError || !criticalPathData) {
+                setShowCriticalPath(true);
+                void fetchCriticalPath();
+                return;
+              }
+              setShowCriticalPath((visible) => !visible);
+            }}
+            disabled={loadingCriticalPath}
+            aria-pressed={showCriticalPath}
+            aria-label={criticalPathError ? "Reintentar cálculo de ruta crítica" : "Alternar ruta crítica"}
             className={clsx(
               "px-2.5 py-1.5 rounded-lg border text-2xs font-bold uppercase tracking-wide flex items-center gap-1.5 transition-all cursor-pointer",
               showCriticalPath
                 ? "bg-[hsl(var(--destructive))]/15 border-[hsl(var(--destructive))]/40 text-[hsl(var(--destructive))]"
-                : "border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))]"
+                : "border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))]",
+              loadingCriticalPath && "disabled:cursor-not-allowed disabled:opacity-50",
             )}
             title="Resaltar método de la ruta crítica (CPM)"
           >
             <Zap size={13} className={showCriticalPath ? "text-[hsl(var(--destructive))]" : ""} />
-            Ruta Crítica {criticalPathData?.critical_tasks_count ? `(${criticalPathData.critical_tasks_count})` : ""}
+            {criticalPathError
+              ? "Reintentar ruta crítica"
+              : loadingCriticalPath
+                ? "Calculando ruta crítica..."
+                : `Ruta Crítica ${criticalPathData?.critical_tasks_count ? `(${criticalPathData.critical_tasks_count})` : ""}`}
           </button>
+          {criticalPathError && (
+            <span className="text-2xs text-[hsl(var(--destructive))]" role="alert" aria-live="assertive">
+              No se pudo calcular la ruta crítica.
+            </span>
+          )}
+          {showCriticalPath && !loadingCriticalPath && !criticalPathError && criticalPathData?.critical_tasks_count === 0 && (
+            <span className="text-2xs text-[hsl(var(--text-primary))]" role="status">
+              No hay tareas críticas.
+            </span>
+          )}
 
           {/* Baseline Toggle (Super-PRO Fase 4) */}
           <button
-            onClick={() => setShowBaseline(!showBaseline)}
+            type="button"
+            onClick={() => {
+              if (baselineError || !baselineLoaded) {
+                setShowBaseline(true);
+                void fetchBaselineData();
+                return;
+              }
+              setShowBaseline((visible) => !visible);
+            }}
+            disabled={loadingBaseline}
+            aria-pressed={showBaseline}
+            aria-label={baselineError ? "Reintentar consulta de línea base" : "Alternar línea base"}
             className={clsx(
               "px-2.5 py-1.5 rounded-lg border text-2xs font-bold uppercase tracking-wide flex items-center gap-1.5 transition-all cursor-pointer",
               showBaseline
                 ? "bg-[hsl(var(--primary))]/15 border-[hsl(var(--primary))]/40 text-[hsl(var(--primary))]"
-                : "border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))]"
+                : "border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))]",
+              loadingBaseline && "disabled:cursor-not-allowed disabled:opacity-50",
             )}
             title="Superponer cronograma planificado de la línea base"
           >
             <Sliders size={13} className={showBaseline ? "text-[hsl(var(--primary))]" : ""} />
-            Línea Base
+            {baselineError
+              ? "Reintentar línea base"
+              : loadingBaseline
+                ? "Consultando línea base..."
+                : "Línea Base"}
           </button>
+          {baselineError && (
+            <span className="text-2xs text-[hsl(var(--destructive))]" role="alert" aria-live="assertive">
+              No se pudo consultar la línea base.
+            </span>
+          )}
+          {showBaseline && baselineLoaded && !baselineError && !latestBaseline && (
+            <span className="text-2xs text-[hsl(var(--text-secondary))]" role="status">
+              No hay una línea base registrada.
+            </span>
+          )}
 
           {/* Manage Baseline Drawer Button */}
           <button
             onClick={() => setShowBaselineDrawer(true)}
-            className="px-2.5 py-1.5 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] hover:bg-[hsl(var(--surface-3))] text-2xs font-bold uppercase tracking-wide flex items-center gap-1.5 text-[hsl(var(--foreground))] transition-all cursor-pointer"
+            className="px-2.5 py-1.5 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] hover:bg-[hsl(var(--surface-3))] text-2xs font-bold uppercase tracking-wide flex items-center gap-1.5 text-[hsl(var(--text-primary))] transition-all cursor-pointer"
             title="Fijar y auditar varianza de línea base"
           >
             <Layers size={13} /> Fijar Base
@@ -470,7 +624,7 @@ export default function ProjectGanttView({
             onClick={() => setShowDepDrawer(true)}
             className="px-3 py-1.5 rounded-lg bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] text-2xs font-bold uppercase tracking-wide hover:opacity-90 active:scale-95 transition-all flex items-center gap-1.5 shadow-xs cursor-pointer"
           >
-            <Link2 size={13} /> Conectar FS
+            <Link2 size={13} /> Conectar dependencia
           </button>
         </div>
       </div>
@@ -479,7 +633,7 @@ export default function ProjectGanttView({
       <div className="flex-1 flex min-h-0 overflow-hidden">
         {/* Left Tasks Tree (WBS) */}
         <div className="w-72 shrink-0 border-r border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] flex flex-col min-h-0">
-          <div className="h-11 px-3 flex items-center justify-between border-b border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] text-2xs font-bold uppercase tracking-wider text-[hsl(var(--muted-foreground))]">
+          <div className="h-11 px-3 flex items-center justify-between border-b border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] text-2xs font-bold uppercase tracking-wider text-[hsl(var(--text-primary))]">
             <span>Estructura de Tareas (WBS)</span>
             <span>Estado</span>
           </div>
@@ -499,7 +653,7 @@ export default function ProjectGanttView({
                         <ChevronDown
                           size={14}
                           className={clsx(
-                            "text-[hsl(var(--muted-foreground))] transition-transform duration-200",
+                            "text-[hsl(var(--text-secondary))] transition-transform duration-200",
                             isCollapsed && "-rotate-90"
                           )}
                         />
@@ -507,11 +661,11 @@ export default function ProjectGanttView({
                           className="size-2 rounded-full shrink-0"
                           style={{ backgroundColor: group.phase.color || "hsl(var(--primary))" }}
                         />
-                        <span className="truncate text-[hsl(var(--foreground))]">
+                        <span className="truncate text-[hsl(var(--text-primary))]">
                           {group.phase.name}
                         </span>
                       </div>
-                      <span className="text-3xs font-semibold px-1.5 py-0.5 rounded bg-[hsl(var(--surface-3))] text-[hsl(var(--muted-foreground))]">
+                      <span className="text-3xs font-semibold px-1.5 py-0.5 rounded bg-[hsl(var(--surface-3))] text-[hsl(var(--text-secondary))]">
                         {group.tasks.length}
                       </span>
                     </div>
@@ -524,9 +678,18 @@ export default function ProjectGanttView({
                       return (
                         <div
                           key={task.id}
+                          role="button"
+                          tabIndex={0}
+                          aria-label={`Abrir detalle de tarea ${task.title} desde la lista del Gantt`}
                           onClick={() => onOpenTask(task)}
+                          onKeyDown={(event) => {
+                            if (event.key === "Enter" || event.key === " ") {
+                              event.preventDefault();
+                              onOpenTask(task);
+                            }
+                          }}
                           className={clsx(
-                            "h-11 px-3 flex items-center justify-between hover:bg-[hsl(var(--surface-2))]/80 cursor-pointer transition-colors group",
+                            "h-11 px-3 flex items-center justify-between hover:bg-[hsl(var(--surface-2))]/80 cursor-pointer transition-colors group focus-visible:outline-2 focus-visible:outline-[hsl(var(--primary))] focus-visible:outline-offset-[-2px]",
                             isTaskCrit && "bg-[hsl(var(--destructive))]/5"
                           )}
                         >
@@ -543,7 +706,7 @@ export default function ProjectGanttView({
                                   : "bg-[hsl(var(--primary))]"
                               )}
                             />
-                            <span className="text-xs text-[hsl(var(--foreground))] truncate group-hover:text-[hsl(var(--primary))] transition-colors">
+                            <span className="text-xs text-[hsl(var(--text-primary))] truncate group-hover:text-[hsl(var(--primary))] transition-colors">
                               {task.title}
                             </span>
                             {isTaskCrit && (
@@ -552,7 +715,7 @@ export default function ProjectGanttView({
                               </span>
                             )}
                           </div>
-                          <span className="text-3xs uppercase font-bold text-[hsl(var(--muted-foreground))] shrink-0">
+                          <span className="text-3xs uppercase font-bold text-[hsl(var(--text-secondary))] shrink-0">
                             {task.status}
                           </span>
                         </div>
@@ -581,10 +744,10 @@ export default function ProjectGanttView({
                   style={{ width: `${config.colWidth}px` }}
                   className="shrink-0 flex flex-col items-center justify-center border-r border-[hsl(var(--border))]/40 text-center select-none"
                 >
-                  <span className="text-2xs font-bold text-[hsl(var(--foreground))]">
+                  <span className="text-2xs font-bold text-[hsl(var(--text-primary))]">
                     {col.label}
                   </span>
-                  <span className="text-3xs text-[hsl(var(--muted-foreground))] uppercase font-medium">
+                  <span className="text-3xs text-[hsl(var(--text-secondary))] uppercase font-medium">
                     {col.subLabel}
                   </span>
                 </div>
@@ -622,7 +785,7 @@ export default function ProjectGanttView({
                         : "bg-[hsl(var(--warning))] border-[hsl(var(--primary-foreground))]"
                     )}
                   />
-                  <div className="hidden group-hover:block absolute left-1/2 -translate-x-1/2 top-5 px-2 py-1 rounded bg-[hsl(var(--surface-3))] border border-[hsl(var(--border))] text-3xs font-bold text-[hsl(var(--foreground))] shadow-lg whitespace-nowrap z-30">
+                  <div className="hidden group-hover:block absolute left-1/2 -translate-x-1/2 top-5 px-2 py-1 rounded bg-[hsl(var(--surface-3))] border border-[hsl(var(--border))] text-3xs font-bold text-[hsl(var(--text-primary))] shadow-lg whitespace-nowrap z-30">
                     <Milestone size={11} className="inline mr-1 text-[hsl(var(--warning))]" />
                     {m.title}
                   </div>
@@ -694,10 +857,19 @@ export default function ProjectGanttView({
                 return (
                   <g
                     key={dep.id}
-                    className="pointer-events-auto cursor-pointer"
+                    role="button"
+                    tabIndex={0}
+                    aria-label={`Quitar dependencia: ${predTask.title} → ${succTask.title}`}
+                    className="pointer-events-auto cursor-pointer focus:outline-none focus-visible:opacity-80"
                     onMouseEnter={() => setHoveredDepId(dep.id)}
                     onMouseLeave={() => setHoveredDepId(null)}
-                    onClick={() => handleDeleteDependency(dep.id)}
+                    onClick={() => requestDeleteDependency(dep)}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter" || event.key === " ") {
+                        event.preventDefault();
+                        requestDeleteDependency(dep);
+                      }
+                    }}
                   >
                     <path
                       d={pathData}
@@ -781,13 +953,22 @@ export default function ProjectGanttView({
 
                             {/* Gantt Bar */}
                             <div
+                              role="button"
+                              tabIndex={0}
+                              aria-label={`Abrir detalle de tarea ${task.title} desde el cronograma`}
                               onClick={() => onOpenTask(task)}
+                              onKeyDown={(event) => {
+                                if (event.key === "Enter" || event.key === " ") {
+                                  event.preventDefault();
+                                  onOpenTask(task);
+                                }
+                              }}
                               style={{
                                 left: `${Math.max(0, startX)}px`,
                                 width: `${width}px`,
                               }}
                               className={clsx(
-                                "absolute h-7 rounded-lg border shadow-xs flex items-center px-2.5 cursor-pointer transition-all duration-200 select-none group/bar z-10",
+                                "absolute h-7 rounded-lg border shadow-xs flex items-center px-2.5 cursor-pointer transition-all duration-200 select-none group/bar z-10 focus-visible:outline-2 focus-visible:outline-[hsl(var(--primary))] focus-visible:outline-offset-2",
                                 isCritical
                                   ? "bg-[hsl(var(--destructive))]/25 border-[hsl(var(--destructive))] text-[hsl(var(--destructive))] ring-1 ring-[hsl(var(--destructive))] shadow-sm"
                                   : isCompleted
@@ -819,7 +1000,7 @@ export default function ProjectGanttView({
                               </span>
 
                               {/* Dates badge on hover */}
-                              <div className="hidden group-hover/bar:flex absolute -top-7 left-0 px-2 py-0.5 rounded bg-[hsl(var(--surface-3))] border border-[hsl(var(--border))] text-3xs font-bold text-[hsl(var(--foreground))] shadow-md whitespace-nowrap z-30 items-center gap-1.5">
+                              <div className="hidden group-hover/bar:flex absolute -top-7 left-0 px-2 py-0.5 rounded bg-[hsl(var(--surface-3))] border border-[hsl(var(--border))] text-3xs font-bold text-[hsl(var(--text-primary))] shadow-md whitespace-nowrap z-30 items-center gap-1.5">
                                 <Clock size={10} />
                                 {startKey} → {dueKey}
                                 {isCritical && <span className="text-[hsl(var(--destructive))] font-black ml-1">[Ruta Crítica]</span>}
@@ -838,35 +1019,36 @@ export default function ProjectGanttView({
 
       {/* 3. Dependency Creation Drawer (SidePanel) */}
       <RightPanel
-        title="Vincular Dependencia (Finish to Start)"
+        title="Vincular dependencia entre tareas"
         open={showDepDrawer}
         onClose={() => setShowDepDrawer(false)}
         width={380}
       >
-        <form onSubmit={handleCreateDependency} className="flex flex-col h-full space-y-4 p-4 text-[hsl(var(--foreground))]">
+        <form onSubmit={handleCreateDependency} className="flex flex-col h-full space-y-4 p-4 text-[hsl(var(--text-primary))]">
           <div className="p-3 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] flex items-start gap-2.5 shadow-sm">
             <div className="p-2 rounded-lg bg-[hsl(var(--primary))]/10 text-[hsl(var(--primary))] shrink-0">
               <Link2 size={18} />
             </div>
             <div>
-              <h4 className="text-xs font-bold uppercase tracking-wider text-[hsl(var(--foreground))]">
-                Dependencia Secuencial (FS)
+              <h4 className="text-xs font-bold uppercase tracking-wider text-[hsl(var(--text-primary))]">
+                {DEPENDENCY_TYPE_COPY[depFormData.dependency_type].label}
               </h4>
-              <p className="text-2xs text-[hsl(var(--muted-foreground))] mt-0.5">
-                La tarea sucesora no podrá iniciar hasta que la predecesora haya finalizado.
+              <p className="text-2xs text-[hsl(var(--text-secondary))] mt-0.5">
+                {DEPENDENCY_TYPE_COPY[depFormData.dependency_type].description}
               </p>
             </div>
           </div>
 
           <div className="space-y-1">
-            <label className="text-2xs font-bold uppercase text-[hsl(var(--muted-foreground))]">
+            <label htmlFor={`${dependencyFormId}-predecessor`} className="text-2xs font-bold uppercase text-[hsl(var(--text-secondary))]">
               Tarea Predecesora (Bloqueante) *
             </label>
             <select
+              id={`${dependencyFormId}-predecessor`}
               required
               value={depFormData.predecessor_id}
               onChange={(e) => setDepFormData({ ...depFormData, predecessor_id: e.target.value })}
-              className="w-full px-2.5 py-1.5 text-xs rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-[hsl(var(--foreground))] focus:outline-none focus:ring-1 focus:ring-[hsl(var(--primary))]"
+              className="w-full px-2.5 py-1.5 text-xs rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-[hsl(var(--text-primary))] focus:outline-none focus:ring-1 focus:ring-[hsl(var(--primary))]"
             >
               <option value="">Selecciona la tarea previa...</option>
               {tasks.map((t) => (
@@ -878,14 +1060,15 @@ export default function ProjectGanttView({
           </div>
 
           <div className="space-y-1">
-            <label className="text-2xs font-bold uppercase text-[hsl(var(--muted-foreground))]">
+            <label htmlFor={`${dependencyFormId}-successor`} className="text-2xs font-bold uppercase text-[hsl(var(--text-secondary))]">
               Tarea Sucesora (Dependiente) *
             </label>
             <select
+              id={`${dependencyFormId}-successor`}
               required
               value={depFormData.successor_id}
               onChange={(e) => setDepFormData({ ...depFormData, successor_id: e.target.value })}
-              className="w-full px-2.5 py-1.5 text-xs rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-[hsl(var(--foreground))] focus:outline-none focus:ring-1 focus:ring-[hsl(var(--primary))]"
+              className="w-full px-2.5 py-1.5 text-xs rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-[hsl(var(--text-primary))] focus:outline-none focus:ring-1 focus:ring-[hsl(var(--primary))]"
             >
               <option value="">Selecciona la tarea dependiente...</option>
               {tasks
@@ -900,29 +1083,35 @@ export default function ProjectGanttView({
 
           <div className="grid grid-cols-2 gap-2">
             <div className="space-y-1">
-              <label className="text-2xs font-bold uppercase text-[hsl(var(--muted-foreground))]">
+              <label htmlFor={`${dependencyFormId}-type`} className="text-2xs font-bold uppercase text-[hsl(var(--text-secondary))]">
                 Tipo de Enlace
               </label>
               <select
+                id={`${dependencyFormId}-type`}
                 value={depFormData.dependency_type}
-                onChange={(e) => setDepFormData({ ...depFormData, dependency_type: e.target.value as any })}
-                className="w-full px-2.5 py-1.5 text-xs rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-[hsl(var(--foreground))] focus:outline-none focus:ring-1 focus:ring-[hsl(var(--primary))]"
+                onChange={(e) => {
+                  const dependencyType = parseDependencyType(e.target.value);
+                  if (dependencyType) setDepFormData((previous) => ({ ...previous, dependency_type: dependencyType }));
+                }}
+                className="w-full px-2.5 py-1.5 text-xs rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-[hsl(var(--text-primary))] focus:outline-none focus:ring-1 focus:ring-[hsl(var(--primary))]"
               >
                 <option value="FS">FS (Fin a Inicio)</option>
                 <option value="SS">SS (Inicio a Inicio)</option>
                 <option value="FF">FF (Fin a Fin)</option>
+                <option value="SF">SF (Inicio a Fin)</option>
               </select>
             </div>
             <div className="space-y-1">
-              <label className="text-2xs font-bold uppercase text-[hsl(var(--muted-foreground))]">
+              <label htmlFor={`${dependencyFormId}-lag`} className="text-2xs font-bold uppercase text-[hsl(var(--text-secondary))]">
                 Lag (Días de desfase)
               </label>
               <input
+                id={`${dependencyFormId}-lag`}
                 type="number"
                 min={0}
                 value={depFormData.lag_days}
                 onChange={(e) => setDepFormData({ ...depFormData, lag_days: Number(e.target.value) })}
-                className="w-full px-2.5 py-1.5 text-xs rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-[hsl(var(--foreground))] focus:outline-none focus:ring-1 focus:ring-[hsl(var(--primary))]"
+                className="w-full px-2.5 py-1.5 text-xs rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-[hsl(var(--text-primary))] focus:outline-none focus:ring-1 focus:ring-[hsl(var(--primary))]"
               />
             </div>
           </div>
@@ -931,7 +1120,7 @@ export default function ProjectGanttView({
             <button
               type="button"
               onClick={() => setShowDepDrawer(false)}
-              className="px-3 py-1.5 text-2xs font-bold uppercase tracking-wider rounded-lg border border-[hsl(var(--border))] text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--surface-2))]"
+              className="px-3 py-1.5 text-2xs font-bold uppercase tracking-wider rounded-lg border border-[hsl(var(--border))] text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))]"
             >
               Cancelar
             </button>
@@ -952,9 +1141,13 @@ export default function ProjectGanttView({
         isOpen={showBaselineDrawer}
         onClose={() => setShowBaselineDrawer(false)}
         onBaselineUpdated={() => {
-          fetchBaselineData();
-          fetchCriticalPath();
+          void fetchBaselineData();
+          void fetchCriticalPath();
         }}
+      />
+      <ConfirmActionDrawer
+        action={confirmDependencyAction}
+        onClose={() => setConfirmDependencyAction(null)}
       />
     </div>
   );

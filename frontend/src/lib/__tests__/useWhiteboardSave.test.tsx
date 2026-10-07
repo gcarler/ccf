@@ -1,7 +1,9 @@
 import { renderHook, act } from "@testing-library/react";
+import { StrictMode, type PropsWithChildren } from "react";
 import { describe, expect, it, vi, afterEach, beforeEach } from "vitest";
 import type { Canvas } from "fabric";
 import { useWhiteboardSave } from "@/hooks/useWhiteboardSave";
+import { ApiError } from "@/lib/http";
 import * as http from "@/lib/http";
 
 const apiFetchSpy = vi.spyOn(http, "apiFetch");
@@ -77,6 +79,25 @@ describe("useWhiteboardSave", () => {
 
     expect(apiFetchSpy).not.toHaveBeenCalled();
     expect(result.current.saveStatus).toBe("idle");
+    expect(result.current.isDirty).toBe(false);
+  });
+
+  it("persists edits after React Strict Mode replays mount effects", async () => {
+    apiFetchSpy.mockResolvedValueOnce({ updated_at: "2026-10-05T10:01:00+00:00" });
+    const canvas = createCanvasMock();
+    const StrictWrapper = ({ children }: PropsWithChildren) => <StrictMode>{children}</StrictMode>;
+    const { result } = renderHook(
+      () => useWhiteboardSave({ projectId: "project-1", token: "token-1" }),
+      { wrapper: StrictWrapper },
+    );
+
+    await act(async () => {
+      result.current.saveNow(canvas);
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    expect(apiFetchSpy).toHaveBeenCalledTimes(1);
     expect(result.current.isDirty).toBe(false);
   });
 
@@ -205,5 +226,86 @@ describe("useWhiteboardSave", () => {
     await act(async () => {
       await Promise.resolve();
     });
+  });
+
+  it("sends the latest server version with each save", async () => {
+    const initialVersion = "2026-10-05T10:00:00+00:00";
+    const savedVersion = "2026-10-05T10:01:00+00:00";
+    const nextSavedVersion = "2026-10-05T10:02:00+00:00";
+    apiFetchSpy
+      .mockResolvedValueOnce({ updated_at: savedVersion })
+      .mockResolvedValueOnce({ updated_at: nextSavedVersion });
+    const canvas = createCanvasMock();
+    const { result } = renderHook(() =>
+      useWhiteboardSave({ projectId: "project-1", token: "token-1", baseUpdatedAt: initialVersion })
+    );
+
+    await act(async () => {
+      result.current.saveNow(canvas);
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+    await act(async () => {
+      result.current.saveNow(canvas);
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    expect(apiFetchSpy).toHaveBeenNthCalledWith(1, "/projects/project-1/whiteboard", expect.objectContaining({
+      body: expect.objectContaining({ base_updated_at: initialVersion }),
+    }));
+    expect(apiFetchSpy).toHaveBeenNthCalledWith(2, "/projects/project-1/whiteboard", expect.objectContaining({
+      body: expect.objectContaining({ base_updated_at: savedVersion }),
+    }));
+  });
+
+  it("passes server conflict versions from apiFetch errors to the conflict handler", async () => {
+    const currentVersion = "2026-10-05T10:01:00+00:00";
+    apiFetchSpy.mockRejectedValueOnce(new ApiError("Conflict", 409, {
+      detail: { code: "whiteboard_conflict", current_updated_at: currentVersion },
+    }));
+    const onConflict = vi.fn();
+    const { result } = renderHook(() =>
+      useWhiteboardSave({ projectId: "project-1", token: "token-1", onConflict })
+    );
+
+    await act(async () => {
+      result.current.saveNow(createCanvasMock());
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    expect(onConflict).toHaveBeenCalledWith(currentVersion);
+    expect(result.current.hasConflict).toBe(true);
+    expect(result.current.saveStatus).toBe("error");
+
+    await act(async () => {
+      result.current.saveNow(createCanvasMock());
+      await Promise.resolve();
+    });
+    expect(apiFetchSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it("stops retrying an in-flight save after the editor unmounts", async () => {
+    let rejectRequest!: (error: Error) => void;
+    apiFetchSpy.mockImplementationOnce(() => new Promise((_, reject) => {
+      rejectRequest = reject;
+    }));
+    const { result, unmount } = renderHook(() =>
+      useWhiteboardSave({ projectId: "project-1", token: "token-1" })
+    );
+
+    act(() => result.current.saveNow(createCanvasMock()));
+    expect(apiFetchSpy).toHaveBeenCalledTimes(1);
+    unmount();
+
+    await act(async () => {
+      rejectRequest(new Error("offline"));
+      await Promise.resolve();
+      vi.advanceTimersByTime(10_000);
+      await Promise.resolve();
+    });
+
+    expect(apiFetchSpy).toHaveBeenCalledTimes(1);
   });
 });

@@ -1,6 +1,6 @@
 "use client";
 
-import { Folder, Layers, Plus } from 'lucide-react';
+import { Folder, Layers, Plus, Search } from 'lucide-react';
 import clsx from 'clsx';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
@@ -20,7 +20,7 @@ import { DSChart } from '@/design';
 import { DSMetric } from '@/design';
 import { apiFetch } from '@/lib/http';
 import { useProjects } from '@/hooks/useProjects';
-import type { ProjectRecord } from '@/types/projects';
+import type { ProjectRecord, ProjectSummaryPageResponse } from '@/types/projects';
 import { AnimatePresence, motion } from 'framer-motion';
 import { toast } from 'sonner';
 
@@ -41,7 +41,20 @@ const ProjectsCalendarView = dynamic(() => import('./views/ProjectsCalendarView'
 const ProjectsGanttView = dynamic(() => import('./views/ProjectsGanttView'), { ssr: false, loading: ViewSkeleton });
 const ProjectsWikiView = dynamic(() => import('./views/ProjectsWikiView'), { ssr: false, loading: ViewSkeleton });
 
-const PROJECT_VIEWS: ViewType[] = ['grid', 'table', 'list', 'board', 'kanban', 'calendar', 'gantt', 'wiki'];
+const PROJECT_VIEWS: ViewType[] = ['dashboard', 'grid', 'table', 'list', 'board', 'kanban', 'calendar', 'gantt', 'wiki'];
+const PROJECTS_PAGE_SIZE = 50;
+const PROJECT_VIEW_LABELS: Record<ViewType, string> = {
+    dashboard: 'Resumen',
+    grid: 'Tarjetas',
+    table: 'Tabla',
+    list: 'Lista',
+    board: 'Tablero',
+    kanban: 'Kanban',
+    calendar: 'Calendario',
+    gantt: 'Gantt',
+    wiki: 'Wiki',
+    chat: 'Chat',
+};
 
 interface ProjectsClientProps {
     initialProjects: ProjectRecord[];
@@ -49,15 +62,23 @@ interface ProjectsClientProps {
 }
 
 export default function ProjectsClient({ initialProjects, initialViewType = 'grid' }: ProjectsClientProps) {
-    const { token } = useAuth();
+    const { token, loading: authLoading } = useAuth();
     const router = useRouter();
     const searchParams = useSearchParams();
     const [projects, setProjects] = useState<ProjectRecord[]>(initialProjects);
+    const [projectTotal, setProjectTotal] = useState(initialProjects.length);
+    const [projectOffset, setProjectOffset] = useState(0);
+    const [isLoadingProjects, setIsLoadingProjects] = useState(initialProjects.length === 0);
+    const [projectsLoadError, setProjectsLoadError] = useState(false);
+    const [projectLoadAttempt, setProjectLoadAttempt] = useState(0);
     const [dashboard, setDashboard] = useState<{
         cards?: Array<{ title: string; value: string; trend?: string | null; tone?: string | null; icon?: string | null }>;
         workload_distribution?: Array<{ label: string; value: number }>;
         delayed_tasks_count?: number;
     } | null>(null);
+    const [isLoadingDashboard, setIsLoadingDashboard] = useState(true);
+    const [dashboardLoadError, setDashboardLoadError] = useState(false);
+    const [dashboardLoadAttempt, setDashboardLoadAttempt] = useState(0);
     const [viewType, setViewType] = useState<ViewType>(initialViewType);
     const [search, setSearch] = useState('');
     const [statusFilter, setStatusFilter] = useState<string>('all');
@@ -65,40 +86,165 @@ export default function ProjectsClient({ initialProjects, initialViewType = 'gri
     const [showCreateForm, setShowCreateForm] = useState(false);
     const { updateProject, deleteProject } = useProjects();
     const projectsListRef = useRef<HTMLDivElement | null>(null);
+    const projectRequestSequence = useRef(0);
+    const projectQueryKey = `${projectOffset}:${search.trim()}:${statusFilter}`;
+    const projectQueryKeyRef = useRef(projectQueryKey);
+    projectQueryKeyRef.current = projectQueryKey;
 
     // Reload projects from the backend when the token becomes available.
     // The SSR (page.tsx → fetchProjects) cannot authenticate because the
     // JWT lives in sessionStorage (client-only), so initialProjects is
     // often []. This useEffect fetches the real list client-side.
     useEffect(() => {
-        if (!token) return;
-        const loadProjects = async () => {
-            try {
-                const data = await apiFetch<ProjectRecord[]>('/projects', { token, cache: 'no-store' });
-                if (Array.isArray(data)) setProjects(data);
-            } catch (err) {
-                // Keep SSR data if the client fetch fails (graceful degradation)
-            }
+        if (authLoading) return;
+        if (!token) {
+            setIsLoadingProjects(false);
+            return;
+        }
+        const requestId = ++projectRequestSequence.current;
+        const timeoutId = window.setTimeout(() => {
+            setIsLoadingProjects(true);
+            setProjectsLoadError(false);
+            void apiFetch<ProjectSummaryPageResponse>('/projects/summary-page', {
+                token,
+                cache: 'no-store',
+                query: {
+                    offset: projectOffset,
+                    limit: PROJECTS_PAGE_SIZE,
+                    search: search.trim() || undefined,
+                    status: statusFilter === 'all' ? undefined : statusFilter,
+                },
+            }).then((data) => {
+                if (requestId !== projectRequestSequence.current) return;
+                if (!Array.isArray(data?.items) || !Number.isFinite(data.total)) {
+                    throw new Error('Invalid project page response');
+                }
+                setProjects(data.items);
+                setProjectTotal(data.total);
+            }).catch(() => {
+                if (requestId !== projectRequestSequence.current) return;
+                setProjectsLoadError(true);
+                toast.error('No se pudieron cargar los proyectos. Inténtalo de nuevo.');
+            }).finally(() => {
+                if (requestId === projectRequestSequence.current) setIsLoadingProjects(false);
+            });
+        }, search.trim() ? 250 : 0);
+        return () => {
+            window.clearTimeout(timeoutId);
+            projectRequestSequence.current += 1;
         };
-        loadProjects();
-    }, [token]);
+    }, [token, authLoading, projectLoadAttempt, projectOffset, search, statusFilter]);
+
+    const handleSearchChange = useCallback((value: string) => {
+        setSearch(value);
+        setProjectOffset(0);
+    }, []);
+
+    const handleStatusFilterChange = useCallback((value: string) => {
+        setStatusFilter(value);
+        setProjectOffset(0);
+    }, []);
+
+    const handleProjectPageChange = useCallback((nextOffset: number) => {
+        setProjectOffset(Math.max(0, nextOffset));
+    }, []);
+
+    // Search/status are server-side, so this page reflects the full tenant dataset.
+    const filtered = projects;
+
+    /*
+     * Existing callback handlers update the currently loaded page optimistically.
+     */
+    const handleUpdateProject = useCallback(
+        async (projectId: string, patch: Partial<ProjectRecord>) => {
+            let previousProject: ProjectRecord | undefined;
+            setProjects((prev) => {
+                previousProject = prev.find((p) => p.id === projectId);
+                if (!previousProject) return prev;
+                return prev.map((p) => (p.id === projectId ? { ...p, ...patch } : p));
+            });
+            const updated = await updateProject(projectId, patch);
+            if (!updated) {
+                if (previousProject) {
+                    setProjects((prev) =>
+                        prev.map((p) => (p.id === projectId ? previousProject! : p))
+                    );
+                }
+                toast.error('No se pudo actualizar el proyecto. Se conservaron los datos guardados.');
+            } else if (updated && (patch.status !== undefined || patch.title !== undefined || patch.description !== undefined)) {
+                setProjectLoadAttempt((attempt) => attempt + 1);
+            }
+        },
+        [updateProject]
+    );
+
+    const handleDeleteProject = useCallback(
+        async (projectId: string) => {
+            const requestQueryKey = projectQueryKeyRef.current;
+            const previousIndex = projects.findIndex((project) => project.id === projectId);
+            const previous = previousIndex >= 0 ? projects[previousIndex] : undefined;
+            if (!previous) return;
+            setProjects((prev) => prev.filter((project) => project.id !== projectId));
+            const ok = await deleteProject(projectId);
+            const isSameQuery = projectQueryKeyRef.current === requestQueryKey;
+            if (!ok) {
+                if (isSameQuery) {
+                    setProjects((prev) => {
+                        if (prev.some((project) => project.id === projectId)) return prev;
+                        const restored = [...prev];
+                        restored.splice(Math.min(previousIndex, restored.length), 0, previous);
+                        return restored;
+                    });
+                } else {
+                    setProjectLoadAttempt((attempt) => attempt + 1);
+                }
+                toast.error('No se pudo eliminar el proyecto. La lista se sincronizó con el servidor.');
+            } else if (isSameQuery) {
+                setProjectTotal((total) => Math.max(0, total - 1));
+                if (filtered.length === 1 && projectOffset > 0) {
+                    setProjectOffset((offset) => Math.max(0, offset - PROJECTS_PAGE_SIZE));
+                } else {
+                    setProjectLoadAttempt((attempt) => attempt + 1);
+                }
+            } else {
+                setProjectLoadAttempt((attempt) => attempt + 1);
+            }
+        },
+        [deleteProject, filtered.length, projectOffset, projects]
+    );
 
     useEffect(() => {
-        if (!token) return;
+        if (viewType !== 'dashboard') return;
+        if (authLoading) return;
+        if (!token) {
+            setIsLoadingDashboard(false);
+            return;
+        }
+        let isCurrentRequest = true;
         const loadDashboard = async () => {
+            setIsLoadingDashboard(true);
+            setDashboardLoadError(false);
             try {
                 const data = await apiFetch<{
                     cards?: Array<{ title: string; value: string; trend?: string | null; tone?: string | null; icon?: string | null }>;
                     workload_distribution?: Array<{ label: string; value: number }>;
                     delayed_tasks_count?: number;
                 }>('/dashboard/projects', { token });
-                setDashboard(data);
-            } catch (err) {
-                toast.error('Error al cargar dashboard');
+                if (isCurrentRequest) setDashboard(data);
+            } catch {
+                if (isCurrentRequest) {
+                    setDashboardLoadError(true);
+                    toast.error('No se pudo cargar el resumen del proyecto');
+                }
+            } finally {
+                if (isCurrentRequest) setIsLoadingDashboard(false);
             }
         };
-        loadDashboard();
-    }, [token]);
+        void loadDashboard();
+        return () => {
+            isCurrentRequest = false;
+        };
+    }, [authLoading, dashboardLoadAttempt, token, viewType]);
 
     useEffect(() => {
         const view = searchParams?.get('view');
@@ -126,55 +272,7 @@ export default function ProjectsClient({ initialProjects, initialViewType = 'gri
         projectsListRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }, [viewType]);
 
-    // Quality filter: hide projects with nonsensical/test names
-    const isValidProject = (p: ProjectRecord) => {
-        const t = (p.title || '').trim();
-        if (t.length < 2) return false;
-        if (/^(.)\1+$/i.test(t)) return false;
-        return true;
-    };
-
-    const filtered = projects
-        .filter(isValidProject)
-        .filter(
-            (p) =>
-                p.title.toLowerCase().includes(search.toLowerCase()) ||
-                (p.description || '').toLowerCase().includes(search.toLowerCase())
-        )
-        .filter((p) => statusFilter === 'all' || (p.status || 'active') === statusFilter);
-
-    const handleUpdateProject = useCallback(
-        async (projectId: string, patch: Partial<ProjectRecord>) => {
-            let previousProject: ProjectRecord | undefined;
-            setProjects((prev) => {
-                previousProject = prev.find((p) => p.id === projectId);
-                if (!previousProject) return prev;
-                return prev.map((p) => (p.id === projectId ? { ...p, ...patch } : p));
-            });
-            const updated = await updateProject(projectId, patch);
-            if (!updated && previousProject) {
-                setProjects((prev) =>
-                    prev.map((p) => (p.id === projectId ? previousProject! : p))
-                );
-            }
-        },
-        [updateProject]
-    );
-
-    const handleDeleteProject = useCallback(
-        async (projectId: string) => {
-            let previous: ProjectRecord | undefined;
-            setProjects((prev) => {
-                previous = prev.find((p) => p.id === projectId);
-                return prev.filter((p) => p.id !== projectId);
-            });
-            const ok = await deleteProject(projectId);
-            if (!ok && previous) {
-                setProjects((prev) => [...prev, previous!]);
-            }
-        },
-        [deleteProject]
-    );
+    const showsStatusFilter = ['dashboard', 'grid', 'table', 'list', 'board', 'kanban'].includes(viewType);
 
     const handleCreateProject = async (data: {
         title: string;
@@ -197,7 +295,9 @@ export default function ProjectsClient({ initialProjects, initialViewType = 'gri
                     owner_id: data.owner_id,
                 },
             });
-            setProjects((prev) => [created, ...prev]);
+            // The active page is server-filtered and may be offset. Reconcile
+            // from the API instead of injecting a row that might not match it.
+            setProjectLoadAttempt((attempt) => attempt + 1);
             setShowCreateForm(false);
             toast.success('Proyecto creado');
             window.dispatchEvent(new CustomEvent('project-updated'));
@@ -235,6 +335,35 @@ export default function ProjectsClient({ initialProjects, initialViewType = 'gri
     );
 
     const renderView = () => {
+        if (isLoadingProjects && projects.length === 0) {
+            return (
+                <div role="status" aria-label="Cargando proyectos" className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                    {Array.from({ length: 6 }, (_, index) => (
+                        <div key={index} aria-hidden="true" className="h-40 animate-pulse rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))]" />
+                    ))}
+                </div>
+            );
+        }
+
+        if (projectsLoadError && projects.length === 0) {
+            return (
+                <div role="alert" className="flex flex-col items-center gap-3 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] px-6 py-12 text-center">
+                    <Folder size={40} className="text-[hsl(var(--muted-foreground))]" aria-hidden="true" />
+                    <div>
+                        <h2 className="text-base font-semibold text-[hsl(var(--text-primary))]">No pudimos cargar tus proyectos</h2>
+                        <p className="mt-1 text-sm text-[hsl(var(--muted-foreground))]">Revisa tu conexión e inténtalo nuevamente.</p>
+                    </div>
+                    <button
+                        type="button"
+                        onClick={() => setProjectLoadAttempt((attempt) => attempt + 1)}
+                        className="rounded-lg bg-[hsl(var(--primary))] px-4 py-2 text-sm font-semibold text-[hsl(var(--primary-foreground))] transition-opacity hover:opacity-90"
+                    >
+                        Reintentar
+                    </button>
+                </div>
+            );
+        }
+
         if (filtered.length === 0) {
             // Wrap the empty state inside the anchor container for the list
             // view so that the #projects-dashboard hash target always exists
@@ -256,6 +385,8 @@ export default function ProjectsClient({ initialProjects, initialViewType = 'gri
         }
 
         switch (viewType) {
+            case 'dashboard':
+                return <ProjectsGridView projects={filtered} onUpdate={handleUpdateProject} onDelete={handleDeleteProject} />;
             case 'grid':
                 return <ProjectsGridView projects={filtered} onUpdate={handleUpdateProject} onDelete={handleDeleteProject} />;
             case 'list':
@@ -281,12 +412,12 @@ export default function ProjectsClient({ initialProjects, initialViewType = 'gri
     };
 
     return (
-        <ProjectsShell
+            <ProjectsShell
             breadcrumbs={[{ label: 'Proyectos', icon: Folder }, { label: 'Centro de Comando', icon: Layers }]}
             viewType={viewType}
             onViewChange={setViewType}
             viewOptions={PROJECT_VIEWS}
-            onSearch={setSearch}
+                onSearch={handleSearchChange}
             rightActions={
                 <button
                     onClick={() => setShowCreateForm(true)}
@@ -303,9 +434,70 @@ export default function ProjectsClient({ initialProjects, initialViewType = 'gri
                 onSubmit={handleCreateProject}
             />
 
-            {/* 📊 Project Metrics */}
-            <section className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                {dashboard?.cards?.map((card, idx) => {
+            <div className="flex items-center gap-2">
+                <label className="sr-only" htmlFor="projects-mobile-view">Vista de proyectos</label>
+                <select
+                    id="projects-mobile-view"
+                    aria-label="Vista de proyectos"
+                    value={viewType}
+                    onChange={(event) => setViewType(event.target.value as ViewType)}
+                    className="h-10 min-w-0 flex-1 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] px-3 text-sm text-[hsl(var(--text-primary))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]/40 sm:hidden"
+                >
+                    {PROJECT_VIEWS.map((view) => (
+                        <option key={view} value={view}>{PROJECT_VIEW_LABELS[view]}</option>
+                    ))}
+                </select>
+                <label className="sr-only" htmlFor="projects-mobile-search">Buscar proyectos</label>
+                <div className="relative min-w-0 flex-1 lg:hidden">
+                    <Search size={15} aria-hidden="true" className="absolute left-3 top-1/2 -translate-y-1/2 text-[hsl(var(--muted-foreground))]" />
+                    <input
+                        id="projects-mobile-search"
+                        type="search"
+                        aria-label="Buscar proyectos"
+                        placeholder="Buscar proyectos"
+                        value={search}
+                        onChange={(event) => handleSearchChange(event.target.value)}
+                        className="h-10 w-full rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] pl-9 pr-3 text-sm text-[hsl(var(--text-primary))] placeholder:text-[hsl(var(--muted-foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]/40"
+                    />
+                </div>
+            </div>
+
+            {projectsLoadError && projects.length > 0 && (
+                <div role="alert" className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] px-4 py-3">
+                    <p className="text-sm text-[hsl(var(--muted-foreground))]">
+                        No se pudo actualizar la lista; se conservan los resultados anteriores.
+                    </p>
+                    <button
+                        type="button"
+                        onClick={() => setProjectLoadAttempt((attempt) => attempt + 1)}
+                        className="rounded-lg border border-[hsl(var(--border))] px-3 py-1.5 text-sm font-semibold text-[hsl(var(--text-primary))] hover:bg-[hsl(var(--surface-2))]"
+                    >
+                        Reintentar proyectos
+                    </button>
+                </div>
+            )}
+
+            {viewType === 'dashboard' && <>
+            {/* Project summary metrics */}
+            <section data-testid="projects-overview" className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                {isLoadingDashboard ? (
+                    <div role="status" aria-label="Cargando resumen" className="col-span-full grid grid-cols-1 gap-3 md:grid-cols-4">
+                        {Array.from({ length: 4 }, (_, index) => (
+                            <div key={index} aria-hidden="true" className="h-24 animate-pulse rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))]" />
+                        ))}
+                    </div>
+                ) : dashboardLoadError ? (
+                    <div role="alert" className="col-span-full flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] px-4 py-3">
+                        <p className="text-sm text-[hsl(var(--muted-foreground))]">No pudimos cargar las métricas del resumen.</p>
+                        <button
+                            type="button"
+                            onClick={() => setDashboardLoadAttempt((attempt) => attempt + 1)}
+                            className="rounded-lg border border-[hsl(var(--border))] px-3 py-1.5 text-sm font-semibold text-[hsl(var(--text-primary))] hover:bg-[hsl(var(--surface-2))]"
+                        >
+                            Reintentar métricas
+                        </button>
+                    </div>
+                ) : dashboard?.cards?.length ? dashboard.cards.map((card, idx) => {
                     const label = (card.title || '').toLowerCase();
                     return (
                         <DSMetric
@@ -323,34 +515,15 @@ export default function ProjectsClient({ initialProjects, initialViewType = 'gri
                             }}
                         />
                     );
-                })}
+                }) : (
+                    <p className="col-span-full rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] px-4 py-6 text-center text-sm text-[hsl(var(--muted-foreground))]">
+                        Aún no hay métricas disponibles para mostrar.
+                    </p>
+                )}
             </section>
 
-            {/* 🔍 Status Filter Bar */}
-            <div className="flex items-center gap-2 flex-wrap">
-                {['all', 'planning', 'active', 'on_hold', 'completed', 'archived'].map((status) => (
-                    <button
-                        key={status}
-                        onClick={() => setStatusFilter(status)}
-                        className={clsx(
-                            'px-3 py-1 rounded-full text-2xs font-bold uppercase tracking-wide border transition-colors',
-                            statusFilter === status
-                                ? 'bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] border-[hsl(var(--primary))]'
-                                : 'border-[hsl(var(--border))] text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--surface-2))]'
-                        )}
-                    >
-                        {status === 'all' ? 'Todos' :
-                         status === 'planning' ? 'Planificación' :
-                         status === 'active' ? 'Activo' :
-                         status === 'on_hold' ? 'En Pausa' :
-                         status === 'completed' ? 'Completado' :
-                         'Archivado'}
-                    </button>
-                ))}
-            </div>
-
-            {/* 📈 Charts */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
+            {/* Workload and overdue-task overview */}
+            {!isLoadingDashboard && !dashboardLoadError && <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
                 <div className="lg:col-span-2">
                     <Link href="/plataforma/projects/team" className="block">
                         <DSCard className="hover:border-[hsl(var(--primary))]/30 transition-all cursor-pointer">
@@ -371,7 +544,7 @@ export default function ProjectsClient({ initialProjects, initialViewType = 'gri
                 </div>
                 <div>
                     <Link href="/plataforma/projects/tasks?view=list&scope=all" className="block">
-                        <DSCard className="hover:border-[hsl(var(--danger)/40%)]/30 transition-all cursor-pointer">
+                        <DSCard className="hover:border-[hsl(var(--destructive))]/30 transition-all cursor-pointer">
                             <h2 className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-3">
                                 Estado de Tareas
                             </h2>
@@ -380,19 +553,40 @@ export default function ProjectsClient({ initialProjects, initialViewType = 'gri
                                     <span className="text-xs font-bold text-[hsl(var(--muted-foreground))]">Tareas Atrasadas</span>
                                     <span className="text-sm font-semibold text-[hsl(var(--destructive))]">{dashboard?.delayed_tasks_count || 0}</span>
                                 </div>
-                                <div className="h-2 w-full bg-[hsl(var(--surface-2))] rounded-full overflow-hidden">
-                                    <div className="h-full w-[15%] bg-[hsl(var(--destructive))]" />
-                                </div>
                                 <p className="text-2xs text-[hsl(var(--muted-foreground))] italic">
-                                    Se recomienda revisar los hitos críticos para evitar cuellos de botella.
+                                    Revisa los hitos críticos para anticipar posibles cuellos de botella.
                                 </p>
                             </div>
                         </DSCard>
                     </Link>
                 </div>
-            </div>
+            </div>}
+            </>}
 
-            <div className="h-px bg-[hsl(var(--border))] my-8" />
+            {/* Status filters belong to project-oriented views, not calendar/wiki navigation. */}
+            {showsStatusFilter && <div className="flex items-center gap-2 flex-wrap">
+                {['all', 'planning', 'active', 'on_hold', 'completed', 'archived'].map((status) => (
+                    <button
+                        key={status}
+                        onClick={() => handleStatusFilterChange(status)}
+                        className={clsx(
+                            'px-3 py-1 rounded-full text-2xs font-bold uppercase tracking-wide border transition-colors',
+                            statusFilter === status
+                                ? 'bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] border-[hsl(var(--primary))]'
+                                : 'border-[hsl(var(--border))] text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--surface-2))]'
+                        )}
+                    >
+                        {status === 'all' ? 'Todos' :
+                         status === 'planning' ? 'Planificación' :
+                         status === 'active' ? 'Activo' :
+                         status === 'on_hold' ? 'En Pausa' :
+                         status === 'completed' ? 'Completado' :
+                         'Archivado'}
+                    </button>
+                ))}
+            </div>}
+
+            {viewType === 'dashboard' && <div className="h-px bg-[hsl(var(--border))] my-8" />}
 
             <div className="relative">
                 <AnimatePresence mode="wait">
@@ -408,6 +602,38 @@ export default function ProjectsClient({ initialProjects, initialViewType = 'gri
                     </motion.div>
                 </AnimatePresence>
             </div>
+            {(projectTotal > PROJECTS_PAGE_SIZE || projectOffset > 0) && (
+                <nav
+                    aria-label="Paginación de proyectos"
+                    aria-busy={isLoadingProjects}
+                    className="flex flex-col gap-3 border-t border-[hsl(var(--border))] py-4 sm:flex-row sm:items-center sm:justify-between"
+                >
+                    <p className="text-sm text-[hsl(var(--muted-foreground))]" aria-live="polite">
+                        {projectTotal === 0
+                            ? 'Sin proyectos'
+                            : `Mostrando ${projectOffset + 1}–${Math.min(projectOffset + filtered.length, projectTotal)} de ${projectTotal} proyectos`}
+                        {isLoadingProjects ? ' · Actualizando' : ''}
+                    </p>
+                    <div className="flex items-center gap-2">
+                        <button
+                            type="button"
+                            onClick={() => handleProjectPageChange(projectOffset - PROJECTS_PAGE_SIZE)}
+                            disabled={projectOffset === 0 || isLoadingProjects}
+                            className="rounded-lg border border-[hsl(var(--border))] px-3 py-2 text-sm font-medium text-[hsl(var(--text-primary))] transition-colors hover:bg-[hsl(var(--surface-2))] disabled:cursor-not-allowed disabled:opacity-50"
+                        >
+                            Anterior
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => handleProjectPageChange(projectOffset + PROJECTS_PAGE_SIZE)}
+                            disabled={projectOffset + filtered.length >= projectTotal || isLoadingProjects}
+                            className="rounded-lg border border-[hsl(var(--border))] px-3 py-2 text-sm font-medium text-[hsl(var(--text-primary))] transition-colors hover:bg-[hsl(var(--surface-2))] disabled:cursor-not-allowed disabled:opacity-50"
+                        >
+                            Siguiente
+                        </button>
+                    </div>
+                </nav>
+            )}
         </ProjectsShell>
     );
 }

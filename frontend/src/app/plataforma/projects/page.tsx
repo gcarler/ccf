@@ -11,5 +11,5 @@ export const dynamic = 'force-dynamic';
 
 export default async function ProjectsPage() {
     const projects = await fetchProjects();
-    return <ProjectsClient initialProjects={projects} initialViewType="list" />;
+    return <ProjectsClient initialProjects={projects} initialViewType="dashboard" />;
 }

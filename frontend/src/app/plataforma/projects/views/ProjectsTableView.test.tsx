@@ -4,8 +4,10 @@ import { describe, it, expect, vi } from 'vitest';
 import ProjectsTableView from './ProjectsTableView';
 import { createMockProject } from '@/test-utils/factories';
 
+const { pushMock } = vi.hoisted(() => ({ pushMock: vi.fn() }));
+
 vi.mock('next/navigation', () => ({
-    useRouter: () => ({ push: vi.fn() }),
+    useRouter: () => ({ push: pushMock }),
 }));
 
 const projects = [
@@ -32,6 +34,17 @@ const projects = [
 ];
 
 describe('ProjectsTableView', () => {
+    it('keeps inline editing separate from an accessible detail action', () => {
+        pushMock.mockClear();
+        render(<ProjectsTableView projects={projects} onUpdate={vi.fn()} />);
+
+        fireEvent.click(screen.getByText('Campamento Juventud'));
+        expect(pushMock).not.toHaveBeenCalled();
+
+        fireEvent.click(screen.getByRole('button', { name: 'Abrir proyecto Campamento Juventud' }));
+        expect(pushMock).toHaveBeenCalledWith('/plataforma/projects/p1?view=list');
+    });
+
     it('renders project titles and status pickers', () => {
         render(<ProjectsTableView projects={projects} onUpdate={vi.fn()} />);
         expect(screen.getByText('Campamento Juventud')).toBeInTheDocument();
@@ -39,6 +52,7 @@ describe('ProjectsTableView', () => {
     });
 
     it('calls onUpdate when title is edited', () => {
+        pushMock.mockClear();
         const onUpdate = vi.fn();
         render(<ProjectsTableView projects={projects} onUpdate={onUpdate} />);
         const title = screen.getByText('Campamento Juventud');
@@ -47,5 +61,6 @@ describe('ProjectsTableView', () => {
         fireEvent.change(input, { target: { value: 'Campamento 2026' } });
         fireEvent.blur(input);
         expect(onUpdate).toHaveBeenCalledWith('p1', { title: 'Campamento 2026' });
+        expect(pushMock).not.toHaveBeenCalled();
     });
 });

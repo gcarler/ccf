@@ -30,6 +30,7 @@ interface WorkspaceToolbarProps {
     leftActions?: React.ReactNode;
     rightActions?: React.ReactNode;
     onSearch?: (query: string) => void;
+    searchValue?: string;
     onFilter?: () => void;
     onColumns?: () => void;
     onGroup?: () => void;
@@ -46,6 +47,7 @@ export default function WorkspaceToolbar({
     leftActions,
     rightActions,
     onSearch,
+    searchValue,
     onFilter,
     onColumns,
     onGroup,
@@ -54,7 +56,7 @@ export default function WorkspaceToolbar({
     onAddOption
 }: WorkspaceToolbarProps) {
     return (
-        <div className="min-h-10 bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-2))] border-b border-[hsl(var(--border))] dark:border-white/[0.06] flex flex-wrap items-center justify-between gap-1.5 px-2 py-1 sticky top-0 z-50 transition-colors duration-300 sm:flex-nowrap sm:gap-2 sm:py-0">
+        <div data-workspace-toolbar className="min-h-10 bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-2))] border-b border-[hsl(var(--border))] dark:border-white/[0.06] flex flex-wrap items-center justify-between gap-1.5 px-2 py-1 sticky top-0 z-50 transition-colors duration-300 sm:flex-nowrap sm:gap-2 sm:py-0">
             {/* Left: leftActions + Breadcrumbs + View Switcher */}
             <div className="flex min-w-0 flex-1 items-center gap-1.5 overflow-hidden sm:gap-2">
                 {leftActions && <>{leftActions}<div className="w-px h-4 bg-[hsl(var(--surface-3))] dark:bg-white/10 mx-0.5 shrink-0" /></>}
@@ -109,7 +111,9 @@ export default function WorkspaceToolbar({
                     <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] group-focus-within:text-[hsl(var(--primary))] transition-colors" size={13} />
                     <input
                         type="text"
+                        aria-label="Buscar en esta vista"
                         placeholder="Buscar en esta vista..."
+                        value={searchValue}
                         onChange={(e) => onSearch?.(e.target.value)}
                         className="h-8 w-44 lg:w-56 bg-[hsl(var(--surface-1))] dark:bg-black/20 border border-[hsl(var(--border))] dark:border-white/[0.06] rounded-md pl-8 pr-3 text-xs font-medium placeholder:text-[hsl(var(--text-secondary))] dark:placeholder:text-[hsl(var(--text-secondary))] focus:ring-1 focus:ring-[hsl(var(--primary))]/30 focus:bg-[hsl(var(--bg-primary))] dark:focus:bg-[hsl(var(--surface-2))] focus:w-64 outline-none transition-all duration-200"
                     />

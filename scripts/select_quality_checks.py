@@ -50,6 +50,7 @@ MODULE_RULES: tuple[Rule, ...] = (
             "docs/PROJECTS_RBAC_MATRIX.md",
             "docs/PLAN_VISTAS_EDITABLES_PROYECTOS.md",
             "backend/api/projects.py",
+            "backend/crud/projects.py",
             "backend/models_projects.py",
             "backend/schemas/projects.py",
             "frontend/src/app/plataforma/projects/",
@@ -58,6 +59,7 @@ MODULE_RULES: tuple[Rule, ...] = (
             "frontend/src/hooks/useProjectTasks.ts",
             "frontend/src/context/ProjectUpdateContext.tsx",
             "scripts/test_projects_quality.py",
+            "scripts/projects_quality_safety.py",
             "tests/test_projects_",
         ),
     ),
@@ -265,6 +267,7 @@ SHARED_PREFIXES: tuple[str, ...] = (
     "frontend/src/lib/api",
     "scripts/hooks/pre-push",
     "scripts/select_quality_checks.py",
+    "scripts/run_quality_integration.py",
     "tests/test_select_quality_checks.py",
     # The workspace shell is platform infrastructure. It requires the
     # platform gate and frontend build, not every module's live quality suite.

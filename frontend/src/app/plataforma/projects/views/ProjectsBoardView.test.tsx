@@ -5,6 +5,7 @@ import { describe, it, expect, vi } from 'vitest';
 vi.mock('@/context/AuthContext', () => ({
     useAuth: () => ({ user: { id: 'u1', role: 'admin' }, hasPermission: () => true, loading: false }),
 }));
+vi.mock('@/lib/http', () => ({ apiFetch: vi.fn().mockResolvedValue([]) }));
 import ProjectsBoardView from './ProjectsBoardView';
 import { createMockProject } from '@/test-utils/factories';
 

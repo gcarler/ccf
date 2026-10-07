@@ -4,6 +4,9 @@
 - `smoke.spec.ts`: rutas publicas (`/login`, `/faro`), siempre ejecutables.
 - `authenticated.spec.ts`: rutas con sesion (`/academy`, `/projects`, `/crm`).
 - `projects/smoke.spec.ts`: smoke dedicado de Projects (`/plataforma/projects?view=list#projects-dashboard`, `/plataforma/projects/tasks`, `/plataforma/projects/inbox`) con bloqueo de consola/API/assets.
+- `projects/tasks-page.spec.ts`: cobertura mockeada de `/plataforma/projects/tasks?scope=mine&view=list`; valida lectura paginada (`offset=0`, `limit=100`), render móvil y ausencia de mutaciones.
+- `projects/workload-drawer-responsive.spec.ts`: detalle de proyecto y drawer de carga del equipo en viewport móvil; valida límites geométricos, barra accesible, axe WCAG 2.1 A/AA y ausencia de mutaciones con API/WebSocket mockeadas. Está incluido en `npm run test:e2e:projects:read-only`.
+- `projects/comment-mention-deeplink.spec.ts`: abre desde la bandeja una notificación de mención y confirma navegación al Drawer de tarea, permitiendo únicamente el PATCH mockeado para marcarla leída.
 - `projects/detail.spec.ts`: smoke profundo seeded de Projects detail (`/plataforma/projects/[id]` dashboard/list/calendar) reutilizando `seed-projects-demo`; requiere runtime Next vivo.
 - `crm/smoke.spec.ts`: smoke dedicado de CRM (`/plataforma/crm`, `/plataforma/crm/personas`, `/plataforma/crm/pipeline`) con bloqueo de consola/API/assets.
 - `crm/persona-detail.spec.ts`: cobertura profunda mockeada del detalle `/plataforma/crm/personas/[id]`; valida MESH insight, tabs de historial/contribuciones y mentoría; requiere runtime Next vivo.
@@ -27,8 +30,11 @@
 - `E2E_EMAIL`
 - `E2E_PASSWORD`
 - `E2E_API_URL` (o `NEXT_PUBLIC_API_URL`)
+- `PROJECTS_DEMO_TARGET_DATABASE`: confirmación exacta del nombre de la base que usará el seed de Projects. El reset solo acepta nombres que identifiquen `_e2e`, `_test` o `_quality`.
 
 Si falta alguna variable, la suite autenticada se marca como `skip` automaticamente.
+No habilites el seed de Projects apuntando a desarrollo compartido, staging o producción: purga/recrea proyectos con títulos demo y exige que el nombre de la base destino se confirme explícitamente.
+El runner autenticado valida esta confirmación antes de intentar normalizar el usuario E2E o iniciar Playwright. Ejemplo (solo tras verificar una DB desechable cuyo nombre sea `ccf_e2e_local`): `PROJECTS_DEMO_TARGET_DATABASE=ccf_e2e_local npm run test:e2e:projects:detail`.
 
 ## Matriz multiusuario
 - `npm run test:e2e:modules:matrix`
@@ -64,8 +70,9 @@ Si falta alguna variable, la suite autenticada se marca como `skip` automaticame
 - `npm run test:e2e:seed-projects-demo`
 
 ## Runner administrado
-- `npm run test:e2e:auth:managed`, `npm run test:e2e:projects:detail` y los comandos profundos de evangelismo, CRM, Academy, CMS, Messaging y Agenda levantan un `webServer` administrado por Playwright sobre `http://localhost:4173`.
+- `npm run test:e2e:auth:managed`, `npm run test:e2e:projects`, `npm run test:e2e:projects:detail` y los comandos profundos de evangelismo, CRM, Academy, CMS, Messaging y Agenda levantan un `webServer` administrado por Playwright sobre un puerto aislado.
 - El wrapper comun vive en `frontend/scripts/run-managed-playwright.mjs`.
+- El runner compila en `.next-playwright-<pid>` y arranca Next con ese `distDir`; no reemplaza `.next` ni reinicia servicios existentes. `--reuse-build` reutiliza `.next` en modo solo lectura. Los builds aislados se borran al terminar el proceso.
 - El runner fija `NEXT_PUBLIC_API_URL` y `API_BASE_URL` hacia `http://127.0.0.1:8000/api` si no existen overrides.
 
 ## Seed de usuario para CI

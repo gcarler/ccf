@@ -1,6 +1,7 @@
 "use client";
 
 import React from 'react';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { Bell, Calendar, Users, CheckCircle2, MessageSquare, Inbox, Bot, RefreshCw } from 'lucide-react';
 import { useToast } from '@/context/ToastContext';
@@ -27,6 +28,7 @@ const TYPE_COLOR: Record<NotificationKind, string> = {
 };
 
 export default function NotificationsCenter() {
+    const router = useRouter();
     const { isAuthenticated } = useAuth();
     const { addToast } = useToast();
     const { notifications, loading, error, refresh, markRead, markAllRead } = useNotifications();
@@ -39,6 +41,12 @@ export default function NotificationsCenter() {
     const handleMarkAllRead = async () => {
         await markAllRead();
         addToast('Todas las notificaciones marcadas como leidas', 'success');
+    };
+
+    const handleOpenNotification = async (id: string) => {
+        const notification = notifications.find((item) => item.id === id);
+        await markRead(id);
+        if (notification?.targetUrl) router.push(notification.targetUrl);
     };
 
     return (
@@ -78,8 +86,8 @@ export default function NotificationsCenter() {
                 </div>
             ) : notifications.length > 0 ? (
                 <div className="space-y-3">
-                    <NotificationSection title="Hoy" notifications={recent} onOpen={markRead} />
-                    <NotificationSection title="Anteriormente" notifications={previous} onOpen={markRead} faded />
+                    <NotificationSection title="Hoy" notifications={recent} onOpen={handleOpenNotification} />
+                    <NotificationSection title="Anteriormente" notifications={previous} onOpen={handleOpenNotification} faded />
                 </div>
             ) : (
                 <div className="flex flex-col items-center justify-center py-1.5 text-center space-y-3">

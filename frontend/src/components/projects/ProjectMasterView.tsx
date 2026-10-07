@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, ElementType } from 'react';
+import dynamic from 'next/dynamic';
 import { motion } from 'framer-motion';
 import {
     Radio, Share2, Globe, CheckCircle2, Clock,
@@ -12,24 +13,54 @@ import {
 import clsx from 'clsx';
 import type { ProjectRecord, ProjectTaskRecord, ProjectMilestoneRecord, ProjectAnalytics, ProjectKPI, ProjectBudgetSummary, ProjectRiskSummary, ProjectWorkloadSummary, ProjectTimeTrackingSummary } from '@/types/projects';
 import { InlineTextInput } from '@/components/ui/inline-editors/InlineTextInput';
+import { PROJECT_ASSIGNEE_CANDIDATES_ENDPOINT, PROJECT_TITLE_MAX_LENGTH, TASK_TITLE_MAX_LENGTH } from '@/lib/projects/constants';
 import { InlineTextArea } from '@/components/ui/inline-editors/InlineTextArea';
 import { InlineProjectStatusPicker } from '@/components/ui/inline-editors/InlineProjectStatusPicker';
 import { InlineUserPicker } from '@/components/ui/inline-editors';
 import { InlineDatePicker } from '@/components/ui/inline-editors/InlineDatePicker';
-import { ProjectKpiDrawer } from '@/components/projects/ProjectKpiDrawer';
-import { ProgressSettingsDrawer } from '@/components/projects/ProgressSettingsDrawer';
-import { ProjectBudgetDrawer } from '@/components/projects/ProjectBudgetDrawer';
-import { ProjectRiskMatrixDrawer } from '@/components/projects/ProjectRiskMatrixDrawer';
-import { ProjectWorkloadDrawer } from '@/components/projects/ProjectWorkloadDrawer';
-import { ProjectTimeTrackingDrawer } from '@/components/projects/ProjectTimeTrackingDrawer';
-import { ProjectTemplateCatalogDrawer } from '@/components/projects/ProjectTemplateCatalogDrawer';
-import { ProjectAutomationsDrawer } from '@/components/projects/ProjectAutomationsDrawer';
-import { ProjectReportDrawer } from '@/components/projects/ProjectReportDrawer';
-import ConfirmDeleteDrawer from '@/components/ui/ConfirmDeleteDrawer';
+import { DeferredMount, ProjectDrawerLoading } from '@/components/projects/DeferredMount';
 import { useProjectUpdate } from '@/context/ProjectUpdateContext';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
 import { apiFetch } from '@/lib/http';
+
+const ProjectKpiDrawer = dynamic(
+    () => import('@/components/projects/ProjectKpiDrawer').then((module) => module.ProjectKpiDrawer),
+    { loading: ProjectDrawerLoading },
+);
+const ProgressSettingsDrawer = dynamic(
+    () => import('@/components/projects/ProgressSettingsDrawer').then((module) => module.ProgressSettingsDrawer),
+    { loading: ProjectDrawerLoading },
+);
+const ProjectBudgetDrawer = dynamic(
+    () => import('@/components/projects/ProjectBudgetDrawer').then((module) => module.ProjectBudgetDrawer),
+    { loading: ProjectDrawerLoading },
+);
+const ProjectRiskMatrixDrawer = dynamic(
+    () => import('@/components/projects/ProjectRiskMatrixDrawer').then((module) => module.ProjectRiskMatrixDrawer),
+    { loading: ProjectDrawerLoading },
+);
+const ProjectWorkloadDrawer = dynamic(
+    () => import('@/components/projects/ProjectWorkloadDrawer').then((module) => module.ProjectWorkloadDrawer),
+    { loading: ProjectDrawerLoading },
+);
+const ProjectTimeTrackingDrawer = dynamic(
+    () => import('@/components/projects/ProjectTimeTrackingDrawer').then((module) => module.ProjectTimeTrackingDrawer),
+    { loading: ProjectDrawerLoading },
+);
+const ProjectTemplateCatalogDrawer = dynamic(
+    () => import('@/components/projects/ProjectTemplateCatalogDrawer').then((module) => module.ProjectTemplateCatalogDrawer),
+    { loading: ProjectDrawerLoading },
+);
+const ProjectAutomationsDrawer = dynamic(
+    () => import('@/components/projects/ProjectAutomationsDrawer').then((module) => module.ProjectAutomationsDrawer),
+    { loading: ProjectDrawerLoading },
+);
+const ProjectReportDrawer = dynamic(
+    () => import('@/components/projects/ProjectReportDrawer').then((module) => module.ProjectReportDrawer),
+    { loading: ProjectDrawerLoading },
+);
+const ConfirmDeleteDrawer = dynamic(() => import('@/components/ui/ConfirmDeleteDrawer'), { loading: ProjectDrawerLoading });
 
 interface ProjectMasterViewProps {
     project: ProjectRecord;
@@ -49,7 +80,7 @@ interface ProjectMasterViewProps {
  *    `task.title`. Persistir la pertenencia es scope de otra fase; este
  *    cambio solo añade edición inline de cada tarea (status + título con
  *    preservación del prefijo).
- *  - Hitos: CRUD completo inline (PATCH / DELETE / POST) + confirm nativo.
+ *  - Hitos: CRUD completo inline (PATCH / DELETE / POST) + confirmación lateral.
  */
 export function ProjectMasterView({ project, tasks, onOpenTask }: ProjectMasterViewProps) {
     const { token } = useAuth();
@@ -206,6 +237,7 @@ export function ProjectMasterView({ project, tasks, onOpenTask }: ProjectMasterV
             setMilestoneToDelete(null);
         } catch {
             addToast('Error al eliminar hito', 'error');
+            throw new Error('Error al eliminar hito');
         } finally {
             setBusyMilestoneId(null);
         }
@@ -257,7 +289,7 @@ export function ProjectMasterView({ project, tasks, onOpenTask }: ProjectMasterV
     return (
         <div className="space-y-4 pb-4 overflow-y-auto h-full pr-2 scrollbar-thin">
             {/* 1. Header de Misión con Pulso de Salud */}
-            <header className="relative p-4 rounded-lg bg-[hsl(var(--surface-1))] text-[hsl(var(--foreground))] overflow-hidden shadow-md border border-[hsl(var(--border))]">
+            <header className="relative p-4 rounded-lg bg-[hsl(var(--surface-1))] text-[hsl(var(--text-primary))] overflow-hidden shadow-md border border-[hsl(var(--border))]">
                 <div className="absolute inset-0 bg-gradient-to-br to-[hsl(var(--info)/20%)] to-[hsl(var(--info)/20%)]" />
                 <div className="absolute top-0 right-0 p-4 opacity-10">
                     <Radio size={220} />
@@ -268,28 +300,29 @@ export function ProjectMasterView({ project, tasks, onOpenTask }: ProjectMasterV
                         <div className="flex items-center gap-2">
                             <span className="px-2 py-1 bg-[hsl(var(--primary))] rounded-full text-2xs font-bold uppercase tracking-wide text-[hsl(var(--primary-foreground))] shadow-lg shadow-[hsl(var(--info)/40%)]">Misión Proactiva</span>
                             <div className="size-2 rounded-full bg-[hsl(var(--success))] animate-ping" />
-                            <span className="text-2xs font-medium text-[hsl(var(--muted-foreground))] uppercase tracking-wide">Sincronizado en tiempo real</span>
+                            <span className="text-2xs font-medium text-[hsl(var(--text-secondary))] uppercase tracking-wide">Sincronizado en tiempo real</span>
                         </div>
-                        <h1 className="text-xl font-bold tracking-tight leading-none text-[hsl(var(--foreground))]">
+                        <h1 className="text-xl font-bold tracking-tight leading-none text-[hsl(var(--text-primary))]">
                             <InlineTextInput
                                 value={project.title || ''}
                                 onChange={(v) => updateProject({ title: v })}
                                 placeholder="Título del proyecto"
-                                className="text-[hsl(var(--foreground))] hover:bg-[hsl(var(--surface-2))]"
-                                inputClassName="text-[hsl(var(--foreground))] border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] placeholder:text-[hsl(var(--muted-foreground))]"
+                                maxLength={PROJECT_TITLE_MAX_LENGTH}
+                                className="text-[hsl(var(--text-primary))] hover:bg-[hsl(var(--surface-2))]"
+                                inputClassName="text-[hsl(var(--text-primary))] border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] placeholder:text-[hsl(var(--text-secondary))]"
                             />
                         </h1>
-                        <div className="text-[hsl(var(--muted-foreground))] text-base font-medium leading-relaxed max-w-xl">
+                        <div className="text-[hsl(var(--text-secondary))] text-base font-medium leading-relaxed max-w-xl">
                             <InlineTextArea
                                 value={project.description || ''}
                                 onChange={(v) => updateProject({ description: v })}
                                 placeholder="Iniciativa estratégica para la expansión del reino en el ecosistema digital."
                                 rows={3}
-                                className="text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--surface-2))]"
-                                inputClassName="text-[hsl(var(--muted-foreground))] border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] placeholder:text-[hsl(var(--muted-foreground))]"
+                                className="text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))]"
+                                inputClassName="text-[hsl(var(--text-secondary))] border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] placeholder:text-[hsl(var(--text-secondary))]"
                             />
                         </div>
-                        <div className="flex items-center gap-2 text-sm text-[hsl(var(--muted-foreground))]">
+                        <div className="flex items-center gap-2 text-sm text-[hsl(var(--text-secondary))]">
                             <InlineProjectStatusPicker
                                 value={project.status || 'planning'}
                                 onChange={(v) => updateProject({ status: v })}
@@ -297,6 +330,7 @@ export function ProjectMasterView({ project, tasks, onOpenTask }: ProjectMasterV
                             />
                             <span className="font-semibold">Responsable:</span>
                             <InlineUserPicker
+                                endpoint={PROJECT_ASSIGNEE_CANDIDATES_ENDPOINT}
                                 value={project.owner_id ?? null}
                                 onChange={(id) => updateProject({ owner_id: id })}
                             />
@@ -323,7 +357,7 @@ export function ProjectMasterView({ project, tasks, onOpenTask }: ProjectMasterV
                             </div>
                             <div>
                                 <div className="flex items-center gap-1.5 mb-0.5">
-                                    <span className="text-2xs font-bold uppercase tracking-wider text-[hsl(var(--muted-foreground))]">
+                                    <span className="text-2xs font-bold uppercase tracking-wider text-[hsl(var(--text-secondary))]">
                                         Avance Inteligente
                                     </span>
                                     <span className="px-1.5 py-0.2 rounded text-3xs font-black uppercase tracking-wider bg-[hsl(var(--surface-3))] text-[hsl(var(--primary))]">
@@ -345,7 +379,7 @@ export function ProjectMasterView({ project, tasks, onOpenTask }: ProjectMasterV
                                                 ? "bg-[hsl(var(--warning))]/10 border-[hsl(var(--warning))]/30 text-[hsl(var(--warning))]"
                                                 : analytics?.health_label === 'crítica'
                                                 ? "bg-[hsl(var(--destructive))]/10 border-[hsl(var(--destructive))]/30 text-[hsl(var(--destructive))]"
-                                                : "bg-[hsl(var(--surface-1))] border-[hsl(var(--border))] text-[hsl(var(--muted-foreground))]"
+                                                : "bg-[hsl(var(--surface-1))] border-[hsl(var(--border))] text-[hsl(var(--text-secondary))]"
                                         )
                                     )}>
                                         <Activity size={10} />
@@ -361,7 +395,7 @@ export function ProjectMasterView({ project, tasks, onOpenTask }: ProjectMasterV
 
                         <button
                             onClick={() => setShowProgressDrawer(true)}
-                            className="p-2 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] hover:bg-[hsl(var(--surface-3))] text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] transition-all active:scale-95 flex flex-col items-center gap-0.5 shrink-0"
+                            className="p-2 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] hover:bg-[hsl(var(--surface-3))] text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] transition-all active:scale-95 flex flex-col items-center gap-0.5 shrink-0"
                             title="Configurar motor de avance y salud"
                         >
                             <Sliders size={14} />
@@ -370,7 +404,7 @@ export function ProjectMasterView({ project, tasks, onOpenTask }: ProjectMasterV
 
                         <button
                             onClick={() => setShowTemplateDrawer(true)}
-                            className="p-2 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] hover:bg-[hsl(var(--surface-3))] text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] transition-all active:scale-95 flex flex-col items-center gap-0.5 shrink-0"
+                            className="p-2 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] hover:bg-[hsl(var(--surface-3))] text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] transition-all active:scale-95 flex flex-col items-center gap-0.5 shrink-0"
                             title="Catálogo de plantillas y guardar proyecto como plantilla"
                         >
                             <BookTemplate size={14} />
@@ -379,7 +413,7 @@ export function ProjectMasterView({ project, tasks, onOpenTask }: ProjectMasterV
 
                         <button
                             onClick={() => setShowAutomationsDrawer(true)}
-                            className="p-2 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] hover:bg-[hsl(var(--surface-3))] text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] transition-all active:scale-95 flex flex-col items-center gap-0.5 shrink-0"
+                            className="p-2 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] hover:bg-[hsl(var(--surface-3))] text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] transition-all active:scale-95 flex flex-col items-center gap-0.5 shrink-0"
                             title="Reglas y disparadores reactivos de automatización"
                         >
                             <Zap size={14} className="text-[hsl(var(--primary))]" />
@@ -388,7 +422,7 @@ export function ProjectMasterView({ project, tasks, onOpenTask }: ProjectMasterV
 
                         <button
                             onClick={() => setShowReportDrawer(true)}
-                            className="p-2 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] hover:bg-[hsl(var(--surface-3))] text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] transition-all active:scale-95 flex flex-col items-center gap-0.5 shrink-0"
+                            className="p-2 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] hover:bg-[hsl(var(--surface-3))] text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] transition-all active:scale-95 flex flex-col items-center gap-0.5 shrink-0"
                             title="Informes ejecutivos en PDF y exportación Excel/CSV"
                         >
                             <FileText size={14} className="text-[hsl(var(--primary))]" />
@@ -414,7 +448,7 @@ export function ProjectMasterView({ project, tasks, onOpenTask }: ProjectMasterV
                     value={analytics ? capitalize(analytics.risk_level) : '—'}
                     detail={analytics ? analytics.risk_reason : 'Calculando…'}
                     icon={AlertCircle}
-                    color={analytics?.risk_level === 'alto' ? "text-[hsl(var(--destructive))]" : analytics?.risk_level === 'medio' ? "text-[hsl(var(--warning))]" : "text-[hsl(var(--muted-foreground))]"}
+                    color={analytics?.risk_level === 'alto' ? "text-[hsl(var(--destructive))]" : analytics?.risk_level === 'medio' ? "text-[hsl(var(--warning))]" : "text-[hsl(var(--text-secondary))]"}
                 />
             </section>
 
@@ -423,10 +457,10 @@ export function ProjectMasterView({ project, tasks, onOpenTask }: ProjectMasterV
                 <div className="flex items-center justify-between px-2">
                     <div className="flex items-center gap-2">
                         <Target className="text-[hsl(var(--primary))]" size={16} />
-                        <h2 className="text-base font-bold text-[hsl(var(--foreground))] uppercase tracking-tight">
+                        <h2 className="text-base font-bold text-[hsl(var(--text-primary))] uppercase tracking-tight">
                             Indicadores Clave y KPIs
                         </h2>
-                        <span className="text-3xs font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-[hsl(var(--surface-3))] text-[hsl(var(--muted-foreground))]">
+                        <span className="text-3xs font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-[hsl(var(--surface-3))] text-[hsl(var(--text-secondary))]">
                             {kpis.length} {kpis.length === 1 ? 'meta' : 'metas'}
                         </span>
                     </div>
@@ -443,11 +477,11 @@ export function ProjectMasterView({ project, tasks, onOpenTask }: ProjectMasterV
                         onClick={() => setShowKpiDrawer(true)}
                         className="p-4 rounded-xl border border-dashed border-[hsl(var(--border))] bg-[hsl(var(--surface-1))]/50 hover:bg-[hsl(var(--surface-2))] transition-colors cursor-pointer flex flex-col items-center justify-center text-center group"
                     >
-                        <Target size={24} className="text-[hsl(var(--muted-foreground))]/40 group-hover:text-[hsl(var(--primary))] transition-colors mb-1.5" />
-                        <p className="text-xs font-bold uppercase tracking-wider text-[hsl(var(--foreground))]">
+                        <Target size={24} className="text-[hsl(var(--text-secondary))]/40 group-hover:text-[hsl(var(--primary))] transition-colors mb-1.5" />
+                        <p className="text-xs font-bold uppercase tracking-wider text-[hsl(var(--text-primary))]">
                             Sin indicadores configurados
                         </p>
-                        <p className="text-3xs text-[hsl(var(--muted-foreground))] mt-0.5">
+                        <p className="text-3xs text-[hsl(var(--text-secondary))] mt-0.5">
                             Haz clic para establecer metas de impacto, cobertura y finanzas con semáforo y progreso.
                         </p>
                     </div>
@@ -508,7 +542,7 @@ export function ProjectMasterView({ project, tasks, onOpenTask }: ProjectMasterV
                                     className="p-3.5 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] hover:border-[hsl(var(--primary))]/50 transition-all cursor-pointer shadow-xs space-y-2 group"
                                 >
                                     <div className="flex items-start justify-between gap-1.5">
-                                        <span className="text-3xs font-black uppercase tracking-wider px-1.5 py-0.5 rounded bg-[hsl(var(--surface-2))] text-[hsl(var(--muted-foreground))]">
+                                        <span className="text-3xs font-black uppercase tracking-wider px-1.5 py-0.5 rounded bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))]">
                                             {kpi.category}
                                         </span>
                                         <span className={clsx("px-2 py-0.5 rounded-full text-3xs font-bold uppercase tracking-wider border flex items-center gap-1", statusBg)}>
@@ -518,11 +552,11 @@ export function ProjectMasterView({ project, tasks, onOpenTask }: ProjectMasterV
                                     </div>
 
                                     <div>
-                                        <h4 className="text-xs font-bold text-[hsl(var(--foreground))] group-hover:text-[hsl(var(--primary))] transition-colors truncate">
+                                        <h4 className="text-xs font-bold text-[hsl(var(--text-primary))] group-hover:text-[hsl(var(--primary))] transition-colors truncate">
                                             {kpi.title}
                                         </h4>
                                         {kpi.description && (
-                                            <p className="text-3xs text-[hsl(var(--muted-foreground))] truncate mt-0.5">
+                                            <p className="text-3xs text-[hsl(var(--text-secondary))] truncate mt-0.5">
                                                 {kpi.description}
                                             </p>
                                         )}
@@ -530,9 +564,9 @@ export function ProjectMasterView({ project, tasks, onOpenTask }: ProjectMasterV
 
                                     <div className="space-y-1 pt-1">
                                         <div className="flex items-baseline justify-between text-2xs">
-                                            <span className="font-bold text-[hsl(var(--foreground))]">
+                                            <span className="font-bold text-[hsl(var(--text-primary))]">
                                                 {kpi.current_value.toLocaleString()} / {kpi.target_value.toLocaleString()}{' '}
-                                                <span className="text-3xs text-[hsl(var(--muted-foreground))] font-normal">
+                                                <span className="text-3xs text-[hsl(var(--text-secondary))] font-normal">
                                                     {kpi.unit}
                                                 </span>
                                             </span>
@@ -558,7 +592,7 @@ export function ProjectMasterView({ project, tasks, onOpenTask }: ProjectMasterV
             {/* 3b. Control Presupuestario y Desglose Financiero (Super-PRO) */}
             <section className="space-y-3">
                 <div className="flex items-center justify-between px-2">
-                    <h2 className="text-lg font-bold text-[hsl(var(--foreground))] uppercase tracking-tighter flex items-center gap-2">
+                    <h2 className="text-lg font-bold text-[hsl(var(--text-primary))] uppercase tracking-tighter flex items-center gap-2">
                         <Wallet className="text-[hsl(var(--primary))]" size={16} /> Control Presupuestario
                     </h2>
                     <button
@@ -573,42 +607,42 @@ export function ProjectMasterView({ project, tasks, onOpenTask }: ProjectMasterV
                     {/* Grid de Métricas Financieras */}
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                         <div className="p-3 rounded-lg bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))]">
-                            <span className="text-3xs font-bold uppercase tracking-wider text-[hsl(var(--muted-foreground))]">Asignado</span>
-                            <div className="text-base md:text-lg font-black text-[hsl(var(--foreground))] mt-0.5">
+                            <span className="text-3xs font-bold uppercase tracking-wider text-[hsl(var(--text-secondary))]">Asignado</span>
+                            <div className="text-base md:text-lg font-black text-[hsl(var(--text-primary))] mt-0.5">
                                 ${(budgetSummary?.budget_allocated ?? project.budget_allocated ?? 0).toLocaleString("es-CO")}
                             </div>
-                            <span className="text-3xs text-[hsl(var(--muted-foreground))]">Límite Aprobado</span>
+                            <span className="text-3xs text-[hsl(var(--text-secondary))]">Límite Aprobado</span>
                         </div>
 
                         <div className="p-3 rounded-lg bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))]">
-                            <span className="text-3xs font-bold uppercase tracking-wider text-[hsl(var(--muted-foreground))]">Desembolsado</span>
+                            <span className="text-3xs font-bold uppercase tracking-wider text-[hsl(var(--text-secondary))]">Desembolsado</span>
                             <div className="text-base md:text-lg font-black text-[hsl(var(--success))] mt-0.5">
                                 ${(budgetSummary?.paid_amount ?? project.budget_spent ?? 0).toLocaleString("es-CO")}
                             </div>
-                            <span className="text-3xs text-[hsl(var(--muted-foreground))]">Pagos Efectivos</span>
+                            <span className="text-3xs text-[hsl(var(--text-secondary))]">Pagos Efectivos</span>
                         </div>
 
                         <div className="p-3 rounded-lg bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))]">
-                            <span className="text-3xs font-bold uppercase tracking-wider text-[hsl(var(--muted-foreground))]">Comprometido</span>
+                            <span className="text-3xs font-bold uppercase tracking-wider text-[hsl(var(--text-secondary))]">Comprometido</span>
                             <div className="text-base md:text-lg font-black text-[hsl(var(--warning))] mt-0.5">
                                 ${(budgetSummary?.committed_amount ?? 0).toLocaleString("es-CO")}
                             </div>
-                            <span className="text-3xs text-[hsl(var(--muted-foreground))]">Órdenes / Contratos</span>
+                            <span className="text-3xs text-[hsl(var(--text-secondary))]">Órdenes / Contratos</span>
                         </div>
 
                         <div className="p-3 rounded-lg bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))]">
-                            <span className="text-3xs font-bold uppercase tracking-wider text-[hsl(var(--muted-foreground))]">Fondos Restantes</span>
+                            <span className="text-3xs font-bold uppercase tracking-wider text-[hsl(var(--text-secondary))]">Fondos Restantes</span>
                             <div className="text-base md:text-lg font-black text-[hsl(var(--primary))] mt-0.5">
                                 ${(budgetSummary?.remaining_budget ?? (project.budget_allocated ? project.budget_allocated - (project.budget_spent || 0) : 0)).toLocaleString("es-CO")}
                             </div>
-                            <span className="text-3xs text-[hsl(var(--muted-foreground))]">Saldo Disponible</span>
+                            <span className="text-3xs text-[hsl(var(--text-secondary))]">Saldo Disponible</span>
                         </div>
                     </div>
 
                     {/* Barra de Quema Presupuestaria */}
                     <div className="space-y-1.5 pt-1">
                         <div className="flex items-center justify-between text-2xs">
-                            <span className="font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wider flex items-center gap-1.5">
+                            <span className="font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wider flex items-center gap-1.5">
                                 <TrendingDown size={13} className="text-[hsl(var(--primary))]" />
                                 Tasa de Quema Presupuestaria (Burn Rate)
                             </span>
@@ -637,11 +671,11 @@ export function ProjectMasterView({ project, tasks, onOpenTask }: ProjectMasterV
                     {/* Desglose Semántico por Categorías */}
                     {budgetSummary && Object.keys(budgetSummary.by_category || {}).length > 0 && (
                         <div className="pt-2 border-t border-[hsl(var(--border))] flex items-center gap-2 flex-wrap text-2xs">
-                            <span className="font-semibold text-[hsl(var(--muted-foreground))]">Partidas por Categoría:</span>
+                            <span className="font-semibold text-[hsl(var(--text-secondary))]">Partidas por Categoría:</span>
                             {Object.entries(budgetSummary.by_category).map(([cat, amt]) => (
                                 <span
                                     key={cat}
-                                    className="px-2 py-0.5 rounded-full bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] font-medium text-[hsl(var(--foreground))]"
+                                    className="px-2 py-0.5 rounded-full bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] font-medium text-[hsl(var(--text-primary))]"
                                 >
                                     {cat}: <strong className="font-bold">${amt.toLocaleString("es-CO")}</strong>
                                 </span>
@@ -654,7 +688,7 @@ export function ProjectMasterView({ project, tasks, onOpenTask }: ProjectMasterV
             {/* 3.1 Matriz RAID de Riesgos y Supuestos (Super-PRO Fase 2) */}
             <section className="space-y-3">
                 <div className="flex items-center justify-between px-2">
-                    <h2 className="text-lg font-bold text-[hsl(var(--foreground))] uppercase tracking-tighter flex items-center gap-2">
+                    <h2 className="text-lg font-bold text-[hsl(var(--text-primary))] uppercase tracking-tighter flex items-center gap-2">
                         <ShieldAlert className="text-[hsl(var(--destructive))]" size={16} /> Matriz RAID de Riesgos y Supuestos
                     </h2>
                     <button
@@ -687,11 +721,11 @@ export function ProjectMasterView({ project, tasks, onOpenTask }: ProjectMasterV
                     {/* Grid de Severidad RAID */}
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                         <div className="p-3 rounded-lg bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))]">
-                            <span className="text-3xs font-bold uppercase tracking-wider text-[hsl(var(--muted-foreground))]">Riesgos Totales</span>
-                            <div className="text-base md:text-lg font-black text-[hsl(var(--foreground))] mt-0.5">
+                            <span className="text-3xs font-bold uppercase tracking-wider text-[hsl(var(--text-secondary))]">Riesgos Totales</span>
+                            <div className="text-base md:text-lg font-black text-[hsl(var(--text-primary))] mt-0.5">
                                 {risksSummary?.total_risks ?? 0}
                             </div>
-                            <span className="text-3xs text-[hsl(var(--muted-foreground))]">{risksSummary?.active_risks ?? 0} activos / latentes</span>
+                            <span className="text-3xs text-[hsl(var(--text-secondary))]">{risksSummary?.active_risks ?? 0} activos / latentes</span>
                         </div>
 
                         <div className="p-3 rounded-lg bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))]">
@@ -703,11 +737,11 @@ export function ProjectMasterView({ project, tasks, onOpenTask }: ProjectMasterV
                         </div>
 
                         <div className="p-3 rounded-lg bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))]">
-                            <span className="text-3xs font-bold uppercase tracking-wider text-[hsl(28_90%_55%)]">Altos (10-14)</span>
-                            <div className="text-base md:text-lg font-black text-[hsl(28_90%_55%)] mt-0.5">
+                            <span className="text-3xs font-bold uppercase tracking-wider text-[hsl(var(--warning-text))]">Altos (10-14)</span>
+                            <div className="text-base md:text-lg font-black text-[hsl(var(--warning-text))] mt-0.5">
                                 {risksSummary?.high_count ?? 0}
                             </div>
-                            <span className="text-3xs text-[hsl(28_90%_55%)]/80 font-medium">Mitigación Activa</span>
+                            <span className="text-3xs text-[hsl(var(--warning-text))] font-medium">Mitigación Activa</span>
                         </div>
 
                         <div className="p-3 rounded-lg bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))]">
@@ -722,11 +756,11 @@ export function ProjectMasterView({ project, tasks, onOpenTask }: ProjectMasterV
                     {/* Distribución de Riesgos por Categoría */}
                     {risksSummary && Object.keys(risksSummary.by_category || {}).length > 0 && (
                         <div className="pt-2 border-t border-[hsl(var(--border))] flex items-center gap-2 flex-wrap text-2xs">
-                            <span className="font-semibold text-[hsl(var(--muted-foreground))]">Riesgos por Categoría:</span>
+                            <span className="font-semibold text-[hsl(var(--text-secondary))]">Riesgos por Categoría:</span>
                             {Object.entries(risksSummary.by_category).map(([cat, count]) => (
                                 <span
                                     key={cat}
-                                    className="px-2 py-0.5 rounded-full bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] font-medium text-[hsl(var(--foreground))]"
+                                    className="px-2 py-0.5 rounded-full bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] font-medium text-[hsl(var(--text-primary))]"
                                 >
                                     {cat}: <strong className="font-bold">{count}</strong>
                                 </span>
@@ -739,7 +773,7 @@ export function ProjectMasterView({ project, tasks, onOpenTask }: ProjectMasterV
             {/* 3.2 Capacidad de Equipo y Carga de Trabajo (Super-PRO Fase 3) */}
             <section className="space-y-3">
                 <div className="flex items-center justify-between px-2">
-                    <h2 className="text-lg font-bold text-[hsl(var(--foreground))] uppercase tracking-tighter flex items-center gap-2">
+                    <h2 className="text-lg font-bold text-[hsl(var(--text-primary))] uppercase tracking-tighter flex items-center gap-2">
                         <Users className="text-[hsl(var(--primary))]" size={16} /> Capacidad de Equipo y Carga de Trabajo
                     </h2>
                     <button
@@ -762,7 +796,7 @@ export function ProjectMasterView({ project, tasks, onOpenTask }: ProjectMasterV
                             </div>
                             <button
                                 onClick={() => setShowWorkloadDrawer(true)}
-                                className="text-3xs font-black uppercase tracking-wider px-2 py-1 rounded bg-[hsl(var(--destructive))] text-[hsl(var(--destructive-foreground))] hover:opacity-90 shrink-0 cursor-pointer"
+                                className="text-3xs font-black uppercase tracking-wider px-2 py-1 rounded bg-[hsl(var(--destructive))] text-[hsl(var(--danger-foreground))] hover:opacity-90 shrink-0 cursor-pointer"
                             >
                                 Rebalancear
                             </button>
@@ -772,11 +806,11 @@ export function ProjectMasterView({ project, tasks, onOpenTask }: ProjectMasterV
                     {/* Grid de Capacidad del Equipo */}
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                         <div className="p-3 rounded-lg bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))]">
-                            <span className="text-3xs font-bold uppercase tracking-wider text-[hsl(var(--muted-foreground))]">Equipo Asignado</span>
-                            <div className="text-base md:text-lg font-black text-[hsl(var(--foreground))] mt-0.5">
+                            <span className="text-3xs font-bold uppercase tracking-wider text-[hsl(var(--text-secondary))]">Equipo Asignado</span>
+                            <div className="text-base md:text-lg font-black text-[hsl(var(--text-primary))] mt-0.5">
                                 {workloadSummary?.total_members ?? 0}
                             </div>
-                            <span className="text-3xs text-[hsl(var(--muted-foreground))]">Miembros con tareas</span>
+                            <span className="text-3xs text-[hsl(var(--text-secondary))]">Miembros con tareas</span>
                         </div>
 
                         <div className="p-3 rounded-lg bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))]">
@@ -808,7 +842,7 @@ export function ProjectMasterView({ project, tasks, onOpenTask }: ProjectMasterV
                     {workloadSummary && workloadSummary.members.length > 0 && (
                         <div className="pt-2 border-t border-[hsl(var(--border))] space-y-2.5">
                             <div className="flex items-center justify-between text-2xs">
-                                <span className="font-semibold text-[hsl(var(--muted-foreground))] uppercase tracking-wider">
+                                <span className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wider">
                                     Distribución de Carga por Responsable
                                 </span>
                                 <button
@@ -834,7 +868,7 @@ export function ProjectMasterView({ project, tasks, onOpenTask }: ProjectMasterV
                                         <div key={m.persona_id ?? m.name} className="p-2.5 rounded-lg bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] space-y-1.5">
                                             <div className="flex items-center justify-between text-2xs">
                                                 <div className="flex items-center gap-1.5 min-w-0">
-                                                    <span className="font-bold text-[hsl(var(--foreground))] truncate max-w-[140px]">
+                                                    <span className="font-bold text-[hsl(var(--text-primary))] truncate max-w-[140px]">
                                                         {m.name}
                                                     </span>
                                                     {m.overdue_tasks > 0 && (
@@ -866,7 +900,7 @@ export function ProjectMasterView({ project, tasks, onOpenTask }: ProjectMasterV
             <section className="space-y-3">
                 <div className="flex items-center justify-between px-2">
                     <div className="flex items-center gap-2">
-                        <h2 className="text-lg font-bold text-[hsl(var(--foreground))] uppercase tracking-tighter flex items-center gap-2">
+                        <h2 className="text-lg font-bold text-[hsl(var(--text-primary))] uppercase tracking-tighter flex items-center gap-2">
                             <Clock className="text-[hsl(var(--primary))]" size={16} /> Registro de Tiempo y Hojas de Horas
                         </h2>
                         {timeTrackingSummary && timeTrackingSummary.total_hours > 0 && (
@@ -877,7 +911,7 @@ export function ProjectMasterView({ project, tasks, onOpenTask }: ProjectMasterV
                     </div>
                     <button
                         onClick={() => setShowTimeTrackingDrawer(true)}
-                        className="px-3 py-1 bg-[hsl(var(--surface-2))] hover:bg-[hsl(var(--surface-3))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))] rounded-md text-2xs font-bold uppercase tracking-wider transition-all flex items-center gap-1.5"
+                        className="px-3 py-1 bg-[hsl(var(--surface-2))] hover:bg-[hsl(var(--surface-3))] text-[hsl(var(--text-primary))] border border-[hsl(var(--border))] rounded-md text-2xs font-bold uppercase tracking-wider transition-all flex items-center gap-1.5"
                     >
                         <Clock size={12} className="text-[hsl(var(--primary))]" /> Hojas de Horas →
                     </button>
@@ -887,26 +921,26 @@ export function ProjectMasterView({ project, tasks, onOpenTask }: ProjectMasterV
                     {/* Tarjetas KPI de tiempo */}
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                         <div className="p-3 rounded-lg bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] space-y-1">
-                            <span className="text-3xs uppercase tracking-wider font-semibold text-[hsl(var(--muted-foreground))]">Total Horas</span>
+                            <span className="text-3xs uppercase tracking-wider font-semibold text-[hsl(var(--text-secondary))]">Total Horas</span>
                             <div className="text-xl font-black text-[hsl(var(--primary))] font-mono">
                                 {(timeTrackingSummary?.total_hours ?? 0).toFixed(2)}h
                             </div>
                         </div>
                         <div className="p-3 rounded-lg bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] space-y-1">
-                            <span className="text-3xs uppercase tracking-wider font-semibold text-[hsl(var(--muted-foreground))]">Facturables</span>
+                            <span className="text-3xs uppercase tracking-wider font-semibold text-[hsl(var(--text-secondary))]">Facturables</span>
                             <div className="text-xl font-black text-[hsl(var(--success))] font-mono">
                                 {(timeTrackingSummary?.billable_hours ?? 0).toFixed(2)}h
                             </div>
                         </div>
                         <div className="p-3 rounded-lg bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] space-y-1">
-                            <span className="text-3xs uppercase tracking-wider font-semibold text-[hsl(var(--muted-foreground))]">No Facturables</span>
+                            <span className="text-3xs uppercase tracking-wider font-semibold text-[hsl(var(--text-secondary))]">No Facturables</span>
                             <div className="text-xl font-black text-[hsl(var(--warning))] font-mono">
                                 {(timeTrackingSummary?.non_billable_hours ?? 0).toFixed(2)}h
                             </div>
                         </div>
                         <div className="p-3 rounded-lg bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] space-y-1">
-                            <span className="text-3xs uppercase tracking-wider font-semibold text-[hsl(var(--muted-foreground))]">Entradas Totales</span>
-                            <div className="text-xl font-black text-[hsl(var(--foreground))] font-mono">
+                            <span className="text-3xs uppercase tracking-wider font-semibold text-[hsl(var(--text-secondary))]">Entradas Totales</span>
+                            <div className="text-xl font-black text-[hsl(var(--text-primary))] font-mono">
                                 {timeTrackingSummary?.total_logs ?? 0}
                             </div>
                         </div>
@@ -916,7 +950,7 @@ export function ProjectMasterView({ project, tasks, onOpenTask }: ProjectMasterV
                     {timeTrackingSummary && timeTrackingSummary.total_hours > 0 && (
                         <div className="space-y-1.5 pt-1">
                             <div className="flex justify-between text-2xs">
-                                <span className="text-[hsl(var(--muted-foreground))] font-semibold">Proporción Facturable</span>
+                                <span className="text-[hsl(var(--text-secondary))] font-semibold">Proporción Facturable</span>
                                 <span className="font-bold text-[hsl(var(--success))]">
                                     {Math.round((timeTrackingSummary.billable_hours / timeTrackingSummary.total_hours) * 100)}%
                                 </span>
@@ -936,7 +970,7 @@ export function ProjectMasterView({ project, tasks, onOpenTask }: ProjectMasterV
                     {timeTrackingSummary && timeTrackingSummary.by_task.length > 0 && (
                         <div className="pt-2 space-y-2">
                             <div className="flex items-center justify-between">
-                                <span className="text-2xs font-bold uppercase tracking-wider text-[hsl(var(--muted-foreground))]">
+                                <span className="text-2xs font-bold uppercase tracking-wider text-[hsl(var(--text-secondary))]">
                                     Horas por Tarea Principal
                                 </span>
                                 <button
@@ -950,7 +984,7 @@ export function ProjectMasterView({ project, tasks, onOpenTask }: ProjectMasterV
                                 {timeTrackingSummary.by_task.slice(0, 4).map((t) => (
                                     <div key={t.task_id} className="p-2.5 rounded-lg bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] space-y-1.5">
                                         <div className="flex items-center justify-between text-2xs">
-                                            <span className="font-bold text-[hsl(var(--foreground))] truncate max-w-[180px]">
+                                            <span className="font-bold text-[hsl(var(--text-primary))] truncate max-w-[180px]">
                                                 {t.task_title}
                                             </span>
                                             <span className="font-black text-[hsl(var(--primary))] font-mono">
@@ -974,7 +1008,7 @@ export function ProjectMasterView({ project, tasks, onOpenTask }: ProjectMasterV
             {/* 4. Línea de Tiempo de Hitos — auto-gestionada */}
             <section className="space-y-3">
                 <div className="flex items-center justify-between px-2">
-                    <h2 className="text-lg font-bold text-[hsl(var(--foreground))] uppercase tracking-tighter flex items-center gap-2">
+                    <h2 className="text-lg font-bold text-[hsl(var(--text-primary))] uppercase tracking-tighter flex items-center gap-2">
                         <BarChart3 className="text-[hsl(var(--primary))]" size={16} /> Hitos Estratégicos
                     </h2>
                 </div>
@@ -991,7 +1025,7 @@ export function ProjectMasterView({ project, tasks, onOpenTask }: ProjectMasterV
                                         className={clsx(
                                             "size-8 rounded-md flex items-center justify-center shadow-lg transition-colors shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--success))] focus-visible:ring-offset-2",
                                             m.is_completed ? "bg-[hsl(var(--success))] text-[hsl(var(--primary-foreground))]"
-                                                : "bg-[hsl(var(--surface-2))] text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--success))]/10 hover:text-[hsl(var(--success))]",
+                                                : "bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--success))]/10 hover:text-[hsl(var(--success))]",
                                             isBusy && "opacity-60 cursor-wait"
                                         )}
                                         title={m.is_completed ? 'Reabrir hito' : 'Completar hito'}
@@ -1021,11 +1055,12 @@ export function ProjectMasterView({ project, tasks, onOpenTask }: ProjectMasterV
                                     value={m.title}
                                     onChange={(v) => milestonePatch(m.id, { title: v })}
                                     placeholder="Título del hito"
+                                    maxLength={PROJECT_TITLE_MAX_LENGTH}
                                     className="block"
-                                    inputClassName="text-base font-bold text-[hsl(var(--foreground))] leading-tight"
+                                    inputClassName="text-base font-bold text-[hsl(var(--text-primary))] leading-tight"
                                 />
                                 {m.description && (
-                                    <p className="text-xs text-[hsl(var(--muted-foreground))] font-medium leading-relaxed mt-1">{m.description}</p>
+                                    <p className="text-xs text-[hsl(var(--text-secondary))] font-medium leading-relaxed mt-1">{m.description}</p>
                                 )}
                             </div>
                         );
@@ -1037,8 +1072,9 @@ export function ProjectMasterView({ project, tasks, onOpenTask }: ProjectMasterV
                             onChange={e => setNewMilestone((s) => ({ ...s, title: e.target.value }))}
                             onKeyDown={e => { if (e.key === 'Enter') milestoneCreate(); }}
                             placeholder="+ Nuevo hito..."
+                            maxLength={PROJECT_TITLE_MAX_LENGTH}
                             disabled={addingMilestone}
-                            className="w-full bg-transparent border-none text-base font-bold outline-none placeholder:text-[hsl(var(--muted-foreground))] text-[hsl(var(--foreground))]"
+                            className="w-full bg-transparent border-none text-base font-bold outline-none placeholder:text-[hsl(var(--text-secondary))] text-[hsl(var(--text-primary))]"
                         />
                         <div className="flex items-center gap-1.5">
                             <div className="flex-1 min-w-0">
@@ -1085,13 +1121,16 @@ export function ProjectMasterView({ project, tasks, onOpenTask }: ProjectMasterV
             </div>
 
             {/* Drawers Pro (SidePanel) */}
+            <DeferredMount open={showKpiDrawer}>
             <ProjectKpiDrawer
                 projectId={project.id}
                 isOpen={showKpiDrawer}
                 onClose={() => setShowKpiDrawer(false)}
                 onKpisUpdated={handleKpisUpdated}
             />
+            </DeferredMount>
 
+            <DeferredMount open={showProgressDrawer}>
             <ProgressSettingsDrawer
                 projectId={project.id}
                 isOpen={showProgressDrawer}
@@ -1101,7 +1140,9 @@ export function ProjectMasterView({ project, tasks, onOpenTask }: ProjectMasterV
                 currentHealthOverride={project.health_override}
                 onSaved={handleProgressSaved}
             />
+            </DeferredMount>
 
+            <DeferredMount open={showBudgetDrawer}>
             <ProjectBudgetDrawer
                 projectId={project.id}
                 isOpen={showBudgetDrawer}
@@ -1112,17 +1153,20 @@ export function ProjectMasterView({ project, tasks, onOpenTask }: ProjectMasterV
                     reloadProject();
                 }}
             />
+            </DeferredMount>
 
+            <DeferredMount open={showRiskDrawer}>
             <ProjectRiskMatrixDrawer
                 projectId={project.id}
                 isOpen={showRiskDrawer}
                 onClose={() => setShowRiskDrawer(false)}
                 onRiskUpdated={() => {
                     loadRisksSummary();
-                    reloadProject();
                 }}
             />
+            </DeferredMount>
 
+            <DeferredMount open={showWorkloadDrawer}>
             <ProjectWorkloadDrawer
                 projectId={project.id}
                 isOpen={showWorkloadDrawer}
@@ -1132,7 +1176,9 @@ export function ProjectMasterView({ project, tasks, onOpenTask }: ProjectMasterV
                     reloadProject();
                 }}
             />
+            </DeferredMount>
 
+            <DeferredMount open={showTimeTrackingDrawer}>
             <ProjectTimeTrackingDrawer
                 projectId={project.id}
                 isOpen={showTimeTrackingDrawer}
@@ -1143,7 +1189,9 @@ export function ProjectMasterView({ project, tasks, onOpenTask }: ProjectMasterV
                     reloadProject();
                 }}
             />
+            </DeferredMount>
 
+            <DeferredMount open={showTemplateDrawer}>
             <ProjectTemplateCatalogDrawer
                 isOpen={showTemplateDrawer}
                 onClose={() => setShowTemplateDrawer(false)}
@@ -1153,24 +1201,27 @@ export function ProjectMasterView({ project, tasks, onOpenTask }: ProjectMasterV
                     reloadProject();
                 }}
             />
+            </DeferredMount>
 
+            <DeferredMount open={showAutomationsDrawer}>
             <ProjectAutomationsDrawer
                 projectId={project.id}
                 isOpen={showAutomationsDrawer}
                 onClose={() => setShowAutomationsDrawer(false)}
                 tasks={tasks}
-                onAutomationTriggered={() => {
-                    reloadProject();
-                }}
             />
+            </DeferredMount>
 
+            <DeferredMount open={showReportDrawer}>
             <ProjectReportDrawer
                 projectId={project.id}
                 isOpen={showReportDrawer}
                 onClose={() => setShowReportDrawer(false)}
                 projectTitle={project.title}
             />
+            </DeferredMount>
 
+            <DeferredMount open={Boolean(milestoneToDelete)}>
             <ConfirmDeleteDrawer
                 open={Boolean(milestoneToDelete)}
                 onClose={() => setMilestoneToDelete(null)}
@@ -1184,6 +1235,7 @@ export function ProjectMasterView({ project, tasks, onOpenTask }: ProjectMasterV
                 }
                 confirmLabel="Eliminar hito"
             />
+            </DeferredMount>
         </div>
     );
 }
@@ -1207,10 +1259,10 @@ function AnalyticCard({ title, value, detail, icon: Icon, color }: AnalyticCardP
                 <div className={clsx("p-1.5 rounded-md bg-[hsl(var(--surface-2))]", color)}>
                     <Icon size={14} />
                 </div>
-                <span className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--muted-foreground))]">{title}</span>
+                <span className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{title}</span>
             </div>
-            <div className="text-xl font-bold text-[hsl(var(--foreground))] leading-none">{value}</div>
-            <p className="text-2xs font-medium text-[hsl(var(--muted-foreground))] mt-1 uppercase tracking-tight">{detail}</p>
+            <div className="text-xl font-bold text-[hsl(var(--text-primary))] leading-none">{value}</div>
+            <p className="text-2xs font-medium text-[hsl(var(--text-secondary))] mt-1 uppercase tracking-tight">{detail}</p>
         </div>
     );
 }
@@ -1233,8 +1285,8 @@ function NodeCard({ title, icon: Icon, color, tasks, onOpenTask, onToggle, onTit
                     <Icon size={18} />
                 </div>
                 <div>
-                    <h3 className="text-base font-bold text-[hsl(var(--foreground))] leading-tight">{title}</h3>
-                    <p className="text-2xs font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wide mt-0.5">Avance por Nodo</p>
+                    <h3 className="text-base font-bold text-[hsl(var(--text-primary))] leading-tight">{title}</h3>
+                    <p className="text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide mt-0.5">Avance por Nodo</p>
                 </div>
             </div>
             <div className="space-y-2">
@@ -1257,14 +1309,15 @@ function NodeCard({ title, icon: Icon, color, tasks, onOpenTask, onToggle, onTit
                                 value={t.title}
                                 onChange={(v) => onTitleSave(t, v)}
                                 placeholder="Título de la tarea..."
+                                maxLength={TASK_TITLE_MAX_LENGTH}
                                 className="flex-1 min-w-0"
-                                inputClassName="text-base font-bold text-[hsl(var(--foreground))]"
+                                inputClassName="text-base font-bold text-[hsl(var(--text-primary))]"
                             />
                             <button
                                 onClick={() => onOpenTask?.(t)}
                                 title="Abrir detalle"
                                 aria-label="Abrir detalle"
-                                className="text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--primary))] transition-colors shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--primary))] focus-visible:ring-offset-2"
+                                className="text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] transition-colors shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--primary))] focus-visible:ring-offset-2"
                             >
                                 <ArrowUpRight size={14} />
                             </button>
@@ -1272,7 +1325,7 @@ function NodeCard({ title, icon: Icon, color, tasks, onOpenTask, onToggle, onTit
                     );
                 })}
                 {tasks.length === 0 && (
-                    <p className="text-xs text-[hsl(var(--muted-foreground))] italic px-2 py-1">Sin tareas en este nodo</p>
+                    <p className="text-xs text-[hsl(var(--text-secondary))] italic px-2 py-1">Sin tareas en este nodo</p>
                 )}
             </div>
         </div>

@@ -26,6 +26,7 @@ class Notification(BaseModel):
     persona_id: UUID
     title: str
     content: Optional[str] = None
+    target_url: Optional[str] = None
     is_read: bool = False
     created_at: datetime
     model_config = orm_config

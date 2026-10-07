@@ -94,6 +94,14 @@ const mockTask: ProjectTaskRecord = {
 };
 
 describe('Projects accessibility - interactive states', () => {
+    it('ProjectMasterView only emits text tokens declared by the CCF theme', () => {
+        const { container } = render(<ProjectMasterView project={mockProject} tasks={[]} />);
+
+        expect(container.innerHTML).not.toMatch(/--(?:foreground|muted-foreground|destructive-foreground)\b/);
+        expect(container.innerHTML).toContain('--text-primary');
+        expect(container.innerHTML).toContain('--text-secondary');
+    });
+
     it('ProjectMasterView uses correct heading hierarchy', () => {
         render(<ProjectMasterView project={mockProject} tasks={[]} />);
 
@@ -108,6 +116,34 @@ describe('Projects accessibility - interactive states', () => {
         // Node card titles should render as h3 headings
         expect(screen.getByRole('heading', { level: 3, name: /Nodo de Nutrición/i })).toBeInTheDocument();
         expect(screen.getByRole('heading', { level: 3, name: /Nodo Digital/i })).toBeInTheDocument();
+    });
+
+    it('ProjectMasterView uses the semantic warning token for high risk severity', () => {
+        render(
+            <ProjectMasterView
+                project={{
+                    ...mockProject,
+                    risks_summary: {
+                        project_id: '1',
+                        total_risks: 1,
+                        active_risks: 1,
+                        mitigated_risks: 0,
+                        occurred_risks: 0,
+                        critical_count: 0,
+                        high_count: 1,
+                        medium_count: 0,
+                        low_count: 0,
+                        matrix_5x5: [],
+                        by_category: {},
+                    },
+                }}
+                tasks={[]}
+            />,
+        );
+
+        expect(screen.getByText('Altos (10-14)')).toHaveClass(
+            'text-[hsl(var(--warning-text))]',
+        );
     });
 
     it('SortableTaskCard drag handle is a focusable button with aria-label', () => {

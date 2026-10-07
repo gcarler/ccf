@@ -1,12 +1,16 @@
 from __future__ import annotations
 
+import argparse
 import os
+import re
 import sys
 import uuid
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Iterable
+
+from sqlalchemy.engine import make_url
 
 # Locate the project root by walking up until we find the `backend/`
 # package. This keeps the script runnable from scripts/, tests/, or CI.
@@ -18,7 +22,7 @@ if str(_PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(_PROJECT_ROOT))
 
 from backend import models
-from backend.core.database import SessionLocal
+from backend.core.database import SessionLocal, engine
 from backend.core.security import get_password_hash
 from backend.models_auth import RolPlataforma, Usuario
 from backend.models_crm import Persona
@@ -46,6 +50,25 @@ DEMO_PROJECTS = (
 )
 
 ACTIVITY_TYPES = ("project_created", "task_created", "status_changed", "comment_added", "review_requested")
+RESET_DATABASE_MARKER = re.compile(r"(?:^|_)(?:e2e|test|quality)(?:_|$)", re.IGNORECASE)
+
+
+def validate_seed_target(database_url: str, confirmed_database: str | None, *, reset: bool) -> str:
+    """Require explicit confirmation before standalone demo data writes."""
+    database_name = make_url(database_url).database
+    if not database_name:
+        raise RuntimeError("No se pudo identificar la base destino del seed de Projects.")
+    if confirmed_database != database_name:
+        raise RuntimeError(
+            "Seed de Projects bloqueado: define PROJECTS_DEMO_TARGET_DATABASE con el nombre "
+            f"exacto de la base destino ({database_name})."
+        )
+    if reset and not RESET_DATABASE_MARKER.search(database_name):
+        raise RuntimeError(
+            "Reset del seed de Projects bloqueado: solo se permite en bases cuyo nombre "
+            "identifique un entorno _e2e, _test o _quality."
+        )
+    return database_name
 
 
 @dataclass(frozen=True)
@@ -229,6 +252,12 @@ def _seed_project_bundle(db, actor: DemoActor, index: int, payload: dict, base_d
 
 
 def seed_projects_demo(db=None, *, actor_email: str | None = None, reset: bool = True):
+    if db is None:
+        validate_seed_target(
+            str(engine.url),
+            os.environ.get("PROJECTS_DEMO_TARGET_DATABASE"),
+            reset=reset,
+        )
     session = db or SessionLocal()
     owns_session = db is None
     try:
@@ -248,8 +277,27 @@ def seed_projects_demo(db=None, *, actor_email: str | None = None, reset: bool =
 
 
 def main() -> None:
-    created = seed_projects_demo()
-    print(f"seeded-projects-demo {len(created)} projects")
+    parser = argparse.ArgumentParser(description="Seed de demostración para E2E de Projects.")
+    parser.add_argument(
+        "--check-target",
+        action="store_true",
+        help="Valida la confirmación de base sin escribir ni eliminar datos.",
+    )
+    args = parser.parse_args()
+    try:
+        if args.check_target:
+            database_name = validate_seed_target(
+                str(engine.url),
+                os.environ.get("PROJECTS_DEMO_TARGET_DATABASE"),
+                reset=True,
+            )
+            print(f"projects-demo-target-confirmed {database_name}")
+            return
+
+        created = seed_projects_demo()
+        print(f"seeded-projects-demo {len(created)} projects")
+    except RuntimeError as exc:
+        parser.error(str(exc))
 
 
 if __name__ == "__main__":

@@ -60,7 +60,7 @@ export default function TaskDetailHeader({
     return (
         <header className="shrink-0 px-4 pt-3 pb-0 border-b border-[hsl(var(--border))]">
             {error && (
-                <div className="mb-2 rounded-md border border-[hsl(var(--warning)/0.3)] bg-[hsl(var(--warning)/0.1)] p-2 text-[hsl(var(--warning))]">
+                <div role="alert" className="mb-2 rounded-md border border-[hsl(var(--warning)/0.3)] bg-[hsl(var(--warning)/0.1)] p-2 text-[hsl(var(--warning))]">
                     <p className="text-2xs font-bold uppercase tracking-wide">{error}</p>
                 </div>
             )}
@@ -83,7 +83,8 @@ export default function TaskDetailHeader({
                     <button
                         onClick={onVerRutaClick}
                         title="Ver ruta jerárquica"
-                        className="flex items-center gap-1 px-2 py-1 rounded-lg text-2xs font-bold text-[hsl(var(--primary))] bg-[hsl(var(--primary)/0.1)] hover:bg-[hsl(var(--primary)/0.15)] transition-all border border-[hsl(var(--primary)/0.2)]"
+                        aria-label="Ver ruta jerárquica de la tarea"
+                        className="flex items-center gap-1 px-2 py-1 rounded-lg text-2xs font-bold text-[hsl(var(--info-text))] bg-[hsl(var(--info-muted))] hover:bg-[hsl(var(--info-muted))] transition-all border border-[hsl(var(--primary)/0.2)]"
                     >
                         <GitBranch size={11} />
                         Ver Ruta
@@ -93,6 +94,7 @@ export default function TaskDetailHeader({
                         onClick={onFileClick}
                         disabled={uploading}
                         title={uploading ? "Subiendo archivo" : "Adjuntar archivo"}
+                        aria-label={uploading ? "Subiendo archivo" : "Adjuntar archivo"}
                         className="p-1.5 rounded-lg text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] hover:bg-[hsl(var(--surface-2))] transition-all disabled:cursor-wait disabled:opacity-60"
                     >
                         {uploading ? <Loader2 size={14} className="animate-spin" /> : <Paperclip size={14} />}
@@ -101,6 +103,7 @@ export default function TaskDetailHeader({
                     <button
                         onClick={onStarToggle}
                         title={starred ? 'Quitar de favoritos' : 'Marcar como favorito'}
+                        aria-label={starred ? 'Quitar tarea de favoritos' : 'Marcar tarea como favorita'}
                         className={clsx(
                             'p-1.5 rounded-lg transition-all',
                             starred
@@ -113,6 +116,7 @@ export default function TaskDetailHeader({
 
                     <button
                         title="Expandir a pantalla completa"
+                        aria-label="Expandir detalle de tarea"
                         className="p-1.5 rounded-lg text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] hover:bg-[hsl(var(--surface-2))] transition-all"
                         onClick={onExpandToggle}
                     >
@@ -122,6 +126,7 @@ export default function TaskDetailHeader({
                     <button
                         onClick={onDeleteTask}
                         title="Eliminar tarea"
+                        aria-label="Eliminar tarea"
                         className="p-1.5 rounded-lg text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--destructive))] hover:bg-[hsl(var(--destructive)/0.1)] transition-all"
                     >
                         <Trash2 size={14} />
@@ -130,6 +135,7 @@ export default function TaskDetailHeader({
                     <button
                         onClick={onClose}
                         title="Cerrar panel"
+                        aria-label="Cerrar detalle de tarea"
                         className="p-1.5 rounded-lg text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] hover:bg-[hsl(var(--surface-2))] transition-all ml-0.5"
                     >
                         <X size={14} />
@@ -141,6 +147,7 @@ export default function TaskDetailHeader({
                 <button
                     onClick={onStatusCycle}
                     title="Click para cambiar estado"
+                    aria-label={`Cambiar estado de la tarea. Estado actual: ${status.label}`}
                     className={clsx(
                         'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold border border-current/15 transition-all hover:border-current/30 cursor-pointer',
                         status.color, status.bg
@@ -152,6 +159,7 @@ export default function TaskDetailHeader({
             </div>
 
             <textarea
+                aria-label="Título de la tarea"
                 value={title}
                 onChange={e => onTitleChange(e.target.value)}
                 onBlur={onSave}

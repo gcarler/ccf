@@ -4,6 +4,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/lib/http';
 import ProjectsShell from '@/components/projects/ProjectsShell';
+import ProjectsLoadError from '@/components/projects/ProjectsLoadError';
 import type { ViewType } from '@/components/ViewSwitcher';
 import UniversalCalendarView from '@/components/ui/UniversalCalendarView';
 import UniversalGanttView from '@/components/ui/UniversalGanttView';
@@ -23,6 +24,8 @@ export default function ProjectsResponsesPage() {
     const [items, setItems] = useState<ProjectInboxItem[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [loadFailed, setLoadFailed] = useState(false);
+    const [loadAttempt, setLoadAttempt] = useState(0);
     const [resolvingId, setResolvingId] = useState<string | null>(null);
     const [viewType, setViewType] = useState<ViewType>('list');
 
@@ -32,23 +35,26 @@ export default function ProjectsResponsesPage() {
                 setLoading(false);
                 setItems([]);
                 setError('Debes iniciar sesión para ver las respuestas de proyectos.');
+                setLoadFailed(false);
                 return;
             }
+            setLoading(true);
             try {
                 setError(null);
+                setLoadFailed(false);
                 const data = await apiFetch<ProjectInboxItem[]>('/projects/inbox', { token, cache: 'no-store' });
                 setItems(Array.isArray(data) ? data : []);
             } catch (error) {
                 setItems([]);
                 setError('No se pudieron cargar las respuestas de proyectos.');
-                toast.error("Error inesperado");
+                setLoadFailed(true);
                 toast.error('Error al cargar respuestas');
             } finally {
                 setLoading(false);
             }
         };
         if (!authLoading) load();
-    }, [authLoading, token]);
+    }, [authLoading, token, loadAttempt]);
 
     const unread = useMemo(() => items.filter((item) => !item.is_read), [items]);
     const grouped = [
@@ -76,7 +82,6 @@ export default function ProjectsResponsesPage() {
             });
             setItems((prev) => prev.map((row) => (row.id === item.id ? { ...row, is_read: true } : row)));
         } catch (error) {
-            toast.error("Error inesperado");
             toast.error('Error al resolver respuesta');
         } finally {
             setResolvingId(null);
@@ -93,9 +98,11 @@ export default function ProjectsResponsesPage() {
 
             <main className="flex-1 overflow-y-auto p-4">
                 {error && (
-                    <div className="mb-3 rounded-lg border border-[hsl(var(--warning)/0.3)] bg-[hsl(var(--warning)/0.1)] p-3 text-[hsl(var(--warning))]">
-                        <p className="text-xs font-bold uppercase tracking-wide">{error}</p>
-                    </div>
+                    <ProjectsLoadError
+                        message={error}
+                        onRetry={loadFailed ? () => setLoadAttempt((attempt) => attempt + 1) : undefined}
+                        className="mb-3"
+                    />
                 )}
                 {loading ? (
                     <div className="space-y-3">{[1, 2, 3].map((idx) => <DSSkeleton key={idx} className="h-20 rounded-lg" />)}</div>

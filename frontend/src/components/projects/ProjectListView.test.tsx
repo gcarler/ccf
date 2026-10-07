@@ -17,6 +17,8 @@ vi.mock('@/context/AuthContext', () => ({
   useAuth: () => ({ token: 'test-token', user: null, loading: false, isAuthenticated: true }),
 }));
 
+vi.mock('@/lib/http', () => ({ apiFetch: vi.fn().mockResolvedValue([]) }));
+
 vi.mock('@/components/ui/inline-editors', () => ({
   InlineStatusPicker: ({
     value,
@@ -45,6 +47,26 @@ describe('ProjectListView', () => {
     { slug: 'backlog', name: 'Por planificar', color: '#64748b', order_index: 0 },
     { slug: 'review_custom', name: 'Revisión pastoral', color: '#f59e0b', order_index: 1 },
   ];
+
+  it('uses declared semantic tokens and accessible warning contrast for the favorites filter', async () => {
+    const user = userEvent.setup();
+    const { container } = render(
+      <ProjectListView
+        tasks={[createMockTask({ id: 'task-1', title: 'Preparar reunión', status: 'backlog' })]}
+        phaseDefs={phases}
+        onOpenTask={vi.fn()}
+        onAddTask={vi.fn()}
+        onTaskUpdate={vi.fn()}
+      />,
+    );
+
+    expect(container.innerHTML).not.toMatch(/--(?:foreground|muted-foreground|background)\b/);
+    await user.click(screen.getByRole('button', { name: /Solo Mis Favoritas/ }));
+    expect(screen.getByRole('button', { name: /Solo Mis Favoritas/ })).toHaveClass(
+      'bg-[hsl(var(--warning-muted))]',
+      'text-[hsl(var(--warning-text))]',
+    );
+  });
 
   it('groups tasks using the project custom phase label', () => {
     render(

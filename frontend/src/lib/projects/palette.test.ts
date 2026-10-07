@@ -7,6 +7,7 @@ import {
   PHASE_COLOR_OPTIONS,
   getPhaseColorOption,
   getProjectColorOption,
+  normalizeProjectColor,
   type ProjectColorOption,
 } from "./palette";
 
@@ -109,6 +110,19 @@ describe("projects/palette — getProjectColorOption", () => {
   it.each(PROJECT_COLOR_OPTIONS.map((o) => o.value))("lookup exacto: %s", (val) => {
     expect(getProjectColorOption(val).value).toBe(val);
   });
+});
+
+describe("projects/palette — normalizeProjectColor", () => {
+  it("preserves valid hex colors and normalizes case/whitespace", () => {
+    expect(normalizeProjectColor("  #A1b2C3 ")).toBe("#a1b2c3");
+  });
+
+  it.each([null, undefined, "", "red", "#fff", "url(javascript:alert(1))", "#123456; color: red"])(
+    "falls back for non-six-digit hex value %s",
+    (value) => {
+      expect(normalizeProjectColor(value)).toBe(DEFAULT_PROJECT_COLOR);
+    },
+  );
 });
 
 describe("projects/palette — coherencia cross-options", () => {

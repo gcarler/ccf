@@ -157,8 +157,13 @@ export function useProjectTasks(options: UseProjectTasksOptions = {}): UseProjec
         handleError("Debes iniciar sesión para eliminar tareas.");
         return false;
       }
+      const taskProjectId = projectId ?? tasks.find((task) => task.id === taskId)?.project_id;
+      if (!taskProjectId) {
+        handleError("No se encontró el proyecto de esta tarea.");
+        return false;
+      }
       try {
-        await apiFetch(`/projects/tasks/${taskId}`, {
+        await apiFetch(`/projects/${taskProjectId}/tasks/${taskId}`, {
           method: "DELETE",
           token,
         });
@@ -169,7 +174,7 @@ export function useProjectTasks(options: UseProjectTasksOptions = {}): UseProjec
         return false;
       }
     },
-    [token, handleError]
+    [token, projectId, tasks, handleError]
   );
 
   const moveTask = useCallback(

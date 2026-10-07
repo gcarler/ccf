@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from "react";
 import { RightPanel } from "@/components/ui/RightPanel";
+import ConfirmActionDrawer, { type ConfirmActionState } from "@/components/ConfirmActionDrawer";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/context/ToastContext";
 import { apiFetch } from "@/lib/http";
@@ -13,13 +14,13 @@ import type {
 } from "@/types/projects";
 import { Zap, Play, Plus, Trash2, CheckCircle2, Clock, Filter, Check, RotateCw, Bell, ListPlus, ArrowRightCircle, AlertCircle, Power, Activity } from "lucide-react";
 import clsx from "clsx";
+import { TASK_TITLE_MAX_LENGTH } from "@/lib/projects/constants";
 
 interface ProjectAutomationsDrawerProps {
   projectId: string;
   isOpen: boolean;
   onClose: () => void;
   tasks?: ProjectTaskRecord[];
-  onAutomationTriggered?: () => void;
 }
 
 const TRIGGER_OPTIONS = [
@@ -81,17 +82,18 @@ export function ProjectAutomationsDrawer({
   isOpen,
   onClose,
   tasks = [],
-  onAutomationTriggered,
 }: ProjectAutomationsDrawerProps) {
   const { token } = useAuth();
   const { addToast } = useToast();
 
   const [activeTab, setActiveTab] = useState<"rules" | "builder" | "test">("rules");
   const [loading, setLoading] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [rules, setRules] = useState<ProjectAutomationRule[]>([]);
   const [testingRuleId, setTestingRuleId] = useState<string | null>(null);
   const [lastTestResults, setLastTestResults] = useState<AutomationExecutionResult[]>([]);
+  const [confirmAction, setConfirmAction] = useState<ConfirmActionState>(null);
 
   // Form State para Builder
   const [ruleName, setRuleName] = useState("");
@@ -107,6 +109,7 @@ export function ProjectAutomationsDrawer({
   const loadRules = useCallback(async () => {
     if (!token || !projectId) return;
     setLoading(true);
+    setLoadError(null);
     try {
       const data = await apiFetch<ProjectAutomationRule[]>(
         `/projects/${projectId}/automations`,
@@ -116,6 +119,7 @@ export function ProjectAutomationsDrawer({
         setRules(data);
       }
     } catch {
+      setLoadError("No se pudieron cargar las reglas de automatización.");
       addToast({
         title: "Error de conexión",
         message: "No se pudieron cargar las reglas de automatización.",
@@ -161,8 +165,8 @@ export function ProjectAutomationsDrawer({
     }
   };
 
-  const handleDeleteRule = async (ruleId: string) => {
-    if (!token) return;
+  const confirmDeleteRule = async (ruleId: string) => {
+    if (!token) throw new Error("Debes iniciar sesión para eliminar la regla.");
     try {
       await apiFetch(`/projects/${projectId}/automations/${ruleId}`, {
         token,
@@ -180,7 +184,18 @@ export function ProjectAutomationsDrawer({
         message: "No se pudo eliminar la regla.",
         type: "error",
       });
+      throw new Error("No se pudo eliminar la regla de automatización.");
     }
+  };
+
+  const handleDeleteRule = (rule: ProjectAutomationRule) => {
+    setConfirmAction({
+      title: "Eliminar automatización",
+      description: `¿Seguro que deseas eliminar “${rule.name}”? La regla dejará de ejecutarse.`,
+      confirmLabel: "Eliminar",
+      destructive: true,
+      onConfirm: () => confirmDeleteRule(rule.id),
+    });
   };
 
   const handleCreateRule = async (e: React.FormEvent) => {
@@ -199,7 +214,7 @@ export function ProjectAutomationsDrawer({
     if (conditionPriority !== "all") conditionData.priority = conditionPriority;
     if (conditionStatus !== "all") conditionData.status = conditionStatus;
 
-    const actionData: Record<string, any> = {};
+    const actionData: Record<string, unknown> = {};
     if (selectedAction === "create_followup_task") {
       actionData.title = followupTitle.trim() || `Seguimiento: ${ruleName}`;
       actionData.duration_days = parseInt(followupDuration, 10) || 3;
@@ -265,6 +280,7 @@ export function ProjectAutomationsDrawer({
           body: JSON.stringify({
             trigger_event: triggerEvent,
             task_id: sampleTask ? sampleTask.id : null,
+            dry_run: true,
             context_data: {
               task_title: sampleTask ? sampleTask.title : "Tarea de Prueba",
               priority: sampleTask ? sampleTask.priority : "high",
@@ -275,15 +291,14 @@ export function ProjectAutomationsDrawer({
       );
       setLastTestResults(results);
       addToast({
-        title: "Disparador evaluado",
-        message: `Se evaluaron ${results.length} reglas activas.`,
+        title: "Vista previa completada",
+        message: `Se previsualizaron ${results.length} reglas activas; no se guardaron cambios.`,
         type: "info",
       });
-      onAutomationTriggered?.();
     } catch {
       addToast({
         title: "Error en prueba",
-        message: "No se pudo completar la simulación del disparador.",
+        message: "No se pudieron ejecutar las reglas para este disparador.",
         type: "error",
       });
     } finally {
@@ -292,6 +307,7 @@ export function ProjectAutomationsDrawer({
   };
 
   return (
+    <>
     <RightPanel
       isOpen={isOpen}
       onClose={onClose}
@@ -308,7 +324,7 @@ export function ProjectAutomationsDrawer({
               "px-3 py-1.5 rounded-md text-xs font-bold transition-all flex items-center gap-1.5",
               activeTab === "rules"
                 ? "bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] shadow-sm"
-                : "text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--surface-2))] hover:text-[hsl(var(--foreground))]"
+                : "text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] hover:text-[hsl(var(--text-primary))]"
             )}
           >
             <Zap size={14} />
@@ -321,7 +337,7 @@ export function ProjectAutomationsDrawer({
               "px-3 py-1.5 rounded-md text-xs font-bold transition-all flex items-center gap-1.5",
               activeTab === "builder"
                 ? "bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] shadow-sm"
-                : "text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--surface-2))] hover:text-[hsl(var(--foreground))]"
+                : "text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] hover:text-[hsl(var(--text-primary))]"
             )}
           >
             <Plus size={14} />
@@ -334,12 +350,23 @@ export function ProjectAutomationsDrawer({
               "px-3 py-1.5 rounded-md text-xs font-bold transition-all flex items-center gap-1.5",
               activeTab === "test"
                 ? "bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] shadow-sm"
-                : "text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--surface-2))] hover:text-[hsl(var(--foreground))]"
+                : "text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] hover:text-[hsl(var(--text-primary))]"
             )}
           >
             <Play size={14} />
-            <span>Simulador</span>
+            <span>Vista previa</span>
           </button>
+        </div>
+
+        <div
+          role="status"
+          className="flex items-start gap-2 rounded-md border border-[hsl(var(--warning))]/40 bg-[hsl(var(--warning))]/10 p-3 text-xs text-[hsl(var(--text-primary))]"
+        >
+          <AlertCircle size={16} className="mt-0.5 shrink-0 text-[hsl(var(--warning))]" aria-hidden="true" />
+          <p>
+            Las reglas se guardan, pero los cambios de tareas todavía no disparan su ejecución automática.
+            La pestaña «Vista previa» solo simula resultados y no aplica acciones.
+          </p>
         </div>
 
         {/* Tab 1: Rules List */}
@@ -348,18 +375,31 @@ export function ProjectAutomationsDrawer({
             {loading ? (
               <div className="p-8 text-center space-y-2">
                 <RotateCw className="animate-spin mx-auto text-[hsl(var(--primary))]" size={24} />
-                <p className="text-xs text-[hsl(var(--muted-foreground))] font-medium">
+                <p className="text-xs text-[hsl(var(--text-secondary))] font-medium">
                   Cargando automatizaciones del proyecto...
                 </p>
               </div>
+            ) : loadError && rules.length === 0 ? (
+              <div role="alert" className="p-8 text-center bg-[hsl(var(--surface-1))] rounded-lg border border-[hsl(var(--border))] space-y-3">
+                <AlertCircle size={24} className="mx-auto text-[hsl(var(--destructive))]" />
+                <h4 className="text-sm font-bold text-[hsl(var(--text-primary))]">No se cargaron las automatizaciones</h4>
+                <p className="text-xs text-[hsl(var(--text-secondary))]">{loadError}</p>
+                <button
+                  type="button"
+                  onClick={loadRules}
+                  className="px-3 py-1.5 rounded-md bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] text-xs font-bold"
+                >
+                  Reintentar
+                </button>
+              </div>
             ) : rules.length === 0 ? (
               <div className="p-8 text-center bg-[hsl(var(--surface-1))] rounded-lg border border-[hsl(var(--border))] space-y-3">
-                <div className="size-10 rounded-full bg-[hsl(var(--surface-2))] flex items-center justify-center mx-auto text-[hsl(var(--muted-foreground))]">
+                <div className="size-10 rounded-full bg-[hsl(var(--surface-2))] flex items-center justify-center mx-auto text-[hsl(var(--text-secondary))]">
                   <Zap size={20} />
                 </div>
                 <div>
-                  <h4 className="text-sm font-bold text-[hsl(var(--foreground))]">Sin automatizaciones configuradas</h4>
-                  <p className="text-xs text-[hsl(var(--muted-foreground))] mt-1 max-w-sm mx-auto">
+                  <h4 className="text-sm font-bold text-[hsl(var(--text-primary))]">Sin automatizaciones configuradas</h4>
+                  <p className="text-xs text-[hsl(var(--text-secondary))] mt-1 max-w-sm mx-auto">
                     Crea reglas reactivas para mover tareas, crear tareas de seguimiento o notificar responsables automáticamente.
                   </p>
                 </div>
@@ -372,7 +412,14 @@ export function ProjectAutomationsDrawer({
                 </button>
               </div>
             ) : (
-              rules.map((rule) => {
+              <>
+              {loadError && (
+                <div role="alert" className="flex items-center justify-between gap-3 rounded-md border border-[hsl(var(--destructive))]/30 bg-[hsl(var(--destructive))]/5 p-3 text-xs text-[hsl(var(--danger-text))]">
+                  <span>{loadError} Se muestran las reglas cargadas anteriormente.</span>
+                  <button type="button" onClick={loadRules} className="font-semibold text-[hsl(var(--primary))]">Reintentar</button>
+                </div>
+              )}
+              {rules.map((rule) => {
                 const triggerObj = TRIGGER_OPTIONS.find((t) => t.id === rule.trigger_event);
                 const actionObj = ACTION_OPTIONS.find((a) => a.id === rule.action_type);
                 const TriggerIcon = triggerObj ? triggerObj.icon : Zap;
@@ -393,17 +440,17 @@ export function ProjectAutomationsDrawer({
                         <div
                           className={clsx(
                             "size-8 rounded-md flex items-center justify-center text-[hsl(var(--primary-foreground))]",
-                            rule.is_active ? "bg-[hsl(var(--primary))]" : "bg-[hsl(var(--muted-foreground))]"
+                            rule.is_active ? "bg-[hsl(var(--primary))]" : "bg-[hsl(var(--text-secondary))]"
                           )}
                         >
                           <Zap size={16} />
                         </div>
                         <div>
-                          <h4 className="text-xs font-bold text-[hsl(var(--foreground))] leading-tight">
+                          <h4 className="text-xs font-bold text-[hsl(var(--text-primary))] leading-tight">
                             {rule.name}
                           </h4>
                           {rule.description && (
-                            <p className="text-3xs text-[hsl(var(--muted-foreground))] mt-0.5 line-clamp-1">
+                            <p className="text-3xs text-[hsl(var(--text-secondary))] mt-0.5 line-clamp-1">
                               {rule.description}
                             </p>
                           )}
@@ -417,7 +464,7 @@ export function ProjectAutomationsDrawer({
                             "px-2 py-0.5 rounded text-3xs font-bold uppercase transition-all flex items-center gap-1 border",
                             rule.is_active
                               ? "bg-[hsl(var(--success))]/10 border-[hsl(var(--success))]/30 text-[hsl(var(--success))]"
-                              : "bg-[hsl(var(--surface-2))] border-[hsl(var(--border))] text-[hsl(var(--muted-foreground))]"
+                              : "bg-[hsl(var(--surface-2))] border-[hsl(var(--border))] text-[hsl(var(--text-secondary))]"
                           )}
                           title={rule.is_active ? "Desactivar regla" : "Activar regla"}
                         >
@@ -426,9 +473,10 @@ export function ProjectAutomationsDrawer({
                         </button>
 
                         <button
-                          onClick={() => handleDeleteRule(rule.id)}
-                          className="p-1 rounded text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--destructive))] transition-colors"
+                          onClick={() => handleDeleteRule(rule)}
+                          className="p-1 rounded text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--destructive))] transition-colors"
                           title="Eliminar regla"
+                          aria-label={`Eliminar regla ${rule.name}`}
                         >
                           <Trash2 size={13} />
                         </button>
@@ -442,8 +490,8 @@ export function ProjectAutomationsDrawer({
                           <TriggerIcon size={12} />
                         </div>
                         <div className="min-w-0">
-                          <span className="block text-3xs font-bold uppercase text-[hsl(var(--muted-foreground))]">Cuando</span>
-                          <span className="font-semibold text-[hsl(var(--foreground))] truncate block">
+                          <span className="block text-3xs font-bold uppercase text-[hsl(var(--text-secondary))]">Cuando</span>
+                          <span className="font-semibold text-[hsl(var(--text-primary))] truncate block">
                             {triggerObj ? triggerObj.label : rule.trigger_event}
                           </span>
                         </div>
@@ -454,10 +502,10 @@ export function ProjectAutomationsDrawer({
                           <Filter size={12} />
                         </div>
                         <div className="min-w-0">
-                          <span className="block text-3xs font-bold uppercase text-[hsl(var(--muted-foreground))]">Si cumple</span>
-                          <span className="font-semibold text-[hsl(var(--foreground))] truncate block">
+                          <span className="block text-3xs font-bold uppercase text-[hsl(var(--text-secondary))]">Si cumple</span>
+                          <span className="font-semibold text-[hsl(var(--text-primary))] truncate block">
                             {Object.keys(rule.condition_data || {}).length > 0
-                              ? Object.entries(rule.condition_data).map(([k, v]) => `${k}:${v}`).join(", ")
+                              ? Object.entries(rule.condition_data).map(([k, v]) => `${k}:${String(v)}`).join(", ")
                               : "Sin condición previa"}
                           </span>
                         </div>
@@ -468,8 +516,8 @@ export function ProjectAutomationsDrawer({
                           <ActionIcon size={12} />
                         </div>
                         <div className="min-w-0">
-                          <span className="block text-3xs font-bold uppercase text-[hsl(var(--muted-foreground))]">Ejecutar</span>
-                          <span className="font-semibold text-[hsl(var(--foreground))] truncate block">
+                          <span className="block text-3xs font-bold uppercase text-[hsl(var(--text-secondary))]">Ejecutar</span>
+                          <span className="font-semibold text-[hsl(var(--text-primary))] truncate block">
                             {actionObj ? actionObj.label : rule.action_type}
                           </span>
                         </div>
@@ -477,7 +525,7 @@ export function ProjectAutomationsDrawer({
                     </div>
 
                     {/* Metadata & Ejecuciones */}
-                    <div className="flex items-center justify-between text-3xs text-[hsl(var(--muted-foreground))] pt-1 border-t border-[hsl(var(--border))]/60">
+                    <div className="flex items-center justify-between text-3xs text-[hsl(var(--text-secondary))] pt-1 border-t border-[hsl(var(--border))]/60">
                       <div className="flex items-center gap-3">
                         <span className="flex items-center gap-1">
                           <Activity size={10} />
@@ -494,7 +542,8 @@ export function ProjectAutomationsDrawer({
                     </div>
                   </div>
                 );
-              })
+              })}
+              </>
             )}
           </div>
         )}
@@ -503,29 +552,31 @@ export function ProjectAutomationsDrawer({
         {activeTab === "builder" && (
           <form onSubmit={handleCreateRule} className="flex-1 overflow-y-auto space-y-4 pr-1">
             <div className="space-y-1">
-              <label className="text-2xs font-bold uppercase tracking-wider text-[hsl(var(--muted-foreground))]">
+              <label htmlFor="automation-rule-name" className="text-2xs font-bold uppercase tracking-wider text-[hsl(var(--text-secondary))]">
                 Nombre de la regla *
               </label>
               <input
                 type="text"
+                id="automation-rule-name"
                 value={ruleName}
                 onChange={(e) => setRuleName(e.target.value)}
                 placeholder="Ej: Auto-crear revisión al completar tareas críticas"
-                className="w-full px-3 py-1.5 rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-xs text-[hsl(var(--foreground))] focus:outline-none focus:ring-1 focus:ring-[hsl(var(--primary))]"
+                className="w-full px-3 py-1.5 rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-xs text-[hsl(var(--text-primary))] focus:outline-none focus:ring-1 focus:ring-[hsl(var(--primary))]"
                 required
               />
             </div>
 
             <div className="space-y-1">
-              <label className="text-2xs font-bold uppercase tracking-wider text-[hsl(var(--muted-foreground))]">
+              <label htmlFor="automation-rule-description" className="text-2xs font-bold uppercase tracking-wider text-[hsl(var(--text-secondary))]">
                 Descripción (opcional)
               </label>
               <textarea
                 value={ruleDescription}
+                id="automation-rule-description"
                 onChange={(e) => setRuleDescription(e.target.value)}
                 placeholder="Propósito operativo de esta automatización..."
                 rows={2}
-                className="w-full px-3 py-1.5 rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-xs text-[hsl(var(--foreground))] focus:outline-none focus:ring-1 focus:ring-[hsl(var(--primary))]"
+                className="w-full px-3 py-1.5 rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-xs text-[hsl(var(--text-primary))] focus:outline-none focus:ring-1 focus:ring-[hsl(var(--primary))]"
               />
             </div>
 
@@ -535,7 +586,7 @@ export function ProjectAutomationsDrawer({
                 <span className="size-5 rounded-full bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] text-3xs font-bold flex items-center justify-center">
                   1
                 </span>
-                <h4 className="text-xs font-bold text-[hsl(var(--foreground))]">
+                <h4 className="text-xs font-bold text-[hsl(var(--text-primary))]">
                   ¿Cuándo debe ejecutarse? (Disparador)
                 </h4>
               </div>
@@ -548,6 +599,7 @@ export function ProjectAutomationsDrawer({
                     <button
                       key={opt.id}
                       type="button"
+                      aria-pressed={isSelected}
                       onClick={() => setSelectedTrigger(opt.id)}
                       className={clsx(
                         "p-2.5 rounded-md border text-left transition-all flex items-start gap-2",
@@ -559,17 +611,17 @@ export function ProjectAutomationsDrawer({
                       <div
                         className={clsx(
                           "p-1.5 rounded shrink-0",
-                          isSelected ? "bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))]" : "bg-[hsl(var(--surface-3))] text-[hsl(var(--muted-foreground))]"
+                          isSelected ? "bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))]" : "bg-[hsl(var(--surface-3))] text-[hsl(var(--text-secondary))]"
                         )}
                       >
                         <Icon size={14} />
                       </div>
                       <div className="min-w-0">
-                        <div className="text-xs font-bold text-[hsl(var(--foreground))] flex items-center justify-between">
+                        <div className="text-xs font-bold text-[hsl(var(--text-primary))] flex items-center justify-between">
                           <span>{opt.label}</span>
                           {isSelected && <Check size={12} className="text-[hsl(var(--primary))]" />}
                         </div>
-                        <p className="text-3xs text-[hsl(var(--muted-foreground))] mt-0.5 line-clamp-2">
+                        <p className="text-3xs text-[hsl(var(--text-secondary))] mt-0.5 line-clamp-2">
                           {opt.description}
                         </p>
                       </div>
@@ -582,21 +634,22 @@ export function ProjectAutomationsDrawer({
             {/* Paso 2: Condición */}
             <div className="p-3 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] space-y-2">
               <div className="flex items-center gap-2">
-                <span className="size-5 rounded-full bg-[hsl(var(--warning))] text-[hsl(var(--foreground))] text-3xs font-bold flex items-center justify-center">
+                <span className="size-5 rounded-full bg-[hsl(var(--warning-muted))] text-[hsl(var(--warning-text))] text-3xs font-bold flex items-center justify-center">
                   2
                 </span>
-                <h4 className="text-xs font-bold text-[hsl(var(--foreground))]">
+                <h4 className="text-xs font-bold text-[hsl(var(--text-primary))]">
                   ¿Bajo qué condiciones? (Filtro opcional)
                 </h4>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-2">
                 <div className="space-y-1">
-                  <label className="text-3xs font-bold text-[hsl(var(--muted-foreground))] uppercase">Prioridad de la tarea</label>
+                  <label htmlFor="automation-condition-priority" className="text-3xs font-bold text-[hsl(var(--text-secondary))] uppercase">Prioridad de la tarea</label>
                   <select
+                    id="automation-condition-priority"
                     value={conditionPriority}
                     onChange={(e) => setConditionPriority(e.target.value)}
-                    className="w-full px-2.5 py-1.5 rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] text-xs text-[hsl(var(--foreground))]"
+                    className="w-full px-2.5 py-1.5 rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] text-xs text-[hsl(var(--text-primary))]"
                   >
                     <option value="all">Cualquier prioridad</option>
                     <option value="urgent">Solo Urgente</option>
@@ -607,11 +660,12 @@ export function ProjectAutomationsDrawer({
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-3xs font-bold text-[hsl(var(--muted-foreground))] uppercase">Estado de la tarea</label>
+                  <label htmlFor="automation-condition-status" className="text-3xs font-bold text-[hsl(var(--text-secondary))] uppercase">Estado de la tarea</label>
                   <select
+                    id="automation-condition-status"
                     value={conditionStatus}
                     onChange={(e) => setConditionStatus(e.target.value)}
-                    className="w-full px-2.5 py-1.5 rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] text-xs text-[hsl(var(--foreground))]"
+                    className="w-full px-2.5 py-1.5 rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] text-xs text-[hsl(var(--text-primary))]"
                   >
                     <option value="all">Cualquier estado</option>
                     <option value="todo">Por Hacer</option>
@@ -629,7 +683,7 @@ export function ProjectAutomationsDrawer({
                 <span className="size-5 rounded-full bg-[hsl(var(--success))] text-[hsl(var(--primary-foreground))] text-3xs font-bold flex items-center justify-center">
                   3
                 </span>
-                <h4 className="text-xs font-bold text-[hsl(var(--foreground))]">
+                <h4 className="text-xs font-bold text-[hsl(var(--text-primary))]">
                   ¿Qué acción ejecutar? (Efecto)
                 </h4>
               </div>
@@ -642,6 +696,7 @@ export function ProjectAutomationsDrawer({
                     <button
                       key={act.id}
                       type="button"
+                      aria-pressed={isSelected}
                       onClick={() => setSelectedAction(act.id)}
                       className={clsx(
                         "p-2.5 rounded-md border text-left transition-all flex items-start gap-2",
@@ -653,17 +708,17 @@ export function ProjectAutomationsDrawer({
                       <div
                         className={clsx(
                           "p-1.5 rounded shrink-0",
-                          isSelected ? "bg-[hsl(var(--success))] text-[hsl(var(--primary-foreground))]" : "bg-[hsl(var(--surface-3))] text-[hsl(var(--muted-foreground))]"
+                          isSelected ? "bg-[hsl(var(--success))] text-[hsl(var(--primary-foreground))]" : "bg-[hsl(var(--surface-3))] text-[hsl(var(--text-secondary))]"
                         )}
                       >
                         <Icon size={14} />
                       </div>
                       <div className="min-w-0">
-                        <div className="text-xs font-bold text-[hsl(var(--foreground))] flex items-center justify-between">
+                        <div className="text-xs font-bold text-[hsl(var(--text-primary))] flex items-center justify-between">
                           <span>{act.label}</span>
                           {isSelected && <Check size={12} className="text-[hsl(var(--success))]" />}
                         </div>
-                        <p className="text-3xs text-[hsl(var(--muted-foreground))] mt-0.5 line-clamp-2">
+                        <p className="text-3xs text-[hsl(var(--text-secondary))] mt-0.5 line-clamp-2">
                           {act.description}
                         </p>
                       </div>
@@ -676,24 +731,27 @@ export function ProjectAutomationsDrawer({
               {selectedAction === "create_followup_task" && (
                 <div className="pt-2 border-t border-[hsl(var(--border))] mt-2 space-y-2">
                   <div className="space-y-1">
-                    <label className="text-3xs font-bold uppercase text-[hsl(var(--muted-foreground))]">Título de la nueva tarea</label>
+                    <label htmlFor="automation-followup-title" className="text-3xs font-bold uppercase text-[hsl(var(--text-secondary))]">Título de la nueva tarea</label>
                     <input
                       type="text"
+                      id="automation-followup-title"
                       value={followupTitle}
                       onChange={(e) => setFollowupTitle(e.target.value)}
+                      maxLength={TASK_TITLE_MAX_LENGTH}
                       placeholder="Ej: Auditoría y entrega formal"
-                      className="w-full px-2.5 py-1 rounded border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] text-xs text-[hsl(var(--foreground))]"
+                      className="w-full px-2.5 py-1 rounded border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] text-xs text-[hsl(var(--text-primary))]"
                     />
                   </div>
                   <div className="space-y-1">
-                    <label className="text-3xs font-bold uppercase text-[hsl(var(--muted-foreground))]">Plazo (días de duración)</label>
+                    <label htmlFor="automation-followup-duration" className="text-3xs font-bold uppercase text-[hsl(var(--text-secondary))]">Plazo (días de duración)</label>
                     <input
                       type="number"
+                      id="automation-followup-duration"
                       min={1}
                       max={60}
                       value={followupDuration}
                       onChange={(e) => setFollowupDuration(e.target.value)}
-                      className="w-24 px-2.5 py-1 rounded border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] text-xs text-[hsl(var(--foreground))]"
+                      className="w-24 px-2.5 py-1 rounded border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] text-xs text-[hsl(var(--text-primary))]"
                     />
                   </div>
                 </div>
@@ -701,13 +759,14 @@ export function ProjectAutomationsDrawer({
 
               {selectedAction === "change_phase" && (
                 <div className="pt-2 border-t border-[hsl(var(--border))] mt-2 space-y-1">
-                  <label className="text-3xs font-bold uppercase text-[hsl(var(--muted-foreground))]">Fase de destino</label>
+                  <label htmlFor="automation-target-phase" className="text-3xs font-bold uppercase text-[hsl(var(--text-secondary))]">Fase de destino</label>
                   <input
                     type="text"
+                    id="automation-target-phase"
                     value={targetPhaseName}
                     onChange={(e) => setTargetPhaseName(e.target.value)}
                     placeholder="Ej: Revisión o Completado"
-                    className="w-full px-2.5 py-1 rounded border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] text-xs text-[hsl(var(--foreground))]"
+                    className="w-full px-2.5 py-1 rounded border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] text-xs text-[hsl(var(--text-primary))]"
                   />
                 </div>
               )}
@@ -717,7 +776,7 @@ export function ProjectAutomationsDrawer({
               <button
                 type="button"
                 onClick={() => setActiveTab("rules")}
-                className="px-3 py-1.5 rounded-md border border-[hsl(var(--border))] text-xs font-semibold text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--surface-2))]"
+                className="px-3 py-1.5 rounded-md border border-[hsl(var(--border))] text-xs font-semibold text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))]"
               >
                 Cancelar
               </button>
@@ -746,28 +805,28 @@ export function ProjectAutomationsDrawer({
         {activeTab === "test" && (
           <div className="flex-1 overflow-y-auto space-y-3 pr-1">
             <div className="p-3 bg-[hsl(var(--surface-1))] rounded-lg border border-[hsl(var(--border))] space-y-2">
-              <h4 className="text-xs font-bold text-[hsl(var(--foreground))]">Simulador de Eventos en Vivo</h4>
-              <p className="text-2xs text-[hsl(var(--muted-foreground))]">
-                Prueba de forma segura el comportamiento del motor simulando un evento del ciclo de vida del proyecto:
+              <h4 className="text-xs font-bold text-[hsl(var(--text-primary))]">Vista previa de automatizaciones</h4>
+              <p className="text-2xs text-[hsl(var(--text-secondary))]">
+                Evalúa las reglas activas para este evento sin crear tareas, modificar datos ni registrar actividad:
               </p>
 
               <div className="grid grid-cols-2 gap-2 pt-2">
                 <button
                   onClick={() => handleTestEvaluate("task_completed")}
                   disabled={testingRuleId !== null}
-                  className="p-2 rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] hover:bg-[hsl(var(--surface-3))] text-xs font-bold text-[hsl(var(--foreground))] flex items-center justify-center gap-1.5 transition-all active:scale-95 disabled:opacity-50"
+                  className="p-2 rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] hover:bg-[hsl(var(--surface-3))] text-xs font-bold text-[hsl(var(--text-primary))] flex items-center justify-center gap-1.5 transition-all active:scale-95 disabled:opacity-50"
                 >
                   <CheckCircle2 size={14} className="text-[hsl(var(--success))]" />
-                  <span>Simular Tarea Completada</span>
+                  <span>Previsualizar: tarea completada</span>
                 </button>
 
                 <button
                   onClick={() => handleTestEvaluate("task_created")}
                   disabled={testingRuleId !== null}
-                  className="p-2 rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] hover:bg-[hsl(var(--surface-3))] text-xs font-bold text-[hsl(var(--foreground))] flex items-center justify-center gap-1.5 transition-all active:scale-95 disabled:opacity-50"
+                  className="p-2 rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] hover:bg-[hsl(var(--surface-3))] text-xs font-bold text-[hsl(var(--text-primary))] flex items-center justify-center gap-1.5 transition-all active:scale-95 disabled:opacity-50"
                 >
                   <Plus size={14} className="text-[hsl(var(--primary))]" />
-                  <span>Simular Tarea Creada</span>
+                  <span>Previsualizar: tarea creada</span>
                 </button>
               </div>
             </div>
@@ -776,8 +835,8 @@ export function ProjectAutomationsDrawer({
             {lastTestResults.length > 0 && (
               <div className="p-3 bg-[hsl(var(--surface-1))] rounded-lg border border-[hsl(var(--border))] space-y-2">
                 <div className="flex items-center justify-between">
-                  <h5 className="text-xs font-bold text-[hsl(var(--foreground))]">Resultado de la Simulación</h5>
-                  <span className="text-3xs font-semibold text-[hsl(var(--muted-foreground))]">
+                  <h5 className="text-xs font-bold text-[hsl(var(--text-primary))]">Resultado de la vista previa</h5>
+                  <span className="text-3xs font-semibold text-[hsl(var(--text-secondary))]">
                     {lastTestResults.length} regla(s) procesadas
                   </span>
                 </div>
@@ -788,18 +847,22 @@ export function ProjectAutomationsDrawer({
                       key={i}
                       className={clsx(
                         "p-2 rounded-md border text-2xs flex items-start gap-2",
-                        res.status === "executed"
-                          ? "bg-[hsl(var(--success))]/10 border-[hsl(var(--success))]/30 text-[hsl(var(--foreground))]"
+                        res.status === "would_execute"
+                          ? "bg-[hsl(var(--primary))]/10 border-[hsl(var(--primary))]/30 text-[hsl(var(--text-primary))]"
+                          : res.status === "executed"
+                          ? "bg-[hsl(var(--success))]/10 border-[hsl(var(--success))]/30 text-[hsl(var(--text-primary))]"
                           : res.status === "skipped_condition"
-                          ? "bg-[hsl(var(--surface-2))] border-[hsl(var(--border))] text-[hsl(var(--muted-foreground))]"
+                          ? "bg-[hsl(var(--surface-2))] border-[hsl(var(--border))] text-[hsl(var(--text-secondary))]"
                           : "bg-[hsl(var(--destructive))]/10 border-[hsl(var(--destructive))]/30 text-[hsl(var(--destructive))]"
                       )}
                     >
                       <div className="p-1 rounded shrink-0 mt-0.5">
-                        {res.status === "executed" ? (
+                        {res.status === "would_execute" ? (
+                          <Zap size={12} className="text-[hsl(var(--primary))]" />
+                        ) : res.status === "executed" ? (
                           <Check size={12} className="text-[hsl(var(--success))]" />
                         ) : res.status === "skipped_condition" ? (
-                          <Filter size={12} className="text-[hsl(var(--muted-foreground))]" />
+                          <Filter size={12} className="text-[hsl(var(--text-secondary))]" />
                         ) : (
                           <AlertCircle size={12} className="text-[hsl(var(--destructive))]" />
                         )}
@@ -808,7 +871,7 @@ export function ProjectAutomationsDrawer({
                         <div className="font-bold flex items-center justify-between">
                           <span>{res.rule_name}</span>
                           <span className="uppercase text-3xs font-extrabold tracking-wider">
-                            {res.status}
+                            {res.status === "would_execute" ? "Se ejecutaría" : res.status}
                           </span>
                         </div>
                         {res.details && (
@@ -824,5 +887,7 @@ export function ProjectAutomationsDrawer({
         )}
       </div>
     </RightPanel>
+      <ConfirmActionDrawer action={confirmAction} onClose={() => setConfirmAction(null)} />
+    </>
   );
 }

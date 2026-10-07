@@ -51,6 +51,7 @@ export interface UseProjectPageDataResult {
 
     // Local UI helpers (consumed only by the page shell)
     error: string | null;
+    loadWarning: string | null;
     reloadKey: number;
     bumpReloadKey: () => void;
 }
@@ -63,6 +64,7 @@ export function useProjectPageData(id: string): UseProjectPageDataResult {
     const [loading, setLoading] = useState(true);
     const [phases, setPhases] = useState<PhaseDef[]>([]);
     const [error, setError] = useState<string | null>(null);
+    const [loadWarning, setLoadWarning] = useState<string | null>(null);
     const [reloadKey, setReloadKey] = useState(0);
 
     const loadProject = useCallback(async () => {
@@ -78,26 +80,50 @@ export function useProjectPageData(id: string): UseProjectPageDataResult {
         }
         try {
             setError(null);
+            setLoadWarning(null);
             setLoading(true);
-            const [projData, tasksData, activityRows, phasesData] = await Promise.all([
+            const [projectResult, tasksResult, activitiesResult, phasesResult] = await Promise.allSettled([
                 apiFetch<ProjectRecord>(`/projects/${id}`, { token }),
-                apiFetch<ProjectTaskRecord[]>(`/projects/${id}/tasks`, { token }).catch(() => []),
-                apiFetch<ProjectActivityItem[]>(`/projects/activities?project_id=${id}&limit=20`, { token }).catch(() => []),
-                apiFetch<PhaseDef[]>(`/projects/${id}/phases`, { token }).catch(() => []),
+                apiFetch<ProjectTaskRecord[]>(`/projects/${id}/tasks`, { token }),
+                apiFetch<ProjectActivityItem[]>(`/projects/activities?project_id=${id}&limit=20`, { token }),
+                apiFetch<PhaseDef[]>(`/projects/${id}/phases`, { token }),
             ]);
-            setProject(projData);
-            setTasks(Array.isArray(tasksData) ? tasksData : []);
-            setActivities(Array.isArray(activityRows) ? activityRows : []);
+            if (projectResult.status === 'rejected') throw projectResult.reason;
+
+            const tasksData = tasksResult.status === 'fulfilled' && Array.isArray(tasksResult.value)
+                ? tasksResult.value
+                : null;
+            const activitiesData = activitiesResult.status === 'fulfilled' && Array.isArray(activitiesResult.value)
+                ? activitiesResult.value
+                : null;
+            const phasesData = phasesResult.status === 'fulfilled' && Array.isArray(phasesResult.value)
+                ? phasesResult.value
+                : null;
+            setProject(projectResult.value);
+            setTasks(tasksData ?? []);
+            setActivities(activitiesData ?? []);
             // PEND-QUALITY-PHASE-SYNC-001 (2026-07-16): si el API devuelve
             // ``[]`` se reemplaza el state de phases para evitar arrastrar
             // columnas stale del proyecto anterior o de la última carga.
-            setPhases(Array.isArray(phasesData) ? phasesData : []);
+            setPhases(phasesData ?? []);
+
+            const unavailableSections = [
+                tasksData === null ? 'las tareas' : null,
+                activitiesData === null ? 'la actividad' : null,
+                phasesData === null ? 'las fases' : null,
+            ].filter((section): section is string => section !== null);
+            if (unavailableSections.length > 0) {
+                const warning = `No se pudieron cargar ${unavailableSections.join(', ')}. Reintenta para consultar toda la información del proyecto.`;
+                setLoadWarning(warning);
+                toast.error(warning);
+            }
             window.dispatchEvent(new CustomEvent('project-updated', { detail: { projectId: id } }));
         } catch (err) {
             setProject(null);
             setTasks([]);
             setActivities([]);
             setPhases([]);
+            setLoadWarning(null);
             setError('No se pudo cargar el proyecto.');
             toast.error('Error al cargar detalle del proyecto');
         } finally {
@@ -161,17 +187,20 @@ export function useProjectPageData(id: string): UseProjectPageDataResult {
     }, [token, loadProject]);
 
     const deleteTask = useCallback(async (taskId: string) => {
-        setTasks((prev) => prev.filter((t) => t.id !== taskId));
-        if (!token) return;
+        if (!token || !id) {
+            toast.error('Debes iniciar sesión para eliminar la tarea');
+            return;
+        }
         try {
-            await apiFetch(`/projects/tasks/${taskId}`, {
+            await apiFetch(`/projects/${id}/tasks/${taskId}`, {
                 method: 'DELETE', token,
             });
             await loadProject();
         } catch {
+            toast.error('No se pudo eliminar la tarea');
             await loadProject();
         }
-    }, [token, loadProject]);
+    }, [id, token, loadProject]);
 
     const bumpReloadKey = useCallback(() => {
         setReloadKey((k) => k + 1);
@@ -181,10 +210,10 @@ export function useProjectPageData(id: string): UseProjectPageDataResult {
         project, tasks, phases, activities, loading,
         reloadProject: loadProject,
         createTask, updateProject, updateTask, deleteTask,
-        error, reloadKey, bumpReloadKey,
+        error, loadWarning, reloadKey, bumpReloadKey,
     }), [
         project, tasks, phases, activities, loading,
         loadProject, createTask, updateProject, updateTask, deleteTask,
-        error, reloadKey, bumpReloadKey,
+        error, loadWarning, reloadKey, bumpReloadKey,
     ]);
 }

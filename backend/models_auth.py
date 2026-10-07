@@ -228,6 +228,7 @@ class NotificacionUsuario(Base):
     sede_id = Column(UUID(as_uuid=True), ForeignKey("sedes.id", ondelete="SET NULL"), nullable=True, index=True)
     title = Column(String(200), nullable=False)
     content = Column(Text, nullable=False)
+    target_url = Column(String(512), nullable=True)
     is_read = Column(Boolean, default=False, nullable=False)
     created_at = Column(DateTime(timezone=True), default=_utcnow)
 

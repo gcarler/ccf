@@ -407,3 +407,12 @@ El módulo de Proyectos ha completado su ciclo de auditoría forense adversarial
   - Sede isolation estricta (Axioma 3) con respuestas 404 seguras anti-BOLA.
 - El módulo de Proyectos queda formalmente elevado y cerrado con la máxima calificación institucional.
 
+## 12. Revalidación y sprint de profesionalización — 2026-10-03
+
+La certificación anterior corresponde al snapshot del 2026-09-06 y no debe interpretarse como la situación actual. La auditoría posterior encontró un HTTP 500 en GET detalle de proyecto (relación `attachments` sobrescrita antes de un commit) y falta de validación de pertenencia de tarea/persona en la evaluación de automatizaciones. Estos defectos se corrigieron en `TKT-PROJECTS-PRO-01`; la revalidación completa está en curso. Hasta que termine el checklist del nuevo reporte, se suspende la etiqueta global 100/100.
+
+- Reporte vigente: `docs/AUDITORIA_PROYECTOS_PRO_2026-10-03.md`.
+- Cambios de este sprint: serialización segura y filtro de adjuntos soft-deleted, aislamiento de tareas y asignatarios en automatizaciones, estados de carga/error/reintento del listado.
+- Evidencia: suites `test_projects_api.py + test_projects_multi_tenant.py + test_projects_rbac.py` (248/248), `ProjectsClient.test.tsx` (6/6), `tsc --noEmit`, `py_compile`, `git diff --check`.
+- No se ejecuta `scripts/test_projects_quality.py` mientras use borrado directo en base compartida.
+- La auditoría de profesionalización integral continúa en el backlog priorizado del reporte vigente; estos gates cubren los cambios del primer sprint, no todas las vistas ni el release completo.

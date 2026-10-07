@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { RightPanel } from "@/components/ui/RightPanel";
+import ConfirmActionDrawer, { type ConfirmActionState } from "@/components/ConfirmActionDrawer";
 import { useAuth } from "@/context/AuthContext";
 import { apiFetch } from "@/lib/http";
 import type { ProjectFileRecord, ProjectFilesSummary } from "@/types/projects";
@@ -9,6 +10,7 @@ import { FolderArchive, Upload, Link2, Search, FileText, FileSpreadsheet, FileCo
 import clsx from "clsx";
 import { toast } from "sonner";
 import { ProjectFileViewerDrawer } from "./ProjectFileViewerDrawer";
+import { getSafeProjectLink } from "@/lib/projects/safeProjectLink";
 
 interface ProjectDriveDrawerProps {
   projectId: string;
@@ -56,6 +58,7 @@ export function ProjectDriveDrawer({
 
   // Estado de visor embebido
   const [viewingFile, setViewingFile] = useState<ProjectFileRecord | null>(null);
+  const [confirmAction, setConfirmAction] = useState<ConfirmActionState>(null);
 
   // Formulario Local Upload
   const [uploadFile, setUploadFile] = useState<File | null>(null);
@@ -203,9 +206,20 @@ export function ProjectDriveDrawer({
       toast.success(`"${fileName}" eliminado de la bóveda`);
       void loadFiles();
       onFileUpdated?.();
-    } catch {
+    } catch (error) {
       toast.error("Error al eliminar archivo");
+      throw error;
     }
+  };
+
+  const requestDeleteFile = (file: ProjectFileRecord) => {
+    setConfirmAction({
+      title: "Eliminar archivo de la bóveda",
+      description: `¿Deseas quitar “${file.name}” de la bóveda del proyecto? Dejará de aparecer en este proyecto.`,
+      confirmLabel: "Eliminar",
+      destructive: true,
+      onConfirm: () => handleDeleteFile(file.id, file.name),
+    });
   };
 
   const formatBytes = (bytes?: number | null) => {
@@ -236,7 +250,7 @@ export function ProjectDriveDrawer({
     if (t.startsWith("video/") || /\.(mp4|mov)$/i.test(n)) {
       return <Video size={18} className="text-[hsl(var(--destructive))]" />;
     }
-    return <FileCode size={18} className="text-[hsl(var(--muted-foreground))]" />;
+    return <FileCode size={18} className="text-[hsl(var(--text-secondary))]" />;
   };
 
   return (
@@ -247,7 +261,7 @@ export function ProjectDriveDrawer({
         title="Bóveda Documental & Google Drive"
         width={720}
       >
-        <div className="flex flex-col h-full bg-[hsl(var(--surface-1))] text-[hsl(var(--foreground))]">
+        <div className="flex flex-col h-full bg-[hsl(var(--surface-1))] text-[hsl(var(--text-primary))]">
           {/* Cabecera y Resumen Métrico */}
           <div className="px-5 pt-3.5 pb-3 border-b border-[hsl(var(--border))] space-y-3 bg-[hsl(var(--surface-2))]/50">
             <div className="flex items-center justify-between">
@@ -256,16 +270,18 @@ export function ProjectDriveDrawer({
                   <FolderArchive size={18} className="text-[hsl(var(--primary))]" />
                   Bóveda de Archivos & Drive
                 </h2>
-                <p className="text-3xs text-[hsl(var(--muted-foreground))]">
+                <p className="text-3xs text-[hsl(var(--text-secondary))]">
                   Almacenamiento unificado de planos, actas, minutas y documentos sincronizados de Google Workspace
                 </p>
               </div>
 
               <button
+                type="button"
                 onClick={() => void loadFiles()}
                 disabled={loading}
                 title="Actualizar lista"
-                className="p-1.5 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] hover:bg-[hsl(var(--surface-3))] text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] transition-colors"
+                aria-label="Actualizar lista de archivos"
+                className="p-1.5 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] hover:bg-[hsl(var(--surface-3))] text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] transition-colors"
               >
                 <RefreshCw size={13} className={clsx(loading && "animate-spin")} />
               </button>
@@ -278,7 +294,7 @@ export function ProjectDriveDrawer({
                   <FolderArchive size={15} />
                 </div>
                 <div>
-                  <p className="text-3xs uppercase font-semibold text-[hsl(var(--muted-foreground))]">
+                  <p className="text-3xs uppercase font-semibold text-[hsl(var(--text-secondary))]">
                     Total Archivos
                   </p>
                   <p className="text-xs font-black">{summary?.total_files ?? files.length}</p>
@@ -290,7 +306,7 @@ export function ProjectDriveDrawer({
                   <HardDrive size={15} />
                 </div>
                 <div>
-                  <p className="text-3xs uppercase font-semibold text-[hsl(var(--muted-foreground))]">
+                  <p className="text-3xs uppercase font-semibold text-[hsl(var(--text-secondary))]">
                     Peso Local
                   </p>
                   <p className="text-xs font-black text-[hsl(var(--success))]">
@@ -304,7 +320,7 @@ export function ProjectDriveDrawer({
                   <Globe size={15} />
                 </div>
                 <div>
-                  <p className="text-3xs uppercase font-semibold text-[hsl(var(--muted-foreground))]">
+                  <p className="text-3xs uppercase font-semibold text-[hsl(var(--text-secondary))]">
                     En Google Drive
                   </p>
                   <p className="text-xs font-black text-[hsl(var(--primary))]">
@@ -322,7 +338,7 @@ export function ProjectDriveDrawer({
                   "px-3 py-1.5 text-2xs font-bold uppercase tracking-wider rounded-t-lg transition-all flex items-center gap-1.5",
                   activeTab === "explorer"
                     ? "bg-[hsl(var(--surface-1))] text-[hsl(var(--primary))] border-t-2 border-t-[hsl(var(--primary))] border-x border-[hsl(var(--border))]"
-                    : "text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] hover:bg-[hsl(var(--surface-2))]"
+                    : "text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] hover:bg-[hsl(var(--surface-2))]"
                 )}
               >
                 <FolderArchive size={13} /> Explorador ({files.length})
@@ -334,7 +350,7 @@ export function ProjectDriveDrawer({
                   "px-3 py-1.5 text-2xs font-bold uppercase tracking-wider rounded-t-lg transition-all flex items-center gap-1.5",
                   activeTab === "upload"
                     ? "bg-[hsl(var(--surface-1))] text-[hsl(var(--primary))] border-t-2 border-t-[hsl(var(--primary))] border-x border-[hsl(var(--border))]"
-                    : "text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] hover:bg-[hsl(var(--surface-2))]"
+                    : "text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] hover:bg-[hsl(var(--surface-2))]"
                 )}
               >
                 <Upload size={13} /> Subir Local
@@ -346,7 +362,7 @@ export function ProjectDriveDrawer({
                   "px-3 py-1.5 text-2xs font-bold uppercase tracking-wider rounded-t-lg transition-all flex items-center gap-1.5",
                   activeTab === "link-drive"
                     ? "bg-[hsl(var(--surface-1))] text-[hsl(var(--primary))] border-t-2 border-t-[hsl(var(--primary))] border-x border-[hsl(var(--border))]"
-                    : "text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] hover:bg-[hsl(var(--surface-2))]"
+                    : "text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] hover:bg-[hsl(var(--surface-2))]"
                 )}
               >
                 <Link2 size={13} /> Vincular Google Drive
@@ -364,22 +380,24 @@ export function ProjectDriveDrawer({
                   <div className="relative sm:col-span-1">
                     <Search
                       size={14}
-                      className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[hsl(var(--muted-foreground))]"
+                      className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[hsl(var(--text-secondary))]"
                     />
                     <input
                       type="text"
+                      aria-label="Buscar archivos por nombre"
                       placeholder="Buscar por nombre..."
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      className="w-full pl-8 pr-3 py-1.5 text-xs rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-[hsl(var(--foreground))] focus:outline-none focus:ring-1 focus:ring-[hsl(var(--primary))]"
+                      className="w-full pl-8 pr-3 py-1.5 text-xs rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-[hsl(var(--text-primary))] focus:outline-none focus:ring-1 focus:ring-[hsl(var(--primary))]"
                     />
                   </div>
 
                   <div>
                     <select
+                      aria-label="Filtrar por categoría"
                       value={selectedCategory}
                       onChange={(e) => setSelectedCategory(e.target.value)}
-                      className="w-full px-2.5 py-1.5 text-xs rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-[hsl(var(--foreground))] focus:outline-none focus:ring-1 focus:ring-[hsl(var(--primary))]"
+                      className="w-full px-2.5 py-1.5 text-xs rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-[hsl(var(--text-primary))] focus:outline-none focus:ring-1 focus:ring-[hsl(var(--primary))]"
                     >
                       {CATEGORIES.map((cat) => (
                         <option key={cat.id} value={cat.id}>
@@ -391,9 +409,10 @@ export function ProjectDriveDrawer({
 
                   <div>
                     <select
+                      aria-label="Filtrar por origen"
                       value={selectedSource}
                       onChange={(e) => setSelectedSource(e.target.value)}
-                      className="w-full px-2.5 py-1.5 text-xs rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-[hsl(var(--foreground))] focus:outline-none focus:ring-1 focus:ring-[hsl(var(--primary))]"
+                      className="w-full px-2.5 py-1.5 text-xs rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-[hsl(var(--text-primary))] focus:outline-none focus:ring-1 focus:ring-[hsl(var(--primary))]"
                     >
                       {SOURCES.map((src) => (
                         <option key={src.id} value={src.id}>
@@ -406,18 +425,18 @@ export function ProjectDriveDrawer({
 
                 {/* Lista de Archivos */}
                 {loading && files.length === 0 ? (
-                  <div className="py-12 flex flex-col items-center justify-center gap-2 text-[hsl(var(--muted-foreground))]">
+                  <div className="py-12 flex flex-col items-center justify-center gap-2 text-[hsl(var(--text-secondary))]">
                     <div className="w-6 h-6 border-2 border-[hsl(var(--primary))] border-t-transparent rounded-full animate-spin" />
                     <p className="text-2xs">Cargando archivos...</p>
                   </div>
                 ) : files.length === 0 ? (
                   <div className="py-12 text-center border-2 border-dashed border-[hsl(var(--border))] rounded-xl bg-[hsl(var(--surface-2))]/30 flex flex-col items-center justify-center p-6 space-y-3">
-                    <FolderArchive size={36} className="text-[hsl(var(--muted-foreground))]" />
+                    <FolderArchive size={36} className="text-[hsl(var(--text-secondary))]" />
                     <div className="space-y-1">
-                      <p className="text-xs font-bold text-[hsl(var(--foreground))]">
+                      <p className="text-xs font-bold text-[hsl(var(--text-primary))]">
                         No hay archivos en la bóveda
                       </p>
-                      <p className="text-3xs text-[hsl(var(--muted-foreground))] max-w-sm">
+                      <p className="text-3xs text-[hsl(var(--text-secondary))] max-w-sm">
                         Sube planos, especificaciones o vincula carpetas y documentos de Google Drive para mantener todo centralizado en el proyecto.
                       </p>
                     </div>
@@ -430,7 +449,7 @@ export function ProjectDriveDrawer({
                       </button>
                       <button
                         onClick={() => setActiveTab("link-drive")}
-                        className="px-3 py-1.5 bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] text-[hsl(var(--foreground))] rounded-lg text-2xs font-bold uppercase tracking-wider flex items-center gap-1.5 hover:bg-[hsl(var(--surface-2))]"
+                        className="px-3 py-1.5 bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] text-[hsl(var(--text-primary))] rounded-lg text-2xs font-bold uppercase tracking-wider flex items-center gap-1.5 hover:bg-[hsl(var(--surface-2))]"
                       >
                         <Link2 size={12} /> Vincular Drive
                       </button>
@@ -438,25 +457,24 @@ export function ProjectDriveDrawer({
                   </div>
                 ) : (
                   <div className="space-y-2">
-                    {files.map((file) => (
-                      <div
-                        key={file.id}
-                        className="group p-3 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] hover:border-[hsl(var(--primary))]/50 hover:shadow-sm transition-all flex items-center justify-between gap-3"
-                      >
-                        {/* Icono e Info Principal */}
+                    {files.map((file) => {
+                      const safeFileUrl = getSafeProjectLink(file.file_url);
+                      return (
                         <div
-                          onClick={() => setViewingFile(file)}
-                          className="flex items-center gap-3 min-w-0 flex-1 cursor-pointer"
+                          key={file.id}
+                          className="group p-3 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] hover:border-[hsl(var(--primary))]/50 hover:shadow-sm transition-all flex items-center justify-between gap-3"
                         >
+                        {/* Icono e Info Principal */}
+                        <div className="flex items-center gap-3 min-w-0 flex-1">
                           <div className="p-2 rounded-lg bg-[hsl(var(--surface-2))] shrink-0 group-hover:scale-105 transition-transform">
                             {getFileIcon(file)}
                           </div>
                           <div className="min-w-0 flex-1">
                             <div className="flex items-center gap-2 mb-0.5 flex-wrap">
-                              <p className="text-xs font-bold text-[hsl(var(--foreground))] truncate group-hover:text-[hsl(var(--primary))] transition-colors">
+                              <p className="text-xs font-bold text-[hsl(var(--text-primary))] truncate group-hover:text-[hsl(var(--primary))] transition-colors">
                                 {file.name}
                               </p>
-                              <span className="text-3xs font-semibold px-2 py-0.2 rounded-full bg-[hsl(var(--surface-2))] text-[hsl(var(--muted-foreground))]">
+                              <span className="text-3xs font-semibold px-2 py-0.2 rounded-full bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))]">
                                 {file.category}
                               </span>
                               {file.file_source === "drive" && (
@@ -465,7 +483,7 @@ export function ProjectDriveDrawer({
                                 </span>
                               )}
                             </div>
-                            <div className="flex items-center gap-3 text-3xs text-[hsl(var(--muted-foreground))] flex-wrap">
+                            <div className="flex items-center gap-3 text-3xs text-[hsl(var(--text-secondary))] flex-wrap">
                               <span>{formatBytes(file.file_size)}</span>
                               {file.uploader_name && <span>Por {file.uploader_name}</span>}
                               <span>
@@ -486,44 +504,49 @@ export function ProjectDriveDrawer({
                         {/* Botones de Acción */}
                         <div className="flex items-center gap-1 shrink-0">
                           <button
+                            type="button"
                             onClick={() => setViewingFile(file)}
-                            title="Previsualizar en Visor Embebido"
+                            aria-label={`Previsualizar ${file.name}`}
                             className="p-1.5 rounded-lg border border-[hsl(var(--border))] hover:bg-[hsl(var(--surface-2))] text-[hsl(var(--primary))] transition-colors"
                           >
                             <Eye size={14} />
                           </button>
 
-                          <a
-                            href={file.file_url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            title="Abrir en pestaña nueva"
-                            className="p-1.5 rounded-lg border border-[hsl(var(--border))] hover:bg-[hsl(var(--surface-2))] text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] transition-colors"
-                          >
-                            <ExternalLink size={14} />
-                          </a>
-
-                          {file.file_source === "local" && (
+                          {safeFileUrl && (
                             <a
-                              href={file.file_url}
+                              href={safeFileUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              aria-label={`Abrir ${file.name} en pestaña nueva`}
+                              className="p-1.5 rounded-lg border border-[hsl(var(--border))] hover:bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] transition-colors"
+                            >
+                              <ExternalLink size={14} />
+                            </a>
+                          )}
+
+                          {file.file_source === "local" && safeFileUrl && (
+                            <a
+                              href={safeFileUrl}
                               download={file.name}
-                              title="Descargar archivo"
-                              className="p-1.5 rounded-lg border border-[hsl(var(--border))] hover:bg-[hsl(var(--surface-2))] text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] transition-colors"
+                              aria-label={`Descargar ${file.name}`}
+                              className="p-1.5 rounded-lg border border-[hsl(var(--border))] hover:bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] transition-colors"
                             >
                               <Download size={14} />
                             </a>
                           )}
 
                           <button
-                            onClick={() => handleDeleteFile(file.id, file.name)}
-                            title="Eliminar de la bóveda"
+                            type="button"
+                            onClick={() => requestDeleteFile(file)}
+                            aria-label={`Eliminar ${file.name} de la bóveda`}
                             className="p-1.5 rounded-lg border border-[hsl(var(--border))] hover:bg-[hsl(var(--destructive))]/15 text-[hsl(var(--destructive))] transition-colors"
                           >
                             <Trash2 size={14} />
                           </button>
                         </div>
-                      </div>
-                    ))}
+                        </div>
+                      );
+                    })}
                   </div>
                 )}
               </div>
@@ -573,10 +596,10 @@ export function ProjectDriveDrawer({
                     <Upload size={24} />
                   </div>
                   <div className="space-y-1">
-                    <p className="text-xs font-bold text-[hsl(var(--foreground))]">
+                    <p className="text-xs font-bold text-[hsl(var(--text-primary))]">
                       {uploadFile ? uploadFile.name : "Haz clic o arrastra un archivo aquí"}
                     </p>
-                    <p className="text-3xs text-[hsl(var(--muted-foreground))]">
+                    <p className="text-3xs text-[hsl(var(--text-secondary))]">
                       {uploadFile
                         ? `Tamaño: ${formatBytes(uploadFile.size)}`
                         : "Soporta PDF, Planos, Excel, Imágenes, Documentos (Máx 50MB)"}
@@ -586,7 +609,7 @@ export function ProjectDriveDrawer({
 
                 <div className="space-y-3 pt-2">
                   <div>
-                    <label className="block text-2xs font-bold uppercase tracking-wider text-[hsl(var(--muted-foreground))] mb-1">
+                    <label className="block text-2xs font-bold uppercase tracking-wider text-[hsl(var(--text-secondary))] mb-1">
                       Nombre para mostrar en el proyecto (Opcional)
                     </label>
                     <input
@@ -594,19 +617,19 @@ export function ProjectDriveDrawer({
                       placeholder="Ej: Plano Arquitectónico Nivel 1.pdf"
                       value={uploadCustomName}
                       onChange={(e) => setUploadCustomName(e.target.value)}
-                      className="w-full px-3 py-2 text-xs rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-[hsl(var(--foreground))] focus:outline-none focus:ring-1 focus:ring-[hsl(var(--primary))]"
+                      className="w-full px-3 py-2 text-xs rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-[hsl(var(--text-primary))] focus:outline-none focus:ring-1 focus:ring-[hsl(var(--primary))]"
                     />
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
-                      <label className="block text-2xs font-bold uppercase tracking-wider text-[hsl(var(--muted-foreground))] mb-1">
+                      <label className="block text-2xs font-bold uppercase tracking-wider text-[hsl(var(--text-secondary))] mb-1">
                         Categoría Documental
                       </label>
                       <select
                         value={uploadCategory}
                         onChange={(e) => setUploadCategory(e.target.value)}
-                        className="w-full px-3 py-2 text-xs rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-[hsl(var(--foreground))] focus:outline-none focus:ring-1 focus:ring-[hsl(var(--primary))]"
+                        className="w-full px-3 py-2 text-xs rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-[hsl(var(--text-primary))] focus:outline-none focus:ring-1 focus:ring-[hsl(var(--primary))]"
                       >
                         {CATEGORIES.filter((c) => c.id !== "ALL").map((c) => (
                           <option key={c.id} value={c.id}>
@@ -617,7 +640,7 @@ export function ProjectDriveDrawer({
                     </div>
 
                     <div>
-                      <label className="block text-2xs font-bold uppercase tracking-wider text-[hsl(var(--muted-foreground))] mb-1">
+                      <label className="block text-2xs font-bold uppercase tracking-wider text-[hsl(var(--text-secondary))] mb-1">
                         Descripción o Notas (Opcional)
                       </label>
                       <input
@@ -625,7 +648,7 @@ export function ProjectDriveDrawer({
                         placeholder="Ej: Versión aprobada por comité de obra"
                         value={uploadDescription}
                         onChange={(e) => setUploadDescription(e.target.value)}
-                        className="w-full px-3 py-2 text-xs rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-[hsl(var(--foreground))] focus:outline-none focus:ring-1 focus:ring-[hsl(var(--primary))]"
+                        className="w-full px-3 py-2 text-xs rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-[hsl(var(--text-primary))] focus:outline-none focus:ring-1 focus:ring-[hsl(var(--primary))]"
                       />
                     </div>
                   </div>
@@ -660,14 +683,14 @@ export function ProjectDriveDrawer({
                   <div className="flex items-center gap-2 text-xs font-bold text-[hsl(var(--primary))]">
                     <Globe size={16} /> Integración Inteligente de Google Drive
                   </div>
-                  <p className="text-3xs text-[hsl(var(--muted-foreground))] leading-relaxed">
+                  <p className="text-3xs text-[hsl(var(--text-secondary))] leading-relaxed">
                     Pega cualquier enlace compartido de Google Docs, Sheets, Slides, Forms o PDFs de Google Drive. El sistema normalizará automáticamente el enlace a modo previsualización embebible para visualizarlo directamente dentro de la plataforma sin salir del proyecto.
                   </p>
                 </div>
 
                 <div className="space-y-3">
                   <div>
-                    <label className="block text-2xs font-bold uppercase tracking-wider text-[hsl(var(--muted-foreground))] mb-1">
+                    <label className="block text-2xs font-bold uppercase tracking-wider text-[hsl(var(--text-secondary))] mb-1">
                       URL de Google Drive o Docs <span className="text-[hsl(var(--destructive))]">*</span>
                     </label>
                     <input
@@ -676,12 +699,12 @@ export function ProjectDriveDrawer({
                       placeholder="https://docs.google.com/document/d/... o https://drive.google.com/file/d/..."
                       value={driveUrl}
                       onChange={(e) => setDriveUrl(e.target.value)}
-                      className="w-full px-3 py-2 text-xs rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-[hsl(var(--foreground))] focus:outline-none focus:ring-1 focus:ring-[hsl(var(--primary))]"
+                      className="w-full px-3 py-2 text-xs rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-[hsl(var(--text-primary))] focus:outline-none focus:ring-1 focus:ring-[hsl(var(--primary))]"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-2xs font-bold uppercase tracking-wider text-[hsl(var(--muted-foreground))] mb-1">
+                    <label className="block text-2xs font-bold uppercase tracking-wider text-[hsl(var(--text-secondary))] mb-1">
                       Nombre Descriptivo del Documento
                     </label>
                     <input
@@ -689,19 +712,19 @@ export function ProjectDriveDrawer({
                       placeholder="Ej: Cuadro de Mando Integral 2026 (Drive)"
                       value={driveName}
                       onChange={(e) => setDriveName(e.target.value)}
-                      className="w-full px-3 py-2 text-xs rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-[hsl(var(--foreground))] focus:outline-none focus:ring-1 focus:ring-[hsl(var(--primary))]"
+                      className="w-full px-3 py-2 text-xs rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-[hsl(var(--text-primary))] focus:outline-none focus:ring-1 focus:ring-[hsl(var(--primary))]"
                     />
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
-                      <label className="block text-2xs font-bold uppercase tracking-wider text-[hsl(var(--muted-foreground))] mb-1">
+                      <label className="block text-2xs font-bold uppercase tracking-wider text-[hsl(var(--text-secondary))] mb-1">
                         Categoría Documental
                       </label>
                       <select
                         value={driveCategory}
                         onChange={(e) => setDriveCategory(e.target.value)}
-                        className="w-full px-3 py-2 text-xs rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-[hsl(var(--foreground))] focus:outline-none focus:ring-1 focus:ring-[hsl(var(--primary))]"
+                        className="w-full px-3 py-2 text-xs rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-[hsl(var(--text-primary))] focus:outline-none focus:ring-1 focus:ring-[hsl(var(--primary))]"
                       >
                         {CATEGORIES.filter((c) => c.id !== "ALL").map((c) => (
                           <option key={c.id} value={c.id}>
@@ -712,7 +735,7 @@ export function ProjectDriveDrawer({
                     </div>
 
                     <div>
-                      <label className="block text-2xs font-bold uppercase tracking-wider text-[hsl(var(--muted-foreground))] mb-1">
+                      <label className="block text-2xs font-bold uppercase tracking-wider text-[hsl(var(--text-secondary))] mb-1">
                         Notas Adicionales
                       </label>
                       <input
@@ -720,7 +743,7 @@ export function ProjectDriveDrawer({
                         placeholder="Ej: Archivo colaborativo en tiempo real"
                         value={driveDescription}
                         onChange={(e) => setDriveDescription(e.target.value)}
-                        className="w-full px-3 py-2 text-xs rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-[hsl(var(--foreground))] focus:outline-none focus:ring-1 focus:ring-[hsl(var(--primary))]"
+                        className="w-full px-3 py-2 text-xs rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-[hsl(var(--text-primary))] focus:outline-none focus:ring-1 focus:ring-[hsl(var(--primary))]"
                       />
                     </div>
                   </div>
@@ -750,6 +773,8 @@ export function ProjectDriveDrawer({
           </div>
         </div>
       </RightPanel>
+
+      <ConfirmActionDrawer action={confirmAction} onClose={() => setConfirmAction(null)} />
 
       {/* Visor Universal Embebido Integrado */}
       <ProjectFileViewerDrawer

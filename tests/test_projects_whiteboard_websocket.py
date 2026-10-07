@@ -200,6 +200,83 @@ def test_whiteboard_ws_replicates_object_updates_to_peers(db_session):
                     assert msg["sender_id"] == client_a
 
 
+@pytest.mark.parametrize(
+    "message",
+    [
+        {"type": "object_added", "objData": {"id": "rect-read-only"}},
+        {"type": "object_modified", "objData": {"id": "rect-read-only", "left": 99}},
+        {"type": "object_removed", "objId": "rect-read-only"},
+    ],
+)
+def test_whiteboard_ws_rejects_canvas_mutations_from_read_only_user(db_session, message):
+    _, _, sede = seed_admin(db_session, email="wb-owner@example.com")
+    reader, _, _ = seed_user_with_role(
+        db_session,
+        role_name="wb-reader",
+        email="wb-reader@example.com",
+        sede_id=sede.id,
+        permisos={"projects:read": "allow"},
+    )
+    project = create_project_factory(db_session, sede_id=sede.id)
+    reader_token = create_access_token({"sub": str(reader.id)})
+    reader_client_id = str(_uuid.uuid4())
+
+    with patch("backend.core.database.SessionLocal", side_effect=TestingSessionLocal):
+        with _ws_client().websocket_connect(
+            _ws_url(project.id, reader_token, reader_client_id)
+        ) as reader_ws:
+            reader_ws.send_json(message)
+            with pytest.raises(WebSocketDisconnect) as exc_info:
+                reader_ws.receive_json()
+
+    assert exc_info.value.code == 4003
+
+
+def test_whiteboard_ws_allows_read_only_user_cursor(db_session):
+    _, _, sede = seed_admin(db_session, email="wb-cursor-owner@example.com")
+    reader, _, _ = seed_user_with_role(
+        db_session,
+        role_name="wb-cursor-reader",
+        email="wb-cursor-reader@example.com",
+        sede_id=sede.id,
+        permisos={"projects:read": "allow"},
+    )
+    project = create_project_factory(db_session, sede_id=sede.id)
+    token = create_access_token({"sub": str(reader.id)})
+    client_id = str(_uuid.uuid4())
+
+    with patch("backend.core.database.SessionLocal", side_effect=TestingSessionLocal):
+        with _ws_client().websocket_connect(_ws_url(project.id, token, client_id)) as ws:
+            ws.send_json({"type": "cursor", "x": 12, "y": 24})
+            received = ws.receive_json()
+
+    assert received["type"] == "cursor"
+    assert received["sender_id"] == client_id
+
+
+def test_whiteboard_ws_allows_assigned_read_only_user_to_edit(db_session):
+    _, _, sede = seed_admin(db_session, email="wb-assigned-owner@example.com")
+    editor, persona, _ = seed_user_with_role(
+        db_session,
+        role_name="wb-assigned-editor",
+        email="wb-assigned-editor@example.com",
+        sede_id=sede.id,
+        permisos={"projects:read": "allow"},
+    )
+    project = create_project_factory(db_session, owner_id=persona.id, sede_id=sede.id)
+    token = create_access_token({"sub": str(editor.id)})
+    client_id = str(_uuid.uuid4())
+
+    with patch("backend.core.database.SessionLocal", side_effect=TestingSessionLocal):
+        with _ws_client().websocket_connect(_ws_url(project.id, token, client_id)) as ws:
+            ws.send_json({"type": "object_added", "objData": {"id": "assigned-shape"}})
+            received = ws.receive_json()
+
+    assert received["type"] == "object_added"
+    assert received["sender_id"] == client_id
+    assert received["objData"]["id"] == "assigned-shape"
+
+
 def test_whiteboard_ws_ignores_unknown_message_types(db_session):
     user, _, _ = seed_admin(db_session, email="wb-unknown@example.com")
     token = create_access_token({"sub": str(user.id)})

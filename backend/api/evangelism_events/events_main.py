@@ -88,6 +88,7 @@ def list_events(
     return [schemas.CrmEvent.model_validate(event).model_dump(mode="json") for event in events]
 
 
+@static_router.get("/events/sedes", response_model=List[dict])
 @static_router.get("/sedes", response_model=List[dict])
 def list_event_sedes(
     db: Session = Depends(get_db),

@@ -22,7 +22,10 @@ Crea 3 usuarios de prueba, un proyecto, tareas asignadas,
 documentos, comentarios y verifica el flujo completo.
 
 Uso:
-    cd /root/ccf && ./venv/bin/python scripts/test_projects_quality.py
+    QUALITY_DATABASE_URL=postgresql://... \
+    QUALITY_API_URL=http://127.0.0.1:8000 \
+    QUALITY_RUN_ID=local-projects-quality \
+    ./venv/bin/python scripts/run_quality_integration.py --suite projects
 """
 import datetime
 import os
@@ -33,7 +36,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)) + "/..")
 os.chdir(os.path.dirname(os.path.abspath(__file__)) + "/..")
 
 from backend import models, schemas
-from backend.core.database import SessionLocal
+from backend.core.database import SessionLocal, engine
 from backend.core.security import get_password_hash
 from backend.models import *  # noqa: F401
 from backend.models_auth import RolPlataforma as _RolPlataforma
@@ -50,6 +53,25 @@ from backend.models_projects import (
     ProjectPhase,
     ProjectTask,
 )
+from scripts.projects_quality_safety import (
+    ProjectsQualityTargetError,
+    validate_projects_quality_target,
+)
+
+try:
+    quality_target_database = validate_projects_quality_target(
+        database_url=str(engine.url),
+        quality_database_url=os.environ.get("QUALITY_DATABASE_URL", ""),
+        confirmed_database=os.environ.get("PROJECTS_QUALITY_TARGET_DATABASE", ""),
+        run_id=os.environ.get("QUALITY_RUN_ID", ""),
+    )
+except ProjectsQualityTargetError as exc:
+    print(f"PROJECTS_QUALITY_TARGET_ERROR: {exc}", file=sys.stderr)
+    sys.exit(2)
+
+if "--check-target" in sys.argv[1:]:
+    print(f"projects-quality-target-confirmed {quality_target_database}")
+    sys.exit(0)
 
 db = SessionLocal()
 
@@ -2232,4 +2254,3 @@ else:
     print(f"\n  {GREEN}✓ Todos los tests pasaron. El módulo de proyectos funciona correctamente.{NC}\n")
 
 db.close()
-

@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import clsx from 'clsx';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { useNotifications } from '@/hooks/useNotifications';
 import { NotificationKind, formatNotificationTime } from '@/lib/notifications';
@@ -46,6 +47,7 @@ function hashToFilter(hash: string): InboxFilter {
 }
 
 export default function InboxPage() {
+    const router = useRouter();
     const { user } = useAuth();
     const { notifications, loading, error, refresh, markRead, markAllRead } = useNotifications();
     const [filter, setFilter] = useState<InboxFilter>('all');
@@ -76,6 +78,12 @@ export default function InboxPage() {
     }), [filter, notifications, search]);
 
     const unreadCount = notifications.filter((notification) => !notification.read).length;
+
+    const openNotification = async (notificationId: string) => {
+        const notification = notifications.find((item) => item.id === notificationId);
+        await markRead(notificationId);
+        if (notification?.targetUrl) router.push(notification.targetUrl);
+    };
 
     return (
         <div className="h-full flex flex-col bg-[hsl(var(--bg-primary))] overflow-hidden font-display">
@@ -184,7 +192,7 @@ export default function InboxPage() {
                                                 ? 'hover:bg-[hsl(var(--surface-1))]/50'
                                                 : 'bg-[hsl(var(--info)/8%)] hover:bg-[hsl(var(--info)/12%)]',
                                         )}
-                                        onClick={() => void markRead(notification.id)}
+                                        onClick={() => void openNotification(notification.id)}
                                     >
                                         {!notification.read && (
                                             <div className="absolute left-2.5 top-1/2 -translate-y-1/2 size-1.5 rounded-full bg-[hsl(var(--primary))]" />

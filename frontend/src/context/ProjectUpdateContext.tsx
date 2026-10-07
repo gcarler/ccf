@@ -12,6 +12,8 @@ export interface PhaseDef {
   name: string;
   color: string;
   order_index: number;
+  start_date?: string | null;
+  end_date?: string | null;
 }
 
 export interface CreateTaskPayload {

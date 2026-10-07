@@ -17,6 +17,7 @@ interface ProjectsShellProps {
     viewType?: ViewType;
     onViewChange?: (view: ViewType) => void;
     onSearch?: (term: string) => void;
+    searchValue?: string;
     rightActions?: ReactNode;
     children: ReactNode;
 }
@@ -27,6 +28,7 @@ export default function ProjectsShell({
     viewType,
     onViewChange,
     onSearch,
+    searchValue,
     rightActions,
     children
 }: ProjectsShellProps) {
@@ -38,9 +40,10 @@ export default function ProjectsShell({
                 setViewType={onViewChange}
                 availableViews={viewOptions}
                 onSearch={onSearch}
+                searchValue={searchValue}
                 rightActions={rightActions}
             />
-            <main className="flex-1 overflow-hidden h-full">
+            <section aria-label="Contenido de proyectos" className="flex-1 overflow-hidden h-full">
                 <div className={
                     viewType && ['board', 'kanban', 'gantt', 'calendar', 'wiki'].includes(viewType)
                         ? "h-full animate-fade-in overflow-y-auto"
@@ -48,7 +51,7 @@ export default function ProjectsShell({
                 }>
                     {children}
                 </div>
-            </main>
+            </section>
         </>
     );
 }

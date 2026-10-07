@@ -57,6 +57,7 @@ function ActivityItem({
     const [titleVal, setTitleVal] = useState(activity.title);
     const hasChildren = (activity.children?.length ?? 0) > 0;
     const inputRef = useRef<HTMLInputElement>(null);
+    const cancelEditRef = useRef(false);
 
     useEffect(() => { if (editing) inputRef.current?.focus(); }, [editing]);
 
@@ -75,18 +76,23 @@ function ActivityItem({
                     />
                 )}
 
-                <button
-                    onClick={() => setExpanded(v => !v)}
-                    className={clsx(
-                        'size-4 flex items-center justify-center text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] transition-colors shrink-0',
-                        !hasChildren && 'opacity-0 pointer-events-none'
-                    )}
-                >
-                    {expanded ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
-                </button>
+                {hasChildren ? (
+                    <button
+                        type="button"
+                        onClick={() => setExpanded(v => !v)}
+                        aria-expanded={expanded}
+                        aria-label={`${expanded ? 'Contraer' : 'Expandir'} sub-actividades de ${activity.title}`}
+                        className="size-4 flex items-center justify-center text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] transition-colors shrink-0"
+                    >
+                        {expanded ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
+                    </button>
+                ) : <span aria-hidden="true" className="size-4 shrink-0" />}
 
                 <button
+                    type="button"
                     onClick={() => onToggle(activity.id)}
+                    aria-pressed={activity.completed}
+                    aria-label={activity.completed ? `Marcar como pendiente: ${activity.title}` : `Completar actividad: ${activity.title}`}
                     className={clsx(
                         'size-4 rounded border-2 flex items-center justify-center shrink-0 transition-all',
                         activity.completed
@@ -100,27 +106,45 @@ function ActivityItem({
                 {editing ? (
                     <input
                         ref={inputRef}
+                        aria-label={`Editar actividad: ${activity.title}`}
                         value={titleVal}
                         onChange={e => setTitleVal(e.target.value)}
-                        onBlur={() => { onUpdateTitle(activity.id, titleVal); setEditing(false); }}
+                        onBlur={() => {
+                            if (cancelEditRef.current) {
+                                cancelEditRef.current = false;
+                            } else {
+                                onUpdateTitle(activity.id, titleVal);
+                            }
+                            setEditing(false);
+                        }}
                         onKeyDown={e => {
-                            if (e.key === 'Enter') { onUpdateTitle(activity.id, titleVal); setEditing(false); }
-                            if (e.key === 'Escape') { setTitleVal(activity.title); setEditing(false); }
+                            if (e.key === 'Enter') {
+                                e.preventDefault();
+                                inputRef.current?.blur();
+                            }
+                            if (e.key === 'Escape') {
+                                e.preventDefault();
+                                cancelEditRef.current = true;
+                                setTitleVal(activity.title);
+                                inputRef.current?.blur();
+                            }
                         }}
                         className="flex-1 text-sm bg-transparent outline-none border-b border-[hsl(var(--primary))] text-[hsl(var(--foreground))]"
                     />
                 ) : (
-                    <span
-                        onDoubleClick={() => setEditing(true)}
+                    <button
+                        type="button"
+                        onClick={() => setEditing(true)}
+                        aria-label={`Editar actividad: ${activity.title}`}
                         className={clsx(
-                            'flex-1 text-sm font-medium cursor-default select-none truncate',
+                            'flex-1 text-left text-sm font-medium cursor-text select-none truncate',
                             activity.completed
                                 ? 'line-through text-[hsl(var(--muted-foreground))]'
                                 : 'text-[hsl(var(--foreground))]'
                         )}
                     >
                         {activity.title}
-                    </span>
+                    </button>
                 )}
 
                 {activity.assignee && (
@@ -134,16 +158,20 @@ function ActivityItem({
                 )}
 
                 <button
+                    type="button"
                     onClick={() => { onAddChild(activity.id); setExpanded(true); }}
-                    className="size-4 rounded flex items-center justify-center text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--primary))] hover:bg-[hsl(var(--primary)/0.1)] opacity-0 group-hover:opacity-100 transition-all"
+                    aria-label={`Añadir sub-actividad a ${activity.title}`}
+                    className="size-4 rounded flex items-center justify-center text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--primary))] hover:bg-[hsl(var(--primary)/0.1)] opacity-100 md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100 transition-all"
                     title="Añadir sub-actividad"
                 >
                     <Plus size={10} strokeWidth={2.5} />
                 </button>
 
                 <button
+                    type="button"
                     onClick={() => onDelete(activity.id)}
-                    className="size-4 rounded flex items-center justify-center text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--destructive))] hover:bg-[hsl(var(--destructive)/0.1)] opacity-0 group-hover:opacity-100 transition-all"
+                    aria-label={`Eliminar actividad: ${activity.title}`}
+                    className="size-4 rounded flex items-center justify-center text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--destructive))] hover:bg-[hsl(var(--destructive)/0.1)] opacity-100 md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100 transition-all"
                     title="Eliminar actividad"
                 >
                     <X size={10} strokeWidth={2.5} />
@@ -199,12 +227,12 @@ export default function TaskActivitySection({
     return (
         <section className="px-4 py-3 border-b border-[hsl(var(--border))]">
             <div className="flex items-center justify-between mb-3">
-                <p className="text-2xs font-semibold uppercase tracking-wider text-[hsl(var(--muted-foreground))] flex items-center gap-1.5">
+                <h3 id="task-activities-heading" className="text-2xs font-semibold uppercase tracking-wider text-[hsl(var(--muted-foreground))] flex items-center gap-1.5">
                     <Check size={11} /> Actividades
                     <span className="px-1.5 py-0.5 bg-[hsl(var(--surface-2))] rounded text-[hsl(var(--muted-foreground))] font-bold text-2xs">
                         {activities.length}
                     </span>
-                </p>
+                </h3>
             </div>
 
             <div className="space-y-0.5">
@@ -225,6 +253,7 @@ export default function TaskActivitySection({
                 <Plus size={13} className="text-[hsl(var(--muted-foreground))] shrink-0" />
                 <input
                     type="text"
+                    aria-label="Añadir actividad"
                     value={newActivityTitle}
                     onChange={e => onNewActivityTitleChange(e.target.value)}
                     onKeyDown={e => e.key === 'Enter' && onAddTopLevel()}
@@ -233,6 +262,8 @@ export default function TaskActivitySection({
                 />
                 {newActivityTitle.trim() && (
                     <button
+                        type="button"
+                        aria-label="Añadir actividad"
                         onClick={onAddTopLevel}
                         className="px-2 py-1 bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] rounded-lg text-2xs font-bold hover:bg-[hsl(var(--primary))] transition-all"
                     >

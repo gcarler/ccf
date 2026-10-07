@@ -1,6 +1,6 @@
 import uuid
 import uuid as _uuid
-from typing import Optional, Any
+from typing import Any, Optional
 
 from sqlalchemy import (
     JSON,
@@ -24,7 +24,7 @@ from backend.models_shared import Base, _utcnow
 class Project(Base):
     __tablename__ = "projects"
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    sede_id = Column(UUID(as_uuid=True), ForeignKey("sedes.id", ondelete="SET NULL"), nullable=True, index=True)
+    sede_id = Column(UUID(as_uuid=True), ForeignKey("sedes.id", ondelete="RESTRICT"), nullable=True, index=True)
     title = Column(String(200), nullable=False)
     description = Column(Text, nullable=True)
     status = Column(String(20), default="planning", index=True)
@@ -206,6 +206,8 @@ class ProjectPhase(Base):
     slug = Column(String(20), nullable=False)
     color = Column(String(20), default="#94a3b8")
     order_index = Column(Integer, default=0)
+    start_date = Column(DateTime(timezone=True), nullable=True)
+    end_date = Column(DateTime(timezone=True), nullable=True)
     deleted_at = Column(DateTime(timezone=True), nullable=True)
 
     project = relationship(
@@ -361,7 +363,7 @@ class ProjectTimeLog(Base):
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     project_id = Column(UUID(as_uuid=True), ForeignKey("projects.id", ondelete="CASCADE"), nullable=False, index=True)
     task_id = Column(UUID(as_uuid=True), ForeignKey("project_tasks.id", ondelete="CASCADE"), nullable=True, index=True)
-    persona_id = Column(UUID(as_uuid=True), ForeignKey("personas.id", ondelete="SET NULL"), nullable=False, index=True)
+    persona_id = Column(UUID(as_uuid=True), ForeignKey("personas.id", ondelete="RESTRICT"), nullable=False, index=True)
     hours = Column(Float, nullable=False)
     date = Column(DateTime(timezone=True), default=_utcnow, nullable=False)
     description = Column(Text, nullable=True)
@@ -386,7 +388,7 @@ class ProjectTemplate(Base):
     structure = Column(JSON, nullable=False, default=dict)
     created_by = Column(UUID(as_uuid=True), ForeignKey("personas.id", ondelete="SET NULL"), nullable=True, index=True)
     is_public = Column(Boolean, default=True, nullable=False, index=True)
-    sede_id = Column(UUID(as_uuid=True), ForeignKey("sedes.id", ondelete="SET NULL"), nullable=True, index=True)
+    sede_id = Column(UUID(as_uuid=True), ForeignKey("sedes.id", ondelete="RESTRICT"), nullable=True, index=True)
     created_at = Column(DateTime(timezone=True), default=_utcnow, nullable=False)
     updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow, nullable=False)
     deleted_at = Column(DateTime(timezone=True), nullable=True, index=True)
@@ -409,7 +411,7 @@ class ProjectAutomationRule(Base):
     execution_count = Column(Integer, default=0, nullable=False)
     last_triggered_at = Column(DateTime(timezone=True), nullable=True)
     created_by = Column(UUID(as_uuid=True), ForeignKey("personas.id", ondelete="SET NULL"), nullable=True, index=True)
-    sede_id = Column(UUID(as_uuid=True), ForeignKey("sedes.id", ondelete="SET NULL"), nullable=True, index=True)
+    sede_id = Column(UUID(as_uuid=True), ForeignKey("sedes.id", ondelete="RESTRICT"), nullable=True, index=True)
     created_at = Column(DateTime(timezone=True), default=_utcnow, nullable=False)
     updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow, nullable=False)
     deleted_at = Column(DateTime(timezone=True), nullable=True, index=True)
@@ -437,7 +439,7 @@ class ProjectIndicator(Base):
     crema_score = Column(Float, nullable=True)
     crema_evaluation = Column(JSON, default=dict, nullable=False)
     created_by = Column(UUID(as_uuid=True), ForeignKey("personas.id", ondelete="SET NULL"), nullable=True, index=True)
-    sede_id = Column(UUID(as_uuid=True), ForeignKey("sedes.id", ondelete="SET NULL"), nullable=True, index=True)
+    sede_id = Column(UUID(as_uuid=True), ForeignKey("sedes.id", ondelete="RESTRICT"), nullable=True, index=True)
     created_at = Column(DateTime(timezone=True), default=_utcnow, nullable=False)
     updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow, nullable=False)
     deleted_at = Column(DateTime(timezone=True), nullable=True, index=True)
@@ -502,7 +504,7 @@ class ProjectFile(Base):
     task_id = Column(UUID(as_uuid=True), ForeignKey("project_tasks.id", ondelete="SET NULL"), nullable=True, index=True)
     phase_id = Column(UUID(as_uuid=True), ForeignKey("project_phases.id", ondelete="SET NULL"), nullable=True, index=True)
     uploaded_by = Column(UUID(as_uuid=True), ForeignKey("personas.id", ondelete="RESTRICT"), nullable=True, index=True)
-    sede_id = Column(UUID(as_uuid=True), ForeignKey("sedes.id", ondelete="SET NULL"), nullable=True, index=True)
+    sede_id = Column(UUID(as_uuid=True), ForeignKey("sedes.id", ondelete="RESTRICT"), nullable=True, index=True)
     created_at = Column(DateTime(timezone=True), default=_utcnow, nullable=False)
     updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow, nullable=True)
     deleted_at = Column(DateTime(timezone=True), nullable=True, index=True)
@@ -529,8 +531,6 @@ class ProjectFile(Base):
                     return f"https://docs.google.com/forms/d/{self.drive_file_id}/viewform?embedded=true"
                 return f"https://drive.google.com/file/d/{self.drive_file_id}/preview"
         return self.file_url
-
-
 
 
 

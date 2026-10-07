@@ -106,6 +106,7 @@ interface WhiteboardEditorProps {
         title: string;
         saveStatus: "idle" | "saving" | "saved" | "error";
         isDirty: boolean;
+        hasConflict: boolean;
         saveNow: () => void;
     }) => React.ReactNode;
     className?: string;
@@ -248,7 +249,7 @@ export default function WhiteboardEditor({
     const [layers, setLayers] = useState<LayerRow[]>([]);
     const [selectedObjectProps, setSelectedObjectProps] = useState<Record<string, unknown> | null>(null);
     const [baseUpdatedAt, setBaseUpdatedAt] = useState<string | undefined>();
-    const { saveStatus, save, saveNow, flushPending, isDirty } = useWhiteboardSave({
+    const { saveStatus, save, saveNow, flushPending, isDirty, hasConflict } = useWhiteboardSave({
         projectId,
         token,
         title,
@@ -1780,7 +1781,7 @@ export default function WhiteboardEditor({
                 </div>
             )}
 
-            {header && header({ title, saveStatus, isDirty, saveNow: handleSaveNow })}
+            {header && header({ title, saveStatus, isDirty, hasConflict, saveNow: handleSaveNow })}
 
             {/* PZ-19: Sticker gallery modal */}
             {showGallery && (
@@ -1812,10 +1813,14 @@ export default function WhiteboardEditor({
             {duplicateTabOpen && (
                 <div
                     data-testid="whiteboard-duplicate-tab"
+                    role={hasConflict ? "alert" : "status"}
+                    aria-live={hasConflict ? "assertive" : "polite"}
                     className="z-30 flex items-center justify-center gap-2 border-b border-[hsl(var(--warning))]/20 bg-[hsl(var(--warning))]/10 px-4 py-1.5 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--warning))]"
                 >
                     <AlertTriangle size={12} />
-                    Esta pizarra está abierta en otra pestaña — los cambios simultáneos pueden sobrescribirse.
+                    {hasConflict
+                        ? "Hay una versión más reciente de esta pizarra. Tus cambios locales no se guardaron; expórtalos antes de cerrar y volver a cargar."
+                        : "Esta pizarra está abierta en otra pestaña — los cambios simultáneos pueden sobrescribirse."}
                 </div>
             )}
 

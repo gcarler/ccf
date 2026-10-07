@@ -115,7 +115,7 @@ describe("useProjectTasks", () => {
   });
 
   it("should delete a task and remove it from the list", async () => {
-    const tasks = [{ id: "1", title: "Task 1", status: "todo", priority: "medium" }];
+    const tasks = [{ id: "1", project_id: "project-1", title: "Task 1", status: "todo", priority: "medium" }];
     apiFetchSpy.mockResolvedValueOnce(tasks);
 
     const { result } = renderHook(() => useProjectTasks(), { wrapper });
@@ -131,7 +131,31 @@ describe("useProjectTasks", () => {
     });
 
     expect(result.current.tasks).toEqual([]);
-    expect(apiFetchSpy).toHaveBeenCalledWith("/projects/tasks/1", {
+    expect(apiFetchSpy).toHaveBeenCalledWith("/projects/project-1/tasks/1", {
+      method: "DELETE",
+      token: "test-token",
+    });
+  });
+
+  it("preserves the task when the scoped delete fails", async () => {
+    const tasks = [{ id: "1", project_id: "project-1", title: "Task 1", status: "todo", priority: "medium" }];
+    apiFetchSpy.mockResolvedValueOnce(tasks);
+    const { result } = renderHook(() => useProjectTasks(), { wrapper });
+
+    await act(async () => {
+      await result.current.fetchTasks("project-1");
+    });
+    apiFetchSpy.mockRejectedValueOnce(new Error("forbidden"));
+
+    let deleted = true;
+    await act(async () => {
+      deleted = await result.current.deleteTask("1");
+    });
+
+    expect(deleted).toBe(false);
+    expect(result.current.tasks).toEqual(tasks);
+    expect(result.current.error).toBe("No se pudo eliminar la tarea.");
+    expect(apiFetchSpy).toHaveBeenLastCalledWith("/projects/project-1/tasks/1", {
       method: "DELETE",
       token: "test-token",
     });

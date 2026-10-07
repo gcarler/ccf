@@ -5,12 +5,12 @@ import ProjectsCalendarView from './ProjectsCalendarView';
 import { createMockProject } from '@/test-utils/factories';
 
 vi.mock('@/components/ui/UniversalCalendarView', () => ({
-    default: ({ events, title, onEventClick }: { events: Array<{ id: string; title: string }>; title: string; onEventClick?: (event: { id: string; title: string }) => void }) => (
+    default: ({ events, title, onEventClick }: { events: Array<{ id: string; title: string; date: string }>; title: string; onEventClick?: (event: { id: string; title: string }) => void }) => (
         <div data-testid="calendar">
             <h2>{title}</h2>
             <ul>
                 {events.map((event) => (
-                    <li key={event.id}>
+                    <li key={event.id} data-date={event.date}>
                         <button onClick={() => onEventClick?.(event)}>{event.title}</button>
                     </li>
                 ))}
@@ -29,6 +29,8 @@ const projects = [
         owner_id: 'u1',
         created_at: '2025-06-15T10:00:00Z',
         updated_at: '2025-06-15T10:00:00Z',
+        start_date: '2025-07-01T00:00:00Z',
+        target_date: '2025-08-15T00:00:00Z',
         tasks: [],
     }),
     createMockProject({
@@ -40,6 +42,18 @@ const projects = [
         owner_id: 'u2',
         created_at: '2025-06-16T10:00:00Z',
         updated_at: '2025-06-16T10:00:00Z',
+        start_date: null,
+        target_date: null,
+        tasks: [],
+    }),
+    createMockProject({
+        id: 'p3',
+        title: 'Encuentro de equipos',
+        status: 'active',
+        created_at: '2025-06-17T10:00:00Z',
+        updated_at: '2025-06-20T10:00:00Z',
+        start_date: '2025-07-10T00:00:00Z',
+        target_date: null,
         tasks: [],
     }),
 ];
@@ -48,14 +62,16 @@ describe('ProjectsCalendarView', () => {
     it('renders calendar events from projects', () => {
         render(<ProjectsCalendarView projects={projects} />);
         expect(screen.getByText('Calendario de proyectos')).toBeInTheDocument();
-        expect(screen.getByText('Campamento Juventud')).toBeInTheDocument();
-        expect(screen.getByText('Retiro Pastoral')).toBeInTheDocument();
+        expect(screen.getByText('Campamento Juventud · Entrega')).toBeInTheDocument();
+        expect(screen.queryByText('Retiro Pastoral · Inicio')).not.toBeInTheDocument();
+        expect(screen.getByText('Campamento Juventud · Entrega').closest('li')).toHaveAttribute('data-date', '2025-08-15');
+        expect(screen.getByText('Encuentro de equipos · Inicio').closest('li')).toHaveAttribute('data-date', '2025-07-10');
     });
 
     it('calls onEventClick when an event is clicked', () => {
         const onEventClick = vi.fn();
         render(<ProjectsCalendarView projects={projects} onEventClick={onEventClick} />);
-        screen.getByText('Campamento Juventud').click();
-        expect(onEventClick).toHaveBeenCalledWith(expect.objectContaining({ id: 'p1', title: 'Campamento Juventud' }));
+        screen.getByText('Campamento Juventud · Entrega').click();
+        expect(onEventClick).toHaveBeenCalledWith(expect.objectContaining({ id: 'p1', title: 'Campamento Juventud · Entrega' }));
     });
 });

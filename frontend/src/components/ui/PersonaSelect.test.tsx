@@ -1,5 +1,6 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { axe } from 'jest-axe';
 import PersonaSelect from './PersonaSelect';
@@ -105,7 +106,7 @@ describe('PersonaSelect (Reactive Server-side Search QA-002)', () => {
 
     it('displays subtle loading spinner inside search input while fetching', async () => {
         let resolveSearch: (val: unknown) => void = () => {};
-        const searchPromise = new Promise((resolve) => {
+        const searchPromise = new Promise<unknown>((resolve) => {
             resolveSearch = resolve;
         });
 
@@ -202,5 +203,44 @@ describe('PersonaSelect (Reactive Server-side Search QA-002)', () => {
         const { container } = render(<PersonaSelect value={null} onChange={() => {}} />);
         const results = await axe(container);
         expect(results.violations).toHaveLength(0);
+    });
+
+    it('keeps search controls outside a named listbox when the picker is open', async () => {
+        mockApiFetch.mockResolvedValueOnce([
+            createMockPersonaSelectOption({ id: '1', first_name: 'Juan', last_name: 'Pérez' }),
+        ]);
+        const { container } = render(<PersonaSelect value={null} onChange={() => {}} />);
+        fireEvent.click(screen.getByRole('button', { name: /sin asignar/i }));
+
+        const listbox = await screen.findByRole('listbox', { name: 'Personas disponibles' });
+        expect(await screen.findByText('Juan Pérez')).toBeInTheDocument();
+        expect(listbox).not.toContainElement(screen.getByRole('textbox', { name: 'Buscar persona' }));
+        expect(screen.getByRole('button', { name: /sin asignar/i })).toHaveAttribute('aria-controls', 'persona-select-options');
+        expect((await axe(container)).violations).toEqual([]);
+    });
+
+    it('consumes Escape, restores trigger focus, and supports selecting by Tab and Enter', async () => {
+        const onChange = vi.fn();
+        const user = userEvent.setup();
+        render(<PersonaSelect value={null} onChange={onChange} />);
+
+        const trigger = screen.getByRole('button', { name: /sin asignar/i });
+        await user.click(trigger);
+        const search = screen.getByRole('textbox', { name: 'Buscar persona' });
+        expect(search).toHaveFocus();
+
+        await user.keyboard('{Escape}');
+        expect(screen.queryByRole('listbox')).not.toBeInTheDocument();
+        expect(trigger).toHaveFocus();
+
+        await user.click(trigger);
+        await screen.findByRole('option', { name: /sin asignar/i });
+        await user.tab();
+        expect(screen.getByRole('option', { name: /sin asignar/i })).toHaveFocus();
+        await user.keyboard('{Enter}');
+
+        expect(onChange).toHaveBeenCalledWith(null);
+        expect(trigger).toHaveFocus();
+        expect(screen.queryByRole('listbox')).not.toBeInTheDocument();
     });
 });

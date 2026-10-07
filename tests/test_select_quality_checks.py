@@ -62,6 +62,21 @@ def test_pre_push_selector_changes_select_platform_only():
     assert checks == ["platform_quality"]
 
 
+def test_shared_quality_runner_selects_all_critical_module_checks():
+    checks = select_quality_checks(["scripts/run_quality_integration.py"])
+    assert checks == [
+        "academy_quality",
+        "agenda_quality",
+        "cms_quality",
+        "crm_quality",
+        "evangelism_quality",
+        "frontend_build",
+        "messaging_quality",
+        "platform_quality",
+        "projects_quality",
+    ]
+
+
 def test_migration_selects_critical_modules():
     checks = select_quality_checks(["alembic/versions/20260717_0001_normalize_project_status.py"])
     assert checks == [
@@ -172,6 +187,13 @@ def test_platform_docs_select_platform_quality():
 
 def test_projects_contract_docs_select_projects_quality():
     checks = select_quality_checks(["docs/PROJECTS_API_CONTRACTS.md"])
+    assert checks == ["projects_quality"]
+
+
+def test_projects_backend_crud_and_quality_guard_select_projects_gate():
+    checks = select_quality_checks(
+        ["backend/crud/projects.py", "scripts/projects_quality_safety.py"]
+    )
     assert checks == ["projects_quality"]
 
 

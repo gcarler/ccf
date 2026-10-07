@@ -2,16 +2,19 @@
 
 import csv
 import io
-from datetime import datetime, timezone, timedelta
-from typing import Any, Dict, List, Optional
+from datetime import datetime, timedelta, timezone
+from typing import Any, Optional
+from urllib.parse import urlsplit
 from uuid import UUID
+from xml.sax.saxutils import escape as escape_xml_text
 
-from sqlalchemy import func
-from sqlalchemy.orm import Session, selectinload
+from sqlalchemy import and_, case, func
+from sqlalchemy.orm import Session, load_only, selectinload
 
 from backend import models, schemas
 from backend.crud.crm import resolve_persona_id_for_user
 from backend.models_shared import _utcnow
+from backend.schemas.projects import TASK_TITLE_MAX_LENGTH
 
 # ── Helper ──────────────────────────────────────────────
 
@@ -34,6 +37,15 @@ def _to_uuid(val: Any) -> Optional[UUID]:
         return None
 
 
+def _safe_csv_text(value: Any) -> str:
+    """Keep user-controlled CSV text from being evaluated as a spreadsheet formula."""
+    text = "" if value is None else str(value)
+    first_content = next((char for char in text if char not in " \t\r\n\v\f"), "")
+    if first_content in {"=", "+", "-", "@"}:
+        return f"'{text}"
+    return text
+
+
 # ── Projects ────────────────────────────────────────────
 
 
@@ -43,6 +55,7 @@ def create_project(
     *,
     owner_persona_id: UUID | str,
     sede_id: UUID | str,
+    commit: bool = True,
 ):
     """Crea un proyecto mediante el contrato Pydantic canónico.
 
@@ -64,8 +77,11 @@ def create_project(
     row.owner_id = owner_persona_id
     row.sede_id = sede_id
     db.add(row)
-    db.commit()
-    db.refresh(row)
+    if commit:
+        db.commit()
+        db.refresh(row)
+    else:
+        db.flush()
     return row
 
 
@@ -83,6 +99,204 @@ def get_projects(db: Session, skip: int = 0, limit: int = 100, sede_id=None, sta
     if status_filter:
         q = q.filter(models.Project.status == status_filter)
     return q.order_by(models.Project.updated_at.desc()).offset(skip).limit(limit).all()
+
+
+def get_projects_page(
+    db: Session,
+    *,
+    offset: int = 0,
+    limit: int = 50,
+    sede_id=None,
+    status_filter: Optional[str] = None,
+    owner_id=None,
+    search: Optional[str] = None,
+):
+    """Return one bounded, filtered project page and its matching total."""
+    query = db.query(models.Project).filter(models.Project.deleted_at.is_(None))
+    if sede_id is not None:
+        query = query.filter(models.Project.sede_id == sede_id)
+    if status_filter:
+        query = query.filter(models.Project.status == status_filter)
+    if owner_id is not None:
+        query = query.filter(models.Project.owner_id == owner_id)
+    normalized_search = search.strip() if isinstance(search, str) else ""
+    if normalized_search:
+        pattern = f"%{normalized_search}%"
+        query = query.filter(
+            models.Project.title.ilike(pattern) | models.Project.description.ilike(pattern)
+        )
+
+    total = query.count()
+    projects = (
+        query.options(
+            selectinload(models.Project.tasks).selectinload(models.ProjectTask.attachments),
+            selectinload(models.Project.milestones),
+        )
+        .order_by(models.Project.created_at.desc(), models.Project.id.desc())
+        .offset(offset)
+        .limit(limit)
+        .all()
+    )
+    return projects, total
+
+
+def get_project_summaries_page(
+    db: Session,
+    *,
+    offset: int = 0,
+    limit: int = 50,
+    sede_id=None,
+    status_filter: Optional[str] = None,
+    owner_id=None,
+    search: Optional[str] = None,
+):
+    """Return a bounded project page with aggregate metrics, not child graphs."""
+    query = db.query(models.Project).filter(models.Project.deleted_at.is_(None))
+    if sede_id is not None:
+        query = query.filter(models.Project.sede_id == sede_id)
+    if status_filter:
+        query = query.filter(models.Project.status == status_filter)
+    if owner_id is not None:
+        query = query.filter(models.Project.owner_id == owner_id)
+    normalized_search = search.strip() if isinstance(search, str) else ""
+    if normalized_search:
+        pattern = f"%{normalized_search}%"
+        query = query.filter(
+            models.Project.title.ilike(pattern) | models.Project.description.ilike(pattern)
+        )
+
+    total = query.count()
+    projects = (
+        query.options(load_only(
+            models.Project.id,
+            models.Project.title,
+            models.Project.description,
+            models.Project.status,
+            models.Project.owner_id,
+            models.Project.color,
+            models.Project.icon,
+            models.Project.start_date,
+            models.Project.target_date,
+            models.Project.progress_mode,
+            models.Project.manual_progress,
+            models.Project.budget_allocated,
+            models.Project.budget_spent,
+            models.Project.health_override,
+            models.Project.created_at,
+            models.Project.updated_at,
+        ))
+        .order_by(models.Project.created_at.desc(), models.Project.id.desc())
+        .offset(offset)
+        .limit(limit)
+        .all()
+    )
+    project_ids = [project.id for project in projects]
+    task_stats = {}
+    milestone_stats = {}
+    if project_ids:
+        now = datetime.now(timezone.utc)
+        task_rows = (
+            db.query(
+                models.ProjectTask.project_id,
+                func.count(models.ProjectTask.id),
+                func.sum(case((models.ProjectTask.status == "completed", 1), else_=0)),
+                func.sum(case((models.ProjectTask.status == "in_progress", 1), else_=0)),
+                func.sum(case((and_(
+                    models.ProjectTask.status != "completed",
+                    models.ProjectTask.due_date.is_not(None),
+                    models.ProjectTask.due_date < now,
+                ), 1), else_=0)),
+            )
+            .filter(
+                models.ProjectTask.project_id.in_(project_ids),
+                models.ProjectTask.deleted_at.is_(None),
+            )
+            .group_by(models.ProjectTask.project_id)
+            .all()
+        )
+        task_stats = {
+            project_id: {
+                "task_count": int(task_count or 0),
+                "completed_task_count": int(completed_count or 0),
+                "in_progress_task_count": int(in_progress_count or 0),
+                "overdue_task_count": int(overdue_count or 0),
+            }
+            for project_id, task_count, completed_count, in_progress_count, overdue_count in task_rows
+        }
+        milestone_rows = (
+            db.query(
+                models.ProjectMilestone.project_id,
+                func.count(models.ProjectMilestone.id),
+                func.sum(case((models.ProjectMilestone.is_completed.is_(True), 1), else_=0)),
+            )
+            .filter(
+                models.ProjectMilestone.project_id.in_(project_ids),
+                models.ProjectMilestone.deleted_at.is_(None),
+            )
+            .group_by(models.ProjectMilestone.project_id)
+            .all()
+        )
+        milestone_stats = {
+            project_id: {
+                "milestone_count": int(milestone_count or 0),
+                "completed_milestone_count": int(completed_count or 0),
+            }
+            for project_id, milestone_count, completed_count in milestone_rows
+        }
+
+    return [
+        {
+            "project": project,
+            **task_stats.get(project.id, {
+                "task_count": 0,
+                "completed_task_count": 0,
+                "in_progress_task_count": 0,
+                "overdue_task_count": 0,
+            }),
+            **milestone_stats.get(project.id, {
+                "milestone_count": 0,
+                "completed_milestone_count": 0,
+            }),
+        }
+        for project in projects
+    ], total
+
+
+def get_assigned_project_tasks_page(
+    db: Session,
+    *,
+    persona_id: UUID | str,
+    sede_id: UUID | str | None,
+    offset: int = 0,
+    limit: int = 50,
+):
+    """Return one bounded page of active tasks assigned to a person in scope."""
+    query = (
+        db.query(models.ProjectTask)
+        .join(models.Project, models.Project.id == models.ProjectTask.project_id)
+        .filter(
+            models.ProjectTask.assignee_id == _to_uuid(persona_id),
+            models.ProjectTask.deleted_at.is_(None),
+            models.Project.deleted_at.is_(None),
+        )
+    )
+    if sede_id is not None:
+        query = query.filter(models.Project.sede_id == _to_uuid(sede_id))
+
+    total = query.count()
+    rows = (
+        query.options(
+            selectinload(models.ProjectTask.project),
+            selectinload(models.ProjectTask.supplies),
+            selectinload(models.ProjectTask.attachments),
+            selectinload(models.ProjectTask.subtasks),
+        )
+        .order_by(models.ProjectTask.created_at.desc(), models.ProjectTask.id.desc())
+        .offset(offset)
+        .limit(limit)
+        .all()
+    )
+    return rows, total
 
 
 def get_project(db: Session, project_id, sede_id=None):
@@ -134,8 +348,133 @@ def delete_project(db: Session, project_id, *, sede_id: UUID | str | None = None
     return True
 
 
+class TaskDateOutOfBoundsError(ValueError):
+    """Raised when a task's dates exceed its phase bounds."""
+    pass
+
+
+def validate_task_dates_within_phase(
+    db: Session,
+    project_id: UUID | str,
+    *,
+    status_slug: Optional[str] = None,
+    node: Optional[str] = None,
+    start_date: Optional[datetime] = None,
+    due_date: Optional[datetime] = None,
+    task_id: Optional[UUID | str] = None,
+) -> None:
+    """Valida que las fechas de una tarea no violen los límites estrictos de la fase asignada."""
+    s_dt = start_date
+    if s_dt is not None:
+        if isinstance(s_dt, str):
+            try:
+                s_dt = datetime.fromisoformat(s_dt.replace("Z", "+00:00"))
+            except Exception:
+                s_dt = None
+        if s_dt and getattr(s_dt, "tzinfo", None) is None:
+            s_dt = s_dt.replace(tzinfo=timezone.utc)
+
+    d_dt = due_date
+    if d_dt is not None:
+        if isinstance(d_dt, str):
+            try:
+                d_dt = datetime.fromisoformat(d_dt.replace("Z", "+00:00"))
+            except Exception:
+                d_dt = None
+        if d_dt and getattr(d_dt, "tzinfo", None) is None:
+            d_dt = d_dt.replace(tzinfo=timezone.utc)
+
+    if s_dt and d_dt and s_dt > d_dt:
+        raise TaskDateOutOfBoundsError(
+            f"La fecha de inicio ({s_dt.isoformat()}) no puede ser posterior a la fecha límite ({d_dt.isoformat()})"
+        )
+
+    project_uuid = _to_uuid(project_id)
+    phases = (
+        db.query(models.ProjectPhase)
+        .filter(models.ProjectPhase.project_id == project_uuid, models.ProjectPhase.deleted_at.is_(None))
+        .all()
+    )
+    if not phases:
+        return
+
+    matching_phase = None
+    if node:
+        node_str = str(node).strip()
+        for p in phases:
+            if str(p.id) == node_str or p.slug == node_str or p.name == node_str:
+                matching_phase = p
+                break
+    if not matching_phase and status_slug:
+        slug_str = str(status_slug).strip()
+        for p in phases:
+            if p.slug == slug_str:
+                matching_phase = p
+                break
+
+    if not matching_phase:
+        return
+
+    p_start = getattr(matching_phase, "start_date", None)
+    if p_start and getattr(p_start, "tzinfo", None) is None:
+        p_start = p_start.replace(tzinfo=timezone.utc)
+
+    p_end = getattr(matching_phase, "end_date", None)
+    if p_end and getattr(p_end, "tzinfo", None) is None:
+        p_end = p_end.replace(tzinfo=timezone.utc)
+
+    if p_start:
+        if s_dt and s_dt < p_start:
+            raise TaskDateOutOfBoundsError(
+                f"La fecha de inicio de la tarea ({s_dt.date()}) no puede ser anterior al inicio de la fase '{matching_phase.name}' ({p_start.date()})"
+            )
+        if d_dt and d_dt < p_start:
+            raise TaskDateOutOfBoundsError(
+                f"La fecha límite de la tarea ({d_dt.date()}) no puede ser anterior al inicio de la fase '{matching_phase.name}' ({p_start.date()})"
+            )
+
+    if p_end:
+        if s_dt and s_dt > p_end:
+            raise TaskDateOutOfBoundsError(
+                f"La fecha de inicio de la tarea ({s_dt.date()}) no puede ser posterior al fin de la fase '{matching_phase.name}' ({p_end.date()})"
+            )
+        if d_dt and d_dt > p_end:
+            raise TaskDateOutOfBoundsError(
+                f"La fecha límite de la tarea ({d_dt.date()}) no puede ser posterior al fin de la fase '{matching_phase.name}' ({p_end.date()})"
+            )
+
+
 def create_project_task(db: Session, task: schemas.ProjectTaskCreate):
-    db_task = models.ProjectTask(**task.model_dump())
+    task_data = task.model_dump()
+    project_id = _to_uuid(task_data.get("project_id"))
+    if project_id is None:
+        raise ValueError("project_id is required to create a project task")
+    parent_id = _to_uuid(task_data.get("parent_id"))
+    if parent_id is not None:
+        parent = (
+            db.query(models.ProjectTask.id)
+            .filter(
+                models.ProjectTask.id == parent_id,
+                models.ProjectTask.project_id == project_id,
+                models.ProjectTask.deleted_at.is_(None),
+            )
+            .first()
+        )
+        if not parent:
+            raise ValueError("parent_id must reference an active task in the same project")
+
+    validate_task_dates_within_phase(
+        db,
+        project_id,
+        status_slug=task_data.get("status"),
+        node=task_data.get("node"),
+        start_date=task_data.get("start_date"),
+        due_date=task_data.get("due_date"),
+    )
+
+    task_data["project_id"] = project_id
+    task_data["parent_id"] = parent_id
+    db_task = models.ProjectTask(**task_data)
     db.add(db_task)
     db.commit()
     db.refresh(db_task)
@@ -164,7 +503,24 @@ def update_project_task(db: Session, task_id, payload: schemas.ProjectTaskUpdate
     row = get_project_task(db, task_id)
     if not row:
         return None
-    for key, value in payload.model_dump(exclude_unset=True).items():
+    update_data = payload.model_dump(exclude_unset=True)
+
+    effective_status = update_data.get("status", row.status)
+    effective_node = update_data.get("node", row.node)
+    effective_start = update_data.get("start_date", row.start_date)
+    effective_due = update_data.get("due_date", row.due_date)
+
+    validate_task_dates_within_phase(
+        db,
+        row.project_id,
+        status_slug=effective_status,
+        node=effective_node,
+        start_date=effective_start,
+        due_date=effective_due,
+        task_id=row.id,
+    )
+
+    for key, value in update_data.items():
         setattr(row, key, value)
     db.commit()
     db.refresh(row)
@@ -192,7 +548,13 @@ def get_project_phases(db: Session, project_id):
     )
 
 
-def set_project_phases(db: Session, project_id, phases: list[dict]) -> list[models.ProjectPhase]:
+def set_project_phases(
+    db: Session,
+    project_id,
+    phases: list[dict],
+    *,
+    commit: bool = True,
+) -> list[models.ProjectPhase]:
     db.query(models.ProjectPhase).filter(models.ProjectPhase.project_id == project_id).update(
         {models.ProjectPhase.deleted_at: datetime.now(timezone.utc)}, synchronize_session=False
     )
@@ -204,23 +566,28 @@ def set_project_phases(db: Session, project_id, phases: list[dict]) -> list[mode
             slug=p["slug"],
             color=p.get("color", "#94a3b8"),
             order_index=p.get("order_index", i),
+            start_date=p.get("start_date"),
+            end_date=p.get("end_date"),
         )
         db.add(phase)
         created.append(phase)
-    db.commit()
-    for p in created:
-        db.refresh(p)
+    if commit:
+        db.commit()
+        for phase in created:
+            db.refresh(phase)
+    else:
+        db.flush()
     return created
 
 
-def create_default_phases(db: Session, project_id):
+def create_default_phases(db: Session, project_id, *, commit: bool = True):
     defaults = [
         {"name": "Por Hacer", "slug": "todo", "color": "#94a3b8"},
         {"name": "En Curso", "slug": "in_progress", "color": "#3b82f6"},
         {"name": "Revisión", "slug": "review", "color": "#f59e0b"},
         {"name": "Completado", "slug": "completed", "color": "#10b981"},
     ]
-    return set_project_phases(db, project_id, defaults)
+    return set_project_phases(db, project_id, defaults, commit=commit)
 
 
 # ── Project Comments ───────────────────────────────────
@@ -627,6 +994,72 @@ def delete_project_kpi(db: Session, project_id: UUID | str, kpi_id: UUID | str) 
 # ── Dependencies (Gantt) ──────────────────────────────
 
 
+class CircularDependencyError(ValueError):
+    """Raised when adding a task dependency would create a circular reference."""
+    pass
+
+
+def detect_cycle_in_dependencies(
+    edges: list[tuple[Any, Any]],
+    new_edge: Optional[tuple[Any, Any]] = None,
+) -> tuple[bool, list[str]]:
+    """Detects if there is a cycle in a directed graph of task dependencies using DFS.
+
+    Edges are directed (predecessor -> successor).
+    Returns (has_cycle, cycle_path_as_strings).
+    """
+    from collections import defaultdict
+
+    adj: dict[str, list[str]] = defaultdict(list)
+    nodes: set[str] = set()
+
+    all_edges = list(edges)
+    if new_edge is not None:
+        all_edges.append(new_edge)
+
+    for p, s in all_edges:
+        p_str = str(p)
+        s_str = str(s)
+        adj[p_str].append(s_str)
+        nodes.add(p_str)
+        nodes.add(s_str)
+
+    color: dict[str, int] = {node: 0 for node in nodes}
+    parent: dict[str, Optional[str]] = {node: None for node in nodes}
+    cycle_path: list[str] = []
+
+    def dfs(u: str) -> bool:
+        color[u] = 1  # GRAY (visiting / in recursion stack)
+        for v in adj.get(u, []):
+            if v == u:
+                cycle_path.extend([u, v])
+                return True
+            if color.get(v, 0) == 1:
+                # Cycle found! Reconstruct cycle path from u back to v
+                curr = u
+                path = [v, curr]
+                while curr != v and curr is not None:
+                    curr = parent.get(curr)
+                    if curr:
+                        path.append(curr)
+                path.reverse()
+                cycle_path.extend(path)
+                return True
+            elif color.get(v, 0) == 0:
+                parent[v] = u
+                if dfs(v):
+                    return True
+        color[u] = 2  # BLACK (visited)
+        return False
+
+    for node in sorted(nodes):
+        if color[node] == 0:
+            if dfs(node):
+                return True, cycle_path
+
+    return False, []
+
+
 def get_task_dependencies(db: Session, project_id: UUID | str) -> list[models.ProjectTaskDependency]:
     return (
         db.query(models.ProjectTaskDependency)
@@ -641,19 +1074,69 @@ def get_task_dependencies(db: Session, project_id: UUID | str) -> list[models.Pr
 def create_task_dependency(
     db: Session, project_id: UUID | str, dep_in: schemas.ProjectTaskDependencyCreate
 ) -> models.ProjectTaskDependency:
+    project_uuid = _to_uuid(project_id)
+    pred_uuid = _to_uuid(dep_in.predecessor_id)
+    succ_uuid = _to_uuid(dep_in.successor_id)
+
+    if pred_uuid == succ_uuid:
+        raise CircularDependencyError(
+            f"Dependencia circular detectada: una tarea ({pred_uuid}) no puede depender de sí misma"
+        )
+
+    task_ids = {pred_uuid, succ_uuid}
+    task_ids.discard(None)
+    project_task_ids = {
+        row[0]
+        for row in db.query(models.ProjectTask.id)
+        .filter(
+            models.ProjectTask.project_id == project_uuid,
+            models.ProjectTask.deleted_at.is_(None),
+            models.ProjectTask.id.in_(task_ids),
+        )
+        .all()
+    }
+    if len(task_ids) != 2 or project_task_ids != task_ids:
+        raise ValueError("Both dependency tasks must be active and belong to the project")
+
+    # Topological DFS Cycle Detection
+    active_deps = (
+        db.query(models.ProjectTaskDependency.predecessor_id, models.ProjectTaskDependency.successor_id)
+        .filter(
+            models.ProjectTaskDependency.project_id == project_uuid,
+            models.ProjectTaskDependency.deleted_at.is_(None),
+        )
+        .all()
+    )
+    edges = [(row[0], row[1]) for row in active_deps]
+    has_cycle, cycle_path = detect_cycle_in_dependencies(edges, new_edge=(pred_uuid, succ_uuid))
+    if has_cycle:
+        path_str = " -> ".join(cycle_path) if cycle_path else f"{pred_uuid} -> {succ_uuid}"
+        raise CircularDependencyError(
+            f"Dependencia circular detectada: la relación {pred_uuid} -> {succ_uuid} crearía un ciclo en el grafo ({path_str}). "
+            "No se permiten dependencias circulares para evitar bloqueos en Gantt."
+        )
+
     existing = (
         db.query(models.ProjectTaskDependency)
         .filter(
+            models.ProjectTaskDependency.project_id == project_uuid,
             models.ProjectTaskDependency.predecessor_id == dep_in.predecessor_id,
             models.ProjectTaskDependency.successor_id == dep_in.successor_id,
-            models.ProjectTaskDependency.deleted_at.is_(None),
         )
         .first()
     )
     if existing:
+        if existing.deleted_at is not None:
+            # The DB's unique pair constraint intentionally includes soft-
+            # deleted rows. Restore that row instead of INSERTing a duplicate.
+            existing.deleted_at = None
+            existing.dependency_type = dep_in.dependency_type
+            existing.lag_days = dep_in.lag_days
+            db.commit()
+            db.refresh(existing)
         return existing
     row = models.ProjectTaskDependency(
-        project_id=project_id,
+        project_id=project_uuid,
         predecessor_id=dep_in.predecessor_id,
         successor_id=dep_in.successor_id,
         dependency_type=dep_in.dependency_type,
@@ -777,8 +1260,9 @@ def update_project_expense(
     row = get_project_expense(db, project_id, expense_id)
     if not row:
         return None
+    nullable_fields = {"description", "receipt_url"}
     for k, v in expense_in.model_dump(exclude_unset=True).items():
-        if v is not None:
+        if v is not None or k in nullable_fields:
             if k == "amount":
                 setattr(row, k, round(float(v), 2))
             else:
@@ -819,12 +1303,9 @@ def get_project_budget_summary(db: Session, project_id: UUID | str) -> Optional[
     committed = sum(e.amount for e in expenses if e.status == "committed")
     paid = sum(e.amount for e in expenses if e.status == "paid")
 
-    # Actualizar budget_spent si difiere
-    if project.budget_spent != round(paid, 2):
-        project.budget_spent = round(paid, 2)
-        db.commit()
-        db.refresh(project)
-
+    # This helper is called by GET endpoints and must remain read-only. Expense
+    # create/update/delete mutations persist the derived field via
+    # recalculate_project_budget().
     remaining = max(0.0, allocated - paid)
     burn_rate = round((paid / allocated * 100), 2) if allocated > 0 else 0.0
 
@@ -887,11 +1368,24 @@ def get_project_risk(
     )
 
 
+def _assert_risk_owner_in_project_sede(
+    db: Session, project_id: UUID | str, owner_id: UUID | str | None
+) -> None:
+    """Keep a risk owner in the same tenant as its project, including direct CRUD callers."""
+    if owner_id is None:
+        return
+    project = get_project(db, project_id)
+    owner = db.query(models.Persona).filter(models.Persona.id == _to_uuid(owner_id)).first()
+    if not project or not owner or str(owner.sede_id) != str(project.sede_id):
+        raise ValueError("Risk owner not found in project sede")
+
+
 def create_project_risk(
     db: Session,
     project_id: UUID | str,
     risk_in: schemas.ProjectRiskCreate,
 ) -> models.ProjectRisk:
+    _assert_risk_owner_in_project_sede(db, project_id, risk_in.owner_id)
     prob = risk_in.probability or 3
     imp = risk_in.impact or 3
     sev = prob * imp
@@ -925,8 +1419,11 @@ def update_project_risk(
     if not row:
         return None
     data = risk_in.model_dump(exclude_unset=True)
+    if "owner_id" in data:
+        _assert_risk_owner_in_project_sede(db, project_id, data["owner_id"])
+    nullable_risk_fields = {"mitigation_plan", "contingency_plan", "owner_id"}
     for k, v in data.items():
-        if v is not None:
+        if v is not None or k in nullable_risk_fields:
             setattr(row, k, v)
 
     # Recalcular severity_score
@@ -967,7 +1464,7 @@ def convert_risk_to_task(
     priority = "urgent" if sev >= 15 else ("high" if sev >= 10 else "medium")
 
     desc_lines = [
-        f"**[INCIDENCIA RAID MATERIALIZADA]**",
+        "**[INCIDENCIA RAID MATERIALIZADA]**",
         f"- **Categoría:** {risk.category}",
         f"- **Probabilidad:** {risk.probability}/5 | **Impacto:** {risk.impact}/5 (Severidad: {sev}/25)",
         "",
@@ -1697,8 +2194,8 @@ def get_project_time_logs(
         q = q.filter(models.ProjectTimeLog.persona_id == persona_id)
 
     logs = q.order_by(models.ProjectTimeLog.date.desc(), models.ProjectTimeLog.created_at.desc()).all()
-    for l in logs:
-        _prepare_time_log_response(l)
+    for time_log in logs:
+        _prepare_time_log_response(time_log)
     return logs
 
 
@@ -1744,15 +2241,15 @@ def get_project_time_tracking_summary(db: Session, project_id: UUID | str) -> di
     task_map: dict[str, dict] = {}
     member_map: dict[str, dict] = {}
 
-    for l in logs:
-        h = float(l.hours or 0.0)
+    for time_log in logs:
+        h = float(time_log.hours or 0.0)
         total_hours += h
-        if l.is_billable:
+        if time_log.is_billable:
             billable_hours += h
 
         # Tarea
-        t_id = str(l.task_id) if l.task_id else "general"
-        t_title = l.task.title if l.task else "General del Proyecto"
+        t_id = str(time_log.task_id) if time_log.task_id else "general"
+        t_title = time_log.task.title if time_log.task else "General del Proyecto"
         if t_id not in task_map:
             task_map[t_id] = {
                 "task_id": t_id,
@@ -1762,16 +2259,16 @@ def get_project_time_tracking_summary(db: Session, project_id: UUID | str) -> di
                 "logs_count": 0,
             }
         task_map[t_id]["total_hours"] = round(task_map[t_id]["total_hours"] + h, 2)
-        if l.is_billable:
+        if time_log.is_billable:
             task_map[t_id]["billable_hours"] = round(task_map[t_id]["billable_hours"] + h, 2)
         task_map[t_id]["logs_count"] += 1
 
         # Miembro
-        p_id = str(l.persona_id)
+        p_id = str(time_log.persona_id)
         p_name = "Miembro"
         p_avatar = None
-        if l.persona:
-            p = l.persona
+        if time_log.persona:
+            p = time_log.persona
             p_name = getattr(p, "nombre_completo", None) or f"{getattr(p, 'nombres', '')} {getattr(p, 'apellidos', '')}".strip() or "Miembro"
             p_avatar = getattr(p, "foto_url", None)
 
@@ -1785,7 +2282,7 @@ def get_project_time_tracking_summary(db: Session, project_id: UUID | str) -> di
                 "logs_count": 0,
             }
         member_map[p_id]["total_hours"] = round(member_map[p_id]["total_hours"] + h, 2)
-        if l.is_billable:
+        if time_log.is_billable:
             member_map[p_id]["billable_hours"] = round(member_map[p_id]["billable_hours"] + h, 2)
         member_map[p_id]["logs_count"] += 1
 
@@ -1843,6 +2340,12 @@ def get_project_templates(
         q = q.filter(
             (models.ProjectTemplate.sede_id.is_(None))
             | (models.ProjectTemplate.sede_id == effective_sede)
+            | (models.ProjectTemplate.is_public.is_(True))
+        )
+    else:
+        q = q.filter(
+            models.ProjectTemplate.sede_id.is_(None)
+            | models.ProjectTemplate.is_public.is_(True)
         )
 
     if category and category != "all":
@@ -1886,6 +2389,11 @@ def get_project_template(
             | (models.ProjectTemplate.sede_id == effective_sede)
             | (models.ProjectTemplate.is_public.is_(True))
         )
+    else:
+        q = q.filter(
+            models.ProjectTemplate.sede_id.is_(None)
+            | models.ProjectTemplate.is_public.is_(True)
+        )
     template = q.first()
     if template:
         _prepare_template_response(template)
@@ -1899,8 +2407,11 @@ def create_project_template(
     sede_id: Optional[UUID | str] = None,
     *,
     created_by: Optional[UUID | str] = None,
+    can_manage_global: bool = False,
 ) -> models.ProjectTemplate:
     effective_creator = creator_persona_id or created_by
+    if sede_id is None and not can_manage_global:
+        raise ValueError("projects:manage es obligatorio para crear plantillas globales")
     structure_dict = (
         template_in.structure.model_dump()
         if hasattr(template_in.structure, "model_dump")
@@ -1915,7 +2426,8 @@ def create_project_template(
         structure=structure_dict,
         created_by=effective_creator,
         is_public=template_in.is_public if template_in.is_public is not None else True,
-        sede_id=template_in.sede_id or sede_id,
+        # Tenant ownership comes from the authenticated actor, never from the request body.
+        sede_id=sede_id,
         created_at=datetime.now(timezone.utc),
         updated_at=datetime.now(timezone.utc),
     )
@@ -1936,9 +2448,13 @@ def update_project_template(
     template_id: UUID | str,
     template_in: schemas.ProjectTemplateUpdate,
     sede_id: Optional[UUID | str] = None,
+    *,
+    can_manage_global: bool = False,
 ) -> Optional[models.ProjectTemplate]:
-    template = get_project_template(db, template_id, sede_id=sede_id)
+    template = _get_project_template_for_mutation(db, template_id, sede_id)
     if not template:
+        return None
+    if template.sede_id is None and not can_manage_global:
         return None
 
     if template_in.name is not None:
@@ -1969,15 +2485,39 @@ def delete_project_template(
     template_id: UUID | str,
     sede_id: Optional[UUID | str] = None,
     user_sede_id: Optional[UUID | str] = None,
+    *,
+    can_manage_global: bool = False,
 ) -> bool:
     effective_sede = sede_id if sede_id is not None else user_sede_id
-    template = get_project_template(db, template_id, sede_id=effective_sede)
+    template = _get_project_template_for_mutation(db, template_id, effective_sede)
     if not template:
+        return False
+    if template.sede_id is None and not can_manage_global:
         return False
 
     template.deleted_at = datetime.now(timezone.utc)
     db.commit()
     return True
+
+
+def _get_project_template_for_mutation(
+    db: Session,
+    template_id: UUID | str,
+    sede_id: Optional[UUID | str],
+) -> Optional[models.ProjectTemplate]:
+    """Resolve templates writable in the actor's tenant; public is read-only cross-tenant."""
+    q = db.query(models.ProjectTemplate).filter(
+        models.ProjectTemplate.id == template_id,
+        models.ProjectTemplate.deleted_at.is_(None),
+    )
+    if sede_id is not None:
+        q = q.filter(
+            models.ProjectTemplate.sede_id.is_(None)
+            | (models.ProjectTemplate.sede_id == sede_id)
+        )
+    else:
+        q = q.filter(models.ProjectTemplate.sede_id.is_(None))
+    return q.first()
 
 
 def create_project_from_template(
@@ -2391,6 +2931,7 @@ def update_project_automation_rule(
     *,
     user_sede_id: Optional[UUID | str] = None,
     sede_id: Optional[UUID | str] = None,
+    can_manage_global: bool = False,
 ) -> Optional[models.ProjectAutomationRule]:
     if rule_in is not None:
         actual_rule_id = rule_id_or_update
@@ -2400,7 +2941,7 @@ def update_project_automation_rule(
         actual_rule_in = rule_id_or_update
 
     rule = get_project_automation_rule(db, actual_rule_id, user_sede_id=user_sede_id, sede_id=sede_id)
-    if not rule:
+    if not rule or (rule.project_id is None and not can_manage_global):
         return None
 
     if actual_rule_in.name is not None:
@@ -2431,15 +2972,36 @@ def delete_project_automation_rule(
     *,
     user_sede_id: Optional[UUID | str] = None,
     sede_id: Optional[UUID | str] = None,
+    can_manage_global: bool = False,
 ) -> bool:
     actual_rule_id = rule_id if rule_id is not None else project_id_or_rule_id
     rule = get_project_automation_rule(db, actual_rule_id, user_sede_id=user_sede_id, sede_id=sede_id)
-    if not rule:
+    if not rule or (rule.project_id is None and not can_manage_global):
         return False
 
     rule.deleted_at = datetime.now(timezone.utc)
     db.commit()
     return True
+
+
+def _assert_automation_assignee_in_sede(
+    db: Session,
+    assignee_id: UUID | str,
+    user_sede_id: Optional[UUID | str],
+) -> None:
+    """Prevent automation rules from creating cross-sede task assignments."""
+    if user_sede_id is None:
+        return
+    persona = (
+        db.query(models.Persona)
+        .filter(
+            models.Persona.id == _to_uuid(assignee_id),
+            models.Persona.sede_id == _to_uuid(user_sede_id),
+        )
+        .first()
+    )
+    if not persona:
+        raise ValueError("Automation assignee not found in actor sede")
 
 
 def evaluate_project_automations(
@@ -2451,6 +3013,7 @@ def evaluate_project_automations(
     trigger_event: Optional[str] = None,
     actor_persona_id: Optional[UUID | str] = None,
     user_sede_id: Optional[UUID | str] = None,
+    dry_run: bool = True,
 ) -> list[dict]:
     effective_context = {}
     if hasattr(trigger_event_or_payload, "trigger_event"):
@@ -2485,27 +3048,85 @@ def evaluate_project_automations(
     if task_id:
         task = (
             db.query(models.ProjectTask)
-            .filter(models.ProjectTask.id == _to_uuid(task_id), models.ProjectTask.deleted_at.is_(None))
+            .filter(
+                models.ProjectTask.id == _to_uuid(task_id),
+                models.ProjectTask.project_id == _to_uuid(project_id),
+                models.ProjectTask.deleted_at.is_(None),
+            )
             .first()
         )
 
+    supported_actions = {
+        "notify_assignee",
+        "reassign_task",
+        "change_phase",
+        "create_followup_task",
+        "set_priority",
+    }
+    supported_priorities = {"low", "medium", "high", "urgent"}
+    task_required_actions = {"reassign_task", "change_phase", "set_priority"}
     for rule in rules:
+        action = rule.action_type
+        validation_data = rule.action_data or {}
+        configuration_error = None
+        if not isinstance(validation_data, dict):
+            configuration_error = "Los datos de configuración de la acción no son válidos."
+        elif action not in supported_actions:
+            configuration_error = f"Acción no soportada: {action}"
+        elif action == "reassign_task" and not validation_data.get("assignee_id"):
+            configuration_error = "La acción requiere assignee_id."
+        elif action == "change_phase" and not any(
+            isinstance(target, str) and target.strip()
+            for target in (validation_data.get("phase_name"), validation_data.get("node"))
+        ):
+            configuration_error = "La acción requiere phase_name o node."
+        elif action == "set_priority" and (
+            not isinstance(validation_data.get("priority", "high"), str)
+            or validation_data.get("priority", "high") not in supported_priorities
+        ):
+            configuration_error = "La prioridad de destino no es válida."
+        elif action == "create_followup_task" and (
+            not isinstance(validation_data.get("priority", "medium"), str)
+            or validation_data.get("priority", "medium") not in supported_priorities
+        ):
+            configuration_error = "La prioridad de la tarea de seguimiento no es válida."
+
+        if configuration_error:
+            results.append({
+                "rule_id": str(rule.id),
+                "rule_name": rule.name,
+                "action_type": action,
+                "status": "failed",
+                "details": configuration_error,
+            })
+            continue
+
+        if action in task_required_actions and task is None:
+            results.append({
+                "rule_id": str(rule.id),
+                "rule_name": rule.name,
+                "action_type": action,
+                "status": "failed",
+                "details": "Esta acción requiere una tarea activa del proyecto.",
+            })
+            continue
+
         cond = rule.condition_data or {}
         # 1. Comprobar condiciones
         matches = True
         if "priority" in cond and cond["priority"]:
-            task_priority = effective_context.get("priority") or getattr(task, "priority", None)
+            task_priority = getattr(task, "priority", None) if task else effective_context.get("priority")
             if task_priority != cond["priority"]:
                 matches = False
 
         if matches and "status" in cond and cond["status"]:
-            task_status = effective_context.get("status") or getattr(task, "status", None)
+            task_status = getattr(task, "status", None) if task else effective_context.get("status")
             if task_status != cond["status"]:
                 matches = False
 
         if matches and ("phase_name" in cond or "node" in cond):
             required_node = cond.get("phase_name") or cond.get("node")
-            task_node = effective_context.get("phase_name") or effective_context.get("node") or getattr(task, "node", None)
+            task_node = getattr(task, "node", None) if task else (effective_context.get("phase_name") or effective_context.get("node"))
             if task_node != required_node:
                 matches = False
 
@@ -2521,12 +3142,12 @@ def evaluate_project_automations(
 
         # 2. Ejecutar acción
         action_details = ""
-        action = rule.action_type
         act_data = rule.action_data or {}
-
         try:
             if action == "notify_assignee":
                 recipient = getattr(task, "assignee_id", None) or effective_context.get("assignee_id") or actor_persona_id
+                if recipient:
+                    _assert_automation_assignee_in_sede(db, recipient, user_sede_id)
                 activity = models.ProjectActivityLog(
                     project_id=_to_uuid(project_id),
                     persona_id=_to_uuid(recipient) if recipient else None,
@@ -2534,89 +3155,115 @@ def evaluate_project_automations(
                     description=f"[Automatización] {rule.name}: Notificación emitida para '{getattr(task, 'title', effective_context.get('task_title', 'tarea'))}'",
                     created_at=datetime.now(timezone.utc),
                 )
-                db.add(activity)
-                action_details = f"Notificación generada para responsable {recipient}"
+                if not dry_run:
+                    db.add(activity)
+                action_details = (
+                    f"Se generaría una notificación para responsable {recipient}"
+                    if dry_run else f"Notificación generada para responsable {recipient}"
+                )
 
             elif action == "reassign_task" and task:
                 new_assignee = act_data.get("assignee_id")
                 if new_assignee:
-                    task.assignee_id = _to_uuid(new_assignee)
-                    task.updated_at = datetime.now(timezone.utc)
-                    activity = models.ProjectActivityLog(
-                        project_id=_to_uuid(project_id),
-                        persona_id=_to_uuid(actor_persona_id) if actor_persona_id else None,
-                        action_type="automation_task_reassigned",
-                        description=f"[Automatización] Tarea '{task.title}' reasignada a {new_assignee}",
-                        created_at=datetime.now(timezone.utc),
-                    )
-                    db.add(activity)
-                    action_details = f"Tarea reasignada a {new_assignee}"
+                    _assert_automation_assignee_in_sede(db, new_assignee, user_sede_id)
+                    if dry_run:
+                        action_details = f"Se reasignaría la tarea a {new_assignee}"
+                    else:
+                        task.assignee_id = _to_uuid(new_assignee)
+                        task.updated_at = datetime.now(timezone.utc)
+                        activity = models.ProjectActivityLog(
+                            project_id=_to_uuid(project_id),
+                            persona_id=_to_uuid(actor_persona_id) if actor_persona_id else None,
+                            action_type="automation_task_reassigned",
+                            description=f"[Automatización] Tarea '{task.title}' reasignada a {new_assignee}",
+                            created_at=datetime.now(timezone.utc),
+                        )
+                        db.add(activity)
+                        action_details = f"Tarea reasignada a {new_assignee}"
 
             elif action == "change_phase" and task:
                 target_node = act_data.get("phase_name") or act_data.get("node")
                 if target_node:
                     old_node = task.node
-                    task.node = target_node
-                    task.updated_at = datetime.now(timezone.utc)
-                    activity = models.ProjectActivityLog(
-                        project_id=_to_uuid(project_id),
-                        persona_id=_to_uuid(actor_persona_id) if actor_persona_id else None,
-                        action_type="automation_phase_changed",
-                        description=f"[Automatización] Tarea '{task.title}' movida de '{old_node}' a '{target_node}'",
-                        created_at=datetime.now(timezone.utc),
-                    )
-                    db.add(activity)
-                    action_details = f"Tarea movida a fase '{target_node}'"
+                    if dry_run:
+                        action_details = f"La tarea se movería de '{old_node}' a '{target_node}'"
+                    else:
+                        task.node = target_node
+                        task.updated_at = datetime.now(timezone.utc)
+                        activity = models.ProjectActivityLog(
+                            project_id=_to_uuid(project_id),
+                            persona_id=_to_uuid(actor_persona_id) if actor_persona_id else None,
+                            action_type="automation_phase_changed",
+                            description=f"[Automatización] Tarea '{task.title}' movida de '{old_node}' a '{target_node}'",
+                            created_at=datetime.now(timezone.utc),
+                        )
+                        db.add(activity)
+                        action_details = f"Tarea movida a fase '{target_node}'"
 
             elif action == "create_followup_task":
-                title = act_data.get("title") or f"Seguimiento: {rule.name}"
+                title = (act_data.get("title") or f"Seguimiento: {rule.name}").strip()
+                if len(title) > TASK_TITLE_MAX_LENGTH:
+                    raise ValueError(
+                        f"El título de la tarea de seguimiento no puede superar "
+                        f"{TASK_TITLE_MAX_LENGTH} caracteres"
+                    )
                 priority = act_data.get("priority", "medium")
                 offset_days = int(act_data.get("duration_days", 3))
                 start_d = datetime.now(timezone.utc)
                 due_d = start_d + timedelta(days=offset_days)
-                new_task = models.ProjectTask(
-                    project_id=_to_uuid(project_id),
-                    title=title,
-                    description=act_data.get("description", f"Generada automáticamente por regla '{rule.name}'"),
-                    status="todo",
-                    priority=priority,
-                    start_date=start_d,
-                    due_date=due_d,
-                    node=act_data.get("phase_name") or act_data.get("node"),
-                    assignee_id=_to_uuid(act_data.get("assignee_id")) if act_data.get("assignee_id") else None,
-                    created_at=datetime.now(timezone.utc),
-                    updated_at=datetime.now(timezone.utc),
-                )
-                db.add(new_task)
-                db.flush()
-                activity = models.ProjectActivityLog(
-                    project_id=_to_uuid(project_id),
-                    persona_id=_to_uuid(actor_persona_id) if actor_persona_id else None,
-                    action_type="automation_followup_created",
-                    description=f"[Automatización] Tarea de seguimiento creada: '{new_task.title}' (id={new_task.id})",
-                    created_at=datetime.now(timezone.utc),
-                )
-                db.add(activity)
-                action_details = f"Tarea de seguimiento '{new_task.title}' creada con éxito"
+                followup_assignee_id = act_data.get("assignee_id")
+                if followup_assignee_id:
+                    _assert_automation_assignee_in_sede(db, followup_assignee_id, user_sede_id)
+                if dry_run:
+                    action_details = f"Se crearía la tarea de seguimiento '{title}' con vencimiento {due_d.date().isoformat()}"
+                else:
+                    new_task = models.ProjectTask(
+                        project_id=_to_uuid(project_id),
+                        title=title,
+                        description=act_data.get("description", f"Generada automáticamente por regla '{rule.name}'"),
+                        status="todo",
+                        priority=priority,
+                        start_date=start_d,
+                        due_date=due_d,
+                        node=act_data.get("phase_name") or act_data.get("node"),
+                        assignee_id=_to_uuid(followup_assignee_id) if followup_assignee_id else None,
+                        created_at=datetime.now(timezone.utc),
+                        updated_at=datetime.now(timezone.utc),
+                    )
+                    db.add(new_task)
+                    db.flush()
+                    activity = models.ProjectActivityLog(
+                        project_id=_to_uuid(project_id),
+                        persona_id=_to_uuid(actor_persona_id) if actor_persona_id else None,
+                        action_type="automation_followup_created",
+                        description=f"[Automatización] Tarea de seguimiento creada: '{new_task.title}' (id={new_task.id})",
+                        created_at=datetime.now(timezone.utc),
+                    )
+                    db.add(activity)
+                    action_details = f"Tarea de seguimiento '{new_task.title}' creada con éxito"
 
             elif action == "set_priority" and task:
                 new_prio = act_data.get("priority", "high")
-                task.priority = new_prio
-                task.updated_at = datetime.now(timezone.utc)
-                action_details = f"Prioridad de tarea cambiada a {new_prio}"
+                if dry_run:
+                    action_details = f"La prioridad de la tarea cambiaría a {new_prio}"
+                else:
+                    task.priority = new_prio
+                    task.updated_at = datetime.now(timezone.utc)
+                    action_details = f"Prioridad de tarea cambiada a {new_prio}"
 
             else:
                 action_details = f"Acción '{action}' completada sin efectos secundarios"
 
             # 3. Registrar ejecución exitosa
-            rule.execution_count = (rule.execution_count or 0) + 1
-            rule.last_triggered_at = datetime.now(timezone.utc)
+            if not dry_run:
+                rule.execution_count = (rule.execution_count or 0) + 1
+                rule.last_triggered_at = datetime.now(timezone.utc)
 
             results.append({
                 "rule_id": str(rule.id),
                 "rule_name": rule.name,
                 "action_type": rule.action_type,
-                "status": "executed",
+                "status": "would_execute" if dry_run else "executed",
                 "details": action_details,
             })
         except Exception as e:
@@ -2628,7 +3275,8 @@ def evaluate_project_automations(
                 "details": str(e),
             })
 
-    db.commit()
+    if not dry_run:
+        db.commit()
     return results
 
 
@@ -2684,6 +3332,24 @@ def get_project_executive_report_data(
         "medium_count": 0,
         "low_count": 0,
         "risks": [],
+    }
+    risk_rows = get_project_risks(db, project.id)
+    executive_risks = {
+        **risks_summary,
+        "project_id": str(project.id),
+        "risks": [
+            {
+                "id": str(risk.id),
+                "title": risk.title,
+                "category": risk.category or "tecnico",
+                "probability": risk.probability,
+                "impact": risk.impact,
+                "severity": (risk.probability or 1) * (risk.impact or 1),
+                "status": risk.status,
+                "mitigation_plan": risk.mitigation_plan,
+            }
+            for risk in risk_rows
+        ],
     }
 
     # Ruta Crítica CPM
@@ -2760,7 +3426,7 @@ def get_project_executive_report_data(
             "completion_rate": completion_rate,
         },
         "financial_kpis": budget_summary,
-        "raid_kpis": risks_summary,
+        "raid_kpis": executive_risks,
         "cpm_metrics": cpm_summary,
         "time_metrics": time_summary,
         "phases": phase_data,
@@ -2771,10 +3437,14 @@ def get_project_executive_report_data(
 
 def generate_project_summary_pdf(report_data: dict) -> bytes:
     """Genera un informe ejecutivo PDF profesional con membrete CCF y ReportLab."""
-    from reportlab.lib.pagesizes import letter
-    from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, HRFlowable
-    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
     from reportlab.lib import colors
+    from reportlab.lib.pagesizes import letter
+    from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
+    from reportlab.platypus import HRFlowable, Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
+
+    def safe_text(value: Any) -> str:
+        """Render project-controlled fields as text, never as ReportLab markup."""
+        return escape_xml_text(str(value if value is not None else ""))
 
     buf = io.BytesIO()
     doc = SimpleDocTemplate(
@@ -2865,15 +3535,15 @@ def generate_project_summary_pdf(report_data: dict) -> bytes:
     meta_table_data = [
         [
             Paragraph("<b>Proyecto:</b>", body_bold),
-            Paragraph(f"<b>{proj.get('title', 'Sin Título')}</b>", body_bold),
+            Paragraph(f"<b>{safe_text(proj.get('title', 'Sin Título'))}</b>", body_bold),
             Paragraph("<b>Estado:</b>", body_bold),
-            Paragraph(str(proj.get('status', 'N/A')).upper(), body_style),
+            Paragraph(safe_text(proj.get('status', 'N/A')).upper(), body_style),
         ],
         [
             Paragraph("<b>Líder / Propietario:</b>", body_style),
-            Paragraph(str(proj.get('owner_name', 'No asignado')), body_style),
+            Paragraph(safe_text(proj.get('owner_name', 'No asignado')), body_style),
             Paragraph("<b>Salud:</b>", body_style),
-            Paragraph(str(proj.get('health_override', 'Normal')).capitalize(), body_style),
+            Paragraph(safe_text(proj.get('health_override', 'Normal')).capitalize(), body_style),
         ],
         [
             Paragraph("<b>Fecha Inicio:</b>", body_style),
@@ -2885,7 +3555,7 @@ def generate_project_summary_pdf(report_data: dict) -> bytes:
             Paragraph("<b>Avance General:</b>", body_style),
             Paragraph(f"<b>{proj.get('progress_percentage', 0.0)}%</b>", body_bold),
             Paragraph("<b>Fecha Emisión:</b>", body_style),
-            Paragraph(str(report_data.get('generated_at', ''))[:19].replace('T', ' ') + " UTC", body_style),
+            Paragraph(safe_text(report_data.get('generated_at', ''))[:19].replace('T', ' ') + " UTC", body_style),
         ],
     ]
     meta_table = Table(meta_table_data, colWidths=[100, 170, 90, 180])
@@ -2933,7 +3603,7 @@ def generate_project_summary_pdf(report_data: dict) -> bytes:
     # 4. Control Presupuestario
     story.append(Paragraph("CONTROL PRESUPUESTARIO Y DESEMBOLSOS", section_title_style))
     by_cat = f_kpi.get("by_category", {})
-    cat_text = ", ".join([f"{k.capitalize()}: ${v:,.2f}" for k, v in by_cat.items()]) or "Sin partidas registradas"
+    cat_text = ", ".join([f"{safe_text(k).capitalize()}: ${v:,.2f}" for k, v in by_cat.items()]) or "Sin partidas registradas"
     rem_budget = f_kpi.get('remaining_budget', 0.0)
     burn_pct = f_kpi.get('burn_rate_percent', 0.0)
     fin_text = (
@@ -2962,10 +3632,10 @@ def generate_project_summary_pdf(report_data: dict) -> bytes:
             sev = (r.get("probability") or 1) * (r.get("impact") or 1)
             sev_color = "#DC2626" if sev >= 15 else ("#D97706" if sev >= 10 else "#16A34A")
             risk_table_data.append([
-                Paragraph(r.get("title", ""), cell_style),
-                Paragraph(r.get("category", "tech"), cell_style),
+                Paragraph(safe_text(r.get("title", "")), cell_style),
+                Paragraph(safe_text(r.get("category", "tech")), cell_style),
                 Paragraph(f"<font color='{sev_color}'><b>{sev}/25</b></font>", cell_style),
-                Paragraph(r.get("mitigation_plan") or "En evaluación", cell_style),
+                Paragraph(safe_text(r.get("mitigation_plan") or "En evaluación"), cell_style),
             ])
         risk_table = Table(risk_table_data, colWidths=[180, 60, 60, 240])
         risk_table.setStyle(TableStyle([
@@ -2985,7 +3655,7 @@ def generate_project_summary_pdf(report_data: dict) -> bytes:
     story.append(Paragraph("CRONOGRAMA Y RUTA CRÍTICA (CPM)", section_title_style))
     cpm_tasks = cpm.get("tasks", [])
     crit_tasks = [t for t in cpm_tasks if t.get("is_critical")]
-    crit_names = ", ".join([t.get("title", "") for t in crit_tasks]) or "Ninguna tarea crítica calculada"
+    crit_names = ", ".join([safe_text(t.get("title", "")) for t in crit_tasks]) or "Ninguna tarea crítica calculada"
     cpm_text = (
         f"<b>Duración Total Estimada:</b> {cpm.get('total_duration_days', 0)} días calendario.<br/>"
         f"<b>Tareas en Ruta Crítica (Holgura Cero):</b> {crit_names}"
@@ -2997,7 +3667,7 @@ def generate_project_summary_pdf(report_data: dict) -> bytes:
     story.append(Paragraph("REGISTRO DE HORAS Y ESFUERZO", section_title_style))
     by_mem = time_met.get("by_member", [])
     if by_mem:
-        mem_str = ", ".join([f"{m.get('persona_name')}: {m.get('total_hours')}h ({m.get('billable_hours')}h fact.)" for m in by_mem[:5]])
+        mem_str = ", ".join([f"{safe_text(m.get('persona_name'))}: {m.get('total_hours')}h ({m.get('billable_hours')}h fact.)" for m in by_mem[:5]])
     else:
         mem_str = "Sin horas registradas en hoja de tiempos"
     time_text = (
@@ -3071,12 +3741,12 @@ def generate_project_tasks_csv(
 
         writer.writerow([
             str(t.id),
-            t.title or "",
-            (t.description or "").replace("\n", " ").strip(),
-            t.status or "todo",
-            t.priority or "medium",
-            t.node or "",
-            assignee_name,
+            _safe_csv_text(t.title),
+            _safe_csv_text((t.description or "").replace("\n", " ").strip()),
+            _safe_csv_text(t.status or "todo"),
+            _safe_csv_text(t.priority or "medium"),
+            _safe_csv_text(t.node),
+            _safe_csv_text(assignee_name),
             start_str,
             due_str,
             created_str,
@@ -3135,12 +3805,12 @@ def generate_project_expenses_csv(
         writer.writerow([
             str(e.id),
             date_str,
-            e.category or "general",
-            (e.description or "").replace("\n", " ").strip(),
+            _safe_csv_text(e.category or "general"),
+            _safe_csv_text((e.description or "").replace("\n", " ").strip()),
             f"{float(e.amount or 0.0):.2f}",
-            e.status or "planned",
-            e.receipt_url or "",
-            creator_name,
+            _safe_csv_text(e.status or "planned"),
+            _safe_csv_text(e.receipt_url),
+            _safe_csv_text(creator_name),
             created_str,
         ])
 
@@ -3495,9 +4165,10 @@ def update_project_indicator(
     user_id: UUID | str,
     *,
     sede_id: Optional[UUID | str] = None,
+    project_id: Optional[UUID | str] = None,
 ) -> Optional[models.ProjectIndicator]:
     """Actualiza un indicador recalculando CREMA si cambiaron atributos clave."""
-    indicator = get_project_indicator(db, indicator_id, sede_id=sede_id)
+    indicator = get_project_indicator(db, indicator_id, project_id=project_id, sede_id=sede_id)
     if not indicator:
         return None
 
@@ -3532,9 +4203,10 @@ def delete_project_indicator(
     user_id: UUID | str,
     *,
     sede_id: Optional[UUID | str] = None,
+    project_id: Optional[UUID | str] = None,
 ) -> bool:
     """Soft-delete de indicador garantizando UTC (Axioma 2)."""
-    indicator = get_project_indicator(db, indicator_id, sede_id=sede_id)
+    indicator = get_project_indicator(db, indicator_id, project_id=project_id, sede_id=sede_id)
     if not indicator:
         return False
 
@@ -3551,23 +4223,21 @@ def create_project_indicator_record(
     reported_by: UUID | str,
     *,
     sede_id: Optional[UUID | str] = None,
+    project_id: Optional[UUID | str] = None,
 ) -> models.ProjectIndicatorRecord:
     """Registra avance periódico calculando SPI y actualizando el valor actual del indicador."""
-    indicator = get_project_indicator(db, indicator_id, sede_id=sede_id)
+    indicator = get_project_indicator(db, indicator_id, project_id=project_id, sede_id=sede_id)
     if not indicator:
         raise ValueError("Indicador no encontrado o no pertenece a la sede (Axioma 3)")
 
     target = float(record_in.target_value or 0.0)
     actual = float(record_in.actual_value or 0.0)
 
-    # Cálculo automático de SPI si no se envía explícito
-    if record_in.spi is not None:
-        spi = float(record_in.spi)
+    # SPI is derived from the persisted measurement; never trust a client-supplied score.
+    if target > 0:
+        spi = round(actual / target, 2)
     else:
-        if target > 0:
-            spi = round(actual / target, 2)
-        else:
-            spi = 1.0 if actual >= 0 else 0.0
+        spi = 1.0 if actual >= 0 else 0.0
 
     rep_at = record_in.reported_at or datetime.now(timezone.utc)
     if not hasattr(rep_at, "tzinfo") or not rep_at.tzinfo:
@@ -3602,9 +4272,10 @@ def get_project_indicator_records(
     indicator_id: UUID | str,
     *,
     sede_id: Optional[UUID | str] = None,
+    project_id: Optional[UUID | str] = None,
 ) -> list[models.ProjectIndicatorRecord]:
     """Lista historial de mediciones de un indicador."""
-    indicator = get_project_indicator(db, indicator_id, sede_id=sede_id)
+    indicator = get_project_indicator(db, indicator_id, project_id=project_id, sede_id=sede_id)
     if not indicator:
         raise ValueError("Indicador no encontrado o no pertenece a la sede (Axioma 3)")
 
@@ -3777,6 +4448,22 @@ def extract_drive_file_id(url_or_id: str) -> Optional[str]:
     if not url_or_id:
         return None
     url_or_id = url_or_id.strip()
+    if "://" in url_or_id:
+        try:
+            parsed_url = urlsplit(url_or_id)
+            if (
+                parsed_url.scheme.lower() != "https"
+                or parsed_url.hostname not in {"drive.google.com", "docs.google.com"}
+                or parsed_url.username is not None
+                or parsed_url.password is not None
+                or parsed_url.port is not None
+            ):
+                return None
+        except ValueError:
+            return None
+    elif "/" in url_or_id or "?" in url_or_id or "#" in url_or_id:
+        # Only raw file IDs are accepted without an absolute Google URL.
+        return None
     for pattern in DRIVE_FILE_ID_PATTERNS:
         match = re.search(pattern, url_or_id)
         if match:
@@ -3850,6 +4537,23 @@ def create_project_file(
     project = get_project(db, project_id, sede_id=sede_id)
     if not project:
         raise ValueError("Proyecto no encontrado o no pertenece a la sede (Axioma 3)")
+
+    if task_id is not None:
+        task = db.query(models.ProjectTask).filter(
+            models.ProjectTask.id == _to_uuid(task_id),
+            models.ProjectTask.project_id == project.id,
+            models.ProjectTask.deleted_at.is_(None),
+        ).first()
+        if not task:
+            raise ValueError("La tarea asociada no pertenece a este proyecto")
+    if phase_id is not None:
+        phase = db.query(models.ProjectPhase).filter(
+            models.ProjectPhase.id == _to_uuid(phase_id),
+            models.ProjectPhase.project_id == project.id,
+            models.ProjectPhase.deleted_at.is_(None),
+        ).first()
+        if not phase:
+            raise ValueError("La fase asociada no pertenece a este proyecto")
 
     # Si es drive y no tiene drive_file_id, intentar extraerlo y normalizar
     if file_source == "drive" or "drive.google.com" in file_url or "docs.google.com" in file_url:
@@ -3950,6 +4654,23 @@ def get_project_files(
     if not project:
         raise ValueError("Proyecto no encontrado o no pertenece a la sede (Axioma 3)")
 
+    if task_id is not None:
+        task = db.query(models.ProjectTask).filter(
+            models.ProjectTask.id == _to_uuid(task_id),
+            models.ProjectTask.project_id == project.id,
+            models.ProjectTask.deleted_at.is_(None),
+        ).first()
+        if not task:
+            raise ValueError("La tarea asociada no pertenece a este proyecto")
+    if phase_id is not None:
+        phase = db.query(models.ProjectPhase).filter(
+            models.ProjectPhase.id == _to_uuid(phase_id),
+            models.ProjectPhase.project_id == project.id,
+            models.ProjectPhase.deleted_at.is_(None),
+        ).first()
+        if not phase:
+            raise ValueError("La fase asociada no pertenece a este proyecto")
+
     q = db.query(models.ProjectFile).filter(
         models.ProjectFile.project_id == project.id,
         models.ProjectFile.deleted_at.is_(None),
@@ -4041,13 +4762,3 @@ def get_project_files_summary(
         "by_category": by_category,
         "files": files,
     }
-
-
-
-
-
-
-
-
-
-
