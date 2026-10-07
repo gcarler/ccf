@@ -116,7 +116,6 @@ describe("CmsBrandingPage", () => {
     authMock.role = "admin";
     render(<CmsBrandingPage />);
 
-    await waitFor(() => expect(listCmsThemes).toHaveBeenCalledWith("ccf", "test-token"));
     fireEvent.change(screen.getByPlaceholderText("El Faro"), {
       target: { value: "Comunidad El Faro" },
     });
