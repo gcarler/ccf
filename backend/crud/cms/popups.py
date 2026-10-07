@@ -9,9 +9,9 @@ seeding, llamada directa al CRUD) podría crear/mutar registros sin
 pasar por el helper API `_get_scoped_*` correspondiente.
 """
 
-from datetime import datetime, timezone
 import logging
 import uuid
+from datetime import datetime, timezone
 
 from sqlalchemy.orm import Session
 

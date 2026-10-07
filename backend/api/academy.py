@@ -8,8 +8,8 @@ explicit Academy permission.
 from __future__ import annotations
 
 import asyncio
-from datetime import date, datetime, timedelta, timezone
 import hashlib
+from datetime import date, datetime, timedelta, timezone
 from html import escape as _html_escape
 from typing import Annotated, Any, List, Optional
 from uuid import UUID
@@ -19,7 +19,6 @@ from sqlalchemy import and_, func, or_
 from sqlalchemy.orm import Session, contains_eager, joinedload, selectinload
 
 from backend import models
-from backend.tasks.academy_notifications import queue_academy_notification
 from backend.api.academy_cache import (
     _fetch_dashboard_metrics_cached,
     _fetch_list_lessons_cached,
@@ -41,6 +40,7 @@ from backend.services.academic_engine_service import (
     compute_student_transcript_summary,
     validate_grading_scheme_cuts,
 )
+from backend.tasks.academy_notifications import queue_academy_notification
 
 router = APIRouter(prefix="/academy", tags=["Academy"])
 
@@ -3748,8 +3748,9 @@ def create_portfolio_entry(
 ):
     now = _utcnow().replace(microsecond=0)
     user_sede_id = get_user_sede_id(db, current_user.id)
-    from backend.services.academic_engine_service import compute_portfolio_credential_hash
     import uuid as _uuid_mod
+
+    from backend.services.academic_engine_service import compute_portfolio_credential_hash
     entry_id = _uuid_mod.uuid4()
     cred_hash = compute_portfolio_credential_hash(current_user.id, entry_id, payload.score, now)
 

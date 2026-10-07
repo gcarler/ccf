@@ -9,11 +9,11 @@ Handles:
 
 from __future__ import annotations
 
-from typing import List, Optional, Tuple
-from uuid import UUID
 from datetime import datetime, timezone
+from typing import Any, List, Optional, Tuple
+from uuid import UUID
+
 from sqlalchemy.orm import Session, joinedload
-from sqlalchemy import or_
 
 from backend import models
 from backend.models_shared import _utcnow
@@ -786,7 +786,7 @@ def suggest_copilot_activities(db: Session, offering_id: UUID, topic: str) -> di
         {
             "activity_type": "group_challenge",
             "title": f"Defensa y Debate Académico: Controversias en {clean_topic}",
-            "description": f"Presentación en equipos con sustentación de posturas y réplica socrática frente al grupo docente y pares.",
+            "description": "Presentación en equipos con sustentación de posturas y réplica socrática frente al grupo docente y pares.",
             "estimated_duration_minutes": 40,
             "aligned_nodes": matching_titles,
         },
@@ -801,8 +801,6 @@ def suggest_copilot_activities(db: Session, offering_id: UUID, topic: str) -> di
 
 def generate_copilot_rubric(title: str, competencies: List[str]) -> dict:
     """Builds a comprehensive evaluation rubric with weighted criteria and 4 performance levels."""
-    comp_text = ", ".join(competencies) if competencies else "Competencias Académicas del Módulo"
-
     criteria = [
         {
             "criterion": "Dominio Conceptual y Teórico",

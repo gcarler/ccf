@@ -8,11 +8,11 @@ from sqlalchemy import inspect
 from sqlalchemy.orm import Session
 
 from backend import models
-from backend.crud.crm_.shared import get_user_sede_id
 from backend.crud._utils import _to_uuid
 from backend.crud.crm_.shared import (
     _case_created_column,  # noqa: F401 — re-exported for pastoral.py, persona_relations.py
     case_query,  # noqa: F401 — re-exported
+    get_user_sede_id,
     persona_query,
     prepare_case_for_output,  # noqa: F401 — re-exported
     prepare_persona_for_output,

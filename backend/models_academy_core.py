@@ -1,4 +1,5 @@
 import sqlalchemy as sa
+
 """Canonical Academy models backed exclusively by ``academy_*`` tables."""
 
 import uuid as _uuid

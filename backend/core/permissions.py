@@ -273,11 +273,6 @@ MODULE_PERMISSION_MAP: Dict[str, Dict[str, str]] = {
         "manage": "agenda:manage",
     },
     "wiki": {"read": "wiki:read", "edit": "wiki:edit", "manage": "wiki:edit"},
-    "agenda": {
-        "read": "agenda:read",
-        "edit": "agenda:edit",
-        "manage": "agenda:manage",
-    },
     "support": {"read": "support:read", "edit": "support:edit", "manage": "support:manage"},
     "analytics": {"read": "analytics:read", "edit": "analytics:manage", "manage": "analytics:manage"},
     "dashboard": {"read": "dashboard:read", "edit": "dashboard:manage", "manage": "dashboard:manage"},

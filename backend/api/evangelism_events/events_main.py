@@ -6,8 +6,8 @@ import csv
 import datetime
 import io
 import math
-from typing import List, Optional
 import uuid
+from typing import List, Optional
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -422,7 +422,7 @@ def save_event_form(
     current_user: models.User = Depends(require_evangelism_manage),
 ):
     """Crea o actualiza el CmsForm vinculado al evento en Form Studio."""
-    from backend.services.form_validation import validate_field_spec, ValidationError
+    from backend.services.form_validation import ValidationError, validate_field_spec
 
     event = require_event_access(db, current_user, event_id)
     raw_fields = payload.get("fields", [])

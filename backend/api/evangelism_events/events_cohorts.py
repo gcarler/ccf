@@ -14,7 +14,7 @@ import logging
 from typing import Optional
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from fastapi.responses import Response as RawResponse
 from sqlalchemy.orm import Session
 
@@ -24,7 +24,6 @@ from backend.core.audit import record_admin_action
 from backend.core.database import get_db
 from backend.core.permissions import require_evangelism_manage, require_evangelism_read
 from backend.core.rate_limit import academy_limiter
-from backend.core.tenant import require_user_sede_id
 from backend.services.event_cohort_retention_service import (
     calculate_event_cohort_retention,
     calculate_multi_sede_cohort_analysis,

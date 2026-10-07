@@ -10,6 +10,7 @@ import datetime as dt
 import uuid
 
 from sqlalchemy import (
+    JSON,
     Boolean,
     Column,
     Date,
@@ -17,7 +18,6 @@ from sqlalchemy import (
     Float,
     ForeignKey,
     Integer,
-    JSON,
     String,
     Text,
 )

@@ -12,20 +12,20 @@ from __future__ import annotations
 
 import csv
 import datetime
-from datetime import timedelta, timezone
 import io
 import logging
+from datetime import timedelta, timezone
 from typing import Any, Optional
 from uuid import UUID
 
-from sqlalchemy import and_, func, or_
+from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
 from backend import models
-from backend.models_academy_core import Course, Enrollment
+from backend.models_academy_core import Enrollment
 from backend.models_crm import Persona
-from backend.models_crm_pipeline import CasoCRM, EtapaPipeline
-from backend.models_evangelism import Asistencia, GrupoEvangelismo, ParticipanteGrupo, Sede, SesionGrupo
+from backend.models_crm_pipeline import CasoCRM
+from backend.models_evangelism import Asistencia, ParticipanteGrupo, Sede, SesionGrupo
 from backend.models_kernel import PersonaMinistry
 
 logger = logging.getLogger(__name__)
