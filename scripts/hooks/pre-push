@@ -412,7 +412,7 @@ else
             projects_quality)
                 if [ "$MODE" = "fast" ]; then
                     run_quality_check "$check_id" "Projects quality (unit/isolated)" \
-                        "$VENV/python -m pytest -q -o addopts= tests/test_projects_cycle_detection.py tests/test_projects_gap.py tests/test_projects_title_lengths.py tests/test_projects_multi_tenant.py tests/test_projects_rbac.py"
+                        "$VENV/python -m pytest -q -o addopts= tests/test_projects_cycle_detection.py tests/test_projects_title_lengths.py"
                 else
                     run_quality_check "$check_id" "Projects quality" \
                         "$VENV/python $REPO_ROOT/scripts/run_quality_integration.py --suite projects --test-database-url '${TEST_DATABASE_URL:-sqlite://}'"

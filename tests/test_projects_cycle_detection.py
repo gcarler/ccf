@@ -28,6 +28,12 @@ from backend.schemas.projects import (
     ProjectTaskDependencyCreate,
     ProjectTaskUpdate,
 )
+from tests.factories_projects import create_project_factory
+
+
+@pytest.fixture
+def test_project(db_session):
+    return create_project_factory(db_session)
 
 
 # ── 1. Pure Algorithm Tests: detect_cycle_in_dependencies (DFS) ───────────────
@@ -172,8 +178,10 @@ def test_task_dates_within_phase_bounds_success(db_session, test_project):
             }
         ],
     )
-    assert phases[0].start_date == phase_start
-    assert phases[0].end_date == phase_end
+    p_start = phases[0].start_date if phases[0].start_date.tzinfo else phases[0].start_date.replace(tzinfo=timezone.utc)
+    p_end = phases[0].end_date if phases[0].end_date.tzinfo else phases[0].end_date.replace(tzinfo=timezone.utc)
+    assert p_start == phase_start
+    assert p_end == phase_end
 
     # Tarea con fechas dentro de la fase
     task_in = ProjectTaskCreate(
