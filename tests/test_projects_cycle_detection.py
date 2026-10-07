@@ -9,7 +9,6 @@ Cumple los criterios de aceptación de TKT-PROJECTS-CYCLE-DETECTION-01:
 5. Cero regresiones en Gantt
 """
 
-import uuid
 from datetime import datetime, timedelta, timezone
 
 import pytest
@@ -22,11 +21,9 @@ from backend.crud.projects import (
     detect_cycle_in_dependencies,
     set_project_phases,
     update_project_task,
-    validate_task_dates_within_phase,
 )
-from backend.models_projects import Project, ProjectPhase, ProjectTask, ProjectTaskDependency
+from backend.models_projects import ProjectTask
 from backend.schemas.projects import (
-    ProjectPhaseInput,
     ProjectTaskCreate,
     ProjectTaskDependencyCreate,
     ProjectTaskUpdate,

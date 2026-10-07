@@ -98,7 +98,7 @@ def fast_checkin_visitor(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_evangelism_edit),
 ):
-    require_event_access(db, current_user, event_id)
+    event = require_event_access(db, current_user, event_id)
     user_sede_id = require_user_sede_id(db, current_user)
 
     try:

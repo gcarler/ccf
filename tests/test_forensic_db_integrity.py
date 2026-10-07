@@ -7,7 +7,6 @@ Valida:
   - Cero pasarelas de pago comerciales en la base de datos
 """
 
-import pytest
 from pathlib import Path
 from sqlalchemy import inspect
 from backend.core.database import engine

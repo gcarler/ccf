@@ -11,12 +11,9 @@ Enforces:
 """
 
 import uuid
-from decimal import Decimal
 import pytest
 from fastapi.testclient import TestClient
 
-from backend import models
-from backend.core.database import SessionLocal
 from tests.conftest import auth_headers, seed_admin, seed_user_with_role
 
 

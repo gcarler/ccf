@@ -9,11 +9,9 @@ from pathlib import Path
 import re
 import uuid as _uuid
 
-import pytest
 from sqlalchemy.orm import Session
 
 from backend import models, schemas
-from backend.models_shared import _utcnow
 from tests.conftest import auth_headers, seed_admin, seed_user_with_role
 
 

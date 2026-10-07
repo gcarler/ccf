@@ -186,6 +186,7 @@ def check_space_collision(
     recurrence_until: datetime | None = None,
     recurrence_exceptions: list[str] | None = None,
     exclude_event_id: UUID | None = None,
+    exclude_reservation_id: UUID | None = None,
 ) -> dict | None:
     """Detecta colisiones de reserva para un salón / espacio físico en la misma sede.
 
@@ -246,6 +247,8 @@ def check_space_collision(
     )
     if exclude_event_id is not None:
         query = query.filter(ReservaRecurso.evento_id != exclude_event_id)
+    if exclude_reservation_id is not None:
+        query = query.filter(ReservaRecurso.id != exclude_reservation_id)
 
     reservations = query.all()
 

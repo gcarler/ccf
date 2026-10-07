@@ -11,7 +11,6 @@ Tests:
 from __future__ import annotations
 
 import time
-import pytest
 
 from backend.core.totp import (
     BASE32_ALPHABET,

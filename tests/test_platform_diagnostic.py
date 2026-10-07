@@ -1,4 +1,3 @@
-import pytest
 from backend.app import ROUTER_REGISTRY
 
 CORE_MODULES = [

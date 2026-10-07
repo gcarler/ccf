@@ -594,7 +594,6 @@ def create_reservation(
         recurrence_rule=event.regla_recurrencia if event else None,
         recurrence_until=event.fecha_limite_recurrencia if event else None,
         recurrence_exceptions=event.excepciones_recurrencia if event else None,
-        exclude_event_id=payload.event_id,
     )
     if conflict:
         raise HTTPException(status_code=409, detail=conflict)
@@ -632,7 +631,7 @@ def update_reservation(
         recurrence_rule=event.regla_recurrencia if event else None,
         recurrence_until=event.fecha_limite_recurrencia if event else None,
         recurrence_exceptions=event.excepciones_recurrencia if event else None,
-        exclude_event_id=row.evento_id,
+        exclude_reservation_id=row.id,
     )
     if conflict:
         raise HTTPException(status_code=409, detail=conflict)

@@ -16,24 +16,21 @@ Tests:
 
 from __future__ import annotations
 
-import base64
 import json
 import uuid
 from unittest.mock import MagicMock, patch
 
 import pytest
-from cryptography.hazmat.primitives import hashes, serialization
+from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import ec
 from fastapi.testclient import TestClient
 
 from backend.services.web_push import (
     b64url_decode,
-    b64url_encode,
     broadcast_to_user,
     create_vapid_headers,
     create_vapid_jwt,
     generate_vapid_keypair,
-    get_vapid_public_key,
     send_web_push,
     store,
 )
