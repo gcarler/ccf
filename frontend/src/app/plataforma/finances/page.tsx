@@ -21,7 +21,6 @@ Plus,
 Receipt,
 Search,
 Zap,
-FileCheck
 } from 'lucide-react';
 import React,{ useEffect,useMemo,useState,useCallback } from 'react';
 import { toast } from 'sonner';

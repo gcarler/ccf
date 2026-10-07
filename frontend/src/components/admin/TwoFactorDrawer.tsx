@@ -317,7 +317,7 @@ export default function TwoFactorDrawer({
                 </h4>
               </div>
               <p className="text-xs text-[hsl(var(--text-secondary))] leading-relaxed">
-                Abre Google Authenticator, 1Password, Authy o Microsoft Authenticator y selecciona "Ingresar clave manualmente".
+                Abre Google Authenticator, 1Password, Authy o Microsoft Authenticator y selecciona &quot;Ingresar clave manualmente&quot;.
               </p>
 
               <div className="space-y-1 pt-1">

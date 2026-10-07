@@ -8,12 +8,10 @@ import {
   BellRing,
   BellOff,
   Send,
-  ShieldCheck,
   Check,
   Smartphone,
   Laptop,
   AlertCircle,
-  RefreshCw,
 } from "lucide-react";
 import clsx from "clsx";
 
@@ -49,7 +47,7 @@ export default function PushNotificationManager() {
   const [isSupported, setIsSupported] = useState<boolean>(true);
   const [permission, setPermission] = useState<NotificationPermission>("default");
   const [subscriptions, setSubscriptions] = useState<PushSubscriptionItem[]>([]);
-  const [loading, setLoading] = useState<boolean>(false);
+  const [_loading, setLoading] = useState<boolean>(false);
   const [actionLoading, setActionLoading] = useState<boolean>(false);
 
   const checkSupportAndPermission = useCallback(() => {

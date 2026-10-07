@@ -98,7 +98,7 @@ export default function UserTasksPage() {
     } finally {
       setLoading(false);
     }
-  }, [token]);
+  }, [token, addToast]);
 
   useEffect(() => {
     loadTasks();

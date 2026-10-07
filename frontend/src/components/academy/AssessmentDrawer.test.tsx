@@ -10,9 +10,9 @@ vi.mock('@/lib/http', () => ({
 }));
 
 vi.mock('framer-motion', () => ({
-  AnimatePresence: ({ children }: any) => <>{children}</>,
+  AnimatePresence: ({ children }: { children?: React.ReactNode }) => <>{children}</>,
   motion: {
-    div: ({ children, ...props }: any) => <div {...props}>{children}</div>,
+    div: ({ children, ...props }: React.HTMLAttributes<HTMLDivElement>) => <div {...props}>{children}</div>,
   },
 }));
 
@@ -159,7 +159,7 @@ describe('AssessmentDrawer — Políticas de Reintento y Cooldown', () => {
   });
 
   it('permite avanzar preguntas, seleccionar opción y enviar la evaluación exitosa', async () => {
-    mockApiFetch.mockImplementation(async (url: string, opts?: any) => {
+    mockApiFetch.mockImplementation(async (url: string, opts?: { method?: string }) => {
       if (url.includes('/attempt-status')) return mockAttemptStatusNormal;
       if (url.includes('/submit') && opts?.method === 'POST') {
         return { passed: true, score: 100 };
@@ -193,7 +193,7 @@ describe('AssessmentDrawer — Políticas de Reintento y Cooldown', () => {
   });
 
   it('muestra toast de error cuando submit falla por cooldown o límite de intentos', async () => {
-    mockApiFetch.mockImplementation(async (url: string, opts?: any) => {
+    mockApiFetch.mockImplementation(async (url: string, opts?: { method?: string }) => {
       if (url.includes('/attempt-status')) return mockAttemptStatusNormal;
       if (url.includes('/submit') && opts?.method === 'POST') {
         throw new Error('Período de enfriamiento activo. Debes esperar 40 minuto(s)');
