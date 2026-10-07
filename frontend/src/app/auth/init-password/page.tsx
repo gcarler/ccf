@@ -81,7 +81,7 @@ function InitPasswordContent() {
 
                 <form onSubmit={handleSubmit} className="p-6 space-y-4">
                     {error && (
-                        <div className="flex items-center gap-2 px-3 py-2 bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 rounded-lg text-sm text-[hsl(var(--destructive))] dark:text-[hsl(var(--destructive))]">
+                        <div className="flex items-center gap-2 px-3 py-2 bg-[hsl(var(--destructive)/0.1)] border border-[hsl(var(--destructive)/0.3)] rounded-lg text-sm text-[hsl(var(--destructive))]">
                             <XCircle size={14} />
                             {error}
                         </div>
