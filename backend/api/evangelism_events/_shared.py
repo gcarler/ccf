@@ -67,7 +67,11 @@ def require_event_access(db: Session, user: models.User, event_id: UUID | str) -
     resource scope (sede + soft delete), so a granular permission cannot be
     contradicted later by a hardcoded list of role names.
     """
-    event = db.query(models.CrmEvent).filter(models.CrmEvent.id == event_id).first()
+    try:
+        event_uuid = uuid.UUID(str(event_id))
+    except (ValueError, TypeError, AttributeError):
+        raise HTTPException(status_code=404, detail="Event not found")
+    event = db.query(models.CrmEvent).filter(models.CrmEvent.id == event_uuid).first()
     if not event or event.deleted_at is not None:
         raise HTTPException(status_code=404, detail="Event not found")
     user_sede = require_user_sede_id(db, user)
