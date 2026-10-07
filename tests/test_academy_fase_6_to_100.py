@@ -404,7 +404,7 @@ def test_acad_tkt_121_submit_assessment_derives_enrollment_id() -> None:
     py_file = BACKEND_SRC / "academy.py"
     text = _code_only(_read(py_file))
     submit_block_pattern = re.compile(
-        r"def\s+submit_assessment[\s\S]{0,5000}?(?=\n(?:def|async\s+def|class|@router)\s|\Z)",
+        r"def\s+submit_assessment[\s\S]{0,10000}?(?=\n(?:def|async\s+def|class|@router[.\s])|\Z)",
     )
     submit_block_match = submit_block_pattern.search(text)
     assert submit_block_match, "TKT-121 regresión: submit_assessment no encontrado en academy.py."

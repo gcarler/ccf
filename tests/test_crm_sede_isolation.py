@@ -480,7 +480,8 @@ def test_update_counseling_ticket_blocks_cross_sede(client, db_session):
     # Sanity: el ticket NO fue mutado
     db_session.refresh(secret_ticket)
     assert secret_ticket.status == "open", "El ticket cross-sede NO debe mutarse"
-    assert secret_ticket.notes == "encrypted-not-exported", "Las notas cross-sede NO deben modificarse"
+    from backend.api.crm.counseling_crypto import decrypt_counseling_notes
+    assert decrypt_counseling_notes(secret_ticket.notes) == "encrypted-not-exported", "Las notas cross-sede NO deben modificarse"
 
     # 2. Sanity positiva: admin A puede mutar su propio ticket → 200
     resp_local = client.patch(
