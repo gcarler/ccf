@@ -227,8 +227,11 @@ class CounselingTicket(CounselingTicketBase):
 
         role = user_role_context.get()
         if role and not is_crm_privileged(role):
-            self.notes = "Contenido confidencial protegido"
-            self.notas = "Contenido confidencial protegido"
+            from backend.api.crm.counseling_crypto import PROTECTED_NOTE_MESSAGE
+
+            redacted = PROTECTED_NOTE_MESSAGE
+            self.notes = redacted
+            self.notas = redacted
         elif self.notes and not self.notas:
             self.notas = self.notes
         elif self.notas and not self.notes:
@@ -651,10 +654,12 @@ class Persona(BaseModel):
 
         role = user_role_context.get()
         if role and not is_crm_privileged(role):
-            self.pastoral_notes = "[RESTRINGIDO]"
+            from backend.api.crm.counseling_crypto import PROTECTED_NOTE_MESSAGE
+
+            self.pastoral_notes = PROTECTED_NOTE_MESSAGE
             self.spiritual_health = 0.0
-            self.talents = "[RESTRINGIDO]"
-            self.spiritual_gifts = "[RESTRINGIDO]"
+            self.talents = PROTECTED_NOTE_MESSAGE
+            self.spiritual_gifts = PROTECTED_NOTE_MESSAGE
         return self
 
 

@@ -4,7 +4,7 @@ from typing import Any
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Response, status
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
@@ -15,10 +15,13 @@ from backend.core.tenant import require_user_sede_id
 from backend.crud.crm_ import pipeline as crm_pipeline
 from backend.crud.crm_.shared import case_query
 from backend.schemas.crm.pipeline import (
+    AutomationFlowCreate,
+    AutomationGraphPayload,
     PipelineCreate,
     PipelineResponse,
     PipelineStageCreate,
     PipelineStageResponse,
+    automation_payload_to_dict,
 )
 
 router = APIRouter(tags=["CRM"])
@@ -269,6 +272,63 @@ class ReorderSameStage(BaseModel):
 class MoveStagePayload(BaseModel):
     caso_id: UUID
     target_stage_id: UUID
+
+
+class RecoveryPayload(BaseModel):
+    """Payload del endpoint de recuperación en drag-drop (caso opcional)."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    caso_id: str | None = None
+
+
+class PipelineSyncPayload(BaseModel):
+    """Payload de POST /pipeline/kanban/sync-reorder y traversal sobre pipeline."""
+
+    model_config = ConfigDict(extra="ignore")
+
+    pipeline_id: UUID
+
+
+class FlowIdPayload(BaseModel):
+    """Payload de los endpoints que operan sobre un flow_id."""
+
+    model_config = ConfigDict(extra="ignore")
+
+    flow_id: UUID
+
+
+class CasoIdPayload(BaseModel):
+    """Payload de los endpoints que operan sobre un caso_id."""
+
+    model_config = ConfigDict(extra="ignore")
+
+    caso_id: UUID
+
+
+class LeadQualificationPayload(BaseModel):
+    """Payload de POST /scenarios/lead-qualification."""
+
+    model_config = ConfigDict(extra="ignore")
+
+    caso_id: UUID
+    target_etapa_id: UUID
+
+
+class BulkReassignmentItem(BaseModel):
+    """Ítem de reasignación masiva (POST /scenarios/bulk-reassignment-reorder)."""
+
+    model_config = ConfigDict(extra="ignore")
+
+    id: UUID
+    asignado_a_id: UUID
+    sort_order: int
+
+
+class BulkReassignmentPayload(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+
+    casos: list[BulkReassignmentItem]
 
 
 @router.get("/pipeline/kanban/layout")
@@ -573,7 +633,7 @@ def automations_palette(
 
 @router.post("/automations/flows")
 def automations_flows(
-    payload: dict,
+    payload: AutomationFlowCreate,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("crm", "edit")),
 ):
@@ -589,9 +649,7 @@ def automations_flows(
             detail="El actor no tiene una sede atribuible; no puede crear flujos",
         )
     sede_id = UUID(str(user_sede))
-    name = payload.get("name", "Unnamed Flow")
-    is_active = payload.get("is_active", True)
-    flow = models.CrmAutomationFlow(name=name, is_active=is_active, sede_id=sede_id)
+    flow = models.CrmAutomationFlow(name=payload.name, is_active=payload.is_active, sede_id=sede_id)
     db.add(flow)
     db.commit()
     db.refresh(flow)
@@ -600,12 +658,12 @@ def automations_flows(
 
 @router.post("/automations/flows/validate-path")
 def validate_path(
-    payload: dict = None,
+    payload: AutomationGraphPayload | None = None,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("crm", "edit")),
 ):
     """Ensures a path exists from start triggers to actions, validating its length (min 3 nodes)."""
-    payload = payload or {}
+    payload = automation_payload_to_dict(payload)
     try:
         nodes, edges = get_graph_from_payload_or_db(payload, db)
     except ValueError as e:
@@ -659,13 +717,13 @@ def branching_variables(current_user: models.User = Depends(require_module_acces
 
 @router.post("/automations/branching/traverse")
 def branching_traverse(
-    payload: dict,
+    payload: AutomationGraphPayload,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("crm", "edit")),
 ):
     """Simulates branching node traversal based on dynamic condition logic."""
-    variables = payload.get("variables", {})
-    conditions = payload.get("conditions", [])
+    variables = payload.variables
+    conditions = [c.model_dump(exclude_none=True) for c in payload.conditions]
 
     results = []
     for cond in conditions:
@@ -680,12 +738,12 @@ def branching_traverse(
 
 @router.post("/automations/flows/check-cycles")
 def check_cycles(
-    payload: dict = None,
+    payload: AutomationGraphPayload | None = None,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("crm", "edit")),
 ):
     """DFS-based cycle checker."""
-    payload = payload or {}
+    payload = automation_payload_to_dict(payload)
     try:
         nodes, edges = get_graph_from_payload_or_db(payload, db)
     except ValueError as e:
@@ -696,11 +754,11 @@ def check_cycles(
 
 @router.post("/automations/flows/validate")
 def flows_validate(
-    payload: dict = None,
+    payload: AutomationGraphPayload | None = None,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("crm", "edit")),
 ):
-    payload = payload or {}
+    payload = automation_payload_to_dict(payload)
     try:
         nodes, edges = get_graph_from_payload_or_db(payload, db)
     except ValueError as e:
@@ -711,12 +769,18 @@ def flows_validate(
 
 @router.post("/automations/flows/validate-node")
 def validate_node(
-    payload: dict = None,
+    payload: AutomationGraphPayload | None = None,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("crm", "edit")),
 ):
-    payload = payload or {}
-    node_id = payload.get("node_id")
+    raw = automation_payload_to_dict(payload)
+    node_id = None
+    if payload is not None:
+        node_id = payload.node_id
+        if not node_id and payload.node:
+            node_value = payload.node.get("id") if isinstance(payload.node, dict) else None
+            node_id = str(node_value) if node_value is not None else None
+    payload = raw
     try:
         nodes, edges = get_graph_from_payload_or_db(payload, db)
     except ValueError as e:
@@ -731,11 +795,11 @@ def validate_node(
 
 @router.post("/automations/validate-graph")
 def validate_graph(
-    payload: dict = None,
+    payload: AutomationGraphPayload | None = None,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("crm", "edit")),
 ):
-    payload = payload or {}
+    payload = automation_payload_to_dict(payload)
     try:
         nodes, edges = get_graph_from_payload_or_db(payload, db)
     except ValueError as e:
@@ -958,8 +1022,8 @@ def drag_drop_invalid_stage(
 
 
 @router.post("/pipeline/kanban/drag-drop/missing-id")
-def drag_drop_missing_id(payload: dict, current_user: models.User = Depends(require_pastor_or_admin)):
-    if "caso_id" not in payload or not payload["caso_id"]:
+def drag_drop_missing_id(payload: RecoveryPayload, current_user: models.User = Depends(require_pastor_or_admin)):
+    if not payload.caso_id:
         raise HTTPException(status_code=400, detail="Missing ID")
     return {"status": "success"}
 
@@ -1005,7 +1069,7 @@ def drag_drop_concurrent(
 
 @router.post("/pipeline/kanban/drag-drop/recovery")
 def drag_drop_recovery(
-    payload: dict,
+    payload: RecoveryPayload,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
@@ -1013,7 +1077,7 @@ def drag_drop_recovery(
     models.CrmReorderLock.cleanup_expired(db, ttl_seconds=10)
     db.commit()
 
-    caso_id = payload.get("caso_id")
+    caso_id = payload.caso_id
     if caso_id:
         try:
             caso_uuid = UUID(caso_id)
@@ -1027,22 +1091,22 @@ def drag_drop_recovery(
 
 @router.post("/automations/flows/empty")
 def flows_empty(
-    payload: dict = None,
+    payload: AutomationGraphPayload | None = None,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("crm", "edit")),
 ):
-    payload = payload or {}
+    payload = automation_payload_to_dict(payload)
     nodes, _ = get_graph_from_payload_or_db(payload, db)
     return {"status": "success", "message": "Flow is empty" if not nodes else "Flow is not empty"}
 
 
 @router.post("/automations/flows/max-nodes-check")
 def flows_max_nodes_check(
-    payload: dict = None,
+    payload: AutomationGraphPayload | None = None,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("crm", "edit")),
 ):
-    payload = payload or {}
+    payload = automation_payload_to_dict(payload)
     nodes, _ = get_graph_from_payload_or_db(payload, db)
     if len(nodes) > 100:
         raise HTTPException(status_code=400, detail="Maximum node limit exceeded")
@@ -1051,11 +1115,11 @@ def flows_max_nodes_check(
 
 @router.post("/automations/flows/disconnected-nodes")
 def flows_disconnected_nodes(
-    payload: dict = None,
+    payload: AutomationGraphPayload | None = None,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("crm", "edit")),
 ):
-    payload = payload or {}
+    payload = automation_payload_to_dict(payload)
     nodes, edges = get_graph_from_payload_or_db(payload, db)
     if not nodes:
         return {"warning": "no nodes"}
@@ -1069,9 +1133,9 @@ def flows_disconnected_nodes(
 
 @router.post("/automations/flows/validate-types")
 def flows_validate_types(
-    payload: dict = None, current_user: models.User = Depends(require_module_access("crm", "edit"))
+    payload: AutomationGraphPayload | None = None, current_user: models.User = Depends(require_module_access("crm", "edit"))
 ):
-    payload = payload or {}
+    payload = automation_payload_to_dict(payload)
     nodes = payload.get("nodes", [])
     valid_types = {
         "new_persona",
@@ -1095,11 +1159,11 @@ def flows_validate_types(
 
 @router.post("/automations/flows/validate-path-length")
 def validate_path_length_api(
-    payload: dict = None,
+    payload: AutomationGraphPayload | None = None,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("crm", "edit")),
 ):
-    payload = payload or {}
+    payload = automation_payload_to_dict(payload)
     nodes_count = payload.get("nodes_count")
     if nodes_count is not None and nodes_count < 3:
         return {"valid": False, "error": "Minimum 3-node connection required"}
@@ -1111,11 +1175,11 @@ def validate_path_length_api(
 
 @router.post("/automations/flows/validate-multiple-inputs")
 def validate_multiple_inputs(
-    payload: dict = None,
+    payload: AutomationGraphPayload | None = None,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("crm", "edit")),
 ):
-    payload = payload or {}
+    payload = automation_payload_to_dict(payload)
     nodes, edges = get_graph_from_payload_or_db(payload, db)
     in_degree = {n: 0 for n in nodes}
     for e in edges:
@@ -1128,11 +1192,11 @@ def validate_multiple_inputs(
 
 @router.post("/automations/flows/validate-multiple-outputs")
 def validate_multiple_outputs(
-    payload: dict = None,
+    payload: AutomationGraphPayload | None = None,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("crm", "edit")),
 ):
-    payload = payload or {}
+    payload = automation_payload_to_dict(payload)
     nodes, edges = get_graph_from_payload_or_db(payload, db)
     out_degree = {n: 0 for n in nodes}
     for e in edges:
@@ -1145,11 +1209,11 @@ def validate_multiple_outputs(
 
 @router.post("/automations/flows/clean-orphans")
 def clean_orphans(
-    payload: dict = None,
+    payload: AutomationGraphPayload | None = None,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("crm", "edit")),
 ):
-    payload = payload or {}
+    payload = automation_payload_to_dict(payload)
     nodes, edges = get_graph_from_payload_or_db(payload, db)
     node_set = set(nodes)
     orphaned_edges = [e for e in edges if e["source"] not in node_set or e["target"] not in node_set]
@@ -1158,11 +1222,11 @@ def clean_orphans(
 
 @router.post("/automations/flows/cross-flow-check")
 def cross_flow_check(
-    payload: dict = None,
+    payload: AutomationGraphPayload | None = None,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("crm", "edit")),
 ):
-    payload = payload or {}
+    payload = automation_payload_to_dict(payload)
     flow_id = payload.get("flow_id")
     edges = payload.get("edges", [])
 
@@ -1191,9 +1255,9 @@ def cross_flow_check(
 
 @router.post("/automations/branching/null-vars")
 def branching_null_vars(
-    payload: dict = None, current_user: models.User = Depends(require_module_access("crm", "edit"))
+    payload: AutomationGraphPayload | None = None, current_user: models.User = Depends(require_module_access("crm", "edit"))
 ):
-    payload = payload or {}
+    payload = automation_payload_to_dict(payload)
     variables = payload.get("variables", {})
     null_vars = [k for k, v in variables.items() if v is None]
     return {"status": "success", "null_variables": null_vars}
@@ -1201,9 +1265,9 @@ def branching_null_vars(
 
 @router.post("/automations/branching/type-mismatch")
 def branching_type_mismatch(
-    payload: dict = None, current_user: models.User = Depends(require_module_access("crm", "edit"))
+    payload: AutomationGraphPayload | None = None, current_user: models.User = Depends(require_module_access("crm", "edit"))
 ):
-    payload = payload or {}
+    payload = automation_payload_to_dict(payload)
     variables = payload.get("variables", {})
     conditions = payload.get("conditions", [])
 
@@ -1226,9 +1290,9 @@ def branching_type_mismatch(
 
 @router.post("/automations/branching/missing-else")
 def branching_missing_else(
-    payload: dict = None, current_user: models.User = Depends(require_module_access("crm", "edit"))
+    payload: AutomationGraphPayload | None = None, current_user: models.User = Depends(require_module_access("crm", "edit"))
 ):
-    payload = payload or {}
+    payload = automation_payload_to_dict(payload)
     branch_node_id = payload.get("node_id")
     edges = payload.get("edges", [])
 
@@ -1241,9 +1305,9 @@ def branching_missing_else(
 
 @router.post("/automations/branching/infinite-nesting")
 def branching_infinite_nesting(
-    payload: dict = None, current_user: models.User = Depends(require_module_access("crm", "edit"))
+    payload: AutomationGraphPayload | None = None, current_user: models.User = Depends(require_module_access("crm", "edit"))
 ):
-    payload = payload or {}
+    payload = automation_payload_to_dict(payload)
     nodes = payload.get("nodes", [])
     edges = payload.get("edges", [])
 
@@ -1278,9 +1342,9 @@ def branching_infinite_nesting(
 
 @router.post("/automations/branching/unexpected-op")
 def branching_unexpected_op(
-    payload: dict = None, current_user: models.User = Depends(require_module_access("crm", "edit"))
+    payload: AutomationGraphPayload | None = None, current_user: models.User = Depends(require_module_access("crm", "edit"))
 ):
-    payload = payload or {}
+    payload = automation_payload_to_dict(payload)
     conditions = payload.get("conditions", [])
     valid_ops = {"equals", "ne", "contains", "starts_with", "in", "gt", "lt", "always"}
     for cond in conditions:
@@ -1292,11 +1356,11 @@ def branching_unexpected_op(
 
 @router.post("/automations/flows/validate-complex-dag")
 def validate_complex_dag(
-    payload: dict = None,
+    payload: AutomationGraphPayload | None = None,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("crm", "edit")),
 ):
-    payload = payload or {}
+    payload = automation_payload_to_dict(payload)
     nodes, edges = get_graph_from_payload_or_db(payload, db)
     has_cycle, _ = check_for_cycles_dfs(nodes, edges)
     return {"valid": not has_cycle}
@@ -1304,15 +1368,12 @@ def validate_complex_dag(
 
 @router.post("/pipeline/kanban/sync-reorder")
 def kanban_sync_reorder(
-    payload: dict,
+    payload: PipelineSyncPayload,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
     sede_id = UUID(str(require_user_sede_id(db, current_user)))
-    try:
-        pipeline_id = UUID(payload["pipeline_id"])
-    except (KeyError, ValueError) as exc:
-        raise HTTPException(status_code=400, detail=f"pipeline_id invalido: {exc}")
+    pipeline_id = payload.pipeline_id
     pipeline = (
         db.query(models.PipelineCRM)
         .filter(models.PipelineCRM.id == pipeline_id, models.PipelineCRM.sede_id == sede_id)
@@ -1331,14 +1392,11 @@ def kanban_sync_reorder(
 
 @router.post("/automations/flow-builder/three-node-render")
 def flow_builder_three_node_render(
-    payload: dict,
+    payload: FlowIdPayload,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
-    try:
-        flow_id = UUID(payload["flow_id"])
-    except (KeyError, ValueError) as exc:
-        raise HTTPException(status_code=400, detail=f"flow_id invalido: {exc}")
+    flow_id = payload.flow_id
     flow = _owned_flow(db, flow_id, current_user)
 
     nodes = db.query(models.CrmAutomationNode).filter(models.CrmAutomationNode.flow_id == flow_id).all()
@@ -1351,11 +1409,11 @@ def flow_builder_three_node_render(
 
 @router.post("/automations/branching/validate-cycles")
 def branching_validate_cycles(
-    payload: dict = None,
+    payload: AutomationGraphPayload | None = None,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("crm", "edit")),
 ):
-    payload = payload or {}
+    payload = automation_payload_to_dict(payload)
     nodes, edges = get_graph_from_payload_or_db(payload, db)
     has_cycle, _ = check_for_cycles_dfs(nodes, edges)
     return {"valid": not has_cycle}
@@ -1363,14 +1421,11 @@ def branching_validate_cycles(
 
 @router.post("/pipeline/casos/reorder-trigger-automation")
 def reorder_trigger_automation(
-    payload: dict,
+    payload: CasoIdPayload,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
-    try:
-        caso_id = UUID(payload["caso_id"])
-    except (KeyError, ValueError) as exc:
-        raise HTTPException(status_code=400, detail=f"caso_id invalido: {exc}")
+    caso_id = payload.caso_id
     sede_id = UUID(str(require_user_sede_id(db, current_user)))
     caso = case_query(db).filter(models.CasoCRM.id == caso_id, models.CasoCRM.sede_id == sede_id).first()
     if not caso:
@@ -1398,15 +1453,12 @@ def reorder_trigger_automation(
 
 @router.post("/automations/branching/three-node-traversal")
 def branching_three_node_traversal(
-    payload: dict,
+    payload: PipelineSyncPayload,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
     sede_id = UUID(str(require_user_sede_id(db, current_user)))
-    try:
-        pipeline_uuid = UUID(payload["pipeline_id"])
-    except (KeyError, ValueError) as exc:
-        raise HTTPException(status_code=400, detail=f"pipeline_id invalido: {exc}")
+    pipeline_uuid = payload.pipeline_id
     pipeline = (
         db.query(models.PipelineCRM)
         .filter(models.PipelineCRM.id == pipeline_uuid, models.PipelineCRM.sede_id == sede_id)
@@ -1420,9 +1472,11 @@ def branching_three_node_traversal(
 
 @router.post("/pipeline/kanban/drag-drop/validate-cycles")
 def drag_drop_validate_cycles(
-    payload: dict = None, db: Session = Depends(get_db), current_user: models.User = Depends(require_pastor_or_admin)
+    payload: AutomationGraphPayload | None = None,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_pastor_or_admin),
 ):
-    payload = payload or {}
+    payload = automation_payload_to_dict(payload)
     nodes, edges = get_graph_from_payload_or_db(payload, db)
     has_cycle, _ = check_for_cycles_dfs(nodes, edges)
     return {"valid": not has_cycle}
@@ -1430,15 +1484,12 @@ def drag_drop_validate_cycles(
 
 @router.post("/scenarios/lead-qualification")
 def lead_qualification(
-    payload: dict,
+    payload: LeadQualificationPayload,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
-    try:
-        caso_id = UUID(payload["caso_id"])
-        target_etapa_id = UUID(payload["target_etapa_id"])
-    except (KeyError, ValueError) as exc:
-        raise HTTPException(status_code=400, detail=f"Parametro invalido: {exc}")
+    caso_id = payload.caso_id
+    target_etapa_id = payload.target_etapa_id
     sede_id = UUID(str(require_user_sede_id(db, current_user)))
     caso = case_query(db).filter(models.CasoCRM.id == caso_id, models.CasoCRM.sede_id == sede_id).first()
     if not caso:
@@ -1450,14 +1501,11 @@ def lead_qualification(
 
 @router.post("/scenarios/support-ticket-routing")
 def support_ticket_routing(
-    payload: dict,
+    payload: CasoIdPayload,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
-    try:
-        caso_id = UUID(payload["caso_id"])
-    except (KeyError, ValueError) as exc:
-        raise HTTPException(status_code=400, detail=f"caso_id invalido: {exc}")
+    caso_id = payload.caso_id
     sede_id = UUID(str(require_user_sede_id(db, current_user)))
     caso = case_query(db).filter(models.CasoCRM.id == caso_id, models.CasoCRM.sede_id == sede_id).first()
     if not caso:
@@ -1474,16 +1522,15 @@ def support_ticket_routing(
 
 @router.post("/scenarios/cyclical-flow-resolution")
 def cyclical_flow_resolution(
-    payload: dict,
+    payload: AutomationGraphPayload,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
-    try:
-        flow_id = UUID(payload["flow_id"])
-    except (KeyError, ValueError) as exc:
-        raise HTTPException(status_code=400, detail=f"flow_id invalido: {exc}")
+    if payload.flow_id is None:
+        raise HTTPException(status_code=400, detail="flow_id invalido")
+    flow_id = payload.flow_id
     _owned_flow(db, flow_id, current_user)  # Axioma 3 — sede scope.
-    nodes, edges = get_graph_from_payload_or_db(payload, db)
+    nodes, edges = get_graph_from_payload_or_db(automation_payload_to_dict(payload), db)
     has_cycle, _ = check_for_cycles_dfs(nodes, edges)
 
     cache = db.query(models.CrmFlowCycleCache).filter(models.CrmFlowCycleCache.flow_id == flow_id).first()
@@ -1499,18 +1546,15 @@ def cyclical_flow_resolution(
 
 @router.post("/scenarios/bulk-reassignment-reorder")
 def bulk_reassignment_reorder(
-    payload: dict,
+    payload: BulkReassignmentPayload,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_pastor_or_admin),
 ):
     sede_id = UUID(str(require_user_sede_id(db, current_user)))
-    for item in payload.get("casos", []):
-        try:
-            caso_id = UUID(item["id"])
-            asignado_a_id = UUID(item["asignado_a_id"])
-        except (KeyError, ValueError) as exc:
-            raise HTTPException(status_code=400, detail=f"Item invalido en casos: {exc}")
-        sort_order = item["sort_order"]
+    for item in payload.casos:
+        caso_id = item.id
+        asignado_a_id = item.asignado_a_id
+        sort_order = item.sort_order
         caso = case_query(db).filter(models.CasoCRM.id == caso_id, models.CasoCRM.sede_id == sede_id).first()
         if caso:
             caso.sort_order = sort_order

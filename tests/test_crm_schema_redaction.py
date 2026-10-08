@@ -39,7 +39,7 @@ class TestCounselingTicketRedaction:
             user_role_context.set(role)
             ticket = self._ticket()
             ticket.restrict_counseling_notes()
-            assert ticket.notes == "[RESTRINGIDO - SOLO PASTORES/ADMIN]", f"failed for role={role}"
+            assert ticket.notes == "Contenido confidencial protegido", f"failed for role={role}"
 
     def test_pastor_sees_original_notes(self):
         user_role_context.set("pastor")
@@ -72,10 +72,10 @@ class TestPersonaRedaction:
             user_role_context.set(role)
             persona = self._persona()
             persona.restrict_crm_fields()
-            assert persona.pastoral_notes == "[RESTRINGIDO]"
+            assert persona.pastoral_notes == "Contenido confidencial protegido"
             assert persona.spiritual_health == 0.0
-            assert persona.talents == "[RESTRINGIDO]"
-            assert persona.spiritual_gifts == "[RESTRINGIDO]"
+            assert persona.talents == "Contenido confidencial protegido"
+            assert persona.spiritual_gifts == "Contenido confidencial protegido"
 
     def test_pastor_sees_original_persona_fields(self):
         user_role_context.set("pastor")
