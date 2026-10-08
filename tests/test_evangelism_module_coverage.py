@@ -689,12 +689,12 @@ class TestModelHybridProperties:
         a2.status = "absent"
         assert a2.estado == "FALTO"
         a2.status = "first_time"
-        assert a2.estado == "primera_vez"
+        assert a2.estado == "ASISTIO"
         assert a2.es_primera_vez is True
         a2.status = "excused"
         assert a2.estado == "EXCUSA"
         a2.status = "present"
-        assert a2.estado == "Presente"
+        assert a2.estado == "ASISTIO"
         assert a2.es_primera_vez is False
 
     def test_asistencia_attended_setter(self, db_session):
@@ -712,9 +712,9 @@ class TestModelHybridProperties:
         db_session.add(a)
         db_session.flush()
         a.attended = False
-        assert a.estado == "Ausente"
+        assert a.estado == "FALTO"
         a.attended = True
-        assert a.estado == "Presente"
+        assert a.estado == "ASISTIO"
 
 
 # ════════════════════════════════════════════════════════════════════

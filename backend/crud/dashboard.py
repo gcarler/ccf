@@ -210,7 +210,7 @@ def get_evangelism_dashboard(
         JOIN sesiones_grupo sg ON a.sesion_id = sg.id
         JOIN grupos_evangelismo ge ON sg.grupo_id = ge.id
         WHERE sg.fecha_sesion >= :cutoff {where_asi}
-        AND a.estado = 'Presente'
+        AND a.estado IN ('ASISTIO', 'Presente', 'presente')
     """),
             {"cutoff": cutoff, **params},
         ).scalar()
@@ -224,7 +224,7 @@ def get_evangelism_dashboard(
         JOIN sesiones_grupo sg ON a.sesion_id = sg.id
         JOIN grupos_evangelismo ge ON sg.grupo_id = ge.id
         WHERE sg.fecha_sesion >= :cutoff {where_asi}
-        AND (a.estado = 'Ausente' OR a.estado IS NULL)
+        AND (a.estado IN ('FALTO', 'Ausente', 'ausente') OR a.estado IS NULL)
     """),
             {"cutoff": cutoff, **params},
         ).scalar()
@@ -264,8 +264,8 @@ def get_evangelism_dashboard(
     sesiones = db.execute(
         sqlt(f"""
         SELECT sg.id, sg.fecha_sesion, ge.nombre as grupo_nombre,
-            (SELECT COUNT(*) FROM asistencias WHERE sesion_id = sg.id AND estado = 'Presente') as presentes,
-            (SELECT COUNT(*) FROM asistencias WHERE sesion_id = sg.id AND (estado = 'Ausente' OR estado IS NULL)) as ausentes
+            (SELECT COUNT(*) FROM asistencias WHERE sesion_id = sg.id AND estado IN ('ASISTIO', 'Presente', 'presente')) as presentes,
+            (SELECT COUNT(*) FROM asistencias WHERE sesion_id = sg.id AND (estado IN ('FALTO', 'Ausente', 'ausente') OR estado IS NULL)) as ausentes
         FROM sesiones_grupo sg
         JOIN grupos_evangelismo ge ON sg.grupo_id = ge.id
         WHERE sg.fecha_sesion >= :cutoff {where_asi}
@@ -325,7 +325,7 @@ def get_evangelism_dashboard(
         JOIN grupos_evangelismo ge ON sg.grupo_id = ge.id
         JOIN personas p ON a.persona_id = p.id
         WHERE sg.fecha_sesion >= :cutoff {where_asi}
-        AND a.estado = 'Ausente'
+        AND a.estado IN ('FALTO', 'Ausente', 'ausente')
         ORDER BY sg.fecha_sesion DESC
         LIMIT 50
     """),
@@ -369,7 +369,7 @@ def get_evangelism_dashboard(
             JOIN sesiones_grupo sg ON a.sesion_id = sg.id
             JOIN grupos_evangelismo ge ON sg.grupo_id = ge.id
             WHERE sg.fecha_sesion >= :cutoff {where_asi}
-            AND a.estado = 'Presente'
+            AND a.estado IN ('ASISTIO', 'Presente', 'presente')
         ) ranked
         JOIN sesiones_grupo sg ON sg.id = ranked.sesion_id
         JOIN grupos_evangelismo ge ON sg.grupo_id = ge.id

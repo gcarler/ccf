@@ -22,7 +22,7 @@ EVANGELISM_PATHS=(
   backend/api/evangelism_analytics.py
   backend/crud/evangelism.py
   backend/schemas/evangelism.py
-  backend/services/evangelism_projection.py
+  backend/services/evangelism_crm_bridge.py
   backend/models_evangelism.py
 )
 
