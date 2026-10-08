@@ -57,7 +57,8 @@ def get_multi_sede_cohorts(
     current_user: models.User = Depends(require_evangelism_read),
 ):
     """Auditoría pastoral multi-sede con KPIs globales, rankings y tasas de retención entre sedes."""
-    user_sede_id = getattr(current_user, "sede_id", None)
+    is_global = getattr(current_user, "is_superuser", False) or getattr(current_user, "church_role", "") == "Pastor General"
+    user_sede_id = None if is_global else getattr(current_user, "sede_id", None)
     return calculate_multi_sede_cohort_analysis(db, requesting_user_sede_id=user_sede_id)
 
 
@@ -71,12 +72,17 @@ def get_cohort_retention_matrix(
     current_user: models.User = Depends(require_evangelism_read),
 ):
     """Matriz temporal de retención de cohortes para heatmap mes a mes (30d, 60d, 90d)."""
-    # Si el usuario no es admin global, forzar su sede si no se especificó o restringir
-    effective_sede = sede_id
-    if not effective_sede and getattr(current_user, "sede_id", None):
-        # Si tiene sede y se desea restringir o ver la sede
-        if not getattr(current_user, "is_superuser", False) and getattr(current_user, "church_role", "") != "Pastor General":
-            effective_sede = current_user.sede_id
+    is_global = getattr(current_user, "is_superuser", False) or getattr(current_user, "church_role", "") == "Pastor General"
+    user_sede_id = getattr(current_user, "sede_id", None)
+    if not is_global:
+        if sede_id and user_sede_id and sede_id != user_sede_id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="No tiene autorización para consultar métricas de cohortes de otra sede.",
+            )
+        effective_sede = user_sede_id
+    else:
+        effective_sede = sede_id
 
     return calculate_temporal_cohort_matrix(db, sede_id=effective_sede, months_count=months)
 
@@ -90,14 +96,26 @@ def export_pastoral_cohort_report(
     current_user: models.User = Depends(require_evangelism_manage),
 ):
     """Exporta el reporte ejecutivo en CSV (con UTF-8 BOM para compatibilidad total con Excel)."""
-    csv_content = export_cohort_pastoral_report_csv(db, requesting_sede_id=sede_id)
+    is_global = getattr(current_user, "is_superuser", False) or getattr(current_user, "church_role", "") == "Pastor General"
+    user_sede_id = getattr(current_user, "sede_id", None)
+    if not is_global:
+        if sede_id and user_sede_id and sede_id != user_sede_id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="No tiene autorización para exportar reportes de cohortes de otra sede.",
+            )
+        effective_sede = user_sede_id
+    else:
+        effective_sede = sede_id
+
+    csv_content = export_cohort_pastoral_report_csv(db, requesting_sede_id=effective_sede)
 
     record_admin_action(
         db,
         current_user,
         action="export_pastoral_cohort_report",
         resource_type="evangelism_cohorts",
-        resource_id=str(sede_id) if sede_id else "ALL_SEDES",
+        resource_id=str(effective_sede) if effective_sede else "ALL_SEDES",
     )
 
     filename = "ccf_auditoria_pastoral_cohortes.csv"

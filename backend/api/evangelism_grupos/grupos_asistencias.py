@@ -362,11 +362,14 @@ def submit_attendance(
         # Mapear estado nuevo (EstadoAsistenciaEnum)
         from backend.models_evangelism import EstadoAsistenciaEnum
 
-        nuevo_estado = "presente"
-        if raw_status == "absent":
+        nuevo_estado = EstadoAsistenciaEnum.ASISTIO.value
+        if raw_status in {"absent", "falto", "ausente"}:
             nuevo_estado = EstadoAsistenciaEnum.FALTO.value
-        elif raw_status == "first_time":
-            nuevo_estado = "primera_vez"
+        elif raw_status in {"first_time", "primera_vez"}:
+            nuevo_estado = EstadoAsistenciaEnum.ASISTIO.value
+            is_first_time = True
+        elif raw_status in {"excused", "excusa"}:
+            nuevo_estado = EstadoAsistenciaEnum.EXCUSA.value
 
         import uuid as _uuid
 

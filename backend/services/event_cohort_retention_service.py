@@ -327,8 +327,12 @@ def calculate_multi_sede_cohort_analysis(
     requesting_user_sede_id: UUID | str | None = None,
 ) -> dict[str, Any]:
     """Genera la auditoría pastoral multi-sede y ranking de retención/LTV entre sedes."""
-    # Listar sedes activas
-    sedes = db.query(Sede).filter(Sede.es_activa.is_(True), Sede.deleted_at.is_(None)).all()
+    # Listar sedes activas (filtradas si requesting_user_sede_id está definido)
+    sedes_query = db.query(Sede).filter(Sede.es_activa.is_(True), Sede.deleted_at.is_(None))
+    if requesting_user_sede_id:
+        req_uuid = UUID(str(requesting_user_sede_id))
+        sedes_query = sedes_query.filter(Sede.id == req_uuid)
+    sedes = sedes_query.all()
 
     sede_summaries: list[dict[str, Any]] = []
 
@@ -341,13 +345,15 @@ def calculate_multi_sede_cohort_analysis(
     global_smi_sum = 0.0
 
     for sede in sedes:
-        # Eventos de la sede
+        # Eventos de la sede (limitados a los más recientes para mitigar N+1 fuera de escala)
         events = (
             db.query(models.CrmEvent)
             .filter(
                 models.CrmEvent.sede_id == sede.id,
                 models.CrmEvent.deleted_at.is_(None),
             )
+            .order_by(models.CrmEvent.event_date.desc().nullslast(), models.CrmEvent.created_at.desc())
+            .limit(50)
             .all()
         )
 
@@ -454,17 +460,18 @@ def calculate_temporal_cohort_matrix(
     cohort_rows: list[dict[str, Any]] = []
 
     for i in range(months_count - 1, -1, -1):
-        # Primer día del mes
-        month_dt = (now.replace(day=1) - timedelta(days=i * 30)).replace(day=1)
-        year = month_dt.year
-        month = month_dt.month
+        # Cálculo exacto de año y mes de calendario hacia atrás (i=0 es mes actual)
+        total_months = (now.year * 12 + (now.month - 1)) - i
+        year = total_months // 12
+        month = (total_months % 12) + 1
+        month_dt = datetime.datetime(year, month, 1, 0, 0, 0, tzinfo=timezone.utc)
         month_key = f"{year}-{month:02d}"
         month_label = month_dt.strftime("%B %Y").capitalize()
 
         # Rango del mes
         next_month_year = year if month < 12 else year + 1
         next_month = month + 1 if month < 12 else 1
-        month_start = datetime.datetime(year, month, 1, 0, 0, 0, tzinfo=timezone.utc)
+        month_start = month_dt
         month_end = datetime.datetime(next_month_year, next_month, 1, 0, 0, 0, tzinfo=timezone.utc)
 
         # Buscar eventos del mes

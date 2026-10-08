@@ -72,10 +72,11 @@ export default function FollowupTab({ eventId, token, eventName: _eventName }: F
       setOverview(overviewData);
       setAttendees(attendeesData);
       setMentors(mentorsData);
-    } catch (err: any) {
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Error al cargar la información de seguimiento post-evento.";
       setFeedbackMessage({
         type: "error",
-        text: err?.message || "Error al cargar la información de seguimiento post-evento.",
+        text: message,
       });
     } finally {
       setLoading(false);
@@ -104,10 +105,11 @@ export default function FollowupTab({ eventId, token, eventName: _eventName }: F
       );
       setFeedbackMessage({ type: "success", text: res.message });
       await loadData();
-    } catch (err: any) {
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "No se pudo realizar la asignación automática de mentores.";
       setFeedbackMessage({
         type: "error",
-        text: err?.message || "No se pudo realizar la asignación automática de mentores.",
+        text: message,
       });
     } finally {
       setActionLoading(false);
@@ -145,10 +147,11 @@ export default function FollowupTab({ eventId, token, eventName: _eventName }: F
         const match = updated.find((a) => a.persona_id === personaId);
         if (match) setSelectedAttendeeForSequence(match);
       }
-    } catch (err: any) {
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Error al disparar el despacho de seguimiento.";
       setFeedbackMessage({
         type: "error",
-        text: err?.message || "Error al disparar el despacho de seguimiento.",
+        text: message,
       });
     } finally {
       setActionLoading(false);
@@ -181,10 +184,11 @@ export default function FollowupTab({ eventId, token, eventName: _eventName }: F
       setSelectedMentorId("");
       setMentorNotes("");
       await loadData();
-    } catch (err: any) {
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Error al asignar mentor.";
       setFeedbackMessage({
         type: "error",
-        text: err?.message || "Error al asignar mentor.",
+        text: message,
       });
     } finally {
       setActionLoading(false);
@@ -214,10 +218,11 @@ export default function FollowupTab({ eventId, token, eventName: _eventName }: F
       setResponseNotes("");
       setSelectedAttendeeForSequence(null);
       await loadData();
-    } catch (err: any) {
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Error al registrar respuesta del asistente.";
       setFeedbackMessage({
         type: "error",
-        text: err?.message || "Error al registrar respuesta del asistente.",
+        text: message,
       });
     } finally {
       setActionLoading(false);

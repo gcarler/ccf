@@ -174,7 +174,6 @@ class EstrategiaEvangelismo(Base):
     descripcion = Column(Text, nullable=True)
     clase_raiz = Column(String(50), nullable=True, index=True)
     activa = Column(Boolean, default=True, index=True)
-    is_public = Column(Boolean, default=False)
 
     # Tipología
     typology = Column(String(50), nullable=True, index=True)  # relacional | evento_masivo | sectorial
@@ -193,7 +192,7 @@ class EstrategiaEvangelismo(Base):
 
     # General
     strategy_type = Column(String(100), nullable=True)
-    is_public = Column(Boolean, default=False)
+    is_public = Column(Boolean, default=False, index=True)
     status = Column(String(50), default="active")
     default_role_id = Column(
         UUID(as_uuid=True), ForeignKey("estrategia_roles_personalizados.id", ondelete="SET NULL"), nullable=True
@@ -433,9 +432,7 @@ class SesionGrupo(Base):
     cancellation_reason = synonym("motivo_cancelacion")
     report_notes = synonym("notas_lider")
 
-    @property
-    def season(self):
-        return None
+    season = relationship("CampaignSeason", foreign_keys=[season_id])
 
     def __init__(self, **kwargs):
         # ``offering_amount`` es columna real (``Column``) y debe llegar a
@@ -482,32 +479,33 @@ class Asistencia(Base):
     @status.setter
     def status(self, value):
         val = str(value).strip().lower()
-        if val == "absent":
-            self.estado = "FALTO"
+        if val in {"absent", "falto", "ausente"}:
+            self.estado = EstadoAsistenciaEnum.FALTO.value
             self.es_primera_vez = False
-        elif val == "first_time":
-            self.estado = "primera_vez"
+        elif val in {"first_time", "primera_vez"}:
+            self.estado = EstadoAsistenciaEnum.ASISTIO.value
             self.es_primera_vez = True
-        elif val == "excused":
-            self.estado = "EXCUSA"
+        elif val in {"excused", "excusa"}:
+            self.estado = EstadoAsistenciaEnum.EXCUSA.value
             self.es_primera_vez = False
         else:
-            self.estado = "Presente"
+            self.estado = EstadoAsistenciaEnum.ASISTIO.value
             self.es_primera_vez = False
 
     @property
     def attended(self):
-        return str(self.estado).strip().lower() in {
-            "asistio",
-            "presente",
-            "present",
-            "primera_vez",
-            "first_time",
+        return str(self.estado).strip().upper() in {
+            EstadoAsistenciaEnum.ASISTIO.value,
+            "ASISTIO",
+            "PRESENTE",
+            "PRESENT",
+            "PRIMERA_VEZ",
+            "FIRST_TIME",
         }
 
     @attended.setter
     def attended(self, value):
-        self.estado = "Presente" if value else "Ausente"
+        self.estado = EstadoAsistenciaEnum.ASISTIO.value if value else EstadoAsistenciaEnum.FALTO.value
 
     sesion = relationship("SesionGrupo", back_populates="asistencias")
     persona = relationship("Persona", back_populates="asistencias")
