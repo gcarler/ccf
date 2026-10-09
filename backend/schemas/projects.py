@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import uuid
 from datetime import datetime, timezone
-from typing import Annotated, Any, List, Literal, Optional
+from typing import Annotated, Any, Dict, List, Literal, Optional
 from urllib.parse import urlsplit
 from uuid import UUID
 
@@ -1664,6 +1664,118 @@ class ProjectTasksRollupSummary(BaseModel):
     tasks_with_expenses_count: int = 0
     tasks_rollup: List[TaskDimensionsDetail] = Field(default_factory=list)
     model_config = orm_config
+
+
+# ============================================================================
+# WBS / EDT Nivel 4: Matriz de 4 Cuadrantes, Organigrama WBS y Modelos EAC (Fase 4)
+# ============================================================================
+
+class EarnedScheduleMetrics(BaseModel):
+    """Métricas de Tiempo Ganado (Earned Schedule - ES) bajo estándar Lipke / PMI."""
+    planned_duration_days: float = Field(..., description="Duración total planificada en días (PD)")
+    actual_time_days: float = Field(..., description="Tiempo real transcurrido a la fecha en días (AT)")
+    earned_schedule_days: float = Field(..., description="Tiempo ganado en unidades de tiempo (ES)")
+    schedule_variance_time_days: float = Field(..., description="Variación del cronograma en tiempo SV(t) = ES - AT")
+    schedule_performance_index_time: float = Field(..., description="Índice de desempeño del cronograma en tiempo SPI(t) = ES / AT")
+    estimated_duration_at_completion_days: float = Field(..., description="Duración estimada al cierre EDAC = PD / SPI(t)")
+    time_variance_at_completion_days: float = Field(..., description="Variación de tiempo al cierre TVAC = PD - EDAC")
+    projected_finish_date: Optional[str] = Field(default=None, description="Fecha de culminación proyectada (ISO)")
+    model_config = orm_config
+
+
+class EACForecastModel(BaseModel):
+    """Modelo de Pronóstico a la Conclusión (EAC, ETC, VAC)."""
+    model_key: Literal["typical", "atypical", "composite"]
+    title: str
+    description: str
+    formula: str
+    eac: float = Field(..., description="Estimate at Completion")
+    etc: float = Field(..., description="Estimate to Complete = EAC - AC")
+    vac: float = Field(..., description="Variance at Completion = BAC - EAC")
+    vac_percentage: float = Field(..., description="Variación porcentual respecto a BAC")
+    model_config = orm_config
+
+
+class TCPIMetrics(BaseModel):
+    """Índice de Desempeño del Trabajo por Completar (TCPI)."""
+    tcpi_bac: Optional[float] = Field(default=None, description="TCPI requerido para cumplir el presupuesto BAC")
+    tcpi_eac: Optional[float] = Field(default=None, description="TCPI requerido para cumplir el pronóstico EAC típico")
+    is_budget_depleted: bool = Field(default=False, description="Indica si el presupuesto BAC ya fue consumido")
+    difficulty_level: Literal["feasible", "moderate", "hard", "critical"] = Field(default="feasible")
+    explanation: str
+    model_config = orm_config
+
+
+class EarlyWarningAlert(BaseModel):
+    """Alerta temprana de desviación según la Regla del 15% PMI."""
+    metric: str
+    level: Literal["critical", "warning", "info"]
+    title: str
+    detail: str
+    threshold: str
+    current_value: float
+    model_config = orm_config
+
+
+class CPIversusSPIQuadrant(BaseModel):
+    """Matriz de 4 Cuadrantes CPI vs SPI."""
+    quadrant_id: Literal["quadrant_1", "quadrant_2", "quadrant_3", "quadrant_4"]
+    quadrant_number: int
+    name: str
+    health_status: Literal["OPTIMO", "RIESGO", "CRITICO", "ATENCION"]
+    badge_color: Literal["success", "warning", "destructive", "accent"]
+    description: str
+    action_recommendation: str
+    cpi: float
+    spi: float
+    point_x_pct: float
+    point_y_pct: float
+    rule_15_triggered: bool = False
+    alerts: List[EarlyWarningAlert] = Field(default_factory=list)
+    model_config = orm_config
+
+
+class ProjectEVMAdvancedResponse(BaseModel):
+    """Respuesta consolidada de EVM Avanzado: Matriz de 4 Cuadrantes, Pronósticos EAC, ES y TCPI."""
+    project_id: UUIDStr
+    calculated_at: str
+    standard_evm: ProjectEVMMetrics
+    earned_schedule: EarnedScheduleMetrics
+    forecast_models: Dict[str, EACForecastModel]
+    tcpi: TCPIMetrics
+    quadrant: CPIversusSPIQuadrant
+    early_warnings: List[EarlyWarningAlert] = Field(default_factory=list)
+    model_config = orm_config
+
+
+class WBSNode(BaseModel):
+    """Nodo jerárquico del Organigrama / Árbol WBS."""
+    id: str
+    wbs_code: str
+    title: str
+    type: Literal["project", "component", "task"]
+    level: int
+    status: str
+    progress_pct: float
+    estimated_hours: float = 0.0
+    actual_hours: float = 0.0
+    budget_allocated: Optional[float] = None
+    cost: float = 0.0
+    is_leaf: bool = True
+    health_status: Optional[str] = None
+    children: List[WBSNode] = Field(default_factory=list)
+    model_config = orm_config
+
+
+class ProjectWBSTreeResponse(BaseModel):
+    """Respuesta del Organigrama / Árbol de EDT jerárquica con codificación automática recursiva."""
+    project_id: UUIDStr
+    project_title: str
+    total_nodes: int
+    max_depth: int
+    root: WBSNode
+    model_config = orm_config
+
 
 
 

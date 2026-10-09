@@ -1003,3 +1003,101 @@ export interface ProjectTasksRollupSummary {
   tasks_rollup: TaskDimensionsDetail[];
 }
 
+// ── WBS / EDT Nivel 4: Cuadrantes, Organigrama y Pronósticos (Fase 4) ─────────
+
+export interface EarnedScheduleMetrics {
+  planned_duration_days: number;
+  actual_time_days: number;
+  earned_schedule_days: number;
+  schedule_variance_time_days: number;
+  schedule_performance_index_time: number;
+  estimated_duration_at_completion_days: number;
+  time_variance_at_completion_days: number;
+  projected_finish_date?: string | null;
+}
+
+export interface EACForecastModel {
+  model_key: 'typical' | 'atypical' | 'composite';
+  title: string;
+  description: string;
+  formula: string;
+  eac: number;
+  etc: number;
+  vac: number;
+  vac_percentage: number;
+}
+
+export interface TCPIMetrics {
+  tcpi_bac?: number | null;
+  tcpi_eac?: number | null;
+  is_budget_depleted: boolean;
+  difficulty_level: 'feasible' | 'moderate' | 'hard' | 'critical';
+  explanation: string;
+}
+
+export interface EarlyWarningAlert {
+  metric: string;
+  level: 'critical' | 'warning' | 'info';
+  title: string;
+  detail: string;
+  threshold: string;
+  current_value: number;
+}
+
+export interface CPIversusSPIQuadrant {
+  quadrant_id: 'quadrant_1' | 'quadrant_2' | 'quadrant_3' | 'quadrant_4';
+  quadrant_number: number;
+  name: string;
+  health_status: 'OPTIMO' | 'RIESGO' | 'CRITICO' | 'ATENCION';
+  badge_color: 'success' | 'warning' | 'destructive' | 'accent';
+  description: string;
+  action_recommendation: string;
+  cpi: number;
+  spi: number;
+  point_x_pct: number;
+  point_y_pct: number;
+  rule_15_triggered: boolean;
+  alerts: EarlyWarningAlert[];
+}
+
+export interface ProjectEVMAdvancedResponse {
+  project_id: string;
+  calculated_at: string;
+  standard_evm: ProjectEVMMetrics;
+  earned_schedule: EarnedScheduleMetrics;
+  forecast_models: {
+    typical: EACForecastModel;
+    atypical: EACForecastModel;
+    composite: EACForecastModel;
+  };
+  tcpi: TCPIMetrics;
+  quadrant: CPIversusSPIQuadrant;
+  early_warnings: EarlyWarningAlert[];
+}
+
+export interface WBSNode {
+  id: string;
+  wbs_code: string;
+  title: string;
+  type: 'project' | 'component' | 'task';
+  level: number;
+  status: string;
+  progress_pct: number;
+  estimated_hours: number;
+  actual_hours: number;
+  budget_allocated?: number | null;
+  cost: number;
+  is_leaf: boolean;
+  health_status?: string | null;
+  children: WBSNode[];
+}
+
+export interface ProjectWBSTreeResponse {
+  project_id: string;
+  project_title: string;
+  total_nodes: number;
+  max_depth: number;
+  root: WBSNode;
+}
+
+

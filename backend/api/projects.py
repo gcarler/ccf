@@ -2392,6 +2392,37 @@ def get_project_curve_s(
     )
 
 
+@router.get("/{project_id}/evm-advanced", response_model=schemas.ProjectEVMAdvancedResponse)
+def get_project_evm_advanced(
+    project_id: str,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_project_access("read")),
+):
+    """Calcula el balance avanzado de EVM: Matriz de 4 Cuadrantes, 3 Modelos de Pronóstico EAC, Tiempo Ganado (ES), TCPI y Alertas Tempranas (Regla del 15%)."""
+    user_sede = get_user_sede_id(db, current_user.id)
+    project = _ensure_project(db, project_id, user_sede=user_sede)
+    from backend.services.project_evm_service import calculate_project_evm_advanced
+
+    evm_adv = calculate_project_evm_advanced(db, project)
+    return schemas.ProjectEVMAdvancedResponse(**evm_adv)
+
+
+@router.get("/{project_id}/wbs-tree", response_model=schemas.ProjectWBSTreeResponse)
+def get_project_wbs_tree(
+    project_id: str,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_project_access("read")),
+):
+    """Construye el Organigrama y Árbol de la EDT (WBS) jerárquico con codificación recursiva automática (1.1, 1.1.1)."""
+    user_sede = get_user_sede_id(db, current_user.id)
+    project = _ensure_project(db, project_id, user_sede=user_sede)
+    from backend.services.project_evm_service import build_project_wbs_tree
+
+    wbs_data = build_project_wbs_tree(db, project)
+    return schemas.ProjectWBSTreeResponse(**wbs_data)
+
+
+
 # ── EDT Nivel 2: Componentes y Regla del 100% ──────────────────────────────
 
 

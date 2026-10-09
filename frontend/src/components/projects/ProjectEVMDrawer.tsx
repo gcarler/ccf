@@ -11,13 +11,17 @@ import {
     BarChart3,
     CheckCircle2,
     DollarSign,
+    Grid,
     HelpCircle,
     Info,
+    ListTree,
     RefreshCw,
     ShieldAlert,
 } from 'lucide-react';
 import clsx from 'clsx';
 import { toast } from 'sonner';
+import { ProjectQuadrantsMatrix } from './ProjectQuadrantsMatrix';
+import { ProjectWBSTreeView } from './ProjectWBSTreeView';
 
 interface ProjectEVMDrawerProps {
     projectId: string;
@@ -33,6 +37,7 @@ export function ProjectEVMDrawer({
     onClose,
 }: ProjectEVMDrawerProps) {
     const { token } = useAuth();
+    const [activeTab, setActiveTab] = useState<'balance' | 'quadrants' | 'wbs'>('balance');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [evmData, setEvmData] = useState<ProjectEVMMetrics | null>(null);
@@ -161,53 +166,115 @@ export function ProjectEVMDrawer({
             width="w-full sm:max-w-2xl md:max-w-3xl"
         >
             <div className="p-4 sm:p-6 space-y-6">
-                {/* Botón de recarga */}
-                <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-1.5 text-xs text-[hsl(var(--muted-foreground))]">
-                        <Info size={14} className="shrink-0 text-[hsl(var(--primary))]" />
-                        <span>Fórmulas normativas estándar del Project Management Institute (PMI)</span>
-                    </div>
+                {/* Selector de Pestañas Superiores */}
+                <div className="flex rounded-lg p-1 border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] text-xs font-semibold">
                     <button
                         type="button"
-                        onClick={() => void loadData()}
-                        disabled={loading}
-                        className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] hover:bg-[hsl(var(--surface-2))] transition-colors active:scale-95 disabled:opacity-50"
+                        onClick={() => setActiveTab('balance')}
+                        className={clsx(
+                            "flex-1 py-1.5 px-3 rounded-md transition-all flex items-center justify-center gap-1.5",
+                            activeTab === 'balance'
+                                ? "bg-[hsl(var(--surface-1))] text-[hsl(var(--foreground))] shadow-xs"
+                                : "text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))]"
+                        )}
                     >
-                        <RefreshCw size={13} className={clsx(loading && 'animate-spin')} />
-                        Recalcular
+                        <BarChart3 size={14} />
+                        <span>Curva S y Balance</span>
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => setActiveTab('quadrants')}
+                        className={clsx(
+                            "flex-1 py-1.5 px-3 rounded-md transition-all flex items-center justify-center gap-1.5",
+                            activeTab === 'quadrants'
+                                ? "bg-[hsl(var(--surface-1))] text-[hsl(var(--foreground))] shadow-xs"
+                                : "text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))]"
+                        )}
+                    >
+                        <Grid size={14} />
+                        <span>Matriz 4 Cuadrantes</span>
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => setActiveTab('wbs')}
+                        className={clsx(
+                            "flex-1 py-1.5 px-3 rounded-md transition-all flex items-center justify-center gap-1.5",
+                            activeTab === 'wbs'
+                                ? "bg-[hsl(var(--surface-1))] text-[hsl(var(--foreground))] shadow-xs"
+                                : "text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))]"
+                        )}
+                    >
+                        <ListTree size={14} />
+                        <span>Organigrama WBS</span>
                     </button>
                 </div>
 
-                {loading && !evmData && (
-                    <div className="space-y-4 animate-pulse">
-                        <div className="h-28 rounded-xl bg-[hsl(var(--surface-2))]" />
-                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                            {[1, 2, 3, 4].map(i => (
-                                <div key={i} className="h-20 rounded-lg bg-[hsl(var(--surface-2))]" />
-                            ))}
+                {/* Vista 2: Matriz de 4 Cuadrantes y Pronósticos */}
+                {activeTab === 'quadrants' && (
+                    <ProjectQuadrantsMatrix
+                        projectId={projectId}
+                        projectTitle={projectTitle}
+                    />
+                )}
+
+                {/* Vista 3: Organigrama WBS */}
+                {activeTab === 'wbs' && (
+                    <ProjectWBSTreeView
+                        projectId={projectId}
+                        projectTitle={projectTitle}
+                    />
+                )}
+
+                {/* Vista 1: Curva S y Balance General */}
+                {activeTab === 'balance' && (
+                    <div className="space-y-6">
+                        {/* Botón de recarga */}
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-1.5 text-xs text-[hsl(var(--muted-foreground))]">
+                                <Info size={14} className="shrink-0 text-[hsl(var(--primary))]" />
+                                <span>Fórmulas normativas estándar del Project Management Institute (PMI)</span>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={() => void loadData()}
+                                disabled={loading}
+                                className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] hover:bg-[hsl(var(--surface-2))] transition-colors active:scale-95 disabled:opacity-50"
+                            >
+                                <RefreshCw size={13} className={clsx(loading && 'animate-spin')} />
+                                Recalcular
+                            </button>
                         </div>
-                        <div className="h-64 rounded-xl bg-[hsl(var(--surface-2))]" />
-                    </div>
-                )}
 
-                {error && !evmData && (
-                    <div className="rounded-xl border border-[hsl(var(--destructive)/0.3)] bg-[hsl(var(--destructive)/0.08)] p-6 text-center space-y-3">
-                        <AlertTriangle className="mx-auto text-[hsl(var(--destructive))]" size={28} />
-                        <p className="text-sm font-semibold text-[hsl(var(--destructive))]">{error}</p>
-                        <button
-                            type="button"
-                            onClick={() => void loadData()}
-                            className="px-4 py-2 text-xs font-bold uppercase rounded-lg bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] hover:bg-[hsl(var(--surface-2))]"
-                        >
-                            Reintentar
-                        </button>
-                    </div>
-                )}
+                        {loading && !evmData && (
+                            <div className="space-y-4 animate-pulse">
+                                <div className="h-28 rounded-xl bg-[hsl(var(--surface-2))]" />
+                                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                                    {[1, 2, 3, 4].map(i => (
+                                        <div key={i} className="h-20 rounded-lg bg-[hsl(var(--surface-2))]" />
+                                    ))}
+                                </div>
+                                <div className="h-64 rounded-xl bg-[hsl(var(--surface-2))]" />
+                            </div>
+                        )}
 
-                {evmData && (
-                    <>
-                        {/* 1. Header Semafórico y Diagnóstico Principal */}
-                        <div
+                        {error && !evmData && (
+                            <div className="rounded-xl border border-[hsl(var(--destructive)/0.3)] bg-[hsl(var(--destructive)/0.08)] p-6 text-center space-y-3">
+                                <AlertTriangle className="mx-auto text-[hsl(var(--destructive))]" size={28} />
+                                <p className="text-sm font-semibold text-[hsl(var(--destructive))]">{error}</p>
+                                <button
+                                    type="button"
+                                    onClick={() => void loadData()}
+                                    className="px-4 py-2 text-xs font-bold uppercase rounded-lg bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] hover:bg-[hsl(var(--surface-2))]"
+                                >
+                                    Reintentar
+                                </button>
+                            </div>
+                        )}
+
+                        {evmData && (
+                            <>
+                                {/* 1. Header Semafórico y Diagnóstico Principal */}
+                                <div
                             className={clsx(
                                 "rounded-xl border p-4.5 space-y-3 transition-colors",
                                 evmData.health_color === 'success' && "bg-[hsl(var(--success)/0.08)] border-[hsl(var(--success)/0.35)]",
@@ -602,6 +669,8 @@ export function ProjectEVMDrawer({
                             </div>
                         )}
                     </>
+                )}
+                    </div>
                 )}
             </div>
         </RightPanel>
