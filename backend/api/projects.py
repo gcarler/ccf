@@ -3170,6 +3170,12 @@ def update_project_task(
         )
     db.commit()
     db.refresh(task)
+    if task.parent_id:
+        try:
+            from backend.services.project_evm_service import sync_parent_task_rollup
+            sync_parent_task_rollup(db, task.parent_id)
+        except Exception:
+            pass
     if (
         "assignee_id" in update_data
         and _assignment_changed(previous_assignee_id, getattr(task, "assignee_id", None))
@@ -3182,6 +3188,46 @@ def update_project_task(
             previous_assignee_id=previous_assignee_id,
         )
     return task
+
+
+@router.get(
+    "/{project_id}/tasks/{task_id}/dimensions",
+    response_model=schemas.TaskDimensionsDetail,
+    tags=["Projects Super-PRO", "WBS EDT"],
+)
+def get_task_dimensions_endpoint(
+    project_id: str,
+    task_id: str,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_project_access("read")),
+):
+    """Consulta las 3 Dimensiones de Control PMI (Tiempo/Horas, Avance Físico Continuo y Costos Imputados) y Roll-Up."""
+    user_sede = get_user_sede_id(db, current_user.id)
+    _ensure_project(db, project_id, user_sede=user_sede)
+    task = _ensure_task_in_project(db, project_id, task_id)
+    from backend.services.project_evm_service import calculate_task_rollup
+
+    rollup_data = calculate_task_rollup(db, task)
+    return schemas.TaskDimensionsDetail(**rollup_data)
+
+
+@router.get(
+    "/{project_id}/tasks-rollup",
+    response_model=schemas.ProjectTasksRollupSummary,
+    tags=["Projects Super-PRO", "WBS EDT"],
+)
+def get_project_tasks_rollup_endpoint(
+    project_id: str,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_project_access("read")),
+):
+    """Consulta el Roll-Up consolidado de las 3 Dimensiones para todas las tareas y paquetes de trabajo del proyecto."""
+    user_sede = get_user_sede_id(db, current_user.id)
+    project = _ensure_project(db, project_id, user_sede=user_sede)
+    from backend.services.project_evm_service import calculate_project_tasks_rollup
+
+    summary_data = calculate_project_tasks_rollup(db, project)
+    return schemas.ProjectTasksRollupSummary(**summary_data)
 
 
 @router.get("/{project_id}/tasks/{task_id}/supplies", response_model=List[schemas.TaskSupply])
@@ -4247,6 +4293,23 @@ def create_project_expense(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="El componente especificado no pertenece a este proyecto o no existe",
             )
+    if payload.task_id:
+        task_obj = (
+            db.query(models.ProjectTask)
+            .filter(
+                models.ProjectTask.id == _to_uuid(payload.task_id),
+                models.ProjectTask.project_id == project.id,
+                models.ProjectTask.deleted_at.is_(None),
+            )
+            .first()
+        )
+        if not task_obj:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="La tarea especificada no pertenece a este proyecto o no existe",
+            )
+        if not payload.component_id and task_obj.component_id:
+            payload.component_id = str(task_obj.component_id)
     persona_id = get_user_persona_id(db, current_user.id)
     expense = crud.create_project_expense(
         db,
@@ -4316,6 +4379,21 @@ def update_project_expense(
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="El componente especificado no pertenece a este proyecto o no existe",
+            )
+    if payload.task_id:
+        task_obj = (
+            db.query(models.ProjectTask)
+            .filter(
+                models.ProjectTask.id == _to_uuid(payload.task_id),
+                models.ProjectTask.project_id == project.id,
+                models.ProjectTask.deleted_at.is_(None),
+            )
+            .first()
+        )
+        if not task_obj:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="La tarea especificada no pertenece a este proyecto o no existe",
             )
     expense = crud.update_project_expense(
         db,

@@ -28,6 +28,8 @@ export interface ProjectExpense {
   id: string;
   project_id: string;
   component_id?: string | null;
+  task_id?: string | null;
+  task_title?: string | null;
   category: string;
   description?: string | null;
   amount: number;
@@ -232,11 +234,15 @@ export interface ProjectTaskRecord {
   start_date?: string | null;
   due_date?: string | null;
   node?: string | null;
+  physical_progress_pct?: number;
+  estimated_hours?: number;
+  actual_cost?: number;
   labels?: string[];
   order_index?: number;
   supplies?: TaskSupplyRecord[];
   subtasks?: ProjectTaskRecord[];
   attachments?: ProjectAttachment[];
+  expenses?: ProjectExpense[];
   comments_count?: number;
 }
 
@@ -936,5 +942,64 @@ export interface ProjectComponentsBreakdown {
   project_id: string;
   components: ProjectComponentDetail[];
   budget_rule: ProjectBudget100RuleValidation;
+}
+
+// ── WBS EDT Nivel 3: Paquetes de Trabajo, 3 Dimensiones y Roll-Up (Fase 3) ────
+
+export interface TaskTimeDimension {
+  estimated_hours: number;
+  actual_hours: number;
+  start_date?: string | null;
+  due_date?: string | null;
+  duration_days?: number | null;
+  subtasks_estimated_hours: number;
+  total_estimated_hours: number;
+}
+
+export interface TaskProgressDimension {
+  physical_progress_pct: number;
+  rolled_up_progress_pct: number;
+  is_leaf: boolean;
+  subtasks_count: number;
+  completed_subtasks_count: number;
+  weight_basis: 'estimated_hours' | 'equal_count';
+}
+
+export interface TaskCostDimension {
+  direct_cost: number;
+  subtasks_cost: number;
+  total_cost: number;
+  actual_cost: number;
+  planned_cost: number;
+  committed_cost: number;
+  expenses_count: number;
+}
+
+export interface TaskDimensionsDetail {
+  task_id: string;
+  project_id: string;
+  title: string;
+  status: string;
+  priority: string;
+  parent_id?: string | null;
+  component_id?: string | null;
+  component_name?: string | null;
+  time: TaskTimeDimension;
+  progress: TaskProgressDimension;
+  cost: TaskCostDimension;
+  expenses: ProjectExpense[];
+}
+
+export interface ProjectTasksRollupSummary {
+  project_id: string;
+  total_tasks: number;
+  leaf_tasks_count: number;
+  parent_tasks_count: number;
+  total_estimated_hours: number;
+  total_actual_hours: number;
+  overall_physical_progress_pct: number;
+  total_expenses_cost: number;
+  tasks_with_expenses_count: number;
+  tasks_rollup: TaskDimensionsDetail[];
 }
 

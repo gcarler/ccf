@@ -478,6 +478,12 @@ def create_project_task(db: Session, task: schemas.ProjectTaskCreate):
     db.add(db_task)
     db.commit()
     db.refresh(db_task)
+    if parent_id is not None:
+        try:
+            from backend.services.project_evm_service import sync_parent_task_rollup
+            sync_parent_task_rollup(db, parent_id)
+        except Exception:
+            pass
     return db_task
 
 
@@ -524,6 +530,12 @@ def update_project_task(db: Session, task_id, payload: schemas.ProjectTaskUpdate
         setattr(row, key, value)
     db.commit()
     db.refresh(row)
+    if row.parent_id:
+        try:
+            from backend.services.project_evm_service import sync_parent_task_rollup
+            sync_parent_task_rollup(db, row.parent_id)
+        except Exception:
+            pass
     return row
 
 
@@ -531,8 +543,15 @@ def delete_project_task(db: Session, task_id) -> bool:
     row = get_project_task(db, task_id)
     if not row:
         return False
+    parent_id = row.parent_id
     row.deleted_at = datetime.now(timezone.utc)
     db.commit()
+    if parent_id:
+        try:
+            from backend.services.project_evm_service import sync_parent_task_rollup
+            sync_parent_task_rollup(db, parent_id)
+        except Exception:
+            pass
     return True
 
 
@@ -1285,6 +1304,8 @@ def get_project_expenses(
     for r in rows:
         if r.creator:
             r.creator_name = r.creator.nombre_completo
+        if getattr(r, "task", None):
+            r.task_title = r.task.title
     return rows
 
 
@@ -1300,8 +1321,11 @@ def get_project_expense(
         )
         .first()
     )
-    if row and row.creator:
-        row.creator_name = row.creator.nombre_completo
+    if row:
+        if row.creator:
+            row.creator_name = row.creator.nombre_completo
+        if getattr(row, "task", None):
+            row.task_title = row.task.title
     return row
 
 
@@ -1315,6 +1339,7 @@ def create_project_expense(
     row = models.ProjectExpense(
         project_id=project_id,
         component_id=_to_uuid(expense_in.component_id) if expense_in.component_id else None,
+        task_id=_to_uuid(expense_in.task_id) if getattr(expense_in, "task_id", None) else None,
         category=expense_in.category or "general",
         description=expense_in.description,
         amount=round(float(expense_in.amount), 2),
@@ -1329,6 +1354,8 @@ def create_project_expense(
     recalculate_project_budget(db, project_id)
     if row.creator:
         row.creator_name = row.creator.nombre_completo
+    if getattr(row, "task", None):
+        row.task_title = row.task.title
     return row
 
 
@@ -1341,12 +1368,12 @@ def update_project_expense(
     row = get_project_expense(db, project_id, expense_id)
     if not row:
         return None
-    nullable_fields = {"description", "receipt_url", "component_id"}
+    nullable_fields = {"description", "receipt_url", "component_id", "task_id"}
     for k, v in expense_in.model_dump(exclude_unset=True).items():
         if v is not None or k in nullable_fields:
             if k == "amount":
                 setattr(row, k, round(float(v), 2))
-            elif k == "component_id":
+            elif k in ("component_id", "task_id"):
                 setattr(row, k, _to_uuid(v) if v else None)
             else:
                 setattr(row, k, v)
@@ -1356,6 +1383,8 @@ def update_project_expense(
     recalculate_project_budget(db, project_id)
     if row.creator:
         row.creator_name = row.creator.nombre_completo
+    if getattr(row, "task", None):
+        row.task_title = row.task.title
     return row
 
 

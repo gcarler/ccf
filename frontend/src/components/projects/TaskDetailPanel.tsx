@@ -26,6 +26,7 @@ import type { Activity } from './TaskActivitySection';
 import { toggleActivity, addChild, updateTitle } from './TaskActivitySection';
 import TaskCommentSection from './TaskCommentSection';
 import TaskTimeTrackingSection from './TaskTimeTrackingSection';
+import TaskDimensionsSection from './TaskDimensionsSection';
 
 const MIN_WIDTH = 400;
 const DEFAULT_WIDTH = 520;
@@ -552,6 +553,14 @@ export default function TaskDetailPanel({
                         onNodeCycle={handleNodeCycle}
                         priority={priority}
                         token={token}
+                    />
+
+                    {/* 3 Dimensiones de Control PMI (Tiempo, Avance Continuo, Costos) */}
+                    <TaskDimensionsSection
+                        task={task}
+                        token={token}
+                        onUpdate={onUpdate}
+                        onActivityCreated={onActivityCreated}
                     />
 
                     {/* Description */}

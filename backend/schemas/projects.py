@@ -176,6 +176,8 @@ class ProjectTaskBase(BaseModel):
     due_date: Optional[datetime] = None
     node: Optional[str] = Field(default=None, max_length=50)
     component_id: Optional[UUIDStr] = None
+    physical_progress_pct: float = Field(default=0.0, ge=0.0, le=100.0)
+    estimated_hours: float = Field(default=0.0, ge=0.0)
     labels: List[str] = Field(default_factory=list)
     attachments: List[ProjectAttachment] = Field(default_factory=list)
 
@@ -218,6 +220,8 @@ class ProjectTaskUpdate(BaseModel):
     due_date: Optional[datetime] = None
     node: Optional[str] = Field(default=None, max_length=50)
     component_id: Optional[UUIDStr] = None
+    physical_progress_pct: Optional[float] = Field(default=None, ge=0.0, le=100.0)
+    estimated_hours: Optional[float] = Field(default=None, ge=0.0)
     labels: Optional[List[str]] = None
     attachments: Optional[List[dict]] = None
 
@@ -238,6 +242,7 @@ class ProjectTask(ProjectTaskBase):
     project_id: UUIDStr
     parent_id: Optional[UUIDStr] = None
     order_index: int = 0
+    actual_cost: float = 0.0
     supplies: List[TaskSupply] = Field(default_factory=list)
     subtasks: List["ProjectTask"] = Field(default_factory=list)
     model_config = orm_config
@@ -314,6 +319,7 @@ class ProjectExpenseBase(BaseModel):
     receipt_url: Optional[str] = Field(default=None, max_length=500)
     status: Literal["planned", "committed", "paid"] = "planned"
     component_id: Optional[UUIDStr] = None
+    task_id: Optional[UUIDStr] = None
 
 
 class ProjectExpenseCreate(ProjectExpenseBase):
@@ -333,6 +339,7 @@ class ProjectExpenseUpdate(BaseModel):
     receipt_url: Optional[str] = Field(default=None, max_length=500)
     status: Optional[Literal["planned", "committed", "paid"]] = None
     component_id: Optional[UUIDStr] = None
+    task_id: Optional[UUIDStr] = None
 
     @field_validator("receipt_url")
     @classmethod
@@ -345,6 +352,7 @@ class ProjectExpense(ProjectExpenseBase):
     project_id: UUIDStr
     created_by: Optional[UUIDStr] = None
     creator_name: Optional[str] = None
+    task_title: Optional[str] = None
     created_at: datetime
     updated_at: Optional[datetime] = None
     model_config = orm_config
@@ -1585,5 +1593,77 @@ class ProjectComponentsBreakdown(BaseModel):
     project_id: UUIDStr
     components: List[ProjectComponentDetail] = Field(default_factory=list)
     budget_rule: ProjectBudget100RuleValidation
+
+
+# ============================================================================
+# WBS / EDT Nivel 3: Paquetes de Trabajo, 3 Dimensiones y Roll-Up (Fase 3)
+# ============================================================================
+
+class TaskTimeDimension(BaseModel):
+    """Dimensión 1: Tiempo y Esfuerzo (Schedule & Effort)."""
+    estimated_hours: float = 0.0
+    actual_hours: float = 0.0
+    start_date: Optional[datetime] = None
+    due_date: Optional[datetime] = None
+    duration_days: Optional[int] = None
+    subtasks_estimated_hours: float = 0.0
+    total_estimated_hours: float = 0.0
+    model_config = orm_config
+
+
+class TaskProgressDimension(BaseModel):
+    """Dimensión 2: Avance Físico Continuo y Ponderado (Physical Progress 0-100%)."""
+    physical_progress_pct: float = 0.0
+    rolled_up_progress_pct: float = 0.0
+    is_leaf: bool = True
+    subtasks_count: int = 0
+    completed_subtasks_count: int = 0
+    weight_basis: str = "estimated_hours"  # "estimated_hours" | "equal_count"
+    model_config = orm_config
+
+
+class TaskCostDimension(BaseModel):
+    """Dimensión 3: Costo e Imputación Financiera (Financial & Cost)."""
+    direct_cost: float = 0.0
+    subtasks_cost: float = 0.0
+    total_cost: float = 0.0
+    actual_cost: float = 0.0
+    planned_cost: float = 0.0
+    committed_cost: float = 0.0
+    expenses_count: int = 0
+    model_config = orm_config
+
+
+class TaskDimensionsDetail(BaseModel):
+    """Detalle unificado de las 3 Dimensiones de Control PMI para un paquete de trabajo."""
+    task_id: UUIDStr
+    project_id: UUIDStr
+    title: str
+    status: str
+    priority: str = "medium"
+    parent_id: Optional[UUIDStr] = None
+    component_id: Optional[UUIDStr] = None
+    component_name: Optional[str] = None
+    time: TaskTimeDimension
+    progress: TaskProgressDimension
+    cost: TaskCostDimension
+    expenses: List[ProjectExpense] = Field(default_factory=list)
+    model_config = orm_config
+
+
+class ProjectTasksRollupSummary(BaseModel):
+    """Resumen de Roll-Up de tareas y paquetes de trabajo a nivel de proyecto."""
+    project_id: UUIDStr
+    total_tasks: int = 0
+    leaf_tasks_count: int = 0
+    parent_tasks_count: int = 0
+    total_estimated_hours: float = 0.0
+    total_actual_hours: float = 0.0
+    overall_physical_progress_pct: float = 0.0
+    total_expenses_cost: float = 0.0
+    tasks_with_expenses_count: int = 0
+    tasks_rollup: List[TaskDimensionsDetail] = Field(default_factory=list)
+    model_config = orm_config
+
 
 

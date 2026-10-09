@@ -7,7 +7,12 @@ import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/context/ToastContext";
 import { apiFetch } from "@/lib/http";
 import { getSafeProjectLink } from "@/lib/projects/safeProjectLink";
-import type { ProjectExpense, ProjectBudgetSummary } from "@/types/projects";
+import type {
+  ProjectExpense,
+  ProjectBudgetSummary,
+  ProjectTaskRecord,
+  ProjectComponentDetail,
+} from "@/types/projects";
 import {
   Wallet,
   Plus,
@@ -23,6 +28,8 @@ import {
   Clock,
   FileText,
   PieChart,
+  CheckSquare,
+  Layers,
 } from "lucide-react";
 
 interface ProjectBudgetDrawerProps {
@@ -81,6 +88,8 @@ export function ProjectBudgetDrawer({
 
   const [expenses, setExpenses] = useState<ProjectExpense[]>([]);
   const [summary, setSummary] = useState<ProjectBudgetSummary | null>(null);
+  const [tasks, setTasks] = useState<ProjectTaskRecord[]>([]);
+  const [components, setComponents] = useState<ProjectComponentDetail[]>([]);
   const [loading, setLoading] = useState(false);
   const [loadError, setLoadError] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -100,6 +109,8 @@ export function ProjectBudgetDrawer({
     date: string;
     receipt_url: string;
     status: "planned" | "committed" | "paid";
+    component_id: string;
+    task_id: string;
   }>({
     category: "general",
     description: "",
@@ -107,6 +118,8 @@ export function ProjectBudgetDrawer({
     date: new Date().toISOString().split("T")[0],
     receipt_url: "",
     status: "planned",
+    component_id: "",
+    task_id: "",
   });
 
   const fetchData = useCallback(async () => {
@@ -115,13 +128,17 @@ export function ProjectBudgetDrawer({
     setLoading(true);
     setLoadError(false);
     try {
-      const [expData, sumData] = await Promise.all([
+      const [expData, sumData, tasksData, compsBreakdown] = await Promise.all([
         apiFetch<ProjectExpense[]>(`/projects/${projectId}/expenses`, { token }),
         apiFetch<ProjectBudgetSummary>(`/projects/${projectId}/budget-summary`, { token }),
+        apiFetch<ProjectTaskRecord[]>(`/projects/${projectId}/tasks`, { token }).catch(() => []),
+        apiFetch<{ components: ProjectComponentDetail[] }>(`/projects/${projectId}/components-breakdown`, { token }).catch(() => ({ components: [] })),
       ]);
       if (requestId !== requestSequence.current) return;
       setExpenses(expData || []);
       setSummary(sumData);
+      setTasks(tasksData || []);
+      setComponents(compsBreakdown?.components || []);
     } catch {
       if (requestId !== requestSequence.current) return;
       setLoadError(true);
@@ -153,32 +170,29 @@ export function ProjectBudgetDrawer({
 
     setSaving(true);
     try {
+      const payloadBody = {
+        category: formData.category,
+        description: formData.description,
+        amount: Number(formData.amount),
+        date: formData.date ? new Date(formData.date).toISOString() : undefined,
+        receipt_url: formData.receipt_url || null,
+        status: formData.status,
+        component_id: formData.component_id || null,
+        task_id: formData.task_id || null,
+      };
+
       if (editingId) {
         await apiFetch(`/projects/${projectId}/expenses/${editingId}`, {
           method: "PATCH",
           token,
-          body: JSON.stringify({
-            category: formData.category,
-            description: formData.description,
-            amount: Number(formData.amount),
-            date: formData.date ? new Date(formData.date).toISOString() : undefined,
-            receipt_url: formData.receipt_url || null,
-            status: formData.status,
-          }),
+          body: JSON.stringify(payloadBody),
         });
         addToast("Partida de gasto actualizada", "success");
       } else {
         await apiFetch(`/projects/${projectId}/expenses`, {
           method: "POST",
           token,
-          body: JSON.stringify({
-            category: formData.category,
-            description: formData.description,
-            amount: Number(formData.amount),
-            date: formData.date ? new Date(formData.date).toISOString() : undefined,
-            receipt_url: formData.receipt_url || null,
-            status: formData.status,
-          }),
+          body: JSON.stringify(payloadBody),
         });
         addToast("Gasto registrado exitosamente", "success");
       }
@@ -192,6 +206,8 @@ export function ProjectBudgetDrawer({
         date: new Date().toISOString().split("T")[0],
         receipt_url: "",
         status: "planned",
+        component_id: "",
+        task_id: "",
       });
       fetchData();
       onBudgetUpdated?.();
@@ -212,6 +228,8 @@ export function ProjectBudgetDrawer({
       date: exp.date ? exp.date.split("T")[0] : new Date().toISOString().split("T")[0],
       receipt_url: exp.receipt_url || "",
       status: exp.status || "planned",
+      component_id: exp.component_id || "",
+      task_id: exp.task_id || "",
     });
   };
 
@@ -357,6 +375,8 @@ export function ProjectBudgetDrawer({
                   date: new Date().toISOString().split("T")[0],
                   receipt_url: "",
                   status: "planned",
+                  component_id: "",
+                  task_id: "",
                 });
               }}
               className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold cursor-pointer transition-opacity hover:opacity-90"
@@ -476,6 +496,67 @@ export function ProjectBudgetDrawer({
                     color: "hsl(var(--text-primary))",
                   }}
                 />
+              </div>
+            </div>
+
+            {/* Vinculación WBS / EDT: Componente y Actividad */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div>
+                <label htmlFor={`${fieldId}-component`} className="block text-xs font-medium mb-1 flex items-center gap-1">
+                  <Layers className="w-3 h-3 text-[hsl(var(--primary))]" />
+                  Componente EDT (Nivel 2)
+                </label>
+                <select
+                  id={`${fieldId}-component`}
+                  value={formData.component_id}
+                  onChange={(e) => setFormData({ ...formData, component_id: e.target.value })}
+                  className="w-full px-3 py-2 rounded-lg border text-sm outline-none"
+                  style={{
+                    backgroundColor: "hsl(var(--surface-2))",
+                    borderColor: "hsl(var(--border))",
+                    color: "hsl(var(--text-primary))",
+                  }}
+                >
+                  <option value="">Sin componente asignado</option>
+                  {components.map((comp) => (
+                    <option key={comp.id} value={comp.id}>
+                      [{comp.code}] {comp.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label htmlFor={`${fieldId}-task`} className="block text-xs font-medium mb-1 flex items-center gap-1">
+                  <CheckSquare className="w-3 h-3 text-[hsl(var(--primary))]" />
+                  Actividad / Paquete de Trabajo
+                </label>
+                <select
+                  id={`${fieldId}-task`}
+                  value={formData.task_id}
+                  onChange={(e) => {
+                    const selectedTaskId = e.target.value;
+                    const selectedTask = tasks.find((t) => t.id === selectedTaskId);
+                    setFormData({
+                      ...formData,
+                      task_id: selectedTaskId,
+                      component_id: (!formData.component_id && selectedTask?.component_id) ? selectedTask.component_id : formData.component_id,
+                    });
+                  }}
+                  className="w-full px-3 py-2 rounded-lg border text-sm outline-none"
+                  style={{
+                    backgroundColor: "hsl(var(--surface-2))",
+                    borderColor: "hsl(var(--border))",
+                    color: "hsl(var(--text-primary))",
+                  }}
+                >
+                  <option value="">Gasto global del proyecto (sin tarea)</option>
+                  {tasks.map((taskItem) => (
+                    <option key={taskItem.id} value={taskItem.id}>
+                      {taskItem.title}
+                    </option>
+                  ))}
+                </select>
               </div>
             </div>
 
@@ -680,6 +761,41 @@ export function ProjectBudgetDrawer({
                         >
                           {catLabel}
                         </span>
+
+                        {(exp.task_title || exp.task_id) && (
+                          <span
+                            className="px-2 py-0.5 rounded-full text-xs border inline-flex items-center gap-1 font-medium"
+                            style={{
+                              backgroundColor: "hsl(var(--surface-3))",
+                              borderColor: "hsl(var(--border))",
+                              color: "hsl(var(--foreground))",
+                            }}
+                          >
+                            <CheckSquare className="w-3 h-3 text-[hsl(var(--primary))]" />
+                            <span>
+                              {exp.task_title ||
+                                tasks.find((t) => t.id === exp.task_id)?.title ||
+                                "Actividad vinculada"}
+                            </span>
+                          </span>
+                        )}
+
+                        {exp.component_id && (
+                          <span
+                            className="px-2 py-0.5 rounded-full text-xs border inline-flex items-center gap-1 font-medium"
+                            style={{
+                              backgroundColor: "hsl(var(--primary)/0.1)",
+                              borderColor: "hsl(var(--primary)/0.3)",
+                              color: "hsl(var(--primary))",
+                            }}
+                          >
+                            <Layers className="w-3 h-3 text-[hsl(var(--primary))]" />
+                            <span>
+                              {components.find((c) => c.id === exp.component_id)?.code ||
+                                "EDT"}
+                            </span>
+                          </span>
+                        )}
                       </div>
                       <p className="text-xs" style={{ color: "hsl(var(--text-secondary))" }}>
                         {exp.description || "Sin descripción"}

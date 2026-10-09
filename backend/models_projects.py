@@ -169,6 +169,8 @@ class ProjectTask(Base):
     start_date = Column(DateTime(timezone=True), nullable=True)
     due_date = Column(DateTime(timezone=True), nullable=True)
     node = Column(String(50), nullable=True, index=True)
+    physical_progress_pct = Column(Float, default=0.0, nullable=False)
+    estimated_hours = Column(Float, default=0.0, nullable=False)
     labels = Column(JSON, default=list, nullable=False)
     deleted_at = Column(DateTime(timezone=True), nullable=True)
     created_at = Column(DateTime(timezone=True), default=_utcnow, index=True)
@@ -180,6 +182,7 @@ class ProjectTask(Base):
     supplies = relationship("TaskSupply", back_populates="task", cascade="all, delete-orphan")
     attachments = relationship("ProjectAttachment", back_populates="task", cascade="all, delete-orphan")
     time_logs = relationship("ProjectTimeLog", back_populates="task", cascade="all, delete-orphan")
+    expenses = relationship("ProjectExpense", back_populates="task")
     subtasks = relationship(
         "ProjectTask",
         backref=backref("parent", remote_side="ProjectTask.id"),
@@ -345,6 +348,9 @@ class ProjectExpense(Base):
     component_id = Column(
         UUID(as_uuid=True), ForeignKey("project_components.id", ondelete="SET NULL"), nullable=True, index=True
     )
+    task_id = Column(
+        UUID(as_uuid=True), ForeignKey("project_tasks.id", ondelete="SET NULL"), nullable=True, index=True
+    )
     category = Column(String(50), default="general", nullable=False)
     description = Column(Text, nullable=True)
     amount = Column(Float, default=0.0, nullable=False)
@@ -358,6 +364,7 @@ class ProjectExpense(Base):
 
     project = relationship("Project", back_populates="expenses")
     component = relationship("ProjectComponent", back_populates="expenses")
+    task = relationship("ProjectTask", back_populates="expenses")
     creator = relationship("Persona", foreign_keys=[created_by])
 
 

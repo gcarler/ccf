@@ -58,6 +58,7 @@ try:
         ProjectExpense,
         ProjectMilestone,
         ProjectTask,
+        ProjectTimeLog,
     )
 except ImportError:
     # Fallback for testing environments without C-extension dependencies
@@ -66,6 +67,7 @@ except ImportError:
     ProjectExpense = _DummyModel  # type: ignore
     ProjectMilestone = _DummyModel  # type: ignore
     ProjectTask = _DummyModel  # type: ignore
+    ProjectTimeLog = _DummyModel  # type: ignore
 
 
 def _as_utc(dt: Optional[datetime.datetime]) -> Optional[datetime.datetime]:
@@ -74,6 +76,23 @@ def _as_utc(dt: Optional[datetime.datetime]) -> Optional[datetime.datetime]:
     if dt.tzinfo is None:
         return dt.replace(tzinfo=timezone.utc)
     return dt.astimezone(timezone.utc)
+
+
+def _safe_float(val: Any, default: float = 0.0) -> float:
+    """Extrae de manera segura un valor flotante manejando None, Decimals, cadenas y MagicMocks."""
+    if val is None:
+        return default
+    if isinstance(val, (int, float)):
+        return float(val)
+    from decimal import Decimal
+    if isinstance(val, Decimal):
+        return float(val)
+    if isinstance(val, str):
+        try:
+            return float(val)
+        except (ValueError, TypeError):
+            return default
+    return default
 
 
 def _utcnow() -> datetime.datetime:
@@ -345,13 +364,55 @@ def calculate_component_evm(
     )
     total_tasks = len(tasks)
     completed_tasks = sum(1 for t in tasks if t.status in ("completed", "done"))
-    physical_pct = round((completed_tasks / max(total_tasks, 1)) * 100.0, 1) if total_tasks > 0 else 0.0
+
+    # Avance físico continuo ponderado por esfuerzo o conteo
+    if total_tasks > 0:
+        total_hours = sum(_safe_float(getattr(t, "estimated_hours", 0.0)) for t in tasks)
+        has_continuous_progress = any(_safe_float(getattr(t, "physical_progress_pct", 0.0)) > 0 for t in tasks)
+
+        if total_hours > 0:
+            weighted_sum = sum(
+                (
+                    _safe_float(getattr(t, "physical_progress_pct", 0.0))
+                    or (100.0 if t.status in ("completed", "done") else 0.0)
+                )
+                * (
+                    _safe_float(getattr(t, "estimated_hours", 0.0))
+                    if _safe_float(getattr(t, "estimated_hours", 0.0)) > 0
+                    else 1.0
+                )
+                for t in tasks
+            )
+            weight_denom = sum(
+                (
+                    _safe_float(getattr(t, "estimated_hours", 0.0))
+                    if _safe_float(getattr(t, "estimated_hours", 0.0)) > 0
+                    else 1.0
+                )
+                for t in tasks
+            )
+            physical_pct = round(weighted_sum / weight_denom, 1)
+        elif has_continuous_progress:
+            physical_pct = round(
+                sum(
+                    _safe_float(getattr(t, "physical_progress_pct", 0.0))
+                    or (100.0 if t.status in ("completed", "done") else 0.0)
+                    for t in tasks
+                )
+                / total_tasks,
+                1,
+            )
+        else:
+            physical_pct = round((completed_tasks / total_tasks) * 100.0, 1)
+    else:
+        physical_pct = 0.0
 
     # 2. EV (Earned Value)
     ev = round(bac * (physical_pct / 100.0), 2)
 
-    # 3. AC (Actual Cost)
-    expenses = (
+    # 3. AC (Actual Cost): gastos asignados al componente O a sus tareas
+    task_ids = [t.id for t in tasks]
+    direct_comp_expenses = (
         db.query(ProjectExpense)
         .filter(
             ProjectExpense.component_id == component.id,
@@ -360,7 +421,20 @@ def calculate_component_evm(
         )
         .all()
     )
-    ac = round(sum(float(e.amount or 0.0) for e in expenses), 2)
+    task_comp_expenses = []
+    if task_ids:
+        task_comp_expenses = (
+            db.query(ProjectExpense)
+            .filter(
+                ProjectExpense.task_id.in_(task_ids),
+                ProjectExpense.deleted_at.is_(None),
+                ProjectExpense.status.in_(["approved", "paid"]),
+            )
+            .all()
+        )
+    # Deduplicar por ID
+    unique_expenses = {e.id: e for e in direct_comp_expenses + task_comp_expenses}
+    ac = round(sum(float(e.amount or 0.0) for e in unique_expenses.values()), 2)
 
     # 4. PV (Planned Value)
     if total_tasks > 0:
@@ -555,4 +629,312 @@ def get_project_components_breakdown(db: Session, project: Project) -> Dict[str,
         "components": component_details,
         "budget_rule": budget_rule,
     }
+
+
+# ============================================================================
+# WBS / EDT Nivel 3: Paquetes de Trabajo, 3 Dimensiones y Roll-Up (Fase 3)
+# ============================================================================
+
+
+def get_task_descendant_ids(db: Session, task_id: Any) -> List[Any]:
+    """Obtiene recursivamente todos los UUIDs de subtareas activas (WBS Nivel 3, 4, ...)."""
+    descendants: List[Any] = []
+    queue = [task_id]
+    visited = {str(task_id)}
+    while queue:
+        current_id = queue.pop(0)
+        children = (
+            db.query(ProjectTask.id)
+            .filter(
+                ProjectTask.parent_id == current_id,
+                ProjectTask.deleted_at.is_(None),
+            )
+            .all()
+        )
+        for child_row in children:
+            cid = child_row[0]
+            str_cid = str(cid)
+            if str_cid not in visited:
+                visited.add(str_cid)
+                descendants.append(cid)
+                queue.append(cid)
+    return descendants
+
+
+def calculate_task_rollup(db: Session, task: ProjectTask) -> Dict[str, Any]:
+    """Calcula las 3 Dimensiones de Control PMI y el Roll-Up de un paquete de trabajo."""
+    # 1. Subtareas directas y descendientes
+    direct_subtasks = (
+        db.query(ProjectTask)
+        .filter(
+            ProjectTask.parent_id == task.id,
+            ProjectTask.deleted_at.is_(None),
+        )
+        .order_by(ProjectTask.order_index.asc())
+        .all()
+    )
+    is_leaf = len(direct_subtasks) == 0
+    descendant_ids = get_task_descendant_ids(db, task.id)
+    all_descendants = (
+        db.query(ProjectTask)
+        .filter(ProjectTask.id.in_(descendant_ids), ProjectTask.deleted_at.is_(None))
+        .all()
+        if descendant_ids
+        else []
+    )
+
+    # ── Dimensión 1: Tiempo y Esfuerzo ──────────────────────────────────────────
+    est_hours = _safe_float(getattr(task, "estimated_hours", 0.0))
+    subtasks_est_hours = round(
+        sum(_safe_float(getattr(st, "estimated_hours", 0.0)) for st in all_descendants), 2
+    )
+    total_est_hours = round(est_hours + subtasks_est_hours, 2) if est_hours > 0 else subtasks_est_hours
+
+    # Horas reales desde project_time_logs
+    all_task_ids = [task.id] + descendant_ids
+    time_logs = (
+        db.query(ProjectTimeLog)
+        .filter(
+            ProjectTimeLog.task_id.in_(all_task_ids),
+            ProjectTimeLog.deleted_at.is_(None),
+        )
+        .all()
+    )
+    actual_hours = round(sum(_safe_float(tl.hours) for tl in time_logs), 2)
+
+    duration_days = None
+    if task.start_date and task.due_date:
+        duration_days = max(1, (task.due_date - task.start_date).days + 1)
+
+    time_dim = {
+        "estimated_hours": est_hours,
+        "actual_hours": actual_hours,
+        "start_date": task.start_date,
+        "due_date": task.due_date,
+        "duration_days": duration_days,
+        "subtasks_estimated_hours": subtasks_est_hours,
+        "total_estimated_hours": total_est_hours,
+    }
+
+    # ── Dimensión 2: Avance Físico Continuo y Ponderado ──────────────────────────
+    raw_physical_pct = _safe_float(getattr(task, "physical_progress_pct", 0.0))
+    if is_leaf:
+        if task.status in ("completed", "done") and raw_physical_pct == 0.0:
+            raw_physical_pct = 100.0
+        rolled_up_progress_pct = round(max(0.0, min(100.0, raw_physical_pct)), 2)
+        weight_basis = "estimated_hours"
+        completed_subtasks = 0
+    else:
+        # Calcular el avance continuo de cada subtarea directa
+        subtask_progress_list = []
+        for sub in direct_subtasks:
+            sub_rollup = calculate_task_rollup(db, sub)
+            sub_pct = sub_rollup["progress"]["rolled_up_progress_pct"]
+            sub_weight = _safe_float(getattr(sub, "estimated_hours", 0.0))
+            subtask_progress_list.append((sub_pct, sub_weight))
+
+        total_weight = sum(w for _, w in subtask_progress_list if w > 0)
+        if total_weight > 0:
+            rolled_up_progress_pct = round(
+                sum(pct * (w if w > 0 else 1.0) for pct, w in subtask_progress_list)
+                / sum(w if w > 0 else 1.0 for _, w in subtask_progress_list),
+                2,
+            )
+            weight_basis = "estimated_hours"
+        else:
+            rolled_up_progress_pct = round(
+                sum(pct for pct, _ in subtask_progress_list) / len(subtask_progress_list), 2
+            )
+            weight_basis = "equal_count"
+
+        completed_subtasks = sum(1 for st in direct_subtasks if st.status in ("completed", "done"))
+
+    progress_dim = {
+        "physical_progress_pct": raw_physical_pct,
+        "rolled_up_progress_pct": rolled_up_progress_pct,
+        "is_leaf": is_leaf,
+        "subtasks_count": len(direct_subtasks),
+        "completed_subtasks_count": completed_subtasks,
+        "weight_basis": weight_basis,
+    }
+
+    # ── Dimensión 3: Costos e Imputación Financiera ──────────────────────────────
+    direct_expenses = (
+        db.query(ProjectExpense)
+        .filter(
+            ProjectExpense.task_id == task.id,
+            ProjectExpense.deleted_at.is_(None),
+        )
+        .all()
+    )
+    direct_cost = round(sum(_safe_float(e.amount) for e in direct_expenses), 2)
+
+    subtask_expenses = []
+    if descendant_ids:
+        subtask_expenses = (
+            db.query(ProjectExpense)
+            .filter(
+                ProjectExpense.task_id.in_(descendant_ids),
+                ProjectExpense.deleted_at.is_(None),
+            )
+            .all()
+        )
+    subtasks_cost = round(sum(_safe_float(e.amount) for e in subtask_expenses), 2)
+    total_cost = round(direct_cost + subtasks_cost, 2)
+
+    all_expenses = direct_expenses + subtask_expenses
+    actual_cost = round(
+        sum(_safe_float(e.amount) for e in all_expenses if e.status in ("approved", "paid")), 2
+    )
+    planned_cost = round(
+        sum(_safe_float(e.amount) for e in all_expenses if e.status == "planned"), 2
+    )
+    committed_cost = round(
+        sum(_safe_float(e.amount) for e in all_expenses if e.status == "committed"), 2
+    )
+
+    cost_dim = {
+        "direct_cost": direct_cost,
+        "subtasks_cost": subtasks_cost,
+        "total_cost": total_cost,
+        "actual_cost": actual_cost,
+        "planned_cost": planned_cost,
+        "committed_cost": committed_cost,
+        "expenses_count": len(all_expenses),
+    }
+
+    component_name = task.component.name if getattr(task, "component", None) else None
+
+    # Preparar lista de gastos asociados
+    expenses_out = []
+    for exp in all_expenses:
+        expenses_out.append(
+            {
+                "id": str(exp.id),
+                "project_id": str(exp.project_id),
+                "component_id": str(exp.component_id) if exp.component_id else None,
+                "task_id": str(exp.task_id) if exp.task_id else None,
+                "task_title": task.title if exp.task_id == task.id else None,
+                "category": exp.category,
+                "description": exp.description,
+                "amount": float(exp.amount or 0.0),
+                "date": exp.date,
+                "receipt_url": exp.receipt_url,
+                "status": exp.status,
+                "created_by": str(exp.created_by) if exp.created_by else None,
+                "creator_name": exp.creator.nombre_completo if getattr(exp, "creator", None) else None,
+                "created_at": exp.created_at,
+                "updated_at": exp.updated_at,
+            }
+        )
+
+    return {
+        "task_id": str(task.id),
+        "project_id": str(task.project_id),
+        "title": task.title,
+        "status": task.status,
+        "priority": task.priority,
+        "parent_id": str(task.parent_id) if task.parent_id else None,
+        "component_id": str(task.component_id) if task.component_id else None,
+        "component_name": component_name,
+        "time": time_dim,
+        "progress": progress_dim,
+        "cost": cost_dim,
+        "expenses": expenses_out,
+    }
+
+
+def sync_parent_task_rollup(db: Session, parent_id: Any) -> None:
+    """Actualiza en cascada el avance físico continuo del nodo padre basándose en sus subtareas."""
+    if not parent_id:
+        return
+    parent = (
+        db.query(ProjectTask)
+        .filter(ProjectTask.id == parent_id, ProjectTask.deleted_at.is_(None))
+        .first()
+    )
+    if not parent:
+        return
+    rollup = calculate_task_rollup(db, parent)
+    new_pct = rollup["progress"]["rolled_up_progress_pct"]
+    parent.physical_progress_pct = new_pct
+    db.commit()
+    # Si el padre a su vez tiene un parent_id, propagar hacia arriba recursivamente
+    if parent.parent_id:
+        sync_parent_task_rollup(db, parent.parent_id)
+
+
+def calculate_project_tasks_rollup(db: Session, project: Project) -> Dict[str, Any]:
+    """Calcula el Roll-Up consolidado de todas las tareas y paquetes de trabajo a nivel de proyecto."""
+    all_tasks = (
+        db.query(ProjectTask)
+        .filter(ProjectTask.project_id == project.id, ProjectTask.deleted_at.is_(None))
+        .order_by(ProjectTask.order_index.asc())
+        .all()
+    )
+
+    tasks_details = []
+    root_progress_values = []
+    root_hours_weights = []
+    total_est_hours = 0.0
+    tasks_with_expenses = 0
+    total_expenses_cost = 0.0
+    leaf_count = 0
+    parent_count = 0
+
+    for t in all_tasks:
+        rollup = calculate_task_rollup(db, t)
+        tasks_details.append(rollup)
+
+        if rollup["progress"]["is_leaf"]:
+            leaf_count += 1
+            total_est_hours += rollup["time"]["estimated_hours"]
+        else:
+            parent_count += 1
+
+        if rollup["cost"]["total_cost"] > 0:
+            tasks_with_expenses += 1
+            total_expenses_cost += rollup["cost"]["total_cost"]
+
+        # Si es tarea raíz (sin parent_id), contribuye al promedio global del proyecto
+        if t.parent_id is None:
+            root_pct = rollup["progress"]["rolled_up_progress_pct"]
+            root_weight = rollup["time"]["total_estimated_hours"] or 1.0
+            root_progress_values.append(root_pct)
+            root_hours_weights.append(root_weight)
+
+    # Horas reales totales desde time_logs
+    time_logs = (
+        db.query(ProjectTimeLog)
+        .filter(ProjectTimeLog.project_id == project.id, ProjectTimeLog.deleted_at.is_(None))
+        .all()
+    )
+    total_actual_hours = round(sum(float(tl.hours or 0.0) for tl in time_logs), 2)
+
+    # Avance físico global ponderado
+    if root_progress_values:
+        total_root_weight = sum(root_hours_weights)
+        if total_root_weight > 0:
+            overall_pct = round(
+                sum(p * w for p, w in zip(root_progress_values, root_hours_weights)) / total_root_weight,
+                2,
+            )
+        else:
+            overall_pct = round(sum(root_progress_values) / len(root_progress_values), 2)
+    else:
+        overall_pct = 0.0
+
+    return {
+        "project_id": str(project.id),
+        "total_tasks": len(all_tasks),
+        "leaf_tasks_count": leaf_count,
+        "parent_tasks_count": parent_count,
+        "total_estimated_hours": round(total_est_hours, 2),
+        "total_actual_hours": total_actual_hours,
+        "overall_physical_progress_pct": overall_pct,
+        "total_expenses_cost": round(total_expenses_cost, 2),
+        "tasks_with_expenses_count": tasks_with_expenses,
+        "tasks_rollup": tasks_details,
+    }
+
 
