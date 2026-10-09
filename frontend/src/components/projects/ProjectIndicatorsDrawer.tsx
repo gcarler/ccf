@@ -387,7 +387,7 @@ export function ProjectIndicatorsDrawer({
                 </span>
                 <span
                   className={clsx(
-                    "text-2xs font-extrabold px-2 py-0.5 rounded",
+                    " font-extraboldpx-2 py-0.5 rounded",
                     spiStats.avgCrema >= 85
                       ? "bg-[hsl(var(--success))]/15 text-[hsl(var(--success))]"
                       : spiStats.avgCrema >= 70
@@ -419,7 +419,7 @@ export function ProjectIndicatorsDrawer({
               </div>
               <div>
                 <p className="text-2xs text-[hsl(var(--text-secondary))] uppercase font-semibold">SPI ≥ 1.0 (Óptimo)</p>
-                <p className="text-xs font-extrabold text-[hsl(var(--success))]">{spiStats.optimal}</p>
+                <p className=" font-extraboldtext-[hsl(var(--success))]">{spiStats.optimal}</p>
               </div>
             </div>
 
@@ -429,7 +429,7 @@ export function ProjectIndicatorsDrawer({
               </div>
               <div>
                 <p className="text-2xs text-[hsl(var(--text-secondary))] uppercase font-semibold">SPI 0.8-0.99</p>
-                <p className="text-xs font-extrabold text-[hsl(var(--warning))]">{spiStats.warning}</p>
+                <p className=" font-extraboldtext-[hsl(var(--warning))]">{spiStats.warning}</p>
               </div>
             </div>
 
@@ -439,7 +439,7 @@ export function ProjectIndicatorsDrawer({
               </div>
               <div>
                 <p className="text-2xs text-[hsl(var(--text-secondary))] uppercase font-semibold">SPI &lt; 0.80 (Riesgo)</p>
-                <p className="text-xs font-extrabold text-[hsl(var(--destructive))]">{spiStats.critical}</p>
+                <p className=" font-extraboldtext-[hsl(var(--destructive))]">{spiStats.critical}</p>
               </div>
             </div>
           </div>}
@@ -452,7 +452,7 @@ export function ProjectIndicatorsDrawer({
                 setActiveTab("list");
               }}
               className={clsx(
-                "px-3 py-1.5 rounded-md text-2xs font-bold uppercase tracking-wider transition-all flex items-center gap-1.5",
+                "px-3 py-1.5 rounded-md text-2xs font-medium uppercase tracking-wider transition-all flex items-center gap-1.5",
                 activeTab === "list"
                   ? "bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] shadow-sm"
                   : "bg-[hsl(var(--surface-1))] text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-3))] border border-[hsl(var(--border))]"
@@ -466,7 +466,7 @@ export function ProjectIndicatorsDrawer({
                 setActiveTab("form");
               }}
               className={clsx(
-                "px-3 py-1.5 rounded-md text-2xs font-bold uppercase tracking-wider transition-all flex items-center gap-1.5",
+                "px-3 py-1.5 rounded-md text-2xs font-medium uppercase tracking-wider transition-all flex items-center gap-1.5",
                 activeTab === "form"
                   ? "bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] shadow-sm"
                   : "bg-[hsl(var(--surface-1))] text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-3))] border border-[hsl(var(--border))]"
@@ -478,7 +478,7 @@ export function ProjectIndicatorsDrawer({
               <button
                 onClick={() => setActiveTab("record")}
                 className={clsx(
-                  "px-3 py-1.5 rounded-md text-2xs font-bold uppercase tracking-wider transition-all flex items-center gap-1.5",
+                  "px-3 py-1.5 rounded-md text-2xs font-medium uppercase tracking-wider transition-all flex items-center gap-1.5",
                   activeTab === "record"
                     ? "bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] shadow-sm"
                     : "bg-[hsl(var(--surface-1))] text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-3))] border border-[hsl(var(--border))]"
@@ -504,7 +504,7 @@ export function ProjectIndicatorsDrawer({
                   <button
                     onClick={() => setSelectedLevelFilter("ALL")}
                     className={clsx(
-                      "px-2.5 py-1 rounded-md text-2xs font-bold uppercase transition-all",
+                      "px-2.5 py-1 rounded-md text-2xs font-medium uppercase transition-all",
                       selectedLevelFilter === "ALL"
                         ? "bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))]"
                         : "bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-3))]"
@@ -572,7 +572,7 @@ export function ProjectIndicatorsDrawer({
                       resetForm();
                       setActiveTab("form");
                     }}
-                    className="px-3 py-1.5 rounded-lg bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] text-2xs font-bold uppercase tracking-wide hover:opacity-90 transition-all flex items-center gap-1.5"
+                    className="px-3 py-1.5 rounded-lg bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] text-2xs font-medium uppercase tracking-wide hover:opacity-90 transition-all flex items-center gap-1.5"
                   >
                     <Plus size={13} /> Crear Primer Indicador
                   </button>
@@ -596,10 +596,10 @@ export function ProjectIndicatorsDrawer({
                           {/* Fila Superior: Código, Nivel MGA y Score CREMA */}
                           <div className="flex items-center justify-between gap-2">
                             <div className="flex items-center gap-2 flex-wrap">
-                              <span className="font-mono text-2xs font-extrabold px-2 py-0.5 rounded bg-[hsl(var(--surface-3))] text-[hsl(var(--text-primary))] border border-[hsl(var(--border))]">
+                              <span className="font-mono  font-extraboldpx-2 py-0.5 rounded bg-[hsl(var(--surface-3))] text-[hsl(var(--text-primary))] border border-[hsl(var(--border))]">
                                 {ind.code || "IND"}
                               </span>
-                              <span className="text-2xs font-bold px-2 py-0.5 rounded bg-[hsl(var(--primary))]/10 text-[hsl(var(--primary))] border border-[hsl(var(--primary))]/20">
+                              <span className=" font-boldpx-2 py-0.5 rounded bg-[hsl(var(--primary))]/10 text-[hsl(var(--primary))] border border-[hsl(var(--primary))]/20">
                                 {ind.level}
                               </span>
                               <span className="text-2xs text-[hsl(var(--text-secondary))] flex items-center gap-1">
@@ -611,7 +611,7 @@ export function ProjectIndicatorsDrawer({
                               {ind.crema_score !== null && ind.crema_score !== undefined && (
                                 <span
                                   className={clsx(
-                                    "text-2xs font-extrabold px-2 py-0.5 rounded-full flex items-center gap-1 border",
+                                    " font-extraboldpx-2 py-0.5 rounded-full flex items-center gap-1 border",
                                     ind.crema_score >= 85
                                       ? "bg-[hsl(var(--success))]/15 border-[hsl(var(--success))]/30 text-[hsl(var(--success))]"
                                       : ind.crema_score >= 70
@@ -627,7 +627,7 @@ export function ProjectIndicatorsDrawer({
                               {/* Semáforo SPI */}
                               <div
                                 className={clsx(
-                                  "text-2xs font-extrabold px-2 py-0.5 rounded-full flex items-center gap-1 border",
+                                  " font-extraboldpx-2 py-0.5 rounded-full flex items-center gap-1 border",
                                   spi === null || spi === undefined
                                     ? "bg-[hsl(var(--surface-3))] border-[hsl(var(--border))] text-[hsl(var(--text-secondary))]"
                                     : spi >= 1.0
@@ -660,7 +660,7 @@ export function ProjectIndicatorsDrawer({
 
                           {/* Título y Descripción */}
                           <div>
-                            <h4 className="text-xs font-bold text-[hsl(var(--text-primary))]">{ind.name}</h4>
+                            <h4 className=" font-boldtext-[hsl(var(--text-primary))]">{ind.name}</h4>
                             {ind.description && (
                               <p className="text-2xs text-[hsl(var(--text-secondary))] mt-0.5 line-clamp-2">
                                 {ind.description}
@@ -705,7 +705,7 @@ export function ProjectIndicatorsDrawer({
                             <div className="flex items-center gap-2">
                               <button
                                 onClick={() => handleOpenRecordModal(ind)}
-                                className="px-2.5 py-1 rounded-md bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] text-2xs font-bold uppercase tracking-wider hover:opacity-90 transition-all flex items-center gap-1 shadow-sm"
+                                className="px-2.5 py-1 rounded-md bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] text-2xs font-medium uppercase tracking-wider hover:opacity-90 transition-all flex items-center gap-1 shadow-sm"
                               >
                                 <Plus size={11} /> Medir Avance
                               </button>
@@ -742,7 +742,7 @@ export function ProjectIndicatorsDrawer({
                         {isExpanded && (
                           <div className="px-4 pb-4 pt-2 bg-[hsl(var(--surface-1))] border-t border-[hsl(var(--border))] space-y-2">
                             <div className="flex items-center justify-between">
-                              <h5 className="text-2xs font-bold uppercase tracking-wider text-[hsl(var(--text-secondary))] flex items-center gap-1">
+                              <h5 className="text-2xs font-medium uppercase tracking-wider text-[hsl(var(--text-secondary))] flex items-center gap-1">
                                 <History size={12} /> Registro de Mediciones Periódicas (SPI)
                               </h5>
                               <span className="text-2xs text-[hsl(var(--text-secondary))]">
@@ -825,7 +825,7 @@ export function ProjectIndicatorsDrawer({
             <form onSubmit={handleSaveIndicator} className="space-y-4">
               <div className="p-4 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))]/60 space-y-3">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-xs font-bold flex items-center gap-1.5 text-[hsl(var(--text-primary))]">
+                  <h3 className=" font-boldflex items-center gap-1.5 text-[hsl(var(--text-primary))]">
                     <Layers size={14} className="text-[hsl(var(--primary))]" />
                     {editingId ? "Editar Indicador MGA" : "Definición Metodológica del Indicador MGA"}
                   </h3>
@@ -833,7 +833,7 @@ export function ProjectIndicatorsDrawer({
                     type="button"
                     onClick={handleValidateCrema}
                     disabled={validatingCrema}
-                    className="px-2.5 py-1 rounded-md bg-[hsl(var(--primary))]/15 text-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))]/25 text-2xs font-extrabold uppercase tracking-wide border border-[hsl(var(--primary))]/30 transition-all flex items-center gap-1.5"
+                    className="px-2.5 py-1 rounded-md bg-[hsl(var(--primary))]/15 text-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))]/25 text-2xs font-medium uppercase tracking-wide border border-[hsl(var(--primary))]/30 transition-all flex items-center gap-1.5"
                   >
                     <Sparkles size={12} className={clsx(validatingCrema && "animate-spin")} />
                     {validatingCrema ? "Auditando..." : "Auditar Criterios CREMA"}
@@ -842,7 +842,7 @@ export function ProjectIndicatorsDrawer({
 
                 <div className="grid grid-cols-3 gap-3">
                   <div className="col-span-1 space-y-1">
-                    <label className="text-2xs font-bold uppercase tracking-wider text-[hsl(var(--text-secondary))]">
+                    <label className="text-2xs font-medium uppercase tracking-wider text-[hsl(var(--text-secondary))]">
                       Código (Opcional)
                     </label>
                     <input
@@ -855,7 +855,7 @@ export function ProjectIndicatorsDrawer({
                   </div>
 
                   <div className="col-span-2 space-y-1">
-                    <label className="text-2xs font-bold uppercase tracking-wider text-[hsl(var(--text-secondary))]">
+                    <label className="text-2xs font-medium uppercase tracking-wider text-[hsl(var(--text-secondary))]">
                       Nombre del Indicador *
                     </label>
                     <input
@@ -870,7 +870,7 @@ export function ProjectIndicatorsDrawer({
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-2xs font-bold uppercase tracking-wider text-[hsl(var(--text-secondary))]">
+                  <label className="text-2xs font-medium uppercase tracking-wider text-[hsl(var(--text-secondary))]">
                     Descripción / Justificación Metodológica
                   </label>
                   <textarea
@@ -884,7 +884,7 @@ export function ProjectIndicatorsDrawer({
 
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1">
-                    <label className="text-2xs font-bold uppercase tracking-wider text-[hsl(var(--text-secondary))]">
+                    <label className="text-2xs font-medium uppercase tracking-wider text-[hsl(var(--text-secondary))]">
                       Nivel MGA Canónico *
                     </label>
                     <select
@@ -901,7 +901,7 @@ export function ProjectIndicatorsDrawer({
                   </div>
 
                   <div className="space-y-1">
-                    <label className="text-2xs font-bold uppercase tracking-wider text-[hsl(var(--text-secondary))]">
+                    <label className="text-2xs font-medium uppercase tracking-wider text-[hsl(var(--text-secondary))]">
                       Tipo de Cálculo MGA *
                     </label>
                     <select
@@ -922,7 +922,7 @@ export function ProjectIndicatorsDrawer({
 
                 <div className="grid grid-cols-4 gap-3">
                   <div className="space-y-1">
-                    <label className="text-2xs font-bold uppercase tracking-wider text-[hsl(var(--text-secondary))]">
+                    <label className="text-2xs font-medium uppercase tracking-wider text-[hsl(var(--text-secondary))]">
                       Unidad Medida *
                     </label>
                     <input
@@ -935,7 +935,7 @@ export function ProjectIndicatorsDrawer({
                   </div>
 
                   <div className="space-y-1">
-                    <label className="text-2xs font-bold uppercase tracking-wider text-[hsl(var(--text-secondary))]">
+                    <label className="text-2xs font-medium uppercase tracking-wider text-[hsl(var(--text-secondary))]">
                       Línea Base
                     </label>
                     <input
@@ -948,7 +948,7 @@ export function ProjectIndicatorsDrawer({
                   </div>
 
                   <div className="space-y-1">
-                    <label className="text-2xs font-bold uppercase tracking-wider text-[hsl(var(--text-secondary))]">
+                    <label className="text-2xs font-medium uppercase tracking-wider text-[hsl(var(--text-secondary))]">
                       Meta Proyecto *
                     </label>
                     <input
@@ -962,7 +962,7 @@ export function ProjectIndicatorsDrawer({
                   </div>
 
                   <div className="space-y-1">
-                    <label className="text-2xs font-bold uppercase tracking-wider text-[hsl(var(--text-secondary))]">
+                    <label className="text-2xs font-medium uppercase tracking-wider text-[hsl(var(--text-secondary))]">
                       Periodicidad *
                     </label>
                     <select
@@ -986,17 +986,17 @@ export function ProjectIndicatorsDrawer({
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <Award size={18} className="text-[hsl(var(--primary))]" />
-                      <h4 className="text-xs font-bold text-[hsl(var(--text-primary))]">
+                      <h4 className=" font-boldtext-[hsl(var(--text-primary))]">
                         Diagnóstico Metodológico CREMA (MGA / BID)
                       </h4>
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className="text-2xs font-bold uppercase text-[hsl(var(--text-secondary))]">
+                      <span className="text-2xs font-medium uppercase text-[hsl(var(--text-secondary))]">
                         Estado:
                       </span>
                       <span
                         className={clsx(
-                          "px-2 py-0.5 rounded text-2xs font-extrabold uppercase",
+                          "px-2 py-0.5 rounded text-2xs font-medium uppercase",
                           cremaResult.status === "EXCELENTE"
                             ? "bg-[hsl(var(--success))]/20 text-[hsl(var(--success))]"
                             : cremaResult.status === "BUENO"
@@ -1060,7 +1060,7 @@ export function ProjectIndicatorsDrawer({
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="px-4 py-1.5 rounded-lg bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] text-2xs font-bold uppercase tracking-wider hover:opacity-90 transition-all flex items-center gap-1.5 shadow-md"
+                  className="px-4 py-1.5 rounded-lg bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] text-2xs font-medium uppercase tracking-wider hover:opacity-90 transition-all flex items-center gap-1.5 shadow-md"
                 >
                   <Save size={13} className={clsx(submitting && "animate-spin")} />
                   {submitting ? "Guardando..." : editingId ? "Actualizar Indicador" : "Crear Indicador con Sello CREMA"}
@@ -1074,11 +1074,11 @@ export function ProjectIndicatorsDrawer({
             <form onSubmit={handleSaveRecord} className="space-y-4">
               <div className="p-4 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))]/60 space-y-3">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-xs font-bold flex items-center gap-1.5 text-[hsl(var(--text-primary))]">
+                  <h3 className=" font-boldflex items-center gap-1.5 text-[hsl(var(--text-primary))]">
                     <Clock size={14} className="text-[hsl(var(--primary))]" />
                     Reportar Medición Periódica & Cálculo SPI
                   </h3>
-                  <span className="font-mono text-2xs font-bold px-2 py-0.5 rounded bg-[hsl(var(--surface-3))]">
+                  <span className="font-mono  font-boldpx-2 py-0.5 rounded bg-[hsl(var(--surface-3))]">
                     {targetIndicator.code || "IND"}
                   </span>
                 </div>
@@ -1094,7 +1094,7 @@ export function ProjectIndicatorsDrawer({
 
                 <div className="grid grid-cols-3 gap-3">
                   <div className="space-y-1">
-                    <label className="text-2xs font-bold uppercase tracking-wider text-[hsl(var(--text-secondary))]">
+                    <label className="text-2xs font-medium uppercase tracking-wider text-[hsl(var(--text-secondary))]">
                       Período *
                     </label>
                     <input
@@ -1108,7 +1108,7 @@ export function ProjectIndicatorsDrawer({
                   </div>
 
                   <div className="space-y-1">
-                    <label className="text-2xs font-bold uppercase tracking-wider text-[hsl(var(--text-secondary))]">
+                    <label className="text-2xs font-medium uppercase tracking-wider text-[hsl(var(--text-secondary))]">
                       Meta del Período *
                     </label>
                     <input
@@ -1122,7 +1122,7 @@ export function ProjectIndicatorsDrawer({
                   </div>
 
                   <div className="space-y-1">
-                    <label className="text-2xs font-bold uppercase tracking-wider text-[hsl(var(--text-secondary))]">
+                    <label className="text-2xs font-medium uppercase tracking-wider text-[hsl(var(--text-secondary))]">
                       Valor Real Alcanzado *
                     </label>
                     <input
@@ -1166,7 +1166,7 @@ export function ProjectIndicatorsDrawer({
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-2xs font-bold uppercase tracking-wider text-[hsl(var(--text-secondary))]">
+                  <label className="text-2xs font-medium uppercase tracking-wider text-[hsl(var(--text-secondary))]">
                     URL de Evidencia o Respaldo (Google Drive, Acta, etc.)
                   </label>
                   <input
@@ -1179,7 +1179,7 @@ export function ProjectIndicatorsDrawer({
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-2xs font-bold uppercase tracking-wider text-[hsl(var(--text-secondary))]">
+                  <label className="text-2xs font-medium uppercase tracking-wider text-[hsl(var(--text-secondary))]">
                     Observaciones y Justificación Cualitativa
                   </label>
                   <textarea
@@ -1207,7 +1207,7 @@ export function ProjectIndicatorsDrawer({
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="px-4 py-1.5 rounded-lg bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] text-2xs font-bold uppercase tracking-wider hover:opacity-90 transition-all flex items-center gap-1.5 shadow-md"
+                  className="px-4 py-1.5 rounded-lg bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] text-2xs font-medium uppercase tracking-wider hover:opacity-90 transition-all flex items-center gap-1.5 shadow-md"
                 >
                   <FileCheck2 size={13} className={clsx(submitting && "animate-spin")} />
                   {submitting ? "Registrando..." : "Registrar Avance Periódico"}

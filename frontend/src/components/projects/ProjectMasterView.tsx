@@ -309,7 +309,7 @@ export function ProjectMasterView({ project, tasks, onOpenTask }: ProjectMasterV
                 <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
                     <div className="max-w-2xl space-y-3">
                         <div className="flex items-center gap-2">
-                            <span className="px-2 py-1 bg-[hsl(var(--primary))] rounded-full text-2xs font-bold uppercase tracking-wide text-[hsl(var(--primary-foreground))] shadow-lg shadow-[hsl(var(--info)/40%)]">Misión Proactiva</span>
+                            <span className="px-2 py-1 bg-[hsl(var(--primary))] rounded-full text-2xs font-medium uppercase tracking-wide text-[hsl(var(--primary-foreground))] shadow-lg shadow-[hsl(var(--info)/40%)]">Misión Proactiva</span>
                             <div className="size-2 rounded-full bg-[hsl(var(--success))] animate-ping" />
                             <span className="text-2xs font-medium text-[hsl(var(--text-secondary))] uppercase tracking-wide">Sincronizado en tiempo real</span>
                         </div>
@@ -368,17 +368,17 @@ export function ProjectMasterView({ project, tasks, onOpenTask }: ProjectMasterV
                             </div>
                             <div>
                                 <div className="flex items-center gap-1.5 mb-0.5">
-                                    <span className="text-2xs font-bold uppercase tracking-wider text-[hsl(var(--text-secondary))]">
+                                    <span className="text-2xs font-medium uppercase tracking-wider text-[hsl(var(--text-secondary))]">
                                         Avance Inteligente
                                     </span>
-                                    <span className="px-1.5 py-0.5 rounded text-2xs font-extrabold uppercase tracking-wider bg-[hsl(var(--surface-3))] text-[hsl(var(--primary))]">
+                                    <span className="px-1.5 py-0.5 rounded text-2xs font-medium uppercase tracking-wider bg-[hsl(var(--surface-3))] text-[hsl(var(--primary))]">
                                         {project.progress_mode === 'manual' ? 'Manual' : project.progress_mode === 'milestones' ? 'Hitos' : 'Tareas'}
                                     </span>
                                 </div>
                                 <div className="text-xl font-extrabold tracking-tight">{dbProgress}%</div>
                                 <div className="flex items-center gap-2 mt-1">
                                     <div className={clsx(
-                                        "px-2 py-0.5 rounded text-2xs font-bold uppercase tracking-wider border flex items-center gap-1",
+                                        "px-2 py-0.5 rounded text-2xs font-medium uppercase tracking-wider border flex items-center gap-1",
                                         project.health_status === 'on_track' && "bg-[hsl(var(--success))]/10 border-[hsl(var(--success))]/30 text-[hsl(var(--success))]",
                                         project.health_status === 'at_risk' && "bg-[hsl(var(--warning))]/10 border-[hsl(var(--warning))]/30 text-[hsl(var(--warning))]",
                                         project.health_status === 'off_track' && "bg-[hsl(var(--destructive))]/10 border-[hsl(var(--destructive))]/30 text-[hsl(var(--destructive))]",
@@ -410,7 +410,7 @@ export function ProjectMasterView({ project, tasks, onOpenTask }: ProjectMasterV
                             title="Configurar motor de avance y salud"
                         >
                             <Sliders size={14} />
-                            <span className="text-2xs font-bold uppercase">Motor</span>
+                            <span className="text-2xs font-medium uppercase">Motor</span>
                         </button>
 
                         <button
@@ -419,7 +419,7 @@ export function ProjectMasterView({ project, tasks, onOpenTask }: ProjectMasterV
                             title="Catálogo de plantillas y guardar proyecto como plantilla"
                         >
                             <BookTemplate size={14} />
-                            <span className="text-2xs font-bold uppercase">Plantilla</span>
+                            <span className="text-2xs font-medium uppercase">Plantilla</span>
                         </button>
 
                         <button
@@ -428,7 +428,7 @@ export function ProjectMasterView({ project, tasks, onOpenTask }: ProjectMasterV
                             title="Reglas y disparadores reactivos de automatización"
                         >
                             <Zap size={14} className="text-[hsl(var(--primary))]" />
-                            <span className="text-2xs font-bold uppercase">Auto</span>
+                            <span className="text-2xs font-medium uppercase">Auto</span>
                         </button>
 
                         <button
@@ -437,7 +437,7 @@ export function ProjectMasterView({ project, tasks, onOpenTask }: ProjectMasterV
                             title="Informes ejecutivos en PDF y exportación Excel/CSV"
                         >
                             <FileText size={14} className="text-[hsl(var(--primary))]" />
-                            <span className="text-2xs font-bold uppercase">Reporte</span>
+                            <span className="text-2xs font-medium uppercase">Reporte</span>
                         </button>
 
                         <button
@@ -446,7 +446,7 @@ export function ProjectMasterView({ project, tasks, onOpenTask }: ProjectMasterV
                             title="Gestión del Valor Ganado (EVM), Curva S y CPI"
                         >
                             <TrendingUp size={14} className="text-[hsl(var(--primary))]" />
-                            <span className="text-2xs font-bold uppercase">EVM</span>
+                            <span className="text-2xs font-medium uppercase">EVM</span>
                         </button>
 
                         <button
@@ -455,7 +455,7 @@ export function ProjectMasterView({ project, tasks, onOpenTask }: ProjectMasterV
                             title="Estructura de Desglose del Trabajo (EDT Nivel 2) y Regla del 100%"
                         >
                             <Layers size={14} className="text-[hsl(var(--primary))]" />
-                            <span className="text-2xs font-bold uppercase">EDT</span>
+                            <span className="text-2xs font-medium uppercase">EDT</span>
                         </button>
                     </div>
                 </div>
@@ -489,13 +489,13 @@ export function ProjectMasterView({ project, tasks, onOpenTask }: ProjectMasterV
                         <h2 className="text-base font-bold text-[hsl(var(--text-primary))] uppercase tracking-tight">
                             Indicadores Clave y KPIs
                         </h2>
-                        <span className="text-2xs font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-full bg-[hsl(var(--surface-3))] text-[hsl(var(--text-secondary))]">
+                        <span className="text-2xs font-medium uppercase tracking-wider px-2 py-0.5 rounded-full bg-[hsl(var(--surface-3))] text-[hsl(var(--text-secondary))]">
                             {kpis.length} {kpis.length === 1 ? 'meta' : 'metas'}
                         </span>
                     </div>
                     <button
                         onClick={() => setShowKpiDrawer(true)}
-                        className="px-2.5 py-1 rounded-lg bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] text-2xs font-bold uppercase tracking-wide hover:opacity-90 active:scale-95 transition-all flex items-center gap-1.5 shadow-xs"
+                        className="px-2.5 py-1 rounded-lg bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] text-2xs font-medium uppercase tracking-wide hover:opacity-90 active:scale-95 transition-all flex items-center gap-1.5 shadow-xs"
                     >
                         <Plus size={12} /> Gestionar KPIs
                     </button>
@@ -507,7 +507,7 @@ export function ProjectMasterView({ project, tasks, onOpenTask }: ProjectMasterV
                         className="p-4 rounded-xl border border-dashed border-[hsl(var(--border))] bg-[hsl(var(--surface-1))]/50 hover:bg-[hsl(var(--surface-2))] transition-colors cursor-pointer flex flex-col items-center justify-center text-center group"
                     >
                         <Target size={24} className="text-[hsl(var(--text-secondary))]/40 group-hover:text-[hsl(var(--primary))] transition-colors mb-1.5" />
-                        <p className="text-xs font-bold uppercase tracking-wider text-[hsl(var(--text-primary))]">
+                        <p className="text-xs font-medium uppercase tracking-wider text-[hsl(var(--text-primary))]">
                             Sin indicadores configurados
                         </p>
                         <p className="text-2xs text-[hsl(var(--text-secondary))] mt-0.5">
@@ -571,17 +571,17 @@ export function ProjectMasterView({ project, tasks, onOpenTask }: ProjectMasterV
                                     className="p-3.5 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] hover:border-[hsl(var(--primary))]/50 transition-all cursor-pointer shadow-xs space-y-2 group"
                                 >
                                     <div className="flex items-start justify-between gap-1.5">
-                                        <span className="text-2xs font-extrabold uppercase tracking-wider px-1.5 py-0.5 rounded bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))]">
+                                        <span className="text-2xs font-medium uppercase tracking-wider px-1.5 py-0.5 rounded bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))]">
                                             {kpi.category}
                                         </span>
-                                        <span className={clsx("px-2 py-0.5 rounded-full text-2xs font-bold uppercase tracking-wider border flex items-center gap-1", statusBg)}>
+                                        <span className={clsx("px-2 py-0.5 rounded-full text-2xs font-medium uppercase tracking-wider border flex items-center gap-1", statusBg)}>
                                             <StatusIcon size={10} />
                                             {statusLabel}
                                         </span>
                                     </div>
 
                                     <div>
-                                        <h4 className="text-xs font-bold text-[hsl(var(--text-primary))] group-hover:text-[hsl(var(--primary))] transition-colors truncate">
+                                        <h4 className=" font-boldtext-[hsl(var(--text-primary))] group-hover:text-[hsl(var(--primary))] transition-colors truncate">
                                             {kpi.title}
                                         </h4>
                                         {kpi.description && (
@@ -626,7 +626,7 @@ export function ProjectMasterView({ project, tasks, onOpenTask }: ProjectMasterV
                     </h2>
                     <button
                         onClick={() => setShowBudgetDrawer(true)}
-                        className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-bold uppercase tracking-wider bg-[hsl(var(--primary))]/10 text-[hsl(var(--primary))] border border-[hsl(var(--primary))]/30 hover:bg-[hsl(var(--primary))]/20 transition-all cursor-pointer"
+                        className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-medium uppercase tracking-wider bg-[hsl(var(--primary))]/10 text-[hsl(var(--primary))] border border-[hsl(var(--primary))]/30 hover:bg-[hsl(var(--primary))]/20 transition-all cursor-pointer"
                     >
                         <Plus size={12} /> Gestionar Presupuesto
                     </button>
@@ -636,7 +636,7 @@ export function ProjectMasterView({ project, tasks, onOpenTask }: ProjectMasterV
                     {/* Grid de Métricas Financieras */}
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                         <div className="p-3 rounded-lg bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))]">
-                            <span className="text-2xs font-bold uppercase tracking-wider text-[hsl(var(--text-secondary))]">Asignado</span>
+                            <span className="text-2xs font-medium uppercase tracking-wider text-[hsl(var(--text-secondary))]">Asignado</span>
                             <div className="text-base md:text-lg font-extrabold text-[hsl(var(--text-primary))] mt-0.5">
                                 ${(budgetSummary?.budget_allocated ?? project.budget_allocated ?? 0).toLocaleString("es-CO")}
                             </div>
@@ -644,7 +644,7 @@ export function ProjectMasterView({ project, tasks, onOpenTask }: ProjectMasterV
                         </div>
 
                         <div className="p-3 rounded-lg bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))]">
-                            <span className="text-2xs font-bold uppercase tracking-wider text-[hsl(var(--text-secondary))]">Desembolsado</span>
+                            <span className="text-2xs font-medium uppercase tracking-wider text-[hsl(var(--text-secondary))]">Desembolsado</span>
                             <div className="text-base md:text-lg font-extrabold text-[hsl(var(--success))] mt-0.5">
                                 ${(budgetSummary?.paid_amount ?? project.budget_spent ?? 0).toLocaleString("es-CO")}
                             </div>
@@ -652,7 +652,7 @@ export function ProjectMasterView({ project, tasks, onOpenTask }: ProjectMasterV
                         </div>
 
                         <div className="p-3 rounded-lg bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))]">
-                            <span className="text-2xs font-bold uppercase tracking-wider text-[hsl(var(--text-secondary))]">Comprometido</span>
+                            <span className="text-2xs font-medium uppercase tracking-wider text-[hsl(var(--text-secondary))]">Comprometido</span>
                             <div className="text-base md:text-lg font-extrabold text-[hsl(var(--warning))] mt-0.5">
                                 ${(budgetSummary?.committed_amount ?? 0).toLocaleString("es-CO")}
                             </div>
@@ -660,7 +660,7 @@ export function ProjectMasterView({ project, tasks, onOpenTask }: ProjectMasterV
                         </div>
 
                         <div className="p-3 rounded-lg bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))]">
-                            <span className="text-2xs font-bold uppercase tracking-wider text-[hsl(var(--text-secondary))]">Fondos Restantes</span>
+                            <span className="text-2xs font-medium uppercase tracking-wider text-[hsl(var(--text-secondary))]">Fondos Restantes</span>
                             <div className="text-base md:text-lg font-extrabold text-[hsl(var(--primary))] mt-0.5">
                                 ${(budgetSummary?.remaining_budget ?? (project.budget_allocated ? project.budget_allocated - (project.budget_spent || 0) : 0)).toLocaleString("es-CO")}
                             </div>
@@ -722,7 +722,7 @@ export function ProjectMasterView({ project, tasks, onOpenTask }: ProjectMasterV
                     </h2>
                     <button
                         onClick={() => setShowEVMDrawer(true)}
-                        className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-bold uppercase tracking-wider bg-[hsl(var(--primary))]/10 text-[hsl(var(--primary))] border border-[hsl(var(--primary))]/30 hover:bg-[hsl(var(--primary))]/20 transition-all cursor-pointer"
+                        className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-medium uppercase tracking-wider bg-[hsl(var(--primary))]/10 text-[hsl(var(--primary))] border border-[hsl(var(--primary))]/30 hover:bg-[hsl(var(--primary))]/20 transition-all cursor-pointer"
                     >
                         <BarChart3 size={12} /> Ver Curva S y Detalle EVM
                     </button>
@@ -731,7 +731,7 @@ export function ProjectMasterView({ project, tasks, onOpenTask }: ProjectMasterV
                 <div className="bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] rounded-xl p-4 shadow-xs space-y-4">
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                         <div className="p-3 rounded-lg bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))]">
-                            <span className="text-2xs font-bold uppercase tracking-wider text-[hsl(var(--text-secondary))]">CPI (Costo)</span>
+                            <span className="text-2xs font-medium uppercase tracking-wider text-[hsl(var(--text-secondary))]">CPI (Costo)</span>
                             <div className={clsx(
                                 "text-base md:text-lg font-extrabold mt-0.5",
                                 (analytics?.cpi ?? 1) >= 1.0 ? "text-[hsl(var(--success))]" : "text-[hsl(var(--destructive))]"
@@ -744,7 +744,7 @@ export function ProjectMasterView({ project, tasks, onOpenTask }: ProjectMasterV
                         </div>
 
                         <div className="p-3 rounded-lg bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))]">
-                            <span className="text-2xs font-bold uppercase tracking-wider text-[hsl(var(--text-secondary))]">SPI (Cronograma)</span>
+                            <span className="text-2xs font-medium uppercase tracking-wider text-[hsl(var(--text-secondary))]">SPI (Cronograma)</span>
                             <div className={clsx(
                                 "text-base md:text-lg font-extrabold mt-0.5",
                                 (analytics?.spi ?? 1) >= 1.0 ? "text-[hsl(var(--primary))]" : "text-[hsl(var(--warning))]"
@@ -757,7 +757,7 @@ export function ProjectMasterView({ project, tasks, onOpenTask }: ProjectMasterV
                         </div>
 
                         <div className="p-3 rounded-lg bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))]">
-                            <span className="text-2xs font-bold uppercase tracking-wider text-[hsl(var(--text-secondary))]">Variación Costo (CV)</span>
+                            <span className="text-2xs font-medium uppercase tracking-wider text-[hsl(var(--text-secondary))]">Variación Costo (CV)</span>
                             <div className={clsx(
                                 "text-base md:text-lg font-extrabold mt-0.5",
                                 (analytics?.cost_variance ?? 0) >= 0 ? "text-[hsl(var(--success))]" : "text-[hsl(var(--destructive))]"
@@ -770,7 +770,7 @@ export function ProjectMasterView({ project, tasks, onOpenTask }: ProjectMasterV
                         </div>
 
                         <div className="p-3 rounded-lg bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))]">
-                            <span className="text-2xs font-bold uppercase tracking-wider text-[hsl(var(--text-secondary))]">Diagnóstico EVM</span>
+                            <span className="text-2xs font-medium uppercase tracking-wider text-[hsl(var(--text-secondary))]">Diagnóstico EVM</span>
                             <div className="text-xs md:text-sm font-extrabold text-[hsl(var(--text-primary))] mt-0.5 truncate">
                                 {analytics?.cpi_status ? analytics.cpi_status.replace(/_/g, ' ') : 'OPTIMO'}
                             </div>
@@ -788,7 +788,7 @@ export function ProjectMasterView({ project, tasks, onOpenTask }: ProjectMasterV
                     </h2>
                     <button
                         onClick={() => setShowRiskDrawer(true)}
-                        className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-bold uppercase tracking-wider bg-[hsl(var(--destructive))]/10 text-[hsl(var(--destructive))] border border-[hsl(var(--destructive))]/30 hover:bg-[hsl(var(--destructive))]/20 transition-all cursor-pointer"
+                        className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-medium uppercase tracking-wider bg-[hsl(var(--destructive))]/10 text-[hsl(var(--destructive))] border border-[hsl(var(--destructive))]/30 hover:bg-[hsl(var(--destructive))]/20 transition-all cursor-pointer"
                     >
                         <Plus size={12} /> Gestionar Riesgos (RAID)
                     </button>
@@ -800,13 +800,13 @@ export function ProjectMasterView({ project, tasks, onOpenTask }: ProjectMasterV
                         <div className="p-3 rounded-lg bg-[hsl(var(--destructive))]/10 border border-[hsl(var(--destructive))]/30 flex items-center justify-between gap-3">
                             <div className="flex items-center gap-2">
                                 <AlertOctagon size={16} className="text-[hsl(var(--destructive))] shrink-0" />
-                                <span className="text-xs font-bold text-[hsl(var(--destructive))]">
+                                <span className=" font-boldtext-[hsl(var(--destructive))]">
                                     Atención: {risksSummary?.critical_count} riesgo(s) de severidad crítica requieren plan de contingencia inmediata.
                                 </span>
                             </div>
                             <button
                                 onClick={() => setShowRiskDrawer(true)}
-                                className="text-2xs font-extrabold uppercase tracking-wider px-2 py-1 rounded bg-[hsl(var(--destructive))] text-[hsl(var(--surface-1))] hover:opacity-90 shrink-0 cursor-pointer"
+                                className="text-2xs font-medium uppercase tracking-wider px-2 py-1 rounded bg-[hsl(var(--destructive))] text-[hsl(var(--surface-1))] hover:opacity-90 shrink-0 cursor-pointer"
                             >
                                 Ver Matriz
                             </button>
@@ -816,7 +816,7 @@ export function ProjectMasterView({ project, tasks, onOpenTask }: ProjectMasterV
                     {/* Grid de Severidad RAID */}
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                         <div className="p-3 rounded-lg bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))]">
-                            <span className="text-2xs font-bold uppercase tracking-wider text-[hsl(var(--text-secondary))]">Riesgos Totales</span>
+                            <span className="text-2xs font-medium uppercase tracking-wider text-[hsl(var(--text-secondary))]">Riesgos Totales</span>
                             <div className="text-base md:text-lg font-extrabold text-[hsl(var(--text-primary))] mt-0.5">
                                 {risksSummary?.total_risks ?? 0}
                             </div>
@@ -824,7 +824,7 @@ export function ProjectMasterView({ project, tasks, onOpenTask }: ProjectMasterV
                         </div>
 
                         <div className="p-3 rounded-lg bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))]">
-                            <span className="text-2xs font-bold uppercase tracking-wider text-[hsl(var(--destructive))]">Críticos (15-25)</span>
+                            <span className="text-2xs font-medium uppercase tracking-wider text-[hsl(var(--destructive))]">Críticos (15-25)</span>
                             <div className="text-base md:text-lg font-extrabold text-[hsl(var(--destructive))] mt-0.5">
                                 {risksSummary?.critical_count ?? 0}
                             </div>
@@ -832,7 +832,7 @@ export function ProjectMasterView({ project, tasks, onOpenTask }: ProjectMasterV
                         </div>
 
                         <div className="p-3 rounded-lg bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))]">
-                            <span className="text-2xs font-bold uppercase tracking-wider text-[hsl(var(--warning-text))]">Altos (10-14)</span>
+                            <span className="text-2xs font-medium uppercase tracking-wider text-[hsl(var(--warning-text))]">Altos (10-14)</span>
                             <div className="text-base md:text-lg font-extrabold text-[hsl(var(--warning-text))] mt-0.5">
                                 {risksSummary?.high_count ?? 0}
                             </div>
@@ -840,7 +840,7 @@ export function ProjectMasterView({ project, tasks, onOpenTask }: ProjectMasterV
                         </div>
 
                         <div className="p-3 rounded-lg bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))]">
-                            <span className="text-2xs font-bold uppercase tracking-wider text-[hsl(var(--success))]">Mitigados</span>
+                            <span className="text-2xs font-medium uppercase tracking-wider text-[hsl(var(--success))]">Mitigados</span>
                             <div className="text-base md:text-lg font-extrabold text-[hsl(var(--success))] mt-0.5">
                                 {risksSummary?.mitigated_risks ?? 0}
                             </div>
@@ -873,7 +873,7 @@ export function ProjectMasterView({ project, tasks, onOpenTask }: ProjectMasterV
                     </h2>
                     <button
                         onClick={() => setShowWorkloadDrawer(true)}
-                        className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-bold uppercase tracking-wider bg-[hsl(var(--primary))]/10 text-[hsl(var(--primary))] border border-[hsl(var(--primary))]/30 hover:bg-[hsl(var(--primary))]/20 transition-all cursor-pointer"
+                        className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-medium uppercase tracking-wider bg-[hsl(var(--primary))]/10 text-[hsl(var(--primary))] border border-[hsl(var(--primary))]/30 hover:bg-[hsl(var(--primary))]/20 transition-all cursor-pointer"
                     >
                         <Plus size={12} /> Planificar Carga
                     </button>
@@ -885,13 +885,13 @@ export function ProjectMasterView({ project, tasks, onOpenTask }: ProjectMasterV
                         <div className="p-3 rounded-lg bg-[hsl(var(--destructive))]/10 border border-[hsl(var(--destructive))]/30 flex items-center justify-between gap-3">
                             <div className="flex items-center gap-2">
                                 <AlertOctagon size={16} className="text-[hsl(var(--destructive))] shrink-0" />
-                                <span className="text-xs font-bold text-[hsl(var(--destructive))]">
+                                <span className=" font-boldtext-[hsl(var(--destructive))]">
                                     Atención: {workloadSummary?.overloaded_members_count} colaborador(es) con sobrecarga de trabajo. Rebalancea las tareas para evitar cuellos de botella.
                                 </span>
                             </div>
                             <button
                                 onClick={() => setShowWorkloadDrawer(true)}
-                                className="text-2xs font-extrabold uppercase tracking-wider px-2 py-1 rounded bg-[hsl(var(--destructive))] text-[hsl(var(--danger-foreground))] hover:opacity-90 shrink-0 cursor-pointer"
+                                className="text-2xs font-medium uppercase tracking-wider px-2 py-1 rounded bg-[hsl(var(--destructive))] text-[hsl(var(--danger-foreground))] hover:opacity-90 shrink-0 cursor-pointer"
                             >
                                 Rebalancear
                             </button>
@@ -901,7 +901,7 @@ export function ProjectMasterView({ project, tasks, onOpenTask }: ProjectMasterV
                     {/* Grid de Capacidad del Equipo */}
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                         <div className="p-3 rounded-lg bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))]">
-                            <span className="text-2xs font-bold uppercase tracking-wider text-[hsl(var(--text-secondary))]">Equipo Asignado</span>
+                            <span className="text-2xs font-medium uppercase tracking-wider text-[hsl(var(--text-secondary))]">Equipo Asignado</span>
                             <div className="text-base md:text-lg font-extrabold text-[hsl(var(--text-primary))] mt-0.5">
                                 {workloadSummary?.total_members ?? 0}
                             </div>
@@ -909,7 +909,7 @@ export function ProjectMasterView({ project, tasks, onOpenTask }: ProjectMasterV
                         </div>
 
                         <div className="p-3 rounded-lg bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))]">
-                            <span className="text-2xs font-bold uppercase tracking-wider text-[hsl(var(--destructive))]">Sobrecargados</span>
+                            <span className="text-2xs font-medium uppercase tracking-wider text-[hsl(var(--destructive))]">Sobrecargados</span>
                             <div className="text-base md:text-lg font-extrabold text-[hsl(var(--destructive))] mt-0.5">
                                 {workloadSummary?.overloaded_members_count ?? 0}
                             </div>
@@ -917,7 +917,7 @@ export function ProjectMasterView({ project, tasks, onOpenTask }: ProjectMasterV
                         </div>
 
                         <div className="p-3 rounded-lg bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))]">
-                            <span className="text-2xs font-bold uppercase tracking-wider text-[hsl(var(--primary))]">Balanceados</span>
+                            <span className="text-2xs font-medium uppercase tracking-wider text-[hsl(var(--primary))]">Balanceados</span>
                             <div className="text-base md:text-lg font-extrabold text-[hsl(var(--primary))] mt-0.5">
                                 {workloadSummary?.balanced_members_count ?? 0}
                             </div>
@@ -925,7 +925,7 @@ export function ProjectMasterView({ project, tasks, onOpenTask }: ProjectMasterV
                         </div>
 
                         <div className="p-3 rounded-lg bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))]">
-                            <span className="text-2xs font-bold uppercase tracking-wider text-[hsl(var(--success))]">Disponibles</span>
+                            <span className="text-2xs font-medium uppercase tracking-wider text-[hsl(var(--success))]">Disponibles</span>
                             <div className="text-base md:text-lg font-extrabold text-[hsl(var(--success))] mt-0.5">
                                 {workloadSummary?.available_members_count ?? 0}
                             </div>
@@ -942,7 +942,7 @@ export function ProjectMasterView({ project, tasks, onOpenTask }: ProjectMasterV
                                 </span>
                                 <button
                                     onClick={() => setShowWorkloadDrawer(true)}
-                                    className="text-2xs font-bold text-[hsl(var(--primary))] hover:underline cursor-pointer"
+                                    className=" font-boldtext-[hsl(var(--primary))] hover:underline cursor-pointer"
                                 >
                                     Ver todos ({workloadSummary.members.length}) →
                                 </button>
@@ -967,7 +967,7 @@ export function ProjectMasterView({ project, tasks, onOpenTask }: ProjectMasterV
                                                         {m.name}
                                                     </span>
                                                     {m.overdue_tasks > 0 && (
-                                                        <span className="px-1 py-0.5 rounded text-2xs font-extrabold bg-[hsl(var(--destructive))]/20 text-[hsl(var(--destructive))]">
+                                                        <span className="px-1 py-0.5 rounded  font-extraboldbg-[hsl(var(--destructive))]/20 text-[hsl(var(--destructive))]">
                                                             {m.overdue_tasks} vencida(s)
                                                         </span>
                                                     )}
@@ -999,14 +999,14 @@ export function ProjectMasterView({ project, tasks, onOpenTask }: ProjectMasterV
                             <Clock className="text-[hsl(var(--primary))]" size={16} /> Registro de Tiempo y Hojas de Horas
                         </h2>
                         {timeTrackingSummary && timeTrackingSummary.total_hours > 0 && (
-                            <span className="px-2 py-0.5 rounded-full text-2xs font-bold uppercase tracking-wider bg-[hsl(var(--primary))]/10 text-[hsl(var(--primary))] border border-[hsl(var(--primary))]/20">
+                            <span className="px-2 py-0.5 rounded-full text-2xs font-medium uppercase tracking-wider bg-[hsl(var(--primary))]/10 text-[hsl(var(--primary))] border border-[hsl(var(--primary))]/20">
                                 {timeTrackingSummary.total_hours.toFixed(2)}h Registradas
                             </span>
                         )}
                     </div>
                     <button
                         onClick={() => setShowTimeTrackingDrawer(true)}
-                        className="px-3 py-1 bg-[hsl(var(--surface-2))] hover:bg-[hsl(var(--surface-3))] text-[hsl(var(--text-primary))] border border-[hsl(var(--border))] rounded-md text-2xs font-bold uppercase tracking-wider transition-all flex items-center gap-1.5"
+                        className="px-3 py-1 bg-[hsl(var(--surface-2))] hover:bg-[hsl(var(--surface-3))] text-[hsl(var(--text-primary))] border border-[hsl(var(--border))] rounded-md text-2xs font-medium uppercase tracking-wider transition-all flex items-center gap-1.5"
                     >
                         <Clock size={12} className="text-[hsl(var(--primary))]" /> Hojas de Horas →
                     </button>
@@ -1065,7 +1065,7 @@ export function ProjectMasterView({ project, tasks, onOpenTask }: ProjectMasterV
                     {timeTrackingSummary && timeTrackingSummary.by_task.length > 0 && (
                         <div className="pt-2 space-y-2">
                             <div className="flex items-center justify-between">
-                                <span className="text-2xs font-bold uppercase tracking-wider text-[hsl(var(--text-secondary))]">
+                                <span className="text-2xs font-medium uppercase tracking-wider text-[hsl(var(--text-secondary))]">
                                     Horas por Tarea Principal
                                 </span>
                                 <button
@@ -1376,7 +1376,7 @@ function AnalyticCard({ title, value, detail, icon: Icon, color }: AnalyticCardP
                 <div className={clsx("p-1.5 rounded-md bg-[hsl(var(--surface-2))]", color)}>
                     <Icon size={14} />
                 </div>
-                <span className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{title}</span>
+                <span className="text-2xs font-medium uppercase tracking-wide text-[hsl(var(--text-secondary))]">{title}</span>
             </div>
             <div className="text-xl font-bold text-[hsl(var(--text-primary))] leading-none">{value}</div>
             <p className="text-2xs font-medium text-[hsl(var(--text-secondary))] mt-1 uppercase tracking-tight">{detail}</p>
@@ -1403,7 +1403,7 @@ function NodeCard({ title, icon: Icon, color, tasks, onOpenTask, onToggle, onTit
                 </div>
                 <div>
                     <h3 className="text-base font-bold text-[hsl(var(--text-primary))] leading-tight">{title}</h3>
-                    <p className="text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide mt-0.5">Avance por Nodo</p>
+                    <p className=" font-boldtext-[hsl(var(--text-secondary))] uppercase tracking-wide mt-0.5">Avance por Nodo</p>
                 </div>
             </div>
             <div className="space-y-2">

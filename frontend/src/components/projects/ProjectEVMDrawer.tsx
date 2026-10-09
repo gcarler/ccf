@@ -293,7 +293,7 @@ export function ProjectEVMDrawer({
                                 <button
                                     type="button"
                                     onClick={() => void loadData()}
-                                    className="px-4 py-2 text-xs font-bold uppercase rounded-lg bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] hover:bg-[hsl(var(--surface-2))]"
+                                    className="px-4 py-2 text-xs font-medium uppercase rounded-lg bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] hover:bg-[hsl(var(--surface-2))]"
                                 >
                                     Reintentar
                                 </button>
@@ -323,7 +323,7 @@ export function ProjectEVMDrawer({
                                         <ShieldAlert size={20} className="text-[hsl(var(--destructive))]" />
                                     )}
                                     <div>
-                                        <h3 className="text-xs font-extrabold uppercase tracking-wider text-[hsl(var(--muted-foreground))]">
+                                        <h3 className="text-xs font-medium uppercase tracking-wider text-[hsl(var(--muted-foreground))]">
                                             Estado de Control Físico-Financiero
                                         </h3>
                                         <span className="text-sm font-bold text-[hsl(var(--foreground))]">
@@ -393,7 +393,7 @@ export function ProjectEVMDrawer({
                         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                             {/* CPI */}
                             <div className="p-3.5 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] space-y-1">
-                                <span className="text-2xs font-bold uppercase tracking-wider text-[hsl(var(--muted-foreground))] flex items-center justify-between">
+                                <span className="text-2xs font-medium uppercase tracking-wider text-[hsl(var(--muted-foreground))] flex items-center justify-between">
                                     CPI (Costo)
                                     <span className={clsx(
                                         "px-1.5 py-0.5 rounded text-2xs font-extrabold",
@@ -412,7 +412,7 @@ export function ProjectEVMDrawer({
 
                             {/* SPI */}
                             <div className="p-3.5 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] space-y-1">
-                                <span className="text-2xs font-bold uppercase tracking-wider text-[hsl(var(--muted-foreground))] flex items-center justify-between">
+                                <span className="text-2xs font-medium uppercase tracking-wider text-[hsl(var(--muted-foreground))] flex items-center justify-between">
                                     SPI (Tiempo)
                                     <span className={clsx(
                                         "px-1.5 py-0.5 rounded text-2xs font-extrabold",
@@ -431,7 +431,7 @@ export function ProjectEVMDrawer({
 
                             {/* Variación de Costo (CV) */}
                             <div className="p-3.5 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] space-y-1">
-                                <span className="text-2xs font-bold uppercase tracking-wider text-[hsl(var(--muted-foreground))]">
+                                <span className="text-2xs font-medium uppercase tracking-wider text-[hsl(var(--muted-foreground))]">
                                     Variación Costo (CV)
                                 </span>
                                 <div className={clsx(
@@ -447,7 +447,7 @@ export function ProjectEVMDrawer({
 
                             {/* Variación de Cronograma (SV) */}
                             <div className="p-3.5 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] space-y-1">
-                                <span className="text-2xs font-bold uppercase tracking-wider text-[hsl(var(--muted-foreground))]">
+                                <span className="text-2xs font-medium uppercase tracking-wider text-[hsl(var(--muted-foreground))]">
                                     Variación Tiempo (SV)
                                 </span>
                                 <div className={clsx(
@@ -466,7 +466,7 @@ export function ProjectEVMDrawer({
                         <div className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-4 space-y-3">
                             <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[hsl(var(--border))] pb-3">
                                 <div>
-                                    <h4 className="text-xs font-bold uppercase tracking-wider text-[hsl(var(--foreground))] flex items-center gap-1.5">
+                                    <h4 className="text-xs font-medium uppercase tracking-wider text-[hsl(var(--foreground))] flex items-center gap-1.5">
                                         <BarChart3 size={15} className="text-[hsl(var(--primary))]" />
                                         Curva S de Desempeño Acumulado
                                     </h4>
@@ -632,7 +632,7 @@ export function ProjectEVMDrawer({
 
                         {/* 4. Proyecciones al Cierre (EAC y VAC) */}
                         <div className="p-4 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] space-y-3">
-                            <h4 className="text-xs font-bold uppercase tracking-wider text-[hsl(var(--foreground))] flex items-center gap-1.5">
+                            <h4 className="text-xs font-medium uppercase tracking-wider text-[hsl(var(--foreground))] flex items-center gap-1.5">
                                 <DollarSign size={14} className="text-[hsl(var(--primary))]" />
                                 Pronóstico de Conclusión (Forecasting)
                             </h4>
@@ -683,7 +683,7 @@ export function ProjectEVMDrawer({
                         {/* 5. Recomendaciones Estratégicas del PMI */}
                         {evmData.recommendations && evmData.recommendations.length > 0 && (
                             <div className="p-4 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] space-y-2.5">
-                                <h4 className="text-xs font-bold uppercase tracking-wider text-[hsl(var(--foreground))] flex items-center gap-1.5">
+                                <h4 className="text-xs font-medium uppercase tracking-wider text-[hsl(var(--foreground))] flex items-center gap-1.5">
                                     <HelpCircle size={14} className="text-[hsl(var(--primary))]" />
                                     Recomendaciones de Gestión
                                 </h4>
