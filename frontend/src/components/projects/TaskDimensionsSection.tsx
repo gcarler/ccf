@@ -276,9 +276,12 @@ export default function TaskDimensionsSection({
             {/* Valor numérico y barra de progreso */}
             <div className="space-y-1.5">
               <div className="flex items-center justify-between text-xs">
-                <span className="text-[hsl(var(--muted-foreground))]">
+                <label
+                  htmlFor={isLeaf ? `task-physical-progress-${task.id}` : undefined}
+                  className="text-[hsl(var(--muted-foreground))]"
+                >
                   {isLeaf ? "Avance físico asignado:" : "Avance físico consolidado:"}
-                </span>
+                </label>
                 <span className="font-bold text-[hsl(var(--foreground))]">
                   {isLeaf ? `${physicalProgress}%` : `${rolledUpProgress}%`}
                 </span>
@@ -308,6 +311,9 @@ export default function TaskDimensionsSection({
               {isLeaf && (
                 <div className="pt-1 space-y-2">
                   <input
+                    id={`task-physical-progress-${task.id}`}
+                    name={`task-physical-progress-${task.id}`}
+                    aria-label="Porcentaje de avance físico continuo"
                     type="range"
                     min="0"
                     max="100"
