@@ -175,6 +175,7 @@ class ProjectTaskBase(BaseModel):
     start_date: Optional[datetime] = None
     due_date: Optional[datetime] = None
     node: Optional[str] = Field(default=None, max_length=50)
+    component_id: Optional[UUIDStr] = None
     labels: List[str] = Field(default_factory=list)
     attachments: List[ProjectAttachment] = Field(default_factory=list)
 
@@ -216,6 +217,7 @@ class ProjectTaskUpdate(BaseModel):
     start_date: Optional[datetime] = None
     due_date: Optional[datetime] = None
     node: Optional[str] = Field(default=None, max_length=50)
+    component_id: Optional[UUIDStr] = None
     labels: Optional[List[str]] = None
     attachments: Optional[List[dict]] = None
 
@@ -311,6 +313,7 @@ class ProjectExpenseBase(BaseModel):
     date: Optional[datetime] = None
     receipt_url: Optional[str] = Field(default=None, max_length=500)
     status: Literal["planned", "committed", "paid"] = "planned"
+    component_id: Optional[UUIDStr] = None
 
 
 class ProjectExpenseCreate(ProjectExpenseBase):
@@ -329,6 +332,7 @@ class ProjectExpenseUpdate(BaseModel):
     date: Optional[datetime] = None
     receipt_url: Optional[str] = Field(default=None, max_length=500)
     status: Optional[Literal["planned", "committed", "paid"]] = None
+    component_id: Optional[UUIDStr] = None
 
     @field_validator("receipt_url")
     @classmethod
@@ -1488,4 +1492,98 @@ class ProjectCurveSResponse(BaseModel):
     project_id: UUIDStr
     summary: ProjectEVMMetrics
     points: List[ProjectCurveSPoint] = Field(default_factory=list)
+
+
+# ── EDT Nivel 2: Componentes y Regla del 100% ──────────────────────────────
+
+
+class ProjectComponentBase(BaseModel):
+    code: str = Field(..., min_length=1, max_length=50, description="Código EDT/WBS del componente")
+    name: str = Field(..., min_length=1, max_length=200, description="Nombre descriptivo del componente")
+    description: Optional[str] = Field(default=None, description="Descripción del alcance del paquete de trabajo")
+    budget_allocated: float = Field(default=0.0, ge=0.0, description="Presupuesto asignado al componente (BAC)")
+    order_index: int = Field(default=0, ge=0, description="Orden de presentación en el desglose")
+    color: Optional[str] = Field(default="#3b82f6", max_length=20, description="Color identificador")
+    status: str = Field(default="active", max_length=20, description="Estado del componente")
+
+    @field_validator("code", "name", mode="before")
+    @classmethod
+    def _strip_strings(cls, v: Any) -> Any:
+        return _strip_str_or_passthrough(v)
+
+
+class ProjectComponentCreate(ProjectComponentBase):
+    project_id: Optional[UUIDStr] = None
+
+
+class ProjectComponentUpdate(BaseModel):
+    code: Optional[str] = Field(default=None, min_length=1, max_length=50)
+    name: Optional[str] = Field(default=None, min_length=1, max_length=200)
+    description: Optional[str] = None
+    budget_allocated: Optional[float] = Field(default=None, ge=0.0)
+    order_index: Optional[int] = Field(default=None, ge=0)
+    color: Optional[str] = Field(default=None, max_length=20)
+    status: Optional[str] = Field(default=None, max_length=20)
+
+    @field_validator("code", "name", mode="before")
+    @classmethod
+    def _strip_strings(cls, v: Any) -> Any:
+        return _strip_str_or_passthrough(v)
+
+
+class ProjectComponent(ProjectComponentBase):
+    id: UUIDStr
+    project_id: UUIDStr
+    created_at: datetime
+    updated_at: Optional[datetime] = None
+    deleted_at: Optional[datetime] = None
+    model_config = orm_config
+
+
+class ComponentEVMMetrics(BaseModel):
+    component_id: UUIDStr
+    code: str
+    name: str
+    budget_allocated: float
+    total_tasks: int = 0
+    completed_tasks: int = 0
+    physical_progress_pct: float = 0.0
+    ev: float = 0.0
+    pv: float = 0.0
+    ac: float = 0.0
+    cpi: float = 1.0
+    spi: float = 1.0
+    cv: float = 0.0
+    sv: float = 0.0
+    cr: float = 1.0
+    financial_progress_pct: float = 0.0
+    balance_gap_pct: float = 0.0
+    health_status: str = "OPTIMO"
+    health_color: str = "success"
+
+
+class ProjectComponentDetail(ProjectComponent):
+    tasks_count: int = 0
+    expenses_count: int = 0
+    evm: Optional[ComponentEVMMetrics] = None
+
+
+class ProjectBudget100RuleValidation(BaseModel):
+    project_id: UUIDStr
+    project_budget_allocated: float
+    components_budget_total: float
+    budget_difference: float
+    allocation_percentage: float
+    is_rule_satisfied: bool
+    is_fully_allocated: bool
+    status: Literal["balanced", "under_allocated", "over_allocated", "no_project_budget"]
+    components_count: int
+    recommendations: List[str] = Field(default_factory=list)
+
+
+class ProjectComponentsBreakdown(BaseModel):
+    project_id: UUIDStr
+    components: List[ProjectComponentDetail] = Field(default_factory=list)
+    budget_rule: ProjectBudget100RuleValidation
+
 

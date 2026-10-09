@@ -296,6 +296,7 @@ from backend.models_projects import (
     ProjectAutomationRule,
     ProjectBaseline,
     ProjectComment,
+    ProjectComponent,
     ProjectDocument,
     ProjectExpense,
     ProjectFile,

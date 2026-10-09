@@ -27,6 +27,7 @@ export interface ProjectTaskDependency {
 export interface ProjectExpense {
   id: string;
   project_id: string;
+  component_id?: string | null;
   category: string;
   description?: string | null;
   amount: number;
@@ -227,6 +228,7 @@ export interface ProjectTaskRecord {
   priority: string;
   assignee_id?: string | null;
   parent_id?: string | null;
+  component_id?: string | null;
   start_date?: string | null;
   due_date?: string | null;
   node?: string | null;
@@ -871,3 +873,68 @@ export interface ProjectCurveSResponse {
   summary: ProjectEVMMetrics;
   points: ProjectCurveSPoint[];
 }
+
+// ── EDT Nivel 2: Componentes y Regla del 100% ──────────────────────────────
+
+export interface ComponentEVMMetrics {
+  component_id: string;
+  code: string;
+  name: string;
+  budget_allocated: number;
+  total_tasks: number;
+  completed_tasks: number;
+  physical_progress_pct: number;
+  ev: number;
+  pv: number;
+  ac: number;
+  cpi: number;
+  spi: number;
+  cv: number;
+  sv: number;
+  cr: number;
+  financial_progress_pct: number;
+  balance_gap_pct: number;
+  health_status: string;
+  health_color: 'success' | 'warning' | 'destructive';
+}
+
+export interface ProjectComponent {
+  id: string;
+  project_id: string;
+  code: string;
+  name: string;
+  description?: string | null;
+  budget_allocated: number;
+  order_index: number;
+  color?: string | null;
+  status: string;
+  created_at: string;
+  updated_at?: string | null;
+  deleted_at?: string | null;
+}
+
+export interface ProjectComponentDetail extends ProjectComponent {
+  tasks_count: number;
+  expenses_count: number;
+  evm?: ComponentEVMMetrics | null;
+}
+
+export interface ProjectBudget100RuleValidation {
+  project_id: string;
+  project_budget_allocated: number;
+  components_budget_total: number;
+  budget_difference: number;
+  allocation_percentage: number;
+  is_rule_satisfied: boolean;
+  is_fully_allocated: boolean;
+  status: 'balanced' | 'under_allocated' | 'over_allocated' | 'no_project_budget';
+  components_count: number;
+  recommendations: string[];
+}
+
+export interface ProjectComponentsBreakdown {
+  project_id: string;
+  components: ProjectComponentDetail[];
+  budget_rule: ProjectBudget100RuleValidation;
+}
+

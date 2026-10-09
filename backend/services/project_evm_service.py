@@ -21,7 +21,6 @@ from __future__ import annotations
 import datetime
 from datetime import timedelta, timezone
 from typing import Any, Dict, List, Optional
-from uuid import UUID
 
 try:
     from sqlalchemy.orm import Session
@@ -55,6 +54,7 @@ class _DummyModel(metaclass=_DummyModelMeta):
 try:
     from backend.models_projects import (
         Project,
+        ProjectComponent,
         ProjectExpense,
         ProjectMilestone,
         ProjectTask,
@@ -62,6 +62,7 @@ try:
 except ImportError:
     # Fallback for testing environments without C-extension dependencies
     Project = _DummyModel  # type: ignore
+    ProjectComponent = _DummyModel  # type: ignore
     ProjectExpense = _DummyModel  # type: ignore
     ProjectMilestone = _DummyModel  # type: ignore
     ProjectTask = _DummyModel  # type: ignore
@@ -309,3 +310,249 @@ def generate_curve_s_data(db: Session, project: Project, points_count: int = 8) 
         )
 
     return points
+
+
+# ── Component-Level EVM and 100% Rule Validation (PMI / WBS) ───────────────
+
+
+def calculate_component_evm(
+    db: Session,
+    component: ProjectComponent,
+    now: Optional[datetime.datetime] = None,
+) -> Dict[str, Any]:
+    """Calcula las métricas EVM y balance físico-financiero para un componente EDT.
+
+    - BAC: Presupuesto asignado al componente.
+    - Avance Físico: Ratio de tareas completadas asignadas al componente.
+    - EV: BAC * (% Avance Físico).
+    - AC: Suma de gastos con estado 'approved' o 'paid' vinculados al componente.
+    - PV: Valor planificado a la fecha según vencimiento de tareas del componente.
+    - CPI: EV / AC (1.0 si AC=0 y EV=0, 2.0 si AC=0 y EV>0).
+    - SPI: EV / PV (1.0 si PV=0).
+    - Balance Gap (%): Avance físico (%) - Avance financiero (%).
+    """
+    now = now or _utcnow()
+    bac = float(component.budget_allocated or 0.0)
+
+    # 1. Tareas asociadas al componente
+    tasks = (
+        db.query(ProjectTask)
+        .filter(
+            ProjectTask.component_id == component.id,
+            ProjectTask.deleted_at.is_(None),
+        )
+        .all()
+    )
+    total_tasks = len(tasks)
+    completed_tasks = sum(1 for t in tasks if t.status in ("completed", "done"))
+    physical_pct = round((completed_tasks / max(total_tasks, 1)) * 100.0, 1) if total_tasks > 0 else 0.0
+
+    # 2. EV (Earned Value)
+    ev = round(bac * (physical_pct / 100.0), 2)
+
+    # 3. AC (Actual Cost)
+    expenses = (
+        db.query(ProjectExpense)
+        .filter(
+            ProjectExpense.component_id == component.id,
+            ProjectExpense.deleted_at.is_(None),
+            ProjectExpense.status.in_(["approved", "paid"]),
+        )
+        .all()
+    )
+    ac = round(sum(float(e.amount or 0.0) for e in expenses), 2)
+
+    # 4. PV (Planned Value)
+    if total_tasks > 0:
+        due_tasks = 0
+        for t in tasks:
+            t_due = _as_utc(t.due_date)
+            if t_due and t_due <= now:
+                due_tasks += 1
+        planned_ratio = due_tasks / total_tasks
+        pv = round(bac * planned_ratio, 2)
+    else:
+        pv = ev
+
+    # 5. CPI y SPI
+    if ac > 0:
+        cpi = round(ev / ac, 2)
+    else:
+        cpi = 1.0 if ev == 0.0 else 2.0
+
+    if pv > 0:
+        spi = round(ev / pv, 2)
+    else:
+        spi = 1.0 if ev == 0.0 else 2.0
+
+    cv = round(ev - ac, 2)
+    sv = round(ev - pv, 2)
+    cr = round(cpi * spi, 2)
+
+    financial_pct = round((ac / max(bac, 1.0)) * 100.0, 1) if bac > 0 else 0.0
+    balance_gap = round(physical_pct - financial_pct, 1)
+
+    # Semáforo de salud del componente
+    if cpi >= 1.0 and spi >= 1.0:
+        health_status = "OPTIMO"
+        health_color = "success"
+    elif cpi >= 1.0 and spi < 1.0:
+        health_status = "ATRASADO_SIN_SOBRECOSTO"
+        health_color = "warning"
+    elif cpi < 1.0 and spi >= 1.0:
+        health_status = "ADELANTADO_CON_SOBRECOSTO"
+        health_color = "warning"
+    else:
+        health_status = "CRITICO_RETRASO_Y_SOBRECOSTO"
+        health_color = "destructive"
+
+    return {
+        "component_id": str(component.id),
+        "code": component.code,
+        "name": component.name,
+        "budget_allocated": bac,
+        "total_tasks": total_tasks,
+        "completed_tasks": completed_tasks,
+        "physical_progress_pct": physical_pct,
+        "ev": ev,
+        "pv": pv,
+        "ac": ac,
+        "cpi": cpi,
+        "spi": spi,
+        "cv": cv,
+        "sv": sv,
+        "cr": cr,
+        "financial_progress_pct": financial_pct,
+        "balance_gap_pct": balance_gap,
+        "health_status": health_status,
+        "health_color": health_color,
+    }
+
+
+def validate_project_budget_100_rule(db: Session, project: Project) -> Dict[str, Any]:
+    """Valida la Regla del 100% de la EDT (PMI / PMBOK).
+
+    La suma de los presupuestos asignados a cada componente debe corresponder
+    al 100% del presupuesto asignado al proyecto (BAC).
+    """
+    project_budget = float(project.budget_allocated or 0.0)
+    components = (
+        db.query(ProjectComponent)
+        .filter(
+            ProjectComponent.project_id == project.id,
+            ProjectComponent.deleted_at.is_(None),
+        )
+        .order_by(ProjectComponent.order_index.asc())
+        .all()
+    )
+
+    components_total = round(sum(float(c.budget_allocated or 0.0) for c in components), 2)
+    difference = round(project_budget - components_total, 2)
+
+    if project_budget > 0:
+        allocation_pct = round((components_total / project_budget) * 100.0, 2)
+    else:
+        allocation_pct = 0.0
+
+    recommendations: List[str] = []
+    is_fully_allocated = abs(difference) < 0.01 and project_budget > 0
+
+    if project_budget == 0.0:
+        status_code = "no_project_budget"
+        is_satisfied = False
+        recommendations.append(
+            "El proyecto no tiene un presupuesto total asignado (budget_allocated). "
+            "Configure el presupuesto global del proyecto para validar la Regla del 100%."
+        )
+    elif abs(difference) < 0.01:
+        status_code = "balanced"
+        is_satisfied = True
+        recommendations.append(
+            "El presupuesto de los componentes cubre exactamente el 100% del presupuesto del proyecto. "
+            "Cumple estrictamente la Regla del 100% PMI."
+        )
+    elif components_total < project_budget:
+        status_code = "under_allocated"
+        is_satisfied = True  # No excede el presupuesto, pero hay saldo pendiente
+        pct_remaining = round(100.0 - allocation_pct, 1)
+        recommendations.append(
+            f"Falta asignar ${difference:,.2f} ({pct_remaining}%) del presupuesto global en componentes de la EDT."
+        )
+        recommendations.append("Cree o amplíe componentes para completar la descomposición total del proyecto.")
+    else:
+        status_code = "over_allocated"
+        is_satisfied = False
+        exceeded_amount = round(abs(difference), 2)
+        recommendations.append(
+            f"Alerta presupuestal PMI: La suma de componentes (${components_total:,.2f}) excede el presupuesto "
+            f"aprobado (${project_budget:,.2f}) por ${exceeded_amount:,.2f} ({allocation_pct}% asignado)."
+        )
+        recommendations.append("Ajuste el presupuesto de los componentes o solicite una ampliación del BAC del proyecto.")
+
+    return {
+        "project_id": str(project.id),
+        "project_budget_allocated": project_budget,
+        "components_budget_total": components_total,
+        "budget_difference": difference,
+        "allocation_percentage": allocation_pct,
+        "is_rule_satisfied": is_satisfied,
+        "is_fully_allocated": is_fully_allocated,
+        "status": status_code,
+        "components_count": len(components),
+        "recommendations": recommendations,
+    }
+
+
+def get_project_components_breakdown(db: Session, project: Project) -> Dict[str, Any]:
+    """Genera el desglose completo de componentes EDT con EVM y la validación de la Regla del 100%."""
+    budget_rule = validate_project_budget_100_rule(db, project)
+
+    components = (
+        db.query(ProjectComponent)
+        .filter(
+            ProjectComponent.project_id == project.id,
+            ProjectComponent.deleted_at.is_(None),
+        )
+        .order_by(ProjectComponent.order_index.asc(), ProjectComponent.code.asc())
+        .all()
+    )
+
+    component_details = []
+    for comp in components:
+        evm = calculate_component_evm(db, comp)
+        tasks_count = (
+            db.query(ProjectTask)
+            .filter(ProjectTask.component_id == comp.id, ProjectTask.deleted_at.is_(None))
+            .count()
+        )
+        expenses_count = (
+            db.query(ProjectExpense)
+            .filter(ProjectExpense.component_id == comp.id, ProjectExpense.deleted_at.is_(None))
+            .count()
+        )
+        component_details.append(
+            {
+                "id": str(comp.id),
+                "project_id": str(comp.project_id),
+                "code": comp.code,
+                "name": comp.name,
+                "description": comp.description,
+                "budget_allocated": float(comp.budget_allocated or 0.0),
+                "order_index": comp.order_index,
+                "color": comp.color or "#3b82f6",
+                "status": comp.status,
+                "created_at": comp.created_at,
+                "updated_at": comp.updated_at,
+                "deleted_at": comp.deleted_at,
+                "tasks_count": tasks_count,
+                "expenses_count": expenses_count,
+                "evm": evm,
+            }
+        )
+
+    return {
+        "project_id": str(project.id),
+        "components": component_details,
+        "budget_rule": budget_rule,
+    }
+

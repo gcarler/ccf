@@ -9,6 +9,7 @@ import {
     ArrowUpRight, BarChart3, Plus, Trash2,
     Target, Sliders, Activity, AlertTriangle, AlertOctagon,
     Wallet, TrendingDown, ShieldAlert, Users, BookTemplate, FileText,
+    Layers,
 } from 'lucide-react';
 import clsx from 'clsx';
 import type { ProjectRecord, ProjectTaskRecord, ProjectMilestoneRecord, ProjectAnalytics, ProjectKPI, ProjectBudgetSummary, ProjectRiskSummary, ProjectWorkloadSummary, ProjectTimeTrackingSummary } from '@/types/projects';
@@ -64,6 +65,10 @@ const ProjectEVMDrawer = dynamic(
     () => import('@/components/projects/ProjectEVMDrawer').then((module) => module.ProjectEVMDrawer),
     { loading: ProjectDrawerLoading },
 );
+const ProjectComponentDrawer = dynamic(
+    () => import('@/components/projects/ProjectComponentDrawer').then((module) => module.ProjectComponentDrawer),
+    { loading: ProjectDrawerLoading },
+);
 const ConfirmDeleteDrawer = dynamic(() => import('@/components/ui/ConfirmDeleteDrawer'), { loading: ProjectDrawerLoading });
 
 interface ProjectMasterViewProps {
@@ -105,6 +110,7 @@ export function ProjectMasterView({ project, tasks, onOpenTask }: ProjectMasterV
     const [budgetSummary, setBudgetSummary] = useState<ProjectBudgetSummary | null>(project.budget_summary || null);
     const [showBudgetDrawer, setShowBudgetDrawer] = useState(false);
     const [showEVMDrawer, setShowEVMDrawer] = useState(false);
+    const [showComponentDrawer, setShowComponentDrawer] = useState(false);
 
     // Matriz RAID de Riesgos (Super-PRO Fase 2)
     const [risksSummary, setRisksSummary] = useState<ProjectRiskSummary | null>(project.risks_summary || null);
@@ -441,6 +447,15 @@ export function ProjectMasterView({ project, tasks, onOpenTask }: ProjectMasterV
                         >
                             <TrendingUp size={14} className="text-[hsl(var(--primary))]" />
                             <span className="text-3xs font-bold uppercase">EVM</span>
+                        </button>
+
+                        <button
+                            onClick={() => setShowComponentDrawer(true)}
+                            className="p-2 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] hover:bg-[hsl(var(--surface-3))] text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] transition-all active:scale-95 flex flex-col items-center gap-0.5 shrink-0"
+                            title="Estructura de Desglose del Trabajo (EDT Nivel 2) y Regla del 100%"
+                        >
+                            <Layers size={14} className="text-[hsl(var(--primary))]" />
+                            <span className="text-3xs font-bold uppercase">EDT</span>
                         </button>
                     </div>
                 </div>
@@ -1307,6 +1322,19 @@ export function ProjectMasterView({ project, tasks, onOpenTask }: ProjectMasterV
                 projectTitle={project.title}
                 isOpen={showEVMDrawer}
                 onClose={() => setShowEVMDrawer(false)}
+            />
+            </DeferredMount>
+
+            <DeferredMount open={showComponentDrawer}>
+            <ProjectComponentDrawer
+                projectId={project.id}
+                projectTitle={project.title}
+                isOpen={showComponentDrawer}
+                onClose={() => setShowComponentDrawer(false)}
+                onUpdated={() => {
+                    reloadProject?.();
+                    loadBudgetSummary();
+                }}
             />
             </DeferredMount>
 

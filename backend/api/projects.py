@@ -1282,6 +1282,22 @@ def create_project_task(
         .scalar()
         or 0
     )
+    if payload.get("component_id"):
+        payload["component_id"] = _to_uuid(payload["component_id"])
+        comp = (
+            db.query(models.ProjectComponent)
+            .filter(
+                models.ProjectComponent.id == payload["component_id"],
+                models.ProjectComponent.project_id == _to_uuid(project_id),
+                models.ProjectComponent.deleted_at.is_(None),
+            )
+            .first()
+        )
+        if not comp:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="El componente especificado no pertenece a este proyecto o no existe",
+            )
     payload["project_id"] = _to_uuid(project_id)
     payload["order_index"] = max_order + 1
     db_task = models.ProjectTask(**payload)
@@ -2316,7 +2332,7 @@ def get_project_analytics(
     else:
         health_label = "crítica"
 
-    from backend.services.project_evm_service import calculate_project_evm, generate_curve_s_data
+    from backend.services.project_evm_service import calculate_project_evm
 
     evm_metrics = calculate_project_evm(db, project)
 
@@ -2374,6 +2390,306 @@ def get_project_curve_s(
         summary=schemas.ProjectEVMMetrics(**evm_data),
         points=[schemas.ProjectCurveSPoint(**p) for p in curve_points],
     )
+
+
+# ── EDT Nivel 2: Componentes y Regla del 100% ──────────────────────────────
+
+
+@router.get("/{project_id}/components", response_model=List[schemas.ProjectComponentDetail])
+def list_project_components(
+    project_id: str,
+    include_evm: bool = Query(True, description="Incluir métricas EVM calculadas por componente"),
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_project_access("read")),
+):
+    """Lista todos los componentes EDT (WBS Nivel 2) del proyecto con métricas EVM y balance."""
+    user_sede = get_user_sede_id(db, current_user.id)
+    project = _ensure_project(db, project_id, user_sede=user_sede)
+    from backend.services.project_evm_service import calculate_component_evm
+
+    components = crud.get_project_components(db, project.id)
+    result = []
+    for comp in components:
+        evm_metrics = calculate_component_evm(db, comp) if include_evm else None
+        tasks_count = (
+            db.query(models.ProjectTask)
+            .filter(models.ProjectTask.component_id == comp.id, models.ProjectTask.deleted_at.is_(None))
+            .count()
+        )
+        expenses_count = (
+            db.query(models.ProjectExpense)
+            .filter(models.ProjectExpense.component_id == comp.id, models.ProjectExpense.deleted_at.is_(None))
+            .count()
+        )
+        result.append(
+            schemas.ProjectComponentDetail(
+                id=str(comp.id),
+                project_id=str(comp.project_id),
+                code=comp.code,
+                name=comp.name,
+                description=comp.description,
+                budget_allocated=float(comp.budget_allocated or 0.0),
+                order_index=comp.order_index,
+                color=comp.color or "#3b82f6",
+                status=comp.status,
+                created_at=comp.created_at,
+                updated_at=comp.updated_at,
+                deleted_at=comp.deleted_at,
+                tasks_count=tasks_count,
+                expenses_count=expenses_count,
+                evm=schemas.ComponentEVMMetrics(**evm_metrics) if evm_metrics else None,
+            )
+        )
+    return result
+
+
+@router.get("/{project_id}/components/budget-100-rule", response_model=schemas.ProjectBudget100RuleValidation)
+def get_project_budget_100_rule(
+    project_id: str,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_project_access("read")),
+):
+    """Valida el cumplimiento estricto de la Regla del 100% PMI en la asignación presupuestal de la EDT."""
+    user_sede = get_user_sede_id(db, current_user.id)
+    project = _ensure_project(db, project_id, user_sede=user_sede)
+    from backend.services.project_evm_service import validate_project_budget_100_rule
+
+    data = validate_project_budget_100_rule(db, project)
+    return schemas.ProjectBudget100RuleValidation(**data)
+
+
+@router.get("/{project_id}/components-breakdown", response_model=schemas.ProjectComponentsBreakdown)
+def get_project_components_breakdown_endpoint(
+    project_id: str,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_project_access("read")),
+):
+    """Desglose integral de EDT Nivel 2: Componentes, métricas EVM y balance de la regla del 100%."""
+    user_sede = get_user_sede_id(db, current_user.id)
+    project = _ensure_project(db, project_id, user_sede=user_sede)
+    from backend.services.project_evm_service import get_project_components_breakdown
+
+    breakdown = get_project_components_breakdown(db, project)
+    return schemas.ProjectComponentsBreakdown(
+        project_id=str(project.id),
+        components=[schemas.ProjectComponentDetail(**c) for c in breakdown["components"]],
+        budget_rule=schemas.ProjectBudget100RuleValidation(**breakdown["budget_rule"]),
+    )
+
+
+@router.post(
+    "/{project_id}/components",
+    response_model=schemas.ProjectComponentDetail,
+    status_code=status.HTTP_201_CREATED,
+)
+def create_project_component_endpoint(
+    project_id: str,
+    payload: schemas.ProjectComponentCreate,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_project_access("edit")),
+):
+    """Crea un nuevo componente de la EDT (WBS Nivel 2) validando unicidad de código."""
+    user_sede = get_user_sede_id(db, current_user.id)
+    project = _ensure_project(db, project_id, user_sede=user_sede)
+
+    code_clean = payload.code.strip()
+    existing = (
+        db.query(models.ProjectComponent)
+        .filter(
+            models.ProjectComponent.project_id == project.id,
+            models.ProjectComponent.code == code_clean,
+            models.ProjectComponent.deleted_at.is_(None),
+        )
+        .first()
+    )
+    if existing:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Ya existe un componente activo con el código '{code_clean}' en este proyecto",
+        )
+
+    row = crud.create_project_component(db, project.id, payload)
+    _log_project_activity(
+        db,
+        project_id,
+        current_user.id,
+        "component_created",
+        f"Componente EDT creado: [{row.code}] {row.name} (Presupuesto: ${float(row.budget_allocated or 0.0):,.2f})",
+    )
+
+    from backend.services.project_evm_service import calculate_component_evm
+
+    evm_metrics = calculate_component_evm(db, row)
+    return schemas.ProjectComponentDetail(
+        id=str(row.id),
+        project_id=str(row.project_id),
+        code=row.code,
+        name=row.name,
+        description=row.description,
+        budget_allocated=float(row.budget_allocated or 0.0),
+        order_index=row.order_index,
+        color=row.color or "#3b82f6",
+        status=row.status,
+        created_at=row.created_at,
+        updated_at=row.updated_at,
+        deleted_at=row.deleted_at,
+        tasks_count=0,
+        expenses_count=0,
+        evm=schemas.ComponentEVMMetrics(**evm_metrics),
+    )
+
+
+@router.get("/{project_id}/components/{component_id}", response_model=schemas.ProjectComponentDetail)
+def get_project_component_endpoint(
+    project_id: str,
+    component_id: str,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_project_access("read")),
+):
+    """Obtiene el detalle de un componente EDT específico con sus métricas EVM."""
+    user_sede = get_user_sede_id(db, current_user.id)
+    project = _ensure_project(db, project_id, user_sede=user_sede)
+
+    comp = crud.get_project_component(db, project.id, component_id)
+    if not comp:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Componente no encontrado")
+
+    from backend.services.project_evm_service import calculate_component_evm
+
+    evm_metrics = calculate_component_evm(db, comp)
+    tasks_count = (
+        db.query(models.ProjectTask)
+        .filter(models.ProjectTask.component_id == comp.id, models.ProjectTask.deleted_at.is_(None))
+        .count()
+    )
+    expenses_count = (
+        db.query(models.ProjectExpense)
+        .filter(models.ProjectExpense.component_id == comp.id, models.ProjectExpense.deleted_at.is_(None))
+        .count()
+    )
+    return schemas.ProjectComponentDetail(
+        id=str(comp.id),
+        project_id=str(comp.project_id),
+        code=comp.code,
+        name=comp.name,
+        description=comp.description,
+        budget_allocated=float(comp.budget_allocated or 0.0),
+        order_index=comp.order_index,
+        color=comp.color or "#3b82f6",
+        status=comp.status,
+        created_at=comp.created_at,
+        updated_at=comp.updated_at,
+        deleted_at=comp.deleted_at,
+        tasks_count=tasks_count,
+        expenses_count=expenses_count,
+        evm=schemas.ComponentEVMMetrics(**evm_metrics),
+    )
+
+
+@router.patch("/{project_id}/components/{component_id}", response_model=schemas.ProjectComponentDetail)
+def update_project_component_endpoint(
+    project_id: str,
+    component_id: str,
+    payload: schemas.ProjectComponentUpdate,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_project_access("edit")),
+):
+    """Actualiza los datos de un componente EDT de forma parcial."""
+    user_sede = get_user_sede_id(db, current_user.id)
+    project = _ensure_project(db, project_id, user_sede=user_sede)
+
+    comp = crud.get_project_component(db, project.id, component_id)
+    if not comp:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Componente no encontrado")
+
+    if payload.code:
+        code_clean = payload.code.strip()
+        existing = (
+            db.query(models.ProjectComponent)
+            .filter(
+                models.ProjectComponent.project_id == project.id,
+                models.ProjectComponent.code == code_clean,
+                models.ProjectComponent.id != comp.id,
+                models.ProjectComponent.deleted_at.is_(None),
+            )
+            .first()
+        )
+        if existing:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Ya existe otro componente activo con el código '{code_clean}' en este proyecto",
+            )
+
+    updated = crud.update_project_component(db, project.id, component_id, payload)
+    _log_project_activity(
+        db,
+        project_id,
+        current_user.id,
+        "component_updated",
+        f"Componente EDT actualizado: [{updated.code}] {updated.name}",
+    )
+
+    from backend.services.project_evm_service import calculate_component_evm
+
+    evm_metrics = calculate_component_evm(db, updated)
+    tasks_count = (
+        db.query(models.ProjectTask)
+        .filter(models.ProjectTask.component_id == updated.id, models.ProjectTask.deleted_at.is_(None))
+        .count()
+    )
+    expenses_count = (
+        db.query(models.ProjectExpense)
+        .filter(models.ProjectExpense.component_id == updated.id, models.ProjectExpense.deleted_at.is_(None))
+        .count()
+    )
+    return schemas.ProjectComponentDetail(
+        id=str(updated.id),
+        project_id=str(updated.project_id),
+        code=updated.code,
+        name=updated.name,
+        description=updated.description,
+        budget_allocated=float(updated.budget_allocated or 0.0),
+        order_index=updated.order_index,
+        color=updated.color or "#3b82f6",
+        status=updated.status,
+        created_at=updated.created_at,
+        updated_at=updated.updated_at,
+        deleted_at=updated.deleted_at,
+        tasks_count=tasks_count,
+        expenses_count=expenses_count,
+        evm=schemas.ComponentEVMMetrics(**evm_metrics),
+    )
+
+
+@router.delete("/{project_id}/components/{component_id}")
+def delete_project_component_endpoint(
+    project_id: str,
+    component_id: str,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_project_access("edit")),
+):
+    """Elimina (soft-delete) un componente de la EDT y desvincula las tareas y gastos asociados."""
+    user_sede = get_user_sede_id(db, current_user.id)
+    project = _ensure_project(db, project_id, user_sede=user_sede)
+
+    comp = crud.get_project_component(db, project.id, component_id)
+    if not comp:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Componente no encontrado")
+
+    code_label = comp.code
+    name_label = comp.name
+    success = crud.delete_project_component(db, project.id, component_id)
+    if not success:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="No se pudo eliminar el componente")
+
+    _log_project_activity(
+        db,
+        project_id,
+        current_user.id,
+        "component_deleted",
+        f"Componente EDT eliminado: [{code_label}] {name_label}",
+    )
+    return {"message": "Componente eliminado exitosamente", "id": component_id}
 
 
 @router.get("/{project_id}/wiki", response_model=Optional[schemas.ProjectDocument])
@@ -2794,6 +3110,28 @@ def update_project_task(
     # via PATCH body {} and assign tasks across tenant boundaries.
     if "assignee_id" in update_data:
         _assert_assignee_in_sede(db, update_data.get("assignee_id"), user_sede)
+
+    if "component_id" in update_data:
+        comp_val = update_data.get("component_id")
+        if comp_val:
+            comp_uuid = _to_uuid(comp_val)
+            comp = (
+                db.query(models.ProjectComponent)
+                .filter(
+                    models.ProjectComponent.id == comp_uuid,
+                    models.ProjectComponent.project_id == _to_uuid(project_id),
+                    models.ProjectComponent.deleted_at.is_(None),
+                )
+                .first()
+            )
+            if not comp:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="El componente especificado no pertenece a este proyecto o no existe",
+                )
+            update_data["component_id"] = comp_uuid
+        else:
+            update_data["component_id"] = None
 
     effective_status = update_data.get("status", task.status)
     effective_node = update_data.get("node", getattr(task, "node", None))
@@ -3893,7 +4231,22 @@ def create_project_expense(
 ):
     """Crea una partida de gasto y recalcula el presupuesto gastado."""
     user_sede = get_user_sede_id(db, current_user.id)
-    _ensure_project(db, project_id, user_sede=user_sede)
+    project = _ensure_project(db, project_id, user_sede=user_sede)
+    if payload.component_id:
+        comp = (
+            db.query(models.ProjectComponent)
+            .filter(
+                models.ProjectComponent.id == _to_uuid(payload.component_id),
+                models.ProjectComponent.project_id == project.id,
+                models.ProjectComponent.deleted_at.is_(None),
+            )
+            .first()
+        )
+        if not comp:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="El componente especificado no pertenece a este proyecto o no existe",
+            )
     persona_id = get_user_persona_id(db, current_user.id)
     expense = crud.create_project_expense(
         db,
@@ -3948,7 +4301,22 @@ def update_project_expense(
 ):
     """Actualiza una partida de gasto y recalcula el presupuesto del proyecto."""
     user_sede = get_user_sede_id(db, current_user.id)
-    _ensure_project(db, project_id, user_sede=user_sede)
+    project = _ensure_project(db, project_id, user_sede=user_sede)
+    if payload.component_id:
+        comp = (
+            db.query(models.ProjectComponent)
+            .filter(
+                models.ProjectComponent.id == _to_uuid(payload.component_id),
+                models.ProjectComponent.project_id == project.id,
+                models.ProjectComponent.deleted_at.is_(None),
+            )
+            .first()
+        )
+        if not comp:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="El componente especificado no pertenece a este proyecto o no existe",
+            )
     expense = crud.update_project_expense(
         db,
         project_id=_to_uuid(project_id),

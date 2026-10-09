@@ -59,6 +59,9 @@ class Project(Base):
     automations = relationship("ProjectAutomationRule", back_populates="project", cascade="all, delete-orphan")
     indicators = relationship("ProjectIndicator", back_populates="project", cascade="all, delete-orphan")
     files = relationship("ProjectFile", back_populates="project", cascade="all, delete-orphan")
+    components = relationship(
+        "ProjectComponent", back_populates="project", cascade="all, delete-orphan", order_by="ProjectComponent.order_index"
+    )
 
     # ``name`` is a thin alias over ``title`` so callers that pass or read
     # ``name`` (e.g. ``tests/test_crud_integration.py::TestProjectsCrud``)
@@ -116,12 +119,46 @@ class ProjectWhiteboard(Base):
     project = relationship("Project", back_populates="whiteboard")
 
 
+class ProjectComponent(Base):
+    """Componente de la Estructura de Desglose del Trabajo (EDT Nivel 2 / WBS).
+
+    Representa un paquete de trabajo o entregable principal del proyecto según estándares PMI.
+    Permite agrupar tareas y gastos para cálculo de EVM (PV, EV, AC, CPI, SPI) sectorizado
+    y control de la regla del 100% presupuestal.
+    """
+
+    __tablename__ = "project_components"
+    __table_args__ = (
+        UniqueConstraint("project_id", "code", name="uq_project_components_project_code"),
+    )
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    project_id = Column(UUID(as_uuid=True), ForeignKey("projects.id", ondelete="CASCADE"), nullable=False, index=True)
+    code = Column(String(50), nullable=False, index=True)
+    name = Column(String(200), nullable=False)
+    description = Column(Text, nullable=True)
+    budget_allocated = Column(Float, default=0.0, nullable=False)
+    order_index = Column(Integer, default=0, nullable=False)
+    color = Column(String(20), default="#3b82f6", nullable=True)
+    status = Column(String(20), default="active", nullable=False)
+    created_at = Column(DateTime(timezone=True), default=_utcnow, index=True)
+    updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
+    deleted_at = Column(DateTime(timezone=True), nullable=True, index=True)
+
+    project = relationship("Project", back_populates="components")
+    tasks = relationship("ProjectTask", back_populates="component")
+    expenses = relationship("ProjectExpense", back_populates="component")
+
+
 class ProjectTask(Base):
     __tablename__ = "project_tasks"
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     project_id = Column(UUID(as_uuid=True), ForeignKey("projects.id", ondelete="CASCADE"), nullable=False, index=True)
     parent_id = Column(
         UUID(as_uuid=True), ForeignKey("project_tasks.id", ondelete="CASCADE"), nullable=True, index=True
+    )
+    component_id = Column(
+        UUID(as_uuid=True), ForeignKey("project_components.id", ondelete="SET NULL"), nullable=True, index=True
     )
     order_index = Column(Integer, default=0)
     title = Column(String(200), nullable=False)
@@ -138,6 +175,7 @@ class ProjectTask(Base):
     updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
 
     project = relationship("Project", back_populates="tasks")
+    component = relationship("ProjectComponent", back_populates="tasks")
     assignee = relationship("Persona", foreign_keys=[assignee_id])
     supplies = relationship("TaskSupply", back_populates="task", cascade="all, delete-orphan")
     attachments = relationship("ProjectAttachment", back_populates="task", cascade="all, delete-orphan")
@@ -304,6 +342,9 @@ class ProjectExpense(Base):
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     project_id = Column(UUID(as_uuid=True), ForeignKey("projects.id", ondelete="CASCADE"), nullable=False, index=True)
+    component_id = Column(
+        UUID(as_uuid=True), ForeignKey("project_components.id", ondelete="SET NULL"), nullable=True, index=True
+    )
     category = Column(String(50), default="general", nullable=False)
     description = Column(Text, nullable=True)
     amount = Column(Float, default=0.0, nullable=False)
@@ -316,6 +357,7 @@ class ProjectExpense(Base):
     deleted_at = Column(DateTime(timezone=True), nullable=True, index=True)
 
     project = relationship("Project", back_populates="expenses")
+    component = relationship("ProjectComponent", back_populates="expenses")
     creator = relationship("Persona", foreign_keys=[created_by])
 
 

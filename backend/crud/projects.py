@@ -696,6 +696,86 @@ def delete_milestone(db: Session, milestone_id) -> bool:
     return True
 
 
+# ── Project Components (EDT Level 2) ──────────────────
+
+
+def get_project_components(db: Session, project_id: Any) -> list[models.ProjectComponent]:
+    p_uuid = _to_uuid(project_id)
+    return (
+        db.query(models.ProjectComponent)
+        .filter(
+            models.ProjectComponent.project_id == p_uuid,
+            models.ProjectComponent.deleted_at.is_(None),
+        )
+        .order_by(models.ProjectComponent.order_index.asc(), models.ProjectComponent.code.asc())
+        .all()
+    )
+
+
+def get_project_component(db: Session, project_id: Any, component_id: Any) -> Optional[models.ProjectComponent]:
+    p_uuid = _to_uuid(project_id)
+    c_uuid = _to_uuid(component_id)
+    return (
+        db.query(models.ProjectComponent)
+        .filter(
+            models.ProjectComponent.id == c_uuid,
+            models.ProjectComponent.project_id == p_uuid,
+            models.ProjectComponent.deleted_at.is_(None),
+        )
+        .first()
+    )
+
+
+def create_project_component(
+    db: Session,
+    project_id: Any,
+    payload: schemas.ProjectComponentCreate,
+) -> models.ProjectComponent:
+    p_uuid = _to_uuid(project_id)
+    data = payload.model_dump(exclude_unset=True)
+    data["project_id"] = p_uuid
+    row = models.ProjectComponent(**data)
+    db.add(row)
+    db.commit()
+    db.refresh(row)
+    return row
+
+
+def update_project_component(
+    db: Session,
+    project_id: Any,
+    component_id: Any,
+    payload: schemas.ProjectComponentUpdate,
+) -> Optional[models.ProjectComponent]:
+    row = get_project_component(db, project_id, component_id)
+    if not row:
+        return None
+    for key, value in payload.model_dump(exclude_unset=True).items():
+        setattr(row, key, value)
+    row.updated_at = _utcnow()
+    db.commit()
+    db.refresh(row)
+    return row
+
+
+def delete_project_component(db: Session, project_id: Any, component_id: Any) -> bool:
+    row = get_project_component(db, project_id, component_id)
+    if not row:
+        return False
+    row.deleted_at = _utcnow()
+    # Desvincular de tareas y gastos asociados
+    db.query(models.ProjectTask).filter(
+        models.ProjectTask.component_id == row.id,
+        models.ProjectTask.deleted_at.is_(None),
+    ).update({"component_id": None}, synchronize_session=False)
+    db.query(models.ProjectExpense).filter(
+        models.ProjectExpense.component_id == row.id,
+        models.ProjectExpense.deleted_at.is_(None),
+    ).update({"component_id": None}, synchronize_session=False)
+    db.commit()
+    return True
+
+
 # ── Project Attachments ────────────────────────────────
 
 
@@ -1234,6 +1314,7 @@ def create_project_expense(
     exp_date = expense_in.date or datetime.now(timezone.utc)
     row = models.ProjectExpense(
         project_id=project_id,
+        component_id=_to_uuid(expense_in.component_id) if expense_in.component_id else None,
         category=expense_in.category or "general",
         description=expense_in.description,
         amount=round(float(expense_in.amount), 2),
@@ -1260,11 +1341,13 @@ def update_project_expense(
     row = get_project_expense(db, project_id, expense_id)
     if not row:
         return None
-    nullable_fields = {"description", "receipt_url"}
+    nullable_fields = {"description", "receipt_url", "component_id"}
     for k, v in expense_in.model_dump(exclude_unset=True).items():
         if v is not None or k in nullable_fields:
             if k == "amount":
                 setattr(row, k, round(float(v), 2))
+            elif k == "component_id":
+                setattr(row, k, _to_uuid(v) if v else None)
             else:
                 setattr(row, k, v)
     row.updated_at = datetime.now(timezone.utc)
