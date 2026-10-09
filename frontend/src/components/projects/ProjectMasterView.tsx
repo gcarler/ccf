@@ -60,6 +60,10 @@ const ProjectReportDrawer = dynamic(
     () => import('@/components/projects/ProjectReportDrawer').then((module) => module.ProjectReportDrawer),
     { loading: ProjectDrawerLoading },
 );
+const ProjectEVMDrawer = dynamic(
+    () => import('@/components/projects/ProjectEVMDrawer').then((module) => module.ProjectEVMDrawer),
+    { loading: ProjectDrawerLoading },
+);
 const ConfirmDeleteDrawer = dynamic(() => import('@/components/ui/ConfirmDeleteDrawer'), { loading: ProjectDrawerLoading });
 
 interface ProjectMasterViewProps {
@@ -100,6 +104,7 @@ export function ProjectMasterView({ project, tasks, onOpenTask }: ProjectMasterV
     // Control Presupuestario (Super-PRO)
     const [budgetSummary, setBudgetSummary] = useState<ProjectBudgetSummary | null>(project.budget_summary || null);
     const [showBudgetDrawer, setShowBudgetDrawer] = useState(false);
+    const [showEVMDrawer, setShowEVMDrawer] = useState(false);
 
     // Matriz RAID de Riesgos (Super-PRO Fase 2)
     const [risksSummary, setRisksSummary] = useState<ProjectRiskSummary | null>(project.risks_summary || null);
@@ -428,6 +433,15 @@ export function ProjectMasterView({ project, tasks, onOpenTask }: ProjectMasterV
                             <FileText size={14} className="text-[hsl(var(--primary))]" />
                             <span className="text-3xs font-bold uppercase">Reporte</span>
                         </button>
+
+                        <button
+                            onClick={() => setShowEVMDrawer(true)}
+                            className="p-2 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] hover:bg-[hsl(var(--surface-3))] text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] transition-all active:scale-95 flex flex-col items-center gap-0.5 shrink-0"
+                            title="Gestión del Valor Ganado (EVM), Curva S y CPI"
+                        >
+                            <TrendingUp size={14} className="text-[hsl(var(--primary))]" />
+                            <span className="text-3xs font-bold uppercase">EVM</span>
+                        </button>
                     </div>
                 </div>
             </header>
@@ -682,6 +696,72 @@ export function ProjectMasterView({ project, tasks, onOpenTask }: ProjectMasterV
                             ))}
                         </div>
                     )}
+                </div>
+            </section>
+
+            {/* 3c. Gestión del Valor Ganado (EVM / PMI) & Control Físico-Financiero */}
+            <section className="space-y-3">
+                <div className="flex items-center justify-between px-2">
+                    <h2 className="text-lg font-bold text-[hsl(var(--text-primary))] uppercase tracking-tighter flex items-center gap-2">
+                        <TrendingUp className="text-[hsl(var(--primary))]" size={16} /> Desempeño Físico vs Financiero (EVM & Curva S)
+                    </h2>
+                    <button
+                        onClick={() => setShowEVMDrawer(true)}
+                        className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-bold uppercase tracking-wider bg-[hsl(var(--primary))]/10 text-[hsl(var(--primary))] border border-[hsl(var(--primary))]/30 hover:bg-[hsl(var(--primary))]/20 transition-all cursor-pointer"
+                    >
+                        <BarChart3 size={12} /> Ver Curva S y Detalle EVM
+                    </button>
+                </div>
+
+                <div className="bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] rounded-xl p-4 shadow-xs space-y-4">
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                        <div className="p-3 rounded-lg bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))]">
+                            <span className="text-3xs font-bold uppercase tracking-wider text-[hsl(var(--text-secondary))]">CPI (Costo)</span>
+                            <div className={clsx(
+                                "text-base md:text-lg font-black mt-0.5",
+                                (analytics?.cpi ?? 1) >= 1.0 ? "text-[hsl(var(--success))]" : "text-[hsl(var(--destructive))]"
+                            )}>
+                                {analytics?.cpi !== undefined && analytics?.cpi !== null ? analytics.cpi.toFixed(2) : '1.00'}
+                            </div>
+                            <span className="text-3xs text-[hsl(var(--text-secondary))]">
+                                {(analytics?.cpi ?? 1) >= 1.0 ? "Dentro de costo" : "Sobrecosto"}
+                            </span>
+                        </div>
+
+                        <div className="p-3 rounded-lg bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))]">
+                            <span className="text-3xs font-bold uppercase tracking-wider text-[hsl(var(--text-secondary))]">SPI (Cronograma)</span>
+                            <div className={clsx(
+                                "text-base md:text-lg font-black mt-0.5",
+                                (analytics?.spi ?? 1) >= 1.0 ? "text-[hsl(var(--primary))]" : "text-[hsl(var(--warning))]"
+                            )}>
+                                {analytics?.spi !== undefined && analytics?.spi !== null ? analytics.spi.toFixed(2) : '1.00'}
+                            </div>
+                            <span className="text-3xs text-[hsl(var(--text-secondary))]">
+                                {(analytics?.spi ?? 1) >= 1.0 ? "A tiempo / adelante" : "Atrasado"}
+                            </span>
+                        </div>
+
+                        <div className="p-3 rounded-lg bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))]">
+                            <span className="text-3xs font-bold uppercase tracking-wider text-[hsl(var(--text-secondary))]">Variación Costo (CV)</span>
+                            <div className={clsx(
+                                "text-base md:text-lg font-black mt-0.5",
+                                (analytics?.cost_variance ?? 0) >= 0 ? "text-[hsl(var(--success))]" : "text-[hsl(var(--destructive))]"
+                            )}>
+                                {analytics?.cost_variance !== undefined && analytics?.cost_variance !== null
+                                    ? ((analytics.cost_variance >= 0 ? "+$" : "-$") + Math.abs(analytics.cost_variance).toLocaleString("es-CO"))
+                                    : "$0"}
+                            </div>
+                            <span className="text-3xs text-[hsl(var(--text-secondary))]">EV - AC Monetizado</span>
+                        </div>
+
+                        <div className="p-3 rounded-lg bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))]">
+                            <span className="text-3xs font-bold uppercase tracking-wider text-[hsl(var(--text-secondary))]">Diagnóstico EVM</span>
+                            <div className="text-xs md:text-sm font-black text-[hsl(var(--text-primary))] mt-0.5 truncate">
+                                {analytics?.cpi_status ? analytics.cpi_status.replace(/_/g, ' ') : 'OPTIMO'}
+                            </div>
+                            <span className="text-3xs text-[hsl(var(--text-secondary))]">Estándar PMI</span>
+                        </div>
+                    </div>
                 </div>
             </section>
 
@@ -1218,6 +1298,15 @@ export function ProjectMasterView({ project, tasks, onOpenTask }: ProjectMasterV
                 isOpen={showReportDrawer}
                 onClose={() => setShowReportDrawer(false)}
                 projectTitle={project.title}
+            />
+            </DeferredMount>
+
+            <DeferredMount open={showEVMDrawer}>
+            <ProjectEVMDrawer
+                projectId={project.id}
+                projectTitle={project.title}
+                isOpen={showEVMDrawer}
+                onClose={() => setShowEVMDrawer(false)}
             />
             </DeferredMount>
 

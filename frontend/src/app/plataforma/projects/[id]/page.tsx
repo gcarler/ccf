@@ -28,6 +28,7 @@ import {
   Zap,
   FileText,
   BarChart3,
+  TrendingUp,
   FolderArchive,
   MoreHorizontal,
   type LucideIcon,
@@ -175,6 +176,13 @@ const ProjectDriveDrawer = dynamic(
     ),
   { loading: ProjectDrawerLoading }
 );
+const ProjectEVMDrawer = dynamic(
+  () =>
+    import('@/components/projects/ProjectEVMDrawer').then(
+      module => module.ProjectEVMDrawer
+    ),
+  { loading: ProjectDrawerLoading }
+);
 
 /**
  * Orquestador de la página de detalle de un proyecto.
@@ -289,6 +297,7 @@ export default function ProjectDetailPage() {
   const [showAutomationsDrawer, setShowAutomationsDrawer] = useState(false);
   const [showReportDrawer, setShowReportDrawer] = useState(false);
   const [showIndicatorsDrawer, setShowIndicatorsDrawer] = useState(false);
+  const [showEVMDrawer, setShowEVMDrawer] = useState(false);
   const [showDriveDrawer, setShowDriveDrawer] = useState(false);
   const [confirmAction, setConfirmAction] = useState<ConfirmActionState>(null);
 
@@ -327,6 +336,7 @@ export default function ProjectDetailPage() {
     { key: 'automations', label: 'Automatizaciones', icon: Zap, onSelect: () => setShowAutomationsDrawer(true) },
     { key: 'reports', label: 'Reportes', icon: FileText, onSelect: () => setShowReportDrawer(true) },
     { key: 'indicators', label: 'MGA / CREMA', icon: BarChart3, onSelect: () => setShowIndicatorsDrawer(true) },
+    { key: 'evm', label: 'Valor Ganado (EVM / CPI)', icon: TrendingUp, onSelect: () => setShowEVMDrawer(true) },
     { key: 'drive', label: 'Bóveda y Drive', icon: FolderArchive, onSelect: () => setShowDriveDrawer(true) },
     { key: 'settings', label: 'Editar proyecto', icon: Edit3, onSelect: () => setShowProjectSettings(true), variant: 'warning' as const },
     { key: 'delete', label: 'Eliminar proyecto', icon: Trash2, onSelect: handleDeleteProject, variant: 'destructive' as const, visible: canDeleteProjectFromApiPolicy },
@@ -782,6 +792,15 @@ export default function ProjectDetailPage() {
             isOpen={showIndicatorsDrawer}
             onClose={() => setShowIndicatorsDrawer(false)}
             onIndicatorUpdated={() => reloadProject()}
+          />
+        </DeferredMount>
+
+        <DeferredMount open={showEVMDrawer}>
+          <ProjectEVMDrawer
+            projectId={project?.id || id}
+            projectTitle={project?.title}
+            isOpen={showEVMDrawer}
+            onClose={() => setShowEVMDrawer(false)}
           />
         </DeferredMount>
 

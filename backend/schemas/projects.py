@@ -1061,6 +1061,10 @@ class ProjectAnalytics(BaseModel):
     risk_reason: str
     health_score: int
     health_label: Literal["óptima", "buena", "en riesgo", "crítica"]
+    cpi: Optional[float] = None
+    spi: Optional[float] = None
+    cost_variance: Optional[float] = None
+    cpi_status: Optional[str] = None
 
 
 # Resolve forward references for ProjectTask.subtasks
@@ -1444,3 +1448,44 @@ class ProjectFilesSummary(BaseModel):
     by_source: dict[str, int] = Field(default_factory=dict)
     by_category: dict[str, int] = Field(default_factory=dict)
     files: List[ProjectFile] = Field(default_factory=list)
+
+
+# ── Earned Value Management (EVM) Schemas ──────────────────────────────────
+
+
+class ProjectEVMMetrics(BaseModel):
+    project_id: UUIDStr
+    calculated_at: str
+    bac: float = Field(..., description="Presupuesto total aprobado (Budget at Completion)")
+    ac: float = Field(..., description="Costo real gastado a la fecha (Actual Cost)")
+    ev: float = Field(..., description="Valor ganado del avance físico (Earned Value)")
+    pv: float = Field(..., description="Valor planificado según cronograma (Planned Value)")
+    progress_percentage: float = Field(..., description="Porcentaje de avance físico real")
+    financial_percentage: float = Field(..., description="Porcentaje de ejecución presupuestal")
+    cpi: float = Field(..., description="Índice de desempeño del costo (EV / AC)")
+    spi: float = Field(..., description="Índice de desempeño del cronograma (EV / PV)")
+    cv: float = Field(..., description="Variación del costo (EV - AC)")
+    sv: float = Field(..., description="Variación del cronograma (EV - PV)")
+    cr: float = Field(..., description="Razón crítica (CPI * SPI)")
+    eac: float = Field(..., description="Estimación al finalizar (BAC / CPI)")
+    vac: float = Field(..., description="Variación presupuestaria al finalizar (BAC - EAC)")
+    health_status: str = Field(..., description="Diagnóstico general de desempeño EVM")
+    health_color: str = Field(..., description="Código de color semántico (success, warning, destructive)")
+    recommendations: List[str] = Field(default_factory=list)
+
+
+class ProjectCurveSPoint(BaseModel):
+    date: str
+    label: str
+    pv: float
+    ev: Optional[float] = None
+    ac: Optional[float] = None
+    cpi: Optional[float] = None
+    spi: Optional[float] = None
+
+
+class ProjectCurveSResponse(BaseModel):
+    project_id: UUIDStr
+    summary: ProjectEVMMetrics
+    points: List[ProjectCurveSPoint] = Field(default_factory=list)
+

@@ -2316,6 +2316,10 @@ def get_project_analytics(
     else:
         health_label = "crítica"
 
+    from backend.services.project_evm_service import calculate_project_evm, generate_curve_s_data
+
+    evm_metrics = calculate_project_evm(db, project)
+
     return schemas.ProjectAnalytics(
         project_id=str(project.id),
         total_tasks=total_tasks,
@@ -2329,6 +2333,46 @@ def get_project_analytics(
         risk_reason=risk_reason,
         health_score=health_score,
         health_label=health_label,
+        cpi=evm_metrics["cpi"],
+        spi=evm_metrics["spi"],
+        cost_variance=evm_metrics["cv"],
+        cpi_status=evm_metrics["health_status"],
+    )
+
+
+@router.get("/{project_id}/evm", response_model=schemas.ProjectEVMMetrics)
+def get_project_evm(
+    project_id: str,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_project_access("read")),
+):
+    """Obtiene el balance completo de Gestión del Valor Ganado (EVM), CPI, SPI y salud físico-financiera."""
+    user_sede = get_user_sede_id(db, current_user.id)
+    project = _ensure_project(db, project_id, user_sede=user_sede)
+    from backend.services.project_evm_service import calculate_project_evm
+
+    evm_data = calculate_project_evm(db, project)
+    return schemas.ProjectEVMMetrics(**evm_data)
+
+
+@router.get("/{project_id}/evm/curve-s", response_model=schemas.ProjectCurveSResponse)
+def get_project_curve_s(
+    project_id: str,
+    points: int = Query(8, ge=4, le=24, description="Número de puntos en la serie temporal"),
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_project_access("read")),
+):
+    """Genera las series temporales acumuladas de PV, EV y AC para graficar la Curva S Físico-Financiera."""
+    user_sede = get_user_sede_id(db, current_user.id)
+    project = _ensure_project(db, project_id, user_sede=user_sede)
+    from backend.services.project_evm_service import calculate_project_evm, generate_curve_s_data
+
+    evm_data = calculate_project_evm(db, project)
+    curve_points = generate_curve_s_data(db, project, points_count=points)
+    return schemas.ProjectCurveSResponse(
+        project_id=str(project.id),
+        summary=schemas.ProjectEVMMetrics(**evm_data),
+        points=[schemas.ProjectCurveSPoint(**p) for p in curve_points],
     )
 
 

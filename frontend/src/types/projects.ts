@@ -336,6 +336,10 @@ export interface ProjectAnalytics {
   risk_reason: string;
   health_score: number;
   health_label: 'óptima' | 'buena' | 'en riesgo' | 'crítica';
+  cpi?: number | null;
+  spi?: number | null;
+  cost_variance?: number | null;
+  cpi_status?: string | null;
 }
 
 // ── Critical Path Method (CPM) (Super-PRO Fase 4) ───────────────────────────
@@ -828,4 +832,42 @@ export interface ProjectFilesSummary {
   by_source: Record<string, number>;
   by_category: Record<string, number>;
   files: ProjectFileRecord[];
+}
+
+// ── Earned Value Management (EVM / PMI) ──────────────────────────────────
+export interface ProjectEVMMetrics {
+  project_id: string;
+  calculated_at: string;
+  bac: number;
+  ac: number;
+  ev: number;
+  pv: number;
+  progress_percentage: number;
+  financial_percentage: number;
+  cpi: number;
+  spi: number;
+  cv: number;
+  sv: number;
+  cr: number;
+  eac: number;
+  vac: number;
+  health_status: string;
+  health_color: 'success' | 'warning' | 'destructive';
+  recommendations: string[];
+}
+
+export interface ProjectCurveSPoint {
+  date: string;
+  label: string;
+  pv: number;
+  ev: number | null;
+  ac: number | null;
+  cpi: number | null;
+  spi: number | null;
+}
+
+export interface ProjectCurveSResponse {
+  project_id: string;
+  summary: ProjectEVMMetrics;
+  points: ProjectCurveSPoint[];
 }
