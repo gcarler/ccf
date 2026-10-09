@@ -9,8 +9,10 @@ import {
     Activity,
     AlertTriangle,
     BarChart3,
+    BookOpen,
     CheckCircle2,
     DollarSign,
+    FileSpreadsheet,
     Grid,
     HelpCircle,
     Info,
@@ -22,6 +24,8 @@ import clsx from 'clsx';
 import { toast } from 'sonner';
 import { ProjectQuadrantsMatrix } from './ProjectQuadrantsMatrix';
 import { ProjectWBSTreeView } from './ProjectWBSTreeView';
+import { ProjectAnyDocDrawer } from './ProjectAnyDocDrawer';
+import { ProjectPMIKnowledgeDrawer } from './ProjectPMIKnowledgeDrawer';
 
 interface ProjectEVMDrawerProps {
     projectId: string;
@@ -38,6 +42,8 @@ export function ProjectEVMDrawer({
 }: ProjectEVMDrawerProps) {
     const { token } = useAuth();
     const [activeTab, setActiveTab] = useState<'balance' | 'quadrants' | 'wbs'>('balance');
+    const [anyDocOpen, setAnyDocOpen] = useState(false);
+    const [pmiOpen, setPMIOpen] = useState(false);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [evmData, setEvmData] = useState<ProjectEVMMetrics | null>(null);
@@ -166,47 +172,70 @@ export function ProjectEVMDrawer({
             width="w-full sm:max-w-2xl md:max-w-3xl"
         >
             <div className="p-4 sm:p-6 space-y-6">
-                {/* Selector de Pestañas Superiores */}
-                <div className="flex rounded-lg p-1 border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] text-xs font-semibold">
-                    <button
-                        type="button"
-                        onClick={() => setActiveTab('balance')}
-                        className={clsx(
-                            "flex-1 py-1.5 px-3 rounded-md transition-all flex items-center justify-center gap-1.5",
-                            activeTab === 'balance'
-                                ? "bg-[hsl(var(--surface-1))] text-[hsl(var(--foreground))] shadow-xs"
-                                : "text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))]"
-                        )}
-                    >
-                        <BarChart3 size={14} />
-                        <span>Curva S y Balance</span>
-                    </button>
-                    <button
-                        type="button"
-                        onClick={() => setActiveTab('quadrants')}
-                        className={clsx(
-                            "flex-1 py-1.5 px-3 rounded-md transition-all flex items-center justify-center gap-1.5",
-                            activeTab === 'quadrants'
-                                ? "bg-[hsl(var(--surface-1))] text-[hsl(var(--foreground))] shadow-xs"
-                                : "text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))]"
-                        )}
-                    >
-                        <Grid size={14} />
-                        <span>Matriz 4 Cuadrantes</span>
-                    </button>
-                    <button
-                        type="button"
-                        onClick={() => setActiveTab('wbs')}
-                        className={clsx(
-                            "flex-1 py-1.5 px-3 rounded-md transition-all flex items-center justify-center gap-1.5",
-                            activeTab === 'wbs'
-                                ? "bg-[hsl(var(--surface-1))] text-[hsl(var(--foreground))] shadow-xs"
-                                : "text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))]"
-                        )}
-                    >
-                        <ListTree size={14} />
-                        <span>Organigrama WBS</span>
-                    </button>
+                {/* Selector de Pestañas Superiores y Acciones Rápidas */}
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2">
+                    <div className="flex rounded-lg p-1 border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] text-xs font-semibold flex-1">
+                        <button
+                            type="button"
+                            onClick={() => setActiveTab('balance')}
+                            className={clsx(
+                                "flex-1 py-1.5 px-3 rounded-md transition-all flex items-center justify-center gap-1.5",
+                                activeTab === 'balance'
+                                    ? "bg-[hsl(var(--surface-1))] text-[hsl(var(--foreground))] shadow-xs"
+                                    : "text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))]"
+                            )}
+                        >
+                            <BarChart3 size={14} />
+                            <span>Curva S</span>
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setActiveTab('quadrants')}
+                            className={clsx(
+                                "flex-1 py-1.5 px-3 rounded-md transition-all flex items-center justify-center gap-1.5",
+                                activeTab === 'quadrants'
+                                    ? "bg-[hsl(var(--surface-1))] text-[hsl(var(--foreground))] shadow-xs"
+                                    : "text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))]"
+                            )}
+                        >
+                            <Grid size={14} />
+                            <span>4 Cuadrantes</span>
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setActiveTab('wbs')}
+                            className={clsx(
+                                "flex-1 py-1.5 px-3 rounded-md transition-all flex items-center justify-center gap-1.5",
+                                activeTab === 'wbs'
+                                    ? "bg-[hsl(var(--surface-1))] text-[hsl(var(--foreground))] shadow-xs"
+                                    : "text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))]"
+                            )}
+                        >
+                            <ListTree size={14} />
+                            <span>EDT WBS</span>
+                        </button>
+                    </div>
+
+                    <div className="flex items-center gap-1.5 shrink-0">
+                        <button
+                            type="button"
+                            onClick={() => setAnyDocOpen(true)}
+                            title="Conversor Universal AnyDoc"
+                            className="px-2.5 py-1.5 rounded-lg text-xs font-medium border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] hover:bg-[hsl(var(--surface-2))] text-[hsl(var(--foreground))] transition-colors flex items-center gap-1.5"
+                        >
+                            <FileSpreadsheet size={13} className="text-[hsl(var(--primary))]" />
+                            <span>AnyDoc</span>
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setPMIOpen(true)}
+                            title="Biblioteca Metodológica PMI"
+                            className="px-2.5 py-1.5 rounded-lg text-xs font-medium border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] hover:bg-[hsl(var(--surface-2))] text-[hsl(var(--foreground))] transition-colors flex items-center gap-1.5"
+                        >
+                            <BookOpen size={13} className="text-amber-500" />
+                            <span>Doctrina PMI</span>
+                        </button>
+                    </div>
                 </div>
 
                 {/* Vista 2: Matriz de 4 Cuadrantes y Pronósticos */}
@@ -672,6 +701,18 @@ export function ProjectEVMDrawer({
                 )}
                     </div>
                 )}
+
+                {/* Sub-Drawers Laterales (Fase 5: AnyDoc y Doctrina PMI) */}
+                <ProjectAnyDocDrawer
+                    projectId={projectId}
+                    projectTitle={projectTitle}
+                    isOpen={anyDocOpen}
+                    onClose={() => setAnyDocOpen(false)}
+                />
+                <ProjectPMIKnowledgeDrawer
+                    isOpen={pmiOpen}
+                    onClose={() => setPMIOpen(false)}
+                />
             </div>
         </RightPanel>
     );

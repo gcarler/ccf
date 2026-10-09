@@ -4,13 +4,17 @@ Modelo, indexador automático y búsqueda full-text para que los agentes
 tengan acceso a información real de la plataforma.
 """
 
+import logging
 import uuid as _uuid
 from datetime import datetime, timezone
+from typing import Any, Optional
 
 from sqlalchemy import String, cast, func, inspect
 from sqlalchemy.orm import Session
 
 from backend.models_knowledge_base import AgentKnowledgeBase
+
+logger = logging.getLogger(__name__)
 
 # ──────────────────────────────────────────────
 # KNOWLEDGE INDEXER
@@ -40,6 +44,7 @@ class KnowledgeIndexer:
             "courses": self._index_courses(indexed_by_agent_id),
             "strategies": self._index_evangelism(indexed_by_agent_id),
             "projects": self._index_projects(indexed_by_agent_id),
+            "pmi_doctrine": self._index_pmi_doctrine(indexed_by_agent_id),
             "personas_stats": self._index_persona_stats(indexed_by_agent_id),
             "system_vars": self._index_system_vars(indexed_by_agent_id),
         }
@@ -109,7 +114,7 @@ class KnowledgeIndexer:
         return count
 
     def _index_projects(self, agent_id: _uuid.UUID | None) -> int:
-        """Indexa proyectos activos."""
+        """Indexa proyectos activos enriquecidos con métricas EVM y cuadrantes de salud."""
         from backend import models
 
         projects = (
@@ -121,19 +126,89 @@ class KnowledgeIndexer:
         )
         count = 0
         for p in projects:
+            evm_section = ""
+            summary_text = (p.description or "")[:200] if p.description else None
+            relevance = 0.6 if p.status == "planning" else 0.75
+
+            try:
+                from backend.services.project_evm_service import (
+                    calculate_cpi_spi_quadrant,
+                    calculate_project_evm,
+                )
+
+                evm = calculate_project_evm(self.db, p.id)
+                quad = calculate_cpi_spi_quadrant(evm.cpi, evm.spi)
+
+                evm_section = (
+                    f"\n--- Salud EVM (Earned Value Management) ---\n"
+                    f"Presupuesto BAC: ${evm.bac:,.2f} | Planificado PV: ${evm.pv:,.2f} | Ganado EV: ${evm.ev:,.2f} | Costo Real AC: ${evm.ac:,.2f}\n"
+                    f"Variación Costo CV: ${evm.cv:,.2f} | Variación Cronograma SV: ${evm.sv:,.2f}\n"
+                    f"Índice Desempeño Costo (CPI): {evm.cpi:.2f} ({'En presupuesto' if evm.cpi >= 1.0 else 'Sobre costo'})\n"
+                    f"Índice Desempeño Cronograma (SPI): {evm.spi:.2f} ({'A tiempo/adelantado' if evm.spi >= 1.0 else 'Con retraso'})\n"
+                    f"Avance Físico Real: {evm.progreso_real_pct:.1f}% | Avance Planificado: {evm.progreso_planificado_pct:.1f}%\n"
+                    f"Cuadrante PMI: {quad.name} ({quad.status.value}) — {quad.description}"
+                )
+                summary_text = (
+                    f"{p.title} [{p.status.upper()}] — CPI: {evm.cpi:.2f}, SPI: {evm.spi:.2f} ({quad.name}). "
+                    f"Avance: {evm.progreso_real_pct:.1f}%."
+                )
+                if quad.status.value in ("critical", "risk"):
+                    relevance = 0.90
+            except Exception as e:
+                logger.debug("No se pudo calcular EVM para indexar proyecto %s: %s", p.id, e)
+
+            content_text = (
+                f"{p.title}: {p.description or 'Sin descripción'}\n"
+                f"Estado: {p.status}\n"
+                f"Owner ID: {p.owner_id}\n"
+                f"Sede ID: {p.sede_id}"
+                f"{evm_section}"
+            )
+
             self._upsert_kb(
                 title=f"Proyecto: {p.title}",
-                content=(f"{p.title}: {p.description or ''}\nEstado: {p.status}\nOwner: {p.owner_id}"),
-                summary=(p.description or "")[:200] if p.description else None,
+                content=content_text,
+                summary=summary_text,
                 category="projects",
                 source_module="projects",
                 source_id=str(p.id),
                 source_url=f"/plataforma/projects/{p.id}",
+                relevance_score=relevance,
                 indexed_by=agent_id,
             )
             count += 1
         self.db.commit()
         return count
+
+    def _index_pmi_doctrine(
+        self,
+        agent_id: _uuid.UUID | None = None,
+        base_dir: Optional[Any] = None,
+    ) -> int:
+        """Indexa compendio canónico de 7 volúmenes de doctrina PMI CCF en la Knowledge Base."""
+        try:
+            from backend.services.wiki_pmi_service import get_canonical_pmi_volumes
+
+            volumes = get_canonical_pmi_volumes(base_dir=base_dir)
+            count = 0
+            for vol in volumes:
+                self._upsert_kb(
+                    title=f"Doctrina PMI: {vol['title']}",
+                    content=vol["content"],
+                    summary=vol["summary"],
+                    category="pmi_doctrine",
+                    source_module="projects",
+                    source_id=vol["page_key"],
+                    source_url=f"/plataforma/wiki/{vol['page_key']}",
+                    relevance_score=1.0,
+                    indexed_by=agent_id,
+                )
+                count += 1
+            self.db.commit()
+            return count
+        except Exception as e:
+            logger.error("Error indexando doctrina PMI en Knowledge Base: %s", e)
+            return 0
 
     def _index_persona_stats(self, agent_id: _uuid.UUID | None) -> int:
         """Indexa estadísticas de personas (sin datos personales)."""

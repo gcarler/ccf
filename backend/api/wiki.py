@@ -271,3 +271,61 @@ def delete_wiki_page(
         raise HTTPException(status_code=404, detail="wiki page not found")
     crud_wiki.soft_delete_wiki_page(db, row)
     return None
+
+
+@router.post("/seed-pmi-doctrine", response_model=List[WikiPageRead])
+def seed_pmi_doctrine_pages(
+    force_update: bool = Query(False, description="Sobrescribir páginas si ya existen"),
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_active_user),
+    _: models.User = Depends(require_module_access("wiki", "edit")),
+):
+    """Siembra o actualiza los 7 volúmenes canónicos del compendio PMI en wiki_pages."""
+    from backend.services.wiki_pmi_service import seed_pmi_wiki_doctrine
+
+    sede_id = _resolve_sede(db, current_user)
+    persona_id = _resolve_persona(db, current_user)
+    pages = seed_pmi_wiki_doctrine(
+        db=db,
+        sede_id=sede_id,
+        author_id=persona_id,
+        force_update=force_update,
+    )
+    return pages
+
+
+@router.get("/pmi-doctrine", response_model=List[WikiPageRead])
+def list_pmi_doctrine_pages(
+    auto_seed: bool = Query(True, description="Sembrar automáticamente si no existen en la sede"),
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_active_user),
+    _: models.User = Depends(require_module_access("wiki", "read")),
+):
+    """Retorna las 7 páginas canónicas de doctrina PMI disponibles para la sede."""
+    from backend.services.wiki_pmi_service import CANONICAL_VOLUMES_METADATA, seed_pmi_wiki_doctrine
+
+    sede_id = _resolve_sede(db, current_user)
+    keys = [meta["page_key"] for meta in CANONICAL_VOLUMES_METADATA]
+
+    existing = (
+        db.query(models.WikiPage)
+        .filter(
+            models.WikiPage.page_key.in_(keys),
+            models.WikiPage.sede_id == sede_id,
+            models.WikiPage.deleted_at.is_(None),
+        )
+        .order_by(models.WikiPage.page_key.asc())
+        .all()
+    )
+
+    if len(existing) < len(keys) and auto_seed:
+        persona_id = _resolve_persona(db, current_user)
+        existing = seed_pmi_wiki_doctrine(
+            db=db,
+            sede_id=sede_id,
+            author_id=persona_id,
+            force_update=False,
+        )
+
+    return existing
+

@@ -1100,4 +1100,57 @@ export interface ProjectWBSTreeResponse {
   root: WBSNode;
 }
 
+// ── Fase 5: AnyDoc Universal & Doctrina PMI ────────────────────────────────
+
+export interface DocumentConversionResponse {
+  filename: string;
+  format: string;
+  markdown: string;
+  char_count: number;
+  word_count: number;
+  processing_time_ms: number;
+  engine: string;
+  success: boolean;
+  error?: string | null;
+}
+
+export interface ConvertAndPublishWikiRequest {
+  filename: string;
+  content_base64?: string;
+  format_hint?: string;
+  target_type: 'project_wiki' | 'platform_wiki';
+  title?: string;
+  category?: string;
+  tags?: string[];
+}
+
+export interface ConvertAndPublishWikiResponse {
+  conversion: DocumentConversionResponse;
+  published_to: string;
+  document_id?: string | null;
+  page_key?: string | null;
+  title: string;
+  message: string;
+}
+
+export interface PMIKnowledgeVolume {
+  vol: number;
+  page_key: string;
+  file_name: string;
+  title: string;
+  summary: string;
+  tags: string[];
+  char_count: number;
+  word_count: number;
+  content?: string | null;
+}
+
+export interface PMIDoctrineIndexResponse {
+  total_volumes: number;
+  volumes: PMIKnowledgeVolume[];
+  kb_indexed_count: number;
+  wiki_seeded_count: number;
+}
+
+
 

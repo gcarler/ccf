@@ -1777,5 +1777,66 @@ class ProjectWBSTreeResponse(BaseModel):
     model_config = orm_config
 
 
+class DocumentConversionResponse(BaseModel):
+    """Respuesta del motor AnyDoc tras procesar un documento."""
+    filename: str
+    format: str
+    markdown: str
+    char_count: int
+    word_count: int
+    processing_time_ms: float
+    engine: str = "anydoc_v0.2.4"
+    success: bool = True
+    error: Optional[str] = None
+    model_config = orm_config
+
+
+class ConvertAndPublishWikiRequest(BaseModel):
+    """Petición para convertir un documento y publicarlo como Wiki del Proyecto o Wiki Ministerial."""
+    filename: str
+    content_base64: Optional[str] = None
+    format_hint: Optional[str] = None
+    target_type: Literal["project_wiki", "platform_wiki"] = "project_wiki"
+    title: Optional[str] = None
+    category: Optional[str] = "proyectos"
+    tags: List[str] = Field(default_factory=list)
+    model_config = orm_config
+
+
+class ConvertAndPublishWikiResponse(BaseModel):
+    """Respuesta tras convertir y publicar documento en Wiki."""
+    conversion: DocumentConversionResponse
+    published_to: str
+    document_id: Optional[str] = None
+    page_key: Optional[str] = None
+    title: str
+    message: str
+    model_config = orm_config
+
+
+class PMIKnowledgeVolumeSchema(BaseModel):
+    """Metadatos y contenido de un volumen de doctrina PMI."""
+    vol: int
+    page_key: str
+    file_name: str
+    title: str
+    summary: str
+    tags: List[str] = Field(default_factory=list)
+    char_count: int = 0
+    word_count: int = 0
+    content: Optional[str] = None
+    model_config = orm_config
+
+
+class PMIDoctrineIndexResponse(BaseModel):
+    """Respuesta del compendio canónico de doctrina PMI."""
+    total_volumes: int
+    volumes: List[PMIKnowledgeVolumeSchema]
+    kb_indexed_count: int = 0
+    wiki_seeded_count: int = 0
+    model_config = orm_config
+
+
+
 
 

@@ -1092,6 +1092,129 @@ def create_project(
     return db_project
 
 
+# ── AnyDoc Universal Conversion & PMI Knowledge Base ────────────────────────
+
+
+@router.post("/convert-document", response_model=schemas.DocumentConversionResponse)
+async def convert_document_endpoint(
+    request: Request,
+    file: Optional[UploadFile] = File(None),
+    format_hint: Optional[str] = Form(None),
+    ocr: str = Form("reject"),
+    current_user: models.User = Depends(require_module_access("projects", "read")),
+):
+    """Convierte cualquier archivo de oficina o reporte en Markdown limpio utilizando el motor AnyDoc."""
+    import base64
+
+    from backend.services.anydoc_service import AnyDocConversionError, convert_bytes_to_markdown
+
+    filename = "document"
+    data = b""
+
+    content_type = request.headers.get("content-type", "")
+    if "application/json" in content_type:
+        try:
+            body = await request.json()
+            filename = body.get("filename", "document")
+            b64_content = body.get("content_base64", "")
+            if b64_content:
+                data = base64.b64decode(b64_content)
+            format_hint = body.get("format_hint") or format_hint
+            ocr = body.get("ocr") or ocr
+        except Exception as e:
+            raise HTTPException(status_code=400, detail=f"Payload JSON inválido: {e}")
+    elif file and file.filename:
+        filename = file.filename
+        data = await file.read()
+
+    if not data:
+        raise HTTPException(
+            status_code=400,
+            detail="Debe proporcionar un archivo (multipart) o un payload JSON con 'content_base64'",
+        )
+
+    try:
+        res = convert_bytes_to_markdown(data=data, filename=filename, format_hint=format_hint, ocr=ocr)
+        return schemas.DocumentConversionResponse(**res)
+    except AnyDocConversionError as e:
+        raise HTTPException(
+            status_code=422,
+            detail={"error": str(e), "code": e.code, "details": e.details},
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error inesperado convirtiendo documento con AnyDoc: {e}",
+        )
+
+
+@router.get("/pmi-doctrine", response_model=schemas.PMIDoctrineIndexResponse)
+def get_pmi_doctrine_compendium(
+    include_content: bool = Query(True, description="Incluir el texto completo Markdown de los 7 volúmenes"),
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("projects", "read")),
+):
+    """Retorna el compendio de los 7 volúmenes canónicos de doctrina PMI con estado de indexación en la plataforma."""
+    from backend.models_knowledge_base import AgentKnowledgeBase
+    from backend.services.wiki_pmi_service import get_canonical_pmi_volumes
+
+    user_sede = get_user_sede_id(db, current_user.id)
+    volumes_data = get_canonical_pmi_volumes()
+
+    keys = [v["page_key"] for v in volumes_data]
+    kb_count = (
+        db.query(AgentKnowledgeBase)
+        .filter(
+            AgentKnowledgeBase.category == "pmi_doctrine",
+            AgentKnowledgeBase.is_active,
+        )
+        .count()
+    )
+    wiki_count = (
+        db.query(models.WikiPage)
+        .filter(
+            models.WikiPage.page_key.in_(keys),
+            models.WikiPage.sede_id == user_sede,
+            models.WikiPage.deleted_at.is_(None),
+        )
+        .count()
+    )
+
+    volume_schemas = []
+    for v in volumes_data:
+        vol_dict = dict(v)
+        if not include_content:
+            vol_dict["content"] = None
+        volume_schemas.append(schemas.PMIKnowledgeVolumeSchema(**vol_dict))
+
+    return schemas.PMIDoctrineIndexResponse(
+        total_volumes=len(volume_schemas),
+        volumes=volume_schemas,
+        kb_indexed_count=kb_count,
+        wiki_seeded_count=wiki_count,
+    )
+
+
+@router.post("/pmi-doctrine/sync", response_model=schemas.PMIDoctrineIndexResponse)
+def sync_pmi_doctrine_compendium(
+    force_update: bool = Query(False, description="Sobrescribir páginas si ya existen"),
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("projects", "edit")),
+):
+    """Sincroniza los 7 volúmenes de doctrina PMI en wiki_pages de la sede y en AgentKnowledgeBase."""
+    from backend.services.knowledge_base import KnowledgeIndexer
+    from backend.services.wiki_pmi_service import seed_pmi_wiki_doctrine
+
+    user_sede = get_user_sede_id(db, current_user.id)
+    persona_id = get_user_persona_id(db, current_user.id)
+
+    seed_pmi_wiki_doctrine(db, sede_id=user_sede, author_id=persona_id, force_update=force_update)
+    indexer = KnowledgeIndexer(db)
+    indexer._index_pmi_doctrine(agent_id=None)
+
+    return get_pmi_doctrine_compendium(include_content=True, db=db, current_user=current_user)
+
+
 # ── Phases / Kanban Columns ─────────────────────────────
 
 
@@ -2781,6 +2904,141 @@ def update_project_wiki(
     db.commit()
     db.refresh(doc)
     return _normalize_dates(doc)
+
+
+@router.post("/{project_id}/documents/convert-and-publish", response_model=schemas.ConvertAndPublishWikiResponse)
+async def convert_and_publish_document(
+    project_id: str,
+    request: Request,
+    file: Optional[UploadFile] = File(None),
+    target_type: str = Form("project_wiki"),
+    title: Optional[str] = Form(None),
+    category: Optional[str] = Form("proyectos"),
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_project_access("edit")),
+):
+    """Convierte un archivo de reporte/especificación con AnyDoc y lo publica en la Wiki del Proyecto o en la Wiki Ministerial."""
+    import base64
+    from pathlib import Path
+
+    from backend.crud import wiki as crud_wiki
+    from backend.services.anydoc_service import AnyDocConversionError, convert_bytes_to_markdown
+
+    user_sede = get_user_sede_id(db, current_user.id)
+    _ensure_project(db, project_id, user_sede=user_sede)
+
+    filename = "document"
+    data = b""
+    format_hint = None
+    tags = ["anydoc", "documento"]
+
+    content_type = request.headers.get("content-type", "")
+    if "application/json" in content_type:
+        try:
+            body = await request.json()
+            filename = body.get("filename", "document")
+            b64_content = body.get("content_base64", "")
+            if b64_content:
+                data = base64.b64decode(b64_content)
+            format_hint = body.get("format_hint")
+            target_type = body.get("target_type", target_type)
+            title = body.get("title", title)
+            category = body.get("category", category)
+            tags = body.get("tags") or tags
+        except Exception as e:
+            raise HTTPException(status_code=400, detail=f"Payload JSON inválido: {e}")
+    elif file and file.filename:
+        filename = file.filename
+        data = await file.read()
+
+    if not data:
+        raise HTTPException(
+            status_code=400,
+            detail="Debe proporcionar un archivo (multipart) o un payload JSON con 'content_base64'",
+        )
+
+    try:
+        conv_res = convert_bytes_to_markdown(data=data, filename=filename, format_hint=format_hint)
+    except AnyDocConversionError as e:
+        raise HTTPException(
+            status_code=422,
+            detail={"error": str(e), "code": e.code, "details": e.details},
+        )
+
+    doc_title = title or Path(filename).stem.replace("-", " ").replace("_", " ").title()
+    markdown_content = conv_res["markdown"]
+    author_persona_id = get_user_persona_id(db, current_user.id)
+
+    doc_id = None
+    page_key = None
+
+    if target_type == "platform_wiki":
+        from backend.api.wiki import _normalize_page_key
+
+        clean_stem = Path(filename).stem.lower().replace("-", "_")
+        raw_key = f"wiki_proj_{project_id[:8]}_{clean_stem}"
+        page_key = _normalize_page_key(raw_key)
+
+        existing = crud_wiki.get_wiki_page(db, page_key, user_sede)
+        if existing:
+            wiki_page = crud_wiki.update_wiki_page(
+                db,
+                existing,
+                title=doc_title,
+                content=markdown_content,
+                category=category,
+                tags=tags,
+                author_id=author_persona_id,
+            )
+        else:
+            wiki_page = crud_wiki.create_wiki_page(
+                db,
+                page_key=page_key,
+                title=doc_title,
+                content=markdown_content,
+                sede_id=user_sede,
+                author_id=author_persona_id,
+            )
+        doc_id = str(wiki_page.id)
+        msg = f"Documento convertido con AnyDoc y publicado en Wiki Ministerial como '{page_key}'"
+    else:
+        # project_wiki
+        doc = crud.get_project_wiki(db, _to_uuid(project_id))
+        if not doc:
+            doc = models.ProjectDocument(
+                project_id=_to_uuid(project_id),
+                title=doc_title,
+                content=markdown_content,
+                author_id=author_persona_id,
+            )
+            db.add(doc)
+        else:
+            doc.title = doc_title
+            doc.content = markdown_content
+            doc.author_id = author_persona_id
+            doc.last_edited_at = datetime.now(timezone.utc)
+        db.commit()
+        db.refresh(doc)
+        doc_id = str(doc.id)
+        msg = f"Documento convertido con AnyDoc y publicado en la Wiki del Proyecto '{doc_title}'"
+
+    _log_project_activity(
+        db,
+        project_id,
+        current_user.id,
+        "document_converted_anydoc",
+        f"Archivo '{filename}' convertido con AnyDoc ({conv_res['format'].upper()}) y publicado a {target_type}.",
+    )
+
+    return schemas.ConvertAndPublishWikiResponse(
+        conversion=schemas.DocumentConversionResponse(**conv_res),
+        published_to=target_type,
+        document_id=doc_id,
+        page_key=page_key,
+        title=doc_title,
+        message=msg,
+    )
+
 
 
 @router.get("/{project_id}/whiteboard", response_model=Optional[schemas.ProjectWhiteboard])

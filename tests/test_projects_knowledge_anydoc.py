@@ -1,0 +1,417 @@
+"""Pruebas unitarias para la Fase 5: Integración del Banco de Conocimiento PMI y Motor AnyDoc.
+
+Cubre:
+1. Servicio de conversión documental AnyDoc (anydoc_service.py).
+2. Compendio canónico de 7 volúmenes de doctrina PMI (wiki_pmi_service.py).
+3. Indexador de doctrina PMI y enriquecimiento de proyectos con EVM en AgentKnowledgeBase (knowledge_base.py).
+4. Endpoints de conversión documental y compendio en API Projects (api/projects.py).
+5. Endpoints de doctrina canónica en API Wiki (api/wiki.py).
+"""
+
+from __future__ import annotations
+
+import base64
+import uuid
+from unittest.mock import MagicMock, patch
+
+import pytest
+from fastapi import HTTPException
+from fastapi.datastructures import Headers
+
+from backend import models, schemas
+from backend.services.anydoc_service import (
+    AnyDocConversionError,
+    convert_bytes_to_markdown,
+    detect_document_format,
+    is_anydoc_available,
+)
+from backend.services.knowledge_base import KnowledgeIndexer
+from backend.services.wiki_pmi_service import (
+    CANONICAL_VOLUMES_METADATA,
+    get_canonical_pmi_volumes,
+    load_volume_markdown_content,
+    seed_pmi_wiki_doctrine,
+)
+
+# ────────────────────────────────────────────────────────────
+# 1. PRUEBAS DEL SERVICIO ANYDOC
+# ────────────────────────────────────────────────────────────
+
+
+def test_anydoc_engine_availability():
+    """Verifica que el motor AnyDoc se encuentre disponible en el entorno."""
+    assert is_anydoc_available() is True
+
+
+def test_detect_document_format_variants():
+    """Verifica la detección de formatos mediante extensión, pista o alias."""
+    assert detect_document_format(filename="reporte.csv") == "csv"
+    assert detect_document_format(filename="analisis.xlsx") == "xlsx"
+    assert detect_document_format(filename="datos.xls") == "xlsx"
+    assert detect_document_format(filename="propuesta.docx") == "docx"
+    assert detect_document_format(filename="documento.docm") == "docx"
+    assert detect_document_format(filename="presentacion.pptx") == "pptx"
+    assert detect_document_format(filename="guia.pdf") == "pdf"
+    assert detect_document_format(filename="notas.md") == "md"
+    assert detect_document_format(filename="archivo.txt") == "txt"
+    assert detect_document_format(format_hint="csv") == "csv"
+    assert detect_document_format(format_hint=".docx") == "docx"
+    assert detect_document_format(filename="desconocido.xyz") == "unknown"
+
+
+def test_convert_csv_to_markdown_table():
+    """Valida la conversión de CSV a tablas GitHub-Flavored Markdown con AnyDoc."""
+    csv_bytes = b"Fase,Presupuesto,Responsable\nIniciacion,25000,Pastor General\nPlanificacion,45000,Director Proyectos\n"
+    res = convert_bytes_to_markdown(data=csv_bytes, filename="presupuesto.csv")
+
+    assert res["success"] is True
+    assert res["format"] == "csv"
+    assert res["filename"] == "presupuesto.csv"
+    assert res["engine"] == "anydoc_v0.2.4"
+    assert "| Fase | Presupuesto | Responsable |" in res["markdown"]
+    assert "| Iniciacion | 25000 | Pastor General |" in res["markdown"]
+    assert res["word_count"] > 0
+    assert res["char_count"] > 0
+    assert res["processing_time_ms"] >= 0
+
+
+def test_convert_markdown_and_plain_text():
+    """Valida el procesamiento directo de archivos Markdown y texto plano."""
+    md_content = b"# Plan de Implementacion PMI\n\n- Entregable 1: EDT Completa\n- Entregable 2: Curva S"
+    res = convert_bytes_to_markdown(data=md_content, filename="plan.md")
+
+    assert res["success"] is True
+    assert res["format"] == "md"
+    assert res["engine"] == "native_text"
+    assert "# Plan de Implementacion PMI" in res["markdown"]
+    assert res["char_count"] == len(md_content.decode("utf-8"))
+
+
+def test_convert_empty_bytes():
+    """Valida que bytes vacíos retornen resultado exitoso con markdown vacío."""
+    res = convert_bytes_to_markdown(data=b"", filename="vacio.docx")
+    assert res["success"] is True
+    assert res["markdown"] == ""
+    assert res["char_count"] == 0
+    assert res["word_count"] == 0
+
+
+def test_convert_unsupported_format_raises_error():
+    """Verifica que formatos binarios arbitrarios no soportados eleven AnyDocConversionError."""
+    fake_binary = b"\x00\x01\x02\x03\x04\x05"
+    with pytest.raises(AnyDocConversionError) as exc_info:
+        convert_bytes_to_markdown(data=fake_binary, filename="binario.desconocido", format_hint="xyz_unsupported")
+    assert exc_info.value.code in ("UNSUPPORTED_FORMAT", "CONVERT_ERROR", "MALFORMED_DOCUMENT")
+
+
+# ────────────────────────────────────────────────────────────
+# 2. PRUEBAS DEL COMPENDIO CANÓNICO PMI (7 VOLÚMENES)
+# ────────────────────────────────────────────────────────────
+
+
+def test_canonical_pmi_volumes_loading():
+    """Valida que los 7 volúmenes canónicos del compendio PMI se carguen con contenido íntegro."""
+    assert len(CANONICAL_VOLUMES_METADATA) == 7
+
+    volumes = get_canonical_pmi_volumes()
+    assert len(volumes) == 7
+
+    # Verificar mapeo de volúmenes 0 al 6
+    vol_indices = [v["vol"] for v in volumes]
+    assert vol_indices == [0, 1, 2, 3, 4, 5, 6]
+
+    # Verificar Volumen 0: Compendio Maestro
+    vol0 = volumes[0]
+    assert vol0["page_key"] == "wiki_pmi_00_indice_maestro"
+    assert "Compendio Maestro" in vol0["title"]
+    assert vol0["char_count"] > 1000
+    assert "Project Management Institute" in vol0["content"]
+
+    # Verificar Volumen 3: EDT / WBS
+    vol3 = volumes[3]
+    assert vol3["page_key"] == "wiki_pmi_03_edt_wbs"
+    assert "Regla del 100%" in vol3["summary"]
+    assert "wbs" in vol3["tags"] or "edt" in vol3["tags"]
+    assert vol3["char_count"] > 1000
+
+    # Verificar Volumen 4: EVM
+    vol4 = volumes[4]
+    assert vol4["page_key"] == "wiki_pmi_04_metricas_evm"
+    assert "BAC" in vol4["summary"]
+    assert "CPI" in vol4["summary"]
+    assert "SPI" in vol4["summary"]
+    assert vol4["char_count"] > 1000
+
+    # Verificar Volumen 5: Matriz 4 Cuadrantes
+    vol5 = volumes[5]
+    assert vol5["page_key"] == "wiki_pmi_05_matriz_cuadrantes"
+    assert "Regla 15%" in vol5["summary"] or "4 Cuadrantes" in vol5["summary"]
+
+
+def test_load_volume_markdown_content_fallback():
+    """Valida el texto de contingencia cuando un archivo no existe físicamente."""
+    content = load_volume_markdown_content("archivo_inexistente.md")
+    assert "Biblioteca Metodológica" in content
+
+
+def test_seed_pmi_wiki_doctrine():
+    """Valida la siembra de los 7 volúmenes en la tabla wiki_pages."""
+    db = MagicMock()
+    db.query().filter().first.return_value = None  # Simula páginas nuevas
+
+    sede_id = uuid.uuid4()
+    author_id = uuid.uuid4()
+
+    seeded = seed_pmi_wiki_doctrine(db, sede_id=sede_id, author_id=author_id, force_update=False)
+
+    assert len(seeded) == 7
+    assert db.add.call_count == 7
+    assert db.commit.call_count == 1
+
+    for page in seeded:
+        assert page.category == "proyectos_pmi"
+        assert page.sede_id == sede_id
+        assert page.author_id == author_id
+        assert page.version == 1
+        assert page.page_key.startswith("wiki_pmi_")
+
+
+# ────────────────────────────────────────────────────────────
+# 3. PRUEBAS DEL INDEXADOR DE KNOWLEDGE BASE (EVM & PMI)
+# ────────────────────────────────────────────────────────────
+
+
+def test_knowledge_indexer_pmi_doctrine():
+    """Valida la indexación de la doctrina PMI en AgentKnowledgeBase."""
+    db = MagicMock()
+    indexer = KnowledgeIndexer(db)
+
+    with patch.object(indexer, "_upsert_kb") as mock_upsert:
+        count = indexer._index_pmi_doctrine(agent_id=None)
+        assert count == 7
+        assert mock_upsert.call_count == 7
+        first_call = mock_upsert.call_args_list[0][1]
+        assert first_call["category"] == "pmi_doctrine"
+        assert first_call["source_module"] == "projects"
+        assert first_call["relevance_score"] == 1.0
+
+
+def test_knowledge_indexer_projects_evm_enrichment():
+    """Valida que los proyectos indexados en KB contengan métricas EVM y cuadrantes de salud."""
+    db = MagicMock()
+
+    proj_id = uuid.uuid4()
+    mock_project = MagicMock(spec=models.Project)
+    mock_project.id = proj_id
+    mock_project.title = "Catedral Sede Norte"
+    mock_project.description = "Construcción y adecuación integral"
+    mock_project.status = "active"
+    mock_project.owner_id = uuid.uuid4()
+    mock_project.sede_id = uuid.uuid4()
+
+    db.query().filter().all.return_value = [mock_project]
+
+    indexer = KnowledgeIndexer(db)
+
+    # Simular cálculo de EVM en el servicio
+    mock_evm = MagicMock()
+    mock_evm.bac = 100000.0
+    mock_evm.pv = 50000.0
+    mock_evm.ev = 55000.0
+    mock_evm.ac = 48000.0
+    mock_evm.cv = 7000.0
+    mock_evm.sv = 5000.0
+    mock_evm.cpi = 1.15
+    mock_evm.spi = 1.10
+    mock_evm.progreso_real_pct = 55.0
+    mock_evm.progreso_planificado_pct = 50.0
+
+    mock_quad = MagicMock()
+    mock_quad.name = "Zona Óptima"
+    mock_quad.status.value = "optimal"
+    mock_quad.description = "Bajo presupuesto y adelantado en cronograma."
+
+    with (
+        patch("backend.services.project_evm_service.calculate_project_evm", return_value=mock_evm),
+        patch("backend.services.project_evm_service.calculate_cpi_spi_quadrant", return_value=mock_quad),
+        patch.object(indexer, "_upsert_kb") as mock_upsert,
+    ):
+        count = indexer._index_projects(agent_id=None)
+        assert count == 1
+        assert mock_upsert.call_count == 1
+
+        call_kwargs = mock_upsert.call_args[1]
+        assert call_kwargs["title"] == "Proyecto: Catedral Sede Norte"
+        assert "Salud EVM" in call_kwargs["content"]
+        assert "1.15" in call_kwargs["content"]
+        assert "1.10" in call_kwargs["content"]
+        assert "Zona Óptima" in call_kwargs["content"]
+        assert "CPI: 1.15" in call_kwargs["summary"]
+        assert "Zona Óptima" in call_kwargs["summary"]
+
+
+def test_rebuild_all_includes_pmi_doctrine():
+    """Valida que KnowledgeIndexer.rebuild_all() incluya 'pmi_doctrine' en su diccionario de resultados."""
+    db = MagicMock()
+    indexer = KnowledgeIndexer(db)
+
+    with (
+        patch.object(indexer, "_index_courses", return_value=3),
+        patch.object(indexer, "_index_evangelism", return_value=2),
+        patch.object(indexer, "_index_projects", return_value=5),
+        patch.object(indexer, "_index_pmi_doctrine", return_value=7),
+        patch.object(indexer, "_index_persona_stats", return_value=1),
+        patch.object(indexer, "_index_system_vars", return_value=4),
+    ):
+        stats = indexer.rebuild_all()
+        assert stats["pmi_doctrine"] == 7
+        assert stats["projects"] == 5
+
+
+# ────────────────────────────────────────────────────────────
+# 4. PRUEBAS DE ENDPOINTS DE LA API (PROJECTS & WIKI)
+# ────────────────────────────────────────────────────────────
+
+
+@pytest.mark.anyio
+async def test_api_convert_document_json_payload():
+    """Valida el endpoint POST /convert-document con payload JSON base64."""
+    from backend.api.projects import convert_document_endpoint
+
+    csv_data = b"Codigo,Tarea,Avance\nT-1,Diseno,100\nT-2,Desarrollo,50\n"
+    b64 = base64.b64encode(csv_data).decode("utf-8")
+
+    request = MagicMock()
+    request.headers = Headers({"content-type": "application/json"})
+
+    async def mock_json():
+        return {
+            "filename": "tareas.csv",
+            "content_base64": b64,
+            "format_hint": "csv",
+        }
+
+    request.json = mock_json
+
+    user = MagicMock(spec=models.User)
+
+    res = await convert_document_endpoint(
+        request=request,
+        file=None,
+        format_hint=None,
+        ocr="reject",
+        current_user=user,
+    )
+
+    assert isinstance(res, schemas.DocumentConversionResponse)
+    assert res.success is True
+    assert res.format == "csv"
+    assert "| Codigo | Tarea | Avance |" in res.markdown
+
+
+@pytest.mark.anyio
+async def test_api_convert_document_empty_raises_400():
+    """Valida que POST /convert-document eleve 400 si no se envían datos."""
+    from backend.api.projects import convert_document_endpoint
+
+    request = MagicMock()
+    request.headers = Headers({"content-type": "application/json"})
+
+    async def mock_json():
+        return {}
+
+    request.json = mock_json
+
+    user = MagicMock(spec=models.User)
+
+    with pytest.raises(HTTPException) as exc_info:
+        await convert_document_endpoint(
+            request=request,
+            file=None,
+            format_hint=None,
+            ocr="reject",
+            current_user=user,
+        )
+    assert exc_info.value.status_code == 400
+
+
+def test_api_pmi_doctrine_compendium():
+    """Valida el endpoint GET /pmi-doctrine."""
+    from backend.api.projects import get_pmi_doctrine_compendium
+
+    db = MagicMock()
+    db.query().filter().count.return_value = 7
+    user = MagicMock(spec=models.User)
+
+    with patch("backend.api.projects.get_user_sede_id", return_value=uuid.uuid4()):
+        res = get_pmi_doctrine_compendium(
+            include_content=True,
+            db=db,
+            current_user=user,
+        )
+
+        assert isinstance(res, schemas.PMIDoctrineIndexResponse)
+        assert res.total_volumes == 7
+        assert len(res.volumes) == 7
+        assert res.volumes[0].vol == 0
+        assert res.volumes[0].content is not None
+
+
+@pytest.mark.anyio
+async def test_api_convert_and_publish_project_wiki():
+    """Valida el endpoint POST /{project_id}/documents/convert-and-publish a la Wiki del Proyecto."""
+    from backend.api.projects import convert_and_publish_document
+
+    project_uuid = uuid.uuid4()
+    project_id_str = str(project_uuid)
+    sede_uuid = uuid.uuid4()
+
+    db = MagicMock()
+    db_project = MagicMock(spec=models.Project)
+    db_project.id = project_uuid
+    db_project.title = "Construcción Templo"
+    db_project.sede_id = sede_uuid
+
+    request = MagicMock()
+    request.headers = Headers({"content-type": "application/json"})
+
+    csv_data = b"Entregable,Responsable\nEDT,Ingeniero\nCurva S,Analista\n"
+    b64 = base64.b64encode(csv_data).decode("utf-8")
+
+    async def mock_json():
+        return {
+            "filename": "entregables.csv",
+            "content_base64": b64,
+            "target_type": "project_wiki",
+            "title": "Entregables del Proyecto",
+        }
+
+    request.json = mock_json
+    user = MagicMock(spec=models.User)
+    user.id = uuid.uuid4()
+
+    with (
+        patch("backend.api.projects.get_user_sede_id", return_value=sede_uuid),
+        patch("backend.api.projects._ensure_project", return_value=db_project),
+        patch("backend.api.projects.get_user_persona_id", return_value=uuid.uuid4()),
+        patch("backend.crud.get_project_wiki", return_value=None),
+        patch("backend.api.projects._log_project_activity"),
+    ):
+        res = await convert_and_publish_document(
+            project_id=project_id_str,
+            request=request,
+            file=None,
+            target_type="project_wiki",
+            title=None,
+            category="proyectos",
+            db=db,
+            current_user=user,
+        )
+
+        assert isinstance(res, schemas.ConvertAndPublishWikiResponse)
+        assert res.published_to == "project_wiki"
+        assert res.title == "Entregables del Proyecto"
+        assert res.conversion.format == "csv"
+        assert "| Entregable | Responsable |" in res.conversion.markdown
+        assert db.add.called
+        assert db.commit.called
