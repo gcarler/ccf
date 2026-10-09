@@ -450,7 +450,7 @@ export function ProjectAutomationsDrawer({
                             {rule.name}
                           </h4>
                           {rule.description && (
-                            <p className="text-3xs text-[hsl(var(--text-secondary))] mt-0.5 line-clamp-1">
+                            <p className="text-2xs text-[hsl(var(--text-secondary))] mt-0.5 line-clamp-1">
                               {rule.description}
                             </p>
                           )}
@@ -461,7 +461,7 @@ export function ProjectAutomationsDrawer({
                         <button
                           onClick={() => handleToggleActive(rule)}
                           className={clsx(
-                            "px-2 py-0.5 rounded text-3xs font-bold uppercase transition-all flex items-center gap-1 border",
+                            "px-2 py-0.5 rounded text-2xs font-bold uppercase transition-all flex items-center gap-1 border",
                             rule.is_active
                               ? "bg-[hsl(var(--success))]/10 border-[hsl(var(--success))]/30 text-[hsl(var(--success))]"
                               : "bg-[hsl(var(--surface-2))] border-[hsl(var(--border))] text-[hsl(var(--text-secondary))]"
@@ -490,7 +490,7 @@ export function ProjectAutomationsDrawer({
                           <TriggerIcon size={12} />
                         </div>
                         <div className="min-w-0">
-                          <span className="block text-3xs font-bold uppercase text-[hsl(var(--text-secondary))]">Cuando</span>
+                          <span className="block text-2xs font-bold uppercase text-[hsl(var(--text-secondary))]">Cuando</span>
                           <span className="font-semibold text-[hsl(var(--text-primary))] truncate block">
                             {triggerObj ? triggerObj.label : rule.trigger_event}
                           </span>
@@ -502,7 +502,7 @@ export function ProjectAutomationsDrawer({
                           <Filter size={12} />
                         </div>
                         <div className="min-w-0">
-                          <span className="block text-3xs font-bold uppercase text-[hsl(var(--text-secondary))]">Si cumple</span>
+                          <span className="block text-2xs font-bold uppercase text-[hsl(var(--text-secondary))]">Si cumple</span>
                           <span className="font-semibold text-[hsl(var(--text-primary))] truncate block">
                             {Object.keys(rule.condition_data || {}).length > 0
                               ? Object.entries(rule.condition_data).map(([k, v]) => `${k}:${String(v)}`).join(", ")
@@ -516,7 +516,7 @@ export function ProjectAutomationsDrawer({
                           <ActionIcon size={12} />
                         </div>
                         <div className="min-w-0">
-                          <span className="block text-3xs font-bold uppercase text-[hsl(var(--text-secondary))]">Ejecutar</span>
+                          <span className="block text-2xs font-bold uppercase text-[hsl(var(--text-secondary))]">Ejecutar</span>
                           <span className="font-semibold text-[hsl(var(--text-primary))] truncate block">
                             {actionObj ? actionObj.label : rule.action_type}
                           </span>
@@ -525,7 +525,7 @@ export function ProjectAutomationsDrawer({
                     </div>
 
                     {/* Metadata & Ejecuciones */}
-                    <div className="flex items-center justify-between text-3xs text-[hsl(var(--text-secondary))] pt-1 border-t border-[hsl(var(--border))]/60">
+                    <div className="flex items-center justify-between text-2xs text-[hsl(var(--text-secondary))] pt-1 border-t border-[hsl(var(--border))]/60">
                       <div className="flex items-center gap-3">
                         <span className="flex items-center gap-1">
                           <Activity size={10} />
@@ -583,7 +583,7 @@ export function ProjectAutomationsDrawer({
             {/* Paso 1: Disparador */}
             <div className="p-3 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] space-y-2">
               <div className="flex items-center gap-2">
-                <span className="size-5 rounded-full bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] text-3xs font-bold flex items-center justify-center">
+                <span className="size-5 rounded-full bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] text-2xs font-bold flex items-center justify-center">
                   1
                 </span>
                 <h4 className="text-xs font-bold text-[hsl(var(--text-primary))]">
@@ -621,7 +621,7 @@ export function ProjectAutomationsDrawer({
                           <span>{opt.label}</span>
                           {isSelected && <Check size={12} className="text-[hsl(var(--primary))]" />}
                         </div>
-                        <p className="text-3xs text-[hsl(var(--text-secondary))] mt-0.5 line-clamp-2">
+                        <p className="text-2xs text-[hsl(var(--text-secondary))] mt-0.5 line-clamp-2">
                           {opt.description}
                         </p>
                       </div>
@@ -634,7 +634,7 @@ export function ProjectAutomationsDrawer({
             {/* Paso 2: Condición */}
             <div className="p-3 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] space-y-2">
               <div className="flex items-center gap-2">
-                <span className="size-5 rounded-full bg-[hsl(var(--warning-muted))] text-[hsl(var(--warning-text))] text-3xs font-bold flex items-center justify-center">
+                <span className="size-5 rounded-full bg-[hsl(var(--warning-muted))] text-[hsl(var(--warning-text))] text-2xs font-bold flex items-center justify-center">
                   2
                 </span>
                 <h4 className="text-xs font-bold text-[hsl(var(--text-primary))]">
@@ -644,7 +644,7 @@ export function ProjectAutomationsDrawer({
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-2">
                 <div className="space-y-1">
-                  <label htmlFor="automation-condition-priority" className="text-3xs font-bold text-[hsl(var(--text-secondary))] uppercase">Prioridad de la tarea</label>
+                  <label htmlFor="automation-condition-priority" className="text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase">Prioridad de la tarea</label>
                   <select
                     id="automation-condition-priority"
                     value={conditionPriority}
@@ -660,7 +660,7 @@ export function ProjectAutomationsDrawer({
                 </div>
 
                 <div className="space-y-1">
-                  <label htmlFor="automation-condition-status" className="text-3xs font-bold text-[hsl(var(--text-secondary))] uppercase">Estado de la tarea</label>
+                  <label htmlFor="automation-condition-status" className="text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase">Estado de la tarea</label>
                   <select
                     id="automation-condition-status"
                     value={conditionStatus}
@@ -680,7 +680,7 @@ export function ProjectAutomationsDrawer({
             {/* Paso 3: Acción */}
             <div className="p-3 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] space-y-2">
               <div className="flex items-center gap-2">
-                <span className="size-5 rounded-full bg-[hsl(var(--success))] text-[hsl(var(--primary-foreground))] text-3xs font-bold flex items-center justify-center">
+                <span className="size-5 rounded-full bg-[hsl(var(--success))] text-[hsl(var(--primary-foreground))] text-2xs font-bold flex items-center justify-center">
                   3
                 </span>
                 <h4 className="text-xs font-bold text-[hsl(var(--text-primary))]">
@@ -718,7 +718,7 @@ export function ProjectAutomationsDrawer({
                           <span>{act.label}</span>
                           {isSelected && <Check size={12} className="text-[hsl(var(--success))]" />}
                         </div>
-                        <p className="text-3xs text-[hsl(var(--text-secondary))] mt-0.5 line-clamp-2">
+                        <p className="text-2xs text-[hsl(var(--text-secondary))] mt-0.5 line-clamp-2">
                           {act.description}
                         </p>
                       </div>
@@ -731,7 +731,7 @@ export function ProjectAutomationsDrawer({
               {selectedAction === "create_followup_task" && (
                 <div className="pt-2 border-t border-[hsl(var(--border))] mt-2 space-y-2">
                   <div className="space-y-1">
-                    <label htmlFor="automation-followup-title" className="text-3xs font-bold uppercase text-[hsl(var(--text-secondary))]">Título de la nueva tarea</label>
+                    <label htmlFor="automation-followup-title" className="text-2xs font-bold uppercase text-[hsl(var(--text-secondary))]">Título de la nueva tarea</label>
                     <input
                       type="text"
                       id="automation-followup-title"
@@ -743,7 +743,7 @@ export function ProjectAutomationsDrawer({
                     />
                   </div>
                   <div className="space-y-1">
-                    <label htmlFor="automation-followup-duration" className="text-3xs font-bold uppercase text-[hsl(var(--text-secondary))]">Plazo (días de duración)</label>
+                    <label htmlFor="automation-followup-duration" className="text-2xs font-bold uppercase text-[hsl(var(--text-secondary))]">Plazo (días de duración)</label>
                     <input
                       type="number"
                       id="automation-followup-duration"
@@ -759,7 +759,7 @@ export function ProjectAutomationsDrawer({
 
               {selectedAction === "change_phase" && (
                 <div className="pt-2 border-t border-[hsl(var(--border))] mt-2 space-y-1">
-                  <label htmlFor="automation-target-phase" className="text-3xs font-bold uppercase text-[hsl(var(--text-secondary))]">Fase de destino</label>
+                  <label htmlFor="automation-target-phase" className="text-2xs font-bold uppercase text-[hsl(var(--text-secondary))]">Fase de destino</label>
                   <input
                     type="text"
                     id="automation-target-phase"
@@ -836,7 +836,7 @@ export function ProjectAutomationsDrawer({
               <div className="p-3 bg-[hsl(var(--surface-1))] rounded-lg border border-[hsl(var(--border))] space-y-2">
                 <div className="flex items-center justify-between">
                   <h5 className="text-xs font-bold text-[hsl(var(--text-primary))]">Resultado de la vista previa</h5>
-                  <span className="text-3xs font-semibold text-[hsl(var(--text-secondary))]">
+                  <span className="text-2xs font-semibold text-[hsl(var(--text-secondary))]">
                     {lastTestResults.length} regla(s) procesadas
                   </span>
                 </div>
@@ -870,12 +870,12 @@ export function ProjectAutomationsDrawer({
                       <div className="min-w-0 flex-1">
                         <div className="font-bold flex items-center justify-between">
                           <span>{res.rule_name}</span>
-                          <span className="uppercase text-3xs font-extrabold tracking-wider">
+                          <span className="uppercase text-2xs font-extrabold tracking-wider">
                             {res.status === "would_execute" ? "Se ejecutaría" : res.status}
                           </span>
                         </div>
                         {res.details && (
-                          <p className="text-3xs opacity-85 mt-0.5">{res.details}</p>
+                          <p className="text-2xs opacity-85 mt-0.5">{res.details}</p>
                         )}
                       </div>
                     </div>

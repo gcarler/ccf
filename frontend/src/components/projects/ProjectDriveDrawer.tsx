@@ -270,7 +270,7 @@ export function ProjectDriveDrawer({
                   <FolderArchive size={18} className="text-[hsl(var(--primary))]" />
                   Bóveda de Archivos & Drive
                 </h2>
-                <p className="text-3xs text-[hsl(var(--text-secondary))]">
+                <p className="text-2xs text-[hsl(var(--text-secondary))]">
                   Almacenamiento unificado de planos, actas, minutas y documentos sincronizados de Google Workspace
                 </p>
               </div>
@@ -294,10 +294,10 @@ export function ProjectDriveDrawer({
                   <FolderArchive size={15} />
                 </div>
                 <div>
-                  <p className="text-3xs uppercase font-semibold text-[hsl(var(--text-secondary))]">
+                  <p className="text-2xs uppercase font-semibold text-[hsl(var(--text-secondary))]">
                     Total Archivos
                   </p>
-                  <p className="text-xs font-black">{summary?.total_files ?? files.length}</p>
+                  <p className="text-xs font-extrabold">{summary?.total_files ?? files.length}</p>
                 </div>
               </div>
 
@@ -306,10 +306,10 @@ export function ProjectDriveDrawer({
                   <HardDrive size={15} />
                 </div>
                 <div>
-                  <p className="text-3xs uppercase font-semibold text-[hsl(var(--text-secondary))]">
+                  <p className="text-2xs uppercase font-semibold text-[hsl(var(--text-secondary))]">
                     Peso Local
                   </p>
-                  <p className="text-xs font-black text-[hsl(var(--success))]">
+                  <p className="text-xs font-extrabold text-[hsl(var(--success))]">
                     {formatBytes(summary?.total_size_bytes)}
                   </p>
                 </div>
@@ -320,10 +320,10 @@ export function ProjectDriveDrawer({
                   <Globe size={15} />
                 </div>
                 <div>
-                  <p className="text-3xs uppercase font-semibold text-[hsl(var(--text-secondary))]">
+                  <p className="text-2xs uppercase font-semibold text-[hsl(var(--text-secondary))]">
                     En Google Drive
                   </p>
-                  <p className="text-xs font-black text-[hsl(var(--primary))]">
+                  <p className="text-xs font-extrabold text-[hsl(var(--primary))]">
                     {summary?.by_source?.drive ?? 0} Docs
                   </p>
                 </div>
@@ -436,7 +436,7 @@ export function ProjectDriveDrawer({
                       <p className="text-xs font-bold text-[hsl(var(--text-primary))]">
                         No hay archivos en la bóveda
                       </p>
-                      <p className="text-3xs text-[hsl(var(--text-secondary))] max-w-sm">
+                      <p className="text-2xs text-[hsl(var(--text-secondary))] max-w-sm">
                         Sube planos, especificaciones o vincula carpetas y documentos de Google Drive para mantener todo centralizado en el proyecto.
                       </p>
                     </div>
@@ -474,16 +474,16 @@ export function ProjectDriveDrawer({
                               <p className="text-xs font-bold text-[hsl(var(--text-primary))] truncate group-hover:text-[hsl(var(--primary))] transition-colors">
                                 {file.name}
                               </p>
-                              <span className="text-3xs font-semibold px-2 py-0.2 rounded-full bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))]">
+                              <span className="text-2xs font-semibold px-2 py-0.5 rounded-full bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))]">
                                 {file.category}
                               </span>
                               {file.file_source === "drive" && (
-                                <span className="text-3xs font-extrabold px-1.5 py-0.2 rounded bg-[hsl(var(--primary))]/15 text-[hsl(var(--primary))] uppercase">
+                                <span className="text-2xs font-extrabold px-1.5 py-0.5 rounded bg-[hsl(var(--primary))]/15 text-[hsl(var(--primary))] uppercase">
                                   Drive
                                 </span>
                               )}
                             </div>
-                            <div className="flex items-center gap-3 text-3xs text-[hsl(var(--text-secondary))] flex-wrap">
+                            <div className="flex items-center gap-3 text-2xs text-[hsl(var(--text-secondary))] flex-wrap">
                               <span>{formatBytes(file.file_size)}</span>
                               {file.uploader_name && <span>Por {file.uploader_name}</span>}
                               <span>
@@ -599,7 +599,7 @@ export function ProjectDriveDrawer({
                     <p className="text-xs font-bold text-[hsl(var(--text-primary))]">
                       {uploadFile ? uploadFile.name : "Haz clic o arrastra un archivo aquí"}
                     </p>
-                    <p className="text-3xs text-[hsl(var(--text-secondary))]">
+                    <p className="text-2xs text-[hsl(var(--text-secondary))]">
                       {uploadFile
                         ? `Tamaño: ${formatBytes(uploadFile.size)}`
                         : "Soporta PDF, Planos, Excel, Imágenes, Documentos (Máx 50MB)"}
@@ -683,7 +683,7 @@ export function ProjectDriveDrawer({
                   <div className="flex items-center gap-2 text-xs font-bold text-[hsl(var(--primary))]">
                     <Globe size={16} /> Integración Inteligente de Google Drive
                   </div>
-                  <p className="text-3xs text-[hsl(var(--text-secondary))] leading-relaxed">
+                  <p className="text-2xs text-[hsl(var(--text-secondary))] leading-relaxed">
                     Pega cualquier enlace compartido de Google Docs, Sheets, Slides, Forms o PDFs de Google Drive. El sistema normalizará automáticamente el enlace a modo previsualización embebible para visualizarlo directamente dentro de la plataforma sin salir del proyecto.
                   </p>
                 </div>

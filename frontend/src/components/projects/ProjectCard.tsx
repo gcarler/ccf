@@ -72,7 +72,7 @@ export default function ProjectCard({
           {/* Header row */}
           <div className="flex items-start justify-between gap-3">
             <label
-              className="relative size-6 rounded-md flex items-center justify-center text-[hsl(var(--primary-foreground))] font-black text-lg shadow-lg transition-transform group-hover:scale-105 shrink-0 cursor-pointer overflow-hidden"
+              className="relative size-6 rounded-md flex items-center justify-center text-[hsl(var(--primary-foreground))] font-extrabold text-lg shadow-lg transition-transform group-hover:scale-105 shrink-0 cursor-pointer overflow-hidden"
               style={{ backgroundColor: color }}
             >
               <input

@@ -518,7 +518,7 @@ export default function ProjectListView({
                     <span>Solo Mis Favoritas</span>
                     {favoriteTaskIds.size > 0 && (
                         <span className={clsx(
-                            'px-1.5 py-0.2 rounded-full text-3xs font-bold',
+                            'px-1.5 py-0.5 rounded-full text-2xs font-bold',
                             onlyFavorites
                                 ? 'bg-[hsl(var(--warning-muted))] text-[hsl(var(--warning-text))]'
                                 : 'bg-[hsl(var(--surface-3))] text-[hsl(var(--text-secondary))]'

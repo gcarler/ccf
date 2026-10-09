@@ -175,7 +175,7 @@ export function ProjectQuadrantsMatrix({
                                 quadrant.badge_color === 'accent' && "bg-[hsl(var(--primary))]"
                             )}
                         />
-                        <span className="text-xs font-black uppercase tracking-wider text-[hsl(var(--muted-foreground))]">
+                        <span className="text-xs font-extrabold uppercase tracking-wider text-[hsl(var(--muted-foreground))]">
                             Cuadrante {quadrant.quadrant_number}:
                         </span>
                         <span className="text-xs font-bold text-[hsl(var(--foreground))]">

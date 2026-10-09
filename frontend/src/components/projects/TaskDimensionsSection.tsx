@@ -403,14 +403,14 @@ export default function TaskDimensionsSection({
                         <span className="font-medium text-[hsl(var(--foreground))] truncate">
                           {exp.description || exp.category}
                         </span>
-                        <span className="text-3xs text-[hsl(var(--muted-foreground))]">
+                        <span className="text-2xs text-[hsl(var(--muted-foreground))]">
                           {exp.date ? new Date(exp.date).toLocaleDateString("es-ES") : "Sin fecha"}
                         </span>
                       </div>
                       <div className="flex items-center gap-1.5 shrink-0">
                         <span
                           className={clsx(
-                            "px-1 py-0.2 rounded text-3xs font-semibold uppercase",
+                            "px-1 py-0.5 rounded text-2xs font-semibold uppercase",
                             exp.status === "paid"
                               ? "bg-[hsl(var(--success))/0.15] text-[hsl(var(--success))]"
                               : exp.status === "committed"

@@ -124,7 +124,7 @@ export function ProjectKanbanBoard({ project, tasks, phases, onOpenTask, onAddTa
                     <span>Solo Mis Favoritas</span>
                     {favoriteTaskIds.size > 0 && (
                         <span className={clsx(
-                            'px-1.5 py-0.2 rounded-full text-3xs font-bold',
+                            'px-1.5 py-0.5 rounded-full text-2xs font-bold',
                             onlyFavorites
                                 ? 'bg-[hsl(var(--warning))] text-[hsl(var(--background))]'
                                 : 'bg-[hsl(var(--surface-3))] text-[hsl(var(--muted-foreground))]'

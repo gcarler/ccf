@@ -408,7 +408,7 @@ export function ProjectTimeTrackingDrawer({
 
             {/* Contador Digital Grande */}
             <div
-              className="text-5xl sm:text-6xl font-black font-mono tracking-widest py-3 px-6 rounded-2xl border select-none"
+              className="text-5xl sm:text-6xl font-extrabold font-mono tracking-widest py-3 px-6 rounded-2xl border select-none"
               style={{
                 backgroundColor: "hsl(var(--surface-2))",
                 borderColor: "hsl(var(--border))",
@@ -707,7 +707,7 @@ export function ProjectTimeTrackingDrawer({
                           }}
                         />
                       </div>
-                      <div className="flex justify-between text-3xs" style={{ color: "hsl(var(--text-secondary))" }}>
+                      <div className="flex justify-between text-2xs" style={{ color: "hsl(var(--text-secondary))" }}>
                         <span>{m.logs_count} registro(s)</span>
                         <span style={{ color: "hsl(var(--success))" }}>{m.billable_hours.toFixed(2)}h fact.</span>
                       </div>
@@ -777,7 +777,7 @@ export function ProjectTimeTrackingDrawer({
               >
                 <Clock className="w-8 h-8 mx-auto opacity-40" />
                 <p className="font-semibold">No se encontraron registros de tiempo</p>
-                <p className="text-3xs">Usa el cronómetro o la entrada manual para registrar horas.</p>
+                <p className="text-2xs">Usa el cronómetro o la entrada manual para registrar horas.</p>
               </div>
             ) : (
               <div className="flex flex-col gap-2.5">
@@ -796,7 +796,7 @@ export function ProjectTimeTrackingDrawer({
                           {log.persona_name || "Colaborador"}
                         </span>
                         <span
-                          className="px-2 py-0.5 rounded text-3xs font-semibold"
+                          className="px-2 py-0.5 rounded text-2xs font-semibold"
                           style={{
                             backgroundColor: log.is_billable
                               ? "hsl(var(--success) / 0.15)"
@@ -808,7 +808,7 @@ export function ProjectTimeTrackingDrawer({
                         >
                           {log.is_billable ? "Facturable" : "No Facturable"}
                         </span>
-                        <span className="text-3xs" style={{ color: "hsl(var(--text-secondary))" }}>
+                        <span className="text-2xs" style={{ color: "hsl(var(--text-secondary))" }}>
                           {log.date ? new Date(log.date).toLocaleDateString("es-CO") : ""}
                         </span>
                       </div>
@@ -817,7 +817,7 @@ export function ProjectTimeTrackingDrawer({
                         {log.description || "Sin descripción"}
                       </p>
 
-                      <div className="flex items-center gap-1.5 text-3xs" style={{ color: "hsl(var(--text-secondary))" }}>
+                      <div className="flex items-center gap-1.5 text-2xs" style={{ color: "hsl(var(--text-secondary))" }}>
                         <CheckSquare className="w-3 h-3" />
                         <span className="truncate">{log.task_title || "General del Proyecto"}</span>
                       </div>
@@ -825,7 +825,7 @@ export function ProjectTimeTrackingDrawer({
 
                     <div className="flex items-center gap-3">
                       <span
-                        className="text-sm font-black font-mono px-2 py-1 rounded-md"
+                        className="text-sm font-extrabold font-mono px-2 py-1 rounded-md"
                         style={{
                           backgroundColor: "hsl(var(--surface-2))",
                           color: "hsl(var(--primary))",

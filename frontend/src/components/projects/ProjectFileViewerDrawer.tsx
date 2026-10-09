@@ -158,17 +158,17 @@ export function ProjectFileViewerDrawer({
               <div className="flex items-center gap-2 mb-1 flex-wrap">
                 <span
                   className={clsx(
-                    "text-3xs font-extrabold uppercase px-2 py-0.5 rounded-full border",
+                    "text-2xs font-extrabold uppercase px-2 py-0.5 rounded-full border",
                     sourceBadge.color
                   )}
                 >
                   {sourceBadge.label}
                 </span>
-                <span className="text-3xs font-semibold px-2 py-0.5 rounded-full bg-[hsl(var(--surface-1))] text-[hsl(var(--text-secondary))] border border-[hsl(var(--border))]">
+                <span className="text-2xs font-semibold px-2 py-0.5 rounded-full bg-[hsl(var(--surface-1))] text-[hsl(var(--text-secondary))] border border-[hsl(var(--border))]">
                   {file.category || "general"}
                 </span>
                 {file.file_type && (
-                  <span className="text-3xs font-mono text-[hsl(var(--text-secondary))]">
+                  <span className="text-2xs font-mono text-[hsl(var(--text-secondary))]">
                     {file.file_type}
                   </span>
                 )}
@@ -218,7 +218,7 @@ export function ProjectFileViewerDrawer({
           </div>
 
           {/* Metadatos secundarios */}
-          <div className="flex items-center gap-4 text-3xs text-[hsl(var(--text-secondary))] flex-wrap pt-0.5">
+          <div className="flex items-center gap-4 text-2xs text-[hsl(var(--text-secondary))] flex-wrap pt-0.5">
             <span className="flex items-center gap-1">
               <HardDrive size={11} /> {formatFileSize(file.file_size)}
             </span>
@@ -265,7 +265,7 @@ export function ProjectFileViewerDrawer({
                 sandbox="allow-scripts allow-same-origin allow-popups allow-forms"
                 onLoad={() => setIframeLoading(false)}
               />
-              <div className="px-3 py-1.5 bg-[hsl(var(--surface-1))] border-t border-[hsl(var(--border))] flex items-center justify-between text-3xs text-[hsl(var(--text-secondary))]">
+              <div className="px-3 py-1.5 bg-[hsl(var(--surface-1))] border-t border-[hsl(var(--border))] flex items-center justify-between text-2xs text-[hsl(var(--text-secondary))]">
                 <span>Google Workspace Live Viewer</span>
                 <span className="italic">
                   Requiere permisos de acceso en Google Drive si no es público
@@ -282,7 +282,7 @@ export function ProjectFileViewerDrawer({
                 title={file.name}
                 className="w-full h-full border-0"
               />
-              <div className="px-3 py-1.5 bg-[hsl(var(--surface-1))] border-t border-[hsl(var(--border))] flex items-center justify-between text-3xs text-[hsl(var(--text-secondary))]">
+              <div className="px-3 py-1.5 bg-[hsl(var(--surface-1))] border-t border-[hsl(var(--border))] flex items-center justify-between text-2xs text-[hsl(var(--text-secondary))]">
                 <span>Visor de Documento PDF</span>
                 <a
                   href={safeFileUrl}
@@ -308,7 +308,7 @@ export function ProjectFileViewerDrawer({
                 >
                   <ZoomOut size={15} />
                 </button>
-                <span className="text-3xs font-mono font-bold w-12 text-center text-[hsl(var(--text-primary))]">
+                <span className="text-2xs font-mono font-bold w-12 text-center text-[hsl(var(--text-primary))]">
                   {Math.round(imageZoom * 100)}%
                 </span>
                 <button
@@ -331,7 +331,7 @@ export function ProjectFileViewerDrawer({
                     setImageZoom(1);
                     setImageRotation(0);
                   }}
-                  className="text-3xs px-2 py-0.5 rounded bg-[hsl(var(--surface-2))] hover:bg-[hsl(var(--surface-3))] font-medium text-[hsl(var(--text-primary))]"
+                  className="text-2xs px-2 py-0.5 rounded bg-[hsl(var(--surface-2))] hover:bg-[hsl(var(--surface-3))] font-medium text-[hsl(var(--text-primary))]"
                 >
                   Reiniciar
                 </button>
@@ -351,7 +351,7 @@ export function ProjectFileViewerDrawer({
                 />
               </div>
 
-              <div className="text-3xs text-[hsl(var(--text-secondary))]">
+              <div className="text-2xs text-[hsl(var(--text-secondary))]">
                 Usa los controles para ampliar y rotar la fotografía
               </div>
             </div>
@@ -367,7 +367,7 @@ export function ProjectFileViewerDrawer({
                 <h3 className="text-sm font-bold text-[hsl(var(--text-primary))]">
                   {file.name}
                 </h3>
-                <p className="text-3xs text-[hsl(var(--text-secondary))]">
+                <p className="text-2xs text-[hsl(var(--text-secondary))]">
                   Archivo de audio de proyecto
                 </p>
               </div>
@@ -387,7 +387,7 @@ export function ProjectFileViewerDrawer({
               >
                 Tu navegador no soporta el elemento de video.
               </video>
-              <div className="p-3 bg-[hsl(var(--surface-2))]/60 border-t border-[hsl(var(--border))] text-3xs text-[hsl(var(--text-secondary))] flex justify-between">
+              <div className="p-3 bg-[hsl(var(--surface-2))]/60 border-t border-[hsl(var(--border))] text-2xs text-[hsl(var(--text-secondary))] flex justify-between">
                 <span>{file.name}</span>
                 <span>{formatFileSize(file.file_size)}</span>
               </div>
@@ -407,7 +407,7 @@ export function ProjectFileViewerDrawer({
                 <p className="text-2xs text-[hsl(var(--text-secondary))]">
                   Este formato de archivo no cuenta con previsualización embebida interactiva.
                 </p>
-                <p className="text-3xs font-mono text-[hsl(var(--text-secondary))]">
+                <p className="text-2xs font-mono text-[hsl(var(--text-secondary))]">
                   Tamaño: {formatFileSize(file.file_size)}
                 </p>
               </div>

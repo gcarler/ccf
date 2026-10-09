@@ -445,7 +445,7 @@ export default function ProjectGanttView({
             </h3>
             <span
               className={clsx(
-                "text-3xs",
+                "text-2xs",
                 dependenciesError ? "text-[hsl(var(--destructive))]" : "text-[hsl(var(--text-primary))]",
               )}
               role={dependenciesError ? "alert" : "status"}
@@ -515,7 +515,7 @@ export default function ProjectGanttView({
             </button>
             <button
               onClick={goToToday}
-              className="px-2 py-1 text-3xs font-bold uppercase border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] hover:bg-[hsl(var(--surface-3))] rounded-lg"
+              className="px-2 py-1 text-2xs font-bold uppercase border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] hover:bg-[hsl(var(--surface-3))] rounded-lg"
             >
               Hoy
             </button>
@@ -665,7 +665,7 @@ export default function ProjectGanttView({
                           {group.phase.name}
                         </span>
                       </div>
-                      <span className="text-3xs font-semibold px-1.5 py-0.5 rounded bg-[hsl(var(--surface-3))] text-[hsl(var(--text-secondary))]">
+                      <span className="text-2xs font-semibold px-1.5 py-0.5 rounded bg-[hsl(var(--surface-3))] text-[hsl(var(--text-secondary))]">
                         {group.tasks.length}
                       </span>
                     </div>
@@ -710,12 +710,12 @@ export default function ProjectGanttView({
                               {task.title}
                             </span>
                             {isTaskCrit && (
-                              <span className="px-1 py-0.2 rounded text-3xs font-black bg-[hsl(var(--destructive))]/15 text-[hsl(var(--destructive))] shrink-0 uppercase tracking-tight">
+                              <span className="px-1 py-0.5 rounded text-2xs font-extrabold bg-[hsl(var(--destructive))]/15 text-[hsl(var(--destructive))] shrink-0 uppercase tracking-tight">
                                 CPM
                               </span>
                             )}
                           </div>
-                          <span className="text-3xs uppercase font-bold text-[hsl(var(--text-secondary))] shrink-0">
+                          <span className="text-2xs uppercase font-bold text-[hsl(var(--text-secondary))] shrink-0">
                             {task.status}
                           </span>
                         </div>
@@ -747,7 +747,7 @@ export default function ProjectGanttView({
                   <span className="text-2xs font-bold text-[hsl(var(--text-primary))]">
                     {col.label}
                   </span>
-                  <span className="text-3xs text-[hsl(var(--text-secondary))] uppercase font-medium">
+                  <span className="text-2xs text-[hsl(var(--text-secondary))] uppercase font-medium">
                     {col.subLabel}
                   </span>
                 </div>
@@ -760,7 +760,7 @@ export default function ProjectGanttView({
                 className="absolute top-0 bottom-0 z-10 w-0.5 bg-[hsl(var(--destructive))] pointer-events-none"
                 style={{ left: `${todayX}px` }}
               >
-                <div className="sticky top-11 px-1 py-0.5 rounded text-3xs font-black uppercase tracking-wider bg-[hsl(var(--destructive))] text-[hsl(var(--destructive-foreground))] -translate-x-1/2">
+                <div className="sticky top-11 px-1 py-0.5 rounded text-2xs font-extrabold uppercase tracking-wider bg-[hsl(var(--destructive))] text-[hsl(var(--destructive-foreground))] -translate-x-1/2">
                   Hoy
                 </div>
               </div>
@@ -785,7 +785,7 @@ export default function ProjectGanttView({
                         : "bg-[hsl(var(--warning))] border-[hsl(var(--primary-foreground))]"
                     )}
                   />
-                  <div className="hidden group-hover:block absolute left-1/2 -translate-x-1/2 top-5 px-2 py-1 rounded bg-[hsl(var(--surface-3))] border border-[hsl(var(--border))] text-3xs font-bold text-[hsl(var(--text-primary))] shadow-lg whitespace-nowrap z-30">
+                  <div className="hidden group-hover:block absolute left-1/2 -translate-x-1/2 top-5 px-2 py-1 rounded bg-[hsl(var(--surface-3))] border border-[hsl(var(--border))] text-2xs font-bold text-[hsl(var(--text-primary))] shadow-lg whitespace-nowrap z-30">
                     <Milestone size={11} className="inline mr-1 text-[hsl(var(--warning))]" />
                     {m.title}
                   </div>
@@ -1000,10 +1000,10 @@ export default function ProjectGanttView({
                               </span>
 
                               {/* Dates badge on hover */}
-                              <div className="hidden group-hover/bar:flex absolute -top-7 left-0 px-2 py-0.5 rounded bg-[hsl(var(--surface-3))] border border-[hsl(var(--border))] text-3xs font-bold text-[hsl(var(--text-primary))] shadow-md whitespace-nowrap z-30 items-center gap-1.5">
+                              <div className="hidden group-hover/bar:flex absolute -top-7 left-0 px-2 py-0.5 rounded bg-[hsl(var(--surface-3))] border border-[hsl(var(--border))] text-2xs font-bold text-[hsl(var(--text-primary))] shadow-md whitespace-nowrap z-30 items-center gap-1.5">
                                 <Clock size={10} />
                                 {startKey} → {dueKey}
-                                {isCritical && <span className="text-[hsl(var(--destructive))] font-black ml-1">[Ruta Crítica]</span>}
+                                {isCritical && <span className="text-[hsl(var(--destructive))] font-extrabold ml-1">[Ruta Crítica]</span>}
                               </div>
                             </div>
                           </div>

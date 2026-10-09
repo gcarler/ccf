@@ -171,16 +171,16 @@ export function ProjectBaselineDrawer({
           <div className="p-4 rounded-xl bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] shadow-xs space-y-3">
             <div className="flex items-center justify-between">
               <div>
-                <span className="text-3xs uppercase font-black tracking-widest text-[hsl(var(--muted-foreground))]">
+                <span className="text-2xs uppercase font-extrabold tracking-widest text-[hsl(var(--muted-foreground))]">
                   Línea Base Activa
                 </span>
-                <h3 className="text-sm font-black text-[hsl(var(--foreground))] mt-0.5">
+                <h3 className="text-sm font-extrabold text-[hsl(var(--foreground))] mt-0.5">
                   {latestBaseline.name}
                 </h3>
               </div>
               <span
                 className={clsx(
-                  "px-2.5 py-1 rounded-full text-2xs font-black tracking-wider uppercase border",
+                  "px-2.5 py-1 rounded-full text-2xs font-extrabold tracking-wider uppercase border",
                   totalVariance > 0
                     ? "bg-[hsl(var(--destructive))]/10 border-[hsl(var(--destructive))]/30 text-[hsl(var(--destructive))]"
                     : "bg-[hsl(var(--success))]/10 border-[hsl(var(--success))]/30 text-[hsl(var(--success))]"
@@ -192,7 +192,7 @@ export function ProjectBaselineDrawer({
 
             <div className="grid grid-cols-2 gap-2.5 pt-2 border-t border-[hsl(var(--border))]/50 text-2xs">
               <div className="p-2.5 rounded-lg bg-[hsl(var(--surface-2))]">
-                <span className="text-3xs text-[hsl(var(--muted-foreground))] block font-medium">Congelado el:</span>
+                <span className="text-2xs text-[hsl(var(--muted-foreground))] block font-medium">Congelado el:</span>
                 <span className="font-bold text-[hsl(var(--foreground))]">
                   {new Date(latestBaseline.created_at).toLocaleDateString("es-ES", {
                     day: "2-digit",
@@ -204,7 +204,7 @@ export function ProjectBaselineDrawer({
                 </span>
               </div>
               <div className="p-2.5 rounded-lg bg-[hsl(var(--surface-2))]">
-                <span className="text-3xs text-[hsl(var(--muted-foreground))] block font-medium">Tareas Auditadas:</span>
+                <span className="text-2xs text-[hsl(var(--muted-foreground))] block font-medium">Tareas Auditadas:</span>
                 <span className="font-bold text-[hsl(var(--foreground))]">
                   {comparisons.length} tareas
                 </span>
@@ -244,7 +244,7 @@ export function ProjectBaselineDrawer({
             className="p-4 rounded-xl border border-[hsl(var(--primary))]/30 bg-[hsl(var(--surface-2))] space-y-3.5 shadow-sm"
           >
             <div className="flex items-center justify-between">
-              <span className="text-xs font-black uppercase tracking-wider text-[hsl(var(--primary))] flex items-center gap-1.5">
+              <span className="text-xs font-extrabold uppercase tracking-wider text-[hsl(var(--primary))] flex items-center gap-1.5">
                 <Sparkles size={14} /> Nueva Instantánea Planificada
               </span>
               <button
@@ -299,7 +299,7 @@ export function ProjectBaselineDrawer({
           <div className="space-y-2.5">
             <h4 className="text-xs font-bold uppercase tracking-wider text-[hsl(var(--muted-foreground))] flex items-center justify-between">
               <span>Desglose de Varianza por Tarea</span>
-              <span className="text-3xs font-semibold lowercase">
+              <span className="text-2xs font-semibold lowercase">
                 {comparisons.filter((c) => c.variance_days > 0).length} con retraso
               </span>
             </h4>
@@ -323,7 +323,7 @@ export function ProjectBaselineDrawer({
                       </span>
                       <span
                         className={clsx(
-                          "px-2 py-0.5 rounded text-3xs font-black tracking-tight shrink-0",
+                          "px-2 py-0.5 rounded text-2xs font-extrabold tracking-tight shrink-0",
                           isDelayed
                             ? "bg-[hsl(var(--destructive))]/15 text-[hsl(var(--destructive))]"
                             : isAhead
@@ -341,13 +341,13 @@ export function ProjectBaselineDrawer({
 
                     <div className="grid grid-cols-2 gap-2 text-2xs text-[hsl(var(--muted-foreground))]">
                       <div>
-                        <span className="text-3xs font-semibold block uppercase">Línea Base:</span>
+                        <span className="text-2xs font-semibold block uppercase">Línea Base:</span>
                         <span className="font-medium text-[hsl(var(--foreground))]">
                           {baseDueStr} ({c.baseline_duration}d)
                         </span>
                       </div>
                       <div>
-                        <span className="text-3xs font-semibold block uppercase">Cronograma Real:</span>
+                        <span className="text-2xs font-semibold block uppercase">Cronograma Real:</span>
                         <span className="font-medium text-[hsl(var(--foreground))]">
                           {curDueStr} ({c.current_duration}d)
                         </span>
@@ -379,7 +379,7 @@ export function ProjectBaselineDrawer({
                   className="px-3 py-2 rounded-lg bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] flex items-center justify-between text-2xs"
                 >
                   <span className="font-bold text-[hsl(var(--foreground))]">{b.name}</span>
-                  <span className="text-3xs text-[hsl(var(--muted-foreground))]">
+                  <span className="text-2xs text-[hsl(var(--muted-foreground))]">
                     {new Date(b.created_at).toLocaleDateString("es-ES", {
                       day: "2-digit",
                       month: "short",

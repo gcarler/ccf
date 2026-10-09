@@ -121,7 +121,7 @@ export default function TaskTimeTrackingSection({
           <Clock size={11} /> Tiempo Dedicado
           {totalHours > 0 && (
             <span
-              className="ml-1 px-1.5 py-0.5 rounded font-bold font-mono text-3xs"
+              className="ml-1 px-1.5 py-0.5 rounded font-bold font-mono text-2xs"
               style={{
                 backgroundColor: "hsl(var(--surface-2))",
                 color: "hsl(var(--primary))",
@@ -154,7 +154,7 @@ export default function TaskTimeTrackingSection({
       </div>
 
       {error && !showAddForm && (
-        <p role="alert" className="mb-2 text-3xs" style={{ color: "hsl(var(--destructive))" }}>
+        <p role="alert" className="mb-2 text-2xs" style={{ color: "hsl(var(--destructive))" }}>
           {error}
         </p>
       )}
@@ -172,7 +172,7 @@ export default function TaskTimeTrackingSection({
         >
           <div className="grid grid-cols-2 gap-2">
             <div>
-              <label htmlFor="task-time-log-hours" className="block text-3xs font-semibold mb-1" style={{ color: "hsl(var(--text-secondary))" }}>
+              <label htmlFor="task-time-log-hours" className="block text-2xs font-semibold mb-1" style={{ color: "hsl(var(--text-secondary))" }}>
                 Horas dedicadas *
               </label>
               <input
@@ -192,7 +192,7 @@ export default function TaskTimeTrackingSection({
               />
             </div>
             <div className="flex items-end pb-1.5">
-              <label className="flex items-center gap-1.5 cursor-pointer text-3xs font-medium">
+              <label className="flex items-center gap-1.5 cursor-pointer text-2xs font-medium">
                 <input
                   id="task-time-log-billable"
                   type="checkbox"
@@ -206,7 +206,7 @@ export default function TaskTimeTrackingSection({
           </div>
 
           <div>
-            <label htmlFor="task-time-log-description" className="block text-3xs font-semibold mb-1" style={{ color: "hsl(var(--text-secondary))" }}>
+            <label htmlFor="task-time-log-description" className="block text-2xs font-semibold mb-1" style={{ color: "hsl(var(--text-secondary))" }}>
               Descripción de lo realizado
             </label>
             <input
@@ -225,7 +225,7 @@ export default function TaskTimeTrackingSection({
           </div>
 
           {error && (
-            <p role="alert" className="text-3xs" style={{ color: "hsl(var(--destructive))" }}>
+            <p role="alert" className="text-2xs" style={{ color: "hsl(var(--destructive))" }}>
               {error}
             </p>
           )}
@@ -257,7 +257,7 @@ export default function TaskTimeTrackingSection({
 
       {/* Lista de registros en esta tarea */}
       {loading ? (
-        <div role="status" aria-live="polite" className="py-2 text-center text-3xs" style={{ color: "hsl(var(--text-secondary))" }}>
+        <div role="status" aria-live="polite" className="py-2 text-center text-2xs" style={{ color: "hsl(var(--text-secondary))" }}>
           Cargando registros...
         </div>
       ) : logs.length === 0 ? (
@@ -281,7 +281,7 @@ export default function TaskTimeTrackingSection({
                     {log.persona_name || "Colaborador"}
                   </span>
                   <span
-                    className="px-1 py-0.2 rounded text-3xs font-semibold"
+                    className="px-1 py-0.5 rounded text-2xs font-semibold"
                     style={{
                       backgroundColor: log.is_billable
                         ? "hsl(var(--success) / 0.15)"
@@ -301,7 +301,7 @@ export default function TaskTimeTrackingSection({
 
               <div className="flex items-center gap-2">
                 <span
-                  className="font-bold font-mono px-1.5 py-0.5 rounded text-3xs"
+                  className="font-bold font-mono px-1.5 py-0.5 rounded text-2xs"
                   style={{
                     backgroundColor: "hsl(var(--surface-1))",
                     color: "hsl(var(--primary))",

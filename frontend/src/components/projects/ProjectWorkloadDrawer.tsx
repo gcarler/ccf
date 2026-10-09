@@ -530,7 +530,7 @@ export function ProjectWorkloadDrawer({
                                 </span>
                                 {task.is_overdue && (
                                   <span
-                                    className="text-[10px] font-bold px-1.5 py-0.2 rounded"
+                                    className="text-[10px] font-bold px-1.5 py-0.5 rounded"
                                     style={{
                                       backgroundColor: "hsl(var(--danger-muted))",
                                       color: "hsl(var(--danger-text))",

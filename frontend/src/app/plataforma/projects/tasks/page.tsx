@@ -222,7 +222,7 @@ export default function ProjectsTasksPage() {
                         key={value}
                         onClick={() => setStatus(value)}
                         className={clsx(
-                            'px-3 py-1 rounded-full text-2xs uppercase tracking-wide font-black border transition-colors',
+                            'px-3 py-1 rounded-full text-2xs uppercase tracking-wide font-extrabold border transition-colors',
                             status === value
                                 ? 'bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] border-[hsl(var(--primary))]'
                                 : 'border-[hsl(var(--border))] text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--surface-2))]'
@@ -317,7 +317,7 @@ export default function ProjectsTasksPage() {
                                     </div>
                                     <button
                                         onClick={() => moveForward(task)}
-                                        className="px-3 py-1 rounded-lg bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] text-2xs uppercase tracking-wide font-black"
+                                        className="px-3 py-1 rounded-lg bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] text-2xs uppercase tracking-wide font-extrabold"
                                     >
                                         Siguiente estado
                                     </button>

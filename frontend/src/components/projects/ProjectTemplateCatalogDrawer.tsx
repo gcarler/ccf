@@ -348,7 +348,7 @@ export function ProjectTemplateCatalogDrawer({
               >
                 <BookTemplate className="w-10 h-10 mx-auto opacity-30" />
                 <p className="font-semibold text-sm">No se encontraron plantillas</p>
-                <p className="text-3xs max-w-sm mx-auto">
+                <p className="text-2xs max-w-sm mx-auto">
                   Guarda proyectos activos como plantillas reutilizables para estandarizar tus
                   flujos de trabajo pastorales y ministeriales.
                 </p>
@@ -376,7 +376,7 @@ export function ProjectTemplateCatalogDrawer({
                               {tpl.name}
                             </h3>
                             <span
-                              className="px-2 py-0.5 rounded text-3xs font-semibold uppercase tracking-wider"
+                              className="px-2 py-0.5 rounded text-2xs font-semibold uppercase tracking-wider"
                               style={{
                                 backgroundColor: "hsl(var(--surface-2))",
                                 color: "hsl(var(--primary))",
@@ -385,11 +385,11 @@ export function ProjectTemplateCatalogDrawer({
                               {tpl.category}
                             </span>
                             {tpl.is_public ? (
-                              <span className="flex items-center gap-1 text-3xs" style={{ color: "hsl(var(--success))" }}>
+                              <span className="flex items-center gap-1 text-2xs" style={{ color: "hsl(var(--success))" }}>
                                 <Globe className="w-3 h-3" /> Pública
                               </span>
                             ) : (
-                              <span className="flex items-center gap-1 text-3xs" style={{ color: "hsl(var(--warning))" }}>
+                              <span className="flex items-center gap-1 text-2xs" style={{ color: "hsl(var(--warning))" }}>
                                 <Lock className="w-3 h-3" /> Sede
                               </span>
                             )}
@@ -427,15 +427,15 @@ export function ProjectTemplateCatalogDrawer({
                         }}
                       >
                         <div>
-                          <span className="text-3xs block" style={{ color: "hsl(var(--text-secondary))" }}>Fases</span>
+                          <span className="text-2xs block" style={{ color: "hsl(var(--text-secondary))" }}>Fases</span>
                           <span className="font-bold">{phases.length}</span>
                         </div>
                         <div>
-                          <span className="text-3xs block" style={{ color: "hsl(var(--text-secondary))" }}>Tareas</span>
+                          <span className="text-2xs block" style={{ color: "hsl(var(--text-secondary))" }}>Tareas</span>
                           <span className="font-bold">{tasks.length}</span>
                         </div>
                         <div>
-                          <span className="text-3xs block" style={{ color: "hsl(var(--text-secondary))" }}>Presupuesto</span>
+                          <span className="text-2xs block" style={{ color: "hsl(var(--text-secondary))" }}>Presupuesto</span>
                           <span className="font-bold font-mono" style={{ color: "hsl(var(--primary))" }}>
                             ${(tpl.default_budget || 0).toLocaleString("es-CO")}
                           </span>
@@ -477,7 +477,7 @@ export function ProjectTemplateCatalogDrawer({
                             borderColor: "hsl(var(--border))",
                           }}
                         >
-                          <span className="font-bold text-3xs uppercase tracking-wider block" style={{ color: "hsl(var(--text-secondary))" }}>
+                          <span className="font-bold text-2xs uppercase tracking-wider block" style={{ color: "hsl(var(--text-secondary))" }}>
                             Estructura de la Plantilla ({phases.length} fases, {tasks.length} tareas)
                           </span>
 
@@ -505,7 +505,7 @@ export function ProjectTemplateCatalogDrawer({
                                     {phaseTasks.length > 0 ? (
                                       <div className="pl-4 pt-1.5 space-y-1">
                                         {phaseTasks.map((t, tIdx) => (
-                                          <div key={tIdx} className="flex items-center justify-between text-3xs">
+                                          <div key={tIdx} className="flex items-center justify-between text-2xs">
                                             <span className="truncate max-w-[220px]">
                                               • {t.title}
                                             </span>
@@ -516,7 +516,7 @@ export function ProjectTemplateCatalogDrawer({
                                         ))}
                                       </div>
                                     ) : (
-                                      <p className="pl-4 text-3xs italic" style={{ color: "hsl(var(--text-secondary))" }}>
+                                      <p className="pl-4 text-2xs italic" style={{ color: "hsl(var(--text-secondary))" }}>
                                         Sin tareas específicas
                                       </p>
                                     )}
@@ -529,7 +529,7 @@ export function ProjectTemplateCatalogDrawer({
                               {tasks.map((t, tIdx) => (
                                 <div
                                   key={tIdx}
-                                  className="flex items-center justify-between p-1.5 rounded border text-3xs"
+                                  className="flex items-center justify-between p-1.5 rounded border text-2xs"
                                   style={{
                                     backgroundColor: "hsl(var(--surface-1))",
                                     borderColor: "hsl(var(--border))",
@@ -543,7 +543,7 @@ export function ProjectTemplateCatalogDrawer({
                               ))}
                             </div>
                           ) : (
-                            <p className="text-3xs italic" style={{ color: "hsl(var(--text-secondary))" }}>
+                            <p className="text-2xs italic" style={{ color: "hsl(var(--text-secondary))" }}>
                               Plantilla sin fases ni tareas predefinidas.
                             </p>
                           )}
@@ -572,7 +572,7 @@ export function ProjectTemplateCatalogDrawer({
                 <FolderPlus className="w-5 h-5" style={{ color: "hsl(var(--primary))" }} />
                 <div>
                   <h3 className="font-bold text-sm">Instanciar Nuevo Proyecto</h3>
-                  <span className="text-3xs" style={{ color: "hsl(var(--text-secondary))" }}>
+                  <span className="text-2xs" style={{ color: "hsl(var(--text-secondary))" }}>
                     Basado en: {selectedTemplate.name}
                   </span>
                 </div>
@@ -672,13 +672,13 @@ export function ProjectTemplateCatalogDrawer({
               <span className="font-bold block" style={{ color: "hsl(var(--primary))" }}>
                 ¿Qué se creará automáticamente?
               </span>
-              <p className="text-3xs" style={{ color: "hsl(var(--text-secondary))" }}>
+              <p className="text-2xs" style={{ color: "hsl(var(--text-secondary))" }}>
                 • {selectedTemplate.structure?.phases?.length || 0} fase(s) organizadas.
               </p>
-              <p className="text-3xs" style={{ color: "hsl(var(--text-secondary))" }}>
+              <p className="text-2xs" style={{ color: "hsl(var(--text-secondary))" }}>
                 • {selectedTemplate.structure?.tasks?.length || 0} tarea(s) con cronograma relativo calculado desde la fecha de inicio.
               </p>
-              <p className="text-3xs" style={{ color: "hsl(var(--text-secondary))" }}>
+              <p className="text-2xs" style={{ color: "hsl(var(--text-secondary))" }}>
                 • Control presupuestario y asignación de sede multi-tenant segura.
               </p>
             </div>
@@ -712,7 +712,7 @@ export function ProjectTemplateCatalogDrawer({
               <BookmarkPlus className="w-5 h-5" style={{ color: "hsl(var(--primary))" }} />
               <div>
                 <h3 className="font-bold text-sm">Guardar Proyecto Activo como Plantilla</h3>
-                <span className="text-3xs" style={{ color: "hsl(var(--text-secondary))" }}>
+                <span className="text-2xs" style={{ color: "hsl(var(--text-secondary))" }}>
                   Captura las fases y tareas actuales para estandarizarlas
                 </span>
               </div>

@@ -419,12 +419,12 @@ export function ProjectKpiDrawer({
                   <div className="flex items-start justify-between gap-2">
                     <div className="space-y-0.5">
                       <div className="flex items-center gap-2">
-                        <span className="px-1.5 py-0.5 rounded text-3xs font-black uppercase tracking-wider bg-[hsl(var(--surface-3))] text-[hsl(var(--text-secondary))]">
+                        <span className="px-1.5 py-0.5 rounded text-2xs font-extrabold uppercase tracking-wider bg-[hsl(var(--surface-3))] text-[hsl(var(--text-secondary))]">
                           {CATEGORIES.find((c) => c.id === kpi.category)?.label || kpi.category}
                         </span>
                         <span
                           className={clsx(
-                            "px-2 py-0.5 rounded-full text-3xs font-bold uppercase tracking-wider border flex items-center gap-1",
+                            "px-2 py-0.5 rounded-full text-2xs font-bold uppercase tracking-wider border flex items-center gap-1",
                             status.bg,
                             status.color
                           )}
@@ -462,7 +462,7 @@ export function ProjectKpiDrawer({
                           {kpi.unit}
                         </span>
                       </span>
-                      <span className={clsx("font-black tracking-tight", status.color)}>
+                      <span className={clsx("font-extrabold tracking-tight", status.color)}>
                         {pct}%
                       </span>
                     </div>
@@ -480,26 +480,26 @@ export function ProjectKpiDrawer({
                     <div className="flex items-center gap-1">
                       <button
                         onClick={() => handleUpdateValue(kpi, kpi.current_value - 1)}
-                        className="px-2 py-0.5 rounded text-3xs font-bold border border-[hsl(var(--border))] text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-3))] active:scale-95"
+                        className="px-2 py-0.5 rounded text-2xs font-bold border border-[hsl(var(--border))] text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-3))] active:scale-95"
                       >
                         -1
                       </button>
                       <button
                         onClick={() => handleUpdateValue(kpi, kpi.current_value + 1)}
-                        className="px-2 py-0.5 rounded text-3xs font-bold border border-[hsl(var(--border))] text-[hsl(var(--text-primary))] hover:bg-[hsl(var(--surface-3))] active:scale-95"
+                        className="px-2 py-0.5 rounded text-2xs font-bold border border-[hsl(var(--border))] text-[hsl(var(--text-primary))] hover:bg-[hsl(var(--surface-3))] active:scale-95"
                       >
                         +1
                       </button>
                       <button
                         onClick={() => handleUpdateValue(kpi, kpi.current_value + 10)}
-                        className="px-2 py-0.5 rounded text-3xs font-bold border border-[hsl(var(--primary))]/30 text-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))]/10 active:scale-95"
+                        className="px-2 py-0.5 rounded text-2xs font-bold border border-[hsl(var(--primary))]/30 text-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))]/10 active:scale-95"
                       >
                         +10
                       </button>
                     </div>
 
                     {kpi.due_date && (
-                      <span className="text-3xs text-[hsl(var(--text-secondary))] flex items-center gap-1">
+                      <span className="text-2xs text-[hsl(var(--text-secondary))] flex items-center gap-1">
                         <Calendar size={11} />
                         {new Date(kpi.due_date).toLocaleDateString("es-ES", {
                           day: "numeric",

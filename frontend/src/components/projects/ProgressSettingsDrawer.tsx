@@ -205,7 +205,7 @@ export function ProgressSettingsDrawer({
                       <span className="text-xs font-bold text-[hsl(var(--foreground))]">
                         {m.title}
                       </span>
-                      <span className="text-3xs font-black uppercase tracking-wider px-1.5 py-0.5 rounded bg-[hsl(var(--surface-3))] text-[hsl(var(--muted-foreground))]">
+                      <span className="text-2xs font-extrabold uppercase tracking-wider px-1.5 py-0.5 rounded bg-[hsl(var(--surface-3))] text-[hsl(var(--muted-foreground))]">
                         {m.badge}
                       </span>
                     </div>
@@ -226,7 +226,7 @@ export function ProgressSettingsDrawer({
               <span className="text-xs font-bold text-[hsl(var(--foreground))]">
                 Porcentaje de Avance Manual
               </span>
-              <span className="text-xs font-black text-[hsl(var(--primary))]">
+              <span className="text-xs font-extrabold text-[hsl(var(--primary))]">
                 {Math.round(progressVal)}%
               </span>
             </div>
@@ -238,7 +238,7 @@ export function ProgressSettingsDrawer({
               onChange={(e) => setProgressVal(Number(e.target.value))}
               className="w-full accent-[hsl(var(--primary))] cursor-pointer"
             />
-            <div className="flex justify-between text-3xs text-[hsl(var(--muted-foreground))]">
+            <div className="flex justify-between text-2xs text-[hsl(var(--muted-foreground))]">
               <span>0% Inicio</span>
               <span>50% Mitad</span>
               <span>100% Terminado</span>
@@ -272,7 +272,7 @@ export function ProgressSettingsDrawer({
                       {h.label}
                     </span>
                   </div>
-                  <p className="text-3xs text-[hsl(var(--muted-foreground))] leading-tight">
+                  <p className="text-2xs text-[hsl(var(--muted-foreground))] leading-tight">
                     {h.description}
                   </p>
                 </div>

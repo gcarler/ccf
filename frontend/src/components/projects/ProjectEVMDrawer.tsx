@@ -323,7 +323,7 @@ export function ProjectEVMDrawer({
                                         <ShieldAlert size={20} className="text-[hsl(var(--destructive))]" />
                                     )}
                                     <div>
-                                        <h3 className="text-xs font-black uppercase tracking-wider text-[hsl(var(--muted-foreground))]">
+                                        <h3 className="text-xs font-extrabold uppercase tracking-wider text-[hsl(var(--muted-foreground))]">
                                             Estado de Control Físico-Financiero
                                         </h3>
                                         <span className="text-sm font-bold text-[hsl(var(--foreground))]">
@@ -344,7 +344,7 @@ export function ProjectEVMDrawer({
                                 <div className="p-3 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))]">
                                     <div className="flex items-center justify-between text-xs">
                                         <span className="font-semibold text-[hsl(var(--muted-foreground))]">Avance Físico Real</span>
-                                        <span className="font-black text-[hsl(var(--primary))] text-sm">
+                                        <span className="font-extrabold text-[hsl(var(--primary))] text-sm">
                                             {evmData.progress_percentage}%
                                         </span>
                                     </div>
@@ -354,7 +354,7 @@ export function ProjectEVMDrawer({
                                             style={{ width: `${Math.min(evmData.progress_percentage, 100)}%` }}
                                         />
                                     </div>
-                                    <span className="text-3xs text-[hsl(var(--muted-foreground))] mt-1 block">
+                                    <span className="text-2xs text-[hsl(var(--muted-foreground))] mt-1 block">
                                         Valor Ganado (EV): ${evmData.ev.toLocaleString('es-CO')}
                                     </span>
                                 </div>
@@ -363,7 +363,7 @@ export function ProjectEVMDrawer({
                                     <div className="flex items-center justify-between text-xs">
                                         <span className="font-semibold text-[hsl(var(--muted-foreground))]">Ejecución Financiera</span>
                                         <span className={clsx(
-                                            "font-black text-sm",
+                                            "font-extrabold text-sm",
                                             evmData.financial_percentage > evmData.progress_percentage
                                                 ? "text-[hsl(var(--destructive))]"
                                                 : "text-[hsl(var(--success))]"
@@ -382,7 +382,7 @@ export function ProjectEVMDrawer({
                                             style={{ width: `${Math.min(evmData.financial_percentage, 100)}%` }}
                                         />
                                     </div>
-                                    <span className="text-3xs text-[hsl(var(--muted-foreground))] mt-1 block">
+                                    <span className="text-2xs text-[hsl(var(--muted-foreground))] mt-1 block">
                                         Costo Real Gastado (AC): ${evmData.ac.toLocaleString('es-CO')}
                                     </span>
                                 </div>
@@ -393,70 +393,70 @@ export function ProjectEVMDrawer({
                         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                             {/* CPI */}
                             <div className="p-3.5 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] space-y-1">
-                                <span className="text-3xs font-bold uppercase tracking-wider text-[hsl(var(--muted-foreground))] flex items-center justify-between">
+                                <span className="text-2xs font-bold uppercase tracking-wider text-[hsl(var(--muted-foreground))] flex items-center justify-between">
                                     CPI (Costo)
                                     <span className={clsx(
-                                        "px-1.5 py-0.5 rounded text-3xs font-black",
+                                        "px-1.5 py-0.5 rounded text-2xs font-extrabold",
                                         getPerformanceBadge(evmData.cpi, 'cpi').colorClass
                                     )}>
                                         {evmData.cpi >= 1.0 ? '≥ 1.0' : '< 1.0'}
                                     </span>
                                 </span>
-                                <div className="text-xl font-black text-[hsl(var(--foreground))]">
+                                <div className="text-xl font-extrabold text-[hsl(var(--foreground))]">
                                     {evmData.cpi.toFixed(2)}
                                 </div>
-                                <span className="text-3xs text-[hsl(var(--muted-foreground))] block truncate" title="Fórmula: EV / AC">
+                                <span className="text-2xs text-[hsl(var(--muted-foreground))] block truncate" title="Fórmula: EV / AC">
                                     {getPerformanceBadge(evmData.cpi, 'cpi').label}
                                 </span>
                             </div>
 
                             {/* SPI */}
                             <div className="p-3.5 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] space-y-1">
-                                <span className="text-3xs font-bold uppercase tracking-wider text-[hsl(var(--muted-foreground))] flex items-center justify-between">
+                                <span className="text-2xs font-bold uppercase tracking-wider text-[hsl(var(--muted-foreground))] flex items-center justify-between">
                                     SPI (Tiempo)
                                     <span className={clsx(
-                                        "px-1.5 py-0.5 rounded text-3xs font-black",
+                                        "px-1.5 py-0.5 rounded text-2xs font-extrabold",
                                         getPerformanceBadge(evmData.spi, 'spi').colorClass
                                     )}>
                                         {evmData.spi >= 1.0 ? '≥ 1.0' : '< 1.0'}
                                     </span>
                                 </span>
-                                <div className="text-xl font-black text-[hsl(var(--foreground))]">
+                                <div className="text-xl font-extrabold text-[hsl(var(--foreground))]">
                                     {evmData.spi.toFixed(2)}
                                 </div>
-                                <span className="text-3xs text-[hsl(var(--muted-foreground))] block truncate" title="Fórmula: EV / PV">
+                                <span className="text-2xs text-[hsl(var(--muted-foreground))] block truncate" title="Fórmula: EV / PV">
                                     {getPerformanceBadge(evmData.spi, 'spi').label}
                                 </span>
                             </div>
 
                             {/* Variación de Costo (CV) */}
                             <div className="p-3.5 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] space-y-1">
-                                <span className="text-3xs font-bold uppercase tracking-wider text-[hsl(var(--muted-foreground))]">
+                                <span className="text-2xs font-bold uppercase tracking-wider text-[hsl(var(--muted-foreground))]">
                                     Variación Costo (CV)
                                 </span>
                                 <div className={clsx(
-                                    "text-lg font-black truncate",
+                                    "text-lg font-extrabold truncate",
                                     evmData.cv >= 0 ? "text-[hsl(var(--success))]" : "text-[hsl(var(--destructive))]"
                                 )}>
                                     {evmData.cv >= 0 ? `+$${evmData.cv.toLocaleString('es-CO')}` : `-$${Math.abs(evmData.cv).toLocaleString('es-CO')}`}
                                 </div>
-                                <span className="text-3xs text-[hsl(var(--muted-foreground))] block">
+                                <span className="text-2xs text-[hsl(var(--muted-foreground))] block">
                                     {evmData.cv >= 0 ? "Superávit generado" : "Sobrecosto actual"}
                                 </span>
                             </div>
 
                             {/* Variación de Cronograma (SV) */}
                             <div className="p-3.5 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] space-y-1">
-                                <span className="text-3xs font-bold uppercase tracking-wider text-[hsl(var(--muted-foreground))]">
+                                <span className="text-2xs font-bold uppercase tracking-wider text-[hsl(var(--muted-foreground))]">
                                     Variación Tiempo (SV)
                                 </span>
                                 <div className={clsx(
-                                    "text-lg font-black truncate",
+                                    "text-lg font-extrabold truncate",
                                     evmData.sv >= 0 ? "text-[hsl(var(--primary))]" : "text-[hsl(var(--warning))]"
                                 )}>
                                     {evmData.sv >= 0 ? `+$${evmData.sv.toLocaleString('es-CO')}` : `-$${Math.abs(evmData.sv).toLocaleString('es-CO')}`}
                                 </div>
-                                <span className="text-3xs text-[hsl(var(--muted-foreground))] block">
+                                <span className="text-2xs text-[hsl(var(--muted-foreground))] block">
                                     {evmData.sv >= 0 ? "Adelanto monetizado" : "Atraso monetizado"}
                                 </span>
                             </div>
@@ -470,13 +470,13 @@ export function ProjectEVMDrawer({
                                         <BarChart3 size={15} className="text-[hsl(var(--primary))]" />
                                         Curva S de Desempeño Acumulado
                                     </h4>
-                                    <p className="text-3xs text-[hsl(var(--muted-foreground))]">
+                                    <p className="text-2xs text-[hsl(var(--muted-foreground))]">
                                         Comparativa temporal de Valor Planificado (PV), Valor Ganado (EV) y Costo Real (AC)
                                     </p>
                                 </div>
 
                                 {/* Leyenda interactiva */}
-                                <div className="flex items-center gap-3 text-3xs font-semibold">
+                                <div className="flex items-center gap-3 text-2xs font-semibold">
                                     <div className="flex items-center gap-1.5">
                                         <span className="w-3.5 h-0.5 border-t-2 border-dashed border-[hsl(var(--muted-foreground))]" />
                                         <span className="text-[hsl(var(--muted-foreground))]">PV (Planificado)</span>
@@ -621,7 +621,7 @@ export function ProjectEVMDrawer({
                                             </span>
                                         )}
                                         {hoveredPoint.cpi !== null && (
-                                            <span className="text-3xs px-2 py-0.5 rounded border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))]">
+                                            <span className="text-2xs px-2 py-0.5 rounded border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))]">
                                                 CPI: <strong>{hoveredPoint.cpi}</strong>
                                             </span>
                                         )}
@@ -639,41 +639,41 @@ export function ProjectEVMDrawer({
 
                             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
                                 <div className="p-3 rounded-lg bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))]">
-                                    <span className="text-3xs uppercase text-[hsl(var(--muted-foreground))] font-semibold">
+                                    <span className="text-2xs uppercase text-[hsl(var(--muted-foreground))] font-semibold">
                                         Presupuesto Total (BAC)
                                     </span>
-                                    <div className="text-base font-black text-[hsl(var(--foreground))] mt-0.5">
+                                    <div className="text-base font-extrabold text-[hsl(var(--foreground))] mt-0.5">
                                         ${evmData.bac.toLocaleString('es-CO')}
                                     </div>
-                                    <span className="text-3xs text-[hsl(var(--muted-foreground))]">Línea base autorizada</span>
+                                    <span className="text-2xs text-[hsl(var(--muted-foreground))]">Línea base autorizada</span>
                                 </div>
 
                                 <div className="p-3 rounded-lg bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))]">
-                                    <span className="text-3xs uppercase text-[hsl(var(--muted-foreground))] font-semibold">
+                                    <span className="text-2xs uppercase text-[hsl(var(--muted-foreground))] font-semibold">
                                         Costo Final Estimado (EAC)
                                     </span>
                                     <div className={clsx(
-                                        "text-base font-black mt-0.5",
+                                        "text-base font-extrabold mt-0.5",
                                         evmData.eac > evmData.bac ? "text-[hsl(var(--destructive))]" : "text-[hsl(var(--success))]"
                                     )}>
                                         ${evmData.eac.toLocaleString('es-CO')}
                                     </div>
-                                    <span className="text-3xs text-[hsl(var(--muted-foreground))]">
+                                    <span className="text-2xs text-[hsl(var(--muted-foreground))]">
                                         {evmData.eac > evmData.bac ? "Requiere ampliación presupuestal" : "Proyectado dentro del límite"}
                                     </span>
                                 </div>
 
                                 <div className="p-3 rounded-lg bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))]">
-                                    <span className="text-3xs uppercase text-[hsl(var(--muted-foreground))] font-semibold">
+                                    <span className="text-2xs uppercase text-[hsl(var(--muted-foreground))] font-semibold">
                                         Variación al Cierre (VAC)
                                     </span>
                                     <div className={clsx(
-                                        "text-base font-black mt-0.5",
+                                        "text-base font-extrabold mt-0.5",
                                         evmData.vac >= 0 ? "text-[hsl(var(--success))]" : "text-[hsl(var(--destructive))]"
                                     )}>
                                         {evmData.vac >= 0 ? `+$${evmData.vac.toLocaleString('es-CO')}` : `-$${Math.abs(evmData.vac).toLocaleString('es-CO')}`}
                                     </div>
-                                    <span className="text-3xs text-[hsl(var(--muted-foreground))]">
+                                    <span className="text-2xs text-[hsl(var(--muted-foreground))]">
                                         {evmData.vac >= 0 ? "Ahorro neto previsto al finalizar" : "Déficit total proyectado al finalizar"}
                                     </span>
                                 </div>
@@ -690,7 +690,7 @@ export function ProjectEVMDrawer({
                                 <ul className="space-y-1.5 text-xs text-[hsl(var(--muted-foreground))]">
                                     {evmData.recommendations.map((rec, i) => (
                                         <li key={i} className="flex items-start gap-2">
-                                            <span className="text-[hsl(var(--primary))] font-black leading-none mt-1">•</span>
+                                            <span className="text-[hsl(var(--primary))] font-extrabold leading-none mt-1">•</span>
                                             <span>{rec}</span>
                                         </li>
                                     ))}
