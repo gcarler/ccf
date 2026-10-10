@@ -20,8 +20,8 @@ import clsx from 'clsx';
 import { filterWorkspaceSectionsByAccess } from '@/lib/workspaceAccess';
 import { SITE_NAME } from '@/lib/site-config';
 import { AnimatePresence,motion } from 'framer-motion';
-import { Bot,ChevronLeft,ChevronRight,LayoutPanelLeft,LogOut,Maximize2,Menu,Minimize2,Settings,User } from 'lucide-react';
-import { usePathname } from 'next/navigation';
+import { Bot,ChevronLeft,ChevronRight,LayoutPanelLeft,LogOut,Maximize2,Menu,Minimize2,Palette,Settings,User } from 'lucide-react';
+import { usePathname, useRouter } from 'next/navigation';
 import React,{ useCallback,useEffect,useMemo,useRef,useState } from 'react';
 
 // â”€â”€ Layer Context (importamos el provider aquÃ­) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -390,7 +390,12 @@ function WorkspaceLayoutInner({
 
             <div className="w-px h-4 bg-[hsl(var(--surface-3))] dark:bg-white/10 mx-1" />
 
-            <UserMenuDropdown displayName={displayName} username={user?.username} logout={logout} />
+            <UserMenuDropdown
+                displayName={displayName}
+                username={user?.username}
+                logout={logout}
+                onOpenAppearance={() => setShowAppearance(true)}
+            />
         </div>
     );
 
@@ -679,9 +684,17 @@ function WorkspaceLayoutInner({
     );
 }
 
-function UserMenuDropdown({ displayName, username, logout }: { displayName: string; username?: string; logout: () => void }) {
+export interface UserMenuDropdownProps {
+    displayName: string;
+    username?: string;
+    logout: () => void;
+    onOpenAppearance?: () => void;
+}
+
+export function UserMenuDropdown({ displayName, username, logout, onOpenAppearance }: UserMenuDropdownProps) {
     const [isOpen, setIsOpen] = useState(false);
     const menuRef = useRef<HTMLDivElement>(null);
+    const router = useRouter();
 
     useEffect(() => {
         const handleClickOutside = (e: MouseEvent) => {
@@ -723,19 +736,37 @@ function UserMenuDropdown({ displayName, username, logout }: { displayName: stri
 
                         <div className="px-1.5 flex flex-col gap-0.5">
                             <button
-                                onClick={() => setIsOpen(false)}
-                                className="w-full flex items-center gap-3 px-3 py-1.5 rounded-lg text-xs text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5 transition-all text-left"
+                                onClick={() => {
+                                    setIsOpen(false);
+                                    router.push('/plataforma/account');
+                                }}
+                                className="w-full flex items-center gap-3 px-3 py-1.5 rounded-lg text-xs text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5 hover:text-[hsl(var(--text-primary))] dark:hover:text-white transition-all text-left"
                             >
                                 <User size={14} className="text-[hsl(var(--text-secondary))]" />
                                 <span>Mi perfil</span>
                             </button>
                             <button
-                                onClick={() => setIsOpen(false)}
-                                className="w-full flex items-center gap-3 px-3 py-1.5 rounded-lg text-xs text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5 transition-all text-left"
+                                onClick={() => {
+                                    setIsOpen(false);
+                                    router.push('/plataforma/settings');
+                                }}
+                                className="w-full flex items-center gap-3 px-3 py-1.5 rounded-lg text-xs text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5 hover:text-[hsl(var(--text-primary))] dark:hover:text-white transition-all text-left"
                             >
                                 <Settings size={14} className="text-[hsl(var(--text-secondary))]" />
                                 <span>Configuración</span>
                             </button>
+                            {onOpenAppearance && (
+                                <button
+                                    onClick={() => {
+                                        setIsOpen(false);
+                                        onOpenAppearance();
+                                    }}
+                                    className="w-full flex items-center gap-3 px-3 py-1.5 rounded-lg text-xs text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5 hover:text-[hsl(var(--primary))] transition-all text-left"
+                                >
+                                    <Palette size={14} className="text-[hsl(var(--primary))]" />
+                                    <span>Apariencia y Accesibilidad</span>
+                                </button>
+                            )}
                         </div>
 
                         <div className="mt-1 pt-1 border-t border-[hsl(var(--border))] dark:border-white/5 px-1.5">
