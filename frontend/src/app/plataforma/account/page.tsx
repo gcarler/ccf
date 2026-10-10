@@ -18,15 +18,20 @@ import WorkspaceLayout from '@/components/WorkspaceLayout';
 import { apiFetch } from '@/lib/http';
 import TwoFactorDrawer from '@/components/admin/TwoFactorDrawer';
 import PushNotificationManager from '@/components/messaging/PushNotificationManager';
+import AppearanceDrawer from '@/components/ui/AppearanceDrawer';
+import PaletteSelector from '@/app/plataforma/theme/PaletteSelector';
+import { useTheme } from '@/app/plataforma/theme/ThemeContext';
 
 export default function AccountSettingsPage() {
     const { user, logout, refresh } = useAuth();
     const { addToast } = useToast();
+    const { theme, currentScale, currentAccent } = useTheme();
     const [activeTab, setActiveTab] = useState<'profile' | 'security' | 'appearance' | 'notifications'>('profile');
     const [isSaving, setIsSaving] = useState(false);
     const [isChangingPassword, setIsChangingPassword] = useState(false);
     const [is2FADrawerOpen, setIs2FADrawerOpen] = useState(false);
     const [is2FAEnabled, setIs2FAEnabled] = useState(false);
+    const [isAppearanceDrawerOpen, setIsAppearanceDrawerOpen] = useState(false);
     const [viewType, setViewType] = useState<ViewType>('grid');
     const [formValues, setFormValues] = useState({
         username: user?.username || '',
@@ -211,7 +216,9 @@ export default function AccountSettingsPage() {
                     </div>
                     {tabs.map((tab) => (
                         <button
-                            key={tab.id} onClick={() => setActiveTab(tab.id as any)}
+                            key={tab.id}
+                            data-testid={`tab-${tab.id}`}
+                            onClick={() => setActiveTab(tab.id as any)}
                             className={clsx(
                                 "w-full flex items-center gap-4 px-3 py-1.5 rounded-lg font-semibold transition-all group relative overflow-hidden",
                                 activeTab === tab.id
@@ -329,10 +336,11 @@ export default function AccountSettingsPage() {
                                             />
                                         </div>
                                         <div className="space-y-2">
-                                            <label className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide ml-2 leading-none block">
+                                            <label htmlFor="account-bio-short" className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide ml-2 leading-none block">
                                                 Biografía Breve
                                             </label>
                                             <textarea
+                                                id="account-bio-short"
                                                 value={formValues.bioShort}
                                                 placeholder="Breve reseña sobre tu ministerio, rol pastoral y llamado..."
                                                 rows={3}
@@ -454,15 +462,38 @@ export default function AccountSettingsPage() {
                             {activeTab === 'appearance' && (
                                 <motion.div
                                     key="appearance" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}
-                                    className="space-y-3"
+                                    className="space-y-4"
                                 >
-                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                                        <ThemeCard label="Modo Claro" icon={Sun} active />
-                                        <ThemeCard label="Modo Noche" icon={Moon} />
-                                        <ThemeCard label="Automático" icon={Monitor} />
+                                    {/* Resumen dinámico y acceso al panel lateral */}
+                                    <div className="p-4 bg-[hsl(var(--surface-1))] rounded-lg border border-[hsl(var(--border))] flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-sm">
+                                        <div className="space-y-1">
+                                            <div className="flex items-center gap-2">
+                                                <Palette size={18} className="text-[hsl(var(--primary))]" />
+                                                <h3 className="text-sm font-bold text-[hsl(var(--text-primary))] uppercase tracking-wide">
+                                                    Personalización de Apariencia
+                                                </h3>
+                                            </div>
+                                            <p className="text-xs text-[hsl(var(--text-secondary))]">
+                                                Ambiente visual: <span className="font-semibold text-[hsl(var(--text-primary))]">{theme === 'night' ? 'Modo Noche' : 'Modo Día'}</span> · Escala: <span className="font-semibold text-[hsl(var(--text-primary))]">{currentScale.label} ({currentScale.percentage})</span> · Acento: <span className="font-semibold text-[hsl(var(--text-primary))]">{currentAccent.label}</span>
+                                            </p>
+                                        </div>
+                                        <button
+                                            type="button"
+                                            onClick={() => setIsAppearanceDrawerOpen(true)}
+                                            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold bg-[hsl(var(--primary)/0.12)] text-[hsl(var(--primary))] hover:bg-[hsl(var(--primary)/0.2)] transition-colors self-start sm:self-auto shrink-0"
+                                        >
+                                            <Sparkles size={14} />
+                                            <span>Abrir en panel lateral</span>
+                                        </button>
                                     </div>
 
-                                    <div className="p-4 bg-[hsl(var(--surface-1))] rounded-lg border border-[hsl(var(--border))] space-y-3">
+                                    {/* Selector universal integrado en la página */}
+                                    <div className="p-4 sm:p-5 bg-[hsl(var(--surface-1))] rounded-lg border border-[hsl(var(--border))] shadow-sm">
+                                        <PaletteSelector />
+                                    </div>
+
+                                    {/* Idioma y Localización */}
+                                    <div className="p-4 bg-[hsl(var(--surface-1))] rounded-lg border border-[hsl(var(--border))] space-y-3 shadow-sm">
                                         <h3 className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide">Idioma y Localización</h3>
                                         <div className="flex items-center justify-between p-3 bg-[hsl(var(--surface-2))] rounded-lg border border-[hsl(var(--border))] shadow-sm cursor-pointer hover:border-[hsl(var(--primary))] transition-all group">
                                             <div className="flex items-center gap-4">
@@ -497,17 +528,24 @@ export default function AccountSettingsPage() {
             onClose={() => setIs2FADrawerOpen(false)}
             onStatusChange={setIs2FAEnabled}
         />
+        <AppearanceDrawer
+            isOpen={isAppearanceDrawerOpen}
+            onClose={() => setIsAppearanceDrawerOpen(false)}
+        />
         </WorkspaceLayout>
     );
 }
 
-function InputField({ label, icon: Icon, value, placeholder, type = "text", onChange }: any) {
+function InputField({ label, icon: Icon, value, placeholder, type = "text", onChange, id: explicitId }: any) {
+    const autoId = React.useId();
+    const inputId = explicitId || `${autoId}-${label.toLowerCase().replace(/[^a-z0-9]/g, '-')}`;
     return (
         <div className="space-y-3">
-            <label className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide ml-2 leading-none block">{label}</label>
+            <label htmlFor={inputId} className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide ml-2 leading-none block">{label}</label>
             <div className="relative group">
                 {Icon && <Icon className="absolute left-5 top-1/2 -translate-y-1/2 text-[hsl(var(--text-secondary))] group-focus-within:text-[hsl(var(--primary))] transition-colors" size={18} />}
                 <input
+                    id={inputId}
                     type={type} value={value} placeholder={placeholder}
                     onChange={(e) => onChange?.(e.target.value)}
                     className={clsx(
@@ -516,26 +554,6 @@ function InputField({ label, icon: Icon, value, placeholder, type = "text", onCh
                     )}
                 />
             </div>
-        </div>
-    );
-}
-
-function ThemeCard({ label, icon: Icon, active }: any) {
-    return (
-        <div className={clsx(
-            "p-4 rounded-lg border-2 cursor-pointer transition-all flex flex-col items-center gap-3 group relative overflow-hidden",
-            active
-                ? "border-[hsl(var(--primary))] bg-[hsl(var(--info-muted))] shadow-2xl shadow-[hsl(var(--primary))/0.1] scale-[1.02]"
-                : "border-[hsl(var(--border))] hover:border-[hsl(var(--border-subtle))] hover:scale-[1.02]"
-        )}>
-            {active && <div className="absolute top-4 right-4 size-2 rounded-full bg-[hsl(var(--primary))] shadow-[hsl(var(--primary)/0.4)]" />}
-            <div className={clsx(
-                "size-8 rounded-lg flex items-center justify-center transition-all duration-500 group-hover:rotate-12",
-                active ? "bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] shadow-2xl" : "bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))] group-hover:text-[hsl(var(--primary))]"
-            )}>
-                <Icon size={32} />
-            </div>
-            <span className={clsx("text-xs font-semibold uppercase tracking-wide", active ? "text-[hsl(var(--primary))]" : "text-[hsl(var(--text-secondary))]")}>{label}</span>
         </div>
     );
 }
