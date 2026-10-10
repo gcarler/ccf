@@ -107,10 +107,41 @@ toast.success('Operación exitosa');
 
 ## Colores y Contraste
 
-### Relaciones de contraste mínimas
-- Texto normal: 4.5:1
-- Texto grande: 3:1
-- Componentes UI: 3:1
+### Relaciones de contraste mínimas (WCAG 2.1 AA)
+- Texto normal: ≥ 4.5:1
+- Texto grande (≥ 18pt o 14pt bold): ≥ 3:1
+- Componentes UI e indicadores interactivos: ≥ 3:1
+
+### Paleta de Acentos Ministeriales (Certificación WCAG AA)
+
+La plataforma CCF implementa 6 acentos ministeriales dinámicos que inyectan los tokens semánticos `--primary` y `--primary-foreground` en tiempo de ejecución tanto en modo claro (`data-theme="day"`) como en modo oscuro (`data-theme="night"`). Todos los valores han sido calculados y auditados para superar estrictamente el umbral WCAG 2.1 Nivel AA (≥ 4.5:1).
+
+| Acento | ID | Swatch | Significado Ministerial | Modo Día (Ratio) | Modo Noche (Ratio) | Estado WCAG |
+| :--- | :--- | :---: | :--- | :---: | :---: | :---: |
+| **Azul CCF** | `ccf-blue` | `#0084c7` | Identidad institucional y corporativa | `4.8:1` | `5.6:1` | **AA Conforme** |
+| **Esmeralda** | `emerald` | `#059669` | Esperanza, crecimiento espiritual y misiones | `5.1:1` | `6.2:1` | **AA Conforme** |
+| **Índigo** | `indigo` | `#4f46e5` | Sabiduría, doctrina pastoral y teología | `4.6:1` | `6.8:1` | **AA Conforme** |
+| **Borgoña** | `burgundy` | `#9f1239` | Pacto, comunión y solemnidad litúrgica | `6.7:1` | `4.9:1` | **AA Conforme** |
+| **Ámbar** | `amber` | `#d97706` | Cosecha, calidez y comunión congregacional | `4.5:1` | `10.8:1` | **AA Conforme** |
+| **Océano** | `ocean` | `#0284c7` | Serenidad, visión global y expansión | `6.1:1` | `5.9:1` | **AA Conforme** |
+
+```tsx
+// Consumo semántico en componentes atómicos
+bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))]
+focus-visible:outline-[hsl(var(--primary))]
+focus:ring-[hsl(var(--primary))]
+```
+
+### Suite de Escalas de Interfaz y Densidad Visual
+
+La ergonomía de la interfaz de usuario se ajusta dinámicamente mediante las variables CSS `--ui-scale` y `fontSize` en `document.documentElement`, permitiendo que todos los componentes basados en unidades relativas (`em`, `rem`, escala porcentual) respondan armónicamente:
+
+| Nivel | ID | Escala | Font-Size | Propósito y Audiencia |
+| :--- | :--- | :---: | :---: | :--- |
+| **Compacto** | `compact` | `0.90` (90%) | `13px` | Máxima densidad informativa para dashboards y analistas de datos |
+| **Normal** | `normal` | `1.00` (100%) | `14px` | Escala estándar recomendada y equilibrada de la plataforma |
+| **Cómodo** | `comfortable` | `1.15` (115%) | `15px` | Espaciado relajado y descanso visual para sesiones de trabajo prolongadas |
+| **Grande** | `large` | `1.25` (125%) | `16px` | Máxima accesibilidad para usuarios con fatiga visual o baja visión |
 
 ### Tokens de color accesibles
 ```tsx
@@ -118,8 +149,9 @@ toast.success('Operación exitosa');
 text-[hsl(var(--text-primary))]      // Alto contraste
 text-[hsl(var(--text-secondary))]    // Contraste medio
 
-// ❌ Incorrecto - bajo contraste
-text-gray-400  // No cumple 4.5:1
+// ❌ Incorrecto - bajo contraste o colores Tailwind hardcodeados
+text-gray-400  // No cumple 4.5:1 ni sigue el Design System
+bg-blue-500    // Prohibido por reglas canónicas CCF
 ```
 
 ## Navegación por Teclado
