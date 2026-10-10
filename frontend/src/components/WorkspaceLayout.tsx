@@ -757,6 +757,8 @@ export function UserMenuDropdown({ displayName, username, logout, onOpenAppearan
                             </button>
                             {onOpenAppearance && (
                                 <button
+                                    data-testid="user-menu-appearance"
+                                    aria-label="Configuración de apariencia, pantalla y accesibilidad"
                                     onClick={() => {
                                         setIsOpen(false);
                                         onOpenAppearance();

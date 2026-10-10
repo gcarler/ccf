@@ -48,7 +48,7 @@ const SETTINGS_GROUPS: SettingsGroupConfig[] = [
         items: [
             { id: "appearance-theme", icon: Palette, label: "Tema Visual", desc: "Modo día, noche, paleta de acento y escala", href: "/plataforma/theme", action: "appearance" },
             { icon: Languages, label: "Idioma y Región", desc: "Español (Colombia)", href: "#idioma" },
-            { id: "appearance-density", icon: Monitor, label: "Densidad de UI", desc: "Compacto (90%), normal (100%), cómodo (115%) o grande (125%)", href: "#densidad", action: "appearance" },
+            { id: "appearance-density", icon: Monitor, label: "Densidad de UI", desc: "Ultra compacta, compacta, cómoda o espaciosa y zoom manual (85%-140%)", href: "#densidad", action: "appearance" },
         ]
     },
     {
@@ -71,7 +71,7 @@ const COLOR_MAP: Record<string, string> = {
 export default function SettingsPage() {
     const { logout, user } = useAuth();
     const router = useRouter();
-    const { theme, setTheme, currentScale, currentAccent } = useTheme();
+    const { theme, setTheme, currentScale, currentAccent, currentDensity, zoomPercentage } = useTheme();
     const [isAppearanceOpen, setIsAppearanceOpen] = useState(false);
 
     const sidebarSections = [
@@ -141,7 +141,7 @@ export default function SettingsPage() {
                         <div>
                             <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Tema Visual y Accesibilidad</p>
                             <p className="text-xs text-[hsl(var(--text-secondary))]">
-                                Acento activo: <span className="font-semibold text-[hsl(var(--text-primary))]">{currentAccent.label}</span> · Escala: <span className="font-semibold text-[hsl(var(--text-primary))]">{currentScale.label} ({currentScale.percentage})</span>
+                                Acento activo: <span className="font-semibold text-[hsl(var(--text-primary))]">{currentAccent.label}</span> · Densidad: <span className="font-semibold text-[hsl(var(--text-primary))]">{currentDensity.label}</span> · Zoom: <span className="font-semibold text-[hsl(var(--text-primary))]">{zoomPercentage}%</span>
                             </p>
                         </div>
                         <button

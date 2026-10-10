@@ -19,6 +19,7 @@ import {
     UiScaleId,
     AccentId,
 } from '@/app/plataforma/theme/ThemeContext';
+import DensityZoomSelector from '@/app/plataforma/theme/DensityZoomSelector';
 
 export default function PaletteSelector() {
     const {
@@ -27,6 +28,13 @@ export default function PaletteSelector() {
         toggleTheme,
         uiScale,
         setUiScale,
+        uiDensity,
+        setUiDensity,
+        currentDensity,
+        zoomPercentage,
+        setZoomPercentage,
+        zoomIn,
+        zoomOut,
         accent,
         setAccent,
         currentAccent,
@@ -179,6 +187,10 @@ export default function PaletteSelector() {
                         );
                     })}
                 </div>
+
+                <div className="pt-2">
+                    <DensityZoomSelector showDensity={true} showZoom={true} />
+                </div>
             </div>
 
             {/* ── 3. Paleta de Acentos Ministeriales ──────────────────────────── */}
@@ -255,7 +267,7 @@ export default function PaletteSelector() {
                     </div>
                     <div className="flex items-center gap-3">
                         <span className="text-3xs text-[hsl(var(--text-secondary))]">
-                            {currentScale.label} ({currentScale.percentage}) • {currentAccent.label}
+                            {currentScale.label} ({zoomPercentage}%) • {currentDensity.label} • {currentAccent.label}
                         </span>
                         <div className="flex items-center gap-1 text-3xs text-[hsl(var(--text-secondary))]">
                             {isSyncing ? (

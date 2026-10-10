@@ -7,7 +7,47 @@ export type ThemeMode = 'day' | 'night';
 
 export type UiScaleId = 'compact' | 'normal' | 'comfortable' | 'large';
 
+export type UiDensity = 'ultra-compact' | 'compact' | 'comfortable' | 'spacious';
+
 export type AccentId = 'ccf-blue' | 'emerald' | 'indigo' | 'burgundy' | 'amber' | 'ocean';
+
+export interface UiDensityOption {
+    id: UiDensity;
+    label: string;
+    description: string;
+    paddingRatio: string;
+}
+
+export const UI_DENSITY_OPTIONS: Record<UiDensity, UiDensityOption> = {
+    'ultra-compact': {
+        id: 'ultra-compact',
+        label: 'Ultra compacta',
+        description: 'Espaciado mínimo, máxima información en pantalla',
+        paddingRatio: '0.75',
+    },
+    compact: {
+        id: 'compact',
+        label: 'Compacta',
+        description: 'Espaciado ajustado para flujos densos y alta productividad',
+        paddingRatio: '0.875',
+    },
+    comfortable: {
+        id: 'comfortable',
+        label: 'Cómoda',
+        description: 'Densidad equilibrada estándar recomendada',
+        paddingRatio: '1.0',
+    },
+    spacious: {
+        id: 'spacious',
+        label: 'Espaciosa',
+        description: 'Espaciado amplio para lectura descansada o pantallas táctiles',
+        paddingRatio: '1.25',
+    },
+};
+
+export const ZOOM_PRESETS: number[] = [90, 100, 110, 115, 120, 125, 130, 133];
+export const MIN_ZOOM = 85;
+export const MAX_ZOOM = 140;
 
 export interface UiScaleOption {
     id: UiScaleId;
@@ -168,11 +208,22 @@ export interface AppearanceContextProps {
     toggleTheme: () => void;
     setTheme: (mode: ThemeMode) => void;
 
-    // Interface Scale
+    // Interface Scale (legacy compatibility)
     uiScale: UiScaleId;
     setUiScale: (scale: UiScaleId) => void;
     scaleFactor: number;
     currentScale: UiScaleOption;
+
+    // Interface Density
+    uiDensity: UiDensity;
+    setUiDensity: (density: UiDensity) => void;
+    currentDensity: UiDensityOption;
+
+    // Manual Zoom
+    zoomPercentage: number;
+    setZoomPercentage: (zoom: number) => void;
+    zoomIn: () => void;
+    zoomOut: () => void;
 
     // Accent Palette
     accent: AccentId;
@@ -219,6 +270,8 @@ const ThemeContext = createContext<AppearanceContextProps | undefined>(undefined
 export const ThemeProvider = ({ children }: { children: ReactNode }) => {
     const [theme, setThemeState] = useState<ThemeMode>('day');
     const [uiScale, setUiScaleState] = useState<UiScaleId>('normal');
+    const [uiDensity, setUiDensityState] = useState<UiDensity>('comfortable');
+    const [zoomPercentage, setZoomPercentageState] = useState<number>(100);
     const [accent, setAccentState] = useState<AccentId>('ccf-blue');
     const [isMounted, setIsMounted] = useState(false);
     const [isSyncing, setIsSyncing] = useState(false);
@@ -234,6 +287,21 @@ export const ThemeProvider = ({ children }: { children: ReactNode }) => {
             const savedScale = localStorage.getItem('theme-scale') as UiScaleId | null;
             if (savedScale && UI_SCALE_OPTIONS[savedScale]) {
                 setUiScaleState(savedScale);
+            }
+
+            const savedDensity = localStorage.getItem('theme-density') as UiDensity | null;
+            if (savedDensity && UI_DENSITY_OPTIONS[savedDensity]) {
+                setUiDensityState(savedDensity);
+            }
+
+            const savedZoom = localStorage.getItem('theme-zoom');
+            if (savedZoom) {
+                const parsedZoom = Number(savedZoom);
+                if (!isNaN(parsedZoom) && parsedZoom >= MIN_ZOOM && parsedZoom <= MAX_ZOOM) {
+                    setZoomPercentageState(parsedZoom);
+                }
+            } else if (savedScale && UI_SCALE_OPTIONS[savedScale]) {
+                setZoomPercentageState(Math.round(UI_SCALE_OPTIONS[savedScale].scale * 100));
             }
 
             const savedAccent = localStorage.getItem('theme-accent') as AccentId | null;
@@ -255,6 +323,7 @@ export const ThemeProvider = ({ children }: { children: ReactNode }) => {
         // Attributes & classes
         root.setAttribute('data-theme', theme);
         root.setAttribute('data-ui-scale', uiScale);
+        root.setAttribute('data-ui-density', uiDensity);
         root.setAttribute('data-accent', accent);
 
         if (theme === 'night') {
@@ -263,10 +332,11 @@ export const ThemeProvider = ({ children }: { children: ReactNode }) => {
             root.classList.remove('dark');
         }
 
-        // Apply scale factor
-        const scaleOption = UI_SCALE_OPTIONS[uiScale] || UI_SCALE_OPTIONS.normal;
-        root.style.setProperty('--ui-scale', scaleOption.scale.toString());
-        root.style.fontSize = `${scaleOption.scale * 100}%`;
+        // Apply scale & density factor
+        const scaleVal = (zoomPercentage / 100).toString();
+        root.style.setProperty('--ui-scale', scaleVal);
+        root.style.setProperty('--ui-density-ratio', UI_DENSITY_OPTIONS[uiDensity]?.paddingRatio || '1.0');
+        root.style.fontSize = `${zoomPercentage}%`;
 
         // Apply accent color
         const accentOption = ACCENT_PALETTES[accent] || ACCENT_PALETTES['ccf-blue'];
@@ -284,11 +354,13 @@ export const ThemeProvider = ({ children }: { children: ReactNode }) => {
         try {
             localStorage.setItem('theme-mode', theme);
             localStorage.setItem('theme-scale', uiScale);
+            localStorage.setItem('theme-density', uiDensity);
+            localStorage.setItem('theme-zoom', zoomPercentage.toString());
             localStorage.setItem('theme-accent', accent);
         } catch {
             // storage error
         }
-    }, [theme, uiScale, accent, isMounted]);
+    }, [theme, uiScale, uiDensity, zoomPercentage, accent, isMounted]);
 
     // ── Step 3: Remote profile synchronization ────────────────────────
     const syncPreferences = useCallback(async () => {
@@ -300,6 +372,8 @@ export const ThemeProvider = ({ children }: { children: ReactNode }) => {
                     settings: {
                         theme_mode: theme,
                         ui_scale: uiScale,
+                        ui_density: uiDensity,
+                        zoom_percentage: zoomPercentage,
                         accent: accent,
                     },
                 },
@@ -310,7 +384,7 @@ export const ThemeProvider = ({ children }: { children: ReactNode }) => {
         } finally {
             setIsSyncing(false);
         }
-    }, [theme, uiScale, accent]);
+    }, [theme, uiScale, uiDensity, zoomPercentage, accent]);
 
     // Trigger background sync after user changes preferences
     useEffect(() => {
@@ -319,7 +393,7 @@ export const ThemeProvider = ({ children }: { children: ReactNode }) => {
             syncPreferences();
         }, 600);
         return () => clearTimeout(timer);
-    }, [theme, uiScale, accent, isMounted, syncPreferences]);
+    }, [theme, uiScale, uiDensity, zoomPercentage, accent, isMounted, syncPreferences]);
 
     // Initial background reconciliation from remote profile
     useEffect(() => {
@@ -332,6 +406,8 @@ export const ThemeProvider = ({ children }: { children: ReactNode }) => {
                     settings?: {
                         theme_mode?: ThemeMode;
                         ui_scale?: UiScaleId;
+                        ui_density?: UiDensity;
+                        zoom_percentage?: number;
                         accent?: AccentId;
                     };
                 }>('/v3/auth/preferences', { silent: true });
@@ -341,6 +417,12 @@ export const ThemeProvider = ({ children }: { children: ReactNode }) => {
                 const remoteSettings = res.settings;
                 if (remoteSettings.theme_mode && (remoteSettings.theme_mode === 'day' || remoteSettings.theme_mode === 'night')) {
                     setThemeState(remoteSettings.theme_mode);
+                }
+                if (remoteSettings.ui_density && UI_DENSITY_OPTIONS[remoteSettings.ui_density]) {
+                    setUiDensityState(remoteSettings.ui_density);
+                }
+                if (typeof remoteSettings.zoom_percentage === 'number' && remoteSettings.zoom_percentage >= MIN_ZOOM && remoteSettings.zoom_percentage <= MAX_ZOOM) {
+                    setZoomPercentageState(remoteSettings.zoom_percentage);
                 }
                 if (remoteSettings.ui_scale && UI_SCALE_OPTIONS[remoteSettings.ui_scale]) {
                     setUiScaleState(remoteSettings.ui_scale);
@@ -362,16 +444,60 @@ export const ThemeProvider = ({ children }: { children: ReactNode }) => {
 
     const setTheme = (mode: ThemeMode) => setThemeState(mode);
     const toggleTheme = () => setThemeState(prev => (prev === 'day' ? 'night' : 'day'));
-    const setUiScale = (scale: UiScaleId) => setUiScaleState(scale);
+
+    const setUiScale = (scale: UiScaleId) => {
+        setUiScaleState(scale);
+        const option = UI_SCALE_OPTIONS[scale];
+        if (option) {
+            setZoomPercentageState(Math.round(option.scale * 100));
+        }
+    };
+
+    const setUiDensity = (density: UiDensity) => {
+        setUiDensityState(density);
+    };
+
+    const setZoomPercentage = (zoom: number) => {
+        const clamped = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, Math.round(zoom)));
+        setZoomPercentageState(clamped);
+        if (clamped <= 95) setUiScaleState('compact');
+        else if (clamped <= 105) setUiScaleState('normal');
+        else if (clamped <= 118) setUiScaleState('comfortable');
+        else setUiScaleState('large');
+    };
+
+    const zoomIn = () => {
+        const current = zoomPercentage;
+        const next = ZOOM_PRESETS.find(p => p > current);
+        if (next) {
+            setZoomPercentage(next);
+        } else {
+            setZoomPercentage(Math.min(MAX_ZOOM, current + 5));
+        }
+    };
+
+    const zoomOut = () => {
+        const current = zoomPercentage;
+        const prev = [...ZOOM_PRESETS].reverse().find(p => p < current);
+        if (prev) {
+            setZoomPercentage(prev);
+        } else {
+            setZoomPercentage(Math.max(MIN_ZOOM, current - 5));
+        }
+    };
+
     const setAccent = (newAccent: AccentId) => setAccentState(newAccent);
 
     const resetToDefaults = () => {
         setThemeState('day');
         setUiScaleState('normal');
+        setUiDensityState('comfortable');
+        setZoomPercentageState(100);
         setAccentState('ccf-blue');
     };
 
     const currentScale = UI_SCALE_OPTIONS[uiScale] || UI_SCALE_OPTIONS.normal;
+    const currentDensity = UI_DENSITY_OPTIONS[uiDensity] || UI_DENSITY_OPTIONS.comfortable;
     const currentAccent = ACCENT_PALETTES[accent] || ACCENT_PALETTES['ccf-blue'];
 
     return (
@@ -384,6 +510,13 @@ export const ThemeProvider = ({ children }: { children: ReactNode }) => {
                 setUiScale,
                 scaleFactor: currentScale.scale,
                 currentScale,
+                uiDensity,
+                setUiDensity,
+                currentDensity,
+                zoomPercentage,
+                setZoomPercentage,
+                zoomIn,
+                zoomOut,
                 accent,
                 setAccent,
                 currentAccent,
