@@ -25,7 +25,7 @@ import { useTheme } from '@/app/plataforma/theme/ThemeContext';
 export default function AccountSettingsPage() {
     const { user, logout, refresh } = useAuth();
     const { addToast } = useToast();
-    const { theme, currentScale, currentAccent } = useTheme();
+    const { theme, currentScale, currentAccent, currentDensity, zoomPercentage } = useTheme();
     const [activeTab, setActiveTab] = useState<'profile' | 'security' | 'appearance' | 'notifications'>('profile');
     const [isSaving, setIsSaving] = useState(false);
     const [isChangingPassword, setIsChangingPassword] = useState(false);
@@ -474,7 +474,7 @@ export default function AccountSettingsPage() {
                                                 </h3>
                                             </div>
                                             <p className="text-xs text-[hsl(var(--text-secondary))]">
-                                                Ambiente visual: <span className="font-semibold text-[hsl(var(--text-primary))]">{theme === 'night' ? 'Modo Noche' : 'Modo Día'}</span> · Escala: <span className="font-semibold text-[hsl(var(--text-primary))]">{currentScale.label} ({currentScale.percentage})</span> · Acento: <span className="font-semibold text-[hsl(var(--text-primary))]">{currentAccent.label}</span>
+                                                Ambiente visual: <span className="font-semibold text-[hsl(var(--text-primary))]">{theme === 'night' ? 'Modo Noche' : 'Modo Día'}</span> · Escala: <span className="font-semibold text-[hsl(var(--text-primary))]">{currentScale.label} ({zoomPercentage}%)</span> · Densidad: <span className="font-semibold text-[hsl(var(--text-primary))]">{currentDensity.label}</span> · Acento: <span className="font-semibold text-[hsl(var(--text-primary))]">{currentAccent.label}</span>
                                             </p>
                                         </div>
                                         <button

@@ -20,7 +20,7 @@ export function AppearanceDrawer({
     className = '',
 }: AppearanceDrawerProps) {
     const isVisible = isOpenProp ?? openProp ?? false;
-    const { theme, currentScale, currentAccent } = useTheme();
+    const { theme, currentScale, currentAccent, currentDensity, zoomPercentage } = useTheme();
 
     return (
         <RightPanel
@@ -56,7 +56,7 @@ export function AppearanceDrawer({
                     <div className="flex items-center gap-2">
                         <Sparkles className="w-4 h-4 text-[hsl(var(--primary))]" />
                         <span className="text-2xs font-semibold text-[hsl(var(--text-primary))]">
-                            {theme === 'night' ? 'Modo Noche' : 'Modo Día'} • {currentScale.label} ({currentScale.percentage})
+                            {theme === 'night' ? 'Modo Noche' : 'Modo Día'} • {currentScale.label} ({zoomPercentage}%) • {currentDensity.label}
                         </span>
                         <span className="text-[hsl(var(--border))]">•</span>
                         <span className="inline-flex items-center gap-1 text-2xs font-medium text-[hsl(var(--text-secondary))]">
