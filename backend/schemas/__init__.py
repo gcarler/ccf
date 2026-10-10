@@ -118,6 +118,8 @@ from backend.schemas.auth_v3 import (
     RolPlataformaUpdate,
     TokenResponse,
     TokenSesionRead,
+    UpdateUserPreferencesRequest,
+    UserPreferencesResponse,
     UsuarioBase,
     UsuarioCreate,
     UsuarioLogin,

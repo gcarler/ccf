@@ -34,6 +34,10 @@ from backend.models_auth import (
     TokenSesion,
     Usuario,
 )
+from backend.schemas.auth_v3 import (
+    UpdateUserPreferencesRequest,
+    UserPreferencesResponse,
+)
 
 settings = get_settings()
 log = logging.getLogger(__name__)
@@ -1413,3 +1417,44 @@ def disable_2fa(
     db.commit()
 
     return {"status": "success", "message": "2FA desactivado exitosamente"}
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# 11. PREFERENCIAS DE INTERFAZ Y ACCESIBILIDAD (UI / APPEARANCE)
+# ═══════════════════════════════════════════════════════════════════════
+
+
+@router.get("/preferences", response_model=UserPreferencesResponse)
+def get_user_ui_preferences(
+    request: Request,
+    db: Session = Depends(get_db),
+    current_user: Usuario = Depends(require_auth_dep),
+):
+    """Retorna las preferencias de interfaz, accesibilidad y escala del usuario autenticado."""
+    from backend.crud.identity import get_ui_preferences
+
+    prefs = get_ui_preferences(db, current_user.id)
+    return UserPreferencesResponse(
+        user_id=str(current_user.id),
+        settings=prefs.settings if prefs and prefs.settings else {},
+        updated_at=prefs.updated_at.isoformat() if prefs and prefs.updated_at else None,
+    )
+
+
+@router.put("/preferences", response_model=UserPreferencesResponse)
+def update_user_ui_preferences(
+    payload: UpdateUserPreferencesRequest,
+    request: Request,
+    db: Session = Depends(get_db),
+    current_user: Usuario = Depends(require_auth_dep),
+):
+    """Actualiza y persiste las preferencias de interfaz, escala y acento ministerial."""
+    from backend.crud.identity import update_ui_preferences
+
+    prefs = update_ui_preferences(db, current_user.id, payload.settings)
+    return UserPreferencesResponse(
+        user_id=str(current_user.id),
+        settings=prefs.settings if prefs and prefs.settings else {},
+        updated_at=prefs.updated_at.isoformat() if prefs and prefs.updated_at else None,
+    )
+

@@ -269,3 +269,17 @@ class AuthStatsSummary(BaseModel):
     verified_users: int
     mfa_enabled: int
     by_role: dict[str, int]
+
+
+# ── Preferencias de Interfaz / Accesibilidad ──────────────────────────────
+
+
+class UserPreferencesResponse(BaseModel):
+    user_id: str
+    settings: dict[str, Any] = Field(default_factory=dict)
+    updated_at: Optional[str] = None
+
+
+class UpdateUserPreferencesRequest(BaseModel):
+    settings: dict[str, Any] = Field(default_factory=dict)
+

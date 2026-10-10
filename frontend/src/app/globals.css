@@ -5,6 +5,7 @@
 /* Compact Design Tokens */
 :root,
 [data-theme="day"] {
+  --ui-scale: 1;
   --bg-primary: 0 0% 100%;
   --bg-secondary: 210 40% 98%;
   --text-primary: 222 47% 11%;
@@ -142,6 +143,7 @@
 
 
 [data-theme="night"] {
+  --ui-scale: 1;
   --bg-primary: 222 47% 4%;
   --bg-secondary: 222 47% 6%;
   --text-primary: 210 40% 98%;
@@ -211,6 +213,10 @@
 }
 
 @layer base {
+  html {
+    font-size: calc(100% * var(--ui-scale, 1));
+  }
+
   body {
     background-color: hsl(var(--bg-primary));
     color: hsl(var(--text-primary));
