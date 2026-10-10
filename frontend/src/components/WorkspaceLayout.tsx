@@ -4,6 +4,7 @@ import ErrorBoundary from '@/components/ErrorBoundary';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import MeshChat from '@/components/ui/MeshChat';
 import ThemeToggle from '@/components/ui/ThemeToggle';
+import AppearanceDrawer from '@/components/ui/AppearanceDrawer';
 import { DSTooltip } from '@/design';
 import UniversalCreationDrawer from '@/components/ui/UniversalCreationDrawer';
 import WorkspaceInbox from '@/components/WorkspaceInbox';
@@ -67,13 +68,14 @@ function WorkspaceLayoutInner({
     allowedRoles, allowedPermissions, hideWorkspaceHeader, depth, onBack, customSidebar,
     // Toolbar props
     breadcrumbs, viewType, setViewType, availableViews,
-    rightActions, leftActions, onSearch, onFilter, onColumns, onGroup, onMore, onAdd, onAddOption
+    rightActions, leftActions, onSearch, onFilter, onColumns, onGroup, onMore, onAdd, onAddOption, onAppearance
 }: any) {
     const { user, hasModuleAccess, hasPermission, logout } = useAuth();
     const pathname = usePathname();
     const moduleKey = pathname?.split('/')[2] || 'default';
     const [showInbox, setShowInbox] = useState(false);
     const [showChat, setShowChat] = useState(false);
+    const [showAppearance, setShowAppearance] = useState(false);
     const [isMounted, setIsReady] = useState(false);
     const [isFocusMode, setIsFocusMode] = useState(false);
     const [viewportMode, setViewportMode] = useState<'mobile' | 'tablet' | 'desktop'>('desktop');
@@ -368,7 +370,7 @@ function WorkspaceLayoutInner({
     // Combined Right Actions for WorkspaceToolbar
     const defaultRightActions = (
         <div className="flex items-center gap-0.5">
-            <ThemeToggle variant="pill" />
+            <ThemeToggle variant="pill" onOpenAppearance={() => setShowAppearance(true)} />
 
             <button
                 onClick={toggleFocusMode}
@@ -441,6 +443,7 @@ function WorkspaceLayoutInner({
                             onColumns={onColumns}
                             onGroup={onGroup}
                             onMore={onMore}
+                            onAppearance={onAppearance ?? (() => setShowAppearance(true))}
                             onAdd={onAdd}
                             onAddOption={onAddOption}
                         />
@@ -551,6 +554,7 @@ function WorkspaceLayoutInner({
 
                         <WorkspaceInbox isOpen={showInbox} onClose={() => setShowInbox(false)} />
                         <MeshChat isOpen={showChat} onClose={() => setShowChat(false)} />
+                        <AppearanceDrawer isOpen={showAppearance} onClose={() => setShowAppearance(false)} />
 
                         <motion.button
                             initial={{ scale: 0, rotate: -45 }}
