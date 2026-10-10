@@ -47,4 +47,5 @@ export { default as UniversalWikiView } from './ui/UniversalWikiView';
 // ── App-level singletons ──────────────────────────────────────────────────
 export { CommandCenter } from './ui/CommandCenter';
 export { default as ThemeToggle } from './ui/ThemeToggle';
+export { default as AppearanceDrawer, AppearanceDrawer as AppearanceDrawerComponent } from './ui/AppearanceDrawer';
 export { default as MeshChat } from './ui/MeshChat';

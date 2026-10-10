@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Sun, Moon } from "lucide-react";
+import { Sun, Moon, Palette } from "lucide-react";
 import { useTheme } from "@/app/plataforma/theme/ThemeContext";
 import { DSTooltip } from '@/design';
 
@@ -9,9 +9,10 @@ interface ThemeToggleProps {
     /** 'icon' = solo icono circular (para mini-sidebar / toolbar) */
     variant?: "icon" | "pill" | "row";
     className?: string;
+    onOpenAppearance?: () => void;
 }
 
-export default function ThemeToggle({ variant = "icon", className = "" }: ThemeToggleProps) {
+export default function ThemeToggle({ variant = "icon", className = "", onOpenAppearance }: ThemeToggleProps) {
     const { theme, toggleTheme } = useTheme();
     const isNight = theme === "night";
 
@@ -83,6 +84,20 @@ export default function ThemeToggle({ variant = "icon", className = "" }: ThemeT
                 >
                     <Moon size={13} />
                 </button>
+                {onOpenAppearance && (
+                    <>
+                        <div className="w-px h-3.5 bg-[hsl(var(--border))] dark:bg-white/10 mx-0.5" />
+                        <button
+                            type="button"
+                            onClick={onOpenAppearance}
+                            className="size-6 rounded-lg flex items-center justify-center transition-all text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] hover:bg-[hsl(var(--surface-3))] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[hsl(var(--primary))]"
+                            title="Ajustar apariencia y escala de interfaz"
+                            aria-label="Abrir panel de apariencia y escala"
+                        >
+                            <Palette size={13} />
+                        </button>
+                    </>
+                )}
             </div>
         );
     }

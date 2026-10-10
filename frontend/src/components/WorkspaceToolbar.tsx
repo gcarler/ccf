@@ -9,7 +9,8 @@ import {
     ChevronRight,
     Home,
     Columns,
-    Layers
+    Layers,
+    Palette
 } from 'lucide-react';
 import ViewSwitcher, { ViewType } from './ViewSwitcher';
 import { motion } from 'framer-motion';
@@ -35,6 +36,7 @@ interface WorkspaceToolbarProps {
     onColumns?: () => void;
     onGroup?: () => void;
     onMore?: () => void;
+    onAppearance?: () => void;
     onAdd?: () => void;
     onAddOption?: (type: string) => void;
 }
@@ -52,6 +54,7 @@ export default function WorkspaceToolbar({
     onColumns,
     onGroup,
     onMore,
+    onAppearance,
     onAdd,
     onAddOption
 }: WorkspaceToolbarProps) {
@@ -136,6 +139,7 @@ export default function WorkspaceToolbar({
                         />
                     )}
 
+                    {onAppearance && <ToolbarButton icon={Palette} onClick={onAppearance} tooltip="Apariencia y accesibilidad" />}
                     {onMore && <ToolbarButton icon={MoreHorizontal} onClick={onMore} tooltip="Más opciones" />}
                     </div>
                     {rightActions}

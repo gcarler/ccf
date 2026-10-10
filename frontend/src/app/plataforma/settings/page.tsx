@@ -13,8 +13,25 @@ import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
 import clsx from 'clsx';
 import WorkspaceLayout from '@/components/WorkspaceLayout';
+import AppearanceDrawer from '@/components/ui/AppearanceDrawer';
+import { useTheme } from '@/app/plataforma/theme/ThemeContext';
 
-const SETTINGS_GROUPS = [
+export interface SettingsItemConfig {
+    id?: string;
+    icon: any;
+    label: string;
+    desc: string;
+    href?: string;
+    action?: 'appearance';
+}
+
+export interface SettingsGroupConfig {
+    title: string;
+    color: string;
+    items: SettingsItemConfig[];
+}
+
+const SETTINGS_GROUPS: SettingsGroupConfig[] = [
     {
         title: "Cuenta",
         color: "blue",
@@ -29,9 +46,9 @@ const SETTINGS_GROUPS = [
         title: "Apariencia",
         color: "blue",
         items: [
-            { icon: Palette, label: "Tema Visual", desc: "Modo claro, oscuro o sistema", href: "/plataforma/theme" },
+            { id: "appearance-theme", icon: Palette, label: "Tema Visual", desc: "Modo día, noche, paleta de acento y escala", href: "/plataforma/theme", action: "appearance" },
             { icon: Languages, label: "Idioma y Región", desc: "Español (Colombia)", href: "#idioma" },
-            { icon: Monitor, label: "Densidad de UI", desc: "Compacto, normal o cómodo", href: "#densidad" },
+            { id: "appearance-density", icon: Monitor, label: "Densidad de UI", desc: "Compacto (90%), normal (100%), cómodo (115%) o grande (125%)", href: "#densidad", action: "appearance" },
         ]
     },
     {
@@ -54,7 +71,8 @@ const COLOR_MAP: Record<string, string> = {
 export default function SettingsPage() {
     const { logout, user } = useAuth();
     const router = useRouter();
-    const [theme, setTheme] = useState<'light' | 'dark' | 'system'>('system');
+    const { theme, setTheme, currentScale, currentAccent } = useTheme();
+    const [isAppearanceOpen, setIsAppearanceOpen] = useState(false);
 
     const sidebarSections = [
         {
@@ -119,28 +137,51 @@ export default function SettingsPage() {
                     transition={{ delay: 0.05 }}
                     className="bg-[hsl(var(--surface-1))] rounded-lg border border-[hsl(var(--border))] p-3 shadow-sm"
                 >
-                    <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] mb-4">Tema Visual</p>
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                        {([
-                            { id: 'light', icon: Sun, label: 'Claro' },
-                            { id: 'dark', icon: Moon, label: 'Oscuro' },
-                            { id: 'system', icon: Monitor, label: 'Sistema' },
-                        ] as const).map(t => (
-                            <button
-                                key={t.id}
-                                onClick={() => setTheme(t.id)}
-                                className={clsx(
-                                    "flex flex-col items-center gap-2 py-1.5 rounded-md border-2 transition-all text-xs font-semibold uppercase tracking-wide",
-                                    theme === t.id
-                                        ? "border-[hsl(var(--primary))] bg-[hsl(var(--info-muted))] text-[hsl(var(--primary))]"
-                                        : "border-[hsl(var(--border))] text-[hsl(var(--text-secondary))] hover:border-[hsl(var(--border))]"
-                                )}
-                            >
-                                <t.icon size={18} />
-                                {t.label}
-                                {theme === t.id && <Check size={10} className="text-[hsl(var(--primary))]" />}
-                            </button>
-                        ))}
+                    <div className="flex items-center justify-between mb-4">
+                        <div>
+                            <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Tema Visual y Accesibilidad</p>
+                            <p className="text-xs text-[hsl(var(--text-secondary))]">
+                                Acento activo: <span className="font-semibold text-[hsl(var(--text-primary))]">{currentAccent.label}</span> · Escala: <span className="font-semibold text-[hsl(var(--text-primary))]">{currentScale.label} ({currentScale.percentage})</span>
+                            </p>
+                        </div>
+                        <button
+                            type="button"
+                            onClick={() => setIsAppearanceOpen(true)}
+                            className="text-2xs font-semibold text-[hsl(var(--primary))] hover:underline flex items-center gap-1.5 transition-colors"
+                        >
+                            <Palette size={13} />
+                            <span>Abrir panel de apariencia</span>
+                        </button>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <button
+                            type="button"
+                            onClick={() => setTheme('day')}
+                            className={clsx(
+                                "flex flex-col items-center gap-2 py-2 rounded-md border-2 transition-all text-xs font-semibold uppercase tracking-wide",
+                                theme === 'day'
+                                    ? "border-[hsl(var(--primary))] bg-[hsl(var(--info-muted))] text-[hsl(var(--primary))]"
+                                    : "border-[hsl(var(--border))] text-[hsl(var(--text-secondary))] hover:border-[hsl(var(--border))]"
+                            )}
+                        >
+                            <Sun size={18} />
+                            Modo Día
+                            {theme === 'day' && <Check size={10} className="text-[hsl(var(--primary))]" />}
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setTheme('night')}
+                            className={clsx(
+                                "flex flex-col items-center gap-2 py-2 rounded-md border-2 transition-all text-xs font-semibold uppercase tracking-wide",
+                                theme === 'night'
+                                    ? "border-[hsl(var(--primary))] bg-[hsl(var(--info-muted))] text-[hsl(var(--primary))]"
+                                    : "border-[hsl(var(--border))] text-[hsl(var(--text-secondary))] hover:border-[hsl(var(--border))]"
+                            )}
+                        >
+                            <Moon size={18} />
+                            Modo Noche
+                            {theme === 'night' && <Check size={10} className="text-[hsl(var(--primary))]" />}
+                        </button>
                     </div>
                 </motion.div>
 
@@ -159,7 +200,14 @@ export default function SettingsPage() {
                             {group.items.map((item, ii) => (
                                 <button
                                     key={ii}
-                                    onClick={() => item.href.startsWith('/') ? router.push(item.href) : null}
+                                    type="button"
+                                    onClick={() => {
+                                        if (item.action === 'appearance') {
+                                            setIsAppearanceOpen(true);
+                                        } else if (item.href && item.href.startsWith('/')) {
+                                            router.push(item.href);
+                                        }
+                                    }}
                                     className="w-full flex items-center gap-4 px-3 py-1.5 hover:bg-[hsl(var(--surface-2))] transition-all group text-left"
                                 >
                                     <div className={clsx("size-9 rounded-md flex items-center justify-center shrink-0", COLOR_MAP[group.color])}>
@@ -200,6 +248,10 @@ export default function SettingsPage() {
                 </p>
             </div>
         </div>
+        <AppearanceDrawer
+            isOpen={isAppearanceOpen}
+            onClose={() => setIsAppearanceOpen(false)}
+        />
         </WorkspaceLayout>
     );
 }
