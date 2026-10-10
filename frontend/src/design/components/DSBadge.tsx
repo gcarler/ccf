@@ -3,11 +3,12 @@
 import React from 'react';
 import clsx from 'clsx';
 
-type Tone = 'slate' | 'blue' | 'emerald' | 'amber';
+type Tone = 'slate' | 'blue' | 'emerald' | 'amber' | 'primary';
 
 const toneStyles: Record<Tone, string> = {
     slate: 'bg-[hsl(var(--bg-muted))]/70 text-[hsl(var(--text-secondary))]',
     blue: 'bg-[hsl(var(--info-muted))] text-[hsl(var(--info))]',
+    primary: 'bg-[hsl(var(--primary)/0.15)] text-[hsl(var(--primary))] border-[hsl(var(--primary)/0.3)]',
     emerald: 'bg-[hsl(var(--success-muted))] text-[hsl(var(--success-text))]',
     amber: 'bg-[hsl(var(--warning-muted))] text-[hsl(var(--warning-text))]',
 };

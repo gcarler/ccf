@@ -8,7 +8,7 @@ interface DSMetricProps {
     label: string;
     value: string;
     trend?: string;
-    tone?: 'blue' | 'emerald' | 'amber';
+    tone?: 'blue' | 'emerald' | 'amber' | 'primary';
     icon?: AppIcon;
     onClick?: () => void;
     href?: string;
@@ -17,10 +17,11 @@ interface DSMetricProps {
 import Link from 'next/link';
 
 export function DSMetric({ label, value, trend, tone = 'blue', icon: Icon, onClick, href }: DSMetricProps) {
-    const tones: Record<typeof tone, { bg: string; text: string; iconBg: string }> = {
+    const tones: Record<NonNullable<DSMetricProps['tone']>, { bg: string; text: string; iconBg: string }> = {
         blue: { bg: 'bg-[hsl(var(--info-muted))]', text: 'text-[hsl(var(--info))]', iconBg: 'bg-[hsl(var(--info-muted))]' },
-        emerald: { bg: 'bg-[hsl(var(--success-muted))]', text: 'text-[hsl(var(--success-text))]', iconBg: 'bg-[hsl(var(--success-muted))]' },
-        amber: { bg: 'bg-[hsl(var(--warning-muted))]', text: 'text-[hsl(var(--warning-text))]', iconBg: 'bg-[hsl(var(--warning-muted))]' },
+        primary: { bg: 'bg-[hsl(var(--primary)/0.12)]', text: 'text-[hsl(var(--primary))]', iconBg: 'bg-[hsl(var(--primary)/0.12)]' },
+        emerald: { bg: 'bg-[hsl(var(--success-muted))] text-[hsl(var(--success-text))]', text: 'text-[hsl(var(--success-text))]', iconBg: 'bg-[hsl(var(--success-muted))]' },
+        amber: { bg: 'bg-[hsl(var(--warning-muted))] text-[hsl(var(--warning-text))]', text: 'text-[hsl(var(--warning-text))]', iconBg: 'bg-[hsl(var(--warning-muted))]' },
     };
 
     const containerClasses = clsx(

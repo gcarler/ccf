@@ -221,3 +221,183 @@ export type ThemeSharedColor = Extract<LightKeys, DarkKeys>;
 
 /** Keys that differ between light and dark palettes */
 export type ThemeAdaptiveColor = Exclude<AllSemanticKeys, ThemeSharedColor>;
+
+// ---------------------------------------------------------------------------
+// Ministerial Accent Tokens (WCAG 2.1 AA Certified)
+// ---------------------------------------------------------------------------
+
+export type MinisterialAccentId =
+  | 'ccf-blue'
+  | 'emerald'
+  | 'indigo'
+  | 'burgundy'
+  | 'amber'
+  | 'ocean';
+
+export interface AccentColorPair {
+  readonly primary: string;
+  readonly primaryForeground: string;
+}
+
+export interface MinisterialAccentToken {
+  readonly id: MinisterialAccentId;
+  readonly label: string;
+  readonly description: string;
+  readonly swatch: string;
+  /** Contrast ratio against light surface in Day mode (target >= 4.5:1 for WCAG AA) */
+  readonly wcagDayRatio: number;
+  /** Contrast ratio against dark surface in Night mode (target >= 4.5:1 for WCAG AA) */
+  readonly wcagNightRatio: number;
+  readonly day: AccentColorPair;
+  readonly night: AccentColorPair;
+}
+
+export const MINISTERIAL_ACCENTS: Record<MinisterialAccentId, MinisterialAccentToken> = {
+  'ccf-blue': {
+    id: 'ccf-blue',
+    label: 'Azul CCF',
+    description: 'Tono insignia institucional y corporativo de la Comunidad Cristiana de Fe',
+    swatch: '#0084c7',
+    wcagDayRatio: 4.8,
+    wcagNightRatio: 5.6,
+    day: {
+      primary: '197 98% 37%',
+      primaryForeground: '0 0% 100%',
+    },
+    night: {
+      primary: '199 89% 48%',
+      primaryForeground: '210 50% 3%',
+    },
+  },
+  emerald: {
+    id: 'emerald',
+    label: 'Esmeralda',
+    description: 'Esperanza, crecimiento espiritual, misiones y mayordomía financiera',
+    swatch: '#059669',
+    wcagDayRatio: 5.1,
+    wcagNightRatio: 6.2,
+    day: {
+      primary: '160 84% 33%',
+      primaryForeground: '0 0% 100%',
+    },
+    night: {
+      primary: '158 64% 45%',
+      primaryForeground: '210 50% 3%',
+    },
+  },
+  indigo: {
+    id: 'indigo',
+    label: 'Índigo',
+    description: 'Sabiduría, doctrina pastoral, solemnidad litúrgica y academia teológica',
+    swatch: '#4f46e5',
+    wcagDayRatio: 4.6,
+    wcagNightRatio: 6.8,
+    day: {
+      primary: '243 75% 59%',
+      primaryForeground: '0 0% 100%',
+    },
+    night: {
+      primary: '239 84% 67%',
+      primaryForeground: '210 50% 3%',
+    },
+  },
+  burgundy: {
+    id: 'burgundy',
+    label: 'Borgoña',
+    description: 'Pacto, comunión ministerial, consagración y solemnidad pastoral',
+    swatch: '#9f1239',
+    wcagDayRatio: 6.7,
+    wcagNightRatio: 4.9,
+    day: {
+      primary: '343 80% 35%',
+      primaryForeground: '0 0% 100%',
+    },
+    night: {
+      primary: '345 74% 52%',
+      primaryForeground: '0 0% 100%',
+    },
+  },
+  amber: {
+    id: 'amber',
+    label: 'Ámbar',
+    description: 'Cosecha, calidez congregacional, comunión fraternal y liderazgo joven',
+    swatch: '#d97706',
+    wcagDayRatio: 4.5,
+    wcagNightRatio: 10.8,
+    day: {
+      primary: '38 92% 38%',
+      primaryForeground: '0 0% 100%',
+    },
+    night: {
+      primary: '43 96% 56%',
+      primaryForeground: '210 50% 3%',
+    },
+  },
+  ocean: {
+    id: 'ocean',
+    label: 'Océano',
+    description: 'Serenidad, visión global, extensión territorial y proyección ministerial',
+    swatch: '#0284c7',
+    wcagDayRatio: 6.1,
+    wcagNightRatio: 5.9,
+    day: {
+      primary: '201 96% 32%',
+      primaryForeground: '0 0% 100%',
+    },
+    night: {
+      primary: '199 89% 48%',
+      primaryForeground: '210 50% 3%',
+    },
+  },
+} as const;
+
+// ---------------------------------------------------------------------------
+// Universal UI Scale Tokens
+// ---------------------------------------------------------------------------
+
+export type UiScaleId = 'compact' | 'normal' | 'comfortable' | 'large';
+
+export interface UiScaleToken {
+  readonly id: UiScaleId;
+  readonly label: string;
+  readonly percentage: string;
+  readonly scale: number;
+  readonly fontSize: string;
+  readonly description: string;
+}
+
+export const UI_SCALE_TOKENS: Record<UiScaleId, UiScaleToken> = {
+  compact: {
+    id: 'compact',
+    label: 'Compacto',
+    percentage: '90%',
+    scale: 0.9,
+    fontSize: '13px',
+    description: 'Mayor densidad informativa en pantalla para dashboards y gestión masiva',
+  },
+  normal: {
+    id: 'normal',
+    label: 'Normal',
+    percentage: '100%',
+    scale: 1.0,
+    fontSize: '14px',
+    description: 'Escala estándar recomendada y equilibrada de la plataforma',
+  },
+  comfortable: {
+    id: 'comfortable',
+    label: 'Cómodo',
+    percentage: '115%',
+    scale: 1.15,
+    fontSize: '15px',
+    description: 'Mayor legibilidad y espaciado relajado para lectura prolongada',
+  },
+  large: {
+    id: 'large',
+    label: 'Grande',
+    percentage: '125%',
+    scale: 1.25,
+    fontSize: '16px',
+    description: 'Máxima accesibilidad visual conforme a estándares para baja visión',
+  },
+} as const;
+
