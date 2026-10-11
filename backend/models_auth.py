@@ -233,6 +233,32 @@ class NotificacionUsuario(Base):
     created_at = Column(DateTime(timezone=True), default=_utcnow)
 
 
+class NotificationPreference(Base):
+    """Preferencias de canales de notificación por usuario y tipo de evento.
+
+    Cada fila decide si un tipo de evento (``task_assigned``, ``mention``,
+    ``event_reminder``, ...) notifica por un canal dado (``in_app``, ``email``).
+
+    Multi-tenant / Axioma 3:
+      - ``user_id`` → ``auth_users.id`` (kernel de personas).
+      - Cada usuario ve y muta SÓLO sus propias preferencias.
+
+    Unicidad: una fila por (user_id, channel, event_type) — enforced en
+    migración via UNIQUE index ``uq_notif_pref_user_channel_event``.
+    """
+
+    __tablename__ = "notification_preferences"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=_uuid.uuid4)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("auth_users.id", ondelete="CASCADE"), nullable=False)
+    sede_id = Column(UUID(as_uuid=True), ForeignKey("sedes.id", ondelete="SET NULL"), nullable=True, index=True)
+    channel = Column(String(20), nullable=False)  # in_app | email
+    event_type = Column(String(50), nullable=False)  # task_assigned | mention | event_reminder | ...
+    enabled = Column(Boolean, nullable=False, default=True)
+    created_at = Column(DateTime(timezone=True), default=_utcnow, nullable=False)
+    updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow, nullable=False)
+
+
 class RecordatorioUsuario(Base):
     __tablename__ = "auth_user_reminders"
     __table_args__ = (Index("ix_user_reminders_user_id", "user_id"),)

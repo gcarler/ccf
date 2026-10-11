@@ -18,6 +18,7 @@ import WorkspaceLayout from '@/components/WorkspaceLayout';
 import { apiFetch } from '@/lib/http';
 import TwoFactorDrawer from '@/components/admin/TwoFactorDrawer';
 import PushNotificationManager from '@/components/messaging/PushNotificationManager';
+import NotificationPreferencesPanel from '@/components/messaging/NotificationPreferencesPanel';
 import AppearanceDrawer from '@/components/ui/AppearanceDrawer';
 import PaletteSelector from '@/app/plataforma/theme/PaletteSelector';
 import { useTheme } from '@/app/plataforma/theme/ThemeContext';
@@ -514,6 +515,7 @@ export default function AccountSettingsPage() {
                                     key="notifications" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}
                                     className="space-y-4"
                                 >
+                                    <NotificationPreferencesPanel />
                                     <PushNotificationManager />
                                 </motion.div>
                             )}

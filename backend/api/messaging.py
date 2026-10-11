@@ -53,7 +53,7 @@ import re
 import uuid as _uuid
 from typing import List, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Query, WebSocket, WebSocketDisconnect
+from fastapi import APIRouter, Depends, HTTPException, Query, WebSocket, WebSocketDisconnect, status
 from jose import jwt as _jwt
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
@@ -71,6 +71,8 @@ from backend.core.permissions import (
 )
 from backend.crud._utils import _coerce_uuid_or_404
 from backend.crud.crm import get_user_sede_id, resolve_persona_id_for_user
+from backend.services import notification_preferences as notification_prefs
+from backend.schemas import notification_preferences as schemas_notification_preferences
 from backend.mesh_websockets import manager
 from backend.schemas.notifications import MessagingChannel
 from backend.services.messaging import CommunicationOutcome
@@ -410,6 +412,54 @@ async def send_notification(
     await _check_broadcast_rate_limit(user_id)
     await manager.broadcast_event({"event": payload.event, "body": payload.body}, room=room)
     return {"status": "queued"}
+
+
+# ── Fase 1: preferencias de notificación por usuario ─────────────────────────────────
+# NOTA: declaradas ANTES de ``/messaging/notifications/{notification_id}`` para
+# que FastAPI matchee ``preferences`` como ruta estática y no como id.
+
+
+@router.get("/messaging/notifications/preferences", response_model=schemas_notification_preferences.NotificationPreferencesBulkRead)
+def get_notification_preferences(
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("messaging", "read")),
+):
+    """Devuelve (y siembra si faltan) las preferencias de notificación del usuario.
+
+    Axioma 3: ``user_id`` proviene SIEMPRE del actor autenticado; ``sede_id``
+    del usuario, nunca del cliente.
+    """
+    persona_id = resolve_persona_id_for_user(db, getattr(current_user, "id", None))
+    if persona_id is None:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="User has no persona profile")
+    sede_id = get_user_sede_id(db, current_user.id)
+    prefs = notification_prefs.get_or_create_user_preferences(db, user_id=persona_id, sede_id=sede_id)
+    return {"preferences": prefs}
+
+
+@router.patch("/messaging/notifications/preferences", response_model=schemas_notification_preferences.NotificationPreferenceRead)
+def update_notification_preference(
+    payload: schemas_notification_preferences.NotificationPreferenceUpdate,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_module_access("messaging", "read")),
+):
+    """Actualiza una preferencia concreto (canal × evento) del usuario autenticado."""
+    persona_id = resolve_persona_id_for_user(db, getattr(current_user, "id", None))
+    if persona_id is None:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="User has no persona profile")
+    sede_id = get_user_sede_id(db, current_user.id)
+    try:
+        pref = notification_prefs.set_preference(
+            db,
+            user_id=persona_id,
+            channel=payload.channel,
+            event_type=payload.event_type,
+            enabled=payload.enabled,
+            sede_id=sede_id,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(exc))
+    return pref
 
 
 @router.get("/messaging/notifications", response_model=List[schemas.Notification])
