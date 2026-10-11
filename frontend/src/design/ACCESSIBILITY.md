@@ -120,7 +120,7 @@ La plataforma CCF implementa 6 acentos ministeriales dinámicos que inyectan los
 | :--- | :--- | :---: | :--- | :---: | :---: | :---: |
 | **Azul CCF** | `ccf-blue` | `#0084c7` | Identidad institucional y corporativa | `4.8:1` | `5.6:1` | **AA Conforme** |
 | **Esmeralda** | `emerald` | `#059669` | Esperanza, crecimiento espiritual y misiones | `5.1:1` | `6.2:1` | **AA Conforme** |
-| **Índigo** | `indigo` | `#4f46e5` | Sabiduría, doctrina pastoral y teología | `4.6:1` | `6.8:1` | **AA Conforme** |
+| **Azul real** | `royal` | `#4f46e5` | Sabiduría, doctrina pastoral y teología | `4.6:1` | `6.8:1` | **AA Conforme** |
 | **Borgoña** | `burgundy` | `#9f1239` | Pacto, comunión y solemnidad litúrgica | `6.7:1` | `4.9:1` | **AA Conforme** |
 | **Ámbar** | `amber` | `#d97706` | Cosecha, calidez y comunión congregacional | `4.5:1` | `10.8:1` | **AA Conforme** |
 | **Océano** | `ocean` | `#0284c7` | Serenidad, visión global y expansión | `6.1:1` | `5.9:1` | **AA Conforme** |

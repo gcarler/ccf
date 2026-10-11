@@ -20,7 +20,7 @@ function DensityHarness() {
         { accessorKey: 'name', header: 'Nombre' },
     ];
     const sampleData = [
-        { id: '1', name: 'Membresía Central' },
+        { id: '1', name: 'Iglesia Central' },
         { id: '2', name: 'Escuela de Líderes' },
     ];
 

@@ -78,7 +78,7 @@ function AdoptionHarness() {
                 token="fake"
                 session={null}
                 personas={[
-                    { persona_id: 'p1', name: 'Juan Pérez', role: 'miembro', role_label: 'Miembro', status: 'present', notes: '' },
+                    { persona_id: 'p1', name: 'Juan Pérez', role: 'asistente', role_label: 'Asistente', status: 'present', notes: '' },
                 ]}
                 setPersonas={vi.fn()}
                 saving={false}

@@ -42,7 +42,7 @@ describe('PaletteSelector Component', () => {
         // 6 accents
         expect(screen.getByText('Azul CCF')).toBeInTheDocument();
         expect(screen.getByText('Esmeralda')).toBeInTheDocument();
-        expect(screen.getByText('Índigo')).toBeInTheDocument();
+        expect(screen.getByText('Azul real')).toBeInTheDocument();
         expect(screen.getByText('Borgoña')).toBeInTheDocument();
         expect(screen.getByText('Ámbar')).toBeInTheDocument();
         expect(screen.getByText('Océano')).toBeInTheDocument();
@@ -89,13 +89,13 @@ describe('PaletteSelector Component', () => {
             </ThemeProvider>
         );
 
-        const indigoBtn = screen.getByRole('radio', { name: /Índigo/i });
+        const royalBtn = screen.getByRole('radio', { name: /Azul real/i });
         act(() => {
-            fireEvent.click(indigoBtn);
+            fireEvent.click(royalBtn);
         });
 
-        expect(indigoBtn).toHaveAttribute('aria-checked', 'true');
-        expect(document.documentElement.getAttribute('data-accent')).toBe('indigo');
+        expect(royalBtn).toHaveAttribute('aria-checked', 'true');
+        expect(document.documentElement.getAttribute('data-accent')).toBe('royal');
     });
 
     it('resets all preferences to default when clicking reset button', () => {

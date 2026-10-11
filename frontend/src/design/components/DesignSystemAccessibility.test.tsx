@@ -93,7 +93,7 @@ describe('Design System Atomic Components — Accessibility & Scale Integration'
         const accents: MinisterialAccentId[] = [
             'ccf-blue',
             'emerald',
-            'indigo',
+            'royal',
             'burgundy',
             'amber',
             'ocean',
