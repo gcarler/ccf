@@ -203,10 +203,10 @@ describe('Mathematical Regression Verification across Phase 3 Target Modules', (
         expect(0.5 + ultraDeltas.padX).toBe(0.5);
         expect(0.5 + spaciousDeltas.padX).toBeGreaterThan(0.5);
 
-        // Export CSV button: px-4 py-2 (1rem, 0.5rem)
-        expect(1 + ultraDeltas.padX).toBe(1);
+        // Export CSV button: px-0 py-2 (0rem, 0.5rem base) - preserves 0px horizontal padding in ultra-compact
+        expect(0 + ultraDeltas.padX).toBe(0);
         expect(0.5 + ultraDeltas.padY).toBe(0.5);
-        expect(1 + spaciousDeltas.padX).toBeGreaterThan(1);
+        expect(0 + spaciousDeltas.padX).toBeGreaterThan(0);
         expect(0.5 + spaciousDeltas.padY).toBeGreaterThan(0.5);
     });
 

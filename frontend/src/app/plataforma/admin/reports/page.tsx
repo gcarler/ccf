@@ -435,7 +435,7 @@ export default function AdvancedBIReports() {
 
                         <button
                             onClick={() => exportReportsCsv(bi, activeTab)}
-                            className="w-full px-[calc(1rem+var(--density-pad-x-delta,0px))] py-[calc(0.5rem+var(--density-pad-y-delta,0px))] bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] rounded-lg text-xs font-semibold uppercase tracking-wide shadow-xl shadow-[hsl(var(--info)/20%)] active:scale-95 transition-all"
+                            className="w-full px-[calc(0rem+var(--density-pad-x-delta,0px))] py-[calc(0.5rem+var(--density-pad-y-delta,0px))] bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] rounded-lg text-xs font-semibold uppercase tracking-wide shadow-xl shadow-[hsl(var(--info)/20%)] active:scale-95 transition-all"
                         >
                             Exportar Reporte CSV
                         </button>
