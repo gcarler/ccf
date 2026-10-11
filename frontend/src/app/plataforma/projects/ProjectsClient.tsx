@@ -421,7 +421,7 @@ export default function ProjectsClient({ initialProjects, initialViewType = 'gri
             rightActions={
                 <button
                     onClick={() => setShowCreateForm(true)}
-                    className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wide transition-all bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] shadow-lg shadow-[hsl(var(--primary))]/20 hover:bg-[hsl(var(--primary))]/90 active:scale-95"
+                    className="flex items-center gap-2 px-[calc(0.75rem+var(--density-pad-x-delta,0px))] py-[calc(0.375rem+var(--density-pad-y-delta,0px))] rounded-lg text-xs font-bold uppercase tracking-wide transition-all bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] shadow-lg shadow-[hsl(var(--primary))]/20 hover:bg-[hsl(var(--primary))]/90 active:scale-95"
                 >
                     <Plus size={14} />
                     Nuevo Proyecto
@@ -441,7 +441,7 @@ export default function ProjectsClient({ initialProjects, initialViewType = 'gri
                     aria-label="Vista de proyectos"
                     value={viewType}
                     onChange={(event) => setViewType(event.target.value as ViewType)}
-                    className="h-10 min-w-0 flex-1 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] px-3 text-sm text-[hsl(var(--text-primary))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]/40 sm:hidden"
+                    className="h-[calc(2.5rem+var(--density-h-delta,0px))] min-w-0 flex-1 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] px-[calc(0.75rem+var(--density-pad-x-delta,0px))] text-sm text-[hsl(var(--text-primary))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]/40 sm:hidden"
                 >
                     {PROJECT_VIEWS.map((view) => (
                         <option key={view} value={view}>{PROJECT_VIEW_LABELS[view]}</option>
@@ -457,7 +457,7 @@ export default function ProjectsClient({ initialProjects, initialViewType = 'gri
                         placeholder="Buscar proyectos"
                         value={search}
                         onChange={(event) => handleSearchChange(event.target.value)}
-                        className="h-10 w-full rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] pl-9 pr-3 text-sm text-[hsl(var(--text-primary))] placeholder:text-[hsl(var(--muted-foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]/40"
+                        className="h-[calc(2.5rem+var(--density-h-delta,0px))] w-full rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] pl-9 pr-[calc(0.75rem+var(--density-pad-x-delta,0px))] text-sm text-[hsl(var(--text-primary))] placeholder:text-[hsl(var(--muted-foreground))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary))]/40"
                     />
                 </div>
             </div>
@@ -470,7 +470,7 @@ export default function ProjectsClient({ initialProjects, initialViewType = 'gri
                     <button
                         type="button"
                         onClick={() => setProjectLoadAttempt((attempt) => attempt + 1)}
-                        className="rounded-lg border border-[hsl(var(--border))] px-3 py-1.5 text-sm font-semibold text-[hsl(var(--text-primary))] hover:bg-[hsl(var(--surface-2))]"
+                        className="rounded-lg border border-[hsl(var(--border))] px-[calc(0.75rem+var(--density-pad-x-delta,0px))] py-[calc(0.375rem+var(--density-pad-y-delta,0px))] text-sm font-semibold text-[hsl(var(--text-primary))] hover:bg-[hsl(var(--surface-2))]"
                     >
                         Reintentar proyectos
                     </button>
@@ -619,7 +619,7 @@ export default function ProjectsClient({ initialProjects, initialViewType = 'gri
                             type="button"
                             onClick={() => handleProjectPageChange(projectOffset - PROJECTS_PAGE_SIZE)}
                             disabled={projectOffset === 0 || isLoadingProjects}
-                            className="rounded-lg border border-[hsl(var(--border))] px-3 py-2 text-sm font-medium text-[hsl(var(--text-primary))] transition-colors hover:bg-[hsl(var(--surface-2))] disabled:cursor-not-allowed disabled:opacity-50"
+                            className="rounded-lg border border-[hsl(var(--border))] px-[calc(0.75rem+var(--density-pad-x-delta,0px))] py-[calc(0.5rem+var(--density-pad-y-delta,0px))] text-sm font-medium text-[hsl(var(--text-primary))] transition-colors hover:bg-[hsl(var(--surface-2))] disabled:cursor-not-allowed disabled:opacity-50"
                         >
                             Anterior
                         </button>
@@ -627,7 +627,7 @@ export default function ProjectsClient({ initialProjects, initialViewType = 'gri
                             type="button"
                             onClick={() => handleProjectPageChange(projectOffset + PROJECTS_PAGE_SIZE)}
                             disabled={projectOffset + filtered.length >= projectTotal || isLoadingProjects}
-                            className="rounded-lg border border-[hsl(var(--border))] px-3 py-2 text-sm font-medium text-[hsl(var(--text-primary))] transition-colors hover:bg-[hsl(var(--surface-2))] disabled:cursor-not-allowed disabled:opacity-50"
+                            className="rounded-lg border border-[hsl(var(--border))] px-[calc(0.75rem+var(--density-pad-x-delta,0px))] py-[calc(0.5rem+var(--density-pad-y-delta,0px))] text-sm font-medium text-[hsl(var(--text-primary))] transition-colors hover:bg-[hsl(var(--surface-2))] disabled:cursor-not-allowed disabled:opacity-50"
                         >
                             Siguiente
                         </button>
@@ -649,7 +649,7 @@ function EmptyProjectsState({ search, onShowCreate }: { search: string; onShowCr
             {!search && (
                 <button
                     onClick={onShowCreate}
-                    className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] text-xs font-bold uppercase tracking-wide shadow-lg shadow-[hsl(var(--primary))]/20 hover:bg-[hsl(var(--primary))]/90 active:scale-95"
+                    className="inline-flex items-center gap-2 px-[calc(1rem+var(--density-pad-x-delta,0px))] py-[calc(0.5rem+var(--density-pad-y-delta,0px))] rounded-lg bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] text-xs font-bold uppercase tracking-wide shadow-lg shadow-[hsl(var(--primary))]/20 hover:bg-[hsl(var(--primary))]/90 active:scale-95"
                 >
                     <Plus size={16} /> Crear proyecto
                 </button>

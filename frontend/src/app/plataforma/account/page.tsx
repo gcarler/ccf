@@ -161,7 +161,7 @@ export default function AccountSettingsPage() {
                 rightActions={
                     <button
                         onClick={handleSave} disabled={isSaving}
-                        className="flex items-center gap-2 px-3 py-2 bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] rounded-md text-xs font-semibold uppercase tracking-wide shadow-xl shadow-[hsl(var(--primary)/0.2)] active:scale-95 transition-all disabled:opacity-50"
+                        className="flex items-center gap-2 px-[calc(0.75rem+var(--density-pad-x-delta,0px))] py-[calc(0.5rem+var(--density-pad-y-delta,0px))] bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] rounded-md text-xs font-semibold uppercase tracking-wide shadow-xl shadow-[hsl(var(--primary)/0.2)] active:scale-95 transition-all disabled:opacity-50"
                     >
                         {isSaving ? <><Sparkles size={14} className="animate-spin" /> Guardando</> : <><Save size={14} /> Guardar Cambios</>}
                     </button>
@@ -172,7 +172,7 @@ export default function AccountSettingsPage() {
                 <main className="flex-1 overflow-y-auto p-4">
                     <div className="mx-auto max-w-4xl space-y-4">
                         {tabs.map((tab) => (
-                            <button key={tab.id} onClick={() => setActiveTab(tab.id as typeof activeTab)} className="w-full rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-3 text-left hover:bg-[hsl(var(--surface-2))] transition-colors">
+                            <button key={tab.id} onClick={() => setActiveTab(tab.id as typeof activeTab)} className="w-full rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-[calc(0.75rem+var(--density-pad-y-delta,0px))] text-left hover:bg-[hsl(var(--surface-2))] transition-colors">
                                 <div className="flex items-center gap-4">
                                     <tab.icon size={20} className="text-[hsl(var(--primary))]" />
                                     <div>
@@ -189,16 +189,16 @@ export default function AccountSettingsPage() {
             {viewType === 'table' && (
                 <main className="flex-1 overflow-y-auto p-4">
                     <div className="mx-auto max-w-4xl overflow-x-auto rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))]">
-                        <table className="w-full min-w-[480px] text-left">
+                        <table className="density-table w-full min-w-[480px] text-left">
                             <thead className="bg-[hsl(var(--surface-2))] text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
-                                <tr><th className="px-3 py-1.5">Sección</th><th className="px-3 py-1.5">Estado</th><th className="px-3 py-1.5">Acción</th></tr>
+                                <tr><th className="px-[calc(0.75rem+var(--density-pad-x-delta,0px))] py-[calc(0.375rem+var(--density-pad-y-delta,0px))]">Sección</th><th className="px-[calc(0.75rem+var(--density-pad-x-delta,0px))] py-[calc(0.375rem+var(--density-pad-y-delta,0px))]">Estado</th><th className="px-[calc(0.75rem+var(--density-pad-x-delta,0px))] py-[calc(0.375rem+var(--density-pad-y-delta,0px))]">Acción</th></tr>
                             </thead>
                             <tbody>
                                 {tabs.map((tab) => (
                                     <tr key={tab.id} className="border-t border-[hsl(var(--border))]">
-                                        <td className="px-3 py-1.5 font-bold text-[hsl(var(--text-primary))]">{tab.label}</td>
-                                        <td className="px-3 py-1.5 text-[hsl(var(--text-secondary))]">{activeTab === tab.id ? 'Activa' : 'Disponible'}</td>
-                                        <td className="px-3 py-1.5"><button onClick={() => setActiveTab(tab.id as typeof activeTab)} className="text-xs font-semibold uppercase tracking-wide text-[hsl(var(--primary))]">Abrir</button></td>
+                                        <td className="px-[calc(0.75rem+var(--density-pad-x-delta,0px))] py-[calc(0.375rem+var(--density-pad-y-delta,0px))] font-bold text-[hsl(var(--text-primary))]">{tab.label}</td>
+                                        <td className="px-[calc(0.75rem+var(--density-pad-x-delta,0px))] py-[calc(0.375rem+var(--density-pad-y-delta,0px))] text-[hsl(var(--text-secondary))]">{activeTab === tab.id ? 'Activa' : 'Disponible'}</td>
+                                        <td className="px-[calc(0.75rem+var(--density-pad-x-delta,0px))] py-[calc(0.375rem+var(--density-pad-y-delta,0px))]"><button onClick={() => setActiveTab(tab.id as typeof activeTab)} className="text-xs font-semibold uppercase tracking-wide text-[hsl(var(--primary))]">Abrir</button></td>
                                     </tr>
                                 ))}
                             </tbody>
@@ -220,7 +220,7 @@ export default function AccountSettingsPage() {
                             data-testid={`tab-${tab.id}`}
                             onClick={() => setActiveTab(tab.id as any)}
                             className={clsx(
-                                "w-full flex items-center gap-4 px-3 py-1.5 rounded-lg font-semibold transition-all group relative overflow-hidden",
+                                "w-full flex items-center gap-4 px-[calc(0.75rem+var(--density-pad-x-delta,0px))] py-[calc(0.375rem+var(--density-pad-y-delta,0px))] rounded-lg font-semibold transition-all group relative overflow-hidden",
                                 activeTab === tab.id
                                     ? "bg-[hsl(var(--surface-2))] text-[hsl(var(--primary))] shadow-[var(--shadow-premium)] border border-[hsl(var(--border))]"
                                     : "text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))]"
@@ -233,7 +233,7 @@ export default function AccountSettingsPage() {
                     ))}
 
                     <div className="pt-10 mt-3 border-t border-[hsl(var(--border))]">
-                        <button onClick={logout} className="w-full flex items-center gap-4 px-3 py-1.5 rounded-lg font-semibold text-[hsl(var(--destructive))] hover:bg-[hsl(var(--destructive)/0.08)] transition-all group">
+                        <button onClick={logout} className="w-full flex items-center gap-4 px-[calc(0.75rem+var(--density-pad-x-delta,0px))] py-[calc(0.375rem+var(--density-pad-y-delta,0px))] rounded-lg font-semibold text-[hsl(var(--destructive))] hover:bg-[hsl(var(--destructive)/0.08)] transition-all group">
                             <LogOut size={20} className="group-hover:-translate-x-1 transition-transform" /> Cerrar Sesión
                         </button>
                     </div>
@@ -345,7 +345,7 @@ export default function AccountSettingsPage() {
                                                 placeholder="Breve reseña sobre tu ministerio, rol pastoral y llamado..."
                                                 rows={3}
                                                 onChange={(e) => setFormValues(f => ({...f, bioShort: e.target.value}))}
-                                                className="w-full bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] rounded-lg p-3 text-sm font-medium text-[hsl(var(--text-primary))] focus:ring-4 focus:ring-[hsl(var(--primary))]/10 focus:border-[hsl(var(--primary))] outline-none transition-all resize-none"
+                                                className="w-full bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] rounded-lg p-[calc(0.75rem+var(--density-pad-y-delta,0px))] text-sm font-medium text-[hsl(var(--text-primary))] focus:ring-4 focus:ring-[hsl(var(--primary))]/10 focus:border-[hsl(var(--primary))] outline-none transition-all resize-none"
                                             />
                                         </div>
                                     </section>
@@ -359,7 +359,7 @@ export default function AccountSettingsPage() {
                                                 <p className="text-[hsl(var(--text-secondary))] text-sm font-medium">Verifica tu número para habilitar alertas pastorales por WhatsApp.</p>
                                             </div>
                                         </div>
-                                        <button className="relative z-10 px-4 py-1.5 bg-[hsl(var(--surface-1))] text-[hsl(var(--text-primary))] border border-[hsl(var(--border))] rounded-lg font-black text-xs uppercase tracking-wide hover:scale-105 active:scale-95 transition-all shadow-sm">Verificar Ahora</button>
+                                        <button className="relative z-10 px-[calc(1rem+var(--density-pad-x-delta,0px))] py-[calc(0.375rem+var(--density-pad-y-delta,0px))] bg-[hsl(var(--surface-1))] text-[hsl(var(--text-primary))] border border-[hsl(var(--border))] rounded-lg font-black text-xs uppercase tracking-wide hover:scale-105 active:scale-95 transition-all shadow-sm">Verificar Ahora</button>
                                     </section>
                                 </motion.div>
                             )}
@@ -549,7 +549,7 @@ function InputField({ label, icon: Icon, value, placeholder, type = "text", onCh
                     type={type} value={value} placeholder={placeholder}
                     onChange={(e) => onChange?.(e.target.value)}
                     className={clsx(
-                        "w-full bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] rounded-lg py-1.5 pr-6 text-sm font-bold text-[hsl(var(--text-primary))] focus:ring-4 focus:ring-[hsl(var(--primary))]/10 focus:border-[hsl(var(--primary))] focus:bg-[hsl(var(--surface-1))] outline-none transition-all",
+                        "w-full bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] rounded-lg py-[calc(0.375rem+var(--density-pad-y-delta,0px))] pr-6 text-sm font-bold text-[hsl(var(--text-primary))] focus:ring-4 focus:ring-[hsl(var(--primary))]/10 focus:border-[hsl(var(--primary))] focus:bg-[hsl(var(--surface-1))] outline-none transition-all",
                         Icon ? "pl-14" : "pl-6"
                     )}
                 />

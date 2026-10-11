@@ -155,15 +155,15 @@ export default function FinancesPage() {
                         <div className="flex items-center gap-1 bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] rounded-md p-0.5 text-2xs font-semibold">
                             {(['Semana', 'Mes', 'Año']).map((p) => (
                                 <button key={p} className={clsx(
-                                    'px-2 py-1 rounded-md transition-colors',
+                                    'px-[calc(0.5rem+var(--density-pad-x-delta,0px))] py-[calc(0.25rem+var(--density-pad-y-delta,0px))] rounded-md transition-colors',
                                     p === 'Mes' ? 'bg-[hsl(var(--primary))] text-[hsl(var(--text-inverse))] shadow-sm' : 'text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))]'
                                 )}>{p}</button>
                             ))}
                         </div>
-                        <button className="flex items-center gap-1.5 px-2.5 py-1.5 bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] rounded-md text-2xs font-semibold text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] transition-all">
+                        <button className="flex items-center gap-1.5 px-[calc(0.625rem+var(--density-pad-x-delta,0px))] py-[calc(0.375rem+var(--density-pad-y-delta,0px))] bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] rounded-md text-2xs font-semibold text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] transition-all">
                             <Download size={12} /> Exportar
                         </button>
-                        <button className="flex items-center gap-1.5 px-3 py-1.5 bg-[hsl(var(--primary))] text-[hsl(var(--text-inverse))] rounded-md text-2xs font-semibold shadow-sm active:scale-95 transition-all">
+                        <button className="flex items-center gap-1.5 px-[calc(0.75rem+var(--density-pad-x-delta,0px))] py-[calc(0.375rem+var(--density-pad-y-delta,0px))] bg-[hsl(var(--primary))] text-[hsl(var(--text-inverse))] rounded-md text-2xs font-semibold shadow-sm active:scale-95 transition-all">
                             <Plus size={12} /> Registro
                         </button>
                     </div>
@@ -245,7 +245,7 @@ export default function FinancesPage() {
                                                 value={search}
                                                 onChange={e => setSearch(e.target.value)}
                                                 placeholder="Buscar..."
-                                                className="pl-8 pr-3 py-1.5 text-xs bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] rounded-lg text-[hsl(var(--text-primary))] outline-none focus:ring-1 focus:ring-[hsl(var(--primary))]"
+                                                className="pl-8 pr-[calc(0.75rem+var(--density-pad-x-delta,0px))] py-[calc(0.375rem+var(--density-pad-y-delta,0px))] text-xs bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] rounded-lg text-[hsl(var(--text-primary))] outline-none focus:ring-1 focus:ring-[hsl(var(--primary))]"
                                             />
                                         </div>
                                         <div className="flex rounded-lg overflow-hidden border border-[hsl(var(--border))] text-xs font-bold">
@@ -254,7 +254,7 @@ export default function FinancesPage() {
                                                     key={f}
                                                     onClick={() => setFilter(f)}
                                                     className={clsx(
-                                                        'px-2.5 py-1 transition-colors text-2xs',
+                                                        'px-[calc(0.625rem+var(--density-pad-x-delta,0px))] py-[calc(0.25rem+var(--density-pad-y-delta,0px))] transition-colors text-2xs',
                                                         filter === f
                                                             ? 'bg-[hsl(var(--primary))] text-[hsl(var(--text-inverse))]'
                                                             : 'text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))]'
@@ -290,7 +290,7 @@ export default function FinancesPage() {
                                                 initial={{ opacity: 0 }}
                                                 animate={{ opacity: 1 }}
                                                 transition={{ delay: idx * 0.03 }}
-                                                className="flex items-center gap-4 px-3 py-2 hover:bg-[hsl(var(--surface-2))] transition-colors cursor-pointer"
+                                                className="flex items-center gap-4 px-[calc(0.75rem+var(--density-pad-x-delta,0px))] py-[calc(0.5rem+var(--density-pad-y-delta,0px))] hover:bg-[hsl(var(--surface-2))] transition-colors cursor-pointer"
                                             >
                                                 <div className={clsx(
                                                     'size-8 rounded-md flex items-center justify-center shrink-0',
@@ -344,7 +344,7 @@ export default function FinancesPage() {
                                                     setSelectedReport(rep);
                                                     setIsExpenseDrawerOpen(true);
                                                 }}
-                                                className="flex items-center justify-between gap-3 px-3 py-2.5 hover:bg-[hsl(var(--surface-2))] transition-colors cursor-pointer"
+                                                className="flex items-center justify-between gap-3 px-[calc(0.75rem+var(--density-pad-x-delta,0px))] py-[calc(0.625rem+var(--density-pad-y-delta,0px))] hover:bg-[hsl(var(--surface-2))] transition-colors cursor-pointer"
                                             >
                                                 <div className="min-w-0 flex-1">
                                                     <div className="flex items-center gap-2">

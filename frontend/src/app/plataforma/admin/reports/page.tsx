@@ -175,7 +175,7 @@ export default function AdvancedBIReports() {
                     <p className="text-xs font-semibold text-[hsl(var(--text-primary))]">{error}</p>
                     <button
                         onClick={() => setRetryKey((k) => k + 1)}
-                        className="shrink-0 rounded-md bg-[hsl(var(--primary))] px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-[hsl(var(--primary-foreground))] transition-all active:scale-95"
+                        className="shrink-0 rounded-md bg-[hsl(var(--primary))] px-[calc(0.75rem+var(--density-pad-x-delta,0px))] py-[calc(0.375rem+var(--density-pad-y-delta,0px))] text-xs font-semibold uppercase tracking-wide text-[hsl(var(--primary-foreground))] transition-all active:scale-95"
                     >
                         Reintentar
                     </button>
@@ -191,7 +191,7 @@ export default function AdvancedBIReports() {
                         aria-selected={activeTab === tab.id}
                         onClick={() => setActiveTab(tab.id as ReportTab)}
                         className={clsx(
-                            "flex items-center gap-3 px-4 py-1.5 rounded-lg text-xs font-semibold uppercase tracking-wide transition-all active:scale-95",
+                            "flex items-center gap-3 px-[calc(1rem+var(--density-pad-x-delta,0px))] py-[calc(0.375rem+var(--density-pad-y-delta,0px))] rounded-lg text-xs font-semibold uppercase tracking-wide transition-all active:scale-95",
                             activeTab === tab.id
                                 ? "bg-[hsl(var(--bg-primary))] text-[hsl(var(--primary))] shadow-sm"
                                 : "text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))]"
@@ -260,7 +260,7 @@ export default function AdvancedBIReports() {
                                 <div className="size-7 rounded-lg bg-[hsl(var(--info-muted))] text-[hsl(var(--primary))] flex items-center justify-center">
                                     <Users size={24} />
                                 </div>
-                                <button className="p-2 hover:bg-[hsl(var(--surface-2))] rounded-lg transition-colors" aria-label="Opciones de detalle"><ChevronDown size={18} /></button>
+                                <button className="p-[calc(0.5rem+var(--density-pad-y-delta,0px))] hover:bg-[hsl(var(--surface-2))] rounded-lg transition-colors" aria-label="Opciones de detalle"><ChevronDown size={18} /></button>
                             </div>
                             <div>
                                 <p className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide mb-1">Estudiantes Activos</p>
@@ -289,7 +289,7 @@ export default function AdvancedBIReports() {
                                 <div className="size-7 rounded-lg bg-[hsl(var(--success-muted))] text-[hsl(var(--success))] flex items-center justify-center">
                                     <Target size={24} />
                                 </div>
-                                <button className="p-2 hover:bg-[hsl(var(--surface-2))] rounded-lg transition-colors" aria-label="Filtros de métrica"><Filter size={18} /></button>
+                                <button className="p-[calc(0.5rem+var(--density-pad-y-delta,0px))] hover:bg-[hsl(var(--surface-2))] rounded-lg transition-colors" aria-label="Filtros de métrica"><Filter size={18} /></button>
                             </div>
                             <div>
                                 <p className="font-semibold text-[hsl(var(--text-secondary))] uppercase tracking-wide mb-1">Certificados Emitidos</p>
@@ -340,7 +340,7 @@ export default function AdvancedBIReports() {
                         </p>
                         <button
                             onClick={() => router.push('/plataforma/finances')}
-                            className="mt-4 rounded-md bg-[hsl(var(--primary))] px-4 py-2 text-xs font-semibold uppercase tracking-wide text-[hsl(var(--primary-foreground))] transition-all active:scale-95"
+                            className="mt-4 rounded-md bg-[hsl(var(--primary))] px-[calc(1rem+var(--density-pad-x-delta,0px))] py-[calc(0.5rem+var(--density-pad-y-delta,0px))] text-xs font-semibold uppercase tracking-wide text-[hsl(var(--primary-foreground))] transition-all active:scale-95"
                         >
                             Ir a Finanzas
                         </button>
@@ -359,7 +359,7 @@ export default function AdvancedBIReports() {
                         <div className="space-y-4">
                             <button
                                 onClick={() => setRetryKey((k) => k + 1)}
-                                className="w-full flex items-center justify-between p-3 bg-[hsl(var(--surface-1))] rounded-lg border border-transparent hover:border-[hsl(var(--info)/100%)]/30 transition-all group"
+                                className="w-full flex items-center justify-between p-[calc(0.75rem+var(--density-pad-y-delta,0px))] bg-[hsl(var(--surface-1))] rounded-lg border border-transparent hover:border-[hsl(var(--info)/100%)]/30 transition-all group"
                             >
                                 <div className="flex items-center gap-4 text-left">
                                     <div className="size-10 rounded-md bg-[hsl(var(--surface-2))] flex items-center justify-center text-[hsl(var(--text-secondary))] shadow-sm group-hover:scale-110 transition-transform">
@@ -435,7 +435,7 @@ export default function AdvancedBIReports() {
 
                         <button
                             onClick={() => exportReportsCsv(bi, activeTab)}
-                            className="w-full py-2 bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] rounded-lg text-xs font-semibold uppercase tracking-wide shadow-xl shadow-[hsl(var(--info)/20%)] active:scale-95 transition-all"
+                            className="w-full px-[calc(1rem+var(--density-pad-x-delta,0px))] py-[calc(0.5rem+var(--density-pad-y-delta,0px))] bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] rounded-lg text-xs font-semibold uppercase tracking-wide shadow-xl shadow-[hsl(var(--info)/20%)] active:scale-95 transition-all"
                         >
                             Exportar Reporte CSV
                         </button>

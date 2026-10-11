@@ -425,7 +425,7 @@ export default function ProjectDetailPage() {
           </p>
           <button
             onClick={() => bumpReloadKey()}
-            className="rounded-md border border-[hsl(var(--border))] px-3 py-1.5 text-xs font-bold uppercase tracking-wide text-[hsl(var(--muted-foreground))] transition-colors hover:bg-[hsl(var(--surface-2))]"
+            className="rounded-md border border-[hsl(var(--border))] px-[calc(0.75rem+var(--density-pad-x-delta,0px))] py-[calc(0.375rem+var(--density-pad-y-delta,0px))] text-xs font-bold uppercase tracking-wide text-[hsl(var(--muted-foreground))] transition-colors hover:bg-[hsl(var(--surface-2))]"
           >
             Reintentar
           </button>
@@ -458,45 +458,45 @@ export default function ProjectDetailPage() {
                   setTaskCreationStatus('todo');
                   setShowTaskModal(true);
                 }}
-                className="px-3 py-1.5 bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] rounded-lg text-2xs font-bold uppercase tracking-wide shadow-lg hover:bg-[hsl(var(--primary))]/90 active:scale-95 transition-all flex items-center gap-2"
+                className="px-[calc(0.75rem+var(--density-pad-x-delta,0px))] py-[calc(0.375rem+var(--density-pad-y-delta,0px))] bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] rounded-lg text-2xs font-bold uppercase tracking-wide shadow-lg hover:bg-[hsl(var(--primary))]/90 active:scale-95 transition-all flex items-center gap-2"
               >
                 <Plus size={14} /> Nueva Tarea
               </button>
               <button
                 onClick={() => setWhiteboardOpen(true)}
-                className="px-3 py-1.5 bg-[hsl(var(--surface-2))] text-[hsl(var(--foreground))] rounded-lg text-2xs font-bold uppercase tracking-wide hover:bg-[hsl(var(--surface-3))] active:scale-95 transition-all flex items-center gap-2 border border-[hsl(var(--border))]"
+                className="px-[calc(0.75rem+var(--density-pad-x-delta,0px))] py-[calc(0.375rem+var(--density-pad-y-delta,0px))] bg-[hsl(var(--surface-2))] text-[hsl(var(--foreground))] rounded-lg text-2xs font-bold uppercase tracking-wide hover:bg-[hsl(var(--surface-3))] active:scale-95 transition-all flex items-center gap-2 border border-[hsl(var(--border))]"
               >
                 <PencilRuler size={14} /> Pizarra
               </button>
               <button
                 onClick={() => setShowPhaseManager(true)}
-                className="px-3 py-1.5 bg-[hsl(var(--surface-2))] text-[hsl(var(--foreground))] rounded-lg text-2xs font-bold uppercase tracking-wide hover:bg-[hsl(var(--surface-3))] active:scale-95 transition-all flex items-center gap-1.5 border border-[hsl(var(--border))]"
+                className="px-[calc(0.75rem+var(--density-pad-x-delta,0px))] py-[calc(0.375rem+var(--density-pad-y-delta,0px))] bg-[hsl(var(--surface-2))] text-[hsl(var(--foreground))] rounded-lg text-2xs font-bold uppercase tracking-wide hover:bg-[hsl(var(--surface-3))] active:scale-95 transition-all flex items-center gap-1.5 border border-[hsl(var(--border))]"
               >
                 <Edit3 size={14} /> Fases
               </button>
               <button
                 onClick={() => setShowKpiDrawer(true)}
-                className="px-3 py-1.5 bg-[hsl(var(--surface-2))] text-[hsl(var(--foreground))] rounded-lg text-2xs font-bold uppercase tracking-wide hover:bg-[hsl(var(--surface-3))] active:scale-95 transition-all flex items-center gap-1.5 border border-[hsl(var(--border))]"
+                className="px-[calc(0.75rem+var(--density-pad-x-delta,0px))] py-[calc(0.375rem+var(--density-pad-y-delta,0px))] bg-[hsl(var(--surface-2))] text-[hsl(var(--foreground))] rounded-lg text-2xs font-bold uppercase tracking-wide hover:bg-[hsl(var(--surface-3))] active:scale-95 transition-all flex items-center gap-1.5 border border-[hsl(var(--border))]"
               >
                 <Target size={14} className="text-[hsl(var(--primary))]" /> KPIs
               </button>
               <button
                 onClick={() => setShowProgressDrawer(true)}
-                className="px-3 py-1.5 bg-[hsl(var(--surface-2))] text-[hsl(var(--foreground))] rounded-lg text-2xs font-bold uppercase tracking-wide hover:bg-[hsl(var(--surface-3))] active:scale-95 transition-all flex items-center gap-1.5 border border-[hsl(var(--border))]"
+                className="px-[calc(0.75rem+var(--density-pad-x-delta,0px))] py-[calc(0.375rem+var(--density-pad-y-delta,0px))] bg-[hsl(var(--surface-2))] text-[hsl(var(--foreground))] rounded-lg text-2xs font-bold uppercase tracking-wide hover:bg-[hsl(var(--surface-3))] active:scale-95 transition-all flex items-center gap-1.5 border border-[hsl(var(--border))]"
               >
                 <Sliders size={14} className="text-[hsl(var(--primary))]" />{' '}
                 Avance
               </button>
               <button
                 onClick={() => setShowBudgetDrawer(true)}
-                className="px-3 py-1.5 bg-[hsl(var(--surface-2))] text-[hsl(var(--foreground))] rounded-lg text-2xs font-bold uppercase tracking-wide hover:bg-[hsl(var(--surface-3))] active:scale-95 transition-all flex items-center gap-1.5 border border-[hsl(var(--border))]"
+                className="px-[calc(0.75rem+var(--density-pad-x-delta,0px))] py-[calc(0.375rem+var(--density-pad-y-delta,0px))] bg-[hsl(var(--surface-2))] text-[hsl(var(--foreground))] rounded-lg text-2xs font-bold uppercase tracking-wide hover:bg-[hsl(var(--surface-3))] active:scale-95 transition-all flex items-center gap-1.5 border border-[hsl(var(--border))]"
               >
                 <Wallet size={14} className="text-[hsl(var(--primary))]" />{' '}
                 Presupuesto
               </button>
               <button
                 onClick={() => setShowRiskDrawer(true)}
-                className="px-3 py-1.5 bg-[hsl(var(--surface-2))] text-[hsl(var(--foreground))] rounded-lg text-2xs font-bold uppercase tracking-wide hover:bg-[hsl(var(--surface-3))] active:scale-95 transition-all flex items-center gap-1.5 border border-[hsl(var(--border))]"
+                className="px-[calc(0.75rem+var(--density-pad-x-delta,0px))] py-[calc(0.375rem+var(--density-pad-y-delta,0px))] bg-[hsl(var(--surface-2))] text-[hsl(var(--foreground))] rounded-lg text-2xs font-bold uppercase tracking-wide hover:bg-[hsl(var(--surface-3))] active:scale-95 transition-all flex items-center gap-1.5 border border-[hsl(var(--border))]"
               >
                 <ShieldAlert
                   size={14}
@@ -506,19 +506,19 @@ export default function ProjectDetailPage() {
               </button>
               <button
                 onClick={() => setShowWorkloadDrawer(true)}
-                className="px-3 py-1.5 bg-[hsl(var(--surface-2))] text-[hsl(var(--foreground))] rounded-lg text-2xs font-bold uppercase tracking-wide hover:bg-[hsl(var(--surface-3))] active:scale-95 transition-all flex items-center gap-1.5 border border-[hsl(var(--border))]"
+                className="px-[calc(0.75rem+var(--density-pad-x-delta,0px))] py-[calc(0.375rem+var(--density-pad-y-delta,0px))] bg-[hsl(var(--surface-2))] text-[hsl(var(--foreground))] rounded-lg text-2xs font-bold uppercase tracking-wide hover:bg-[hsl(var(--surface-3))] active:scale-95 transition-all flex items-center gap-1.5 border border-[hsl(var(--border))]"
               >
                 <Users size={14} className="text-[hsl(var(--primary))]" /> Carga
               </button>
               <button
                 onClick={() => setShowTimeTrackingDrawer(true)}
-                className="px-3 py-1.5 bg-[hsl(var(--surface-2))] text-[hsl(var(--foreground))] rounded-lg text-2xs font-bold uppercase tracking-wide hover:bg-[hsl(var(--surface-3))] active:scale-95 transition-all flex items-center gap-1.5 border border-[hsl(var(--border))]"
+                className="px-[calc(0.75rem+var(--density-pad-x-delta,0px))] py-[calc(0.375rem+var(--density-pad-y-delta,0px))] bg-[hsl(var(--surface-2))] text-[hsl(var(--foreground))] rounded-lg text-2xs font-bold uppercase tracking-wide hover:bg-[hsl(var(--surface-3))] active:scale-95 transition-all flex items-center gap-1.5 border border-[hsl(var(--border))]"
               >
                 <Clock size={14} className="text-[hsl(var(--primary))]" /> Horas
               </button>
               <button
                 onClick={() => setShowTemplateDrawer(true)}
-                className="px-3 py-1.5 bg-[hsl(var(--surface-2))] text-[hsl(var(--foreground))] rounded-lg text-2xs font-bold uppercase tracking-wide hover:bg-[hsl(var(--surface-3))] active:scale-95 transition-all flex items-center gap-1.5 border border-[hsl(var(--border))]"
+                className="px-[calc(0.75rem+var(--density-pad-x-delta,0px))] py-[calc(0.375rem+var(--density-pad-y-delta,0px))] bg-[hsl(var(--surface-2))] text-[hsl(var(--foreground))] rounded-lg text-2xs font-bold uppercase tracking-wide hover:bg-[hsl(var(--surface-3))] active:scale-95 transition-all flex items-center gap-1.5 border border-[hsl(var(--border))]"
               >
                 <BookTemplate
                   size={14}
@@ -528,27 +528,27 @@ export default function ProjectDetailPage() {
               </button>
               <button
                 onClick={() => setShowAutomationsDrawer(true)}
-                className="px-3 py-1.5 bg-[hsl(var(--surface-2))] text-[hsl(var(--foreground))] rounded-lg text-2xs font-bold uppercase tracking-wide hover:bg-[hsl(var(--surface-3))] active:scale-95 transition-all flex items-center gap-1.5 border border-[hsl(var(--border))]"
+                className="px-[calc(0.75rem+var(--density-pad-x-delta,0px))] py-[calc(0.375rem+var(--density-pad-y-delta,0px))] bg-[hsl(var(--surface-2))] text-[hsl(var(--foreground))] rounded-lg text-2xs font-bold uppercase tracking-wide hover:bg-[hsl(var(--surface-3))] active:scale-95 transition-all flex items-center gap-1.5 border border-[hsl(var(--border))]"
               >
                 <Zap size={14} className="text-[hsl(var(--primary))]" /> Auto
               </button>
               <button
                 onClick={() => setShowReportDrawer(true)}
-                className="px-3 py-1.5 bg-[hsl(var(--surface-2))] text-[hsl(var(--foreground))] rounded-lg text-2xs font-bold uppercase tracking-wide hover:bg-[hsl(var(--surface-3))] active:scale-95 transition-all flex items-center gap-1.5 border border-[hsl(var(--border))]"
+                className="px-[calc(0.75rem+var(--density-pad-x-delta,0px))] py-[calc(0.375rem+var(--density-pad-y-delta,0px))] bg-[hsl(var(--surface-2))] text-[hsl(var(--foreground))] rounded-lg text-2xs font-bold uppercase tracking-wide hover:bg-[hsl(var(--surface-3))] active:scale-95 transition-all flex items-center gap-1.5 border border-[hsl(var(--border))]"
               >
                 <FileText size={14} className="text-[hsl(var(--primary))]" />{' '}
                 Reportes
               </button>
               <button
                 onClick={() => setShowIndicatorsDrawer(true)}
-                className="px-3 py-1.5 bg-[hsl(var(--surface-2))] text-[hsl(var(--foreground))] rounded-lg text-2xs font-bold uppercase tracking-wide hover:bg-[hsl(var(--surface-3))] active:scale-95 transition-all flex items-center gap-1.5 border border-[hsl(var(--border))]"
+                className="px-[calc(0.75rem+var(--density-pad-x-delta,0px))] py-[calc(0.375rem+var(--density-pad-y-delta,0px))] bg-[hsl(var(--surface-2))] text-[hsl(var(--foreground))] rounded-lg text-2xs font-bold uppercase tracking-wide hover:bg-[hsl(var(--surface-3))] active:scale-95 transition-all flex items-center gap-1.5 border border-[hsl(var(--border))]"
               >
                 <BarChart3 size={14} className="text-[hsl(var(--primary))]" />{' '}
                 MGA / CREMA
               </button>
               <button
                 onClick={() => setShowDriveDrawer(true)}
-                className="px-3 py-1.5 bg-[hsl(var(--surface-2))] text-[hsl(var(--foreground))] rounded-lg text-2xs font-bold uppercase tracking-wide hover:bg-[hsl(var(--surface-3))] active:scale-95 transition-all flex items-center gap-1.5 border border-[hsl(var(--border))]"
+                className="px-[calc(0.75rem+var(--density-pad-x-delta,0px))] py-[calc(0.375rem+var(--density-pad-y-delta,0px))] bg-[hsl(var(--surface-2))] text-[hsl(var(--foreground))] rounded-lg text-2xs font-bold uppercase tracking-wide hover:bg-[hsl(var(--surface-3))] active:scale-95 transition-all flex items-center gap-1.5 border border-[hsl(var(--border))]"
               >
                 <FolderArchive
                   size={14}
@@ -558,14 +558,14 @@ export default function ProjectDetailPage() {
               </button>
               <button
                 onClick={() => setShowProjectSettings(true)}
-                className="px-3 py-1.5 bg-[hsl(var(--warning))] text-[hsl(var(--primary-foreground))] rounded-lg text-2xs font-bold uppercase tracking-wide hover:opacity-90 active:scale-95 transition-all flex items-center gap-2"
+                className="px-[calc(0.75rem+var(--density-pad-x-delta,0px))] py-[calc(0.375rem+var(--density-pad-y-delta,0px))] bg-[hsl(var(--warning))] text-[hsl(var(--primary-foreground))] rounded-lg text-2xs font-bold uppercase tracking-wide hover:opacity-90 active:scale-95 transition-all flex items-center gap-2"
               >
                 <Edit3 size={14} /> Editar
               </button>
               {canDeleteProjectFromApiPolicy && (
                 <button
                   onClick={handleDeleteProject}
-                  className="px-3 py-1.5 bg-[hsl(var(--destructive))] text-[hsl(var(--destructive-foreground))] rounded-lg text-2xs font-bold uppercase tracking-wide hover:opacity-90 active:scale-95 transition-all flex items-center gap-2"
+                  className="px-[calc(0.75rem+var(--density-pad-x-delta,0px))] py-[calc(0.375rem+var(--density-pad-y-delta,0px))] bg-[hsl(var(--destructive))] text-[hsl(var(--destructive-foreground))] rounded-lg text-2xs font-bold uppercase tracking-wide hover:opacity-90 active:scale-95 transition-all flex items-center gap-2"
                 >
                   <Trash2 size={14} /> Eliminar
                 </button>
@@ -579,7 +579,7 @@ export default function ProjectDetailPage() {
                   setTaskCreationStatus('todo');
                   setShowTaskModal(true);
                 }}
-                className="flex min-h-10 shrink-0 items-center gap-2 rounded-lg bg-[hsl(var(--primary))] px-3 py-2 text-2xs font-bold uppercase tracking-wide text-[hsl(var(--primary-foreground))] shadow-sm transition-colors hover:opacity-90"
+                className="flex min-h-10 shrink-0 items-center gap-2 rounded-lg bg-[hsl(var(--primary))] px-[calc(0.75rem+var(--density-pad-x-delta,0px))] py-[calc(0.5rem+var(--density-pad-y-delta,0px))] text-2xs font-bold uppercase tracking-wide text-[hsl(var(--primary-foreground))] shadow-sm transition-colors hover:opacity-90"
               >
                 <Plus size={14} aria-hidden="true" /> Nueva tarea
               </button>
@@ -589,7 +589,7 @@ export default function ProjectDetailPage() {
                 aria-label="Abrir acciones del proyecto"
                 aria-haspopup="dialog"
                 aria-expanded={showProjectActions}
-                className="flex min-h-10 shrink-0 items-center gap-2 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] px-3 py-2 text-2xs font-bold uppercase tracking-wide text-[hsl(var(--foreground))] transition-colors hover:bg-[hsl(var(--surface-2))]"
+                className="flex min-h-10 shrink-0 items-center gap-2 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] px-[calc(0.75rem+var(--density-pad-x-delta,0px))] py-[calc(0.5rem+var(--density-pad-y-delta,0px))] text-2xs font-bold uppercase tracking-wide text-[hsl(var(--foreground))] transition-colors hover:bg-[hsl(var(--surface-2))]"
               >
                 <MoreHorizontal size={16} aria-hidden="true" /> Acciones
               </button>
@@ -613,7 +613,7 @@ export default function ProjectDetailPage() {
             <button
               type="button"
               onClick={() => bumpReloadKey()}
-              className="rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] px-3 py-1.5 text-xs font-semibold text-[hsl(var(--foreground))] hover:bg-[hsl(var(--surface-2))]"
+              className="rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] px-[calc(0.75rem+var(--density-pad-x-delta,0px))] py-[calc(0.375rem+var(--density-pad-y-delta,0px))] text-xs font-semibold text-[hsl(var(--foreground))] hover:bg-[hsl(var(--surface-2))]"
             >
               Reintentar
             </button>
