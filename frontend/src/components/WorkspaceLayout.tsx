@@ -758,7 +758,7 @@ export function UserMenuDropdown({ displayName, username, logout, onOpenAppearan
                             {onOpenAppearance && (
                                 <button
                                     data-testid="user-menu-appearance"
-                                    aria-label="Configuración de apariencia, pantalla y accesibilidad"
+                                    aria-label="Configuración de pantalla, densidad y color"
                                     onClick={() => {
                                         setIsOpen(false);
                                         onOpenAppearance();
@@ -766,7 +766,7 @@ export function UserMenuDropdown({ displayName, username, logout, onOpenAppearan
                                     className="w-full flex items-center gap-3 px-3 py-1.5 rounded-lg text-xs text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))] dark:hover:bg-white/5 hover:text-[hsl(var(--primary))] transition-all text-left"
                                 >
                                     <Palette size={14} className="text-[hsl(var(--primary))]" />
-                                    <span>Apariencia y Accesibilidad</span>
+                                    <span>Pantalla, Densidad y Color</span>
                                 </button>
                             )}
                         </div>

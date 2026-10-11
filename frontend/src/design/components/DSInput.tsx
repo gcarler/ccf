@@ -48,19 +48,27 @@ export const DSInput = React.forwardRef<HTMLInputElement, DSInputProps>(
                     <input
                         ref={ref}
                         id={inputId}
-                    className={clsx(
-                        'w-full px-2.5 py-1.5 text-xs bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-2))]',
-                        'border border-[hsl(var(--border))] dark:border-[hsl(var(--border))]',
-                        'text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-primary))]',
-                        'placeholder:text-[hsl(var(--text-secondary))]/50',
-                        'focus:outline-none focus:ring-1 focus:ring-[hsl(var(--primary))] focus:border-[hsl(var(--primary))]',
-                        'disabled:opacity-50 disabled:cursor-not-allowed',
-                        'transition-colors',
-                        'rounded-md font-sans',
-                        Icon && 'pl-8',
-                        error && 'border-[hsl(var(--danger))] focus:ring-[hsl(var(--danger))]',
-                        className
-                    )}
+                        style={{
+                            minHeight: 'var(--density-row-h, 28px)',
+                            paddingTop: 'var(--density-pad-y, 0.125rem)',
+                            paddingBottom: 'var(--density-pad-y, 0.125rem)',
+                            paddingLeft: Icon ? undefined : 'var(--density-pad-x, 0.5rem)',
+                            paddingRight: 'var(--density-pad-x, 0.5rem)',
+                            ...props.style,
+                        }}
+                        className={clsx(
+                            'density-input w-full px-2.5 py-1.5 text-xs bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-2))]',
+                            'border border-[hsl(var(--border))] dark:border-[hsl(var(--border))]',
+                            'text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-primary))]',
+                            'placeholder:text-[hsl(var(--text-secondary))]/50',
+                            'focus:outline-none focus:ring-1 focus:ring-[hsl(var(--primary))] focus:border-[hsl(var(--primary))]',
+                            'disabled:opacity-50 disabled:cursor-not-allowed',
+                            'transition-colors',
+                            'rounded-md font-sans',
+                            Icon && 'pl-8',
+                            error && 'border-[hsl(var(--danger))] focus:ring-[hsl(var(--danger))]',
+                            className
+                        )}
                         disabled={loading || props.disabled}
                         aria-invalid={error ? 'true' : undefined}
                         aria-describedby={describedBy}

@@ -51,7 +51,8 @@ describe('AppearanceDrawer Component', () => {
 
         // Palette selector sections
         expect(screen.getByText('Ambiente Visual')).toBeInTheDocument();
-        expect(screen.getByText('Escala de Interfaz y Densidad')).toBeInTheDocument();
+        expect(screen.getByText('Densidad de Interfaz')).toBeInTheDocument();
+        expect(screen.getByText('Zoom de Pantalla y Texto')).toBeInTheDocument();
         expect(screen.getByText('Acento Ministerial')).toBeInTheDocument();
         expect(screen.getByText('Previsualización en Vivo')).toBeInTheDocument();
     });

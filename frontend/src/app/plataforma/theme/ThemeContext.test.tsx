@@ -21,6 +21,9 @@ function ConsumerComponent() {
         uiScale,
         setUiScale,
         scaleFactor,
+        uiDensity,
+        setUiDensity,
+        currentDensity,
         accent,
         setAccent,
         resetToDefaults,
@@ -32,6 +35,8 @@ function ConsumerComponent() {
             <div data-testid="theme-val">{theme}</div>
             <div data-testid="scale-val">{uiScale}</div>
             <div data-testid="scale-factor">{scaleFactor}</div>
+            <div data-testid="density-val">{uiDensity}</div>
+            <div data-testid="density-label">{currentDensity.label}</div>
             <div data-testid="accent-val">{accent}</div>
             <div data-testid="sync-val">{isSyncing ? 'syncing' : 'idle'}</div>
 
@@ -40,6 +45,8 @@ function ConsumerComponent() {
             <button data-testid="set-day" onClick={() => setTheme('day')}>Day</button>
             <button data-testid="set-compact" onClick={() => setUiScale('compact')}>Compact</button>
             <button data-testid="set-large" onClick={() => setUiScale('large')}>Large</button>
+            <button data-testid="set-spacious" onClick={() => setUiDensity('spacious')}>Spacious</button>
+            <button data-testid="set-comfortable" onClick={() => setUiDensity('comfortable')}>Comfortable</button>
             <button data-testid="set-emerald" onClick={() => setAccent('emerald')}>Emerald</button>
             <button data-testid="set-burgundy" onClick={() => setAccent('burgundy')}>Burgundy</button>
             <button data-testid="reset-btn" onClick={resetToDefaults}>Reset</button>
@@ -52,6 +59,7 @@ describe('ThemeContext & AppearanceContext', () => {
         localStorage.clear();
         document.documentElement.removeAttribute('data-theme');
         document.documentElement.removeAttribute('data-ui-scale');
+        document.documentElement.removeAttribute('data-ui-density');
         document.documentElement.removeAttribute('data-accent');
         document.documentElement.className = '';
         vi.clearAllMocks();
@@ -66,14 +74,20 @@ describe('ThemeContext & AppearanceContext', () => {
 
         expect(screen.getByTestId('theme-val').textContent).toBe('day');
         expect(screen.getByTestId('scale-val').textContent).toBe('normal');
+        expect(screen.getByTestId('density-val').textContent).toBe('ultra-compact');
         expect(screen.getByTestId('scale-factor').textContent).toBe('1');
         expect(screen.getByTestId('accent-val').textContent).toBe('ccf-blue');
 
         const root = document.documentElement;
         expect(root.getAttribute('data-theme')).toBe('day');
         expect(root.getAttribute('data-ui-scale')).toBe('normal');
+        expect(root.getAttribute('data-ui-density')).toBe('ultra-compact');
         expect(root.getAttribute('data-accent')).toBe('ccf-blue');
         expect(root.style.getPropertyValue('--ui-scale')).toBe('1');
+        expect(root.style.getPropertyValue('--density-row-h')).toBe('28px');
+        expect(root.style.getPropertyValue('--density-pad-x')).toBe('0.5rem');
+        expect(root.style.getPropertyValue('--density-pad-y')).toBe('0.125rem');
+        expect(root.style.getPropertyValue('--density-gap')).toBe('0.25rem');
         expect(root.style.getPropertyValue('--primary')).toBe(ACCENT_PALETTES['ccf-blue'].day.primary);
     });
 
@@ -159,6 +173,27 @@ describe('ThemeContext & AppearanceContext', () => {
         expect(document.documentElement.getAttribute('data-accent')).toBe('burgundy');
     });
 
+    it('updates uiDensity and applies corresponding CSS density variables to root document element', () => {
+        render(
+            <ThemeProvider>
+                <ConsumerComponent />
+            </ThemeProvider>
+        );
+
+        const spaciousBtn = screen.getByTestId('set-spacious');
+        act(() => {
+            spaciousBtn.click();
+        });
+
+        expect(screen.getByTestId('density-val').textContent).toBe('spacious');
+        expect(document.documentElement.getAttribute('data-ui-density')).toBe('spacious');
+        expect(document.documentElement.style.getPropertyValue('--density-row-h')).toBe('52px');
+        expect(document.documentElement.style.getPropertyValue('--density-pad-x')).toBe('1.25rem');
+        expect(document.documentElement.style.getPropertyValue('--density-pad-y')).toBe('0.875rem');
+        expect(document.documentElement.style.getPropertyValue('--density-gap')).toBe('1rem');
+        expect(localStorage.getItem('theme-density')).toBe('spacious');
+    });
+
     it('restores initial values on resetToDefaults', () => {
         render(
             <ThemeProvider>
@@ -169,11 +204,13 @@ describe('ThemeContext & AppearanceContext', () => {
         act(() => {
             screen.getByTestId('set-night').click();
             screen.getByTestId('set-large').click();
+            screen.getByTestId('set-spacious').click();
             screen.getByTestId('set-emerald').click();
         });
 
         expect(screen.getByTestId('theme-val').textContent).toBe('night');
         expect(screen.getByTestId('scale-val').textContent).toBe('large');
+        expect(screen.getByTestId('density-val').textContent).toBe('spacious');
         expect(screen.getByTestId('accent-val').textContent).toBe('emerald');
 
         act(() => {
@@ -182,7 +219,10 @@ describe('ThemeContext & AppearanceContext', () => {
 
         expect(screen.getByTestId('theme-val').textContent).toBe('day');
         expect(screen.getByTestId('scale-val').textContent).toBe('normal');
+        expect(screen.getByTestId('density-val').textContent).toBe('ultra-compact');
         expect(screen.getByTestId('accent-val').textContent).toBe('ccf-blue');
+        expect(document.documentElement.getAttribute('data-ui-density')).toBe('ultra-compact');
+        expect(document.documentElement.style.getPropertyValue('--density-row-h')).toBe('28px');
     });
 
     it('verifies that all 6 ministerial accents meet WCAG AA contrast requirements (>= 4.5:1)', () => {

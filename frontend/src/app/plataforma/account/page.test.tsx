@@ -99,7 +99,8 @@ describe('AccountSettingsPage — Appearance & Accessibility Tab', () => {
 
         // PaletteSelector sections
         expect(screen.getByText('Ambiente Visual')).toBeInTheDocument();
-        expect(screen.getByText('Escala de Interfaz y Densidad')).toBeInTheDocument();
+        expect(screen.getByText('Densidad de Interfaz')).toBeInTheDocument();
+        expect(screen.getByText('Zoom de Pantalla y Texto')).toBeInTheDocument();
         expect(screen.getByText('Acento Ministerial')).toBeInTheDocument();
         expect(screen.getByText('Previsualización en Vivo')).toBeInTheDocument();
     });
@@ -132,13 +133,14 @@ describe('AccountSettingsPage — Appearance & Accessibility Tab', () => {
 
         expect(document.documentElement.classList.contains('dark')).toBe(true);
 
-        // Switch scale to Compact
-        const compactRadio = screen.getAllByRole('radio', { name: /Compacto/i })[0];
+        // Switch density to Compacta
+        const compactRadio = screen.getAllByRole('radio', { name: /Densidad Compacta/i })[0];
         act(() => {
             fireEvent.click(compactRadio);
         });
 
-        expect(document.documentElement.style.getPropertyValue('--ui-scale')).toBe('0.9');
+        expect(document.documentElement.getAttribute('data-ui-density')).toBe('compact');
+        expect(document.documentElement.style.getPropertyValue('--density-row-h')).toBe('36px');
     });
 
     it('passes automated accessibility audit with 0 violations', async () => {

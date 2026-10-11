@@ -9,7 +9,7 @@ interface DSCardProps extends React.HTMLAttributes<HTMLDivElement> {
 }
 
 export const DSCard = React.forwardRef<HTMLDivElement, DSCardProps>(
-    ({ tone = 'light', padding = 'md', className, children, ...props }, ref) => {
+    ({ tone = 'light', padding = 'md', className, style, children, ...props }, ref) => {
         const toneClass =
             tone === 'dark'
                 ? 'bg-[hsl(var(--surface-2))]/10 border border-[hsl(var(--border))]/20'
@@ -22,7 +22,11 @@ export const DSCard = React.forwardRef<HTMLDivElement, DSCardProps>(
         return (
             <div
                 ref={ref}
-                className={clsx('rounded-lg shadow-sm', toneClass, paddingClass, className)}
+                style={{
+                    gap: 'var(--density-gap, 0.25rem)',
+                    ...style,
+                }}
+                className={clsx('density-card rounded-lg shadow-sm', toneClass, paddingClass, className)}
                 {...props}
             >
                 {children}
