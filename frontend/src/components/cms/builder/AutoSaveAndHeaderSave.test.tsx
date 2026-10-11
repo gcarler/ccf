@@ -357,6 +357,80 @@ describe("M5: Auto-Save & Manual Save Header Integration", () => {
     expect(screen.getByText("Guardado en borrador")).toBeInTheDocument();
   });
 
+  it("serializes server writes: patchCmsSection is not called for save #2 until save #1 resolves", async () => {
+    let resolveFirstSave: (val: any) => void;
+    const slowFirstPromise = new Promise((resolve) => {
+      resolveFirstSave = resolve;
+    });
+
+    const calls: Array<{ callIndex: number; title: string }> = [];
+
+    (cmsV2.patchCmsSection as any).mockImplementation((_site: string, _slug: string, _id: string, payload: any) => {
+      const callIndex = calls.length + 1;
+      const title = payload?.props_json?.title;
+      calls.push({ callIndex, title });
+
+      if (callIndex === 1) {
+        return slowFirstPromise;
+      }
+      return Promise.resolve({ id: "sec-1", type: "hero", props_json: payload?.props_json });
+    });
+
+    render(<PuckBuilderPage />);
+
+    await act(async () => {
+      await vi.runAllTimersAsync();
+    });
+
+    // Suppress initial mount
+    act(() => {
+      puckPropsCaptured.onChange({ content: [] });
+    });
+
+    // First edit -> triggers save #1 (slow)
+    act(() => {
+      puckPropsCaptured.onChange({
+        content: [{ type: "hero", props: { id: "sec-1", title: "Version 1" } }],
+      });
+    });
+
+    await act(async () => {
+      vi.advanceTimersByTime(3000);
+    });
+
+    // Verify save #1 has started writing to server
+    expect(calls).toHaveLength(1);
+    expect(calls[0].title).toBe("Version 1");
+
+    // Second edit -> triggers manual save #2 (fast)
+    act(() => {
+      puckPropsCaptured.onChange({
+        content: [{ type: "hero", props: { id: "sec-1", title: "Version 2" } }],
+      });
+    });
+
+    const saveButton = screen.getByRole("button", { name: /guardar/i });
+    await act(async () => {
+      fireEvent.click(saveButton);
+    });
+
+    // CRITICAL GUARDIAN ASSERTION:
+    // Because server writes are strictly serialized via saveQueueRef,
+    // patchCmsSection MUST NOT have been invoked for save #2 yet while save #1 is pending.
+    expect(calls).toHaveLength(1);
+
+    // Now resolve slow save #1
+    await act(async () => {
+      resolveFirstSave!({ id: "sec-1", type: "hero" });
+      await vi.runAllTimersAsync();
+    });
+
+    // Now save #2 has proceeded and written to server in strict order
+    expect(calls).toHaveLength(2);
+    expect(calls[1].title).toBe("Version 2");
+    expect(screen.getByText("Guardado en borrador")).toBeInTheDocument();
+  });
+
   it("displays error status badge and error toast when save fails", async () => {
     (cmsV2.patchCmsSection as any).mockRejectedValue(new Error("Network Error"));
 
