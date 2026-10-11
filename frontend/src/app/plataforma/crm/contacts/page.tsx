@@ -164,7 +164,7 @@ export default function ContactsPage() {
             rightActions={canEditCrm ? (
                 <button
                     onClick={() => setIsCreateOpen(true)}
-                    className="flex items-center gap-2 px-3 py-2 bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] rounded-md text-xs font-bold uppercase tracking-wide shadow-xl shadow-[hsl(var(--primary)/0.2)] active:scale-95 transition-all"
+                    className="flex items-center gap-2 px-[calc(0.75rem+var(--density-pad-x-delta,0px))] py-[calc(0.5rem+var(--density-pad-y-delta,0px))] bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] rounded-md text-xs font-bold uppercase tracking-wide shadow-xl shadow-[hsl(var(--primary)/0.2)] active:scale-95 transition-all"
                 >
                     <Plus size={14} /> Nuevo Contacto
                 </button>
@@ -196,7 +196,7 @@ export default function ContactsPage() {
                         <input
                             type="text"
                             placeholder="Buscar por nombre o fuente..."
-                            className="w-full bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] rounded-lg py-1.5 pl-11 pr-4 text-sm font-medium text-[hsl(var(--text-primary))] focus:ring-2 focus:ring-[hsl(var(--primary))/0.2] outline-none transition-all"
+                            className="w-full bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] rounded-lg py-[calc(0.375rem+var(--density-pad-y-delta,0px))] pl-11 pr-[calc(1rem+var(--density-pad-x-delta,0px))] text-sm font-medium text-[hsl(var(--text-primary))] focus:ring-2 focus:ring-[hsl(var(--primary))/0.2] outline-none transition-all"
                             value={searchQuery}
                             onChange={e => setSearchQuery(e.target.value)}
                         />
@@ -204,7 +204,7 @@ export default function ContactsPage() {
                     <div className="flex gap-2 overflow-x-auto pb-1">
                         <button
                             onClick={() => setActiveFilter('all')}
-                            className={`px-4 py-1.5 rounded-full text-2xs font-bold uppercase tracking-wide transition-all border whitespace-nowrap ${activeFilter === 'all' ? 'bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] border-[hsl(var(--primary))]' : 'bg-[hsl(var(--surface-1))] text-[hsl(var(--text-secondary))] border-[hsl(var(--border))]'}`}
+                            className={`px-[calc(1rem+var(--density-pad-x-delta,0px))] py-[calc(0.375rem+var(--density-pad-y-delta,0px))] rounded-full text-2xs font-bold uppercase tracking-wide transition-all border whitespace-nowrap ${activeFilter === 'all' ? 'bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] border-[hsl(var(--primary))]' : 'bg-[hsl(var(--surface-1))] text-[hsl(var(--text-secondary))] border-[hsl(var(--border))]'}`}
                         >
                             Todos ({leads.length})
                         </button>
@@ -212,7 +212,7 @@ export default function ContactsPage() {
                             <button
                                 key={s}
                                 onClick={() => setActiveFilter(s)}
-                                className={`px-4 py-1.5 rounded-full text-2xs font-bold uppercase tracking-wide transition-all border whitespace-nowrap ${activeFilter === s ? 'bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] border-[hsl(var(--primary))]' : 'bg-[hsl(var(--surface-1))] text-[hsl(var(--text-secondary))] border-[hsl(var(--border))]'}`}
+                                className={`px-[calc(1rem+var(--density-pad-x-delta,0px))] py-[calc(0.375rem+var(--density-pad-y-delta,0px))] rounded-full text-2xs font-bold uppercase tracking-wide transition-all border whitespace-nowrap ${activeFilter === s ? 'bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] border-[hsl(var(--primary))]' : 'bg-[hsl(var(--surface-1))] text-[hsl(var(--text-secondary))] border-[hsl(var(--border))]'}`}
                             >
                                 {STAGE_LABELS[s]} ({leads.filter(l => l.stage === s).length})
                             </button>
@@ -367,14 +367,14 @@ export default function ContactsPage() {
                             {!leadsError && filtered.length === 0 && <div className="py-1.5 text-center text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Sin datos</div>}
                         </div>
                     ) : viewType === 'table' ? (
-                        <div className="rounded-lg border border-[hsl(var(--border))] overflow-x-auto">
+                        <div className="rounded-lg border border-[hsl(var(--border))] overflow-x-auto density-table">
                             <table className="w-full text-left min-w-[520px]">
                                 <thead className="bg-[hsl(var(--surface-2))]">
                                     <tr>
-                                        <th className="px-4 py-1.5 text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Nombre</th>
-                                        <th className="px-4 py-1.5 text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Fuente</th>
-                                        <th className="px-4 py-1.5 text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Telefono</th>
-                                        <th className="px-4 py-1.5 text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Etapa</th>
+                                        <th className="px-[calc(1rem+var(--density-pad-x-delta,0px))] py-[calc(0.375rem+var(--density-pad-y-delta,0px))] text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Nombre</th>
+                                        <th className="px-[calc(1rem+var(--density-pad-x-delta,0px))] py-[calc(0.375rem+var(--density-pad-y-delta,0px))] text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Fuente</th>
+                                        <th className="px-[calc(1rem+var(--density-pad-x-delta,0px))] py-[calc(0.375rem+var(--density-pad-y-delta,0px))] text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Telefono</th>
+                                        <th className="px-[calc(1rem+var(--density-pad-x-delta,0px))] py-[calc(0.375rem+var(--density-pad-y-delta,0px))] text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Etapa</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -382,10 +382,10 @@ export default function ContactsPage() {
                                         const stage = lead.stage ?? 'new';
                                         return (
                                         <tr key={lead.id} onClick={() => router.push(`/plataforma/crm/contacts/${lead.id}`)} className="cursor-pointer border-t border-[hsl(var(--border))] hover:bg-[hsl(var(--surface-2))]">
-                                            <td className="px-4 py-1.5 text-sm font-bold text-[hsl(var(--text-primary))]">{lead.nombre_completo || ''}</td>
-                                            <td className="px-4 py-1.5 text-xs text-[hsl(var(--text-secondary))]">{lead.source || 'Sin fuente'}</td>
-                                            <td className="px-4 py-1.5 text-xs text-[hsl(var(--text-secondary))]">{lead.telefono ?? lead.phone ?? 'Sin telefono'}</td>
-                                            <td className="px-4 py-1.5 text-xs text-[hsl(var(--text-secondary))]">{STAGE_LABELS[stage] || stage}</td>
+                                            <td className="px-[calc(1rem+var(--density-pad-x-delta,0px))] py-[calc(0.375rem+var(--density-pad-y-delta,0px))] text-sm font-bold text-[hsl(var(--text-primary))]">{lead.nombre_completo || ''}</td>
+                                            <td className="px-[calc(1rem+var(--density-pad-x-delta,0px))] py-[calc(0.375rem+var(--density-pad-y-delta,0px))] text-xs text-[hsl(var(--text-secondary))]">{lead.source || 'Sin fuente'}</td>
+                                            <td className="px-[calc(1rem+var(--density-pad-x-delta,0px))] py-[calc(0.375rem+var(--density-pad-y-delta,0px))] text-xs text-[hsl(var(--text-secondary))]">{lead.telefono ?? lead.phone ?? 'Sin telefono'}</td>
+                                            <td className="px-[calc(1rem+var(--density-pad-x-delta,0px))] py-[calc(0.375rem+var(--density-pad-y-delta,0px))] text-xs text-[hsl(var(--text-secondary))]">{STAGE_LABELS[stage] || stage}</td>
                                         </tr>
                                         );
                                     })}
@@ -436,14 +436,14 @@ export default function ContactsPage() {
                 subtitle="Registrar prospecto en el pipeline pastoral"
                 actions={
                     <>
-                        <button type="button" onClick={() => setIsCreateOpen(false)} className="px-4 py-2 text-xs font-bold text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))]">
+                        <button type="button" onClick={() => setIsCreateOpen(false)} className="px-[calc(1rem+var(--density-pad-x-delta,0px))] py-[calc(0.5rem+var(--density-pad-y-delta,0px))] text-xs font-bold text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))]">
                             Cancelar
                         </button>
                         <button
                             form="create-contact-form"
                             type="submit"
                             disabled={isSaving}
-                            className="px-3 py-2 bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] rounded-lg text-xs font-bold uppercase tracking-wide shadow-lg shadow-[hsl(var(--primary)/0.2)] hover:opacity-90 active:scale-95 transition-all flex items-center gap-2"
+                            className="px-[calc(0.75rem+var(--density-pad-x-delta,0px))] py-[calc(0.5rem+var(--density-pad-y-delta,0px))] bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] rounded-lg text-xs font-bold uppercase tracking-wide shadow-lg shadow-[hsl(var(--primary)/0.2)] hover:opacity-90 active:scale-95 transition-all flex items-center gap-2"
                         >
                             {isSaving ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
                             Registrar
@@ -460,7 +460,7 @@ export default function ContactsPage() {
                                 value={newLead.first_name}
                                 onChange={e => setNewLead({ ...newLead, first_name: e.target.value })}
                                 placeholder="Juan"
-                                className="w-full px-4 py-1.5 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.2] font-bold text-sm text-[hsl(var(--text-primary))]"
+                                className="w-full px-[calc(1rem+var(--density-pad-x-delta,0px))] py-[calc(0.375rem+var(--density-pad-y-delta,0px))] rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.2] font-bold text-sm text-[hsl(var(--text-primary))]"
                             />
                         </div>
                         <div className="space-y-2">
@@ -469,7 +469,7 @@ export default function ContactsPage() {
                                 value={newLead.last_name}
                                 onChange={e => setNewLead({ ...newLead, last_name: e.target.value })}
                                 placeholder="Pérez"
-                                className="w-full px-4 py-1.5 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.2] font-bold text-sm text-[hsl(var(--text-primary))]"
+                                className="w-full px-[calc(1rem+var(--density-pad-x-delta,0px))] py-[calc(0.375rem+var(--density-pad-y-delta,0px))] rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.2] font-bold text-sm text-[hsl(var(--text-primary))]"
                             />
                         </div>
                     </div>
@@ -479,7 +479,7 @@ export default function ContactsPage() {
                             value={newLead.phone}
                             onChange={e => setNewLead({ ...newLead, phone: e.target.value })}
                             placeholder="+57 300 123 4567"
-                            className="w-full px-4 py-1.5 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.2] font-bold text-sm text-[hsl(var(--text-primary))]"
+                            className="w-full px-[calc(1rem+var(--density-pad-x-delta,0px))] py-[calc(0.375rem+var(--density-pad-y-delta,0px))] rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.2] font-bold text-sm text-[hsl(var(--text-primary))]"
                         />
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -488,7 +488,7 @@ export default function ContactsPage() {
                             <select
                                 value={newLead.source}
                                 onChange={e => setNewLead({ ...newLead, source: e.target.value })}
-                                className="w-full px-4 py-1.5 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.2] font-bold text-sm text-[hsl(var(--text-primary))] appearance-none"
+                                className="w-full px-[calc(1rem+var(--density-pad-x-delta,0px))] py-[calc(0.375rem+var(--density-pad-y-delta,0px))] rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.2] font-bold text-sm text-[hsl(var(--text-primary))] appearance-none"
                             >
                                 {SOURCE_OPTS.map(s => <option key={s} value={s}>{s}</option>)}
                             </select>
@@ -498,7 +498,7 @@ export default function ContactsPage() {
                             <select
                                 value={newLead.stage}
                                 onChange={e => setNewLead({ ...newLead, stage: e.target.value })}
-                                className="w-full px-4 py-1.5 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.2] font-bold text-sm text-[hsl(var(--text-primary))] appearance-none"
+                                className="w-full px-[calc(1rem+var(--density-pad-x-delta,0px))] py-[calc(0.375rem+var(--density-pad-y-delta,0px))] rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.2] font-bold text-sm text-[hsl(var(--text-primary))] appearance-none"
                             >
                                 {PIPELINE_STAGES.map(s => <option key={s} value={s}>{STAGE_LABELS[s]}</option>)}
                             </select>
@@ -511,7 +511,7 @@ export default function ContactsPage() {
                             onChange={e => setNewLead({ ...newLead, notes: e.target.value })}
                             placeholder="Contexto del contacto inicial..."
                             rows={3}
-                            className="w-full px-4 py-1.5 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.2] font-bold text-sm text-[hsl(var(--text-primary))] resize-none"
+                            className="w-full px-[calc(1rem+var(--density-pad-x-delta,0px))] py-[calc(0.375rem+var(--density-pad-y-delta,0px))] rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.2] font-bold text-sm text-[hsl(var(--text-primary))] resize-none"
                         />
                     </div>
                 </form>

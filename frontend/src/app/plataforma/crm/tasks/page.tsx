@@ -170,7 +170,7 @@ export default function CrmTasksPage() {
             rightActions={canEditCrm ? (
                 <button
                     onClick={() => setIsCreateOpen(true)}
-                    className="flex items-center gap-2 px-3 py-2 bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] rounded-md text-xs font-bold uppercase tracking-wide shadow-xl shadow-[hsl(var(--primary)/0.2)] active:scale-95 transition-all"
+                    className="flex items-center gap-2 px-[calc(0.75rem+var(--density-pad-x-delta,0px))] py-[calc(0.5rem+var(--density-pad-y-delta,0px))] bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] rounded-md text-xs font-bold uppercase tracking-wide shadow-xl shadow-[hsl(var(--primary)/0.2)] active:scale-95 transition-all"
                 >
                     <Plus size={14} /> Nueva Tarea
                 </button>
@@ -198,7 +198,7 @@ export default function CrmTasksPage() {
             {/* ─── Stats strip ─── */}
             <div className="px-4 pt-4 pb-0 flex items-center gap-3">
                 {STATUS_COLUMNS.map(col => (
-                    <div key={col.key} className={clsx("flex items-center gap-2 px-4 py-2 rounded-md border text-xs font-bold", col.bg, col.border)}>
+                    <div key={col.key} className={clsx("flex items-center gap-[calc(0.5rem+var(--density-gap-delta,0px))] px-[calc(1rem+var(--density-pad-x-delta,0px))] py-[calc(0.5rem+var(--density-pad-y-delta,0px))] rounded-md border text-xs font-bold", col.bg, col.border)}>
                         <div className={clsx("size-2 rounded-full", col.dot)} />
                         <span className="text-[hsl(var(--muted-foreground))]">{col.label}</span>
                         <span className="font-bold text-[hsl(var(--foreground))]">{tasksByStatus[col.key]?.length ?? 0}</span>
@@ -231,7 +231,7 @@ export default function CrmTasksPage() {
                                                     {colTasks.length}
                                                 </span>
                                             </div>
-                                            {canEditCrm && <button onClick={() => setIsCreateOpen(true)} aria-label="Crear tarea" className="p-1.5 rounded-lg text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--primary))] hover:bg-[hsl(var(--surface-2))] transition-all">
+                                            {canEditCrm && <button onClick={() => setIsCreateOpen(true)} aria-label="Crear tarea" className="p-[calc(0.375rem+var(--density-pad-y-delta,0px))] rounded-lg text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--primary))] hover:bg-[hsl(var(--surface-2))] transition-all">
                                                 <Plus size={14} />
                                             </button>}
                                         </div>
@@ -321,13 +321,13 @@ export default function CrmTasksPage() {
                     <motion.div
                         key="table"
                         initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                        className="flex-1 overflow-auto p-4"
+                        className="flex-1 overflow-auto p-4 density-table"
                     >
                         <table className="w-full text-left">
                             <thead>
                                 <tr className="border-b border-[hsl(var(--border))]">
                                     {['Tarea', 'Persona', 'Categoría', 'Prioridad', 'Estado', 'Vence'].map(h => (
-                                        <th key={h} className="pb-3 px-3 text-2xs font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wide">{h}</th>
+                                        <th key={h} className="px-[calc(0.75rem+var(--density-pad-x-delta,0px))] py-[calc(0.75rem+var(--density-pad-y-delta,0px))] text-2xs font-bold text-[hsl(var(--muted-foreground))] uppercase tracking-wide">{h}</th>
                                     ))}
                                 </tr>
                             </thead>
@@ -343,19 +343,19 @@ export default function CrmTasksPage() {
                                             onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); router.push(`/plataforma/crm/tasks/${task.id}`); } }}
                                             className="border-b border-[hsl(var(--border))] hover:bg-[hsl(var(--surface-1))] cursor-pointer transition-colors"
                                         >
-                                            <td className="py-1.5 px-3 text-xs font-bold text-[hsl(var(--foreground))] max-w-[250px] truncate">{task.title}</td>
-                                            <td className="py-1.5 px-3 text-xs text-[hsl(var(--muted-foreground))]">{task.persona_name || '—'}</td>
-                                            <td className="py-1.5 px-3 text-2xs font-bold text-[hsl(var(--muted-foreground))] uppercase">{task.category}</td>
-                                            <td className="py-1.5 px-3">
+                                            <td className="px-[calc(0.75rem+var(--density-pad-x-delta,0px))] py-[calc(0.375rem+var(--density-pad-y-delta,0px))] text-xs font-bold text-[hsl(var(--foreground))] max-w-[250px] truncate">{task.title}</td>
+                                            <td className="px-[calc(0.75rem+var(--density-pad-x-delta,0px))] py-[calc(0.375rem+var(--density-pad-y-delta,0px))] text-xs text-[hsl(var(--muted-foreground))]">{task.persona_name || '—'}</td>
+                                            <td className="px-[calc(0.75rem+var(--density-pad-x-delta,0px))] py-[calc(0.375rem+var(--density-pad-y-delta,0px))] text-2xs font-bold text-[hsl(var(--muted-foreground))] uppercase">{task.category}</td>
+                                            <td className="px-[calc(0.75rem+var(--density-pad-x-delta,0px))] py-[calc(0.375rem+var(--density-pad-y-delta,0px))]">
                                                 <span className={clsx("px-2 py-0.5 rounded text-2xs font-bold uppercase", PRIORITY_STYLES[task.priority])}>{task.priority}</span>
                                             </td>
-                                            <td className="py-1.5 px-3">
+                                            <td className="px-[calc(0.75rem+var(--density-pad-x-delta,0px))] py-[calc(0.375rem+var(--density-pad-y-delta,0px))]">
                                                 <div className="flex items-center gap-1.5">
                                                     <div className={clsx("size-1.5 rounded-full", col?.dot)} />
                                                     <span className="text-2xs font-bold text-[hsl(var(--muted-foreground))] uppercase">{col?.label}</span>
                                                 </div>
                                             </td>
-                                            <td className="py-1.5 px-3 text-xs text-[hsl(var(--muted-foreground))]">{task.due_date ? new Date(task.due_date).toLocaleDateString() : '—'}</td>
+                                            <td className="px-[calc(0.75rem+var(--density-pad-x-delta,0px))] py-[calc(0.375rem+var(--density-pad-y-delta,0px))] text-xs text-[hsl(var(--muted-foreground))]">{task.due_date ? new Date(task.due_date).toLocaleDateString() : '—'}</td>
                                         </tr>
                                     );
                                 })}
@@ -514,14 +514,14 @@ export default function CrmTasksPage() {
                 subtitle="Seguimiento y gestión ministerial"
                 actions={
                     <>
-                        <button type="button" onClick={() => setIsCreateOpen(false)} className="px-4 py-2 text-xs font-bold text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] transition-colors">
+                        <button type="button" onClick={() => setIsCreateOpen(false)} className="px-[calc(1rem+var(--density-pad-x-delta,0px))] py-[calc(0.5rem+var(--density-pad-y-delta,0px))] text-xs font-bold text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] transition-colors">
                             Cancelar
                         </button>
                         <button
                             form="create-task-form"
                             type="submit"
                             disabled={isSaving}
-                            className="px-3 py-2 bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] rounded-lg text-xs font-bold uppercase tracking-wide shadow-lg shadow-[hsl(var(--primary)/0.2)] hover:bg-[hsl(var(--primary))] active:scale-95 transition-all flex items-center gap-2"
+                            className="px-[calc(0.75rem+var(--density-pad-x-delta,0px))] py-[calc(0.5rem+var(--density-pad-y-delta,0px))] bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] rounded-lg text-xs font-bold uppercase tracking-wide shadow-lg shadow-[hsl(var(--primary)/0.2)] hover:bg-[hsl(var(--primary))] active:scale-95 transition-all flex items-center gap-2"
                         >
                             {isSaving ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
                             Crear Tarea
@@ -537,7 +537,7 @@ export default function CrmTasksPage() {
                             value={newTask.title}
                             onChange={e => setNewTask({ ...newTask, title: e.target.value })}
                             placeholder="Ej: Visitar a hermano Juan"
-                            className="w-full px-4 py-1.5 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.2] font-bold text-sm text-[hsl(var(--foreground))]"
+                            className="w-full px-[calc(1rem+var(--density-pad-x-delta,0px))] py-[calc(0.375rem+var(--density-pad-y-delta,0px))] rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.2] font-bold text-sm text-[hsl(var(--foreground))]"
                         />
                     </div>
                     <div className="space-y-2">
@@ -547,7 +547,7 @@ export default function CrmTasksPage() {
                             onChange={e => setNewTask({ ...newTask, description: e.target.value })}
                             placeholder="Detalles adicionales..."
                             rows={3}
-                            className="w-full px-4 py-1.5 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.2] font-bold text-sm text-[hsl(var(--foreground))] resize-none"
+                            className="w-full px-[calc(1rem+var(--density-pad-x-delta,0px))] py-[calc(0.375rem+var(--density-pad-y-delta,0px))] rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.2] font-bold text-sm text-[hsl(var(--foreground))] resize-none"
                         />
                     </div>
                     <div className="grid grid-cols-2 gap-4">
@@ -556,7 +556,7 @@ export default function CrmTasksPage() {
                             <select
                                 value={newTask.category}
                                 onChange={e => setNewTask({ ...newTask, category: e.target.value })}
-                                className="w-full px-4 py-1.5 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.2] font-bold text-sm text-[hsl(var(--foreground))] appearance-none"
+                                className="w-full px-[calc(1rem+var(--density-pad-x-delta,0px))] py-[calc(0.375rem+var(--density-pad-y-delta,0px))] rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.2] font-bold text-sm text-[hsl(var(--foreground))] appearance-none"
                             >
                                 {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
                             </select>
@@ -566,7 +566,7 @@ export default function CrmTasksPage() {
                             <select
                                 value={newTask.priority}
                                 onChange={e => setNewTask({ ...newTask, priority: e.target.value })}
-                                className="w-full px-4 py-1.5 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.2] font-bold text-sm text-[hsl(var(--foreground))] appearance-none"
+                                className="w-full px-[calc(1rem+var(--density-pad-x-delta,0px))] py-[calc(0.375rem+var(--density-pad-y-delta,0px))] rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.2] font-bold text-sm text-[hsl(var(--foreground))] appearance-none"
                             >
                                 <option value="low">Baja</option>
                                 <option value="medium">Media</option>
@@ -580,7 +580,7 @@ export default function CrmTasksPage() {
                             <select
                                 value={newTask.status}
                                 onChange={e => setNewTask({ ...newTask, status: e.target.value })}
-                                className="w-full px-4 py-1.5 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.2] font-bold text-sm text-[hsl(var(--foreground))] appearance-none"
+                                className="w-full px-[calc(1rem+var(--density-pad-x-delta,0px))] py-[calc(0.375rem+var(--density-pad-y-delta,0px))] rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.2] font-bold text-sm text-[hsl(var(--foreground))] appearance-none"
                             >
                                 {STATUS_COLUMNS.map(c => <option key={c.key} value={c.key}>{c.label}</option>)}
                             </select>
@@ -591,7 +591,7 @@ export default function CrmTasksPage() {
                                 type="date"
                                 value={newTask.due_date}
                                 onChange={e => setNewTask({ ...newTask, due_date: e.target.value })}
-                                className="w-full px-4 py-1.5 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.2] font-bold text-sm text-[hsl(var(--foreground))]"
+                                className="w-full px-[calc(1rem+var(--density-pad-x-delta,0px))] py-[calc(0.375rem+var(--density-pad-y-delta,0px))] rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.2] font-bold text-sm text-[hsl(var(--foreground))]"
                             />
                         </div>
                     </div>

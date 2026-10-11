@@ -175,7 +175,7 @@ export default function AcademyAdminConsole() {
                   setSelectedProgram(null);
                   setProgramDrawerOpen(true);
                 }}
-                className="px-4 py-2 text-xs font-bold rounded-lg bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] flex items-center gap-1.5 hover:opacity-90 shadow-md transition-all"
+                className="px-[calc(1rem+var(--density-pad-x-delta,0px))] py-[calc(0.5rem+var(--density-pad-y-delta,0px))] text-xs font-bold rounded-lg bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] flex items-center gap-1.5 hover:opacity-90 shadow-md transition-all"
               >
                 <Plus className="size-4" />
                 <span>Nuevo Proceso Formativo</span>
@@ -188,7 +188,7 @@ export default function AcademyAdminConsole() {
                   setSelectedPeriod(null);
                   setPeriodDrawerOpen(true);
                 }}
-                className="px-4 py-2 text-xs font-bold rounded-lg bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] flex items-center gap-1.5 hover:opacity-90 shadow-md transition-all"
+                className="px-[calc(1rem+var(--density-pad-x-delta,0px))] py-[calc(0.5rem+var(--density-pad-y-delta,0px))] text-xs font-bold rounded-lg bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] flex items-center gap-1.5 hover:opacity-90 shadow-md transition-all"
               >
                 <Plus className="size-4" />
                 <span>Aperturar Período</span>
@@ -201,7 +201,7 @@ export default function AcademyAdminConsole() {
                   setSelectedScheme(null);
                   setSchemeDrawerOpen(true);
                 }}
-                className="px-4 py-2 text-xs font-bold rounded-lg bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] flex items-center gap-1.5 hover:opacity-90 shadow-md transition-all"
+                className="px-[calc(1rem+var(--density-pad-x-delta,0px))] py-[calc(0.5rem+var(--density-pad-y-delta,0px))] text-xs font-bold rounded-lg bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] flex items-center gap-1.5 hover:opacity-90 shadow-md transition-all"
               >
                 <Plus className="size-4" />
                 <span>Nuevo Esquema de Cortes</span>
@@ -213,7 +213,7 @@ export default function AcademyAdminConsole() {
                 onClick={() => {
                   setSubjectDrawerOpen(true);
                 }}
-                className="px-4 py-2 text-xs font-bold rounded-lg bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] flex items-center gap-1.5 hover:opacity-90 shadow-md transition-all"
+                className="px-[calc(1rem+var(--density-pad-x-delta,0px))] py-[calc(0.5rem+var(--density-pad-y-delta,0px))] text-xs font-bold rounded-lg bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] flex items-center gap-1.5 hover:opacity-90 shadow-md transition-all"
               >
                 <Plus className="size-4" />
                 <span>Incorporar Materia al Pensum</span>
@@ -243,7 +243,7 @@ export default function AcademyAdminConsole() {
                   setSearch('');
                 }}
                 className={clsx(
-                  'px-3.5 py-2.5 text-xs font-bold border-b-2 flex items-center gap-2 transition-all shrink-0',
+                  'px-[calc(0.875rem+var(--density-pad-x-delta,0px))] py-[calc(0.625rem+var(--density-pad-y-delta,0px))] text-xs font-bold border-b-2 flex items-center gap-2 transition-all shrink-0',
                   active
                     ? 'border-[hsl(var(--primary))] text-[hsl(var(--primary))] bg-[hsl(var(--primary)/0.05)]'
                     : 'border-transparent text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--foreground))] hover:border-[hsl(var(--border))]'
@@ -271,7 +271,7 @@ export default function AcademyAdminConsole() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Buscar por código, nombre o docente..."
-              className="w-full pl-9 pr-4 py-2 text-xs rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] focus:outline-none focus:ring-1 focus:ring-[hsl(var(--primary))]"
+              className="w-full pl-9 pr-[calc(1rem+var(--density-pad-x-delta,0px))] py-[calc(0.5rem+var(--density-pad-y-delta,0px))] text-xs rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] focus:outline-none focus:ring-1 focus:ring-[hsl(var(--primary))]"
             />
           </div>
         )}
@@ -536,7 +536,7 @@ export default function AcademyAdminConsole() {
                     <select
                       value={selectedPlanId}
                       onChange={(e) => setSelectedPlanId(e.target.value)}
-                      className="px-3 py-1.5 text-sm font-bold rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))]"
+                      className="px-[calc(0.75rem+var(--density-pad-x-delta,0px))] py-[calc(0.375rem+var(--density-pad-y-delta,0px))] text-sm font-bold rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))]"
                     >
                       {studyPlans.map((sp) => (
                         <option key={sp.id} value={sp.id}>
@@ -560,39 +560,39 @@ export default function AcademyAdminConsole() {
 
                 {/* Tabla de Materias con Créditos */}
                 {activePlan && activePlan.subjects.length > 0 ? (
-                  <div className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] overflow-hidden shadow-sm">
+                  <div className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] overflow-hidden shadow-sm density-table">
                     <table className="w-full text-left border-collapse text-xs">
                       <thead>
                         <tr className="border-b border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))] font-bold uppercase tracking-wider text-[11px]">
-                          <th className="p-3">Código</th>
-                          <th className="p-3">Asignatura</th>
-                          <th className="p-3 text-center">Nivel / Semestre</th>
-                          <th className="p-3 text-center">Créditos Educativos</th>
-                          <th className="p-3 text-center">Intensidad Horaria</th>
-                          <th className="p-3">Prerrequisitos</th>
-                          <th className="p-3 text-right">Carácter</th>
+                          <th className="px-[calc(0.75rem+var(--density-pad-x-delta,0px))] py-[calc(0.75rem+var(--density-pad-y-delta,0px))]">Código</th>
+                          <th className="px-[calc(0.75rem+var(--density-pad-x-delta,0px))] py-[calc(0.75rem+var(--density-pad-y-delta,0px))]">Asignatura</th>
+                          <th className="px-[calc(0.75rem+var(--density-pad-x-delta,0px))] py-[calc(0.75rem+var(--density-pad-y-delta,0px))] text-center">Nivel / Semestre</th>
+                          <th className="px-[calc(0.75rem+var(--density-pad-x-delta,0px))] py-[calc(0.75rem+var(--density-pad-y-delta,0px))] text-center">Créditos Educativos</th>
+                          <th className="px-[calc(0.75rem+var(--density-pad-x-delta,0px))] py-[calc(0.75rem+var(--density-pad-y-delta,0px))] text-center">Intensidad Horaria</th>
+                          <th className="px-[calc(0.75rem+var(--density-pad-x-delta,0px))] py-[calc(0.75rem+var(--density-pad-y-delta,0px))]">Prerrequisitos</th>
+                          <th className="px-[calc(0.75rem+var(--density-pad-x-delta,0px))] py-[calc(0.75rem+var(--density-pad-y-delta,0px))] text-right">Carácter</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-[hsl(var(--border))]">
                         {activePlan.subjects.map((sub) => (
                           <tr key={sub.id} className="hover:bg-[hsl(var(--surface-2)/0.5)] transition-colors">
-                            <td className="p-3 font-mono font-bold text-[hsl(var(--primary))]">{sub.code}</td>
-                            <td className="p-3 font-bold text-[hsl(var(--foreground))]">{sub.name}</td>
-                            <td className="p-3 text-center font-semibold">Semestre {sub.level_number}</td>
-                            <td className="p-3 text-center">
+                            <td className="px-[calc(0.75rem+var(--density-pad-x-delta,0px))] py-[calc(0.75rem+var(--density-pad-y-delta,0px))] font-mono font-bold text-[hsl(var(--primary))]">{sub.code}</td>
+                            <td className="px-[calc(0.75rem+var(--density-pad-x-delta,0px))] py-[calc(0.75rem+var(--density-pad-y-delta,0px))] font-bold text-[hsl(var(--foreground))]">{sub.name}</td>
+                            <td className="px-[calc(0.75rem+var(--density-pad-x-delta,0px))] py-[calc(0.75rem+var(--density-pad-y-delta,0px))] text-center font-semibold">Semestre {sub.level_number}</td>
+                            <td className="px-[calc(0.75rem+var(--density-pad-x-delta,0px))] py-[calc(0.75rem+var(--density-pad-y-delta,0px))] text-center">
                               <span className="px-2.5 py-1 rounded font-bold text-xs bg-[hsl(var(--primary)/0.1)] text-[hsl(var(--primary))] border border-[hsl(var(--primary)/0.2)]">
                                 {sub.credits} Créditos
                               </span>
                             </td>
-                            <td className="p-3 text-center text-[hsl(var(--text-secondary))]">
+                            <td className="px-[calc(0.75rem+var(--density-pad-x-delta,0px))] py-[calc(0.75rem+var(--density-pad-y-delta,0px))] text-center text-[hsl(var(--text-secondary))]">
                               {sub.weekly_hours_theory}h T / {sub.weekly_hours_practice}h P / {sub.weekly_hours_independent}h I
                             </td>
-                            <td className="p-3 text-[hsl(var(--text-secondary))]">
+                            <td className="px-[calc(0.75rem+var(--density-pad-x-delta,0px))] py-[calc(0.75rem+var(--density-pad-y-delta,0px))] text-[hsl(var(--text-secondary))]">
                               {sub.prerequisite_codes && sub.prerequisite_codes.length > 0
                                 ? sub.prerequisite_codes.join(', ')
                                 : '—'}
                             </td>
-                            <td className="p-3 text-right">
+                            <td className="px-[calc(0.75rem+var(--density-pad-x-delta,0px))] py-[calc(0.75rem+var(--density-pad-y-delta,0px))] text-right">
                               {sub.is_mandatory ? (
                                 <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-[hsl(var(--surface-2))] text-[hsl(var(--foreground))]">
                                   Obligatoria
