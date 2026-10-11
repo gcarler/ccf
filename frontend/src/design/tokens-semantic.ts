@@ -229,7 +229,7 @@ export type ThemeAdaptiveColor = Exclude<AllSemanticKeys, ThemeSharedColor>;
 export type MinisterialAccentId =
   | 'ccf-blue'
   | 'emerald'
-  | 'indigo'
+  | 'royal'
   | 'burgundy'
   | 'amber'
   | 'ocean';
@@ -285,9 +285,9 @@ export const MINISTERIAL_ACCENTS: Record<MinisterialAccentId, MinisterialAccentT
       primaryForeground: '210 50% 3%',
     },
   },
-  indigo: {
-    id: 'indigo',
-    label: 'Índigo',
+  royal: {
+    id: 'royal',
+    label: 'Azul real',
     description: 'Sabiduría, doctrina pastoral, solemnidad litúrgica y academia teológica',
     swatch: '#4f46e5',
     wcagDayRatio: 4.6,

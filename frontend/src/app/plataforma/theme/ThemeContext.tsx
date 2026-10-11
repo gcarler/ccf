@@ -9,7 +9,7 @@ export type UiScaleId = 'compact' | 'normal' | 'comfortable' | 'large';
 
 export type UiDensity = 'ultra-compact' | 'compact' | 'comfortable' | 'spacious';
 
-export type AccentId = 'ccf-blue' | 'emerald' | 'indigo' | 'burgundy' | 'amber' | 'ocean';
+export type AccentId = 'ccf-blue' | 'emerald' | 'royal' | 'burgundy' | 'amber' | 'ocean';
 
 export interface UiDensityOption {
     id: UiDensity;
@@ -177,9 +177,9 @@ export const ACCENT_PALETTES: Record<AccentId, AccentOption> = {
             primaryForeground: '222 47% 4%',
         },
     },
-    indigo: {
-        id: 'indigo',
-        label: 'Índigo',
+    royal: {
+        id: 'royal',
+        label: 'Azul real',
         description: 'Sabiduría ministerial y visión',
         swatch: '#292ec9',
         wcagDayRatio: 10.79,
