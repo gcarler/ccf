@@ -59,7 +59,7 @@ export default function WorkspaceToolbar({
     onAddOption
 }: WorkspaceToolbarProps) {
     return (
-        <div data-workspace-toolbar className="min-h-[calc(var(--density-row-h,32px)+8px)] bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-2))] border-b border-[hsl(var(--border))] dark:border-white/[0.06] flex flex-wrap items-center justify-between gap-[var(--density-gap,0.375rem)] px-[var(--density-pad-x,0.5rem)] py-[var(--density-pad-y,0.25rem)] sticky top-0 z-50 transition-colors duration-300 sm:flex-nowrap sm:py-0">
+        <div data-workspace-toolbar className="min-h-[calc(2.5rem+var(--density-h-delta,0px))] bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-2))] border-b border-[hsl(var(--border))] dark:border-white/[0.06] flex flex-wrap items-center justify-between gap-[calc(0.375rem+var(--density-gap-delta,0px))] px-[calc(0.5rem+var(--density-pad-x-delta,0px))] py-[calc(0.25rem+var(--density-pad-y-delta,0px))] sticky top-0 z-50 transition-colors duration-300 sm:flex-nowrap sm:gap-2 sm:py-0">
             {/* Left: leftActions + Breadcrumbs + View Switcher */}
             <div className="flex min-w-0 flex-1 items-center gap-1.5 overflow-hidden sm:gap-2">
                 {leftActions && <>{leftActions}<div className="w-px h-4 bg-[hsl(var(--surface-3))] dark:bg-white/10 mx-0.5 shrink-0" /></>}
@@ -118,7 +118,7 @@ export default function WorkspaceToolbar({
                         placeholder="Buscar en esta vista..."
                         value={searchValue}
                         onChange={(e) => onSearch?.(e.target.value)}
-                        className="h-[var(--density-row-h,2rem)] w-44 lg:w-56 bg-[hsl(var(--surface-1))] dark:bg-black/20 border border-[hsl(var(--border))] dark:border-white/[0.06] rounded-md pl-8 pr-3 text-xs font-medium placeholder:text-[hsl(var(--text-secondary))] dark:placeholder:text-[hsl(var(--text-secondary))] focus:ring-1 focus:ring-[hsl(var(--primary))]/30 focus:bg-[hsl(var(--bg-primary))] dark:focus:bg-[hsl(var(--surface-2))] focus:w-64 outline-none transition-all duration-200"
+                        className="h-[calc(2rem+var(--density-h-delta,0px))] w-44 lg:w-56 bg-[hsl(var(--surface-1))] dark:bg-black/20 border border-[hsl(var(--border))] dark:border-white/[0.06] rounded-md pl-8 pr-3 text-xs font-medium placeholder:text-[hsl(var(--text-secondary))] dark:placeholder:text-[hsl(var(--text-secondary))] focus:ring-1 focus:ring-[hsl(var(--primary))]/30 focus:bg-[hsl(var(--bg-primary))] dark:focus:bg-[hsl(var(--surface-2))] focus:w-64 outline-none transition-all duration-200"
                     />
                 </div>
 
@@ -154,7 +154,7 @@ function ToolbarButton({ icon: Icon, onClick, tooltip, active }: { icon: AppIcon
         <div className="relative group/toolbar-btn">
             <button
                 onClick={onClick}
-                className={`min-h-[var(--density-row-h,1.75rem)] min-w-[var(--density-row-h,1.75rem)] flex items-center justify-center p-1 rounded-md transition-all ${
+                className={`min-h-[calc(1.75rem+var(--density-h-delta,0px))] min-w-[calc(1.75rem+var(--density-h-delta,0px))] flex items-center justify-center p-1 rounded-md transition-all ${
                     active
                     ? 'bg-[hsl(var(--info-muted))] text-[hsl(var(--primary))] dark:bg-[hsl(var(--info))]/10 dark:text-[hsl(var(--primary))]'
                     : 'text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:text-[hsl(var(--text-secondary))] dark:hover:bg-white/5 hover:text-[hsl(var(--text-primary))] dark:hover:text-[hsl(var(--text-secondary))]'

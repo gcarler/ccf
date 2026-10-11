@@ -999,19 +999,19 @@ export default function SystemSettings() {
                                     </span>
                                 )}
                             </div>
-                            <div className="flex items-center gap-[var(--density-gap,0.5rem)]">
-                                <button onClick={scanIncidents} className="h-[var(--density-row-h,2.25rem)] min-h-[var(--density-row-h,2.25rem)] rounded-md border border-[hsl(var(--border))] px-[var(--density-pad-x,0.75rem)] py-[var(--density-pad-y,0.25rem)] text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))]/10">
+                            <div className="flex items-center gap-[calc(0.5rem+var(--density-gap-delta,0px))]">
+                                <button onClick={scanIncidents} className="h-[calc(2.25rem+var(--density-h-delta,0px))] rounded-md border border-[hsl(var(--border))] px-[calc(0.75rem+var(--density-pad-x-delta,0px))] text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))]/10">
                                     {actionLoading === 'scan-incidents' ? 'Escaneando...' : 'Scan Incidents'}
                                 </button>
-                                <button onClick={() => downloadAudit('json')} className="h-[var(--density-row-h,2.25rem)] min-h-[var(--density-row-h,2.25rem)] rounded-md border border-[hsl(var(--border))] px-[var(--density-pad-x,0.75rem)] py-[var(--density-pad-y,0.25rem)] text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))]">Export JSON</button>
-                                <button onClick={() => downloadAudit('csv')} className="h-[var(--density-row-h,2.25rem)] min-h-[var(--density-row-h,2.25rem)] rounded-md border border-[hsl(var(--border))] px-[var(--density-pad-x,0.75rem)] py-[var(--density-pad-y,0.25rem)] text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))]">Export CSV</button>
+                                <button onClick={() => downloadAudit('json')} className="h-[calc(2.25rem+var(--density-h-delta,0px))] rounded-md border border-[hsl(var(--border))] px-[calc(0.75rem+var(--density-pad-x-delta,0px))] text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))]">Export JSON</button>
+                                <button onClick={() => downloadAudit('csv')} className="h-[calc(2.25rem+var(--density-h-delta,0px))] rounded-md border border-[hsl(var(--border))] px-[calc(0.75rem+var(--density-pad-x-delta,0px))] text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))]">Export CSV</button>
                             </div>
                         </div>
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-[var(--density-gap,0.75rem)]">
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-[calc(0.75rem+var(--density-gap-delta,0px))]">
                             <select
                                 value={auditFilters.action}
                                 onChange={(event) => setAuditFilters((prev) => ({ ...prev, action: event.target.value }))}
-                                className="h-[var(--density-row-h,2.5rem)] min-h-[var(--density-row-h,2.5rem)] rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] px-[var(--density-pad-x,0.75rem)] py-[var(--density-pad-y,0.25rem)] text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]"
+                                className="h-[calc(2.5rem+var(--density-h-delta,0px))] rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] px-[calc(0.75rem+var(--density-pad-x-delta,0px))] text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]"
                             >
                                 <option value="">Todas las acciones</option>
                                 <option value="update_flags">update_flags</option>
@@ -1020,7 +1020,7 @@ export default function SystemSettings() {
                             <select
                                 value={auditFilters.feature}
                                 onChange={(event) => setAuditFilters((prev) => ({ ...prev, feature: event.target.value }))}
-                                className="h-[var(--density-row-h,2.5rem)] min-h-[var(--density-row-h,2.5rem)] rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] px-[var(--density-pad-x,0.75rem)] py-[var(--density-pad-y,0.25rem)] text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]"
+                                className="h-[calc(2.5rem+var(--density-h-delta,0px))] rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] px-[calc(0.75rem+var(--density-pad-x-delta,0px))] text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]"
                             >
                                 <option value="">Todas las features</option>
                                 {Object.keys(config?.features_enabled || {}).map((feature) => (
@@ -1031,7 +1031,7 @@ export default function SystemSettings() {
                                 value={auditFilters.actor}
                                 onChange={(event) => setAuditFilters((prev) => ({ ...prev, actor: event.target.value }))}
                                 placeholder="Filtrar actor (id usuario)"
-                                className="h-[var(--density-row-h,2.5rem)] min-h-[var(--density-row-h,2.5rem)] rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] px-[var(--density-pad-x,0.75rem)] py-[var(--density-pad-y,0.25rem)] text-xs font-bold text-[hsl(var(--text-primary))] placeholder:text-[hsl(var(--text-secondary))]"
+                                className="h-[calc(2.5rem+var(--density-h-delta,0px))] rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] px-[calc(0.75rem+var(--density-pad-x-delta,0px))] text-xs font-bold text-[hsl(var(--text-primary))] placeholder:text-[hsl(var(--text-secondary))]"
                             />
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
@@ -1515,7 +1515,7 @@ function HealthCard({ label, value, status, icon: Icon }: HealthCardProps) {
 
 function FeatureToggle({ label, desc, active, onToggle, loading }: FeatureToggleProps) {
     return (
-        <div className="p-[var(--density-pad-x,0.75rem)] py-[var(--density-pad-y,0.75rem)] bg-[hsl(var(--surface-1))] rounded-lg border border-[hsl(var(--border))] flex items-center justify-between group hover:border-[hsl(var(--primary)/0.2)] transition-all">
+        <div className="p-[calc(0.75rem+var(--density-pad-x-delta,0px))] py-[calc(0.75rem+var(--density-pad-y-delta,0px))] bg-[hsl(var(--surface-1))] rounded-lg border border-[hsl(var(--border))] flex items-center justify-between group hover:border-[hsl(var(--primary)/0.2)] transition-all">
             <div className="flex-1 pr-4">
                 <h5 className="font-semibold text-[hsl(var(--text-primary))] uppercase mb-1">{label}</h5>
                 <p className="text-2xs font-bold text-[hsl(var(--text-secondary))] uppercase tracking-wide leading-tight">{desc}</p>
@@ -1535,7 +1535,7 @@ function FeatureToggle({ label, desc, active, onToggle, loading }: FeatureToggle
 
 function AuditMetric({ label, value }: { label: string; value: string }) {
     return (
-        <div className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-[var(--density-pad-x,1rem)] py-[var(--density-pad-y,1rem)]">
+        <div className="rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] p-[calc(1rem+var(--density-pad-x-delta,0px))] py-[calc(1rem+var(--density-pad-y-delta,0px))]">
             <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">{label}</p>
             <p className="text-lg font-bold text-[hsl(var(--text-primary))] mt-1">{value}</p>
         </div>
@@ -1562,8 +1562,8 @@ function ProviderRow({ icon: Icon, name, status, color = 'blue', detail }: Provi
         blue: 'text-[hsl(var(--primary))] bg-[hsl(var(--info-muted))]'
     };
     return (
-        <div className="flex items-center justify-between p-[var(--density-pad-x,0.75rem)] py-[var(--density-pad-y,0.75rem)] bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] rounded-lg group hover:border-[hsl(var(--primary)/0.2)] transition-all shadow-sm">
-            <div className="flex items-center gap-[var(--density-gap,0.75rem)]">
+        <div className="flex items-center justify-between p-[calc(0.75rem+var(--density-pad-x-delta,0px))] py-[calc(0.75rem+var(--density-pad-y-delta,0px))] bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] rounded-lg group hover:border-[hsl(var(--primary)/0.2)] transition-all shadow-sm">
+            <div className="flex items-center gap-[calc(0.75rem+var(--density-gap-delta,0px))]">
                 <div className={clsx("size-7 rounded-lg flex items-center justify-center transition-transform group-hover:scale-110", colors[color])}>
                     {Icon && <Icon size={24} />}
                 </div>

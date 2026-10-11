@@ -10,6 +10,10 @@
   --density-pad-y: 0.125rem;
   --density-gap: 0.25rem;
   --ui-density-ratio: 0.75;
+  --density-pad-y-delta: 0px;
+  --density-pad-x-delta: 0px;
+  --density-gap-delta: 0px;
+  --density-h-delta: 0px;
 }
 
 [data-ui-density="compact"] {
@@ -18,6 +22,10 @@
   --density-pad-y: 0.375rem;
   --density-gap: 0.5rem;
   --ui-density-ratio: 0.875;
+  --density-pad-y-delta: 0.125rem;
+  --density-pad-x-delta: 0.125rem;
+  --density-gap-delta: 0.125rem;
+  --density-h-delta: 4px;
 }
 
 [data-ui-density="comfortable"] {
@@ -26,6 +34,10 @@
   --density-pad-y: 0.625rem;
   --density-gap: 0.75rem;
   --ui-density-ratio: 1.0;
+  --density-pad-y-delta: 0.25rem;
+  --density-pad-x-delta: 0.25rem;
+  --density-gap-delta: 0.25rem;
+  --density-h-delta: 8px;
 }
 
 [data-ui-density="spacious"] {
@@ -34,26 +46,13 @@
   --density-pad-y: 0.875rem;
   --density-gap: 1rem;
   --ui-density-ratio: 1.25;
+  --density-pad-y-delta: 0.375rem;
+  --density-pad-x-delta: 0.5rem;
+  --density-gap-delta: 0.375rem;
+  --density-h-delta: 12px;
 }
 
 /* Density-aware design system utilities */
-.density-button {
-  min-height: var(--density-row-h);
-  padding-left: var(--density-pad-x);
-  padding-right: var(--density-pad-x);
-  padding-top: var(--density-pad-y);
-  padding-bottom: var(--density-pad-y);
-  gap: var(--density-gap);
-}
-
-.density-input {
-  min-height: var(--density-row-h);
-  padding-left: var(--density-pad-x);
-  padding-right: var(--density-pad-x);
-  padding-top: var(--density-pad-y);
-  padding-bottom: var(--density-pad-y);
-}
-
 .density-row {
   height: var(--density-row-h);
 }
@@ -79,47 +78,50 @@
 }
 
 .density-pad {
-  padding: var(--density-pad-y) var(--density-pad-x);
+  padding: calc(0.75rem + var(--density-pad-y-delta, 0px)) calc(1rem + var(--density-pad-x-delta, 0px));
 }
 
 .density-pad-x {
-  padding-left: var(--density-pad-x);
-  padding-right: var(--density-pad-x);
+  padding-left: calc(1rem + var(--density-pad-x-delta, 0px));
+  padding-right: calc(1rem + var(--density-pad-x-delta, 0px));
 }
 
 .density-pad-y {
-  padding-top: var(--density-pad-y);
-  padding-bottom: var(--density-pad-y);
+  padding-top: calc(0.75rem + var(--density-pad-y-delta, 0px));
+  padding-bottom: calc(0.75rem + var(--density-pad-y-delta, 0px));
 }
 
 .density-gap {
-  gap: var(--density-gap);
+  gap: calc(0.5rem + var(--density-gap-delta, 0px));
 }
 
 .density-table tr {
-  height: var(--density-row-h);
+  min-height: calc(2.5rem + var(--density-h-delta, 0px));
 }
 
 .density-table th,
 .density-table td {
-  padding: var(--density-pad-y) var(--density-pad-x);
+  padding-top: calc(0.75rem + var(--density-pad-y-delta, 0px));
+  padding-bottom: calc(0.75rem + var(--density-pad-y-delta, 0px));
+  padding-left: calc(1rem + var(--density-pad-x-delta, 0px));
+  padding-right: calc(1rem + var(--density-pad-x-delta, 0px));
 }
 
 .density-header {
-  gap: var(--density-gap);
-  padding-bottom: var(--density-pad-y);
+  gap: calc(0.5rem + var(--density-gap-delta, 0px));
+  padding-bottom: calc(0.5rem + var(--density-pad-y-delta, 0px));
 }
 
 .density-button {
-  min-height: var(--density-row-h);
-  padding: var(--density-pad-y) var(--density-pad-x);
-  gap: var(--density-gap);
+  min-height: calc(2rem + var(--density-h-delta, 0px));
+  padding: calc(0.375rem + var(--density-pad-y-delta, 0px)) calc(1rem + var(--density-pad-x-delta, 0px));
+  gap: calc(0.5rem + var(--density-gap-delta, 0px));
 }
 
 .density-input {
-  height: var(--density-row-h);
-  padding-left: var(--density-pad-x);
-  padding-right: var(--density-pad-x);
+  height: calc(2rem + var(--density-h-delta, 0px));
+  padding-left: calc(0.75rem + var(--density-pad-x-delta, 0px));
+  padding-right: calc(0.75rem + var(--density-pad-x-delta, 0px));
 }
 
 /* Compact Design Tokens */

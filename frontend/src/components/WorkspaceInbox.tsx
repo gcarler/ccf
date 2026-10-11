@@ -94,23 +94,23 @@ export default function WorkspaceInbox({ isOpen, onClose }: { isOpen: boolean, o
                         )}
                     >
                         {/* Header */}
-                        <header className="min-h-[calc(var(--density-row-h,32px)+4px)] border-b border-[hsl(var(--border))] dark:border-white/5 flex items-center justify-between px-[var(--density-pad-x,0.75rem)] py-[var(--density-pad-y,0.25rem)] bg-[hsl(var(--surface-1))]/50 dark:bg-white/5 shrink-0">
-                            <div className="flex items-center gap-[var(--density-gap,0.75rem)]">
+                        <header className="min-h-[calc(2rem+var(--density-h-delta,0px))] border-b border-[hsl(var(--border))] dark:border-white/5 flex items-center justify-between px-[calc(0.75rem+var(--density-pad-x-delta,0px))] py-[calc(0.25rem+var(--density-pad-y-delta,0px))] bg-[hsl(var(--surface-1))]/50 dark:bg-white/5 shrink-0">
+                            <div className="flex items-center gap-[calc(0.75rem+var(--density-gap-delta,0px))]">
                                 <div className="size-8 rounded-md bg-[hsl(var(--primary))] flex items-center justify-center text-white shadow-lg shadow-[hsl(var(--info))]/20 shrink-0">
                                     <Inbox size={18} />
                                 </div>
                                 <h3 className="text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] tracking-tight">Inbox</h3>
                             </div>
-                            <div className="flex items-center gap-[var(--density-gap,0.75rem)]">
+                            <div className="flex items-center gap-[calc(0.75rem+var(--density-gap-delta,0px))]">
                                 <span className={clsx(
-                                    'text-2xs font-bold uppercase tracking-wide flex items-center gap-1',
-                                    socketStatus === 'open'
-                                        ? 'text-[hsl(var(--success))]'
-                                        : socketStatus === 'connecting'
-                                            ? 'text-[hsl(var(--warning))]'
-                                            : socketStatus === 'error'
-                                                ? 'text-[hsl(var(--danger))]'
-                                                : 'text-[hsl(var(--text-secondary))]'
+                                     'text-2xs font-bold uppercase tracking-wide flex items-center gap-1',
+                                     socketStatus === 'open'
+                                         ? 'text-[hsl(var(--success))]'
+                                         : socketStatus === 'connecting'
+                                             ? 'text-[hsl(var(--warning))]'
+                                             : socketStatus === 'error'
+                                                 ? 'text-[hsl(var(--danger))]'
+                                                 : 'text-[hsl(var(--text-secondary))]'
                                 )}>
                                     <span className="size-2 rounded-full bg-current" />
                                     WS
@@ -121,7 +121,7 @@ export default function WorkspaceInbox({ isOpen, onClose }: { isOpen: boolean, o
                                 <div className="w-[1px] h-4 bg-[hsl(var(--surface-3))] dark:bg-white/10 mx-1" />
                                 <button
                                     onClick={() => setIsExpanded((expanded) => !expanded)}
-                                    className="inline-flex min-h-[var(--density-row-h,1.75rem)] items-center gap-1.5 rounded-md border border-[hsl(var(--border))] dark:border-white/10 px-2 py-[var(--density-pad-y,0.25rem)] text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-3))] dark:hover:bg-white/10 hover:text-[hsl(var(--text-primary))] dark:hover:text-white transition-all"
+                                    className="inline-flex min-h-[calc(1.75rem+var(--density-h-delta,0px))] items-center gap-1.5 rounded-md border border-[hsl(var(--border))] dark:border-white/10 px-2 py-[calc(0.25rem+var(--density-pad-y-delta,0px))] text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-3))] dark:hover:bg-white/10 hover:text-[hsl(var(--text-primary))] dark:hover:text-white transition-all"
                                     aria-label={isExpanded ? "Contraer panel de notificaciones" : "Expandir panel de notificaciones"}
                                     aria-pressed={isExpanded}
                                     title={isExpanded ? "Contraer panel" : "Expandir panel"}
@@ -131,7 +131,7 @@ export default function WorkspaceInbox({ isOpen, onClose }: { isOpen: boolean, o
                                 </button>
                                 <button
                                     onClick={onClose}
-                                    className="p-1.5 min-h-[var(--density-row-h,1.75rem)] min-w-[var(--density-row-h,1.75rem)] flex items-center justify-center hover:bg-[hsl(var(--surface-3))] dark:hover:bg-white/10 rounded-md transition-all text-[hsl(var(--text-secondary))]"
+                                    className="p-[calc(0.5rem+var(--density-pad-y-delta,0px))] flex items-center justify-center hover:bg-[hsl(var(--surface-3))] dark:hover:bg-white/10 rounded-md transition-all text-[hsl(var(--text-secondary))]"
                                     aria-label="Cerrar panel de notificaciones"
                                     title="Cerrar panel"
                                 >
@@ -238,7 +238,7 @@ function HeaderAction({ icon: Icon, tooltip, ariaLabel = tooltip, onClick, press
     return (
         <button
             onClick={onClick}
-            className="p-[var(--density-pad-y,0.25rem)] min-h-[var(--density-row-h,1.75rem)] min-w-[var(--density-row-h,1.75rem)] flex items-center justify-center text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-secondary))] dark:hover:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-3))] dark:hover:bg-white/10 rounded-md transition-all relative group/h"
+            className="p-[calc(0.5rem+var(--density-pad-y-delta,0px))] text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-secondary))] dark:hover:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-3))] dark:hover:bg-white/10 rounded-md transition-all relative group/h"
             aria-label={ariaLabel}
             aria-pressed={pressed}
             title={tooltip}
