@@ -184,11 +184,11 @@ export default function AgendaEventsPage() {
                                 </p>
                             </div>
                             <div className="flex flex-wrap items-center gap-2">
-                                <span className="rounded-full border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] px-3 py-1 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
+                                <span className="rounded-full border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] px-[calc(0.75rem+var(--density-pad-x-delta,0px))] py-[calc(0.25rem+var(--density-pad-y-delta,0px))] text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
                                     {isAgendaEditing ? "Edición rápida" : "Agenda completa"}
                                 </span>
                                 <span
-                                    className={`rounded-full px-3 py-1 text-2xs font-semibold uppercase tracking-wide ${
+                                    className={`rounded-full px-[calc(0.75rem+var(--density-pad-x-delta,0px))] py-[calc(0.25rem+var(--density-pad-y-delta,0px))] text-2xs font-semibold uppercase tracking-wide ${
                                         isAgendaEditing
                                             ? "bg-[hsl(var(--warning-soft))] text-[hsl(var(--warning-text))]"
                                             : "bg-[hsl(var(--success-soft))] text-[hsl(var(--success-text))]"
@@ -219,7 +219,7 @@ export default function AgendaEventsPage() {
                                         value={form.title}
                                         onChange={(e) => setForm((prev) => ({ ...prev, title: e.target.value }))}
                                         placeholder="Ej: Reunión de liderazgo"
-                                        className="w-full rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] px-4 py-3 text-sm font-bold text-[hsl(var(--text-primary))] outline-none focus:border-[hsl(var(--primary))]"
+                                        className="w-full rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] px-[calc(1rem+var(--density-pad-x-delta,0px))] py-[calc(0.75rem+var(--density-pad-y-delta,0px))] text-sm font-bold text-[hsl(var(--text-primary))] outline-none focus:border-[hsl(var(--primary))]"
                                     />
                                 </div>
 
@@ -230,7 +230,7 @@ export default function AgendaEventsPage() {
                                             type="date"
                                             value={form.start_at}
                                             onChange={(e) => setForm((prev) => ({ ...prev, start_at: e.target.value }))}
-                                            className="w-full rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] px-4 py-3 text-sm font-bold text-[hsl(var(--text-primary))] outline-none focus:border-[hsl(var(--primary))]"
+                                            className="w-full rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] px-[calc(1rem+var(--density-pad-x-delta,0px))] py-[calc(0.75rem+var(--density-pad-y-delta,0px))] text-sm font-bold text-[hsl(var(--text-primary))] outline-none focus:border-[hsl(var(--primary))]"
                                         />
                                     </div>
                                     <div className="space-y-1.5">
@@ -239,7 +239,7 @@ export default function AgendaEventsPage() {
                                             type="date"
                                             value={form.end_at}
                                             onChange={(e) => setForm((prev) => ({ ...prev, end_at: e.target.value }))}
-                                            className="w-full rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] px-4 py-3 text-sm font-bold text-[hsl(var(--text-primary))] outline-none focus:border-[hsl(var(--primary))]"
+                                            className="w-full rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] px-[calc(1rem+var(--density-pad-x-delta,0px))] py-[calc(0.75rem+var(--density-pad-y-delta,0px))] text-sm font-bold text-[hsl(var(--text-primary))] outline-none focus:border-[hsl(var(--primary))]"
                                         />
                                     </div>
                                 </div>
@@ -250,7 +250,7 @@ export default function AgendaEventsPage() {
                                         value={form.location}
                                         onChange={(e) => setForm((prev) => ({ ...prev, location: e.target.value }))}
                                         placeholder="Ej: Salón principal"
-                                        className="w-full rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] px-4 py-3 text-sm font-bold text-[hsl(var(--text-primary))] outline-none focus:border-[hsl(var(--primary))]"
+                                        className="w-full rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] px-[calc(1rem+var(--density-pad-x-delta,0px))] py-[calc(0.75rem+var(--density-pad-y-delta,0px))] text-sm font-bold text-[hsl(var(--text-primary))] outline-none focus:border-[hsl(var(--primary))]"
                                     />
                                 </div>
 
@@ -261,7 +261,7 @@ export default function AgendaEventsPage() {
                                         value={form.description}
                                         onChange={(e) => setForm((prev) => ({ ...prev, description: e.target.value }))}
                                         placeholder="Notas de la reunión o contexto para la agenda"
-                                        className="w-full resize-none rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] px-4 py-3 text-sm font-medium text-[hsl(var(--text-primary))] outline-none focus:border-[hsl(var(--primary))]"
+                                        className="w-full resize-none rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] px-[calc(1rem+var(--density-pad-x-delta,0px))] py-[calc(0.75rem+var(--density-pad-y-delta,0px))] text-sm font-medium text-[hsl(var(--text-primary))] outline-none focus:border-[hsl(var(--primary))]"
                                     />
                                 </div>
                             </div>
@@ -269,7 +269,7 @@ export default function AgendaEventsPage() {
                             <button
                                 type="submit"
                                 disabled={saving || !form.title.trim()}
-                                className="mt-5 inline-flex items-center gap-2 rounded-lg bg-[hsl(var(--primary))] px-3 py-3 text-xs font-semibold uppercase tracking-wide text-[hsl(var(--primary-foreground))] transition-all hover:opacity-90 disabled:opacity-50"
+                                className="mt-5 inline-flex items-center gap-2 rounded-lg bg-[hsl(var(--primary))] px-[calc(0.75rem+var(--density-pad-x-delta,0px))] py-[calc(0.75rem+var(--density-pad-y-delta,0px))] text-xs font-semibold uppercase tracking-wide text-[hsl(var(--primary-foreground))] transition-all hover:opacity-90 disabled:opacity-50"
                             >
                                 <Plus size={14} />
                                 {saving ? "Guardando..." : "Crear evento"}
@@ -282,7 +282,7 @@ export default function AgendaEventsPage() {
                                     <h2 className="text-sm font-semibold uppercase tracking-wide text-[hsl(var(--text-primary))]">Próximos eventos</h2>
                                     <p className="text-xs font-medium text-[hsl(var(--text-secondary))]">Se reflejan también en el calendario general</p>
                                 </div>
-                                <span className="rounded-full bg-[hsl(var(--surface-2))] px-3 py-1 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
+                                <span className="rounded-full bg-[hsl(var(--surface-2))] px-[calc(0.75rem+var(--density-pad-x-delta,0px))] py-[calc(0.25rem+var(--density-pad-y-delta,0px))] text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
                                     {sortedEvents.length} registrados
                                 </span>
                             </div>
@@ -308,21 +308,21 @@ export default function AgendaEventsPage() {
                                             {editingEventId === event.id ? (
                                                 <div className="space-y-4">
                                                     <div className="flex items-center justify-between gap-3">
-                                                        <span className="rounded-full bg-[hsl(var(--warning-soft))] px-3 py-1 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--warning-text))]">
+                                                        <span className="rounded-full bg-[hsl(var(--warning-soft))] px-[calc(0.75rem+var(--density-pad-x-delta,0px))] py-[calc(0.25rem+var(--density-pad-y-delta,0px))] text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--warning-text))]">
                                                             Edición rápida
                                                         </span>
                                                         <div className="flex gap-2">
                                                             <button
                                                                 onClick={() => handleInlineDelete(event.id)}
                                                                 disabled={deletingEventId === event.id}
-                                                                className="inline-flex items-center gap-1 rounded-md border border-[hsl(var(--destructive)/30%)] px-3 py-2 text-xs font-semibold uppercase tracking-wide text-[hsl(var(--destructive))] transition-all hover:bg-[hsl(var(--destructive)/10%)] disabled:opacity-50"
+                                                                className="inline-flex items-center gap-1 rounded-md border border-[hsl(var(--destructive)/30%)] px-[calc(0.75rem+var(--density-pad-x-delta,0px))] py-[calc(0.5rem+var(--density-pad-y-delta,0px))] text-xs font-semibold uppercase tracking-wide text-[hsl(var(--destructive))] transition-all hover:bg-[hsl(var(--destructive)/10%)] disabled:opacity-50"
                                                             >
                                                                 <Trash2 size={12} />
                                                                 {deletingEventId === event.id ? "Eliminando..." : "Eliminar"}
                                                             </button>
                                                             <button
                                                                 onClick={() => setEditingEventId(null)}
-                                                                className="inline-flex items-center gap-1 rounded-md border border-[hsl(var(--border))] px-3 py-2 text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] transition-all hover:bg-[hsl(var(--surface-2))]"
+                                                                className="inline-flex items-center gap-1 rounded-md border border-[hsl(var(--border))] px-[calc(0.75rem+var(--density-pad-x-delta,0px))] py-[calc(0.5rem+var(--density-pad-y-delta,0px))] text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] transition-all hover:bg-[hsl(var(--surface-2))]"
                                                             >
                                                                 <X size={12} />
                                                                 Cancelar
@@ -330,7 +330,7 @@ export default function AgendaEventsPage() {
                                                             <button
                                                                 onClick={() => handleInlineUpdate(event.id)}
                                                                 disabled={editingEventSaving}
-                                                                className="inline-flex items-center gap-1 rounded-md bg-[hsl(var(--primary))] px-3 py-2 text-xs font-semibold uppercase tracking-wide text-[hsl(var(--primary-foreground))] transition-all hover:opacity-90 disabled:opacity-50"
+                                                                className="inline-flex items-center gap-1 rounded-md bg-[hsl(var(--primary))] px-[calc(0.75rem+var(--density-pad-x-delta,0px))] py-[calc(0.5rem+var(--density-pad-y-delta,0px))] text-xs font-semibold uppercase tracking-wide text-[hsl(var(--primary-foreground))] transition-all hover:opacity-90 disabled:opacity-50"
                                                             >
                                                                 <Save size={12} />
                                                                 {editingEventSaving ? "Guardando..." : "Guardar"}
@@ -344,7 +344,7 @@ export default function AgendaEventsPage() {
                                                             <input
                                                                 value={editForm.title}
                                                                 onChange={(e) => setEditForm((prev) => ({ ...prev, title: e.target.value }))}
-                                                                className="w-full rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] px-4 py-3 text-sm font-bold text-[hsl(var(--text-primary))] outline-none focus:border-[hsl(var(--primary))]"
+                                                                className="w-full rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] px-[calc(1rem+var(--density-pad-x-delta,0px))] py-[calc(0.75rem+var(--density-pad-y-delta,0px))] text-sm font-bold text-[hsl(var(--text-primary))] outline-none focus:border-[hsl(var(--primary))]"
                                                             />
                                                         </div>
                                                         <div className="space-y-1.5">
@@ -353,7 +353,7 @@ export default function AgendaEventsPage() {
                                                                 type="date"
                                                                 value={editForm.start_at}
                                                                 onChange={(e) => setEditForm((prev) => ({ ...prev, start_at: e.target.value }))}
-                                                                className="w-full rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] px-4 py-3 text-sm font-bold text-[hsl(var(--text-primary))] outline-none focus:border-[hsl(var(--primary))]"
+                                                                className="w-full rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] px-[calc(1rem+var(--density-pad-x-delta,0px))] py-[calc(0.75rem+var(--density-pad-y-delta,0px))] text-sm font-bold text-[hsl(var(--text-primary))] outline-none focus:border-[hsl(var(--primary))]"
                                                             />
                                                         </div>
                                                         <div className="space-y-1.5">
@@ -362,7 +362,7 @@ export default function AgendaEventsPage() {
                                                                 type="date"
                                                                 value={editForm.end_at}
                                                                 onChange={(e) => setEditForm((prev) => ({ ...prev, end_at: e.target.value }))}
-                                                                className="w-full rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] px-4 py-3 text-sm font-bold text-[hsl(var(--text-primary))] outline-none focus:border-[hsl(var(--primary))]"
+                                                                className="w-full rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] px-[calc(1rem+var(--density-pad-x-delta,0px))] py-[calc(0.75rem+var(--density-pad-y-delta,0px))] text-sm font-bold text-[hsl(var(--text-primary))] outline-none focus:border-[hsl(var(--primary))]"
                                                             />
                                                         </div>
                                                         <div className="space-y-1.5 md:col-span-2">
@@ -370,7 +370,7 @@ export default function AgendaEventsPage() {
                                                             <input
                                                                 value={editForm.location}
                                                                 onChange={(e) => setEditForm((prev) => ({ ...prev, location: e.target.value }))}
-                                                                className="w-full rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] px-4 py-3 text-sm font-bold text-[hsl(var(--text-primary))] outline-none focus:border-[hsl(var(--primary))]"
+                                                                className="w-full rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] px-[calc(1rem+var(--density-pad-x-delta,0px))] py-[calc(0.75rem+var(--density-pad-y-delta,0px))] text-sm font-bold text-[hsl(var(--text-primary))] outline-none focus:border-[hsl(var(--primary))]"
                                                             />
                                                         </div>
                                                         <div className="space-y-1.5 md:col-span-2">
@@ -379,7 +379,7 @@ export default function AgendaEventsPage() {
                                                                 rows={3}
                                                                 value={editForm.description}
                                                                 onChange={(e) => setEditForm((prev) => ({ ...prev, description: e.target.value }))}
-                                                                className="w-full resize-none rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] px-4 py-3 text-sm font-medium text-[hsl(var(--text-primary))] outline-none focus:border-[hsl(var(--primary))]"
+                                                                className="w-full resize-none rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] px-[calc(1rem+var(--density-pad-x-delta,0px))] py-[calc(0.75rem+var(--density-pad-y-delta,0px))] text-sm font-medium text-[hsl(var(--text-primary))] outline-none focus:border-[hsl(var(--primary))]"
                                                             />
                                                         </div>
                                                     </div>
@@ -399,20 +399,20 @@ export default function AgendaEventsPage() {
                                                             ) : null}
                                                         </div>
                                                         <div className="flex items-center gap-2">
-                                                            <span className="rounded-full bg-[hsl(var(--info-soft))] px-3 py-1 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--info-text))]">
+                                                            <span className="rounded-full bg-[hsl(var(--info-soft))] px-[calc(0.75rem+var(--density-pad-x-delta,0px))] py-[calc(0.25rem+var(--density-pad-y-delta,0px))] text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--info-text))]">
                                                                 Agenda simple
                                                             </span>
                                                             <button
                                                                 onClick={() => handleInlineDelete(event.id)}
                                                                 disabled={deletingEventId === event.id}
-                                                                className="inline-flex items-center gap-1 rounded-md border border-[hsl(var(--destructive)/30%)] px-3 py-2 text-xs font-semibold uppercase tracking-wide text-[hsl(var(--destructive))] transition-all hover:bg-[hsl(var(--destructive)/10%)] disabled:opacity-50"
+                                                                className="inline-flex items-center gap-1 rounded-md border border-[hsl(var(--destructive)/30%)] px-[calc(0.75rem+var(--density-pad-x-delta,0px))] py-[calc(0.5rem+var(--density-pad-y-delta,0px))] text-xs font-semibold uppercase tracking-wide text-[hsl(var(--destructive))] transition-all hover:bg-[hsl(var(--destructive)/10%)] disabled:opacity-50"
                                                             >
                                                                 <Trash2 size={12} />
                                                                 {deletingEventId === event.id ? "Eliminando..." : "Eliminar"}
                                                             </button>
                                                             <button
                                                                 onClick={() => startInlineEdit(event)}
-                                                                className="inline-flex items-center gap-1 rounded-md border border-[hsl(var(--border))] px-3 py-2 text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] transition-all hover:bg-[hsl(var(--surface-2))]"
+                                                                className="inline-flex items-center gap-1 rounded-md border border-[hsl(var(--border))] px-[calc(0.75rem+var(--density-pad-x-delta,0px))] py-[calc(0.5rem+var(--density-pad-y-delta,0px))] text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] transition-all hover:bg-[hsl(var(--surface-2))]"
                                                             >
                                                                 <Pencil size={12} />
                                                                 Editar

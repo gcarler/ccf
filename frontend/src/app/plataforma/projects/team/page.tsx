@@ -172,7 +172,7 @@ export default function TeamPage() {
                         <button
                             onClick={() => { setViewMode('workload'); }}
                             className={clsx(
-                                'px-3 py-1 rounded-full text-2xs font-bold uppercase tracking-wide border transition-colors',
+                                'px-[calc(0.75rem+var(--density-pad-x-delta,0px))] py-[calc(0.25rem+var(--density-pad-y-delta,0px))] rounded-full text-2xs font-bold uppercase tracking-wide border transition-colors',
                                 viewMode === 'workload'
                                     ? 'bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] border-[hsl(var(--primary))]'
                                     : 'border-[hsl(var(--border))] text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))]'
@@ -183,7 +183,7 @@ export default function TeamPage() {
                         <button
                             onClick={() => { setViewMode('members'); setSelectedProjectId(projects[0]?.id ?? ''); }}
                             className={clsx(
-                                'px-3 py-1 rounded-full text-2xs font-bold uppercase tracking-wide border transition-colors',
+                                'px-[calc(0.75rem+var(--density-pad-x-delta,0px))] py-[calc(0.25rem+var(--density-pad-y-delta,0px))] rounded-full text-2xs font-bold uppercase tracking-wide border transition-colors',
                                 viewMode === 'members'
                                     ? 'bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] border-[hsl(var(--primary))]'
                                     : 'border-[hsl(var(--border))] text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-1))]'
@@ -195,7 +195,7 @@ export default function TeamPage() {
                             <select
                                 value={selectedProjectId}
                                 onChange={(e) => setSelectedProjectId(e.target.value)}
-                                className="bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] rounded-md px-3 py-1.5 text-sm font-medium outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] transition-all text-[hsl(var(--text-primary))]"
+                                className="bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] rounded-md px-[calc(0.75rem+var(--density-pad-x-delta,0px))] py-[calc(0.375rem+var(--density-pad-y-delta,0px))] text-sm font-medium outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] transition-all text-[hsl(var(--text-primary))]"
                             >
                                 {projects.length === 0 && <option value="">Sin proyectos</option>}
                                 {projects.map((p) => (
@@ -243,7 +243,7 @@ export default function TeamPage() {
                             <button
                                 onClick={openInvite}
                                 disabled={viewMode === 'members' && !selectedProjectId}
-                                className="flex items-center gap-2 px-4 py-1.5 bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] rounded-lg text-xs font-semibold uppercase tracking-wide shadow-xl shadow-[hsl(var(--primary)/0.2)] hover:bg-[hsl(var(--primary))] active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                                className="flex items-center gap-2 px-[calc(1rem+var(--density-pad-x-delta,0px))] py-[calc(0.375rem+var(--density-pad-y-delta,0px))] bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] rounded-lg text-xs font-semibold uppercase tracking-wide shadow-xl shadow-[hsl(var(--primary)/0.2)] hover:bg-[hsl(var(--primary))] active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 <UserPlus size={13} /> Invitar
                             </button>
@@ -308,7 +308,7 @@ export default function TeamPage() {
                                             onClick={() => requestRemoveMember(selectedProjectId, member)}
                                             disabled={removingId === member.persona_id}
                                             aria-label={`Remover ${member.persona_name ?? 'integrante'} del proyecto`}
-                                            className="w-full py-1.5 text-2xs font-bold uppercase tracking-wide text-[hsl(var(--destructive))] border border-[hsl(var(--destructive)/0.3)] rounded-md hover:bg-[hsl(var(--destructive)/0.1)] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1.5"
+                                            className="w-full py-[calc(0.375rem+var(--density-pad-y-delta,0px))] text-2xs font-bold uppercase tracking-wide text-[hsl(var(--destructive))] border border-[hsl(var(--destructive)/0.3)] rounded-md hover:bg-[hsl(var(--destructive)/0.1)] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1.5"
                                         >
                                             {removingId === member.persona_id ? <Loader2 className="animate-spin" size={12} /> : <UserMinus size={12} />}
                                             {removingId === member.persona_id ? 'Removiendo...' : 'Remover del proyecto'}
@@ -431,7 +431,7 @@ export default function TeamPage() {
 
                         <button
                             onClick={() => closeLayer('RIGHT')}
-                            className="w-full py-2 border border-[hsl(var(--border))] rounded-md text-xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] transition-all"
+                            className="w-full py-[calc(0.5rem+var(--density-pad-y-delta,0px))] border border-[hsl(var(--border))] rounded-md text-xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] transition-all"
                         >
                             Cerrar
                         </button>
@@ -458,7 +458,7 @@ export default function TeamPage() {
                         <select
                             value={inviteProjectId}
                             onChange={(e) => setInviteProjectId(e.target.value)}
-                            className="w-full bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] rounded-md px-3 py-2 text-sm font-medium outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] transition-all text-[hsl(var(--text-primary))]"
+                            className="w-full bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] rounded-md px-[calc(0.75rem+var(--density-pad-x-delta,0px))] py-[calc(0.5rem+var(--density-pad-y-delta,0px))] text-sm font-medium outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] transition-all text-[hsl(var(--text-primary))]"
                         >
                             {projects.length === 0 && <option value="">Sin proyectos disponibles</option>}
                             {projects.map((p) => (
@@ -485,7 +485,7 @@ export default function TeamPage() {
                             </p>
                             <ul className="space-y-1">
                                 {members[inviteProjectId].map((m) => (
-                                    <li key={m.id} className="flex items-center justify-between px-2.5 py-1.5 rounded-md bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] text-sm font-medium text-[hsl(var(--text-primary))]">
+                                    <li key={m.id} className="flex items-center justify-between px-[calc(0.625rem+var(--density-pad-x-delta,0px))] py-[calc(0.375rem+var(--density-pad-y-delta,0px))] rounded-md bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] text-sm font-medium text-[hsl(var(--text-primary))]">
                                         <span>{m.persona_name ?? m.persona_id}</span>
                                         <span className="text-2xs uppercase tracking-wide text-[hsl(var(--text-secondary))]">{m.role}</span>
                                     </li>
@@ -497,7 +497,7 @@ export default function TeamPage() {
                     <button
                         onClick={handleInvite}
                         disabled={inviting || !inviteProjectId || !invitePersonaId}
-                        className="w-full py-2 bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] rounded-md text-xs font-bold uppercase tracking-wide shadow-lg shadow-[hsl(var(--primary)/0.2)] hover:bg-[hsl(var(--primary))] active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                        className="w-full py-[calc(0.5rem+var(--density-pad-y-delta,0px))] bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] rounded-md text-xs font-bold uppercase tracking-wide shadow-lg shadow-[hsl(var(--primary)/0.2)] hover:bg-[hsl(var(--primary))] active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                     >
                         {inviting ? <Loader2 className="animate-spin" size={12} /> : <UserPlus size={12} />}
                         {inviting ? 'Invitando...' : 'Invitar al equipo'}

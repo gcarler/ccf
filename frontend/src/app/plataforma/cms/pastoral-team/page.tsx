@@ -207,7 +207,7 @@ export default function PastoralTeamPage() {
                 setPage(0);
               }}
               placeholder="Buscar por nombre..."
-              className="w-full pl-9 pr-4 py-2 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.3)]"
+              className="w-full pl-9 pr-[calc(1rem+var(--density-pad-x-delta,0px))] py-[calc(0.5rem+var(--density-pad-y-delta,0px))] rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.3)]"
             />
           </div>
           <div className="flex items-center gap-2">
@@ -222,7 +222,7 @@ export default function PastoralTeamPage() {
             />
             <button
               onClick={() => setDrawerMode("add")}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] text-xs font-bold uppercase tracking-wider hover:opacity-90 transition-all"
+              className="inline-flex items-center gap-2 px-[calc(1rem+var(--density-pad-x-delta,0px))] py-[calc(0.5rem+var(--density-pad-y-delta,0px))] rounded-xl bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] text-xs font-bold uppercase tracking-wider hover:opacity-90 transition-all"
             >
               <UserPlus size={14} />
               Agregar líder
@@ -338,22 +338,22 @@ export default function PastoralTeamPage() {
 
             {/* Table View */}
             {viewType === "table" && (
-              <div className="overflow-x-auto rounded-xl border border-[hsl(var(--border))]">
-                <table className="w-full text-sm">
+              <div className="overflow-x-auto rounded-xl border border-[hsl(var(--border))] density-table">
+                <table className="density-table w-full text-sm">
                   <thead>
                     <tr className="border-b border-[hsl(var(--border))] bg-[hsl(var(--surface-1))]">
-                      <th className="text-left px-4 py-3 text-2xs font-bold uppercase tracking-wider text-[hsl(var(--text-secondary))]">Foto</th>
-                      <th className="text-left px-4 py-3 text-2xs font-bold uppercase tracking-wider text-[hsl(var(--text-secondary))]">Nombre</th>
-                      <th className="text-left px-4 py-3 text-2xs font-bold uppercase tracking-wider text-[hsl(var(--text-secondary))]">Rol</th>
-                      <th className="text-left px-4 py-3 text-2xs font-bold uppercase tracking-wider text-[hsl(var(--text-secondary))]">Redes</th>
-                      <th className="text-left px-4 py-3 text-2xs font-bold uppercase tracking-wider text-[hsl(var(--text-secondary))]">Principal</th>
-                      <th className="text-right px-4 py-3 text-2xs font-bold uppercase tracking-wider text-[hsl(var(--text-secondary))]">Acciones</th>
+                      <th className="text-left px-[calc(1rem+var(--density-pad-x-delta,0px))] py-[calc(0.75rem+var(--density-pad-y-delta,0px))] text-2xs font-bold uppercase tracking-wider text-[hsl(var(--text-secondary))]">Foto</th>
+                      <th className="text-left px-[calc(1rem+var(--density-pad-x-delta,0px))] py-[calc(0.75rem+var(--density-pad-y-delta,0px))] text-2xs font-bold uppercase tracking-wider text-[hsl(var(--text-secondary))]">Nombre</th>
+                      <th className="text-left px-[calc(1rem+var(--density-pad-x-delta,0px))] py-[calc(0.75rem+var(--density-pad-y-delta,0px))] text-2xs font-bold uppercase tracking-wider text-[hsl(var(--text-secondary))]">Rol</th>
+                      <th className="text-left px-[calc(1rem+var(--density-pad-x-delta,0px))] py-[calc(0.75rem+var(--density-pad-y-delta,0px))] text-2xs font-bold uppercase tracking-wider text-[hsl(var(--text-secondary))]">Redes</th>
+                      <th className="text-left px-[calc(1rem+var(--density-pad-x-delta,0px))] py-[calc(0.75rem+var(--density-pad-y-delta,0px))] text-2xs font-bold uppercase tracking-wider text-[hsl(var(--text-secondary))]">Principal</th>
+                      <th className="text-right px-[calc(1rem+var(--density-pad-x-delta,0px))] py-[calc(0.75rem+var(--density-pad-y-delta,0px))] text-2xs font-bold uppercase tracking-wider text-[hsl(var(--text-secondary))]">Acciones</th>
                     </tr>
                   </thead>
                   <tbody>
                     {paginated.map((profile) => (
                       <tr key={profile.id} className="border-b border-[hsl(var(--border))] hover:bg-[hsl(var(--surface-1))] transition-colors">
-                        <td className="px-4 py-3">
+                        <td className="px-[calc(1rem+var(--density-pad-x-delta,0px))] py-[calc(0.75rem+var(--density-pad-y-delta,0px))]">
                           <div className="relative w-8 h-8 rounded-full overflow-hidden bg-[hsl(var(--surface-2))]">
                             {profile.photo_url ? (
                               <Image src={profile.photo_url} alt={profile.name} fill className="object-cover" sizes="32px" />
@@ -364,14 +364,14 @@ export default function PastoralTeamPage() {
                             )}
                           </div>
                         </td>
-                        <td className="px-4 py-3">
+                        <td className="px-[calc(1rem+var(--density-pad-x-delta,0px))] py-[calc(0.75rem+var(--density-pad-y-delta,0px))]">
                           <div className="flex items-center gap-2">
                             <span className="font-semibold text-[hsl(var(--text-primary))]">{profile.name}</span>
                             {profile.is_main_pastor && <Sparkles size={10} className="text-[hsl(var(--primary))]" />}
                           </div>
                         </td>
-                        <td className="px-4 py-3 text-[hsl(var(--text-secondary))]">{profile.role || "Pastor"}</td>
-                        <td className="px-4 py-3">
+                        <td className="px-[calc(1rem+var(--density-pad-x-delta,0px))] py-[calc(0.75rem+var(--density-pad-y-delta,0px))] text-[hsl(var(--text-secondary))]">{profile.role || "Pastor"}</td>
+                        <td className="px-[calc(1rem+var(--density-pad-x-delta,0px))] py-[calc(0.75rem+var(--density-pad-y-delta,0px))]">
                           <div className="flex items-center gap-1">
                             {profile.social_instagram && <Instagram size={12} className="text-[hsl(var(--text-secondary))]" />}
                             {profile.social_facebook && <Facebook size={12} className="text-[hsl(var(--text-secondary))]" />}
@@ -381,7 +381,7 @@ export default function PastoralTeamPage() {
                             )}
                           </div>
                         </td>
-                        <td className="px-4 py-3">
+                        <td className="px-[calc(1rem+var(--density-pad-x-delta,0px))] py-[calc(0.75rem+var(--density-pad-y-delta,0px))]">
                           {profile.is_main_pastor ? (
                             <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[hsl(var(--primary)/10%)] text-[hsl(var(--primary))] text-2xs font-semibold">
                               <Check size={10} /> Sí
@@ -390,7 +390,7 @@ export default function PastoralTeamPage() {
                             <span className="text-2xs text-[hsl(var(--text-secondary))]">No</span>
                           )}
                         </td>
-                        <td className="px-4 py-3 text-right">
+                        <td className="px-[calc(1rem+var(--density-pad-x-delta,0px))] py-[calc(0.75rem+var(--density-pad-y-delta,0px))] text-right">
                           <button
                             onClick={() => openDrawer(profile)}
                             className="p-1.5 rounded-lg hover:bg-[hsl(var(--primary)/10%)] text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] transition-colors"
@@ -517,7 +517,7 @@ export default function PastoralTeamPage() {
                 defaultValue={editing.bio_short || ""}
                 rows={2}
                 placeholder="Breve descripción para la tarjeta..."
-                className="w-full px-4 py-2 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.3)] resize-none"
+                className="w-full px-[calc(1rem+var(--density-pad-x-delta,0px))] py-[calc(0.5rem+var(--density-pad-y-delta,0px))] rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.3)] resize-none"
               />
             </div>
 
@@ -531,7 +531,7 @@ export default function PastoralTeamPage() {
                 defaultValue={editing.bio_full || ""}
                 rows={4}
                 placeholder="Historia completa del pastor (soporta HTML)..."
-                className="w-full px-4 py-2 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.3)] resize-none font-mono"
+                className="w-full px-[calc(1rem+var(--density-pad-x-delta,0px))] py-[calc(0.5rem+var(--density-pad-y-delta,0px))] rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.3)] resize-none font-mono"
               />
             </div>
 
@@ -546,7 +546,7 @@ export default function PastoralTeamPage() {
                   type="url"
                   defaultValue={editing.social_instagram || ""}
                   placeholder="https://instagram.com/..."
-                  className="w-full px-4 py-2 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.3)]"
+                  className="w-full px-[calc(1rem+var(--density-pad-x-delta,0px))] py-[calc(0.5rem+var(--density-pad-y-delta,0px))] rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.3)]"
                 />
               </div>
               <div>
@@ -558,7 +558,7 @@ export default function PastoralTeamPage() {
                   type="url"
                   defaultValue={editing.social_facebook || ""}
                   placeholder="https://facebook.com/..."
-                  className="w-full px-4 py-2 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.3)]"
+                  className="w-full px-[calc(1rem+var(--density-pad-x-delta,0px))] py-[calc(0.5rem+var(--density-pad-y-delta,0px))] rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.3)]"
                 />
               </div>
               <div>
@@ -570,7 +570,7 @@ export default function PastoralTeamPage() {
                   type="url"
                   defaultValue={editing.social_twitter || ""}
                   placeholder="https://x.com/..."
-                  className="w-full px-4 py-2 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.3)]"
+                  className="w-full px-[calc(1rem+var(--density-pad-x-delta,0px))] py-[calc(0.5rem+var(--density-pad-y-delta,0px))] rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.3)]"
                 />
               </div>
             </div>
@@ -621,7 +621,7 @@ export default function PastoralTeamPage() {
                 type="number"
                 defaultValue={editing.pastoral_sort_order || 0}
                 min="0"
-                className="w-full px-4 py-2 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.3)]"
+                className="w-full px-[calc(1rem+var(--density-pad-x-delta,0px))] py-[calc(0.5rem+var(--density-pad-y-delta,0px))] rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.3)]"
               />
               <p className="text-2xs text-[hsl(var(--text-secondary))] mt-1">
                 Menor número = aparece primero
@@ -633,14 +633,14 @@ export default function PastoralTeamPage() {
               <button
                 type="button"
                 onClick={closeDrawer}
-                className="flex-1 py-2.5 rounded-xl bg-[hsl(var(--surface-2))] text-sm font-medium text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-3))] transition-all"
+                className="flex-1 py-[calc(0.625rem+var(--density-pad-y-delta,0px))] rounded-xl bg-[hsl(var(--surface-2))] text-sm font-medium text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-3))] transition-all"
               >
                 Cancelar
               </button>
               <button
                 type="submit"
                 disabled={saving}
-                className="flex-1 py-2.5 rounded-xl bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] text-sm font-bold uppercase tracking-wider hover:opacity-90 disabled:opacity-50 transition-all"
+                className="flex-1 py-[calc(0.625rem+var(--density-pad-y-delta,0px))] rounded-xl bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] text-sm font-bold uppercase tracking-wider hover:opacity-90 disabled:opacity-50 transition-all"
               >
                 {saving ? "Guardando..." : "Guardar"}
               </button>
@@ -677,7 +677,7 @@ export default function PastoralTeamPage() {
               value={addSearch}
               onChange={(e) => searchPersonas(e.target.value)}
               placeholder="Buscar por nombre (mín. 3 caracteres)..."
-              className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.3)]"
+              className="w-full pl-9 pr-[calc(1rem+var(--density-pad-x-delta,0px))] py-[calc(0.625rem+var(--density-pad-y-delta,0px))] rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.3)]"
             />
           </div>
 
@@ -713,7 +713,7 @@ export default function PastoralTeamPage() {
                       <button
                         onClick={() => handleAddLeader(persona.id)}
                         disabled={saving}
-                        className="px-3 py-1.5 rounded-lg bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] text-2xs font-bold uppercase tracking-wider hover:opacity-90 disabled:opacity-50 transition-all"
+                        className="px-[calc(0.75rem+var(--density-pad-x-delta,0px))] py-[calc(0.375rem+var(--density-pad-y-delta,0px))] rounded-lg bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] text-2xs font-bold uppercase tracking-wider hover:opacity-90 disabled:opacity-50 transition-all"
                       >
                         {saving ? "..." : "Agregar"}
                       </button>
@@ -728,7 +728,7 @@ export default function PastoralTeamPage() {
             <button
               type="button"
               onClick={closeDrawer}
-              className="flex-1 py-2.5 rounded-xl bg-[hsl(var(--surface-2))] text-sm font-medium text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-3))] transition-all"
+              className="flex-1 py-[calc(0.625rem+var(--density-pad-y-delta,0px))] rounded-xl bg-[hsl(var(--surface-2))] text-sm font-medium text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-3))] transition-all"
             >
               Cancelar
             </button>

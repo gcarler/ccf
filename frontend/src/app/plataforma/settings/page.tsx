@@ -124,7 +124,7 @@ export default function SettingsPage() {
                     </div>
                     <button
                         onClick={() => router.push('/plataforma/account')}
-                        className="px-4 py-2 text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] border border-[hsl(var(--border))] rounded-md hover:border-[hsl(var(--primary))] transition-all"
+                        className="px-[calc(1rem+var(--density-pad-x-delta,0px))] py-[calc(0.5rem+var(--density-pad-y-delta,0px))] text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] border border-[hsl(var(--border))] rounded-md hover:border-[hsl(var(--primary))] transition-all"
                     >
                         Editar
                     </button>
@@ -158,7 +158,7 @@ export default function SettingsPage() {
                             type="button"
                             onClick={() => setTheme('day')}
                             className={clsx(
-                                "flex flex-col items-center gap-2 py-2 rounded-md border-2 transition-all text-xs font-semibold uppercase tracking-wide",
+                                "flex flex-col items-center gap-2 py-[calc(0.5rem+var(--density-pad-y-delta,0px))] rounded-md border-2 transition-all text-xs font-semibold uppercase tracking-wide",
                                 theme === 'day'
                                     ? "border-[hsl(var(--primary))] bg-[hsl(var(--info-muted))] text-[hsl(var(--primary))]"
                                     : "border-[hsl(var(--border))] text-[hsl(var(--text-secondary))] hover:border-[hsl(var(--border))]"
@@ -172,7 +172,7 @@ export default function SettingsPage() {
                             type="button"
                             onClick={() => setTheme('night')}
                             className={clsx(
-                                "flex flex-col items-center gap-2 py-2 rounded-md border-2 transition-all text-xs font-semibold uppercase tracking-wide",
+                                "flex flex-col items-center gap-2 py-[calc(0.5rem+var(--density-pad-y-delta,0px))] rounded-md border-2 transition-all text-xs font-semibold uppercase tracking-wide",
                                 theme === 'night'
                                     ? "border-[hsl(var(--primary))] bg-[hsl(var(--info-muted))] text-[hsl(var(--primary))]"
                                     : "border-[hsl(var(--border))] text-[hsl(var(--text-secondary))] hover:border-[hsl(var(--border))]"
@@ -208,7 +208,7 @@ export default function SettingsPage() {
                                             router.push(item.href);
                                         }
                                     }}
-                                    className="w-full flex items-center gap-4 px-3 py-1.5 hover:bg-[hsl(var(--surface-2))] transition-all group text-left"
+                                    className="w-full flex items-center gap-4 px-[calc(0.75rem+var(--density-pad-x-delta,0px))] py-[calc(0.375rem+var(--density-pad-y-delta,0px))] hover:bg-[hsl(var(--surface-2))] transition-all group text-left"
                                 >
                                     <div className={clsx("size-9 rounded-md flex items-center justify-center shrink-0", COLOR_MAP[group.color])}>
                                         <item.icon size={16} />
@@ -234,11 +234,11 @@ export default function SettingsPage() {
                     <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--destructive))] mb-4">Zona de Peligro</p>
                     <button
                         onClick={() => { logout(); router.push('/login'); }}
-                        className="w-full flex items-center gap-3 px-4 py-3 rounded-md text-[hsl(var(--destructive))] hover:bg-[hsl(var(--destructive)/0.08)] transition-all text-sm font-bold"
+                        className="w-full flex items-center gap-3 px-[calc(1rem+var(--density-pad-x-delta,0px))] py-[calc(0.75rem+var(--density-pad-y-delta,0px))] rounded-md text-[hsl(var(--destructive))] hover:bg-[hsl(var(--destructive)/0.08)] transition-all text-sm font-bold"
                     >
                         <LogOut size={16} /> Cerrar Sesión
                     </button>
-                    <button className="w-full flex items-center gap-3 px-4 py-3 rounded-md text-[hsl(var(--destructive))] hover:bg-[hsl(var(--destructive)/0.08)] transition-all text-sm font-bold">
+                    <button className="w-full flex items-center gap-3 px-[calc(1rem+var(--density-pad-x-delta,0px))] py-[calc(0.75rem+var(--density-pad-y-delta,0px))] rounded-md text-[hsl(var(--destructive))] hover:bg-[hsl(var(--destructive)/0.08)] transition-all text-sm font-bold">
                         <Trash2 size={16} /> Eliminar mi cuenta
                     </button>
                 </motion.div>

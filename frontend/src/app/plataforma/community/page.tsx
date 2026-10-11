@@ -786,29 +786,29 @@ export default function CommunityHubPage() {
     );
 
     const renderTableView = () => (
-        <div className="overflow-x-auto rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))]">
-            <table className="min-w-full text-sm">
+        <div className="overflow-x-auto rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] density-table">
+            <table className="density-table min-w-full text-sm">
                 <thead className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
                     <tr>
-                        <th className="text-left px-4 py-1.5">Nombre</th>
-                        <th className="text-left px-4 py-1.5">Lista</th>
-                        <th className="text-left px-4 py-1.5">Persona</th>
-                        <th className="text-left px-4 py-1.5">Prioridad</th>
-                        <th className="text-left px-4 py-1.5">Estado</th>
-                        <th className="text-left px-4 py-1.5">Entrega</th>
+                        <th className="text-left px-[calc(1rem+var(--density-pad-x-delta,0px))] py-[calc(0.375rem+var(--density-pad-y-delta,0px))]">Nombre</th>
+                        <th className="text-left px-[calc(1rem+var(--density-pad-x-delta,0px))] py-[calc(0.375rem+var(--density-pad-y-delta,0px))]">Lista</th>
+                        <th className="text-left px-[calc(1rem+var(--density-pad-x-delta,0px))] py-[calc(0.375rem+var(--density-pad-y-delta,0px))]">Persona</th>
+                        <th className="text-left px-[calc(1rem+var(--density-pad-x-delta,0px))] py-[calc(0.375rem+var(--density-pad-y-delta,0px))]">Prioridad</th>
+                        <th className="text-left px-[calc(1rem+var(--density-pad-x-delta,0px))] py-[calc(0.375rem+var(--density-pad-y-delta,0px))]">Estado</th>
+                        <th className="text-left px-[calc(1rem+var(--density-pad-x-delta,0px))] py-[calc(0.375rem+var(--density-pad-y-delta,0px))]">Entrega</th>
                     </tr>
                 </thead>
                 <tbody>
                     {allItems.map((item) => (
                         <tr key={`${item.columnTitle}-${item.id}-table`} className="border-t border-[hsl(var(--border))]">
-                            <td className="px-4 py-1.5 font-semibold text-[hsl(var(--text-primary))]">{item.name}</td>
-                            <td className="px-4 py-1.5 text-[hsl(var(--text-secondary))]">{item.columnTitle}</td>
-                            <td className="px-4 py-1.5 text-[hsl(var(--text-secondary))]">{item.owner}</td>
-                            <td className="px-4 py-1.5">
+                            <td className="px-[calc(1rem+var(--density-pad-x-delta,0px))] py-[calc(0.375rem+var(--density-pad-y-delta,0px))] font-semibold text-[hsl(var(--text-primary))]">{item.name}</td>
+                            <td className="px-[calc(1rem+var(--density-pad-x-delta,0px))] py-[calc(0.375rem+var(--density-pad-y-delta,0px))] text-[hsl(var(--text-secondary))]">{item.columnTitle}</td>
+                            <td className="px-[calc(1rem+var(--density-pad-x-delta,0px))] py-[calc(0.375rem+var(--density-pad-y-delta,0px))] text-[hsl(var(--text-secondary))]">{item.owner}</td>
+                            <td className="px-[calc(1rem+var(--density-pad-x-delta,0px))] py-[calc(0.375rem+var(--density-pad-y-delta,0px))]">
                                 <span className={`px-2 py-1 rounded-full text-2xs font-semibold uppercase tracking-wide ${priorityTone[item.priority]}`}>{item.priority}</span>
                             </td>
-                            <td className="px-4 py-1.5 text-[hsl(var(--text-secondary))]">{item.status}</td>
-                            <td className="px-4 py-1.5 text-[hsl(var(--text-secondary))]">{item.due}</td>
+                            <td className="px-[calc(1rem+var(--density-pad-x-delta,0px))] py-[calc(0.375rem+var(--density-pad-y-delta,0px))] text-[hsl(var(--text-secondary))]">{item.status}</td>
+                            <td className="px-[calc(1rem+var(--density-pad-x-delta,0px))] py-[calc(0.375rem+var(--density-pad-y-delta,0px))] text-[hsl(var(--text-secondary))]">{item.due}</td>
                         </tr>
                     ))}
                 </tbody>
@@ -848,7 +848,7 @@ export default function CommunityHubPage() {
                         <button
                             key={view}
                             onClick={() => setActiveView(view)}
-                            className={`px-3 h-8 rounded-full border text-2xs uppercase tracking-wide ${activeView === view ? 'bg-[hsl(var(--text-primary))] text-[hsl(var(--surface-1))] font-semibold' : 'text-[hsl(var(--text-secondary))] font-normal'}`}
+                            className={`px-[calc(0.75rem+var(--density-pad-x-delta,0px))] h-[calc(2rem+var(--density-h-delta,0px))] rounded-full border text-2xs uppercase tracking-wide ${activeView === view ? 'bg-[hsl(var(--text-primary))] text-[hsl(var(--surface-1))] font-semibold' : 'text-[hsl(var(--text-secondary))] font-normal'}`}
                         >
                             {view === 'table' ? 'Tabla' : 'Grid'}
                         </button>
@@ -857,13 +857,13 @@ export default function CommunityHubPage() {
                         <Search size={10} className="absolute left-3 top-1/2 -translate-y-1/2 text-[hsl(var(--text-secondary))]" />
                         <input
                             placeholder="Buscar en esta vista..."
-                            className="w-full h-8 rounded-full border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] pl-7 pr-3 text-2xs"
+                            className="w-full h-[calc(2rem+var(--density-h-delta,0px))] rounded-full border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] pl-7 pr-3 text-2xs"
                         />
                     </div>
                     <button className="p-1.5 rounded-full border border-[hsl(var(--border))] text-[hsl(var(--text-secondary))]"><Filter size={10} /></button>
                     <button className="p-1.5 rounded-full border border-[hsl(var(--border))] text-[hsl(var(--text-secondary))]"><Columns3 size={10} /></button>
                     <button className="p-1.5 rounded-full border border-[hsl(var(--text-primary))] text-[hsl(var(--text-primary))]"><SlidersHorizontal size={10} /></button>
-                    <button className="px-3 h-8 rounded-full bg-[hsl(var(--surface-2))] text-[hsl(var(--text-primary))] text-2xs font-semibold uppercase tracking-wide">+ Nuevo</button>
+                    <button className="px-[calc(0.75rem+var(--density-pad-x-delta,0px))] h-[calc(2rem+var(--density-h-delta,0px))] rounded-full bg-[hsl(var(--surface-2))] text-[hsl(var(--text-primary))] text-2xs font-semibold uppercase tracking-wide">+ Nuevo</button>
                 </div>
             </div>
             <header className="rounded-lg border border-[hsl(var(--border))] bg-gradient-to-br from-[hsl(var(--surface-2))] to-[hsl(var(--surface-1))] p-4 md:p-3 space-y-3">
@@ -1022,7 +1022,7 @@ export default function CommunityHubPage() {
                                     <select
                                         value={newCard.columnId}
                                         onChange={(event) => handleNewCardField('columnId', event.target.value as ColumnId)}
-                                        className="h-8 w-full rounded-lg border border-[hsl(var(--border))] bg-transparent px-3 text-sm text-[hsl(var(--text-primary))]"
+                                        className="h-[calc(2rem+var(--density-h-delta,0px))] w-full rounded-lg border border-[hsl(var(--border))] bg-transparent px-[calc(0.75rem+var(--density-pad-x-delta,0px))] text-sm text-[hsl(var(--text-primary))]"
                                     >
                                         {columns.map((column) => (
                                             <option key={column.id} value={column.id} className="text-[hsl(var(--text-primary))]">
@@ -1037,7 +1037,7 @@ export default function CommunityHubPage() {
                                         value={newCard.name}
                                         onChange={(event) => handleNewCardField('name', event.target.value)}
                                         placeholder="Ej. Seguimiento visitas"
-                                        className="h-8 w-full rounded-lg border border-[hsl(var(--border))] bg-transparent px-3 text-sm text-[hsl(var(--text-primary))]"
+                                        className="h-[calc(2rem+var(--density-h-delta,0px))] w-full rounded-lg border border-[hsl(var(--border))] bg-transparent px-[calc(0.75rem+var(--density-pad-x-delta,0px))] text-sm text-[hsl(var(--text-primary))]"
                                     />
                                 </label>
                                 <label className="text-2xs uppercase tracking-wide text-[hsl(var(--text-secondary))] space-y-2">
@@ -1046,7 +1046,7 @@ export default function CommunityHubPage() {
                                         value={newCard.stage}
                                         onChange={(event) => handleNewCardField('stage', event.target.value)}
                                         placeholder="Mensajes, Oración, etc."
-                                        className="h-8 w-full rounded-lg border border-[hsl(var(--border))] bg-transparent px-3 text-sm text-[hsl(var(--text-primary))]"
+                                        className="h-[calc(2rem+var(--density-h-delta,0px))] w-full rounded-lg border border-[hsl(var(--border))] bg-transparent px-[calc(0.75rem+var(--density-pad-x-delta,0px))] text-sm text-[hsl(var(--text-primary))]"
                                     />
                                 </label>
                                 <label className="text-2xs uppercase tracking-wide text-[hsl(var(--text-secondary))] space-y-2">
@@ -1055,7 +1055,7 @@ export default function CommunityHubPage() {
                                         value={newCard.owner}
                                         onChange={(event) => handleNewCardField('owner', event.target.value)}
                                         placeholder="Equipo o persona"
-                                        className="h-8 w-full rounded-lg border border-[hsl(var(--border))] bg-transparent px-3 text-sm text-[hsl(var(--text-primary))]"
+                                        className="h-[calc(2rem+var(--density-h-delta,0px))] w-full rounded-lg border border-[hsl(var(--border))] bg-transparent px-[calc(0.75rem+var(--density-pad-x-delta,0px))] text-sm text-[hsl(var(--text-primary))]"
                                     />
                                 </label>
                                 <label className="text-2xs uppercase tracking-wide text-[hsl(var(--text-secondary))] space-y-2">
@@ -1064,7 +1064,7 @@ export default function CommunityHubPage() {
                                         type="date"
                                         value={newCard.due}
                                         onChange={(event) => handleNewCardField('due', event.target.value)}
-                                        className="h-8 w-full rounded-lg border border-[hsl(var(--border))] bg-transparent px-3 text-sm text-[hsl(var(--text-primary))]"
+                                        className="h-[calc(2rem+var(--density-h-delta,0px))] w-full rounded-lg border border-[hsl(var(--border))] bg-transparent px-[calc(0.75rem+var(--density-pad-x-delta,0px))] text-sm text-[hsl(var(--text-primary))]"
                                     />
                                 </label>
                                 <label className="text-2xs uppercase tracking-wide text-[hsl(var(--text-secondary))] space-y-2">
@@ -1072,7 +1072,7 @@ export default function CommunityHubPage() {
                                     <select
                                         value={newCard.priority}
                                         onChange={(event) => handleNewCardField('priority', event.target.value as BoardItem['priority'])}
-                                        className="h-8 w-full rounded-lg border border-[hsl(var(--border))] bg-transparent px-3 text-sm text-[hsl(var(--text-primary))]"
+                                        className="h-[calc(2rem+var(--density-h-delta,0px))] w-full rounded-lg border border-[hsl(var(--border))] bg-transparent px-[calc(0.75rem+var(--density-pad-x-delta,0px))] text-sm text-[hsl(var(--text-primary))]"
                                     >
                                         {priorityOptions.map((priority) => (
                                             <option key={priority} value={priority} className="text-[hsl(var(--text-primary))]">
@@ -1086,7 +1086,7 @@ export default function CommunityHubPage() {
                                     <select
                                         value={newCard.status}
                                         onChange={(event) => handleNewCardField('status', event.target.value)}
-                                        className="h-8 w-full rounded-lg border border-[hsl(var(--border))] bg-transparent px-3 text-sm text-[hsl(var(--text-primary))]"
+                                        className="h-[calc(2rem+var(--density-h-delta,0px))] w-full rounded-lg border border-[hsl(var(--border))] bg-transparent px-[calc(0.75rem+var(--density-pad-x-delta,0px))] text-sm text-[hsl(var(--text-primary))]"
                                     >
                                         {statusOptions.map((status) => (
                                             <option key={status} value={status} className="text-[hsl(var(--text-primary))]">
@@ -1101,7 +1101,7 @@ export default function CommunityHubPage() {
                                         value={newCard.comments}
                                         onChange={(event) => handleNewCardField('comments', event.target.value)}
                                         placeholder="Contexto rápido para el equipo"
-                                        className="min-h-[96px] w-full rounded-lg border border-[hsl(var(--border))] bg-transparent px-3 py-2 text-sm text-[hsl(var(--text-primary))]"
+                                        className="min-h-[96px] w-full rounded-lg border border-[hsl(var(--border))] bg-transparent px-[calc(0.75rem+var(--density-pad-x-delta,0px))] py-[calc(0.5rem+var(--density-pad-y-delta,0px))] text-sm text-[hsl(var(--text-primary))]"
                                     />
                                 </label>
                             </div>
@@ -1112,14 +1112,14 @@ export default function CommunityHubPage() {
                                         setIsCreatingCard(false);
                                         resetNewCardForm();
                                     }}
-                                    className="px-4 h-10 rounded-lg border border-[hsl(var(--border))] text-2xs font-medium uppercase tracking-wide text-[hsl(var(--text-secondary))]"
+                                    className="px-[calc(1rem+var(--density-pad-x-delta,0px))] h-[calc(2.5rem+var(--density-h-delta,0px))] rounded-lg border border-[hsl(var(--border))] text-2xs font-medium uppercase tracking-wide text-[hsl(var(--text-secondary))]"
                                 >
                                     Cancelar
                                 </button>
                                 <button
                                     type="submit"
                                     disabled={isSubmittingCard}
-                                    className="px-4 h-10 rounded-lg bg-[hsl(var(--text-primary))] text-[hsl(var(--surface-1))] text-2xs font-semibold uppercase tracking-wide disabled:opacity-60 disabled:cursor-not-allowed"
+                                    className="px-[calc(1rem+var(--density-pad-x-delta,0px))] h-[calc(2.5rem+var(--density-h-delta,0px))] rounded-lg bg-[hsl(var(--text-primary))] text-[hsl(var(--surface-1))] text-2xs font-semibold uppercase tracking-wide disabled:opacity-60 disabled:cursor-not-allowed"
                                 >
                                     {isSubmittingCard ? 'Guardando...' : 'Guardar tarjeta'}
                                 </button>
