@@ -275,7 +275,7 @@ export default function IdentityManagementPage() {
                 breadcrumbs={[{ label: 'Administración', icon: Shield }, { label: 'Gestión de Identidad', icon: Users }]}
                 onSearch={setSearch}
                 rightActions={
-                    <button onClick={() => setIsCreateOpen(true)} className="flex items-center gap-[var(--density-gap,0.5rem)] px-[var(--density-pad-x,0.75rem)] py-[var(--density-pad-y,0.5rem)] min-h-[var(--density-row-h,2rem)] bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] rounded-md text-xs font-semibold uppercase tracking-wide shadow-xl shadow-[hsl(var(--info)/0.2)] active:scale-95 transition-all hover:bg-[hsl(var(--primary))]">
+                    <button onClick={() => setIsCreateOpen(true)} className="flex items-center gap-[calc(0.5rem+var(--density-gap-delta,0px))] px-[calc(0.75rem+var(--density-pad-x-delta,0px))] py-[calc(0.5rem+var(--density-pad-y-delta,0px))] bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] rounded-md text-xs font-semibold uppercase tracking-wide shadow-xl shadow-[hsl(var(--info)/0.2)] active:scale-95 transition-all hover:bg-[hsl(var(--primary))]">
                         <UserPlus size={14} /> Nuevo Usuario
                     </button>
                 }
@@ -316,11 +316,11 @@ export default function IdentityManagementPage() {
                             <table className="density-table w-full min-w-[520px] text-left border-collapse">
                                 <thead>
                                     <tr className="bg-[hsl(var(--surface-2))] text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
-                                        <th className="px-[var(--density-pad-x,1rem)] py-[var(--density-pad-y,0.5rem)]">Persona</th>
-                                        <th className="px-[var(--density-pad-x,1rem)] py-[var(--density-pad-y,0.5rem)]">Email</th>
-                                        <th className="px-[var(--density-pad-x,1rem)] py-[var(--density-pad-y,0.5rem)]">Rol Plataforma</th>
-                                        <th className="px-[var(--density-pad-x,1rem)] py-[var(--density-pad-y,0.5rem)]">Estado</th>
-                                        <th className="px-[var(--density-pad-x,1rem)] py-[var(--density-pad-y,0.5rem)] text-right">Acciones</th>
+                                        <th className="px-[calc(1rem+var(--density-pad-x-delta,0px))] py-[calc(0.5rem+var(--density-pad-y-delta,0px))]">Persona</th>
+                                        <th className="px-[calc(1rem+var(--density-pad-x-delta,0px))] py-[calc(0.5rem+var(--density-pad-y-delta,0px))]">Email</th>
+                                        <th className="px-[calc(1rem+var(--density-pad-x-delta,0px))] py-[calc(0.5rem+var(--density-pad-y-delta,0px))]">Rol Plataforma</th>
+                                        <th className="px-[calc(1rem+var(--density-pad-x-delta,0px))] py-[calc(0.5rem+var(--density-pad-y-delta,0px))]">Estado</th>
+                                        <th className="px-[calc(1rem+var(--density-pad-x-delta,0px))] py-[calc(0.5rem+var(--density-pad-y-delta,0px))] text-right">Acciones</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-[hsl(var(--border))]">
@@ -330,16 +330,16 @@ export default function IdentityManagementPage() {
                                             className="group hover:bg-[hsl(var(--surface-2))] transition-all cursor-pointer"
                                             onClick={() => handleSelectUser(user)}
                                         >
-                                            <td className="px-[var(--density-pad-x,1rem)] py-[var(--density-pad-y,0.5rem)]">
-                                                <div className="flex items-center gap-[var(--density-gap,0.75rem)]">
+                                            <td className="px-[calc(1rem+var(--density-pad-x-delta,0px))] py-[calc(0.5rem+var(--density-pad-y-delta,0px))]">
+                                                <div className="flex items-center gap-[calc(0.75rem+var(--density-gap-delta,0px))]">
                                                     <div className="size-9 rounded-lg bg-gradient-to-tr from-[hsl(var(--info))] to-[hsl(var(--info))] flex items-center justify-center text-[hsl(var(--primary-foreground))] font-semibold text-xs">
                                                         {user.username.substring(0, 2).toUpperCase()}
                                                     </div>
                                                     <p className="text-sm font-bold text-[hsl(var(--text-primary))]">{user.username}</p>
                                                 </div>
                                             </td>
-                                            <td className="px-[var(--density-pad-x,1rem)] py-[var(--density-pad-y,0.5rem)] text-xs text-[hsl(var(--text-secondary))]">{user.email}</td>
-                                            <td className="px-[var(--density-pad-x,1rem)] py-[var(--density-pad-y,0.5rem)]">
+                                            <td className="px-[calc(1rem+var(--density-pad-x-delta,0px))] py-[calc(0.5rem+var(--density-pad-y-delta,0px))] text-xs text-[hsl(var(--text-secondary))]">{user.email}</td>
+                                            <td className="px-[calc(1rem+var(--density-pad-x-delta,0px))] py-[calc(0.5rem+var(--density-pad-y-delta,0px))]">
                                                 <span className={clsx(
                                                     "inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-2xs font-semibold uppercase",
                                                     ['admin', 'administrador'].includes(user.role) ? "bg-[hsl(var(--info-muted))] text-[hsl(var(--info))]" :
@@ -349,17 +349,17 @@ export default function IdentityManagementPage() {
                                                     {user.role}
                                                 </span>
                                             </td>
-                                            <td className="px-[var(--density-pad-x,1rem)] py-[var(--density-pad-y,0.5rem)]">
+                                            <td className="px-[calc(1rem+var(--density-pad-x-delta,0px))] py-[calc(0.5rem+var(--density-pad-y-delta,0px))]">
                                                 <div className="flex items-center gap-2">
                                                     <div className={clsx("size-2 rounded-full", user.is_active ? "bg-[hsl(var(--success))]" : "bg-[hsl(var(--surface-2))]")} />
                                                     <span className="text-2xs font-semibold uppercase text-[hsl(var(--text-secondary))]">{user.is_active ? 'Activo' : 'Inactivo'}</span>
                                                 </div>
                                             </td>
-                                            <td className="px-[var(--density-pad-x,1rem)] py-[var(--density-pad-y,0.5rem)] text-right">
+                                            <td className="px-[calc(1rem+var(--density-pad-x-delta,0px))] py-[calc(0.5rem+var(--density-pad-y-delta,0px))] text-right">
                                                 <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                                                     <button
                                                         onClick={(e) => { e.stopPropagation(); handleSelectUser(user); }}
-                                                        className="p-2 min-h-[var(--density-row-h,2rem)] min-w-[var(--density-row-h,2rem)] flex items-center justify-center hover:bg-[hsl(var(--info-muted))] rounded-md transition-all text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))]"
+                                                        className="p-[calc(0.5rem+var(--density-pad-y-delta,0px))] hover:bg-[hsl(var(--info-muted))] rounded-md transition-all text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))]"
                                                     >
                                                         <Eye size={16} />
                                                     </button>

@@ -362,15 +362,15 @@ export default function PreregistrationTab({ eventId, token }: { eventId: string
       )}
 
       <div className="rounded-lg border border-[hsl(var(--border))] overflow-hidden">
-        <div className="min-h-[var(--density-row-h,2.25rem)] px-[var(--density-pad-x,1rem)] py-[var(--density-pad-y,0.625rem)] bg-[hsl(var(--bg-muted))] flex flex-wrap items-center justify-between gap-[var(--density-gap,0.5rem)]">
-          <div className="flex items-center gap-[var(--density-gap,0.5rem)] text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
+        <div className="px-[calc(1rem+var(--density-pad-x-delta,0px))] py-[calc(0.625rem+var(--density-pad-y-delta,0px))] bg-[hsl(var(--bg-muted))] flex flex-wrap items-center justify-between gap-[calc(0.5rem+var(--density-gap-delta,0px))]">
+          <div className="flex items-center gap-[calc(0.5rem+var(--density-gap-delta,0px))] text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
             <Users size={13} /> Inscritos ({rows.length})
           </div>
-          <div className="flex items-center gap-[var(--density-gap,0.5rem)] flex-wrap">
+          <div className="flex items-center gap-[calc(0.5rem+var(--density-gap-delta,0px))] flex-wrap">
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value as RegistrationStatus | "")}
-              className="h-[var(--density-row-h,2rem)] px-[var(--density-pad-x,0.5rem)] py-[var(--density-pad-y,0.25rem)] rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] text-xs font-semibold text-[hsl(var(--text-primary))] outline-none"
+              className="px-[calc(0.5rem+var(--density-pad-x-delta,0px))] py-[calc(0.375rem+var(--density-pad-y-delta,0px))] rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] text-xs font-semibold text-[hsl(var(--text-primary))] outline-none"
             >
               <option value="">Todos los estados</option>
               {Object.entries(STATUS_LABEL).map(([k, v]) => (
@@ -381,18 +381,18 @@ export default function PreregistrationTab({ eventId, token }: { eventId: string
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Buscar por nombre/email/teléfono"
-              className="h-[var(--density-row-h,2rem)] px-[var(--density-pad-x,0.5rem)] py-[var(--density-pad-y,0.25rem)] rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] text-xs font-semibold text-[hsl(var(--text-primary))] outline-none placeholder:text-[hsl(var(--text-secondary))] w-44"
+              className="px-[calc(0.5rem+var(--density-pad-x-delta,0px))] py-[calc(0.375rem+var(--density-pad-y-delta,0px))] rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--bg-primary))] text-xs font-semibold text-[hsl(var(--text-primary))] outline-none placeholder:text-[hsl(var(--text-secondary))] w-44"
             />
             <button
               onClick={handleExportCsv}
               disabled={exportingCsv}
-              className="h-[var(--density-row-h,2rem)] px-[var(--density-pad-x,0.625rem)] py-[var(--density-pad-y,0.25rem)] rounded-md bg-[hsl(var(--bg-muted))] hover:bg-[hsl(var(--primary))] text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary-foreground))] text-2xs font-semibold uppercase flex items-center gap-[var(--density-gap,0.375rem)] transition-all disabled:opacity-50"
+              className="px-[calc(0.625rem+var(--density-pad-x-delta,0px))] py-[calc(0.375rem+var(--density-pad-y-delta,0px))] rounded-md bg-[hsl(var(--bg-muted))] hover:bg-[hsl(var(--primary))] text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary-foreground))] text-2xs font-semibold uppercase flex items-center gap-[calc(0.375rem+var(--density-gap-delta,0px))] transition-all disabled:opacity-50"
             >
               {exportingCsv ? <Loader2 size={13} className="animate-spin" /> : <Download size={13} />} CSV
             </button>
             <button
               onClick={loadAll}
-              className="min-h-[var(--density-row-h,1.75rem)] min-w-[var(--density-row-h,1.75rem)] p-1.5 rounded-md text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--bg-muted))] transition-all flex items-center justify-center"
+              className="p-[calc(0.375rem+var(--density-pad-y-delta,0px))] rounded-md text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--bg-muted))] transition-all"
               title="Refrescar"
             >
               <RefreshCw size={14} />
@@ -404,12 +404,12 @@ export default function PreregistrationTab({ eventId, token }: { eventId: string
           <table className="density-table w-full text-sm">
             <thead>
               <tr className="bg-[hsl(var(--bg-muted))]/50 text-2xs font-bold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
-                <th className="px-[var(--density-pad-x,1rem)] py-[var(--density-pad-y,0.5rem)] text-left">Persona</th>
-                <th className="px-[var(--density-pad-x,1rem)] py-[var(--density-pad-y,0.5rem)] text-left">Pase</th>
-                <th className="px-[var(--density-pad-x,1rem)] py-[var(--density-pad-y,0.5rem)] text-left">Estado</th>
-                <th className="px-[var(--density-pad-x,1rem)] py-[var(--density-pad-y,0.5rem)] text-left">Registro</th>
-                <th className="px-[var(--density-pad-x,1rem)] py-[var(--density-pad-y,0.5rem)] text-left">QR</th>
-                <th className="px-[var(--density-pad-x,1rem)] py-[var(--density-pad-y,0.5rem)] text-left">Acciones</th>
+                <th className="px-[calc(1rem+var(--density-pad-x-delta,0px))] py-[calc(0.5rem+var(--density-pad-y-delta,0px))] text-left">Persona</th>
+                <th className="px-[calc(1rem+var(--density-pad-x-delta,0px))] py-[calc(0.5rem+var(--density-pad-y-delta,0px))] text-left">Pase</th>
+                <th className="px-[calc(1rem+var(--density-pad-x-delta,0px))] py-[calc(0.5rem+var(--density-pad-y-delta,0px))] text-left">Estado</th>
+                <th className="px-[calc(1rem+var(--density-pad-x-delta,0px))] py-[calc(0.5rem+var(--density-pad-y-delta,0px))] text-left">Registro</th>
+                <th className="px-[calc(1rem+var(--density-pad-x-delta,0px))] py-[calc(0.5rem+var(--density-pad-y-delta,0px))] text-left">QR</th>
+                <th className="px-[calc(1rem+var(--density-pad-x-delta,0px))] py-[calc(0.5rem+var(--density-pad-y-delta,0px))] text-left">Acciones</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[hsl(var(--border))]">
@@ -424,13 +424,13 @@ export default function PreregistrationTab({ eventId, token }: { eventId: string
                 })
                 .map((r) => (
                   <tr key={r.id}>
-                    <td className="px-[var(--density-pad-x,1rem)] py-[var(--density-pad-y,0.625rem)]">
+                    <td className="px-[calc(1rem+var(--density-pad-x-delta,0px))] py-[calc(0.625rem+var(--density-pad-y-delta,0px))]">
                       <div className="font-bold text-[hsl(var(--text-primary))]">{r.persona_name || "—"}</div>
                       <div className="text-xs font-medium text-[hsl(var(--text-secondary))]">
                         {r.persona_email || ""}{r.persona_email && r.persona_phone ? " · " : ""}{r.persona_phone || ""}
                       </div>
                     </td>
-                    <td className="px-[var(--density-pad-x,1rem)] py-[var(--density-pad-y,0.625rem)]">
+                    <td className="px-[calc(1rem+var(--density-pad-x-delta,0px))] py-[calc(0.625rem+var(--density-pad-y-delta,0px))]">
                       {r.registration_code ? (
                         <span className="inline-flex items-center px-2 py-0.5 rounded font-mono text-2xs font-bold bg-[hsl(var(--primary)/0.12)] text-[hsl(var(--primary))] border border-[hsl(var(--primary)/0.2)]">
                           {r.registration_code}
@@ -443,16 +443,16 @@ export default function PreregistrationTab({ eventId, token }: { eventId: string
                         <span className="text-2xs text-[hsl(var(--text-secondary))]">—</span>
                       )}
                     </td>
-                    <td className="px-[var(--density-pad-x,1rem)] py-[var(--density-pad-y,0.625rem)]">
+                    <td className="px-[calc(1rem+var(--density-pad-x-delta,0px))] py-[calc(0.625rem+var(--density-pad-y-delta,0px))]">
                       <span className={clsx("inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-2xs font-semibold uppercase tracking-wide", STATUS_BADGE[r.registration_status])}>
                         {STATUS_LABEL[r.registration_status]}
                         {r.waiting_list_position != null && <span>#{r.waiting_list_position}</span>}
                       </span>
                     </td>
-                    <td className="px-[var(--density-pad-x,1rem)] py-[var(--density-pad-y,0.625rem)] text-xs font-semibold text-[hsl(var(--text-secondary))]">
+                    <td className="px-[calc(1rem+var(--density-pad-x-delta,0px))] py-[calc(0.625rem+var(--density-pad-y-delta,0px))] text-xs font-semibold text-[hsl(var(--text-secondary))]">
                       {new Date(r.registered_at).toLocaleString("es-CO")}
                     </td>
-                    <td className="px-[var(--density-pad-x,1rem)] py-[var(--density-pad-y,0.625rem)]">
+                    <td className="px-[calc(1rem+var(--density-pad-x-delta,0px))] py-[calc(0.625rem+var(--density-pad-y-delta,0px))]">
                       {r.qr_token ? (
                         <a
                           href={`/public/events/${eventId}/qr?token=${r.qr_token}`}
@@ -466,7 +466,7 @@ export default function PreregistrationTab({ eventId, token }: { eventId: string
                         <span className="text-xs font-medium text-[hsl(var(--text-secondary))]">—</span>
                       )}
                     </td>
-                    <td className="px-[var(--density-pad-x,1rem)] py-[var(--density-pad-y,0.625rem)]">
+                    <td className="px-[calc(1rem+var(--density-pad-x-delta,0px))] py-[calc(0.625rem+var(--density-pad-y-delta,0px))]">
                       <div className="flex items-center gap-1.5">
                         {r.registration_status !== "CANCELLED" && (
                           <button

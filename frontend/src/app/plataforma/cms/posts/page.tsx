@@ -286,8 +286,8 @@ export default function CmsPostsManagement() {
 
   return (
     <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))]">
-      <header className="min-h-[calc(var(--density-row-h,32px)+4px)] border-b border-[hsl(var(--border))] flex items-center px-[var(--density-pad-x,0.75rem)] py-[var(--density-pad-y,0.25rem)] gap-[var(--density-gap,0.75rem)] shrink-0">
-        <div className="flex items-center gap-[var(--density-gap,0.5rem)] flex-1 min-w-0">
+      <header className="min-h-[calc(2rem+var(--density-h-delta,0px))] border-b border-[hsl(var(--border))] flex items-center px-[calc(0.75rem+var(--density-pad-x-delta,0px))] gap-[calc(0.75rem+var(--density-gap-delta,0px))] shrink-0">
+        <div className="flex items-center gap-[calc(0.5rem+var(--density-gap-delta,0px))] flex-1 min-w-0">
           <FileText size={16} className="text-[hsl(var(--primary))] shrink-0" />
           <h2 className="text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] truncate">
             Posts / Blog
@@ -300,7 +300,7 @@ export default function CmsPostsManagement() {
         <select
           value={siteKey}
           onChange={(e) => setSiteKey(e.target.value)}
-          className="h-[var(--density-row-h,2rem)] rounded-lg border border-[hsl(var(--border))] bg-transparent px-[var(--density-pad-x,0.75rem)] py-[var(--density-pad-y,0.25rem)] text-xs shrink-0"
+          className="rounded-lg border border-[hsl(var(--border))] bg-transparent px-[calc(0.75rem+var(--density-pad-x-delta,0px))] py-[calc(0.375rem+var(--density-pad-y-delta,0px))] text-sm shrink-0"
         >
           {sites.length === 0 && <option value={SITE_KEY}>{SITE_KEY}</option>}
           {sites.map((site) => (
@@ -317,7 +317,7 @@ export default function CmsPostsManagement() {
             placeholder="Buscar posts..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="h-[var(--density-row-h,2rem)] pl-9 pr-4 py-[var(--density-pad-y,0.25rem)] bg-[hsl(var(--surface-2))] border-none rounded-lg text-xs focus:ring-2 focus:ring-[hsl(var(--primary))]/20 w-52 transition-all"
+            className="pl-9 pr-[calc(1rem+var(--density-pad-x-delta,0px))] py-[calc(0.375rem+var(--density-pad-y-delta,0px))] bg-[hsl(var(--surface-2))] border-none rounded-lg text-sm focus:ring-2 focus:ring-[hsl(var(--primary))]/20 w-52 transition-all"
           />
         </div>
 
@@ -326,7 +326,7 @@ export default function CmsPostsManagement() {
         <button
           onClick={() => setIsQuickAddOpen((prev) => !prev)}
           disabled={!canEdit}
-          className="h-[var(--density-row-h,2rem)] bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] px-[var(--density-pad-x,1rem)] py-[var(--density-pad-y,0.25rem)] rounded-lg text-xs font-semibold uppercase tracking-wide shadow-xl shadow-[hsl(var(--info)/20%)] hover:bg-[hsl(var(--primary))] active:scale-95 transition-all flex items-center gap-2 disabled:opacity-50 shrink-0"
+          className="bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] px-[calc(1rem+var(--density-pad-x-delta,0px))] py-[calc(0.375rem+var(--density-pad-y-delta,0px))] rounded-lg text-xs font-semibold uppercase tracking-wide shadow-xl shadow-[hsl(var(--info)/20%)] hover:bg-[hsl(var(--primary))] active:scale-95 transition-all flex items-center gap-[calc(0.5rem+var(--density-gap-delta,0px))] disabled:opacity-50 shrink-0"
         >
           <Plus size={14} /> Nuevo post
         </button>
@@ -468,7 +468,7 @@ export default function CmsPostsManagement() {
             <table className="density-table w-full min-w-[480px] text-left">
               <thead className="bg-[hsl(var(--surface-1))]">
                 <tr>
-                  <th className="w-10 px-[var(--density-pad-x,1rem)] py-[var(--density-pad-y,0.75rem)]">
+                  <th className="w-10 px-[calc(1rem+var(--density-pad-x-delta,0px))] py-[calc(0.75rem+var(--density-pad-y-delta,0px))]">
                     <input
                       type="checkbox"
                       checked={selectedIds.size === visiblePosts.length && visiblePosts.length > 0}
@@ -476,11 +476,11 @@ export default function CmsPostsManagement() {
                       className="rounded"
                     />
                   </th>
-                  <th className="px-[var(--density-pad-x,1rem)] py-[var(--density-pad-y,0.75rem)] text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Post</th>
-                  <th className="px-[var(--density-pad-x,1rem)] py-[var(--density-pad-y,0.75rem)] text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hidden md:table-cell">Slug</th>
-                  <th className="px-[var(--density-pad-x,1rem)] py-[var(--density-pad-y,0.75rem)] text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hidden lg:table-cell">Estado</th>
-                  <th className="px-[var(--density-pad-x,1rem)] py-[var(--density-pad-y,0.75rem)] text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hidden xl:table-cell">Categorías</th>
-                  <th className="px-[var(--density-pad-x,1rem)] py-[var(--density-pad-y,0.75rem)] text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Acciones</th>
+                  <th className="px-[calc(1rem+var(--density-pad-x-delta,0px))] py-[calc(0.75rem+var(--density-pad-y-delta,0px))] text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Post</th>
+                  <th className="px-[calc(1rem+var(--density-pad-x-delta,0px))] py-[calc(0.75rem+var(--density-pad-y-delta,0px))] text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hidden md:table-cell">Slug</th>
+                  <th className="px-[calc(1rem+var(--density-pad-x-delta,0px))] py-[calc(0.75rem+var(--density-pad-y-delta,0px))] text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hidden lg:table-cell">Estado</th>
+                  <th className="px-[calc(1rem+var(--density-pad-x-delta,0px))] py-[calc(0.75rem+var(--density-pad-y-delta,0px))] text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hidden xl:table-cell">Categorías</th>
+                  <th className="px-[calc(1rem+var(--density-pad-x-delta,0px))] py-[calc(0.75rem+var(--density-pad-y-delta,0px))] text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Acciones</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[hsl(var(--border))]">
@@ -488,29 +488,29 @@ export default function CmsPostsManagement() {
                   const st = STATUS_CONFIG[post.status] ?? STATUS_CONFIG["draft"];
                   return (
                     <tr key={post.id} className="hover:bg-[hsl(var(--surface-1))] group transition-colors">
-                      <td className="px-[var(--density-pad-x,1rem)] py-[var(--density-pad-y,0.75rem)]">
+                      <td className="px-[calc(1rem+var(--density-pad-x-delta,0px))] py-[calc(0.75rem+var(--density-pad-y-delta,0px))]">
                         <input type="checkbox" checked={selectedIds.has(post.id)} onChange={() => toggleSelect(post.id)} className="rounded" />
                       </td>
-                      <td className="px-[var(--density-pad-x,1rem)] py-[var(--density-pad-y,0.75rem)]">
-                        <div className="flex items-center gap-[var(--density-gap,0.75rem)]">
+                      <td className="px-[calc(1rem+var(--density-pad-x-delta,0px))] py-[calc(0.75rem+var(--density-pad-y-delta,0px))]">
+                        <div className="flex items-center gap-[calc(0.75rem+var(--density-gap-delta,0px))]">
                           <div className="size-8 rounded-md bg-[hsl(var(--domain-fuchsia)/10%)] text-[hsl(var(--domain-fuchsia)/90%)] flex items-center justify-center shrink-0">
                             <FileText size={14} />
                           </div>
                           <span className="text-sm font-bold text-[hsl(var(--text-primary))] truncate max-w-[200px]">{post.title}</span>
                         </div>
                       </td>
-                      <td className="px-[var(--density-pad-x,1rem)] py-[var(--density-pad-y,0.75rem)] hidden md:table-cell">
+                      <td className="px-[calc(1rem+var(--density-pad-x-delta,0px))] py-[calc(0.75rem+var(--density-pad-y-delta,0px))] hidden md:table-cell">
                         <span className="text-xs font-mono text-[hsl(var(--text-secondary))]">/{post.slug}</span>
                       </td>
-                      <td className="px-[var(--density-pad-x,1rem)] py-[var(--density-pad-y,0.75rem)] hidden lg:table-cell">
+                      <td className="px-[calc(1rem+var(--density-pad-x-delta,0px))] py-[calc(0.75rem+var(--density-pad-y-delta,0px))] hidden lg:table-cell">
                         <span className={clsx("px-2 py-0.5 rounded-full text-2xs font-semibold uppercase tracking-wide", st.color)}>{st.label}</span>
                       </td>
-                      <td className="px-[var(--density-pad-x,1rem)] py-[var(--density-pad-y,0.75rem)] hidden xl:table-cell">
+                      <td className="px-[calc(1rem+var(--density-pad-x-delta,0px))] py-[calc(0.75rem+var(--density-pad-y-delta,0px))] hidden xl:table-cell">
                         <span className="text-xs text-[hsl(var(--text-secondary))]">
                           {post.categories?.map((c) => c.name).join(", ") || "—"}
                         </span>
                       </td>
-                      <td className="px-[var(--density-pad-x,1rem)] py-[var(--density-pad-y,0.75rem)]">
+                      <td className="px-[calc(1rem+var(--density-pad-x-delta,0px))] py-[calc(0.75rem+var(--density-pad-y-delta,0px))]">
                         <div className="flex items-center gap-1">
                           <button
                             onClick={() => openPost(post)}

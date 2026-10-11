@@ -196,7 +196,7 @@ export default function AttendanceDrawer({
     )}
     <div className="space-y-2">
     {personas.map((m, i) => (
-    <div key={m.persona_id} className={`flex items-center gap-[var(--density-gap,0.75rem)] px-[var(--density-pad-x,0.75rem)] py-[var(--density-pad-y,0.5rem)] min-h-[var(--density-row-h,2.25rem)] rounded-lg ${m.status === 'first_time' ? 'bg-[hsl(var(--info-muted))] border border-[hsl(var(--info)/0.3)]' : 'bg-[hsl(var(--bg-muted))]'}`}>
+    <div key={m.persona_id} className={`flex items-center gap-[calc(0.75rem+var(--density-gap-delta,0px))] px-[calc(0.75rem+var(--density-pad-x-delta,0px))] py-[calc(0.625rem+var(--density-pad-y-delta,0px))] rounded-lg ${m.status === 'first_time' ? 'bg-[hsl(var(--info-muted))] border border-[hsl(var(--info)/0.3)]' : 'bg-[hsl(var(--bg-muted))]'}`}>
     <div className="flex-1 min-w-0">
     <div className="flex items-center gap-1.5">
     <p className="text-xs font-semibold text-[hsl(var(--text-primary))] ">{m.name}</p>
@@ -214,14 +214,14 @@ export default function AttendanceDrawer({
     ] as const).map(opt => (
     <button key={opt.status}
     onClick={() => setPersonas(prev => prev.map((x, j) => j === i ? { ...x, status: opt.status } : x))}
-    className={`min-w-[var(--density-row-h,2rem)] min-h-[var(--density-row-h,2rem)] rounded-lg text-xs font-bold transition-all ${opt.cls} ${m.status === opt.status ? opt.activeCls : 'opacity-50 hover:opacity-100'}`}>
+    className={`w-[calc(2rem+var(--density-h-delta,0px))] h-[calc(2rem+var(--density-h-delta,0px))] rounded-lg text-xs font-bold transition-all ${opt.cls} ${m.status === opt.status ? opt.activeCls : 'opacity-50 hover:opacity-100'}`}>
     {opt.label}
     </button>
     ))}
     {m.role === 'visitante' && (
     <button onClick={() => setPersonas(prev => prev.filter((_, j) => j !== i))}
     aria-label="Remover visitante"
-    className="min-w-[var(--density-row-h,1.75rem)] min-h-[var(--density-row-h,1.75rem)] ml-1 flex items-center justify-center rounded-lg text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--destructive)/0.1)] hover:text-[hsl(var(--destructive))] transition-colors">
+    className="w-[calc(1.75rem+var(--density-h-delta,0px))] h-[calc(1.75rem+var(--density-h-delta,0px))] ml-1 flex items-center justify-center rounded-lg text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--destructive)/0.1)] hover:text-[hsl(var(--destructive))] transition-colors">
     <X size={12} />
     </button>
     )}
@@ -237,11 +237,11 @@ export default function AttendanceDrawer({
     {!showVisitorSearch && !showNewVisitorForm ? (
     <div className="flex gap-2">
     <button onClick={() => setShowVisitorSearch(true)}
-    className="flex-1 flex min-h-[var(--density-row-h,2.25rem)] items-center justify-center gap-1.5 px-[var(--density-pad-x,0.75rem)] py-[var(--density-pad-y,0.5rem)] rounded-lg border border-dashed border-[hsl(var(--border-primary))] text-xs text-[hsl(var(--text-secondary))] hover:border-[hsl(var(--info)/0.4)] hover:text-[hsl(var(--primary))] transition-colors">
+    className="flex-1 flex items-center justify-center gap-1.5 py-[calc(0.5rem+var(--density-pad-y-delta,0px))] rounded-lg border border-dashed border-[hsl(var(--border-primary))] text-xs text-[hsl(var(--text-secondary))] hover:border-[hsl(var(--info)/0.4)] hover:text-[hsl(var(--primary))] transition-colors">
     <Search size={13} />Buscar existente
     </button>
     <button onClick={() => setShowNewVisitorForm(true)}
-    className="flex-1 flex min-h-[var(--density-row-h,2.25rem)] items-center justify-center gap-1.5 px-[var(--density-pad-x,0.75rem)] py-[var(--density-pad-y,0.5rem)] rounded-lg border border-dashed border-[hsl(var(--border-primary))] text-xs text-[hsl(var(--text-secondary))] hover:border-[hsl(var(--secondary))] hover:text-[hsl(var(--secondary))] transition-colors">
+    className="flex-1 flex items-center justify-center gap-1.5 py-[calc(0.5rem+var(--density-pad-y-delta,0px))] rounded-lg border border-dashed border-[hsl(var(--border-primary))] text-xs text-[hsl(var(--text-secondary))] hover:border-[hsl(var(--secondary))] hover:text-[hsl(var(--secondary))] transition-colors">
     <UserPlus size={13} />Crear persona nueva
     </button>
     </div>
@@ -257,11 +257,11 @@ export default function AttendanceDrawer({
     value={visitorSearch}
     onChange={e => setVisitorSearch(e.target.value)}
     placeholder="Buscar persona por nombre..."
-    className="w-full pl-8 pr-3 min-h-[var(--density-row-h,2.25rem)] text-sm bg-[hsl(var(--bg-muted))] border border-[hsl(var(--border-primary))] rounded-lg text-[hsl(var(--text-primary))] outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.2] focus:border-[hsl(var(--primary))]"
+    className="w-full pl-8 pr-3 py-[calc(0.5rem+var(--density-pad-y-delta,0px))] text-sm bg-[hsl(var(--bg-muted))] border border-[hsl(var(--border-primary))] rounded-lg text-[hsl(var(--text-primary))] outline-none focus:ring-2 focus:ring-[hsl(var(--primary))/0.2] focus:border-[hsl(var(--primary))]"
     />
     </div>
     <button onClick={() => { setShowVisitorSearch(false); setVisitorSearch(''); }}
-    className="min-w-[var(--density-row-h,2rem)] min-h-[var(--density-row-h,2rem)] flex items-center justify-center rounded-lg text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--bg-muted))]">
+    className="w-[calc(2rem+var(--density-h-delta,0px))] h-[calc(2rem+var(--density-h-delta,0px))] flex items-center justify-center rounded-lg text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--bg-muted))]">
     <X size={14} />
     </button>
     </div>

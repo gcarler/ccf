@@ -20,6 +20,10 @@ export interface UiDensityOption {
     padX: string;
     padY: string;
     gap: string;
+    padYDelta: string;
+    padXDelta: string;
+    gapDelta: string;
+    hDelta: string;
 }
 
 export const UI_DENSITY_OPTIONS: Record<UiDensity, UiDensityOption> = {
@@ -32,6 +36,10 @@ export const UI_DENSITY_OPTIONS: Record<UiDensity, UiDensityOption> = {
         padX: '0.5rem',
         padY: '0.125rem',
         gap: '0.25rem',
+        padYDelta: '0px',
+        padXDelta: '0px',
+        gapDelta: '0px',
+        hDelta: '0px',
     },
     compact: {
         id: 'compact',
@@ -42,6 +50,10 @@ export const UI_DENSITY_OPTIONS: Record<UiDensity, UiDensityOption> = {
         padX: '0.75rem',
         padY: '0.375rem',
         gap: '0.5rem',
+        padYDelta: '0.125rem',
+        padXDelta: '0.125rem',
+        gapDelta: '0.125rem',
+        hDelta: '4px',
     },
     comfortable: {
         id: 'comfortable',
@@ -52,6 +64,10 @@ export const UI_DENSITY_OPTIONS: Record<UiDensity, UiDensityOption> = {
         padX: '1rem',
         padY: '0.625rem',
         gap: '0.75rem',
+        padYDelta: '0.25rem',
+        padXDelta: '0.25rem',
+        gapDelta: '0.25rem',
+        hDelta: '8px',
     },
     spacious: {
         id: 'spacious',
@@ -62,6 +78,10 @@ export const UI_DENSITY_OPTIONS: Record<UiDensity, UiDensityOption> = {
         padX: '1.25rem',
         padY: '0.875rem',
         gap: '1rem',
+        padYDelta: '0.375rem',
+        padXDelta: '0.5rem',
+        gapDelta: '0.375rem',
+        hDelta: '12px',
     },
 };
 
@@ -361,6 +381,10 @@ export const ThemeProvider = ({ children }: { children: ReactNode }) => {
         root.style.setProperty('--density-pad-y', densityOption.padY);
         root.style.setProperty('--density-gap', densityOption.gap);
         root.style.setProperty('--ui-density-ratio', densityOption.paddingRatio);
+        root.style.setProperty('--density-pad-y-delta', densityOption.padYDelta);
+        root.style.setProperty('--density-pad-x-delta', densityOption.padXDelta);
+        root.style.setProperty('--density-gap-delta', densityOption.gapDelta);
+        root.style.setProperty('--density-h-delta', densityOption.hDelta);
         root.style.fontSize = `${zoomPercentage}%`;
 
         // Apply accent color
