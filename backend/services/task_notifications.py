@@ -25,6 +25,15 @@ from backend.services.messaging_outcomes import CommunicationOutcome
 logger = logging.getLogger(__name__)
 
 
+def _make_nop_session(db: Session):
+    """Wrapper no-propagador: notify() del hub opera con commits propios,
+    pero dentro de notify_task_assigned la transacción es atómica del caller.
+    Pasamos la misma sesión: el hub usará add/commit; el commit aquí es
+    coherente porque el batch principal se compromete igualmente al final.
+    """
+    return db
+
+
 def _display_name(persona: models.Persona | None) -> str:
     if not persona:
         return "Usuario"
@@ -169,6 +178,34 @@ def notify_task_assigned(
                 outcome=outcome,
             )
         )
+
+        # Fase 2 (notification hub): si el usuario tiene el canal email ON para
+        # ``task_assigned``, se agenda una entrega pendiente trazable
+        # (notification_deliveries) para el worker, sin doble envío inmediato.
+        # El SMTP del remitente en esta función queda como el envío histórico
+        # transaccional; el hub registra el registro de auditoría del canal.
+        try:
+            from uuid import UUID as _UUID
+
+            from backend.services.notification_hub import notify as _hub_notify
+
+            if recipient_id:
+                _hub_notify(
+                    db_noop=_make_nop_session(db),
+                    user_ids=[_UUID(str(recipient_id))],
+                    event_type="task_assigned",
+                    title=notification_title,
+                    content=notification_content,
+                    target_url=task_url,
+                    channels=("email",),
+                    dedupe_key=f"task:{task.id}",
+                    email_context={"task_id": str(task.id)},
+                )
+        except Exception:
+            # El hub es best-effort: jamás debe romper el flujo operativo
+            # de asignación (la notificación in-app y el email real ya
+            # se enviaron/registraron arriba).
+            logger.debug("notification_hub enqueue falló (best-effort)", exc_info=True)
         # Stage the inbox notification ONLY when the email succeeded.
         # This is the pivotal atomicity contract: send_email=False ⇒ NO
         # NotificacionUsuario (the audit row's outcome="email_failed" is

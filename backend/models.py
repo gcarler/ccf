@@ -94,6 +94,9 @@ from backend.models_auth import (
     UsuarioPermisoOverride,
     UsuarioRolModulo,
 )
+from backend.models_notifications import (  # noqa: F401
+    NotificationDelivery,  # noqa: F401 — Fase 2 notification hub
+)
 from backend.models_cms import (  # noqa: F401
     Announcement,  # noqa: F401
     CmsAbTest,
