@@ -401,14 +401,14 @@ export default function CmsPagesManagement() {
 
   return (
     <div className="flex flex-col h-full bg-[hsl(var(--bg-primary))]">
-      <header className="h-8 border-b border-[hsl(var(--border))] flex items-center px-3 gap-3 shrink-0">
-        <div className="flex items-center gap-2 flex-1 min-w-0">
+      <header className="min-h-[calc(var(--density-row-h,32px)+4px)] border-b border-[hsl(var(--border))] flex items-center px-[var(--density-pad-x,0.75rem)] py-[var(--density-pad-y,0.25rem)] gap-[var(--density-gap,0.75rem)] shrink-0">
+        <div className="flex items-center gap-[var(--density-gap,0.5rem)] flex-1 min-w-0">
           <FileText size={16} className="text-[hsl(var(--primary))] shrink-0" />
           <h2 className="text-xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] truncate">Gestion de paginas</h2>
           <span className="text-2xs font-semibold text-[hsl(var(--text-secondary))] bg-[hsl(var(--surface-2))] px-2 py-0.5 rounded-full shrink-0">{visiblePages.length}</span>
         </div>
 
-        <select value={siteKey} onChange={(e) => setSiteKey(e.target.value)} className="rounded-lg border border-[hsl(var(--border))] bg-transparent px-3 py-1.5 text-sm shrink-0">
+        <select value={siteKey} onChange={(e) => setSiteKey(e.target.value)} className="h-[var(--density-row-h,2rem)] rounded-lg border border-[hsl(var(--border))] bg-transparent px-[var(--density-pad-x,0.75rem)] py-[var(--density-pad-y,0.25rem)] text-xs shrink-0">
           {sites.length === 0 && <option value={SITE_KEY}>{SITE_KEY}</option>}
           {sites.map((site) => (
             <option key={site.site_key} value={site.site_key}>{site.name} ({site.site_key})</option>
@@ -422,7 +422,7 @@ export default function CmsPagesManagement() {
             placeholder="Buscar paginas..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="pl-9 pr-4 py-1.5 bg-[hsl(var(--surface-2))] border-none rounded-lg text-sm focus:ring-2 focus:ring-[hsl(var(--primary))]/20 w-52 transition-all"
+            className="h-[var(--density-row-h,2rem)] pl-9 pr-4 py-[var(--density-pad-y,0.25rem)] bg-[hsl(var(--surface-2))] border-none rounded-lg text-xs focus:ring-2 focus:ring-[hsl(var(--primary))]/20 w-52 transition-all"
           />
         </div>
 
@@ -431,7 +431,7 @@ export default function CmsPagesManagement() {
         <button
           onClick={() => setIsQuickAddOpen((prev) => !prev)}
           disabled={!canEdit}
-          className="bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] px-4 py-1.5 rounded-lg text-xs font-semibold uppercase tracking-wide shadow-sm hover:opacity-90 active:scale-95 transition-all flex items-center gap-2 disabled:opacity-50 shrink-0"
+          className="h-[var(--density-row-h,2rem)] bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] px-[var(--density-pad-x,1rem)] py-[var(--density-pad-y,0.25rem)] rounded-lg text-xs font-semibold uppercase tracking-wide shadow-sm hover:opacity-90 active:scale-95 transition-all flex items-center gap-2 disabled:opacity-50 shrink-0"
         >
           <Plus size={14} /> Nueva pagina
         </button>
@@ -635,10 +635,10 @@ export default function CmsPagesManagement() {
         ) : (
           /* TABLE VIEW */
           <div className="rounded-lg border border-[hsl(var(--border))] overflow-x-auto">
-            <table className="w-full min-w-[480px] text-left">
+            <table className="density-table w-full min-w-[480px] text-left">
               <thead className="bg-[hsl(var(--surface-1))]">
                 <tr>
-                  <th className="w-10 px-4 py-3">
+                  <th className="w-10 px-[var(--density-pad-x,1rem)] py-[var(--density-pad-y,0.75rem)]">
                     <input
                       type="checkbox"
                       checked={selectedIds.size === visiblePages.length && visiblePages.length > 0}
@@ -646,11 +646,11 @@ export default function CmsPagesManagement() {
                       className="rounded"
                     />
                   </th>
-                  <th className="px-4 py-3 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Pagina</th>
-                  <th className="px-4 py-3 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hidden md:table-cell">Slug</th>
-                  <th className="px-4 py-3 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hidden lg:table-cell">Estado</th>
-                  <th className="px-4 py-3 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hidden xl:table-cell">Actualizado</th>
-                  <th className="px-4 py-3 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Acciones</th>
+                  <th className="px-[var(--density-pad-x,1rem)] py-[var(--density-pad-y,0.75rem)] text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Pagina</th>
+                  <th className="px-[var(--density-pad-x,1rem)] py-[var(--density-pad-y,0.75rem)] text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hidden md:table-cell">Slug</th>
+                  <th className="px-[var(--density-pad-x,1rem)] py-[var(--density-pad-y,0.75rem)] text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hidden lg:table-cell">Estado</th>
+                  <th className="px-[var(--density-pad-x,1rem)] py-[var(--density-pad-y,0.75rem)] text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hidden xl:table-cell">Actualizado</th>
+                  <th className="px-[var(--density-pad-x,1rem)] py-[var(--density-pad-y,0.75rem)] text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Acciones</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[hsl(var(--border))]">
@@ -658,7 +658,7 @@ export default function CmsPagesManagement() {
                   const st = STATUS_CONFIG[page.status] ?? STATUS_CONFIG["draft"];
                   return (
                     <tr key={page.id} className="hover:bg-[hsl(var(--surface-1))] group transition-colors">
-                      <td className="px-4 py-3">
+                      <td className="px-[var(--density-pad-x,1rem)] py-[var(--density-pad-y,0.75rem)]">
                         <input
                           type="checkbox"
                           checked={selectedIds.has(page.id)}
@@ -666,24 +666,24 @@ export default function CmsPagesManagement() {
                           className="rounded"
                         />
                       </td>
-                      <td className="px-4 py-3">
-                        <div className="flex items-center gap-3">
+                      <td className="px-[var(--density-pad-x,1rem)] py-[var(--density-pad-y,0.75rem)]">
+                        <div className="flex items-center gap-[var(--density-gap,0.75rem)]">
                           <div className="size-8 rounded-md bg-[hsl(var(--primary)/10%)] text-[hsl(var(--primary))] flex items-center justify-center shrink-0">
                             <FileText size={14} />
                           </div>
                           <span className="text-sm font-bold text-[hsl(var(--text-primary))] truncate max-w-[200px]">{page.title}</span>
                         </div>
                       </td>
-                      <td className="px-4 py-3 hidden md:table-cell">
+                      <td className="px-[var(--density-pad-x,1rem)] py-[var(--density-pad-y,0.75rem)] hidden md:table-cell">
                         <span className="text-xs font-mono text-[hsl(var(--text-secondary))]">/{page.slug}</span>
                       </td>
-                      <td className="px-4 py-3 hidden lg:table-cell">
+                      <td className="px-[var(--density-pad-x,1rem)] py-[var(--density-pad-y,0.75rem)] hidden lg:table-cell">
                         <span className={clsx("px-2 py-0.5 rounded-full text-2xs font-semibold uppercase tracking-wide", st.color)}>{st.label}</span>
                       </td>
-                      <td className="px-4 py-3 hidden xl:table-cell">
+                      <td className="px-[var(--density-pad-x,1rem)] py-[var(--density-pad-y,0.75rem)] hidden xl:table-cell">
                         <span className="text-xs text-[hsl(var(--text-secondary))]">{page.updated_at ? new Date(page.updated_at).toLocaleDateString() : "-"}</span>
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="px-[var(--density-pad-x,1rem)] py-[var(--density-pad-y,0.75rem)]">
                         <div className="flex items-center gap-1">
                           <button
                             onClick={() => openPreview(page)}

@@ -94,14 +94,14 @@ export default function WorkspaceInbox({ isOpen, onClose }: { isOpen: boolean, o
                         )}
                     >
                         {/* Header */}
-                        <header className="h-8 border-b border-[hsl(var(--border))] dark:border-white/5 flex items-center justify-between px-3 bg-[hsl(var(--surface-1))]/50 dark:bg-white/5 shrink-0">
-                            <div className="flex items-center gap-3">
-                                <div className="size-8 rounded-md bg-[hsl(var(--primary))] flex items-center justify-center text-white shadow-lg shadow-[hsl(var(--info))]/20">
+                        <header className="min-h-[calc(var(--density-row-h,32px)+4px)] border-b border-[hsl(var(--border))] dark:border-white/5 flex items-center justify-between px-[var(--density-pad-x,0.75rem)] py-[var(--density-pad-y,0.25rem)] bg-[hsl(var(--surface-1))]/50 dark:bg-white/5 shrink-0">
+                            <div className="flex items-center gap-[var(--density-gap,0.75rem)]">
+                                <div className="size-8 rounded-md bg-[hsl(var(--primary))] flex items-center justify-center text-white shadow-lg shadow-[hsl(var(--info))]/20 shrink-0">
                                     <Inbox size={18} />
                                 </div>
                                 <h3 className="text-sm font-semibold text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-secondary))] tracking-tight">Inbox</h3>
                             </div>
-                            <div className="flex items-center gap-3">
+                            <div className="flex items-center gap-[var(--density-gap,0.75rem)]">
                                 <span className={clsx(
                                     'text-2xs font-bold uppercase tracking-wide flex items-center gap-1',
                                     socketStatus === 'open'
@@ -118,10 +118,10 @@ export default function WorkspaceInbox({ isOpen, onClose }: { isOpen: boolean, o
                                 <HeaderAction icon={CheckCircle2} tooltip="Marcar todo como leído" />
                                 <HeaderAction icon={Filter} tooltip="Filtrar" />
                                 <HeaderAction icon={Settings} tooltip="Ajustes" />
-                                <div className="w-[1px] h-4 bg-[hsl(var(--surface-3))] dark:bg-white/10 mx-2" />
+                                <div className="w-[1px] h-4 bg-[hsl(var(--surface-3))] dark:bg-white/10 mx-1" />
                                 <button
                                     onClick={() => setIsExpanded((expanded) => !expanded)}
-                                    className="inline-flex items-center gap-1.5 rounded-md border border-[hsl(var(--border))] dark:border-white/10 px-2 py-1 text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-3))] dark:hover:bg-white/10 hover:text-[hsl(var(--text-primary))] dark:hover:text-white transition-all"
+                                    className="inline-flex min-h-[var(--density-row-h,1.75rem)] items-center gap-1.5 rounded-md border border-[hsl(var(--border))] dark:border-white/10 px-2 py-[var(--density-pad-y,0.25rem)] text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-3))] dark:hover:bg-white/10 hover:text-[hsl(var(--text-primary))] dark:hover:text-white transition-all"
                                     aria-label={isExpanded ? "Contraer panel de notificaciones" : "Expandir panel de notificaciones"}
                                     aria-pressed={isExpanded}
                                     title={isExpanded ? "Contraer panel" : "Expandir panel"}
@@ -131,7 +131,7 @@ export default function WorkspaceInbox({ isOpen, onClose }: { isOpen: boolean, o
                                 </button>
                                 <button
                                     onClick={onClose}
-                                    className="p-2 hover:bg-[hsl(var(--surface-3))] dark:hover:bg-white/10 rounded-md transition-all text-[hsl(var(--text-secondary))]"
+                                    className="p-1.5 min-h-[var(--density-row-h,1.75rem)] min-w-[var(--density-row-h,1.75rem)] flex items-center justify-center hover:bg-[hsl(var(--surface-3))] dark:hover:bg-white/10 rounded-md transition-all text-[hsl(var(--text-secondary))]"
                                     aria-label="Cerrar panel de notificaciones"
                                     title="Cerrar panel"
                                 >
@@ -238,7 +238,7 @@ function HeaderAction({ icon: Icon, tooltip, ariaLabel = tooltip, onClick, press
     return (
         <button
             onClick={onClick}
-            className="p-2 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-secondary))] dark:hover:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-3))] dark:hover:bg-white/10 rounded-md transition-all relative group/h"
+            className="p-[var(--density-pad-y,0.25rem)] min-h-[var(--density-row-h,1.75rem)] min-w-[var(--density-row-h,1.75rem)] flex items-center justify-center text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-secondary))] dark:hover:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-3))] dark:hover:bg-white/10 rounded-md transition-all relative group/h"
             aria-label={ariaLabel}
             aria-pressed={pressed}
             title={tooltip}

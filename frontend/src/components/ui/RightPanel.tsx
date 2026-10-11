@@ -107,7 +107,7 @@ function RightPanel({
             aria-label={typeof title === 'string' ? title : 'Panel'}
         >
             {/* Panel header */}
-            <div className="shrink-0 px-4 py-2.5 border-b border-[hsl(var(--border))] dark:border-[hsl(var(--border))] flex items-start justify-between gap-2">
+            <div className="shrink-0 min-h-[var(--density-row-h,2.25rem)] px-[var(--density-pad-x,1rem)] py-[var(--density-pad-y,0.625rem)] border-b border-[hsl(var(--border))] dark:border-[hsl(var(--border))] flex items-start justify-between gap-[var(--density-gap,0.5rem)]">
                 <div className="min-w-0">
                     <div className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--foreground))]">
                         {title}
@@ -127,7 +127,7 @@ function RightPanel({
                     <button
                         onClick={handleClose}
                         aria-label="Cerrar panel"
-                        className="p-1 rounded-md text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] dark:hover:text-[hsl(var(--text-primary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-[hsl(var(--surface-2))] transition-all focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[hsl(var(--primary))]"
+                        className="p-1 min-h-[var(--density-row-h,1.75rem)] min-w-[var(--density-row-h,1.75rem)] flex items-center justify-center rounded-md text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] dark:hover:text-[hsl(var(--text-primary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-[hsl(var(--surface-2))] transition-all focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[hsl(var(--primary))]"
                     >
                         <X size={14} />
                     </button>
