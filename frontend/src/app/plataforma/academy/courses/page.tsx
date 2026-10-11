@@ -104,14 +104,14 @@ export default function AcademyCoursesPage() {
                     <div className="flex items-center gap-2">
                         <button
                             onClick={() => router.push('/plataforma/academy/curriculum')}
-                            className="px-3.5 py-1.5 bg-[hsl(var(--surface-2))] hover:bg-[hsl(var(--surface-3))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))] rounded-lg text-xs font-bold uppercase tracking-wider transition-all"
+                            className="px-[calc(0.875rem+var(--density-pad-x-delta,0px))] py-[calc(0.375rem+var(--density-pad-y-delta,0px))] bg-[hsl(var(--surface-2))] hover:bg-[hsl(var(--surface-3))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))] rounded-lg text-xs font-bold uppercase tracking-wider transition-all"
                         >
                             Ver Malla Curricular
                         </button>
                         {hasModuleAccess('academy', 'manage') && (
                             <button
                                 onClick={() => router.push('/plataforma/academy/coordination')}
-                                className="px-3.5 py-1.5 bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] rounded-lg text-xs font-bold uppercase tracking-wider shadow-md hover:opacity-90 transition-all flex items-center gap-1.5"
+                                className="px-[calc(0.875rem+var(--density-pad-x-delta,0px))] py-[calc(0.375rem+var(--density-pad-y-delta,0px))] bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] rounded-lg text-xs font-bold uppercase tracking-wider shadow-md hover:opacity-90 transition-all flex items-center gap-1.5"
                             >
                                 <ShieldCheck size={14} /> Coordinación
                             </button>
@@ -166,7 +166,7 @@ export default function AcademyCoursesPage() {
                         <button
                             type="button"
                             onClick={() => setSelectedModality('all')}
-                            className={`px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all ${
+                            className={`px-[calc(0.75rem+var(--density-pad-x-delta,0px))] py-[calc(0.375rem+var(--density-pad-y-delta,0px))] rounded-lg text-xs font-bold uppercase tracking-wider transition-all ${
                                 selectedModality === 'all'
                                     ? 'bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] shadow-sm'
                                     : 'bg-[hsl(var(--surface-1))] hover:bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))] border border-[hsl(var(--border))]'
@@ -179,7 +179,7 @@ export default function AcademyCoursesPage() {
                                 key={mod}
                                 type="button"
                                 onClick={() => setSelectedModality(mod)}
-                                className={`px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all ${
+                                className={`px-[calc(0.75rem+var(--density-pad-x-delta,0px))] py-[calc(0.375rem+var(--density-pad-y-delta,0px))] rounded-lg text-xs font-bold uppercase tracking-wider transition-all ${
                                     selectedModality === mod
                                         ? 'bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] shadow-sm'
                                         : 'bg-[hsl(var(--surface-1))] hover:bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))] border border-[hsl(var(--border))]'
@@ -198,7 +198,7 @@ export default function AcademyCoursesPage() {
                             placeholder="Buscar por nombre o código..."
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            className="w-full pl-9 pr-3 py-2 bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] rounded-xl text-xs outline-none focus:border-[hsl(var(--primary))] text-[hsl(var(--foreground))] transition-colors"
+                            className="w-full pl-9 pr-[calc(0.75rem+var(--density-pad-x-delta,0px))] py-[calc(0.5rem+var(--density-pad-y-delta,0px))] bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] rounded-xl text-xs outline-none focus:border-[hsl(var(--primary))] text-[hsl(var(--foreground))] transition-colors"
                         />
                     </div>
                 </div>
@@ -268,7 +268,7 @@ export default function AcademyCoursesPage() {
                                         <button
                                             type="button"
                                             onClick={() => router.push(`/plataforma/academy/course/${course.id}`)}
-                                            className="flex-1 py-2.5 px-3 bg-[hsl(var(--primary))] hover:opacity-90 text-[hsl(var(--primary-foreground))] rounded-xl text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-all shadow-md active:scale-95"
+                                            className="flex-1 px-[calc(0.75rem+var(--density-pad-x-delta,0px))] py-[calc(0.625rem+var(--density-pad-y-delta,0px))] bg-[hsl(var(--primary))] hover:opacity-90 text-[hsl(var(--primary-foreground))] rounded-xl text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-all shadow-md active:scale-95"
                                         >
                                             <PlayCircle size={15} /> Entrar al Aula
                                         </button>
@@ -277,7 +277,7 @@ export default function AcademyCoursesPage() {
                                             <button
                                                 type="button"
                                                 onClick={() => router.push(`/plataforma/academy/courses/${course.id}/lessons`)}
-                                                className="py-2.5 px-3 bg-[hsl(var(--surface-2))] hover:bg-[hsl(var(--surface-3))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))] rounded-xl text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all"
+                                                className="px-[calc(0.75rem+var(--density-pad-x-delta,0px))] py-[calc(0.625rem+var(--density-pad-y-delta,0px))] bg-[hsl(var(--surface-2))] hover:bg-[hsl(var(--surface-3))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))] rounded-xl text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all"
                                                 title="Administrar Lecciones"
                                             >
                                                 <Settings size={14} /> Lecciones

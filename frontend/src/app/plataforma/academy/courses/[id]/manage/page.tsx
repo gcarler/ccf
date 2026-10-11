@@ -163,18 +163,23 @@ export default function CourseManagementPage() {
                 )}
 
                 {viewType === 'table' && (
-                    <div className="overflow-x-auto rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))]">
+                    <div className="overflow-x-auto rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] density-table">
                         <table className="w-full min-w-[480px] text-left">
                             <thead className="bg-[hsl(var(--surface-2))] text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
-                                <tr><th className="px-4 py-1.5">Estudiante</th><th className="px-4 py-1.5">Correo</th><th className="px-4 py-1.5">Progreso</th><th className="px-4 py-1.5">Nota</th></tr>
+                                <tr>
+                                    <th className="px-[calc(1rem+var(--density-pad-x-delta,0px))] py-[calc(0.375rem+var(--density-pad-y-delta,0px))]">Estudiante</th>
+                                    <th className="px-[calc(1rem+var(--density-pad-x-delta,0px))] py-[calc(0.375rem+var(--density-pad-y-delta,0px))]">Correo</th>
+                                    <th className="px-[calc(1rem+var(--density-pad-x-delta,0px))] py-[calc(0.375rem+var(--density-pad-y-delta,0px))]">Progreso</th>
+                                    <th className="px-[calc(1rem+var(--density-pad-x-delta,0px))] py-[calc(0.375rem+var(--density-pad-y-delta,0px))]">Nota</th>
+                                </tr>
                             </thead>
                             <tbody>
                                 {filteredStudents.map((student) => (
                                     <tr key={student.id} className="border-t border-[hsl(var(--border))]">
-                                        <td className="px-4 py-1.5 font-bold text-[hsl(var(--foreground))]">{student.username}</td>
-                                        <td className="px-4 py-1.5 text-[hsl(var(--text-secondary))]">{student.email}</td>
-                                        <td className="px-4 py-1.5 text-[hsl(var(--text-secondary))]">{Math.round(student.progress)}%</td>
-                                        <td className="px-4 py-1.5 text-[hsl(var(--text-secondary))]">{student.average_grade.toFixed(1)}</td>
+                                        <td className="px-[calc(1rem+var(--density-pad-x-delta,0px))] py-[calc(0.375rem+var(--density-pad-y-delta,0px))] font-bold text-[hsl(var(--foreground))]">{student.username}</td>
+                                        <td className="px-[calc(1rem+var(--density-pad-x-delta,0px))] py-[calc(0.375rem+var(--density-pad-y-delta,0px))] text-[hsl(var(--text-secondary))]">{student.email}</td>
+                                        <td className="px-[calc(1rem+var(--density-pad-x-delta,0px))] py-[calc(0.375rem+var(--density-pad-y-delta,0px))] text-[hsl(var(--text-secondary))]">{Math.round(student.progress)}%</td>
+                                        <td className="px-[calc(1rem+var(--density-pad-x-delta,0px))] py-[calc(0.375rem+var(--density-pad-y-delta,0px))] text-[hsl(var(--text-secondary))]">{student.average_grade.toFixed(1)}</td>
                                     </tr>
                                 ))}
                             </tbody>
@@ -214,7 +219,7 @@ export default function CourseManagementPage() {
                         </div>
 
                         <div className="flex items-center gap-4 relative z-10">
-                            <button className="px-3 py-1.5 bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] rounded-lg font-black text-xs uppercase tracking-wide hover:opacity-90 active:scale-95 transition-all shadow-md">
+                            <button className="px-[calc(0.75rem+var(--density-pad-x-delta,0px))] py-[calc(0.375rem+var(--density-pad-y-delta,0px))] bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] rounded-lg font-black text-xs uppercase tracking-wide hover:opacity-90 active:scale-95 transition-all shadow-md">
                                 Registrar Asistencia
                             </button>
                             <button className="size-8 bg-[hsl(var(--surface-2))] text-[hsl(var(--foreground))] border border-[hsl(var(--border))] rounded-lg flex items-center justify-center hover:bg-[hsl(var(--surface-3))] transition-all shadow-sm">
@@ -233,7 +238,7 @@ export default function CourseManagementPage() {
                                 key={tab.id}
                                 onClick={() => setActiveTab(tab.id)}
                                 className={clsx(
-                                    "flex items-center gap-2.5 px-3 py-1.5 rounded-lg text-2xs font-semibold uppercase tracking-wide transition-all",
+                                    "flex items-center gap-2.5 px-[calc(0.75rem+var(--density-pad-x-delta,0px))] py-[calc(0.375rem+var(--density-pad-y-delta,0px))] rounded-lg text-2xs font-semibold uppercase tracking-wide transition-all",
                                     activeTab === tab.id
                                         ? "bg-[hsl(var(--surface-1))] text-[hsl(var(--primary))] shadow-sm"
                                         : "text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--foreground))]"

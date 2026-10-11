@@ -195,7 +195,7 @@ export default function DocentePortalPage() {
               <select
                 value={selectedOfferingId}
                 onChange={(e) => setSelectedOfferingId(e.target.value)}
-                className="px-3 py-1.5 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] text-xs font-semibold text-[hsl(var(--foreground))] focus:outline-none focus:border-[hsl(var(--primary))]"
+                className="px-[calc(0.75rem+var(--density-pad-x-delta,0px))] py-[calc(0.375rem+var(--density-pad-y-delta,0px))] rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] text-xs font-semibold text-[hsl(var(--foreground))] focus:outline-none focus:border-[hsl(var(--primary))]"
               >
                 {offerings.map((o) => (
                   <option key={o.id} value={o.id}>
@@ -212,7 +212,7 @@ export default function DocentePortalPage() {
           <button
             type="button"
             onClick={() => setActiveTab('comisiones')}
-            className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all flex items-center gap-1.5 ${
+            className={`px-[calc(0.75rem+var(--density-pad-x-delta,0px))] py-[calc(0.375rem+var(--density-pad-y-delta,0px))] text-xs font-bold rounded-lg transition-all flex items-center gap-1.5 ${
               activeTab === 'comisiones'
                 ? 'bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] shadow-sm'
                 : 'text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))]'
@@ -225,7 +225,7 @@ export default function DocentePortalPage() {
           <button
             type="button"
             onClick={() => setActiveTab('bienestar')}
-            className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all flex items-center gap-1.5 ${
+            className={`px-[calc(0.75rem+var(--density-pad-x-delta,0px))] py-[calc(0.375rem+var(--density-pad-y-delta,0px))] text-xs font-bold rounded-lg transition-all flex items-center gap-1.5 ${
               activeTab === 'bienestar'
                 ? 'bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] shadow-sm'
                 : 'text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))]'
@@ -238,7 +238,7 @@ export default function DocentePortalPage() {
           <button
             type="button"
             onClick={() => setActiveTab('copiloto')}
-            className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all flex items-center gap-1.5 ${
+            className={`px-[calc(0.75rem+var(--density-pad-x-delta,0px))] py-[calc(0.375rem+var(--density-pad-y-delta,0px))] text-xs font-bold rounded-lg transition-all flex items-center gap-1.5 ${
               activeTab === 'copiloto'
                 ? 'bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] shadow-sm'
                 : 'text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))]'
@@ -320,7 +320,7 @@ export default function DocentePortalPage() {
                         setSelectedOfferingId(off.id);
                         setGradesDrawerOpen(true);
                       }}
-                      className="w-full py-2 text-xs font-bold rounded-xl bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] flex items-center justify-center gap-2 shadow-sm transition-all hover:opacity-90"
+                      className="w-full py-[calc(0.5rem+var(--density-pad-y-delta,0px))] text-xs font-bold rounded-xl bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] flex items-center justify-center gap-2 shadow-sm transition-all hover:opacity-90"
                     >
                       <Award className="size-4" />
                       <span>Calificar Cortes</span>
@@ -333,7 +333,7 @@ export default function DocentePortalPage() {
                           setSelectedOfferingId(off.id);
                           setWellnessDrawerOpen(true);
                         }}
-                        className="py-1.5 px-2 text-[11px] font-semibold rounded-lg bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] text-[hsl(var(--foreground))] flex items-center justify-center gap-1.5 hover:bg-[hsl(var(--surface-3,var(--surface-2)))]"
+                        className="px-[calc(0.5rem+var(--density-pad-x-delta,0px))] py-[calc(0.375rem+var(--density-pad-y-delta,0px))] text-[11px] font-semibold rounded-lg bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] text-[hsl(var(--foreground))] flex items-center justify-center gap-1.5 hover:bg-[hsl(var(--surface-3,var(--surface-2)))]"
                       >
                         <HeartPulse className="size-3.5 text-[hsl(var(--destructive))]" />
                         <span>Bienestar</span>
@@ -345,7 +345,7 @@ export default function DocentePortalPage() {
                           setSelectedOfferingId(off.id);
                           setCopilotDrawerOpen(true);
                         }}
-                        className="py-1.5 px-2 text-[11px] font-semibold rounded-lg bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] text-[hsl(var(--primary))] flex items-center justify-center gap-1.5 hover:bg-[hsl(var(--surface-3,var(--surface-2)))]"
+                        className="px-[calc(0.5rem+var(--density-pad-x-delta,0px))] py-[calc(0.375rem+var(--density-pad-y-delta,0px))] text-[11px] font-semibold rounded-lg bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] text-[hsl(var(--primary))] flex items-center justify-center gap-1.5 hover:bg-[hsl(var(--surface-3,var(--surface-2)))]"
                       >
                         <Sparkles className="size-3.5" />
                         <span>Copiloto IA</span>
