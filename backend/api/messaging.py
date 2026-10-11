@@ -510,6 +510,18 @@ def update_notification(
     )
     if not updated:
         raise HTTPException(status_code=404, detail="Notification not found")
+
+    # Fase 3 (read-state unificado): si el usuario leyó la notificación antes
+    # de que el canal externo se disparara, suprimimos las entregas pendientes
+    # (no puede haber spam post-lectura). Best-effort: no rompe el endpoint.
+    try:
+        from uuid import UUID as _UUID
+
+        from backend.services.notification_hub import suppress_pending_for_notification
+
+        suppress_pending_for_notification(db, _UUID(str(notification_id)))
+    except Exception:
+        pass
     return updated
 
 
