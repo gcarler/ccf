@@ -240,14 +240,21 @@ export function DSTable<T>({
                                         onClick={header.column.getToggleSortingHandler()}
                                         aria-sort={isSorted === 'asc' ? 'ascending' : isSorted === 'desc' ? 'descending' : canSort ? 'none' : undefined}
                                         className={clsx(
-                                            'text-2xs font-semibold uppercase tracking-wide',
+                                            'density-cell text-2xs font-semibold uppercase tracking-wide',
                                             'text-[hsl(var(--text-secondary))]',
                                             'border-b border-[hsl(var(--border))] dark:border-[hsl(var(--border))]',
                                             'bg-[hsl(var(--surface-1))] dark:bg-[hsl(var(--surface-1))]',
                                             compact ? 'px-2 py-1.5' : 'px-3 py-2',
                                             canSort && 'cursor-pointer hover:bg-[hsl(var(--surface-2))] dark:hover:bg-[hsl(var(--surface-2))] select-none transition-colors'
                                         )}
-                                        style={{ width: header.getSize() !== TANSTACK_DEFAULT_WIDTH ? header.getSize() : 'auto' }}
+                                        style={{
+                                            width: header.getSize() !== TANSTACK_DEFAULT_WIDTH ? header.getSize() : 'auto',
+                                            height: 'var(--density-row-h, 28px)',
+                                            paddingTop: 'var(--density-pad-y, 0.125rem)',
+                                            paddingBottom: 'var(--density-pad-y, 0.125rem)',
+                                            paddingLeft: 'var(--density-pad-x, 0.5rem)',
+                                            paddingRight: 'var(--density-pad-x, 0.5rem)',
+                                        }}
                                     >
                                         <div className="flex items-center gap-1.5">
                                             {flexRender(header.column.columnDef.header, header.getContext())}
@@ -289,8 +296,11 @@ export function DSTable<T>({
                                 tabIndex={rowIsClickable ? 0 : undefined}
                                 role={rowIsClickable ? 'button' : undefined}
                                 onKeyDown={rowIsClickable ? (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onRowClick?.(row.original); } } : undefined}
+                                style={{
+                                    height: 'var(--density-row-h, 28px)',
+                                }}
                                 className={clsx(
-                                    'border-b border-[hsl(var(--border))] dark:border-[hsl(var(--border))] last:border-0',
+                                    'density-row border-b border-[hsl(var(--border))] dark:border-[hsl(var(--border))] last:border-0',
                                     'hover:bg-[hsl(var(--surface-2))] dark:hover:bg-[hsl(var(--surface-2))]',
                                     'transition-colors',
                                     (onRowClick || cursorPointer) && 'cursor-pointer',
@@ -301,8 +311,15 @@ export function DSTable<T>({
                                 {row.getVisibleCells().map((cell) => (
                                     <td
                                         key={cell.id}
+                                        style={{
+                                            height: 'var(--density-row-h, 28px)',
+                                            paddingTop: 'var(--density-pad-y, 0.125rem)',
+                                            paddingBottom: 'var(--density-pad-y, 0.125rem)',
+                                            paddingLeft: 'var(--density-pad-x, 0.5rem)',
+                                            paddingRight: 'var(--density-pad-x, 0.5rem)',
+                                        }}
                                         className={clsx(
-                                            'text-xs text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-primary))]',
+                                            'density-cell text-xs text-[hsl(var(--text-primary))] dark:text-[hsl(var(--text-primary))]',
                                             compact ? 'px-2 py-1.5' : 'px-3 py-2'
                                         )}
                                     >

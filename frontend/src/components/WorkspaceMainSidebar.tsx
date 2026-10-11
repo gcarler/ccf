@@ -115,11 +115,20 @@ function NavRow({
                 }
             }}
         >
-            <div className={clsx(
-                'relative flex items-center gap-1.5 px-2 py-1.5 mx-1.5 rounded-md transition-all duration-150 group cursor-pointer',
-                isActive
-                    ? 'bg-[hsl(var(--info))]/10 dark:bg-[hsl(var(--info))]/10 text-[hsl(var(--primary))] dark:text-info-text'
-                    : 'text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))]/80 dark:hover:bg-white/[0.04] hover:text-navy-dark dark:hover:text-white'
+            <div
+                style={{
+                    minHeight: 'var(--density-row-h, 28px)',
+                    paddingTop: 'var(--density-pad-y, 0.125rem)',
+                    paddingBottom: 'var(--density-pad-y, 0.125rem)',
+                    paddingLeft: 'var(--density-pad-x, 0.5rem)',
+                    paddingRight: 'var(--density-pad-x, 0.5rem)',
+                    gap: 'var(--density-gap, 0.25rem)',
+                }}
+                className={clsx(
+                    'density-item relative flex items-center gap-1.5 px-2 py-1.5 mx-1.5 rounded-md transition-all duration-150 group cursor-pointer',
+                    isActive
+                        ? 'bg-[hsl(var(--info))]/10 dark:bg-[hsl(var(--info))]/10 text-[hsl(var(--primary))] dark:text-info-text'
+                        : 'text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))]/80 dark:hover:bg-white/[0.04] hover:text-navy-dark dark:hover:text-white'
             )}>
                 {/* Active indicator bar */}
                 {isActive && (

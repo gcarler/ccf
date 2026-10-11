@@ -16,7 +16,7 @@ describe('PaletteSelector Component', () => {
         vi.clearAllMocks();
     });
 
-    it('renders ambient mode options, scale options, accent options and preview', () => {
+    it('renders ambient mode options, density options, zoom options, accent options and preview', () => {
         render(
             <ThemeProvider>
                 <PaletteSelector />
@@ -24,7 +24,8 @@ describe('PaletteSelector Component', () => {
         );
 
         expect(screen.getByText('Ambiente Visual')).toBeInTheDocument();
-        expect(screen.getByText('Escala de Interfaz y Densidad')).toBeInTheDocument();
+        expect(screen.getByText('Densidad de Interfaz')).toBeInTheDocument();
+        expect(screen.getByText('Zoom de Pantalla y Texto')).toBeInTheDocument();
         expect(screen.getByText('Acento Ministerial')).toBeInTheDocument();
         expect(screen.getByText('Previsualización en Vivo')).toBeInTheDocument();
 
@@ -32,11 +33,11 @@ describe('PaletteSelector Component', () => {
         expect(screen.getByText('Modo Día')).toBeInTheDocument();
         expect(screen.getByText('Modo Noche')).toBeInTheDocument();
 
-        // 4 scales
-        expect(screen.getByText('Compacto')).toBeInTheDocument();
-        expect(screen.getByText('Normal')).toBeInTheDocument();
-        expect(screen.getByText('Cómodo')).toBeInTheDocument();
-        expect(screen.getByText('Grande')).toBeInTheDocument();
+        // 4 densities
+        expect(screen.getByRole('radio', { name: /^Densidad Ultra compacta:/i })).toBeInTheDocument();
+        expect(screen.getByRole('radio', { name: /^Densidad Compacta:/i })).toBeInTheDocument();
+        expect(screen.getByRole('radio', { name: /^Densidad Cómoda:/i })).toBeInTheDocument();
+        expect(screen.getByRole('radio', { name: /^Densidad Espaciosa:/i })).toBeInTheDocument();
 
         // 6 accents
         expect(screen.getByText('Azul CCF')).toBeInTheDocument();
@@ -63,20 +64,22 @@ describe('PaletteSelector Component', () => {
         expect(document.documentElement.classList.contains('dark')).toBe(true);
     });
 
-    it('allows selecting interface scale and updates UI accordingly', () => {
+    it('allows selecting interface density and updates UI and CSS variables accordingly', () => {
         render(
             <ThemeProvider>
                 <PaletteSelector />
             </ThemeProvider>
         );
 
-        const comfortableBtn = screen.getByRole('radio', { name: /Cómodo/i });
+        const comfortableBtn = screen.getByRole('radio', { name: /Densidad Cómoda/i });
         act(() => {
             fireEvent.click(comfortableBtn);
         });
 
         expect(comfortableBtn).toHaveAttribute('aria-checked', 'true');
-        expect(document.documentElement.style.getPropertyValue('--ui-scale')).toBe('1.15');
+        expect(document.documentElement.getAttribute('data-ui-density')).toBe('comfortable');
+        expect(document.documentElement.style.getPropertyValue('--density-row-h')).toBe('44px');
+        expect(document.documentElement.style.getPropertyValue('--density-pad-x')).toBe('1rem');
     });
 
     it('allows selecting ministerial accent palette and updates primary token', () => {
@@ -102,15 +105,16 @@ describe('PaletteSelector Component', () => {
             </ThemeProvider>
         );
 
-        // Change mode, scale, accent
+        // Change mode, density, accent
         act(() => {
             fireEvent.click(screen.getByRole('radio', { name: /Modo Noche/i }));
-            fireEvent.click(screen.getByRole('radio', { name: /Grande/i }));
+            fireEvent.click(screen.getByRole('radio', { name: /Densidad Espaciosa/i }));
             fireEvent.click(screen.getByRole('radio', { name: /Esmeralda/i }));
         });
 
         expect(document.documentElement.classList.contains('dark')).toBe(true);
         expect(document.documentElement.getAttribute('data-accent')).toBe('emerald');
+        expect(document.documentElement.getAttribute('data-ui-density')).toBe('spacious');
 
         // Click reset
         const resetBtn = screen.getByRole('button', { name: /Restablecer valores predeterminados/i });
@@ -120,7 +124,8 @@ describe('PaletteSelector Component', () => {
 
         expect(document.documentElement.classList.contains('dark')).toBe(false);
         expect(document.documentElement.getAttribute('data-accent')).toBe('ccf-blue');
-        expect(document.documentElement.getAttribute('data-ui-scale')).toBe('normal');
+        expect(document.documentElement.getAttribute('data-ui-density')).toBe('ultra-compact');
+        expect(document.documentElement.style.getPropertyValue('--density-row-h')).toBe('28px');
     });
 
     it('passes automated accessibility audit with zero axe-core violations', async () => {

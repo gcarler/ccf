@@ -2,6 +2,82 @@
 @tailwind components;
 @tailwind utilities;
 
+/* UI Density Design Tokens */
+:root,
+[data-ui-density="ultra-compact"] {
+  --density-row-h: 28px;
+  --density-pad-x: 0.5rem;
+  --density-pad-y: 0.125rem;
+  --density-gap: 0.25rem;
+  --ui-density-ratio: 0.75;
+}
+
+[data-ui-density="compact"] {
+  --density-row-h: 36px;
+  --density-pad-x: 0.75rem;
+  --density-pad-y: 0.375rem;
+  --density-gap: 0.5rem;
+  --ui-density-ratio: 0.875;
+}
+
+[data-ui-density="comfortable"] {
+  --density-row-h: 44px;
+  --density-pad-x: 1rem;
+  --density-pad-y: 0.625rem;
+  --density-gap: 0.75rem;
+  --ui-density-ratio: 1.0;
+}
+
+[data-ui-density="spacious"] {
+  --density-row-h: 52px;
+  --density-pad-x: 1.25rem;
+  --density-pad-y: 0.875rem;
+  --density-gap: 1rem;
+  --ui-density-ratio: 1.25;
+}
+
+/* Density-aware design system utilities */
+.density-button {
+  min-height: var(--density-row-h);
+  padding-left: var(--density-pad-x);
+  padding-right: var(--density-pad-x);
+  padding-top: var(--density-pad-y);
+  padding-bottom: var(--density-pad-y);
+  gap: var(--density-gap);
+}
+
+.density-input {
+  min-height: var(--density-row-h);
+  padding-left: var(--density-pad-x);
+  padding-right: var(--density-pad-x);
+  padding-top: var(--density-pad-y);
+  padding-bottom: var(--density-pad-y);
+}
+
+.density-row {
+  height: var(--density-row-h);
+}
+
+.density-cell {
+  padding-left: var(--density-pad-x);
+  padding-right: var(--density-pad-x);
+  padding-top: var(--density-pad-y);
+  padding-bottom: var(--density-pad-y);
+}
+
+.density-card {
+  gap: var(--density-gap);
+}
+
+.density-item {
+  min-height: var(--density-row-h);
+  padding-left: var(--density-pad-x);
+  padding-right: var(--density-pad-x);
+  padding-top: var(--density-pad-y);
+  padding-bottom: var(--density-pad-y);
+  gap: var(--density-gap);
+}
+
 /* Compact Design Tokens */
 :root,
 [data-theme="day"] {

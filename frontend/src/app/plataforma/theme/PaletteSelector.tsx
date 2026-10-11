@@ -13,10 +13,8 @@ import {
 } from 'lucide-react';
 import {
     useTheme,
-    UI_SCALE_OPTIONS,
     ACCENT_PALETTES,
     ThemeMode,
-    UiScaleId,
     AccentId,
 } from '@/app/plataforma/theme/ThemeContext';
 import DensityZoomSelector from '@/app/plataforma/theme/DensityZoomSelector';
@@ -26,8 +24,6 @@ export default function PaletteSelector() {
         theme,
         setTheme,
         toggleTheme,
-        uiScale,
-        setUiScale,
         uiDensity,
         setUiDensity,
         currentDensity,
@@ -58,7 +54,6 @@ export default function PaletteSelector() {
         },
     ];
 
-    const scaleList = Object.values(UI_SCALE_OPTIONS);
     const accentList = Object.values(ACCENT_PALETTES);
 
     return (
@@ -130,67 +125,9 @@ export default function PaletteSelector() {
                 </div>
             </div>
 
-            {/* ── 2. Escala de Interfaz ────────────────────────────────────────── */}
-            <div className="space-y-3">
-                <div>
-                    <h2 className="text-sm font-semibold text-[hsl(var(--text-primary))]">Escala de Interfaz y Densidad</h2>
-                    <p className="text-2xs text-[hsl(var(--text-secondary))]">
-                        Ajusta el tamaño global de tipografías y controles para mayor comodidad visual y accesibilidad.
-                    </p>
-                </div>
-
-                <div
-                    role="radiogroup"
-                    aria-label="Seleccionar escala de interfaz"
-                    className="grid grid-cols-2 sm:grid-cols-4 gap-2.5"
-                >
-                    {scaleList.map((item) => {
-                        const isSelected = uiScale === item.id;
-                        return (
-                            <button
-                                key={item.id}
-                                type="button"
-                                role="radio"
-                                aria-checked={isSelected}
-                                aria-label={`Escala ${item.label} (${item.percentage}): ${item.description}`}
-                                onClick={() => setUiScale(item.id as UiScaleId)}
-                                className={`text-left p-3 rounded-lg border transition-all duration-200 flex flex-col justify-between ${
-                                    isSelected
-                                        ? 'border-[hsl(var(--primary))] bg-[hsl(var(--surface-2))] shadow-sm ring-1 ring-[hsl(var(--primary))]'
-                                        : 'border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] hover:border-[hsl(var(--primary)/0.4)] hover:bg-[hsl(var(--surface-2))]'
-                                }`}
-                            >
-                                <div className="flex items-center justify-between w-full mb-2">
-                                    <span className="text-xs font-semibold text-[hsl(var(--text-primary))]">{item.label}</span>
-                                    <span
-                                        className={`text-2xs font-semibold px-1.5 py-0.5 rounded ${
-                                            isSelected
-                                                ? 'bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))]'
-                                                : 'bg-[hsl(var(--surface-3))] text-[hsl(var(--text-secondary))]'
-                                        }`}
-                                    >
-                                        {item.percentage}
-                                    </span>
-                                </div>
-                                <div className="py-1">
-                                    <span
-                                        className="font-bold text-[hsl(var(--text-primary))]"
-                                        style={{ fontSize: `${item.scale * 14}px` }}
-                                    >
-                                        Aa
-                                    </span>
-                                </div>
-                                <p className="text-3xs text-[hsl(var(--text-secondary))] mt-1 line-clamp-2 leading-tight">
-                                    {item.description}
-                                </p>
-                            </button>
-                        );
-                    })}
-                </div>
-
-                <div className="pt-2">
-                    <DensityZoomSelector showDensity={true} showZoom={true} />
-                </div>
+            {/* ── 2. Densidad de Interfaz y Zoom de Pantalla ────────────────── */}
+            <div className="pt-1">
+                <DensityZoomSelector showDensity={true} showZoom={true} />
             </div>
 
             {/* ── 3. Paleta de Acentos Ministeriales ──────────────────────────── */}

@@ -49,7 +49,7 @@ describe('UserMenuDropdown Component', () => {
 
         expect(screen.getByText('Mi perfil')).toBeInTheDocument();
         expect(screen.getByText('Configuración')).toBeInTheDocument();
-        expect(screen.getByText('Apariencia y Accesibilidad')).toBeInTheDocument();
+        expect(screen.getByText('Pantalla, Densidad y Color')).toBeInTheDocument();
         expect(screen.getByText('Cerrar sesión')).toBeInTheDocument();
     });
 
@@ -85,7 +85,7 @@ describe('UserMenuDropdown Component', () => {
         expect(mockPush).toHaveBeenCalledWith('/plataforma/settings');
     });
 
-    it('calls onOpenAppearance when clicking "Apariencia y Accesibilidad"', () => {
+    it('calls onOpenAppearance when clicking "Pantalla, Densidad y Color"', () => {
         render(
             <UserMenuDropdown
                 displayName="Pastor Carlos"
@@ -96,7 +96,7 @@ describe('UserMenuDropdown Component', () => {
         );
 
         fireEvent.click(screen.getByRole('button'));
-        fireEvent.click(screen.getByText('Apariencia y Accesibilidad'));
+        fireEvent.click(screen.getByText('Pantalla, Densidad y Color'));
 
         expect(mockOpenAppearance).toHaveBeenCalledTimes(1);
     });

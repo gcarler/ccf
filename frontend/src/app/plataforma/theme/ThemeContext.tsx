@@ -16,6 +16,10 @@ export interface UiDensityOption {
     label: string;
     description: string;
     paddingRatio: string;
+    rowHeight: string;
+    padX: string;
+    padY: string;
+    gap: string;
 }
 
 export const UI_DENSITY_OPTIONS: Record<UiDensity, UiDensityOption> = {
@@ -24,24 +28,40 @@ export const UI_DENSITY_OPTIONS: Record<UiDensity, UiDensityOption> = {
         label: 'Ultra compacta',
         description: 'Espaciado mínimo, máxima información en pantalla',
         paddingRatio: '0.75',
+        rowHeight: '28px',
+        padX: '0.5rem',
+        padY: '0.125rem',
+        gap: '0.25rem',
     },
     compact: {
         id: 'compact',
         label: 'Compacta',
         description: 'Espaciado ajustado para flujos densos y alta productividad',
         paddingRatio: '0.875',
+        rowHeight: '36px',
+        padX: '0.75rem',
+        padY: '0.375rem',
+        gap: '0.5rem',
     },
     comfortable: {
         id: 'comfortable',
         label: 'Cómoda',
         description: 'Densidad equilibrada estándar recomendada',
         paddingRatio: '1.0',
+        rowHeight: '44px',
+        padX: '1rem',
+        padY: '0.625rem',
+        gap: '0.75rem',
     },
     spacious: {
         id: 'spacious',
         label: 'Espaciosa',
         description: 'Espaciado amplio para lectura descansada o pantallas táctiles',
         paddingRatio: '1.25',
+        rowHeight: '52px',
+        padX: '1.25rem',
+        padY: '0.875rem',
+        gap: '1rem',
     },
 };
 
@@ -270,7 +290,7 @@ const ThemeContext = createContext<AppearanceContextProps | undefined>(undefined
 export const ThemeProvider = ({ children }: { children: ReactNode }) => {
     const [theme, setThemeState] = useState<ThemeMode>('day');
     const [uiScale, setUiScaleState] = useState<UiScaleId>('normal');
-    const [uiDensity, setUiDensityState] = useState<UiDensity>('comfortable');
+    const [uiDensity, setUiDensityState] = useState<UiDensity>('ultra-compact');
     const [zoomPercentage, setZoomPercentageState] = useState<number>(100);
     const [accent, setAccentState] = useState<AccentId>('ccf-blue');
     const [isMounted, setIsMounted] = useState(false);
@@ -332,10 +352,15 @@ export const ThemeProvider = ({ children }: { children: ReactNode }) => {
             root.classList.remove('dark');
         }
 
-        // Apply scale & density factor
+        // Apply scale & density factors
         const scaleVal = (zoomPercentage / 100).toString();
         root.style.setProperty('--ui-scale', scaleVal);
-        root.style.setProperty('--ui-density-ratio', UI_DENSITY_OPTIONS[uiDensity]?.paddingRatio || '1.0');
+        const densityOption = UI_DENSITY_OPTIONS[uiDensity] || UI_DENSITY_OPTIONS['ultra-compact'];
+        root.style.setProperty('--density-row-h', densityOption.rowHeight);
+        root.style.setProperty('--density-pad-x', densityOption.padX);
+        root.style.setProperty('--density-pad-y', densityOption.padY);
+        root.style.setProperty('--density-gap', densityOption.gap);
+        root.style.setProperty('--ui-density-ratio', densityOption.paddingRatio);
         root.style.fontSize = `${zoomPercentage}%`;
 
         // Apply accent color
@@ -491,13 +516,13 @@ export const ThemeProvider = ({ children }: { children: ReactNode }) => {
     const resetToDefaults = () => {
         setThemeState('day');
         setUiScaleState('normal');
-        setUiDensityState('comfortable');
+        setUiDensityState('ultra-compact');
         setZoomPercentageState(100);
         setAccentState('ccf-blue');
     };
 
     const currentScale = UI_SCALE_OPTIONS[uiScale] || UI_SCALE_OPTIONS.normal;
-    const currentDensity = UI_DENSITY_OPTIONS[uiDensity] || UI_DENSITY_OPTIONS.comfortable;
+    const currentDensity = UI_DENSITY_OPTIONS[uiDensity] || UI_DENSITY_OPTIONS['ultra-compact'];
     const currentAccent = ACCENT_PALETTES[accent] || ACCENT_PALETTES['ccf-blue'];
 
     return (

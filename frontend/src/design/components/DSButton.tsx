@@ -17,13 +17,22 @@ const variantClasses: Record<Variant, string> = {
 };
 
 export const DSButton = React.forwardRef<HTMLButtonElement, DSButtonProps>(
-    ({ variant = 'primary', loading, type = 'button', className, children, ...props }, ref) => {
+    ({ variant = 'primary', loading, type = 'button', className, style, children, ...props }, ref) => {
         return (
             <button
                 ref={ref}
                 type={type}
+                style={{
+                    minHeight: 'var(--density-row-h, 28px)',
+                    paddingTop: 'var(--density-pad-y, 0.125rem)',
+                    paddingBottom: 'var(--density-pad-y, 0.125rem)',
+                    paddingLeft: 'var(--density-pad-x, 0.5rem)',
+                    paddingRight: 'var(--density-pad-x, 0.5rem)',
+                    gap: 'var(--density-gap, 0.25rem)',
+                    ...style,
+                }}
                 className={clsx(
-                    'px-3 py-1.5 text-2xs font-semibold uppercase tracking-wide transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed rounded-md',
+                    'density-button inline-flex items-center justify-center px-3 py-1.5 text-2xs font-semibold uppercase tracking-wide transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed rounded-md',
                     'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[hsl(var(--primary))]',
                     variantClasses[variant],
                     className
