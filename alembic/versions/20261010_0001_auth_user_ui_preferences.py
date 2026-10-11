@@ -1,7 +1,7 @@
 """Create auth_user_ui_preferences table.
 
 Revision ID: 20261010_0001_auth_user_ui_preferences
-Revises: 20261009_0002_project_task_dimensions_rollup
+Revises: 20261006_0001_project_phases_date_range, 20261007_0001_academy_assessment_retry_cooldown
 Create Date: 2026-10-10 16:35:00
 
 Creates auth_user_ui_preferences table for persistent UI preferences:
@@ -21,7 +21,10 @@ from alembic import op
 
 # revision identifiers, used by Alembic.
 revision: str = "20261010_0001_auth_user_ui_preferences"
-down_revision: Union[str, Sequence[str], None] = "20261009_0002_project_task_dimensions_rollup"
+down_revision: Union[str, Sequence[str], None] = (
+    "20261006_0001_project_phases_date_range",
+    "20261007_0001_academy_assessment_retry_cooldown",
+)
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
