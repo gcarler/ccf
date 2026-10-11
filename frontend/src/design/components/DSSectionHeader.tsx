@@ -13,7 +13,7 @@ interface DSSectionHeaderProps {
 
 export function DSSectionHeader({ eyebrow, title, description, actions, align = 'left' }: DSSectionHeaderProps) {
     return (
-        <div className={clsx('flex flex-col gap-2 md:flex-row md:items-center font-sans', align === 'center' && 'text-center md:text-center md:flex-col')}>
+        <div className={clsx('flex flex-col gap-[var(--density-gap,0.5rem)] md:flex-row md:items-center font-sans', align === 'center' && 'text-center md:text-center md:flex-col')}>
             <div className={clsx('flex-1 space-y-1', align === 'center' && 'md:items-center')}>
                 {eyebrow && (
                     <p className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">
@@ -24,7 +24,7 @@ export function DSSectionHeader({ eyebrow, title, description, actions, align = 
                 {description && <p className="text-xs text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] max-w-2xl">{description}</p>}
             </div>
             {actions && (
-                <div className={clsx('mt-2 md:mt-0 flex items-center gap-2', align === 'center' && 'justify-center')}>
+                <div className={clsx('mt-2 md:mt-0 flex items-center gap-[var(--density-gap,0.5rem)]', align === 'center' && 'justify-center')}>
                     {actions}
                 </div>
             )}

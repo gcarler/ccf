@@ -78,6 +78,50 @@
   gap: var(--density-gap);
 }
 
+.density-pad {
+  padding: var(--density-pad-y) var(--density-pad-x);
+}
+
+.density-pad-x {
+  padding-left: var(--density-pad-x);
+  padding-right: var(--density-pad-x);
+}
+
+.density-pad-y {
+  padding-top: var(--density-pad-y);
+  padding-bottom: var(--density-pad-y);
+}
+
+.density-gap {
+  gap: var(--density-gap);
+}
+
+.density-table tr {
+  height: var(--density-row-h);
+}
+
+.density-table th,
+.density-table td {
+  padding: var(--density-pad-y) var(--density-pad-x);
+}
+
+.density-header {
+  gap: var(--density-gap);
+  padding-bottom: var(--density-pad-y);
+}
+
+.density-button {
+  min-height: var(--density-row-h);
+  padding: var(--density-pad-y) var(--density-pad-x);
+  gap: var(--density-gap);
+}
+
+.density-input {
+  height: var(--density-row-h);
+  padding-left: var(--density-pad-x);
+  padding-right: var(--density-pad-x);
+}
+
 /* Compact Design Tokens */
 :root,
 [data-theme="day"] {

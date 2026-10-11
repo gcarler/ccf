@@ -347,10 +347,10 @@ function WorkspaceLayoutInner({
         : user?.username;
 
     const responsiveNavigationActions = (
-        <div className="hidden items-center gap-1 md:flex xl:hidden">
+        <div className="hidden items-center gap-[var(--density-gap,0.25rem)] md:flex xl:hidden">
             <button
                 onClick={openPrimaryNavigation}
-                className="flex size-8 items-center justify-center rounded-md text-[hsl(var(--text-secondary))] transition-all hover:bg-[hsl(var(--surface-2))] hover:text-[hsl(var(--primary))] dark:text-[hsl(var(--text-secondary))] dark:hover:bg-white/5 dark:hover:text-white"
+                className="flex min-h-[var(--density-row-h,2rem)] min-w-[var(--density-row-h,2rem)] items-center justify-center rounded-md text-[hsl(var(--text-secondary))] transition-all hover:bg-[hsl(var(--surface-2))] hover:text-[hsl(var(--primary))] dark:text-[hsl(var(--text-secondary))] dark:hover:bg-white/5 dark:hover:text-white"
                 aria-label="Abrir navegación principal"
                 title="Navegación principal"
             >
@@ -358,7 +358,7 @@ function WorkspaceLayoutInner({
             </button>
             <button
                 onClick={openModuleNavigation}
-                className="flex size-8 items-center justify-center rounded-md text-[hsl(var(--text-secondary))] transition-all hover:bg-[hsl(var(--surface-2))] hover:text-[hsl(var(--primary))] dark:text-[hsl(var(--text-secondary))] dark:hover:bg-white/5 dark:hover:text-white"
+                className="flex min-h-[var(--density-row-h,2rem)] min-w-[var(--density-row-h,2rem)] items-center justify-center rounded-md text-[hsl(var(--text-secondary))] transition-all hover:bg-[hsl(var(--surface-2))] hover:text-[hsl(var(--primary))] dark:text-[hsl(var(--text-secondary))] dark:hover:bg-white/5 dark:hover:text-white"
                 aria-label="Abrir navegación del módulo"
                 title="Navegación del módulo"
             >
@@ -375,9 +375,9 @@ function WorkspaceLayoutInner({
             <button
                 onClick={toggleFocusMode}
                 className={clsx(
-                    "p-1.5 rounded-md transition-all",
+                    "min-h-[var(--density-row-h,1.75rem)] min-w-[var(--density-row-h,1.75rem)] flex items-center justify-center p-1.5 rounded-md transition-all",
                     isFocusMode
-                        ? "bg-info-soft text-[hsl(var(--primary))] dark:bg-[hsl(var(--info))]/10 dark:text-[hsl(var(--primary))]"
+                        ? "bg-[hsl(var(--info-muted))] text-[hsl(var(--primary))] dark:bg-[hsl(var(--info))]/10 dark:text-[hsl(var(--primary))]"
                         : "text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5"
                 )}
                 aria-label={isFocusMode ? "Salir de modo enfoque" : "Entrar en modo enfoque"}
