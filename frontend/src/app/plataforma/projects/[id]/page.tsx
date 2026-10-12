@@ -36,6 +36,7 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import WorkspaceToolbar from '@/components/WorkspaceToolbar';
+import { UserMenuDropdown } from '@/components/WorkspaceLayout';
 import { DSTooltip } from '@/design';
 import RightPanel from '@/components/ui/RightPanel';
 import type { ConfirmActionState } from '@/components/ConfirmActionDrawer';
@@ -531,6 +532,8 @@ export default function ProjectDetailPage() {
                   <MoreHorizontal size={16} aria-hidden="true" />
                 </button>
               </DSTooltip>
+              <div className="w-px h-4 bg-[hsl(var(--surface-3))] dark:bg-white/10 mx-0.5 shrink-0" />
+              <UserMenuDropdown />
               <RightPanel
                 open={showProjectActions}
                 onClose={() => setShowProjectActions(false)}

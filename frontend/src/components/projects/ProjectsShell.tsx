@@ -4,6 +4,7 @@ import { ReactNode } from 'react';
 import WorkspaceToolbar from '@/components/WorkspaceToolbar';
 import { ViewType } from '@/components/ViewSwitcher';
 import type { AppIcon } from '@/types/icons';
+import { UserMenuDropdown } from '@/components/WorkspaceLayout';
 
 export interface BreadcrumbOption {
     label: string;
@@ -41,7 +42,13 @@ export default function ProjectsShell({
                 availableViews={viewOptions}
                 onSearch={onSearch}
                 searchValue={searchValue}
-                rightActions={rightActions}
+                rightActions={
+                    <div className="flex items-center gap-1.5 shrink-0">
+                        {rightActions}
+                        <div className="w-px h-4 bg-[hsl(var(--surface-3))] dark:bg-white/10 mx-0.5 shrink-0" />
+                        <UserMenuDropdown />
+                    </div>
+                }
             />
             <section aria-label="Contenido de proyectos" className="flex-1 overflow-hidden h-full">
                 <div className={

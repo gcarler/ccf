@@ -13,7 +13,7 @@ import type { NavSection } from '@/components/WorkspaceMainSidebar';
 import WorkspaceMainSidebar from '@/components/WorkspaceMainSidebar';
 import WorkspaceMiniSidebar from '@/components/WorkspaceMiniSidebar';
 import WorkspaceToolbar from '@/components/WorkspaceToolbar';
-import { useAuth } from '@/context/AuthContext';
+import { useAuth, useOptionalAuth } from '@/context/AuthContext';
 import { useRegisterCommands } from '@/context/CommandCenterContext';
 import { useCreation } from '@/context/CreationContext';
 import clsx from 'clsx';
@@ -722,16 +722,21 @@ function WorkspaceLayoutInner({
 }
 
 export interface UserMenuDropdownProps {
-    displayName: string;
+    displayName?: string;
     username?: string;
-    logout: () => void;
+    logout?: () => void;
     onOpenAppearance?: () => void;
 }
 
-export function UserMenuDropdown({ displayName, username, logout, onOpenAppearance }: UserMenuDropdownProps) {
+export function UserMenuDropdown({ displayName: propDisplayName, username: propUsername, logout: propLogout, onOpenAppearance }: UserMenuDropdownProps = {}) {
+    const auth = useOptionalAuth();
     const [isOpen, setIsOpen] = useState(false);
     const menuRef = useRef<HTMLDivElement>(null);
     const router = useRouter();
+
+    const displayName = propDisplayName ?? auth?.user?.name ?? auth?.user?.full_name ?? auth?.user?.email?.split('@')[0] ?? 'Usuario';
+    const username = propUsername ?? auth?.user?.username ?? auth?.user?.email;
+    const logout = propLogout ?? (auth?.logout || (() => {}));
 
     useEffect(() => {
         const handleClickOutside = (e: MouseEvent) => {

@@ -20,6 +20,7 @@ import {
     Shield,
     Flame,
     Home,
+    User,
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -128,11 +129,29 @@ export default function WorkspaceMiniSidebar({ onHide }: { onHide: () => void })
                 <NavItem id="inbox" icon={Inbox} href="/plataforma/inbox" label="Bandeja" badge={3} pathname={pathname} onClick={resetSidebarStack} />
             )}
 
-            {/* ── Footer: solo Settings + Collapse (SIN ThemeToggle — ya está en el header) */}
+            {/* ── Footer: Mi Perfil + Settings + Collapse */}
             <div className="flex flex-col items-center gap-1 mb-2">
+                <DSTooltip content="Mi Perfil" side="right">
+                    <Link href="/plataforma/account" prefetch={false} aria-label="Mi Perfil">
+                        <div className={clsx(
+                            "size-10 rounded-lg flex items-center justify-center transition-all duration-200 cursor-pointer sidebar-nav-item",
+                            pathname?.startsWith('/plataforma/account')
+                                ? "bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] shadow-md shadow-[hsl(var(--primary)/30%)]"
+                                : "text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5 hover:text-[hsl(var(--primary))]"
+                        )}>
+                            <User size={19} />
+                        </div>
+                    </Link>
+                </DSTooltip>
+
                 <DSTooltip content="Ajustes" side="right">
                     <Link href="/plataforma/settings" prefetch={false} aria-label="Ajustes">
-                        <div className="size-10 rounded-lg flex items-center justify-center text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5 sidebar-nav-item transition-all duration-200 cursor-pointer">
+                        <div className={clsx(
+                            "size-10 rounded-lg flex items-center justify-center transition-all duration-200 cursor-pointer sidebar-nav-item",
+                            pathname?.startsWith('/plataforma/settings')
+                                ? "bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] shadow-md shadow-[hsl(var(--primary)/30%)]"
+                                : "text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5 hover:text-[hsl(var(--primary))]"
+                        )}>
                             <Settings size={19} />
                         </div>
                     </Link>

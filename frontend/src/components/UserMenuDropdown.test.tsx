@@ -131,4 +131,10 @@ describe('UserMenuDropdown Component', () => {
         const results = await axe(container);
         expect(results.violations).toHaveLength(0);
     });
+
+    it('renders with default values when props are omitted', () => {
+        render(<UserMenuDropdown />);
+        expect(screen.getByText('Usuario')).toBeInTheDocument();
+        expect(screen.getByText('US')).toBeInTheDocument();
+    });
 });
