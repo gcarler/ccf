@@ -173,6 +173,18 @@ _READ_ENDPOINTS = [
     ("GET", f"/api/projects/{FAKE}/workload"),
     # Comentarios: ruta flat ``/comments`` (lista global con filtros).
     ("GET", "/api/projects/comments"),
+    # PMI Doctrine y EVM Avanzado / WBS EDT (Fases 1-5)
+    ("GET", "/api/projects/pmi-doctrine"),
+    ("GET", f"/api/projects/{FAKE}/components"),
+    ("GET", f"/api/projects/{FAKE}/components-breakdown"),
+    ("GET", f"/api/projects/{FAKE}/components/budget-100-rule"),
+    ("GET", f"/api/projects/{FAKE}/components/{FAKE}"),
+    ("GET", f"/api/projects/{FAKE}/evm"),
+    ("GET", f"/api/projects/{FAKE}/evm-advanced"),
+    ("GET", f"/api/projects/{FAKE}/evm/curve-s"),
+    ("GET", f"/api/projects/{FAKE}/tasks-rollup"),
+    ("GET", f"/api/projects/{FAKE}/tasks/{FAKE_TASK}/dimensions"),
+    ("GET", f"/api/projects/{FAKE}/wbs-tree"),
 ]
 
 # Endpoints where Miembro should receive 403 (module-level access denied)
@@ -216,6 +228,7 @@ _READ_ENDPOINTS_MIEMBRO_403 = [
     ("GET", f"/api/projects/{FAKE}/time-logs"),
     ("GET", f"/api/projects/{FAKE}/time-tracking-summary"),
     ("GET", f"/api/projects/{FAKE}/workload"),
+    ("GET", "/api/projects/pmi-doctrine"),
 ]
 
 # Endpoints protected by require_project_access with a project/task ID:
@@ -229,6 +242,16 @@ _READ_ENDPOINTS_MIEMBRO_404 = [
     ("GET", f"/api/projects/{FAKE}/analytics"),
     ("GET", f"/api/projects/{FAKE}/tasks/{FAKE_TASK}/supplies"),
     ("GET", f"/api/projects/{FAKE}/team"),
+    ("GET", f"/api/projects/{FAKE}/components"),
+    ("GET", f"/api/projects/{FAKE}/components-breakdown"),
+    ("GET", f"/api/projects/{FAKE}/components/budget-100-rule"),
+    ("GET", f"/api/projects/{FAKE}/components/{FAKE}"),
+    ("GET", f"/api/projects/{FAKE}/evm"),
+    ("GET", f"/api/projects/{FAKE}/evm-advanced"),
+    ("GET", f"/api/projects/{FAKE}/evm/curve-s"),
+    ("GET", f"/api/projects/{FAKE}/tasks-rollup"),
+    ("GET", f"/api/projects/{FAKE}/tasks/{FAKE_TASK}/dimensions"),
+    ("GET", f"/api/projects/{FAKE}/wbs-tree"),
 ]
 
 # Endpoints scoped to a project ID but still protected by

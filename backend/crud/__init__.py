@@ -435,6 +435,8 @@ from backend.crud.projects import (
     get_project_file,
     delete_project_file,
     get_project_files_summary,
+    validate_task_dates_within_phase,
+    TaskDateOutOfBoundsError,
 )
 
 # ── Wiki ───────────────────────────────────────────────────────────────────
