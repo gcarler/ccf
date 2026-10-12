@@ -369,7 +369,7 @@ describe('Static Invariance & Code Quality Verification', () => {
             // Must use relative delta
             expect(content).toMatch(/--density-(pad-x|pad-y|gap|h)-delta/);
 
-            // Must NOT use legacy absolute density variables directly
+            // Must NOT use obsolete absolute density variables directly
             expect(content).not.toMatch(/h-\[var\(--density-row-h\)/);
             expect(content).not.toMatch(/px-\[var\(--density-pad-x\)/);
             expect(content).not.toMatch(/py-\[var\(--density-pad-y\)/);
