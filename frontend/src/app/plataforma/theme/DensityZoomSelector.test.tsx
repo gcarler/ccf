@@ -79,6 +79,7 @@ describe('DensityZoomSelector Component', () => {
         expect(screen.getByRole('button', { name: /Establecer zoom a 100%/i })).toBeInTheDocument();
         expect(screen.getByRole('button', { name: /Establecer zoom a 115%/i })).toBeInTheDocument();
         expect(screen.getByRole('button', { name: /Establecer zoom a 133%/i })).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: /Establecer zoom a 200%/i })).toBeInTheDocument();
     });
 
     it('updates zoom percentage via quick presets and reflects in style properties', () => {
@@ -96,6 +97,15 @@ describe('DensityZoomSelector Component', () => {
         expect(screen.getByTestId('zoom-percentage-badge')).toHaveTextContent('125%');
         expect(document.documentElement.style.fontSize).toBe('125%');
         expect(document.documentElement.style.getPropertyValue('--ui-scale')).toBe('1.25');
+
+        const preset200 = screen.getByRole('button', { name: /Establecer zoom a 200%/i });
+        act(() => {
+            fireEvent.click(preset200);
+        });
+
+        expect(screen.getByTestId('zoom-percentage-badge')).toHaveTextContent('200%');
+        expect(document.documentElement.style.fontSize).toBe('200%');
+        expect(document.documentElement.style.getPropertyValue('--ui-scale')).toBe('2');
     });
 
     it('updates zoom percentage via increment (+) and decrement (-) buttons', () => {

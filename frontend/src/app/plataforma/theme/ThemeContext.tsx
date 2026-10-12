@@ -85,9 +85,9 @@ export const UI_DENSITY_OPTIONS: Record<UiDensity, UiDensityOption> = {
     },
 };
 
-export const ZOOM_PRESETS: number[] = [90, 100, 110, 115, 120, 125, 130, 133];
+export const ZOOM_PRESETS: number[] = [90, 100, 110, 115, 120, 125, 130, 133, 150, 175, 200];
 export const MIN_ZOOM = 85;
-export const MAX_ZOOM = 140;
+export const MAX_ZOOM = 200;
 
 export interface UiScaleOption {
     id: UiScaleId;

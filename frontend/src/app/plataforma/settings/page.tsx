@@ -48,7 +48,7 @@ const SETTINGS_GROUPS: SettingsGroupConfig[] = [
         items: [
             { id: "appearance-theme", icon: Palette, label: "Tema Visual", desc: "Modo día, noche, paleta de acento y escala", href: "/plataforma/theme", action: "appearance" },
             { icon: Languages, label: "Idioma y Región", desc: "Español (Colombia)", href: "#idioma" },
-            { id: "appearance-density", icon: Monitor, label: "Densidad de UI", desc: "Ultra compacta, compacta, cómoda o espaciosa y zoom manual (85%-140%)", href: "#densidad", action: "appearance" },
+            { id: "appearance-density", icon: Monitor, label: "Densidad de UI", desc: "Ultra compacta, compacta, cómoda o espaciosa y zoom manual (85%-200%)", href: "#densidad", action: "appearance" },
         ]
     },
     {
