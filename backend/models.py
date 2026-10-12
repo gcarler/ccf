@@ -94,9 +94,6 @@ from backend.models_auth import (
     UsuarioPermisoOverride,
     UsuarioRolModulo,
 )
-from backend.models_notifications import (  # noqa: F401
-    NotificationDelivery,  # noqa: F401 — Fase 2 notification hub
-)
 from backend.models_cms import (  # noqa: F401
     Announcement,  # noqa: F401
     CmsAbTest,
@@ -289,6 +286,9 @@ from backend.models_kernel import (  # noqa: F401
 
 # Knowledge Base
 from backend.models_knowledge_base import AgentKnowledgeBase
+from backend.models_notifications import (  # noqa: F401
+    NotificationDelivery,  # noqa: F401 — Fase 2 notification hub
+)
 from backend.models_ops import ChurchLocation, SocialChannel, SystemVariable
 
 # Projects (canonical)

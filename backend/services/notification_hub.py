@@ -22,11 +22,10 @@ from uuid import UUID
 
 from sqlalchemy.orm import Session
 
-from backend import crud
 from backend.models_auth import NotificacionUsuario
 from backend.models_notifications import NotificationDelivery
-from backend.services.notification_preferences import is_channel_enabled
 from backend.services import email as email_svc
+from backend.services.notification_preferences import is_channel_enabled
 
 log = logging.getLogger(__name__)
 
@@ -95,7 +94,6 @@ def notify(
         # Dedupe: si ya existe una notificación reciente con este dedupe_key
         # para el usuario, omitir (el llamador reintenta demasiado rápido).
         if dedupe_key:
-            marker = (dedupe_key,)
             # Usamos target_url como campo auxiliar: dedupe_key va como sufijo.
             existing = (
                 db.query(NotificacionUsuario)

@@ -9,10 +9,8 @@ proveedor y las preferencias del usuario.
 from __future__ import annotations
 
 import uuid as _uuid
-from datetime import datetime as _datetime, timezone as _timezone
-
-# Reutilizamos helpers del módulo auth para consistencia de fechas UTC.
-from backend.models_auth import _utcnow
+from datetime import datetime as _datetime
+from datetime import timezone as _timezone
 
 from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Index, Integer, String, Text
 from sqlalchemy.dialects.postgresql import UUID

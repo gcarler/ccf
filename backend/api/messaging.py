@@ -71,10 +71,10 @@ from backend.core.permissions import (
 )
 from backend.crud._utils import _coerce_uuid_or_404
 from backend.crud.crm import get_user_sede_id, resolve_persona_id_for_user
-from backend.services import notification_preferences as notification_prefs
-from backend.schemas import notification_preferences as schemas_notification_preferences
 from backend.mesh_websockets import manager
+from backend.schemas import notification_preferences as schemas_notification_preferences
 from backend.schemas.notifications import MessagingChannel
+from backend.services import notification_preferences as notification_prefs
 from backend.services.messaging import CommunicationOutcome
 
 logger = logging.getLogger(__name__)

@@ -13,7 +13,6 @@ from __future__ import annotations
 
 import datetime as _dt
 import logging
-from uuid import UUID
 
 from sqlalchemy.orm import Session
 
