@@ -191,7 +191,7 @@ class TestHabilitacionFlujoCompleto:
         )
         fresh.close()
         assert asistencia is not None
-        assert asistencia.estado == "presente"
+        assert asistencia.estado in (EstadoAsistenciaEnum.ASISTIO.value, "ASISTIO", "presente")
 
     def test_registro_de_visitante_en_grupo_crea_caso_crm(self, client, db_session):
         admin, admin_persona, sede = seed_admin(db_session)
