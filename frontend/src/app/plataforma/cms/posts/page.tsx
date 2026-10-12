@@ -403,7 +403,7 @@ export default function CmsPostsManagement() {
 
                   <div
                     onClick={() => openPost(post)}
-                    className="size-7 rounded-md bg-[hsl(var(--domain-fuchsia)/10%)] text-[hsl(var(--domain-fuchsia)/90%)] flex items-center justify-center shrink-0 cursor-pointer"
+                    className="size-7 rounded-md bg-[hsl(var(--primary)/10%)] text-[hsl(var(--primary))] flex items-center justify-center shrink-0 group-hover:bg-[hsl(var(--primary))] group-hover:text-[hsl(var(--primary-foreground))] transition-all cursor-pointer"
                   >
                     <FileText size={20} />
                   </div>
@@ -428,7 +428,7 @@ export default function CmsPostsManagement() {
                       </>}
                       {post.tags && post.tags.length > 0 && <>
                         <div className="size-1 bg-[hsl(var(--surface-3))] rounded-full" />
-                        <div className="flex items-center gap-1 text-xs text-[hsl(var(--domain-fuchsia)/90%)]">
+                        <div className="flex items-center gap-1 text-xs text-[hsl(var(--primary))]">
                           <Tag size={11} />
                           {post.tags.map((t) => t.name).join(", ")}
                         </div>
@@ -493,7 +493,7 @@ export default function CmsPostsManagement() {
                       </td>
                       <td className="px-[calc(1rem+var(--density-pad-x-delta,0px))] py-[calc(0.75rem+var(--density-pad-y-delta,0px))]">
                         <div className="flex items-center gap-[calc(0.75rem+var(--density-gap-delta,0px))]">
-                          <div className="size-8 rounded-md bg-[hsl(var(--domain-fuchsia)/10%)] text-[hsl(var(--domain-fuchsia)/90%)] flex items-center justify-center shrink-0">
+                          <div className="size-8 rounded-md bg-[hsl(var(--primary)/10%)] text-[hsl(var(--primary))] flex items-center justify-center shrink-0">
                             <FileText size={14} />
                           </div>
                           <span className="text-sm font-bold text-[hsl(var(--text-primary))] truncate max-w-[200px]">{post.title}</span>
@@ -551,7 +551,7 @@ export default function CmsPostsManagement() {
                   onClick={() => openPost(post)}
                   className="group bg-[hsl(var(--bg-primary))] rounded-lg border border-[hsl(var(--border))]/70 p-4 shadow-sm hover:shadow-xl hover:border-[hsl(var(--info)/100%)]/30 transition-all cursor-pointer flex items-center gap-4"
                 >
-                  <div className="size-6 rounded-md bg-[hsl(var(--domain-fuchsia)/10%)] text-[hsl(var(--domain-fuchsia)/90%)] flex items-center justify-center shrink-0 group-hover:bg-[hsl(var(--domain-fuchsia))] group-hover:text-[hsl(var(--text-primary))] transition-all">
+                  <div className="size-6 rounded-md bg-[hsl(var(--primary)/10%)] text-[hsl(var(--primary))] flex items-center justify-center shrink-0 group-hover:bg-[hsl(var(--primary))] group-hover:text-[hsl(var(--primary-foreground))] transition-all">
                     <FileText size={18} />
                   </div>
                   <div className="flex-1 min-w-0">
@@ -714,8 +714,8 @@ export default function CmsPostsManagement() {
                           className={clsx(
                             "px-3 py-1.5 rounded-md text-xs font-medium transition-all disabled:opacity-50",
                             isSelected
-                              ? "bg-[hsl(var(--domain-fuchsia)/20%)] text-[hsl(var(--domain-fuchsia)/90%)] border border-[hsl(var(--domain-fuchsia)/30%)]"
-                              : "bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))] border border-[hsl(var(--border))] hover:border-[hsl(var(--domain-fuchsia)/100%)]"
+                              ? "bg-[hsl(var(--primary)/20%)] text-[hsl(var(--primary))] border border-[hsl(var(--primary)/30%)]"
+                              : "bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))] border border-[hsl(var(--border))] hover:border-[hsl(var(--primary))]"
                           )}
                         >
                           {tag.name}
@@ -1004,8 +1004,8 @@ export default function CmsPostsManagement() {
                               className={clsx(
                                 "px-2.5 py-1 rounded-md text-2xs font-medium transition-all disabled:opacity-50",
                                 isSelected
-                                  ? "bg-[hsl(var(--domain-fuchsia)/20%)] text-[hsl(var(--domain-fuchsia)/90%)] border border-[hsl(var(--domain-fuchsia)/30%)]"
-                                  : "bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))] border border-[hsl(var(--border))] hover:border-[hsl(var(--domain-fuchsia)/100%)]"
+                                  ? "bg-[hsl(var(--primary)/20%)] text-[hsl(var(--primary))] border border-[hsl(var(--primary)/30%)]"
+                                  : "bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))] border border-[hsl(var(--border))] hover:border-[hsl(var(--primary))]"
                               )}
                             >
                               {tag.name}

@@ -22,7 +22,7 @@ const FALLBACK_TOKENS = {
  "--site-surface-container-highest": "#d9e2ff",
  "--site-on-surface": "#101828",
  "--site-on-surface-variant": "#475467",
- "--site-primary": "#3155d4",
+ "--site-primary": "#004581",
  "--site-on-primary": "#ffffff",
  "--site-primary-container": "#e1e8ff",
  "--site-on-primary-container": "#001a66",

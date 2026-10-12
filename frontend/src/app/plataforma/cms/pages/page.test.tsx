@@ -250,18 +250,18 @@ describe("CmsPagesManagement", () => {
 
     fireEvent.click(screen.getByText("Inicio"));
 
-    expect(routerPush).toHaveBeenCalledWith("/plataforma/cms/builder?site=ccf&page=inicio&mode=content");
+    expect(routerPush).toHaveBeenCalledWith("/plataforma/cms/pages/inicio");
   });
 
-  it("abre el editor de contenido desde el botón Editar contenido", async () => {
+  it("abre el builder desde el botón Editar", async () => {
     vi.mocked(listCmsPages).mockResolvedValue([page]);
     render(<CmsPagesManagement />);
     await waitFor(() => expect(screen.getByText("Inicio")).toBeInTheDocument());
 
-    fireEvent.click(screen.getByRole("button", { name: /^editar contenido$/i }));
+    fireEvent.click(screen.getByRole("button", { name: /^editar$/i }));
 
     expect(routerPush).toHaveBeenCalledWith(
-      "/plataforma/cms/builder?site=ccf&page=inicio&mode=content",
+      "/plataforma/cms/builder?site=ccf&page=inicio",
     );
   });
 
