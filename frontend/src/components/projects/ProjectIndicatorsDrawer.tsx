@@ -364,7 +364,7 @@ export function ProjectIndicatorsDrawer({
     <RightPanel
       open={isOpen}
       onClose={onClose}
-      title="Indicadores MGA & Semáforo CREMA"
+      title="Indicadores y Desempeño del Proyecto (IDP)"
       width={780}
     >
       <div className="flex flex-col h-full bg-[hsl(var(--surface-1))] text-[hsl(var(--text-primary))]">
@@ -375,7 +375,7 @@ export function ProjectIndicatorsDrawer({
               <div>
                 <h2 className="text-sm font-bold flex items-center gap-2">
                   <BarChart3 size={18} className="text-[hsl(var(--primary))]" />
-                  Metodología General Ajustada (MGA) & CREMA
+                  Indicadores y Desempeño del Proyecto (IDP)
                 </h2>
                 <p className="text-2xs text-[hsl(var(--text-secondary))]">
                   Monitoreo riguroso de eficacia, productos y semáforo SPI de avance periódico
@@ -458,7 +458,7 @@ export function ProjectIndicatorsDrawer({
                   : "bg-[hsl(var(--surface-1))] text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-3))] border border-[hsl(var(--border))]"
               )}
             >
-              <BarChart3 size={13} /> Matriz MGA ({indicators.length})
+              <BarChart3 size={13} /> Matriz IDP ({indicators.length})
             </button>
             <button
               onClick={() => {
@@ -564,7 +564,7 @@ export function ProjectIndicatorsDrawer({
                   <div className="max-w-xs">
                     <h3 className="text-xs font-bold">No hay indicadores en este nivel</h3>
                     <p className="text-2xs text-[hsl(var(--text-secondary))] mt-1">
-                      Cree indicadores de resultado o producto con la metodología MGA y califíquelos con el Asistente CREMA.
+                      Cree indicadores de resultado o producto para el proyecto y califíquelos con el Asistente CREMA.
                     </p>
                   </div>
                   <button
@@ -827,7 +827,7 @@ export function ProjectIndicatorsDrawer({
                 <div className="flex items-center justify-between">
                   <h3 className=" font-boldflex items-center gap-1.5 text-[hsl(var(--text-primary))]">
                     <Layers size={14} className="text-[hsl(var(--primary))]" />
-                    {editingId ? "Editar Indicador MGA" : "Definición Metodológica del Indicador MGA"}
+                    {editingId ? "Editar Indicador IDP" : "Definición del Indicador IDP"}
                   </h3>
                   <button
                     type="button"
@@ -885,7 +885,7 @@ export function ProjectIndicatorsDrawer({
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1">
                     <label className="text-2xs font-medium uppercase tracking-wider text-[hsl(var(--text-secondary))]">
-                      Nivel MGA Canónico *
+                      Nivel del Indicador (IDP) *
                     </label>
                     <select
                       value={level}
@@ -902,7 +902,7 @@ export function ProjectIndicatorsDrawer({
 
                   <div className="space-y-1">
                     <label className="text-2xs font-medium uppercase tracking-wider text-[hsl(var(--text-secondary))]">
-                      Tipo de Cálculo MGA *
+                      Tipo de Cálculo *
                     </label>
                     <select
                       value={calculationType}
@@ -987,7 +987,7 @@ export function ProjectIndicatorsDrawer({
                     <div className="flex items-center gap-2">
                       <Award size={18} className="text-[hsl(var(--primary))]" />
                       <h4 className=" font-boldtext-[hsl(var(--text-primary))]">
-                        Diagnóstico Metodológico CREMA (MGA / BID)
+                        Diagnóstico de Calidad CREMA (IDP)
                       </h4>
                     </div>
                     <div className="flex items-center gap-2">

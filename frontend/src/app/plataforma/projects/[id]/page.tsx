@@ -335,7 +335,7 @@ export default function ProjectDetailPage() {
     { key: 'templates', label: 'Plantillas', icon: BookTemplate, onSelect: () => setShowTemplateDrawer(true) },
     { key: 'automations', label: 'Automatizaciones', icon: Zap, onSelect: () => setShowAutomationsDrawer(true) },
     { key: 'reports', label: 'Reportes', icon: FileText, onSelect: () => setShowReportDrawer(true) },
-    { key: 'indicators', label: 'MGA / CREMA', icon: BarChart3, onSelect: () => setShowIndicatorsDrawer(true) },
+    { key: 'indicators', label: 'Indicadores (IDP)', icon: BarChart3, onSelect: () => setShowIndicatorsDrawer(true) },
     { key: 'evm', label: 'Valor Ganado (EVM / CPI)', icon: TrendingUp, onSelect: () => setShowEVMDrawer(true) },
     { key: 'drive', label: 'Bóveda y Drive', icon: FolderArchive, onSelect: () => setShowDriveDrawer(true) },
     { key: 'settings', label: 'Editar proyecto', icon: Edit3, onSelect: () => setShowProjectSettings(true), variant: 'warning' as const },
@@ -554,7 +554,7 @@ export default function ProjectDetailPage() {
                 className="px-[calc(0.75rem+var(--density-pad-x-delta,0px))] py-[calc(0.375rem+var(--density-pad-y-delta,0px))] bg-[hsl(var(--surface-2))] text-[hsl(var(--foreground))] rounded-lg text-2xs font-bold uppercase tracking-wide hover:bg-[hsl(var(--surface-3))] active:scale-95 transition-all flex items-center gap-1.5 border border-[hsl(var(--border))]"
               >
                 <BarChart3 size={14} className="text-[hsl(var(--primary))]" />{' '}
-                MGA / CREMA
+                Indicadores (IDP)
               </button>
               <button
                 onClick={() => setShowDriveDrawer(true)}

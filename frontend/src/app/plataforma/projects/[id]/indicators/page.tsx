@@ -130,11 +130,11 @@ export default function ProjectIndicatorsPage() {
                   {projectTitle}
                 </Link>
                 <span>/</span>
-                <span className="text-[hsl(var(--text-primary))]">Indicadores MGA & CREMA</span>
+                <span className="text-[hsl(var(--text-primary))]">Indicadores y Desempeño (IDP)</span>
               </div>
               <h1 className="text-lg font-extrabold tracking-tight flex items-center gap-2 mt-0.5">
                 <BarChart3 size={20} className="text-[hsl(var(--primary))]" />
-                Tablero de Indicadores MGA & Semáforo SPI
+                Tablero de Indicadores y Desempeño (IDP)
               </h1>
             </div>
           </div>
@@ -169,7 +169,7 @@ export default function ProjectIndicatorsPage() {
               <Activity size={18} className="text-[hsl(var(--primary))]" />
             </div>
             <p className="text-2xl font-extrabold text-[hsl(var(--text-primary))]">{indicators.length}</p>
-            <p className="text-2xs text-[hsl(var(--text-secondary))]">Metodología MGA vinculada</p>
+            <p className="text-2xs text-[hsl(var(--text-secondary))]">Indicadores IDP activos</p>
           </div>
 
           <div className="p-4 rounded-xl bg-[hsl(var(--surface-2))] border border-[hsl(var(--success))]/30 shadow-sm space-y-1">
@@ -256,7 +256,7 @@ export default function ProjectIndicatorsPage() {
         {loading ? (
           <div className="py-20 flex flex-col items-center justify-center gap-3 text-[hsl(var(--text-secondary))]">
             <RotateCw size={28} className="animate-spin text-[hsl(var(--primary))]" />
-            <p className="text-xs font-semibold">Cargando tablero MGA y mediciones periódicas...</p>
+            <p className="text-xs font-semibold">Cargando tablero IDP y mediciones periódicas...</p>
           </div>
         ) : loadError ? (
           <div role="alert" className="py-16 px-4 rounded-2xl border border-[hsl(var(--destructive))]/30 bg-[hsl(var(--destructive))]/5 flex flex-col items-center justify-center text-center gap-3">
@@ -277,7 +277,7 @@ export default function ProjectIndicatorsPage() {
             <div className="max-w-md">
               <h3 className="text-sm font-bold text-[hsl(var(--text-primary))]">Sin indicadores configurados</h3>
               <p className="text-2xs text-[hsl(var(--text-secondary))] mt-1">
-                Configure indicadores MGA de eficacia o producto utilizando el Asistente Inteligente CREMA para garantizar cumplimiento con los lineamientos del DNP y BID.
+                Configure indicadores de eficacia o producto utilizando el Asistente IDP para garantizar el cumplimiento y seguimiento de metas.
               </p>
             </div>
             <button
