@@ -56,7 +56,12 @@ const INITIAL_FORM_DATA: ComponentFormData = {
   color: "#3b82f6",
 };
 
-const COLOR_PRESETS = [
+/**
+ * Paleta canónica de colores predefinidos para componentes EDT elegida por el usuario.
+ * Estos valores hexadecimales representan datos de dominio persistidos en models.ProjectComponent.color
+ * para la categorización gráfica y visualización en organigramas WBS y matrices de cuadrantes.
+ */
+export const PROJECT_COMPONENT_COLOR_PRESETS: readonly string[] = [
   "#3b82f6", // azul
   "#10b981", // verde
   "#f59e0b", // ámbar
@@ -64,7 +69,9 @@ const COLOR_PRESETS = [
   "#ec4899", // rosa
   "#06b6d4", // cian
   "#64748b", // pizarra
-];
+] as const;
+
+const COLOR_PRESETS = PROJECT_COMPONENT_COLOR_PRESETS;
 
 export function ProjectComponentDrawer({
   projectId,

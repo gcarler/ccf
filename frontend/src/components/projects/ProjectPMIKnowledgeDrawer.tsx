@@ -211,7 +211,7 @@ export function ProjectPMIKnowledgeDrawer({
                                     onClick={handleCopy}
                                     className="p-1.5 rounded-lg bg-[hsl(var(--surface-2))] hover:bg-[hsl(var(--surface-3))] text-[hsl(var(--foreground))] transition-colors text-xs flex items-center gap-1.5 shrink-0"
                                 >
-                                    {copied ? <Check size={14} className="text-emerald-500" /> : <Copy size={14} />}
+                                    {copied ? <Check size={14} className="text-[hsl(var(--success))]" /> : <Copy size={14} />}
                                     <span>Copiar Volumen</span>
                                 </button>
                             </div>

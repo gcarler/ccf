@@ -315,7 +315,7 @@ export function ProjectAnyDocDrawer({
                                     title="Copiar Markdown"
                                     className="p-1.5 rounded-lg bg-[hsl(var(--surface-2))] hover:bg-[hsl(var(--surface-3))] text-[hsl(var(--foreground))] transition-colors text-xs flex items-center gap-1"
                                 >
-                                    {copied ? <Check size={14} className="text-emerald-500" /> : <Copy size={14} />}
+                                    {copied ? <Check size={14} className="text-[hsl(var(--success))]" /> : <Copy size={14} />}
                                     <span className="hidden sm:inline">Copiar</span>
                                 </button>
                                 <button
@@ -383,7 +383,7 @@ export function ProjectAnyDocDrawer({
                                     onClick={() => handlePublish('platform_wiki')}
                                     className="p-3 rounded-lg border border-[hsl(var(--border))] hover:border-[hsl(var(--primary))] bg-[hsl(var(--surface-1))] hover:bg-[hsl(var(--surface-3))] text-left transition-colors flex items-start gap-2.5 disabled:opacity-50"
                                 >
-                                    <Globe size={16} className="text-sky-400 shrink-0 mt-0.5" />
+                                    <Globe size={16} className="text-[hsl(var(--primary))] shrink-0 mt-0.5" />
                                     <div>
                                         <span className="text-xs font-semibold text-[hsl(var(--foreground))] block">
                                             Wiki Ministerial

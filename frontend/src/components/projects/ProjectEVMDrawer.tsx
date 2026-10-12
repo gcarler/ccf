@@ -232,7 +232,7 @@ export function ProjectEVMDrawer({
                             title="Biblioteca Metodológica PMI"
                             className="px-2.5 py-1.5 rounded-lg text-xs font-medium border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] hover:bg-[hsl(var(--surface-2))] text-[hsl(var(--foreground))] transition-colors flex items-center gap-1.5"
                         >
-                            <BookOpen size={13} className="text-amber-500" />
+                            <BookOpen size={13} className="text-[hsl(var(--warning))]" />
                             <span>Doctrina PMI</span>
                         </button>
                     </div>
