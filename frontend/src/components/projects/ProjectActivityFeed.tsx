@@ -13,9 +13,10 @@ import type { ProjectActivityItem } from '@/types/projects';
 
 interface Props {
     activities: ProjectActivityItem[];
+    onRefresh?: () => void;
 }
 
-export default function ProjectActivityFeed({ activities }: Props) {
+export default function ProjectActivityFeed({ activities, onRefresh }: Props) {
     const sorted = [...activities].sort((a, b) =>
         new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
     );
@@ -24,11 +25,24 @@ export default function ProjectActivityFeed({ activities }: Props) {
         <div className="flex flex-col h-full bg-[hsl(var(--surface-1))] overflow-hidden font-display">
             <header className="p-3 border-b border-[hsl(var(--border))] flex items-center justify-between bg-[hsl(var(--surface-1))]">
                 <div>
-                    <h3 className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--muted-foreground))]">Actividad Reciente</h3>
-                    <p className="text-2xs font-medium text-[hsl(var(--primary))] uppercase mt-0.5">Pulso del Equipo</p>
+                    <h3 className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--muted-foreground))]">Historia del Proyecto</h3>
+                    <p className="text-2xs font-medium text-[hsl(var(--primary))] uppercase mt-0.5">Trazabilidad y Eventos</p>
                 </div>
-                <div className="size-7 rounded-md bg-[hsl(var(--primary)/0.1)] flex items-center justify-center text-[hsl(var(--primary))]">
-                    <Clock size={12} />
+                <div className="flex items-center gap-1.5">
+                    {onRefresh && (
+                        <button
+                            type="button"
+                            onClick={onRefresh}
+                            aria-label="Actualizar historia"
+                            title="Actualizar historia"
+                            className="size-7 rounded-md border border-[hsl(var(--border))] flex items-center justify-center text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--primary))] hover:bg-[hsl(var(--surface-2))] transition-colors"
+                        >
+                            <RefreshCcw size={12} />
+                        </button>
+                    )}
+                    <div className="size-7 rounded-md bg-[hsl(var(--primary)/0.1)] flex items-center justify-center text-[hsl(var(--primary))]">
+                        <Clock size={12} />
+                    </div>
                 </div>
             </header>
 
@@ -39,7 +53,7 @@ export default function ProjectActivityFeed({ activities }: Props) {
                 {sorted.length === 0 ? (
                     <div className="flex flex-col items-center justify-center h-40 text-center space-y-3 opacity-40">
                         <Clock size={24} />
-                        <p className="text-2xs font-semibold uppercase tracking-wide">Sin actividad aún</p>
+                        <p className="text-2xs font-semibold uppercase tracking-wide">Sin registros en la historia aún</p>
                     </div>
                 ) : (
                     sorted.map((log, idx) => (

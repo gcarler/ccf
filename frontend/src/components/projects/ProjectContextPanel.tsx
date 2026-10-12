@@ -25,13 +25,15 @@ interface ProjectContextPanelProps {
   onClose?: () => void;
   isExpanded?: boolean;
   onToggleExpand?: () => void;
+  isMaximized?: boolean;
+  onToggleMaximize?: () => void;
   isMinimized?: boolean;
   onToggleMinimize?: () => void;
 }
 
 const TABS: Array<{ id: ContextTab; label: string; icon: typeof MessageSquare }> = [
   { id: "chat", label: "Chat", icon: MessageSquare },
-  { id: "activity", label: "Actividad", icon: Activity },
+  { id: "activity", label: "Historia", icon: Activity },
   { id: "inbox", label: "Inbox", icon: Inbox },
   { id: "details", label: "Detalles", icon: Users },
 ];
@@ -43,20 +45,60 @@ export default function ProjectContextPanel({
   onClose,
   isExpanded: controlledExpanded,
   onToggleExpand,
+  isMaximized: controlledMaximized,
+  onToggleMaximize,
   isMinimized: controlledMinimized,
   onToggleMinimize,
 }: ProjectContextPanelProps) {
-  const { project, tasks, activities } = useProjectUpdate();
+  const { project, tasks, activities, reloadProject } = useProjectUpdate();
   const { token } = useAuth();
   const [activeTab, setActiveTab] = useState<ContextTab>(defaultTab);
-  const [internalExpanded, setInternalExpanded] = useState(false);
+  const [internalMaximized, setInternalMaximized] = useState(false);
   const [internalMinimized, setInternalMinimized] = useState(false);
+  const [width, setWidth] = useState<number>(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("workspace:s3_width");
+      if (saved && !isNaN(Number(saved))) return Math.max(300, Math.min(Number(saved), 1200));
+    }
+    return 380;
+  });
+  const [isDragging, setIsDragging] = useState(false);
+  const panelRef = useRef<HTMLElement>(null);
 
-  const isExpanded = controlledExpanded !== undefined ? controlledExpanded : internalExpanded;
+  const isMaximized = controlledMaximized ?? controlledExpanded ?? internalMaximized;
   const isMinimized = controlledMinimized !== undefined ? controlledMinimized : internalMinimized;
 
-  const toggleExpand = onToggleExpand ?? (() => setInternalExpanded((v) => !v));
+  const toggleMaximize = onToggleMaximize ?? onToggleExpand ?? (() => setInternalMaximized((v) => !v));
   const toggleMinimize = onToggleMinimize ?? (() => setInternalMinimized((v) => !v));
+
+  const handleResizeDrag = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    const startX = e.clientX;
+    const startWidth = panelRef.current?.offsetWidth ?? width;
+    setIsDragging(true);
+    document.body.style.cursor = "col-resize";
+    document.body.style.userSelect = "none";
+
+    const onMouseMove = (ev: MouseEvent) => {
+      const maxAllowed = typeof window !== "undefined" ? window.innerWidth - 80 : 1200;
+      const next = Math.max(300, Math.min(startWidth + (startX - ev.clientX), maxAllowed));
+      setWidth(next);
+      try {
+        localStorage.setItem("workspace:s3_width", String(next));
+      } catch {}
+    };
+
+    const onMouseUp = () => {
+      setIsDragging(false);
+      document.body.style.cursor = "";
+      document.body.style.userSelect = "";
+      document.removeEventListener("mousemove", onMouseMove);
+      document.removeEventListener("mouseup", onMouseUp);
+    };
+
+    document.addEventListener("mousemove", onMouseMove);
+    document.addEventListener("mouseup", onMouseUp);
+  }, [width]);
 
   const tabRefs = useRef<Partial<Record<ContextTab, HTMLButtonElement | null>>>({});
   const { items: projectInbox, unreadCount: projectInboxUnread, loading: inboxLoading, error: inboxError, refresh: refreshProjectInbox, markAsRead } = useProjectInbox(project?.id);
@@ -173,13 +215,29 @@ export default function ProjectContextPanel({
 
   return (
     <aside
+      ref={panelRef}
       aria-label="Contexto del proyecto"
       className={clsx(
-        "flex min-h-0 max-h-[48dvh] w-full shrink-0 flex-col overflow-hidden border-t border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] lg:max-h-none lg:border-l lg:border-t-0 transition-[width] duration-200 ease-in-out",
-        isExpanded ? "lg:w-[560px]" : "lg:w-[360px]",
+        "relative flex min-h-0 shrink-0 flex-col overflow-hidden border-t border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] lg:border-l lg:border-t-0",
+        isDragging ? "select-none" : "transition-[width] duration-150 ease-out",
+        isMaximized
+          ? "w-full flex-1 max-w-full lg:w-full lg:max-w-none"
+          : "max-h-[48dvh] w-full lg:max-h-none",
         className,
       )}
+      style={!isMaximized ? { width: typeof window !== "undefined" && window.innerWidth >= 1024 ? `${width}px` : undefined } : undefined}
     >
+      {/* Resizer manual en el borde izquierdo (solo en desktop y cuando no está maximizado) */}
+      {!isMaximized && (
+        <div
+          onMouseDown={handleResizeDrag}
+          className="hidden lg:block absolute left-0 top-0 h-full w-2.5 -translate-x-1 cursor-col-resize group/resize z-30 select-none"
+          title="Arrastra para ajustar el ancho manualmente"
+        >
+          <div className="h-full w-0.5 mx-auto bg-transparent group-hover/resize:bg-[hsl(var(--primary))] transition-colors" />
+        </div>
+      )}
+
       <div className="flex items-center justify-between border-b border-[hsl(var(--border))] px-3 py-2">
         <div className="min-w-0 pr-2">
           <p className="text-2xs font-bold uppercase tracking-[0.16em] text-[hsl(var(--muted-foreground))]">Contexto</p>
@@ -201,14 +259,14 @@ export default function ProjectContextPanel({
             <ExternalLink size={11} />
           </Link>
           <div className="h-4 w-px bg-[hsl(var(--border))] mx-0.5" />
-          <DSTooltip content={isExpanded ? "Restaurar ancho (360px)" : "Extender ancho (560px)"} side="bottom">
+          <DSTooltip content={isMaximized ? "Restaurar vista dividida" : "Extender a toda la pantalla (hasta Sidebar 1)"} side="bottom">
             <button
               type="button"
-              onClick={toggleExpand}
-              aria-label={isExpanded ? "Restaurar ancho del panel de contexto" : "Extender ancho del panel de contexto"}
+              onClick={toggleMaximize}
+              aria-label={isMaximized ? "Restaurar tamaño normal del panel" : "Extender a toda la pantalla"}
               className="p-1 rounded-md text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] hover:bg-[hsl(var(--surface-2))] transition-colors"
             >
-              {isExpanded ? <Minimize2 size={13} /> : <Maximize2 size={13} />}
+              {isMaximized ? <Minimize2 size={13} /> : <Maximize2 size={13} />}
             </button>
           </DSTooltip>
           <DSTooltip content="Minimizar panel a iconos" side="bottom">
@@ -279,7 +337,7 @@ export default function ProjectContextPanel({
         ) : null}
 
         {activeTab === "activity" ? (
-          <ProjectActivityFeed activities={activities} />
+          <ProjectActivityFeed activities={activities} onRefresh={() => void reloadProject()} />
         ) : null}
 
         {activeTab === "inbox" ? (
@@ -354,6 +412,17 @@ function isProjectInboxEvent(payload: WsEvent, projectId: string): boolean {
   return "project_id" in body && String(body.project_id) === projectId;
 }
 
+function formatRelativeTime(dateStr: string): string {
+  if (!dateStr) return "";
+  const now = new Date();
+  const date = new Date(dateStr);
+  const diffSec = Math.floor((now.getTime() - date.getTime()) / 1000);
+  if (diffSec < 60) return "Ahora";
+  if (diffSec < 3600) return `${Math.floor(diffSec / 60)}m`;
+  if (diffSec < 86400) return `${Math.floor(diffSec / 3600)}h`;
+  return date.toLocaleDateString("es-CO", { day: "2-digit", month: "short" });
+}
+
 function ProjectInboxContent({
   items,
   loading,
@@ -377,8 +446,16 @@ function ProjectInboxContent({
   onRead: (itemId: string) => Promise<void>;
   onOpenTask: (taskId: string) => void;
 }) {
+  const unreadItems = items.filter((i) => !i.is_read);
+
+  const handleMarkAllRead = async () => {
+    for (const item of unreadItems) {
+      await onRead(item.id);
+    }
+  };
+
   if (loading) {
-    return <div className="p-4 text-sm text-[hsl(var(--muted-foreground))]">Cargando inbox del proyecto…</div>;
+    return <div className="p-4 text-sm text-[hsl(var(--muted-foreground))]">Cargando bandeja de entrada…</div>;
   }
 
   if (error) {
@@ -388,55 +465,74 @@ function ProjectInboxContent({
   if (items.length === 0) {
     return (
       <div className="flex h-full flex-col items-center justify-center gap-2 p-6 text-center text-[hsl(var(--muted-foreground))]">
-        <CheckCircle2 size={24} />
+        <CheckCircle2 size={24} className="text-[hsl(var(--success))]" />
         <p className="text-sm font-semibold">Inbox al día</p>
-        <p className="text-xs">No hay comentarios ni tareas pendientes en este proyecto.</p>
+        <p className="text-xs">No hay comentarios ni tareas asignadas pendientes en este proyecto.</p>
       </div>
     );
   }
 
   return (
-    <div className="h-full overflow-y-auto divide-y divide-[hsl(var(--border))]">
-      {items.map((item) => (
-        <article key={item.id} className={`p-3 transition-colors ${item.is_read ? "" : "bg-[hsl(var(--primary)/0.05)]"}`}>
-          <div className="flex items-start gap-2">
-            <div className="mt-0.5 rounded-md bg-[hsl(var(--surface-2))] p-1.5 text-[hsl(var(--primary))]">
-              {item.type === "task_assigned" ? <CheckCircle2 size={14} /> : <MessageSquare size={14} />}
-            </div>
-            <div className="min-w-0 flex-1">
-              <div className="flex items-start justify-between gap-2">
-                <p className="truncate text-xs font-bold text-[hsl(var(--foreground))]">{item.user}</p>
-                {!item.is_read ? <span className="mt-1 size-1.5 shrink-0 rounded-full bg-[hsl(var(--primary))]" aria-label="Sin leer" /> : null}
+    <div className="flex flex-col h-full overflow-hidden">
+      {unreadItems.length > 0 && (
+        <div className="px-3 py-1.5 border-b border-[hsl(var(--border))] flex items-center justify-between bg-[hsl(var(--surface-2)/0.4)] shrink-0">
+          <span className="text-2xs font-semibold text-[hsl(var(--muted-foreground))]">
+            {unreadItems.length} pendiente{unreadItems.length > 1 ? "s" : ""}
+          </span>
+          <button
+            type="button"
+            onClick={handleMarkAllRead}
+            className="text-2xs font-bold text-[hsl(var(--primary))] hover:underline"
+          >
+            Marcar todo como leído
+          </button>
+        </div>
+      )}
+      <div className="flex-1 overflow-y-auto divide-y divide-[hsl(var(--border))]">
+        {items.map((item) => (
+          <article key={item.id} className={`p-3 transition-colors ${item.is_read ? "" : "bg-[hsl(var(--primary)/0.05)]"}`}>
+            <div className="flex items-start gap-2">
+              <div className="mt-0.5 rounded-md bg-[hsl(var(--surface-2))] p-1.5 text-[hsl(var(--primary))] shrink-0">
+                {item.type === "task_assigned" ? <CheckCircle2 size={14} /> : <MessageSquare size={14} />}
               </div>
-              <p className="mt-1 text-xs leading-relaxed text-[hsl(var(--muted-foreground))]">{item.content}</p>
-              {item.task_title ? <p className="mt-1 text-2xs font-semibold text-[hsl(var(--primary))]">{item.task_title}</p> : null}
-              <div className="mt-2 flex items-center gap-2">
-                {item.task_id ? (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      void onRead(item.id);
-                      onOpenTask(item.task_id as string);
-                    }}
-                    className="rounded-md bg-[hsl(var(--primary))] px-2 py-1 text-2xs font-bold text-[hsl(var(--primary-foreground))]"
-                  >
-                    Abrir tarea
-                  </button>
-                ) : null}
-                {!item.is_read ? (
-                  <button
-                    type="button"
-                    onClick={() => void onRead(item.id)}
-                    className="rounded-md border border-[hsl(var(--border))] px-2 py-1 text-2xs font-bold text-[hsl(var(--muted-foreground))]"
-                  >
-                    Marcar leído
-                  </button>
-                ) : null}
+              <div className="min-w-0 flex-1">
+                <div className="flex items-start justify-between gap-2">
+                  <p className="truncate text-xs font-bold text-[hsl(var(--foreground))]">{item.user}</p>
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <span className="text-2xs text-[hsl(var(--muted-foreground))]">{formatRelativeTime(item.created_at)}</span>
+                    {!item.is_read ? <span className="size-1.5 rounded-full bg-[hsl(var(--primary))]" aria-label="Sin leer" /> : null}
+                  </div>
+                </div>
+                <p className="mt-1 text-xs leading-relaxed text-[hsl(var(--muted-foreground))]">{item.content}</p>
+                {item.task_title ? <p className="mt-1 text-2xs font-semibold text-[hsl(var(--primary))]">{item.task_title}</p> : null}
+                <div className="mt-2 flex items-center gap-2">
+                  {item.task_id ? (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        void onRead(item.id);
+                        onOpenTask(item.task_id as string);
+                      }}
+                      className="rounded-md bg-[hsl(var(--primary))] px-2 py-1 text-2xs font-bold text-[hsl(var(--primary-foreground))] hover:opacity-90 transition-opacity"
+                    >
+                      Abrir tarea
+                    </button>
+                  ) : null}
+                  {!item.is_read ? (
+                    <button
+                      type="button"
+                      onClick={() => void onRead(item.id)}
+                      className="rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] px-2 py-1 text-2xs font-bold text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--surface-2))] transition-colors"
+                    >
+                      Marcar leído
+                    </button>
+                  ) : null}
+                </div>
               </div>
             </div>
-          </div>
-        </article>
-      ))}
+          </article>
+        ))}
+      </div>
     </div>
   );
 }

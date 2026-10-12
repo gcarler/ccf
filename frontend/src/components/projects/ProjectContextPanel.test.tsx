@@ -136,9 +136,9 @@ describe("ProjectContextPanel", () => {
     const user = userEvent.setup();
     renderPanel();
 
-    await user.click(screen.getByRole("tab", { name: "Actividad" }));
+    await user.click(screen.getByRole("tab", { name: "Historia" }));
     expect(screen.getByText("Actividad del proyecto (1)")).toBeInTheDocument();
-    expect(screen.getByRole("tab", { name: "Actividad" })).toHaveAttribute("aria-selected", "true");
+    expect(screen.getByRole("tab", { name: "Historia" })).toHaveAttribute("aria-selected", "true");
 
     await user.click(screen.getByRole("tab", { name: "Detalles" }));
     expect(screen.getByText("Total")).toBeInTheDocument();
@@ -213,30 +213,35 @@ describe("ProjectContextPanel", () => {
     const chatTab = screen.getByRole("tab", { name: "Chat" });
     chatTab.focus();
     await user.keyboard("{ArrowRight}");
-    expect(screen.getByRole("tab", { name: "Actividad" })).toHaveFocus();
-    expect(screen.getByRole("tab", { name: "Actividad" })).toHaveAttribute("aria-selected", "true");
+    expect(screen.getByRole("tab", { name: "Historia" })).toHaveFocus();
+    expect(screen.getByRole("tab", { name: "Historia" })).toHaveAttribute("aria-selected", "true");
 
     await user.keyboard("{End}");
     expect(screen.getByRole("tab", { name: "Detalles" })).toHaveFocus();
     expect(screen.getByRole("tab", { name: "Detalles" })).toHaveAttribute("aria-selected", "true");
   });
 
-  it("allows toggling expand (extender/restaurar ancho)", async () => {
+  it("allows toggling expand to full width (extender todo/restaurar)", async () => {
     const user = userEvent.setup();
     renderPanel();
 
     const aside = screen.getByRole("complementary", { name: "Contexto del proyecto" });
-    expect(aside).toHaveClass("lg:w-[360px]");
+    expect(aside).not.toHaveClass("w-full flex-1 max-w-full");
 
-    const expandBtn = screen.getByRole("button", { name: "Extender ancho del panel de contexto" });
+    const expandBtn = screen.getByRole("button", { name: "Extender a toda la pantalla" });
     await user.click(expandBtn);
 
-    expect(aside).toHaveClass("lg:w-[560px]");
+    expect(aside).toHaveClass("w-full flex-1 max-w-full");
 
-    const restoreBtn = screen.getByRole("button", { name: "Restaurar ancho del panel de contexto" });
+    const restoreBtn = screen.getByRole("button", { name: "Restaurar tamaño normal del panel" });
     await user.click(restoreBtn);
 
-    expect(aside).toHaveClass("lg:w-[360px]");
+    expect(aside).not.toHaveClass("w-full flex-1 max-w-full");
+  });
+
+  it("renders the manual resize handle when not maximized", () => {
+    renderPanel();
+    expect(screen.getByTitle("Arrastra para ajustar el ancho manualmente")).toBeInTheDocument();
   });
 
   it("allows minimizing and restoring the panel", async () => {

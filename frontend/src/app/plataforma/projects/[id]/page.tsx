@@ -302,6 +302,7 @@ export default function ProjectDetailPage() {
   const [showEVMDrawer, setShowEVMDrawer] = useState(false);
   const [showDriveDrawer, setShowDriveDrawer] = useState(false);
   const [showContextPanel, setShowContextPanel] = useState(true);
+  const [isContextMaximized, setIsContextMaximized] = useState(false);
   const [confirmAction, setConfirmAction] = useState<ConfirmActionState>(null);
 
   const handleDeleteProject = async () => {
@@ -654,7 +655,7 @@ export default function ProjectDetailPage() {
         )}
 
         <div className="flex min-h-0 flex-1 flex-col overflow-hidden lg:flex-row">
-          <div className="min-h-0 min-w-0 flex-1 overflow-hidden">
+          <div className={clsx("min-h-0 min-w-0 flex-1 overflow-hidden", isContextMaximized && "hidden")}>
             <ProjectViewsContent
               viewType={viewType}
               onOpenTask={handleOpenTask}
@@ -669,7 +670,12 @@ export default function ProjectDetailPage() {
           {viewType !== 'chat' && !selectedTask && showContextPanel && (
             <ProjectContextPanel
               onOpenTask={handleOpenTask}
-              onClose={() => setShowContextPanel(false)}
+              onClose={() => {
+                setShowContextPanel(false);
+                setIsContextMaximized(false);
+              }}
+              isMaximized={isContextMaximized}
+              onToggleMaximize={() => setIsContextMaximized((prev) => !prev)}
             />
           )}
           {viewType !== 'chat' && !selectedTask && !showContextPanel && (
