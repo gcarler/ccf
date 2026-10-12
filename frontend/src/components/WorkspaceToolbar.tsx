@@ -59,7 +59,7 @@ export default function WorkspaceToolbar({
     onAddOption
 }: WorkspaceToolbarProps) {
     return (
-        <div data-workspace-toolbar className="min-h-[calc(2.5rem+var(--density-h-delta,0px))] bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-2))] border-b border-[hsl(var(--border))] dark:border-white/[0.06] flex flex-wrap items-center justify-between gap-[calc(0.375rem+var(--density-gap-delta,0px))] px-[calc(0.5rem+var(--density-pad-x-delta,0px))] py-[calc(0.25rem+var(--density-pad-y-delta,0px))] sticky top-0 z-50 transition-colors duration-300 sm:flex-nowrap sm:gap-2 sm:py-0">
+        <div data-workspace-toolbar className="min-h-[calc(2.5rem+var(--density-h-delta,0px))] bg-[hsl(var(--bg-primary))] dark:bg-[hsl(var(--surface-2))] border-b border-[hsl(var(--border))] dark:border-white/[0.06] flex flex-wrap items-center justify-between gap-[calc(0.375rem+var(--density-gap-delta,0px))] px-[calc(0.5rem+var(--density-pad-x-delta,0px))] py-[calc(0.25rem+var(--density-pad-y-delta,0px))] sticky top-0 z-50 transition-colors duration-300 lg:flex-nowrap sm:gap-2 sm:py-0">
             {/* Left: leftActions + Breadcrumbs + View Switcher */}
             <div className="flex min-w-0 flex-1 items-center gap-1.5 overflow-hidden sm:gap-2">
                 {leftActions && <>{leftActions}<div className="w-px h-4 bg-[hsl(var(--surface-3))] dark:bg-white/10 mx-0.5 shrink-0" /></>}
@@ -109,7 +109,7 @@ export default function WorkspaceToolbar({
             </div>
 
             {/* Right: Search, Filter, Actions */}
-            <div className="flex min-w-0 shrink-0 items-center gap-1">
+            <div className="flex min-w-0 max-w-full shrink-0 flex-wrap items-center justify-end gap-1 lg:flex-nowrap">
                 <div className="relative hidden lg:block group">
                     <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[hsl(var(--text-secondary))] dark:text-[hsl(var(--text-secondary))] group-focus-within:text-[hsl(var(--primary))] transition-colors" size={13} />
                     <input

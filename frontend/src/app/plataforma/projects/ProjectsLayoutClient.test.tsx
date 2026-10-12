@@ -20,6 +20,14 @@ vi.mock('@/context/AuthContext', () => ({
   useAuth: () => ({ token: layoutMocks.token }),
 }));
 
+vi.mock('@/context/SidebarLayerContext', () => ({
+  useSidebarLayers: () => ({
+    layers: { S1: true, S2: true, S3: false },
+    openLayer: vi.fn(),
+    closeLayer: vi.fn(),
+  }),
+}));
+
 vi.mock('@/lib/http', () => ({
   apiFetch: layoutMocks.apiFetch,
 }));

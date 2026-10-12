@@ -36,6 +36,7 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import WorkspaceToolbar from '@/components/WorkspaceToolbar';
+import { DSTooltip } from '@/design';
 import RightPanel from '@/components/ui/RightPanel';
 import type { ConfirmActionState } from '@/components/ConfirmActionDrawer';
 import {
@@ -48,6 +49,14 @@ import ProjectContextPanel from '@/components/projects/ProjectContextPanel';
 import { useProjectPageData } from '@/hooks/useProjectPageData';
 import type { ViewType } from '@/components/ViewSwitcher';
 import type { ProjectTaskRecord } from '@/types/projects';
+
+const TOOLBAR_ICON_BUTTON_CLASS =
+  'flex size-9 shrink-0 items-center justify-center rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] text-[hsl(var(--foreground))] transition-colors hover:bg-[hsl(var(--surface-2))] active:scale-95 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[hsl(var(--primary))]';
+
+const INLINE_TOOLBAR_ACTION_KEYS = [
+  'whiteboard', 'phases', 'kpis', 'progress', 'budget', 'risks',
+  'workload', 'reports', 'indicators', 'drive',
+];
 
 const PROJECT_DETAIL_VIEWS: ViewType[] = [
   'dashboard',
@@ -464,148 +473,18 @@ export default function ProjectDetailPage() {
           setViewType={setViewType}
           availableViews={PROJECT_DETAIL_VIEWS}
           rightActions={
-            <>
-            <div className="hidden items-center gap-2 lg:flex">
-            <div className="flex items-center gap-2">
+            <div className="flex min-w-0 max-w-full flex-wrap items-center justify-end gap-1.5">
               {viewType !== 'chat' && !selectedTask && !showContextPanel && (
-                <button
-                  type="button"
-                  onClick={() => setShowContextPanel(true)}
-                  aria-label="Mostrar panel de contexto"
-                  className="px-[calc(0.75rem+var(--density-pad-x-delta,0px))] py-[calc(0.375rem+var(--density-pad-y-delta,0px))] bg-[hsl(var(--surface-2))] text-[hsl(var(--foreground))] rounded-lg text-2xs font-bold uppercase tracking-wide hover:bg-[hsl(var(--surface-3))] active:scale-95 transition-all flex items-center gap-1.5 border border-[hsl(var(--border))]"
-                >
-                  <PanelRightOpen size={14} className="text-[hsl(var(--primary))]" /> Contexto
-                </button>
-              )}
-              <button
-                onClick={() => {
-                  setTaskCreationStatus('todo');
-                  setShowTaskModal(true);
-                }}
-                className="px-[calc(0.75rem+var(--density-pad-x-delta,0px))] py-[calc(0.375rem+var(--density-pad-y-delta,0px))] bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] rounded-lg text-2xs font-bold uppercase tracking-wide shadow-lg hover:bg-[hsl(var(--primary))]/90 active:scale-95 transition-all flex items-center gap-2"
-              >
-                <Plus size={14} /> Nueva Tarea
-              </button>
-              <button
-                onClick={() => setWhiteboardOpen(true)}
-                className="px-[calc(0.75rem+var(--density-pad-x-delta,0px))] py-[calc(0.375rem+var(--density-pad-y-delta,0px))] bg-[hsl(var(--surface-2))] text-[hsl(var(--foreground))] rounded-lg text-2xs font-bold uppercase tracking-wide hover:bg-[hsl(var(--surface-3))] active:scale-95 transition-all flex items-center gap-2 border border-[hsl(var(--border))]"
-              >
-                <PencilRuler size={14} /> Pizarra
-              </button>
-              <button
-                onClick={() => setShowPhaseManager(true)}
-                className="px-[calc(0.75rem+var(--density-pad-x-delta,0px))] py-[calc(0.375rem+var(--density-pad-y-delta,0px))] bg-[hsl(var(--surface-2))] text-[hsl(var(--foreground))] rounded-lg text-2xs font-bold uppercase tracking-wide hover:bg-[hsl(var(--surface-3))] active:scale-95 transition-all flex items-center gap-1.5 border border-[hsl(var(--border))]"
-              >
-                <Edit3 size={14} /> Fases
-              </button>
-              <button
-                onClick={() => setShowKpiDrawer(true)}
-                className="px-[calc(0.75rem+var(--density-pad-x-delta,0px))] py-[calc(0.375rem+var(--density-pad-y-delta,0px))] bg-[hsl(var(--surface-2))] text-[hsl(var(--foreground))] rounded-lg text-2xs font-bold uppercase tracking-wide hover:bg-[hsl(var(--surface-3))] active:scale-95 transition-all flex items-center gap-1.5 border border-[hsl(var(--border))]"
-              >
-                <Target size={14} className="text-[hsl(var(--primary))]" /> KPIs
-              </button>
-              <button
-                onClick={() => setShowProgressDrawer(true)}
-                className="px-[calc(0.75rem+var(--density-pad-x-delta,0px))] py-[calc(0.375rem+var(--density-pad-y-delta,0px))] bg-[hsl(var(--surface-2))] text-[hsl(var(--foreground))] rounded-lg text-2xs font-bold uppercase tracking-wide hover:bg-[hsl(var(--surface-3))] active:scale-95 transition-all flex items-center gap-1.5 border border-[hsl(var(--border))]"
-              >
-                <Sliders size={14} className="text-[hsl(var(--primary))]" />{' '}
-                Avance
-              </button>
-              <button
-                onClick={() => setShowBudgetDrawer(true)}
-                className="px-[calc(0.75rem+var(--density-pad-x-delta,0px))] py-[calc(0.375rem+var(--density-pad-y-delta,0px))] bg-[hsl(var(--surface-2))] text-[hsl(var(--foreground))] rounded-lg text-2xs font-bold uppercase tracking-wide hover:bg-[hsl(var(--surface-3))] active:scale-95 transition-all flex items-center gap-1.5 border border-[hsl(var(--border))]"
-              >
-                <Wallet size={14} className="text-[hsl(var(--primary))]" />{' '}
-                Presupuesto
-              </button>
-              <button
-                onClick={() => setShowRiskDrawer(true)}
-                className="px-[calc(0.75rem+var(--density-pad-x-delta,0px))] py-[calc(0.375rem+var(--density-pad-y-delta,0px))] bg-[hsl(var(--surface-2))] text-[hsl(var(--foreground))] rounded-lg text-2xs font-bold uppercase tracking-wide hover:bg-[hsl(var(--surface-3))] active:scale-95 transition-all flex items-center gap-1.5 border border-[hsl(var(--border))]"
-              >
-                <ShieldAlert
-                  size={14}
-                  className="text-[hsl(var(--destructive))]"
-                />{' '}
-                Riesgos
-              </button>
-              <button
-                onClick={() => setShowWorkloadDrawer(true)}
-                className="px-[calc(0.75rem+var(--density-pad-x-delta,0px))] py-[calc(0.375rem+var(--density-pad-y-delta,0px))] bg-[hsl(var(--surface-2))] text-[hsl(var(--foreground))] rounded-lg text-2xs font-bold uppercase tracking-wide hover:bg-[hsl(var(--surface-3))] active:scale-95 transition-all flex items-center gap-1.5 border border-[hsl(var(--border))]"
-              >
-                <Users size={14} className="text-[hsl(var(--primary))]" /> Carga
-              </button>
-              <button
-                onClick={() => setShowTimeTrackingDrawer(true)}
-                className="px-[calc(0.75rem+var(--density-pad-x-delta,0px))] py-[calc(0.375rem+var(--density-pad-y-delta,0px))] bg-[hsl(var(--surface-2))] text-[hsl(var(--foreground))] rounded-lg text-2xs font-bold uppercase tracking-wide hover:bg-[hsl(var(--surface-3))] active:scale-95 transition-all flex items-center gap-1.5 border border-[hsl(var(--border))]"
-              >
-                <Clock size={14} className="text-[hsl(var(--primary))]" /> Horas
-              </button>
-              <button
-                onClick={() => setShowTemplateDrawer(true)}
-                className="px-[calc(0.75rem+var(--density-pad-x-delta,0px))] py-[calc(0.375rem+var(--density-pad-y-delta,0px))] bg-[hsl(var(--surface-2))] text-[hsl(var(--foreground))] rounded-lg text-2xs font-bold uppercase tracking-wide hover:bg-[hsl(var(--surface-3))] active:scale-95 transition-all flex items-center gap-1.5 border border-[hsl(var(--border))]"
-              >
-                <BookTemplate
-                  size={14}
-                  className="text-[hsl(var(--primary))]"
-                />{' '}
-                Plantillas
-              </button>
-              <button
-                onClick={() => setShowAutomationsDrawer(true)}
-                className="px-[calc(0.75rem+var(--density-pad-x-delta,0px))] py-[calc(0.375rem+var(--density-pad-y-delta,0px))] bg-[hsl(var(--surface-2))] text-[hsl(var(--foreground))] rounded-lg text-2xs font-bold uppercase tracking-wide hover:bg-[hsl(var(--surface-3))] active:scale-95 transition-all flex items-center gap-1.5 border border-[hsl(var(--border))]"
-              >
-                <Zap size={14} className="text-[hsl(var(--primary))]" /> Auto
-              </button>
-              <button
-                onClick={() => setShowReportDrawer(true)}
-                className="px-[calc(0.75rem+var(--density-pad-x-delta,0px))] py-[calc(0.375rem+var(--density-pad-y-delta,0px))] bg-[hsl(var(--surface-2))] text-[hsl(var(--foreground))] rounded-lg text-2xs font-bold uppercase tracking-wide hover:bg-[hsl(var(--surface-3))] active:scale-95 transition-all flex items-center gap-1.5 border border-[hsl(var(--border))]"
-              >
-                <FileText size={14} className="text-[hsl(var(--primary))]" />{' '}
-                Reportes
-              </button>
-              <button
-                onClick={() => setShowIndicatorsDrawer(true)}
-                className="px-[calc(0.75rem+var(--density-pad-x-delta,0px))] py-[calc(0.375rem+var(--density-pad-y-delta,0px))] bg-[hsl(var(--surface-2))] text-[hsl(var(--foreground))] rounded-lg text-2xs font-bold uppercase tracking-wide hover:bg-[hsl(var(--surface-3))] active:scale-95 transition-all flex items-center gap-1.5 border border-[hsl(var(--border))]"
-              >
-                <BarChart3 size={14} className="text-[hsl(var(--primary))]" />{' '}
-                Indicadores (IDP)
-              </button>
-              <button
-                onClick={() => setShowDriveDrawer(true)}
-                className="px-[calc(0.75rem+var(--density-pad-x-delta,0px))] py-[calc(0.375rem+var(--density-pad-y-delta,0px))] bg-[hsl(var(--surface-2))] text-[hsl(var(--foreground))] rounded-lg text-2xs font-bold uppercase tracking-wide hover:bg-[hsl(var(--surface-3))] active:scale-95 transition-all flex items-center gap-1.5 border border-[hsl(var(--border))]"
-              >
-                <FolderArchive
-                  size={14}
-                  className="text-[hsl(var(--primary))]"
-                />{' '}
-                Bóveda & Drive
-              </button>
-              <button
-                onClick={() => setShowProjectSettings(true)}
-                className="px-[calc(0.75rem+var(--density-pad-x-delta,0px))] py-[calc(0.375rem+var(--density-pad-y-delta,0px))] bg-[hsl(var(--warning))] text-[hsl(var(--primary-foreground))] rounded-lg text-2xs font-bold uppercase tracking-wide hover:opacity-90 active:scale-95 transition-all flex items-center gap-2"
-              >
-                <Edit3 size={14} /> Editar
-              </button>
-              {canDeleteProjectFromApiPolicy && (
-                <button
-                  onClick={handleDeleteProject}
-                  className="px-[calc(0.75rem+var(--density-pad-x-delta,0px))] py-[calc(0.375rem+var(--density-pad-y-delta,0px))] bg-[hsl(var(--destructive))] text-[hsl(var(--destructive-foreground))] rounded-lg text-2xs font-bold uppercase tracking-wide hover:opacity-90 active:scale-95 transition-all flex items-center gap-2"
-                >
-                  <Trash2 size={14} /> Eliminar
-                </button>
-              )}
-            </div>
-            </div>
-            <div className="flex max-w-full items-center gap-2 lg:hidden">
-              {viewType !== 'chat' && !selectedTask && !showContextPanel && (
-                <button
-                  type="button"
-                  onClick={() => setShowContextPanel(true)}
-                  aria-label="Mostrar panel de contexto"
-                  className="flex min-h-10 shrink-0 items-center gap-1.5 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] px-[calc(0.75rem+var(--density-pad-x-delta,0px))] py-[calc(0.5rem+var(--density-pad-y-delta,0px))] text-2xs font-bold uppercase tracking-wide text-[hsl(var(--foreground))] transition-colors hover:bg-[hsl(var(--surface-2))]"
-                >
-                  <PanelRightOpen size={16} aria-hidden="true" /> Contexto
-                </button>
+                <DSTooltip content="Mostrar panel de contexto" side="bottom">
+                  <button
+                    type="button"
+                    onClick={() => setShowContextPanel(true)}
+                    aria-label="Mostrar panel de contexto"
+                    className={TOOLBAR_ICON_BUTTON_CLASS}
+                  >
+                    <PanelRightOpen size={15} aria-hidden="true" className="text-[hsl(var(--primary))]" />
+                  </button>
+                </DSTooltip>
               )}
               <button
                 type="button"
@@ -613,20 +492,45 @@ export default function ProjectDetailPage() {
                   setTaskCreationStatus('todo');
                   setShowTaskModal(true);
                 }}
-                className="flex min-h-10 shrink-0 items-center gap-2 rounded-lg bg-[hsl(var(--primary))] px-[calc(0.75rem+var(--density-pad-x-delta,0px))] py-[calc(0.5rem+var(--density-pad-y-delta,0px))] text-2xs font-bold uppercase tracking-wide text-[hsl(var(--primary-foreground))] shadow-sm transition-colors hover:opacity-90"
+                aria-label="Nueva actividad"
+                className="flex min-h-9 shrink-0 items-center gap-1.5 rounded-lg bg-[hsl(var(--primary))] px-[calc(0.625rem+var(--density-pad-x-delta,0px))] py-[calc(0.375rem+var(--density-pad-y-delta,0px))] text-2xs font-bold uppercase tracking-wide text-[hsl(var(--primary-foreground))] shadow-sm transition-colors hover:opacity-90 active:scale-95"
               >
-                <Plus size={14} aria-hidden="true" /> Nueva tarea
+                <Plus size={14} aria-hidden="true" />
+                <span className="hidden md:inline">Nueva actividad</span>
               </button>
-              <button
-                type="button"
-                onClick={() => setShowProjectActions(true)}
-                aria-label="Abrir acciones del proyecto"
-                aria-haspopup="dialog"
-                aria-expanded={showProjectActions}
-                className="flex min-h-10 shrink-0 items-center gap-2 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] px-[calc(0.75rem+var(--density-pad-x-delta,0px))] py-[calc(0.5rem+var(--density-pad-y-delta,0px))] text-2xs font-bold uppercase tracking-wide text-[hsl(var(--foreground))] transition-colors hover:bg-[hsl(var(--surface-2))]"
-              >
-                <MoreHorizontal size={16} aria-hidden="true" /> Acciones
-              </button>
+              {/* Herramientas del proyecto: solo icono + tooltip (xl+). En pantallas
+                  menores o con zoom alto viven en el drawer «Acciones». */}
+              <div className="hidden min-w-0 items-center gap-1 xl:flex" role="toolbar" aria-label="Herramientas del proyecto">
+                {projectActions
+                  .filter((action) => INLINE_TOOLBAR_ACTION_KEYS.includes(action.key))
+                  .map((action) => {
+                    const ActionIcon = action.icon;
+                    return (
+                      <DSTooltip key={action.key} content={action.label} side="bottom">
+                        <button
+                          type="button"
+                          onClick={() => void action.onSelect()}
+                          aria-label={action.label}
+                          className={TOOLBAR_ICON_BUTTON_CLASS}
+                        >
+                          <ActionIcon size={15} aria-hidden="true" className="text-[hsl(var(--primary))]" />
+                        </button>
+                      </DSTooltip>
+                    );
+                  })}
+              </div>
+              <DSTooltip content="Todas las acciones del proyecto" side="bottom">
+                <button
+                  type="button"
+                  onClick={() => setShowProjectActions(true)}
+                  aria-label="Abrir acciones del proyecto"
+                  aria-haspopup="dialog"
+                  aria-expanded={showProjectActions}
+                  className={TOOLBAR_ICON_BUTTON_CLASS}
+                >
+                  <MoreHorizontal size={16} aria-hidden="true" />
+                </button>
+              </DSTooltip>
               <RightPanel
                 open={showProjectActions}
                 onClose={() => setShowProjectActions(false)}
@@ -637,7 +541,6 @@ export default function ProjectDetailPage() {
                 {renderProjectActionList(true)}
               </RightPanel>
             </div>
-            </>
           }
         />
 
