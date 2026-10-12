@@ -6,7 +6,8 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
     ChevronDown, Plus,
-    ChevronLeft, ChevronRight, Circle
+    ChevronLeft, ChevronRight, Circle,
+    Layers, Maximize2, Minimize2, Minus, X,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import clsx from 'clsx';
@@ -35,6 +36,10 @@ interface Props {
     isMini?: boolean;
     onToggle?: () => void;
     isCollapsed?: boolean;
+    isExpanded?: boolean;
+    onToggleExpand?: () => void;
+    onMinimize?: () => void;
+    onClose?: () => void;
 }
 
 // ─── Sección expandible genérica ──────────────────────────────────────────────
@@ -175,7 +180,16 @@ function NavRow({
 }
 
 
-export default function WorkspaceMainSidebar({ sections, isMini, onToggle, isCollapsed }: Props) {
+export default function WorkspaceMainSidebar({
+    sections,
+    isMini,
+    onToggle,
+    isCollapsed,
+    isExpanded,
+    onToggleExpand,
+    onMinimize,
+    onClose,
+}: Props) {
     const pathname = usePathname();
     const {
         sidebarStack,
@@ -226,7 +240,7 @@ export default function WorkspaceMainSidebar({ sections, isMini, onToggle, isCol
             {/* Header: Botón de retroceso en drill-down */}
             {!isMini && isDrillDown && (
                 <div className="shrink-0 border-b border-[hsl(var(--border))] dark:border-white/[0.04] relative z-20 bg-white/80 dark:bg-[hsl(var(--surface-2))]/80 backdrop-blur-xl">
-                    <div className="h-8 flex items-center px-3">
+                    <div className="h-9 flex items-center justify-between px-3">
                         <motion.button
                             initial={{ opacity: 0, x: -10 }}
                             animate={{ opacity: 1, x: 0 }}
@@ -236,10 +250,95 @@ export default function WorkspaceMainSidebar({ sections, isMini, onToggle, isCol
                                 popSidebarPanel();
                             }}
                             className="p-1 -ml-1 rounded-md bg-[hsl(var(--surface-1))] dark:bg-white/5 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] hover:bg-[hsl(var(--bg-primary))] dark:hover:bg-white/10 transition-all flex items-center justify-center shrink-0 border border-[hsl(var(--border))] dark:border-white/5 active:scale-90"
+                            aria-label="Volver"
                         >
                             <ChevronLeft size={14} strokeWidth={2.5} />
                         </motion.button>
+                        <div className="flex items-center gap-1">
+                            {onToggleExpand && (
+                                <DSTooltip content={isExpanded ? "Restaurar ancho" : "Extender ancho"} side="bottom">
+                                    <button
+                                        onClick={onToggleExpand}
+                                        aria-label={isExpanded ? "Restaurar ancho del panel" : "Extender ancho del panel"}
+                                        className="p-1 rounded text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5 transition-colors"
+                                    >
+                                        {isExpanded ? <Minimize2 size={13} /> : <Maximize2 size={13} />}
+                                    </button>
+                                </DSTooltip>
+                            )}
+                            {onClose && (
+                                <DSTooltip content="Cerrar panel" side="bottom">
+                                    <button
+                                        onClick={onClose}
+                                        aria-label="Cerrar panel lateral"
+                                        className="p-1 rounded text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--destructive))] hover:bg-[hsl(var(--destructive)/0.1)] transition-colors"
+                                    >
+                                        <X size={13} />
+                                    </button>
+                                </DSTooltip>
+                            )}
+                        </div>
                     </div>
+                </div>
+            )}
+
+            {/* Header: Modo normal (Navegación + controles de Extender, Minimizar y Cerrar) */}
+            {!isMini && !isDrillDown && (
+                <div className="shrink-0 h-9 border-b border-[hsl(var(--border))] dark:border-white/5 px-2.5 flex items-center justify-between bg-[hsl(var(--surface-1))] dark:bg-[hsl(var(--surface-2))] relative z-20">
+                    <span className="text-2xs font-extrabold uppercase tracking-wider text-[hsl(var(--text-secondary))] flex items-center gap-1.5 truncate">
+                        <Layers size={13} className="text-[hsl(var(--primary))] shrink-0" />
+                        Navegación
+                    </span>
+                    <div className="flex items-center gap-0.5 shrink-0">
+                        {onToggleExpand && (
+                            <DSTooltip content={isExpanded ? "Restaurar ancho (280px)" : "Extender ancho (440px)"} side="bottom">
+                                <button
+                                    onClick={onToggleExpand}
+                                    aria-label={isExpanded ? "Restaurar ancho del panel" : "Extender ancho del panel"}
+                                    className="p-1 rounded-md text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5 transition-colors"
+                                >
+                                    {isExpanded ? <Minimize2 size={13} /> : <Maximize2 size={13} />}
+                                </button>
+                            </DSTooltip>
+                        )}
+                        {onMinimize && (
+                            <DSTooltip content="Minimizar panel a iconos" side="bottom">
+                                <button
+                                    onClick={onMinimize}
+                                    aria-label="Minimizar panel a iconos"
+                                    className="p-1 rounded-md text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5 transition-colors"
+                                >
+                                    <Minus size={13} />
+                                </button>
+                            </DSTooltip>
+                        )}
+                        {onClose && (
+                            <DSTooltip content="Cerrar panel" side="bottom">
+                                <button
+                                    onClick={onClose}
+                                    aria-label="Cerrar panel lateral"
+                                    className="p-1 rounded-md text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--destructive))] hover:bg-[hsl(var(--destructive)/0.1)] transition-colors"
+                                >
+                                    <X size={13} />
+                                </button>
+                            </DSTooltip>
+                        )}
+                    </div>
+                </div>
+            )}
+
+            {/* Header: Modo Mini (Expandir botón) */}
+            {isMini && (
+                <div className="shrink-0 h-9 border-b border-[hsl(var(--border))] dark:border-white/5 p-1 flex items-center justify-center relative z-20">
+                    <DSTooltip content="Expandir navegación" side="right">
+                        <button
+                            onClick={onToggleExpand || onToggle}
+                            aria-label="Expandir panel de navegación"
+                            className="p-1 rounded-md text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] hover:bg-[hsl(var(--surface-2))] dark:hover:bg-white/5 transition-colors"
+                        >
+                            <ChevronRight size={14} />
+                        </button>
+                    </DSTooltip>
                 </div>
             )}
             {/* 3. Body: Contenido con animación de Slide Direccional */}

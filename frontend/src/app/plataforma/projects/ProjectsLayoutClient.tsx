@@ -2,6 +2,7 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
+import { useSidebarLayers } from '@/context/SidebarLayerContext';
 import { apiFetch } from '@/lib/http';
 import WorkspaceLayout from '@/components/WorkspaceLayout';
 import { ModuleErrorBoundary } from '@/components/ModuleErrorBoundary';
@@ -36,6 +37,13 @@ export default function ProjectsLayoutClient({ children, initialProjectPage }: P
     const [projects, setProjects] = useState<ProjectSummaryRecord[]>(initialProjectPage?.items ?? []);
     const [currentProject, setCurrentProject] = useState<ProjectRecord | null>(null);
     const initialPageAvailable = useRef(Boolean(initialProjectPage));
+
+    const { openLayer, layers } = useSidebarLayers();
+    useEffect(() => {
+        if (!layers.S1) {
+            openLayer('S1');
+        }
+    }, [openLayer, layers.S1]);
 
     useEffect(() => {
         if (!token) {

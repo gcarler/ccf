@@ -75,7 +75,10 @@ vi.mock("@/hooks/useNotifications", () => ({
   }),
 }));
 
-function renderPanel(overrides: Partial<ProjectUpdateContextValue> = {}) {
+function renderPanel(
+  overrides: Partial<ProjectUpdateContextValue> = {},
+  panelProps: React.ComponentProps<typeof ProjectContextPanel> = {},
+) {
   const value: ProjectUpdateContextValue = {
     project: createMockProject({ id: "project-1", title: "Proyecto CCF", description: "Descripción del proyecto" }),
     tasks: [
@@ -102,7 +105,7 @@ function renderPanel(overrides: Partial<ProjectUpdateContextValue> = {}) {
 
   return render(
     <ProjectUpdateProvider value={value}>
-      <ProjectContextPanel />
+      <ProjectContextPanel {...panelProps} />
     </ProjectUpdateProvider>,
   );
 }
@@ -216,5 +219,48 @@ describe("ProjectContextPanel", () => {
     await user.keyboard("{End}");
     expect(screen.getByRole("tab", { name: "Detalles" })).toHaveFocus();
     expect(screen.getByRole("tab", { name: "Detalles" })).toHaveAttribute("aria-selected", "true");
+  });
+
+  it("allows toggling expand (extender/restaurar ancho)", async () => {
+    const user = userEvent.setup();
+    renderPanel();
+
+    const aside = screen.getByRole("complementary", { name: "Contexto del proyecto" });
+    expect(aside).toHaveClass("lg:w-[360px]");
+
+    const expandBtn = screen.getByRole("button", { name: "Extender ancho del panel de contexto" });
+    await user.click(expandBtn);
+
+    expect(aside).toHaveClass("lg:w-[560px]");
+
+    const restoreBtn = screen.getByRole("button", { name: "Restaurar ancho del panel de contexto" });
+    await user.click(restoreBtn);
+
+    expect(aside).toHaveClass("lg:w-[360px]");
+  });
+
+  it("allows minimizing and restoring the panel", async () => {
+    const user = userEvent.setup();
+    renderPanel();
+
+    const minimizeBtn = screen.getByRole("button", { name: "Minimizar panel de contexto" });
+    await user.click(minimizeBtn);
+
+    const restoreBtn = screen.getByRole("button", { name: "Restaurar panel de contexto" });
+    expect(restoreBtn).toBeInTheDocument();
+
+    await user.click(restoreBtn);
+    expect(screen.getByRole("button", { name: "Minimizar panel de contexto" })).toBeInTheDocument();
+  });
+
+  it("calls onClose when the close button is clicked", async () => {
+    const user = userEvent.setup();
+    const onClose = vi.fn();
+    renderPanel({}, { onClose });
+
+    const closeBtn = screen.getByRole("button", { name: "Cerrar panel de contexto" });
+    await user.click(closeBtn);
+
+    expect(onClose).toHaveBeenCalledTimes(1);
   });
 });

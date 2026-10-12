@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useCallback, useRef, useState } from "react";
-import { Activity, Bell, CheckCircle2, ExternalLink, Inbox, MessageSquare, Users, X } from "lucide-react";
+import { Activity, Bell, CheckCircle2, ChevronLeft, ChevronRight, ExternalLink, Inbox, Maximize2, MessageSquare, Minimize2, Minus, Users, X } from "lucide-react";
 import clsx from "clsx";
 import { useProjectUpdate } from "@/context/ProjectUpdateContext";
 import { useAuth } from "@/context/AuthContext";
@@ -11,6 +11,7 @@ import ProjectChatPanel from "@/components/projects/ProjectChatPanel";
 import { useNotifications } from "@/hooks/useNotifications";
 import { useProjectInbox } from "@/hooks/useProjectInbox";
 import { useWorkspaceSocket } from "@/hooks/useWorkspaceSocket";
+import { DSTooltip } from "@/design";
 import type { WsEvent } from "@/types/directMessages";
 import type { ProjectTaskRecord } from "@/types/projects";
 import { formatDate } from "@/lib/format";
@@ -21,6 +22,11 @@ interface ProjectContextPanelProps {
   className?: string;
   defaultTab?: ContextTab;
   onOpenTask?: (task: ProjectTaskRecord) => void;
+  onClose?: () => void;
+  isExpanded?: boolean;
+  onToggleExpand?: () => void;
+  isMinimized?: boolean;
+  onToggleMinimize?: () => void;
 }
 
 const TABS: Array<{ id: ContextTab; label: string; icon: typeof MessageSquare }> = [
@@ -30,10 +36,28 @@ const TABS: Array<{ id: ContextTab; label: string; icon: typeof MessageSquare }>
   { id: "details", label: "Detalles", icon: Users },
 ];
 
-export default function ProjectContextPanel({ className, defaultTab = "chat", onOpenTask }: ProjectContextPanelProps) {
+export default function ProjectContextPanel({
+  className,
+  defaultTab = "chat",
+  onOpenTask,
+  onClose,
+  isExpanded: controlledExpanded,
+  onToggleExpand,
+  isMinimized: controlledMinimized,
+  onToggleMinimize,
+}: ProjectContextPanelProps) {
   const { project, tasks, activities } = useProjectUpdate();
   const { token } = useAuth();
   const [activeTab, setActiveTab] = useState<ContextTab>(defaultTab);
+  const [internalExpanded, setInternalExpanded] = useState(false);
+  const [internalMinimized, setInternalMinimized] = useState(false);
+
+  const isExpanded = controlledExpanded !== undefined ? controlledExpanded : internalExpanded;
+  const isMinimized = controlledMinimized !== undefined ? controlledMinimized : internalMinimized;
+
+  const toggleExpand = onToggleExpand ?? (() => setInternalExpanded((v) => !v));
+  const toggleMinimize = onToggleMinimize ?? (() => setInternalMinimized((v) => !v));
+
   const tabRefs = useRef<Partial<Record<ContextTab, HTMLButtonElement | null>>>({});
   const { items: projectInbox, unreadCount: projectInboxUnread, loading: inboxLoading, error: inboxError, refresh: refreshProjectInbox, markAsRead } = useProjectInbox(project?.id);
   const { notifications } = useNotifications();
@@ -76,33 +100,140 @@ export default function ProjectContextPanel({ className, defaultTab = "chat", on
   const openTasks = tasks.filter((task) => task.status !== "completed").length;
   const completedTasks = tasks.length - openTasks;
 
+  if (isMinimized) {
+    return (
+      <aside
+        aria-label="Contexto del proyecto"
+        className={clsx(
+          "flex min-h-0 w-12 shrink-0 flex-col items-center border-t border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] py-2.5 space-y-2 lg:w-14 lg:border-l lg:border-t-0 select-none",
+          className
+        )}
+      >
+        <DSTooltip content="Restaurar panel de contexto" side="left">
+          <button
+            type="button"
+            onClick={toggleMinimize}
+            aria-label="Restaurar panel de contexto"
+            className="flex h-8 w-8 items-center justify-center rounded-md text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] hover:text-[hsl(var(--text-primary))] transition-colors"
+          >
+            <ChevronLeft size={16} />
+          </button>
+        </DSTooltip>
+
+        <div className="w-6 border-b border-[hsl(var(--border))]" />
+
+        <div className="flex flex-col items-center space-y-2 w-full px-1" role="tablist" aria-label="Contexto del proyecto (minimizado)">
+          {TABS.map(({ id, label, icon: Icon }) => (
+            <DSTooltip key={id} content={label} side="left">
+              <button
+                key={id}
+                type="button"
+                role="tab"
+                aria-label={id === "inbox" && projectInboxUnread > 0 ? `${label}, ${projectInboxUnread} sin leer` : label}
+                aria-selected={activeTab === id}
+                onClick={() => {
+                  setActiveTab(id);
+                  toggleMinimize();
+                }}
+                className={clsx(
+                  "relative flex h-8 w-8 items-center justify-center rounded-md transition-colors",
+                  activeTab === id
+                    ? "bg-[hsl(var(--primary)/0.12)] text-[hsl(var(--primary))]"
+                    : "text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--surface-2))] hover:text-[hsl(var(--foreground))]"
+                )}
+              >
+                <Icon size={16} />
+                {id === "inbox" && projectInboxUnread > 0 && (
+                  <span className="absolute -top-0.5 -right-0.5 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-[hsl(var(--destructive))] text-[9px] font-bold text-[hsl(var(--primary-foreground))]">
+                    {projectInboxUnread}
+                  </span>
+                )}
+              </button>
+            </DSTooltip>
+          ))}
+        </div>
+
+        <div className="flex-1" />
+
+        {onClose && (
+          <DSTooltip content="Cerrar panel de contexto" side="left">
+            <button
+              type="button"
+              onClick={onClose}
+              aria-label="Cerrar panel de contexto"
+              className="flex h-8 w-8 items-center justify-center rounded-md text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--destructive)/0.1)] hover:text-[hsl(var(--destructive))] transition-colors mb-2"
+            >
+              <X size={15} />
+            </button>
+          </DSTooltip>
+        )}
+      </aside>
+    );
+  }
+
   return (
     <aside
       aria-label="Contexto del proyecto"
       className={clsx(
-        "flex min-h-0 max-h-[48dvh] w-full shrink-0 flex-col overflow-hidden border-t border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] lg:max-h-none lg:w-[360px] lg:border-l lg:border-t-0",
+        "flex min-h-0 max-h-[48dvh] w-full shrink-0 flex-col overflow-hidden border-t border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] lg:max-h-none lg:border-l lg:border-t-0 transition-[width] duration-200 ease-in-out",
+        isExpanded ? "lg:w-[560px]" : "lg:w-[360px]",
         className,
       )}
     >
-      <div className="flex items-center justify-between border-b border-[hsl(var(--border))] px-3 py-2.5">
-        <div className="min-w-0">
+      <div className="flex items-center justify-between border-b border-[hsl(var(--border))] px-3 py-2">
+        <div className="min-w-0 pr-2">
           <p className="text-2xs font-bold uppercase tracking-[0.16em] text-[hsl(var(--muted-foreground))]">Contexto</p>
           <p className="truncate text-sm font-semibold text-[hsl(var(--foreground))]">
             {project?.title || "Proyecto"}
           </p>
         </div>
-        <span className="rounded-full bg-[hsl(var(--primary)/0.1)] px-2 py-1 text-2xs font-bold text-[hsl(var(--primary))]">
-          {openTasks} abiertas
-        </span>
-        <Link
-          href="/plataforma/inbox"
-          className="inline-flex items-center gap-1 rounded-md border border-[hsl(var(--border))] px-2 py-1 text-2xs font-bold text-[hsl(var(--muted-foreground))] transition-colors hover:border-[hsl(var(--primary))] hover:text-[hsl(var(--primary))]"
-          aria-label={globalUnread > 0 ? `Abrir notificaciones, ${globalUnread} sin leer` : "Abrir notificaciones"}
-        >
-          <Bell size={12} />
-          {globalUnread > 0 ? globalUnread : null}
-          <ExternalLink size={11} />
-        </Link>
+        <div className="flex items-center gap-1 shrink-0">
+          <span className="rounded-full bg-[hsl(var(--primary)/0.1)] px-2 py-0.5 text-2xs font-bold text-[hsl(var(--primary))]">
+            {openTasks} abiertas
+          </span>
+          <Link
+            href="/plataforma/inbox"
+            className="inline-flex items-center gap-1 rounded-md border border-[hsl(var(--border))] px-1.5 py-1 text-2xs font-bold text-[hsl(var(--muted-foreground))] transition-colors hover:border-[hsl(var(--primary))] hover:text-[hsl(var(--primary))]"
+            aria-label={globalUnread > 0 ? `Abrir notificaciones, ${globalUnread} sin leer` : "Abrir notificaciones"}
+          >
+            <Bell size={12} />
+            {globalUnread > 0 ? globalUnread : null}
+            <ExternalLink size={11} />
+          </Link>
+          <div className="h-4 w-px bg-[hsl(var(--border))] mx-0.5" />
+          <DSTooltip content={isExpanded ? "Restaurar ancho (360px)" : "Extender ancho (560px)"} side="bottom">
+            <button
+              type="button"
+              onClick={toggleExpand}
+              aria-label={isExpanded ? "Restaurar ancho del panel de contexto" : "Extender ancho del panel de contexto"}
+              className="p-1 rounded-md text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] hover:bg-[hsl(var(--surface-2))] transition-colors"
+            >
+              {isExpanded ? <Minimize2 size={13} /> : <Maximize2 size={13} />}
+            </button>
+          </DSTooltip>
+          <DSTooltip content="Minimizar panel a iconos" side="bottom">
+            <button
+              type="button"
+              onClick={toggleMinimize}
+              aria-label="Minimizar panel de contexto"
+              className="p-1 rounded-md text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] hover:bg-[hsl(var(--surface-2))] transition-colors"
+            >
+              <Minus size={13} />
+            </button>
+          </DSTooltip>
+          {onClose && (
+            <DSTooltip content="Cerrar panel de contexto" side="bottom">
+              <button
+                type="button"
+                onClick={onClose}
+                aria-label="Cerrar panel de contexto"
+                className="p-1 rounded-md text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--destructive))] hover:bg-[hsl(var(--destructive)/0.1)] transition-colors"
+              >
+                <X size={13} />
+              </button>
+            </DSTooltip>
+          )}
+        </div>
       </div>
 
       <div className="flex min-w-0 overflow-x-auto border-b border-[hsl(var(--border))] px-2 pt-2" role="tablist" aria-label="Contexto del proyecto">

@@ -31,6 +31,8 @@ import {
   TrendingUp,
   FolderArchive,
   MoreHorizontal,
+  ChevronLeft,
+  PanelRightOpen,
   type LucideIcon,
 } from 'lucide-react';
 import WorkspaceToolbar from '@/components/WorkspaceToolbar';
@@ -299,6 +301,7 @@ export default function ProjectDetailPage() {
   const [showIndicatorsDrawer, setShowIndicatorsDrawer] = useState(false);
   const [showEVMDrawer, setShowEVMDrawer] = useState(false);
   const [showDriveDrawer, setShowDriveDrawer] = useState(false);
+  const [showContextPanel, setShowContextPanel] = useState(true);
   const [confirmAction, setConfirmAction] = useState<ConfirmActionState>(null);
 
   const handleDeleteProject = async () => {
@@ -463,6 +466,16 @@ export default function ProjectDetailPage() {
             <>
             <div className="hidden items-center gap-2 lg:flex">
             <div className="flex items-center gap-2">
+              {viewType !== 'chat' && !selectedTask && !showContextPanel && (
+                <button
+                  type="button"
+                  onClick={() => setShowContextPanel(true)}
+                  aria-label="Mostrar panel de contexto"
+                  className="px-[calc(0.75rem+var(--density-pad-x-delta,0px))] py-[calc(0.375rem+var(--density-pad-y-delta,0px))] bg-[hsl(var(--surface-2))] text-[hsl(var(--foreground))] rounded-lg text-2xs font-bold uppercase tracking-wide hover:bg-[hsl(var(--surface-3))] active:scale-95 transition-all flex items-center gap-1.5 border border-[hsl(var(--border))]"
+                >
+                  <PanelRightOpen size={14} className="text-[hsl(var(--primary))]" /> Contexto
+                </button>
+              )}
               <button
                 onClick={() => {
                   setTaskCreationStatus('todo');
@@ -583,6 +596,16 @@ export default function ProjectDetailPage() {
             </div>
             </div>
             <div className="flex max-w-full items-center gap-2 lg:hidden">
+              {viewType !== 'chat' && !selectedTask && !showContextPanel && (
+                <button
+                  type="button"
+                  onClick={() => setShowContextPanel(true)}
+                  aria-label="Mostrar panel de contexto"
+                  className="flex min-h-10 shrink-0 items-center gap-1.5 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] px-[calc(0.75rem+var(--density-pad-x-delta,0px))] py-[calc(0.5rem+var(--density-pad-y-delta,0px))] text-2xs font-bold uppercase tracking-wide text-[hsl(var(--foreground))] transition-colors hover:bg-[hsl(var(--surface-2))]"
+                >
+                  <PanelRightOpen size={16} aria-hidden="true" /> Contexto
+                </button>
+              )}
               <button
                 type="button"
                 onClick={() => {
@@ -643,8 +666,23 @@ export default function ProjectDetailPage() {
               setTaskCreationStatus={setTaskCreationStatus}
             />
           </div>
-          {viewType !== 'chat' && !selectedTask && (
-            <ProjectContextPanel onOpenTask={handleOpenTask} />
+          {viewType !== 'chat' && !selectedTask && showContextPanel && (
+            <ProjectContextPanel
+              onOpenTask={handleOpenTask}
+              onClose={() => setShowContextPanel(false)}
+            />
+          )}
+          {viewType !== 'chat' && !selectedTask && !showContextPanel && (
+            <button
+              type="button"
+              onClick={() => setShowContextPanel(true)}
+              aria-label="Abrir panel de contexto"
+              className="fixed right-0 top-1/2 -translate-y-1/2 z-30 flex items-center gap-1 rounded-l-lg border-y border-l border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] px-1.5 py-3 text-xs font-semibold text-[hsl(var(--text-secondary))] shadow-md hover:bg-[hsl(var(--surface-2))] hover:text-[hsl(var(--primary))] transition-colors"
+              title="Abrir panel de contexto"
+            >
+              <ChevronLeft size={16} />
+              <span className="[writing-mode:vertical-rl] rotate-180 text-2xs uppercase tracking-wider font-bold">Contexto</span>
+            </button>
           )}
           {selectedTask && (
             <TaskDetailPanel

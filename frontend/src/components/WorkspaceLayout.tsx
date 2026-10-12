@@ -113,7 +113,7 @@ function WorkspaceLayoutInner({
         const syncViewportMode = () => {
             const width = window.innerWidth;
             if (width < 768) setViewportMode('mobile');
-            else if (width < 1180) setViewportMode('tablet');
+            else if (width < 1024) setViewportMode('tablet');
             else setViewportMode('desktop');
         };
 
@@ -123,11 +123,13 @@ function WorkspaceLayoutInner({
     }, []);
 
     useEffect(() => {
-        const savedS1 = localStorage.getItem('workspace:s1') !== 'hidden';
+        // En desktop/tablet, S1 (barra mini) debe estar SIEMPRE disponible y visible por defecto
+        const savedS1 = localStorage.getItem('workspace:s1');
+        const s1ShouldBeOpen = savedS1 === null ? true : savedS1 !== 'hidden';
         const savedS2 = localStorage.getItem(`workspace:s2:${moduleKey}`) !== 'hidden';
         const savedFocusMode = localStorage.getItem(`workspace:focus:${moduleKey}`) === '1';
 
-        if (savedS1) openLayer('S1');
+        if (s1ShouldBeOpen) openLayer('S1');
         else closeLayer('S1');
 
         if (savedS2) openLayer('S2');
@@ -137,7 +139,7 @@ function WorkspaceLayoutInner({
         setIsFocusMode(savedFocusMode);
 
         if (savedFocusMode) {
-            previousLayerStateRef.current = { s1: savedS1, s2: savedS2 };
+            previousLayerStateRef.current = { s1: s1ShouldBeOpen, s2: savedS2 };
             closeLayer('S1');
             closeLayer('S2');
         }
@@ -155,16 +157,18 @@ function WorkspaceLayoutInner({
         }
 
         if (isTabletViewport) {
-            closeLayer('S1');
+            openLayer('S1');
             openLayer('S2');
         }
     }, [closeLayer, isFocusMode, isMobileViewport, isMounted, isTabletViewport, openLayer]);
 
     useEffect(() => {
-        if (!isCompactViewport) return;
-        closeLayer('S1');
-        if (isMobileViewport) closeLayer('S2');
-    }, [closeLayer, isCompactViewport, isMobileViewport, pathname]);
+        // Solo en pantallas móviles cerramos la barra al navegar entre rutas
+        if (isMobileViewport) {
+            closeLayer('S1');
+            closeLayer('S2');
+        }
+    }, [closeLayer, isMobileViewport, pathname]);
 
     useEffect(() => {
         if (!isCompactViewport) return;
@@ -314,6 +318,27 @@ function WorkspaceLayoutInner({
     const resolvedS2Width = isTabletViewport ? tabletS2Width : s2WidthNum;
     const isMiniSidebar = inlineS2Visible && resolvedS2Width <= snapThreshold;
     const currentS2Width = inlineS2Visible ? `${resolvedS2Width}px` : '0px';
+
+    const defaultS2Width = 280;
+    const expandedS2Width = 440;
+    const isS2Expanded = resolvedS2Width >= 400;
+
+    const handleToggleExpandS2 = useCallback(() => {
+        setS2WidthNum(prev => {
+            if (prev <= snapThreshold) return defaultS2Width;
+            if (prev >= 400) return defaultS2Width;
+            return expandedS2Width;
+        });
+        if (!layers.S2) openLayer('S2');
+    }, [layers.S2, openLayer, snapThreshold]);
+
+    const handleMinimizeS2 = useCallback(() => {
+        setS2WidthNum(minS2Width);
+    }, [minS2Width]);
+
+    const handleCloseS2 = useCallback(() => {
+        closeLayer('S2');
+    }, [closeLayer]);
 
     const openPrimaryNavigation = useCallback(() => {
         if (isMobileViewport) closeLayer('S2');
@@ -532,6 +557,10 @@ function WorkspaceLayoutInner({
                                         isMini={isMiniSidebar}
                                         onToggle={cycleS2}
                                         isCollapsed={!layers.S2}
+                                        isExpanded={isS2Expanded}
+                                        onToggleExpand={handleToggleExpandS2}
+                                        onMinimize={handleMinimizeS2}
+                                        onClose={handleCloseS2}
                                     />
                                 )}
                             </div>
@@ -597,11 +626,12 @@ function WorkspaceLayoutInner({
                             initial={{ opacity: 0, x: -20 }}
                             animate={{ opacity: 1, x: 0 }}
                             onClick={() => openLayer('S1')}
-                            className="fixed left-2 z-[60] size-10 bg-black text-white rounded-lg shadow-lg hover:bg-black/80 hover:scale-110 active:scale-95 transition-all flex items-center justify-center"
+                            className="fixed left-2 z-[60] size-9 bg-[hsl(var(--surface-3))] text-[hsl(var(--text-primary))] hover:bg-[hsl(var(--primary))] hover:text-[hsl(var(--primary-foreground))] rounded-lg shadow-lg hover:scale-105 active:scale-95 transition-all flex items-center justify-center border border-[hsl(var(--border))]"
                             style={{ bottom: '4.5rem' }}
                             aria-label="Mostrar navegación principal"
+                            title="Mostrar navegación principal"
                         >
-                            <ChevronRight size={20} strokeWidth={2.5} />
+                            <ChevronRight size={18} strokeWidth={2.5} />
                         </motion.button>
                     )}
                     {!isCompactViewport && !layers.S2 && (
@@ -609,12 +639,19 @@ function WorkspaceLayoutInner({
                             initial={{ opacity: 0, x: -20 }}
                             animate={{ opacity: 1, x: 0 }}
                             transition={{ delay: 0.1 }}
-                            onClick={() => openLayer('S2')}
-                            className="fixed left-2 z-[60] size-10 bg-black text-white rounded-lg shadow-lg hover:bg-black/80 hover:scale-110 active:scale-95 transition-all flex items-center justify-center"
+                            onClick={() => {
+                                if (s2WidthNum <= snapThreshold) setS2WidthNum(defaultS2Width);
+                                openLayer('S2');
+                            }}
+                            className={clsx(
+                                "fixed z-[60] size-9 bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] rounded-lg shadow-lg hover:scale-105 active:scale-95 transition-all flex items-center justify-center",
+                                s1Visible ? "left-[5.25rem]" : "left-2"
+                            )}
                             style={{ bottom: '2rem' }}
                             aria-label="Mostrar panel de módulo"
+                            title="Mostrar navegación de proyectos"
                         >
-                            <ChevronRight size={20} strokeWidth={2.5} />
+                            <ChevronRight size={18} strokeWidth={2.5} />
                         </motion.button>
                     )}
                 </div>
