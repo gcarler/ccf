@@ -16,6 +16,7 @@ from backend.services.project_evm_service import (
     calculate_cpi_spi_quadrant,
     calculate_eac_forecasts,
     calculate_earned_schedule,
+    calculate_project_evm,
     calculate_project_evm_advanced,
     calculate_tcpi,
 )
@@ -414,4 +415,129 @@ def test_calculate_project_evm_advanced_integration():
     assert "composite" in res["forecast_models"]
     assert res["quadrant"]["quadrant_number"] == 1
     assert res["tcpi"]["is_budget_depleted"] is False
+
+
+def test_evm_canonical_edge_cases_no_zero_division_or_nan():
+    """Valida casos de borde canónicos (AC=0, PV=0, BAC=0, EV>BAC) para garantizar
+    que ninguna métrica retorne ZeroDivisionError, NaN o Infinity en backend ni APIs."""
+    import math
+
+    now = _utcnow()
+    db = MagicMock()
+
+    # Función auxiliar para comprobar que ningún valor float sea NaN ni Inf
+    def assert_no_nan_or_inf(obj):
+        if isinstance(obj, float):
+            assert not math.isnan(obj), f"Se encontró NaN: {obj}"
+            assert not math.isinf(obj), f"Se encontró Infinity: {obj}"
+        elif isinstance(obj, dict):
+            for v in obj.values():
+                assert_no_nan_or_inf(v)
+        elif isinstance(obj, (list, tuple)):
+            for item in obj:
+                assert_no_nan_or_inf(item)
+
+    # 1. Caso AC = 0 (Proyecto sin gastos aún)
+    # 1a: AC=0 y EV=0
+    proj_zero_ac_zero_ev = MagicMock(spec=models.Project)
+    proj_zero_ac_zero_ev.id = uuid.uuid4()
+    proj_zero_ac_zero_ev.budget_allocated = 100000.0
+    proj_zero_ac_zero_ev.budget_spent = 0.0
+    proj_zero_ac_zero_ev.manual_progress = 0.0
+    proj_zero_ac_zero_ev.progress_mode = "manual"
+    proj_zero_ac_zero_ev.start_date = now - timedelta(days=10)
+    proj_zero_ac_zero_ev.target_date = now + timedelta(days=90)
+    proj_zero_ac_zero_ev.created_at = proj_zero_ac_zero_ev.start_date
+    db.query().filter().all.return_value = []
+
+    evm_res = calculate_project_evm(db, proj_zero_ac_zero_ev)
+    assert evm_res["ac"] == 0.0
+    assert evm_res["cpi"] == 1.0
+    assert_no_nan_or_inf(evm_res)
+
+    adv_res = calculate_project_evm_advanced(db, proj_zero_ac_zero_ev, now=now)
+    assert_no_nan_or_inf(adv_res)
+
+    # 1b: AC=0 y EV > 0 (Trabajo completado sin costo registrado todavía)
+    proj_zero_ac_pos_ev = MagicMock(spec=models.Project)
+    proj_zero_ac_pos_ev.id = uuid.uuid4()
+    proj_zero_ac_pos_ev.budget_allocated = 100000.0
+    proj_zero_ac_pos_ev.budget_spent = 0.0
+    proj_zero_ac_pos_ev.manual_progress = 30.0
+    proj_zero_ac_pos_ev.progress_mode = "manual"
+    proj_zero_ac_pos_ev.start_date = now - timedelta(days=10)
+    proj_zero_ac_pos_ev.target_date = now + timedelta(days=90)
+    proj_zero_ac_pos_ev.created_at = proj_zero_ac_pos_ev.start_date
+
+    evm_res2 = calculate_project_evm(db, proj_zero_ac_pos_ev)
+    assert evm_res2["ac"] == 0.0
+    assert evm_res2["cpi"] == 2.0  # Sin gasto aún con avance positivo
+    assert_no_nan_or_inf(evm_res2)
+
+    adv_res2 = calculate_project_evm_advanced(db, proj_zero_ac_pos_ev, now=now)
+    assert_no_nan_or_inf(adv_res2)
+
+    # 2. Caso PV = 0 (Proyecto antes de la fecha de inicio o sin avance planificado a la fecha)
+    proj_zero_pv = MagicMock(spec=models.Project)
+    proj_zero_pv.id = uuid.uuid4()
+    proj_zero_pv.budget_allocated = 50000.0
+    proj_zero_pv.budget_spent = 5000.0
+    proj_zero_pv.manual_progress = 0.0
+    proj_zero_pv.progress_mode = "manual"
+    proj_zero_pv.start_date = now + timedelta(days=10)  # Inicia en el futuro
+    proj_zero_pv.target_date = now + timedelta(days=100)
+    proj_zero_pv.created_at = now
+
+    evm_pv0 = calculate_project_evm(db, proj_zero_pv)
+    assert evm_pv0["pv"] == 0.0
+    assert evm_pv0["spi"] == 1.0  # Seguro contra ZeroDivisionError
+    assert_no_nan_or_inf(evm_pv0)
+
+    adv_pv0 = calculate_project_evm_advanced(db, proj_zero_pv, now=now)
+    assert_no_nan_or_inf(adv_pv0)
+
+    # 3. Caso BAC = 0 (Proyecto con presupuesto 0 o no inicializado)
+    proj_zero_bac = MagicMock(spec=models.Project)
+    proj_zero_bac.id = uuid.uuid4()
+    proj_zero_bac.budget_allocated = 0.0
+    proj_zero_bac.budget_spent = 0.0
+    proj_zero_bac.manual_progress = 50.0
+    proj_zero_bac.progress_mode = "manual"
+    proj_zero_bac.start_date = now - timedelta(days=20)
+    proj_zero_bac.target_date = now + timedelta(days=80)
+    proj_zero_bac.created_at = proj_zero_bac.start_date
+
+    evm_bac0 = calculate_project_evm(db, proj_zero_bac)
+    assert evm_bac0["bac"] == 0.0
+    assert evm_bac0["ev"] == 0.0
+    assert evm_bac0["cpi"] == 1.0
+    assert evm_bac0["spi"] == 1.0
+    assert evm_bac0["financial_percentage"] == 0.0
+    assert_no_nan_or_inf(evm_bac0)
+
+    adv_bac0 = calculate_project_evm_advanced(db, proj_zero_bac, now=now)
+    assert adv_bac0["earned_schedule"]["earned_schedule_days"] == 0.0
+    assert adv_bac0["tcpi"]["is_budget_depleted"] is True
+    assert adv_bac0["tcpi"]["tcpi_bac"] is None
+    assert_no_nan_or_inf(adv_bac0)
+
+    # 4. Caso EV > BAC (Proyecto sobrecumplido / superavit de avance)
+    forecasts_over = calculate_eac_forecasts(bac=100000.0, ev=120000.0, ac=90000.0, cpi=1.33, spi=1.20)
+    assert_no_nan_or_inf(forecasts_over)
+    for model_key in ("typical", "atypical", "composite"):
+        # work_remaining = max(0.0, bac - ev) = 0.0
+        # etc debe ser >= 0.0 (no negativo)
+        assert forecasts_over[model_key]["etc"] == 0.0
+        assert forecasts_over[model_key]["eac"] == 90000.0
+
+    tcpi_over = calculate_tcpi(bac=100000.0, ev=120000.0, ac=90000.0, eac=90000.0)
+    assert_no_nan_or_inf(tcpi_over)
+    # No hay trabajo pendiente por financiar (work_remaining < 0)
+    assert tcpi_over["tcpi_bac"] is None
+    assert tcpi_over["tcpi_eac"] is None
+
+    es_over = calculate_earned_schedule(db, proj_zero_bac, ev=120000.0, bac=100000.0, now=now)
+    assert_no_nan_or_inf(es_over)
+    # Si EV >= BAC, earned_schedule_days se limita a planned_duration_days
+    assert es_over["earned_schedule_days"] == es_over["planned_duration_days"]
 
