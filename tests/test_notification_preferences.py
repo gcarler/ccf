@@ -13,7 +13,6 @@ Auth: flujo JWT real (login como admin sembrado) — sin override del guard,
 
 from __future__ import annotations
 
-import pytest
 from fastapi.testclient import TestClient
 
 from tests.conftest import auth_headers as _auth_headers

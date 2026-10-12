@@ -12,9 +12,9 @@ Verifica:
 from __future__ import annotations
 
 import datetime
+import uuid
 from datetime import timedelta, timezone
 from unittest.mock import MagicMock
-import uuid
 
 try:
     import pytest

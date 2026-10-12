@@ -12,11 +12,6 @@ Cubre:
 
 from __future__ import annotations
 
-from uuid import uuid4
-
-import pytest
-from fastapi.testclient import TestClient
-
 from tests.conftest import seed_admin as _seed_admin
 
 
@@ -26,9 +21,9 @@ def _mk_admin(db_session):
 
 
 def test_notify_creates_in_app_and_pending_delivery(db_session):
-    from backend.services.notification_hub import notify
     from backend.models_auth import NotificacionUsuario
     from backend.models_notifications import NotificationDelivery
+    from backend.services.notification_hub import notify
 
     admin, persona, sede = _mk_admin(db_session)
     user_id = persona.id
@@ -54,8 +49,8 @@ def test_notify_creates_in_app_and_pending_delivery(db_session):
 
 
 def test_notify_dedupe_skips_second_same_key(db_session):
-    from backend.services.notification_hub import notify
     from backend.models_auth import NotificacionUsuario
+    from backend.services.notification_hub import notify
 
     admin, persona, sede = _mk_admin(db_session)
     user_id = persona.id
@@ -86,9 +81,9 @@ def test_notify_dedupe_skips_second_same_key(db_session):
 
 
 def test_notify_respects_silenced_channels(db_session):
-    from backend.services.notification_preferences import set_preference, get_or_create_user_preferences
-    from backend.services.notification_hub import notify
     from backend.models_auth import NotificacionUsuario
+    from backend.services.notification_hub import notify
+    from backend.services.notification_preferences import get_or_create_user_preferences, set_preference
 
     admin, persona, sede = _mk_admin(db_session)
     user_id = persona.id
@@ -111,9 +106,9 @@ def test_notify_respects_silenced_channels(db_session):
 
 
 def test_deliver_pending_send_success(db_session, monkeypatch):
-    from backend.services import email as email_svc
-    from backend.services.notification_hub import notify, deliver_pending
     from backend.models_notifications import NotificationDelivery
+    from backend.services import email as email_svc
+    from backend.services.notification_hub import deliver_pending, notify
 
     admin, persona, sede = _mk_admin(db_session)
     user_id = persona.id
@@ -146,9 +141,9 @@ def test_deliver_pending_send_success(db_session, monkeypatch):
 
 
 def test_deliver_pending_exhausts_attempts_and_fails(db_session, monkeypatch):
-    from backend.services import email as email_svc
-    from backend.services.notification_hub import notify, deliver_pending
     from backend.models_notifications import NotificationDelivery
+    from backend.services import email as email_svc
+    from backend.services.notification_hub import deliver_pending, notify
 
     admin, persona, sede = _mk_admin(db_session)
     user_id = persona.id
@@ -182,8 +177,8 @@ def test_deliver_pending_exhausts_attempts_and_fails(db_session, monkeypatch):
 
 
 def test_suppress_pending_marks_read(db_session):
-    from backend.services.notification_hub import notify, suppress_pending_for_notification
     from backend.models_notifications import NotificationDelivery
+    from backend.services.notification_hub import notify, suppress_pending_for_notification
 
     admin, persona, sede = _mk_admin(db_session)
     user_id = persona.id
