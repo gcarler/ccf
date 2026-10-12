@@ -248,7 +248,7 @@ export interface AppearanceContextProps {
     toggleTheme: () => void;
     setTheme: (mode: ThemeMode) => void;
 
-    // Interface Scale (legacy compatibility)
+    // Interface Scale (backward compatibility)
     uiScale: UiScaleId;
     setUiScale: (scale: UiScaleId) => void;
     scaleFactor: number;
