@@ -110,7 +110,7 @@ class AutomationGraphPayload(BaseModel):
 
     Todos los campos son opcionales: cuerpo ausente o ``{}`` equivalen a un
     grafo vacío con fallback a la base de datos. Los nodos se preservan de
-    forma polimórfica (dict rico o string) porque el servicio legacy
+    forma polimórfica (dict rico o string) porque el servicio anterior
     ``get_graph_from_payload_or_db`` acepta ambas formas.
     """
 
@@ -138,7 +138,7 @@ class AutomationFlowData(BaseModel):
 
 
 def automation_payload_to_dict(payload: AutomationGraphPayload | None) -> dict[str, Any]:
-    """Convierte el payload tipado al dict plano que consume el servicio legacy.
+    """Convierte el payload tipado al dict plano que consume el servicio subyacente.
 
     ``exclude_unset`` preserva exactamente las claves que envió el cliente:
     un cuerpo ``{}`` se queda como ``{}`` (el servicio hace fallback a base de

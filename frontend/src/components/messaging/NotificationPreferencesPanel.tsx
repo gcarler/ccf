@@ -23,7 +23,7 @@ type NotificationChannel = 'in_app' | 'email';
 
 interface NotificationPreference {
     id: string;
-    user_id: string;
+    persona_id?: string;
     channel: NotificationChannel;
     event_type: string;
     enabled: boolean;
