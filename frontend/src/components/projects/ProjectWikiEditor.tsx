@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
+import clsx from 'clsx';
 import { useEditor, EditorContent, ReactRenderer } from '@tiptap/react';
 import { Extension, type Editor, type Range } from '@tiptap/core';
 import StarterKit from '@tiptap/starter-kit';
@@ -11,14 +12,15 @@ import Suggestion, { type SuggestionProps, type SuggestionKeyDownProps } from '@
 import tippy, { type Instance as TippyInstance } from 'tippy.js';
 import {
     Bold, Italic, Heading1, Heading2,
-    List, CheckSquare, Quote, Undo, Redo,
-    Cloud, Loader2, Minus
+    List, ListOrdered, CheckSquare, Quote, Undo, Redo,
+    Cloud, Loader2, Minus, Save
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/lib/http';
 import { CommandsList } from './wiki/CommandsList';
 import { toast } from "sonner";
+import { DSButton } from '@/design';
 
 interface Props {
     project_id: string;
@@ -30,33 +32,76 @@ export default function ProjectWikiEditor({ project_id, initialContent = '' }: P
     const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
     const [content, setContent] = useState(initialContent);
     const [loadError, setLoadError] = useState<string | null>(null);
+    const contentRef = useRef(initialContent);
+    const lastSavedContentRef = useRef(initialContent);
+    const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const saveStatusTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const saveQueueRef = useRef<Promise<void>>(Promise.resolve());
+    const pendingSavesRef = useRef(new Map<string, Promise<void>>());
 
-    const saveContent = useCallback(async (newContent: string) => {
-        if (!token) {
-            setSaveStatus('error');
-            setLoadError('Debes iniciar sesión para guardar la wiki.');
-            return;
-        }
-        setSaveStatus('saving');
-        try {
-            await apiFetch(`/projects/${project_id}/wiki`, {
-                method: 'POST',
-                token,
-                body: { content: newContent }
+    const saveContent = useCallback((newContent: string, manual = false) => {
+        const enqueueSave = () => {
+            const operation = saveQueueRef.current.catch(() => undefined).then(async () => {
+                if (!manual && newContent === lastSavedContentRef.current) return;
+                if (!token) {
+                    setSaveStatus('error');
+                    setLoadError('Debes iniciar sesión para guardar la wiki.');
+                    return;
+                }
+                setSaveStatus('saving');
+                try {
+                    await apiFetch(`/projects/${project_id}/wiki`, {
+                        method: 'POST', token, body: { content: newContent }
+                    });
+                    lastSavedContentRef.current = newContent;
+                    setLoadError(null);
+                    setSaveStatus('saved');
+                    if (manual) toast.success('Wiki guardada con éxito');
+                    if (saveStatusTimerRef.current) clearTimeout(saveStatusTimerRef.current);
+                    saveStatusTimerRef.current = setTimeout(() => setSaveStatus('idle'), 3000);
+                } catch {
+                    setSaveStatus('error');
+                    setLoadError('No se pudo guardar la wiki del proyecto.');
+                }
             });
-            setSaveStatus('saved');
-            setTimeout(() => setSaveStatus('idle'), 3000);
-        } catch (err) {
-            setSaveStatus('error');
-            setLoadError('No se pudo guardar la wiki del proyecto.');
+            saveQueueRef.current = operation;
+            pendingSavesRef.current.set(newContent, operation);
+            void operation.then(() => {
+                if (pendingSavesRef.current.get(newContent) === operation) pendingSavesRef.current.delete(newContent);
+            });
+            return operation;
+        };
+
+        const pendingSave = pendingSavesRef.current.get(newContent);
+        if (pendingSave) {
+            if (!manual) return pendingSave;
+            return pendingSave.then(() => {
+                if (lastSavedContentRef.current === newContent) {
+                    toast.success('Wiki guardada con éxito');
+                    return;
+                }
+                return enqueueSave();
+            });
         }
+        return enqueueSave();
     }, [project_id, token]);
 
     useEffect(() => {
-        if (content === initialContent) return;
-        const timer = setTimeout(() => saveContent(content), 2000);
-        return () => clearTimeout(timer);
-    }, [content, saveContent, initialContent]);
+        if (content === lastSavedContentRef.current) return;
+        saveTimerRef.current = setTimeout(() => {
+            saveTimerRef.current = null;
+            void saveContent(content);
+        }, 2000);
+        return () => {
+            if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+            saveTimerRef.current = null;
+        };
+    }, [content, saveContent]);
+
+    useEffect(() => () => {
+        if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+        if (saveStatusTimerRef.current) clearTimeout(saveStatusTimerRef.current);
+    }, []);
 
     const editor = useEditor({
         extensions: [
@@ -147,7 +192,11 @@ export default function ProjectWikiEditor({ project_id, initialContent = '' }: P
         content: initialContent,
         immediatelyRender: false,
         editorProps: { attributes: { class: 'prose max-w-none focus:outline-none min-h-48' } },
-        onUpdate: ({ editor }) => setContent(editor.getHTML())
+        onUpdate: ({ editor }) => {
+            const nextContent = editor.getHTML();
+            contentRef.current = nextContent;
+            setContent(nextContent);
+        }
     });
 
     useEffect(() => {
@@ -160,14 +209,19 @@ export default function ProjectWikiEditor({ project_id, initialContent = '' }: P
             try {
                 setLoadError(null);
                 const data = await apiFetch<{content: string}>(`/projects/${project_id}/wiki`, { token });
-                if (data && data.content) editor?.commands.setContent(data.content);
+                if (data && typeof data.content === 'string' && contentRef.current === initialContent) {
+                    lastSavedContentRef.current = data.content;
+                    contentRef.current = data.content;
+                    setContent(data.content);
+                    editor?.commands.setContent(data.content);
+                }
             } catch (err) {
                 setLoadError('No se pudo cargar la wiki del proyecto.');
                 toast.error("Error inesperado");
             }
         };
         load();
-    }, [authLoading, editor, project_id, token]);
+    }, [authLoading, editor, initialContent, project_id, token]);
 
     if (!editor) return null;
 
@@ -176,13 +230,32 @@ export default function ProjectWikiEditor({ project_id, initialContent = '' }: P
             <div className="flex flex-wrap items-center gap-1 p-2 border-b border-[hsl(var(--border))] bg-[hsl(var(--surface-1))]">
                 <MenuButton label="Negrita" onClick={() => editor.chain().focus().toggleBold().run()} isActive={editor.isActive('bold')} icon={Bold} />
                 <MenuButton label="Cursiva" onClick={() => editor.chain().focus().toggleItalic().run()} isActive={editor.isActive('italic')} icon={Italic} />
+                <MenuButton label="Encabezado 1" onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()} isActive={editor.isActive('heading', { level: 1 })} icon={Heading1} />
+                <MenuButton label="Encabezado 2" onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()} isActive={editor.isActive('heading', { level: 2 })} icon={Heading2} />
                 <div className="w-[1px] h-5 bg-[hsl(var(--border))] mx-1" />
+                <MenuButton label="Lista con viñetas" onClick={() => editor.chain().focus().toggleBulletList().run()} isActive={editor.isActive('bulletList')} icon={List} />
+                <MenuButton label="Lista numerada" onClick={() => editor.chain().focus().toggleOrderedList().run()} isActive={editor.isActive('orderedList')} icon={ListOrdered} />
                 <MenuButton label="Lista de tareas" onClick={() => editor.chain().focus().toggleTaskList().run()} isActive={editor.isActive('taskList')} icon={CheckSquare} />
+                <MenuButton label="Cita" onClick={() => editor.chain().focus().toggleBlockquote().run()} isActive={editor.isActive('blockquote')} icon={Quote} />
+                <MenuButton label="Separador horizontal" onClick={() => editor.chain().focus().setHorizontalRule().run()} isActive={editor.isActive('horizontalRule')} icon={Minus} />
                 <div className="ml-auto flex items-center gap-3 px-2">
                     <div className="flex items-center gap-1.5">
                         {saveStatus === 'saving' && <><Loader2 size={12} className="animate-spin text-[hsl(var(--primary))]" /> <span className="text-2xs font-bold uppercase text-[hsl(var(--primary))]">Guardando</span></>}
                         {saveStatus === 'saved' && <><Cloud size={12} className="text-[hsl(var(--success))]" /> <span className="text-2xs font-bold uppercase text-[hsl(var(--success))]">Sincronizado</span></>}
                     </div>
+                    <DSButton
+                        type="button"
+                        onClick={() => {
+                            if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+                            saveTimerRef.current = null;
+                            void saveContent(contentRef.current, true);
+                        }}
+                        className="inline-flex items-center gap-1.5"
+                        aria-label="Guardar cambios de la wiki"
+                    >
+                        <Save size={14} aria-hidden="true" />
+                        Guardar cambios
+                    </DSButton>
                     <div className="flex items-center gap-0.5 border-l border-[hsl(var(--border))] pl-2">
                         <MenuButton label="Deshacer" onClick={() => editor.chain().focus().undo().run()} disabled={!editor.can().undo()} icon={Undo} />
                         <MenuButton label="Rehacer" onClick={() => editor.chain().focus().redo().run()} disabled={!editor.can().redo()} icon={Redo} />
@@ -209,13 +282,22 @@ export default function ProjectWikiEditor({ project_id, initialContent = '' }: P
 
 function MenuButton({ onClick, isActive, disabled, icon: Icon, label }: { onClick: () => void; isActive?: boolean; disabled?: boolean; icon: LucideIcon; label: string }) {
     return (
-        <button
+        <DSButton
+            type="button"
             onClick={onClick}
             disabled={disabled}
             aria-label={label}
-            className={`p-2 rounded-md transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--primary))] focus-visible:ring-offset-2 ${isActive ? 'bg-[hsl(var(--surface-2))] text-[hsl(var(--primary))] shadow-sm ring-1 ring-[hsl(var(--border))]' : 'text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--surface-2))] hover:text-[hsl(var(--foreground))]'} ${disabled ? 'opacity-20' : ''}`}
+            aria-pressed={Boolean(isActive)}
+            variant="ghost"
+            className={clsx(
+                'p-2 rounded-md transition-all focus-visible:ring-2 focus-visible:ring-offset-2',
+                isActive
+                    ? 'bg-[hsl(var(--surface-2))] text-[hsl(var(--primary))] shadow-sm ring-1 ring-[hsl(var(--border))]'
+                    : 'text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-2))] hover:text-[hsl(var(--text-primary))]',
+                disabled && 'opacity-20'
+            )}
         >
-            <Icon size={16} />
-        </button>
+            <Icon size={16} aria-hidden="true" />
+        </DSButton>
     );
 }
