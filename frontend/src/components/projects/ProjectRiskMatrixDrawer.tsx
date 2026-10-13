@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState, useEffect, useCallback, useRef } from "react";
-import { RightPanel } from "@/components/ui/RightPanel";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/context/ToastContext";
 import { apiFetch } from "@/lib/http";
@@ -327,13 +326,7 @@ export function ProjectRiskMatrixDrawer({
   });
 
   return (
-    <RightPanel
-      isOpen={isOpen}
-      onClose={onClose}
-      title="Matriz RAID de Riesgos y Supuestos"
-      description="Gestión preventiva de amenazas, matriz de calor 5x5 y activación de planes de contingencia."
-      width="max-w-3xl"
-    >
+    <>
       <div className="space-y-6 pb-12">
         {/* RESUMEN DE SEVERIDAD */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -1027,6 +1020,6 @@ export function ProjectRiskMatrixDrawer({
         </div>
       </div>
       <ConfirmActionDrawer action={confirmAction} onClose={() => setConfirmAction(null)} />
-    </RightPanel>
+    </>
   );
 }

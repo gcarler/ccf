@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { RightPanel } from "@/components/ui/RightPanel";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/context/ToastContext";
 import { apiFetch } from "@/lib/http";
@@ -208,12 +207,7 @@ export function ProjectTemplateCatalogDrawer({
   };
 
   return (
-    <RightPanel
-      isOpen={isOpen}
-      onClose={onClose}
-      title="Catálogo de Plantillas Reutilizables de Proyectos"
-      className="w-full max-w-2xl"
-    >
+    <>
       <div className="flex flex-col gap-5 p-6 text-sm" style={{ color: "hsl(var(--text-primary))" }}>
         {/* NAVEGACIÓN ENTRE PESTAÑAS */}
         <div
@@ -806,6 +800,6 @@ export function ProjectTemplateCatalogDrawer({
         )}
       </div>
       <ConfirmActionDrawer action={confirmAction} onClose={() => setConfirmAction(null)} />
-    </RightPanel>
+    </>
   );
 }

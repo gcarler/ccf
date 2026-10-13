@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import RightPanel from '@/components/ui/RightPanel';
 import { useAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/lib/http';
 import type { ProjectEVMMetrics, ProjectCurveSPoint, ProjectCurveSResponse } from '@/types/projects';
@@ -153,24 +152,7 @@ export function ProjectEVMDrawer({
     };
 
     return (
-        <RightPanel
-            isOpen={isOpen}
-            onClose={onClose}
-            title={
-                <div className="flex items-center gap-2">
-                    <Activity className="text-[hsl(var(--primary))]" size={18} />
-                    <span className="font-bold text-sm uppercase tracking-tight">
-                        Gestión del Valor Ganado (EVM / PMI)
-                    </span>
-                </div>
-            }
-            subtitle={
-                <span className="text-xs text-[hsl(var(--muted-foreground))]">
-                    Balance Físico vs Financiero • {projectTitle}
-                </span>
-            }
-            width="w-full sm:max-w-2xl md:max-w-3xl"
-        >
+        <>
             <div className="p-4 sm:p-6 space-y-6">
                 {/* Selector de Pestañas Superiores y Acciones Rápidas */}
                 <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2">
@@ -714,7 +696,7 @@ export function ProjectEVMDrawer({
                     onClose={() => setPMIOpen(false)}
                 />
             </div>
-        </RightPanel>
+        </>
     );
 }
 

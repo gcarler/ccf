@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from "react";
-import { RightPanel } from "@/components/ui/RightPanel";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/context/ToastContext";
 import { apiFetch } from "@/lib/http";
@@ -228,12 +227,7 @@ export function ProjectKpiDrawer({
   };
 
   return (
-    <RightPanel
-      title="Indicadores y KPIs del Proyecto"
-      open={isOpen}
-      onClose={onClose}
-      width={440}
-    >
+    <>
       <div className="flex flex-col h-full space-y-4 p-4 text-[hsl(var(--text-primary))]">
         {/* Header Summary */}
         <div className="flex items-center justify-between p-3 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] shadow-sm">
@@ -515,6 +509,6 @@ export function ProjectKpiDrawer({
         </div>
       </div>
       <ConfirmActionDrawer action={confirmAction} onClose={() => setConfirmAction(null)} />
-    </RightPanel>
+    </>
   );
 }

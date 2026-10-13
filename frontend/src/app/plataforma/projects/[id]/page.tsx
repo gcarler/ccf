@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import dynamic from 'next/dynamic';
 import clsx from 'clsx';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
@@ -39,6 +39,11 @@ import WorkspaceToolbar from '@/components/WorkspaceToolbar';
 import { UserMenuDropdown } from '@/components/WorkspaceLayout';
 import { DSTooltip } from '@/design';
 import RightPanel from '@/components/ui/RightPanel';
+import {
+  ProjectManagementHubDrawer,
+  type ProjectHubModuleKey,
+  type ProjectHubModuleMeta,
+} from '@/components/projects/ProjectManagementHubDrawer';
 import type { ConfirmActionState } from '@/components/ConfirmActionDrawer';
 import {
   DeferredMount,
@@ -57,6 +62,22 @@ const TOOLBAR_ICON_BUTTON_CLASS =
 const INLINE_TOOLBAR_ACTION_KEYS = [
   'whiteboard', 'phases', 'kpis', 'progress', 'budget', 'risks',
   'workload', 'reports', 'indicators', 'drive',
+];
+
+// Hub unificado de gestión: metadatos de los 12 módulos de control.
+const PROJECT_HUB_MODULE_META: ProjectHubModuleMeta[] = [
+  { key: 'kpis', label: 'KPIs', icon: Target },
+  { key: 'progress', label: 'Avance', icon: Sliders },
+  { key: 'budget', label: 'Presupuesto', icon: Wallet },
+  { key: 'risks', label: 'Riesgos', icon: ShieldAlert },
+  { key: 'workload', label: 'Carga', icon: Users },
+  { key: 'time', label: 'Horas', icon: Clock },
+  { key: 'templates', label: 'Plantillas', icon: BookTemplate },
+  { key: 'automations', label: 'Automatizaciones', icon: Zap },
+  { key: 'reports', label: 'Reportes', icon: FileText },
+  { key: 'indicators', label: 'Indicadores (IDP)', icon: BarChart3 },
+  { key: 'evm', label: 'Valor Ganado (EVM / CPI)', icon: TrendingUp },
+  { key: 'drive', label: 'Bóveda y Drive', icon: FolderArchive },
 ];
 
 const PROJECT_DETAIL_VIEWS: ViewType[] = [
@@ -299,18 +320,36 @@ export default function ProjectDetailPage() {
   const [showProjectActions, setShowProjectActions] = useState(false);
   const [whiteboardOpen, setWhiteboardOpen] = useState(false);
   const [showPhaseManager, setShowPhaseManager] = useState(false);
-  const [showKpiDrawer, setShowKpiDrawer] = useState(false);
-  const [showProgressDrawer, setShowProgressDrawer] = useState(false);
-  const [showBudgetDrawer, setShowBudgetDrawer] = useState(false);
-  const [showRiskDrawer, setShowRiskDrawer] = useState(false);
-  const [showWorkloadDrawer, setShowWorkloadDrawer] = useState(false);
-  const [showTimeTrackingDrawer, setShowTimeTrackingDrawer] = useState(false);
-  const [showTemplateDrawer, setShowTemplateDrawer] = useState(false);
-  const [showAutomationsDrawer, setShowAutomationsDrawer] = useState(false);
-  const [showReportDrawer, setShowReportDrawer] = useState(false);
-  const [showIndicatorsDrawer, setShowIndicatorsDrawer] = useState(false);
-  const [showEVMDrawer, setShowEVMDrawer] = useState(false);
-  const [showDriveDrawer, setShowDriveDrawer] = useState(false);
+  // Hub de gestión: una sola pestaña activa dentro de un único panel.
+  const [hubState, setHubState] = useState<{
+    open: ProjectHubModuleKey[];
+    active: ProjectHubModuleKey | null;
+  }>({ open: [], active: null });
+  const hubOpen = hubState.open.length > 0;
+
+  const openHubModule = useCallback((key: ProjectHubModuleKey) => {
+    setHubState(prev => ({
+      open: prev.open.includes(key) ? prev.open : [...prev.open, key],
+      active: key,
+    }));
+  }, []);
+
+  const closeHubModule = useCallback((key: ProjectHubModuleKey) => {
+    setHubState(prev => {
+      const open = prev.open.filter(row => row !== key);
+      return {
+        open,
+        active:
+          prev.active === key
+            ? open[open.length - 1] ?? null
+            : prev.active,
+      };
+    });
+  }, []);
+
+  const closeHub = useCallback(() => {
+    setHubState({ open: [], active: null });
+  }, []);
   const [showContextPanel, setShowContextPanel] = useState(true);
   const [isContextMaximized, setIsContextMaximized] = useState(false);
   const [confirmAction, setConfirmAction] = useState<ConfirmActionState>(null);
@@ -340,18 +379,18 @@ export default function ProjectDetailPage() {
   }[] = [
     { key: 'whiteboard', label: 'Pizarra', icon: PencilRuler, onSelect: () => setWhiteboardOpen(true) },
     { key: 'phases', label: 'Fases', icon: Edit3, onSelect: () => setShowPhaseManager(true) },
-    { key: 'kpis', label: 'KPIs', icon: Target, onSelect: () => setShowKpiDrawer(true) },
-    { key: 'progress', label: 'Avance', icon: Sliders, onSelect: () => setShowProgressDrawer(true) },
-    { key: 'budget', label: 'Presupuesto', icon: Wallet, onSelect: () => setShowBudgetDrawer(true) },
-    { key: 'risks', label: 'Riesgos', icon: ShieldAlert, onSelect: () => setShowRiskDrawer(true) },
-    { key: 'workload', label: 'Carga', icon: Users, onSelect: () => setShowWorkloadDrawer(true) },
-    { key: 'time', label: 'Horas', icon: Clock, onSelect: () => setShowTimeTrackingDrawer(true) },
-    { key: 'templates', label: 'Plantillas', icon: BookTemplate, onSelect: () => setShowTemplateDrawer(true) },
-    { key: 'automations', label: 'Automatizaciones', icon: Zap, onSelect: () => setShowAutomationsDrawer(true) },
-    { key: 'reports', label: 'Reportes', icon: FileText, onSelect: () => setShowReportDrawer(true) },
-    { key: 'indicators', label: 'Indicadores (IDP)', icon: BarChart3, onSelect: () => setShowIndicatorsDrawer(true) },
-    { key: 'evm', label: 'Valor Ganado (EVM / CPI)', icon: TrendingUp, onSelect: () => setShowEVMDrawer(true) },
-    { key: 'drive', label: 'Bóveda y Drive', icon: FolderArchive, onSelect: () => setShowDriveDrawer(true) },
+    { key: 'kpis', label: 'KPIs', icon: Target, onSelect: () => openHubModule('kpis') },
+    { key: 'progress', label: 'Avance', icon: Sliders, onSelect: () => openHubModule('progress') },
+    { key: 'budget', label: 'Presupuesto', icon: Wallet, onSelect: () => openHubModule('budget') },
+    { key: 'risks', label: 'Riesgos', icon: ShieldAlert, onSelect: () => openHubModule('risks') },
+    { key: 'workload', label: 'Carga', icon: Users, onSelect: () => openHubModule('workload') },
+    { key: 'time', label: 'Horas', icon: Clock, onSelect: () => openHubModule('time') },
+    { key: 'templates', label: 'Plantillas', icon: BookTemplate, onSelect: () => openHubModule('templates') },
+    { key: 'automations', label: 'Automatizaciones', icon: Zap, onSelect: () => openHubModule('automations') },
+    { key: 'reports', label: 'Reportes', icon: FileText, onSelect: () => openHubModule('reports') },
+    { key: 'indicators', label: 'Indicadores (IDP)', icon: BarChart3, onSelect: () => openHubModule('indicators') },
+    { key: 'evm', label: 'Valor Ganado (EVM / CPI)', icon: TrendingUp, onSelect: () => openHubModule('evm') },
+    { key: 'drive', label: 'Bóveda y Drive', icon: FolderArchive, onSelect: () => openHubModule('drive') },
     { key: 'settings', label: 'Editar proyecto', icon: Edit3, onSelect: () => setShowProjectSettings(true), variant: 'warning' as const },
     { key: 'delete', label: 'Eliminar proyecto', icon: Trash2, onSelect: handleDeleteProject, variant: 'destructive' as const, visible: canDeleteProjectFromApiPolicy },
   ].filter((action) => action.visible !== false);
@@ -386,6 +425,110 @@ export default function ProjectDetailPage() {
       })}
     </div>
   );
+
+  const moduleRenderers = {
+    kpis: () => (
+      <ProjectKpiDrawer
+        projectId={project?.id || id}
+        isOpen
+        onClose={() => closeHubModule('kpis')}
+        onKpisUpdated={() => reloadProject()}
+      />
+    ),
+    progress: () => (
+      <ProgressSettingsDrawer
+        projectId={project?.id || id}
+        isOpen
+        onClose={() => closeHubModule('progress')}
+        currentMode={project?.progress_mode}
+        manualProgress={project?.manual_progress}
+        currentHealthOverride={project?.health_override}
+        onSaved={() => reloadProject()}
+      />
+    ),
+    budget: () => (
+      <ProjectBudgetDrawer
+        projectId={project?.id || id}
+        isOpen
+        onClose={() => closeHubModule('budget')}
+        budgetAllocated={project?.budget_allocated}
+        onBudgetUpdated={() => reloadProject()}
+      />
+    ),
+    risks: () => (
+      <ProjectRiskMatrixDrawer
+        projectId={project?.id || id}
+        isOpen
+        onClose={() => closeHubModule('risks')}
+      />
+    ),
+    workload: () => (
+      <ProjectWorkloadDrawer
+        projectId={project?.id || id}
+        isOpen
+        onClose={() => closeHubModule('workload')}
+        onWorkloadUpdated={() => reloadProject()}
+      />
+    ),
+    time: () => (
+      <ProjectTimeTrackingDrawer
+        projectId={project?.id || id}
+        isOpen
+        onClose={() => closeHubModule('time')}
+        tasks={tasks}
+        onTimeLogged={() => reloadProject()}
+      />
+    ),
+    templates: () => (
+      <ProjectTemplateCatalogDrawer
+        isOpen
+        onClose={() => closeHubModule('templates')}
+        activeProjectId={project?.id || id}
+        activeProjectTitle={project?.title}
+        onProjectCreated={() => reloadProject()}
+      />
+    ),
+    automations: () => (
+      <ProjectAutomationsDrawer
+        projectId={project?.id || id}
+        isOpen
+        onClose={() => closeHubModule('automations')}
+        tasks={tasks}
+      />
+    ),
+    reports: () => (
+      <ProjectReportDrawer
+        projectId={project?.id || id}
+        isOpen
+        onClose={() => closeHubModule('reports')}
+        projectTitle={project?.title}
+      />
+    ),
+    indicators: () => (
+      <ProjectIndicatorsDrawer
+        projectId={project?.id || id}
+        isOpen
+        onClose={() => closeHubModule('indicators')}
+        onIndicatorUpdated={() => reloadProject()}
+      />
+    ),
+    evm: () => (
+      <ProjectEVMDrawer
+        projectId={project?.id || id}
+        projectTitle={project?.title}
+        isOpen
+        onClose={() => closeHubModule('evm')}
+      />
+    ),
+    drive: () => (
+      <ProjectDriveDrawer
+        projectId={project?.id || id}
+        isOpen
+        onClose={() => closeHubModule('drive')}
+        onFileUpdated={() => reloadProject()}
+      />
+    ),
+  } satisfies Partial<Record<ProjectHubModuleKey, () => React.ReactNode>>;
 
   // ── Build context value (stable reference) ──
   const contextValue = useMemo(
@@ -650,118 +793,19 @@ export default function ProjectDetailPage() {
           />
         </DeferredMount>
 
-        <DeferredMount open={showKpiDrawer}>
-          <ProjectKpiDrawer
-            projectId={project?.id || id}
-            isOpen={showKpiDrawer}
-            onClose={() => setShowKpiDrawer(false)}
-            onKpisUpdated={() => reloadProject()}
+        <DeferredMount open={hubOpen}>
+          <ProjectManagementHubDrawer
+            isOpen={hubOpen}
+            openModules={hubState.open}
+            moduleMeta={PROJECT_HUB_MODULE_META}
+            activeModule={hubState.active}
+            onActivateModule={openHubModule}
+            onCloseModule={closeHubModule}
+            onCloseHub={closeHub}
+            moduleRenderers={moduleRenderers}
           />
         </DeferredMount>
 
-        <DeferredMount open={showProgressDrawer}>
-          <ProgressSettingsDrawer
-            projectId={project?.id || id}
-            isOpen={showProgressDrawer}
-            onClose={() => setShowProgressDrawer(false)}
-            currentMode={project?.progress_mode}
-            manualProgress={project?.manual_progress}
-            currentHealthOverride={project?.health_override}
-            onSaved={() => reloadProject()}
-          />
-        </DeferredMount>
-
-        <DeferredMount open={showBudgetDrawer}>
-          <ProjectBudgetDrawer
-            projectId={project?.id || id}
-            isOpen={showBudgetDrawer}
-            onClose={() => setShowBudgetDrawer(false)}
-            budgetAllocated={project?.budget_allocated}
-            onBudgetUpdated={() => reloadProject()}
-          />
-        </DeferredMount>
-
-        <DeferredMount open={showRiskDrawer}>
-          <ProjectRiskMatrixDrawer
-            projectId={project?.id || id}
-            isOpen={showRiskDrawer}
-            onClose={() => setShowRiskDrawer(false)}
-          />
-        </DeferredMount>
-
-        <DeferredMount open={showWorkloadDrawer}>
-          <ProjectWorkloadDrawer
-            projectId={project?.id || id}
-            isOpen={showWorkloadDrawer}
-            onClose={() => setShowWorkloadDrawer(false)}
-            onWorkloadUpdated={() => reloadProject()}
-          />
-        </DeferredMount>
-
-        <DeferredMount open={showTimeTrackingDrawer}>
-          <ProjectTimeTrackingDrawer
-            projectId={project?.id || id}
-            isOpen={showTimeTrackingDrawer}
-            onClose={() => setShowTimeTrackingDrawer(false)}
-            tasks={tasks}
-            onTimeLogged={() => reloadProject()}
-          />
-        </DeferredMount>
-
-        <DeferredMount open={showTemplateDrawer}>
-          <ProjectTemplateCatalogDrawer
-            isOpen={showTemplateDrawer}
-            onClose={() => setShowTemplateDrawer(false)}
-            activeProjectId={project?.id || id}
-            activeProjectTitle={project?.title}
-            onProjectCreated={() => reloadProject()}
-          />
-        </DeferredMount>
-
-        <DeferredMount open={showAutomationsDrawer}>
-          <ProjectAutomationsDrawer
-            projectId={project?.id || id}
-            isOpen={showAutomationsDrawer}
-            onClose={() => setShowAutomationsDrawer(false)}
-            tasks={tasks}
-          />
-        </DeferredMount>
-
-        <DeferredMount open={showReportDrawer}>
-          <ProjectReportDrawer
-            projectId={project?.id || id}
-            isOpen={showReportDrawer}
-            onClose={() => setShowReportDrawer(false)}
-            projectTitle={project?.title}
-          />
-        </DeferredMount>
-
-        <DeferredMount open={showIndicatorsDrawer}>
-          <ProjectIndicatorsDrawer
-            projectId={project?.id || id}
-            isOpen={showIndicatorsDrawer}
-            onClose={() => setShowIndicatorsDrawer(false)}
-            onIndicatorUpdated={() => reloadProject()}
-          />
-        </DeferredMount>
-
-        <DeferredMount open={showEVMDrawer}>
-          <ProjectEVMDrawer
-            projectId={project?.id || id}
-            projectTitle={project?.title}
-            isOpen={showEVMDrawer}
-            onClose={() => setShowEVMDrawer(false)}
-          />
-        </DeferredMount>
-
-        <DeferredMount open={showDriveDrawer}>
-          <ProjectDriveDrawer
-            projectId={project?.id || id}
-            isOpen={showDriveDrawer}
-            onClose={() => setShowDriveDrawer(false)}
-            onFileUpdated={() => reloadProject()}
-          />
-        </DeferredMount>
       </div>
     </ProjectUpdateProvider>
   );

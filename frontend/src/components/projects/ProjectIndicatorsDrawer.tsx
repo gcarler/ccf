@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState, useEffect, useCallback, useMemo } from "react";
-import { RightPanel } from "@/components/ui/RightPanel";
 import ConfirmDeleteDrawer from "@/components/ui/ConfirmDeleteDrawer";
 import { useAuth } from "@/context/AuthContext";
 import { apiFetch } from "@/lib/http";
@@ -361,12 +360,7 @@ export function ProjectIndicatorsDrawer({
   }, [recordTarget, recordActual]);
 
   return (
-    <RightPanel
-      open={isOpen}
-      onClose={onClose}
-      title="Indicadores y Desempeño del Proyecto (IDP)"
-      width={780}
-    >
+    <>
       <div className="flex flex-col h-full bg-[hsl(var(--surface-1))] text-[hsl(var(--text-primary))]">
         {/* Encabezado y Navegación de Pestañas */}
         <div className="px-5 pt-3 pb-3 border-b border-[hsl(var(--border))] space-y-3 bg-[hsl(var(--surface-2))]/50">
@@ -1226,6 +1220,6 @@ export function ProjectIndicatorsDrawer({
         description="¿Estás seguro de que deseas eliminar este indicador? Esta acción no se puede deshacer y borrará también su historial de avance."
         confirmLabel="Eliminar indicador"
       />
-    </RightPanel>
+    </>
   );
 }
