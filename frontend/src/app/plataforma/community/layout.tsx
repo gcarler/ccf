@@ -20,25 +20,25 @@ export default function CommunityLayout({ children }: { children: React.ReactNod
         {
             title: "Canales",
             items: [
-                { label: "Notificaciones", icon: Bell, href: "/community/notifications" },
-                { label: "Anuncios", icon: Megaphone, href: "/community/announcements" },
-                { label: "Mensajes", icon: MessageSquare, href: "/plataforma/messages" }
+                { label: "Notificaciones", icon: Bell, href: "/plataforma/community/notifications" },
+                { label: "Anuncios", icon: Megaphone, href: "/plataforma/community/announcements" },
+                { label: "Mensajes", icon: MessageSquare, href: "/plataforma/community/messages" }
             ]
         },
         {
             title: "Interacción",
             items: [
-                { label: "Calendario", icon: Calendar, href: "/community/events" },
-                { label: "Ofrendas", icon: HeartHandshake, href: "/community/give" },
-                { label: "Muro de Oración", icon: Heart, href: "/community/prayer" },
-                { label: "Testimonios", icon: Star, href: "/community/testimonies" }
+                { label: "Calendario", icon: Calendar, href: "/plataforma/community/events" },
+                { label: "Ofrendas", icon: HeartHandshake, href: "/plataforma/community/give" },
+                { label: "Muro de Oración", icon: Heart, href: "/plataforma/community/prayer" },
+                { label: "Testimonios", icon: Star, href: "/plataforma/community/testimonies" }
             ]
         },
         {
             title: "Grupos",
             items: [
-                { label: "Grupos Pequeños", icon: Users, href: "/community/grupos" },
-                { label: "Descubrir", icon: Search, href: "/community/discover" }
+                { label: "Grupos Pequeños", icon: Users, href: "/plataforma/community/grupos" },
+                { label: "Descubrir", icon: Search, href: "/plataforma/community/discover" }
             ]
         }
     ];
