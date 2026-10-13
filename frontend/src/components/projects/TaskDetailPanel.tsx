@@ -340,8 +340,12 @@ export default function TaskDetailPanel({
         const currentIdx = STATUS_CYCLE.indexOf(getValidStatus(task.status));
         const nextStatus = STATUS_CYCLE[(currentIdx + 1) % STATUS_CYCLE.length];
         onUpdate?.({ ...task, status: nextStatus });
-        try { await apiFetch(`/projects/tasks/${task.id}`, { method: 'PATCH', token, body: { status: nextStatus } }); }
-        catch { setError('No se pudo actualizar el estado de la tarea.'); }
+        try {
+            await apiFetch(`/projects/tasks/${task.id}`, { method: 'PATCH', token, body: { status: nextStatus } });
+            onActivityCreated?.();
+        } catch {
+            setError('No se pudo actualizar el estado de la tarea.');
+        }
     };
 
     const handlePriorityCycle = async () => {
@@ -349,15 +353,23 @@ export default function TaskDetailPanel({
         const currentIdx = PRIORITY_CYCLE.indexOf(getValidPriority(task.priority));
         const nextPriority = PRIORITY_CYCLE[(currentIdx + 1) % PRIORITY_CYCLE.length];
         onUpdate?.({ ...task, priority: nextPriority });
-        try { await apiFetch(`/projects/tasks/${task.id}`, { method: 'PATCH', token, body: { priority: nextPriority } }); }
-        catch { setError('No se pudo actualizar la prioridad de la tarea.'); }
+        try {
+            await apiFetch(`/projects/tasks/${task.id}`, { method: 'PATCH', token, body: { priority: nextPriority } });
+            onActivityCreated?.();
+        } catch {
+            setError('No se pudo actualizar la prioridad de la tarea.');
+        }
     };
 
     const handleAssigneeChange = async (newAssigneeId: string | null) => {
         if (!task || !requireAuth('Debes iniciar sesión para reasignar la tarea.')) return;
         onUpdate?.({ ...task, assignee_id: newAssigneeId });
-        try { await apiFetch(`/projects/tasks/${task.id}`, { method: 'PATCH', token, body: { assignee_id: newAssigneeId } }); }
-        catch { setError('No se pudo reasignar la tarea.'); }
+        try {
+            await apiFetch(`/projects/tasks/${task.id}`, { method: 'PATCH', token, body: { assignee_id: newAssigneeId } });
+            onActivityCreated?.();
+        } catch {
+            setError('No se pudo reasignar la tarea.');
+        }
     };
 
     const handleDueDateChange = async (newDueDate: string | null) => {
@@ -380,8 +392,12 @@ export default function TaskDetailPanel({
         const currentNode = task.node ?? null;
         const nextNode = currentNode === 'nutrition' ? 'digital' : currentNode === 'digital' ? null : 'nutrition';
         onUpdate?.({ ...task, node: nextNode });
-        try { await apiFetch(`/projects/tasks/${task.id}`, { method: 'PATCH', token, body: { node: nextNode } }); }
-        catch { setError('No se pudo actualizar el nodo de la tarea.'); }
+        try {
+            await apiFetch(`/projects/tasks/${task.id}`, { method: 'PATCH', token, body: { node: nextNode } });
+            onActivityCreated?.();
+        } catch {
+            setError('No se pudo actualizar el nodo de la tarea.');
+        }
     };
 
     const confirmDeleteTask = async () => {

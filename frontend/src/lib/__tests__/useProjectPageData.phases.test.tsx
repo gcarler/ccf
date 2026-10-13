@@ -48,6 +48,7 @@ interface PageDataSnapshotShape {
   phases: PhaseDef[];
   projectId: string | null;
   loadWarning: string | null;
+  loading: boolean;
 }
 
 import { apiFetch } from "@/lib/http";
@@ -62,6 +63,7 @@ function Snapshot({ data }: { data: PageDataSnapshotShape }) {
       <span data-testid="phases-slugs" data-slugs={data.phases.map((p) => p.slug).join(",")} />
       <span data-testid="phases-len" data-len={String(data.phases.length)} />
       <span data-testid="load-warning">{data.loadWarning}</span>
+      <span data-testid="loading-state">{String(data.loading)}</span>
     </div>
   );
 }
@@ -72,7 +74,7 @@ function Harness() {
     <>
       {/* El id real lo mutamos via reload key en cada test */}
       <button type="button" onClick={() => pageData.reloadProject()}>reload</button>
-      <Snapshot data={{ phases: pageData.phases, projectId: pageData.project?.id ?? null, loadWarning: pageData.loadWarning }} />
+      <Snapshot data={{ phases: pageData.phases, projectId: pageData.project?.id ?? null, loadWarning: pageData.loadWarning, loading: pageData.loading }} />
     </>
   );
 }
@@ -161,5 +163,36 @@ describe("useProjectPageData — phase sync reset (PEND-QUALITY-PHASE-SYNC-001)"
     expect(await screen.findByTestId("load-warning")).toHaveTextContent(
       "No se pudieron cargar las tareas. Reintenta para consultar toda la información del proyecto.",
     );
+  });
+
+  it("D) reloadProject performs silent revalidation without setting loading to true", async () => {
+    vi.mocked(apiFetch).mockImplementation(async (url: string) => {
+      if (url === "/projects/__placeholder__") {
+        return { id: "__placeholder__", title: "Proyecto A" };
+      }
+      return [];
+    });
+
+    render(<Harness />);
+    expect(await screen.findByTestId("project-id")).toHaveTextContent("__placeholder__");
+    expect(screen.getByTestId("loading-state")).toHaveTextContent("false");
+
+    let reloadResolvers: (() => void)[] = [];
+    vi.mocked(apiFetch).mockImplementation(() => new Promise((resolve) => {
+      reloadResolvers.push(() => resolve([]));
+    }));
+
+    await act(async () => {
+      fireEvent.click(screen.getByText("reload"));
+    });
+
+    // While revalidation request is in-flight, loading must remain false to prevent UI flash
+    expect(screen.getByTestId("loading-state")).toHaveTextContent("false");
+
+    await act(async () => {
+      reloadResolvers.forEach((fn) => fn());
+    });
+
+    expect(screen.getByTestId("loading-state")).toHaveTextContent("false");
   });
 });

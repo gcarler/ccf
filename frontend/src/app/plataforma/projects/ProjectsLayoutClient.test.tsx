@@ -189,4 +189,38 @@ describe('ProjectsLayoutClient', () => {
       query: { offset: 100, limit: 100 },
     });
   });
+
+  it('preserves current project sidebar without resetting to null on project-updated event for same project', async () => {
+    const projectA = deferred<ProjectRecord>();
+    layoutMocks.apiFetch.mockReturnValueOnce(projectA.promise);
+
+    render(
+      <ProjectsLayoutClient initialProjectPage={null}><main>Contenido</main></ProjectsLayoutClient>,
+    );
+
+    await act(async () => {
+      projectA.resolve(projectRecord('project-a', 'Proyecto A', 'task-a', 'Tarea persistente A'));
+      await projectA.promise;
+    });
+
+    expect(screen.getByRole('link', { name: 'Tarea persistente A' })).toBeInTheDocument();
+
+    // Trigger project-updated event for project-a
+    const updateDeferred = deferred<ProjectRecord>();
+    layoutMocks.apiFetch.mockReturnValueOnce(updateDeferred.promise);
+
+    await act(async () => {
+      window.dispatchEvent(new CustomEvent('project-updated', { detail: { projectId: 'project-a' } }));
+    });
+
+    // During the in-flight revalidation, the current project's task link MUST stay in the document (not wiped to null)
+    expect(screen.getByRole('link', { name: 'Tarea persistente A' })).toBeInTheDocument();
+
+    await act(async () => {
+      updateDeferred.resolve(projectRecord('project-a', 'Proyecto A', 'task-a', 'Tarea persistente A (actualizada)'));
+      await updateDeferred.promise;
+    });
+
+    expect(screen.getByRole('link', { name: 'Tarea persistente A (actualizada)' })).toBeInTheDocument();
+  });
 });

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/lib/http';
 import { toast } from 'sonner';
@@ -48,6 +48,7 @@ export interface UseProjectPageDataResult {
     updateProject: (patch: Partial<ProjectRecord>) => Promise<void>;
     updateTask: (taskId: string, patch: Partial<ProjectTaskRecord>) => Promise<void>;
     deleteTask: (taskId: string) => Promise<void>;
+    updateTaskLocal: (updated: ProjectTaskRecord) => void;
 
     // Local UI helpers (consumed only by the page shell)
     error: string | null;
@@ -67,6 +68,9 @@ export function useProjectPageData(id: string): UseProjectPageDataResult {
     const [loadWarning, setLoadWarning] = useState<string | null>(null);
     const [reloadKey, setReloadKey] = useState(0);
 
+    const projectRef = useRef<ProjectRecord | null>(null);
+    projectRef.current = project;
+
     const loadProject = useCallback(async () => {
         if (!id) {
             setLoading(false);
@@ -81,7 +85,9 @@ export function useProjectPageData(id: string): UseProjectPageDataResult {
         try {
             setError(null);
             setLoadWarning(null);
-            setLoading(true);
+            if (!projectRef.current || projectRef.current.id !== id) {
+                setLoading(true);
+            }
             const [projectResult, tasksResult, activitiesResult, phasesResult] = await Promise.allSettled([
                 apiFetch<ProjectRecord>(`/projects/${id}`, { token }),
                 apiFetch<ProjectTaskRecord[]>(`/projects/${id}/tasks`, { token }),
@@ -119,12 +125,14 @@ export function useProjectPageData(id: string): UseProjectPageDataResult {
             }
             window.dispatchEvent(new CustomEvent('project-updated', { detail: { projectId: id } }));
         } catch (err) {
-            setProject(null);
-            setTasks([]);
-            setActivities([]);
-            setPhases([]);
-            setLoadWarning(null);
-            setError('No se pudo cargar el proyecto.');
+            if (!projectRef.current || projectRef.current.id !== id) {
+                setProject(null);
+                setTasks([]);
+                setActivities([]);
+                setPhases([]);
+                setLoadWarning(null);
+                setError('No se pudo cargar el proyecto.');
+            }
             toast.error('Error al cargar detalle del proyecto');
         } finally {
             setLoading(false);
@@ -206,14 +214,18 @@ export function useProjectPageData(id: string): UseProjectPageDataResult {
         setReloadKey((k) => k + 1);
     }, []);
 
+    const updateTaskLocal = useCallback((updated: ProjectTaskRecord) => {
+        setTasks((prev) => prev.map((t) => (t.id === updated.id ? { ...t, ...updated } : t)));
+    }, []);
+
     return useMemo(() => ({
         project, tasks, phases, activities, loading,
         reloadProject: loadProject,
-        createTask, updateProject, updateTask, deleteTask,
+        createTask, updateProject, updateTask, deleteTask, updateTaskLocal,
         error, loadWarning, reloadKey, bumpReloadKey,
     }), [
         project, tasks, phases, activities, loading,
-        loadProject, createTask, updateProject, updateTask, deleteTask,
+        loadProject, createTask, updateProject, updateTask, deleteTask, updateTaskLocal,
         error, loadWarning, reloadKey, bumpReloadKey,
     ]);
 }

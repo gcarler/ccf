@@ -45,6 +45,9 @@ export default function ProjectsLayoutClient({ children, initialProjectPage }: P
         }
     }, [openLayer, layers.S1]);
 
+    const currentProjectRef = useRef<ProjectRecord | null>(null);
+    currentProjectRef.current = currentProject;
+
     useEffect(() => {
         if (!token) {
             setCurrentProject(null);
@@ -62,7 +65,9 @@ export default function ProjectsLayoutClient({ children, initialProjectPage }: P
             activeController = controller;
             if (projectId) {
                 // Avoid showing the previous project's task links while the new context loads.
-                setCurrentProject(null);
+                if (currentProjectRef.current?.id !== projectId) {
+                    setCurrentProject(null);
+                }
                 apiFetch<ProjectRecord>(`/projects/${projectId}`, { token, signal: controller.signal })
                     .then(data => {
                         if (isCurrentRequest && generation === requestGeneration) setCurrentProject(data);

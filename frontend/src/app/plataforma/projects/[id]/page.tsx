@@ -281,7 +281,7 @@ export default function ProjectDetailPage() {
     setSelectedTask(prev =>
       prev?.id === updated.id ? { ...prev, ...updated } : prev
     );
-    void reloadProject();
+    pageData.updateTaskLocal(updated);
   };
 
   const handleDeleteFromPanel = async (taskId: string) => {
@@ -415,7 +415,7 @@ export default function ProjectDetailPage() {
     ]
   );
 
-  if (loading) {
+  if (loading && !project) {
     return (
       <ProjectUpdateProvider value={contextValue}>
         <div className="flex flex-col h-full bg-[hsl(var(--surface-1))]">
