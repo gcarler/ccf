@@ -33,7 +33,7 @@ interface ProjectManagementHubDrawerProps {
   /** Hub abierto — true cuando hay al menos una pestaña de módulo abierta. */
   isOpen: boolean;
   /** Llaves de módulos con pestaña abierta (orden en que se abrieron). */
-  openModules: ProjectHubModuleKey[];
+  openModules: readonly ProjectHubModuleKey[];
   /** Metadatos (etiqueta + icono) de los módulos, en su orden canónico. */
   moduleMeta: ProjectHubModuleMeta[];
   /** Módulo activo: el único cuyo contenido se monta (sin drawers apilados). */
