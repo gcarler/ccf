@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef, useMemo } from 'react';
 import { apiFetch } from '@/lib/http';
 import type { ProjectTaskRecord, ProjectCommentItem, ProjectCommentAttachment } from '@/types/projects';
 import { Loader2, MessageSquare, Pin, Send, Trash2 } from 'lucide-react';
@@ -46,6 +46,99 @@ export default function TaskCommentSection({
     const [sendingComment, setSendingComment] = useState(false);
     const [loadingComments, setLoadingComments] = useState(false);
     const [error, setError] = useState<string | null>(null);
+
+    const [mentionState, setMentionState] = useState<{ query: string; start: number } | null>(null);
+    const [candidates, setCandidates] = useState<Array<{ id: string; name: string }>>([]);
+    const [selectedMentions, setSelectedMentions] = useState<Array<{ id: string; name: string }>>([]);
+    const [activeMentionIndex, setActiveMentionIndex] = useState(0);
+    const inputRef = useRef<HTMLInputElement>(null);
+
+    useEffect(() => {
+        if (!mentionState) return;
+        let active = true;
+        const query = mentionState.query.trim();
+        const queryParam = query ? `?search=${encodeURIComponent(query)}` : '';
+
+        apiFetch<Array<any>>(`/projects/assignee-candidates${queryParam}`, { token: token ?? undefined })
+            .catch(() => apiFetch<Array<any>>(`/crm/personas${queryParam}`, { token: token ?? undefined }))
+            .then(data => {
+                if (!active) return;
+                const list = (Array.isArray(data) ? data : []).map(p => ({
+                    id: String(p.user?.id ?? p.id),
+                    name: p.nombre_completo || [p.first_name, p.last_name].filter(Boolean).join(' ') || p.username || `#${p.id}`,
+                }));
+                setCandidates(list);
+                setActiveMentionIndex(0);
+            })
+            .catch(() => {
+                if (active) setCandidates([]);
+            });
+
+        return () => { active = false; };
+    }, [mentionState?.query, token]);
+
+    const filteredCandidates = useMemo(() => {
+        if (!mentionState) return [];
+        const q = mentionState.query.toLowerCase().trim();
+        if (!q) return candidates;
+        return candidates.filter(c => c.name.toLowerCase().includes(q));
+    }, [candidates, mentionState]);
+
+    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const val = e.target.value;
+        setCommentInput(val);
+        const pos = e.target.selectionStart ?? val.length;
+        const before = val.slice(0, pos);
+        const lastAt = before.lastIndexOf('@');
+        if (lastAt !== -1) {
+            const query = before.slice(lastAt + 1);
+            if (!query.includes(' ')) {
+                setMentionState({ query, start: lastAt });
+                return;
+            }
+        }
+        setMentionState(null);
+    };
+
+    const handleSelectMention = (candidate: { id: string; name: string }) => {
+        if (!mentionState) return;
+        const before = commentInput.slice(0, mentionState.start);
+        const after = commentInput.slice(mentionState.start + 1 + mentionState.query.length);
+        const next = `${before}@${candidate.name} ${after}`;
+        setCommentInput(next);
+        setSelectedMentions(prev => prev.some(m => m.id === candidate.id) ? prev : [...prev, candidate]);
+        setMentionState(null);
+        setTimeout(() => inputRef.current?.focus(), 20);
+    };
+
+    const handleInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+        if (mentionState && filteredCandidates.length > 0) {
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                setActiveMentionIndex(prev => (prev + 1) % filteredCandidates.length);
+                return;
+            }
+            if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                setActiveMentionIndex(prev => (prev - 1 + filteredCandidates.length) % filteredCandidates.length);
+                return;
+            }
+            if (e.key === 'Enter' || e.key === 'Tab') {
+                e.preventDefault();
+                handleSelectMention(filteredCandidates[activeMentionIndex]);
+                return;
+            }
+            if (e.key === 'Escape') {
+                e.preventDefault();
+                setMentionState(null);
+                return;
+            }
+        }
+
+        if (e.key === 'Enter' && !e.shiftKey) {
+            handleSendComment();
+        }
+    };
 
     const loadComments = useCallback(async () => {
         if (!token) return;
@@ -108,10 +201,18 @@ export default function TaskCommentSection({
         if (!commentInput.trim() || !token) return;
         setSendingComment(true);
         try {
+            const mentionIds = selectedMentions
+                .filter(m => commentInput.includes(`@${m.name}`))
+                .map(m => m.id);
+
             const created = await apiFetch<ProjectCommentItem>(`/projects/${task.project_id}/comments`, {
                 method: 'POST',
                 token,
-                body: { content: commentInput.trim(), task_id: task.id },
+                body: {
+                    content: commentInput.trim(),
+                    task_id: task.id,
+                    mentions: mentionIds,
+                },
             });
             const newComment: Comment = {
                 id: created.id,
@@ -126,6 +227,7 @@ export default function TaskCommentSection({
                 pinner_name: created.pinner_name,
             };
             setComments(prev => sortComments([...prev, newComment]));
+            setSelectedMentions([]);
             onActivityCreated?.();
         } catch {
             setError('No se pudo enviar el comentario.');
@@ -221,31 +323,63 @@ export default function TaskCommentSection({
             </div>
 
 
-            <div className="flex items-end gap-2">
-                <div className="size-6 rounded-full bg-[hsl(var(--primary))] flex items-center justify-center font-semibold text-[hsl(var(--primary-foreground))] shrink-0">
-                    T
-                </div>
-                <div className="flex-1 flex items-center gap-2 px-3 py-2 rounded-md bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] focus-within:ring-2 focus-within:ring-[hsl(var(--primary)/0.2)] focus-within:border-[hsl(var(--primary))] transition-all">
-                    <input
-                        type="text"
-                        value={commentInput}
-                        onChange={e => setCommentInput(e.target.value)}
-                        onKeyDown={e => e.key === 'Enter' && !e.shiftKey && handleSendComment()}
-                        aria-label="Escribe un comentario"
-                        placeholder="Menciona @Dzin para crear, encontrar y preguntar..."
-                        className="flex-1 text-sm bg-transparent outline-none text-[hsl(var(--foreground))] placeholder:text-[hsl(var(--muted-foreground))]"
-                    />
-                    {commentInput.trim() && (
-                        <button
-                            type="button"
-                            onClick={handleSendComment}
-                            disabled={sendingComment}
-                            aria-label={sendingComment ? 'Enviando comentario' : 'Enviar comentario'}
-                            className="text-[hsl(var(--primary))] hover:text-[hsl(var(--primary))] transition-colors"
-                        >
-                            {sendingComment ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
-                        </button>
-                    )}
+            <div className="relative">
+                {mentionState && filteredCandidates.length > 0 && (
+                    <div
+                        role="listbox"
+                        data-testid="mention-autocomplete-list"
+                        className="absolute left-8 right-0 bottom-full mb-1 z-50 max-h-40 overflow-y-auto rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] shadow-lg p-1 space-y-0.5"
+                    >
+                        {filteredCandidates.slice(0, 5).map((candidate, idx) => (
+                            <button
+                                key={candidate.id}
+                                type="button"
+                                role="option"
+                                aria-selected={idx === activeMentionIndex}
+                                onClick={() => handleSelectMention(candidate)}
+                                className={clsx(
+                                    "w-full text-left flex items-center gap-2 px-2 py-1.5 rounded text-xs transition-colors",
+                                    idx === activeMentionIndex
+                                        ? "bg-[hsl(var(--primary)/0.15)] text-[hsl(var(--primary))] font-semibold"
+                                        : "text-[hsl(var(--foreground))] hover:bg-[hsl(var(--surface-2))]"
+                                )}
+                            >
+                                <span className="size-5 rounded-full bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] flex items-center justify-center text-2xs font-bold shrink-0">
+                                    {candidate.name.charAt(0).toUpperCase()}
+                                </span>
+                                <span className="truncate">{candidate.name}</span>
+                            </button>
+                        ))}
+                    </div>
+                )}
+
+                <div className="flex items-end gap-2">
+                    <div className="size-6 rounded-full bg-[hsl(var(--primary))] flex items-center justify-center font-semibold text-[hsl(var(--primary-foreground))] shrink-0">
+                        T
+                    </div>
+                    <div className="flex-1 flex items-center gap-2 px-3 py-2 rounded-md bg-[hsl(var(--surface-1))] border border-[hsl(var(--border))] focus-within:ring-2 focus-within:ring-[hsl(var(--primary)/0.2)] focus-within:border-[hsl(var(--primary))] transition-all">
+                        <input
+                            ref={inputRef}
+                            type="text"
+                            value={commentInput}
+                            onChange={handleInputChange}
+                            onKeyDown={handleInputKeyDown}
+                            aria-label="Escribe un comentario"
+                            placeholder="Menciona @Dzin para crear, encontrar y preguntar..."
+                            className="flex-1 text-sm bg-transparent outline-none text-[hsl(var(--foreground))] placeholder:text-[hsl(var(--muted-foreground))]"
+                        />
+                        {commentInput.trim() && (
+                            <button
+                                type="button"
+                                onClick={handleSendComment}
+                                disabled={sendingComment}
+                                aria-label={sendingComment ? 'Enviando comentario' : 'Enviar comentario'}
+                                className="text-[hsl(var(--primary))] hover:text-[hsl(var(--primary))] transition-colors"
+                            >
+                                {sendingComment ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
+                            </button>
+                        )}
+                    </div>
                 </div>
             </div>
 

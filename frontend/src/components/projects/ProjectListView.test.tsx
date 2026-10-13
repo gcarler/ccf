@@ -17,7 +17,29 @@ vi.mock('@/context/AuthContext', () => ({
   useAuth: () => ({ token: 'test-token', user: null, loading: false, isAuthenticated: true }),
 }));
 
-vi.mock('@/lib/http', () => ({ apiFetch: vi.fn().mockResolvedValue([]) }));
+const { mockApiFetch, mockToast } = vi.hoisted(() => ({
+  mockApiFetch: vi.fn().mockImplementation(async (endpoint: string, options?: any) => {
+    if (typeof endpoint === 'string' && (endpoint.includes('assignee-candidates') || endpoint.includes('/crm/personas'))) {
+      return [{ id: 'user-laury', nombre_completo: 'Laury Rodríguez' }];
+    }
+    if (typeof endpoint === 'string' && endpoint.includes('/comments') && options?.method === 'POST') {
+      return { id: 'comment-123' };
+    }
+    return [];
+  }),
+  mockToast: {
+    success: vi.fn(),
+    error: vi.fn(),
+  },
+}));
+
+vi.mock('@/lib/http', () => ({
+  apiFetch: (...args: unknown[]) => mockApiFetch(...args),
+}));
+
+vi.mock('sonner', () => ({
+  toast: mockToast,
+}));
 
 vi.mock('@/components/ui/inline-editors', () => ({
   InlineStatusPicker: ({
@@ -308,6 +330,152 @@ describe('ProjectListView', () => {
       title: 'Actividad botón crear',
       status: 'backlog',
       priority: 'medium',
+    });
+  });
+
+  it('handles file attachment via paperclip button and allows removal', async () => {
+    const user = userEvent.setup();
+    render(
+      <ProjectListView
+        tasks={[createMockTask({ id: 'task-1', title: 'Preparar reunión', status: 'backlog' })]}
+        phaseDefs={phases}
+        onOpenTask={vi.fn()}
+        onAddTask={vi.fn()}
+      />,
+    );
+
+    await user.click(screen.getByRole('button', { name: 'Ver comentarios y actividad' }));
+    expect(screen.getByTestId('quick-comment-popover')).toBeInTheDocument();
+
+    const fileInput = screen.getByTestId('comment-file-input');
+    const testFile = new File(['contenido de prueba'], 'reporte-semanal.pdf', { type: 'application/pdf' });
+    await user.upload(fileInput, testFile);
+
+    expect(screen.getByText('reporte-semanal.pdf')).toBeInTheDocument();
+    const removeBtn = screen.getByRole('button', { name: 'Remover archivo' });
+    expect(removeBtn).toBeInTheDocument();
+
+    await user.click(removeBtn);
+    expect(screen.queryByText('reporte-semanal.pdf')).not.toBeInTheDocument();
+  });
+
+  it('inserts emoji into comment via emoji picker', async () => {
+    const user = userEvent.setup();
+    render(
+      <ProjectListView
+        tasks={[createMockTask({ id: 'task-1', title: 'Preparar reunión', status: 'backlog' })]}
+        phaseDefs={phases}
+        onOpenTask={vi.fn()}
+        onAddTask={vi.fn()}
+      />,
+    );
+
+    await user.click(screen.getByRole('button', { name: 'Ver comentarios y actividad' }));
+
+    const emojiBtn = screen.getByRole('button', { name: 'Añadir emoji' });
+    await user.click(emojiBtn);
+
+    const rocketEmoji = screen.getByRole('button', { name: 'Insertar emoji 🚀' });
+    await user.click(rocketEmoji);
+
+    const textarea = screen.getByPlaceholderText(/Escribe un comentario/i);
+    expect(textarea).toHaveValue('🚀 ');
+  });
+
+  it('triggers mention autocomplete, allows selecting candidate, and submits comment with mentions and attachments', async () => {
+    const user = userEvent.setup();
+    mockApiFetch.mockClear();
+    mockToast.success.mockClear();
+
+    render(
+      <ProjectListView
+        tasks={[createMockTask({ id: 'task-1', project_id: 'p1', title: 'Preparar reunión', status: 'backlog' })]}
+        phaseDefs={phases}
+        onOpenTask={vi.fn()}
+        onAddTask={vi.fn()}
+      />,
+    );
+
+    await user.click(screen.getByRole('button', { name: 'Ver comentarios y actividad' }));
+
+    // Click mention button
+    const mentionBtn = screen.getByRole('button', { name: 'Mencionar usuario' });
+    await user.click(mentionBtn);
+
+    // Dropdown list appears
+    const option = await screen.findByRole('option', { name: /Laury Rodríguez/i });
+    expect(option).toBeInTheDocument();
+    await user.click(option);
+
+    const textarea = screen.getByPlaceholderText(/Escribe un comentario/i);
+    expect(textarea).toHaveValue('@Laury Rodríguez ');
+
+    // Type additional content
+    await user.type(textarea, 'favor revisar');
+
+    // Attach a file
+    const fileInput = screen.getByTestId('comment-file-input');
+    const file = new File(['data'], 'documento.pdf', { type: 'application/pdf' });
+    await user.upload(fileInput, file);
+
+    // Send comment
+    const sendBtn = screen.getByRole('button', { name: 'Enviar' });
+    await user.click(sendBtn);
+
+    await waitFor(() => {
+      expect(mockApiFetch).toHaveBeenCalledWith(
+        '/projects/p1/comments',
+        expect.objectContaining({
+          method: 'POST',
+          body: expect.objectContaining({
+            task_id: 'task-1',
+            project_id: 'p1',
+            content: '@Laury Rodríguez favor revisar',
+            mentions: ['user-laury'],
+            attachments: expect.arrayContaining([
+              expect.objectContaining({ name: 'documento.pdf' }),
+            ]),
+          }),
+        }),
+      );
+      expect(mockToast.success).toHaveBeenCalledWith('Comentario guardado');
+      expect(screen.queryByTestId('quick-comment-popover')).not.toBeInTheDocument();
+    });
+  });
+
+  it('submits comment using Cmd+Enter or Ctrl+Enter keyboard shortcut', async () => {
+    const user = userEvent.setup();
+    mockApiFetch.mockClear();
+    mockToast.success.mockClear();
+
+    render(
+      <ProjectListView
+        tasks={[createMockTask({ id: 'task-1', project_id: 'p1', title: 'Preparar reunión', status: 'backlog' })]}
+        phaseDefs={phases}
+        onOpenTask={vi.fn()}
+        onAddTask={vi.fn()}
+      />,
+    );
+
+    await user.click(screen.getByRole('button', { name: 'Ver comentarios y actividad' }));
+    const textarea = screen.getByPlaceholderText(/Escribe un comentario/i);
+    await user.type(textarea, 'Comentario con atajo de teclado');
+
+    await user.keyboard('{Control>}{Enter}{/Control}');
+
+    await waitFor(() => {
+      expect(mockApiFetch).toHaveBeenCalledWith(
+        '/projects/p1/comments',
+        expect.objectContaining({
+          method: 'POST',
+          body: expect.objectContaining({
+            task_id: 'task-1',
+            content: 'Comentario con atajo de teclado',
+          }),
+        }),
+      );
+      expect(mockToast.success).toHaveBeenCalledWith('Comentario guardado');
+      expect(screen.queryByTestId('quick-comment-popover')).not.toBeInTheDocument();
     });
   });
 });

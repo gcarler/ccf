@@ -81,4 +81,61 @@ describe('TaskCommentSection', () => {
       );
     });
   });
+
+  it('autocompletes mentions with @ and includes canonical ID in mentions payload', async () => {
+    mockApiFetch.mockImplementation(async (url: string) => {
+      if (url.includes('/projects/comments')) {
+        return [];
+      }
+      if (url.includes('/projects/assignee-candidates') || url.includes('/crm/personas')) {
+        return [
+          { id: 'usr-laury-123', nombre_completo: 'Laury Gomez' },
+          { id: 'usr-ana-456', nombre_completo: 'Ana Lopez' },
+        ];
+      }
+      if (url === '/projects/p1/comments') {
+        return {
+          id: 'c-new',
+          author_name: 'Tú',
+          content: 'Hola @Laury Gomez buen trabajo',
+          mentions: ['usr-laury-123'],
+          created_at: '2026-01-01T12:00:00Z',
+        };
+      }
+      return [];
+    });
+
+    render(<TaskCommentSection task={task} token="test-token" onDeleteComment={vi.fn()} />);
+    await screen.findByText(/Sin comentarios aún/);
+
+    const input = screen.getByPlaceholderText(/Menciona @Dzin/);
+    fireEvent.change(input, { target: { value: 'Hola @laury' } });
+
+    // Autocomplete dropdown appears with matching user
+    const candidateOption = await screen.findByRole('option', { name: /Laury Gomez/i });
+    expect(candidateOption).toBeInTheDocument();
+
+    // Select candidate
+    fireEvent.click(candidateOption);
+
+    // Input text updated with mention
+    expect(input).toHaveValue('Hola @Laury Gomez ');
+
+    // Send comment
+    const sendButton = screen.getByRole('button', { name: 'Enviar comentario' });
+    fireEvent.click(sendButton);
+
+    await waitFor(() => {
+      expect(mockApiFetch).toHaveBeenCalledWith(
+        '/projects/p1/comments',
+        expect.objectContaining({
+          method: 'POST',
+          body: expect.objectContaining({
+            task_id: 't1',
+            mentions: ['usr-laury-123'],
+          }),
+        }),
+      );
+    });
+  });
 });

@@ -4,10 +4,11 @@ import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import {
     ChevronDown, ChevronRight, Plus,
     MessageSquare, MoreHorizontal, CheckCircle2, X, Send,
-    Paperclip, AtSign, Smile, Check, Star, Pencil,
+    Paperclip, AtSign, Smile, Check, Star, Pencil, Loader2,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import clsx from 'clsx';
+import { toast } from 'sonner';
 import { useAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/lib/http';
 import type { ProjectTaskRecord, ProjectUserFavorite } from '@/types/projects';
@@ -44,62 +45,368 @@ interface Props {
 interface CommentPopoverProps {
     onClose: () => void;
     placement?: 'bottom' | 'top';
+    taskId?: string;
+    projectId?: string;
 }
 
-function CommentPopover({ onClose, placement = 'bottom' }: CommentPopoverProps) {
+const QUICK_EMOJIS = ['👍', '❤️', '🎉', '🚀', '👀', '💡', '✅', '👏'];
+
+function CommentPopover({ onClose, placement = 'bottom', taskId, projectId }: CommentPopoverProps) {
+    const { token } = useAuth();
     const [text, setText] = useState('');
+    const [attachedFile, setAttachedFile] = useState<File | null>(null);
+    const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+    const [sending, setSending] = useState(false);
+
+    // Mentions state
+    const [mentionState, setMentionState] = useState<{ query: string; start: number } | null>(null);
+    const [candidates, setCandidates] = useState<Array<{ id: string; name: string }>>([]);
+    const [selectedMentions, setSelectedMentions] = useState<Array<{ id: string; name: string }>>([]);
+    const [activeMentionIndex, setActiveMentionIndex] = useState(0);
+
+    const fileInputRef = useRef<HTMLInputElement>(null);
+    const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+    // Fetch candidate mentions when mention query changes
+    useEffect(() => {
+        if (!mentionState) return;
+        let active = true;
+        const query = mentionState.query.trim();
+        const queryParam = query ? `?search=${encodeURIComponent(query)}` : '';
+
+        apiFetch<Array<any>>(`/projects/assignee-candidates${queryParam}`, { token: token ?? undefined })
+            .catch(() => apiFetch<Array<any>>(`/crm/personas${queryParam}`, { token: token ?? undefined }))
+            .then(data => {
+                if (!active) return;
+                const list = (Array.isArray(data) ? data : []).map(p => ({
+                    id: String(p.user?.id ?? p.id),
+                    name: p.nombre_completo || [p.first_name, p.last_name].filter(Boolean).join(' ') || p.username || `#${p.id}`,
+                }));
+                setCandidates(list);
+                setActiveMentionIndex(0);
+            })
+            .catch(() => {
+                if (active) setCandidates([]);
+            });
+
+        return () => { active = false; };
+    }, [mentionState?.query, token]);
+
+    const filteredCandidates = useMemo(() => {
+        if (!mentionState) return [];
+        const q = mentionState.query.toLowerCase().trim();
+        if (!q) return candidates;
+        return candidates.filter(c => c.name.toLowerCase().includes(q));
+    }, [candidates, mentionState]);
+
+    const handleTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+        const val = e.target.value;
+        setText(val);
+        const pos = e.target.selectionStart ?? val.length;
+        const before = val.slice(0, pos);
+        const lastAt = before.lastIndexOf('@');
+        if (lastAt !== -1) {
+            const query = before.slice(lastAt + 1);
+            if (!query.includes(' ') && !query.includes('\n')) {
+                setMentionState({ query, start: lastAt });
+                return;
+            }
+        }
+        setMentionState(null);
+    };
+
+    const handleSelectMention = (candidate: { id: string; name: string }) => {
+        if (!mentionState) return;
+        const before = text.slice(0, mentionState.start);
+        const after = text.slice(mentionState.start + 1 + mentionState.query.length);
+        const next = `${before}@${candidate.name} ${after}`;
+        setText(next);
+        setSelectedMentions(prev => prev.some(m => m.id === candidate.id) ? prev : [...prev, candidate]);
+        setMentionState(null);
+        setTimeout(() => textareaRef.current?.focus(), 20);
+    };
+
+    const handleTriggerMention = () => {
+        const textarea = textareaRef.current;
+        const pos = textarea?.selectionStart ?? text.length;
+        const before = text.slice(0, pos);
+        const after = text.slice(pos);
+        const needsSpace = before.length > 0 && !before.endsWith(' ');
+        const insert = needsSpace ? ' @' : '@';
+        const next = `${before}${insert}${after}`;
+        setText(next);
+        const newPos = pos + insert.length;
+        setMentionState({ query: '', start: newPos - 1 });
+        setTimeout(() => {
+            if (textarea) {
+                textarea.focus();
+                textarea.setSelectionRange(newPos, newPos);
+            }
+        }, 20);
+    };
+
+    const handleAddEmoji = (emoji: string) => {
+        const textarea = textareaRef.current;
+        const pos = textarea?.selectionStart ?? text.length;
+        const before = text.slice(0, pos);
+        const after = text.slice(pos);
+        const needsSpace = before.length > 0 && !before.endsWith(' ');
+        const insert = needsSpace ? ` ${emoji} ` : `${emoji} `;
+        const next = `${before}${insert}${after}`;
+        setText(next);
+        setShowEmojiPicker(false);
+        setTimeout(() => {
+            if (textarea) {
+                textarea.focus();
+                const newPos = pos + insert.length;
+                textarea.setSelectionRange(newPos, newPos);
+            }
+        }, 20);
+    };
+
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            setAttachedFile(file);
+        }
+    };
+
+    const handleRemoveFile = () => {
+        setAttachedFile(null);
+        if (fileInputRef.current) {
+            fileInputRef.current.value = '';
+        }
+    };
+
+    const handleSend = async () => {
+        if (!text.trim() || sending) return;
+        setSending(true);
+        try {
+            const endpoint = projectId ? `/projects/${projectId}/comments` : '/projects/comments';
+            const mentionIds = selectedMentions
+                .filter(m => text.includes(`@${m.name}`))
+                .map(m => m.id);
+
+            const payload: any = {
+                content: text.trim(),
+                task_id: taskId,
+                mentions: mentionIds,
+            };
+            if (projectId) {
+                payload.project_id = projectId;
+            }
+            if (attachedFile) {
+                payload.attachments = [{
+                    name: attachedFile.name,
+                    url: attachedFile.name,
+                    type: attachedFile.type || 'document',
+                    size: attachedFile.size,
+                }];
+            }
+
+            await apiFetch(endpoint, {
+                method: 'POST',
+                token,
+                body: payload,
+            });
+
+            toast.success('Comentario guardado');
+            onClose();
+        } catch {
+            toast.error('No se pudo guardar el comentario');
+        } finally {
+            setSending(false);
+        }
+    };
+
+    const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+        if (mentionState && filteredCandidates.length > 0) {
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                setActiveMentionIndex(prev => (prev + 1) % filteredCandidates.length);
+                return;
+            }
+            if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                setActiveMentionIndex(prev => (prev - 1 + filteredCandidates.length) % filteredCandidates.length);
+                return;
+            }
+            if ((e.key === 'Enter' || e.key === 'Tab') && !e.metaKey && !e.ctrlKey) {
+                e.preventDefault();
+                handleSelectMention(filteredCandidates[activeMentionIndex]);
+                return;
+            }
+            if (e.key === 'Escape') {
+                e.preventDefault();
+                setMentionState(null);
+                return;
+            }
+        }
+
+        if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+            e.preventDefault();
+            handleSend();
+            return;
+        }
+
+        if (e.key === 'Escape') {
+            e.preventDefault();
+            onClose();
+        }
+    };
+
     return (
         <div
             data-testid="quick-comment-popover"
             data-placement={placement}
-            className="w-80 bg-[hsl(var(--surface-1))] rounded-lg shadow-xl border border-[hsl(var(--border))] z-[600] overflow-hidden"
+            className="w-80 bg-[hsl(var(--surface-1))] rounded-lg shadow-xl border border-[hsl(var(--border))] z-[600] overflow-hidden relative"
         >
             {/* Header */}
             <div className="flex items-center justify-between px-3 py-2 border-b border-[hsl(var(--border))]">
                 <span className="text-2xs font-semibold uppercase tracking-wide text-[hsl(var(--text-secondary))]">Comentario rápido</span>
-                <button onClick={onClose} aria-label="Cerrar comentario rápido" className="p-0.5 rounded text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--primary))] focus-visible:ring-offset-2">
+                <button
+                    onClick={onClose}
+                    aria-label="Cerrar comentario rápido"
+                    className="p-0.5 rounded text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--primary))] focus-visible:ring-offset-2"
+                >
                     <X size={13}/>
                 </button>
             </div>
+
             {/* Textarea */}
             <div className="relative">
                 <textarea
+                    ref={textareaRef}
                     autoFocus
                     value={text}
-                    onChange={e => setText(e.target.value)}
+                    onChange={handleTextChange}
+                    onKeyDown={handleKeyDown}
                     placeholder="Escribe un comentario... @Brain para IA"
                     className="w-full resize-none text-sm text-[hsl(var(--text-primary))] placeholder:text-[hsl(var(--text-secondary))] px-3 pt-3 pb-2 bg-transparent outline-none min-h-[68px] leading-relaxed"
-                    onKeyDown={e => {
-                        if (e.key === 'Enter' && (e.metaKey || e.ctrlKey) && text.trim()) onClose();
-                        if (e.key === 'Escape') onClose();
-                    }}
                 />
+
+                {/* Autocomplete mention dropdown */}
+                {mentionState && filteredCandidates.length > 0 && (
+                    <div
+                        role="listbox"
+                        data-testid="mention-autocomplete-list"
+                        className="absolute left-2 right-2 bottom-1 z-[700] max-h-40 overflow-y-auto rounded-md border border-[hsl(var(--border))] bg-[hsl(var(--surface-1))] shadow-lg p-1 space-y-0.5"
+                    >
+                        {filteredCandidates.slice(0, 5).map((candidate, idx) => (
+                            <button
+                                key={candidate.id}
+                                type="button"
+                                role="option"
+                                aria-selected={idx === activeMentionIndex}
+                                onClick={() => handleSelectMention(candidate)}
+                                className={clsx(
+                                    "w-full text-left flex items-center gap-2 px-2 py-1.5 rounded text-xs transition-colors",
+                                    idx === activeMentionIndex
+                                        ? "bg-[hsl(var(--primary)/0.15)] text-[hsl(var(--primary))] font-semibold"
+                                        : "text-[hsl(var(--text-primary))] hover:bg-[hsl(var(--surface-2))]"
+                                )}
+                            >
+                                <span className="size-5 rounded-full bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] flex items-center justify-center text-2xs font-bold shrink-0">
+                                    {candidate.name.charAt(0).toUpperCase()}
+                                </span>
+                                <span className="truncate">{candidate.name}</span>
+                            </button>
+                        ))}
+                    </div>
+                )}
             </div>
+
+            {/* Attachment preview if any */}
+            {attachedFile && (
+                <div className="flex items-center gap-1.5 px-2.5 py-1 mx-3 mb-2 rounded-md bg-[hsl(var(--surface-2))] border border-[hsl(var(--border))] text-xs text-[hsl(var(--text-primary))]">
+                    <Paperclip size={12} className="text-[hsl(var(--text-secondary))] shrink-0" />
+                    <span className="truncate max-w-[200px] text-xs font-medium">{attachedFile.name}</span>
+                    <button
+                        type="button"
+                        onClick={handleRemoveFile}
+                        aria-label="Remover archivo"
+                        className="ml-auto text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--destructive))] transition-colors p-0.5"
+                    >
+                        <X size={12} />
+                    </button>
+                </div>
+            )}
+
+            {/* Quick emoji bar */}
+            {showEmojiPicker && (
+                <div className="flex items-center justify-between gap-1 px-3 py-1.5 border-t border-[hsl(var(--border))] bg-[hsl(var(--surface-2)/0.5)]">
+                    {QUICK_EMOJIS.map(emoji => (
+                        <button
+                            key={emoji}
+                            type="button"
+                            onClick={() => handleAddEmoji(emoji)}
+                            className="p-1 hover:bg-[hsl(var(--surface-3))] rounded text-base active:scale-110 transition-transform"
+                            aria-label={`Insertar emoji ${emoji}`}
+                        >
+                            {emoji}
+                        </button>
+                    ))}
+                </div>
+            )}
+
+            {/* Hidden file input */}
+            <input
+                ref={fileInputRef}
+                type="file"
+                className="hidden"
+                data-testid="comment-file-input"
+                onChange={handleFileChange}
+            />
+
             {/* Toolbar */}
             <div className="flex items-center gap-1 px-3 pb-3">
-                <button aria-label="Adjuntar archivo" className="p-1.5 rounded-lg text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] hover:bg-[hsl(var(--primary)/0.1)] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--primary))] focus-visible:ring-offset-2" title="Adjuntar">
+                <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    aria-label="Adjuntar archivo"
+                    className="p-1.5 rounded-lg text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] hover:bg-[hsl(var(--primary)/0.1)] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--primary))] focus-visible:ring-offset-2"
+                    title="Adjuntar"
+                >
                     <Paperclip size={13} />
                 </button>
-                <button aria-label="Mencionar usuario" className="p-1.5 rounded-lg text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] hover:bg-[hsl(var(--primary)/0.1)] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--primary))] focus-visible:ring-offset-2" title="Mencionar">
+                <button
+                    type="button"
+                    onClick={handleTriggerMention}
+                    aria-label="Mencionar usuario"
+                    className="p-1.5 rounded-lg text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] hover:bg-[hsl(var(--primary)/0.1)] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--primary))] focus-visible:ring-offset-2"
+                    title="Mencionar"
+                >
                     <AtSign size={13} />
                 </button>
-                <button aria-label="Añadir emoji" className="p-1.5 rounded-lg text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] hover:bg-[hsl(var(--primary)/0.1)] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--primary))] focus-visible:ring-offset-2" title="Emoji">
+                <button
+                    type="button"
+                    onClick={() => setShowEmojiPicker(prev => !prev)}
+                    aria-label="Añadir emoji"
+                    className={clsx(
+                        "p-1.5 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--primary))] focus-visible:ring-offset-2",
+                        showEmojiPicker
+                            ? "text-[hsl(var(--primary))] bg-[hsl(var(--primary)/0.15)]"
+                            : "text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] hover:bg-[hsl(var(--primary)/0.1)]"
+                    )}
+                    title="Emoji"
+                >
                     <Smile size={13} />
                 </button>
                 <div className="flex-1" />
                 <span className="text-2xs text-[hsl(var(--text-secondary))] mr-2 hidden sm:block">⌘↵ enviar</span>
                 <button
-                    onClick={onClose}
+                    type="button"
+                    onClick={handleSend}
                     className={clsx(
                         'flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-bold transition-all',
-                        text.trim()
+                        text.trim() && !sending
                             ? 'bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] hover:bg-[hsl(var(--primary))]/90 shadow-sm active:scale-95'
                             : 'bg-[hsl(var(--surface-2))] text-[hsl(var(--text-secondary))] cursor-not-allowed'
                     )}
-                    disabled={!text.trim()}
+                    disabled={!text.trim() || sending}
                 >
-                    <Send size={11} />
-                    Enviar
+                    {sending ? <Loader2 size={11} className="animate-spin" /> : <Send size={11} />}
+                    {sending ? 'Enviando...' : 'Enviar'}
                 </button>
             </div>
         </div>
@@ -278,6 +585,8 @@ function TaskRow({
                             <CommentPopover
                                 onClose={() => setCommentOpen(false)}
                                 placement={commentPlacement}
+                                taskId={task.id}
+                                projectId={task.project_id}
                             />
                         </motion.div>
                     )}
