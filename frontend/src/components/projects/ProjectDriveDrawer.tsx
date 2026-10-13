@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState, useEffect, useCallback, useRef } from "react";
-import { RightPanel } from "@/components/ui/RightPanel";
 import ConfirmActionDrawer, { type ConfirmActionState } from "@/components/ConfirmActionDrawer";
 import { useAuth } from "@/context/AuthContext";
 import { apiFetch } from "@/lib/http";
@@ -255,12 +254,7 @@ export function ProjectDriveDrawer({
 
   return (
     <>
-      <RightPanel
-        open={isOpen}
-        onClose={onClose}
-        title="Bóveda Documental & Google Drive"
-        width={720}
-      >
+      <>
         <div className="flex flex-col h-full bg-[hsl(var(--surface-1))] text-[hsl(var(--text-primary))]">
           {/* Cabecera y Resumen Métrico */}
           <div className="px-5 pt-3.5 pb-3 border-b border-[hsl(var(--border))] space-y-3 bg-[hsl(var(--surface-2))]/50">
@@ -772,7 +766,7 @@ export function ProjectDriveDrawer({
             )}
           </div>
         </div>
-      </RightPanel>
+      </>
 
       <ConfirmActionDrawer action={confirmAction} onClose={() => setConfirmAction(null)} />
 

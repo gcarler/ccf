@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { RightPanel } from "@/components/ui/RightPanel";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/context/ToastContext";
 import { apiFetch } from "@/lib/http";
@@ -148,12 +147,7 @@ export function ProgressSettingsDrawer({
   ];
 
   return (
-    <RightPanel
-      title="Motor de Avance y Salud del Proyecto"
-      open={isOpen}
-      onClose={onClose}
-      width={420}
-    >
+    <>
       <form onSubmit={handleSave} className="flex flex-col h-full space-y-4 p-4 text-[hsl(var(--foreground))]">
         {/* Intro Banner */}
         <div className="p-3 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--surface-2))] flex items-start gap-2.5 shadow-sm">
@@ -299,7 +293,7 @@ export function ProgressSettingsDrawer({
           </button>
         </div>
       </form>
-    </RightPanel>
+    </>
   );
 }
 

@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState, useEffect, useCallback, useId, useRef } from "react";
-import { RightPanel } from "@/components/ui/RightPanel";
 import ConfirmActionDrawer, { type ConfirmActionState } from "@/components/ConfirmActionDrawer";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/context/ToastContext";
@@ -288,12 +287,7 @@ export function ProjectBudgetDrawer({
       : "hsl(var(--success))";
 
   return (
-    <RightPanel
-      isOpen={isOpen}
-      onClose={onClose}
-      title="Control Presupuestario y Partidas de Gasto"
-      className="w-full max-w-2xl"
-    >
+    <>
       <div className="flex flex-col gap-5 p-6 text-sm" style={{ color: "hsl(var(--text-primary))" }}>
         {/* KPI CARDS & RESUMEN FINANCIERO */}
         <div
@@ -887,6 +881,6 @@ export function ProjectBudgetDrawer({
         </div>
       </div>
       <ConfirmActionDrawer action={confirmAction} onClose={() => setConfirmAction(null)} />
-    </RightPanel>
+    </>
   );
 }

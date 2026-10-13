@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from "react";
-import { RightPanel } from "@/components/ui/RightPanel";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/context/ToastContext";
 import { apiFetch, apiFetchBlob } from "@/lib/http";
@@ -124,17 +123,7 @@ export function ProjectReportDrawer({
   const timeMet = data?.time_metrics;
 
   return (
-    <RightPanel
-      isOpen={isOpen}
-      onClose={onClose}
-      title="Reportes y Exportación Ejecutiva"
-      subtitle={
-        <span className="text-xs" style={{ color: "hsl(var(--text-secondary))" }}>
-          {projectTitle || proj?.title || "Proyecto"} • Membrete Oficial CCF & Excel CSV
-        </span>
-      }
-      width="w-full sm:max-w-2xl lg:max-w-4xl"
-    >
+    <>
       <div className="flex flex-col h-full space-y-4">
         {/* Navegación por pestañas */}
         <div
@@ -896,7 +885,7 @@ export function ProjectReportDrawer({
           </div>
         )}
       </div>
-    </RightPanel>
+    </>
   );
 }
 export default ProjectReportDrawer;

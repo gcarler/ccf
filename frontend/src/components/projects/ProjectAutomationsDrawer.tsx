@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from "react";
-import { RightPanel } from "@/components/ui/RightPanel";
 import ConfirmActionDrawer, { type ConfirmActionState } from "@/components/ConfirmActionDrawer";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/context/ToastContext";
@@ -308,13 +307,7 @@ export function ProjectAutomationsDrawer({
 
   return (
     <>
-    <RightPanel
-      isOpen={isOpen}
-      onClose={onClose}
-      title="Motor de Automatizaciones"
-      subtitle="Disparadores reactivos, reglas de flujo y acciones automáticas"
-      width="w-full md:w-[650px]"
-    >
+    <>
       <div className="flex flex-col h-full space-y-4">
         {/* Navigation Tabs */}
         <div className="flex items-center gap-1 border-b border-[hsl(var(--border))] pb-2">
@@ -886,7 +879,7 @@ export function ProjectAutomationsDrawer({
           </div>
         )}
       </div>
-    </RightPanel>
+    </>
       <ConfirmActionDrawer action={confirmAction} onClose={() => setConfirmAction(null)} />
     </>
   );

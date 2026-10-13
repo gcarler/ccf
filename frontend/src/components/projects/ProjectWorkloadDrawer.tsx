@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState, useEffect, useCallback, useRef } from "react";
-import { RightPanel } from "@/components/ui/RightPanel";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/context/ToastContext";
 import { apiFetch } from "@/lib/http";
@@ -133,13 +132,7 @@ export function ProjectWorkloadDrawer({
   const assignableMembers = summary?.members.filter((m) => m.persona_id !== null) || [];
 
   return (
-    <RightPanel
-      isOpen={isOpen}
-      onClose={onClose}
-      title="Capacidad de Equipo y Carga de Trabajo"
-      description="Monitoreo de saturación operativa, balanceo de tareas y prevención de sobrecarga en el equipo ministerial."
-      width="w-screen max-w-3xl"
-    >
+    <>
       <div className="space-y-6 pb-12">
         {/* RESUMEN DE CAPACIDAD */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -602,6 +595,6 @@ export function ProjectWorkloadDrawer({
           )}
         </div>
       </div>
-    </RightPanel>
+    </>
   );
 }

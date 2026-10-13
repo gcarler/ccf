@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState, useEffect, useCallback, useRef } from "react";
-import { RightPanel } from "@/components/ui/RightPanel";
 import ConfirmActionDrawer, { type ConfirmActionState } from "@/components/ConfirmActionDrawer";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/context/ToastContext";
@@ -241,12 +240,7 @@ export function ProjectTimeTrackingDrawer({
       : 0;
 
   return (
-    <RightPanel
-      isOpen={isOpen}
-      onClose={onClose}
-      title="Registro de Tiempo y Hojas de Horas"
-      className="w-full max-w-2xl"
-    >
+    <>
       <div className="flex flex-col gap-5 p-6 text-sm" style={{ color: "hsl(var(--text-primary))" }}>
         {/* KPI CARDS & RESUMEN DE TIEMPO */}
         <div
@@ -856,6 +850,6 @@ export function ProjectTimeTrackingDrawer({
         )}
       </div>
       <ConfirmActionDrawer action={confirmAction} onClose={() => setConfirmAction(null)} />
-    </RightPanel>
+    </>
   );
 }
