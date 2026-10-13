@@ -49,6 +49,9 @@ export default function ProjectsLayoutClient({ children, initialProjectPage }: P
             if (!layers.S2) {
                 openLayer('S2');
             }
+            try {
+                localStorage.setItem('workspace:s2:projects', 'visible');
+            } catch {}
         }
     }, [openLayer, layers.S1, layers.S2]);
 

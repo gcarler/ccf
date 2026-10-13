@@ -126,7 +126,11 @@ function WorkspaceLayoutInner({
         // En desktop/tablet, S1 (barra mini) debe estar SIEMPRE disponible y visible por defecto
         const savedS1 = localStorage.getItem('workspace:s1');
         const s1ShouldBeOpen = savedS1 === null ? true : savedS1 !== 'hidden';
-        const savedS2 = localStorage.getItem(`workspace:s2:${moduleKey}`) !== 'hidden';
+        // En el modulo proyectos, S2 debe iniciar SIEMPRE abierto por defecto al ingresar
+        const isProjects = moduleKey === 'projects';
+        const savedS2 = isProjects
+            ? true
+            : localStorage.getItem(`workspace:s2:${moduleKey}`) !== 'hidden';
         const savedFocusMode = localStorage.getItem(`workspace:focus:${moduleKey}`) === '1';
 
         if (s1ShouldBeOpen) openLayer('S1');

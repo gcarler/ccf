@@ -71,7 +71,14 @@ export default function WorkspaceMiniSidebar({ onHide }: { onHide: () => void })
     const pathname = usePathname();
     const { hasModuleAccess, hasPermission } = useAuth();
     const { openModal } = useCreation();
-    const { resetSidebarStack } = useSidebarLayers();
+    const { resetSidebarStack, openLayer } = useSidebarLayers();
+
+    const handleNavItemClick = (item: { id: string; href: string }) => {
+        resetSidebarStack();
+        if (item.id === 'projects' || item.href === PROJECTS_LIST_ROUTE || item.href.startsWith('/plataforma/projects')) {
+            openLayer('S2');
+        }
+    };
 
     const primaryItems = [
         { id: 'dashboard',  icon: LayoutDashboard, href: '/plataforma',  label: 'Inicio' },
@@ -113,20 +120,20 @@ export default function WorkspaceMiniSidebar({ onHide }: { onHide: () => void })
             </button>
 
             {/* Primary workspace items */}
-            {visiblePrimaryItems.map(item => <NavItem key={item.id} {...item} pathname={pathname} onClick={resetSidebarStack} />)}
+            {visiblePrimaryItems.map(item => <NavItem key={item.id} {...item} pathname={pathname} onClick={() => handleNavItemClick(item)} />)}
 
             {/* Separator */}
             <div className="w-6 h-px bg-[hsl(var(--surface-2))] dark:bg-white/10 my-2" />
 
             {/* Module items */}
-            {visibleModuleItems.map(item => <NavItem key={item.id} {...item} pathname={pathname} onClick={resetSidebarStack} />)}
+            {visibleModuleItems.map(item => <NavItem key={item.id} {...item} pathname={pathname} onClick={() => handleNavItemClick(item)} />)}
 
             {/* Separator */}
             <div className="w-6 h-px bg-[hsl(var(--surface-2))] dark:bg-white/10 my-2" />
 
             {/* Inbox with badge */}
             {canAccessWorkspaceHref('/plataforma/inbox', { hasModuleAccess, hasPermission }) && (
-                <NavItem id="inbox" icon={Inbox} href="/plataforma/inbox" label="Bandeja" badge={3} pathname={pathname} onClick={resetSidebarStack} />
+                <NavItem id="inbox" icon={Inbox} href="/plataforma/inbox" label="Bandeja" badge={3} pathname={pathname} onClick={() => handleNavItemClick({ id: 'inbox', href: '/plataforma/inbox' })} />
             )}
 
             {/* ── Footer: Mi Perfil + Settings + Collapse */}
