@@ -84,4 +84,21 @@ describe('TaskMetaFields', () => {
 
     expect(screen.getByText('Sin fecha límite')).toBeInTheDocument();
   });
+
+  it('does not render orphan Nodo Operativo section', () => {
+    render(
+      <TaskMetaFields
+        task={mockTask}
+        labels={[]}
+        onLabelsChange={vi.fn()}
+        onAssigneeChange={vi.fn()}
+        onPriorityCycle={vi.fn()}
+        priority={defaultPriority}
+        token="test-token"
+      />
+    );
+
+    expect(screen.queryByText('Nodo Operativo')).not.toBeInTheDocument();
+    expect(screen.queryByText('Sin nodo')).not.toBeInTheDocument();
+  });
 });

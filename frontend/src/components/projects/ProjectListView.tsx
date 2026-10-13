@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import {
     ChevronDown, ChevronRight, Plus,
     MessageSquare, MoreHorizontal, CheckCircle2, X, Send,
-    Paperclip, AtSign, Smile, Check, Star,
+    Paperclip, AtSign, Smile, Check, Star, Pencil,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import clsx from 'clsx';
@@ -13,7 +13,7 @@ import { apiFetch } from '@/lib/http';
 import type { ProjectTaskRecord, ProjectUserFavorite } from '@/types/projects';
 import { useSidebarLayers } from '@/context/SidebarLayerContext';
 import { buildStatusOptions, getStatusOption, PROJECT_ASSIGNEE_CANDIDATES_ENDPOINT, STATUS_GROUP_PILL } from '@/lib/projects/constants';
-import type { PhaseDef } from '@/context/ProjectUpdateContext';
+import { useProjectUpdate, type PhaseDef } from '@/context/ProjectUpdateContext';
 import type { TaskStatus } from '@/lib/projects/constants';
 import {
     InlineStatusPicker,
@@ -284,6 +284,19 @@ function TaskRow({
                 </AnimatePresence>
             </div>
 
+            {/* ── DETALLE ──────────────── */}
+            <div className="w-16 flex-shrink-0 flex items-center justify-center px-1">
+                <button
+                    type="button"
+                    onClick={onOpen}
+                    title="Ver detalle completo"
+                    aria-label={`Ver detalle completo de ${task.title}`}
+                    className="flex items-center justify-center size-8 rounded-lg border border-[hsl(var(--border))] text-[hsl(var(--text-secondary))] hover:border-[hsl(var(--primary)/0.3)] hover:text-[hsl(var(--primary))] hover:bg-[hsl(var(--primary)/0.1)] transition-all min-h-[40px] min-w-[32px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--primary))] focus-visible:ring-offset-2"
+                >
+                    <Pencil size={13} />
+                </button>
+            </div>
+
             {/* More */}
             <div className="w-8 flex-shrink-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                 <span className="size-6 rounded flex items-center justify-center text-[hsl(var(--text-secondary))]">
@@ -301,6 +314,7 @@ function StatusGroup({
     tasks,
     onOpenTask,
     onAddTask,
+    onStartInlineAdd,
     isFirst,
     onChangeTask,
     phaseDefs,
@@ -309,12 +323,15 @@ function StatusGroup({
     onQuickAddTitleChange,
     onQuickAddConfirm,
     onQuickAddCancel,
+    isAddingHere: isAddingHereProp,
+    isSubmitting = false,
 }: {
     status: string;
     statusLabel?: string;
     tasks: ProjectTaskRecord[];
     onOpenTask: (t: ProjectTaskRecord) => void;
-    onAddTask: (s: string) => void;
+    onAddTask?: (s: string) => void;
+    onStartInlineAdd?: () => void;
     isFirst?: boolean;
     onChangeTask: (taskId: number | string, patch: Partial<ProjectTaskRecord>) => void;
     phaseDefs?: readonly PhaseDef[];
@@ -323,9 +340,11 @@ function StatusGroup({
     onQuickAddTitleChange?: (v: string) => void;
     onQuickAddConfirm?: () => void;
     onQuickAddCancel?: () => void;
+    isAddingHere?: boolean;
+    isSubmitting?: boolean;
 }) {
     const inputRef = useRef<HTMLInputElement>(null);
-    const isAddingHere = quickAddStatus === status;
+    const isAddingHere = isAddingHereProp !== undefined ? isAddingHereProp : (quickAddStatus === status);
     const [collapsed, setCollapsed] = useState(false);
 
     useEffect(() => {
@@ -377,6 +396,7 @@ function StatusGroup({
                             <div className="w-20 flex-shrink-0 px-1 py-2 text-2xs font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] text-center whitespace-nowrap">Prior.</div>
                             <div className="w-36 flex-shrink-0 px-2 py-2 text-2xs font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] whitespace-nowrap">Estado</div>
                             <div className="w-24 flex-shrink-0 px-1 py-2 text-2xs font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] text-center whitespace-nowrap">Coment.</div>
+                            <div className="w-16 flex-shrink-0 px-1 py-2 text-2xs font-semibold uppercase tracking-wider text-[hsl(var(--text-secondary))] text-center whitespace-nowrap">Detalle</div>
                             <div className="w-8 flex-shrink-0" />
                         </div>
 
@@ -407,25 +427,32 @@ function StatusGroup({
                                         if (e.key === 'Enter') onQuickAddConfirm?.();
                                         if (e.key === 'Escape') onQuickAddCancel?.();
                                     }}
-                                    placeholder="Nombre de la tarea..."
+                                    placeholder="Nombre de la actividad... (Enter para crear)"
+                                    disabled={isSubmitting}
                                     className="flex-1 text-base font-medium bg-transparent outline-none text-[hsl(var(--text-primary))] placeholder:text-[hsl(var(--text-secondary))]"
                                 />
                                 <button
+                                    type="button"
                                     onClick={onQuickAddConfirm}
-                                    className="px-3 py-1.5 bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] text-xs font-bold rounded-lg hover:bg-[hsl(var(--primary))]/90 active:scale-95 transition-all"
+                                    disabled={isSubmitting || !quickAddTitle.trim()}
+                                    className="px-3 py-1.5 bg-[hsl(var(--primary))] text-[hsl(var(--primary-foreground))] text-xs font-bold rounded-lg hover:bg-[hsl(var(--primary))]/90 active:scale-95 transition-all disabled:opacity-50"
                                 >
-                                    Guardar
+                                    {isSubmitting ? 'Creando...' : 'Crear'}
                                 </button>
                                 <button
+                                    type="button"
                                     onClick={onQuickAddCancel}
-                                    className="p-1.5 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] hover:bg-[hsl(var(--surface-2))] rounded-lg transition-colors"
+                                    disabled={isSubmitting}
+                                    aria-label="Cancelar creación de actividad"
+                                    className="p-1.5 text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] hover:bg-[hsl(var(--surface-2))] rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--primary))] focus-visible:ring-offset-2"
                                 >
                                     <X size={14} />
                                 </button>
                             </div>
                         ) : (
                             <button
-                                onClick={() => onAddTask(status)}
+                                type="button"
+                                onClick={onStartInlineAdd ?? (() => onAddTask?.(status))}
                                 className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--primary))] hover:bg-[hsl(var(--surface-1))] w-full transition-colors border-b border-[hsl(var(--border))] min-h-[40px]"
                             >
                                 <Plus size={13} />
@@ -454,8 +481,57 @@ export default function ProjectListView({
     onQuickAddCancel,
 }: Props) {
     const { token } = useAuth();
+    const { createTask } = useProjectUpdate();
     const [onlyFavorites, setOnlyFavorites] = useState(false);
     const [favoriteTaskIds, setFavoriteTaskIds] = useState<Set<string>>(new Set());
+    const [internalInlineStatus, setInternalInlineStatus] = useState<string | null>(null);
+    const [internalInlineTitle, setInternalInlineTitle] = useState('');
+    const [isSubmittingInline, setIsSubmittingInline] = useState(false);
+
+    const activeInlineStatus = quickAddStatus !== undefined ? quickAddStatus : internalInlineStatus;
+    const activeInlineTitle = quickAddTitle !== undefined ? quickAddTitle : internalInlineTitle;
+
+    const handleStartInlineAdd = (status: string) => {
+        setInternalInlineStatus(status);
+        setInternalInlineTitle('');
+    };
+
+    const handleInlineTitleChange = (v: string) => {
+        setInternalInlineTitle(v);
+        onQuickAddTitleChange?.(v);
+    };
+
+    const handleInlineConfirm = async (status: string) => {
+        const title = activeInlineTitle.trim();
+        if (!title) {
+            setInternalInlineStatus(null);
+            setInternalInlineTitle('');
+            onQuickAddCancel?.();
+            return;
+        }
+        if (onQuickAddConfirm) {
+            onQuickAddConfirm();
+            return;
+        }
+        setIsSubmittingInline(true);
+        try {
+            await createTask({
+                title,
+                status,
+                priority: 'medium',
+            });
+            setInternalInlineTitle('');
+            setInternalInlineStatus(null);
+        } finally {
+            setIsSubmittingInline(false);
+        }
+    };
+
+    const handleInlineCancel = () => {
+        setInternalInlineTitle('');
+        setInternalInlineStatus(null);
+        onQuickAddCancel?.();
+    };
 
     const effectiveProjectId = projectId || tasks[0]?.project_id;
 
@@ -490,7 +566,7 @@ export default function ProjectListView({
         label: statusLabels.get(status) ?? status,
         tasks: displayedTasks.filter(t => (t.status ?? 'todo').toLowerCase() === status),
     })).filter(g => {
-        const isTarget = quickAddStatus === g.status;
+        const isTarget = activeInlineStatus === g.status;
         return g.tasks.length > 0 || isTarget;
     });
 
@@ -560,14 +636,16 @@ export default function ProjectListView({
                     tasks={g.tasks}
                     onOpenTask={onOpenTask}
                     onAddTask={onAddTask}
+                    onStartInlineAdd={() => handleStartInlineAdd(g.status)}
                     isFirst={i === 0}
                     onChangeTask={handleChangeTask}
                     phaseDefs={phaseDefs}
-                    quickAddStatus={null}
-                    quickAddTitle={quickAddTitle}
-                    onQuickAddTitleChange={onQuickAddTitleChange}
-                    onQuickAddConfirm={onQuickAddConfirm}
-                    onQuickAddCancel={onQuickAddCancel}
+                    isAddingHere={activeInlineStatus === g.status}
+                    quickAddTitle={activeInlineTitle}
+                    onQuickAddTitleChange={handleInlineTitleChange}
+                    onQuickAddConfirm={() => handleInlineConfirm(g.status)}
+                    onQuickAddCancel={handleInlineCancel}
+                    isSubmitting={isSubmittingInline}
                 />
             ))}
 
@@ -578,8 +656,15 @@ export default function ProjectListView({
                     tasks={ungrouped}
                     onOpenTask={onOpenTask}
                     onAddTask={onAddTask}
+                    onStartInlineAdd={() => handleStartInlineAdd('todo')}
                     onChangeTask={handleChangeTask}
                     phaseDefs={phaseDefs}
+                    isAddingHere={activeInlineStatus === 'todo'}
+                    quickAddTitle={activeInlineTitle}
+                    onQuickAddTitleChange={handleInlineTitleChange}
+                    onQuickAddConfirm={() => handleInlineConfirm('todo')}
+                    onQuickAddCancel={handleInlineCancel}
+                    isSubmitting={isSubmittingInline}
                 />
             )}
 

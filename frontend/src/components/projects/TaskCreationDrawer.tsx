@@ -2,11 +2,11 @@
 
 import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
-import { CheckSquare, Type, AlignLeft, Flag, Loader2, User, Boxes } from 'lucide-react';
+import { CheckSquare, Type, AlignLeft, Flag, Loader2, User } from 'lucide-react';
 import PersonaSelect from '@/components/ui/PersonaSelect';
 import clsx from 'clsx';
 import WorkspaceDrawer from '@/components/WorkspaceDrawer';
-import { PRIORITY_LABELS, NODE_OPTIONS, TASK_TITLE_MAX_LENGTH } from '@/lib/projects/constants';
+import { PRIORITY_LABELS, TASK_TITLE_MAX_LENGTH } from '@/lib/projects/constants';
 
 interface Props {
     isOpen: boolean;
@@ -43,7 +43,6 @@ export default function TaskCreationDrawer({ isOpen, defaultStatus = 'todo', onC
 
     const priority = watch('priority');
     const assigneeId = watch('assignee_id');
-    const node = watch('node');
 
     useEffect(() => {
         if (isOpen) {
@@ -132,43 +131,6 @@ export default function TaskCreationDrawer({ isOpen, defaultStatus = 'todo', onC
                             </button>
                         ))}
                     </div>
-                </div>
-
-                <div role="group" aria-labelledby="task-node-label" className="space-y-2">
-                    <span id="task-node-label" className="text-2xs font-bold uppercase tracking-wide text-[hsl(var(--muted-foreground))] flex items-center gap-2">
-                        <Boxes size={12} /> Nodo Operativo
-                    </span>
-                    <div className="grid grid-cols-2 gap-2">
-                        {NODE_OPTIONS.map((n) => (
-                            <button
-                                key={n.value}
-                                type="button"
-                                onClick={() => setValue('node', node === n.value ? null : n.value)}
-                                aria-pressed={node === n.value}
-                                className={clsx(
-                                    "py-2 px-3 rounded-md flex items-center justify-center gap-2 border text-xs font-bold uppercase tracking-wide transition-all",
-                                    node === n.value
-                                        ? "border-transparent text-[hsl(var(--primary-foreground))] shadow-sm"
-                                        : "bg-transparent border-[hsl(var(--border))] text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--surface-2))]"
-                                )}
-                                style={node === n.value ? { backgroundColor: n.value === 'nutrition' ? 'hsl(var(--warning))' : 'hsl(var(--primary))' } : undefined}
-                            >
-                                {node !== n.value && <div className={clsx("size-1.5 rounded-full", n.dot)} />}
-                                {n.short}
-                            </button>
-                        ))}
-                    </div>
-                    <button
-                        type="button"
-                        onClick={() => setValue('node', null)}
-                        aria-pressed={node === null}
-                        className={clsx(
-                            "text-2xs font-semibold uppercase tracking-wide transition-colors",
-                            node === null ? "text-[hsl(var(--primary))]" : "text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))]"
-                        )}
-                    >
-                        Sin nodo
-                    </button>
                 </div>
 
                 <div role="group" aria-labelledby="task-assignee-label" className="space-y-1.5">

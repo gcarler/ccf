@@ -42,6 +42,13 @@ vi.mock('@/components/ui/inline-editors', () => ({
   InlineUserPicker: ({ value }: { value: string | null }) => <span>{value ?? 'Sin asignar'}</span>,
 }));
 
+const mockCreateTask = vi.fn().mockResolvedValue(true);
+vi.mock('@/context/ProjectUpdateContext', () => ({
+  useProjectUpdate: () => ({
+    createTask: mockCreateTask,
+  }),
+}));
+
 describe('ProjectListView', () => {
   const phases: PhaseDef[] = [
     { slug: 'backlog', name: 'Por planificar', color: '#64748b', order_index: 0 },
@@ -215,6 +222,92 @@ describe('ProjectListView', () => {
     await userEvent.click(sendBtn);
     await waitFor(() => {
       expect(screen.queryByTestId('quick-comment-popover')).not.toBeInTheDocument();
+    });
+  });
+
+  it('renders Detalle column with pencil button that calls onOpenTask on click', async () => {
+    const onOpenTask = vi.fn();
+    const task = createMockTask({ id: 'task-1', title: 'Preparar reunión', status: 'backlog' });
+    render(
+      <ProjectListView
+        tasks={[task]}
+        phaseDefs={phases}
+        onOpenTask={onOpenTask}
+        onAddTask={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText('Detalle')).toBeInTheDocument();
+    const pencilButton = screen.getByRole('button', { name: `Ver detalle completo de ${task.title}` });
+    expect(pencilButton).toBeInTheDocument();
+    expect(pencilButton).toHaveAttribute('title', 'Ver detalle completo');
+
+    await userEvent.click(pencilButton);
+    expect(onOpenTask).toHaveBeenCalledWith(task);
+  });
+
+  it('triggers inline quick creation on clicking "+ Nuevo" without calling onAddTask and invokes createTask on Enter', async () => {
+    const onAddTask = vi.fn();
+    mockCreateTask.mockClear();
+
+    render(
+      <ProjectListView
+        tasks={[createMockTask({ id: 'task-1', title: 'Preparar reunión', status: 'backlog' })]}
+        phaseDefs={phases}
+        onOpenTask={vi.fn()}
+        onAddTask={onAddTask}
+      />,
+    );
+
+    // Find the "+ Nuevo" button in the group
+    const nuevoBtn = screen.getByRole('button', { name: /Nuevo/i });
+    await userEvent.click(nuevoBtn);
+
+    // Ensure onAddTask was NOT called (drawer was not opened)
+    expect(onAddTask).not.toHaveBeenCalled();
+
+    // The inline input with autofocus placeholder appears
+    const input = screen.getByPlaceholderText('Nombre de la actividad... (Enter para crear)');
+    expect(input).toBeInTheDocument();
+
+    // Type new task name and hit Enter
+    await userEvent.type(input, 'Nueva tarea inline{enter}');
+
+    // createTask from useProjectUpdate was invoked
+    expect(mockCreateTask).toHaveBeenCalledWith({
+      title: 'Nueva tarea inline',
+      status: 'backlog',
+      priority: 'medium',
+    });
+
+    // onAddTask was never called
+    expect(onAddTask).not.toHaveBeenCalled();
+  });
+
+  it('creates task when clicking the Crear button in inline creation row', async () => {
+    mockCreateTask.mockClear();
+
+    render(
+      <ProjectListView
+        tasks={[createMockTask({ id: 'task-1', title: 'Preparar reunión', status: 'backlog' })]}
+        phaseDefs={phases}
+        onOpenTask={vi.fn()}
+        onAddTask={vi.fn()}
+      />,
+    );
+
+    await userEvent.click(screen.getByRole('button', { name: /Nuevo/i }));
+
+    const input = screen.getByPlaceholderText('Nombre de la actividad... (Enter para crear)');
+    await userEvent.type(input, 'Actividad botón crear');
+
+    const crearBtn = screen.getByRole('button', { name: 'Crear' });
+    await userEvent.click(crearBtn);
+
+    expect(mockCreateTask).toHaveBeenCalledWith({
+      title: 'Actividad botón crear',
+      status: 'backlog',
+      priority: 'medium',
     });
   });
 });

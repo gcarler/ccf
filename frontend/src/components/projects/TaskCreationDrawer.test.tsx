@@ -14,10 +14,10 @@ describe('TaskCreationDrawer accessibility', () => {
         expect(screen.getByRole('textbox', { name: 'Título de la tarea' })).toBeInTheDocument();
         expect(screen.getByRole('textbox', { name: 'Descripción (Opcional)' })).toBeInTheDocument();
         expect(screen.getByRole('group', { name: 'Nivel de Prioridad' })).toBeInTheDocument();
-        expect(screen.getByRole('group', { name: 'Nodo Operativo' })).toBeInTheDocument();
+        expect(screen.queryByRole('group', { name: 'Nodo Operativo' })).not.toBeInTheDocument();
         expect(screen.getByRole('group', { name: 'Asignar a' })).toBeInTheDocument();
         expect(screen.getByRole('button', { name: 'Media' })).toHaveAttribute('aria-pressed', 'true');
-        expect(screen.getByRole('button', { name: 'Sin nodo' })).toHaveAttribute('aria-pressed', 'true');
+        expect(screen.queryByRole('button', { name: 'Sin nodo' })).not.toBeInTheDocument();
     });
 
     it('has no axe accessibility violations while open', async () => {

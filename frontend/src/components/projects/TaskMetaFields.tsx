@@ -5,8 +5,7 @@ import MetaRow from '@/components/ui/MetaRow';
 import TaskLabelManager from './TaskLabelManager';
 import { InlineDatePicker } from '@/components/ui/inline-editors/InlineDatePicker';
 import type { ProjectTaskRecord } from '@/types/projects';
-import { getNodeOption } from '@/lib/projects/constants';
-import { Boxes, CalendarDays, Flag, Tag, UserRound } from 'lucide-react';
+import { CalendarDays, Flag, Tag, UserRound } from 'lucide-react';
 import clsx from 'clsx';
 
 function formatCalendarDate(value: string): string {
@@ -37,11 +36,10 @@ export default function TaskMetaFields({
     onAssigneeChange: (id: string | null) => void;
     onDueDateChange?: (date: string | null) => void;
     onPriorityCycle: () => void;
-    onNodeCycle: () => void;
+    onNodeCycle?: () => void;
     priority: { color: string; dot: string; label: string };
     token: string | null;
 }) {
-    const nodeOpt = getNodeOption(task.node);
 
     return (
         <section className="px-4 py-3 border-b border-[hsl(var(--border))] space-y-2">
@@ -77,19 +75,6 @@ export default function TaskMetaFields({
                     className={clsx('flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-sm font-bold border border-transparent hover:border-[hsl(var(--border))] transition-all cursor-pointer', priority.color)}>
                     <span className={clsx('size-2 rounded-full', priority.dot)} />
                     {priority.label}
-                </button>
-            </MetaRow>
-
-            <MetaRow icon={<Boxes size={13} className="text-[hsl(var(--muted-foreground))]" />} label="Nodo Operativo">
-                <button
-                    onClick={onNodeCycle}
-                    title="Click para cambiar de nodo"
-                    className={clsx(
-                        'flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-sm font-bold border border-transparent hover:border-[hsl(var(--border))] transition-all cursor-pointer',
-                        nodeOpt ? nodeOpt.color : 'text-[hsl(var(--muted-foreground))]'
-                    )}>
-                    {nodeOpt && <span className={clsx('size-2 rounded-full', nodeOpt.dot)} />}
-                    {nodeOpt ? nodeOpt.label : 'Sin nodo'}
                 </button>
             </MetaRow>
 
