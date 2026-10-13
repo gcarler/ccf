@@ -57,7 +57,7 @@ export default function TaskCommentSection({
         if (!mentionState) return;
         let active = true;
         const query = mentionState.query.trim();
-        const queryParam = query ? `?search=${encodeURIComponent(query)}` : '';
+        const queryParam = `?limit=500${query ? `&search=${encodeURIComponent(query)}` : ''}`;
 
         apiFetch<Array<any>>(`/projects/assignee-candidates${queryParam}`, { token: token ?? undefined })
             .catch(() => apiFetch<Array<any>>(`/crm/personas${queryParam}`, { token: token ?? undefined }))

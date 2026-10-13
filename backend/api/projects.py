@@ -870,7 +870,7 @@ def _normalize_dates(obj):
 @router.get("/assignee-candidates", response_model=List[schemas.ProjectAssigneeCandidate])
 def list_project_assignee_candidates(
     search: Optional[str] = Query(None, max_length=100),
-    limit: int = Query(50, ge=1, le=50),
+    limit: int = Query(200, ge=1, le=1000),
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_module_access("projects", "read")),
 ):
@@ -3387,6 +3387,36 @@ async def upload_task_attachment(
         uploader_id=uploader_persona_id,
     )
     db.add(attachment)
+
+    # Sincronizar archivo en el Drive del proyecto
+    existing_pf = (
+        db.query(models.ProjectFile)
+        .filter(
+            models.ProjectFile.project_id == _to_uuid(project_id),
+            models.ProjectFile.task_id == _to_uuid(task_id),
+            models.ProjectFile.file_url == url,
+            models.ProjectFile.deleted_at.is_(None),
+        )
+        .first()
+    )
+    if not existing_pf:
+        try:
+            crud.create_project_file(
+                db,
+                _to_uuid(project_id),
+                name=filename,
+                file_url=url,
+                file_source="local",
+                category="attachments",
+                file_type=file.content_type,
+                file_size=len(contents),
+                task_id=_to_uuid(task_id),
+                phase_id=task.phase_id,
+                uploaded_by=uploader_persona_id,
+                sede_id=user_sede,
+            )
+        except Exception:
+            pass
     _log_project_activity(
         db,
         project_id,
@@ -6151,6 +6181,32 @@ async def upload_project_file_endpoint(
         )
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
+
+    if task_id:
+        try:
+            task_uuid = _to_uuid(task_id)
+            existing_att = (
+                db.query(models.ProjectAttachment)
+                .filter(
+                    models.ProjectAttachment.task_id == task_uuid,
+                    models.ProjectAttachment.file_url == url,
+                    models.ProjectAttachment.deleted_at.is_(None),
+                )
+                .first()
+            )
+            if not existing_att:
+                att = models.ProjectAttachment(
+                    task_id=task_uuid,
+                    filename=doc_name,
+                    file_url=url,
+                    file_type=file.content_type,
+                    file_size=len(contents),
+                    uploader_id=persona_id,
+                )
+                db.add(att)
+                db.commit()
+        except Exception:
+            pass
 
     _log_project_activity(
         db,

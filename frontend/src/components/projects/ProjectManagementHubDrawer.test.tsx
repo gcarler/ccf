@@ -11,7 +11,7 @@ import {
 
 const META: ProjectHubModuleMeta[] = [
   { key: "kpis", label: "KPIs", icon: Target },
-  { key: "drive", label: "Bóveda y Drive", icon: FolderArchive },
+  { key: "drive", label: "Drive", icon: FolderArchive },
 ];
 
 const RENDERERS = {
@@ -53,7 +53,7 @@ describe("ProjectManagementHubDrawer", () => {
   it("muestra las pestañas abiertas con la activa marcada", () => {
     renderHub();
     const kpisTab = screen.getByRole("tab", { name: /KPIs/ });
-    const driveTab = screen.getByRole("tab", { name: /Bóveda y Drive/ });
+    const driveTab = screen.getByRole("tab", { name: /^Drive$/ });
     expect(kpisTab).toHaveAttribute("aria-selected", "true");
     expect(driveTab).toHaveAttribute("aria-selected", "false");
   });
@@ -61,7 +61,7 @@ describe("ProjectManagementHubDrawer", () => {
   it("activa otra pestaña al hacer clic y unmount el módulo anterior", async () => {
     const user = userEvent.setup();
     const { props, rerender } = renderHub();
-    await user.click(screen.getByRole("tab", { name: /Bóveda y Drive/ }));
+    await user.click(screen.getByRole("tab", { name: /^Drive$/ }));
     expect(props.onActivateModule).toHaveBeenCalledWith("drive");
 
     // Mismo hub con activeModule=drive: solo el contenido de drive vive

@@ -12,7 +12,7 @@ import { toast } from 'sonner';
 import { useAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/lib/http';
 import type { ProjectTaskRecord, ProjectUserFavorite } from '@/types/projects';
-import { useSidebarLayers } from '@/context/SidebarLayerContext';
+
 import { buildStatusOptions, getStatusOption, PROJECT_ASSIGNEE_CANDIDATES_ENDPOINT, STATUS_GROUP_PILL } from '@/lib/projects/constants';
 import { useProjectUpdate, type PhaseDef } from '@/context/ProjectUpdateContext';
 import type { TaskStatus } from '@/lib/projects/constants';
@@ -49,7 +49,7 @@ interface CommentPopoverProps {
     projectId?: string;
 }
 
-const QUICK_EMOJIS = ['👍', '❤️', '🎉', '🚀', '👀', '💡', '✅', '👏'];
+const QUICK_EMOJIS = ['👍', '❤️', '🎉', '🚀', '👀', '💡', '✅', '👏', '🔥', '🙌', '⭐', '📌', '🎯', '💬', '💪', '🙏'];
 
 function CommentPopover({ onClose, placement = 'bottom', taskId, projectId }: CommentPopoverProps) {
     const { token } = useAuth();
@@ -72,7 +72,7 @@ function CommentPopover({ onClose, placement = 'bottom', taskId, projectId }: Co
         if (!mentionState) return;
         let active = true;
         const query = mentionState.query.trim();
-        const queryParam = query ? `?search=${encodeURIComponent(query)}` : '';
+        const queryParam = `?limit=500${query ? `&search=${encodeURIComponent(query)}` : ''}`;
 
         apiFetch<Array<any>>(`/projects/assignee-candidates${queryParam}`, { token: token ?? undefined })
             .catch(() => apiFetch<Array<any>>(`/crm/personas${queryParam}`, { token: token ?? undefined }))
@@ -187,6 +187,41 @@ function CommentPopover({ onClose, placement = 'bottom', taskId, projectId }: Co
                 .filter(m => text.includes(`@${m.name}`))
                 .map(m => m.id);
 
+            let uploadedAttachments: any[] = [];
+            if (attachedFile) {
+                const formData = new FormData();
+                formData.append('file', attachedFile);
+                formData.append('name', attachedFile.name);
+                formData.append('category', 'attachments');
+                if (taskId) {
+                    formData.append('task_id', taskId);
+                }
+                const uploadEndpoint = projectId
+                    ? `/projects/${projectId}/files/upload`
+                    : (taskId ? `/projects/tasks/${taskId}/attachments` : '/projects/files/upload');
+                try {
+                    const uploadRes = await apiFetch<any>(uploadEndpoint, {
+                        method: 'POST',
+                        body: formData,
+                        token: token ?? undefined,
+                    });
+                    uploadedAttachments = [{
+                        id: uploadRes?.id,
+                        name: uploadRes?.name || attachedFile.name,
+                        url: uploadRes?.file_url || uploadRes?.url || attachedFile.name,
+                        type: uploadRes?.file_type || attachedFile.type || 'document',
+                        size: uploadRes?.file_size || attachedFile.size,
+                    }];
+                } catch {
+                    uploadedAttachments = [{
+                        name: attachedFile.name,
+                        url: attachedFile.name,
+                        type: attachedFile.type || 'document',
+                        size: attachedFile.size,
+                    }];
+                }
+            }
+
             const payload: any = {
                 content: text.trim(),
                 task_id: taskId,
@@ -195,13 +230,8 @@ function CommentPopover({ onClose, placement = 'bottom', taskId, projectId }: Co
             if (projectId) {
                 payload.project_id = projectId;
             }
-            if (attachedFile) {
-                payload.attachments = [{
-                    name: attachedFile.name,
-                    url: attachedFile.name,
-                    type: attachedFile.type || 'document',
-                    size: attachedFile.size,
-                }];
+            if (uploadedAttachments.length > 0) {
+                payload.attachments = uploadedAttachments;
             }
 
             await apiFetch(endpoint, {
@@ -425,7 +455,6 @@ function TaskRow({
     onChange: (patch: Partial<ProjectTaskRecord>) => void;
     phases?: readonly PhaseDef[];
 }) {
-    const { openLayer, setRightMode } = useSidebarLayers();
     const [commentOpen, setCommentOpen] = useState(false);
     const [commentPlacement, setCommentPlacement] = useState<'bottom' | 'top'>('bottom');
     const commentRef = useRef<HTMLDivElement>(null);
@@ -474,8 +503,6 @@ function TaskRow({
     const handleCommentClick = () => {
         if (!commentOpen) {
             updateCommentPlacement();
-            setRightMode('push');
-            openLayer('RIGHT');
         }
         setCommentOpen(v => !v);
     };
