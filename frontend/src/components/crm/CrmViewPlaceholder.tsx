@@ -17,6 +17,7 @@ const VIEW_LABEL: Record<ViewType, string> = {
   kanban: "Kanban",
   gantt: "Gantt",
   calendar: "Calendario",
+  workflow: "Workflow",
   wiki: "Wiki",
   chat: "Chat",
 };

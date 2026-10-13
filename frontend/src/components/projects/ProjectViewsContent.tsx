@@ -27,6 +27,7 @@ const ProjectCalendarView = dynamic(() => import('@/components/projects/ProjectC
 const ProjectGanttView = dynamic(() => import('@/components/projects/ProjectGanttView'), { loading: ProjectViewLoading });
 const ProjectWikiEditor = dynamic(() => import('@/components/projects/ProjectWikiEditor'), { loading: ProjectViewLoading });
 const ProjectChatPanel = dynamic(() => import('@/components/projects/ProjectChatPanel'), { loading: ProjectViewLoading });
+const ProjectWorkflowView = dynamic(() => import('@/components/projects/ProjectWorkflowView'), { loading: ProjectViewLoading });
 const ProjectKanbanBoard = dynamic(
     () => import('@/components/projects/ProjectKanbanBoard').then((module) => module.ProjectKanbanBoard),
     { loading: ProjectViewLoading },
@@ -179,6 +180,17 @@ export function ProjectViewsContent({
 
             {viewType === 'wiki' && (
                 project?.id ? <ProjectWikiEditor project_id={project.id} /> : null
+            )}
+
+            {viewType === 'workflow' && (
+                <div className="w-full h-[calc(100vh-8rem)]">
+                    <ProjectWorkflowView
+                        project={project}
+                        tasks={tasks}
+                        phases={phases}
+                        onOpenTask={onOpenTask}
+                    />
+                </div>
             )}
 
             {viewType === 'chat' && (

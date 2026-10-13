@@ -67,6 +67,7 @@ const PROJECT_DETAIL_VIEWS: ViewType[] = [
   'kanban',
   'calendar',
   'gantt',
+  'workflow',
   'wiki',
   'chat',
 ];

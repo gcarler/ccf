@@ -52,6 +52,7 @@ const PROJECT_VIEW_LABELS: Record<ViewType, string> = {
     kanban: 'Kanban',
     calendar: 'Calendario',
     gantt: 'Gantt',
+    workflow: 'Workflow',
     wiki: 'Wiki',
     chat: 'Chat',
 };
